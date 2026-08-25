@@ -13,15 +13,18 @@
   import { GridBody } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { onMount } from 'svelte';
+  import { flip } from 'svelte/animate';
 
   import EntryReorderListItem from '$lib/components/contents/list/entry-reorder-list-item.svelte';
   import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
   import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder';
   import {
     entryGroups,
+    listedEntryIndexMap,
     reorderDirty,
     reorderedEntries,
   } from '$lib/services/contents/collection/view';
+  import { getDropIndex, getMoveTarget, moveListItem } from '$lib/services/utils/drag-sorting';
 
   /**
    * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
@@ -43,23 +46,18 @@
   let reorderGroups = $state({});
 
   /**
-   * Name of the group the current drag started in. Empty while no drag is in progress. Used to
-   * reject drops in any other group.
-   * @type {string}
+   * The group name and entry order as they were when the current drag started, so that an abandoned
+   * drag can put the entries back, and so drops in any other group can be rejected. `undefined`
+   * while no drag is in progress.
+   * @type {{ name: string, entries: Entry[] } | undefined}
    */
-  let dragGroupName = $state('');
+  let dragOrigin = $state();
 
   /**
-   * Index of the entry currently being dragged within its group.
-   * @type {number | undefined}
+   * The entry currently being dragged.
+   * @type {Entry | undefined}
    */
-  let dragIndex = $state(undefined);
-
-  /**
-   * Insertion position during drag: the dragged entry will be placed *before* this index.
-   * @type {number | undefined}
-   */
-  let dropIndex = $state(undefined);
+  let draggedEntry = $state();
 
   /**
    * Sync the flattened ordered entries back to the shared store so the toolbar Save button can read
@@ -72,7 +70,9 @@
   };
 
   /**
-   * Move an entry within a group from one index to another.
+   * Move an entry within a group from one index to another, and mark the new order as unsaved.
+   * This is the committed move behind the Move Up / Move Down buttons; a drag previews the move
+   * first and only commits it on drop.
    * @param {string} groupName Group name.
    * @param {number} from Source index.
    * @param {number} to Destination index.
@@ -80,13 +80,35 @@
   const moveEntry = (groupName, from, to) => {
     if (from === to) return;
 
-    const group = [...(reorderGroups[groupName] ?? [])];
-    const [item] = group.splice(from, 1);
-
-    group.splice(to, 0, item);
-    reorderGroups[groupName] = group;
+    reorderGroups[groupName] = moveListItem(reorderGroups[groupName] ?? [], from, to);
     reorderDirty.set(true);
     publishOrder();
+  };
+
+  /**
+   * End the current drag, either keeping the previewed order or restoring the one from before it.
+   *
+   * `drop` fires before `dragend`, so a completed drop clears the origin here and the `dragend`
+   * that follows finds nothing left to undo.
+   * @param {boolean} commit Whether to keep the previewed order.
+   */
+  const finishDrag = (commit) => {
+    if (dragOrigin) {
+      const { name, entries } = dragOrigin;
+
+      if (commit) {
+        // The pointer may well have returned to where it started, in which case nothing moved
+        if ((reorderGroups[name] ?? []).some((entry, index) => entry.id !== entries[index]?.id)) {
+          reorderDirty.set(true);
+          publishOrder();
+        }
+      } else {
+        reorderGroups[name] = entries;
+      }
+    }
+
+    dragOrigin = undefined;
+    draggedEntry = undefined;
   };
 
   // Snapshot the entry groups exactly once when this component mounts (i.e. when the user enters
@@ -120,65 +142,85 @@
       <GridBody label={name !== '*' ? name : undefined}>
         {@const localEntries = reorderGroups[name] ?? entries}
         {#each localEntries as entry, index (entry.id)}
-          <EntryReorderListItem
-            {collection}
-            {entry}
-            {viewType}
-            dragging={dragIndex === index && dragGroupName === name}
-            dropBefore={dropIndex === index &&
-              dragGroupName === name &&
-              dragIndex !== index &&
-              dragIndex !== index - 1}
-            dropAfter={dropIndex === localEntries.length &&
-              index === localEntries.length - 1 &&
-              dragGroupName === name &&
-              dragIndex !== localEntries.length - 1}
-            canMoveUp={index > 0}
-            canMoveDown={index < localEntries.length - 1}
-            onDragStart={() => {
-              dragGroupName = name;
-              dragIndex = index;
+          <!--
+            The row is written out here rather than with `<GridRow>` because `animate:` only works
+            on an element at the top level of a keyed `each` block, never on a component. Dragging
+            reorders `reorderGroups` as the pointer moves, so the other rows slide out of the way
+            and the gap the entry would land in follows the pointer.
+          -->
+          <div
+            role="row"
+            class="sui grid-row"
+            class:drag-source={draggedEntry?.id === entry.id}
+            tabindex="0"
+            aria-rowindex={$listedEntryIndexMap.get(entry.id) ?? -1}
+            aria-selected="false"
+            draggable="true"
+            ondragstart={(/** @type {DragEvent} */ event) => {
+              dragOrigin = { name, entries: [...localEntries] };
+              draggedEntry = entry;
+
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+              }
             }}
-            onDragOver={(/** @type {number} */ clientY, /** @type {DOMRect} */ rect) => {
+            ondragover={(/** @type {DragEvent & { currentTarget: HTMLElement }} */ event) => {
               // Reject the drop when it targets another group, so the browser shows a “no drop”
-              // cursor and never fires the `drop` event. This also rejects anything dragged in from
-              // outside the list, where `dragGroupName` is still empty.
-              if (name !== dragGroupName) {
-                dropIndex = undefined;
+              // cursor. This also rejects anything dragged in from outside the list, where there is
+              // no drag origin at all.
+              const accepted = name === dragOrigin?.name;
 
-                return false;
+              if (accepted) {
+                event.preventDefault();
+
+                const list = reorderGroups[name] ?? [];
+                const from = list.findIndex(({ id }) => id === draggedEntry?.id);
+
+                const to = getMoveTarget({
+                  dragIndex: from,
+                  dropIndex: getDropIndex({
+                    index,
+                    clientY: event.clientY,
+                    rect: event.currentTarget.getBoundingClientRect(),
+                  }),
+                });
+
+                if (to !== undefined) {
+                  reorderGroups[name] = moveListItem(list, from, to);
+                }
               }
 
-              dropIndex = clientY < rect.top + rect.height / 2 ? index : index + 1;
-
-              return true;
-            }}
-            onDrop={() => {
-              if (
-                name === dragGroupName &&
-                dragIndex !== undefined &&
-                dropIndex !== undefined &&
-                dropIndex !== dragIndex &&
-                dropIndex !== dragIndex + 1
-              ) {
-                moveEntry(name, dragIndex, dropIndex > dragIndex ? dropIndex - 1 : dropIndex);
+              if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = accepted ? 'move' : 'none';
               }
-
-              dragIndex = undefined;
-              dropIndex = undefined;
             }}
-            onDragEnd={() => {
-              dragGroupName = '';
-              dragIndex = undefined;
-              dropIndex = undefined;
+            ondrop={(/** @type {DragEvent} */ event) => {
+              event.preventDefault();
+              // `AppShell` accepts every drop so the browser doesn’t navigate away from a stray
+              // file, which means a drop rejected above can still land here. Releasing over another
+              // group shows the “no drop” cursor, so it has to put the entries back rather than
+              // commit the arrangement the pointer left behind.
+              finishDrag(name === dragOrigin?.name);
             }}
-            onMoveUp={() => {
-              if (index > 0) moveEntry(name, index, index - 1);
+            ondragend={() => {
+              finishDrag(false);
             }}
-            onMoveDown={() => {
-              if (index < localEntries.length - 1) moveEntry(name, index, index + 1);
-            }}
-          />
+            animate:flip={{ duration: 200 }}
+          >
+            <EntryReorderListItem
+              {collection}
+              {entry}
+              {viewType}
+              canMoveUp={index > 0}
+              canMoveDown={index < localEntries.length - 1}
+              onMoveUp={() => {
+                if (index > 0) moveEntry(name, index, index - 1);
+              }}
+              onMoveDown={() => {
+                if (index < localEntries.length - 1) moveEntry(name, index, index + 1);
+              }}
+            />
+          </div>
         {/each}
       </GridBody>
     {/await}
@@ -188,27 +230,23 @@
 <style>
   .wrapper {
     :global {
+      /* The rows aren’t `<GridRow>` components, so they don’t get its scoped layout rules */
+      .grid-row {
+        display: table-row;
+        height: var(--sui-primary-row-height);
+      }
+
+      /* The dragged row is left as a faint placeholder marking the gap it would drop into. The
+        pointer already carries the browser’s own drag image of it, so showing it twice at full
+        strength would just be confusing. */
+
       .grid-row.drag-source {
-        opacity: 0.4;
+        opacity: 0.25;
         cursor: grabbing;
       }
 
       .grid-row[draggable='true']:not(.drag-source) {
         cursor: grab;
-      }
-
-      /* Draw the drop indicators with an inset shadow rather than a border: the list view zeroes
-        out the top border of the first row and the bottom border of the last row of a labelled
-        group with a more specific `!important` rule (see `listing-grid.svelte`), which would hide a
-        border indicator at the top and bottom edge of every group. A shadow also keeps the row
-        heights stable, so the list no longer shifts by 3px as the indicator moves. */
-
-      .grid-row.drop-before .grid-cell {
-        box-shadow: inset 0 3px 0 0 var(--sui-primary-accent-color);
-      }
-
-      .grid-row.drop-after .grid-cell {
-        box-shadow: inset 0 -3px 0 0 var(--sui-primary-accent-color);
       }
     }
   }

@@ -23,9 +23,11 @@
   import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import { getContext, onMount, untrack } from 'svelte';
+  import { flip } from 'svelte/animate';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import ExpandIcon from '$lib/components/common/expand-icon.svelte';
+  import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
@@ -42,6 +44,14 @@
   import { formatSummary, getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
+  import {
+    getDropIndex,
+    getListItemAt,
+    getMoveTarget,
+    moveListItem,
+    startAutoScroll,
+    stopAutoScroll,
+  } from '$lib/services/utils/drag-sorting';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -145,6 +155,33 @@
    * @type {HTMLElement | undefined}
    */
   let itemList = $state();
+  /**
+   * Index of the item made draggable by a press on its drag handle. Only the handle starts a drag,
+   * so the rest of the item stays selectable and its own controls keep working.
+   * @type {number | undefined}
+   */
+  let grabbedIndex = $state();
+  /**
+   * Index of the item currently being dragged.
+   * @type {number | undefined}
+   */
+  let dragIndex = $state();
+  /**
+   * Item indexes in the order they are displayed. While an item is being dragged, this holds the
+   * provisional order, so the other items slide out of the way and the gap the dragged item would
+   * land in follows the pointer. `undefined` while no drag is in progress.
+   * @type {number[] | undefined}
+   */
+  let previewOrder = $state();
+
+  /**
+   * The order the items are rendered in. This is the identity order except during a drag. A stale
+   * preview left over from a list that changed length underneath is discarded.
+   * @type {number[]}
+   */
+  const displayOrder = $derived(
+    previewOrder?.length === items.length ? previewOrder : items.map((_item, index) => index),
+  );
 
   /**
    * Initialize the expander state.
@@ -181,6 +218,19 @@
    * @returns {HTMLElement | undefined} List item element.
    */
   const getItem = (index) => /** @type {HTMLElement} */ (itemList?.children[index]);
+
+  /**
+   * Get the `each` block key that identifies the item at the given index. Object items carry a
+   * generated ID that follows the item as the list is reordered; primitives can only be keyed by
+   * their position.
+   * @param {number} index Target index.
+   * @returns {string | number} Key.
+   */
+  const getItemKey = (index) => {
+    const item = items[index];
+
+    return isObject(item) ? (item.__sc_item_id ?? index) : index;
+  };
 
   /**
    * Add a new subfield to the list.
@@ -265,35 +315,109 @@
   };
 
   /**
-   * Swap a subfield with the next one.
-   * @param {number} index Target index.
-   * @param {'move-up' | 'move-down'} action Move action.
+   * Move a subfield to another position in the list.
+   * @param {number} from Source index.
+   * @param {number} to Destination index.
+   * @param {string} [action] `data-action` of the reorder control that triggered the move, so the
+   * focus can be restored to the matching control on the item once it has moved.
    */
-  const moveDownItem = async (index, action) => {
+  const moveItem = async (from, to, action = 'reorder') => {
     updateComplexList(({ valueList, expanderStateList }) => {
       if (!hasSingleSubField) {
-        // Ensure the IDs are unique before swapping
-        valueList[index].__sc_item_id ??= crypto.randomUUID();
-        valueList[index + 1].__sc_item_id ??= crypto.randomUUID();
-        // Track original key paths for correct revert after reordering
-        valueList[index].__sc_item_original_key_path ??= `${keyPath}.${index}`;
-        valueList[index + 1].__sc_item_original_key_path ??= `${keyPath}.${index + 1}`;
+        valueList.forEach((item, index) => {
+          if (isObject(item)) {
+            // Ensure the IDs are unique before reordering, so that the `each` block below keeps
+            // following each item rather than its position
+            item.__sc_item_id ??= crypto.randomUUID();
+            // Track original key paths for correct revert after reordering
+            item.__sc_item_original_key_path ??= `${keyPath}.${index}`;
+          }
+        });
       }
 
-      [valueList[index], valueList[index + 1]] = [valueList[index + 1], valueList[index]];
-      [expanderStateList[index], expanderStateList[index + 1]] = [
-        expanderStateList[index + 1],
-        expanderStateList[index],
-      ];
+      valueList.splice(to, 0, ...valueList.splice(from, 1));
+      // The expander states are only manipulated with the default locale, so this list may be empty
+      expanderStateList.splice(to, 0, ...expanderStateList.splice(from, 1));
     });
 
     await sleep(50);
-    // Move the focus to the Move Up/Down button on the same item
-    /** @type {HTMLElement} */ (
-      getItem(action === 'move-up' ? index : index + 1)?.querySelector(
-        `button[data-action="${action}"]`,
-      )
+    // Move the focus back to the control on the item that was just moved, so that it can be used
+    // repeatedly without having to find it again
+    /** @type {HTMLElement | null | undefined} */ (
+      getItem(to)?.querySelector(`button[data-action="${action}"]`)
     )?.focus();
+  };
+
+  /**
+   * Handle a `dragover` event fired while an item is being reordered.
+   *
+   * The list-level drag handlers run in the capture phase, so that a drop zone or another sortable
+   * list nested in an item — a File subfield, say — never sees a reorder drag and doesn’t light up
+   * as a drop target. Anything else being dragged, such as a file from the desktop, is passed
+   * through untouched.
+   * @param {DragEvent} event `dragover` event.
+   */
+  const onDragOver = (event) => {
+    if (dragIndex === undefined || !previewOrder) {
+      return;
+    }
+
+    event.stopPropagation();
+    // The browser rejects the drop and never fires the `drop` event unless the default is prevented
+    event.preventDefault();
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+
+    const item = getListItemAt({ target: event.target, listElement: itemList });
+
+    // Keep the current order while the pointer is over a gap between two items
+    if (!item) {
+      return;
+    }
+
+    const from = previewOrder.indexOf(dragIndex);
+
+    const to = getMoveTarget({
+      dragIndex: from,
+      dropIndex: getDropIndex({
+        index: item.index,
+        clientY: event.clientY,
+        rect: item.element.getBoundingClientRect(),
+      }),
+    });
+
+    if (to !== undefined) {
+      previewOrder = moveListItem(previewOrder, from, to);
+    }
+  };
+
+  /**
+   * Handle a `drop` event fired while an item is being reordered.
+   * @param {DragEvent} event `drop` event.
+   */
+  const onDrop = (event) => {
+    if (dragIndex === undefined) {
+      return;
+    }
+
+    event.stopPropagation();
+    event.preventDefault();
+    stopAutoScroll();
+
+    const from = dragIndex;
+    // Where the item ended up in the preview is where it should be committed
+    const to = previewOrder?.indexOf(dragIndex) ?? from;
+
+    grabbedIndex = undefined;
+    dragIndex = undefined;
+    // The committed order matches the preview, so the items don’t move again on the way out
+    previewOrder = undefined;
+
+    if (to !== from) {
+      moveItem(from, to);
+    }
   };
 
   /**
@@ -491,129 +615,159 @@
   class="item-list"
   class:collapsed={!parentExpanded}
   bind:this={itemList}
+  ondragovercapture={onDragOver}
+  ondropcapture={onDrop}
 >
-  {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
-    <VisibilityObserver>
-      {@const itemKeyPath = `${keyPath}.${index}`}
-      {@const type = hasVariableTypes ? item[typeKey] : undefined}
-      {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
-      {#if hasVariableTypes && !typeConfig}
-        <Alert status="warning">{_('unknown_variable_type')}</Alert>
-        {warnUnknownType({ itemKeyPath, type })}
-      {:else}
-        {@const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
-        {@const subFields = hasVariableTypes
-          ? (typeConfig?.fields ?? [])
-          : (fields ?? (field ? [field] : []))}
-        {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
-        <!-- @todo Support drag sorting. -->
-        <div role="group" class="item">
-          <ObjectHeader
-            label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
-            controlId="list-{fieldId}-item-{index}-body"
-            {expanded}
-            toggleExpanded={subFields.length
-              ? () => syncExpanderStates({ [itemKeyPath]: !expanded })
-              : undefined}
+  {#each displayOrder as index (getItemKey(index))}
+    {@const item = items[index]}
+    <!--
+      The wrapper is what the `flip` animation moves: `animate:` only works on an element at the top
+      level of a keyed `each` block, and the item itself sits inside `VisibilityObserver`.
+    -->
+    <div role="none" class="item-wrapper" animate:flip={{ duration: 200 }}>
+      <VisibilityObserver>
+        {@const itemKeyPath = `${keyPath}.${index}`}
+        {@const type = hasVariableTypes ? item[typeKey] : undefined}
+        {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
+        {#if hasVariableTypes && !typeConfig}
+          <Alert status="warning">{_('unknown_variable_type')}</Alert>
+          {warnUnknownType({ itemKeyPath, type })}
+        {:else}
+          {@const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
+          {@const subFields = hasVariableTypes
+            ? (typeConfig?.fields ?? [])
+            : (fields ?? (field ? [field] : []))}
+          {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
+          <div
+            role="group"
+            class="item"
+            class:dragging={dragIndex === index}
+            draggable={grabbedIndex === index}
+            ondragstart={(/** @type {DragEvent} */ event) => {
+              // A nested sortable list starts its own drag; the event just bubbles through here
+              if (event.target !== event.currentTarget) {
+                return;
+              }
+
+              dragIndex = index;
+              previewOrder = [...displayOrder];
+              // Let the editor pane scroll while the pointer is dragged near its top or
+              // bottom edge, so a long list can be reordered without letting go
+              startAutoScroll(itemList);
+
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                // Firefox doesn’t start a drag unless some data is attached to it
+                event.dataTransfer.setData('text/plain', _formatSummary(index, summaryTemplate));
+              }
+            }}
+            ondragend={(/** @type {DragEvent} */ event) => {
+              if (event.target !== event.currentTarget) {
+                return;
+              }
+
+              stopAutoScroll();
+              grabbedIndex = undefined;
+              dragIndex = undefined;
+              // A cancelled drag puts every item back where it started
+              previewOrder = undefined;
+            }}
           >
-            {#snippet centerContent()}
-              {#if allowReorder}
-                <Button
-                  size="small"
-                  iconic
-                  disabled={isDuplicateField || index === 0}
-                  aria-label={_('move_up')}
-                  data-action="move-up"
-                  onclick={() => moveDownItem(index - 1, 'move-up')}
-                >
-                  {#snippet startIcon()}
-                    <Icon name="arrow_upward" />
-                  {/snippet}
-                </Button>
-                <Spacer />
-                <Button
-                  iconic
-                  size="small"
-                  disabled={isDuplicateField || index === items.length - 1}
-                  aria-label={_('move_down')}
-                  data-action="move-down"
-                  onclick={() => moveDownItem(index, 'move-down')}
-                >
-                  {#snippet startIcon()}
-                    <Icon name="arrow_downward" />
-                  {/snippet}
-                </Button>
-              {/if}
-            {/snippet}
-            {#snippet endContent()}
-              {#if allowAdd}
-                <MenuButton
-                  variant="ghost"
-                  size="small"
-                  iconic
-                  popupPosition="bottom-right"
-                  aria-label={_('list_item_options')}
-                  disabled={isAddDisabled}
-                >
-                  {#snippet popup()}
-                    <Menu aria-label={_('list_item_options')}>
-                      {#if allowDuplicate}
-                        <MenuItem
-                          label={_('duplicate')}
-                          disabled={hasMaxItems}
-                          onclick={() => addItem({ index: index + 1, dupIndex: index })}
-                        />
-                      {/if}
-                      {@render addPositionItems(index, 'above')}
-                      {@render addPositionItems(index + 1, 'below')}
-                    </Menu>
-                  {/snippet}
-                </MenuButton>
-              {/if}
-              {#if allowRemove}
-                <Button
-                  variant="ghost"
-                  size="small"
-                  iconic
-                  aria-label={_('remove')}
-                  onclick={() => removeItem(index)}
-                >
-                  {#snippet startIcon()}
-                    <Icon name="close" />
-                  {/snippet}
-                </Button>
-              {/if}
-            {/snippet}
-          </ObjectHeader>
-          <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
-            {#if expanded}
-              {#each subFields as subField (subField.name)}
-                <VisibilityObserver>
-                  <FieldEditor
-                    keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
-                    typedKeyPath={hasVariableTypes
-                      ? `${typedKeyPath}.*<${type}>.${subField.name}`
-                      : `${typedKeyPath}.*.${subField.name}`}
-                    {locale}
-                    fieldConfig={subField}
-                    context={hasSingleSubField ? 'single-subfield-list-field' : undefined}
+            <ObjectHeader
+              label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
+              controlId="list-{fieldId}-item-{index}-body"
+              {expanded}
+              toggleExpanded={subFields.length
+                ? () => syncExpanderStates({ [itemKeyPath]: !expanded })
+                : undefined}
+            >
+              {#snippet centerContent()}
+                {#if allowReorder}
+                  <ReorderControls
+                    {index}
+                    itemCount={items.length}
+                    disabled={isDuplicateField || items.length < 2}
+                    icon="drag_handle"
+                    onGrab={() => {
+                      grabbedIndex = index;
+                    }}
+                    onRelease={() => {
+                      grabbedIndex = undefined;
+                    }}
+                    onMove={(to, action) => moveItem(index, to, action)}
                   />
-                </VisibilityObserver>
-              {/each}
-            {:else}
-              <div role="none" class="summary">
-                {#if thumbnails[index]}
-                  <Image src={thumbnails[index]} variant="icon" cover />
                 {/if}
-                <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
-                  {_formatSummary(index, summaryTemplate)}
-                </TruncatedText>
-              </div>
-            {/if}
+              {/snippet}
+              {#snippet endContent()}
+                {#if allowAdd}
+                  <MenuButton
+                    variant="ghost"
+                    size="small"
+                    iconic
+                    popupPosition="bottom-right"
+                    aria-label={_('list_item_options')}
+                    disabled={isAddDisabled}
+                  >
+                    {#snippet popup()}
+                      <Menu aria-label={_('list_item_options')}>
+                        {#if allowDuplicate}
+                          <MenuItem
+                            label={_('duplicate')}
+                            disabled={hasMaxItems}
+                            onclick={() => addItem({ index: index + 1, dupIndex: index })}
+                          />
+                        {/if}
+                        {@render addPositionItems(index, 'above')}
+                        {@render addPositionItems(index + 1, 'below')}
+                      </Menu>
+                    {/snippet}
+                  </MenuButton>
+                {/if}
+                {#if allowRemove}
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    iconic
+                    aria-label={_('remove')}
+                    onclick={() => removeItem(index)}
+                  >
+                    {#snippet startIcon()}
+                      <Icon name="close" />
+                    {/snippet}
+                  </Button>
+                {/if}
+              {/snippet}
+            </ObjectHeader>
+            <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
+              {#if expanded}
+                {#each subFields as subField (subField.name)}
+                  <VisibilityObserver>
+                    <FieldEditor
+                      keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
+                      typedKeyPath={hasVariableTypes
+                        ? `${typedKeyPath}.*<${type}>.${subField.name}`
+                        : `${typedKeyPath}.*.${subField.name}`}
+                      {locale}
+                      fieldConfig={subField}
+                      context={hasSingleSubField ? 'single-subfield-list-field' : undefined}
+                    />
+                  </VisibilityObserver>
+                {/each}
+              {:else}
+                <div role="none" class="summary">
+                  {#if thumbnails[index]}
+                    <Image src={thumbnails[index]} variant="icon" cover />
+                  {/if}
+                  <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
+                    {_formatSummary(index, summaryTemplate)}
+                  </TruncatedText>
+                </div>
+              {/if}
+            </div>
           </div>
-        </div>
-      {/if}
-    </VisibilityObserver>
+        {/if}
+      </VisibilityObserver>
+    </div>
   {/each}
 </div>
 {#if allowAdd && !addToTop && items.length && parentExpanded}
@@ -666,9 +820,19 @@
 
   .item {
     flex: none;
+    position: relative;
     border-width: 2px;
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);
+    background-color: var(--sui-primary-background-color); /* for dragging opacity */
+
+    /* The dragged item is left as a faint placeholder marking the gap it would drop into. The
+      pointer already carries the browser’s own drag image of it, so showing it twice at full
+      strength would just be confusing. */
+
+    &.dragging {
+      opacity: 0.25;
+    }
 
     .summary {
       display: flex;

@@ -4,7 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
-import { getItemList, removeMultiValueItem, updateListField, updateObject } from './list';
+import {
+  getItemList,
+  moveMultiValueItem,
+  removeMultiValueItem,
+  updateListField,
+  updateObject,
+} from './list';
 
 vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
@@ -325,6 +331,106 @@ describe('draft/update/list', () => {
 
       expect(list1).toEqual(['a', 'b']);
       expect(list2).toEqual(['a', 'b']);
+    });
+  });
+
+  describe('moveMultiValueItem', () => {
+    beforeEach(() => {
+      mockEntryDraft.currentValues.en = {
+        title: 'Hello',
+        'blocks.0.photos.0': 'a.png',
+        'blocks.0.photos.1': 'b.png',
+        'blocks.0.photos.2': 'c.png',
+        'blocks.0.photos.3': 'd.png',
+      };
+    });
+
+    /**
+     * Get the item values in list order.
+     * @param {string} [valueStoreKey] Value store key.
+     * @param {string} [keyPath] Dot-notated field name.
+     * @returns {any[]} Values.
+     */
+    const items = (valueStoreKey = 'currentValues', keyPath = 'blocks.0.photos') =>
+      Object.entries(mockEntryDraft[valueStoreKey].en)
+        .filter(([key]) => key.startsWith(`${keyPath}.`))
+        .map(([, value]) => value);
+
+    it('should move an item down', () => {
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 0, to: 2 });
+
+      expect(items()).toEqual(['b.png', 'c.png', 'a.png', 'd.png']);
+    });
+
+    it('should move an item up', () => {
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 3, to: 1 });
+
+      expect(items()).toEqual(['a.png', 'd.png', 'b.png', 'c.png']);
+    });
+
+    it('should move an item to either end', () => {
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 2, to: 0 });
+      expect(items()).toEqual(['c.png', 'a.png', 'b.png', 'd.png']);
+
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 0, to: 3 });
+      expect(items()).toEqual(['a.png', 'b.png', 'd.png', 'c.png']);
+    });
+
+    it('should leave the other values alone', () => {
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 0, to: 1 });
+
+      expect(mockEntryDraft.currentValues.en.title).toBe('Hello');
+      expect(Object.keys(mockEntryDraft.currentValues.en)).toHaveLength(5);
+    });
+
+    it('should do nothing when the source and destination are the same', () => {
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 1, to: 1 });
+
+      expect(items()).toEqual(['a.png', 'b.png', 'c.png', 'd.png']);
+    });
+
+    it('should do nothing when either index is out of range', () => {
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 4, to: 0 });
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 0, to: 4 });
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: -1, to: 0 });
+
+      expect(items()).toEqual(['a.png', 'b.png', 'c.png', 'd.png']);
+    });
+
+    it('should do nothing for an unknown field', () => {
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.videos', from: 0, to: 1 });
+
+      expect(items()).toEqual(['a.png', 'b.png', 'c.png', 'd.png']);
+    });
+
+    it('should support a custom value store key', () => {
+      mockEntryDraft.extraValues = {
+        en: { 'photos.0': 'a.png', 'photos.1': 'b.png' },
+      };
+
+      moveMultiValueItem({
+        locale: 'en',
+        valueStoreKey: 'extraValues',
+        keyPath: 'photos',
+        from: 0,
+        to: 1,
+      });
+
+      expect(items('extraValues', 'photos')).toEqual(['b.png', 'a.png']);
+      // The other value store must be left alone
+      expect(items()).toEqual(['a.png', 'b.png', 'c.png', 'd.png']);
+    });
+
+    it('should reorder the list within a single store update', () => {
+      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 0, to: 3 });
+
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not return the updated list', () => {
+      expect(
+        moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 0, to: 1 }),
+      ).toBeUndefined();
     });
   });
 

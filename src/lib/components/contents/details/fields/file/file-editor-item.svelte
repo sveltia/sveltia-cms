@@ -7,6 +7,7 @@
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
+  import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import { getAssetByPath } from '$lib/services/assets';
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { getMediaKind } from '$lib/services/assets/kinds';
@@ -34,8 +35,14 @@
    * @property {Entry | undefined} entry The entry object.
    * @property {() => void} [onReplace] Event handler for replace action.
    * @property {() => void} [onRemove] Event handler for remove action.
-   * @property {() => void} [onMoveUp] Event handler for move up action.
-   * @property {() => void} [onMoveDown] Event handler for move down action.
+   * @property {number} [index] Index of the item within a multi-value field.
+   * @property {number} [itemCount] Total number of items in a multi-value field.
+   * @property {boolean} [dragging] Whether this item is currently being dragged.
+   * @property {() => void} [onDragStart] Event handler for the start of a reorder drag.
+   * @property {() => void} [onDragEnd] Event handler for the end of a reorder drag.
+   * @property {(index: number, action: string) => void} [onMove] Event handler for a reorder
+   * shortcut or button, called with the destination index and the `data-action` of the activated
+   * control. Reordering is only offered when this is given.
    */
 
   /** @type {Props} */
@@ -53,8 +60,12 @@
     entry = undefined,
     onReplace,
     onRemove,
-    onMoveUp,
-    onMoveDown,
+    index = 0,
+    itemCount = 1,
+    dragging = false,
+    onDragStart,
+    onDragEnd,
+    onMove,
   } = $props();
 
   /** @type {Asset | undefined} */
@@ -72,9 +83,15 @@
   /** @type {HTMLInputElement | undefined} */
   let inputElement = $state();
   let showExtensionChangeDialog = $state(false);
+  /**
+   * Whether the drag handle has been pressed, making this item draggable. Only the handle starts a
+   * drag, so the file name and path stay selectable.
+   */
+  let grabbed = $state(false);
 
   const { widget: fieldType } = $derived(fieldConfig);
   const isImageField = $derived(fieldType === 'image');
+  const sortable = $derived(!!onMove && !readonly);
   /**
    * Whether the file is not yet saved to the repository. An unsaved file is a pending upload cached
    * in the draft and referenced with a temporary blob URL, so it can still be renamed.
@@ -247,36 +264,40 @@
   });
 </script>
 
-<div role="none" class="filled">
-  {#if (onMoveUp || onMoveDown) && !readonly}
-    <!-- @todo Support drag & drop sorting -->
-    <div role="toolbar" class="reorder-controls">
-      <Button
-        size="small"
-        iconic
-        disabled={!onMoveUp}
-        aria-label={_('move_up')}
-        onclick={() => {
-          onMoveUp?.();
+<div
+  role="none"
+  class="filled"
+  class:sortable
+  class:dragging
+  draggable={grabbed}
+  ondragstart={(/** @type {DragEvent} */ event) => {
+    onDragStart?.();
+
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      // Firefox doesn’t start a drag unless some data is attached to it
+      event.dataTransfer.setData('text/plain', fileDisplayPath);
+    }
+  }}
+  ondragend={() => {
+    grabbed = false;
+    onDragEnd?.();
+  }}
+>
+  {#if sortable}
+    <div role="none" class="reorder-controls">
+      <ReorderControls
+        {index}
+        {itemCount}
+        disabled={itemCount < 2}
+        onGrab={() => {
+          grabbed = true;
         }}
-      >
-        {#snippet startIcon()}
-          <Icon name="arrow_upward" />
-        {/snippet}
-      </Button>
-      <Button
-        size="small"
-        iconic
-        disabled={!onMoveDown}
-        aria-label={_('move_down')}
-        onclick={() => {
-          onMoveDown?.();
+        onRelease={() => {
+          grabbed = false;
         }}
-      >
-        {#snippet startIcon()}
-          <Icon name="arrow_downward" />
-        {/snippet}
-      </Button>
+        {onMove}
+      />
     </div>
   {/if}
   {#if kind && src}
@@ -428,8 +449,18 @@
   .filled {
     display: flex !important;
     align-items: center;
+    position: relative;
     gap: 12px;
     margin: var(--sui-focus-ring-width);
+    background-color: var(--sui-primary-background-color); /* for dragging opacity */
+
+    /* The dragged item is left as a faint placeholder marking the gap it would drop into. The
+      pointer already carries the browser’s own drag image of it, so showing it twice at full
+      strength would just be confusing. */
+
+    &.dragging {
+      opacity: 0.25;
+    }
 
     :global {
       .preview {
@@ -466,6 +497,10 @@
         align-items: center;
         gap: 4px;
 
+        @media (width < 768px) {
+          font-size: var(--sui-font-size-small);
+        }
+
         .filename {
           flex: auto;
         }
@@ -482,17 +517,31 @@
         }
       }
     }
+
+    &.sortable {
+      gap: 0;
+      border-width: 1px;
+      border-style: solid;
+      border-color: var(--sui-control-border-color) !important;
+      border-radius: var(--sui-control-medium-border-radius);
+
+      :global {
+        .preview {
+          margin-inline-end: 12px;
+          border-radius: 0;
+          border-width: 0 1px 0 0;
+        }
+      }
+    }
   }
 
   .reorder-controls {
     flex: none !important;
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: center;
     align-items: center;
     gap: 4px;
-    border: 1px solid var(--sui-control-border-color);
-    border-radius: var(--sui-control-medium-border-radius);
     width: 28px;
     height: -moz-available;
     height: -webkit-fill-available;

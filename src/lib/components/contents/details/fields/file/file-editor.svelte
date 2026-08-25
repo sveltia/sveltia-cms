@@ -9,7 +9,9 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { ConfirmationDialog, TextArea } from '@sveltia/ui';
+  import { sleep } from '@sveltia/utils/misc';
   import { flushSync, getContext } from 'svelte';
+  import { flip } from 'svelte/animate';
 
   import SelectAssetsDialog from '$lib/components/assets/browser/select-assets-dialog.svelte';
   import ConflictResolutionDialog from '$lib/components/assets/shared/conflict-resolution-dialog.svelte';
@@ -18,7 +20,10 @@
   import FileEditorItem from '$lib/components/contents/details/fields/file/file-editor-item.svelte';
   import UploadButton from '$lib/components/contents/details/fields/file/upload-button.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { removeMultiValueItem } from '$lib/services/contents/draft/update/list';
+  import {
+    moveMultiValueItem,
+    removeMultiValueItem,
+  } from '$lib/services/contents/draft/update/list';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import {
     getAssetLibraryFolderMap,
@@ -30,6 +35,14 @@
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+  import {
+    getDropIndex,
+    getListItemAt,
+    getMoveTarget,
+    moveListItem,
+    startAutoScroll,
+    stopAutoScroll,
+  } from '$lib/services/utils/drag-sorting';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -89,6 +102,20 @@
   let pendingFiles = $state([]);
   /** @type {Asset[]} */
   let unsavedAssets = $state([]);
+  /** @type {HTMLElement | undefined} */
+  let itemList = $state();
+  /**
+   * Index of the item currently being dragged.
+   * @type {number | undefined}
+   */
+  let dragIndex = $state();
+  /**
+   * Item indexes in the order they are displayed. While an item is being dragged, this holds the
+   * provisional order, so the other items slide out of the way and the gap the dragged item would
+   * land in follows the pointer. `undefined` while no drag is in progress.
+   * @type {number[] | undefined}
+   */
+  let previewOrder = $state();
 
   const {
     widget: fieldType,
@@ -122,6 +149,15 @@
     listAssets({ kind, folder: targetFolder, folderPath: targetFolderPath, unsavedAssets }),
   );
   const multiple = $derived(isMultiple(fieldConfig));
+  const itemCount = $derived(Array.isArray(currentValue) ? currentValue.length : 0);
+  /**
+   * The order the items are rendered in. This is the identity order except during a drag. A stale
+   * preview left over from a list that changed length underneath is discarded.
+   * @type {number[]}
+   */
+  const displayOrder = $derived(
+    previewOrder?.length === itemCount ? previewOrder : [...Array(itemCount).keys()],
+  );
   const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
   const showRemoveButton = $derived(
     !required &&
@@ -304,21 +340,95 @@
   };
 
   /**
-   * Move an item down in the list.
-   * @param {number} index Index of the item to move down.
+   * Move an item to another position in the list.
+   * @param {number} from Source index.
+   * @param {number} to Destination index.
+   * @param {string} [action] `data-action` of the reorder control that triggered the move, so the
+   * focus can be restored to the matching control on the item once it has moved.
    */
-  const moveDown = (index) => {
+  const moveItem = async (from, to, action = 'reorder') => {
     if (!$entryDraft) {
       return;
     }
 
-    [
-      $entryDraft[valueStoreKey][locale][`${keyPath}.${index}`],
-      $entryDraft[valueStoreKey][locale][`${keyPath}.${index + 1}`],
-    ] = [
-      $entryDraft[valueStoreKey][locale][`${keyPath}.${index + 1}`],
-      $entryDraft[valueStoreKey][locale][`${keyPath}.${index}`],
-    ];
+    moveMultiValueItem({ locale, valueStoreKey, keyPath, from, to });
+
+    await sleep(50);
+    // Move the focus back to the control on the item that was just moved, so that it can be used
+    // repeatedly without having to find it again
+    /** @type {HTMLElement | null | undefined} */ (
+      itemList?.children[to]?.querySelector(`button[data-action="${action}"]`)
+    )?.focus();
+  };
+
+  /**
+   * Handle a `dragover` event fired while an item is being reordered.
+   *
+   * The list-level drag handlers run in the capture phase, so that the surrounding drop zone never
+   * sees a reorder drag and doesn’t offer to upload the item as a file. Anything else being
+   * dragged, such as a file from the desktop, is passed through untouched.
+   * @param {DragEvent} event `dragover` event.
+   */
+  const onDragOver = (event) => {
+    if (dragIndex === undefined || !previewOrder) {
+      return;
+    }
+
+    event.stopPropagation();
+    // The browser rejects the drop and never fires the `drop` event unless the default is prevented
+    event.preventDefault();
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+
+    const item = getListItemAt({ target: event.target, listElement: itemList });
+
+    // Keep the current order while the pointer is over a gap between two items
+    if (!item) {
+      return;
+    }
+
+    const from = previewOrder.indexOf(dragIndex);
+
+    const to = getMoveTarget({
+      dragIndex: from,
+      dropIndex: getDropIndex({
+        index: item.index,
+        clientY: event.clientY,
+        rect: item.element.getBoundingClientRect(),
+      }),
+    });
+
+    if (to !== undefined) {
+      previewOrder = moveListItem(previewOrder, from, to);
+    }
+  };
+
+  /**
+   * Handle a `drop` event fired while an item is being reordered.
+   * @param {DragEvent} event `drop` event.
+   */
+  const onItemDrop = (event) => {
+    if (dragIndex === undefined) {
+      return;
+    }
+
+    event.stopPropagation();
+    event.preventDefault();
+    stopAutoScroll();
+
+    const from = dragIndex;
+    // Where the item ended up in the preview is where it should be committed
+    const to = previewOrder?.indexOf(dragIndex) ?? from;
+
+    dragIndex = undefined;
+    // The committed order matches the preview, so the items don’t move again on the way out
+    previewOrder = undefined;
+
+    if (to !== from) {
+      moveItem(from, to);
+    }
   };
 
   $effect(() => {
@@ -352,21 +462,48 @@
   {#if !!currentValue?.length && !processing}
     {#if multiple}
       {#if Array.isArray(currentValue)}
-        <div role="none" class="item-list">
-          {#each currentValue as value, index (`${value}|${index}`)}
-            <FileEditorItem
-              {...itemArgs}
-              {value}
-              fieldId="{fieldId}-{index}"
-              onReplace={() => {
-                replaceMode = true;
-                replaceIndex = index;
-                showSelectAssetsDialog = true;
-              }}
-              onRemove={() => removeItem(index)}
-              onMoveUp={index > 0 ? () => moveDown(index - 1) : undefined}
-              onMoveDown={index < currentValue.length - 1 ? () => moveDown(index) : undefined}
-            />
+        <div
+          role="none"
+          class="item-list"
+          bind:this={itemList}
+          ondragovercapture={onDragOver}
+          ondropcapture={onItemDrop}
+        >
+          {#each displayOrder as index (`${currentValue[index]}|${index}`)}
+            <!--
+              The wrapper is what the `flip` animation moves: `animate:` only works on an element at
+              the top level of a keyed `each` block, not on a component.
+            -->
+            <div role="none" animate:flip={{ duration: 200 }}>
+              <FileEditorItem
+                {...itemArgs}
+                {index}
+                {itemCount}
+                value={currentValue[index]}
+                fieldId="{fieldId}-{index}"
+                dragging={dragIndex === index}
+                onReplace={() => {
+                  replaceMode = true;
+                  replaceIndex = index;
+                  showSelectAssetsDialog = true;
+                }}
+                onRemove={() => removeItem(index)}
+                onDragStart={() => {
+                  dragIndex = index;
+                  previewOrder = [...displayOrder];
+                  // Let the editor pane scroll while the pointer is dragged near its top or bottom
+                  // edge, so a long list can be reordered without letting go
+                  startAutoScroll(itemList);
+                }}
+                onDragEnd={() => {
+                  stopAutoScroll();
+                  dragIndex = undefined;
+                  // A cancelled drag puts every item back where it started
+                  previewOrder = undefined;
+                }}
+                onMove={(to, action) => moveItem(index, to, action)}
+              />
+            </div>
           {/each}
         </div>
         {#if currentValue.length < max}
@@ -391,10 +528,14 @@
 {/snippet}
 
 {#if allowDrop}
+  <!--
+    The drop zone is disabled while an item is being reordered: a reorder drag carries no file, so
+    letting it land anywhere outside the item list would only report an unsupported file type.
+  -->
   <DropZone
     bind:this={dropZone}
     {multiple}
-    disabled={readonly}
+    disabled={readonly || dragIndex !== undefined}
     accept={accept ?? (isImageField ? SUPPORTED_IMAGE_TYPES.join(',') : undefined)}
     {onDrop}
   >
@@ -455,5 +596,9 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+
+    & ~ :global([role='button']) {
+      margin-top: calc(4px + var(--sui-focus-ring-width));
+    }
   }
 </style>

@@ -1221,6 +1221,9 @@ map_lat_lng: Map showing latitude {$latitude}, longitude {$longitude}
 remove_this_item: Remove This Item
 move_up: Move Up
 move_down: Move Down
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Reorder Item
 
 # Add item button label
 # Example: “Add Image”, “Add Author”

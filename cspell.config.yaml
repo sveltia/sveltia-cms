@@ -90,6 +90,8 @@ words:
   - Mtei
   - Mullvad
   - notranslate
+  - ondragovercapture
+  - ondropcapture
   - onkeydowncapture
   - onpastecapture
   - onwheelcapture

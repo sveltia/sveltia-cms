@@ -111,6 +111,63 @@ export const updateListField = ({
 };
 
 /**
+ * Read a multi-value field out of the draft as a plain list. Our internal representation of such a
+ * field is a flattened object with one numbered key per item, e.g. `images.0`, `images.1`.
+ * @param {Record<string, any>} values Flattened entry content.
+ * @param {FieldKeyPath} keyPath Dot-notated field name.
+ * @returns {any[]} Item values in list order.
+ */
+const getMultiValueList = (values, keyPath) => {
+  /** @type {any[]} */
+  const list = [];
+
+  for (let index = 0; `${keyPath}.${index}` in values; index += 1) {
+    list.push(values[`${keyPath}.${index}`]);
+  }
+
+  return list;
+};
+
+/**
+ * Move an item of a multi-value field, such as a File or Image field with the `multiple` option
+ * enabled, to another position. The reordered list is written back over the existing numbered keys,
+ * which all still exist because reordering doesn’t change the item count.
+ *
+ * Just like {@link removeMultiValueItem}, the whole manipulation is done within a single
+ * {@link entryDraft} update, so that subscribers never observe a half-reordered list.
+ * @param {object} args Arguments.
+ * @param {InternalLocaleCode} args.locale Target locale.
+ * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
+ * @param {FieldKeyPath} args.keyPath Dot-notated field name.
+ * @param {number} args.from Index of the item to move.
+ * @param {number} args.to Index to move the item to.
+ */
+export const moveMultiValueItem = ({
+  locale,
+  valueStoreKey = 'currentValues',
+  keyPath,
+  from,
+  to,
+}) => {
+  /** @type {Writable<EntryDraft>} */ (entryDraft).update((draft) => {
+    const values = draft[valueStoreKey][locale];
+    const list = getMultiValueList(values, keyPath);
+
+    if (from === to || !(from in list) || !(to in list)) {
+      return draft;
+    }
+
+    list.splice(to, 0, ...list.splice(from, 1));
+
+    list.forEach((value, index) => {
+      values[`${keyPath}.${index}`] = value;
+    });
+
+    return draft;
+  });
+};
+
+/**
  * Remove an item from a multi-value field, such as a File or Image field with the `multiple` option
  * enabled. Our internal representation of such a field is a flattened object, so the item is
  * removed by shifting the subsequent values down by one and dropping the now-unused last key.

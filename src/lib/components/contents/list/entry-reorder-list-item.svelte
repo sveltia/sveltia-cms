@@ -1,13 +1,17 @@
 <!--
   @component
-  Render an entry row in reorder mode: draggable, with Move Up / Move Down buttons.
+  Render the contents of an entry row in reorder mode: the regular list cells, plus the Move Up /
+  Move Down buttons that reorder the entry without a pointer.
+
+  The row element itself lives in `entry-reorder-list.svelte`. It has to be a plain element there —
+  `animate:` only works on an element at the top level of a keyed `each` block, never on a component
+  — so the drag handling stays with the list and this component supplies only what goes inside.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, GridCell, GridRow, Icon } from '@sveltia/ui';
+  import { Button, GridCell, Icon } from '@sveltia/ui';
 
   import EntryListItemCells from '$lib/components/contents/list/entry-list-item-cells.svelte';
-  import { listedEntryIndexMap } from '$lib/services/contents/collection/view';
 
   /**
    * @import { Entry, InternalEntryCollection, ViewType } from '$lib/types/private';
@@ -18,16 +22,8 @@
    * @property {InternalEntryCollection} collection Selected collection.
    * @property {Entry} entry Entry.
    * @property {ViewType} viewType View type.
-   * @property {boolean} [dragging] Whether this item is currently being dragged.
-   * @property {boolean} [dropBefore] Whether to show a drop indicator before this item.
-   * @property {boolean} [dropAfter] Whether to show a drop indicator after this item.
    * @property {boolean} [canMoveUp] Whether the Move Up action is available.
    * @property {boolean} [canMoveDown] Whether the Move Down action is available.
-   * @property {() => void} [onDragStart] Drag start handler.
-   * @property {(clientY: number, rect: DOMRect) => boolean} [onDragOver] Drag over handler. Returns
-   * whether the dragged entry can be dropped here; a falsy result rejects the drop.
-   * @property {() => void} [onDrop] Drop handler.
-   * @property {() => void} [onDragEnd] Drag end handler.
    * @property {() => void} [onMoveUp] Move up handler.
    * @property {() => void} [onMoveDown] Move down handler.
    */
@@ -38,84 +34,42 @@
     collection,
     entry,
     viewType,
-    dragging = false,
-    dropBefore = false,
-    dropAfter = false,
     canMoveUp = false,
     canMoveDown = false,
-    onDragStart = undefined,
-    onDragOver = undefined,
-    onDrop = undefined,
-    onDragEnd = undefined,
     onMoveUp = undefined,
     onMoveDown = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 </script>
 
-<GridRow
-  aria-rowindex={$listedEntryIndexMap.get(entry.id) ?? -1}
-  class={[dragging && 'drag-source', dropBefore && 'drop-before', dropAfter && 'drop-after']
-    .filter(Boolean)
-    .join(' ')}
-  draggable
-  ondragstart={(/** @type {DragEvent} */ event) => {
-    onDragStart?.();
-
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-    }
-  }}
-  ondragover={(/** @type {DragEvent & { currentTarget: HTMLElement }} */ event) => {
-    const accepted = !!onDragOver?.(event.clientY, event.currentTarget.getBoundingClientRect());
-
-    // Only calling `preventDefault()` for an accepted target lets the browser reject the drop for
-    // us: no `drop` event is fired elsewhere.
-    if (accepted) {
-      event.preventDefault();
-    }
-
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = accepted ? 'move' : 'none';
-    }
-  }}
-  ondrop={(/** @type {DragEvent} */ event) => {
-    event.preventDefault();
-    onDrop?.();
-  }}
-  ondragend={() => {
-    onDragEnd?.();
-  }}
->
-  <EntryListItemCells {collection} {entry} {viewType} />
-  <GridCell class="reorder-actions">
-    <Button
-      variant="ghost"
-      iconic
-      disabled={!canMoveUp}
-      aria-label={_('move_up')}
-      onclick={(event) => {
-        event.stopPropagation();
-        onMoveUp?.();
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="arrow_upward" />
-      {/snippet}
-    </Button>
-    <Button
-      variant="ghost"
-      iconic
-      disabled={!canMoveDown}
-      aria-label={_('move_down')}
-      onclick={(event) => {
-        event.stopPropagation();
-        onMoveDown?.();
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="arrow_downward" />
-      {/snippet}
-    </Button>
-  </GridCell>
-</GridRow>
+<EntryListItemCells {collection} {entry} {viewType} />
+<GridCell class="reorder-actions">
+  <Button
+    variant="ghost"
+    iconic
+    disabled={!canMoveUp}
+    aria-label={_('move_up')}
+    onclick={(event) => {
+      event.stopPropagation();
+      onMoveUp?.();
+    }}
+  >
+    {#snippet startIcon()}
+      <Icon name="arrow_upward" />
+    {/snippet}
+  </Button>
+  <Button
+    variant="ghost"
+    iconic
+    disabled={!canMoveDown}
+    aria-label={_('move_down')}
+    onclick={(event) => {
+      event.stopPropagation();
+      onMoveDown?.();
+    }}
+  >
+    {#snippet startIcon()}
+      <Icon name="arrow_downward" />
+    {/snippet}
+  </Button>
+</GridCell>
