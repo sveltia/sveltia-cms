@@ -1,4 +1,10 @@
-import { addMessages, locale as appLocale, init, register } from '@sveltia/i18n';
+import {
+  addMessages,
+  locale as appLocale,
+  getLocaleFromNavigator,
+  init,
+  register,
+} from '@sveltia/i18n';
 import { strings as componentStrings } from '@sveltia/ui';
 import defaultComponentStrings from '@sveltia/ui/locales/en-US.yaml';
 import { getPathInfo } from '@sveltia/utils/file';
@@ -27,27 +33,19 @@ export const DEFAULT_APP_LOCALE = 'en-US';
 export const APP_LOCALES = import.meta.env.VITE_APP_LOCALES.split(',');
 
 /**
- * Application locales in the order they’re matched against the browser’s languages. The
- * {@link DEFAULT_APP_LOCALE} comes first, so that a language without a region, e.g. `en`, resolves
- * to it rather than to another variant of the same language, e.g. `en-CA`.
- */
-const NEGOTIABLE_LOCALES = [DEFAULT_APP_LOCALE, ...APP_LOCALES];
-
-/**
- * Get the application locale that best matches the browser’s language settings. The user’s
- * preferred languages are tried in order, each first as an exact match, then by the language part
- * of the tag alone, e.g. `ja-JP` → `ja`.
+ * Get the application locale that best matches the browser’s language settings. The negotiation
+ * itself is done by `sveltia-i18n`, which tries the user’s preferred languages in order and matches
+ * them by language and script, so a locale written in another script is never offered, e.g.
+ * Simplified Chinese (`zh-CN`) to a reader of Traditional Chinese (`zh-TW`).
  * @returns {string} Locale code, falling back to {@link DEFAULT_APP_LOCALE} when none of the
- * preferred languages is available.
+ * preferred languages is available. `getLocaleFromNavigator()` returns the first preferred language
+ * as is in that case, which the app can’t activate.
  */
-export const getNavigatorLocale = () =>
-  navigator.languages
-    .map(
-      (lang) =>
-        NEGOTIABLE_LOCALES.find((locale) => locale === lang) ??
-        NEGOTIABLE_LOCALES.find((locale) => locale.split('-')[0] === lang.split('-')[0]),
-    )
-    .find(Boolean) ?? DEFAULT_APP_LOCALE;
+export const getNavigatorLocale = () => {
+  const locale = getLocaleFromNavigator();
+
+  return locale && APP_LOCALES.includes(locale) ? locale : DEFAULT_APP_LOCALE;
+};
 
 /**
  * Base URL for the JSON locale files published to the UNPKG CDN. These files are generated at build
@@ -266,11 +264,22 @@ export const initAppLocale = () => {
     // YAML files are transformed into JS objects by the `yamlToJS` Vite plugin at build time
     const modules = import.meta.glob('$lib/locales/*.yaml', { eager: true, import: 'default' });
 
-    Object.entries(modules).forEach(([path, content]) => {
-      const locale = getPathInfo(path).filename;
+    const localeStrings = Object.fromEntries(
+      Object.entries(modules).map(([path, content]) => [
+        getPathInfo(path).filename,
+        /** @type {Record<string, any>} */ (content),
+      ]),
+    );
 
+    // Add the default locale first, just like the production branch below, so that a browser
+    // language without a region, e.g. `en`, is negotiated to it rather than to another variant of
+    // the same language, e.g. `en-CA`. `sveltia-i18n` matches in registration order.
+    [
+      DEFAULT_APP_LOCALE,
+      ...Object.keys(localeStrings).filter((locale) => locale !== DEFAULT_APP_LOCALE),
+    ].forEach((locale) => {
       addMessages(locale, {
-        .../** @type {Record<string, any>} */ (content),
+        ...localeStrings[locale],
         _sui: componentStrings[locale] ?? {},
       });
     });
