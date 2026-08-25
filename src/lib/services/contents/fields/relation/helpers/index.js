@@ -22,7 +22,7 @@ import { getOrCreateBounded } from '$lib/services/utils/cache';
  * InternalLocaleCode,
  * RelationOption,
  * } from '$lib/types/private';
- * @import { FieldKeyPath, RelationField } from '$lib/types/public';
+ * @import { FieldKeyPath, RelationField, RelationFieldFilterOptions } from '$lib/types/public';
  */
 
 /**
@@ -45,6 +45,59 @@ export const optionCacheMap = new Map();
 const MAX_OPTION_CACHE_SIZE = 100;
 
 /**
+ * Build the option list for a Relation field from the given referenced entries. This is the
+ * uncached core shared by {@link getOptions} and {@link getEntryOptions}.
+ * @param {object} args Arguments.
+ * @param {InternalLocaleCode} args.locale Current locale.
+ * @param {RelationField} args.fieldConfig Field configuration.
+ * @param {Entry[]} args.refEntries Referenced entries.
+ * @param {RelationFieldFilterOptions[]} [args.entryFilters] Entry filters with any template strings
+ * already resolved.
+ * @returns {RelationOption[]} Options, unsorted.
+ */
+const buildOptions = ({ locale, fieldConfig, refEntries, entryFilters = [] }) => {
+  const { collection: collectionName, file: fileName } = fieldConfig;
+  const collection = getCollection(collectionName);
+
+  if (!collection) {
+    return [];
+  }
+
+  const {
+    _type,
+    _i18n: { defaultLocale },
+  } = collection;
+
+  const { identifier_field: identifierField = 'title' } = _type === 'entry' ? collection : {};
+  const templates = prepareFieldTemplates(fieldConfig, identifierField);
+  const { allFieldNames, hasListFields } = templates;
+
+  const filteredEntries = filterAndPrepareEntries({
+    refEntries,
+    locale,
+    fileName,
+    entryFilters,
+    defaultLocale,
+  });
+
+  return filteredEntries.flatMap(({ refEntry, content }) =>
+    processEntry({
+      refEntry,
+      content,
+      collection,
+      templates,
+      allFieldNames,
+      hasListFields,
+      collectionName,
+      fileName,
+      locale,
+      identifierField,
+      defaultLocale,
+    }),
+  );
+};
+
+/**
  * Get options for a Relation field.
  * @param {object} args Arguments.
  * @param {InternalLocaleCode} args.locale Current locale.
@@ -65,7 +118,7 @@ export const getOptions = ({
   currentLocaleValues = undefined,
   currentSlug = undefined,
 }) => {
-  const { collection: collectionName, file: fileName, filters } = fieldConfig;
+  const { filters } = fieldConfig;
   // Resolve template strings in filter values against the current entry’s locale content and slug.
   // The resolved values are also baked into the cache key so stale options are not returned when
   // the relevant field value changes while the user is editing.
@@ -81,51 +134,29 @@ export const getOptions = ({
   return getOrCreateBounded(
     optionCacheMap,
     cacheKey,
-    () => {
-      const collection = getCollection(collectionName);
-
-      if (!collection) {
-        return [];
-      }
-
-      const {
-        _type,
-        _i18n: { defaultLocale },
-      } = collection;
-
-      const { identifier_field: identifierField = 'title' } = _type === 'entry' ? collection : {};
-      const templates = prepareFieldTemplates(fieldConfig, identifierField);
-      const { allFieldNames, hasListFields } = templates;
-
-      const filteredEntries = filterAndPrepareEntries({
-        refEntries,
-        locale,
-        fileName,
-        entryFilters: resolvedFilters,
-        defaultLocale,
-      });
-
-      return filteredEntries
-        .flatMap(({ refEntry, content }) =>
-          processEntry({
-            refEntry,
-            content,
-            collection,
-            templates,
-            allFieldNames,
-            hasListFields,
-            collectionName,
-            fileName,
-            locale,
-            identifierField,
-            defaultLocale,
-          }),
-        )
-        .sort((a, b) => compare(a.label, b.label));
-    },
+    () =>
+      buildOptions({ locale, fieldConfig, refEntries, entryFilters: resolvedFilters }).sort(
+        (a, b) => compare(a.label, b.label),
+      ),
     MAX_OPTION_CACHE_SIZE,
   );
 };
+
+/**
+ * Get the option(s) representing a single entry in a Relation field, in other words the value(s)
+ * that would be stored when the entry is selected. Unlike {@link getOptions}, the field’s `filters`
+ * are not applied — a reference to the entry can exist regardless of whether the entry still
+ * qualifies as a choice — and the result is not cached, because callers ask for a one-off entry
+ * rather than the list backing a field.
+ * @param {object} args Arguments.
+ * @param {InternalLocaleCode} args.locale Locale of the entry holding the Relation field.
+ * @param {RelationField} args.fieldConfig Field configuration.
+ * @param {Entry} args.refEntry Referenced entry.
+ * @returns {RelationOption[]} Options, in the order the templates produce them. Empty if the
+ * referenced collection is gone or the entry has no content in any usable locale.
+ */
+export const getEntryOptions = ({ locale, fieldConfig, refEntry }) =>
+  buildOptions({ locale, fieldConfig, refEntries: [refEntry] });
 
 /**
  * Resolve the display value(s) for a relation field.

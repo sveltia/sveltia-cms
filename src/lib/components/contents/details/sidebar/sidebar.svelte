@@ -6,9 +6,9 @@
   import HistoryPanel from '$lib/components/contents/details/sidebar/panels/history-panel.svelte';
   import ValidationPanel from '$lib/components/contents/details/sidebar/panels/validation-panel.svelte';
   import { backend } from '$lib/services/backends';
-  import { collectors } from '$lib/services/config';
   import { entryDraft } from '$lib/services/contents/draft';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+  import { getReferencingRelationFields } from '$lib/services/contents/entry/relations';
 
   /**
    * @import { Component } from 'svelte';
@@ -23,26 +23,14 @@
    * @property {Component} panel The panel component to render when the tab is active.
    */
 
-  /** Whether any relation field references the current entry’s collection. */
+  /** Whether any Relation field anywhere in the site can reference the current entry. */
   const isReferenced = $derived.by(() => {
     const collectionName = $entryDraft?.collectionName;
-    const fileName = $entryDraft?.fileName;
 
-    if (!collectionName) {
-      return false;
-    }
-
-    return [...collectors.relationFields].some(({ fieldConfig }) => {
-      if (fieldConfig.collection !== collectionName) {
-        return false;
-      }
-
-      if (fileName && fieldConfig.file && fieldConfig.file !== fileName) {
-        return false;
-      }
-
-      return true;
-    });
+    return (
+      !!collectionName &&
+      getReferencingRelationFields({ collectionName, fileName: $entryDraft?.fileName }).length > 0
+    );
   });
 
   /** @type {SidebarTab[]} */

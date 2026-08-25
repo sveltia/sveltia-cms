@@ -949,7 +949,6 @@ revert_all_changes: 撤销所有更改
 
 # Slug editing
 edit_slug: 编辑别名
-edit_slug_warning: 修改别名可能破坏指向此条目的内部和外部链接。Sveltia CMS 不会自动更新 Relation 字段创建的引用，请手动更新引用及其他链接。
 edit_slug_error:
   empty: 别名不能为空。
   invalid: 别名不能包含特殊字符（包括斜杠和空格）。

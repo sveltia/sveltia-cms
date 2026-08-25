@@ -1011,7 +1011,6 @@ revert_all_changes: Hoàn tác tất cả thay đổi
 
 # Slug editing
 edit_slug: Chỉnh sửa đường dẫn tĩnh
-edit_slug_warning: Đổi đường dẫn tĩnh có thể làm hỏng các liên kết đến bài viết. Sveltia CMS không tự động cập nhật liên kết trong những bài viết khác. Bạn cần kiểm tra và cập nhật thủ công.
 edit_slug_error:
   empty: Đường dẫn tĩnh không được để trống.
   invalid: Đường dẫn tĩnh không được chứa ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.

@@ -990,7 +990,6 @@ revert_all_changes: Kumoa kaikki muutokset
 
 # Slug editing
 edit_slug: Muokkaa polkua
-edit_slug_warning: Polun muuttaminen saattaa rikkoa merkintään osoittavat sisäiset ja ulkoiset linkit. Sveltia CMS ei tällä hetkellä päivitä Relation-kentillä luotuja viittauksia, joten sinun on päivitettävä ne ja muut linkit manuaalisesti.
 edit_slug_error:
   empty: Slug ei voi olla tyhjä.
   invalid: Slug ei voi sisältää erikoismerkkejä, mukaan lukien kauttaviivoja ja välilyöntejä.

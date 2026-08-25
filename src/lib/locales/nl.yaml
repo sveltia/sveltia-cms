@@ -995,7 +995,6 @@ revert_all_changes: Alle wijzigingen terugdraaien
 
 # Slug editing
 edit_slug: Slug bewerken
-edit_slug_warning: Het wijzigen van de slug kan interne en externe links naar het item verbreken. Sveltia CMS werkt op dit moment geen verwijzingen bij die met Relation-velden zijn gemaakt, dus je moet zulke verwijzingen samen met andere links handmatig bijwerken.
 edit_slug_error:
   empty: De slug mag niet leeg zijn.
   invalid: De slug mag geen speciale tekens bevatten, waaronder schuine strepen en spaties.

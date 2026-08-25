@@ -969,7 +969,6 @@ revert_all_changes: Tüm Değişiklikleri Geri Al
 
 # Slug editing
 edit_slug: Slug’ı Düzenle
-edit_slug_warning: Slug’ı değiştirmek içerik ve dış bağlantıları bozabilir. Sveltia CMS şu anda Relation alanları ile oluşturulan referansları otomatik güncellememektedir, bu yüzden bu referansları manuel güncellemeniz gerekir.
 edit_slug_error:
   empty: Slug boş olamaz.
   invalid: Slug bölü çizgisi ve boşluk dahil özel karakterler içeremez.

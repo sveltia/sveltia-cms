@@ -990,7 +990,6 @@ revert_all_changes: Reverteix tots els canvis
 
 # Slug editing
 edit_slug: Edita el slug
-edit_slug_warning: Canviar el slug pot trencar els enllaços interns i externs cap a l’entrada. Actualment, Sveltia CMS no actualitza les referències creades amb camps de relació, de manera que haureu d’actualitzar manualment aquestes referències juntament amb altres enllaços.
 edit_slug_error:
   empty: El slug no pot ser buit.
   invalid: El slug no pot contenir caràcters especials, incloses les barres i els espais.

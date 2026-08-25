@@ -1013,7 +1013,6 @@ revert_all_changes: Reverter todas as alterações
 
 # Slug editing
 edit_slug: Editar slug
-edit_slug_warning: Alterar o slug pode quebrar as ligações internas e externas para a entrada. Atualmente, o Sveltia CMS não atualiza as referências criadas com campos de Relação, pelo que terá de atualizar manualmente essas referências, bem como as restantes ligações.
 edit_slug_error:
   empty: O slug não pode estar vazio.
   invalid: O slug não pode conter caracteres especiais, incluindo barras e espaços.

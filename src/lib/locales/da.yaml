@@ -1013,7 +1013,6 @@ revert_all_changes: Fortryd alle ændringer
 
 # Slug editing
 edit_slug: Rediger slug
-edit_slug_warning: Hvis du ændrer dokumentets slug, kan interne og eksterne links til dokumentet holde op med at virke. Sveltia CMS opdaterer i øjeblikket ikke referencer der er oprettet med relationsfelter, så du skal selv opdatere den slags referencer sammen med andre links.
 edit_slug_error:
   empty: Slug må ikke være tomt.
   invalid: Slug må ikke indeholde specialtegn, herunder skråstreger og mellemrum.

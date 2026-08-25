@@ -990,7 +990,6 @@ revert_all_changes: Cofnij wszystkie zmiany
 
 # Slug editing
 edit_slug: Edytuj przyjazny link
-edit_slug_warning: Zmiana przyjaznego linku może spowodować uszkodzenie wewnętrznych i zewnętrznych linków do wpisu. Obecnie Sveltia CMS nie aktualizuje odniesień utworzonych za pomocą pól relacji, więc konieczne będzie ręczne zaktualizowanie takich odniesień wraz z innymi linkami.
 edit_slug_error:
   empty: Przyjazny link nie może być pusty.
   invalid: Przyjazny link nie może zawierać znaków specjalnych, w tym ukośników i spacji.

@@ -990,7 +990,6 @@ revert_all_changes: Alle Änderungen zurücknehmen
 
 # Slug editing
 edit_slug: Slug bearbeiten
-edit_slug_warning: Das Ändern des Slugs kann interne und externe Links zu diesem Eintrag unbrauchbar machen. Sveltia CMS aktualisiert derzeit keine Verweise aus Relations-Feldern, daher müssen solche Verweise ebenso wie andere Links von Hand angepasst werden.
 edit_slug_error:
   empty: Der Slug darf nicht leer sein.
   invalid: Der Slug darf keine Sonderzeichen enthalten, auch keine Schrägstriche und Leerzeichen.

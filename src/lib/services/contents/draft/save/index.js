@@ -18,6 +18,7 @@ import { validateEntry } from '$lib/services/contents/draft/validate';
 import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
+import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade';
 import { workflowEnabled } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
@@ -29,8 +30,10 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
  * Update the application stores with deployment settings.
  * @param {object} args Arguments.
  * @param {boolean | undefined} args.skipCI Whether to disable automatic deployments for the change.
+ * @param {number} args.count Number of entries saved, including any entry rewritten to keep its
+ * references to the saved entry up to date.
  */
-const updateStores = ({ skipCI }) => {
+const updateStores = ({ skipCI, count }) => {
   // With Editorial Workflow, changes go to a pull request, so nothing is published yet
   const published =
     !get(workflowEnabled) && get(skipCIConfigured) && !(skipCI ?? get(skipCIEnabled));
@@ -39,7 +42,7 @@ const updateStores = ({ skipCI }) => {
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
     published,
-    count: 1,
+    count,
   });
 
   isLastCommitPublished.set(published);
@@ -104,6 +107,19 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   const slugs = getSlugs({ draft });
   const { defaultLocaleSlug } = slugs;
   const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
+
+  // When the slug has been edited, the entries referencing this one through a Relation field have
+  // to be rewritten in the same commit, or they would be left pointing at an entry that no longer
+  // exists under that name
+  const { changes: cascadeChanges, savingEntries: cascadeEntries } = await buildCascadeChanges({
+    collection,
+    collectionFile: draft.collectionFile,
+    originalEntry,
+    savingEntry,
+  });
+
+  changes.push(...cascadeChanges);
+
   /** @type {ChangeResults} */
   let results;
   /** @type {CommitOptions} */
@@ -123,7 +139,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
         })
       : await saveChanges({
           changes,
-          savingEntries: [savingEntry],
+          savingEntries: [savingEntry, ...cascadeEntries],
           savingAssets,
           options,
         });
@@ -142,7 +158,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     isNew,
   });
 
-  updateStores({ skipCI });
+  updateStores({ skipCI, count: 1 + cascadeEntries.length });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
 
   if (originalEntry) {

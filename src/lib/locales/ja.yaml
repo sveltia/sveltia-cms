@@ -971,7 +971,6 @@ revert_all_changes: すべての変更を取り消す
 
 # Slug editing
 edit_slug: スラッグを編集
-edit_slug_warning: スラッグを変更すると、エントリーへの内部・外部リンクが壊れる可能性があります。現在のところ、Sveltia CMS は Relation フィールドで作成された参照を更新しないため、そのような参照は他のリンクとともに手動で更新する必要があります。
 edit_slug_error:
   empty: スラッグは空白にはできません。
   invalid: スラッグにはスラッシュや空白を含む特殊文字を使用できません。

@@ -1017,7 +1017,6 @@ revert_all_changes: Poništi sve promjene
 
 # Slug editing
 edit_slug: Uredi slug
-edit_slug_warning: Promjena sluga može pokvariti unutarnje i vanjske poveznice na unos. Sveltia CMS trenutačno ne ažurira reference stvorene poljima vrste Relation, pa ćete takve reference i ostale poveznice morati ručno ažurirati.
 edit_slug_error:
   empty: Slug ne može biti prazan.
   invalid: Slug ne smije sadržavati posebne znakove, uključujući kose crte i razmake.

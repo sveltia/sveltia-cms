@@ -1380,6 +1380,21 @@
  */
 
 /**
+ * A Relation field that points at a given collection, resolved down to everything needed to locate
+ * its stored values within the entries holding the field.
+ * @typedef {object} ResolvedRelationField
+ * @property {RelationField} fieldConfig Relation field config.
+ * @property {InternalCollection} sourceCollection Collection holding the Relation field.
+ * @property {InternalCollectionFile} [sourceCollectionFile] Collection file holding the Relation
+ * field, for file/singleton collections.
+ * @property {FieldKeyPath} keyPath Key path of the field within an entry’s flattened content. May
+ * contain `*` wildcards when the field is nested in a list.
+ * @property {RegExp} [valuePattern] Pattern matching the concrete key paths a wildcard `keyPath`
+ * expands to. `undefined` when the key path has no wildcard.
+ * @property {boolean} multiple Whether the field accepts multiple values.
+ */
+
+/**
  * Collectors used during config parsing.
  * @typedef {object} ConfigParserCollectors
  * @property {Set<string>} errors Collected error messages.

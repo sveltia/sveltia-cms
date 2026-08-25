@@ -1039,7 +1039,6 @@ revert_all_changes: Vrátit všechny změny
 
 # Slug editing
 edit_slug: Upravit slug
-edit_slug_warning: Změna slugu může narušit interní a externí odkazy na tuto položku. Sveltia CMS v současné době neaktualizuje odkazy vytvořené pomocí polí typu Relation, takže je budete muset spolu s ostatními odkazy aktualizovat ručně.
 edit_slug_error:
   empty: Slug nemůže být prázdný.
   invalid: Slug nesmí obsahovat speciální znaky, včetně lomítek a mezer.

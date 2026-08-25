@@ -1,8 +1,5 @@
 import { isObject } from '@sveltia/utils/object';
-import { IndexedDB } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 
-import { backend } from '$lib/services/backends';
 import { saveChanges } from '$lib/services/backends/save';
 import {
   contentUpdatesToast,
@@ -10,11 +7,14 @@ import {
 } from '$lib/services/contents/collection/data';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
-import { serializeContent } from '$lib/services/contents/draft/save/serialize';
-import { formatEntryFile } from '$lib/services/contents/file/format';
+import {
+  buildEntryUpdateChanges,
+  createSyntheticDraft,
+  resolveCacheDB,
+} from '$lib/services/contents/entry/changes';
 
 /**
+ * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import { Entry, FileChange, InternalEntryCollection } from '$lib/types/private';
  */
 
@@ -100,66 +100,6 @@ export const sortEntriesByOrderField = (entries, collection) => {
 };
 
 /**
- * Build a synthetic draft object suitable for {@link serializeContent}. The draft shape is
- * identical for every entry in a given collection during reorder, so callers should build it once
- * per batch and pass it down to avoid per-entry allocations.
- * @param {InternalEntryCollection} collection Entry collection.
- * @returns {any} Synthetic draft.
- */
-const createSyntheticDraft = (collection) => ({
-  collection,
-  collectionName: collection.name,
-  collectionFile: undefined,
-  fields: collection.fields,
-  isIndexFile: false,
-});
-
-/**
- * Build the file content for a single-file entry, taking i18n single-file structures into account.
- * @param {object} args Arguments.
- * @param {InternalEntryCollection} args.collection Entry collection.
- * @param {Entry} args.entry Entry whose locales have already been updated with the new order.
- * @param {any} args.draft Synthetic draft shared across the batch.
- * @returns {Record<string, any>} Serializable content object passed to {@link formatEntryFile}.
- */
-const buildSingleFileContent = ({ collection, entry, draft }) => {
-  const {
-    _i18n: { i18nEnabled, defaultLocale, structureMap: { i18nSingleFileDefaultRoot } = {} },
-  } = collection;
-
-  if (!i18nEnabled) {
-    return serializeContent({
-      draft,
-      locale: '_default',
-      valueMap: entry.locales[defaultLocale].content,
-    });
-  }
-
-  const localeContents = Object.fromEntries(
-    Object.entries(entry.locales)
-      .filter(([, le]) => !!le.content)
-      .map(([locale, le]) => [locale, serializeContent({ draft, locale, valueMap: le.content })]),
-  );
-
-  if (i18nSingleFileDefaultRoot) {
-    const { lang: _lang, ...defaultContent } = localeContents[defaultLocale] ?? {};
-
-    const nonDefaultContent = Object.fromEntries(
-      Object.entries(localeContents).filter(([locale]) => locale !== defaultLocale),
-    );
-
-    return {
-      lang: [defaultLocale, ...Object.keys(nonDefaultContent)],
-      ...defaultContent,
-      ...nonDefaultContent,
-    };
-  }
-
-  // `i18nSingleFile`: nested locale keys
-  return localeContents;
-};
-
-/**
  * Apply a new order value to all locales of an entry that have content. Locales without content are
  * passed through unchanged so that they can still be referenced (e.g. for paths) without adding an
  * `order` field to an empty content object.
@@ -181,93 +121,6 @@ const withUpdatedOrder = (entry, orderKey, newOrder) => {
 };
 
 /**
- * Build a single {@link FileChange} for an entry that lives in one file (no i18n, single-file i18n,
- * or default-root single-file i18n).
- * @param {object} args Arguments.
- * @param {InternalEntryCollection} args.collection Entry collection.
- * @param {Entry} args.entry Entry whose locales already have the new order applied.
- * @param {any} args.draft Synthetic draft shared across the batch.
- * @param {IndexedDB | undefined} args.cacheDB File cache database, when available.
- * @returns {Promise<FileChange>} Update change.
- */
-const buildSingleFileChange = async ({ collection, entry, draft, cacheDB }) => {
-  const {
-    _file,
-    _i18n: { defaultLocale },
-  } = collection;
-
-  const { slug, path } = entry.locales[defaultLocale];
-
-  const [previousSha, data] = await Promise.all([
-    getPreviousSha({ cacheDB, previousPath: path }),
-    formatEntryFile({ content: buildSingleFileContent({ collection, entry, draft }), _file }),
-  ]);
-
-  return /** @type {FileChange} */ ({ action: 'update', slug, path, previousSha, data });
-};
-
-/**
- * Build per-locale {@link FileChange} entries for an entry that lives in one file per locale.
- * Locales without content are skipped.
- * @param {object} args Arguments.
- * @param {InternalEntryCollection} args.collection Entry collection.
- * @param {Entry} args.entry Entry whose locales already have the new order applied.
- * @param {any} args.draft Synthetic draft shared across the batch.
- * @param {IndexedDB | undefined} args.cacheDB File cache database, when available.
- * @returns {Promise<FileChange[]>} Update changes.
- */
-const buildMultiFileChanges = async ({ collection, entry, draft, cacheDB }) => {
-  const {
-    _file,
-    _i18n: { allLocales },
-  } = collection;
-
-  const localeChanges = await Promise.all(
-    allLocales.map(async (locale) => {
-      const le = entry.locales[locale];
-
-      if (!le?.content) {
-        return undefined;
-      }
-
-      const [previousSha, data] = await Promise.all([
-        getPreviousSha({ cacheDB, previousPath: le.path }),
-        formatEntryFile({
-          content: serializeContent({ draft, locale, valueMap: le.content }),
-          _file,
-        }),
-      ]);
-
-      return /** @type {FileChange} */ ({
-        action: 'update',
-        slug: le.slug,
-        path: le.path,
-        previousSha,
-        data,
-      });
-    }),
-  );
-
-  return /** @type {FileChange[]} */ (localeChanges.filter(Boolean));
-};
-
-/**
- * Resolve a usable file-cache `IndexedDB` handle: prefer the caller-provided one (so the same
- * handle is shared across composite operations like delete + renumber), otherwise open one.
- * @param {IndexedDB} [provided] Caller-provided handle.
- * @returns {IndexedDB | undefined} Cache handle, or `undefined` if no backend is configured.
- */
-const resolveCacheDB = (provided) => {
-  if (provided) {
-    return provided;
-  }
-
-  const databaseName = get(backend)?.repository?.databaseName;
-
-  return databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
-};
-
-/**
  * Build the {@link FileChange}s needed to renumber the given entries with new 1-based order values.
  * Entries whose order field already matches the target value are skipped so no empty commits are
  * produced. The returned `savingEntries` are clones with the new order applied.
@@ -286,14 +139,9 @@ const buildReorderChanges = async (collection, orderedEntries, { cacheDB } = {})
   }
 
   const {
-    _i18n: {
-      i18nEnabled,
-      defaultLocale,
-      structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot } = {},
-    },
+    _i18n: { defaultLocale },
   } = collection;
 
-  const isSingleFile = !i18nEnabled || i18nSingleFile || i18nSingleFileDefaultRoot;
   const db = resolveCacheDB(cacheDB);
   const savingEntries = [];
 
@@ -311,16 +159,12 @@ const buildReorderChanges = async (collection, orderedEntries, { cacheDB } = {})
   }
 
   // Build the synthetic draft once for the whole batch — its shape is identical across entries.
-  const draft = createSyntheticDraft(collection);
+  const draft = createSyntheticDraft({ collection });
 
   // Build file changes in parallel
   const perEntryChanges = await Promise.all(
     savingEntries.map((entry) =>
-      isSingleFile
-        ? buildSingleFileChange({ collection, entry, draft, cacheDB: db }).then((change) => [
-            change,
-          ])
-        : buildMultiFileChanges({ collection, entry, draft, cacheDB: db }),
+      buildEntryUpdateChanges({ collection, entry, draft, cacheDB: db }),
     ),
   );
 

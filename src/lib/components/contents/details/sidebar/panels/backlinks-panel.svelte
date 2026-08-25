@@ -5,7 +5,7 @@
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getBacklinks } from '$lib/services/contents/entry/backlinks';
+  import { getBacklinks } from '$lib/services/contents/entry/relations/backlinks';
 
   /**
    * @import { EntryBacklink } from '$lib/types/private';

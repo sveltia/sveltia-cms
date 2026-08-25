@@ -990,7 +990,6 @@ revert_all_changes: Återställ alla ändringar
 
 # Slug editing
 edit_slug: Redigera slugg
-edit_slug_warning: 'Att ändra sluggen kan bryta interna och externa länkar till posten. För närvarande uppdaterar Sveltia CMS inte referenser skapade med Relationsfält, så du måste manuellt uppdatera sådana referenser tillsammans med andra länkar.'
 edit_slug_error:
   empty: Sluggen får inte vara tom.
   invalid: Sluggen får inte innehålla specialtecken, inklusive snedstreck och mellanslag.

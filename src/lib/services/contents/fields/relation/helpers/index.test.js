@@ -2,6 +2,7 @@ import { flatten } from 'flat';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  getEntryOptions,
   getOptions,
   getReferencedOptionLabel,
   optionCacheMap,
@@ -1249,6 +1250,59 @@ describe('Test getOptions()', async () => {
           searchValue: 'Secondary Green',
         });
       });
+    });
+  });
+
+  describe('getEntryOptions function', () => {
+    beforeEach(() => {
+      // @ts-ignore - Using simplified mock collection for testing
+      vi.mocked(getCollection).mockReturnValue(mockCollection);
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(getField).mockReturnValue(undefined);
+      vi.mocked(getFieldDisplayValue).mockImplementation(
+        ({ keyPath, valueMap }) => valueMap?.[keyPath] ?? '',
+      );
+      vi.mocked(getEntrySummaryFromContent).mockReturnValue('summary');
+    });
+
+    test('returns the value identifying a single entry', () => {
+      /** @type {RelationField} */
+      const fieldConfig = { ...baseFieldConfig, collection: 'members', value_field: '{{slug}}' };
+
+      const result = getEntryOptions({
+        locale,
+        fieldConfig,
+        refEntry: comprehensiveMemberEntries[0],
+      });
+
+      expect(result.map(({ value }) => value)).toEqual([comprehensiveMemberEntries[0].slug]);
+    });
+
+    test('ignores the field filters', () => {
+      /** @type {RelationField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        collection: 'members',
+        value_field: '{{slug}}',
+        filters: [{ field: 'slug', values: ['nobody'] }],
+      };
+
+      expect(
+        getEntryOptions({ locale, fieldConfig, refEntry: comprehensiveMemberEntries[0] }),
+      ).toHaveLength(1);
+      expect(getOptions({ locale, fieldConfig, refEntries: singleEntry })).toHaveLength(0);
+    });
+
+    test('returns an empty array when the collection is not found', () => {
+      vi.mocked(getCollection).mockReturnValue(undefined);
+
+      expect(
+        getEntryOptions({
+          locale,
+          fieldConfig: { ...baseFieldConfig, collection: 'members' },
+          refEntry: comprehensiveMemberEntries[0],
+        }),
+      ).toEqual([]);
     });
   });
 

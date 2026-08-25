@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Dialog, TextInput } from '@sveltia/ui';
+  import { Dialog, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
 
   import { slugify } from '$lib/services/common/slug';
@@ -111,9 +111,6 @@
     );
   }}
 >
-  <Alert status="warning" --font-size="var(--sui-font-size-small)">
-    {_('edit_slug_warning')}
-  </Alert>
   <div role="none" class="locales">
     {#each Object.keys(updatedSlugs) as locale (locale)}
       <section>
@@ -151,7 +148,7 @@
 
   .locales {
     display: table;
-    margin: 16px 0 0;
+    margin: 0;
     width: 100%;
 
     section {
