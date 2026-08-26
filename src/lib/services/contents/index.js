@@ -103,10 +103,16 @@ const getEntryFolderCache = () => {
 export const getEntryFoldersByPath = (path) => {
   const { fileMap, regexFolders } = getEntryFolderCache();
 
-  const results = [
+  return [
+    // A file/singleton collection declares the exact path, so it’s always more specific than an
+    // entry collection, whose folder may happen to contain the same file. This notably applies to
+    // Hugo’s special index file: `content/blog/_index.md` can be declared as a file collection item
+    // while `content/blog` is also an entry collection’s folder
     ...(fileMap.get(path) ?? []),
-    ...regexFolders.filter(([, regex]) => regex?.test(path)).map(([folder]) => folder),
+    // Deeper folder paths are more specific, so sort them in descending order
+    ...regexFolders
+      .filter(([, regex]) => regex?.test(path))
+      .map(([folder]) => folder)
+      .sort((a, b) => (b.folderPath ?? '').localeCompare(a.folderPath ?? '')),
   ];
-
-  return results.sort((a, b) => (b.folderPath ?? '').localeCompare(a.folderPath ?? ''));
 };

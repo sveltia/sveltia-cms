@@ -89,25 +89,33 @@ describe('contents/index', () => {
       expect(result[0].collectionName).toBe('posts');
     });
 
-    it('should return folders sorted by folderPath descending', () => {
+    it('should return entry folders sorted by folderPath descending', () => {
+      vi.mocked(getCollection).mockImplementation(
+        (name) =>
+          /** @type {any} */ ({
+            _file: {
+              fullPathRegEx:
+                name === 'blog' ? /^content\/posts\/blog\/.+\.md$/ : /^content\/posts\/.+\.md$/,
+              extension: 'md',
+              format: 'yaml-frontmatter',
+            },
+          }),
+      );
+
       allEntryFolders.set([
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: 'content/posts',
-          filePathMap: {
-            en: 'content/posts/test.md',
-          },
+          filePathMap: undefined,
         }),
         /** @type {any} */ ({
           collectionName: 'blog',
           folderPath: 'content/posts/blog',
-          filePathMap: {
-            en: 'content/posts/test.md',
-          },
+          filePathMap: undefined,
         }),
       ]);
 
-      const result = getEntryFoldersByPath('content/posts/test.md');
+      const result = getEntryFoldersByPath('content/posts/blog/test.md');
 
       expect(result).toHaveLength(2);
       expect(result[0].collectionName).toBe('blog');
@@ -179,30 +187,42 @@ describe('contents/index', () => {
       expect(result).toHaveLength(1);
     });
 
-    it('should sort correctly when some folders have undefined folderPath', () => {
+    it('should prioritize a file collection over an entry collection containing the file', () => {
+      // Hugo’s special index file can be declared as a file collection item while it also lives in
+      // an entry collection’s folder. The explicit `file` declaration must win
+      vi.mocked(getCollection).mockReturnValue(
+        /** @type {any} */ ({
+          _file: {
+            fullPathRegEx: /^content\/updates\/news\/(?<subPath>[^/]+?)\.md$/,
+            extension: 'md',
+            format: 'yaml-frontmatter',
+          },
+        }),
+      );
+
       allEntryFolders.set([
         /** @type {any} */ ({
-          collectionName: 'posts',
-          folderPath: undefined,
-          filePathMap: { en: 'content/posts/test.md' },
+          collectionName: 'news',
+          folderPath: 'content/updates/news',
+          filePathMap: undefined,
         }),
         /** @type {any} */ ({
-          collectionName: 'blog',
-          folderPath: 'content/posts/blog',
-          filePathMap: { en: 'content/posts/test.md' },
+          collectionName: 'pages',
+          fileName: 'news',
+          folderPath: undefined,
+          filePathMap: { _default: 'content/updates/news/_index.md' },
         }),
       ]);
 
-      const result = getEntryFoldersByPath('content/posts/test.md');
+      const result = getEntryFoldersByPath('content/updates/news/_index.md');
 
       expect(result).toHaveLength(2);
-      // Folder with a defined folderPath sorts higher than one with undefined (empty string
-      // fallback).
-      expect(result[0].collectionName).toBe('blog');
-      expect(result[1].collectionName).toBe('posts');
+      expect(result[0].collectionName).toBe('pages');
+      expect(result[0].fileName).toBe('news');
+      expect(result[1].collectionName).toBe('news');
     });
 
-    it('should sort stably when multiple folders have undefined folderPath', () => {
+    it('should return every file folder that declares the same path', () => {
       allEntryFolders.set([
         /** @type {any} */ ({
           collectionName: 'alpha',
@@ -213,6 +233,37 @@ describe('contents/index', () => {
           collectionName: 'beta',
           folderPath: undefined,
           filePathMap: { en: 'content/shared.md' },
+        }),
+      ]);
+
+      const result = getEntryFoldersByPath('content/shared.md');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].collectionName).toBe('alpha');
+      expect(result[1].collectionName).toBe('beta');
+    });
+
+    it('should sort stably when multiple entry folders have undefined folderPath', () => {
+      vi.mocked(getCollection).mockReturnValue(
+        /** @type {any} */ ({
+          _file: {
+            fullPathRegEx: /^content\/.+\.md$/,
+            extension: 'md',
+            format: 'yaml-frontmatter',
+          },
+        }),
+      );
+
+      allEntryFolders.set([
+        /** @type {any} */ ({
+          collectionName: 'alpha',
+          folderPath: undefined,
+          filePathMap: undefined,
+        }),
+        /** @type {any} */ ({
+          collectionName: 'beta',
+          folderPath: undefined,
+          filePathMap: undefined,
         }),
       ]);
 

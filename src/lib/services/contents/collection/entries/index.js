@@ -106,7 +106,10 @@ const queryEntriesByCollection = (collectionName) => {
       return false;
     }
 
-    if (!filterField) {
+    // The `filter` option is defined against the collection’s regular fields, while Hugo’s special
+    // index file has its own `index_file.fields` schema. The index file is identified by its path,
+    // not by its content, so the filter must not apply to it
+    if (!filterField || isCollectionIndexFile(collection, entry)) {
       return true;
     }
 

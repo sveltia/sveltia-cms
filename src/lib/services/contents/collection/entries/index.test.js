@@ -285,6 +285,48 @@ describe('getEntriesByCollection()', () => {
     expect(result[1].id).toBe('3');
   });
 
+  test('exempts Hugo’s special index file from the collection filter', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const indexFileModule = await import('$lib/services/contents/collection/entries/index-file');
+    const { isCollectionIndexFile } = indexFileModule;
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getRegex } = await import('$lib/services/utils/regex');
+
+    const collection = {
+      name: 'news',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'type', value: 'post' },
+      index_file: { fields: [{ name: 'type', widget: 'hidden', default: 'updates' }] },
+    };
+
+    const entries = [
+      { id: '1', slug: 'hello', locales: { en: { content: { type: 'post' } } } },
+      // The index file has its own `index_file.fields` schema, so its `type` doesn’t match the
+      // collection filter, yet it must still be listed
+      { id: '2', slug: '_index', locales: { en: { content: { type: 'updates' } } } },
+      { id: '3', slug: 'world', locales: { en: { content: { type: 'page' } } } },
+    ];
+
+    vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(get).mockReturnValue(entries);
+    vi.mocked(getRegex).mockReturnValue(null);
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'news' }]);
+    vi.mocked(isCollectionIndexFile).mockImplementation((_collection, entry) => entry.id === '2');
+    vi.mocked(getPropertyValue)
+      .mockReturnValueOnce('post') // Entry 1: included
+      .mockReturnValueOnce('page'); // Entry 3: excluded
+
+    const result = getEntriesByCollection('news');
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe('1');
+    expect(result[1].id).toBe('2');
+    // The index file short-circuits before the property lookup
+    expect(getPropertyValue).toHaveBeenCalledTimes(2);
+  });
+
   test('filters entries using fullPathRegEx when collection has _file.fullPathRegEx', async () => {
     const { getCollection } = await import('$lib/services/contents/collection');
     const fullPathRegEx = /^posts\/[^/]+\.md$/;
