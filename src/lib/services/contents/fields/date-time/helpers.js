@@ -28,6 +28,7 @@ dayjs.extend(dayjsTimeZone);
 
 const DATE_ONLY_MATCH_REGEX = /^(?<date>\d{4}-[01]\d-[0-3]\d)\b/;
 const TIME_SUFFIX_MATCH_REGEX = /(?:^|T)(?<time>[0-2]\d:[0-5]\d)\b/;
+const TIME_WITH_SECONDS_REGEX = /(?:^|T)[0-2]\d:[0-5]\d:[0-5]\d/;
 
 /**
  * Check if the given value is a valid `Date` object.
@@ -237,12 +238,17 @@ export const getCurrentValue = ({ inputValue, currentValue, fieldConfig, timeZon
     return inputValue;
   }
 
-  const hasSeconds = /:\d{2}$/.test(inputValue);
+  // Check for a seconds component. The input element omits it with the default `step` of 60,
+  // yielding `HH:mm` or `YYYY-MM-DDTHH:mm`.
+  const hasSeconds = TIME_WITH_SECONDS_REGEX.test(inputValue);
   // Append seconds (and milliseconds) for data format & framework compatibility
   const timeSuffix = currentValue ? `:00${currentValue.endsWith('.000') ? '.000' : ''}` : ':00';
 
   if (timeOnly) {
-    return hasSeconds ? inputValue : `${inputValue}${timeSuffix}`;
+    const timeValue = hasSeconds ? inputValue : `${inputValue}${timeSuffix}`;
+
+    // Input is already in UTC; store with a `Z` suffix (no conversion needed)
+    return inputTimeZone === 'utc' ? `${timeValue}Z` : timeValue;
   }
 
   if (inputTimeZone === 'utc') {

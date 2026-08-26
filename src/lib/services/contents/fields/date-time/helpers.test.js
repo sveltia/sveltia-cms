@@ -349,26 +349,25 @@ describe('getCurrentValue', () => {
     expect(result).toMatch(/2023-12-25T14:30/);
   });
 
-  test('should return time as-is if already ends with minutes', () => {
+  test('should append seconds when the input omits them', () => {
     const result = getCurrentValue({
       inputValue: '2023-12-25T14:30',
       currentValue: '2023-12-25T14:30:00',
       fieldConfig: baseFieldConfig,
     });
 
-    // Input already ends with minutes, so return as-is
-    expect(result).toBe('2023-12-25T14:30');
+    // The input element omits seconds with the default `step` of 60
+    expect(result).toBe('2023-12-25T14:30:00');
   });
 
-  test('should return time as-is if already ends with minutes', () => {
+  test('should append seconds and milliseconds when the stored value has milliseconds', () => {
     const result = getCurrentValue({
       inputValue: '2023-12-25T14:30',
       currentValue: '2023-12-25T14:30:00.000',
       fieldConfig: baseFieldConfig,
     });
 
-    // Input already ends with minutes, so return as-is
-    expect(result).toBe('2023-12-25T14:30');
+    expect(result).toBe('2023-12-25T14:30:00.000');
   });
 
   test('should handle invalid input gracefully in getCurrentValue', () => {
@@ -600,18 +599,14 @@ describe('getCurrentValue', () => {
     expect(result).toBe('2023-12-25T14:30:45');
   });
 
-  test('should append timeSuffix when no format and no seconds', () => {
-    // This tests the fallback return at line 241
-    // Need: no format, no dateOnly, no timeOnly, no outputUTC, no timeZone, input NOT matching
-    // /:\d{2}$/
+  test('should append seconds to a new value with no stored value', () => {
     const result = getCurrentValue({
-      inputValue: '2023-12-25', // Date without time, doesn't match /:\d{2}$/
-      currentValue: '2023-12-25T14:00:00',
+      inputValue: '2023-12-25T14:30',
+      currentValue: undefined,
       fieldConfig: baseFieldConfig, // No format, not dateOnly, not timeOnly
     });
 
-    // Should append :00 suffix since currentValue is set
-    expect(result).toMatch(/2023-12-25:00/);
+    expect(result).toBe('2023-12-25T14:30:00');
   });
 
   test('should preserve the stored wall-clock value for a configured custom timezone', () => {
@@ -763,8 +758,7 @@ describe('getCurrentValue', () => {
     consoleSpy.mockRestore();
   });
 
-  test('should return timeOnly input as-is when already formatted with minutes (lines 220-224)', () => {
-    // Test the uncovered code path: timeOnly block where inputValue matches /:\d{2}$/
+  test('should append seconds to a timeOnly input that omits them', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       widget: 'datetime',
@@ -773,19 +767,16 @@ describe('getCurrentValue', () => {
       // No format specified - so it takes the timeOnly path, not the format path
     };
 
-    // Input that matches /:\d{2}$/ (ends with :MM)
     const result = getCurrentValue({
-      inputValue: '14:30', // Matches /:\d{2}$/ - ends with :30
+      inputValue: '14:30',
       currentValue: undefined,
       fieldConfig,
     });
 
-    // Should return the input as-is since it already has the correct format
-    expect(result).toBe('14:30');
+    expect(result).toBe('14:30:00');
   });
 
-  test('should append timeSuffix to timeOnly input when not formatted (lines 224)', () => {
-    // Test the other branch: timeOnly block where inputValue does NOT match /:\d{2}$/
+  test('should return a timeOnly input as-is when it already has seconds', () => {
     /** @type {DateTimeField} */
     const fieldConfig = {
       widget: 'datetime',
@@ -794,15 +785,48 @@ describe('getCurrentValue', () => {
       // No format specified
     };
 
-    // Input that does NOT match /:\d{2}$/ (doesn't end with :MM)
     const result = getCurrentValue({
-      inputValue: '14', // Does NOT match /:\d{2}$/ - doesn't end with :MM
+      inputValue: '14:30:45',
       currentValue: '14:00:00',
       fieldConfig,
     });
 
-    // Should append timeSuffix (:00) since currentValue has seconds
-    expect(result).toBe('14:00');
+    expect(result).toBe('14:30:45');
+  });
+
+  test('should append a Z suffix to a timeOnly input when the input timezone is UTC', () => {
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      widget: 'datetime',
+      name: 'time_test',
+      date_format: false, // This makes timeOnly = true
+      picker_utc: true,
+    };
+
+    expect(getCurrentValue({ inputValue: '14:30', currentValue: undefined, fieldConfig })).toBe(
+      '14:30:00Z',
+    );
+
+    // An input that already has seconds keeps them
+    expect(
+      getCurrentValue({ inputValue: '14:30:45', currentValue: '14:00:00Z', fieldConfig }),
+    ).toBe('14:30:45Z');
+  });
+
+  test('should round-trip a UTC timeOnly value through the input', () => {
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      widget: 'datetime',
+      name: 'time_test',
+      date_format: false, // This makes timeOnly = true
+      picker_utc: true,
+    };
+
+    const currentValue = '14:30:00Z';
+    const inputValue = getInputValue({ currentValue, fieldConfig });
+
+    expect(inputValue).toBe('14:30');
+    expect(getCurrentValue({ inputValue, currentValue, fieldConfig })).toBe(currentValue);
   });
 
   test('should convert to UTC when format + timeZone + outputUTC are all set (line 261)', () => {
