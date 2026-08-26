@@ -358,7 +358,7 @@ describe('GitHub deployment service', () => {
       expect(result.abc123).toEqual(expect.objectContaining({ state: 'pending', url: undefined }));
     });
 
-    test('ignores a canceled check run and a suite with no runs', async () => {
+    test('drops a canceled check run and takes no URL from a nameless one', async () => {
       respondWith({
         checkSuites: {
           nodes: [
@@ -372,7 +372,8 @@ describe('GitHub deployment service', () => {
                     conclusion: 'CANCELLED',
                     detailsUrl: 'https://gone.example.com',
                   },
-                  // A nameless run can’t say it’s a preview, so it’s dropped too
+                  // A nameless run can’t say it’s a preview, so its link isn’t followed — but
+                  // it still reports that something on this commit finished
                   {
                     name: null,
                     status: 'COMPLETED',
@@ -388,7 +389,9 @@ describe('GitHub deployment service', () => {
 
       const result = await fetchDeployments([createTarget()]);
 
-      expect(result.abc123.state).toBe('unknown');
+      expect(result.abc123).toEqual(
+        expect.objectContaining({ state: 'ready', url: undefined, context: '' }),
+      );
     });
 
     test('skips a canceled deploy in favour of the one that ran', async () => {

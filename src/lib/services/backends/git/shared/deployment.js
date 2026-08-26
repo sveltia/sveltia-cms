@@ -136,15 +136,36 @@ const isGitServiceURL = (url, selfURL) => {
 };
 
 /**
+ * Whether a candidate is claiming to describe a deployment at all. A check run that doesn’t name
+ * itself a preview is some other job on the same push — a test suite, a linter — which says nothing
+ * about whether the site is live and whose URL is a build log. It isn’t thrown away, because a
+ * provider this list has never heard of would otherwise report nothing and let a failed build pass
+ * unnoticed; it’s just outranked by anything that does claim to be a deployment, and it never
+ * supplies a URL. A configured `preview_context` has already narrowed the field by name, so
+ * whatever survived that is taken at its word.
+ * @param {DeployCandidate} candidate Candidate to judge.
+ * @param {string} previewContext Configured context, empty when unset.
+ * @returns {boolean} Result.
+ */
+const claimsDeployment = ({ name, source }, previewContext) =>
+  !!previewContext || source !== 'check' || PREVIEW_NAME_REGEX.test(name);
+
+/**
  * Rank a candidate so the best one can be picked with a single sort. A higher number wins.
  * @param {DeployCandidate} candidate Candidate to score.
- * @param {'production' | 'preview'} kind Kind of deployment expected.
+ * @param {object} args Arguments.
+ * @param {'production' | 'preview'} args.kind Kind of deployment expected.
+ * @param {string} args.previewContext Configured context, empty when unset.
  * @returns {number} Score.
  */
-const getScore = ({ name, url, state, source }, kind) => {
+const getScore = (candidate, { kind, previewContext }) => {
+  const { name, url, state, source } = candidate;
   const isProductionName = PRODUCTION_NAME_REGEX.test(name);
 
   return (
+    // Enough to sink it below every real candidate, including one that has yet to report a URL:
+    // a green test suite must not stand in for a deployment that’s still building
+    (claimsDeployment(candidate, previewContext) ? 0 : -64) +
     // A candidate with somewhere to go is worth more than one that only reports a state
     (url ? 32 : 0) +
     // A finished build with a page to open is the most useful thing to report, so it outranks a
@@ -183,13 +204,6 @@ export const pickDeployment = (candidates, { kind, selfURL }) => {
     remaining = exact.length
       ? exact
       : remaining.filter(({ name }) => name.toLowerCase().includes(needle));
-  } else {
-    // Without an explicit context to go by, a check run counts only when its name suggests a
-    // deployment at all — an ordinary CI job says nothing about whether the site is live, and its
-    // details URL is a build log
-    remaining = remaining.filter(
-      ({ name, source }) => source !== 'check' || PREVIEW_NAME_REGEX.test(name),
-    );
   }
 
   // A build that was canceled or skipped has no page behind it, whatever state it reports
@@ -205,7 +219,9 @@ export const pickDeployment = (candidates, { kind, selfURL }) => {
   remaining = remaining.map((candidate) => ({
     ...candidate,
     url:
-      candidate.state === 'ready' && !isGitServiceURL(candidate.url, selfURL)
+      candidate.state === 'ready' &&
+      claimsDeployment(candidate, previewContext) &&
+      !isGitServiceURL(candidate.url, selfURL)
         ? normalizeURL(candidate.url)
         : undefined,
   }));
@@ -218,7 +234,11 @@ export const pickDeployment = (candidates, { kind, selfURL }) => {
 
   // The backends supply candidates oldest first, so a later one wins a tie
   const [best] = remaining
-    .map((candidate, index) => ({ candidate, index, score: getScore(candidate, kind) }))
+    .map((candidate, index) => ({
+      candidate,
+      index,
+      score: getScore(candidate, { kind, previewContext }),
+    }))
     .sort((a, b) => b.score - a.score || b.index - a.index)
     .map(({ candidate }) => candidate);
 

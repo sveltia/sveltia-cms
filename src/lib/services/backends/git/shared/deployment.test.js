@@ -398,7 +398,9 @@ describe('Git deployment selection', () => {
         );
       });
 
-      test('ignores an ordinary CI check run, whose URL is a build log', () => {
+      test('takes an ordinary CI check run’s state but not its build log', () => {
+        // A provider this list has never heard of would otherwise report nothing at all, so the
+        // state is kept. The URL isn’t: for a job like this it leads to a log, not a site
         const result = pickDeployment(
           [
             createCandidate({
@@ -410,7 +412,27 @@ describe('Git deployment selection', () => {
           { kind: 'preview' },
         );
 
-        expect(result.state).toBe('unknown');
+        expect(result.state).toBe('ready');
+        expect(result.url).toBeUndefined();
+      });
+
+      test('never lets an unrelated job speak over a deployment', () => {
+        // A green test suite alongside a build still running must not report the site as ready
+        const result = pickDeployment(
+          [
+            createCandidate({
+              name: 'unit tests',
+              url: 'https://ci.example.com/1',
+              source: 'check',
+            }),
+            createCandidate({ name: 'Cloudflare Pages', state: 'pending', url: undefined }),
+          ],
+          { kind: 'preview' },
+        );
+
+        expect(result).toEqual(
+          expect.objectContaining({ state: 'pending', context: 'Cloudflare Pages' }),
+        );
       });
 
       test('ranks a check run below a commit status reporting the same state', () => {
