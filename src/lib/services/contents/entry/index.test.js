@@ -628,6 +628,83 @@ describe('Test getEntryPreviewURL()', () => {
     expect(result).toBe('https://example.com/posts/test-entry');
   });
 
+  test('uses the base URL override instead of the configured site URL', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      show_preview_links: true,
+      _baseURL: 'https://example.com',
+    });
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('posts/test-entry');
+
+    const result = getEntryPreviewURL(mockEntry, 'en', mockCollection, undefined, {
+      baseURL: 'https://deploy-preview-1--example.netlify.app',
+    });
+
+    expect(result).toBe('https://deploy-preview-1--example.netlify.app/posts/test-entry');
+  });
+
+  test('uses the base URL override when site_url is not configured', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({ show_preview_links: true });
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('posts/test-entry');
+
+    const result = getEntryPreviewURL(mockEntry, 'en', mockCollection, undefined, {
+      baseURL: 'https://preview.example.com',
+    });
+
+    expect(result).toBe('https://preview.example.com/posts/test-entry');
+  });
+
+  test('strips a trailing slash from the base URL override', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({ show_preview_links: true });
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('/posts/test-entry');
+
+    const result = getEntryPreviewURL(mockEntry, 'en', mockCollection, undefined, {
+      baseURL: 'https://preview.example.com/',
+    });
+
+    expect(result).toBe('https://preview.example.com/posts/test-entry');
+  });
+
+  test('ignores the base URL override when show_preview_links is false', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      show_preview_links: false,
+      _baseURL: 'https://example.com',
+    });
+
+    const result = getEntryPreviewURL(mockEntry, 'en', mockCollection, undefined, {
+      baseURL: 'https://preview.example.com',
+    });
+
+    expect(result).toBeUndefined();
+  });
+
   test('handles null cmsConfig by using empty object fallback (line 84)', async () => {
     // @ts-ignore - Set cmsConfig to null to test the ?? {} fallback
     (await import('$lib/services/config')).cmsConfig = writable(null);

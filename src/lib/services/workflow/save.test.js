@@ -207,8 +207,10 @@ describe('workflow/save', () => {
         }),
       );
 
+      // The head commit is taken from the commit results, so the deploy preview lookup points at
+      // the build for this save rather than the previous one
       expect(/** @type {any} */ (results.savedEntries[0]).workflow).toEqual({
-        pullRequest,
+        pullRequest: { ...pullRequest, headSHA: 'abc' },
         status: 'draft',
         collectionName: 'posts',
         fileName: undefined,

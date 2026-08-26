@@ -952,6 +952,31 @@ view_in_repository: リポジトリ内で見る
 view_on_x: '{$service} で見る'
 view_on_live_site: 管理対象サイトで見る
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: プレビューを見る
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: プレビューをビルド中です。
+  # Shown when the build failed, so no preview is available
+  failed: プレビューをビルドできませんでした。
+  # Shown briefly while the CI/CD provider is being queried
+  checking: プレビューを確認中…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: プレビューを確認
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: プレビューを確認中
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: ビルド中…
+    failed: ビルド失敗
+
 # Content copying from other locales
 copy_from: 他の言語からコピー…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -1496,6 +1521,10 @@ config:
     unsupported_ignored_option: '`{$prop}` オプションは Sveltia CMS ではサポートされていません。このオプションは無視されます。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: '`picker_utc` と新しいタイムゾーンオプション (`input_timezone` または `output_utc`) の両方が設定されています。新しいオプションが優先されます。設定から `picker_utc` を削除することを検討してください。'
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: '`preview_path` オプションで日時タグが使用されていますが、コレクションに参照可能な DateTime フィールドがないため、プレビューリンクは表示されません。'
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: '`preview_path_date_field` オプションで `{$name}` という名前のフィールドが指定されていますが、その名前の DateTime フィールドが定義されていないため、プレビューリンクは表示されません。'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: '詳しくは互換性情報をご覧ください: {$link}'

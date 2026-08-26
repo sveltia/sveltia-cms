@@ -216,6 +216,64 @@
  */
 
 /**
+ * State of a deployment created by a CI/CD provider connected to the Git backend.
+ * - `checking`: a request to the backend is in flight.
+ * - `pending`: the build is queued or running, or the page is not live yet.
+ * - `ready`: the build succeeded and the page is live.
+ * - `error`: the build failed.
+ * - `unknown`: no CI/CD provider reported anything, or the lookup itself failed. The UI falls back
+ * to the plain site preview link in this case.
+ * @typedef {'checking' | 'pending' | 'ready' | 'error' | 'unknown'} DeployState
+ */
+
+/**
+ * A commit to look up a deployment for.
+ * @typedef {object} DeployTarget
+ * @property {string} sha Git object ID (SHA-1 hash) of the commit.
+ * @property {string} branch Branch the commit is on. It’s needed by services that can only filter
+ * deployments by ref, such as GitLab.
+ * @property {'production' | 'preview'} kind Kind of deployment expected for the commit, used to
+ * break ties between environments. A commit on the production branch gets `production`, while an
+ * Editorial Workflow pull request gets `preview`.
+ */
+
+/**
+ * A deployment resolved from a backend’s CI/CD integration.
+ * @typedef {object} DeployStatus
+ * @property {DeployState} state Current state.
+ * @property {string} [url] Base URL of the deployment, without a trailing slash. It can be
+ * `undefined` while the build is still `pending`, because a URL isn’t always assigned upfront.
+ * @property {string} [context] Commit status context or deployment environment the URL came from.
+ * @property {number} checkedTime Time when the backend was last queried, as a Unix timestamp in
+ * milliseconds.
+ */
+
+/**
+ * Result of a liveness check against a fully composed preview URL.
+ * - `ready`: the page returned a 2xx status.
+ * - `pending`: the page returned 404, meaning it hasn’t been built yet.
+ * - `unknown`: the response couldn’t be read. The URL is cross-origin, so the check was skipped, or
+ * the server returned some other status.
+ * @typedef {'ready' | 'pending' | 'unknown'} PageLiveness
+ */
+
+/**
+ * A preview link resolved for one entry and locale, composed from the site configuration and the
+ * deployment stores.
+ * @typedef {object} EntryPreviewLink
+ * @property {string} [url] URL to open. It’s `undefined` while a build has no URL yet, in which
+ * case the UI shows a disabled control instead of a link.
+ * @property {DeployState} state Current state.
+ * @property {boolean} isDeployPreview Whether the URL points at a deploy preview rather than the
+ * production site.
+ * @property {boolean} awaitingPreview Whether a deploy preview is expected for the entry but hasn’t
+ * been reported yet. The URL, if any, leads to the published version or nowhere, so the control
+ * reports the wait rather than offering it.
+ * @property {boolean} pingable Whether the URL is worth checking for liveness. It’s `false` for a
+ * page that can’t be live yet, such as an unpublished entry falling back to the production site.
+ */
+
+/**
  * Options for the `signIn` function on {@link BackendService}.
  * @typedef {object} SignInOptions
  * @property {boolean} auto Whether the sign-in process is automatic.
@@ -258,6 +316,12 @@
  * deletions, and return the commit hash and a map of committed files.
  * @property {() => Promise<Response>} [triggerDeployment] Function to manually trigger a new
  * deployment on any connected CI/CD provider. GitHub only.
+ * @property {() => Promise<string | undefined>} [fetchBranchHeadSHA] Function to resolve the head
+ * commit of the configured branch, which is the production deployment target. Git backends only.
+ * @property {(targets: DeployTarget[]) =>
+ * Promise<Record<string, DeployStatus>>} [fetchDeployments] Function to resolve the deployment
+ * status and URL for the given commits, keyed by commit SHA. Git backends only, and only when the
+ * service exposes deployment or commit status information.
  * @property {(paths: string[]) => Promise<FileCommit[]>} [fetchFileCommits] Function to fetch
  * commit history for given file paths. Git backends only.
  * @property {WorkflowBackendService} [workflow] Editorial Workflow implementation. Git backends
@@ -300,7 +364,8 @@
  * @property {Date} createdDate Date when the pull request was created.
  * @property {Date} updatedDate Date when the pull request was last updated.
  * @property {CommitAuthor} [author] Author of the pull request.
- * @property {string} [previewURL] Deploy preview URL, if any.
+ * @property {string} [headSHA] Git object ID (SHA-1 hash) of the head commit on the pull
+ * request’s branch. It’s used to look up the deploy preview created for the pull request.
  * @property {WorkflowFile[]} files Files changed in the pull request.
  */
 

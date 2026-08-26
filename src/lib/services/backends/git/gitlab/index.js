@@ -10,6 +10,7 @@ import {
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
 } from '$lib/services/backends/git/gitlab/constants';
+import { fetchBranchHeadSHA, fetchDeployments } from '$lib/services/backends/git/gitlab/deployment';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
@@ -122,5 +123,7 @@ export default {
   fetchBlob,
   commitChanges,
   fetchFileCommits,
+  fetchBranchHeadSHA,
+  fetchDeployments,
   workflow,
 };

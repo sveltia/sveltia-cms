@@ -53,6 +53,7 @@ const createNode = (overrides = {}) => ({
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-02T00:00:00Z',
   headRefName: 'cms/posts/hello',
+  headRefOid: 'abc123',
   author: {
     login: 'me',
     name: 'Me',
@@ -122,6 +123,7 @@ describe('GitHub Editorial Workflow service', () => {
         title: 'Create Post “hello”',
         url: 'https://github.com/owner/repo/pull/1',
         branch: 'cms/posts/hello',
+        headSHA: 'abc123',
         status: 'draft',
         createdDate: new Date('2026-01-01T00:00:00Z'),
         updatedDate: new Date('2026-01-02T00:00:00Z'),
@@ -532,6 +534,7 @@ describe('GitHub Editorial Workflow service', () => {
           node_id: 'PR_5',
           title: 'Create Post “hello”',
           html_url: 'https://github.com/owner/repo/pull/5',
+          head: { sha: 'abc123' },
           created_at: '2026-01-01T00:00:00Z',
           updated_at: '2026-01-01T00:00:00Z',
         })
@@ -561,7 +564,13 @@ describe('GitHub Editorial Workflow service', () => {
       expect(fetchAPI).toHaveBeenCalledTimes(2);
 
       expect(result).toEqual(
-        expect.objectContaining({ number: 5, nodeId: 'PR_5', status: 'draft', files: [] }),
+        expect.objectContaining({
+          number: 5,
+          nodeId: 'PR_5',
+          headSHA: 'abc123',
+          status: 'draft',
+          files: [],
+        }),
       );
     });
   });

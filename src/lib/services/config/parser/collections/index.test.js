@@ -122,6 +122,51 @@ describe('Collections Parser', () => {
       expect(mockParseFields).toHaveBeenCalled();
     });
 
+    it('should warn when preview_path needs a date but no DateTime field is defined', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          preview_path: '/blog/{{year}}/{{month}}/{{slug}}',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'warning', strKey: 'preview_path_no_date_field' }),
+      );
+    });
+
+    it('should accept a date field defined only on the index file', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          preview_path: '/blog/{{year}}/{{slug}}',
+          fields: [{ name: 'title', widget: 'string' }],
+          index_file: { fields: [{ name: 'pubDate', widget: 'datetime' }] },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'preview_path_no_date_field' }),
+      );
+    });
+
     it('should detect format mismatch in entry collection', async () => {
       const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();

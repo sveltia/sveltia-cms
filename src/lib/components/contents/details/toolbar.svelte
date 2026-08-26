@@ -10,6 +10,7 @@
     MenuButton,
     MenuItem,
     MenuItemCheckbox,
+    Spacer,
     SplitButton,
     Toast,
     Toolbar,
@@ -18,6 +19,7 @@
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
+  import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
@@ -39,14 +41,14 @@
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
-  import { getEntryPreviewURL } from '$lib/services/contents/entry';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { deployPollTimedOut } from '$lib/services/deployments';
+  import { recheckDeployments, retainDeployPolling } from '$lib/services/deployments/poll';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
-  import { openNewTab } from '$lib/services/utils/window';
   import {
     hasPublishedVersion,
     isPendingDeletion,
@@ -137,11 +139,6 @@
       ? getAssociatedAssets({ entry: originalEntry, collectionName, fileName, relative: true })
       : [],
   );
-  const previewURL = $derived(
-    collection && originalEntry
-      ? getEntryPreviewURL(originalEntry, defaultLocale, collection, collectionFile)
-      : undefined,
-  );
   const workflowBranch = $derived(
     $workflowEnabled && collectionName && originalEntry
       ? getBranchName({ collectionName, slug: fileName ?? originalEntry.slug })
@@ -170,6 +167,11 @@
   // An entry awaiting deletion is read-only: there’s nothing to save or move through the stages,
   // only the deletion itself to carry out or call off
   const pendingDeletion = $derived(isPendingDeletion(unpublishedEntry));
+
+  // Keep the deploy state fresh while the editor is open, so a build that finishes in the
+  // background turns the preview link live without the user reloading. The release function is
+  // returned synchronously; awaiting anything first would lose the handle and leak the hold
+  $effect(() => retainDeployPolling());
 
   /**
    * Go back to the previous page. If the entry is a singleton file, go to the collections list.
@@ -351,69 +353,30 @@
 </script>
 
 {#snippet overflowButtons()}
-  {@const Component = env.isSmallScreen ? MenuItem : Button}
-  {@const canDuplicate =
-    !collectionFile &&
-    !isIndexFile &&
-    entryCollection?.duplicate !== false &&
-    !$collectionState.creationDisabled &&
-    // @todo Enable duplication for Hugo’s page bundles = the `path` option. We need to
-    // duplicate assets along with the entry.
-    // @see https://github.com/sveltia/sveltia-cms/issues/526
-    !entryCollection?.path}
-  {#if canDuplicate}
-    <Component
-      variant="ghost"
-      disabled={controlsDisabled}
-      label={_('duplicate')}
-      aria-label={_('duplicate_entry')}
-      onclick={() => {
-        goto(`/collections/${collectionName}/new`, {
-          replaceState: true,
-          notifyChange: false,
-          transitionType: 'forwards',
-        });
-        duplicateDraft();
-      }}
-    />
-  {/if}
-  <!-- A collection file is part of the collection definition, so it can only be discarded -->
-  {#if publishedVersionExists || (canDeleteEntry && !collectionFile)}
-    <Component
-      variant="ghost"
-      disabled={controlsDisabled}
-      label={_(
-        pendingDeletion
-          ? 'workflow.cancel_deletion'
-          : publishedVersionExists
-            ? 'discard'
-            : 'delete',
-      )}
-      aria-label={pendingDeletion
-        ? _('workflow.cancel_deletion')
-        : publishedVersionExists
-          ? _('workflow.discard_changes')
-          : _('delete_entries', { values: { count: 1 } })}
-      onclick={() => {
-        if (publishedVersionExists) {
-          showDiscardDialog = true;
-        } else {
-          showDeleteDialog = true;
-        }
-      }}
+  {#if !disabled && collection && originalEntry}
+    <PreviewLinkButton
+      entry={originalEntry}
+      locale={defaultLocale}
+      {collection}
+      {collectionFile}
+      pullRequest={unpublishedEntry?.workflow?.pullRequest}
+      iconic={!env.isLargeScreen}
+      as={env.isSmallScreen ? 'menuitem' : 'button'}
     />
   {/if}
 {/snippet}
 
-<div role="none" class="toolbar-wrapper" class:workflow={!!unpublishedEntry}>
-  <Toolbar variant="primary" aria-label={_('primary')}>
-    <BackButton
-      aria-label={_('cancel_editing')}
-      useShortcut={prefs.closeWithEscape && !$activeInlineEditors}
-      onclick={() => {
-        _goBack();
-      }}
-    />
+<Toolbar variant="primary" aria-label={_('primary')}>
+  <BackButton
+    aria-label={_('cancel_editing')}
+    useShortcut={prefs.closeWithEscape && !$activeInlineEditors}
+    onclick={() => {
+      _goBack();
+    }}
+  />
+  {#if env.isSmallScreen}
+    <Spacer flex />
+  {:else}
     <h2 role="none">
       {#if !notFound}
         <TruncatedText>
@@ -436,148 +399,195 @@
         </TruncatedText>
       {/if}
     </h2>
-    {#if !disabled && previewURL}
-      <Button
-        variant="tertiary"
-        label={_('view_on_live_site')}
-        onclick={() => {
-          openNewTab(previewURL);
-        }}
-      />
-    {/if}
-    {#if !env.isSmallScreen && !disabled && !isNew}
-      {@render overflowButtons()}
-    {/if}
-    <MenuButton
-      disabled={controlsDisabled}
-      variant="ghost"
-      iconic
-      popupPosition="bottom-right"
-      aria-label={_('show_editor_options')}
-      bind:this={menuButton}
+  {/if}
+  {#if !env.isSmallScreen}
+    {@render overflowButtons()}
+  {/if}
+  {#if unpublishedEntry && !pendingDeletion}
+    <EntryStatusMenu entry={unpublishedEntry} disabled={controlsDisabled} />
+  {/if}
+  {#if pendingDeletion}
+    <!-- Nothing to save: the entry is shown for reference until the deletion is carried out -->
+  {:else if $skipCIConfigured && !$workflowEnabled}
+    <SplitButton
+      variant="primary"
+      label={_($skipCIEnabled ? (saving ? 'saving' : 'save') : saving ? 'publishing' : 'publish')}
+      disabled={controlsDisabled || !modified}
+      keyShortcuts="Accel+S"
+      onclick={() => {
+        save();
+      }}
     >
       {#snippet popup()}
-        <Menu aria-label={_('editor_options')}>
-          {#if env.isSmallScreen && !disabled && !isNew}
-            {@render overflowButtons()}
-          {/if}
-          {#if publishedVersionExists && canDeleteEntry && !collectionFile && !pendingDeletion}
-            <MenuItem
-              label={_('delete')}
-              onclick={() => {
-                showDeleteDialog = true;
-              }}
-            />
-          {/if}
+        <!-- Show the opposite option: if automatic deployments are enabled, allow to disable it -->
+        <Menu>
           <MenuItem
-            label={_('edit_slug')}
-            disabled={!!collectionFile ||
-              isNew ||
-              isIndexFile ||
-              pendingDeletion ||
-              entryCollection?.delete === false}
+            label={_($skipCIEnabled ? 'save_and_publish' : 'save_without_publishing')}
             onclick={() => {
-              showEditSlugDialog = true;
+              save({ skipCI: !$skipCIEnabled });
             }}
           />
-          <MenuItem
-            label={_('revert_all_changes')}
-            disabled={!modified || pendingDeletion}
-            onclick={() => {
-              revertChanges();
-            }}
-          />
-          {#if !(env.isSmallScreen || env.isMediumScreen)}
-            <Divider />
-            <!-- The panes follow the writing direction, so they can’t be called left and right -->
-            <MenuItemCheckbox
-              label={_('show_second_pane')}
-              checked={showSecondPane}
-              disabled={!canShowSecondPane}
-              onChange={() => {
-                entryEditorSettings.update((view = {}) => ({
-                  ...view,
-                  showSecondPane: !(view.showSecondPane ?? true),
-                }));
-              }}
-            />
-            <!-- The preview is rendered in the second pane, so it’s unavailable while that’s
-            hidden -->
-            <MenuItemCheckbox
-              label={_('show_preview')}
-              checked={$entryEditorSettings?.showPreview}
-              disabled={!showSecondPane || !canPreview}
-              onChange={() => {
-                entryEditorSettings.update((view = {}) => ({
-                  ...view,
-                  showPreview: !view.showPreview,
-                }));
-              }}
-            />
-            <MenuItemCheckbox
-              label={_('sync_scrolling')}
-              checked={$entryEditorSettings?.syncScrolling}
-              disabled={!showSecondPane ||
-                (!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1)}
-              onChange={() => {
-                entryEditorSettings.update((view = {}) => ({
-                  ...view,
-                  syncScrolling: !view.syncScrolling,
-                }));
-              }}
-            />
-          {/if}
         </Menu>
       {/snippet}
-    </MenuButton>
-    <div role="none" class="actions">
-      {#if unpublishedEntry && !pendingDeletion}
-        <EntryStatusMenu entry={unpublishedEntry} disabled={controlsDisabled} />
-      {/if}
-      {#if pendingDeletion}
-        <!-- Nothing to save: the entry is shown for reference until the deletion is carried out -->
-      {:else if $skipCIConfigured && !$workflowEnabled}
-        <SplitButton
-          variant="primary"
-          label={_(
-            $skipCIEnabled ? (saving ? 'saving' : 'save') : saving ? 'publishing' : 'publish',
-          )}
-          disabled={controlsDisabled || !modified}
-          keyShortcuts="Accel+S"
+    </SplitButton>
+  {:else}
+    <Button
+      variant="primary"
+      label={_(saving ? 'saving' : 'save')}
+      disabled={controlsDisabled || !modified}
+      keyShortcuts="Accel+S"
+      onclick={() => {
+        save();
+      }}
+    />
+  {/if}
+  {#if unpublishedEntry}
+    <PublishEntryButton entry={unpublishedEntry} disabled={controlsDisabled} {modified} />
+  {/if}
+  <MenuButton
+    disabled={controlsDisabled}
+    variant="ghost"
+    iconic
+    popupPosition="bottom-right"
+    aria-label={_('show_editor_options')}
+    bind:this={menuButton}
+  >
+    {#snippet popup()}
+      <Menu aria-label={_('editor_options')}>
+        {#if env.isSmallScreen}
+          {@render overflowButtons()}
+        {/if}
+        {#if !disabled && !isNew}
+          {@const canDuplicate =
+            !collectionFile &&
+            !isIndexFile &&
+            entryCollection?.duplicate !== false &&
+            !$collectionState.creationDisabled &&
+            // @todo Enable duplication for Hugo’s page bundles = the `path` option. We need to
+            // duplicate assets along with the entry.
+            // @see https://github.com/sveltia/sveltia-cms/issues/526
+            !entryCollection?.path}
+          {#if canDuplicate}
+            <MenuItem
+              variant="ghost"
+              disabled={controlsDisabled}
+              label={_('duplicate')}
+              aria-label={_('duplicate_entry')}
+              onclick={() => {
+                goto(`/collections/${collectionName}/new`, {
+                  replaceState: true,
+                  notifyChange: false,
+                  transitionType: 'forwards',
+                });
+                duplicateDraft();
+              }}
+            />
+          {/if}
+          <!-- A collection file is part of the collection definition, so it can only be
+            discarded -->
+          {#if publishedVersionExists || (canDeleteEntry && !collectionFile)}
+            <MenuItem
+              variant="ghost"
+              disabled={controlsDisabled}
+              label={_(
+                pendingDeletion
+                  ? 'workflow.cancel_deletion'
+                  : publishedVersionExists
+                    ? 'discard'
+                    : 'delete',
+              )}
+              aria-label={pendingDeletion
+                ? _('workflow.cancel_deletion')
+                : publishedVersionExists
+                  ? _('workflow.discard_changes')
+                  : _('delete_entries', { values: { count: 1 } })}
+              onclick={() => {
+                if (publishedVersionExists) {
+                  showDiscardDialog = true;
+                } else {
+                  showDeleteDialog = true;
+                }
+              }}
+            />
+          {/if}
+        {/if}
+        {#if publishedVersionExists && canDeleteEntry && !collectionFile && !pendingDeletion}
+          <MenuItem
+            label={_('delete')}
+            onclick={() => {
+              showDeleteDialog = true;
+            }}
+          />
+        {/if}
+        <MenuItem
+          label={_('edit_slug')}
+          disabled={!!collectionFile ||
+            isNew ||
+            isIndexFile ||
+            pendingDeletion ||
+            entryCollection?.delete === false}
           onclick={() => {
-            save();
-          }}
-        >
-          {#snippet popup()}
-            <!-- Show the opposite option: if automatic deployments are enabled, allow to
-            disable it -->
-            <Menu>
-              <MenuItem
-                label={_($skipCIEnabled ? 'save_and_publish' : 'save_without_publishing')}
-                onclick={() => {
-                  save({ skipCI: !$skipCIEnabled });
-                }}
-              />
-            </Menu>
-          {/snippet}
-        </SplitButton>
-      {:else}
-        <Button
-          variant="primary"
-          label={_(saving ? 'saving' : 'save')}
-          disabled={controlsDisabled || !modified}
-          keyShortcuts="Accel+S"
-          onclick={() => {
-            save();
+            showEditSlugDialog = true;
           }}
         />
-      {/if}
-      {#if unpublishedEntry}
-        <PublishEntryButton entry={unpublishedEntry} disabled={controlsDisabled} {modified} />
-      {/if}
-    </div>
-  </Toolbar>
-</div>
+        <MenuItem
+          label={_('revert_all_changes')}
+          disabled={!modified || pendingDeletion}
+          onclick={() => {
+            revertChanges();
+          }}
+        />
+        {#if $deployPollTimedOut}
+          <Divider />
+          <MenuItem
+            label={_('deploy_preview.check_again')}
+            onclick={() => {
+              recheckDeployments();
+            }}
+          />
+        {/if}
+        {#if env.isLargeScreen}
+          <Divider />
+          <MenuItemCheckbox
+            label={_('show_second_pane')}
+            checked={showSecondPane}
+            disabled={!canShowSecondPane}
+            onChange={() => {
+              entryEditorSettings.update((view = {}) => ({
+                ...view,
+                showSecondPane: !(view.showSecondPane ?? true),
+              }));
+            }}
+          />
+          <!-- The preview is rendered in the second pane, so it’s unavailable while hidden -->
+          <MenuItemCheckbox
+            label={_('show_preview')}
+            checked={$entryEditorSettings?.showPreview}
+            disabled={!showSecondPane || !canPreview}
+            onChange={() => {
+              entryEditorSettings.update((view = {}) => ({
+                ...view,
+                showPreview: !view.showPreview,
+              }));
+            }}
+          />
+          <MenuItemCheckbox
+            label={_('sync_scrolling')}
+            checked={$entryEditorSettings?.syncScrolling}
+            disabled={!showSecondPane ||
+              (!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1)}
+            onChange={() => {
+              entryEditorSettings.update((view = {}) => ({
+                ...view,
+                syncScrolling: !view.syncScrolling,
+              }));
+            }}
+          />
+        {/if}
+      </Menu>
+    {/snippet}
+  </MenuButton>
+</Toolbar>
 
 <Toast bind:show={showValidationToast}>
   <Alert status="error">
@@ -688,38 +698,6 @@ because this toast goes away with the editor once the deletion has completed -->
 </AlertDialog>
 
 <style>
-  .toolbar-wrapper {
-    display: contents;
-
-    /*
-     * Editorial Workflow adds a status button and a Publish button next to Save, which crowd the
-     * primary toolbar on a narrow screen. Move that group to a second row instead.
-     */
-
-    &.workflow {
-      @media (width < 768px) {
-        :global(.sui.toolbar.primary) {
-          flex-wrap: wrap;
-          padding-block: 4px;
-          height: auto;
-          row-gap: 4px;
-        }
-
-        .actions {
-          display: flex;
-          align-items: center;
-          flex-basis: 100%;
-          justify-content: flex-end;
-        }
-      }
-    }
-  }
-
-  /* The buttons space themselves with their focus ring margin, so don’t add a flex gap here */
-  .actions {
-    display: contents;
-  }
-
   .error {
     margin-top: 8px;
     border-radius: var(--sui-control-medium-border-radius);

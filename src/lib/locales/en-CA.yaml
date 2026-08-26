@@ -1002,6 +1002,31 @@ view_in_repository: View in Repository
 view_on_x: 'View on {$service}'
 view_on_live_site: View on Live Site
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: View Preview
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: The preview is still being built.
+  # Shown when the build failed, so no preview is available
+  failed: The preview couldn’t be built.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Checking for a preview…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Check for Preview
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Checking for Preview
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Building…
+    failed: Build Failed
+
 # Content copying from other locales
 copy_from: Copy from…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -1579,6 +1604,10 @@ config:
     unsupported_ignored_option: The `{$prop}` option is not supported in Sveltia CMS. It will be ignored.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Both `picker_utc` and newer timezone options (`input_timezone` or `output_utc`) are set. The new options take precedence. Consider removing `picker_utc` from your configuration.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: The `preview_path` option uses date and time tags, but the collection has no DateTime field to read them from, so the preview link won’t be shown.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: The `preview_path_date_field` option refers to a field named `{$name}`, but no DateTime field with that name is defined, so the preview link won’t be shown.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'See the compatibility notes for details: {$link}'

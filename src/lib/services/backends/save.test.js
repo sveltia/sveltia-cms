@@ -28,7 +28,8 @@ vi.mock('@sveltia/utils/storage', () => ({
   })),
 }));
 
-vi.mock('svelte/store', () => ({
+vi.mock('svelte/store', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
   get: vi.fn(),
 }));
 

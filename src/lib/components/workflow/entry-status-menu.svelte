@@ -64,12 +64,12 @@
 </script>
 
 <MenuButton
-  variant="tertiary"
+  variant="ghost"
   label={updating
     ? _('workflow.changing_status')
-    : env.isSmallScreen
-      ? statusName
-      : qualifiedStatusName}
+    : env.isLargeScreen
+      ? qualifiedStatusName
+      : statusName}
   disabled={disabled || updating}
   popupPosition="bottom-right"
   aria-label={updating ? _('workflow.changing_status') : qualifiedStatusName}

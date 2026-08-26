@@ -4,6 +4,7 @@ import { get } from 'svelte/store';
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
+import { productionSHA } from '$lib/services/deployments';
 import { user } from '$lib/services/user/account.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { getBlob } from '$lib/services/utils/file';
@@ -168,6 +169,10 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
 
   await updateCache({ changes, commit });
   updateStores({ changes, savedEntries, savedAssets });
+  // The site is rebuilt from this commit, so the deploy state the UI reports is now about the
+  // user’s own change. Editorial Workflow commits don’t come through here; they land on a workflow
+  // branch and are tracked by the pull request instead
+  productionSHA.set(commit.sha);
 
   return { commit, savedEntries, savedAssets };
 };

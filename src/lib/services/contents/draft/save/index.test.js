@@ -43,7 +43,10 @@ vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/entry/history');
-vi.mock('$lib/services/workflow', () => ({ workflowEnabled: { subscribe: vi.fn() } }));
+vi.mock('$lib/services/workflow', () => ({
+  workflowEnabled: { subscribe: vi.fn() },
+  unpublishedEntries: { subscribe: vi.fn(() => vi.fn()) },
+}));
 vi.mock('$lib/services/workflow/save');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { subscribe: vi.fn(() => vi.fn()) },

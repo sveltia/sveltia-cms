@@ -157,16 +157,21 @@ export const getPreviewPath = ({
 };
 
 /**
- * Get the given entry file’s web-accessible URL on the live site.
+ * Get the given entry file’s web-accessible URL on the live site or a deploy preview.
  * @param {Entry} entry Entry.
  * @param {InternalLocaleCode} locale Locale.
  * @param {InternalCollection} collection Collection.
  * @param {InternalCollectionFile} [collectionFile] Collection file. File/singleton collection only.
- * @returns {string | undefined} URL on the live site.
+ * @param {object} [options] Options.
+ * @param {string} [options.baseURL] Base URL to use instead of the site’s own, typically the deploy
+ * preview URL reported by a CI/CD provider for an Editorial Workflow pull request. It takes
+ * precedence over the `site_url` option, which may be unset.
+ * @returns {string | undefined} URL on the live site or the deploy preview.
  * @see https://decapcms.org/docs/deploy-preview-links/
  */
-export const getEntryPreviewURL = (entry, locale, collection, collectionFile) => {
-  const { show_preview_links: showLinks = true, _baseURL: baseURL } = get(cmsConfig) ?? {};
+export const getEntryPreviewURL = (entry, locale, collection, collectionFile, options = {}) => {
+  const { show_preview_links: showLinks = true, _baseURL } = get(cmsConfig) ?? {};
+  const baseURL = options.baseURL || _baseURL;
   const { slug, path, content } = entry.locales[locale] ?? {};
 
   if (!showLinks || !baseURL) {

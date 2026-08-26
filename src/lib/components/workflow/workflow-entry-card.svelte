@@ -5,9 +5,11 @@
 -->
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Button } from '@sveltia/ui';
+  import { Button, Icon } from '@sveltia/ui';
 
   import Image from '$lib/components/assets/shared/image.svelte';
+  import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
+  import DeployStatusBadge from '$lib/components/workflow/deploy-status-badge.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { allEntries } from '$lib/services/contents';
   import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
@@ -17,6 +19,7 @@
   } from '$lib/services/contents/collection/files';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { deployments } from '$lib/services/deployments';
   import { hasPublishedVersion } from '$lib/services/workflow';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -55,6 +58,11 @@
   const collectionFile = $derived(
     collection && fileName ? getCollectionFile(collection, fileName) : undefined,
   );
+  // The card has no locale of its own, so the link points at the entry’s default one
+  const defaultLocale = $derived((collectionFile ?? collection)?._i18n?.defaultLocale);
+  const deployState = $derived(
+    (pullRequest.headSHA ? $deployments[pullRequest.headSHA]?.state : undefined) ?? 'unknown',
+  );
   const summary = $derived.by(() => {
     // `appLocale.current` is a key, because the labels can be localized
     if (!appLocale.current || !collection) {
@@ -82,6 +90,10 @@
   const canDelete = $derived(
     publishedVersionExists || (collection?._type === 'entry' ? collection.delete !== false : true),
   );
+  // The left action does one of three things depending on the entry, and with the labels gone the
+  // icon is all that says which: it reverses a pending deletion, throws away the changes a pull
+  // request was about to make, or takes an unpublished entry away for good
+  const deleteIcon = $derived(deletion || publishedVersionExists ? 'undo' : 'delete');
 </script>
 
 <!-- A pending deletion has no stages to move through, so its card doesn’t drag -->
@@ -137,14 +149,26 @@
           day: 'numeric',
         })}
       </span>
+      <DeployStatusBadge state={deployState} />
     </div>
     <div role="none" class="actions">
+      {#if collection && defaultLocale}
+        <PreviewLinkButton
+          {entry}
+          locale={defaultLocale}
+          {collection}
+          {collectionFile}
+          {pullRequest}
+          size="small"
+          iconic
+        />
+      {/if}
       {#if canDelete}
         <Button
-          variant="tertiary"
+          variant="ghost"
           size="small"
+          iconic
           disabled={busy}
-          label={_(deletion ? 'cancel' : publishedVersionExists ? 'discard' : 'delete')}
           aria-label={deletion
             ? _('workflow.cancel_deletion')
             : publishedVersionExists
@@ -153,21 +177,29 @@
           onclick={() => {
             onDelete?.();
           }}
-        />
+        >
+          {#snippet startIcon()}
+            <Icon name={deleteIcon} />
+          {/snippet}
+        </Button>
       {/if}
       {#if canPublish}
         <Button
           variant="primary"
           size="small"
+          iconic
           disabled={busy}
-          label={_(deletion ? 'delete' : 'publish')}
           aria-label={deletion
             ? _('delete_entries', { values: { count: 1 } })
             : _('workflow.publish_entry')}
           onclick={() => {
             onPublish?.();
           }}
-        />
+        >
+          {#snippet startIcon()}
+            <Icon name={deletion ? 'delete' : 'publish'} />
+          {/snippet}
+        </Button>
       {/if}
     </div>
   </footer>
@@ -254,8 +286,8 @@
 
     .actions {
       display: flex;
+      flex: none;
       align-items: center;
-      gap: 4px;
     }
   }
 </style>

@@ -10,6 +10,8 @@ import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { forgetDeployments } from '$lib/services/deployments';
+import { refreshProductionSHA } from '$lib/services/deployments/resolve';
 import { unpublishedEntries } from '$lib/services/workflow';
 import {
   mergeWorkflowAssets,
@@ -177,7 +179,10 @@ export const saveWorkflowChanges = async ({
     commitAuthor,
     commitDate,
     workflow: {
-      pullRequest,
+      // The backend returns the existing pull request as is when there already is one, so the head
+      // commit it carries is the one from before this save. Point it at the new commit, so the
+      // deploy preview lookup doesn’t keep reporting the previous build until the next full load
+      pullRequest: { ...pullRequest, headSHA: commit.sha },
       status: pullRequest.status,
       collectionName,
       fileName,
@@ -289,6 +294,10 @@ export const publishWorkflowEntry = async (entry) => {
 
   removeUnpublishedEntry(pullRequest.branch);
   publishWorkflowAssets(pullRequest.branch);
+  forgetDeployments([pullRequest.headSHA]);
+  // The merge put a new commit on the configured branch, so the production build to watch is a
+  // different one now
+  refreshProductionSHA();
 
   if (hookArgs) {
     await callEventHooks({ ...hookArgs, type: postType });
@@ -307,6 +316,7 @@ export const discardWorkflowEntry = async (entry) => {
   await workflow.discard(pullRequest);
   removeUnpublishedEntry(pullRequest.branch);
   removeWorkflowAssets(pullRequest.branch);
+  forgetDeployments([pullRequest.headSHA]);
 };
 
 /**

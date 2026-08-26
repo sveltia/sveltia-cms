@@ -70,6 +70,7 @@ const getFetchPullRequestsQuery = () => `
           createdAt
           updatedAt
           headRefName
+          headRefOid
           author {
             login
             avatarUrl
@@ -124,6 +125,7 @@ export const parsePullRequest = (node) => {
     title: node.title,
     url: node.url,
     branch: node.headRefName,
+    headSHA: node.headRefOid,
     status,
     createdDate: new Date(node.createdAt),
     updatedDate: new Date(node.updatedAt),
@@ -778,6 +780,7 @@ export const createPullRequest = async ({ branch, title, status }) => {
     title: result.title,
     url: result.html_url,
     branch,
+    headSHA: result.head?.sha,
     status,
     createdDate: new Date(result.created_at),
     updatedDate: new Date(result.updated_at),

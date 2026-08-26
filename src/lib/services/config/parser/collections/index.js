@@ -6,6 +6,7 @@ import { isObject } from '@sveltia/utils/object';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
+import { checkPreviewPath } from '$lib/services/config/parser/collections/preview';
 import { checkViewOptions } from '$lib/services/config/parser/collections/views';
 import { parseFields } from '$lib/services/config/parser/fields';
 import {
@@ -51,6 +52,8 @@ export const parseEntryCollection = (context, collectors) => {
     format,
     fields,
     index_file,
+    preview_path,
+    preview_path_date_field,
     reorder,
     slug,
     slug_length: legacySlugLength,
@@ -106,6 +109,17 @@ export const parseEntryCollection = (context, collectors) => {
       });
     }
   }
+
+  // Validate the `preview_path` option against the fields that can fill in its date and time tags.
+  // An index file can define its own fields, and the preview path reads from those for that entry,
+  // so a date field defined only there still counts
+  checkPreviewPath({
+    pathTemplate: preview_path,
+    dateFieldName: preview_path_date_field,
+    fields: [...(fields ?? []), ...(isObject(index_file) ? (index_file.fields ?? []) : [])],
+    context,
+    collectors,
+  });
 
   // Validate the `sortable_fields`, `view_groups` and `view_filters` options, including the fields
   // they refer to and the view group and filter names

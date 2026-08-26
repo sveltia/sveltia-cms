@@ -1561,7 +1561,10 @@
  * prefix or with Netlify/Decap CMS remain editable.
  * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Default:
  * `false`.
- * @property {string} [preview_context] Deploy preview link context.
+ * @property {string} [preview_context] Name of the commit status context or deployment environment
+ * that carries the deploy preview URL, matched as a case-insensitive substring. Default: any
+ * context or environment that looks like a deploy preview. See the
+ * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
  * @property {boolean} [open_authoring] Whether to enable Open Authoring, which lets a contributor
  * without write access to the repository propose changes from a fork. It requires the
  * `editorial_workflow` publish mode. Default: `false`. See the
@@ -1606,6 +1609,10 @@
  * prefix or with Netlify/Decap CMS remain editable.
  * @property {boolean} [squash_merges] Whether to use squash marge for Editorial Workflow. Default:
  * `false`.
+ * @property {string} [preview_context] Name of the commit status context or deployment environment
+ * that carries the deploy preview URL, matched as a case-insensitive substring. Default: any
+ * context or environment that looks like a deploy preview. See the
+ * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
  * @see https://decapcms.org/docs/gitlab-backend/
  * @see https://decapcms.org/docs/editorial-workflows/
  * @see https://sveltiacms.app/en/docs/backends/gitlab

@@ -46,7 +46,7 @@ const DRAFT_TITLE_PREFIX = 'Draft: ';
  * with the slash percent-encoded.
  * @returns {string} Project ID.
  */
-const getProjectId = () => {
+export const getProjectId = () => {
   const { owner, repo } = repository;
 
   return encodeURIComponent(`${owner}/${repo}`);
@@ -89,6 +89,7 @@ export const parseMergeRequest = (item) => {
     title: stripDraftPrefix(item.title),
     url: item.web_url,
     branch: item.source_branch,
+    headSHA: item.sha,
     status,
     createdDate: new Date(item.created_at),
     updatedDate: new Date(item.updated_at),
@@ -277,6 +278,7 @@ export const createPullRequest = async ({ branch, title, status }) => {
     title,
     url: result.web_url,
     branch,
+    headSHA: result.sha,
     status,
     createdDate: new Date(result.created_at),
     updatedDate: new Date(result.updated_at),

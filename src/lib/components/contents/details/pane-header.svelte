@@ -8,18 +8,22 @@
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
   import PreviewButton from '$lib/components/contents/details/preview-button.svelte';
+  import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import { backend } from '$lib/services/backends';
   import { entryDraft, filterRealValues } from '$lib/services/contents/draft';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { getEntryPreviewURL, getEntryRepoBlobURL } from '$lib/services/contents/entry';
+  import { getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { deployPollTimedOut } from '$lib/services/deployments';
+  import { recheckDeployments } from '$lib/services/deployments/poll';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
-  import { isPendingDeletion } from '$lib/services/workflow';
+  import { isPendingDeletion, unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
+  import { getBranchName } from '$lib/services/workflow/branch';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -68,9 +72,20 @@
       ),
   );
   const canPreview = $derived($entryDraft?.canPreview ?? true);
-  const previewURL = $derived(
-    collection && originalEntry && $thisPane?.locale
-      ? getEntryPreviewURL(originalEntry, $thisPane.locale, collection, collectionFile)
+  // Look the entry up in the store rather than reading the draft, so the preview link follows the
+  // head commit as it moves with each save, the same way the entry toolbar does
+  const workflowBranch = $derived(
+    $workflowEnabled && $entryDraft?.collectionName && originalEntry
+      ? getBranchName({
+          collectionName: $entryDraft.collectionName,
+          slug: $entryDraft.fileName ?? originalEntry.slug,
+        })
+      : undefined,
+  );
+  const pullRequest = $derived(
+    workflowBranch
+      ? $unpublishedEntries.find(({ workflow }) => workflow.pullRequest.branch === workflowBranch)
+          ?.workflow.pullRequest
       : undefined,
   );
 </script>
@@ -129,13 +144,21 @@
                 }}
               />
             {/if}
-            {#if originalEntry && (previewURL || prefs.devModeEnabled)}
+            {#if originalEntry && collection && $thisPane}
               <Divider />
-              {#if previewURL}
+              <PreviewLinkButton
+                as="menuitem"
+                entry={originalEntry}
+                locale={$thisPane.locale}
+                {collection}
+                {collectionFile}
+                {pullRequest}
+              />
+              {#if $deployPollTimedOut}
                 <MenuItem
-                  label={_('view_on_live_site')}
+                  label={_('deploy_preview.check_again')}
                   onclick={() => {
-                    openNewTab(previewURL);
+                    recheckDeployments();
                   }}
                 />
               {/if}

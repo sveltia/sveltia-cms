@@ -1,6 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
+import { checkPreviewPath } from '$lib/services/config/parser/collections/preview';
 import { parseFields } from '$lib/services/config/parser/fields';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 
@@ -22,6 +23,10 @@ export const parseCollectionFile = (context, collectors) => {
   const { collection, collectionFile } = context;
   // @ts-ignore singleton files don’t have `format` property on their files
   const { file, format = collection.format, fields, i18n } = collectionFile;
+
+  const { preview_path: previewPath, preview_path_date_field: previewPathDateField } =
+    collectionFile;
+
   const { extension } = getPathInfo(file);
 
   if (isFormatMismatch(extension, format, fields)) {
@@ -45,6 +50,16 @@ export const parseCollectionFile = (context, collectors) => {
   }
 
   parseFields(fields, context, collectors);
+
+  // A collection file’s own `preview_path` is used instead of the collection’s, not merged with
+  // it, so the fields available to fill it in are the file’s own
+  checkPreviewPath({
+    pathTemplate: previewPath,
+    dateFieldName: previewPathDateField,
+    fields: fields ?? [],
+    context,
+    collectors,
+  });
 };
 
 /**

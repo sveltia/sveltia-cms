@@ -6,6 +6,7 @@
   import WorkflowEntryCard from '$lib/components/workflow/workflow-entry-card.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
   import { allEntries } from '$lib/services/contents';
+  import { retainDeployPolling } from '$lib/services/deployments/poll';
   import {
     hasPublishedVersion,
     unpublishedEntries,
@@ -110,6 +111,12 @@
   const pendingDeletions = $derived(
     $unpublishedEntries.filter(({ workflow }) => workflow.status === 'pending_deletion'),
   );
+
+  // Keep the deploy state fresh while the board is open, so a preview link turns live as soon as
+  // its build finishes. One hold covers every card, because the lookup batches across all the open
+  // pull requests. The release function is returned synchronously; awaiting anything first would
+  // lose the handle and leak the hold
+  $effect(() => retainDeployPolling());
 
   /** Whether the page has already been announced, so a later status change doesn’t repeat it. */
   let announced = false;

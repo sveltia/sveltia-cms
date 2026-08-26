@@ -37,7 +37,8 @@ vi.mock('@sveltia/utils/object', () => ({
   isObject: vi.fn((obj) => obj !== null && typeof obj === 'object'),
 }));
 
-vi.mock('svelte/store', () => ({
+vi.mock('svelte/store', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
   get: mockGet,
   writable: vi.fn((initial) => ({
     set: vi.fn(),
