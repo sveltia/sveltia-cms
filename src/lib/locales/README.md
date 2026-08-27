@@ -45,6 +45,15 @@ Thank you for your interest in translating the Sveltia CMS user interface! Here�
 
 - Strings use [Unicode MessageFormat 2](https://messageformat.unicode.org/) (MF2) for pluralization and gender-specific translations.
 - Use correct [pluralization rules](https://www.unicode.org/cldr/charts/48/supplemental/language_plural_rules.html) for your language to add the necessary plural forms in your translation. Some languages have multiple plural forms (e.g., Arabic, Polish, Russian), while others have only one (e.g., Chinese, Japanese).
+- **Use only the plural categories your language actually has.** A category name your language doesn’t use — such as `one` in Chinese, Japanese, Korean or Vietnamese — never matches, so that variant is silently dead and every count falls through to `*`. Copying the English file’s `one` variant is the usual way this slips in.
+- **To vary the wording at a specific count, select on the value instead of a category.** If your language has only `other` but you still want different wording for a single item, use `1` rather than `one`. A literal key takes precedence over a category key, so it works in any language:
+  ```
+  .input {$count :integer}
+  .match $count
+    1   {{ 이 폴더에 “{$name}” 파일이 이미 있습니다. 교체하시겠습니까? }}
+    *   {{ 이 폴더에 이름이 같은 파일 {$count}개가 이미 있습니다. 교체하시겠습니까? }}
+  ```
+  Reach for a literal only when your language lacks the category. Where a category exists, prefer it: Polish or Russian `one` also covers 21, 31, 101 and so on, which a literal `1` would miss.
 - Refer to the [MF2 translator guide](https://messageformat.unicode.org/docs/translators/) and [Sveltia I18n documentation](https://github.com/sveltia/sveltia-i18n#message-format) for syntax details.
 
 ### Language & Tone

@@ -353,7 +353,7 @@ viewing_x_collection: |
   .input {$count :integer}
   .match $count
     0   {{ 「{$collection}」コレクションを表示しています。ここにはまだエントリーがありません。 }}
-    one {{ 「{$collection}」コレクションを表示しています。ここにはひとつのエントリーがあります。 }}
+    1   {{ 「{$collection}」コレクションを表示しています。ここにはひとつのエントリーがあります。 }}
     *   {{ 「{$collection}」コレクションを表示しています。ここには {$count} 個のエントリーがあります。 }}
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
@@ -361,7 +361,7 @@ viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
     0   {{ 「{$folder}」アセットフォルダーを表示しています。ここにはまだアセットがありません。 }}
-    one {{ 「{$folder}」アセットフォルダーを表示しています。ここにはひとつのアセットがあります。 }}
+    1   {{ 「{$folder}」アセットフォルダーを表示しています。ここにはひとつのアセットがあります。 }}
     *   {{ 「{$folder}」アセットフォルダーを表示しています。ここには {$count} 個のアセットがあります。 }}
 
 # Singleton file selection announcement
@@ -537,7 +537,7 @@ enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
     0   {{ 新しい名前を以下に入力してください。 }}
-    one {{ 新しい名前を以下に入力してください。このアセットを使用している 1 個のエントリーも更新されます。 }}
+    1   {{ 新しい名前を以下に入力してください。このアセットを使用している 1 個のエントリーも更新されます。 }}
     *   {{ 新しい名前を以下に入力してください。このアセットを使用している {$count} 個のエントリーも更新されます。 }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
@@ -622,7 +622,7 @@ confirm_deleting_this_asset: このアセットを削除してもよろしいで
 confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ 選択されたアセットを削除してもよろしいですか？ }}
+    1   {{ 選択されたアセットを削除してもよろしいですか？ }}
     *   {{ 選択された {$count} 個のアセットを削除してもよろしいですか？ }}
 confirm_deleting_all_assets: すべてのアセットを削除してもよろしいですか？
 
@@ -641,13 +641,13 @@ deleting_entry_failed: エントリーを削除できませんでした。再度
 confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ 選択されたエントリーを削除してもよろしいですか？ }}
+    1   {{ 選択されたエントリーを削除してもよろしいですか？ }}
     *   {{ 選択された {$count} 個のエントリーを削除してもよろしいですか？ }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    one {{ 選択されたエントリーと関連アセットを削除してもよろしいですか？ }}
+    1   {{ 選択されたエントリーと関連アセットを削除してもよろしいですか？ }}
     *   {{ 選択された {$count} 個のエントリーと関連アセットを削除してもよろしいですか？ }}
 confirm_deleting_all_entries: すべてのエントリーを削除してもよろしいですか？
 confirm_deleting_all_entries_with_assets: すべてのエントリーと関連アセットを削除してもよろしいですか？
@@ -688,7 +688,7 @@ confirm_replacing_file: '「{$name}」がこのファイルと置き換えられ
 confirm_uploading_files: |
   .input {$count :integer}
   .match $count
-    one {{ このファイルを「{$folder}」フォルダーに保存します: }}
+    1   {{ このファイルを「{$folder}」フォルダーに保存します: }}
     *   {{ これら {$count} 個のファイルを「{$folder}」フォルダーに保存します: }}
 
 # File size validation
@@ -698,7 +698,7 @@ oversized_files: サイズ超過ファイル
 warning_oversized_files: |
   .input {$count :integer}
   .match $count
-    one {{ このファイルは最大サイズ {$size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。 }}
+    1   {{ このファイルは最大サイズ {$size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。 }}
     *   {{ これらのファイルは最大サイズ {$size} を超えているため、アップロードできません。サイズを縮小するか、他のファイルを選んでください。 }}
 
 # File integrity validation
@@ -708,7 +708,7 @@ invalid_files: 無効なファイル
 warning_invalid_files: |
   .input {$count :integer}
   .match $count
-    one {{ このファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
+    1   {{ このファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
     *   {{ これらのファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
 
 # File format validation when replacing an asset
@@ -718,22 +718,22 @@ mismatched_files: 形式不一致ファイル
 warning_mismatched_files: |
   .input {$count :integer}
   .match $count
-    one {{ このファイルは形式が異なるため、「{$name}」と置き換えられません。ファイルを同じ形式に変換してから再度お試しください。 }}
-    *   {{ 選択したファイルは形式が異なるため、「{$name}」と置き換えられません。ファイルを同じ形式に変換してから再度お試しください。 }}
+    1   {{ このファイルは形式が異なるため、「{$name}」と置き換えられません。ファイルを同じ形式に変換してから再度お試しください。 }}
+    *   {{ これらのファイルは形式が異なるため、「{$name}」と置き換えられません。ファイルを同じ形式に変換してから再度お試しください。 }}
 
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
   .input {$count :integer}
   .match $count
-    one {{ 同じ名前のファイルがこのフォルダーに既に存在します。置き換えますか？ }}
+    1   {{ 同じ名前のファイルがこのフォルダーに既に存在します。置き換えますか？ }}
     *   {{ {$count} 個のファイルが同じ名前でこのフォルダーに既に存在します。置き換えますか？ }}
 # {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
 file_name_conflict_confirmation_with_name: |
   .input {$count :integer}
   .input {$name :string}
   .match $count
-    one {{ "{$name}" という名前のファイルはこのフォルダーに既に存在します。置き換えますか？ }}
+    1   {{ "{$name}" という名前のファイルはこのフォルダーに既に存在します。置き換えますか？ }}
     *   {{ {$count} 個のファイルが同じ名前でこのフォルダーに既に存在します。置き換えますか？ }}
 file_name_conflict_resolution: ファイル名の競合解決
 # Option to keep both files (rename the new one)
@@ -780,7 +780,7 @@ entry_duplicated: エントリーが複製され、新しい下書きとなり�
 entry_validation_errors: |
   .input {$count :integer}
   .match $count
-    one {{ ひとつのフィールドにエラーがあります。エントリーを保存するには問題を修正してください。 }}
+    1   {{ ひとつのフィールドにエラーがあります。エントリーを保存するには問題を修正してください。 }}
     *   {{ {$count} 個のフィールドにエラーがあります。エントリーを保存するには問題を修正してください。 }}
 
 # ==============================================================================
@@ -793,17 +793,17 @@ entry_validation_errors: |
 entry_saved: |
   .input {$count :integer}
   .match $count
-    one {{ エントリーが保存されました。 }}
+    1   {{ エントリーが保存されました。 }}
     *   {{ {$count} 件のエントリーが保存されました。 }}
 entry_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ エントリーが保存、公開されました。 }}
+    1   {{ エントリーが保存、公開されました。 }}
     *   {{ {$count} 件のエントリーが保存、公開されました。 }}
 entries_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ エントリーが削除されました。 }}
+    1   {{ エントリーが削除されました。 }}
     *   {{ {$count} 個のエントリーが削除されました。 }}
 
 # Asset operations
@@ -811,47 +811,47 @@ entries_deleted: |
 assets_saved: |
   .input {$count :integer}
   .match $count
-    one {{ アセットが保存されました。 }}
+    1   {{ アセットが保存されました。 }}
     *   {{ {$count} 個のアセットが保存されました。 }}
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ アセットが保存、公開されました。 }}
+    1   {{ アセットが保存、公開されました。 }}
     *   {{ {$count} 個のアセットが保存、公開されました。 }}
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
-    one {{ URL がクリップボードにコピーされました。 }}
+    1   {{ URL がクリップボードにコピーされました。 }}
     *   {{ {$count} 個の URL がクリップボードにコピーされました。 }}
 asset_paths_copied: |
   .input {$count :integer}
   .match $count
-    one {{ ファイルパスがクリップボードにコピーされました。 }}
+    1   {{ ファイルパスがクリップボードにコピーされました。 }}
     *   {{ {$count} 個のファイルパスがクリップボードにコピーされました。 }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
-    one {{ ファイルデータがクリップボードにコピーされました。 }}
+    1   {{ ファイルデータがクリップボードにコピーされました。 }}
     *   {{ {$count} 個のファイルデータがクリップボードにコピーされました。 }}
 assets_downloaded: |
   .input {$count :integer}
   .match $count
-    one {{ アセットファイルがダウンロードされました。 }}
+    1   {{ アセットファイルがダウンロードされました。 }}
     *   {{ {$count} 個のアセットファイルがダウンロードされました。 }}
 assets_moved: |
   .input {$count :integer}
   .match $count
-    one {{ アセットが移動されました。 }}
+    1   {{ アセットが移動されました。 }}
     *   {{ {$count} 個のアセットが移動されました。 }}
 assets_renamed: |
   .input {$count :integer}
   .match $count
-    one {{ アセットの名前が変更されました。 }}
+    1   {{ アセットの名前が変更されました。 }}
     *   {{ {$count} 個のアセットの名前が変更されました。 }}
 assets_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ アセットが削除されました。 }}
+    1   {{ アセットが削除されました。 }}
     *   {{ {$count} 個のアセットが削除されました。 }}
 
 # ==============================================================================
@@ -1028,7 +1028,7 @@ editor:
       .input {$count :integer}
       .match $count
         0   {{ {$source} から翻訳されたフィールドはありません。 }}
-        one {{ {$source} からフィールドを翻訳しました。 }}
+        1   {{ {$source} からフィールドを翻訳しました。 }}
         *   {{ {$source} から {$count} 個のフィールドを翻訳しました。 }}
   copy:
     none: コピーされたフィールドはありません。
@@ -1037,7 +1037,7 @@ editor:
       .input {$count :integer}
       .match $count
         0   {{ {$source} からコピーされたフィールドはありません。 }}
-        one {{ {$source} からフィールドをコピーしました。 }}
+        1   {{ {$source} からフィールドをコピーしました。 }}
         *   {{ {$source} から {$count} 個のフィールドをコピーしました。 }}
 
 # ==============================================================================
@@ -1401,7 +1401,7 @@ config:
     insecure_urls: |
       .input {$count :integer}
       .match $count
-        one {{ 設定ファイルの URL は HTTPS プロトコルまたはローカルホストアドレスを使用する必要があります。 }}
+        1   {{ 設定ファイルの URL は HTTPS プロトコルまたはローカルホストアドレスを使用する必要があります。 }}
         *   {{ 設定ファイルの URL は HTTPS プロトコルまたはローカルホストアドレスを使用する必要があります。 }}
     fetch_failed: 設定ファイルを読み込めませんでした。
     # {$status} is the HTTP status code returned while fetching the config file
@@ -1593,13 +1593,13 @@ workflow:
   deletion_pending: |
     .input {$count :integer}
     .match $count
-      one {{ エントリーを削除予定にしました。 }}
+      1   {{ エントリーを削除予定にしました。 }}
       *   {{ {$count} 件のエントリーを削除予定にしました。 }}
   # Toast notification shown after the unpublished changes to an entry have been thrown away
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      one {{ 変更を破棄しました。 }}
+      1   {{ 変更を破棄しました。 }}
       *   {{ {$count} 件のエントリーの変更を破棄しました。 }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: 削除を取り消しています…
@@ -1650,7 +1650,7 @@ workflow:
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      one {{ そのうち 1 件はまだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。 }}
+      1   {{ そのうち 1 件はまだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。 }}
       *   {{ そのうち {$count} 件はまだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。 }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry: このエントリーを公開してもよろしいですか？ 変更は即座に反映されます。
