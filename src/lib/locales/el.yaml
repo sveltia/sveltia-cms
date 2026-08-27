@@ -1491,7 +1491,6 @@ config:
   warning:
     oauth_no_app_id: Το OAuth application ID δεν έχει οριστεί. Οι χρήστες πρέπει να παρέχουν διακριτικό πρόσβασης για να συνδεθούν.
     editorial_workflow_unsupported: Η ροή εργασίας σύνταξης δεν υποστηρίζεται ακόμη στο Sveltia CMS.
-    open_authoring_unsupported: Η ανοιχτή συγγραφή (open authoring) δεν υποστηρίζεται ακόμη στο Sveltia CMS.
     nested_collections_unsupported: Οι εμφωλευμένες (nested) συλλογές δεν υποστηρίζονται ακόμη στο Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Η επιλογή `{$prop}` δεν υποστηρίζεται στο Sveltia CMS και θα αγνοηθεί.

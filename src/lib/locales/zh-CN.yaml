@@ -1439,7 +1439,6 @@ config:
   warning:
     oauth_no_app_id: 未定义 OAuth 应用程序 ID。用户需要提供访问令牌才能登录。
     editorial_workflow_unsupported: Sveltia CMS 暂不支持编辑工作流。
-    open_authoring_unsupported: Sveltia CMS 暂不支持开放撰写。
     nested_collections_unsupported: Sveltia CMS 暂不支持嵌套集合。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: 'Sveltia CMS 不支持 `{$prop}` 选项。该选项将会被忽略。'

@@ -1434,7 +1434,6 @@ config:
   warning:
     oauth_no_app_id: OAuth 애플리케이션 ID가 정의되지 않았습니다. 사용자는 로그인하려면 액세스 토큰을 제공해야 합니다.
     editorial_workflow_unsupported: 에디토리얼 워크플로우는 Sveltia CMS에서 아직 지원되지 않습니다.
-    open_authoring_unsupported: 오픈 오소링은 Sveltia CMS에서 아직 지원되지 않습니다.
     nested_collections_unsupported: 중첩 컬렉션은 Sveltia CMS에서 아직 지원되지 않습니다.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` 옵션은 Sveltia CMS에서 지원되지 않습니다. 이 옵션은 무시됩니다.'

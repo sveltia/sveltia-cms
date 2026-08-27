@@ -1589,7 +1589,6 @@ config:
   warning:
     oauth_no_app_id: ID aplikace OAuth není definováno. Uživatelé se musí přihlásit pomocí přístupového tokenu.
     editorial_workflow_unsupported: Redakční workflow zatím není ve Sveltia CMS podporováno.
-    open_authoring_unsupported: Otevřené autorství (open authoring) zatím není ve Sveltia CMS podporováno.
     nested_collections_unsupported: Zanořené kolekce zatím nejsou ve Sveltia CMS podporovány.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Možnost `{$prop}` není ve Sveltia CMS podporována a bude ignorována.

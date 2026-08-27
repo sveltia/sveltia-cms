@@ -1538,7 +1538,6 @@ config:
   warning:
     oauth_no_app_id: ID ứng dụng OAuth không được xác định. Người dùng được yêu cầu cung cấp mã truy cập để đăng nhập.
     editorial_workflow_unsupported: Quy trình biên tập hiện chỉ hỗ trợ dịch vụ GitHub và GitLab.
-    open_authoring_unsupported: Open Authoring chưa được Sveltia CMS hỗ trợ.
     nested_collections_unsupported: Sveltia CMS chưa hỗ trợ các chuyên mục lồng nhau.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Tùy chọn `{$prop}` không được hỗ trợ trong Sveltia CMS. Nó sẽ bị bỏ qua.

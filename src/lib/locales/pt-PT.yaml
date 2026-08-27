@@ -1552,7 +1552,6 @@ config:
   warning:
     oauth_no_app_id: O ID da aplicação OAuth não está definido. Os utilizadores têm de fornecer um token de acesso para iniciar sessão.
     editorial_workflow_unsupported: O fluxo de trabalho editorial ainda não é suportado no Sveltia CMS.
-    open_authoring_unsupported: A autoria aberta ainda não é suportada no Sveltia CMS.
     nested_collections_unsupported: As coleções aninhadas ainda não são suportadas no Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: A opção `{$prop}` não é suportada no Sveltia CMS. Será ignorada.

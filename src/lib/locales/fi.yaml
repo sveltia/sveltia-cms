@@ -1500,7 +1500,6 @@ config:
   warning:
     oauth_no_app_id: OAuth-sovelluksen tunnusta ei ole määritetty. Käyttäjien on annettava pääsytunnus kirjautuakseen sisään.
     editorial_workflow_unsupported: Editoinnin työnkulkua ei vielä tueta Sveltia CMS:ssä.
-    open_authoring_unsupported: Open Authoringia ei vielä tueta Sveltia CMS:ssä.
     nested_collections_unsupported: Sisäkkäisiä kokoelmia ei vielä tueta Sveltia CMS:ssä.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Asetusta `{$prop}` ei tueta Sveltia CMS:ssä. Se jätetään huomiotta.

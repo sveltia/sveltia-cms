@@ -1534,7 +1534,6 @@ config:
   warning:
     oauth_no_app_id: ID OAuth aplikacije nije definiran. Korisnici se moraju prijaviti pomoću pristupnog tokena.
     editorial_workflow_unsupported: Uredničko radno okruženje još nije podržano u Sveltia CMS-u.
-    open_authoring_unsupported: Otvoreno autorstvo još nije podržano u Sveltia CMS-u.
     nested_collections_unsupported: Ugniježđene zbirke još nisu podržane u Sveltia CMS-u.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Opcija `{$prop}` nije podržana u Sveltia CMS-u. Bit će zanemarena.

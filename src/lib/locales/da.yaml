@@ -1554,7 +1554,6 @@ config:
   warning:
     oauth_no_app_id: OAuth-applikationens id er ikke defineret. Brugere skal angive et adgangstoken for at logge ind.
     editorial_workflow_unsupported: Redaktionel arbejdsgang understøttes endnu ikke i Sveltia CMS.
-    open_authoring_unsupported: Open authoring understøttes endnu ikke i Sveltia CMS.
     nested_collections_unsupported: Indlejrede samlinger understøttes endnu ikke i Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Indstillingen `{$prop}` understøttes ikke i Sveltia CMS. Den bliver ignoreret.

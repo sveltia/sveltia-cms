@@ -1468,7 +1468,6 @@ config:
   warning:
     oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış. Kullanıcıların giriş yapabilmesi için bir erişim token’ı sağlaması gerekir.
     editorial_workflow_unsupported: Editöryal akış henüz Sveltia CMS’te desteklenmiyor.
-    open_authoring_unsupported: Açık yazarlık (Open authoring) henüz Sveltia CMS’te desteklenmiyor.
     nested_collections_unsupported: İç içe koleksiyonlar henüz Sveltia CMS’te desteklenmiyor.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` seçeneği Sveltia CMS’te desteklenmiyor. Yoksayılacaktır.'

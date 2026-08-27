@@ -1573,7 +1573,6 @@ config:
   warning:
     oauth_no_app_id: Идентификатор OAuth-приложения не определён. Пользователи должны предоставить токен доступа для входа.
     editorial_workflow_unsupported: Редакционный процесс пока не поддерживается в Sveltia CMS.
-    open_authoring_unsupported: Открытое авторство пока не поддерживается в Sveltia CMS.
     nested_collections_unsupported: Вложенные коллекции пока не поддерживаются в Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Параметр `{$prop}` не поддерживается в Sveltia CMS. Он будет проигнорирован.

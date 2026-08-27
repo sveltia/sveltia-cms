@@ -1703,7 +1703,6 @@ config:
   warning:
     oauth_no_app_id: معرف تطبيق OAuth غير محدد. يلزم المستخدمون بتوفير رمز وصول لتسجيل الدخول.
     editorial_workflow_unsupported: سير عمل التحرير غير مدعوم بعد في Sveltia CMS.
-    open_authoring_unsupported: التأليف المفتوح غير مدعوم بعد في Sveltia CMS.
     nested_collections_unsupported: المجموعات المتداخلة غير مدعومة بعد في Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: الخيار `{$prop}` غير مدعوم في Sveltia CMS. سيتم تجاهله.
