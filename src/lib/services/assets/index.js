@@ -139,6 +139,11 @@ export const renamingAsset = writable();
  * @type {Readable<ProcessedAssets>}
  */
 export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], set, update) => {
+  // Set when a newer selection supersedes this run. Processing a file is asynchronous and can take
+  // a while — transcoding a large image, for one — so a run that started earlier may well settle
+  // after a later one has, and it must not overwrite the newer results with its own stale ones.
+  let superseded = false;
+
   set({
     processing: false,
     validFiles: [],
@@ -157,6 +162,10 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
 
     const results = await Promise.all(originalFiles.map((file) => processFile(file, config)));
 
+    if (superseded) {
+      return;
+    }
+
     update(() => ({
       processing: false,
       validFiles: results
@@ -173,6 +182,11 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
       ),
     }));
   })();
+
+  // Called by `derived` before the next run starts, and when the last subscriber goes away
+  return () => {
+    superseded = true;
+  };
 });
 
 /**

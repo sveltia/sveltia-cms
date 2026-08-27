@@ -406,6 +406,56 @@ describe('assets/index', () => {
       expect(latestState.transformedFileMap.get(originalFile)).toBeUndefined();
     });
 
+    it('should discard the results of a superseded run', async () => {
+      const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+      const firstFile = new File(['first'], 'first.jpg', { type: 'image/jpeg' });
+      const secondFile = new File(['second'], 'second.jpg', { type: 'image/jpeg' });
+
+      Object.defineProperty(firstFile, 'size', { value: 500 });
+      Object.defineProperty(secondFile, 'size', { value: 500 });
+
+      /** @type {Record<string, (valid: boolean) => void>} */
+      const resolvers = {};
+
+      // Hold each file’s validation open, so the two runs can be settled out of order
+      vi.mocked(isValidImage).mockImplementation(
+        (file) =>
+          new Promise((resolve) => {
+            resolvers[file.name] = resolve;
+          }),
+      );
+
+      let latestState = /** @type {any} */ (null);
+
+      const unsubscribe = processedAssets.subscribe((state) => {
+        latestState = state;
+      });
+
+      // A slow selection, superseded by another one before it settles
+      uploadingAssets.set({ folder: undefined, files: [firstFile] });
+      uploadingAssets.set({ folder: undefined, files: [secondFile] });
+
+      resolvers['second.jpg'](true);
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      expect(latestState.validFiles).toEqual([secondFile]);
+
+      // The superseded run settles last, and must not overwrite the current results
+      resolvers['first.jpg'](true);
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      unsubscribe();
+      vi.mocked(isValidImage).mockResolvedValue(true);
+
+      expect(latestState.validFiles).toEqual([secondFile]);
+    });
+
     it('should set processing state during transformations', async () => {
       const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 

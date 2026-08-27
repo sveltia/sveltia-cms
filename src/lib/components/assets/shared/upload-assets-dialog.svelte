@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Dialog, FilePicker } from '@sveltia/ui';
   import mime from 'mime';
+  import { untrack } from 'svelte';
 
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { uploadingAssets } from '$lib/services/assets';
@@ -47,6 +48,22 @@
   $effect(() => {
     if (!$showAssetOverlay) {
       $showUploadAssetsDialog = false;
+    }
+  });
+
+  $effect(() => {
+    if (!$showUploadAssetsDialog) {
+      // A replacement request is written to the store before this dialog opens, and consumed by
+      // `onSelect` above. Dismissing the dialog would otherwise leave it behind, and the next
+      // ordinary upload would be treated as a replacement of that asset — with the wrong dialog
+      // title, a single-file picker and an `accept` list restricted to the asset’s own type.
+      // `onSelect` stores the files before it closes the dialog, so a non-empty list here means a
+      // selection was made and the request is still in use.
+      untrack(() => {
+        if (!$uploadingAssets.files.length && $uploadingAssets.originalAssets) {
+          $uploadingAssets = { folder: undefined, files: [] };
+        }
+      });
     }
   });
 </script>
