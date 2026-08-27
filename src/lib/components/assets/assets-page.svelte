@@ -1,6 +1,5 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Alert, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
   import { onMount } from 'svelte';
@@ -23,7 +22,6 @@
     updateContentFromHashChange,
   } from '$lib/services/app/navigation';
   import { allAssets, overlaidAsset } from '$lib/services/assets';
-  import { assetUpdatesToast } from '$lib/services/assets/data';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import {
     getFolderLabelByCollection,
@@ -175,29 +173,3 @@
 
 <EditAssetDialog />
 <RenameAssetDialog />
-
-<Toast bind:show={$assetUpdatesToast.saved}>
-  <Alert status="success">
-    {_($assetUpdatesToast.published ? 'assets_saved_and_published' : 'assets_saved', {
-      values: { count: $assetUpdatesToast.count },
-    })}
-  </Alert>
-</Toast>
-
-<Toast bind:show={$assetUpdatesToast.moved}>
-  <Alert status="success">
-    {_('assets_moved', { values: { count: $assetUpdatesToast.count } })}
-  </Alert>
-</Toast>
-
-<Toast bind:show={$assetUpdatesToast.renamed}>
-  <Alert status="success">
-    {_('assets_renamed', { values: { count: $assetUpdatesToast.count } })}
-  </Alert>
-</Toast>
-
-<Toast bind:show={$assetUpdatesToast.deleted}>
-  <Alert status="success">
-    {_('assets_deleted', { values: { count: $assetUpdatesToast.count } })}
-  </Alert>
-</Toast>

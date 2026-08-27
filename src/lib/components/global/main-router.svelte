@@ -3,6 +3,7 @@
 
   import AssetsPage from '$lib/components/assets/assets-page.svelte';
   import CloudinaryIframe from '$lib/components/assets/browser/cloudinary-iframe.svelte';
+  import AssetUpdatesToast from '$lib/components/assets/shared/asset-updates-toast.svelte';
   import UploadAssetsConfirmDialog from '$lib/components/assets/shared/upload-assets-confirm-dialog.svelte';
   import UploadAssetsDialog from '$lib/components/assets/shared/upload-assets-dialog.svelte';
   import ConfigPage from '$lib/components/config/config-page.svelte';
@@ -110,6 +111,7 @@
 
 <UploadAssetsDialog />
 <UploadAssetsConfirmDialog />
+<AssetUpdatesToast />
 <TranslatorApiKeyDialog />
 <EntryParseErrorsToast />
 <CloudinaryIframe />
