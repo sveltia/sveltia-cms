@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, ConfirmationDialog, Radio, RadioGroup } from '@sveltia/ui';
+  import { Alert, ConfirmationDialog, Radio, RadioGroup, Toast } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
@@ -18,6 +18,10 @@
   /** @type {File[]} */
   let files = $state([]);
   let replaceFiles = $state(true);
+  // Committing to a remote repository takes a few seconds, and the confirmation dialog is gone by
+  // then, so the upload would otherwise happen with nothing on screen to say it’s under way
+  let uploading = $state(false);
+  let uploadFailed = $state(false);
 
   const { files: originalFiles, folder, originalAssets } = $derived($uploadingAssets);
   const originalAsset = $derived(originalAssets?.[0]);
@@ -68,14 +72,25 @@
   okLabel={_(originalAsset ? 'replace' : 'upload')}
   okDisabled={!files.length}
   onOk={async () => {
-    await saveAssets(
-      originalAsset
-        ? { files, folder, originalAssets }
-        : { files, folder, replaceDuplicates: replaceFiles },
-      { commitType: 'uploadMedia' },
-    );
+    uploading = true;
 
-    $uploadingAssets = { folder: undefined, files: [] };
+    try {
+      await saveAssets(
+        originalAsset
+          ? { files, folder, originalAssets }
+          : { files, folder, replaceDuplicates: replaceFiles },
+        { commitType: 'uploadMedia' },
+      );
+    } catch (/** @type {any} */ ex) {
+      uploadFailed = true;
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    } finally {
+      uploading = false;
+      // Clear the selection whatever happened, so a failed upload doesn’t leave the store holding
+      // files that no dialog is showing any more
+      $uploadingAssets = { folder: undefined, files: [] };
+    }
   }}
   onCancel={() => {
     $uploadingAssets = { folder: undefined, files: [] };
@@ -149,6 +164,15 @@
     </div>
   {/if}
 </ConfirmationDialog>
+
+<!-- `duration={0}` keeps this up until the upload settles, however long the commit takes -->
+<Toast bind:show={uploading} duration={0}>
+  <Alert status="info">{_('uploading_files_progress')}</Alert>
+</Toast>
+
+<Toast bind:show={uploadFailed}>
+  <Alert status="error">{_('uploading_files_failed')}</Alert>
+</Toast>
 
 <style>
   .section {
