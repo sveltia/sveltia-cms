@@ -20,6 +20,9 @@
    * @property {boolean} [multiple] Whether to accept multiple files.
    * @property {boolean} [showUploadButton] Whether to show the upload button.
    * @property {boolean} [showFilePreview] Whether to show file preview after files are selected.
+   * @property {boolean} [filterDroppedFiles] Whether to drop files that don’t match {@link accept}
+   * and report the mismatch. Disable this when the consumer checks the selection itself, so the
+   * user is told once, in one place. The `accept` attribute still narrows the file picker.
    * @property {(detail: { files: File[] }) => void} [onDrop] Custom `Drop` event handler.
    * @property {Snippet} [children] Slot content.
    */
@@ -32,6 +35,7 @@
     multiple = false,
     showUploadButton = false,
     showFilePreview = false,
+    filterDroppedFiles = true,
     onDrop = undefined,
     children = undefined,
     /* eslint-enable prefer-const */
@@ -163,11 +167,13 @@
 
     dragging = false;
 
-    const filteredFileList = await scanFiles(event.dataTransfer, { accept });
+    const filteredFileList = await scanFiles(event.dataTransfer, {
+      accept: filterDroppedFiles ? accept : undefined,
+    });
 
     if (filteredFileList.length) {
       updateFileList(filteredFileList);
-    } else {
+    } else if (filterDroppedFiles) {
       typeMismatch = true;
     }
   }}

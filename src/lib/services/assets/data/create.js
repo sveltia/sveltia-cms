@@ -19,7 +19,9 @@ import { formatFileName } from '$lib/services/utils/file';
  */
 
 /**
- * Create a list of file objects to be uploaded, ensuring that names are unique and sanitized.
+ * Create a list of file objects to be uploaded, ensuring that names are unique and sanitized. A
+ * file that overwrites an existing asset — because the user picked that asset to be replaced, or
+ * because they chose to overwrite a same-named file — takes over the asset’s name and path.
  * @internal
  * @param {UploadingAssets} uploadingAssets Assets to be uploaded.
  * @returns {{ action: CommitAction, name: string, path: string, file: File }[]} An array of objects
@@ -27,21 +29,28 @@ import { formatFileName } from '$lib/services/utils/file';
  * object.
  */
 export const createFileList = (uploadingAssets) => {
-  const { files, folder, originalAssets } = uploadingAssets;
+  const { files, folder, originalAssets, replaceDuplicates = false } = uploadingAssets;
   const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
 
-  const assetNamesInSameFolder =
-    folder?.internalPath !== undefined
-      ? getAssetsByDirName(folder.internalPath).map((a) => a.name.normalize())
-      : [];
+  const assetsInSameFolder =
+    folder?.internalPath !== undefined ? getAssetsByDirName(folder.internalPath) : [];
 
-  return files.map((file) => {
-    const originalAsset = originalAssets?.find(
-      (a) => a.name.normalize().toLowerCase() === file.name.normalize().toLowerCase(),
-    );
+  const assetNamesInSameFolder = assetsInSameFolder.map((a) => a.name.normalize());
+
+  return files.map((file, index) => {
+    // The user picked this asset to be replaced, so the file takes over its name and path even
+    // when it’s called something else. Failing that, an ordinary upload overwrites an existing
+    // file of the same name when the user chose to replace it.
+    const replacedAsset =
+      originalAssets?.[index] ??
+      (replaceDuplicates
+        ? assetsInSameFolder.find(
+            (a) => a.name.normalize().toLowerCase() === file.name.normalize().toLowerCase(),
+          )
+        : undefined);
 
     const fileName =
-      originalAsset?.name ??
+      replacedAsset?.name ??
       formatFileName(file.name, { slugificationEnabled, assetNamesInSameFolder });
 
     if (!assetNamesInSameFolder.includes(fileName)) {
@@ -49,9 +58,9 @@ export const createFileList = (uploadingAssets) => {
     }
 
     return {
-      action: /** @type {CommitAction} */ (originalAsset ? 'update' : 'create'),
+      action: /** @type {CommitAction} */ (replacedAsset ? 'update' : 'create'),
       name: fileName,
-      path: originalAsset?.path ?? [folder?.internalPath, fileName].join('/'),
+      path: replacedAsset?.path ?? [folder?.internalPath, fileName].join('/'),
       file,
     };
   });

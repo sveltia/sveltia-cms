@@ -260,7 +260,7 @@ describe('assets/data/create', () => {
       ]);
     });
 
-    it('should use create action when file name does not match any original asset', () => {
+    it('should give a replacement file the original asset’s name', () => {
       const mockFile = new File(['content'], 'new-photo.jpg', { type: 'image/jpeg' });
 
       const uploadingAssets = {
@@ -294,12 +294,102 @@ describe('assets/data/create', () => {
 
       expect(result).toEqual([
         {
-          action: 'create',
-          name: 'new-photo.jpg',
-          path: '/images/new-photo.jpg',
+          action: 'update',
+          name: 'original.jpg',
+          path: '/images/original.jpg',
           file: mockFile,
         },
       ]);
+    });
+
+    it('should overwrite a same-named asset when replaceDuplicates is enabled', async () => {
+      const { getAssetsByDirName } = await import('$lib/services/assets');
+
+      vi.mocked(getAssetsByDirName).mockReturnValue([
+        {
+          name: 'existing.jpg',
+          path: '/images/existing.jpg',
+          sha: 'abc123',
+          size: 1024,
+          kind: 'image',
+          folder: {
+            internalPath: '/images',
+            collectionName: 'assets',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+        },
+      ]);
+
+      const mockFile = new File(['content'], 'existing.jpg', { type: 'image/jpeg' });
+
+      const uploadingAssets = {
+        files: [mockFile],
+        folder: {
+          internalPath: '/images',
+          collectionName: 'assets',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        replaceDuplicates: true,
+      };
+
+      const result = createFileList(uploadingAssets);
+
+      expect(result).toEqual([
+        {
+          action: 'update',
+          name: 'existing.jpg',
+          path: '/images/existing.jpg',
+          file: mockFile,
+        },
+      ]);
+    });
+
+    it('should keep a same-named asset when replaceDuplicates is disabled', async () => {
+      const { getAssetsByDirName } = await import('$lib/services/assets');
+      const { formatFileName } = await import('$lib/services/utils/file');
+
+      vi.mocked(getAssetsByDirName).mockReturnValue([
+        {
+          name: 'existing.jpg',
+          path: '/images/existing.jpg',
+          sha: 'abc123',
+          size: 1024,
+          kind: 'image',
+          folder: {
+            internalPath: '/images',
+            collectionName: 'assets',
+            publicPath: '/images',
+            entryRelative: false,
+            hasTemplateTags: false,
+          },
+        },
+      ]);
+
+      const mockFile = new File(['content'], 'existing.jpg', { type: 'image/jpeg' });
+
+      const uploadingAssets = {
+        files: [mockFile],
+        folder: {
+          internalPath: '/images',
+          collectionName: 'assets',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      };
+
+      const result = createFileList(uploadingAssets);
+
+      // The unique name is `formatFileName`’s job, which is stubbed here to return the name as is
+      expect(formatFileName).toHaveBeenCalledWith('existing.jpg', {
+        slugificationEnabled: false,
+        assetNamesInSameFolder: ['existing.jpg'],
+      });
+      expect(result[0].action).toBe('create');
     });
 
     it('should match original assets case-insensitively', () => {

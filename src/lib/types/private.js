@@ -1004,7 +1004,11 @@
  * @typedef {object} UploadingAssets
  * @property {AssetFolderInfo | undefined} folder Target asset folder info.
  * @property {File[]} files File list.
- * @property {Asset[]} [originalAssets] Assets to be replaced.
+ * @property {Asset[]} [originalAssets] Assets the user picked to be replaced. Each file replaces
+ * the asset at the same index, taking over its name and path, so an asset can be replaced with a
+ * file that’s named differently.
+ * @property {boolean} [replaceDuplicates] Whether a file that has the same name as an existing
+ * asset in the target folder overwrites it. Otherwise the file is saved under a unique name.
  */
 
 /**

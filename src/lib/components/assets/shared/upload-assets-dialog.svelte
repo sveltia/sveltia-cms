@@ -76,10 +76,16 @@
     bind:open={$showUploadAssetsDialog}
     showOk={false}
   >
+    <!--
+      Dropped files are not filtered by `accept` here: `<UploadAssetsConfirmDialog>` checks the
+      format once the files have been processed, which is the only point a transformation could
+      have changed it. The attribute still narrows the file picker.
+    -->
     <DropZone
       showUploadButton={true}
       {accept}
       {multiple}
+      filterDroppedFiles={false}
       onDrop={({ files }) => {
         onSelect(files);
       }}

@@ -1,6 +1,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Alert, ConfirmationDialog, Radio, RadioGroup } from '@sveltia/ui';
+  import { getPathInfo } from '@sveltia/utils/file';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import {
@@ -12,7 +13,7 @@
   import { saveAssets } from '$lib/services/assets/data/create';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-  import { formatSize } from '$lib/services/utils/file';
+  import { formatSize, isEquivalentFileExtension } from '$lib/services/utils/file';
 
   /** @type {File[]} */
   let files = $state([]);
@@ -30,9 +31,26 @@
   );
   const dupFiles = $derived(getDuplicateFiles(files, assetsInSameFolder));
   const dupFileCount = $derived(dupFiles.length);
+  // A replacement file keeps the name of the asset it replaces, so it has to be in the same
+  // format: `cat.jpg` can be replaced with `cat2.jpeg`, which is that same format under another
+  // extension, while a `cat.png` is a different thing that can’t be saved under the `.jpg` name.
+  // This is checked here, rather than on the file the user picked, because an image is transcoded
+  // first when `transformations` is configured — a `.jpg` chosen for a `.jpg` asset can well
+  // arrive as a `.webp`.
+  const mismatchedFiles = $derived(
+    originalAsset
+      ? validFiles.filter(
+          (file) =>
+            !isEquivalentFileExtension(
+              getPathInfo(file.name).extension,
+              getPathInfo(originalAsset.name).extension,
+            ),
+        )
+      : [],
+  );
 
   $effect(() => {
-    files = [...validFiles];
+    files = validFiles.filter((file) => !mismatchedFiles.includes(file));
     replaceFiles = true;
   });
 
@@ -50,9 +68,13 @@
   okLabel={_(originalAsset ? 'replace' : 'upload')}
   okDisabled={!files.length}
   onOk={async () => {
-    const original = originalAsset ? originalAssets : replaceFiles ? assetsInSameFolder : [];
+    await saveAssets(
+      originalAsset
+        ? { files, folder, originalAssets }
+        : { files, folder, replaceDuplicates: replaceFiles },
+      { commitType: 'uploadMedia' },
+    );
 
-    await saveAssets({ files, folder, originalAssets: original }, { commitType: 'uploadMedia' });
     $uploadingAssets = { folder: undefined, files: [] };
   }}
   onCancel={() => {
@@ -102,6 +124,16 @@
       <UploadAssetsPreview files={invalidFiles} removable={false} showThumbnail={false} />
     </div>
   {/if}
+  {#if mismatchedFiles.length}
+    <div role="group" class="section mismatched" aria-label={_('mismatched_files')}>
+      <Alert status="warning">
+        {_('warning_mismatched_files', {
+          values: { count: mismatchedFiles.length, name: originalAsset?.name },
+        })}
+      </Alert>
+      <UploadAssetsPreview files={mismatchedFiles} {transformedFileMap} removable={false} />
+    </div>
+  {/if}
   {#if dupFileCount}
     <div role="group" class="section">
       {_('file_name_conflict_confirmation', { values: { count: dupFileCount } })}
@@ -133,7 +165,8 @@
     }
 
     &.oversized :global(.files),
-    &.invalid :global(.files) {
+    &.invalid :global(.files),
+    &.mismatched :global(.files) {
       opacity: 0.5;
     }
   }

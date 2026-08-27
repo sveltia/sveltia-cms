@@ -761,6 +761,16 @@ warning_invalid_files: |
     one {{ This file cannot be uploaded because it’s damaged, or its content doesn’t match its file extension. This often happens when a photo is renamed rather than converted, such as a HEIC image saved as a JPEG file. Please convert the file and try again. }}
     *   {{ These files cannot be uploaded because they’re damaged, or their content doesn’t match their file extensions. This often happens when photos are renamed rather than converted, such as HEIC images saved as JPEG files. Please convert the files and try again. }}
 
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Mismatched Files
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ This file cannot replace “{$name}” because it’s in a different format. Please convert the file to the same format and try again. }}
+    *   {{ These files cannot replace “{$name}” because they’re in a different format. Please convert the files to the same format and try again. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |

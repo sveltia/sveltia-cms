@@ -711,6 +711,16 @@ warning_invalid_files: |
     one {{ このファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
     *   {{ これらのファイルは破損しているか、内容が拡張子と一致しないため、アップロードできません。HEIC 画像を JPEG として保存するなど、写真を変換せずに拡張子だけを変更した場合によく発生します。ファイルを変換してから再度アップロードしてください。 }}
 
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: 形式不一致ファイル
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ このファイルは形式が異なるため、「{$name}」と置き換えられません。ファイルを同じ形式に変換してから再度お試しください。 }}
+    *   {{ 選択したファイルは形式が異なるため、「{$name}」と置き換えられません。ファイルを同じ形式に変換してから再度お試しください。 }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
