@@ -1692,7 +1692,7 @@ prefs:
       field_label: 'Klíč pro {$service}'
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: Zaregistrujte se do <a>služby {$service}</a> a zadejte zde <a {$apiKeyHref}>váš klíč API</a>, abyste umožnili rychlý překlad textových polí.
+      description: Zaregistrujte se do <a {$homeHref}>služby {$service}</a> a zadejte zde <a {$apiKeyHref}>váš klíč API</a>, abyste umožnili rychlý překlad textových polí.
 
   # Media panel
   media:

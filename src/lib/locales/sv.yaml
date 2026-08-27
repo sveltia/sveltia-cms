@@ -1616,7 +1616,7 @@ prefs:
       description: Registrera dig för <a {$homeHref}>{$service} API</a> och ange <a {$apiKeyHref}>din API-nyckel</a> här för att infoga gratis stockfoton i bildinmatningsfält.
       # Photo credit attribution
       # {$service} is the stock photo service name
-      credit: 'Fotokälla: Bilder från <a {$homeHref}>{$service}</a>'
+      credit: 'Fotokälla: Bilder från {$service}'
       no_services: Inga <a>stockfototjänster</a> är konfigurerade.
     cloud_storage:
       api_keys:
