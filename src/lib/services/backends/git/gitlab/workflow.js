@@ -349,6 +349,12 @@ export const publish = async (pullRequest) => {
     body: {
       squash,
       should_remove_source_branch: true,
+      // A group or instance can require the source branch’s current HEAD SHA on this call; without
+      // it, the merge fails with `SHA must be provided when merging` even though the branch is up
+      // to date.
+      // @see https://github.com/decaporg/decap-cms/issues/7963
+      // @see https://docs.gitlab.com/user/group/manage/#require-a-commit-sha-on-the-merge-requests-api
+      ...(pullRequest.headSHA ? { sha: pullRequest.headSHA } : {}),
       ...(squash
         ? { squash_commit_message: pullRequest.title }
         : { merge_commit_message: pullRequest.title }),

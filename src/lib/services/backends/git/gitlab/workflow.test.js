@@ -477,7 +477,12 @@ describe('GitLab Editorial Workflow service', () => {
   describe('publish', () => {
     test('merges the merge request and deletes the branch', async () => {
       await publish(
-        /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', title: 'Create Post' }),
+        /** @type {any} */ ({
+          number: 1,
+          branch: 'cms/posts/hello',
+          title: 'Create Post',
+          headSHA: 'abc123',
+        }),
       );
 
       expect(fetchAPI).toHaveBeenNthCalledWith(
@@ -488,6 +493,7 @@ describe('GitLab Editorial Workflow service', () => {
           body: {
             squash: false,
             should_remove_source_branch: true,
+            sha: 'abc123',
             merge_commit_message: 'Create Post',
           },
         },
@@ -500,14 +506,25 @@ describe('GitLab Editorial Workflow service', () => {
       );
     });
 
+    test('omits the sha when the merge request has no head SHA on record', async () => {
+      await publish(
+        /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', title: 'Create Post' }),
+      );
+
+      expect(getRequestBody().sha).toBeUndefined();
+    });
+
     test('uses a squash merge when configured', async () => {
       vi.mocked(get).mockReturnValue({ backend: { name: 'gitlab', squash_merges: true } });
 
-      await publish(/** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', title: 't' }));
+      await publish(
+        /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', title: 't', headSHA: 'sha1' }),
+      );
 
       expect(getRequestBody()).toEqual({
         squash: true,
         should_remove_source_branch: true,
+        sha: 'sha1',
         squash_commit_message: 't',
       });
     });
