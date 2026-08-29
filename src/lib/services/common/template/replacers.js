@@ -77,9 +77,13 @@ export const replaceTemplateTag = (tag, context) => {
       return filePathValue;
     }
 
-    // `{{fields.*}}` tags are not supported in the media folder path and preview path templates, so
-    // we return `undefined` instead of the field value to avoid generating invalid paths.
-    return undefined;
+    // `{{fields.*}}` tags are supported in the preview path template, but not in the media folder
+    // path template or as bare field name tags in either template, because those could collide with
+    // the special path tags handled above. Return `undefined` instead of the field value in those
+    // cases to avoid generating invalid paths.
+    if (type === 'media_folder' || !tag.startsWith('fields.')) {
+      return undefined;
+    }
   }
 
   // Handle field values

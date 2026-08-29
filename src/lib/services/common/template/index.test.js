@@ -938,7 +938,7 @@ describe('fillTemplate()', async () => {
     );
   });
 
-  test('fillTemplate does not resolve fields.* tags for preview paths', async () => {
+  test('fillTemplate resolves fields.* tags for preview paths', async () => {
     await setupCmsConfig();
 
     const result = fillTemplate('{{fields.title}}', {
@@ -948,7 +948,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/2024/my-post.md',
     });
 
-    expect(result).toMatch(/^[0-9a-f]{12}$/);
+    expect(result).toBe('My Title');
   });
 
   test('getFieldValue handles slug tag specially', async () => {
