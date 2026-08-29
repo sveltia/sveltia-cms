@@ -213,7 +213,7 @@ const finalizeContent = ({
 
       Object.keys(unsortedMap)
         .filter((_keyPath) => regex.test(_keyPath))
-        .sort(([a, b]) => compare(a, b))
+        .sort((a, b) => compare(a, b))
         .forEach((_keyPath) => {
           // When the wildcard path couldn’t resolve a typed list field, resolve with the concrete
           // key path so that field metadata (e.g. `required`) is available to `copyProperty`
@@ -224,9 +224,10 @@ const finalizeContent = ({
     }
   });
 
-  // Move the remainder, if any, to a new object
+  // Move the remainder, if any, to a new object. Sorting also guarantees that a parent key path
+  // precedes its own children, which `unflatten()` below depends on to keep the children
   Object.keys(unsortedMap)
-    .sort(([a, b]) => compare(a, b))
+    .sort((a, b) => compare(a, b))
     .forEach((key) => {
       copyProperty({ ...copyArgs, key });
     });
