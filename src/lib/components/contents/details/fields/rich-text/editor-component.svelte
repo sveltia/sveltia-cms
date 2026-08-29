@@ -14,6 +14,7 @@
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { validateFields } from '$lib/services/contents/draft/validate/fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { unflattenMap } from '$lib/services/utils/object';
 
   /**
    * @import {
@@ -121,7 +122,7 @@
       return undefined;
     }
 
-    return unflatten(
+    return unflattenMap(
       Object.fromEntries(
         Object.entries(getValueMapSnapshot($entryDraft, locale, valueStoreKey))
           .filter(([key]) => key.startsWith(keyPathPrefix))

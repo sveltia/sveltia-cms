@@ -52,6 +52,7 @@
     startAutoScroll,
     stopAutoScroll,
   } from '$lib/services/utils/drag-sorting';
+  import { unflattenMap } from '$lib/services/utils/object';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -122,7 +123,7 @@
   const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
   /** @type {Record<string, any>[]} */
   const items = $derived(
-    unflatten(
+    unflattenMap(
       Object.fromEntries(
         Object.entries(valueMap)
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))

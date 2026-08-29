@@ -1,4 +1,3 @@
-import { unflatten } from 'flat';
 import { fromJS, Map as ImmutableMap } from 'immutable';
 import { createElement } from 'react';
 import { mount, unmount } from 'svelte';
@@ -12,6 +11,7 @@ import {
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getField } from '$lib/services/contents/entry/fields';
+import { unflattenMap } from '$lib/services/utils/object';
 
 /**
  * @import { MapOf } from 'immutable';
@@ -211,7 +211,7 @@ export const preparePreviewTemplateProps = ({ draft, locale }) => {
   return {
     entry: entryMap,
     widgetFor,
-    widgetsFor: createWidgetsFor(unflatten(valueMap), widgetFor),
+    widgetsFor: createWidgetsFor(unflattenMap(valueMap), widgetFor),
     getAsset,
     getCollection: getCollectionByName,
     fieldsMetaData,

@@ -8,13 +8,13 @@
   import { VisibilityObserver } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
   import { escapeRegExp } from '@sveltia/utils/string';
-  import { unflatten } from 'flat';
 
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+  import { unflattenMap } from '$lib/services/utils/object';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -50,7 +50,7 @@
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`));
   /** @type {Record<string, any>[]} */
   const items = $derived(
-    unflatten(
+    unflattenMap(
       Object.fromEntries(
         Object.entries(getValueMapSnapshot($entryDraft, locale))
           .filter(([_keyPath]) => keyPathRegex.test(_keyPath))

@@ -8,7 +8,6 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, Button, Checkbox, Icon, TruncatedText, VisibilityObserver } from '@sveltia/ui';
   import { toRaw } from '@sveltia/utils/object';
-  import { unflatten } from 'flat';
   import { getContext, onMount, tick } from 'svelte';
 
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
@@ -25,6 +24,7 @@
   import { formatSummary } from '$lib/services/contents/fields/object/helpers';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
+  import { unflattenMap } from '$lib/services/utils/object';
 
   /**
    * @import { EntryDraft, FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -85,7 +85,7 @@
   );
   /** @type {Record<string, any>} */
   const objectValue = $derived(
-    unflatten(
+    unflattenMap(
       Object.fromEntries(
         Object.entries(valueMap)
           .filter(([_keyPath]) => _keyPath.startsWith(`${keyPath}.`))

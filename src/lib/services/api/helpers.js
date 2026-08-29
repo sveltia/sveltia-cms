@@ -1,4 +1,3 @@
-import { unflatten } from 'flat';
 import { fromJS } from 'immutable';
 import { get } from 'svelte/store';
 
@@ -8,6 +7,7 @@ import { getAssetFolder } from '$lib/services/assets/folders';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { getField } from '$lib/services/contents/entry/fields';
+import { unflattenMap } from '$lib/services/utils/object';
 
 /**
  * @import { MapOf } from 'immutable';
@@ -59,11 +59,11 @@ export const createEntryMap = ({
   // @ts-ignore
   fromJS({
     // Entry data for the default locale
-    data: unflatten(content),
+    data: unflattenMap(content),
     // Entry data for other locales
     // @see https://github.com/decaporg/decap-cms/issues/4729
     i18n: Object.fromEntries(
-      otherLocales.map((locale) => [locale, { data: unflatten(locales[locale].content) }]),
+      otherLocales.map((locale) => [locale, { data: unflattenMap(locales[locale].content) }]),
     ),
     // Other entry properties
     slug,
