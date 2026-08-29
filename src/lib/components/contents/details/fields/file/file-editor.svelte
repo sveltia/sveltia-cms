@@ -276,6 +276,14 @@
       }
     });
 
+    if (multiple) {
+      // Update `currentValue` for compatibility with custom editor components. This doesn’t update
+      // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
+      currentValue = /** @type {string[]} */ (
+        resources.map(({ value }) => value).filter((value) => !!value)
+      );
+    }
+
     // Restore the previous value if no valid resources were processed, so that a failed
     // upload/replace doesn’t leave an empty or invalid reference in the YAML
     if (!hasValidResource && !multiple && previousValue !== undefined) {

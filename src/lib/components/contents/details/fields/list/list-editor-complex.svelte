@@ -67,7 +67,7 @@
   /**
    * @typedef {object} Props
    * @property {ComplexListField} fieldConfig Field configuration.
-   * @property {string[]} currentValue Field value.
+   * @property {Record<string, any>[]} currentValue Field value.
    */
 
   /** @type {FieldEditorContext} */
@@ -82,6 +82,7 @@
     keyPath,
     typedKeyPath,
     fieldConfig,
+    currentValue = $bindable(),
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -210,6 +211,10 @@
         updateListField({ locale: _locale, valueStoreKey, keyPath, manipulate });
       }
     });
+
+    // Update `currentValue` for compatibility with custom editor components. This doesn’t update
+    // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
+    currentValue = items;
   };
 
   /**

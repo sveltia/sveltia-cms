@@ -51,7 +51,7 @@
     keyPath,
     fieldId,
     fieldConfig,
-    currentValue,
+    currentValue = $bindable(),
     required = true,
     readonly = false,
     invalid = false,
@@ -149,7 +149,13 @@
    * Write the rows to the draft.
    */
   const updateValue = () => {
-    updateNonPrimitiveValue({ valueStoreKey, locale, keyPath, i18n, value: getStoredValue() });
+    const value = getStoredValue();
+
+    updateNonPrimitiveValue({ valueStoreKey, locale, keyPath, i18n, value });
+
+    // Update `currentValue` for compatibility with custom editor components. This doesn’t update
+    // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
+    currentValue = value;
   };
 
   /**

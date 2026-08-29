@@ -7,6 +7,7 @@
 <script>
   import { CodeEditor } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
+  import { isObject } from '@sveltia/utils/object';
   import { getContext, untrack } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
@@ -92,7 +93,9 @@
         currentValue = code;
       }
     } else if ($entryDraft) {
-      currentValue = {};
+      if (!isObject(valueMap[keyPath]) || Object.keys(valueMap[keyPath]).length) {
+        $entryDraft[valueStoreKey][locale][keyPath] = {};
+      }
 
       if (valueMap[codeKeyPath] !== code) {
         $entryDraft[valueStoreKey][locale][codeKeyPath] = code;
@@ -101,6 +104,10 @@
       if (valueMap[langKeyPath] !== lang) {
         $entryDraft[valueStoreKey][locale][langKeyPath] = lang;
       }
+
+      // Update `currentValue` for compatibility with custom editor components. This doesn’t update
+      // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
+      currentValue = { [outputKeys.code]: code, [outputKeys.lang]: lang };
     }
   };
 

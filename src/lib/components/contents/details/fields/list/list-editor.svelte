@@ -19,13 +19,14 @@
   /**
    * @typedef {object} Props
    * @property {ListField} fieldConfig Field configuration.
-   * @property {string[]} currentValue Field value.
+   * @property {any[]} currentValue Field value.
    */
 
   /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
     fieldConfig: config,
+    currentValue = $bindable(),
     ...rest
     /* eslint-enable prefer-const */
   } = $props();
@@ -35,8 +36,14 @@
 
 <Group aria-labelledby="list-{fieldId}-summary">
   {#if getListFieldInfo(config).hasSubFields}
-    <ListEditorComplex {...{ ...rest, fieldConfig: /** @type {ComplexListField} */ (config) }} />
+    <ListEditorComplex
+      bind:currentValue
+      {...{ ...rest, fieldConfig: /** @type {ComplexListField} */ (config) }}
+    />
   {:else}
-    <ListEditorSimple {...{ ...rest, fieldConfig: /** @type {SimpleListField} */ (config) }} />
+    <ListEditorSimple
+      bind:currentValue
+      {...{ ...rest, fieldConfig: /** @type {SimpleListField} */ (config) }}
+    />
   {/if}
 </Group>

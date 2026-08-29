@@ -8,6 +8,7 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, Button, Checkbox, Icon, TruncatedText, VisibilityObserver } from '@sveltia/ui';
   import { toRaw } from '@sveltia/utils/object';
+  import { unflatten } from 'flat';
   import { getContext, onMount, tick } from 'svelte';
 
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
@@ -53,6 +54,7 @@
     typedKeyPath,
     fieldLabel,
     fieldConfig,
+    currentValue = $bindable(),
     required = true,
     /* eslint-enable prefer-const */
   } = $props();
@@ -79,6 +81,16 @@
   const hasValues = $derived(
     Object.entries(valueMap).some(
       ([_keyPath, value]) => _keyPath.startsWith(`${keyPath}.`) && value !== undefined,
+    ),
+  );
+  /** @type {Record<string, any>} */
+  const objectValue = $derived(
+    unflatten(
+      Object.fromEntries(
+        Object.entries(valueMap)
+          .filter(([_keyPath]) => _keyPath.startsWith(`${keyPath}.`))
+          .map(([_keyPath, value]) => [_keyPath.slice(keyPath.length + 1), value]),
+      ),
     ),
   );
   const canEdit = $derived(
@@ -152,6 +164,10 @@
     });
 
     $i18nAutoDupEnabled = true;
+
+    // Update `currentValue` for compatibility with custom editor components. This doesn’t update
+    // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
+    currentValue = objectValue;
   };
 
   /**
@@ -175,6 +191,10 @@
     });
 
     $i18nAutoDupEnabled = true;
+
+    // Update `currentValue` for compatibility with custom editor components. This doesn’t update
+    // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
+    currentValue = objectValue;
   };
 
   /**

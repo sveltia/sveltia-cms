@@ -106,6 +106,12 @@
    * @param {any} value New value.
    */
   const writeValue = (value) => {
+    // Only primitive value fields support two-way binding. Updating an array and object in the
+    // draft store has to be handled in each field editor.
+    if (typeof value === 'object' && value !== null) {
+      return;
+    }
+
     const store = valueStoreKey;
     const _locale = locale;
     const _keyPath = keyPath;
@@ -334,17 +340,12 @@
         {@render afterInput()}
       {:else if getFieldKind(fieldConfig) === 'unknown'}
         <div role="none">{_('unsupported_field_type_x', { values: { name: fieldType } })}</div>
-      {:else if isList}
-        {@const Editor = editors[fieldType]}
-        <Editor {...editorProps} {currentValue} />
       {:else}
         {@const Editor = editors[fieldType]}
         {@render beforeInput()}
         <Editor
           {...editorProps}
-          bind:currentValue={
-            () => $entryDraft[valueStoreKey][locale][keyPath], (value) => writeValue(value)
-          }
+          bind:currentValue={() => currentValue, (value) => writeValue(value)}
         />
         {@render afterInput()}
       {/if}
