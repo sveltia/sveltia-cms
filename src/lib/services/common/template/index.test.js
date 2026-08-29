@@ -1135,10 +1135,23 @@ describe('fillTemplate()', async () => {
     expect(result).toBe('/2024/uploads');
   });
 
-  test('fillTemplate falls back to a generated ID for preview_path tags that are not file path tags', async () => {
+  test('fillTemplate resolves bare field name tags in preview_path templates', async () => {
     await setupCmsConfig();
 
     const result = fillTemplate('{{title}}', {
+      collection,
+      content: { title: 'My Post Title' },
+      type: 'preview_path',
+      entryFilePath: 'content/posts/2024/my-post.md',
+    });
+
+    expect(result).toBe('My Post Title');
+  });
+
+  test('fillTemplate falls back to a generated ID for preview_path tags with no matching field', async () => {
+    await setupCmsConfig();
+
+    const result = fillTemplate('{{nonexistent}}', {
       collection,
       content: { title: 'My Post Title' },
       type: 'preview_path',
@@ -1225,7 +1238,7 @@ describe('fillTemplate()', async () => {
     expect(result2).toMatch(/^[0-9a-f]{12}$/);
   });
 
-  test('fillTemplate does not resolve field values in preview_path templates', async () => {
+  test('fillTemplate sanitizes path traversal attempts in preview_path field values', async () => {
     await setupCmsConfig();
 
     const result1 = fillTemplate('{{category}}', {
@@ -1235,7 +1248,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/my-post.md',
     });
 
-    expect(result1).toMatch(/^[0-9a-f]{12}$/);
+    expect(result1).toBe('admin');
 
     const result2 = fillTemplate('{{path}}', {
       collection,
@@ -1244,7 +1257,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/my-post.md',
     });
 
-    expect(result2).toMatch(/^[0-9a-f]{12}$/);
+    expect(result2).toBe('config/secrets');
   });
 
   test('fillTemplate preserves date-time parts while falling back for unsupported field values in media_folder', async () => {
