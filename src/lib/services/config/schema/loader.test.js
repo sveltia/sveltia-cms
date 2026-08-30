@@ -5,6 +5,10 @@ const { mockSchema } = vi.hoisted(() => ({
 }));
 
 vi.mock('virtual:config-schema', () => ({
+  /**
+   * Stand in for the schema the build bundles, read afresh on each import.
+   * @returns {Record<string, any> | null} Schema.
+   */
   get default() {
     return mockSchema.current;
   },

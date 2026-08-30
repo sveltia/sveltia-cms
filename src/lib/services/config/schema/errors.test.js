@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
 /**
- * @import { ErrorObject } from 'ajv';
+ * @import { SchemaValidationError } from '$lib/types/private';
  */
 
 vi.mock('@sveltia/i18n', () => ({
@@ -49,7 +49,7 @@ const config = /** @type {any} */ ({
 
 /**
  * Collect the messages the given errors produce.
- * @param {Partial<ErrorObject>[]} errors Validation errors.
+ * @param {Partial<SchemaValidationError>[]} errors Validation errors.
  * @returns {string[]} Messages.
  */
 const report = (errors) => {

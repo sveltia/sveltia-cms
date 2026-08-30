@@ -1,3 +1,5 @@
+// `then` is a JSON Schema keyword, not a promise callback
+/* oxlint-disable unicorn/no-thenable */
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { customFieldTypeRegistry } from '$lib/services/api/registries';

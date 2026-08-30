@@ -39,6 +39,7 @@ const getCustomFieldSchemas = () => {
     // options are tolerated everywhere else, so they are here too.
     schemas.push({
       if: { required: ['widget'], properties: { widget: { const: name } } },
+      // oxlint-disable-next-line unicorn/no-thenable -- `then` is a JSON Schema keyword here
       then: prepareSchema(schema),
     });
   });
