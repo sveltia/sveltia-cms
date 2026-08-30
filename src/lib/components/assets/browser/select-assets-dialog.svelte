@@ -382,7 +382,7 @@
                 {@const name = `default-${id}`}
                 <Option
                   {name}
-                  label={folder?.label ?? _(`assets_dialog.folder.${id}`)}
+                  label={folder?.label || _(`assets_dialog.folder.${id}`)}
                   selected={libraryName === name}
                 />
               {/if}

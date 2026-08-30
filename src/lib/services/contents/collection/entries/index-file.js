@@ -75,7 +75,7 @@ export const getIndexFile = (collection) => {
 
     indexFile = {
       name,
-      label: file.label ?? _('index_file'),
+      label: file.label || _('index_file'),
       icon: file.icon ?? 'home',
       // The following properties are inherited from the collection file, collection or global
       // config

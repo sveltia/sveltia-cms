@@ -297,6 +297,15 @@ describe('built-in field control component', () => {
     expect(svelteProps.currentValue).toBeUndefined();
   });
 
+  test('falls back to the field name when the label is an empty string', async () => {
+    const { control } = /** @type {any} */ (getFieldTypeDefinition('string'));
+    const field = { name: 'title', widget: 'string', label: '' };
+    const { svelteProps } = await render(control, { field });
+
+    // The field editor renders the name in this case, so the prop matches what’s on screen
+    expect(svelteProps.fieldLabel).toBe('title');
+  });
+
   test('passes through the optional Sveltia-specific props', async () => {
     const { control } = /** @type {any} */ (getFieldTypeDefinition('string'));
 

@@ -57,8 +57,8 @@ export const getBacklinks = ({ collectionName, fileName, entry }) =>
 
           return /** @type {EntryBacklink} */ ({
             collectionName: sourceCollectionName,
-            collectionLabel: sourceCollection.label ?? sourceCollectionName,
-            fieldLabel: fieldConfig.label ?? fieldConfig.name,
+            collectionLabel: sourceCollection.label || sourceCollectionName,
+            fieldLabel: fieldConfig.label || fieldConfig.name,
             entry: sourceEntry,
             summary: getEntrySummary(sourceCollection, sourceEntry),
           });

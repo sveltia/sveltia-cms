@@ -124,7 +124,8 @@ const buildEditorProps = (props, fieldState) => {
     keyPath: keyPath ?? fieldState.keyPath ?? name ?? '',
     typedKeyPath: '',
     fieldId: forID ?? '',
-    fieldLabel: label ?? name ?? '',
+    // An empty label is as good as none, matching what the field editor renders
+    fieldLabel: label || name || '',
     // Store the field configuration as given, so that a change can be detected. It’s converted
     // when the Svelte component reads the prop.
     fieldConfig: field,
