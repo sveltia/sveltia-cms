@@ -16,13 +16,13 @@ export { getConfigSchema } from '$lib/services/config/schema/loader';
  * configuration error.
  *
  * Nothing here can keep a user out of the CMS by accident: a missing schema, a content security
- * policy that blocks the validator from compiling, or an unexpected failure anywhere in between
- * all skip validation instead of failing the configuration. In that case `schemaValidated` is left
+ * policy that blocks the validator from compiling, or an unexpected failure anywhere in between all
+ * skip validation instead of failing the configuration. In that case `schemaValidated` is left
  * unset, and the parser falls back to checking the structure itself.
  * @param {object} args Arguments.
  * @param {CmsConfig} args.config Raw CMS configuration.
- * @param {Record<string, any> | undefined} args.schema Schema to validate against, if it could be
- * downloaded.
+ * @param {Record<string, any> | undefined} args.schema Schema to validate against, if the app was
+ * built with one.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
 export const validateConfigSchema = ({ config, schema, collectors }) => {

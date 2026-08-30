@@ -1,11 +1,6 @@
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
-import {
-  SCHEMA_FETCH_TIMEOUT,
-  SCHEMA_URL,
-  SCHEMA_VALIDATION_URL,
-  SUPPORTED_TYPES,
-} from './constants';
+import { SCHEMA_URL, SUPPORTED_TYPES } from './constants';
 
 describe('config/constants', () => {
   describe('SCHEMA_URL', () => {
@@ -25,35 +20,6 @@ describe('config/constants', () => {
 
     test('should have the exact expected URL', () => {
       expect(SCHEMA_URL).toBe('https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json');
-    });
-  });
-
-  describe('SCHEMA_VALIDATION_URL', () => {
-    afterEach(() => {
-      vi.unstubAllEnvs();
-      vi.resetModules();
-    });
-
-    test('should point to the locally generated schema during development', () => {
-      expect(SCHEMA_VALIDATION_URL).toBe('/package/schema/sveltia-cms.min.json');
-    });
-
-    test('should point to the published schema for the running version otherwise', async () => {
-      vi.stubEnv('DEV', false);
-      vi.resetModules();
-
-      const constants = await import('./constants');
-      const { version } = await import('$lib/services/app');
-
-      expect(constants.SCHEMA_VALIDATION_URL).toBe(
-        `https://unpkg.com/@sveltia/cms@${version}/schema/sveltia-cms.min.json`,
-      );
-    });
-  });
-
-  describe('SCHEMA_FETCH_TIMEOUT', () => {
-    test('should be a positive number of milliseconds', () => {
-      expect(SCHEMA_FETCH_TIMEOUT).toBeGreaterThan(0);
     });
   });
 

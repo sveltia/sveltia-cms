@@ -29,6 +29,10 @@ const MAIN_TYPE_PATH = 'package/main.d.ts';
  */
 const PUBLIC_TYPE_PATH = 'package/types/public.d.ts';
 /**
+ * Path to the generated JSON schema for the CMS configuration.
+ */
+const SCHEMA_PATH = 'package/schema/sveltia-cms.json';
+/**
  * Path to the app’s locale files.
  */
 const APP_LOCALES_DIR = 'src/lib/locales';
@@ -293,17 +297,43 @@ const generateSchema = async () => {
     .replace(/"deprecated":"(.+?)"/g, '"deprecated":true,"deprecationMessage":"$1"');
 
   await mkdir('package/schema', { recursive: true });
-
-  await Promise.all([
-    writeFile('package/schema/sveltia-cms.json', schemaString),
-    // The CMS downloads a copy without the documentation to validate against. The descriptions are
-    // most of the file, and they’re only useful in an editor.
-    writeFile(
-      'package/schema/sveltia-cms.min.json',
-      JSON.stringify(stripSchemaAnnotations(JSON.parse(schemaString))),
-    ),
-  ]);
+  await writeFile(SCHEMA_PATH, schemaString);
 };
+
+/**
+ * Module specifier the app imports the bundled configuration schema from.
+ */
+const SCHEMA_MODULE_ID = 'virtual:config-schema';
+const RESOLVED_SCHEMA_MODULE_ID = `\0${SCHEMA_MODULE_ID}`;
+
+/**
+ * Bundle the configuration schema with the app, stripped of the documentation that only an editor
+ * needs. Validation then costs nothing at runtime beyond the few kilobytes the schema compresses
+ * to, and it works offline and under a content security policy that blocks the CDN.
+ * @returns {import('vite').Plugin} Vite plugin.
+ */
+const bundleSchema = () => ({
+  name: 'bundle-schema',
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  resolveId: (id) => (id === SCHEMA_MODULE_ID ? RESOLVED_SCHEMA_MODULE_ID : null),
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  load: async (id) => {
+    if (id !== RESOLVED_SCHEMA_MODULE_ID) {
+      return null;
+    }
+
+    // A build writes the schema in `buildStart`, before any module is loaded. The dev server
+    // doesn’t, to keep startup quick, so it reuses whatever the last build left behind — and
+    // exports nothing at all if there was none, which turns validation off.
+    if (!existsSync(SCHEMA_PATH)) {
+      return 'export default null;';
+    }
+
+    const schema = stripSchemaAnnotations(JSON.parse(await readFile(SCHEMA_PATH, 'utf-8')));
+
+    return `export default ${JSON.stringify(schema)};`;
+  },
+});
 
 /**
  * Read a YAML file and parse it, stripping comments and squashing multiline strings, just like the
@@ -427,6 +457,7 @@ export default defineConfig({
     }),
     copyPackageFiles(),
     generateExtraFiles(),
+    bundleSchema(),
     // https://sonda.dev/configuration.html
     Sonda({
       enabled: false,

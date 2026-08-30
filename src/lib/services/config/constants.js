@@ -1,6 +1,4 @@
-import { UNPKG_BASE_URL, version } from '$lib/services/app';
-
-const { DEV } = import.meta.env;
+import { UNPKG_BASE_URL } from '$lib/services/app';
 
 /**
  * The URL of the JSON schema for Sveltia CMS configuration files. This is used to validate the
@@ -8,24 +6,6 @@ const { DEV } = import.meta.env;
  * @see https://sveltiacms.app/en/docs/config-basics#validation-and-autocomplete
  */
 export const SCHEMA_URL = `${UNPKG_BASE_URL}/schema/sveltia-cms.json`;
-
-/**
- * The URL of the JSON schema used to validate a configuration file at runtime. This is a copy of
- * {@link SCHEMA_URL} without the descriptions, which document the options for an editor but have no
- * effect on validation and account for most of the file. During development, the schema generated
- * by the last production build is served from the project directory, so that local changes to the
- * type definitions take effect. Otherwise the schema published alongside the running version is
- * used, which is immutable and therefore cached by the browser.
- */
-export const SCHEMA_VALIDATION_URL = DEV
-  ? '/package/schema/sveltia-cms.min.json'
-  : `${UNPKG_BASE_URL}@${version}/schema/sveltia-cms.min.json`;
-
-/**
- * How long to wait for the JSON schema, in milliseconds. Validation is skipped when the download
- * takes longer than this, so that a slow or unreachable CDN doesn’t keep anyone out of the CMS.
- */
-export const SCHEMA_FETCH_TIMEOUT = 5000;
 
 /**
  * Supported MIME types for configuration files.

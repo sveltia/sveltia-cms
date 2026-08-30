@@ -102,8 +102,6 @@ export const initCmsConfig = async (manualConfig) => {
       throw new Error(_('config.error.no_secure_context'));
     }
 
-    // Start downloading the JSON schema while the configuration file is being fetched
-    const schemaLoader = getConfigSchema();
     /** @type {any} */
     let rawConfig;
 
@@ -124,7 +122,7 @@ export const initCmsConfig = async (manualConfig) => {
     // Store the raw config so it can be used in the parser and config viewer
     Object.assign(rawCmsConfig, rawConfig);
 
-    validateConfigSchema({ config: rawConfig, schema: await schemaLoader, collectors });
+    validateConfigSchema({ config: rawConfig, schema: getConfigSchema(), collectors });
     parseCmsConfig(rawConfig, collectors);
 
     if (collectors.errors.size) {
