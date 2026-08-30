@@ -14,6 +14,7 @@
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
+  import NotFound from '$lib/components/global/not-found.svelte';
   import SearchMainArea from '$lib/components/search/search-main-area.svelte';
   import {
     announcedPageStatus,
@@ -35,6 +36,7 @@
 
   let isIndexPage = $state(false);
   let isSearchPage = $state(false);
+  let notFound = $state(false);
 
   const selectedAssetFolderLabel = $derived(
     // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized
@@ -46,7 +48,6 @@
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.
-   * @todo Show Not Found page.
    */
   const navigate = async () => {
     const { path } = parseLocation();
@@ -54,6 +55,7 @@
 
     isIndexPage = false;
     isSearchPage = false;
+    notFound = false;
 
     if (!match?.groups) {
       $showAssetOverlay = false;
@@ -88,8 +90,19 @@
           : internalPath === folderPath,
       );
 
+    if (!folder && !fileName) {
+      $selectedAssetFolder = undefined;
+      $showAssetOverlay = false;
+      $announcedPageStatus = _('asset_folder_not_found');
+      notFound = true;
+
+      return; // Not Found
+    }
+
     if (!folder) {
-      // Not found
+      // A folder path that comes with a file name doesn’t have to be a configured asset folder,
+      // because an asset can live in a subfolder of one. The asset itself is looked up by its full
+      // path below, so leave the resolution to that
       $selectedAssetFolder = undefined;
     } else if (!equal($selectedAssetFolder, folder)) {
       $selectedAssetFolder = folder;
@@ -143,6 +156,12 @@
   {#snippet main()}
     {#if isSearchPage}
       <SearchMainArea />
+    {:else if notFound}
+      <PageContainerMainArea aria-label={_('asset_library')}>
+        {#snippet mainContent()}
+          <NotFound message={_('asset_folder_not_found')} backPath="/assets" />
+        {/snippet}
+      </PageContainerMainArea>
     {:else if !env.isSmallScreen || !isIndexPage}
       <PageContainerMainArea
         id="assets-container"

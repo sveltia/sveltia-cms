@@ -12,6 +12,7 @@
   import PrimaryToolbar from '$lib/components/contents/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/contents/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/contents/list/secondary-toolbar.svelte';
+  import NotFound from '$lib/components/global/not-found.svelte';
   import SearchMainArea from '$lib/components/search/search-main-area.svelte';
   import {
     announcedPageStatus,
@@ -33,6 +34,7 @@
     getCollectionFileLabel,
   } from '$lib/services/contents/collection/files';
   import { listedEntries } from '$lib/services/contents/collection/view';
+  import { entryDraft } from '$lib/services/contents/draft';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { showContentOverlay } from '$lib/services/contents/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -49,6 +51,8 @@
 
   let isIndexPage = $state(false);
   let isSearchPage = $state(false);
+  /** Message key shown on the Not Found view, or an empty string when the route resolved. */
+  let notFoundKey = $state('');
   let loadingEntry = $state(false);
   let editorLocale = $state();
 
@@ -56,7 +60,6 @@
 
   /**
    * Navigate to the content list or content details page given the URL hash.
-   * @todo Show Not Found page.
    */
   const navigate = () => {
     const { path, params } = parseLocation();
@@ -64,6 +67,7 @@
 
     isIndexPage = false;
     isSearchPage = false;
+    notFoundKey = '';
     loadingEntry = false;
 
     // Set the editor locale if specified in the URL params, e.g., `?_locale=fr`
@@ -114,6 +118,7 @@
     if (!collection || !$selectedCollection) {
       $showContentOverlay = false;
       $announcedPageStatus = _('collection_not_found');
+      notFoundKey = 'collection_not_found';
 
       return; // Not Found
     }
@@ -123,6 +128,16 @@
     const _fileMap = '_fileMap' in $selectedCollection ? $selectedCollection._fileMap : undefined;
 
     if (!routeType) {
+      if (subPath) {
+        // A collection route takes no path of its own, so anything between the collection name and
+        // an `entries`/`new` segment is a dead link, e.g. `#/collections/pages/foo/ever`
+        $showContentOverlay = false;
+        $announcedPageStatus = _('page_not_found');
+        notFoundKey = 'page_not_found';
+
+        return; // Not Found
+      }
+
       $showContentOverlay = false;
       $announcedPageStatus = _('viewing_x_collection', {
         values: {
@@ -149,13 +164,21 @@
     if (_fileMap) {
       // File/singleton collection
       if (routeType === 'entries' && subPath) {
+        const collectionFile = _fileMap[subPath];
+
+        if (!collectionFile) {
+          // The URL names a file that isn’t part of this collection
+          $entryDraft = undefined;
+          $announcedPageStatus = _('file_not_found');
+
+          return; // Not Found
+        }
+
         // An unpublished entry takes precedence over the published version, so the user can keep
         // editing the draft stored in the pull request
         const originalEntry =
           getUnpublishedEntry({ collectionName, subPath }) ??
           getCollectionFileEntry(collectionName, subPath);
-
-        const collectionFile = _fileMap[subPath];
 
         if (originalEntry) {
           createDraft({ collection, collectionFile, originalEntry });
@@ -179,39 +202,54 @@
             file: getCollectionFileLabel(collectionFile),
           },
         });
+      } else {
+        // A file collection has no `new` route, and `entries` needs a file name
+        $entryDraft = undefined;
+        $announcedPageStatus = _('file_not_found');
       }
-    } else {
-      // Entry collection
-      if (routeType === 'new' && !subPath) {
-        createDraft({
-          collection,
-          dynamicValues: params,
-          isIndexFile: !!window.history.state?.index,
-        });
 
-        $announcedPageStatus = _('create_entry_announcement', {
+      return;
+    }
+
+    // Entry collection
+    if (routeType === 'new' && !subPath) {
+      createDraft({
+        collection,
+        dynamicValues: params,
+        isIndexFile: !!window.history.state?.index,
+      });
+
+      $announcedPageStatus = _('create_entry_announcement', {
+        values: {
+          collection: collectionLabel,
+        },
+      });
+    } else if (routeType === 'entries' && subPath) {
+      const originalEntry =
+        getUnpublishedEntry({ collectionName, subPath }) ??
+        $listedEntries.find((entry) => entry.subPath === subPath);
+
+      if (!originalEntry) {
+        $entryDraft = undefined;
+        $announcedPageStatus = _('entry_not_found');
+
+        return; // Not Found
+      }
+
+      if (appLocale.current) {
+        createDraft({ collection, originalEntry });
+
+        $announcedPageStatus = _('edit_entry_announcement', {
           values: {
             collection: collectionLabel,
+            entry: getEntrySummary($selectedCollection, originalEntry),
           },
         });
       }
-
-      if (routeType === 'entries' && subPath) {
-        const originalEntry =
-          getUnpublishedEntry({ collectionName, subPath }) ??
-          $listedEntries.find((entry) => entry.subPath === subPath);
-
-        if (originalEntry && appLocale.current) {
-          createDraft({ collection, originalEntry });
-
-          $announcedPageStatus = _('edit_entry_announcement', {
-            values: {
-              collection: collectionLabel,
-              entry: getEntrySummary($selectedCollection, originalEntry),
-            },
-          });
-        }
-      }
+    } else {
+      // `new` with a sub path or `entries` without one, e.g. `#/collections/posts/new/foo`
+      $entryDraft = undefined;
+      $announcedPageStatus = _('entry_not_found');
     }
   };
 
@@ -245,6 +283,12 @@
   {#snippet main()}
     {#if isSearchPage}
       <SearchMainArea />
+    {:else if notFoundKey}
+      <PageContainerMainArea aria-label={_('content_library')}>
+        {#snippet mainContent()}
+          <NotFound message={_(notFoundKey)} />
+        {/snippet}
+      </PageContainerMainArea>
     {:else if !env.isSmallScreen || !isIndexPage}
       <PageContainerMainArea
         aria-label={_('x_collection', {

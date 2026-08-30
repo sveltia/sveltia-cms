@@ -56,7 +56,9 @@ export const parseLocation = (href = window.location.href) => {
   const { pathname, searchParams } = new URL(`${origin}${hash.substring(1)}`);
 
   return {
-    path: decodeURIComponent(pathname),
+    // Drop any trailing slash before decoding, so a hand-typed `#/collections/` resolves the same
+    // way as `#/collections` rather than matching no route at all. The root path is left as is
+    path: decodeURIComponent(pathname.replace(/(?!^)\/+$/, '')),
     params: Object.fromEntries(
       // Merge multiple values of the same key with a comma, e.g. `?a=1&a=2` becomes `{ a: '1,2' }`.
       // This is to support both `?tags=tag1,tag2` and `?tags=tag1&tags=tag2` formats for dynamic

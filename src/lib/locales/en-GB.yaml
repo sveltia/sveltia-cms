@@ -371,8 +371,10 @@ viewing_x_asset_folder: |
 # {$file} is the singleton file name
 singleton_selected_announcement: Press Enter to edit the “{$file}” file.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Page not found.
 collection_not_found: Collection not found.
+asset_folder_not_found: Asset folder not found.
 file_not_found: File not found.
 
 # Selection count indicator

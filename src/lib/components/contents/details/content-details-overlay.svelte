@@ -21,6 +21,7 @@
   import Sidebar from '$lib/components/contents/details/sidebar/sidebar.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { goto } from '$lib/services/app/navigation';
+  import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { entryDraft, entryDraftInteracted } from '$lib/services/contents/draft';
   import {
@@ -531,7 +532,11 @@
           <Button
             variant="primary"
             onclick={() => {
-              goto(`/collection/${collection?.name}`, {
+              // The draft is gone when the entry couldn’t be found, so fall back to the collection
+              // the URL pointed at
+              const targetCollection = collectionName ?? $selectedCollection?.name;
+
+              goto(targetCollection ? `/collections/${targetCollection}` : '/collections', {
                 replaceState: true,
                 transitionType: 'backwards',
               });

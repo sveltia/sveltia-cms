@@ -217,6 +217,20 @@ describe('navigation', () => {
       });
     });
 
+    it('should strip a trailing slash from the path', () => {
+      expect(parseLocation('https://example.com/#/collections/').path).toEqual('/collections');
+      expect(parseLocation('https://example.com/#/assets/-/all/').path).toEqual('/assets/-/all');
+      expect(parseLocation('https://example.com/#/collections/?filter=all')).toEqual({
+        path: '/collections',
+        params: { filter: 'all' },
+      });
+    });
+
+    it('should keep the root path as is', () => {
+      expect(parseLocation('https://example.com/#/').path).toEqual('/');
+      expect(parseLocation('https://example.com/#//').path).toEqual('/');
+    });
+
     it('should join duplicate keys with commas', () => {
       const result = parseLocation('https://example.com/#/search?foo=1&foo=2&foo=3');
 

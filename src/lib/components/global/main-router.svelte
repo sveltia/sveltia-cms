@@ -12,6 +12,7 @@
   import EntryParseErrorsToast from '$lib/components/contents/shared/entry-parse-errors-toast.svelte';
   import MobilePromoInfobar from '$lib/components/global/infobars/mobile-promo-infobar.svelte';
   import NewLanguageInfobar from '$lib/components/global/infobars/new-language-infobar.svelte';
+  import NotFoundPage from '$lib/components/global/not-found-page.svelte';
   import BottomNavigation from '$lib/components/global/toolbar/bottom-navigation.svelte';
   import GlobalToolbar from '$lib/components/global/toolbar/global-toolbar.svelte';
   import MenuPage from '$lib/components/menu/menu-page.svelte';
@@ -27,6 +28,18 @@
   import { canShowMobileSignInDialog } from '$lib/services/app/onboarding';
   import { searchMode } from '$lib/services/search';
   import { env } from '$lib/services/user/env.svelte';
+
+  /**
+   * Page name used while the URL matches none of the routes below. It’s deliberately not a route
+   * itself, so `#/not-found` is a dead link like any other unknown path.
+   */
+  const NOT_FOUND_PAGE_NAME = 'not-found';
+
+  /**
+   * Page names that make up the whole route. Unlike the content library and the other pages that
+   * take a path of their own, anything following these in the URL is a dead link.
+   */
+  const STANDALONE_PAGE_NAMES = ['workflow', 'config', 'menu'];
 
   /** @type {Record<string, any>} */
   const pages = $derived({
@@ -44,11 +57,21 @@
     settings: SettingsPage,
   });
 
-  const SelectedPage = $derived(pages[$selectedPageName]);
+  const SelectedPage = $derived(
+    $selectedPageName === NOT_FOUND_PAGE_NAME ? NotFoundPage : pages[$selectedPageName],
+  );
+
+  /**
+   * Show the Not Found page, which isn’t a route of its own, so `#/not-found` is a dead link like
+   * any other unknown path.
+   */
+  const showNotFound = () => {
+    $selectedPageName = NOT_FOUND_PAGE_NAME;
+    $searchMode = null;
+  };
 
   /**
    * Select one of the pages given the URL path.
-   * @todo Show Not Found page.
    */
   export const selectPage = () => {
     // A Netlify/Decap CMS shorthand link to an entry has to be caught before the fallback below,
@@ -60,13 +83,31 @@
 
     const { path } = parseLocation();
 
+    // The page name has to fill the whole first path segment, so `/collections-foo` doesn’t pass
+    // for the content library and land on a page that can’t make sense of the rest of the path
     const { pageName } =
-      path.match(`^\\/(?<pageName>${Object.keys(pages).join('|')})\\b`)?.groups ?? {};
+      path.match(`^\\/(?<pageName>${Object.keys(pages).join('|')})(?=\\/|$)`)?.groups ?? {};
 
     if (!pageName) {
-      // Redirect any invalid page to the contents page
-      window.location.replace('#/collections');
-    } else if ($selectedPageName !== pageName) {
+      if (path === '/') {
+        // The bare `#/` path is where the app starts, so open the content library
+        window.location.replace('#/collections');
+      } else {
+        // Any other unknown path is a dead link. Show a Not Found page instead of redirecting,
+        // which would hide the fact that the URL the user followed no longer goes anywhere
+        showNotFound();
+      }
+
+      return;
+    }
+
+    if (STANDALONE_PAGE_NAMES.includes(pageName) && path !== `/${pageName}`) {
+      showNotFound();
+
+      return;
+    }
+
+    if ($selectedPageName !== pageName) {
       $selectedPageName = pageName;
     }
 
