@@ -65,6 +65,21 @@ export const getSubtree = (valueMap, keyPath) => {
 };
 
 /**
+ * Check whether the given key path still holds anything: a value of its own — other than the
+ * placeholder an empty container leaves behind — or one or more descendants.
+ *
+ * This is how a field tells whether the object or list item containing it is still part of the
+ * entry. A container has no key of its own once it has children, so its presence can only be
+ * inferred from what is stored below it.
+ * @param {FlattenedEntryContent} valueMap Flattened entry content.
+ * @param {FieldKeyPath} keyPath Key path of the field.
+ * @returns {boolean} Result.
+ */
+export const hasSubtree = (valueMap, keyPath) =>
+  (keyPath in valueMap && !isPlaceholder(valueMap[keyPath])) ||
+  !!getKeysByPrefix(valueMap, `${keyPath}.`).length;
+
+/**
  * Delete the value stored at the given key path along with everything below it. The map is modified
  * in place.
  * @param {FlattenedEntryContent} valueMap Flattened entry content.

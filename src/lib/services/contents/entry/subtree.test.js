@@ -4,6 +4,7 @@ import {
   deleteSubtree,
   getSubtree,
   getSubtreeEntries,
+  hasSubtree,
   isPlaceholder,
   setSubtree,
 } from '$lib/services/contents/entry/subtree';
@@ -98,6 +99,42 @@ describe('getSubtree()', () => {
 
     expect(getSubtree(valueMap, 'tag')).toEqual(['a']);
     expect(getSubtree(valueMap, 'tags')).toEqual(['b']);
+  });
+});
+
+describe('hasSubtree()', () => {
+  test('should detect a scalar value of its own', () => {
+    expect(hasSubtree({ title: 'Hello' }, 'title')).toBe(true);
+    expect(hasSubtree({ title: '' }, 'title')).toBe(true);
+    expect(hasSubtree({ title: null }, 'title')).toBe(true);
+  });
+
+  test('should detect descendants', () => {
+    const valueMap = { 'authors.0.name': 'Kohei', 'authors.0.role': 'dev' };
+
+    expect(hasSubtree(valueMap, 'authors')).toBe(true);
+    expect(hasSubtree(valueMap, 'authors.0')).toBe(true);
+  });
+
+  test('should reject a missing key path', () => {
+    const valueMap = { 'authors.0.name': 'Kohei' };
+
+    expect(hasSubtree(valueMap, 'authors.1')).toBe(false);
+    expect(hasSubtree(valueMap, 'tags')).toBe(false);
+  });
+
+  test('should reject an empty container left behind as a placeholder', () => {
+    expect(hasSubtree({ authors: [] }, 'authors')).toBe(false);
+    expect(hasSubtree({ meta: {} }, 'meta')).toBe(false);
+  });
+
+  test('should accept a placeholder that still has descendants', () => {
+    expect(hasSubtree({ authors: [], 'authors.0.name': 'Kohei' }, 'authors')).toBe(true);
+  });
+
+  test('should not match a key path that merely shares a prefix', () => {
+    expect(hasSubtree({ 'authors.0.name': 'Kohei' }, 'author')).toBe(false);
+    expect(hasSubtree({ 'authors.10.name': 'Kohei' }, 'authors.1')).toBe(false);
   });
 });
 

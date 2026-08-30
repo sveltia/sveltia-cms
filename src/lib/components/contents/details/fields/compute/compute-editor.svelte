@@ -12,6 +12,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+  import { hasSubtree } from '$lib/services/contents/entry/subtree';
   import { getListFormatter } from '$lib/services/contents/i18n';
   import { isNumeric } from '$lib/services/utils/number';
 
@@ -62,13 +63,27 @@
   };
 
   /**
+   * Check whether the object or list item containing this field is still part of the entry. The
+   * computed value is written back to the draft below, so a field left over from a removed list
+   * item would recreate the item’s key path and make the item impossible to remove.
+   *
+   * The field’s own key path can’t answer this: it’s missing whenever the field has yet to hold
+   * anything, which is the case for a field added to the configuration after the entry was written
+   * and for one inside a rich text editor component, where missing values are deliberately not
+   * filled in. Such a field has to compute its first value, not skip it.
+   * @returns {boolean} Result. Always `true` for a root-level field, which has no container.
+   */
+  const isContainerAlive = () => {
+    const index = keyPath.lastIndexOf('.');
+
+    return index === -1 || hasSubtree(valueMap, keyPath.slice(0, index));
+  };
+
+  /**
    * Update {@link currentValue} based on the current values.
    */
   const setCurrentValue = () => {
-    // Check if the `keyPath` is valid, otherwise a list item containing this compute field cannot
-    // be removed due to the `currentValue` update below
-    // @todo Figure out how to handle nested fields
-    if (keyPath.includes('.') && !(keyPath in valueMap)) {
+    if (!isContainerAlive()) {
       return;
     }
 
