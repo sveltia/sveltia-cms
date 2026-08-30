@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('$lib/services/config/constants', () => ({
   SCHEMA_FETCH_TIMEOUT: 5000,
-  SCHEMA_VALIDATION_URL: 'https://example.com/sveltia-cms.json',
+  SCHEMA_VALIDATION_URL: 'https://example.com/sveltia-cms.min.json',
 }));
 
 const schema = { definitions: { Root: { type: 'object', additionalProperties: false } } };
@@ -41,7 +41,7 @@ describe('config/schema/loader', () => {
     const result = await getConfigSchema();
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://example.com/sveltia-cms.json',
+      'https://example.com/sveltia-cms.min.json',
       expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result?.definitions.Root.additionalProperties).toBeUndefined();

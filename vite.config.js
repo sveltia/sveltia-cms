@@ -185,6 +185,66 @@ const generateTypes = async () => {
 };
 
 /**
+ * Schema keywords that document the configuration for an editor but have no effect on validation.
+ */
+const SCHEMA_ANNOTATIONS = [
+  'title',
+  'description',
+  'markdownDescription',
+  'deprecated',
+  'deprecationMessage',
+];
+
+/**
+ * Keywords whose value maps names to nested schemas. A key there is a configuration option name,
+ * not a schema keyword, and `description` happens to be one of those options, so the keys are kept.
+ */
+const SCHEMA_MAPS = ['properties', 'definitions'];
+/**
+ * Keywords whose value is data rather than a nested schema, so it’s copied over untouched.
+ */
+const SCHEMA_VALUES = ['const', 'enum', 'required'];
+
+/**
+ * Remove the documentation from a schema, leaving only what affects validation.
+ * @param {any} node Schema node.
+ * @returns {any} Node without annotations.
+ */
+const stripSchemaAnnotations = (node) => {
+  if (Array.isArray(node)) {
+    return node.map(stripSchemaAnnotations);
+  }
+
+  if (!isObject(node)) {
+    return node;
+  }
+
+  return Object.fromEntries(
+    Object.entries(/** @type {Record<string, any>} */ (node))
+      .filter(([key]) => !SCHEMA_ANNOTATIONS.includes(key))
+      .map(([key, value]) => {
+        if (SCHEMA_VALUES.includes(key)) {
+          return [key, value];
+        }
+
+        if (SCHEMA_MAPS.includes(key) && isObject(value)) {
+          return [
+            key,
+            Object.fromEntries(
+              Object.entries(/** @type {Record<string, any>} */ (value)).map(([name, nested]) => [
+                name,
+                stripSchemaAnnotations(nested),
+              ]),
+            ),
+          ];
+        }
+
+        return [key, stripSchemaAnnotations(value)];
+      }),
+  );
+};
+
+/**
  * Generate JSON schema for the Sveltia CMS configuration from TypeScript types. This schema is used
  * to validate the `config.yml` file within VS Code and other tools that support JSON schema
  * validation.
@@ -233,7 +293,16 @@ const generateSchema = async () => {
     .replace(/"deprecated":"(.+?)"/g, '"deprecated":true,"deprecationMessage":"$1"');
 
   await mkdir('package/schema', { recursive: true });
-  await writeFile('package/schema/sveltia-cms.json', schemaString);
+
+  await Promise.all([
+    writeFile('package/schema/sveltia-cms.json', schemaString),
+    // The CMS downloads a copy without the documentation to validate against. The descriptions are
+    // most of the file, and they’re only useful in an editor.
+    writeFile(
+      'package/schema/sveltia-cms.min.json',
+      JSON.stringify(stripSchemaAnnotations(JSON.parse(schemaString))),
+    ),
+  ]);
 };
 
 /**

@@ -35,7 +35,7 @@ describe('config/constants', () => {
     });
 
     test('should point to the locally generated schema during development', () => {
-      expect(SCHEMA_VALIDATION_URL).toBe('/package/schema/sveltia-cms.json');
+      expect(SCHEMA_VALIDATION_URL).toBe('/package/schema/sveltia-cms.min.json');
     });
 
     test('should point to the published schema for the running version otherwise', async () => {
@@ -46,7 +46,7 @@ describe('config/constants', () => {
       const { version } = await import('$lib/services/app');
 
       expect(constants.SCHEMA_VALIDATION_URL).toBe(
-        `https://unpkg.com/@sveltia/cms@${version}/schema/sveltia-cms.json`,
+        `https://unpkg.com/@sveltia/cms@${version}/schema/sveltia-cms.min.json`,
       );
     });
   });
