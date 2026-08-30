@@ -122,6 +122,47 @@ describe('parseMediaConfig', () => {
     });
   });
 
+  describe('schema-covered problems', () => {
+    it('should leave option types to the schema once it has been applied', async () => {
+      const { parseMediaConfig } = await import('./media.js');
+      const collectors = createCollectors();
+
+      collectors.schemaValidated = true;
+
+      /** @type {any} */
+      const config = {
+        media_folder: 123,
+        public_folder: 123,
+        asset_collections: {},
+      };
+
+      parseMediaConfig(config, collectors);
+
+      expect([...collectors.errors]).toEqual([]);
+    });
+
+    it('should still report the rules the schema can’t express', async () => {
+      const { parseMediaConfig } = await import('./media.js');
+      const collectors = createCollectors();
+
+      collectors.schemaValidated = true;
+
+      /** @type {any} */
+      const config = {
+        media_folder: '/media',
+        public_folder: './relative',
+        asset_collections: [{ name: 'invalid name', media_folder: '/assets' }],
+      };
+
+      parseMediaConfig(config, collectors);
+
+      const errors = [...collectors.errors];
+
+      expect(errors.some((e) => e.includes('Public folder cannot use relative paths'))).toBe(true);
+      expect(errors.some((e) => e.includes('Invalid asset collection name'))).toBe(true);
+    });
+  });
+
   describe('cloud media library integration', () => {
     it('should not require media_folder when media_library is cloudinary', async () => {
       const { parseMediaConfig } = await import('./media.js');

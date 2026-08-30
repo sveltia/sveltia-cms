@@ -97,9 +97,9 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
 
     if (repo === undefined) {
       errors.add(_('config.error.missing_repository'));
-    }
-
-    if (typeof repo !== 'string' || !/^[^/:]+(?:\/[^/:]+)+$/.test(repo)) {
+    } else if (typeof repo !== 'string' || !/^[^/:]+(?:\/[^/:]+)+$/.test(repo)) {
+      // A configured but malformed repository is a separate problem from a missing one, and
+      // reporting both for the same option only reads as noise
       errors.add(_('config.error.invalid_repository'));
     }
 

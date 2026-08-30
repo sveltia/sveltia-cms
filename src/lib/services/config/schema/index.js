@@ -16,7 +16,8 @@ export { getConfigSchema } from '$lib/services/config/schema/loader';
  *
  * Nothing here can keep a user out of the CMS by accident: a missing schema, a content security
  * policy that blocks the validator from compiling, or an unexpected failure anywhere in between
- * all skip validation instead of failing the configuration.
+ * all skip validation instead of failing the configuration. In that case `schemaValidated` is left
+ * unset, and the parser falls back to checking the structure itself.
  * @param {object} args Arguments.
  * @param {CmsConfig} args.config Raw CMS configuration.
  * @param {Record<string, any> | undefined} args.schema Schema to validate against, if it could be
@@ -36,16 +37,18 @@ export const validateConfigSchema = ({ config, schema, collectors }) => {
       schema,
     );
 
-    if (validate(config)) {
-      return;
+    if (!validate(config)) {
+      // Ajv always reports at least one error when validation fails
+      reportSchemaErrors({
+        config,
+        errors: /** @type {ErrorObject[]} */ (validate.errors),
+        collectors,
+      });
     }
 
-    // Ajv always reports at least one error when validation fails
-    reportSchemaErrors({
-      config,
-      errors: /** @type {ErrorObject[]} */ (validate.errors),
-      collectors,
-    });
+    // Let the parser know the structural checks are covered, so it doesn’t repeat them. This is
+    // only set once the configuration has actually been through the validator.
+    collectors.schemaValidated = true;
   } catch (ex) {
     // eslint-disable-next-line no-console
     console.warn('Skipping configuration schema validation', ex);

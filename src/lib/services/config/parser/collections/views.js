@@ -59,16 +59,15 @@ const checkNamedViewOptions = ({ config, options, fields, optionType, context, c
   options.forEach((option, index) => {
     const { name, field: key } = isObject(option) ? option : {};
 
-    if (isNameRequired || name !== undefined) {
-      checkName({
-        name,
-        index,
-        nameCounts,
-        strKeyBase: `${optionType}_name`,
-        context,
-        collectors,
-      });
-    }
+    checkName({
+      name,
+      index,
+      nameCounts,
+      strKeyBase: `${optionType}_name`,
+      context,
+      collectors,
+      required: isNameRequired,
+    });
 
     // A missing field is not validated here, as it just disables grouping or filtering
     if (typeof key !== 'string' || !key || METADATA_KEYS.includes(key)) {

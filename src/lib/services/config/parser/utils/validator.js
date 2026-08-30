@@ -26,6 +26,9 @@ const COMPATIBILITY_DOC_URL =
  * @param {string} [args.extraStrKey] An extra i18n string key to append to the message.
  * @param {ConfigParserContext} [args.context] The field parser context.
  * @param {ConfigParserCollectors} args.collectors The collectors.
+ * @param {boolean} [args.schemaCovered] Whether the JSON schema reports the same problem. Such a
+ * message is skipped once the configuration has been validated against the schema, so that one
+ * mistake never yields two messages.
  */
 export const addMessage = ({
   type = 'error',
@@ -34,7 +37,12 @@ export const addMessage = ({
   extraStrKey,
   context = {},
   collectors,
+  schemaCovered = false,
 }) => {
+  if (schemaCovered && collectors.schemaValidated) {
+    return;
+  }
+
   const { collection, collectionFile, componentName, typedKeyPath } = context;
   const { errors, warnings } = collectors;
   const locators = [];
@@ -42,7 +50,8 @@ export const addMessage = ({
   if (collection) {
     locators.push(
       _('config.error_locator.collection', {
-        values: { collection: collection.label_singular ?? collection.label ?? collection.name },
+        // An empty label is as good as none, so fall back the same way the UI does
+        values: { collection: collection.label_singular || collection.label || collection.name },
       }),
     );
   }
@@ -50,7 +59,7 @@ export const addMessage = ({
   if (collectionFile) {
     locators.push(
       _('config.error_locator.file', {
-        values: { file: collectionFile.label ?? collectionFile.name },
+        values: { file: collectionFile.label || collectionFile.name },
       }),
     );
   }
@@ -141,14 +150,33 @@ export const isValidName = (name) => VALID_NAME_REGEX.test(name);
  * "invalid_".
  * @param {ConfigParserContext} args.context Context.
  * @param {ConfigParserCollectors} args.collectors Collectors.
+ * @param {boolean} [args.required] Whether a missing name must be reported even when the JSON
+ * schema has been applied. The schema requires a `name` almost everywhere, so this is only needed
+ * where it can’t, such as a view group or filter in the object format.
  * @returns {boolean} `true` if the name is valid, `false` otherwise.
  */
-export const checkName = ({ name, index, nameCounts, strKeyBase, context, collectors }) => {
-  if (!name || typeof name !== 'string') {
+export const checkName = ({
+  name,
+  index,
+  nameCounts,
+  strKeyBase,
+  context,
+  collectors,
+  required = false,
+}) => {
+  if (typeof name !== 'string' || !name) {
     // Use count (1-based index) for user-facing messages
     const count = String(index + 1);
 
-    addMessage({ strKey: `missing_${strKeyBase}`, context, values: { count }, collectors });
+    addMessage({
+      strKey: `missing_${strKeyBase}`,
+      context,
+      values: { count },
+      collectors,
+      // An empty string satisfies the schema, and a name the schema can’t require has to be
+      // reported here or nowhere; anything else the schema has already said
+      schemaCovered: name !== '' && !(required && name === undefined),
+    });
 
     return false;
   }

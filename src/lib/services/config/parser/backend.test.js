@@ -333,13 +333,8 @@ describe('parseBackendConfig', () => {
 
       parseBackendConfig(config, collectors);
 
-      // repo === undefined check AND typeof repo !== 'string' check both fail
-      expect(collectors.errors.size).toBe(2);
-
-      const errors = [...collectors.errors];
-
-      expect(errors.some((e) => e === 'Missing repository')).toBe(true);
-      expect(errors.some((e) => e === 'Invalid repository format')).toBe(true);
+      // A missing repository is reported once, not also as a malformed one
+      expect([...collectors.errors]).toEqual(['Missing repository']);
     });
 
     it('should error when repository is not a string', async () => {

@@ -34,6 +34,7 @@ export const parseObjectFieldConfig = (args) => {
       strKey: 'object_field_missing_fields',
       context,
       collectors,
+      schemaCovered: true,
     });
 
     return;

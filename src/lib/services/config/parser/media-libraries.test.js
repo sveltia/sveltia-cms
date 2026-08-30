@@ -164,6 +164,35 @@ describe('parseMediaLibraries', () => {
       expect((await parseTransformations([])).strKeys).toEqual(['invalid_transformations']);
     });
 
+    it('should mark the problems the schema reports too', async () => {
+      // These are only reported when the schema couldn’t be applied, so that one mistake in a
+      // validated configuration never yields two messages
+      const { calls } = await parseTransformations({
+        jpeg: { format: 'jpeg' },
+        png: 'invalid',
+        svg: { optimize: 'yes' },
+      });
+
+      expect(calls.map(({ strKey, schemaCovered }) => [strKey, schemaCovered])).toEqual([
+        ['invalid_transformation_format', true],
+        ['invalid_transformation_options', true],
+        ['invalid_transformation_optimize', true],
+      ]);
+    });
+
+    it('should not mark the rules the schema can’t express', async () => {
+      const { calls } = await parseTransformations({
+        tiff: {},
+        jpeg: { quality: 300, width: -1 },
+      });
+
+      expect(calls.map(({ strKey, schemaCovered }) => [strKey, schemaCovered])).toEqual([
+        ['invalid_transformation_key', undefined],
+        ['invalid_transformation_quality', undefined],
+        ['invalid_transformation_size', undefined],
+      ]);
+    });
+
     it('should reject an unsupported key', async () => {
       const { strKeys, calls } = await parseTransformations({ tiff: { format: 'webp' } });
 

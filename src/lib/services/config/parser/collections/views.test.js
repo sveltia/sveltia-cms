@@ -237,12 +237,17 @@ describe('Test checkViewOptions()', () => {
     check({ fields, view_filters: { filters: [{ label: 'Titled', field: 'title' }] } });
 
     expect(mockCheckName).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ name: undefined, index: 0, strKeyBase: 'view_filter_name' }),
+      expect.objectContaining({
+        name: undefined,
+        index: 0,
+        strKeyBase: 'view_filter_name',
+        required: true,
+      }),
     );
 
     mockCheckName.mockClear();
 
-    // A name is optional in the array format, but still checked when provided
+    // A name is optional in the array format, so a missing one isn’t reported
     check({
       fields,
       view_filters: [
@@ -251,8 +256,14 @@ describe('Test checkViewOptions()', () => {
       ],
     });
 
-    expect(mockCheckName).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ name: 'authored', index: 1, strKeyBase: 'view_filter_name' }),
+    expect(mockCheckName).toHaveBeenCalledTimes(2);
+    expect(mockCheckName).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        name: 'authored',
+        index: 1,
+        strKeyBase: 'view_filter_name',
+        required: false,
+      }),
     );
   });
 });

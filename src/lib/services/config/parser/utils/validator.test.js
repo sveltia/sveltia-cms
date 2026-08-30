@@ -152,6 +152,41 @@ describe('messages', () => {
       expect(message).toContain('Collection: Posts');
     });
 
+    it('should fall back to the name when a label is an empty string', () => {
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        collection: { name: 'pages', label: '', label_singular: '' },
+        collectionFile: { name: 'general', label: '' },
+      };
+
+      addMessage({ strKey: 'test_error', context, collectors });
+
+      const message = Array.from(collectors.errors)[0];
+
+      expect(message).toContain('Collection: pages');
+      expect(message).toContain('File: general');
+    });
+
+    it('should prefer the singular label, then the label, then the name', () => {
+      const collectors = createCollectors();
+      /** @type {any} */
+      const base = { name: 'pages', label: 'Pages', label_singular: 'Page' };
+
+      addMessage({ strKey: 'test_error', context: { collection: base }, collectors });
+      addMessage({
+        strKey: 'test_error',
+        context: { collection: { ...base, label_singular: '' } },
+        collectors,
+      });
+
+      const messages = Array.from(collectors.errors);
+
+      expect(messages[0]).toContain('Collection: Page');
+      expect(messages[1]).toContain('Collection: Pages');
+    });
+
     it('should include file locator when context has collectionFile', () => {
       const collectors = createCollectors();
 
@@ -834,22 +869,29 @@ describe('messages', () => {
       expect(nameCounts.validName).toBe(1);
     });
 
-    it('should return false for missing name', () => {
+    it('should report a missing name only when the schema hasn’t', () => {
       const collectors = createCollectors();
       /** @type {Record<string, number>} */
       const nameCounts = {};
 
-      const result = checkName({
+      const args = {
         name: null,
         index: 0,
         nameCounts,
         strKeyBase: 'field_names',
         context: {},
         collectors,
-      });
+      };
 
-      expect(result).toBe(false);
+      expect(checkName(args)).toBe(false);
       expect(collectors.errors.size).toBe(1);
+
+      collectors.errors.clear();
+      collectors.schemaValidated = true;
+
+      // The schema already reports a missing name, so repeating it would show two messages
+      expect(checkName(args)).toBe(false);
+      expect(collectors.errors.size).toBe(0);
     });
 
     it('should return false for empty string name', () => {
@@ -870,21 +912,27 @@ describe('messages', () => {
       expect(collectors.errors.size).toBe(1);
     });
 
-    it('should return false for undefined name', () => {
+    it('should report an undefined name the schema can’t require', () => {
       const collectors = createCollectors();
       /** @type {Record<string, number>} */
       const nameCounts = {};
 
-      const result = checkName({
+      const args = {
         name: undefined,
         index: 5,
         nameCounts,
         strKeyBase: 'field_names',
         context: {},
         collectors,
-      });
+      };
 
-      expect(result).toBe(false);
+      collectors.schemaValidated = true;
+
+      expect(checkName(args)).toBe(false);
+      expect(collectors.errors.size).toBe(0);
+
+      // A view group or filter name is one the schema can’t require, so it’s reported either way
+      expect(checkName({ ...args, required: true })).toBe(false);
       expect(collectors.errors.size).toBe(1);
 
       const message = Array.from(collectors.errors)[0];
@@ -964,7 +1012,7 @@ describe('messages', () => {
       const nameCounts = {};
 
       checkName({
-        name: null,
+        name: '',
         index: 9,
         nameCounts,
         strKeyBase: 'field_names',
@@ -1003,10 +1051,12 @@ describe('messages', () => {
       expect(collectors.errors.size).toBe(1);
     });
 
-    it('should handle non-string names correctly', () => {
+    it('should leave a non-string name to the schema', () => {
       const collectors = createCollectors();
       /** @type {Record<string, number>} */
       const nameCounts = {};
+
+      collectors.schemaValidated = true;
 
       const result = checkName({
         name: 123,
@@ -1015,10 +1065,12 @@ describe('messages', () => {
         strKeyBase: 'field_names',
         context: {},
         collectors,
+        // Even where a name is required, a wrong type is the schema’s to report
+        required: true,
       });
 
       expect(result).toBe(false);
-      expect(collectors.errors.size).toBe(1);
+      expect(collectors.errors.size).toBe(0);
     });
 
     it('should handle names with special allowed characters', () => {

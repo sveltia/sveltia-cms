@@ -788,14 +788,23 @@ describe('Field Collectors', () => {
       const fields = [
         {
           // name is missing → checkName returns false → parseFieldConfig is NOT called
-          widget: 'string',
+          widget: 'datetime',
+          dateFormat: 'YYYY',
         },
       ];
 
       parseFields(fields, context, collectors);
 
-      // checkName should have added an error for missing name
-      expect(collectors.errors.size).toBeGreaterThan(0);
+      // The field is skipped, so its deprecated `dateFormat` option goes unreported; the missing
+      // name itself is reported because the schema hasn’t been applied
+      expect(collectors.errors.size).toBe(1);
+
+      collectors.errors.clear();
+      collectors.schemaValidated = true;
+      parseFields(fields, context, collectors);
+
+      // Once the schema has reported the missing name, nothing is added here
+      expect(collectors.errors.size).toBe(0);
     });
   });
 });

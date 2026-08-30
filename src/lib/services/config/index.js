@@ -73,6 +73,7 @@ export const collectors = {
   warnings: new Set(),
   mediaFields: new Set(),
   relationFields: new Set(),
+  schemaValidated: false,
 };
 
 /**
@@ -90,6 +91,9 @@ export const initCmsConfig = async (manualConfig) => {
     warnings: new Set(),
     mediaFields: new Set(),
     relationFields: new Set(),
+    // Reset so that a schema that couldn’t be downloaded this time doesn’t inherit the last run’s
+    // result and leave the structure unchecked
+    schemaValidated: false,
   });
 
   try {

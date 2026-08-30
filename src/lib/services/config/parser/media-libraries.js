@@ -34,7 +34,7 @@ const parseRasterImageTransformation = ({ key, options, context, collectors }) =
     format !== undefined &&
     !(/** @type {string[]} */ (RASTER_IMAGE_CONVERSION_FORMATS).includes(format))
   ) {
-    addMessage({ ...args, strKey: 'invalid_transformation_format' });
+    addMessage({ ...args, strKey: 'invalid_transformation_format', schemaCovered: true });
   }
 
   if (quality !== undefined && !(Number.isSafeInteger(quality) && quality >= 0 && quality <= 100)) {
@@ -67,6 +67,7 @@ const parseVectorImageTransformation = ({ key, options, context, collectors }) =
       values: { key },
       context,
       collectors,
+      schemaCovered: true,
     });
   }
 };
@@ -74,7 +75,8 @@ const parseVectorImageTransformation = ({ key, options, context, collectors }) =
 /**
  * Parse and validate the `transformations` option of the default media library. The options are
  * applied to files being uploaded, so any problem must be reported here rather than silently
- * ignored at upload time.
+ * ignored at upload time. The options whose type the JSON schema checks are marked as such, so
+ * they’re only reported here when the schema couldn’t be applied.
  * @param {object} args Arguments.
  * @param {any} args.transformations File transformation option map.
  * @param {ConfigParserContext} args.context Context.
@@ -86,12 +88,14 @@ const parseTransformations = ({ transformations, context, collectors }) => {
   }
 
   if (!isObject(transformations)) {
-    addMessage({ strKey: 'invalid_transformations', context, collectors });
+    addMessage({ strKey: 'invalid_transformations', context, collectors, schemaCovered: true });
 
     return;
   }
 
   Object.entries(transformations).forEach(([key, options]) => {
+    // Unknown keys are silently ignored at upload time, and the schema allows them because unknown
+    // options are tolerated everywhere else
     if (!TRANSFORMATION_KEYS.includes(key)) {
       addMessage({ strKey: 'invalid_transformation_key', values: { key }, context, collectors });
 
@@ -104,6 +108,7 @@ const parseTransformations = ({ transformations, context, collectors }) => {
         values: { key },
         context,
         collectors,
+        schemaCovered: true,
       });
 
       return;
