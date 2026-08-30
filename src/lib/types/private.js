@@ -1332,6 +1332,21 @@
  */
 
 /**
+ * Index of a flattened entry content, which tells in constant time whether a key path holds
+ * anything at all and which list items exist under it.
+ * @typedef {object} ContentIndex
+ * @property {Map<FieldKeyPath, Set<string>>} childSegmentMap Direct child key segments found under
+ * each key path. For example, content holding only `colors.0.name` yields `colors` → `0` and
+ * `colors.0` → `name`.
+ */
+
+/**
+ * Index of the list items in a flattened entry content: the key path holding a list mapped to the
+ * indexes of the items stored under it.
+ * @typedef {Map<FieldKeyPath, Set<number>>} ListItemIndex
+ */
+
+/**
  * @typedef {object} NormalizeContentArgs
  * @property {Field[]} fields Field list of a collection, collection file or index file.
  * @property {FlattenedEntryContent} content Flattened entry content, modified in place.

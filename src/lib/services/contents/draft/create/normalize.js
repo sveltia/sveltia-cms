@@ -1,6 +1,11 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
+import {
+  getItemIndexes,
+  hasChildKeys,
+  indexContent,
+} from '$lib/services/contents/entry/content-index';
 import { getFieldKind, isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
@@ -8,6 +13,7 @@ import { getLocalizedRelationValue } from '$lib/services/contents/fields/relatio
 
 /**
  * @import {
+ * ContentIndex,
  * FlattenedEntryContent,
  * InternalLocaleCode,
  * NormalizeContentArgs,
@@ -21,13 +27,6 @@ import { getLocalizedRelationValue } from '$lib/services/contents/fields/relatio
  * ListFieldWithSubField,
  * NumberField,
  * } from '$lib/types/public';
- */
-
-/**
- * @typedef {object} ContentIndex
- * @property {Map<FieldKeyPath, Set<string>>} childSegmentMap Direct child key segments found under
- * each key path. For example, content holding only `colors.0.name` yields `colors` → `0` and
- * `colors.0` → `name`.
  */
 
 /**
@@ -57,60 +56,6 @@ import { getLocalizedRelationValue } from '$lib/services/contents/fields/relatio
  * types are up to the developer.
  */
 const OPAQUE_FIELD_TYPES = ['code', 'hidden', 'keyvalue'];
-const NUMERIC_KEY_REGEX = /^\d+$/;
-
-/**
- * Index the given content so that {@link normalizeField} can ask two questions in constant time:
- * whether a key path holds anything at all, and which list items exist under it. A plain scan would
- * be O(keys) per field, and normalization visits every configured field.
- * @param {FlattenedEntryContent} content Flattened entry content.
- * @returns {ContentIndex} Index of the content.
- */
-const indexContent = (content) => {
-  /** @type {Map<FieldKeyPath, Set<string>>} */
-  const childSegmentMap = new Map();
-
-  Object.keys(content).forEach((key) => {
-    const segments = key.split('.');
-    let path = '';
-
-    segments.forEach((segment, index) => {
-      if (index > 0) {
-        const siblings = childSegmentMap.get(path);
-
-        if (siblings) {
-          siblings.add(segment);
-        } else {
-          childSegmentMap.set(path, new Set([segment]));
-        }
-      }
-
-      path = index === 0 ? segment : `${path}.${segment}`;
-    });
-  });
-
-  return { childSegmentMap };
-};
-
-/**
- * Check whether the given key path has any child key paths in the indexed content.
- * @param {ContentIndex} index Index of the content.
- * @param {FieldKeyPath} keyPath Key path.
- * @returns {boolean} Result.
- */
-const hasChildKeys = (index, keyPath) => index.childSegmentMap.has(keyPath);
-
-/**
- * Get the indexes of the list items stored under the given key path, in ascending order.
- * @param {ContentIndex} index Index of the content.
- * @param {FieldKeyPath} keyPath Key path of the list field.
- * @returns {number[]} Item indexes.
- */
-const getItemIndexes = (index, keyPath) =>
-  [...(index.childSegmentMap.get(keyPath) ?? [])]
-    .filter((segment) => NUMERIC_KEY_REGEX.test(segment))
-    .map(Number)
-    .sort((a, b) => a - b);
 
 /**
  * Check whether the value is an empty object or array. The `flat` library uses these as

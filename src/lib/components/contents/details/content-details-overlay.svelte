@@ -27,6 +27,7 @@
     resetBackupToastState,
     showBackupToastIfNeeded,
   } from '$lib/services/contents/draft/backup';
+  import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
   import {
     editorFirstPane,
     editorSecondPane,
@@ -392,6 +393,16 @@
     return () => {
       window.removeEventListener('message', onmessage);
     };
+  });
+
+  $effect(() => {
+    void [$entryDraft];
+
+    untrack(() => {
+      // Resolve the Compute fields here rather than in their own editors, which only run while
+      // they are rendered — a collapsed or off-screen list item renders none of its fields
+      updateComputedValues();
+    });
   });
 
   $effect(() => {
