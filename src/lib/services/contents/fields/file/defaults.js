@@ -1,3 +1,4 @@
+import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 
 /**
@@ -32,10 +33,7 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
     value = value.map((val) => val.trim()).filter((val) => val !== '');
 
     if (value.length) {
-      content[keyPath] = [];
-      value.forEach((val, index) => {
-        content[`${keyPath}.${index}`] = val;
-      });
+      Object.assign(content, getSubtreeEntries(keyPath, value));
     }
   }
 

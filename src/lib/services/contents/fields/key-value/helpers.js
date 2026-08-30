@@ -1,6 +1,7 @@
 import { get } from 'svelte/store';
 
 import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -17,10 +18,14 @@ import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
  * @param {InternalLocaleCode} args.locale Current pane’s locale.
  * @returns {[string, string][]} Key-value pairs.
  */
-export const getPairs = ({ entryDraft, valueStoreKey = 'currentValues', keyPath, locale }) =>
-  Object.entries(get(entryDraft)[valueStoreKey][locale] ?? {})
-    .filter(([_keyPath]) => _keyPath.startsWith(`${keyPath}.`))
-    .map(([_keyPath, value]) => [_keyPath.replace(`${keyPath}.`, ''), value]);
+export const getPairs = ({ entryDraft, valueStoreKey = 'currentValues', keyPath, locale }) => {
+  const valueMap = get(entryDraft)[valueStoreKey][locale] ?? {};
+  const prefix = `${keyPath}.`;
+
+  return /** @type {[string, string][]} */ (
+    getKeysByPrefix(valueMap, prefix).map((key) => [key.slice(prefix.length), valueMap[key]])
+  );
+};
 
 /**
  * Validate the given key-value pairs.
@@ -46,25 +51,34 @@ export const validatePairs = ({ pairs, edited }) =>
  * Save the key-value pairs to the draft store.
  * @param {object} args Arguments.
  * @param {Writable<EntryDraft>} args.entryDraft Draft store.
+ * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {KeyValueField} args.fieldConfig Field configuration.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {InternalLocaleCode} args.locale Current pane’s locale.
  * @param {[string, string][]} args.pairs Key-value pairs.
  */
-export const savePairs = ({ entryDraft, keyPath, locale, fieldConfig, pairs }) => {
+export const savePairs = ({
+  entryDraft,
+  valueStoreKey = 'currentValues',
+  keyPath,
+  locale,
+  fieldConfig,
+  pairs,
+}) => {
   const { i18n } = fieldConfig;
 
   i18nAutoDupEnabled.set(false);
 
   entryDraft.update((draft) => {
     if (draft) {
-      Object.entries(draft.currentValues).forEach(([_locale, content]) => {
+      Object.entries(draft[valueStoreKey]).forEach(([_locale, content]) => {
         if (_locale === locale || i18n === 'duplicate') {
-          // Clear pairs first
-          Object.entries(content).forEach(([_keyPath]) => {
-            if (_keyPath.startsWith(`${keyPath}.`)) {
-              delete content[_keyPath];
-            }
+          // Clear the existing pairs first. Unlike other non-primitive fields, a KeyValue field
+          // stores no placeholder at its own key path: its keys are arbitrary strings, and
+          // `unflatten()` would turn numeric ones into an array. `finalizeContent()` rebuilds the
+          // object from the children instead
+          getKeysByPrefix(content, `${keyPath}.`).forEach((_keyPath) => {
+            delete content[_keyPath];
           });
 
           pairs.forEach(([key, value]) => {

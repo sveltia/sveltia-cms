@@ -14,6 +14,7 @@
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { validateFields } from '$lib/services/contents/draft/validate/fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
   import { unflattenMap } from '$lib/services/utils/object';
 
   /**
@@ -122,11 +123,14 @@
       return undefined;
     }
 
+    const valueMap = getValueMapSnapshot($entryDraft, locale, valueStoreKey);
+
     return unflattenMap(
       Object.fromEntries(
-        Object.entries(getValueMapSnapshot($entryDraft, locale, valueStoreKey))
-          .filter(([key]) => key.startsWith(keyPathPrefix))
-          .map(([key, value]) => [key.replace(keyPathPrefix, ''), value]),
+        getKeysByPrefix(valueMap, keyPathPrefix).map((key) => [
+          key.slice(keyPathPrefix.length),
+          valueMap[key],
+        ]),
       ),
     );
   });

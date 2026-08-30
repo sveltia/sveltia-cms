@@ -21,6 +21,7 @@
     getInitialExpanderState,
     syncExpanderStates,
   } from '$lib/services/contents/editor/fields';
+  import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
   import { formatSummary } from '$lib/services/contents/fields/object/helpers';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
@@ -162,11 +163,10 @@
 
     Object.entries($entryDraft?.[valueStoreKey] ?? {}).forEach(([_locale, _valueMap]) => {
       if (_locale === locale || i18n === 'duplicate') {
-        Object.keys(_valueMap).forEach((_keyPath) => {
-          if (_keyPath.startsWith(`${keyPath}.`)) {
-            /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][_keyPath] = null;
-            delete $entryDraft?.[valueStoreKey][_locale][_keyPath];
-          }
+        // Assign `null` before deleting each property, so the draft proxy can revalidate the field
+        getKeysByPrefix(_valueMap, `${keyPath}.`).forEach((_keyPath) => {
+          /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][_keyPath] = null;
+          delete $entryDraft?.[valueStoreKey][_locale][_keyPath];
         });
 
         // Enable validation

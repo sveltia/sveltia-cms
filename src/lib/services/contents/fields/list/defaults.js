@@ -1,5 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
-import { flatten } from 'flat';
+
+import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
 
 /**
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
@@ -37,31 +38,11 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
 
   // Always return the main array, even if empty
   if (!isArray) {
-    return { [keyPath]: [] };
+    return getSubtreeEntries(keyPath, []);
   }
 
-  /** @type {Record<string, any>}  */
-  const content = { [keyPath]: value };
+  // A simple List field holds scalars only, so drop any object that snuck into the default
+  const items = fields || types ? value : value.filter((val) => !isObject(val));
 
-  if (fields || types) {
-    value.forEach((item, index) => {
-      if (isObject(item)) {
-        // Flatten the object and prefix keys with the key path and index
-        Object.entries(flatten(item)).forEach(([key, val]) => {
-          content[`${keyPath}.${index}.${key}`] = val;
-        });
-      } else {
-        // For simple string values in object-based lists, add indexed items
-        content[`${keyPath}.${index}`] = item;
-      }
-    });
-  } else {
-    value.forEach((val, index) => {
-      if (!isObject(val)) {
-        content[`${keyPath}.${index}`] = val;
-      }
-    });
-  }
-
-  return content;
+  return getSubtreeEntries(keyPath, items);
 };

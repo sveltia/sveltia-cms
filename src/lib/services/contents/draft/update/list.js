@@ -1,8 +1,9 @@
 import { escapeRegExp } from '@sveltia/utils/string';
-import { flatten, unflatten } from 'flat';
+import { flatten } from 'flat';
 import { get } from 'svelte/store';
 
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import { getSubtree } from '$lib/services/contents/entry/subtree';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -51,13 +52,8 @@ export const getItemList = (obj, keyPath) => {
     () => new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`),
   );
 
-  const filtered = Object.entries(obj)
-    .filter(([k]) => regex.test(k))
-    .map(([k, v]) => [k.replace(regex, '_'), v])
-    .sort();
-
   return [
-    unflatten(Object.fromEntries(filtered))._ ?? [],
+    getSubtree(obj, keyPath) ?? [],
     Object.fromEntries(Object.entries(obj).filter(([k]) => !regex.test(k))),
   ];
 };
@@ -117,16 +113,7 @@ export const updateListField = ({
  * @param {FieldKeyPath} keyPath Dot-notated field name.
  * @returns {any[]} Item values in list order.
  */
-const getMultiValueList = (values, keyPath) => {
-  /** @type {any[]} */
-  const list = [];
-
-  for (let index = 0; `${keyPath}.${index}` in values; index += 1) {
-    list.push(values[`${keyPath}.${index}`]);
-  }
-
-  return list;
-};
+const getMultiValueList = (values, keyPath) => getSubtree(values, keyPath) ?? [];
 
 /**
  * Move an item of a multi-value field, such as a File or Image field with the `multiple` option

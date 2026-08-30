@@ -1,6 +1,5 @@
-import { flatten } from 'flat';
-
 import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import { setSubtree } from '$lib/services/contents/entry/subtree';
 
 /**
  * @import { DraftValueStoreKey, InternalLocaleCode } from '$lib/types/private';
@@ -30,23 +29,9 @@ export const updateNonPrimitiveValue = ({ valueStoreKey, locale, keyPath, i18n, 
         return;
       }
 
-      // Remove all existing values for the List field in the current locale, including any nested
-      // subfields, to ensure that the new value is set cleanly.
-      /* v8 ignore start */
-      Object.keys(draft[valueStoreKey][_locale] ?? {}).forEach((_keyPath) => {
-        if (_keyPath === keyPath || _keyPath.startsWith(`${keyPath}.`)) {
-          delete draft[valueStoreKey][_locale][_keyPath];
-        }
-      });
-      /* v8 ignore end */
-
-      // Make sure validation is triggered even if no items provided
-      draft[valueStoreKey][_locale][keyPath] = Array.isArray(value) ? [] : {};
-
-      // Add the new value(s) for the List field in the current locale.
-      Object.entries(flatten(value)).forEach(([key, val]) => {
-        draft[valueStoreKey][_locale][`${keyPath}.${key}`] = val;
-      });
+      // Drop the existing subtree and write the new value in its place. The placeholder
+      // `setSubtree()` writes also keeps validation running when there are no items at all
+      setSubtree(draft[valueStoreKey][_locale], keyPath, value);
     });
 
     return draft;

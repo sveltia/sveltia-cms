@@ -20,7 +20,6 @@
   } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { isObject } from '@sveltia/utils/object';
-  import { escapeRegExp } from '@sveltia/utils/string';
   import { unflatten } from 'flat';
   import { getContext, onMount, untrack } from 'svelte';
   import { flip } from 'svelte/animate';
@@ -41,6 +40,7 @@
     syncExpanderStates,
   } from '$lib/services/contents/editor/fields';
   import { getField } from '$lib/services/contents/entry/fields';
+  import { getSubtree } from '$lib/services/contents/entry/subtree';
   import { formatSummary, getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
@@ -52,7 +52,6 @@
     startAutoScroll,
     stopAutoScroll,
   } from '$lib/services/utils/drag-sorting';
-  import { unflattenMap } from '$lib/services/utils/object';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -109,7 +108,6 @@
   const { fields } = $derived(/** @type {ListFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
-  const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)(.*)?`));
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const collectionName = $derived($entryDraft?.collectionName ?? '');
@@ -121,15 +119,7 @@
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
   /** @type {Record<string, any>[]} */
-  const items = $derived(
-    unflattenMap(
-      Object.fromEntries(
-        Object.entries(valueMap)
-          .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-          .map(([_keyPath, value]) => [`${fieldName}${_keyPath.slice(keyPath.length)}`, value]),
-      ),
-    )[fieldName] ?? [],
-  );
+  const items = $derived(getSubtree(valueMap, keyPath) ?? []);
   const itemExpanderStates = $derived(
     items.map((_item, index) => {
       const key = `${keyPath}.${index}`;

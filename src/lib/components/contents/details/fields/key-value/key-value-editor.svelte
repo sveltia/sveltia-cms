@@ -149,7 +149,7 @@
 
     const _entryDraft = /** @type {Writable<EntryDraft>} */ (entryDraft);
 
-    savePairs({ entryDraft: _entryDraft, fieldConfig, keyPath, locale, pairs });
+    savePairs({ entryDraft: _entryDraft, valueStoreKey, fieldConfig, keyPath, locale, pairs });
   };
 
   $effect(() => {

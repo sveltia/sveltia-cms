@@ -1,5 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
+
 /**
  * @import { CodeField, FieldKeyPath } from '$lib/types/public';
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
@@ -27,9 +29,8 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
   const code = obj?.[outputKeys.code] ?? value;
   const lang = obj?.[outputKeys.lang] ?? '';
 
-  return {
-    [keyPath]: {},
-    [`${keyPath}.${outputKeys.code}`]: typeof code === 'string' ? code : '',
-    [`${keyPath}.${outputKeys.lang}`]: typeof lang === 'string' ? lang : '',
-  };
+  return getSubtreeEntries(keyPath, {
+    [outputKeys.code]: typeof code === 'string' ? code : '',
+    [outputKeys.lang]: typeof lang === 'string' ? lang : '',
+  });
 };

@@ -50,7 +50,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     expect(result).toEqual({
-      items: ['item1', 'item2'],
+      items: [],
       'items.0': 'item1',
       'items.1': 'item2',
     });
@@ -75,7 +75,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     expect(result).toEqual({
-      items: ['dynamic1', 'dynamic2', 'dynamic3'],
+      items: [],
       'items.0': 'dynamic1',
       'items.1': 'dynamic2',
       'items.2': 'dynamic3',
@@ -121,7 +121,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     expect(result).toEqual({
-      items: ['item1', 'item2', 'item3'],
+      items: [],
       'items.0': 'item1',
       'items.1': 'item2',
       'items.2': 'item3',
@@ -146,7 +146,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     expect(result).toEqual({
-      items: ['new1', 'new2'],
+      items: [],
       'items.0': 'new1',
       'items.1': 'new2',
     });
@@ -171,7 +171,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     expect(result).toEqual({
-      items: ['default1', 'default2'],
+      items: [],
       'items.0': 'default1',
       'items.1': 'default2',
     });
@@ -201,10 +201,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     expect(result).toEqual({
-      items: [
-        { title: 'Title 1', description: 'Desc 1' },
-        { title: 'Title 2', description: 'Desc 2' },
-      ],
+      items: [],
       'items.0.title': 'Title 1',
       'items.0.description': 'Desc 1',
       'items.1.title': 'Title 2',
@@ -236,7 +233,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     expect(result).toEqual({
-      items: [{ name: 'Item 1' }, { name: 'Item 2' }],
+      items: [],
       'items.0.name': 'Item 1',
       'items.1.name': 'Item 2',
     });
@@ -259,7 +256,7 @@ describe('Test getDefaultValueMap()', () => {
     });
 
     expect(result).toEqual({
-      items: ['tag1', 'tag2', 'tag3'],
+      items: [],
       'items.0': 'tag1',
       'items.1': 'tag2',
       'items.2': 'tag3',
@@ -282,10 +279,12 @@ describe('Test getDefaultValueMap()', () => {
       defaultLocale: '_default',
     });
 
+    // The dropped object leaves no gap: the remaining items are renumbered, so the flat map
+    // matches what every reader assembles from it
     expect(result).toEqual({
-      items: ['string1', { name: 'object' }, 'string2'],
+      items: [],
       'items.0': 'string1',
-      'items.2': 'string2',
+      'items.1': 'string2',
     });
   });
 });
