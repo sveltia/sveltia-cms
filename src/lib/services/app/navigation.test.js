@@ -321,6 +321,230 @@ describe('navigation', () => {
         update: expect.any(Function),
       });
     });
+
+    /**
+     * Mock the session history exposed by the Navigation API.
+     * @param {number} currentIndex Index of the current entry.
+     * @param {string[]} urls URLs of all the entries, in order.
+     */
+    const mockHistory = (currentIndex, urls) => {
+      const entries = urls.map((url, index) => ({ index, url, sameDocument: true }));
+
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: entries[currentIndex],
+          entries: vi.fn(() => entries),
+          back: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+    };
+
+    it('should detect forward navigation with the Navigation API', () => {
+      const updateContent = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      document.startViewTransition = mockStartViewTransition;
+
+      // Both paths have the same number of segments, so only the history knows the direction
+      const oldURL = 'https://example.com/#/collections/posts';
+      const newURL = 'https://example.com/#/collections/pages';
+
+      mockHistory(2, ['https://example.com/#/collections', oldURL, newURL]);
+
+      const event = new HashChangeEvent('hashchange', { oldURL, newURL });
+
+      Object.defineProperty(event, 'isTrusted', { value: true });
+
+      updateContentFromHashChange(event, updateContent, /^\/collections/);
+
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
+        types: ['forwards'],
+        update: expect.any(Function),
+      });
+    });
+
+    it('should detect backward navigation with the Navigation API across sections', () => {
+      const updateContent = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      document.startViewTransition = mockStartViewTransition;
+
+      const oldURL = 'https://example.com/#/assets';
+      const newURL = 'https://example.com/#/collections/posts';
+
+      mockHistory(0, [newURL, oldURL]);
+
+      const event = new HashChangeEvent('hashchange', { oldURL, newURL });
+
+      Object.defineProperty(event, 'isTrusted', { value: true });
+
+      updateContentFromHashChange(event, updateContent, /^\/collections/);
+
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
+        types: ['backwards'],
+        update: expect.any(Function),
+      });
+    });
+
+    it('should use the history entry closest to the current one', () => {
+      const updateContent = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      document.startViewTransition = mockStartViewTransition;
+
+      const oldURL = 'https://example.com/#/collections/posts';
+      const newURL = 'https://example.com/#/collections';
+
+      // The old URL appears twice; the one at index 3 is where the user has just been
+      mockHistory(2, [oldURL, 'https://example.com/#/assets', newURL, oldURL]);
+
+      const event = new HashChangeEvent('hashchange', { oldURL, newURL });
+
+      Object.defineProperty(event, 'isTrusted', { value: true });
+
+      updateContentFromHashChange(event, updateContent, /^\/collections/);
+
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
+        types: ['backwards'],
+        update: expect.any(Function),
+      });
+    });
+
+    it('should ignore the current history entry when it has the old URL', () => {
+      const updateContent = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      document.startViewTransition = mockStartViewTransition;
+
+      const oldURL = 'https://example.com/#/collections/posts';
+      const newURL = 'https://example.com/#/collections';
+
+      mockHistory(1, [oldURL, oldURL]);
+
+      const event = new HashChangeEvent('hashchange', { oldURL, newURL });
+
+      Object.defineProperty(event, 'isTrusted', { value: true });
+
+      updateContentFromHashChange(event, updateContent, /^\/collections/);
+
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
+        types: ['forwards'],
+        update: expect.any(Function),
+      });
+    });
+
+    it('should compare paths when the old URL is no longer in the history', () => {
+      const updateContent = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      document.startViewTransition = mockStartViewTransition;
+
+      const oldURL = 'https://example.com/#/collections';
+      const newURL = 'https://example.com/#/collections/posts';
+
+      // The old entry has been replaced, e.g. with `goto(path, { replaceState: true })`
+      mockHistory(0, [newURL]);
+
+      const event = new HashChangeEvent('hashchange', { oldURL, newURL });
+
+      Object.defineProperty(event, 'isTrusted', { value: true });
+
+      updateContentFromHashChange(event, updateContent, /^\/collections/);
+
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
+        types: ['forwards'],
+        update: expect.any(Function),
+      });
+    });
+
+    it('should compare paths when the current entry is not in the history', () => {
+      const updateContent = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      document.startViewTransition = mockStartViewTransition;
+
+      const oldURL = 'https://example.com/#/collections/posts';
+      const newURL = 'https://example.com/#/collections';
+
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: -1, url: newURL },
+          entries: vi.fn(() => []),
+          back: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      const event = new HashChangeEvent('hashchange', { oldURL, newURL });
+
+      Object.defineProperty(event, 'isTrusted', { value: true });
+
+      updateContentFromHashChange(event, updateContent, /^\/collections/);
+
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
+        types: ['backwards'],
+        update: expect.any(Function),
+      });
+    });
+
+    it('should compare paths when the Navigation API is unavailable', () => {
+      const updateContent = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      document.startViewTransition = mockStartViewTransition;
+
+      // Simulate a browser without the Navigation API
+      Object.defineProperty(window, 'navigation', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
+
+      const event = new HashChangeEvent('hashchange', {
+        oldURL: 'https://example.com/#/collections',
+        newURL: 'https://example.com/#/collections/posts',
+      });
+
+      Object.defineProperty(event, 'isTrusted', { value: true });
+
+      updateContentFromHashChange(event, updateContent, /^\/collections/);
+
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
+        types: ['forwards'],
+        update: expect.any(Function),
+      });
+    });
+
+    it('should treat navigation between paths of the same depth as unknown', () => {
+      const updateContent = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      document.startViewTransition = mockStartViewTransition;
+
+      // Simulate a browser without the Navigation API
+      Object.defineProperty(window, 'navigation', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
+
+      const event = new HashChangeEvent('hashchange', {
+        oldURL: 'https://example.com/#/collections/posts',
+        newURL: 'https://example.com/#/collections/pages',
+      });
+
+      Object.defineProperty(event, 'isTrusted', { value: true });
+
+      updateContentFromHashChange(event, updateContent, /^\/collections/);
+
+      expect(mockStartViewTransition).toHaveBeenCalledWith({
+        types: ['unknown'],
+        update: expect.any(Function),
+      });
+    });
   });
 
   describe('goto', () => {

@@ -115,12 +115,70 @@ export const startViewTransition = (transitionType, updateContent) => {
 };
 
 /**
+ * Determine the transition type with the Navigation API, which knows where the URL we came from
+ * sits in the session history relative to the current one. Unlike a comparison of the two paths,
+ * this reflects the direction the user actually moved in, including navigation between two
+ * different sections of the app or between two URLs with the same number of path segments.
+ * @param {string} oldURL URL before the navigation.
+ * @returns {ViewTransitionType | undefined} Transition type, or `undefined` if the API is
+ * unavailable or the previous entry is no longer in the history, e.g. because it has been replaced.
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API
+ */
+const getTransitionTypeFromHistory = (oldURL) => {
+  const currentIndex = window.navigation?.currentEntry?.index ?? -1;
+
+  if (currentIndex === -1) {
+    return undefined;
+  }
+
+  // The same URL can appear more than once in the history, so pick the entry closest to the current
+  // one, which is the one the user has most likely just left.
+  const [oldIndex] = window.navigation
+    .entries()
+    .filter(({ url, index }) => url === oldURL && index !== currentIndex)
+    .map(({ index }) => index)
+    .sort((a, b) => Math.abs(a - currentIndex) - Math.abs(b - currentIndex));
+
+  if (oldIndex === undefined) {
+    return undefined;
+  }
+
+  return oldIndex < currentIndex ? 'forwards' : 'backwards';
+};
+
+/**
+ * Determine the transition type by comparing the two paths. This is a fallback for browsers without
+ * the Navigation API, and for navigation the API cannot place in the history.
+ * @param {string} oldURL URL before the navigation.
+ * @param {string} newURL URL after the navigation.
+ * @param {RegExp} routeRegex Regex to match a specific route.
+ * @returns {ViewTransitionType} Transition type.
+ */
+const getTransitionTypeFromPaths = (oldURL, newURL, routeRegex) => {
+  const oldPath = parseLocation(oldURL).path;
+  const newPath = parseLocation(newURL).path;
+  // Compare paths to see if it’s a navigation within the same section, e.g. `/collections` to
+  // `/collections/posts`.
+  const inSameSection = routeRegex.test(oldPath) && routeRegex.test(newPath);
+  // Count the number of path segments; navigating from `/collections` to `/collections/posts` and
+  // `/collections/posts` to `/collections/posts/new` is forwards, while `/assets/-/all` to
+  // `/assets` is backwards
+  const oldPathSegmentCount = oldPath.split('/').length;
+  const newPathSegmentCount = newPath.split('/').length;
+
+  if (!inSameSection || oldPathSegmentCount === newPathSegmentCount) {
+    return 'unknown';
+  }
+
+  return oldPathSegmentCount < newPathSegmentCount ? 'forwards' : 'backwards';
+};
+
+/**
  * Update the content when the `hashchange` event is triggered. This function aims to support page
  * transition via the browser’s back/forward navigation.
  * @param {HashChangeEvent} event `hashchange` event.
  * @param {() => void} updateContent Function to trigger a content update.
  * @param {RegExp} routeRegex Regex to match a specific route.
- * @todo Develop a robust way to handle transition using the Navigation API.
  */
 export const updateContentFromHashChange = (event, updateContent, routeRegex) => {
   const { isTrusted, oldURL, newURL } = event;
@@ -133,23 +191,8 @@ export const updateContentFromHashChange = (event, updateContent, routeRegex) =>
     return;
   }
 
-  const oldPath = parseLocation(oldURL).path;
-  const newPath = parseLocation(newURL).path;
-  // Compare paths to see if it’s a navigation within the same section, e.g. `/collections` to
-  // `/collections/posts`.
-  const inSameSection = routeRegex.test(oldPath) && routeRegex.test(newPath);
-  // Count the number of path segments; navigating from `/collections` to `/collections/posts` and
-  // `/collections/posts` to `/collections/posts/new` is forwards, while `/assets/-/all` to
-  // `/assets` is backwards
-  const oldPathSegmentCount = oldPath.split('/').length;
-  const newPathSegmentCount = newPath.split('/').length;
-
   const transitionType =
-    inSameSection && oldPathSegmentCount > newPathSegmentCount
-      ? 'backwards'
-      : inSameSection && oldPathSegmentCount < newPathSegmentCount
-        ? 'forwards'
-        : 'unknown';
+    getTransitionTypeFromHistory(oldURL) ?? getTransitionTypeFromPaths(oldURL, newURL, routeRegex);
 
   startViewTransition(transitionType, () => updateContent());
 };
