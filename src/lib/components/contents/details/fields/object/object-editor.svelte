@@ -166,8 +166,10 @@
     forEachTargetLocale(
       { valueStore: $entryDraft?.[valueStoreKey], locale, i18n },
       (_valueMap, _locale) => {
-        // Assign `null` before deleting each property, so the draft proxy can revalidate the field
-        getKeysByPrefix(_valueMap, `${keyPath}.`).forEach((_keyPath) => {
+        // Assign `null` before deleting each property, so the draft proxy can revalidate the field.
+        // The value map is the draft’s live map, which is mutated right below, so its key paths
+        // have to be read as they are right now
+        getKeysByPrefix(_valueMap, `${keyPath}.`, { live: true }).forEach((_keyPath) => {
           /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][_keyPath] = null;
           delete $entryDraft?.[valueStoreKey][_locale][_keyPath];
         });

@@ -43,6 +43,22 @@ describe('getKeysByPrefix()', () => {
     // Second call goes through the cached index and must agree
     expect(getKeysByPrefix(valueMap, 'item.')).toEqual(['item.0.name', 'item.1.name']);
   });
+
+  test('rereads a value map mutated in place when the `live` option is set', () => {
+    /** @type {Record<string, any>} */
+    const valueMap = { title: 'Hello' };
+
+    expect(getKeysByPrefix(valueMap, 'tags.', { live: true })).toEqual([]);
+
+    valueMap['tags.0'] = 'a';
+
+    // Without the option, the memoized index would still describe the map as it was above
+    expect(getKeysByPrefix(valueMap, 'tags.', { live: true })).toEqual(['tags.0']);
+
+    delete valueMap['tags.0'];
+
+    expect(getKeysByPrefix(valueMap, 'tags.', { live: true })).toEqual([]);
+  });
 });
 
 describe('getListItemKeys()', () => {
@@ -81,5 +97,20 @@ describe('getListItemKeys()', () => {
     expect(getListItemKeys(valueMap, 'authors')).toEqual(['authors.0', 'authors.1']);
     // Second call goes through the cached index and must agree
     expect(getListItemKeys(valueMap, 'authors')).toEqual(['authors.0', 'authors.1']);
+  });
+
+  test('rereads a value map mutated in place when the `live` option is set', () => {
+    /** @type {Record<string, any>} */
+    const valueMap = { 'authors.0': 'a' };
+
+    expect(getListItemKeys(valueMap, 'authors', { live: true })).toEqual(['authors.0']);
+
+    valueMap['authors.1'] = 'b';
+
+    // Without the option, the memoized index would still describe the map as it was above
+    expect(getListItemKeys(valueMap, 'authors', { live: true })).toEqual([
+      'authors.0',
+      'authors.1',
+    ]);
   });
 });

@@ -40,6 +40,9 @@ const itemListRegexCache = new Map();
 
 /**
  * Traverse the given object by decoding dot-notated key path.
+ *
+ * The object is a draft’s live content, not a snapshot of it, and the caller writes the manipulated
+ * list straight back into it, so the key paths have to be read as they are right now.
  * @internal
  * @param {Record<string, any>} obj Original object.
  * @param {FieldKeyPath} keyPath Dot-notated field name.
@@ -53,7 +56,7 @@ export const getItemList = (obj, keyPath) => {
   );
 
   return [
-    getSubtree(obj, keyPath) ?? [],
+    getSubtree(obj, keyPath, { live: true }) ?? [],
     Object.fromEntries(Object.entries(obj).filter(([k]) => !regex.test(k))),
   ];
 };
@@ -106,12 +109,13 @@ export const updateListField = ({
 
 /**
  * Read a multi-value field out of the draft as a plain list. Our internal representation of such a
- * field is a flattened object with one numbered key per item, e.g. `images.0`, `images.1`.
+ * field is a flattened object with one numbered key per item, e.g. `images.0`, `images.1`. Just
+ * like {@link getItemList}, this reads a draft’s live content, which the caller then mutates.
  * @param {Record<string, any>} values Flattened entry content.
  * @param {FieldKeyPath} keyPath Dot-notated field name.
  * @returns {any[]} Item values in list order.
  */
-const getMultiValueList = (values, keyPath) => getSubtree(values, keyPath) ?? [];
+const getMultiValueList = (values, keyPath) => getSubtree(values, keyPath, { live: true }) ?? [];
 
 /**
  * Move an item of a multi-value field, such as a File or Image field with the `multiple` option

@@ -98,6 +98,28 @@ describe('draft/update/list', () => {
       expect(vi.mocked(i18nAutoDupEnabled).set).toHaveBeenCalledWith(true);
     });
 
+    // https://github.com/sveltia/sveltia-cms/issues/939
+    it('should accumulate items across consecutive updates to the same value map', () => {
+      mockEntryDraft.currentValues.en = {};
+      mockEntryDraft.expanderStates._ = {};
+
+      ['tag1', 'tag2', 'tag3'].forEach((value) => {
+        updateListField({
+          locale: 'en',
+          keyPath: 'tags',
+          manipulate: ({ valueList }) => {
+            valueList.push(value);
+          },
+        });
+      });
+
+      expect(mockEntryDraft.currentValues.en).toEqual({
+        'tags.0': 'tag1',
+        'tags.1': 'tag2',
+        'tags.2': 'tag3',
+      });
+    });
+
     it('should remove item from list', () => {
       updateListField({
         locale: 'en',

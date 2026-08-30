@@ -99,6 +99,22 @@ describe('getSubtree()', () => {
     expect(getSubtree(valueMap, 'tag')).toEqual(['a']);
     expect(getSubtree(valueMap, 'tags')).toEqual(['b']);
   });
+
+  test('should reread a value map mutated in place with the `live` option', () => {
+    /** @type {Record<string, any>} */
+    const valueMap = {};
+
+    expect(getSubtree(valueMap, 'tags', { live: true })).toBeUndefined();
+
+    valueMap['tags.0'] = 'a';
+
+    // Without the option, the memoized key path index would still describe the map as it was above
+    expect(getSubtree(valueMap, 'tags', { live: true })).toEqual(['a']);
+
+    valueMap['tags.1'] = 'b';
+
+    expect(getSubtree(valueMap, 'tags', { live: true })).toEqual(['a', 'b']);
+  });
 });
 
 describe('deleteSubtree()', () => {

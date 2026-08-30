@@ -43,10 +43,13 @@ export const getSubtreeEntries = (keyPath, value) => ({
  * Assemble the non-primitive value stored under the given key path from its child key paths.
  * @param {FlattenedEntryContent} valueMap Flattened entry content.
  * @param {FieldKeyPath} keyPath Key path of the field.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.live] Whether the value map may be mutated after this call. See
+ * {@link getKeysByPrefix}.
  * @returns {any} Assembled value, or `undefined` if the key path has no children.
  */
-export const getSubtree = (valueMap, keyPath) => {
-  const keys = getKeysByPrefix(valueMap, `${keyPath}.`);
+export const getSubtree = (valueMap, keyPath, { live = false } = {}) => {
+  const keys = getKeysByPrefix(valueMap, `${keyPath}.`, { live });
 
   if (!keys.length) {
     return undefined;

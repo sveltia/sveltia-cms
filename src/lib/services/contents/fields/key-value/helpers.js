@@ -23,7 +23,12 @@ export const getPairs = ({ entryDraft, valueStoreKey = 'currentValues', keyPath,
   const prefix = `${keyPath}.`;
 
   return /** @type {[string, string][]} */ (
-    getKeysByPrefix(valueMap, prefix).map((key) => [key.slice(prefix.length), valueMap[key]])
+    // The value map is the draft’s live map, which {@link savePairs} mutates in place, so its key
+    // paths have to be read as they are right now
+    getKeysByPrefix(valueMap, prefix, { live: true }).map((key) => [
+      key.slice(prefix.length),
+      valueMap[key],
+    ])
   );
 };
 
@@ -74,7 +79,9 @@ export const savePairs = ({
         // stores no placeholder at its own key path: its keys are arbitrary strings, and
         // `unflatten()` would turn numeric ones into an array. `finalizeContent()` rebuilds the
         // object from the children instead
-        getKeysByPrefix(content, `${keyPath}.`).forEach((_keyPath) => {
+        // The content is the draft’s live map, which is mutated right below, so its key paths
+        // have to be read as they are right now
+        getKeysByPrefix(content, `${keyPath}.`, { live: true }).forEach((_keyPath) => {
           delete content[_keyPath];
         });
 

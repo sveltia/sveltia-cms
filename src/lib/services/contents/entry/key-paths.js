@@ -13,6 +13,10 @@
  * once instead, keyed by the map object itself: the draft hands out a fresh snapshot per update, so
  * an index is built at most once per keystroke and shared by every field reading from it, then
  * garbage-collected with the snapshot.
+ *
+ * An index is therefore only valid while the map it was built from is left alone. A caller reading
+ * a map it also mutates — a draft’s live content rather than a snapshot of it — has to pass the
+ * `live` option, or it would keep getting the key paths the map had the first time it was read.
  */
 
 /**
@@ -51,9 +55,16 @@ const getSortedKeys = (valueMap) => {
  * the “first” field under a key path.
  * @param {FlattenedEntryContent} valueMap Flattened entry content.
  * @param {string} prefix Key path prefix, e.g. `authors.0.`.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.live] Whether the value map may be mutated after this call, in which
+ * case the key paths are scanned instead of being read from — and memoized in — the index.
  * @returns {FieldKeyPath[]} Matching key paths.
  */
-export const getKeysByPrefix = (valueMap, prefix) => {
+export const getKeysByPrefix = (valueMap, prefix, { live = false } = {}) => {
+  if (live) {
+    return Object.keys(valueMap).filter((key) => key.startsWith(prefix));
+  }
+
   const sorted = getSortedKeys(valueMap);
   let low = 0;
   let high = sorted.length;
@@ -98,9 +109,18 @@ const listItemKeyCacheMap = new WeakMap();
  * multiple Relation or Select field — so the same index serves all of them.
  * @param {FlattenedEntryContent} valueMap Flattened entry content.
  * @param {FieldKeyPath} keyPath Key path of the list field.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.live] Whether the value map may be mutated after this call, in which
+ * case the key paths are scanned instead of being read from — and memoized in — the index.
  * @returns {FieldKeyPath[]} Item key paths, e.g. `['authors.0', 'authors.1']`.
  */
-export const getListItemKeys = (valueMap, keyPath) => {
+export const getListItemKeys = (valueMap, keyPath, { live = false } = {}) => {
+  if (live) {
+    return Object.keys(valueMap).filter(
+      (key) => key.match(LIST_ITEM_KEY_REGEX)?.groups?.parent === keyPath,
+    );
+  }
+
   let index = listItemKeyCacheMap.get(valueMap);
 
   if (!index) {
