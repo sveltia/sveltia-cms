@@ -146,7 +146,13 @@
     getTargetFolderPath({ entry: $entryDraft?.originalEntry, folder: targetFolder }),
   );
   const listedAssets = $derived(
-    listAssets({ kind, folder: targetFolder, folderPath: targetFolderPath, unsavedAssets }),
+    listAssets({
+      kind,
+      folder: targetFolder,
+      folderPath: targetFolderPath,
+      unsavedAssets,
+      slugificationEnabled: libraryConfig.slugify_filename,
+    }),
   );
   const multiple = $derived(isMultiple(fieldConfig));
   const itemCount = $derived(Array.isArray(currentValue) ? currentValue.length : 0);

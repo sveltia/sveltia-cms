@@ -90,6 +90,17 @@ const getAssetPathMap = () => {
 export const getAssetByInternalPath = (path) => getAssetPathMap().get(path);
 
 /**
+ * Get a stable, unique key for the given asset, to be used as its identity in a list. An unsaved
+ * asset is keyed by its blob URL, because it can temporarily share a path with the saved asset it’s
+ * going to overwrite, and two pending files can share one as well. A saved asset is keyed by its
+ * path, which is unique within the repository, and unlike its blob URL — only generated when the
+ * file is fetched — never changes while the asset is listed.
+ * @param {Asset} asset Asset.
+ * @returns {string} Key.
+ */
+export const getAssetKey = ({ unsaved, blobURL, path }) => (unsaved && blobURL ? blobURL : path);
+
+/**
  * Selected assets.
  * @type {Writable<Asset[]>}
  */

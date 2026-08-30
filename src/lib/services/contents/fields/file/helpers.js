@@ -9,6 +9,7 @@ import { hasTemplateTags } from '$lib/services/common/template';
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { formatFileName } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -217,22 +218,104 @@ export const isAssetInSelectedFolder = ({ asset, folder, folderPath }) => {
 };
 
 /**
+ * Give unsaved assets the file names these will actually get once the entry is saved, so no two
+ * assets in the list end up with the same path. An unsaved asset is created with a provisional path
+ * made of the target folder path and the raw file name, which can collide with an existing asset or
+ * with another pending file of the same name. The renaming logic mirrors `replaceBlobURL()`, which
+ * determines the final names at save time.
+ * @internal
+ * @param {object} args Arguments.
+ * @param {Asset[]} args.savedAssets Saved assets in the selected folder.
+ * @param {Asset[]} args.unsavedAssets Unsaved assets in the selected folder.
+ * @param {boolean} args.slugificationEnabled Whether the file names are slugified on upload.
+ * @returns {{ savedAssets: Asset[], unsavedAssets: Asset[] }} Assets with unique paths. A saved
+ * asset that a pending file is going to overwrite is excluded, because the pending file already
+ * represents it in the list.
+ */
+export const resolveUnsavedAssetPaths = ({ savedAssets, unsavedAssets, slugificationEnabled }) => {
+  if (!unsavedAssets.length) {
+    return { savedAssets, unsavedAssets };
+  }
+
+  /** @type {Map<string, string[]>} Map of a directory name to the file names in that directory. */
+  const namesByDir = new Map();
+  /** @type {Set<string>} Paths of the saved assets to be overwritten. */
+  const replacedPaths = new Set();
+
+  savedAssets.forEach(({ path, name }) => {
+    const dirName = getPathInfo(path).dirname ?? '';
+
+    namesByDir.set(dirName, [...(namesByDir.get(dirName) ?? []), name.normalize()]);
+  });
+
+  const resolvedUnsavedAssets = unsavedAssets.map((asset) => {
+    const { name, path, replace } = asset;
+    const dirName = getPathInfo(path).dirname ?? '';
+    const namesInDir = namesByDir.get(dirName) ?? [];
+
+    // A replacing file keeps its original name because it overwrites the existing asset
+    const newName = formatFileName(name, {
+      slugificationEnabled,
+      assetNamesInSameFolder: replace ? [] : namesInDir,
+    });
+
+    const newPath = dirName ? `${dirName}/${newName}` : newName;
+
+    if (replace) {
+      replacedPaths.add(newPath);
+    } else {
+      namesInDir.push(newName.normalize());
+      namesByDir.set(dirName, namesInDir);
+    }
+
+    return newPath === path ? asset : { ...asset, name: newName, path: newPath };
+  });
+
+  return {
+    savedAssets: replacedPaths.size
+      ? savedAssets.filter(({ path }) => !replacedPaths.has(path))
+      : savedAssets,
+    unsavedAssets: resolvedUnsavedAssets,
+  };
+};
+
+/**
  * Get the list of assets to show in the asset library, filtered by the selected folder and kind.
  * @param {object} args Arguments.
  * @param {'image' | undefined} args.kind Asset kind.
  * @param {AssetFolderInfo | undefined} args.folder Selected folder.
  * @param {string | undefined} args.folderPath Target folder path.
  * @param {Asset[]} args.unsavedAssets Unsaved assets.
+ * @param {boolean} [args.slugificationEnabled] Whether the file names are slugified on upload.
  * @returns {Asset[]} List of assets to show in the asset library.
  */
-export const listAssets = ({ kind, folder, folderPath, unsavedAssets }) => {
-  const availableAssets = [...get(allAssets), ...unsavedAssets]
-    .filter((asset) => !kind || kind === asset.kind)
-    .sort((a, b) => a.name.localeCompare(b.name))
-    // Unsaved assets should go first
-    .sort((a, b) => Number(!!b.unsaved) - Number(!!a.unsaved));
+export const listAssets = ({
+  kind,
+  folder,
+  folderPath,
+  unsavedAssets,
+  slugificationEnabled = false,
+}) => {
+  /**
+   * Check if the given asset belongs to the selected folder.
+   * @param {Asset} asset Asset to check.
+   * @returns {boolean} `true` if the asset is in the selected folder.
+   */
+  const isInSelectedFolder = (asset) => isAssetInSelectedFolder({ asset, folder, folderPath });
 
-  return availableAssets.filter((asset) => isAssetInSelectedFolder({ asset, folder, folderPath }));
+  const resolved = resolveUnsavedAssetPaths({
+    savedAssets: get(allAssets).filter(isInSelectedFolder),
+    unsavedAssets: unsavedAssets.filter(isInSelectedFolder),
+    slugificationEnabled,
+  });
+
+  return (
+    [...resolved.unsavedAssets, ...resolved.savedAssets]
+      .filter((asset) => !kind || kind === asset.kind)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      // Unsaved assets should go first
+      .sort((a, b) => Number(!!b.unsaved) - Number(!!a.unsaved))
+  );
 };
 
 /**

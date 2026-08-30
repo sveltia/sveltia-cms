@@ -35,6 +35,7 @@
     activated as cloudinaryActivated,
     dialogOpen as cloudinaryDialogOpen,
   } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
+  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import {
     allStockAssetProviders,
     getStockAssetMediaLibraryOptions,
@@ -147,8 +148,17 @@
   const targetFolderPath = $derived(
     getTargetFolderPath({ entry: $entryDraft?.originalEntry, folder: selectedFolder }),
   );
+  const slugificationEnabled = $derived(
+    getDefaultMediaLibraryOptions({ fieldConfig }).config.slugify_filename,
+  );
   const listedAssets = $derived(
-    listAssets({ kind, folder: selectedFolder, folderPath: targetFolderPath, unsavedAssets }),
+    listAssets({
+      kind,
+      folder: selectedFolder,
+      folderPath: targetFolderPath,
+      unsavedAssets,
+      slugificationEnabled,
+    }),
   );
   const enabledStockAssetProviderEntries = $derived.by(() => {
     const { providers = [] } = getStockAssetMediaLibraryOptions({ fieldConfig });
@@ -185,10 +195,11 @@
   /**
    * Process a dropped file.
    * @param {File} file File to be processed.
+   * @param {boolean} replace Whether the file replaces an existing asset with the same name.
    * @returns {Promise<Asset | undefined>} Processed asset or `undefined` if the file already
    * exists.
    */
-  const processFile = async (file) => {
+  const processFile = async (file, replace) => {
     const hash = await getHash(file);
     const folder = selectedFolder;
 
@@ -196,7 +207,7 @@
       return undefined;
     }
 
-    const asset = await convertFileItemToAsset({ file, folder, targetFolderPath });
+    const asset = await convertFileItemToAsset({ file, folder, targetFolderPath, replace });
 
     droppedAssets.push(asset);
 
@@ -215,7 +226,7 @@
       return;
     }
 
-    selectedResources = (await Promise.all(files.map((file) => processFile(file))))
+    selectedResources = (await Promise.all(files.map((file) => processFile(file, replace))))
       .filter((asset) => !!asset)
       .map((asset) => ({ asset, replace }));
   };

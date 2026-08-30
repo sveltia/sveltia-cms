@@ -15,6 +15,7 @@ import {
   getAssetByPath,
   getAssetByRelativePath,
   getAssetByRelativePathAndCollection,
+  getAssetKey,
   getAssetsByDirName,
   getAssetsByFolder,
   getDuplicateFiles,
@@ -575,6 +576,58 @@ describe('assets/index', () => {
 
       expect(getAssetByInternalPath('assets/old.jpg')).toBeUndefined();
       expect(getAssetByInternalPath('assets/new.jpg')).toBe(newAsset);
+    });
+  });
+
+  describe('getAssetKey', () => {
+    it('should key a saved asset by its path', () => {
+      const asset = /** @type {any} */ ({ path: 'assets/photo.jpg', name: 'photo.jpg' });
+
+      expect(getAssetKey(asset)).toBe('assets/photo.jpg');
+    });
+
+    it('should key a saved asset by its path even when a blob URL is available', () => {
+      const asset = /** @type {any} */ ({
+        path: 'assets/photo.jpg',
+        name: 'photo.jpg',
+        blobURL: 'blob:fetched',
+      });
+
+      expect(getAssetKey(asset)).toBe('assets/photo.jpg');
+    });
+
+    it('should key an unsaved asset by its blob URL', () => {
+      const asset = /** @type {any} */ ({
+        path: 'assets/photo.jpg',
+        name: 'photo.jpg',
+        unsaved: true,
+        blobURL: 'blob:pending',
+      });
+
+      expect(getAssetKey(asset)).toBe('blob:pending');
+    });
+
+    it('should fall back to the path when an unsaved asset has no blob URL', () => {
+      const asset = /** @type {any} */ ({
+        path: 'assets/photo.jpg',
+        name: 'photo.jpg',
+        unsaved: true,
+      });
+
+      expect(getAssetKey(asset)).toBe('assets/photo.jpg');
+    });
+
+    it('should give an unsaved asset a key distinct from the asset it replaces', () => {
+      const saved = /** @type {any} */ ({ path: 'assets/photo.jpg', name: 'photo.jpg' });
+
+      const unsaved = /** @type {any} */ ({
+        path: 'assets/photo.jpg',
+        name: 'photo.jpg',
+        unsaved: true,
+        blobURL: 'blob:pending',
+      });
+
+      expect(getAssetKey(saved)).not.toBe(getAssetKey(unsaved));
     });
   });
 

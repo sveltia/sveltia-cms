@@ -8,6 +8,7 @@ import {
   hasSameAsset,
   isAssetInSelectedFolder,
   listAssets,
+  resolveUnsavedAssetPaths,
 } from './helpers';
 
 // Mock dependencies
@@ -50,6 +51,10 @@ const { default: equal } = await import('fast-deep-equal');
 const { allAssets, fillInternalPathTemplate } = await import('$lib/services/assets');
 const { getSlugs } = await import('$lib/services/contents/draft/slugs');
 const { getAssetFolderPaths } = await import('$lib/services/contents/draft/save/assets');
+
+const { getPathInfo: getActualPathInfo } = /** @type {any} */ (
+  await vi.importActual('@sveltia/utils/file')
+);
 
 describe('contents/fields/file/helpers', () => {
   beforeEach(() => {
@@ -1233,6 +1238,8 @@ describe('contents/fields/file/helpers', () => {
 
     beforeEach(() => {
       allAssets.set([]);
+      // `listAssets` resolves unsaved asset paths, which needs the real path parser
+      vi.mocked(getPathInfo).mockImplementation(getActualPathInfo);
     });
 
     it('should return empty array when there are no assets', () => {
@@ -1371,6 +1378,171 @@ describe('contents/fields/file/helpers', () => {
       });
 
       expect(result).toEqual([]);
+    });
+
+    describe('duplicate paths', () => {
+      /**
+       * Create a minimal unsaved asset in the shared folder.
+       * @param {string} name File name.
+       * @param {object} [options] Options.
+       * @param {boolean} [options.replace] Whether the file replaces an existing asset.
+       * @param {string} [options.blobURL] Blob URL.
+       * @returns {import('$lib/types/private').Asset} Asset.
+       */
+      const makeUnsavedAsset = (name, { replace = false, blobURL = 'blob:1' } = {}) => ({
+        ...makeAsset(name),
+        unsaved: true,
+        replace,
+        blobURL,
+      });
+
+      it('should rename an unsaved asset that collides with a saved asset', () => {
+        allAssets.set([makeAsset('photo.jpg')]);
+
+        const result = listAssets({
+          kind: undefined,
+          folder,
+          folderPath: 'content/posts/images',
+          unsavedAssets: [makeUnsavedAsset('photo.jpg')],
+        });
+
+        expect(result.map((a) => a.path)).toEqual([
+          'content/posts/images/photo-1.jpg',
+          'content/posts/images/photo.jpg',
+        ]);
+        expect(new Set(result.map((a) => a.path)).size).toBe(2);
+      });
+
+      it('should rename unsaved assets that collide with each other', () => {
+        const result = listAssets({
+          kind: undefined,
+          folder,
+          folderPath: 'content/posts/images',
+          unsavedAssets: [
+            makeUnsavedAsset('photo.jpg', { blobURL: 'blob:1' }),
+            makeUnsavedAsset('photo.jpg', { blobURL: 'blob:2' }),
+            makeUnsavedAsset('photo.jpg', { blobURL: 'blob:3' }),
+          ],
+        });
+
+        expect(result.map((a) => a.name)).toEqual(['photo-1.jpg', 'photo-2.jpg', 'photo.jpg']);
+        expect(new Set(result.map((a) => a.path)).size).toBe(3);
+      });
+
+      it('should keep the name of a replacing file and hide the asset it overwrites', () => {
+        allAssets.set([makeAsset('photo.jpg'), makeAsset('other.jpg')]);
+
+        const result = listAssets({
+          kind: undefined,
+          folder,
+          folderPath: 'content/posts/images',
+          unsavedAssets: [makeUnsavedAsset('photo.jpg', { replace: true })],
+        });
+
+        expect(result.map((a) => a.path)).toEqual([
+          'content/posts/images/photo.jpg',
+          'content/posts/images/other.jpg',
+        ]);
+        expect(result[0].unsaved).toBe(true);
+      });
+
+      it('should not rename an unsaved asset with a unique name', () => {
+        allAssets.set([makeAsset('photo.jpg')]);
+
+        const unsaved = makeUnsavedAsset('draft.jpg');
+
+        const result = listAssets({
+          kind: undefined,
+          folder,
+          folderPath: 'content/posts/images',
+          unsavedAssets: [unsaved],
+        });
+
+        // The asset object is passed through untouched when its path doesn’t change
+        expect(result[0]).toBe(unsaved);
+      });
+
+      it('should slugify unsaved file names when slugification is enabled', () => {
+        const result = listAssets({
+          kind: undefined,
+          folder,
+          folderPath: 'content/posts/images',
+          unsavedAssets: [makeUnsavedAsset('My Photo.JPG')],
+          slugificationEnabled: true,
+        });
+
+        expect(result[0].path).toBe('content/posts/images/my-photo.jpg');
+      });
+    });
+  });
+
+  describe('resolveUnsavedAssetPaths', () => {
+    beforeEach(() => {
+      vi.mocked(getPathInfo).mockImplementation(getActualPathInfo);
+    });
+
+    /**
+     * Create a minimal asset.
+     * @param {string} path File path.
+     * @param {Partial<import('$lib/types/private').Asset>} [props] Extra properties.
+     * @returns {import('$lib/types/private').Asset} Asset.
+     */
+    const makeAsset = (path, props = {}) =>
+      /** @type {any} */ ({
+        path,
+        name: /** @type {string} */ (path.split('/').at(-1)),
+        kind: 'image',
+        size: 100,
+        sha: 'abc',
+        ...props,
+      });
+
+    it('should return the given arrays as is when there are no unsaved assets', () => {
+      const savedAssets = [makeAsset('images/photo.jpg')];
+      /** @type {import('$lib/types/private').Asset[]} */
+      const unsavedAssets = [];
+
+      const result = resolveUnsavedAssetPaths({
+        savedAssets,
+        unsavedAssets,
+        slugificationEnabled: false,
+      });
+
+      expect(result.savedAssets).toBe(savedAssets);
+      expect(result.unsavedAssets).toBe(unsavedAssets);
+    });
+
+    it('should handle assets at the repository root, which have no directory name', () => {
+      const result = resolveUnsavedAssetPaths({
+        savedAssets: [makeAsset('photo.jpg')],
+        unsavedAssets: [makeAsset('photo.jpg', { unsaved: true })],
+        slugificationEnabled: false,
+      });
+
+      expect(result.unsavedAssets[0].path).toBe('photo-1.jpg');
+      expect(result.savedAssets.map((a) => a.path)).toEqual(['photo.jpg']);
+    });
+
+    it('should not rename against assets in a different directory', () => {
+      const result = resolveUnsavedAssetPaths({
+        savedAssets: [makeAsset('images/nested/photo.jpg')],
+        unsavedAssets: [makeAsset('images/photo.jpg', { unsaved: true })],
+        slugificationEnabled: false,
+      });
+
+      expect(result.unsavedAssets[0].path).toBe('images/photo.jpg');
+    });
+
+    it('should keep the saved assets untouched when nothing is replaced', () => {
+      const savedAssets = [makeAsset('images/photo.jpg')];
+
+      const result = resolveUnsavedAssetPaths({
+        savedAssets,
+        unsavedAssets: [makeAsset('images/draft.jpg', { unsaved: true })],
+        slugificationEnabled: false,
+      });
+
+      expect(result.savedAssets).toBe(savedAssets);
     });
   });
 

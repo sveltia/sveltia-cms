@@ -66,16 +66,26 @@ export const getExistingBlobURL = async ({ draft, file, folder }) => {
  * @param {string} [args.blobURL] Blob URL of the file.
  * @param {AssetFolderInfo | undefined} args.folder Asset folder.
  * @param {string} [args.targetFolderPath] Target folder path.
+ * @param {boolean} [args.replace] Whether the file overwrites an existing asset with the same name.
  * @returns {Promise<Asset>} Asset.
  */
-export const convertFileItemToAsset = async ({ file, blobURL, folder, targetFolderPath }) => {
+export const convertFileItemToAsset = async ({
+  file,
+  blobURL,
+  folder,
+  targetFolderPath,
+  replace,
+}) => {
   const { name, size } = file;
 
   return /** @type {Asset} */ ({
     unsaved: true,
+    replace: !!replace,
     file,
     blobURL: blobURL ?? URL.createObjectURL(file),
     name,
+    // A provisional path. `listAssets` resolves it against the assets already in the folder,
+    // because the final file name is only determined when the entry is saved.
     path: targetFolderPath ? `${targetFolderPath}/${name}` : name,
     sha: await getGitHash(file),
     size,
@@ -93,8 +103,8 @@ export const convertFileItemToAsset = async ({ file, blobURL, folder, targetFold
  */
 export const getUnsavedAssets = async ({ draft, targetFolderPath }) =>
   Promise.all(
-    Object.entries(draft.files).map(async ([blobURL, { file, folder }]) =>
-      convertFileItemToAsset({ file, blobURL, folder, targetFolderPath }),
+    Object.entries(draft.files).map(async ([blobURL, { file, folder, replace }]) =>
+      convertFileItemToAsset({ file, blobURL, folder, targetFolderPath, replace }),
     ),
   );
 

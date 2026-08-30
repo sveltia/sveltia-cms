@@ -973,6 +973,7 @@ describe('Test convertFileItemToAsset()', () => {
 
     expect(result).toEqual({
       unsaved: true,
+      replace: false,
       file: mockFile,
       blobURL: 'blob:custom-url',
       name: 'test.jpg',
@@ -1110,6 +1111,7 @@ describe('Test getUnsavedAssets()', () => {
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual({
       unsaved: true,
+      replace: false,
       file: mockFile1,
       blobURL: 'blob:url-1',
       name: 'test1.jpg',
@@ -1121,6 +1123,7 @@ describe('Test getUnsavedAssets()', () => {
     });
     expect(result[1]).toEqual({
       unsaved: true,
+      replace: false,
       file: mockFile2,
       blobURL: 'blob:url-2',
       name: 'test2.jpg',

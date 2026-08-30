@@ -1043,6 +1043,8 @@
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {AssetFolderInfo} folder Asset folder info.
  * @property {boolean} [unsaved] Whether the asset is unsaved.
+ * @property {boolean} [replace] Whether the asset overwrites an existing asset with the same name
+ * once the entry is saved. Unsaved files only.
  * @property {UnpublishedAssetProps} [workflow] Editorial Workflow information. It’s only set while
  * the asset lives on a workflow branch, and removed once the entry has been published.
  */
