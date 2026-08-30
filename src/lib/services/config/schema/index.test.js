@@ -68,6 +68,49 @@ describe('config/schema/index', () => {
       expect([...collectors.errors]).toEqual([]);
     });
 
+    test('validates a custom field type against its registered schema', async () => {
+      const { customFieldTypeRegistry } = await import('$lib/services/api/registries');
+
+      customFieldTypeRegistry.set('rating', {
+        /**
+         * Stand-in control component.
+         * @returns {undefined} Nothing.
+         */
+        control: () => undefined,
+        schema: { properties: { max: { type: 'integer' } } },
+      });
+
+      const fieldSchema = prepareSchema({
+        type: 'object',
+        properties: { custom: { $ref: '#/definitions/CustomField' } },
+        definitions: {
+          CustomField: {
+            type: 'object',
+            additionalProperties: false,
+            properties: { name: { type: 'string' }, widget: { type: 'string' } },
+          },
+        },
+      });
+
+      expect(validate({ custom: { name: 'a', widget: 'rating', max: 5 } }, fieldSchema)).toEqual(
+        [],
+      );
+
+      expect(
+        validate({ custom: { name: 'a', widget: 'rating', max: 'five' } }, fieldSchema),
+      ).toEqual([
+        'config.error.schema_invalid_type option=custom.max ' +
+          'type=config.error.schema_value_type.integer',
+      ]);
+
+      // Another field type is unaffected by the registration
+      expect(
+        validate({ custom: { name: 'a', widget: 'other', max: 'five' } }, fieldSchema),
+      ).toEqual([]);
+
+      customFieldTypeRegistry.clear();
+    });
+
     test('skips validation when the schema cannot be compiled', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 

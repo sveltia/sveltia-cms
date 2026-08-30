@@ -1,5 +1,6 @@
 import Ajv from 'ajv';
 
+import { applyCustomFieldSchemas } from '$lib/services/config/schema/custom-fields';
 import { reportSchemaErrors } from '$lib/services/config/schema/errors';
 
 /**
@@ -34,7 +35,7 @@ export const validateConfigSchema = ({ config, schema, collectors }) => {
     // problem at once instead of stopping at the first. Formats are only used for documentation,
     // so checking them would add a dependency without catching anything.
     const validate = new Ajv({ strict: false, allErrors: true, validateFormats: false }).compile(
-      schema,
+      applyCustomFieldSchemas(schema),
     );
 
     if (!validate(config)) {
