@@ -4660,6 +4660,76 @@ describe('Test getCurrentValue()', () => {
     });
   });
 
+  describe('Object value field', () => {
+    test('should assemble the object from its child key paths', () => {
+      // A Code field stores an empty object placeholder at its own key path
+      const result = getCurrentValue({
+        keyPath: 'snippet',
+        valueMap: {
+          'snippet.code': 'const a = 1;',
+          'snippet.lang': 'js',
+          snippet: {},
+        },
+        isList: false,
+      });
+
+      expect(result).toEqual({ code: 'const a = 1;', lang: 'js' });
+    });
+
+    test('should assemble a nested object', () => {
+      const result = getCurrentValue({
+        keyPath: 'meta',
+        valueMap: {
+          meta: {},
+          'meta.author.name': 'Kohei',
+          'meta.author.url': 'https://example.com',
+          'meta.draft': true,
+        },
+        isList: false,
+      });
+
+      expect(result).toEqual({
+        author: { name: 'Kohei', url: 'https://example.com' },
+        draft: true,
+      });
+    });
+
+    test('should keep an empty object when the key path has no children', () => {
+      const result = getCurrentValue({
+        keyPath: 'empty',
+        valueMap: { empty: {} },
+        isList: false,
+      });
+
+      expect(result).toEqual({});
+    });
+
+    test('should assemble the object for a custom field type', () => {
+      const result = getCurrentValue({
+        keyPath: 'custom',
+        valueMap: {
+          'custom.foo': 'bar',
+          custom: {},
+        },
+        isList: false,
+        isCustomFieldType: true,
+      });
+
+      expect(result).toEqual({ foo: 'bar' });
+    });
+
+    test('should not touch a non-object value that has children', () => {
+      // A scalar stored where sub-values exist is left alone; `normalizeContent()` reconciles it
+      const result = getCurrentValue({
+        keyPath: 'weird',
+        valueMap: { weird: 'scalar', 'weird.foo': 'bar' },
+        isList: false,
+      });
+
+      expect(result).toBe('scalar');
+    });
+  });
+
   describe('Multi-value field (isList = true)', () => {
     test('should return array of values when multiple items exist', () => {
       const result = getCurrentValue({

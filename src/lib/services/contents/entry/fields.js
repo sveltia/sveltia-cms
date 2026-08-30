@@ -1,3 +1,5 @@
+import { isObject } from '@sveltia/utils/object';
+
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { applyTransformations } from '$lib/services/common/transformations';
 import { getCollection } from '$lib/services/contents/collection';
@@ -19,6 +21,7 @@ import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
 import { isNumeric } from '$lib/services/utils/number';
+import { unflattenMap } from '$lib/services/utils/object';
 
 /**
  * @import {
@@ -576,6 +579,30 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
 };
 
 /**
+ * Assemble the object stored under the given key path from its child key paths.
+ *
+ * A field holding an object — Code, KeyValue, Object, or a custom field type — stores an empty
+ * object at its own key path as a placeholder, and the actual values under `<keyPath>.*`. Returning
+ * the placeholder as is would hand the consumer an empty object instead of the value.
+ * @param {FlattenedEntryContent} valueMap Flattened entry content.
+ * @param {FieldKeyPath} keyPath Key path of the field.
+ * @returns {Record<string, any> | undefined} Assembled object, or `undefined` if the key path has
+ * no children.
+ */
+const getObjectValue = (valueMap, keyPath) => {
+  const prefix = `${keyPath}.`;
+  const keys = getKeysByPrefix(valueMap, prefix);
+
+  if (!keys.length) {
+    return undefined;
+  }
+
+  return unflattenMap(
+    Object.fromEntries(keys.map((key) => [key.slice(prefix.length), valueMap[key]])),
+  );
+};
+
+/**
  * Get the current value of a field, taking into account whether it’s a single or multi-value field.
  * Our internal representation of multi-value fields is a flattened object, so we need to gather all
  * the values for a given key path into an array.
@@ -593,7 +620,8 @@ export const getCurrentValue = ({ valueMap, keyPath, isList, isCustomFieldType =
 
   // Single value field: custom field requires the list check below as we don’t know the shape
   if (!isList && !isCustomFieldType) {
-    return value;
+    // An object field stores an empty object placeholder at its own key path
+    return isObject(value) ? (getObjectValue(valueMap, keyPath) ?? value) : value;
   }
 
   // Multiple values are flattened in the value map object
@@ -606,7 +634,7 @@ export const getCurrentValue = ({ valueMap, keyPath, isList, isCustomFieldType =
 
   // Single value custom field
   if (isCustomFieldType) {
-    return value;
+    return isObject(value) ? (getObjectValue(valueMap, keyPath) ?? value) : value;
   }
 
   return [];
