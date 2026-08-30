@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  createPublicURL,
   getAssetSavingInfo,
   replaceBlobURL,
   resolveAssetFolderPaths,
@@ -2446,5 +2447,23 @@ describe('Test getAssetSavingInfo()', () => {
     // The resolved paths should have the template tags replaced
     expect(result.assetFolderPaths.resolvedInternalPath).toBe('static/uploads/template-test');
     expect(result.assetFolderPaths.resolvedPublicPath).toBe('/uploads/template-test');
+  });
+});
+
+describe('Test createPublicURL()', () => {
+  test('should join the public path and file name', () => {
+    expect(createPublicURL('/uploads', 'image.png')).toBe('/uploads/image.png');
+  });
+
+  test('should avoid duplicating the slash when the public path is a single slash', () => {
+    expect(createPublicURL('/', 'image.png')).toBe('/image.png');
+  });
+
+  test('should return the file name only when the public path is empty', () => {
+    expect(createPublicURL('', 'image.png')).toBe('image.png');
+  });
+
+  test('should keep the dot prefix for an entry-relative public path', () => {
+    expect(createPublicURL('.', 'image.png')).toBe('./image.png');
   });
 });

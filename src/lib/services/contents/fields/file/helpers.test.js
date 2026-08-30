@@ -4,6 +4,7 @@ import {
   getAssetLibraryFolderMap,
   getDefaultAssetFolder,
   getTargetFolderPath,
+  getUnsavedFileDisplayPath,
   hasSameAsset,
   isAssetInSelectedFolder,
   listAssets,
@@ -33,12 +34,22 @@ vi.mock('$lib/services/assets/folders', async () => {
   };
 });
 
+vi.mock('$lib/services/contents/draft/slugs', () => ({
+  getSlugs: vi.fn(),
+}));
+vi.mock('$lib/services/contents/draft/save/assets', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  getAssetFolderPaths: vi.fn(),
+}));
+
 const { getAssetFolder } = await import('$lib/services/assets/folders');
 const { allAssetFolders } = await import('$lib/services/assets/folders');
 const { getHash } = await import('@sveltia/utils/crypto');
 const { getPathInfo } = await import('@sveltia/utils/file');
 const { default: equal } = await import('fast-deep-equal');
 const { allAssets, fillInternalPathTemplate } = await import('$lib/services/assets');
+const { getSlugs } = await import('$lib/services/contents/draft/slugs');
+const { getAssetFolderPaths } = await import('$lib/services/contents/draft/save/assets');
 
 describe('contents/fields/file/helpers', () => {
   beforeEach(() => {
@@ -882,6 +893,129 @@ describe('contents/fields/file/helpers', () => {
 
         expect(result).toBe('content/posts/images/-');
       });
+    });
+  });
+
+  describe('getUnsavedFileDisplayPath', () => {
+    /**
+     * Create a mock entry draft holding a single unsaved file.
+     * @param {any} folder Target asset folder information.
+     * @returns {any} Mock draft.
+     */
+    const createDraft = (folder) => ({
+      files: { 'blob:test': { file: new File([], 'photo.png'), folder, replace: false } },
+    });
+
+    it('should prepend the public path as is when it has no template tags', () => {
+      const result = getUnsavedFileDisplayPath({
+        draft: createDraft({ entryRelative: false, publicPath: '/images/uploads' }),
+        blobURL: 'blob:test',
+        fileName: 'photo.png',
+      });
+
+      expect(result).toBe('/images/uploads/photo.png');
+      expect(getSlugs).not.toHaveBeenCalled();
+    });
+
+    it('should return the file name only when the public path is empty', () => {
+      const result = getUnsavedFileDisplayPath({
+        draft: createDraft({ entryRelative: false, publicPath: '' }),
+        blobURL: 'blob:test',
+        fileName: 'photo.png',
+      });
+
+      expect(result).toBe('photo.png');
+    });
+
+    it('should return the file name only when the target folder is unknown', () => {
+      const result = getUnsavedFileDisplayPath({
+        draft: createDraft(undefined),
+        blobURL: 'blob:unknown',
+        fileName: 'photo.png',
+      });
+
+      expect(result).toBe('photo.png');
+      expect(getSlugs).not.toHaveBeenCalled();
+    });
+
+    it('should resolve template tags in the public path with the draft content', () => {
+      const draft = createDraft({
+        entryRelative: false,
+        internalPath: 'static/images/{{slug}}',
+        publicPath: '/images/{{slug}}',
+        hasTemplateTags: true,
+      });
+
+      vi.mocked(getSlugs).mockReturnValue({
+        defaultLocaleSlug: 'my-post',
+        localizedSlugs: undefined,
+        canonicalSlug: undefined,
+      });
+
+      vi.mocked(getAssetFolderPaths).mockReturnValue({
+        resolvedInternalPath: 'static/images/my-post',
+        resolvedPublicPath: '/images/my-post',
+      });
+
+      const result = getUnsavedFileDisplayPath({
+        draft,
+        blobURL: 'blob:test',
+        fileName: 'photo.png',
+      });
+
+      expect(result).toBe('/images/my-post/photo.png');
+
+      expect(getAssetFolderPaths).toHaveBeenCalledWith({
+        draft,
+        defaultLocaleSlug: 'my-post',
+        folder: draft.files['blob:test'].folder,
+      });
+    });
+
+    it('should resolve an entry-relative public path', () => {
+      vi.mocked(getSlugs).mockReturnValue({
+        defaultLocaleSlug: 'my-post',
+        localizedSlugs: undefined,
+        canonicalSlug: undefined,
+      });
+
+      vi.mocked(getAssetFolderPaths).mockReturnValue({
+        resolvedInternalPath: 'src/content/blog/my-post',
+        resolvedPublicPath: '.',
+      });
+
+      const result = getUnsavedFileDisplayPath({
+        draft: createDraft({ entryRelative: true, publicPath: '.' }),
+        blobURL: 'blob:test',
+        fileName: 'photo.png',
+      });
+
+      expect(result).toBe('./photo.png');
+    });
+
+    it('should remove empty path segments left by an unresolved template tag', () => {
+      vi.mocked(getSlugs).mockReturnValue({
+        defaultLocaleSlug: '',
+        localizedSlugs: undefined,
+        canonicalSlug: undefined,
+      });
+
+      vi.mocked(getAssetFolderPaths).mockReturnValue({
+        resolvedInternalPath: 'static/images/',
+        resolvedPublicPath: '/images//',
+      });
+
+      const result = getUnsavedFileDisplayPath({
+        draft: createDraft({
+          entryRelative: false,
+          publicPath: '/images/{{slug}}',
+          hasTemplateTags: true,
+        }),
+        blobURL: 'blob:test',
+        fileName: 'photo.png',
+      });
+
+      expect(result).toBe('/images/photo.png');
     });
   });
 

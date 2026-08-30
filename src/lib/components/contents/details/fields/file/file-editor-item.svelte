@@ -13,7 +13,8 @@
   import { getMediaKind } from '$lib/services/assets/kinds';
   import { entryDraft } from '$lib/services/contents/draft';
   import { activeInlineEditors } from '$lib/services/contents/editor';
-  import { createPath, formatFileName, isEquivalentFileExtension } from '$lib/services/utils/file';
+  import { getUnsavedFileDisplayPath } from '$lib/services/contents/fields/file/helpers';
+  import { formatFileName, isEquivalentFileExtension } from '$lib/services/utils/file';
 
   /**
    * @import { Asset, AssetKind, Entry } from '$lib/types/private';
@@ -114,12 +115,13 @@
   });
 
   /**
-   * Get the path to display for the asset or file. For an unsaved file, this will be the same as
-   * the final path in most cases, but it could be different if a file with the same name already
-   * exists in the assets folder, and the new file is renamed to avoid conflicts.
+   * Get the path to display for the asset or file. For an unsaved file, this is the public path
+   * where the file will be stored, with any template tags like `{{slug}}` and entry-relative paths
+   * resolved with the current draft content. It will be the same as the final path in most cases,
+   * but it could be different if a file with the same name already exists in the assets folder, and
+   * the new file is renamed to avoid conflicts, or if the entry slug changes before saving.
    * @type {string} The path to display. If the folder could not be determined, it will only be the
    * file name.
-   * @todo Handle template tags and relative paths if possible.
    */
   const fileDisplayPath = $derived.by(() => {
     if (!value) {
@@ -127,12 +129,11 @@
     }
 
     if (file) {
-      const { publicPath, entryRelative, hasTemplateTags } =
-        $entryDraft?.files[value]?.folder ?? {};
+      const name = decodeURI(file.name.normalize());
 
-      const _folder = entryRelative || hasTemplateTags ? '' : publicPath || '';
-
-      return createPath([_folder, decodeURI(file.name.normalize())]);
+      return $entryDraft
+        ? getUnsavedFileDisplayPath({ draft: $entryDraft, blobURL: value, fileName: name })
+        : name;
     }
 
     if (!value.startsWith('blob:')) {

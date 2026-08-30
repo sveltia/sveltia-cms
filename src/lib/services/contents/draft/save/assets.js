@@ -236,6 +236,43 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
 };
 
 /**
+ * Resolve the internal and public asset folder paths for a file being added to the given draft.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
+ * @param {AssetFolderInfo} args.folder Asset folder associated with a new file.
+ * @returns {ResolvedAssetFolderPaths} Determined paths.
+ */
+export const getAssetFolderPaths = ({ draft, defaultLocaleSlug, folder }) => {
+  const { collection, collectionFile, isIndexFile } = draft;
+
+  const {
+    _i18n: { defaultLocale },
+  } = collectionFile ?? collection;
+
+  return resolveAssetFolderPaths({
+    folder,
+    fillSlugOptions: {
+      ...getFillSlugOptions({ draft }),
+      type: 'media_folder',
+      currentSlug: defaultLocaleSlug,
+      entryFilePath: createEntryPath({ draft, locale: defaultLocale, slug: defaultLocaleSlug }),
+      isIndexFile,
+    },
+  });
+};
+
+/**
+ * Join the resolved public path and file name to create the public URL to be stored as the field
+ * value.
+ * @param {string} publicPath Resolved public path.
+ * @param {string} fileName File name.
+ * @returns {string} Public URL.
+ */
+export const createPublicURL = (publicPath, fileName) =>
+  publicPath ? `${publicPath === '/' ? '' : publicPath}/${fileName}` : fileName;
+
+/**
  * Get the information required to save an asset.
  * @internal
  * @param {object} args Arguments.
@@ -246,23 +283,8 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
  * savingAssetProps: SavingAsset }} Arguments.
  */
 export const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
-  const { collection, collectionName, collectionFile, isIndexFile } = draft;
-
-  const {
-    _i18n: { defaultLocale },
-  } = collectionFile ?? collection;
-
-  const assetFolderPaths = resolveAssetFolderPaths({
-    folder,
-    fillSlugOptions: {
-      ...getFillSlugOptions({ draft }),
-      type: 'media_folder',
-      currentSlug: defaultLocaleSlug,
-      entryFilePath: createEntryPath({ draft, locale: defaultLocale, slug: defaultLocaleSlug }),
-      isIndexFile,
-    },
-  });
-
+  const { collectionName } = draft;
+  const assetFolderPaths = getAssetFolderPaths({ draft, defaultLocaleSlug, folder });
   const { resolvedInternalPath } = assetFolderPaths;
 
   return {
@@ -344,9 +366,7 @@ export const replaceBlobURL = async ({
     });
   }
 
-  let publicURL = resolvedPublicPath
-    ? `${resolvedPublicPath === '/' ? '' : resolvedPublicPath}/${fileName}`
-    : fileName;
+  let publicURL = createPublicURL(resolvedPublicPath, fileName);
 
   if (encodingEnabled) {
     publicURL = encodeFilePath(publicURL);

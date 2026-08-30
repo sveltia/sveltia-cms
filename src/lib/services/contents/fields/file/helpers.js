@@ -5,7 +5,10 @@ import { get } from 'svelte/store';
 
 import { allAssets, fillInternalPathTemplate } from '$lib/services/assets';
 import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
+import { hasTemplateTags } from '$lib/services/common/template';
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
+import { getSlugs } from '$lib/services/contents/draft/slugs';
 
 /**
  * @import {
@@ -13,9 +16,17 @@ import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/consta
  * AssetFolderInfo,
  * AssetLibraryFolderMap,
  * Entry,
+ * EntryDraft,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
  */
+
+/**
+ * Regular expression to match empty path segments, which are left when a template tag in a public
+ * path cannot be resolved, typically because a field used in the entry slug is still empty.
+ * @type {RegExp}
+ */
+const EMPTY_PATH_SEGMENT_REGEX = /(?<=.)\/(?=\/|$)/g;
 
 /**
  * Get the default library folder map for a File/Image field.
@@ -132,6 +143,33 @@ export const getTargetFolderPath = ({ entry, folder }) => {
 
   // Append a placeholder because the complete path is not determined until the entry is saved
   return subPath ? `${internalPath}/${subPath}/-` : `${internalPath}/-`;
+};
+
+/**
+ * Get the public path to be displayed for a file that has not been saved to the repository yet. An
+ * unsaved file is a pending upload cached in the draft and referenced with a temporary blob URL, so
+ * the path has to be resolved the same way as it will be when the entry is saved, including any
+ * template tags like `{{slug}}` and entry-relative paths.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft holding the file.
+ * @param {string} args.blobURL Blob URL of the file, which is the current field value.
+ * @param {string} args.fileName File name to be appended to the resolved folder path.
+ * @returns {string} Path to be displayed. It’s the file name alone if the target folder is unknown
+ * or the public path is empty.
+ */
+export const getUnsavedFileDisplayPath = ({ draft, blobURL, fileName }) => {
+  const { folder } = draft.files[blobURL] ?? {};
+  const { entryRelative, publicPath = '' } = folder ?? {};
+
+  // Nothing has to be resolved if the path is absolute and has no template tags
+  if (!folder || (!entryRelative && !hasTemplateTags(publicPath))) {
+    return createPublicURL(publicPath, fileName);
+  }
+
+  const { defaultLocaleSlug } = getSlugs({ draft });
+  const { resolvedPublicPath } = getAssetFolderPaths({ draft, defaultLocaleSlug, folder });
+
+  return createPublicURL(resolvedPublicPath.replace(EMPTY_PATH_SEGMENT_REGEX, ''), fileName);
 };
 
 /**
