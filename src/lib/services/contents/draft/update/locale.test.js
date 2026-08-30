@@ -5,9 +5,13 @@ import { createProxy } from '$lib/services/contents/draft/create/proxy';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
 
-import { copyDefaultLocaleValues, toggleLocale } from './locale';
+import { copyDefaultLocaleValues, forEachTargetLocale, toggleLocale } from './locale';
 
-vi.mock('$lib/services/contents/draft');
+// Keep the real `suspendAutoDuplication` so it still runs its callback and toggles the store,
+// which the tests below spy on
+vi.mock('$lib/services/contents/draft', async () => ({
+  ...(await vi.importActual('$lib/services/contents/draft')),
+}));
 vi.mock('$lib/services/contents/draft/create/proxy');
 vi.mock('$lib/services/contents/draft/defaults');
 vi.mock('$lib/services/contents/entry/fields');
@@ -109,6 +113,54 @@ describe('draft/update/locale', () => {
       }
 
       return undefined;
+    });
+  });
+
+  describe('forEachTargetLocale', () => {
+    /** @type {Record<string, any>} */
+    const valueStore = { en: { title: 'en' }, ja: { title: 'ja' }, fr: { title: 'fr' } };
+
+    it('should visit only the given locale by default', () => {
+      /** @type {string[]} */
+      const visited = [];
+
+      forEachTargetLocale({ valueStore, locale: 'ja', i18n: true }, (_valueMap, _locale) => {
+        visited.push(_locale);
+      });
+
+      expect(visited).toEqual(['ja']);
+    });
+
+    it('should visit every locale for a duplicate field', () => {
+      /** @type {string[]} */
+      const visited = [];
+
+      forEachTargetLocale({ valueStore, locale: 'ja', i18n: 'duplicate' }, (_valueMap, _locale) => {
+        visited.push(_locale);
+      });
+
+      expect(visited).toEqual(['en', 'ja', 'fr']);
+    });
+
+    it('should hand the callback that locale’s own content', () => {
+      forEachTargetLocale({ valueStore, locale: 'fr', i18n: false }, (valueMap, _locale) => {
+        expect(valueMap).toBe(valueStore[_locale]);
+        expect(valueMap.title).toBe('fr');
+      });
+    });
+
+    it('should do nothing when the locale is not in the store', () => {
+      const callback = vi.fn();
+
+      forEachTargetLocale({ valueStore, locale: 'de', i18n: false }, callback);
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should tolerate an undefined value store', () => {
+      const callback = vi.fn();
+
+      forEachTargetLocale({ valueStore: undefined, locale: 'en', i18n: false }, callback);
+      expect(callback).not.toHaveBeenCalled();
     });
   });
 

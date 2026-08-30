@@ -4,7 +4,11 @@ import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
 
 import { updateNonPrimitiveValue } from '.';
 
-vi.mock('$lib/services/contents/draft');
+// Keep the real `suspendAutoDuplication` so it still runs its callback and toggles the store,
+// which the tests below spy on
+vi.mock('$lib/services/contents/draft', async () => ({
+  ...(await vi.importActual('$lib/services/contents/draft')),
+}));
 vi.mock('svelte/store', async () => {
   const actual = await vi.importActual('svelte/store');
 

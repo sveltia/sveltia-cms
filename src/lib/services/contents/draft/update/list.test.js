@@ -12,7 +12,11 @@ import {
   updateObject,
 } from './list';
 
-vi.mock('$lib/services/contents/draft');
+// Keep the real `suspendAutoDuplication` so it still runs its callback and toggles the store,
+// which the tests below spy on
+vi.mock('$lib/services/contents/draft', async () => ({
+  ...(await vi.importActual('$lib/services/contents/draft')),
+}));
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { devModeEnabled: false },
 }));

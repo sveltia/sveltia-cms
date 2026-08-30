@@ -10,7 +10,7 @@ import {
   entryDraft,
   entryDraftInteracted,
   entryDraftModified,
-  i18nAutoDupEnabled,
+  suspendAutoDuplication,
 } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -144,93 +144,91 @@ export const restoreBackup = ({ backup, collectionName, fileName }) => {
   const { currentLocales, currentSlugs, currentValues, files } = backup;
   const fileURLs = new Map();
 
-  i18nAutoDupEnabled.set(false);
+  suspendAutoDuplication(() => {
+    entryDraft.update((draft) => {
+      if (draft) {
+        draft.currentLocales = currentLocales;
+        draft.currentSlugs = currentSlugs;
 
-  entryDraft.update((draft) => {
-    if (draft) {
-      draft.currentLocales = currentLocales;
-      draft.currentSlugs = currentSlugs;
+        // Reconcile a stale manual-sort order field. The backup may have been taken before
+        // another reorder/renumber operation rewrote this entry’s `order`. For existing entries,
+        // prefer the value persisted on the live entry; for new entries, drop the field entirely
+        // so `assignManualSortOrder` can compute a fresh value at save time. Without this,
+        // restoring an old backup would clobber the latest order with a stale one.
+        const orderKey = getOrderFieldKey(draft.collection);
 
-      // Reconcile a stale manual-sort order field. The backup may have been taken before another
-      // reorder/renumber operation rewrote this entry’s `order`. For existing entries, prefer the
-      // value persisted on the live entry; for new entries, drop the field entirely so
-      // `assignManualSortOrder` can compute a fresh value at save time. Without this, restoring an
-      // old backup would clobber the latest order with a stale one.
-      const orderKey = getOrderFieldKey(draft.collection);
+        Object.entries(currentValues).forEach(([locale, valueMap]) => {
+          if (orderKey && orderKey in valueMap) {
+            const liveOrder = draft.originalEntry?.locales[locale]?.content?.[orderKey];
 
-      Object.entries(currentValues).forEach(([locale, valueMap]) => {
-        if (orderKey && orderKey in valueMap) {
-          const liveOrder = draft.originalEntry?.locales[locale]?.content?.[orderKey];
-
-          if (liveOrder !== undefined) {
-            valueMap[orderKey] = liveOrder;
-          } else {
-            delete valueMap[orderKey];
+            if (liveOrder !== undefined) {
+              valueMap[orderKey] = liveOrder;
+            } else {
+              delete valueMap[orderKey];
+            }
           }
-        }
 
-        Object.entries(valueMap).forEach(([keyPath, value]) => {
-          if (typeof value === 'string') {
-            [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
-              const cache = files[blobURL];
-              const { file } = cache ?? {};
+          Object.entries(valueMap).forEach(([keyPath, value]) => {
+            if (typeof value === 'string') {
+              [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
+                const cache = files[blobURL];
+                const { file } = cache ?? {};
 
-              if (!cache || !file) {
-                return;
-              }
+                if (!cache || !file) {
+                  return;
+                }
 
-              let newURL = '';
+                let newURL = '';
 
-              if (fileURLs.has(file)) {
-                newURL = fileURLs.get(file);
-              } else {
-                // Regenerate a blob URL
-                newURL = URL.createObjectURL(file);
+                if (fileURLs.has(file)) {
+                  newURL = fileURLs.get(file);
+                } else {
+                  // Regenerate a blob URL
+                  newURL = URL.createObjectURL(file);
 
-                draft.files[newURL] = cache;
-                fileURLs.set(file, newURL);
-              }
+                  draft.files[newURL] = cache;
+                  fileURLs.set(file, newURL);
+                }
 
-              value = value.replaceAll(blobURL, newURL);
-            });
+                value = value.replaceAll(blobURL, newURL);
+              });
 
-            valueMap[keyPath] = value;
-          }
-        });
-
-        if (draft.currentValues[locale]) {
-          Object.assign(draft.currentValues[locale], valueMap);
-        } else {
-          draft.currentValues[locale] = createProxy({
-            draft: { collectionName, fileName },
-            locale,
-            target: structuredClone(valueMap),
+              valueMap[keyPath] = value;
+            }
           });
-        }
 
-        const newValueMap = draft.currentValues[locale];
-        const keys = Object.keys(newValueMap);
+          if (draft.currentValues[locale]) {
+            Object.assign(draft.currentValues[locale], valueMap);
+          } else {
+            draft.currentValues[locale] = createProxy({
+              draft: { collectionName, fileName },
+              locale,
+              target: structuredClone(valueMap),
+            });
+          }
 
-        keys.forEach((keyPath) => {
-          const value = newValueMap[keyPath];
+          const newValueMap = draft.currentValues[locale];
+          const keys = Object.keys(newValueMap);
 
-          // Remove an optional object field’s default `null` value when subfields are added
-          // @see https://github.com/sveltia/sveltia-cms/issues/840
-          if (value === null && keys.some((k) => k.startsWith(`${keyPath}.`))) {
-            newValueMap[keyPath] = {};
+          keys.forEach((keyPath) => {
+            const value = newValueMap[keyPath];
+
+            // Remove an optional object field’s default `null` value when subfields are added
+            // @see https://github.com/sveltia/sveltia-cms/issues/840
+            if (value === null && keys.some((k) => k.startsWith(`${keyPath}.`))) {
+              newValueMap[keyPath] = {};
+            }
+          });
+
+          if (!draft.originalValues[locale]) {
+            draft.originalValues[locale] = {};
           }
         });
+      }
 
-        if (!draft.originalValues[locale]) {
-          draft.originalValues[locale] = {};
-        }
-      });
-    }
-
-    return draft;
+      return draft;
+    });
   });
-
-  i18nAutoDupEnabled.set(true);
 };
 
 /**

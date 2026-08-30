@@ -20,9 +20,61 @@ export const entryDraft = writable();
 
 /**
  * Whether to enable automatic i18n duplication in proxies in {@link entryDraft}. This can be
- * temporarily disabled for performance reasons when making large changes to the values.
+ * temporarily disabled for performance reasons when making large changes to the values. Use
+ * {@link suspendAutoDuplication} rather than writing to this store directly.
  */
 export const i18nAutoDupEnabled = writable(true);
+
+/**
+ * Nesting depth of the {@link suspendAutoDuplication} calls currently in flight.
+ */
+let autoDupSuspendDepth = 0;
+
+/**
+ * Run the given function with the automatic i18n duplication in {@link entryDraft} suspended.
+ *
+ * A caller that writes a `duplicate` field to every locale itself has to stop the proxy from
+ * duplicating the same value again. Suspensions nest — the proxy is re-enabled only once the
+ * outermost one finishes — so a caller doesn’t have to know whether anything it calls suspends
+ * too. The suspension is released even if the function throws.
+ * @param {() => any} fn Function to run. If it returns a promise, the suspension is held until that
+ * promise settles.
+ * @returns {any} Whatever `fn` returns.
+ * @throws {Error} Whatever `fn` throws, after releasing the suspension.
+ */
+export const suspendAutoDuplication = (fn) => {
+  autoDupSuspendDepth += 1;
+  i18nAutoDupEnabled.set(false);
+
+  /**
+   * Release this suspension, re-enabling the duplication if it was the outermost one.
+   */
+  const release = () => {
+    autoDupSuspendDepth -= 1;
+
+    if (!autoDupSuspendDepth) {
+      i18nAutoDupEnabled.set(true);
+    }
+  };
+
+  /** @type {any} */
+  let result;
+
+  try {
+    result = fn();
+  } catch (ex) {
+    release();
+    throw ex;
+  }
+
+  if (result instanceof Promise) {
+    return result.finally(release);
+  }
+
+  release();
+
+  return result;
+};
 
 /**
  * Whether the user has manually interacted with the entry editor. This prevents auto-backup from

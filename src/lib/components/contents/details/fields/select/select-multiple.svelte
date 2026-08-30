@@ -4,6 +4,7 @@
 
   import { entryDraft } from '$lib/services/contents/draft';
   import { updateListField } from '$lib/services/contents/draft/update/list';
+  import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
 
   /**
    * @import { FieldEditorContext, SelectFieldSelectorProps } from '$lib/types/private';
@@ -43,11 +44,12 @@
   const updateList = (manipulate) => {
     // Avoid an error while navigating pages
     if ($entryDraft) {
-      Object.keys($entryDraft[valueStoreKey] ?? {}).forEach((_locale) => {
-        if (!(i18n !== 'duplicate' && _locale !== locale)) {
+      forEachTargetLocale(
+        { valueStore: $entryDraft[valueStoreKey], locale, i18n },
+        (_valueMap, _locale) => {
           updateListField({ locale: _locale, valueStoreKey, keyPath, manipulate });
-        }
-      });
+        },
+      );
     }
   };
 

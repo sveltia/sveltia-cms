@@ -2,7 +2,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 import { get } from 'svelte/store';
 
-import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import { entryDraft, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { getSubtree } from '$lib/services/contents/entry/subtree';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -85,25 +85,23 @@ export const updateListField = ({
 
   manipulate({ valueList, expanderStateList });
 
-  i18nAutoDupEnabled.set(false);
-
-  /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
-    updateObject(_draft[valueStoreKey][locale], {
-      ...flatten({ [keyPath]: valueList }),
-      ...valueListRemainder,
-    });
-
-    if (locale === defaultLocale) {
-      updateObject(_draft.expanderStates._, {
-        ...flatten({ [keyPath]: expanderStateList }),
-        ...expanderStateListRemainder,
+  suspendAutoDuplication(() => {
+    /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
+      updateObject(_draft[valueStoreKey][locale], {
+        ...flatten({ [keyPath]: valueList }),
+        ...valueListRemainder,
       });
-    }
 
-    return _draft;
+      if (locale === defaultLocale) {
+        updateObject(_draft.expanderStates._, {
+          ...flatten({ [keyPath]: expanderStateList }),
+          ...expanderStateListRemainder,
+        });
+      }
+
+      return _draft;
+    });
   });
-
-  i18nAutoDupEnabled.set(true);
 };
 
 /**

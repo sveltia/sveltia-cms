@@ -12,6 +12,7 @@
 
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getPairs,
@@ -108,11 +109,9 @@
       return;
     }
 
-    Object.entries($entryDraft[valueStoreKey]).forEach(([_locale, content]) => {
-      if (_locale === locale || i18n === 'duplicate') {
-        // Remove `null` added for validation
-        delete content[keyPath];
-      }
+    forEachTargetLocale({ valueStore: $entryDraft[valueStoreKey], locale, i18n }, (content) => {
+      // Remove `null` added for validation
+      delete content[keyPath];
     });
 
     pairs.push(['', '']);

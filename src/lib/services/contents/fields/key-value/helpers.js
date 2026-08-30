@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 
-import { i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
 import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
 
 /**
@@ -67,29 +67,23 @@ export const savePairs = ({
 }) => {
   const { i18n } = fieldConfig;
 
-  i18nAutoDupEnabled.set(false);
-
   entryDraft.update((draft) => {
     if (draft) {
-      Object.entries(draft[valueStoreKey]).forEach(([_locale, content]) => {
-        if (_locale === locale || i18n === 'duplicate') {
-          // Clear the existing pairs first. Unlike other non-primitive fields, a KeyValue field
-          // stores no placeholder at its own key path: its keys are arbitrary strings, and
-          // `unflatten()` would turn numeric ones into an array. `finalizeContent()` rebuilds the
-          // object from the children instead
-          getKeysByPrefix(content, `${keyPath}.`).forEach((_keyPath) => {
-            delete content[_keyPath];
-          });
+      forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (content) => {
+        // Clear the existing pairs first. Unlike other non-primitive fields, a KeyValue field
+        // stores no placeholder at its own key path: its keys are arbitrary strings, and
+        // `unflatten()` would turn numeric ones into an array. `finalizeContent()` rebuilds the
+        // object from the children instead
+        getKeysByPrefix(content, `${keyPath}.`).forEach((_keyPath) => {
+          delete content[_keyPath];
+        });
 
-          pairs.forEach(([key, value]) => {
-            content[`${keyPath}.${key}`] = value;
-          });
-        }
+        pairs.forEach(([key, value]) => {
+          content[`${keyPath}.${key}`] = value;
+        });
       });
     }
 
     return draft;
   });
-
-  i18nAutoDupEnabled.set(true);
 };

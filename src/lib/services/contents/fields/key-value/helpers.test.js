@@ -8,7 +8,8 @@ import { getPairs, savePairs, validatePairs } from './helpers';
  */
 
 // Mock dependencies
-vi.mock('$lib/services/contents/draft', () => ({
+vi.mock('$lib/services/contents/draft', async () => ({
+  ...(await vi.importActual('$lib/services/contents/draft')),
   i18nAutoDupEnabled: {
     set: vi.fn(),
   },
@@ -407,8 +408,9 @@ describe('Test savePairs()', () => {
         savePairs({ entryDraft, fieldConfig, keyPath, locale, pairs });
       }).not.toThrow();
 
-      expect(i18nAutoDupEnabled.set).toHaveBeenCalledWith(false);
-      expect(i18nAutoDupEnabled.set).toHaveBeenCalledWith(true);
+      // Nothing is written, so the auto-duplication is never suspended. Suspension itself is
+      // covered by `suspendAutoDuplication()` and `forEachTargetLocale()`
+      expect(i18nAutoDupEnabled.set).not.toHaveBeenCalled();
     });
   });
 });

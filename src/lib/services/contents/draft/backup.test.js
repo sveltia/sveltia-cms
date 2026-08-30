@@ -16,7 +16,11 @@ vi.mock('@sveltia/utils/object', () => ({
   toRaw: vi.fn((val) => val),
 }));
 vi.mock('$lib/services/config');
-vi.mock('$lib/services/contents/draft');
+// Mock only the draft store itself, so the real `suspendAutoDuplication` still runs its callback
+vi.mock('$lib/services/contents/draft', async () => ({
+  ...(await vi.importActual('$lib/services/contents/draft')),
+  entryDraft: { subscribe: vi.fn(), set: vi.fn(), update: vi.fn() },
+}));
 vi.mock('$lib/services/contents/draft/create/proxy', () => ({
   createProxy: vi.fn(({ target }) => target),
 }));

@@ -1,7 +1,7 @@
 import { toRaw } from '@sveltia/utils/object';
 import { get } from 'svelte/store';
 
-import { entryDraft } from '$lib/services/contents/draft';
+import { entryDraft, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -9,8 +9,35 @@ import { getField } from '$lib/services/contents/entry/fields';
 /**
  * @import { Writable } from 'svelte/store';
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
- * @import { FieldKeyPath, HiddenField } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, HiddenField } from '$lib/types/public';
  */
+
+/**
+ * Run the given callback for every locale a field update has to be written to.
+ *
+ * A field with the `duplicate` i18n strategy holds the same value in every locale, so an update has
+ * to reach all of them; any other field is written to the given locale only.
+ *
+ * The draft proxy duplicates a `duplicate` field on its own whenever a value is assigned, which
+ * would write every value twice here, so the callback runs with that suspended. Suspensions nest,
+ * so a caller whose operation is wider than this loop can still suspend around the whole thing.
+ * @param {object} args Arguments.
+ * @param {Record<InternalLocaleCode, FlattenedEntryContent> | undefined} args.valueStore Value
+ * store to update, e.g. `draft.currentValues`, keyed by locale.
+ * @param {InternalLocaleCode} args.locale Locale being edited.
+ * @param {Field['i18n']} args.i18n Field i18n configuration.
+ * @param {(valueMap: FlattenedEntryContent, locale: InternalLocaleCode) => void} callback Function
+ * to run for each target locale, taking that locale’s content and the locale code.
+ */
+export const forEachTargetLocale = ({ valueStore, locale, i18n }, callback) => {
+  suspendAutoDuplication(() => {
+    Object.entries(valueStore ?? {}).forEach(([_locale, valueMap]) => {
+      if (_locale === locale || i18n === 'duplicate') {
+        callback(valueMap, _locale);
+      }
+    });
+  });
+};
 
 /**
  * Populate the given localized content with values from the default locale.

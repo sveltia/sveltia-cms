@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { get } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -7,6 +8,7 @@ import {
   filterRealValues,
   i18nAutoDupEnabled,
   revokeDraftFileURLs,
+  suspendAutoDuplication,
 } from '.';
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({
@@ -117,6 +119,85 @@ describe('draft/index', () => {
 
       // Reset
       i18nAutoDupEnabled.set(true);
+    });
+  });
+
+  describe('suspendAutoDuplication', () => {
+    /**
+     * Read the current value of the store.
+     * @returns {boolean} Current value.
+     */
+    const current = () => get(i18nAutoDupEnabled);
+
+    it('should suspend for the duration of the callback and restore afterwards', () => {
+      expect(current()).toBe(true);
+
+      const result = suspendAutoDuplication(() => {
+        expect(current()).toBe(false);
+
+        return 'done';
+      });
+
+      expect(result).toBe('done');
+      expect(current()).toBe(true);
+    });
+
+    it('should stay suspended until the outermost call finishes', () => {
+      suspendAutoDuplication(() => {
+        suspendAutoDuplication(() => {
+          expect(current()).toBe(false);
+        });
+
+        // The inner call must not have re-enabled it
+        expect(current()).toBe(false);
+      });
+
+      expect(current()).toBe(true);
+    });
+
+    it('should release the suspension when the callback throws', () => {
+      expect(() => {
+        suspendAutoDuplication(() => {
+          throw new Error('boom');
+        });
+      }).toThrow('boom');
+
+      expect(current()).toBe(true);
+    });
+
+    it('should release a nested suspension when the inner callback throws', () => {
+      expect(() => {
+        suspendAutoDuplication(() => {
+          suspendAutoDuplication(() => {
+            throw new Error('boom');
+          });
+        });
+      }).toThrow('boom');
+
+      expect(current()).toBe(true);
+    });
+
+    it('should hold the suspension until an async callback settles', async () => {
+      const promise = suspendAutoDuplication(async () => {
+        await Promise.resolve();
+        // Still suspended after the await, which is what an async caller depends on
+        expect(current()).toBe(false);
+
+        return 'async done';
+      });
+
+      expect(current()).toBe(false);
+      await expect(promise).resolves.toBe('async done');
+      expect(current()).toBe(true);
+    });
+
+    it('should release the suspension when an async callback rejects', async () => {
+      const promise = suspendAutoDuplication(async () => {
+        throw new Error('boom');
+      });
+
+      await expect(promise).rejects.toThrow('boom');
+      expect(current()).toBe(true);
     });
   });
 

@@ -13,9 +13,12 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
+  import { entryDraft, suspendAutoDuplication } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
-  import { copyDefaultLocaleValues } from '$lib/services/contents/draft/update/locale';
+  import {
+    copyDefaultLocaleValues,
+    forEachTargetLocale,
+  } from '$lib/services/contents/draft/update/locale';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getInitialExpanderState,
@@ -113,56 +116,56 @@
    * @param {object} [args] Arguments.
    * @param {string} [args.type] Variable type name. If the field doesn’t have variable types, it
    * will be `undefined`.
+   * @returns {Promise<void>} A promise that resolves once the fields have been added.
    */
-  const addFields = async ({ type: _type } = {}) => {
-    // Avoid triggering the Proxy’s i18n duplication strategy for descendant fields
-    $i18nAutoDupEnabled = false;
-
-    if (_type) {
-      Object.keys($entryDraft?.[valueStoreKey] ?? {}).forEach((_locale) => {
-        if (_locale === locale || i18n === 'duplicate') {
-          /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][typeKeyPath] = _type;
-        }
-      });
-
-      // Wait until `subFields` is updated
-      await tick();
-    }
-
-    const newContent = Object.fromEntries(
-      Object.entries(getDefaultValues({ fields: subFields, locale, defaultLocale })) //
-        .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
-    );
-
-    const newValueMap =
-      locale === defaultLocale
-        ? newContent
-        : copyDefaultLocaleValues(newContent, locale, { keyPathPrefix: keyPath });
-
-    Object.entries($entryDraft?.[valueStoreKey] ?? {}).forEach(([_locale, _valueMap]) => {
-      if (_locale === locale || i18n === 'duplicate') {
-        // Apply the new values while keeping the Proxy
-        /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale] = Object.assign(
-          _valueMap,
-          toRaw({ ...newValueMap, ..._valueMap }),
+  const addFields = async ({ type: _type } = {}) =>
+    // Avoid triggering the Proxy’s i18n duplication strategy for descendant fields. The suspension
+    // has to span the `await` below, because the values are written after it
+    suspendAutoDuplication(async () => {
+      if (_type) {
+        forEachTargetLocale(
+          { valueStore: $entryDraft?.[valueStoreKey], locale, i18n },
+          (_valueMap) => {
+            _valueMap[typeKeyPath] = _type;
+          },
         );
 
-        // Disable validation
-        delete (/** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][keyPath]);
+        // Wait until `subFields` is updated
+        await tick();
       }
-    });
 
-    $i18nAutoDupEnabled = true;
-  };
+      const newContent = Object.fromEntries(
+        Object.entries(getDefaultValues({ fields: subFields, locale, defaultLocale })) //
+          .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
+      );
+
+      const newValueMap =
+        locale === defaultLocale
+          ? newContent
+          : copyDefaultLocaleValues(newContent, locale, { keyPathPrefix: keyPath });
+
+      forEachTargetLocale(
+        { valueStore: $entryDraft?.[valueStoreKey], locale, i18n },
+        (_valueMap, _locale) => {
+          // Apply the new values while keeping the Proxy
+          /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale] = Object.assign(
+            _valueMap,
+            toRaw({ ...newValueMap, ..._valueMap }),
+          );
+
+          // Disable validation
+          delete (/** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][keyPath]);
+        },
+      );
+    });
 
   /**
    * Remove the object’s subfields from the entry draft.
    */
   const removeFields = () => {
-    $i18nAutoDupEnabled = false;
-
-    Object.entries($entryDraft?.[valueStoreKey] ?? {}).forEach(([_locale, _valueMap]) => {
-      if (_locale === locale || i18n === 'duplicate') {
+    forEachTargetLocale(
+      { valueStore: $entryDraft?.[valueStoreKey], locale, i18n },
+      (_valueMap, _locale) => {
         // Assign `null` before deleting each property, so the draft proxy can revalidate the field
         getKeysByPrefix(_valueMap, `${keyPath}.`).forEach((_keyPath) => {
           /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][_keyPath] = null;
@@ -171,10 +174,8 @@
 
         // Enable validation
         /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][keyPath] = null;
-      }
-    });
-
-    $i18nAutoDupEnabled = true;
+      },
+    );
   };
 
   /**

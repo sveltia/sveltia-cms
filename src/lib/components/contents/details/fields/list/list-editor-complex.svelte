@@ -34,6 +34,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { updateListField } from '$lib/services/contents/draft/update/list';
+  import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getInitialExpanderState,
@@ -196,11 +197,12 @@
    * See {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
-    Object.keys($entryDraft?.[valueStoreKey] ?? {}).forEach((_locale) => {
-      if (!(i18n !== 'duplicate' && _locale !== locale)) {
+    forEachTargetLocale(
+      { valueStore: $entryDraft?.[valueStoreKey], locale, i18n },
+      (_valueMap, _locale) => {
         updateListField({ locale: _locale, valueStoreKey, keyPath, manipulate });
-      }
-    });
+      },
+    );
   };
 
   /**
