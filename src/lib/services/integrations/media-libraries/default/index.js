@@ -2,7 +2,6 @@ import { isObject } from '@sveltia/utils/object';
 
 import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
 import {
-  RASTER_IMAGE_CONVERSION_FORMATS,
   RASTER_IMAGE_EXTENSION_REGEX,
   RASTER_IMAGE_FORMATS,
 } from '$lib/services/utils/media/image';
@@ -50,8 +49,8 @@ export const getDefaultMediaLibraryOptions = ({ fieldConfig } = {}) => {
  * @param {File} file Original file.
  * @param {FileTransformations} transformations File transformation options.
  * @returns {Promise<File>} Transformed file, or the original file if no transformation is applied
- * or the transformation fails.
- * @todo Move the `transformation` option validation to config parser.
+ * or the transformation fails. The options are validated by the config parser, so they are used as
+ * is here.
  */
 export const transformFile = async (file, transformations) => {
   const [type, subType] = file.type.split('/');
@@ -70,21 +69,12 @@ export const transformFile = async (file, transformations) => {
     }
 
     if (transformation) {
-      const { format, quality, width, height } = transformation;
-
-      const newFormat =
-        format && RASTER_IMAGE_CONVERSION_FORMATS.includes(format) ? format : 'webp';
-
+      const { format = 'webp', quality = 85, width, height } = transformation;
       /** @type {Blob} */
       let blob;
 
       try {
-        blob = await transformImage(file, {
-          format: newFormat,
-          quality: quality && Number.isSafeInteger(quality) ? quality : 85,
-          width: width && Number.isSafeInteger(width) ? width : undefined,
-          height: height && Number.isSafeInteger(height) ? height : undefined,
-        });
+        blob = await transformImage(file, { format, quality, width, height });
       } catch {
         // The browser can’t decode the file — a HEIC image saved with a `.jpg` extension, say — so
         // upload it as is instead of failing the whole selection. This mirrors `optimizeSVG`, which
@@ -93,10 +83,10 @@ export const transformFile = async (file, transformations) => {
       }
 
       const newFileName =
-        blob.type === `image/${newFormat}`
+        blob.type === `image/${format}`
           ? RASTER_IMAGE_EXTENSION_REGEX.test(file.name)
-            ? file.name.replace(RASTER_IMAGE_EXTENSION_REGEX, newFormat)
-            : file.name.concat(newFormat)
+            ? file.name.replace(RASTER_IMAGE_EXTENSION_REGEX, format)
+            : file.name.concat(format)
           : // Failed to transform
             file.name;
 

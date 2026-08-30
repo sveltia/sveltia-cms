@@ -513,28 +513,22 @@ describe('integrations/media-libraries/default', () => {
       expect(result.name).toBe('image.webp');
     });
 
-    it('should use default values for invalid transformation options', async () => {
+    it('should use default values for omitted transformation options', async () => {
       const { transformImage } = await import('$lib/services/utils/media/image/transform');
       const mockBlob = new Blob(['transformed'], { type: 'image/webp' });
 
       vi.mocked(transformImage).mockResolvedValue(mockBlob);
 
-      const transformations = /** @type {any} */ ({
-        jpeg: {
-          format: 'invalid-format',
-          quality: 'not-a-number',
-          width: 'invalid',
-          height: -1,
-        },
-      });
-
+      // The options are validated by the config parser, so only the documented defaults are
+      // applied here
+      const transformations = /** @type {any} */ ({ jpeg: {} });
       const result = await transformFile(jpegFile, transformations);
 
       expect(vi.mocked(transformImage)).toHaveBeenCalledWith(jpegFile, {
-        format: 'webp', // fallback to default
-        quality: 85, // fallback to default
-        width: undefined, // invalid values become undefined
-        height: -1, // negative numbers are valid integers
+        format: 'webp',
+        quality: 85,
+        width: undefined,
+        height: undefined,
       });
 
       expect(result.name).toBe('image.webp');

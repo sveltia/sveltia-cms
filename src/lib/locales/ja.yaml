@@ -1436,6 +1436,20 @@ config:
     invalid_public_folder: 設定されているパブリックフォルダーが正しくありません。この設定は文字列でなければなりません。
     public_folder_relative_path: 設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。
     public_folder_absolute_url: パブリックフォルダーオプションの絶対 URL は Sveltia CMS では非対応です。
+    # Don’t localize `transformations`
+    invalid_transformations: '`transformations` メディアストレージオプションが正しくありません。オブジェクトである必要があります。'
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: '`transformations` オプションにサポートされていない `{$key}` キーが含まれています。`raster_image`、`svg` またはサポートされているラスター画像形式を指定してください。'
+    # {$key} is the transformation key, such as `raster_image` or `jpeg`
+    invalid_transformation_options: '`{$key}` 変換のオプションが正しくありません。オブジェクトである必要があります。'
+    # {$key} is the transformation key; Don’t localize `format` and `webp`
+    invalid_transformation_format: '`{$key}` 変換の `format` オプションが正しくありません。`webp` のみサポートされています。'
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: '`{$key}` 変換の `quality` オプションが正しくありません。0 から 100 までの整数である必要があります。'
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: '`{$key}` 変換の `{$prop}` オプションが正しくありません。正の整数である必要があります。'
+    # {$key} is the transformation key, which is always `svg`; Don’t localize `optimize`
+    invalid_transformation_optimize: '`{$key}` 変換の `optimize` オプションが正しくありません。真偽値である必要があります。'
     # Don’t localize `asset_collections`
     invalid_asset_collections: '`asset_collections` オプションが正しくありません。配列である必要があります。'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`

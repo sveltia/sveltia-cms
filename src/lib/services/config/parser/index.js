@@ -3,6 +3,7 @@ import { parseBackendConfig } from '$lib/services/config/parser/backend';
 import { parseCollections } from '$lib/services/config/parser/collections';
 import { parseFields } from '$lib/services/config/parser/fields';
 import { parseMediaConfig } from '$lib/services/config/parser/media';
+import { parseMediaLibraries } from '$lib/services/config/parser/media-libraries';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
@@ -55,6 +56,7 @@ export const parseCmsConfig = (cmsConfig, collectors) => {
   }
 
   parseMediaConfig(cmsConfig, collectors);
+  parseMediaLibraries({ config: cmsConfig, context: { cmsConfig }, collectors });
   parseCollections(cmsConfig, collectors);
 
   checkUnsupportedOptions({

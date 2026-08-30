@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 
+import { parseMediaLibraries } from '$lib/services/config/parser/media-libraries';
 import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
 /**
@@ -32,5 +33,6 @@ export const parseFileFieldConfig = (args) => {
     });
   }
 
+  parseMediaLibraries({ config, context, collectors });
   checkUnsupportedOptions({ ...args, UNSUPPORTED_OPTIONS });
 };

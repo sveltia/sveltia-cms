@@ -1519,6 +1519,20 @@ config:
     invalid_public_folder: The configured public folder is invalid. It must be a string.
     public_folder_relative_path: The configured public folder is invalid. It must be an absolute path starting with “/”.
     public_folder_absolute_url: An absolute URL for the public folder option is not supported in Sveltia CMS.
+    # Don’t localize `transformations`
+    invalid_transformations: The `transformations` media storage option is invalid. It must be an object.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: The `transformations` option contains an unsupported `{$key}` key. It must be `raster_image`, `svg` or a supported raster image format.
+    # {$key} is the transformation key, such as `raster_image` or `jpeg`
+    invalid_transformation_options: The `{$key}` transformation options are invalid. It must be an object.
+    # {$key} is the transformation key; Don’t localize `format` and `webp`
+    invalid_transformation_format: The `format` option for the `{$key}` transformation is invalid. Only `webp` is supported.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: The `quality` option for the `{$key}` transformation is invalid. It must be an integer between 0 and 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: The `{$prop}` option for the `{$key}` transformation is invalid. It must be a positive integer.
+    # {$key} is the transformation key, which is always `svg`; Don’t localize `optimize`
+    invalid_transformation_optimize: The `optimize` option for the `{$key}` transformation is invalid. It must be a boolean.
     # Don’t localize `asset_collections`
     invalid_asset_collections: The `asset_collections` option is invalid. It must be an array.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
