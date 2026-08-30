@@ -16,7 +16,10 @@ vi.mock('fast-deep-equal');
 vi.mock('$lib/services/assets', async () => {
   const { writable } = await import('svelte/store');
 
-  return { allAssets: writable(/** @type {import('$lib/types/private').Asset[]} */ ([])) };
+  return {
+    allAssets: writable(/** @type {import('$lib/types/private').Asset[]} */ ([])),
+    fillInternalPathTemplate: vi.fn(),
+  };
 });
 vi.mock('$lib/services/assets/folders', async () => {
   const { writable, derived } = await import('svelte/store');
@@ -35,7 +38,7 @@ const { allAssetFolders } = await import('$lib/services/assets/folders');
 const { getHash } = await import('@sveltia/utils/crypto');
 const { getPathInfo } = await import('@sveltia/utils/file');
 const { default: equal } = await import('fast-deep-equal');
-const { allAssets } = await import('$lib/services/assets');
+const { allAssets, fillInternalPathTemplate } = await import('$lib/services/assets');
 
 describe('contents/fields/file/helpers', () => {
   beforeEach(() => {
@@ -752,6 +755,8 @@ describe('contents/fields/file/helpers', () => {
 
     describe('when folder is not entry-relative', () => {
       it('should return internalPath when it has no template tags', () => {
+        vi.mocked(fillInternalPathTemplate).mockReturnValue('static/uploads');
+
         const result = getTargetFolderPath({
           entry: undefined,
           folder: /** @type {any} */ ({
@@ -764,30 +769,42 @@ describe('contents/fields/file/helpers', () => {
         expect(result).toBe('static/uploads');
       });
 
-      it('should replace {{slug}} with the entry slug when entry is provided', () => {
+      it('should resolve template tags with the entry when it is provided', () => {
+        const entry = /** @type {any} */ ({ slug: 'my-post' });
+
+        vi.mocked(fillInternalPathTemplate).mockReturnValue('content/posts/2024/my-post/images');
+
         const result = getTargetFolderPath({
-          entry: /** @type {any} */ ({ slug: 'my-post' }),
+          entry,
           folder: /** @type {any} */ ({
+            collectionName: 'posts',
             entryRelative: false,
-            internalPath: 'content/posts/{{slug}}/images',
+            internalPath: 'content/posts/{{year}}/{{slug}}/images',
             internalSubPath: undefined,
           }),
         });
 
-        expect(result).toBe('content/posts/my-post/images');
+        expect(result).toBe('content/posts/2024/my-post/images');
+        expect(fillInternalPathTemplate).toHaveBeenCalledWith({
+          internalPath: 'content/posts/{{year}}/{{slug}}/images',
+          collectionName: 'posts',
+          entry,
+        });
       });
 
-      it('should replace {{slug}} with a dash placeholder when entry is absent', () => {
+      it('should replace all the template tags with a dash placeholder when they cannot be resolved', () => {
+        vi.mocked(fillInternalPathTemplate).mockReturnValue(undefined);
+
         const result = getTargetFolderPath({
           entry: undefined,
           folder: /** @type {any} */ ({
             entryRelative: false,
-            internalPath: 'content/posts/{{slug}}/images',
+            internalPath: 'content/posts/{{year}}/{{slug}}/images',
             internalSubPath: undefined,
           }),
         });
 
-        expect(result).toBe('content/posts/-/images');
+        expect(result).toBe('content/posts/-/-/images');
       });
 
       it('should return undefined when internalPath is undefined', () => {

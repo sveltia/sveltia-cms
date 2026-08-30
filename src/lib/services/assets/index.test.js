@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   allAssets,
   editingAsset,
+  fillInternalPathTemplate,
   focusedAsset,
   getAssetByAbsolutePath,
   getAssetByInternalPath,
@@ -4375,6 +4376,110 @@ describe('assets/index', () => {
       expect(result).toBeUndefined();
 
       /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set({});
+    });
+  });
+
+  describe('fillInternalPathTemplate', () => {
+    /** @type {any} */
+    const mockCollection = { name: 'posts', _i18n: { defaultLocale: 'en' } };
+
+    /** @type {any} */
+    const mockEntry = {
+      id: 'my-post',
+      slug: 'my-post',
+      locales: {
+        en: { path: 'content/posts/my-post.md', content: { title: 'My Post' } },
+      },
+    };
+
+    it('should return the path as is when it has no template tags', async () => {
+      const { fillTemplate } = await import('$lib/services/common/template');
+
+      expect(
+        fillInternalPathTemplate({
+          internalPath: 'static/uploads',
+          collectionName: 'posts',
+          entry: mockEntry,
+        }),
+      ).toBe('static/uploads');
+
+      expect(fillTemplate).not.toHaveBeenCalled();
+    });
+
+    it('should fill all the template tags using the collection and entry', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const { fillTemplate } = await import('$lib/services/common/template');
+      const { flatten } = await import('flat');
+
+      const { isCollectionIndexFile } =
+        await import('$lib/services/contents/collection/entries/index-file');
+
+      vi.mocked(getCollection).mockReturnValue(mockCollection);
+      vi.mocked(flatten).mockReturnValue({ title: 'My Post' });
+      vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+      vi.mocked(fillTemplate).mockReturnValue('content/posts/2024/my-post/media');
+
+      const result = fillInternalPathTemplate({
+        internalPath: 'content/posts/{{year}}/{{slug}}/media',
+        collectionName: 'posts',
+        entry: mockEntry,
+      });
+
+      expect(result).toBe('content/posts/2024/my-post/media');
+      expect(fillTemplate).toHaveBeenCalledWith('content/posts/{{year}}/{{slug}}/media', {
+        type: 'media_folder',
+        collection: mockCollection,
+        content: { title: 'My Post' },
+        currentSlug: 'my-post',
+        entryFilePath: 'content/posts/my-post.md',
+        isIndexFile: false,
+      });
+    });
+
+    it('should fall back to the first available locale when the default locale is missing', async () => {
+      const { getCollection } = await import('$lib/services/contents/collection');
+      const { fillTemplate } = await import('$lib/services/common/template');
+
+      vi.mocked(getCollection).mockReturnValue(mockCollection);
+      vi.mocked(fillTemplate).mockReturnValue('content/posts/my-post/media');
+
+      fillInternalPathTemplate({
+        internalPath: 'content/posts/{{slug}}/media',
+        collectionName: 'posts',
+        entry: /** @type {any} */ ({
+          ...mockEntry,
+          locales: { fr: { path: 'content/posts/fr/my-post.md', content: {} } },
+        }),
+      });
+
+      expect(fillTemplate).toHaveBeenCalledWith(
+        'content/posts/{{slug}}/media',
+        expect.objectContaining({ entryFilePath: 'content/posts/fr/my-post.md' }),
+      );
+    });
+
+    it('should return undefined when the entry is not given', () => {
+      expect(
+        fillInternalPathTemplate({
+          internalPath: 'content/posts/{{slug}}/media',
+          collectionName: 'posts',
+          entry: undefined,
+        }),
+      ).toBeUndefined();
+    });
+
+    it('should return undefined when the collection cannot be determined', async () => {
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([]);
+
+      expect(
+        fillInternalPathTemplate({
+          internalPath: 'content/posts/{{slug}}/media',
+          collectionName: undefined,
+          entry: mockEntry,
+        }),
+      ).toBeUndefined();
     });
   });
 

@@ -3,8 +3,9 @@ import { getPathInfo } from '@sveltia/utils/file';
 import equal from 'fast-deep-equal';
 import { get } from 'svelte/store';
 
-import { allAssets } from '$lib/services/assets';
+import { allAssets, fillInternalPathTemplate } from '$lib/services/assets';
 import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
+import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 
 /**
  * @import {
@@ -103,11 +104,19 @@ export const getDefaultAssetFolder = (folderMap) =>
  * @returns {string | undefined} Target folder path.
  */
 export const getTargetFolderPath = ({ entry, folder }) => {
-  const { entryRelative, internalPath, internalSubPath } = folder ?? {};
+  const { collectionName, entryRelative, internalPath, internalSubPath } = folder ?? {};
 
   if (!entryRelative) {
-    // @todo FIXME: Replace all template tags in the path, not just `{{slug}}`
-    return internalPath?.replace('{{slug}}', entry?.slug ?? '-');
+    if (internalPath === undefined) {
+      return undefined;
+    }
+
+    return (
+      fillInternalPathTemplate({ internalPath, collectionName, entry }) ??
+      // Replace the tags with a placeholder because the complete path is not determined until the
+      // entry is saved
+      internalPath.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, '-')
+    );
   }
 
   // A non-empty `internalSubPath` means the field has its own `media_folder` subfolder (e.g.

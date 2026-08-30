@@ -190,6 +190,50 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
 });
 
 /**
+ * Resolve template tags in an asset folder’s `internalPath`, such as `/assets/images/{{slug}}`,
+ * using the given entry’s content.
+ * @param {object} args Arguments.
+ * @param {string} args.internalPath Internal path that may contain template tags.
+ * @param {string} [args.collectionName] Collection name associated with the asset folder. It’s
+ * `undefined` for the global asset folder as well as field-level asset folders in custom editor
+ * components.
+ * @param {Entry} [args.entry] Associated entry. Can be `undefined` when editing a new draft.
+ * @returns {string | undefined} Resolved path, which is the given `internalPath` itself if it has
+ * no template tags, or `undefined` if the tags cannot be resolved, typically because the entry has
+ * not been saved yet.
+ */
+export const fillInternalPathTemplate = ({ internalPath, collectionName, entry }) => {
+  if (!TEMPLATE_TAG_REGEX.test(internalPath)) {
+    return internalPath;
+  }
+
+  const collection = collectionName
+    ? getCollection(collectionName)
+    : entry
+      ? getAssociatedCollections(entry)[0]
+      : undefined;
+
+  if (!entry || !collection) {
+    // Cannot resolve the path
+    return undefined;
+  }
+
+  const { slug, locales } = entry;
+  const { defaultLocale } = collection._i18n;
+  const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
+  const { content, path: entryFilePath } = locales[locale];
+
+  return fillTemplate(internalPath, {
+    type: 'media_folder',
+    collection,
+    content: flatten(content),
+    currentSlug: slug,
+    entryFilePath,
+    isIndexFile: isCollectionIndexFile(collection, entry),
+  });
+};
+
+/**
  * Find an asset by a relative path, using the associated entry and collection to help locate it.
  * @param {object} context Context.
  * @param {string} context.path Saved relative path.
@@ -431,29 +475,18 @@ export const getAssetByAbsolutePath = ({
     const { publicPath, collectionName: _collectionName } = folder;
     let { internalPath } = folder;
 
-    // Deal with template tags like `/assets/images/{{slug}}`
-    if (internalPath !== undefined && TEMPLATE_TAG_REGEX.test(internalPath)) {
-      const collection = _collectionName
-        ? getCollection(_collectionName)
-        : entry
-          ? getAssociatedCollections(entry)?.[0]
-          : undefined;
+    if (internalPath !== undefined) {
+      // Deal with template tags like `/assets/images/{{slug}}`
+      internalPath = fillInternalPathTemplate({
+        internalPath,
+        collectionName: _collectionName,
+        entry,
+      });
 
-      if (!(entry && collection)) {
+      if (internalPath === undefined) {
         // Cannot resolve the path
         return false;
       }
-
-      const { content, path: entryFilePath } = entry.locales[collection._i18n.defaultLocale];
-
-      internalPath = fillTemplate(internalPath, {
-        type: 'media_folder',
-        collection,
-        content: flatten(content),
-        currentSlug: entry.slug,
-        entryFilePath,
-        isIndexFile: isCollectionIndexFile(collection, entry),
-      });
     }
 
     // Handle assets stored in a subfolder of the internal path
