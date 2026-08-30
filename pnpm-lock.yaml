@@ -75,8 +75,8 @@ importers:
         specifier: ^4.0.2
         version: 4.0.2
       pdfjs-dist:
-        specifier: ^6.2.108
-        version: 6.2.108
+        specifier: ^6.3.289
+        version: 6.3.289
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
@@ -205,8 +205,8 @@ importers:
 
 packages:
 
-  '@altano/repository-tools@2.1.0':
-    resolution: {integrity: sha512-RGM8IimoK/RDlj+uG9sPgb9CSuHIAMVrtVVeslEMhc7yqDHpdmdKeMQcJfc0WveTtAmBdj/o9r1VW/A27SoPTg==}
+  '@altano/repository-tools@2.1.1':
+    resolution: {integrity: sha512-YFVhwoSjwkERQoopw3lX/TaPIDud0m6ac/Z51FoQ3YEPf0OaxFxpofbcHO0E2mTJ0lvmuRArIMUP9Pz2jpTMhg==}
 
   '@asamuzakjp/css-color@6.0.5':
     resolution: {integrity: sha512-mbhpPMmnw/kwW19aRNmSUl1QzLbdGo1SCuE49BT98MNwqF6zaHb3o2owssFc/PEO/4t2UjqtCNwocuDtJornzA==}
@@ -3162,8 +3162,8 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
-  pdfjs-dist@6.2.108:
-    resolution: {integrity: sha512-YxFb+SQcodN2rnX9Tn3dHYlqfb7NjlzzfONPpJd+AKoKtUjEdevTfbC07d5TcczzOK6261auRkP/M8OBHs9vFQ==}
+  pdfjs-dist@6.3.289:
+    resolution: {integrity: sha512-ZHjSVpDa3D6izMq8/04lvkhkATUmL9px6ChPaXc1k6nU2Mrhlg1/7F0bdUqCwUjw3NsPTfPZsMDUU6ZIcRaeQw==}
     engines: {node: '>=22.13.0 || >=24'}
 
   picocolors@1.1.1:
@@ -3970,12 +3970,12 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.5.2:
-    resolution: {integrity: sha512-XkYXCol10+ba/6F/cueWV+TezUeOqXW0hdeJt5CdXjTYeAgAQg5N03RQdJ80mhfFE72+pblvYMW4wy2Qp4Qbrg==}
+  zod@4.5.4:
+    resolution: {integrity: sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA==}
 
 snapshots:
 
-  '@altano/repository-tools@2.1.0': {}
+  '@altano/repository-tools@2.1.1': {}
 
   '@asamuzakjp/css-color@6.0.5':
     dependencies:
@@ -5991,7 +5991,7 @@ snapshots:
 
   eslint-plugin-package-json@1.8.0(eslint@9.39.5(supports-color@10.2.2)):
     dependencies:
-      '@altano/repository-tools': 2.1.0
+      '@altano/repository-tools': 2.1.1
       '@types/estree': 1.0.9
       change-case: 5.4.4
       detect-indent: 7.0.2
@@ -6011,8 +6011,8 @@ snapshots:
       '@babel/parser': 7.29.8
       eslint: 9.39.5(supports-color@10.2.2)
       hermes-parser: 0.25.1
-      zod: 4.5.2
-      zod-validation-error: 4.0.2(zod@4.5.2)
+      zod: 4.5.4
+      zod-validation-error: 4.0.2(zod@4.5.4)
     transitivePeerDependencies:
       - supports-color
 
@@ -7035,7 +7035,7 @@ snapshots:
 
   pathe@2.0.3: {}
 
-  pdfjs-dist@6.2.108:
+  pdfjs-dist@6.3.289:
     optionalDependencies:
       '@napi-rs/canvas': 1.0.8
 
@@ -7937,8 +7937,8 @@ snapshots:
 
   zimmerframe@1.1.4: {}
 
-  zod-validation-error@4.0.2(zod@4.5.2):
+  zod-validation-error@4.0.2(zod@4.5.4):
     dependencies:
-      zod: 4.5.2
+      zod: 4.5.4
 
-  zod@4.5.2: {}
+  zod@4.5.4: {}
