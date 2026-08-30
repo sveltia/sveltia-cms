@@ -117,10 +117,7 @@ describe('config/schema/custom-fields', () => {
     // One bad registration doesn’t stop the others from being applied
     expect(definitions.CustomField.allOf).toHaveLength(2);
     expect(definitions.CustomField.allOf[1].if.properties.widget.const).toBe('rating');
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('`broken` field type'),
-      expect.anything(),
-    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('`broken` field type'));
   });
 
   test('leaves the schema alone when it has no custom field definition', () => {

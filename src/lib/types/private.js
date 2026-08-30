@@ -1506,6 +1506,16 @@
  */
 
 /**
+ * A schema violation, in the shape the configuration error reporter works with. It mirrors the part
+ * of Ajv’s error object the reporter used to read, so that the validator can be swapped without the
+ * reporting having to change.
+ * @typedef {object} SchemaValidationError
+ * @property {string} instancePath JSON pointer to the offending value within the configuration.
+ * @property {string} keyword Schema keyword that was violated.
+ * @property {Record<string, any>} params Details of the constraint, such as the allowed values.
+ */
+
+/**
  * Relation field option.
  * @typedef {object} RelationOption
  * @property {string} label Option label.

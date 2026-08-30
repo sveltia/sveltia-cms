@@ -111,10 +111,11 @@ describe('config/schema/index', () => {
       customFieldTypeRegistry.clear();
     });
 
-    test('skips validation when the schema cannot be compiled', () => {
+    test('skips validation when the schema cannot be used', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-      expect(validate({}, { type: 'not-a-type' })).toEqual([]);
+      // A reference that goes nowhere is rejected by the validator
+      expect(validate({}, { $ref: '#/definitions/Missing' })).toEqual([]);
       expect(warn).toHaveBeenCalled();
 
       warn.mockRestore();

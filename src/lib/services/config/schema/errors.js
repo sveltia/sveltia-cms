@@ -5,8 +5,11 @@ import { addMessage } from '$lib/services/config/parser/utils/validator';
 import { getListFormatter } from '$lib/services/contents/i18n';
 
 /**
- * @import { ErrorObject } from 'ajv';
- * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
+ * @import {
+ * ConfigParserCollectors,
+ * ConfigParserContext,
+ * SchemaValidationError,
+ * } from '$lib/types/private';
  * @import { CmsConfig } from '$lib/types/public';
  */
 
@@ -142,7 +145,7 @@ export const locateError = (config, instancePath) => {
 
 /**
  * Describe a single schema violation.
- * @param {ErrorObject} error Validation error.
+ * @param {SchemaValidationError} error Validation error.
  * @param {string} option Option path the error applies to.
  * @returns {{ strKey: string, values: Record<string, string> }} I18n string key and values.
  */
@@ -176,7 +179,7 @@ const describeError = ({ keyword, params }, option) => {
  * the innermost location is kept, and the alternatives of a union are merged into a single message.
  * @param {object} args Arguments.
  * @param {CmsConfig} args.config Raw CMS configuration.
- * @param {ErrorObject[]} args.errors Validation errors.
+ * @param {SchemaValidationError[]} args.errors Validation errors.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
 export const reportSchemaErrors = ({ config, errors, collectors }) => {

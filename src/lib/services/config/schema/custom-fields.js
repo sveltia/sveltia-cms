@@ -1,8 +1,9 @@
 import { isObject } from '@sveltia/utils/object';
-import Ajv from 'ajv';
 
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
+import metaSchema from '$lib/services/config/schema/draft-07.json';
 import { prepareSchema } from '$lib/services/config/schema/transform';
+import { compileSchema } from '$lib/services/config/schema/validator';
 
 /**
  * Build a conditional schema for each field type registered with a schema, applying that schema to
@@ -13,33 +14,32 @@ import { prepareSchema } from '$lib/services/config/schema/transform';
 const getCustomFieldSchemas = () => {
   /** @type {Record<string, any>[]} */
   const schemas = [];
-  /** @type {Ajv | undefined} */
-  let ajv;
+  /** @type {((schema: any) => any[]) | undefined} */
+  let validateSchema;
 
   customFieldTypeRegistry.forEach(({ schema }, name) => {
     if (!isObject(schema)) {
       return;
     }
 
-    ajv ??= new Ajv({ strict: false, validateFormats: false });
+    // The validator interprets a schema rather than compiling it, so it accepts a malformed one and
+    // then rejects everything it’s applied to. Checking against the JSON Schema meta-schema catches
+    // that here, where the field type can be named, instead of at every field using it.
+    validateSchema ??= compileSchema(metaSchema);
 
-    // A registered schema describes the options the field type adds, not the whole field, so an
-    // `additionalProperties: false` in it would reject the common options every field has. Unknown
-    // options are tolerated everywhere else, so they are here too.
-    const prepared = prepareSchema(schema);
-
-    try {
-      ajv.compile(prepared);
-    } catch (ex) {
+    if (validateSchema(schema).length) {
       // eslint-disable-next-line no-console
-      console.warn(`Ignoring the invalid schema registered for the \`${name}\` field type`, ex);
+      console.warn(`Ignoring the invalid schema registered for the \`${name}\` field type`);
 
       return;
     }
 
+    // A registered schema describes the options the field type adds, not the whole field, so an
+    // `additionalProperties: false` in it would reject the common options every field has. Unknown
+    // options are tolerated everywhere else, so they are here too.
     schemas.push({
       if: { required: ['widget'], properties: { widget: { const: name } } },
-      then: prepared,
+      then: prepareSchema(schema),
     });
   });
 

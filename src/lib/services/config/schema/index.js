@@ -1,10 +1,8 @@
-import Ajv from 'ajv';
-
 import { applyCustomFieldSchemas } from '$lib/services/config/schema/custom-fields';
 import { reportSchemaErrors } from '$lib/services/config/schema/errors';
+import { compileSchema } from '$lib/services/config/schema/validator';
 
 /**
- * @import { ErrorObject } from 'ajv';
  * @import { ConfigParserCollectors } from '$lib/types/private';
  * @import { CmsConfig } from '$lib/types/public';
  */
@@ -31,20 +29,10 @@ export const validateConfigSchema = ({ config, schema, collectors }) => {
   }
 
   try {
-    // `strict` would reject the schema’s own annotation keywords, and `allErrors` reports every
-    // problem at once instead of stopping at the first. Formats are only used for documentation,
-    // so checking them would add a dependency without catching anything.
-    const validate = new Ajv({ strict: false, allErrors: true, validateFormats: false }).compile(
-      applyCustomFieldSchemas(schema),
-    );
+    const errors = compileSchema(applyCustomFieldSchemas(schema))(config);
 
-    if (!validate(config)) {
-      // Ajv always reports at least one error when validation fails
-      reportSchemaErrors({
-        config,
-        errors: /** @type {ErrorObject[]} */ (validate.errors),
-        collectors,
-      });
+    if (errors.length) {
+      reportSchemaErrors({ config, errors, collectors });
     }
 
     // Let the parser know the structural checks are covered, so it doesn’t repeat them. This is

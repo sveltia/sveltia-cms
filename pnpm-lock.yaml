@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      '@cfworker/json-schema':
+        specifier: ^4.1.1
+        version: 4.1.1
       '@jsquash/webp':
         specifier: ^1.5.0
         version: 1.5.0
@@ -29,9 +32,6 @@ importers:
       '@sveltia/utils':
         specifier: ^0.12.1
         version: 0.12.1
-      ajv:
-        specifier: ^8.20.0
-        version: 8.20.0
       create-react-class:
         specifier: ^15.7.0
         version: 15.7.0
@@ -296,6 +296,9 @@ packages:
 
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
+
+  '@cfworker/json-schema@4.1.1':
+    resolution: {integrity: sha512-gAmrUZSGtKc3AiBL71iNWxDsyUC5uMaKKGdvzYsBoTW/xi42JQHl7eKV2OYzCUqvc+D2RCcf7EXY2iCyFIk6og==}
 
   '@cspell/cspell-bundled-dicts@10.1.1':
     resolution: {integrity: sha512-EvPFPWwEPbPn2pIAD4D6PRRFbuM5OCiYfY0GhmpQyWWteCwR4gRmRs06UOWqfSRKHYBL/rUqcr3OAfiF5ctAjw==}
@@ -4106,6 +4109,8 @@ snapshots:
     dependencies:
       hashery: 1.5.1
       keyv: 5.6.0
+
+  '@cfworker/json-schema@4.1.1': {}
 
   '@cspell/cspell-bundled-dicts@10.1.1':
     dependencies:
