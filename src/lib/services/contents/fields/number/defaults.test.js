@@ -414,7 +414,7 @@ describe('Test getDefaultValueMap()', () => {
       expect(result).toEqual({ value: 123 });
     });
 
-    test('should parse string as integer for int/string type', () => {
+    test('should save a parsed integer as a string for int/string type', () => {
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -431,10 +431,10 @@ describe('Test getDefaultValueMap()', () => {
         defaultLocale: '_default',
       });
 
-      expect(result).toEqual({ value: 42 });
+      expect(result).toEqual({ value: '42' });
     });
 
-    test('should parse string as float for float/string type', () => {
+    test('should save a parsed float as a string for float/string type', () => {
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -451,10 +451,10 @@ describe('Test getDefaultValueMap()', () => {
         defaultLocale: '_default',
       });
 
-      expect(result).toEqual({ value: 3.14 });
+      expect(result).toEqual({ value: '3.14' });
     });
 
-    test('should parse string dynamicValue as integer for int/string type', () => {
+    test('should save a parsed integer dynamicValue as a string for int/string type', () => {
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -472,10 +472,10 @@ describe('Test getDefaultValueMap()', () => {
         dynamicValue: '50',
       });
 
-      expect(result).toEqual({ value: 50 });
+      expect(result).toEqual({ value: '50' });
     });
 
-    test('should parse string dynamicValue as float for float/string type', () => {
+    test('should save a parsed float dynamicValue as a string for float/string type', () => {
       /** @type {NumberField} */
       const fieldConfig = {
         ...baseFieldConfig,
@@ -493,7 +493,7 @@ describe('Test getDefaultValueMap()', () => {
         dynamicValue: '3.5',
       });
 
-      expect(result).toEqual({ value: 3.5 });
+      expect(result).toEqual({ value: '3.5' });
     });
 
     test('should return null when dynamicValue is undefined and no default exists for int type', () => {
@@ -612,15 +612,15 @@ describe('Test getDefaultValueMap()', () => {
        * The value type.
        * @property {number | string} input
        * The input value.
-       * @property {number} expected
+       * @property {number | string} expected
        * The expected result.
        */
       /** @type {TestCase[]} */
       const testCases = [
         { valueType: 'int', input: 42, expected: 42 },
-        { valueType: 'int/string', input: '42', expected: 42 },
+        { valueType: 'int/string', input: '42', expected: '42' },
         { valueType: 'float', input: 3.14, expected: 3.14 },
-        { valueType: 'float/string', input: '3.14', expected: 3.14 },
+        { valueType: 'float/string', input: '3.14', expected: '3.14' },
       ];
 
       testCases.forEach(({ valueType, input, expected }) => {

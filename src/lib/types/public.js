@@ -1263,7 +1263,7 @@
 /**
  * Editor options.
  * @typedef {object} EditorOptions
- * @property {boolean} preview Whether to show the preview pane. Default: `true`.
+ * @property {boolean} [preview] Whether to show the preview pane. Default: `true`.
  * @see https://decapcms.org/docs/configuration-options/#editor
  */
 
@@ -1636,7 +1636,8 @@
  * than Netlify, including [Sveltia CMS Authenticator](https://github.com/sveltia/sveltia-cms-auth).
  * Default: `https://gitea.com/`.
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `login/oauth/authorize`.
- * @property {string} app_id OAuth application ID.
+ * @property {string} [app_id] OAuth application ID. Required for OAuth sign-in; without one,
+ * users can still sign in with a personal access token.
  * @see https://decapcms.org/docs/gitea-backend/
  * @see https://sveltiacms.app/en/docs/backends/gitea
  */
@@ -1673,8 +1674,9 @@
 /**
  * Custom logo options.
  * @typedef {object} LogoOptions
- * @property {string} src Absolute URL or absolute path to the site logo that will be displayed on
- * the entrance page and the browser’s tab (favicon). A square image works best.
+ * @property {string} [src] Absolute URL or absolute path to the site logo that will be displayed
+ * on the entrance page and the browser’s tab (favicon). A square image works best. Falls back to
+ * the deprecated `logo_url` option.
  * @property {boolean} [show_in_header] Whether to show the logo in the header. Default: `true`.
  */
 
@@ -1735,7 +1737,7 @@
 /**
  * Issue reporting options.
  * @typedef {object} IssueReports
- * @property {string} url URL of the issue reporting endpoint. Default:
+ * @property {string} [url] URL of the issue reporting endpoint. Default:
  * `https://github.com/sveltia/sveltia-cms/issues/new`.
  */
 

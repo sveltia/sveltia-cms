@@ -1620,6 +1620,33 @@ config:
     relation_field_invalid_value_field: The referenced value field `{$field}` is invalid or not defined.
     unexpected: Unexpected error
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: 'The `{$option}` option must be {$type}.'
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'The `{$option}` option must be one of these values: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: 'The `{$option}` option must be `{$value}`.'
+    schema_invalid_empty_value: 'The `{$option}` option must be an empty string.'
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: 'The `{$option}` option must be an array of {$count} items.'
+    schema_invalid_value: 'The `{$option}` option has an invalid value.'
+    schema_missing_option: 'The `{$option}` option is required.'
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'One of these options is required: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: a string
+      number: a number
+      integer: an integer
+      boolean: a boolean
+      array: an array
+      object: an object
+      'null': empty
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth application ID is not defined. Users are required to provide an access token to sign in.

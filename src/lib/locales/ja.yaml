@@ -1537,6 +1537,33 @@ config:
     relation_field_invalid_value_field: 参照されている値フィールド `{$field}` は無効であるか定義されていません。
     unexpected: 予期せぬ問題
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: '`{$option}` オプションは{$type}である必要があります。'
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: '`{$option}` オプションは次のいずれかの値である必要があります: {$values}。'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: '`{$option}` オプションは `{$value}` である必要があります。'
+    schema_invalid_empty_value: '`{$option}` オプションは空の文字列である必要があります。'
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: '`{$option}` オプションは {$count} 個の要素を持つ配列である必要があります。'
+    schema_invalid_value: '`{$option}` オプションの値が無効です。'
+    schema_missing_option: '`{$option}` オプションを定義する必要があります。'
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: '次のオプションのいずれかを定義する必要があります: {$options}。'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: 文字列
+      number: 数値
+      integer: 整数
+      boolean: 真偽値
+      array: 配列
+      object: オブジェクト
+      'null': 空
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth アプリケーション ID が定義されていません。ユーザーがログインするにはアクセストークンを入力する必要があります。

@@ -11,6 +11,7 @@ import { getAllAssetFolders } from '$lib/services/config/folders/assets';
 import { getAllEntryFolders } from '$lib/services/config/folders/entries';
 import { fetchCmsConfig } from '$lib/services/config/loader';
 import { parseCmsConfig } from '$lib/services/config/parser';
+import { getConfigSchema, validateConfigSchema } from '$lib/services/config/schema';
 import { allEntryFolders } from '$lib/services/contents';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
@@ -97,6 +98,8 @@ export const initCmsConfig = async (manualConfig) => {
       throw new Error(_('config.error.no_secure_context'));
     }
 
+    // Start downloading the JSON schema while the configuration file is being fetched
+    const schemaLoader = getConfigSchema();
     /** @type {any} */
     let rawConfig;
 
@@ -117,6 +120,7 @@ export const initCmsConfig = async (manualConfig) => {
     // Store the raw config so it can be used in the parser and config viewer
     Object.assign(rawCmsConfig, rawConfig);
 
+    validateConfigSchema({ config: rawConfig, schema: await schemaLoader, collectors });
     parseCmsConfig(rawConfig, collectors);
 
     if (collectors.errors.size) {

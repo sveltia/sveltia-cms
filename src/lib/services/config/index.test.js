@@ -33,6 +33,11 @@ vi.mock('$lib/services/config/deprecations', () => ({
   warnDeprecation: vi.fn(),
 }));
 
+vi.mock('$lib/services/config/schema', () => ({
+  getConfigSchema: vi.fn().mockResolvedValue(undefined),
+  validateConfigSchema: vi.fn(),
+}));
+
 vi.mock('$lib/services/config/folders/assets', () => ({
   getAllAssetFolders: vi.fn().mockReturnValue([]),
 }));

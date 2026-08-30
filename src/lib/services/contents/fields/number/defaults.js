@@ -24,16 +24,26 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
     return { [keyPath]: '' };
   }
 
+  // The `int/string` and `float/string` types accept the same input as `int` and `float` but save
+  // it as a string, which is what the editor writes once the value is changed
   if (['int', 'int/string'].includes(valueType)) {
     const parsedValue = isString ? Number.parseInt(value, 10) : value;
 
-    return Number.isInteger(parsedValue) ? { [keyPath]: parsedValue } : {};
+    if (!Number.isInteger(parsedValue)) {
+      return {};
+    }
+
+    return { [keyPath]: valueType === 'int' ? parsedValue : String(parsedValue) };
   }
 
   if (['float', 'float/string'].includes(valueType)) {
     const parsedValue = isString ? Number.parseFloat(value) : value;
 
-    return Number.isFinite(parsedValue) ? { [keyPath]: parsedValue } : {};
+    if (!Number.isFinite(parsedValue)) {
+      return {};
+    }
+
+    return { [keyPath]: valueType === 'float' ? parsedValue : String(parsedValue) };
   }
 
   return {};
