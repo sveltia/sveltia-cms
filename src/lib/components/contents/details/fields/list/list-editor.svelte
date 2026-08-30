@@ -26,7 +26,6 @@
   let {
     /* eslint-disable prefer-const */
     fieldConfig: config,
-    currentValue = $bindable(),
     ...rest
     /* eslint-enable prefer-const */
   } = $props();
@@ -36,14 +35,8 @@
 
 <Group aria-labelledby="list-{fieldId}-summary">
   {#if getListFieldInfo(config).hasSubFields}
-    <ListEditorComplex
-      bind:currentValue
-      {...{ ...rest, fieldConfig: /** @type {ComplexListField} */ (config) }}
-    />
+    <ListEditorComplex {...{ ...rest, fieldConfig: /** @type {ComplexListField} */ (config) }} />
   {:else}
-    <ListEditorSimple
-      bind:currentValue
-      {...{ ...rest, fieldConfig: /** @type {SimpleListField} */ (config) }}
-    />
+    <ListEditorSimple {...{ ...rest, fieldConfig: /** @type {SimpleListField} */ (config) }} />
   {/if}
 </Group>

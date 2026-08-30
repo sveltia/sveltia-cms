@@ -42,7 +42,6 @@
     keyPath,
     fieldId,
     fieldConfig,
-    currentValue = $bindable(),
     readonly = false,
     /* eslint-enable prefer-const */
   } = $props();
@@ -151,10 +150,6 @@
     const _entryDraft = /** @type {Writable<EntryDraft>} */ (entryDraft);
 
     savePairs({ entryDraft: _entryDraft, fieldConfig, keyPath, locale, pairs });
-
-    // Update `currentValue` for compatibility with custom editor components. This doesn’t update
-    // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
-    currentValue = Object.fromEntries(pairs);
   };
 
   $effect(() => {

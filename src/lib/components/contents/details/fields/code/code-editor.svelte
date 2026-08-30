@@ -104,10 +104,6 @@
       if (valueMap[langKeyPath] !== lang) {
         $entryDraft[valueStoreKey][locale][langKeyPath] = lang;
       }
-
-      // Update `currentValue` for compatibility with custom editor components. This doesn’t update
-      // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
-      currentValue = { [outputKeys.code]: code, [outputKeys.lang]: lang };
     }
   };
 

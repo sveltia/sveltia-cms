@@ -276,14 +276,6 @@
       }
     });
 
-    if (multiple) {
-      // Update `currentValue` for compatibility with custom editor components. This doesn’t update
-      // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
-      currentValue = /** @type {string[]} */ (
-        resources.map(({ value }) => value).filter((value) => !!value)
-      );
-    }
-
     // Restore the previous value if no valid resources were processed, so that a failed
     // upload/replace doesn’t leave an empty or invalid reference in the YAML
     if (!hasValidResource && !multiple && previousValue !== undefined) {
@@ -333,10 +325,9 @@
   /**
    * Remove an item from the list.
    *
-   * The new list is deliberately not assigned to {@link currentValue}: a multi-value field gets the
-   * prop one way from the parent, so a local write turns it into an override that keeps its value
-   * even after the parent recomputes. The list would then stop following the draft, and images
-   * added after a removal wouldn’t show up until the next removal reset it.
+   * The new list is deliberately not assigned to {@link currentValue}: `<FieldEditor>` binds the
+   * prop with a getter that recomputes it from the draft, so writing to it here would be discarded
+   * anyway. Updating the draft is what makes the list re-render.
    * @param {number} index Index of the item to remove.
    */
   const removeItem = (index) => {

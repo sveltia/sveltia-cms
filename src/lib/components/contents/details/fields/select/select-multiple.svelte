@@ -3,7 +3,7 @@
   import { getContext } from 'svelte';
 
   import { entryDraft } from '$lib/services/contents/draft';
-  import { getItemList, updateListField } from '$lib/services/contents/draft/update/list';
+  import { updateListField } from '$lib/services/contents/draft/update/list';
 
   /**
    * @import { FieldEditorContext, SelectFieldSelectorProps } from '$lib/types/private';
@@ -25,7 +25,7 @@
     keyPath,
     fieldId,
     fieldConfig,
-    currentValue = $bindable(),
+    currentValue,
     required = true,
     readonly = false,
     invalid = false,
@@ -48,10 +48,6 @@
           updateListField({ locale: _locale, valueStoreKey, keyPath, manipulate });
         }
       });
-
-      // Update `currentValue` for compatibility with custom editor components. This doesn’t update
-      // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
-      [currentValue] = getItemList($entryDraft[valueStoreKey][locale], keyPath);
     }
   };
 

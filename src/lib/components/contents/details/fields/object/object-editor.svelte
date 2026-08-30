@@ -24,7 +24,6 @@
   import { formatSummary } from '$lib/services/contents/fields/object/helpers';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
-  import { unflattenMap } from '$lib/services/utils/object';
 
   /**
    * @import { EntryDraft, FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -54,7 +53,6 @@
     typedKeyPath,
     fieldLabel,
     fieldConfig,
-    currentValue = $bindable(),
     required = true,
     /* eslint-enable prefer-const */
   } = $props();
@@ -81,16 +79,6 @@
   const hasValues = $derived(
     Object.entries(valueMap).some(
       ([_keyPath, value]) => _keyPath.startsWith(`${keyPath}.`) && value !== undefined,
-    ),
-  );
-  /** @type {Record<string, any>} */
-  const objectValue = $derived(
-    unflattenMap(
-      Object.fromEntries(
-        Object.entries(valueMap)
-          .filter(([_keyPath]) => _keyPath.startsWith(`${keyPath}.`))
-          .map(([_keyPath, value]) => [_keyPath.slice(keyPath.length + 1), value]),
-      ),
     ),
   );
   const canEdit = $derived(
@@ -164,10 +152,6 @@
     });
 
     $i18nAutoDupEnabled = true;
-
-    // Update `currentValue` for compatibility with custom editor components. This doesn’t update
-    // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
-    currentValue = objectValue;
   };
 
   /**
@@ -191,10 +175,6 @@
     });
 
     $i18nAutoDupEnabled = true;
-
-    // Update `currentValue` for compatibility with custom editor components. This doesn’t update
-    // the draft store as `writeValue()` in `<FieldEditor>` rejects non-primitive values by design
-    currentValue = objectValue;
   };
 
   /**
