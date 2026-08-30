@@ -4,12 +4,12 @@ import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets';
-import { isLastCommitPublished } from '$lib/services/backends';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
+import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 
 import {
   fetchAndParseFiles,
@@ -24,12 +24,12 @@ import {
 // Mock dependencies
 vi.mock('@sveltia/utils/storage');
 vi.mock('$lib/services/assets');
-vi.mock('$lib/services/backends');
 vi.mock('$lib/services/backends/git/shared/config');
 vi.mock('$lib/services/backends/process');
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents');
 vi.mock('$lib/services/contents/file/process');
+vi.mock('$lib/services/deployments/publish');
 vi.mock('svelte/store', async () => {
   const actual = await vi.importActual('svelte/store');
 
@@ -564,7 +564,7 @@ describe('git/shared/fetch', () => {
       expect(repository.branch).toBe('main');
     });
 
-    it('should set isLastCommitPublished based on commit message', async () => {
+    it('should record the publish hint based on the commit message', async () => {
       mockFetchLastCommit.mockResolvedValue({
         hash: 'abc123',
         message: '[skip ci] Test commit',
@@ -578,7 +578,24 @@ describe('git/shared/fetch', () => {
         fetchFileContents: mockFetchFileContents,
       });
 
-      expect(isLastCommitPublished.set).toHaveBeenCalledWith(false);
+      expect(setLastCommitPublishHint).toHaveBeenCalledWith(false);
+    });
+
+    it('should record the publish hint for a skip marker away from the start', async () => {
+      mockFetchLastCommit.mockResolvedValue({
+        hash: 'abc123',
+        message: 'Merge pull request #1 from foo/bar\n\nUpdate posts [ci skip]',
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(setLastCommitPublishHint).toHaveBeenCalledWith(false);
     });
 
     it('should update stores with empty data when no files found', async () => {
@@ -795,7 +812,7 @@ describe('git/shared/fetch', () => {
       );
     });
 
-    it('should set published status to true when commit message does not start with [skip ci]', async () => {
+    it('should record the publish hint as true when the commit carries no skip marker', async () => {
       mockFetchLastCommit.mockResolvedValue({
         hash: 'abc123',
         message: 'Regular commit message',
@@ -809,7 +826,7 @@ describe('git/shared/fetch', () => {
         fetchFileContents: mockFetchFileContents,
       });
 
-      expect(isLastCommitPublished.set).toHaveBeenCalledWith(true);
+      expect(setLastCommitPublishHint).toHaveBeenCalledWith(true);
     });
 
     it('should cache meta database hash after fetching files', async () => {

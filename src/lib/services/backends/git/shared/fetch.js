@@ -4,12 +4,13 @@ import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 import { getAssetKind } from '$lib/services/assets/kinds';
-import { isLastCommitPublished } from '$lib/services/backends';
+import { hasSkipCIMarker } from '$lib/services/backends/git/shared/commits';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
+import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 
 /**
  * @import {
@@ -216,8 +217,9 @@ export const fetchAndParseFiles = async ({
   const { hash: lastCommitHash, message } = await fetchLastCommit();
   const fileList = await getFileList({ metaDB, lastCommitHash, cachedFileEntries, fetchFileList });
 
-  // @todo Check if the commit has a workflow run that trigged deployment
-  isLastCommitPublished.set(!message.startsWith('[skip ci]'));
+  // What the message says is only what the author asked for. It’s the answer until the CI/CD
+  // provider is asked about the commit, which `isLastCommitPublished` prefers once it has one
+  setLastCommitPublishHint(!hasSkipCIMarker(message));
 
   // Skip fetching files if no files found
   if (!fileList.count) {

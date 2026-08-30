@@ -2,8 +2,12 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, Button, Toast } from '@sveltia/ui';
 
-  import { backend, isLastCommitPublished } from '$lib/services/backends';
+  import { backend } from '$lib/services/backends';
   import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
+  import {
+    isLastCommitPublished,
+    setLastCommitPublishHint,
+  } from '$lib/services/deployments/publish';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { isSecureURL } from '$lib/services/utils/networking';
@@ -45,7 +49,9 @@
         throw new Error(`Webhook returned ${status} error`);
       }
 
-      $isLastCommitPublished = true;
+      // The provider hasn’t been asked about the new run yet, so record that one was requested.
+      // Anything it reported about the commit before this point describes the state being replaced
+      setLastCommitPublishHint(true);
     } catch (ex) {
       toastStatus = 'error';
       showToast = true;

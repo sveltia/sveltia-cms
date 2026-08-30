@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 
 /**
  * @import { Writable } from 'svelte/store';
- * @import { DeployStatus } from '$lib/types/private';
+ * @import { DeployStatus, PublishHint } from '$lib/types/private';
  */
 
 /**
@@ -19,6 +19,13 @@ export const deployments = writable({});
  * @type {Writable<string>}
  */
 export const productionSHA = writable('');
+
+/**
+ * What the last commit is expected to have done, worked out without asking the CI/CD provider. See
+ * {@link setLastCommitPublishHint}.
+ * @type {Writable<PublishHint>}
+ */
+export const lastCommitPublishHint = writable({ published: true, time: 0 });
 
 /**
  * Whether the automatic re-checks gave up on a pending build, in which case the UI offers a manual
@@ -52,4 +59,5 @@ export const resetDeployments = () => {
   deployments.set({});
   productionSHA.set('');
   deployPollTimedOut.set(false);
+  lastCommitPublishHint.set({ published: true, time: 0 });
 };

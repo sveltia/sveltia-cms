@@ -5,6 +5,7 @@ import {
   deployments,
   deployPollTimedOut,
   forgetDeployments,
+  lastCommitPublishHint,
   productionSHA,
   resetDeployments,
 } from '$lib/services/deployments';
@@ -44,12 +45,14 @@ describe('Deployment stores', () => {
       deployments.set({ a: { state: 'ready', checkedTime: 0 } });
       productionSHA.set('abc');
       deployPollTimedOut.set(true);
+      lastCommitPublishHint.set({ published: false, time: 1000 });
 
       resetDeployments();
 
       expect(get(deployments)).toEqual({});
       expect(get(productionSHA)).toBe('');
       expect(get(deployPollTimedOut)).toBe(false);
+      expect(get(lastCommitPublishHint)).toEqual({ published: true, time: 0 });
     });
   });
 });

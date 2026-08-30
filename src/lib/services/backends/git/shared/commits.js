@@ -25,6 +25,28 @@ const DEFAULT_COMMIT_MESSAGES = {
 };
 
 /**
+ * Markers that tell a CI/CD provider not to build a commit. GitHub Actions and Gitea Actions honour
+ * `[skip ci]`, `[ci skip]`, `[no ci]`, `[skip actions]` and `[actions skip]`, GitLab CI honours
+ * `[skip ci]` and `[ci skip]`, and Cloudflare Pages accepts the same words hyphenated as well as
+ * `[cf-pages-skip]`. They all match case-insensitively anywhere in the message, so this does too:
+ * the marker is written as a prefix here, but a commit made elsewhere can carry it in the body.
+ * @see https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs
+ * @see https://docs.gitlab.com/ee/ci/pipelines/#skip-a-pipeline
+ * @see https://developers.cloudflare.com/pages/platform/branch-build-controls/#skip-builds
+ */
+const SKIP_CI_REGEX =
+  /\[(?:skip[ -](?:ci|actions)|(?:ci|actions)[ -]skip|no[ -]ci|cf-pages-skip)\]/i;
+
+/**
+ * Check if a commit message carries a marker that keeps the connected CI/CD provider from building
+ * the commit. It says what the author asked for, not what the provider did: a repository with no CI
+ * at all never builds an unmarked commit either.
+ * @param {string} message Commit message.
+ * @returns {boolean} Result.
+ */
+export const hasSkipCIMarker = (message) => SKIP_CI_REGEX.test(message);
+
+/**
  * Create a Git commit message.
  * @param {FileChange[]} changes File changes to be saved.
  * @param {CommitOptions} options Commit options.

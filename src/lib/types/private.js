@@ -249,6 +249,16 @@
  */
 
 /**
+ * What the last commit on the production branch is expected to have done, worked out without asking
+ * the CI/CD provider.
+ * @typedef {object} PublishHint
+ * @property {boolean} published Whether the commit is expected to have started a deployment.
+ * @property {number} time When the expectation was formed, as a Unix timestamp in milliseconds. A
+ * deployment read before this point describes an earlier state of the same commit, so it’s ignored
+ * until the next lookup.
+ */
+
+/**
  * Result of a liveness check against a fully composed preview URL.
  * - `ready`: the page returned a 2xx status.
  * - `pending`: the page returned 404, meaning it hasn’t been built yet.

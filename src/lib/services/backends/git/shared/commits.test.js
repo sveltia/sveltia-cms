@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createCommitMessage } from './commits';
+import { createCommitMessage, hasSkipCIMarker } from './commits';
 
 // Mock the get function from svelte/store
 const mockCmsConfig = {
@@ -700,6 +700,41 @@ describe('git/shared/commits', () => {
       // With no backend config, uses default commit message with no skip_ci
       expect(typeof message).toBe('string');
       expect(message).not.toBe('');
+    });
+  });
+
+  describe('hasSkipCIMarker', () => {
+    it('should match the marker this CMS writes', () => {
+      expect(hasSkipCIMarker('[skip ci] Update Post “hello”')).toBe(true);
+    });
+
+    it('should match the other markers the Git services honour', () => {
+      [
+        '[ci skip] Update',
+        '[no ci] Update',
+        '[skip actions] Update',
+        '[actions skip] Update',
+        '[skip-ci] Update',
+        '[cf-pages-skip] Update',
+      ].forEach((message) => {
+        expect(hasSkipCIMarker(message)).toBe(true);
+      });
+    });
+
+    it('should ignore the case, as the services do', () => {
+      expect(hasSkipCIMarker('[Skip CI] Update')).toBe(true);
+    });
+
+    it('should match a marker anywhere in the message', () => {
+      expect(hasSkipCIMarker('Merge pull request #1\n\nUpdate posts [ci skip]')).toBe(true);
+    });
+
+    it('should not match an ordinary message', () => {
+      ['Update Post “hello”', 'Fix the skip ci docs', 'Mention [ci] in the guide'].forEach(
+        (message) => {
+          expect(hasSkipCIMarker(message)).toBe(false);
+        },
+      );
     });
   });
 });

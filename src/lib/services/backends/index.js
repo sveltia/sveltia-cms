@@ -77,11 +77,3 @@ export const backend = derived([backendName], ([name], _set, update) => {
     return newService;
   });
 });
-
-/**
- * Whether the last commit was published. This is used to determine if the last commit was published
- * to the remote backend. If the last commit was not published, the user will be prompted to publish
- * it.
- * @type {Writable<boolean>}
- */
-export const isLastCommitPublished = writable(true);

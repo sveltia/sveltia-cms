@@ -6,7 +6,6 @@ import {
   backend,
   backendName,
   gitBackendServices,
-  isLastCommitPublished,
   unsupportedBackends,
   validBackendNames,
 } from '.';
@@ -191,25 +190,6 @@ describe('Backend Services Index', () => {
       expect(unsupportedBackends.azure.label).toBe('Azure DevOps');
       expect(unsupportedBackends.bitbucket.label).toBe('Bitbucket');
       expect(unsupportedBackends['git-gateway'].label).toBe('Git Gateway');
-    });
-  });
-
-  describe('isLastCommitPublished store', () => {
-    test('should be a writable store', () => {
-      expect(isLastCommitPublished).toHaveProperty('set');
-      expect(isLastCommitPublished).toHaveProperty('update');
-      expect(isLastCommitPublished).toHaveProperty('subscribe');
-    });
-
-    test('should initialize with true', () => {
-      const value = get(isLastCommitPublished);
-
-      expect(value).toBe(true);
-    });
-
-    test('should update value when set', () => {
-      isLastCommitPublished.set(false);
-      expect(get(isLastCommitPublished)).toBe(false);
     });
   });
 });

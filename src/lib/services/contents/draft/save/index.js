@@ -1,7 +1,6 @@
 import { get } from 'svelte/store';
 
 import { callEventHooks } from '$lib/services/api/events';
-import { isLastCommitPublished } from '$lib/services/backends';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import {
@@ -19,6 +18,7 @@ import { awaitCustomFieldValidations } from '$lib/services/contents/draft/valida
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade';
+import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 import { workflowEnabled } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
@@ -45,7 +45,7 @@ const updateStores = ({ skipCI, count }) => {
     count,
   });
 
-  isLastCommitPublished.set(published);
+  setLastCommitPublishHint(published);
 };
 
 /**

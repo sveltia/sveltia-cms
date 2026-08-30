@@ -1,6 +1,7 @@
 import { derived, get } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
+import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
 import { cmsConfig } from '$lib/services/config';
 import { deployments, productionSHA } from '$lib/services/deployments';
 import { DEPLOY_TTL } from '$lib/services/deployments/constants';
@@ -92,13 +93,15 @@ export const deployTargets = derived([productionSHA, unpublishedEntries], () => 
 
 /**
  * Whether it’s worth asking the backend about deployments at all. There’s nothing to look up when
- * the service can’t report one, and nothing to show when preview links are turned off.
+ * the service can’t report one. Preview links being turned off isn’t enough on its own: with
+ * `skip_ci` configured, the answer also tells the Publish Changes button whether the last commit
+ * ever went out, which is worth a request even when no link is shown for it.
  * @returns {boolean} Result.
  */
 export const canResolveDeployments = () => {
   const { show_preview_links: showLinks = true } = get(cmsConfig) ?? {};
 
-  return showLinks && !!get(backend)?.fetchDeployments;
+  return (showLinks || get(skipCIConfigured)) && !!get(backend)?.fetchDeployments;
 };
 
 /**

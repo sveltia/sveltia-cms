@@ -2,6 +2,7 @@ import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { backend } from '$lib/services/backends';
+import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
 import { cmsConfig } from '$lib/services/config';
 import { deployments, productionSHA, resetDeployments } from '$lib/services/deployments';
 import {
@@ -16,6 +17,9 @@ import {
 import { unpublishedEntries } from '$lib/services/workflow';
 
 vi.mock('$lib/services/backends', () => ({ backend: { subscribe: vi.fn() } }));
+vi.mock('$lib/services/backends/git/shared/integration', () => ({
+  skipCIConfigured: { subscribe: vi.fn() },
+}));
 vi.mock('$lib/services/config', () => ({ cmsConfig: { subscribe: vi.fn() } }));
 vi.mock('$lib/services/user/prefs.svelte', () => ({ prefs: { devModeEnabled: false } }));
 
@@ -48,6 +52,8 @@ const { get: readStore } = /** @type {any} */ (await vi.importActual('svelte/sto
 let backendService;
 /** @type {any} */
 let config;
+/** @type {boolean} */
+let skipCI;
 
 /**
  * Create an unpublished entry with the given pull request properties.
@@ -65,6 +71,7 @@ describe('Deployment resolution', () => {
     resetDeployments();
     entries = [];
     config = { show_preview_links: true };
+    skipCI = false;
 
     backendService = {
       repository: { branch: 'main' },
@@ -83,6 +90,10 @@ describe('Deployment resolution', () => {
 
       if (store === cmsConfig) {
         return config;
+      }
+
+      if (store === skipCIConfigured) {
+        return skipCI;
       }
 
       return readStore(store);
@@ -199,6 +210,17 @@ describe('Deployment resolution', () => {
       await resolveDeployments();
 
       expect(backendService.fetchDeployments).not.toHaveBeenCalled();
+    });
+
+    test('looks a commit up with preview links off when skip CI is configured', async () => {
+      // The Publish Changes button needs the answer even where no link is shown for it
+      config = { show_preview_links: false };
+      skipCI = true;
+      productionSHA.set('prod');
+
+      await resolveDeployments();
+
+      expect(backendService.fetchDeployments).toHaveBeenCalled();
     });
 
     test('treats a missing config as preview links being on', async () => {

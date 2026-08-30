@@ -2,7 +2,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { callEventHooks } from '$lib/services/api/events';
-import { isLastCommitPublished } from '$lib/services/backends';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import {
@@ -18,6 +17,7 @@ import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
+import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 import { workflowEnabled } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
@@ -43,6 +43,7 @@ vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/entry/history');
+vi.mock('$lib/services/deployments/publish');
 vi.mock('$lib/services/workflow', () => ({
   workflowEnabled: { subscribe: vi.fn() },
   unpublishedEntries: { subscribe: vi.fn(() => vi.fn()) },
@@ -129,7 +130,6 @@ describe('draft/save/index', () => {
 
     vi.mocked(callEventHooks).mockResolvedValue(undefined);
     vi.mocked(contentUpdatesToast).set = vi.fn();
-    vi.mocked(isLastCommitPublished).set = vi.fn();
     vi.mocked(deleteBackup).mockResolvedValue(undefined);
   });
 
@@ -179,7 +179,7 @@ describe('draft/save/index', () => {
       expect(result.slug).toBe('test-post');
 
       // Nothing is published yet, because the changes only exist in a pull request
-      expect(vi.mocked(isLastCommitPublished).set).toHaveBeenCalledWith(false);
+      expect(vi.mocked(setLastCommitPublishHint)).toHaveBeenCalledWith(false);
     });
 
     it('should throw validation error when entry is invalid', async () => {
@@ -205,7 +205,7 @@ describe('draft/save/index', () => {
         count: 1,
       });
 
-      expect(vi.mocked(isLastCommitPublished).set).toHaveBeenCalledWith(true);
+      expect(vi.mocked(setLastCommitPublishHint)).toHaveBeenCalledWith(true);
     });
 
     it('should handle skipCI option', async () => {
@@ -218,7 +218,7 @@ describe('draft/save/index', () => {
         count: 1,
       });
 
-      expect(vi.mocked(isLastCommitPublished).set).toHaveBeenCalledWith(false);
+      expect(vi.mocked(setLastCommitPublishHint)).toHaveBeenCalledWith(false);
     });
 
     it('should handle non-git backend', async () => {
