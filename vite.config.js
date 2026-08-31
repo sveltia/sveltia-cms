@@ -455,6 +455,7 @@ export default defineConfig({
     Sonda({
       enabled: false,
       brotli: true,
+      gzip: true,
       exclude: [/\.mjs$/],
     }),
   ],
