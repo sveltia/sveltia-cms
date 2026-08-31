@@ -1628,20 +1628,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: يجب أن يحتوي الخيار `auth_methods` على طريقة واحدة على الأقل.
     missing_media_folder: مجلد الوسائط غير محدد.
-    invalid_media_folder: مجلد الوسائط المعد غير صالح. يجب أن يكون سلسلة نصية.
-    invalid_public_folder: المجلد العام المعد غير صالح. يجب أن يكون سلسلة نصية.
     public_folder_relative_path: المجلد العام المعد غير صالح. يجب أن يكون مساراً مطلقاً يبدأ بـ “/”.
     public_folder_absolute_url: استخدام رابط URL مطلق لخيار المجلد العام غير مدعوم في Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: الخيار `asset_collections` غير صالح. يجب أن يكون مصفوفة.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: يجب أن تكون مجموعة الوسائط {$count} تمتلك خيار `name` معرفاً كسلسلة نصية غير فارغة.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: اسم مجموعة الوسائط `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: يجب أن تكون أسماء مجموعات الوسائط فريدة، ولكن `{$name}` مستخدم أكثر من مرة.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: يجب أن تكون مجموعة الوسائط `{$name}` تمتلك خيار `media_folder` معرفاً كسلسلة نصية.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: يجب أن تحتوي المجموعة إما على خيار `folder` أو `files` أو `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1689,8 +1683,6 @@ config:
     invalid_list_variable_type: نوع المتغير لحقل List غير صالح. الخيار `widget` مضبوط على `{$widget}` ولكن يجب أن يكون `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: لا يمكن لحقل Object أن يحتوي على الخيارين `fields` و `types` معاً.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: يجب أن يحتوي حقل Object إما على الخيار `fields` أو `types` محددًا.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: المجموعة المشار إليها `{$collection}` غير صالحة أو غير معرفة.
     relation_field_invalid_collection_file: الملف المشار إليه `{$file}` غير صالح أو غير معرف.

@@ -1359,20 +1359,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` 옵션에는 최소 한 가지 방식이 포함되어야 합니다.'
     missing_media_folder: 미디어 폴더가 정의되지 않았습니다.
-    invalid_media_folder: 설정된 미디어 폴더가 올바르지 않습니다. 문자열이어야 합니다.
-    invalid_public_folder: 설정된 공개 폴더가 올바르지 않습니다. 문자열이어야 합니다.
     public_folder_relative_path: 설정된 공개 폴더가 올바르지 않습니다. “/”로 시작하는 절대 경로여야 합니다.
     public_folder_absolute_url: 공개 폴더 옵션에 절대 URL을 사용하는 것은 Sveltia CMS에서 지원되지 않습니다.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: '`asset_collections` 옵션이 올바르지 않습니다. 배열이어야 합니다.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 에셋 컬렉션 {$count}에는 `name` 옵션이 비어 있지 않은 문자열로 정의되어야 합니다.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: 에셋 컬렉션 이름 `{$name}`이(가) 올바르지 않습니다. 특수 문자를 포함할 수 없습니다.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: 에셋 컬렉션 이름은 고유해야 하지만 `{$name}`이(가) 두 번 이상 사용되었습니다.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: '`{$name}` 에셋 컬렉션에는 `media_folder` 옵션이 문자열로 정의되어야 합니다.'
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: 컬렉션에는 `folder`, `files` 또는 `divider` 옵션 중 하나가 정의되어야 합니다.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1420,8 +1414,6 @@ config:
     invalid_list_variable_type: List 필드의 변수 유형이 올바르지 않습니다. `widget` 옵션이 `{$widget}`(으)로 설정되어 있지만 `object`여야 합니다.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Object 필드에는 `fields`와 `types` 옵션을 함께 사용할 수 없습니다.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Object 필드에는 `fields` 또는 `types` 옵션 중 하나가 정의되어야 합니다.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: 참조된 `{$collection}` 컬렉션이 올바르지 않거나 정의되지 않았습니다.
     relation_field_invalid_collection_file: 참조된 `{$file}` 파일이 올바르지 않거나 정의되지 않았습니다.

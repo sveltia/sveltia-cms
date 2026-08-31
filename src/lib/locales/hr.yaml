@@ -1459,20 +1459,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Opcija `auth_methods` mora sadržavati barem jednu metodu.
     missing_media_folder: Medijska mapa nije definirana.
-    invalid_media_folder: Konfigurirana medijska mapa nije valjana. Mora biti niz znakova.
-    invalid_public_folder: Konfigurirana javna mapa nije valjana. Mora biti niz znakova.
     public_folder_relative_path: Konfigurirana javna mapa nije valjana. Mora biti apsolutna putanja koja počinje znakom „/”.
     public_folder_absolute_url: Apsolutni URL za opciju javne mape nije podržan u Sveltia CMS-u.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Opcija `asset_collections` nije valjana. Mora biti polje.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Zbirka resursa {$count} mora imati opciju `name` definiranu kao neprazan niz znakova.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Naziv zbirke resursa `{$name}` nije valjan. Ne smije sadržavati posebne znakove.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Nazivi zbirki resursa moraju biti jedinstveni, ali `{$name}` se koristi više puta.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Zbirka resursa `{$name}` mora imati opciju `media_folder` definiranu kao niz znakova.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Zbirka mora imati definiranu opciju `folder`, `files` ili `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1520,8 +1514,6 @@ config:
     invalid_list_variable_type: Varijabilna vrsta polja List nije valjana. Opcija `widget` postavljena je na `{$widget}`, ali mora biti `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Polje vrste Object ne može imati opcije `fields` i `types` istodobno.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Polje vrste Object mora imati definiranu opciju `fields` ili `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Referencirana zbirka `{$collection}` nije valjana ili nije definirana.
     relation_field_invalid_collection_file: Referencirana datoteka `{$file}` nije valjana ili nije definirana.

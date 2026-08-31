@@ -26,9 +26,6 @@ const COMPATIBILITY_DOC_URL =
  * @param {string} [args.extraStrKey] An extra i18n string key to append to the message.
  * @param {ConfigParserContext} [args.context] The field parser context.
  * @param {ConfigParserCollectors} args.collectors The collectors.
- * @param {boolean} [args.schemaCovered] Whether the JSON schema reports the same problem. Such a
- * message is skipped once the configuration has been validated against the schema, so that one
- * mistake never yields two messages.
  */
 export const addMessage = ({
   type = 'error',
@@ -37,12 +34,7 @@ export const addMessage = ({
   extraStrKey,
   context = {},
   collectors,
-  schemaCovered = false,
 }) => {
-  if (schemaCovered && collectors.schemaValidated) {
-    return;
-  }
-
   const { collection, collectionFile, componentName, typedKeyPath } = context;
   const { errors, warnings } = collectors;
   const locators = [];
@@ -164,19 +156,16 @@ export const checkName = ({
   collectors,
   required = false,
 }) => {
+  // A name that is absent or of the wrong type is reported against the JSON schema, so repeating it
+  // here would show two messages for one mistake. An empty string satisfies the schema but is just
+  // as unusable, and a name the schema can’t require has to be reported here or nowhere.
   if (typeof name !== 'string' || !name) {
-    // Use count (1-based index) for user-facing messages
-    const count = String(index + 1);
+    if (name === '' || (required && name === undefined)) {
+      // Use count (1-based index) for user-facing messages
+      const count = String(index + 1);
 
-    addMessage({
-      strKey: `missing_${strKeyBase}`,
-      context,
-      values: { count },
-      collectors,
-      // An empty string satisfies the schema, and a name the schema can’t require has to be
-      // reported here or nowhere; anything else the schema has already said
-      schemaCovered: name !== '' && !(required && name === undefined),
-    });
+      addMessage({ strKey: `missing_${strKeyBase}`, context, values: { count }, collectors });
+    }
 
     return false;
   }

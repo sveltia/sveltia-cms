@@ -1,11 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { addMessage } from '$lib/services/config/parser/utils/validator';
-import {
-  RASTER_IMAGE_CONVERSION_FORMATS,
-  RASTER_IMAGE_FORMATS,
-  VECTOR_IMAGE_FORMATS,
-} from '$lib/services/utils/media/image';
+import { RASTER_IMAGE_FORMATS, VECTOR_IMAGE_FORMATS } from '$lib/services/utils/media/image';
 
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
@@ -27,15 +23,8 @@ const TRANSFORMATION_KEYS = ['raster_image', ...RASTER_IMAGE_FORMATS, ...VECTOR_
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
 const parseRasterImageTransformation = ({ key, options, context, collectors }) => {
-  const { format, quality } = options;
+  const { quality } = options;
   const args = { values: { key }, context, collectors };
-
-  if (
-    format !== undefined &&
-    !(/** @type {string[]} */ (RASTER_IMAGE_CONVERSION_FORMATS).includes(format))
-  ) {
-    addMessage({ ...args, strKey: 'invalid_transformation_format', schemaCovered: true });
-  }
 
   if (quality !== undefined && !(Number.isSafeInteger(quality) && quality >= 0 && quality <= 100)) {
     addMessage({ ...args, strKey: 'invalid_transformation_quality' });
@@ -51,45 +40,17 @@ const parseRasterImageTransformation = ({ key, options, context, collectors }) =
 };
 
 /**
- * Parse and validate vector image transformation options.
- * @param {object} args Arguments.
- * @param {string} args.key Transformation key, which is always `svg`.
- * @param {Record<string, any>} args.options Transformation options.
- * @param {ConfigParserContext} args.context Context.
- * @param {ConfigParserCollectors} args.collectors Collectors.
- */
-const parseVectorImageTransformation = ({ key, options, context, collectors }) => {
-  const { optimize } = options;
-
-  if (optimize !== undefined && typeof optimize !== 'boolean') {
-    addMessage({
-      strKey: 'invalid_transformation_optimize',
-      values: { key },
-      context,
-      collectors,
-      schemaCovered: true,
-    });
-  }
-};
-
-/**
  * Parse and validate the `transformations` option of the default media library. The options are
  * applied to files being uploaded, so any problem must be reported here rather than silently
- * ignored at upload time. The options whose type the JSON schema checks are marked as such, so
- * they’re only reported here when the schema couldn’t be applied.
+ * ignored at upload time. Option types are checked against the JSON schema; what’s left is the
+ * numeric ranges and the set of accepted keys, neither of which the schema can express.
  * @param {object} args Arguments.
  * @param {any} args.transformations File transformation option map.
  * @param {ConfigParserContext} args.context Context.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
 const parseTransformations = ({ transformations, context, collectors }) => {
-  if (transformations === undefined) {
-    return;
-  }
-
   if (!isObject(transformations)) {
-    addMessage({ strKey: 'invalid_transformations', context, collectors, schemaCovered: true });
-
     return;
   }
 
@@ -102,30 +63,17 @@ const parseTransformations = ({ transformations, context, collectors }) => {
       return;
     }
 
-    if (!isObject(options)) {
-      addMessage({
-        strKey: 'invalid_transformation_options',
-        values: { key },
-        context,
-        collectors,
-        schemaCovered: true,
-      });
-
+    // Vector images only take an `optimize` flag, whose type the schema checks
+    if (!isObject(options) || /** @type {string[]} */ (VECTOR_IMAGE_FORMATS).includes(key)) {
       return;
     }
 
-    const args = {
+    parseRasterImageTransformation({
       key,
       options: /** @type {Record<string, any>} */ (options),
       context,
       collectors,
-    };
-
-    if (/** @type {string[]} */ (VECTOR_IMAGE_FORMATS).includes(key)) {
-      parseVectorImageTransformation(args);
-    } else {
-      parseRasterImageTransformation(args);
-    }
+    });
   });
 };
 

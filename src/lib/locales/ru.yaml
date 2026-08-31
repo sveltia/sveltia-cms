@@ -1498,20 +1498,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Параметр `auth_methods` должен содержать хотя бы один метод.
     missing_media_folder: Папка медиа не определена.
-    invalid_media_folder: Настроенная папка медиа недействительна. Она должна быть строкой.
-    invalid_public_folder: Настроенная публичная папка недействительна. Она должна быть строкой.
     public_folder_relative_path: Настроенная публичная папка недействительна. Она должна быть абсолютным путём, начинающимся с «/».
     public_folder_absolute_url: Абсолютный URL для параметра публичной папки не поддерживается в Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Параметр `asset_collections` недействителен. Он должен быть массивом.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Коллекция ресурсов {$count} должна иметь параметр `name`, определённый как непустая строка.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Имя коллекции ресурсов `{$name}` недействительно. Оно не может содержать специальных символов.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Имена коллекций ресурсов должны быть уникальными, но `{$name}` используется более одного раза.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Коллекция ресурсов `{$name}` должна иметь параметр `media_folder`, определённый как строка.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Коллекция должна иметь определённым один из параметров `folder`, `files` или `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1559,8 +1553,6 @@ config:
     invalid_list_variable_type: Переменный тип поля List недействителен. Параметр `widget` установлен в `{$widget}`, но он должен быть `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Поле Object не может иметь параметры `fields` и `types` одновременно.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Поле Object должно иметь определённым один из параметров `fields` или `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Коллекция `{$collection}`, на которую есть ссылка, недействительна или не определена.
     relation_field_invalid_collection_file: Файл `{$file}`, на который есть ссылка, недействителен или не определён.

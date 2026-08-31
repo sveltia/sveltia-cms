@@ -795,15 +795,8 @@ describe('Field Collectors', () => {
 
       parseFields(fields, context, collectors);
 
-      // The field is skipped, so its deprecated `dateFormat` option goes unreported; the missing
-      // name itself is reported because the schema hasn’t been applied
-      expect(collectors.errors.size).toBe(1);
-
-      collectors.errors.clear();
-      collectors.schemaValidated = true;
-      parseFields(fields, context, collectors);
-
-      // Once the schema has reported the missing name, nothing is added here
+      // A missing name is reported against the JSON schema, so nothing is collected here — and the
+      // field is skipped, so its deprecated `dateFormat` option goes unreported too
       expect(collectors.errors.size).toBe(0);
     });
   });

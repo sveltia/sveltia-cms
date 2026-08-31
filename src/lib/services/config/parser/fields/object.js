@@ -28,18 +28,6 @@ export const parseObjectFieldConfig = (args) => {
     return;
   }
 
-  // Ensure at least one of `fields` or `types` is defined
-  if (!subfields && !types) {
-    addMessage({
-      strKey: 'object_field_missing_fields',
-      context,
-      collectors,
-      schemaCovered: true,
-    });
-
-    return;
-  }
-
   // Handle subfields
   if (subfields) {
     parseFields(subfields, context, collectors);

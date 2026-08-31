@@ -1517,34 +1517,20 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: The `auth_methods` option must contain at least one method.
     missing_media_folder: The media folder is not defined.
-    invalid_media_folder: The configured media folder is invalid. It must be a string.
-    invalid_public_folder: The configured public folder is invalid. It must be a string.
     public_folder_relative_path: The configured public folder is invalid. It must be an absolute path starting with “/”.
     public_folder_absolute_url: An absolute URL for the public folder option is not supported in Sveltia CMS.
-    # Don’t localize `transformations`
-    invalid_transformations: The `transformations` media storage option is invalid. It must be an object.
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: The `transformations` option contains an unsupported `{$key}` key. It must be `raster_image`, `svg` or a supported raster image format.
-    # {$key} is the transformation key, such as `raster_image` or `jpeg`
-    invalid_transformation_options: The `{$key}` transformation options are invalid. It must be an object.
-    # {$key} is the transformation key; Don’t localize `format` and `webp`
-    invalid_transformation_format: The `format` option for the `{$key}` transformation is invalid. Only `webp` is supported.
     # {$key} is the transformation key; Don’t localize `quality`
     invalid_transformation_quality: The `quality` option for the `{$key}` transformation is invalid. It must be an integer between 0 and 100.
     # {$prop} is either `width` or `height`; {$key} is the transformation key
     invalid_transformation_size: The `{$prop}` option for the `{$key}` transformation is invalid. It must be a positive integer.
-    # {$key} is the transformation key, which is always `svg`; Don’t localize `optimize`
-    invalid_transformation_optimize: The `optimize` option for the `{$key}` transformation is invalid. It must be a boolean.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: The `asset_collections` option is invalid. It must be an array.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: The asset collection {$count} must have the `name` option defined as a non-empty string.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: The asset collection name `{$name}` is invalid. It must not contain special characters.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Asset collection names must be unique, but `{$name}` is used more than once.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: The `{$name}` asset collection must have the `media_folder` option defined as a string.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: The collection must have either the `folder`, `files` or `divider` option defined.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1610,8 +1596,6 @@ config:
     invalid_list_variable_type: The List field’s variable type is invalid. The `widget` option is set to `{$widget}` but it must be `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: The Object field cannot have the `fields` and `types` options together.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: The Object field must have either the `fields` or `types` option defined.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: The referenced `{$collection}` collection is invalid or not defined.
     relation_field_invalid_collection_file: The referenced `{$file}` file is invalid or not defined.

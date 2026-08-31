@@ -1445,20 +1445,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Tùy chọn `auth_methods` phải chứa ít nhất một phương thức.
     missing_media_folder: Thư mục phương tiện không được xác định.
-    invalid_media_folder: Thư mục phương tiện được cấu hình không hợp lệ. Giá trị phải là một chuỗi.
-    invalid_public_folder: Thư mục chung được cấu hình không hợp lệ. Giá trị phải là một chuỗi.
     public_folder_relative_path: Thư mục chung được cấu hình không hợp lệ. Giá trị phải là đường dẫn tuyệt đối bắt đầu bằng “/”.
     public_folder_absolute_url: URL tuyệt đối cho tùy chọn thư mục chung không được hỗ trợ trong Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Tùy chọn `asset_collections` không hợp lệ. Giá trị phải là một mảng.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Nhóm tệp {$count} phải có tùy chọn `name` là một chuỗi không trống.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Tên nhóm tệp `{$name}` không hợp lệ. Tên không được chứa ký tự đặc biệt.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Tên `{$name}` đã được dùng cho một nhóm tệp khác. Hãy chọn tên khác.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Nhóm tệp `{$name}` phải có tùy chọn `media_folder` là một chuỗi.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Chuyên mục phải có tùy chọn `folder`, `files` hoặc `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1524,8 +1518,6 @@ config:
     invalid_list_variable_type: Loại biến của trường Danh sách không hợp lệ. Tùy chọn `widget` được đặt thành `{$widget}` nhưng phải là `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Trường Đối tượng không thể có các tùy chọn `fields` và `types` cùng nhau.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Trường Đối tượng phải được xác định tùy chọn `fields` hoặc `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Chuyên mục `{$collection}` được tham chiếu không hợp lệ hoặc không được xác định.
     relation_field_invalid_collection_file: Tệp `{$file}` được tham chiếu không hợp lệ hoặc không được xác định.

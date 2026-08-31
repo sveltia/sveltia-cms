@@ -1364,20 +1364,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` 选项必须至少包含一种方法。'
     missing_media_folder: 未定义媒体文件夹。
-    invalid_media_folder: 配置的媒体文件夹无效。必须为字符串。
-    invalid_public_folder: 配置的公共文件夹无效。必须为字符串。
     public_folder_relative_path: 配置的公共文件夹无效。必须是以「/」开头的绝对路径。
     public_folder_absolute_url: Sveltia CMS 不支持为公共文件夹选项设置绝对 URL。
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: '`asset_collections` 选项无效。必须为数组。'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 资源集合 {$count} 必须将 `name` 选项定义为非空字符串。
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: 资源集合名称「{$name}」无效。不能包含特殊字符。
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: 资源集合名称必须唯一，但「{$name}」使用了多次。
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: '{$name} 资源集合必须将 `media_folder` 选项定义为字符串。'
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: 集合必须定义 `folder`、`files` 或 `divider` 选项。
     # Don’t localize `folder`, `files`, and `divider`
@@ -1425,8 +1419,6 @@ config:
     invalid_list_variable_type: List 字段的变量类型无效。`widget` 选项设置为 `{$widget}`，但必须是 `object`。
     # Don’t localize `fields`, and `types`
     invalid_object_field: Object 字段不能同时设置 `fields` 和 `types` 选项。
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Object 字段必须定义 `fields` 或 `types` 选项。
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: 引用的集合「{$collection}」无效或未定义。
     relation_field_invalid_collection_file: 引用的文件「{$file}」无效或未定义。

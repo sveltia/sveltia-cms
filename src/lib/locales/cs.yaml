@@ -1496,20 +1496,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Možnost `auth_methods` musí obsahovat alespoň jednu metodu.
     missing_media_folder: Složka médií není definována.
-    invalid_media_folder: Nakonfigurovaná složka médií je neplatná. Musí se jednat o řetězec (string).
-    invalid_public_folder: Nakonfigurovaná veřejná složka je neplatná. Musí se jednat o řetězec (string).
     public_folder_relative_path: Nakonfigurovaná veřejná složka je neplatná. Musí se jednat o absolutní cestu začínající znakem „/“.
     public_folder_absolute_url: Absolutní URL adresa pro možnost veřejné složky není ve Sveltia CMS podporována.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Možnost `asset_collections` je neplatná. Musí se jednat o pole (array).
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Kolekce médií {$count} musí mít možnost `name` definovánu jako neprázdný řetězec.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Název kolekce médií `{$name}` je neplatný. Nesmí obsahovat speciální znaky.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Názvy kolekcí médií musí být unikátní, ale `{$name}` je použit více než jednou.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Kolekce médií `{$name}` musí mít možnost `media_folder` definovánu jako řetězec.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Kolekce musí mít definovanou buď možnost `folder`, `files`, nebo `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1575,8 +1569,6 @@ config:
     invalid_list_variable_type: Typ proměnné pole List je neplatný. Možnost `widget` je nastavena na `{$widget}`, ale musí být `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Pole Object nemůže mít možnosti `fields` a `types` definovány současně.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Pole Object musí mít definovanou buď možnost `fields`, nebo `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Odkazovaná kolekce `{$collection}` je neplatná nebo není definována.
     relation_field_invalid_collection_file: Odkazovaný soubor `{$file}` je neplatný nebo není definován.

@@ -1425,20 +1425,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Asetuksen `auth_methods` on sisällettävä vähintään yksi metodi.
     missing_media_folder: Mediakansiota ei ole määritetty.
-    invalid_media_folder: Määritetty mediakansio on virheellinen. Sen on oltava merkkijono.
-    invalid_public_folder: Määritetty julkinen kansio on virheellinen. Sen on oltava merkkijono.
     public_folder_relative_path: Määritetty julkinen kansio on virheellinen. Sen on oltava absoluuttinen polku, joka alkaa merkillä ”/”.
     public_folder_absolute_url: Julkisen kansion absoluuttista URL-osoitetta ei tueta Sveltia CMS:ssä.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Asetus `asset_collections` on virheellinen. Sen on oltava taulukko.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Assettikokoelmalla {$count} on oltava asetus `name` määritettynä ei-tyhjänä merkkijonona.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Assettikokoelman nimi `{$name}` on virheellinen. Se ei saa sisältää erikoismerkkejä.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Assettikokoelmien nimien on oltava yksilöllisiä, mutta `{$name}` on käytössä useammin kuin kerran.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Assettikokoelmalla `{$name}` on oltava asetus `media_folder` määritettynä merkkijonona.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Kokoelmalla on oltava jokin asetuksista `folder`, `files` tai `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1486,8 +1480,6 @@ config:
     invalid_list_variable_type: List-kentän muuttujatyyppi on virheellinen. Asetus `widget` on `{$widget}`, mutta sen on oltava `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Object-kentällä ei voi olla asetuksia `fields` ja `types` samanaikaisesti.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Object-kentällä on oltava joko asetus `fields` tai `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Viitattu kokoelma `{$collection}` on virheellinen tai sitä ei ole määritetty.
     relation_field_invalid_collection_file: Viitattu tiedosto `{$file}` on virheellinen tai sitä ei ole määritetty.

@@ -1425,20 +1425,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Опцията `auth_methods` трябва да съдържа поне един метод.
     missing_media_folder: Папката за медия не е дефинирана.
-    invalid_media_folder: Конфигурираната папка за медия е невалидна. Тя трябва да е низ.
-    invalid_public_folder: Конфигурираната публична папка е невалидна. Тя трябва да е низ.
     public_folder_relative_path: Конфигурираната публична папка е невалидна. Тя трябва да е абсолютен път, започващ с „/“.
     public_folder_absolute_url: Абсолютен URL адрес за опцията за публична папка не се поддържа в Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Опцията `asset_collections` е невалидна. Тя трябва да е масив.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Колекцията с ресурси {$count} трябва да има дефинирана опция `name` като непразен низ.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Името на колекцията с ресурси `{$name}` е невалидно. То не трябва да съдържа специални знаци.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Имената на колекциите с ресурси трябва да са уникални, но `{$name}` се използва повече от веднъж.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Колекцията с ресурси `{$name}` трябва да има дефинирана опция `media_folder` като низ.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Колекцията трябва да има дефинирана една от опциите `folder`, `files` или `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1486,8 +1480,6 @@ config:
     invalid_list_variable_type: Променливият тип на полето List е невалиден. Опцията `widget` е зададена на `{$widget}`, но трябва да е `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Полето Object не може да има опциите `fields` и `types` едновременно.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Полето Object трябва да има дефинирана опция `fields` или `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Посочената колекция `{$collection}` е невалидна или не е дефинирана.
     relation_field_invalid_collection_file: Посоченият файл `{$file}` е невалиден или не е дефиниран.

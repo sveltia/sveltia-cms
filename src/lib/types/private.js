@@ -1499,10 +1499,6 @@
  * @property {Set<string>} warnings Collected warning messages.
  * @property {Set<CollectedMediaField>} mediaFields Collected media fields.
  * @property {Set<CollectedRelationField>} relationFields Collected relation fields.
- * @property {boolean} [schemaValidated] Whether the configuration has been validated against the
- * JSON schema. When it has, the parser leaves the problems the schema reports to the schema, so
- * that one mistake yields one message. When it hasn’t — the schema couldn’t be downloaded or
- * compiled — the parser reports them itself, so nothing goes unchecked.
  */
 
 /**

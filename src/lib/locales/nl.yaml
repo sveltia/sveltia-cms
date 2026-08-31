@@ -1430,20 +1430,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: De optie `auth_methods` moet minstens één methode bevatten.
     missing_media_folder: De mediamap is niet gedefinieerd.
-    invalid_media_folder: De geconfigureerde mediamap is ongeldig. Deze moet een string zijn.
-    invalid_public_folder: De geconfigureerde publieke map is ongeldig. Deze moet een string zijn.
     public_folder_relative_path: De geconfigureerde publieke map is ongeldig. Deze moet een absoluut pad zijn dat begint met “/”.
     public_folder_absolute_url: Een absolute URL voor de optie voor de publieke map wordt niet ondersteund in Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: De optie `asset_collections` is ongeldig. Deze moet een array zijn.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Voor mediacollectie {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: De naam `{$name}` van de mediacollectie is ongeldig. Deze mag geen speciale tekens bevatten.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Namen van mediacollecties moeten uniek zijn, maar `{$name}` wordt meer dan eens gebruikt.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Voor de mediacollectie `{$name}` moet de optie `media_folder` als string zijn gedefinieerd.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Voor de collectie moet de optie `folder`, `files` of `divider` zijn gedefinieerd.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1491,8 +1485,6 @@ config:
     invalid_list_variable_type: Het variabele type van het List-veld is ongeldig. De optie `widget` is ingesteld op `{$widget}`, maar moet `object` zijn.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Het Object-veld kan de opties `fields` en `types` niet samen hebben.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Voor het Object-veld moet de optie `fields` of `types` zijn gedefinieerd.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: De collectie `{$collection}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
     relation_field_invalid_collection_file: Het bestand `{$file}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.

@@ -1498,20 +1498,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Параметр `auth_methods` має містити щонайменше один метод.
     missing_media_folder: Теку медіа не визначено.
-    invalid_media_folder: Налаштована тека медіа недійсна. Вона має бути рядком.
-    invalid_public_folder: Налаштована публічна тека недійсна. Вона має бути рядком.
     public_folder_relative_path: Налаштована публічна тека недійсна. Вона має бути абсолютним шляхом, що починається з «/».
     public_folder_absolute_url: Абсолютний URL для параметра публічної теки не підтримується в Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Параметр `asset_collections` недійсний. Він має бути масивом.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Колекція ресурсів {$count} повинна мати параметр `name`, визначений як непорожній рядок.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Назва колекції ресурсів `{$name}` недійсна. Вона не може містити спеціальних символів.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Назви колекцій ресурсів мають бути унікальними, але `{$name}` використовується більше одного разу.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Колекція ресурсів `{$name}` повинна мати параметр `media_folder`, визначений як рядок.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Колекція повинна мати визначений один із параметрів `folder`, `files` або `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1559,8 +1553,6 @@ config:
     invalid_list_variable_type: Змінний тип поля List недійсний. Параметр `widget` встановлено на `{$widget}`, але він має бути `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Поле Object не може мати параметри `fields` та `types` одночасно.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Поле Object повинно мати визначений один із параметрів `fields` або `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Колекція `{$collection}`, на яку є посилання, недійсна або не визначена.
     relation_field_invalid_collection_file: Файл `{$file}`, на який є посилання, недійсний або не визначений.

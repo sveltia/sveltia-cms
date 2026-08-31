@@ -86,31 +86,31 @@ describe('parseMediaLibraries', () => {
 
     it('should validate the shared `all` options', async () => {
       const { strKeys } = await parse({
-        media_libraries: { all: { transformations: 'invalid' } },
+        media_libraries: { all: { transformations: { tiff: {} } } },
       });
 
-      expect(strKeys).toEqual(['invalid_transformations']);
+      expect(strKeys).toEqual(['invalid_transformation_key']);
     });
 
     it('should validate the legacy `media_library` options', async () => {
       const { strKeys } = await parse({
-        media_library: { name: 'default', config: { transformations: 'invalid' } },
+        media_library: { name: 'default', config: { transformations: { tiff: {} } } },
       });
 
-      expect(strKeys).toEqual(['invalid_transformations']);
+      expect(strKeys).toEqual(['invalid_transformation_key']);
     });
 
     it('should validate the legacy `media_library` options without a name', async () => {
       const { strKeys } = await parse({
-        media_library: { config: { transformations: 'invalid' } },
+        media_library: { config: { transformations: { tiff: {} } } },
       });
 
-      expect(strKeys).toEqual(['invalid_transformations']);
+      expect(strKeys).toEqual(['invalid_transformation_key']);
     });
 
     it('should skip the legacy `media_library` options for a cloud library', async () => {
       const { strKeys } = await parse({
-        media_library: { name: 'cloudinary', config: { transformations: 'invalid' } },
+        media_library: { name: 'cloudinary', config: { transformations: { tiff: {} } } },
       });
 
       expect(strKeys).toEqual([]);
@@ -118,7 +118,7 @@ describe('parseMediaLibraries', () => {
 
     it('should skip the options for a cloud library', async () => {
       const { strKeys } = await parse({
-        media_libraries: { cloudinary: { config: { transformations: 'invalid' } } },
+        media_libraries: { cloudinary: { config: { transformations: { tiff: {} } } } },
       });
 
       expect(strKeys).toEqual([]);
@@ -128,10 +128,10 @@ describe('parseMediaLibraries', () => {
       const { strKeys } = await parse({
         name: 'image',
         widget: 'image',
-        media_libraries: { default: { config: { transformations: 'invalid' } } },
+        media_libraries: { default: { config: { transformations: { tiff: {} } } } },
       });
 
-      expect(strKeys).toEqual(['invalid_transformations']);
+      expect(strKeys).toEqual(['invalid_transformation_key']);
     });
   });
 
@@ -156,63 +156,11 @@ describe('parseMediaLibraries', () => {
       expect(strKeys).toEqual([]);
     });
 
-    it('should reject a non-object option map', async () => {
-      expect((await parseTransformations('invalid')).strKeys).toEqual(['invalid_transformations']);
-
-      vi.clearAllMocks();
-
-      expect((await parseTransformations([])).strKeys).toEqual(['invalid_transformations']);
-    });
-
-    it('should mark the problems the schema reports too', async () => {
-      // These are only reported when the schema couldn’t be applied, so that one mistake in a
-      // validated configuration never yields two messages
-      const { calls } = await parseTransformations({
-        jpeg: { format: 'jpeg' },
-        png: 'invalid',
-        svg: { optimize: 'yes' },
-      });
-
-      expect(calls.map(({ strKey, schemaCovered }) => [strKey, schemaCovered])).toEqual([
-        ['invalid_transformation_format', true],
-        ['invalid_transformation_options', true],
-        ['invalid_transformation_optimize', true],
-      ]);
-    });
-
-    it('should not mark the rules the schema can’t express', async () => {
-      const { calls } = await parseTransformations({
-        tiff: {},
-        jpeg: { quality: 300, width: -1 },
-      });
-
-      expect(calls.map(({ strKey, schemaCovered }) => [strKey, schemaCovered])).toEqual([
-        ['invalid_transformation_key', undefined],
-        ['invalid_transformation_quality', undefined],
-        ['invalid_transformation_size', undefined],
-      ]);
-    });
-
     it('should reject an unsupported key', async () => {
       const { strKeys, calls } = await parseTransformations({ tiff: { format: 'webp' } });
 
       expect(strKeys).toEqual(['invalid_transformation_key']);
       expect(calls[0].values).toEqual({ key: 'tiff' });
-    });
-
-    it('should reject non-object transformation options', async () => {
-      const { strKeys, calls } = await parseTransformations({ jpeg: true, svg: 'optimize' });
-
-      expect(strKeys).toEqual(['invalid_transformation_options', 'invalid_transformation_options']);
-      expect(calls[0].values).toEqual({ key: 'jpeg' });
-      expect(calls[1].values).toEqual({ key: 'svg' });
-    });
-
-    it('should reject an unsupported conversion format', async () => {
-      const { strKeys, calls } = await parseTransformations({ jpeg: { format: 'jpeg' } });
-
-      expect(strKeys).toEqual(['invalid_transformation_format']);
-      expect(calls[0].values).toEqual({ key: 'jpeg' });
     });
 
     it('should reject an invalid quality', async () => {
@@ -253,13 +201,6 @@ describe('parseMediaLibraries', () => {
         { key: 'png', prop: 'width' },
         { key: 'webp', prop: 'height' },
       ]);
-    });
-
-    it('should reject a non-boolean `optimize` option', async () => {
-      const { strKeys, calls } = await parseTransformations({ svg: { optimize: 'yes' } });
-
-      expect(strKeys).toEqual(['invalid_transformation_optimize']);
-      expect(calls[0].values).toEqual({ key: 'svg' });
     });
   });
 });

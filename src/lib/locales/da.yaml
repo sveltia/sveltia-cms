@@ -1461,20 +1461,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Indstillingen `auth_methods` skal indeholde mindst én metode.
     missing_media_folder: Mediemappen er ikke defineret.
-    invalid_media_folder: Den konfigurerede mediemappe er ugyldig. Den skal være en streng.
-    invalid_public_folder: Den konfigurerede offentlige mappe er ugyldig. Den skal være en streng.
     public_folder_relative_path: Den konfigurerede offentlige mappe er ugyldig. Den skal være en absolut sti der begynder med ”/”.
     public_folder_absolute_url: En absolut URL i indstillingen for den offentlige mappe understøttes ikke i Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Indstillingen `asset_collections` er ugyldig. Den skal være et array.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Mediesamling {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Mediesamlingsnavnet `{$name}` er ugyldigt. Det må ikke indeholde specialtegn.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Navne på mediesamlinger skal være unikke, men `{$name}` bruges mere end én gang.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Mediesamlingen `{$name}` skal have indstillingen `media_folder` defineret som en streng.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Samlingen skal have enten indstillingen `folder`, `files` eller `divider` defineret.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1540,8 +1534,6 @@ config:
     invalid_list_variable_type: Listefeltets variabeltype er ugyldig. Indstillingen `widget` er sat til `{$widget}`, men den skal være `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Objektfeltet kan ikke have indstillingerne `fields` og `types` på samme tid.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Objektfeltet skal have enten indstillingen `fields` eller `types` defineret.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Den refererede samling `{$collection}` er ugyldig eller ikke defineret.
     relation_field_invalid_collection_file: Den refererede fil `{$file}` er ugyldig eller ikke defineret.

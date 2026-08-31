@@ -2,7 +2,7 @@
 
 import { _ } from '@sveltia/i18n';
 
-import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
+import { checkName } from '$lib/services/config/parser/utils/validator';
 import { CLOUD_MEDIA_LIBRARY_NAMES } from '$lib/services/integrations/media-libraries/cloud';
 
 /**
@@ -23,8 +23,8 @@ const hasCloudMediaLibrary = ({ media_library, media_libraries }) =>
   );
 
 /**
- * Parse and validate media folder configuration. The options whose type the JSON schema checks are
- * marked as such, so they’re only reported here when the schema couldn’t be applied.
+ * Parse and validate media folder configuration. The type of each option is checked against the
+ * JSON schema, so only the rules the schema can’t express are verified here.
  * @param {CmsConfig} cmsConfig Raw CMS configuration.
  * @param {ConfigParserCollectors} collectors Collectors.
  * @throws {Error} If there is an error in the media folder config.
@@ -33,12 +33,8 @@ export const parseMediaConfig = (cmsConfig, collectors) => {
   const { media_folder, public_folder, asset_collections } = cmsConfig;
   const { errors } = collectors;
 
-  if (media_folder === undefined) {
-    if (!hasCloudMediaLibrary(cmsConfig)) {
-      errors.add(_('config.error.missing_media_folder'));
-    }
-  } else if (typeof media_folder !== 'string') {
-    addMessage({ strKey: 'invalid_media_folder', collectors, schemaCovered: true });
+  if (media_folder === undefined && !hasCloudMediaLibrary(cmsConfig)) {
+    errors.add(_('config.error.missing_media_folder'));
   }
 
   if (typeof public_folder === 'string') {
@@ -49,29 +45,13 @@ export const parseMediaConfig = (cmsConfig, collectors) => {
     if (/^https?:/.test(public_folder)) {
       errors.add(_('config.error.public_folder_absolute_url'));
     }
-  } else if (public_folder !== undefined) {
-    addMessage({ strKey: 'invalid_public_folder', collectors, schemaCovered: true });
   }
 
   if (Array.isArray(asset_collections)) {
     const checkNameArgs = { nameCounts: {}, strKeyBase: 'asset_collection_name', collectors };
 
-    asset_collections.forEach(({ name, media_folder: mediaFolder }, index) => {
-      const context = { cmsConfig };
-
-      if (
-        checkName({ ...checkNameArgs, name, index, context }) &&
-        typeof mediaFolder !== 'string'
-      ) {
-        addMessage({
-          strKey: 'asset_collection_invalid_media_folder',
-          values: { name },
-          collectors,
-          schemaCovered: true,
-        });
-      }
+    asset_collections.forEach(({ name }, index) => {
+      checkName({ ...checkNameArgs, name, index, context: { cmsConfig } });
     });
-  } else if (asset_collections !== undefined) {
-    addMessage({ strKey: 'invalid_asset_collections', collectors, schemaCovered: true });
   }
 };

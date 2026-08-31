@@ -1421,20 +1421,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods`-alternativet måste innehålla minst en metod.'
     missing_media_folder: Mediamappen är inte definierad.
-    invalid_media_folder: Den konfigurerade mediamappen är ogiltig. Den måste vara en sträng.
-    invalid_public_folder: Den konfigurerade publika mappen är ogiltig. Den måste vara en sträng.
     public_folder_relative_path: Den konfigurerade publika mappen är ogiltig. Den måste vara en absolut sökväg som börjar med “/”.
     public_folder_absolute_url: En absolut URL för det publika mapp-alternativet stöds inte i Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: '`asset_collections`-alternativet är ogiltigt. Det måste vara en array.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 'Resurs-samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: 'Namnet på resurs-samlingen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.'
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: 'Namnen på resurs-samlingar måste vara unika, men `{$name}` används mer än en gång.'
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: 'Resurs-samlingen `{$name}` måste ha `media_folder`-alternativet definierat som en sträng.'
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: 'Samlingen måste ha antingen `folder`-, `files`- eller `divider`-alternativet definierat.'
     # Don’t localize `folder`, `files`, and `divider`
@@ -1482,8 +1476,6 @@ config:
     invalid_list_variable_type: 'List-fältets variabeltyp är ogiltig. `widget`-alternativet är inställt på `{$widget}` men det måste vara `object`.'
     # Don’t localize `fields`, and `types`
     invalid_object_field: 'Objekt-fältet kan inte ha `fields`- och `types`-alternativen tillsammans.'
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: 'Objekt-fältet måste ha antingen `fields`- eller `types`-alternativet definierat.'
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: 'Den refererade `{$collection}`-samlingen är ogiltig eller inte definierad.'
     relation_field_invalid_collection_file: 'Den refererade `{$file}`-filen är ogiltig eller inte definierad.'

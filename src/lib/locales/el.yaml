@@ -1416,20 +1416,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Η επιλογή `auth_methods` πρέπει να περιέχει τουλάχιστον μία μέθοδο.
     missing_media_folder: Ο φάκελος μέσων δεν έχει οριστεί.
-    invalid_media_folder: Ο ρυθμισμένος φάκελος μέσων είναι άκυρος. Πρέπει να είναι string.
-    invalid_public_folder: Ο ρυθμισμένος δημόσιος φάκελος είναι άκυρος. Πρέπει να είναι string.
     public_folder_relative_path: Ο ρυθμισμένος δημόσιος φάκελος είναι άκυρος. Πρέπει να είναι μια απόλυτη διαδρομή που ξεκινά με «/».
     public_folder_absolute_url: Δεν υποστηρίζεται absolute URL για την επιλογή του δημόσιου φακέλου στο Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Η επιλογή `asset_collections` είναι άκυρη. Πρέπει να είναι ένα array.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Η συλλογή πόρων {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Το όνομα της συλλογής πόρων `{$name}` είναι άκυρο. Δεν πρέπει να περιέχει ειδικούς χαρακτήρες.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Τα ονόματα των συλλογών πόρων πρέπει να είναι μοναδικά, αλλά το `{$name}` χρησιμοποιείται περισσότερες από μία φορές.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Η συλλογή πόρων `{$name}` πρέπει να έχει την επιλογή `media_folder` ορισμένη ως string.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Η συλλογή πρέπει να έχει ορισμένη είτε την επιλογή `folder`, `files` ή `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1477,8 +1471,6 @@ config:
     invalid_list_variable_type: Ο τύπος μεταβλητής του πεδίου List είναι άκυρος. Η επιλογή `widget` είναι ορισμένη σε `{$widget}` αλλά πρέπει να είναι `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Το πεδίο Object δεν μπορεί να έχει ταυτόχρονα τις επιλογές `fields` και `types`.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Το πεδίο Object πρέπει να έχει ορισμένη είτε την επιλογή `fields` ή την `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Η συλλογή αναφοράς `{$collection}` είναι άκυρη ή δεν έχει οριστεί.
     relation_field_invalid_collection_file: Το αρχείο αναφοράς `{$file}` είναι άκυρο ή δεν έχει οριστεί.

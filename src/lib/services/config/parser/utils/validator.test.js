@@ -869,28 +869,22 @@ describe('messages', () => {
       expect(nameCounts.validName).toBe(1);
     });
 
-    it('should report a missing name only when the schema hasn’t', () => {
+    it('should leave a missing name to the schema', () => {
       const collectors = createCollectors();
       /** @type {Record<string, number>} */
       const nameCounts = {};
 
-      const args = {
+      const result = checkName({
         name: null,
         index: 0,
         nameCounts,
         strKeyBase: 'field_names',
         context: {},
         collectors,
-      };
+      });
 
-      expect(checkName(args)).toBe(false);
-      expect(collectors.errors.size).toBe(1);
-
-      collectors.errors.clear();
-      collectors.schemaValidated = true;
-
-      // The schema already reports a missing name, so repeating it would show two messages
-      expect(checkName(args)).toBe(false);
+      // The schema reports a missing name, so repeating it would show two messages for one mistake
+      expect(result).toBe(false);
       expect(collectors.errors.size).toBe(0);
     });
 
@@ -925,8 +919,6 @@ describe('messages', () => {
         context: {},
         collectors,
       };
-
-      collectors.schemaValidated = true;
 
       expect(checkName(args)).toBe(false);
       expect(collectors.errors.size).toBe(0);
@@ -1055,8 +1047,6 @@ describe('messages', () => {
       const collectors = createCollectors();
       /** @type {Record<string, number>} */
       const nameCounts = {};
-
-      collectors.schemaValidated = true;
 
       const result = checkName({
         name: 123,

@@ -8,7 +8,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 /** @type {Record<string, string>} */
 const mockI18nStrings = {
   'config.error.invalid_object_field': 'Object field cannot have both fields and types',
-  'config.error.object_field_missing_fields': 'Object field must have either fields or types',
   'config.error.duplicate_names': 'Duplicate name: {name}',
   'config.error_locator.field': 'Field: {field}',
 };
@@ -289,36 +288,6 @@ describe('Object Field Config Parser', () => {
       expect(mockAddMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           strKey: 'invalid_object_field',
-        }),
-      );
-    });
-
-    it('should error when neither fields nor types are present', async () => {
-      const { parseObjectFieldConfig } = await import('./object.js');
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const fieldConfig = {
-        name: 'data',
-        widget: 'object',
-      };
-
-      /** @type {any} */
-      const context = {
-        cmsConfig: {},
-        collection: { name: 'posts' },
-        typedKeyPath: 'data',
-      };
-
-      parseObjectFieldConfig({
-        config: fieldConfig,
-        context,
-        collectors,
-      });
-
-      expect(mockAddMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          strKey: 'object_field_missing_fields',
         }),
       );
     });

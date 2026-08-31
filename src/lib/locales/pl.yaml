@@ -1425,20 +1425,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: Opcja `auth_methods` musi zawierać co najmniej jedną metodę.
     missing_media_folder: Folder multimediów nie jest zdefiniowany.
-    invalid_media_folder: Skonfigurowany folder multimediów jest nieprawidłowy. Musi być ciągiem znaków.
-    invalid_public_folder: Skonfigurowany folder publiczny jest nieprawidłowy. Musi być ciągiem znaków.
     public_folder_relative_path: Skonfigurowany folder publiczny jest nieprawidłowy. Musi być ścieżką bezwzględną zaczynającą się od “/”.
     public_folder_absolute_url: Bezwzględny adres URL dla opcji folderu publicznego nie jest obsługiwany w Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: Opcja `asset_collections` jest nieprawidłowa. Musi być tablicą.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Kolekcja zasobów {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Nazwa kolekcji zasobów `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Nazwy kolekcji zasobów muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: Kolekcja zasobów `{$name}` musi mieć opcję `media_folder` zdefiniowaną jako ciąg znaków.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: Kolekcja musi mieć zdefiniowaną opcję `folder`, `files` lub `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1486,8 +1480,6 @@ config:
     invalid_list_variable_type: Typ zmiennej pola List jest nieprawidłowy. Opcja `widget` jest ustawiona na `{$widget}`, ale musi być `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Pole typu Object nie może mieć jednocześnie opcji `fields` i `types`.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Pole typu Object musi mieć zdefiniowaną opcję `fields` lub `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: Odwołanie do kolekcji `{$collection}` jest nieprawidłowe lub kolekcja nie jest zdefiniowana.
     relation_field_invalid_collection_file: Odwołanie do pliku `{$file}` jest nieprawidłowe lub plik nie jest zdefiniowany.

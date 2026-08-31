@@ -1459,20 +1459,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: L’option `auth_methods` doit contenir au moins une méthode.
     missing_media_folder: Le dossier des médias n’est pas défini.
-    invalid_media_folder: Le dossier des médias configuré n’est pas valide. Il doit s’agir d’une chaîne.
-    invalid_public_folder: Le dossier public configuré n’est pas valide. Il doit s’agir d’une chaîne.
     public_folder_relative_path: Le dossier public configuré n’est pas valide. Il doit s’agir d’un chemin absolu commençant par « / ».
     public_folder_absolute_url: Une URL absolue pour l’option de dossier public n’est pas prise en charge dans Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: L’option `asset_collections` n’est pas valide. Il doit s’agir d’un tableau.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: La collection de ressources {$count} doit avoir l’option `name` définie comme une chaîne non vide.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Le nom de collection de ressources `{$name}` n’est pas valide. Il ne doit pas contenir de caractères spéciaux.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Les noms de collections de ressources doivent être uniques, or `{$name}` est utilisé plusieurs fois.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: La collection de ressources `{$name}` doit avoir l’option `media_folder` définie comme une chaîne.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: La collection doit avoir l’option `folder`, `files` ou `divider` définie.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1538,8 +1532,6 @@ config:
     invalid_list_variable_type: Le type variable du champ List n’est pas valide. L’option `widget` est définie sur `{$widget}` alors qu’elle doit être `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Le champ Object ne peut pas avoir les options `fields` et `types` en même temps.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: Le champ Object doit avoir l’option `fields` ou `types` définie.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: La collection `{$collection}` référencée n’est pas valide ou n’est pas définie.
     relation_field_invalid_collection_file: Le fichier `{$file}` référencé n’est pas valide ou n’est pas défini.

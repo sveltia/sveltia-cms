@@ -1393,20 +1393,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` seçeneği en az bir yöntem içermelidir.'
     missing_media_folder: Medya klasörü tanımlanmamış.
-    invalid_media_folder: Yapılandırılan medya klasörü geçersiz. Bir metin dizgisi olmalıdır.
-    invalid_public_folder: Yapılandırılan genel klasör geçersiz. Bir metin dizgisi olmalıdır.
     public_folder_relative_path: Yapılandırılan genel klasör geçersiz. “/” ile başlayan mutlak bir yol olmalıdır.
     public_folder_absolute_url: Genel klasör seçeneği için mutlak bir URL Sveltia CMS’te desteklenmiyor.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: '`asset_collections` seçeneği geçersiz. Bir dizi (array) olmalıdır.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 'Medya koleksiyonu {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: 'Medya koleksiyon adı `{$name}` geçersiz. Özel karakterler içeremez.'
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: 'Medya koleksiyon adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: '`{$name}` medya koleksiyonu için `media_folder` seçeneği bir metin olarak tanımlanmalıdır.'
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: 'Koleksiyonda `folder`, `files` veya `divider` seçeneklerinden biri tanımlanmalıdır.'
     # Don’t localize `folder`, `files`, and `divider`
@@ -1454,8 +1448,6 @@ config:
     invalid_list_variable_type: 'List alanının değişken türü geçersiz. `widget` seçeneği `{$widget}` olarak ayarlanmış ancak `object` olmalıdır.'
     # Don’t localize `fields`, and `types`
     invalid_object_field: 'Object alanı `fields` ve `types` seçeneklerini birlikte içeremez.'
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: 'Object alanında `fields` veya `types` seçeneklerinden biri tanımlanmalıdır.'
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: 'Referans verilen `{$collection}` koleksiyonu geçersiz veya tanımlanmamış.'
     relation_field_invalid_collection_file: 'Referans verilen `{$file}` dosyası geçersiz veya tanımlanmamış.'

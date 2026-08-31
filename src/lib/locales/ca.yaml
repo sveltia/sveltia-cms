@@ -1425,20 +1425,14 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: L’opció `auth_methods` ha de contenir almenys un mètode.
     missing_media_folder: No s’ha definit la carpeta multimèdia.
-    invalid_media_folder: La carpeta multimèdia configurada no és vàlida. Ha de ser una cadena.
-    invalid_public_folder: La carpeta pública configurada no és vàlida. Ha de ser una cadena.
     public_folder_relative_path: La carpeta pública configurada no és vàlida. Ha de ser un camí absolut que comenci per «/».
     public_folder_absolute_url: No s’admet un URL absolut per a l’opció de carpeta pública a Sveltia CMS.
-    # Don’t localize `asset_collections`
-    invalid_asset_collections: L’opció `asset_collections` no és vàlida. Ha de ser una matriu.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: La col·lecció de recursos {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: El nom de la col·lecció de recursos `{$name}` no és vàlid. No pot contenir caràcters especials.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Els noms de les col·leccions de recursos han de ser únics, però `{$name}` s’usa més d’una vegada.
-    # Don’t localize `media_folder`
-    asset_collection_invalid_media_folder: La col·lecció de recursos `{$name}` ha de tenir l’opció `media_folder` definida com a cadena.
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: La col·lecció ha de tenir definida l’opció `folder`, `files` o `divider`.
     # Don’t localize `folder`, `files`, and `divider`
@@ -1486,8 +1480,6 @@ config:
     invalid_list_variable_type: El tipus variable del camp List no és vàlid. L’opció `widget` està definida com a `{$widget}` però ha de ser `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: El camp Object no pot tenir alhora les opcions `fields` i `types`.
-    # Don’t localize `fields`, and `types`
-    object_field_missing_fields: El camp Object ha de tenir definida l’opció `fields` o `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: La col·lecció referenciada `{$collection}` no és vàlida o no està definida.
     relation_field_invalid_collection_file: El fitxer referenciat `{$file}` no és vàlid o no està definit.
