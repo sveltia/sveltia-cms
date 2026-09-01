@@ -31,8 +31,9 @@
 
 /**
  * Cloud media storage name.
- * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'backblaze_b2' | 'cloudflare_r2' |
- * 'digitalocean_spaces' | 'scaleway_object_storage' | 'supabase_storage'} CloudMediaLibraryName
+ * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'azure_blob_storage' | 'backblaze_b2' |
+ * 'cloudflare_r2' | 'digitalocean_spaces' | 'scaleway_object_storage' |
+ * 'supabase_storage'} CloudMediaLibraryName
  */
 
 /**
@@ -200,6 +201,29 @@
  */
 
 /**
+ * Options for the Azure Blob Storage media library. Unlike the S3-compatible services, which are
+ * authorized with an access key pair, the Blob service is accessed with a [shared access signature
+ * (SAS)](https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview) token that
+ * each user enters in the CMS’s Settings dialog, so no credential belongs in this configuration.
+ * The token needs the Read, Write, Create and List permissions on the container, and the storage
+ * account needs a [CORS
+ * rule](https://learn.microsoft.com/en-us/rest/api/storageservices/cross-origin-resource-sharing--cors--support-for-the-azure-storage-services)
+ * that allows the `GET`, `PUT` and `OPTIONS` methods along with the `x-ms-blob-type` and
+ * `content-type` headers from the CMS’s origin.
+ * @typedef {object} AzureMediaLibrary
+ * @property {string} [name] Media library name (used when configuring via legacy `media_library`).
+ * @property {string} [account_name] Storage account name. Required unless `endpoint` is given.
+ * @property {string} container Blob container name.
+ * @property {string} [endpoint] Custom Blob service endpoint including the account, such as a
+ * custom domain or the Azurite emulator URL. Overrides `account_name`.
+ * @property {string} [prefix] Path prefix within the container. Must end with a slash.
+ * @property {string} [public_url] Base URL for public asset access. When set, asset download URLs
+ * are constructed as `{public_url}/{blob_name}` instead of the Blob service URL. Required unless
+ * the container allows anonymous read access, because the URL stored in an entry can’t contain the
+ * SAS token, which expires. Set it to an Azure CDN or Front Door endpoint, or a custom domain.
+ */
+
+/**
  * Name of supported stock photo/video provider.
  * @typedef {'pexels' | 'picsum' | 'pixabay' | 'unsplash'} StockAssetProviderName
  */
@@ -214,7 +238,8 @@
 
 /**
  * Supported cloud media storage options.
- * @typedef {CloudinaryMediaLibrary | UploadcareMediaLibrary | S3MediaLibrary} CloudMediaLibrary
+ * @typedef {CloudinaryMediaLibrary | UploadcareMediaLibrary | S3MediaLibrary |
+ * AzureMediaLibrary} CloudMediaLibrary
  */
 
 /**
@@ -237,6 +262,8 @@
  * Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [aws_s3] Options for the Amazon S3 media storage. Set to
  * `false` to explicitly disable.
+ * @property {AzureMediaLibrary | false} [azure_blob_storage] Options for the Azure Blob Storage
+ * media storage. Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [cloudflare_r2] Options for the Cloudflare R2 media storage.
  * Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [digitalocean_spaces] Options for the DigitalOcean Spaces

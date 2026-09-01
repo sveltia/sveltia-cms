@@ -67,6 +67,7 @@ words:
   - Gitea
   - goldmark
   - groupable
+  - hotlinked
   - hotlinking
   - hugolify
   - husenunicorn
@@ -86,6 +87,7 @@ words:
   - llms
   - Lume
   - lvml
+  - maxresults
   - mdwn
   - messageformat
   - mkdn
@@ -123,6 +125,7 @@ words:
   - rebranded
   - reimagined
   - rescanning
+  - restype
   - Roadmap
   - safesearch
   - sandboxing

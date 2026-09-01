@@ -1,3 +1,4 @@
+import azureBlobStorage from './azure-blob-storage';
 import cloudinary from './cloudinary';
 import awsS3 from './s3/aws-s3';
 import backblazeB2 from './s3/backblaze-b2';
@@ -18,6 +19,7 @@ import uploadcare from './uploadcare';
  */
 export const allCloudStorageServices = {
   aws_s3: awsS3,
+  azure_blob_storage: azureBlobStorage,
   backblaze_b2: backblazeB2, // S3-compatible
   cloudflare_r2: cloudflareR2, // S3-compatible
   cloudinary,

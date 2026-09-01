@@ -5,7 +5,6 @@ import {
   generateAwsSignature,
   listS3Objects,
   parseS3Results,
-  parseXml,
   searchS3Objects,
   signedRequest,
   uploadToS3,
@@ -112,38 +111,6 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-  });
-
-  describe('parseXml', () => {
-    it('should parse simple XML to object', () => {
-      const xml = '<Root><Name>test</Name><Size>123</Size></Root>';
-      const result = parseXml(xml);
-
-      expect(result).toEqual({
-        Name: 'test',
-        Size: '123',
-      });
-    });
-
-    it('should handle array elements', () => {
-      const xml = '<Root><Item>first</Item><Item>second</Item><Item>third</Item></Root>';
-      const result = parseXml(xml);
-
-      expect(result).toEqual({
-        Item: ['first', 'second', 'third'],
-      });
-    });
-
-    it('should handle nested elements', () => {
-      const xml = '<Root><Parent><Child>value</Child></Parent></Root>';
-      const result = parseXml(xml);
-
-      expect(result).toEqual({
-        Parent: {
-          Child: 'value',
-        },
-      });
-    });
   });
 
   describe('buildObjectUrl', () => {
