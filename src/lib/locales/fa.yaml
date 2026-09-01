@@ -1,0 +1,2036 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: جدید
+select: انتخاب
+select_all: انتخاب همه
+upload: بارگذاری
+copy: کپی
+download: دانلود
+duplicate: تکثیر
+delete: حذف
+reorder: تغییر ترتیب
+
+# Dialog and form actions: confirmation and cancellation
+cancel: لغو
+done: انجام شد
+save: ذخیره
+# Progress indicator shown on the save button while a save operation is in progress
+saving: در حال ذخیره…
+
+# Publishing actions: used when committing changes to the repository
+publish: انتشار
+# Progress indicator shown on the publish button during publishing
+publishing: در حال انتشار…
+
+# Modification actions: editing and updating content
+rename: تغییر نام
+update: به‌روزرسانی
+replace: جایگزینی
+
+# List and collection actions: adding and removing items
+add: افزودن
+remove: حذف
+clear: پاک‌سازی
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: گسترش
+expand_all: گسترش همه
+collapse: جمع کردن
+collapse_all: جمع کردن همه
+
+# Content manipulation: inserting, restoring, and discarding
+insert: درج
+restore: بازیابی
+discard: دور انداختن
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: در حال جستجو…
+no_results: نتیجه‌ای یافت نشد.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: عمومی
+primary: اصلی
+secondary: ثانویه
+collection: مجموعه
+folder: پوشه
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: کلید API
+details: جزئیات
+back: بازگشت
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: خودکار
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: در حال بارگذاری…
+# Dismiss button for temporary notifications and infobars
+later: بعداً
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: نامک
+# Fallback labels for singleton collections when names aren’t configured
+singleton: تک نسخه
+singletons: تک نسخه‌ها
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: کپی در حافظه موقت انجام نشد.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: 'به {$name} خوش آمدید'
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: 'قدرت‌گرفته از {$name}'
+
+# Shown during initial configuration and data loading
+loading_cms_config: در حال بارگذاری پیکربندی CMS…
+loading_site_data: در حال بارگذاری داده‌های سایت…
+loading_site_data_error: خطایی هنگام بارگذاری داده‌های سایت رخ داد.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: 'ورود با {$service}'
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: ورود با استفاده از توکن دسترسی
+sign_in_using_access_token_description: توکن خود را در زیر وارد کنید. این توکن باید دسترسی خواندن/نوشتن به محتوای مخزن داشته باشد.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: می‌توانید یک توکن در <a>صفحه تنظیمات کاربری {$service}</a> ایجاد کنید.
+# Input field label for personal access token
+personal_access_token: توکن دسترسی شخصی
+
+# Authentication progress indicators
+authorizing: در حال احراز هویت…
+signing_in: در حال ورود…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: کار با مخزن محلی
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: پس از نمایش اعلان، پوشه ریشه مخزن «{$repo}» را انتخاب کنید.
+work_with_local_repo_description_no_repo: پس از نمایش اعلان، پوشه ریشه مخزن Git خود را انتخاب کنید.
+# Button label for demo/test repository
+work_with_test_repo: کار با مخزن آزمایشی
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: پوشه انتخاب‌شده پوشه ریشه مخزن نیست. لطفاً دوباره تلاش کنید.
+  picker_dismissed: پوشه ریشه مخزن انتخاب نشد. لطفاً دوباره تلاش کنید.
+  authentication_aborted: احراز هویت لغو شد. لطفاً دوباره تلاش کنید.
+  invalid_token: توکن ارائه شده نامعتبر است. لطفاً بررسی کرده و دوباره تلاش کنید.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: بک‌اند Git شما توسط احراز هویت‌کننده پشتیبانی نمی‌شود.
+  UNSUPPORTED_DOMAIN: دامنه شما مجاز به استفاده از احراز هویت‌کننده نیست.
+  MISCONFIGURED_CLIENT: شناسه کلاینت یا رمز عبور برنامه OAuth پیکربندی نشده است.
+  AUTH_CODE_REQUEST_FAILED: دریافت کد احراز هویت ناموفق بود. لطفاً بعداً دوباره تلاش کنید.
+  CSRF_DETECTED: حمله احتمالی CSRF شناسایی شد. جریان احراز هویت لغو شد.
+  TOKEN_REQUEST_FAILED: درخواست توکن دسترسی ناموفق بود. لطفاً بعداً دوباره تلاش کنید.
+  TOKEN_REFRESH_FAILED: بازآوری توکن دسترسی ناموفق بود. لطفاً بعداً دوباره تلاش کنید.
+  MALFORMED_RESPONSE: سرور با داده‌های نامعتبر پاسخ داد. لطفاً بعداً دوباره تلاش کنید.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: 'بک‌اند {$name} نیازمند {$name} نسخه {$version} یا بالاتر است.'
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: شما به مخزن «{$repo}» دسترسی ندارید.
+repository_not_found: مخزن «{$repo}» وجود ندارد.
+repository_empty: مخزن «{$repo}» هیچ شاخه‌ای ندارد.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: مخزن «{$repo}» شاخه «{$branch}» را ندارد.
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: خطای غیرمنتظره
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ خطایی هنگام پردازش یک فایل ورودی رخ داد. برای جزئیات، کنسول مرورگر را بررسی کنید. }}
+    *   {{ خطاهایی هنگام پردازش فایل‌های ورودی رخ داد. برای جزئیات، کنسول مرورگر را بررسی کنید. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: نام کاربری
+password: رمز عبور
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: ورود
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: ورود با موبایل
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: کد QR زیر را با گوشی یا تبلت خود اسکن کنید تا بدون رمز عبور وارد شوید. تنظیمات شما به طور خودکار کپی خواهد شد.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'واردشده به عنوان {$name}'
+working_with_local_repo: در حال کار با مخزن محلی
+working_with_test_repo: در حال کار با مخزن آزمایشی
+
+# Account menu: action items for sign-out and app installation
+sign_out: خروج
+install_as_app: نصب به عنوان برنامه
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: محتواها
+assets: دارایی‌ها
+editorial_workflow: گردش کار تحریریه
+cms_config: پیکربندی CMS
+# Mobile menu page title (shown only on small screens)
+menu: منو
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS اکنون روی موبایل در دسترس است!
+mobile_promo_button: آن را امتحان کنید
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS اکنون به زبان {$locale} در دسترس است!
+change_language: تغییر زبان
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: در حال تغییر زبان به {$locale}…
+locale_load_failed: بارگذاری ترجمه {$locale} امکان‌پذیر نبود. لطفاً بعداً دوباره تلاش کنید.
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: مشاهده سایت آنلاین
+# Page switcher button group aria-label for switching between main sections
+switch_page: تعویض صفحه
+
+# Search input placeholders
+search_placeholder_contents: جستجوی محتواها…
+search_placeholder_assets: جستجوی دارایی‌ها…
+search_placeholder_all: جستجوی محتواها و دارایی‌ها…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: ایجاد ورودی یا دارایی‌ها
+
+# Publishing actions: button labels and progress indicators
+publish_changes: انتشار تغییرات
+publishing_changes: در حال انتشار تغییرات…
+# Error notification when publishing fails
+publishing_changes_failed: انتشار تغییرات امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
+
+# Notifications: button aria-labels and section headings
+show_notifications: نمایش اعلان‌ها
+notifications: اعلان‌ها
+
+# Account menu: button aria-labels and section headings
+show_account_menu: نمایش منوی حساب کاربری
+# Account section heading in the account menu and mobile menu page
+account: حساب کاربری
+
+# Account menu items: links to external resources
+live_site: سایت آنلاین
+git_repository: مخزن Git
+settings: تنظیمات
+
+# Help menu: button aria-labels and section headings
+show_help_menu: نمایش منوی راهنما
+# Help section heading in dropdowns and mobile menu
+help: راهنما
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: میانبرهای کیبورد
+documentation: مستندات
+release_notes: یادداشت‌های انتشار
+announcements: اطلاعیه‌ها
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: 'نسخه {$version}'
+# Additional help menu items
+report_issue: گزارش مشکل
+share_feedback: اشتراک‌گذاری بازخورد
+get_help: دریافت راهنمایی
+donate: حمایت مالی
+join_discord: پیوستن به ما در دیسکورد
+bluesky: دنبال کردن ما در بلواسکای
+
+# Update notification: infobar message and button
+update_available: آخرین نسخه Sveltia CMS در دسترس است.
+update_now: اکنون به‌روزرسانی کنید
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: '{$service} دچار یک اختلال جزئی شده است. گردش کار شما ممکن است تحت تأثیر قرار گیرد.'
+  major_incident: '{$service} دچار اختلال عمده شده است. ممکن است بخواهید تا بهبود شرایط صبر کنید.'
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: کتابخانه محتوا
+asset_library: کتابخانه دارایی‌ها
+
+# Primary sidebar section headings and list aria-labels
+collections: مجموعه‌ها
+entries: ورودی‌ها
+files: فایل‌ها
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: سایت شما
+  external: مکان‌های خارجی
+  stock_photos: تصاویر استوک
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: دارایی‌های مجموعه
+# List aria-labels for different list types
+entry_list: فهرست ورودی‌ها
+file_list: فهرست فایل‌ها
+asset_list: فهرست دارایی‌ها
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: 'مجموعه «{$collection}»'
+# {$folder} is the current asset folder label
+x_asset_folder: 'پوشه دارایی «{$folder}»'
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: شما اکنون در حال مشاهده فهرست مجموعه‌ها هستید.
+viewing_asset_folder_list: شما اکنون در حال مشاهده فهرست پوشه‌های دارایی هستید.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ شما اکنون در حال مشاهده مجموعه «{$collection}» هستید که هنوز هیچ ورودی ندارد. }}
+    one {{ شما اکنون در حال مشاهده مجموعه «{$collection}» هستید که یک ورودی دارد. }}
+    *   {{ شما اکنون در حال مشاهده مجموعه «{$collection}» هستید که {$count} ورودی دارد. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ شما اکنون در حال مشاهده پوشه دارایی «{$folder}» هستید که هنوز هیچ دارایی ندارد. }}
+    one {{ شما اکنون در حال مشاهده پوشه دارایی «{$folder}» هستید که یک دارایی دارد. }}
+    *   {{ شما اکنون در حال مشاهده پوشه دارایی «{$folder}» هستید که {$count} دارایی دارد. }}
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: کلید Enter را فشار دهید تا فایل «{$file}» ویرایش شود.
+
+# Error messages: page, collection, folder or file not found
+page_not_found: صفحه یافت نشد.
+collection_not_found: مجموعه یافت نشد.
+asset_folder_not_found: پوشه دارایی یافت نشد.
+file_not_found: فایل یافت نشد.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: '{$selected} از {$total} انتخاب شده'
+
+# View switcher: toggle between list and grid views
+switch_view: تعویض نما
+list_view: نمای فهرستی
+grid_view: نمای شبکه‌ای
+switch_to_list_view: تغییر به نمای فهرستی
+switch_to_grid_view: تغییر به نمای شبکه‌ای
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: مرتب‌سازی
+sorting_options: گزینه‌های مرتب‌سازی
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: هیچ‌کدام
+  name: نام
+  slug: اسلاگ
+  # Sort by the last commit’s author name
+  commit_author: به‌روزرسانی توسط
+  # Sort by the last commit date
+  commit_date: تاریخ به‌روزرسانی
+  # Sort by the entry’s computed summary text
+  _summary: خلاصه
+  # Manual order defined by the user via drag-and-drop
+  _manual: دستی
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}، الف تا ی'
+ascending_date: '{$label}، قدیمی به جدید'
+descending: '{$label}، ی تا الف'
+descending_date: '{$label}، جدید به قدیمی'
+
+# Filter menu: button labels and options
+filter: فیلتر
+filtering_options: گزینه‌های فیلتر
+
+# Group menu: button labels and options
+group: گروه‌بندی
+grouping_options: گزینه‌های گروه‌بندی
+
+# Asset type filter and group labels
+type: نوع
+all: همه
+# Asset type labels
+image: تصویر
+video: ویدیو
+audio: صوتی
+document: سند
+other: سایر
+
+# Toolbar toggles: show/hide panels
+show_assets: نمایش دارایی‌ها
+hide_assets: پنهان کردن دارایی‌ها
+show_info: نمایش اطلاعات
+hide_info: پنهان کردن اطلاعات
+
+# Folder display labels when no specific path is configured
+all_assets: همه دارایی‌ها
+global_assets: دارایی‌های عمومی
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ در حال بارگذاری ورودی… }}
+    *   {{ در حال بارگذاری ورودی‌ها… }}
+# Error message when entry cannot be found
+entry_not_found: ورودی یافت نشد.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: ایجاد ورودی‌های جدید در این مجموعه توسط مدیر غیرفعال شده است.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: شما نمی‌توانید ورودی‌های جدیدی به این مجموعه اضافه کنید زیرا به حد مجاز {$quota} ورودی رسیده است.
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$remaining :integer}
+  .match $remaining
+    one {{ این مجموعه به حد مجاز {$quota} ورودی نزدیک می‌شود. شما فقط می‌توانید {$remaining} ورودی دیگر ایجاد کنید. }}
+    *   {{ این مجموعه به حد مجاز {$quota} ورودی نزدیک می‌شود. شما فقط می‌توانید {$remaining} ورودی دیگر ایجاد کنید. }}
+
+# Navigation: back links and list labels
+back_to_collection: بازگشت به مجموعه
+collection_list: فهرست مجموعه‌ها
+back_to_collection_list: بازگشت به فهرست مجموعه‌ها
+asset_folder_list: فهرست پوشه‌های دارایی
+back_to_asset_folder_list: بازگشت به فهرست پوشه‌های دارایی
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: نتایج جستجو
+# {$terms} is the current search query text
+search_results_for_x: نتایج جستجو برای «{$terms}»
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ شما اکنون نتایج جستجو برای «{$terms}» را مشاهده می‌کنید. هیچ ورودی یافت نشد. }}
+    one {{ شما اکنون نتایج جستجو برای «{$terms}» را مشاهده می‌کنید. یک ورودی یافت شد. }}
+    *   {{ شما اکنون نتایج جستجو برای «{$terms}» را مشاهده می‌کنید. {$count} ورودی یافت شد. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ شما اکنون نتایج جستجو برای «{$terms}» را مشاهده می‌کنید. هیچ دارایی یافت نشد. }}
+    one {{ شما اکنون نتایج جستجو برای «{$terms}» را مشاهده می‌کنید. یک دارایی یافت شد. }}
+    *   {{ شما اکنون نتایج جستجو برای «{$terms}» را مشاهده می‌کنید. {$count} دارایی یافت شد. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ بدون ورودی }}
+    one {{ {$count} ورودی }}
+    *   {{ {$count} ورودی }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ بدون دارایی }}
+    one {{ {$count} دارایی }}
+    *   {{ {$count} دارایی }}
+
+# Empty state messages
+no_files_found: هیچ فایلی یافت نشد.
+no_entries_found: هیچ ورودی یافت نشد.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: بارگذاری دارایی‌های جدید
+
+# Edit options menu: button and item labels
+edit_options: گزینه‌های ویرایش
+show_edit_options: نمایش گزینه‌های ویرایش
+# Edit menu items with specific asset names
+edit_asset: ویرایش دارایی
+# {$name} is the selected asset name
+edit_x: 'ویرایش {$name}'
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: شکستن خطوط طولانی
+
+# Rename asset: dialog and validation
+rename_asset: تغییر نام دارایی
+# {$name} is the current asset name
+rename_x: 'تغییر نام {$name}'
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ نام جدیدی را در زیر وارد کنید. }}
+    one {{ نام جدیدی را در زیر وارد کنید. ورودی استفاده‌کننده از این دارایی نیز به‌روزرسانی خواهد شد. }}
+    *   {{ نام جدیدی را در زیر وارد کنید. {$count} ورودی استفاده‌کننده از این دارایی نیز به‌روزرسانی خواهند شد. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: نام فایل نمی‌تواند خالی باشد.
+  character: نام فایل نمی‌تواند شامل کاراکترهای خاص باشد.
+  duplicate: این نام فایل برای دارایی دیگری استفاده شده است.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: تغییر پسوند فایل
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: آیا مطمئن هستید که می‌خواهید پسوند را از «.{$oldExtension}» به «.{$newExtension}» تغییر دهید؟
+  add: آیا مطمئن هستید که می‌خواهید پسوند «.{$newExtension}» را اضافه کنید؟
+  remove: آیا مطمئن هستید که می‌خواهید پسوند «.{$oldExtension}» را حذف کنید؟
+file_extension_change_warning: اگر پسوند فایل با فرمت واقعی آن مطابقت نداشته باشد، ممکن است فایل به درستی نمایش داده نشود یا پردازش نشود.
+
+# Replace asset: menu item and dialog title
+replace_asset: جایگزینی دارایی
+# {$name} is the asset being replaced
+replace_x: 'جایگزینی {$name}'
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: برای مرور کلیک کنید…
+# Browse prompt shown on touch devices
+tap_to_browse: برای مرور ضربه بزنید…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ یک فایل را اینجا رها کنید یا برای مرور کلیک کنید… }}
+    *   {{ فایل‌ها را اینجا رها کنید یا برای مرور کلیک کنید… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ یک فایل را اینجا رها کنید یا }}
+    *   {{ فایل‌ها را اینجا رها کنید یا }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ یک فایل تصویر را اینجا رها کنید یا }}
+    *   {{ فایل‌های تصویر را اینجا رها کنید یا }}
+
+# File picker and clipboard actions used by upload controls
+browse: مرور
+# Generic clipboard paste action used by non-image file fields
+paste: جای‌گذاری
+# Clipboard paste action used by image fields
+paste_image: جای‌گذاری تصویر
+
+# Clipboard paste errors
+no_image_in_clipboard: هیچ تصویری در حافظه موقت یافت نشد.
+clipboard_access_denied: دسترسی به حافظه موقت رد شد.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ یک فایل را اینجا رها کنید }}
+    *   {{ فایل‌ها را اینجا رها کنید }}
+
+# File type validation errors
+unsupported_file_type: نوع فایل پشتیبانی نمی‌شود
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'فایل رهاشده از انواع زیر نیست: {$types}. لطفاً دوباره تلاش کنید.'
+dropped_image_type_mismatch: 'فایل رهاشده پشتیبانی نمی‌شود. فقط تصاویر از انواع زیر پذیرفته می‌شوند: {$types}. لطفاً دوباره تلاش کنید.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ انتخاب فایل }}
+    *   {{ انتخاب فایل‌ها }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ حذف دارایی }}
+    *   {{ حذف دارایی‌ها }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ حذف دارایی انتخاب‌شده }}
+    *   {{ حذف دارایی‌های انتخاب‌شده }}
+confirm_deleting_this_asset: آیا مطمئن هستید که می‌خواهید این دارایی را حذف کنید؟
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ آیا مطمئن هستید که می‌خواهید دارایی انتخاب‌شده را حذف کنید؟ }}
+    *   {{ آیا مطمئن هستید که می‌خواهید {$count} دارایی انتخاب‌شده را حذف کنید؟ }}
+confirm_deleting_all_assets: آیا مطمئن هستید که می‌خواهید همه دارایی‌ها را حذف کنید؟
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ حذف ورودی }}
+    *   {{ حذف ورودی‌ها }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ حذف ورودی انتخاب‌شده }}
+    *   {{ حذف ورودی‌های انتخاب‌شده }}
+confirm_deleting_this_entry: آیا مطمئن هستید که می‌خواهید این ورودی را حذف کنید؟
+confirm_deleting_this_entry_with_assets: آیا مطمئن هستید که می‌خواهید این ورودی و دارایی‌های مرتبط با آن را حذف کنید؟
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: حذف ورودی امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ آیا مطمئن هستید که می‌خواهید ورودی انتخاب‌شده را حذف کنید؟ }}
+    *   {{ آیا مطمئن هستید که می‌خواهید {$count} ورودی انتخاب‌شده را حذف کنید؟ }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ آیا مطمئن هستید که می‌خواهید ورودی انتخاب‌شده و دارایی‌های مرتبط را حذف کنید؟ }}
+    *   {{ آیا مطمئن هستید که می‌خواهید {$count} ورودی انتخاب‌شده و دارایی‌های مرتبط را حذف کنید؟ }}
+confirm_deleting_all_entries: آیا مطمئن هستید که می‌خواهید همه ورودی‌ها را حذف کنید؟
+confirm_deleting_all_entries_with_assets: آیا مطمئن هستید که می‌خواهید همه ورودی‌ها و دارایی‌های مرتبط را حذف کنید؟
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: تغییر ترتیب ورودی‌ها
+done_reordering_entries: اتمام تغییر ترتیب ورودی‌ها
+cancel_reordering_entries: لغو تغییر ترتیب ورودی‌ها
+
+# Reorder error message
+saving_reorder_failed: ذخیره ترتیب جدید ورودی‌ها ناموفق بود. لطفاً دوباره تلاش کنید.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ در حال پردازش یک فایل. این عملیات ممکن است مدتی طول بکشد. }}
+    *   {{ در حال پردازش فایل‌ها. این عملیات ممکن است مدتی طول بکشد. }}
+
+# Uploading section aria-label
+uploading_files: در حال بارگذاری فایل‌ها
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: '«{$name}» با این فایل جایگزین خواهد شد:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ این فایل در پوشه «{$folder}» ذخیره خواهد شد: }}
+    *   {{ این {$count} فایل در پوشه «{$folder}» ذخیره خواهند شد: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: فایل‌های بیش از حد بزرگ
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ این فایل قابل بارگذاری نیست زیرا حجم آن از حداکثر مجاز {$size} بیشتر است. لطفاً حجم آن را کاهش دهید یا فایل دیگری را انتخاب کنید. }}
+    *   {{ این فایل‌ها قابل بارگذاری نیستند زیرا حجم آن‌ها از حداکثر مجاز {$size} بیشتر است. لطفاً حجم آن‌ها را کاهش دهید یا فایل‌های دیگری را انتخاب کنید. }}
+
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: فایل‌های نامعتبر
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ این فایل قابل بارگذاری نیست زیرا آسیب دیده است یا محتوای آن با پسوند فایل مطابقت ندارد. این اتفاق معمولاً زمانی رخ می‌دهد که یک عکس به جای تبدیل، تغییر نام داده شده باشد (مانند تصویر HEIC که به عنوان فایل JPEG ذخیره شده باشد). لطفاً فایل را تبدیل کرده و دوباره تلاش کنید. }}
+    *   {{ این فایل‌ها قابل بارگذاری نیستند زیرا آسیب دیده‌اند یا محتوای آن‌ها با پسوند فایل مطابقت ندارد. این اتفاق معمولاً زمانی رخ می‌دهد که عکس‌ها به جای تبدیل، تغییر نام داده شده باشند (مانند تصاویر HEIC که به عنوان فایل JPEG ذخیره شده باشند). لطفاً فایل‌ها را تبدیل کرده و دوباره تلاش کنید. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: فایل‌های ناهماهنگ
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ این فایل نمی‌تواند جایگزین «{$name}» شود زیرا فرمت متفاوتی دارد. لطفاً فایل را به همان فرمت تبدیل کرده و دوباره تلاش کنید. }}
+    *   {{ این فایل‌ها نمی‌توانند جایگزین «{$name}» شوند زیرا فرمت متفاوتی دارند. لطفاً فایل‌ها را به همان فرمت تبدیل کرده و دوباره تلاش کنید. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ فایلی با همین نام قبلاً در این پوشه وجود دارد. آیا می‌خواهید آن را جایگزین کنید؟ }}
+    *   {{ {$count} فایل با همین نام‌ها قبلاً در این پوشه وجود دارند. آیا می‌خواهید آن‌ها را جایگزین کنید؟ }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ فایلی به نام «{$name}» قبلاً در این پوشه وجود دارد. آیا می‌خواهید آن را جایگزین کنید؟ }}
+    *   {{ {$count} فایل با همین نام‌ها قبلاً در این پوشه وجود دارند. آیا می‌خواهید آن‌ها را جایگزین کنید؟ }}
+file_name_conflict_resolution: حل تداخل نام فایل
+# Option to keep both files (rename the new one)
+keep_both: نگه داشتن هر دو
+
+# Upload progress and error messages
+uploading_files_progress: در حال بارگذاری…
+uploading_files_failed: بارگذاری ناموفق بود.
+
+# File metadata display
+# Shows file type and size in upload preview and asset info
+# {$type} is the localized file type label and {$size} is the formatted file size
+file_meta: '{$type} · {$size}'
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (تبدیل‌شده از {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: این مجموعه هنوز هیچ ورودی ندارد.
+# Button to create first entry
+create_new_entry: ایجاد ورودی جدید
+# “Entry” option label in the create button menu
+entry: ورودی
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: فایل شاخص (Index)
+
+# Empty state for file collections
+no_files_in_collection: هیچ فایلی در این مجموعه موجود نیست.
+
+# Entry duplication
+duplicate_entry: تکثیر ورودی
+entry_duplicated: ورودی به عنوان یک پیش‌نویس جدید تکثیر شد.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ یک فیلد دارای خطا است. لطفاً جهت ذخیره ورودی آن را اصلاح کنید. }}
+    *   {{ {$count} فیلد دارای خطا هستند. لطفاً جهت ذخیره ورودی آن‌ها را اصلاح کنید. }}
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ ورودی ذخیره شد. }}
+    *   {{ {$count} ورودی ذخیره شدند. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ ورودی ذخیره و منتشر شد. }}
+    *   {{ {$count} ورودی ذخیره و منتشر شدند. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ ورودی حذف شد. }}
+    *   {{ {$count} ورودی حذف شدند. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ دارایی ذخیره شد. }}
+    *   {{ {$count} دارایی ذخیره شدند. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ دارایی ذخیره و منتشر شد. }}
+    *   {{ {$count} دارایی ذخیره و منتشر شدند. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ آدرس URL در حافظه موقت کپی شد. }}
+    *   {{ {$count} آدرس URL در حافظه موقت کپی شدند. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ مسیر فایل در حافظه موقت کپی شد. }}
+    *   {{ {$count} مسیر فایل در حافظه موقت کپی شدند. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ داده‌های فایل در حافظه موقت کپی شد. }}
+    *   {{ داده‌های {$count} فایل در حافظه موقت کپی شدند. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ دارایی دانلود شد. }}
+    *   {{ {$count} دارایی دانلود شدند. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ دارایی منتقل شد. }}
+    *   {{ {$count} دارایی منتقل شدند. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ نام دارایی تغییر کرد. }}
+    *   {{ نام {$count} دارایی تغییر کرد. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ دارایی حذف شد. }}
+    *   {{ {$count} دارایی حذف شدند. }}
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: ویرایشگر محتوا
+
+# Draft backup: restore dialog
+restore_backup_title: بازیابی پیش‌نویس
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: این ورودی دارای یک پشتیبان از {$datetime} است. آیا می‌خواهید پیش‌نویس ویرایش‌شده را بازیابی کنید؟
+
+# Draft backup notifications
+draft_backup_saved: پشتیبان پیش‌نویس ذخیره شد.
+draft_backup_restored: پشتیبان پیش‌نویس بازیابی شد.
+draft_backup_deleted: پشتیبان پیش‌نویس حذف شد.
+
+# Editor toolbar actions
+cancel_editing: لغو ویرایش
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: 'ایجاد {$name}'
+# {$collection} is the collection label
+create_entry_announcement: شما اکنون در حال ایجاد یک ورودی جدید در مجموعه «{$collection}» هستید.
+# Editing an existing entry
+# {$collection} is the collection label and {$entry} is the entry label or slug
+edit_entry_title: '{$collection} › {$entry}'
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: شما اکنون در حال ویرایش ورودی «{$entry}» در مجموعه «{$collection}» هستید.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: شما اکنون در حال ویرایش فایل «{$file}» در مجموعه «{$collection}» هستید.
+# {$file} is the singleton file name
+edit_singleton_announcement: شما اکنون در حال ویرایش فایل «{$file}» هستید.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: ذخیره و انتشار
+save_without_publishing: ذخیره بدون انتشار
+
+# Editor options menu
+show_editor_options: نمایش گزینه‌های ویرایشگر
+editor_options: گزینه‌های ویرایشگر
+
+# Preview controls
+show_second_pane: نمایش قاب دوم
+show_preview: نمایش پیش‌نمایش
+
+# Editor settings
+sync_scrolling: پیمایش هم‌زمان
+
+# Locale controls
+switch_locale: تعویض زبان
+# Short status indicators appended to locale names
+locale_content_disabled_short: (غیرفعال)
+locale_content_error_short: (خطا)
+
+# Pane labels
+edit: ویرایش
+preview: پیش‌نمایش
+
+# Pane controls; not to be confused with pages
+swap_panes: جابه‌جایی قاب‌ها
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: 'ویرایش محتوای {$locale}'
+preview_x_locale: 'پیش‌نمایش محتوای {$locale}'
+
+# Preview iframe labels
+content_preview: پیش‌نمایش محتوا
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: 'نمایش گزینه‌های محتوای {$locale}'
+content_options_x_locale: 'گزینه‌های محتوای {$locale}'
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: 'فیلد «{$field}»'
+
+# Field options menu
+show_field_options: نمایش گزینه‌های فیلد
+field_options: گزینه‌های فیلد
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'نوع فیلد پشتیبانی‌نشده: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: 'فعال‌سازی {$locale}'
+reenable_x_locale: 'فعال‌سازی مجدد {$locale}'
+disable_x_locale: 'غیرفعال‌سازی {$locale}'
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: محتوای {$locale} غیرفعال شده است.
+locale_x_now_disabled: محتوای {$locale} اکنون غیرفعال است. با ذخیره ورودی حذف خواهد شد.
+
+# Repository and site links
+view_in_repository: مشاهده در مخزن
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: 'مشاهده در {$service}'
+view_on_live_site: مشاهده در سایت آنلاین
+
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: مشاهده پیش‌نمایش
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: پیش‌نمایش هنوز در حال ساخت است.
+  # Shown when the build failed, so no preview is available
+  failed: ساخت پیش‌نمایش امکان‌پذیر نبود.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: در حال بررسی پیش‌نمایش…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: بررسی مجدد برای پیش‌نمایش
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: در حال بررسی پیش‌نمایش
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: در حال ساخت…
+    failed: ساخت ناموفق بود
+
+# Content copying from other locales
+copy_from: کپی از…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: 'کپی از {$locale}'
+
+# Translation features
+translation_options: گزینه‌های ترجمه
+translate: ترجمه
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ ترجمه فیلد }}
+    *   {{ ترجمه فیلدها }}
+translate_from: ترجمه از…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: 'ترجمه از {$locale}'
+
+# Revert changes
+revert_changes: بازگردانی تغییرات
+revert_all_changes: بازگردانی همه تغییرات
+
+# Slug editing
+edit_slug: ویرایش اسلاگ
+edit_slug_error:
+  empty: اسلاگ نمی‌تواند خالی باشد.
+  invalid: اسلاگ نمی‌تواند شامل کاراکترهای خاص، از جمله اسلش و فاصله باشد.
+  duplicate: این اسلاگ برای ورودی دیگری استفاده شده است.
+
+# Required field indicator
+required: الزامی
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: چیزی برای ترجمه وجود ندارد.
+    started: در حال ترجمه…
+    error: ترجمه ناموفق بود.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ هیچ فیلدی از {$source} ترجمه نشد. }}
+        one {{ فیلد از {$source} ترجمه شد. }}
+        *   {{ {$count} فیلد از {$source} ترجمه شدند. }}
+  copy:
+    none: چیزی برای کپی وجود ندارد.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ هیچ فیلدی از {$source} کپی نشد. }}
+        one {{ فیلد از {$source} کپی شد. }}
+        *   {{ {$count} فیلد از {$source} کپی شدند. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: این فیلد الزامی است.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: 'تاریخ/زمان باید در یا بعد از {$min} باشد.'
+    date: 'تاریخ باید در یا بعد از {$min} باشد.'
+    time: 'زمان باید در یا بعد از {$min} باشد.'
+    number: 'مقدار باید بزرگ‌تر یا مساوی {$min} باشد.'
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ شما باید حداقل {$min} گزینه را انتخاب کنید. }}
+        *   {{ شما باید حداقل {$min} گزینه را انتخاب کنید. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ شما باید حداقل {$min} آیتم اضافه کنید. }}
+        *   {{ شما باید حداقل {$min} آیتم اضافه کنید. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: 'تاریخ/زمان باید در یا قبل از {$max} باشد.'
+    date: 'تاریخ باید در یا قبل از {$max} باشد.'
+    time: 'زمان باید در یا قبل از {$max} باشد.'
+    number: 'مقدار باید کوچک‌تر یا مساوی {$max} باشد.'
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ شما نمی‌توانید بیش از {$max} گزینه انتخاب کنید. }}
+        *   {{ شما نمی‌توانید بیش از {$max} گزینه انتخاب کنید. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ شما نمی‌توانید بیش از {$max} آیتم اضافه کنید. }}
+        *   {{ شما نمی‌توانید بیش از {$max} آیتم اضافه کنید. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ شما باید حداقل {$min} کاراکتر وارد کنید. }}
+      *   {{ شما باید حداقل {$min} کاراکتر وارد کنید. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ شما نمی‌توانید بیش از {$max} کاراکتر وارد کنید. }}
+      *   {{ شما نمی‌توانید بیش از {$max} کاراکتر وارد کنید. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: لطفاً یک عدد وارد کنید.
+    email: لطفاً یک ایمیل معتبر وارد کنید.
+    url: لطفاً یک URL معتبر وارد کنید.
+
+  # Custom field validation error
+  invalid_value: مقدار نامعتبر است.
+  unexpected_error: خطای غیرمنتظره‌ای رخ داد.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: پنل‌های نوار کناری
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: اعتبارسنجی
+    placeholder: نتایج اعتبارسنجی اینجا نمایش داده می‌شوند.
+    no_errors_found: هیچ خطایی یافت نشد.
+
+  # History panel: shows entry commit history
+  history:
+    title: تاریخچه
+    fetch_failed: بارگذاری تاریخچه ناموفق بود.
+    no_history: هیچ تاریخچه‌ای یافت نشد.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: بک‌لینک‌ها
+    no_entries: هیچ ورودی‌ای به این ورودی ارجاع نمی‌دهد.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: خطا
+    description: خطایی هنگام ذخیره ورودی رخ داد. لطفاً بعداً دوباره تلاش کنید.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: شما در حال مشاهده جزئیات دارایی «{$name}» هستید.
+
+# Asset editor container aria-label
+asset_editor: ویرایشگر دارایی
+
+# Preview unavailable message
+preview_unavailable: پیش‌نمایش در دسترس نیست.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ آدرس URL عمومی }}
+    *   {{ آدرس‌های URL عمومی }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ مسیر فایل }}
+    *   {{ مسیرهای فایل }}
+file_data: داده‌های فایل
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: اطلاعات دارایی
+select_asset_show_info: یک دارایی را انتخاب کنید تا اطلاعات آن نمایش داده شود.
+
+kind: نوع
+size: حجم
+dimensions: ابعاد
+duration: مدت زمان
+# Short heading for a list of entries using the selected asset
+used_in: استفاده‌شده در
+created_date: تاریخ ایجاد
+location: مکان
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: 'نقشه نشان‌دهنده عرض جغرافیایی {$latitude}، طول جغرافیایی {$longitude}'
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: حذف این آیتم
+move_up: انتقال به بالا
+move_down: انتقال به پایین
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: تغییر ترتیب آیتم
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: مقدار آیتم
+
+# Add item button label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: 'افزودن {$name}'
+
+# List item context menu
+add_item_above: افزودن آیتم در بالا
+add_item_below: افزودن آیتم در پایین
+
+# Variable-type list selector
+select_list_type: انتخاب نوع لیست
+
+# Variable-type mismatch
+unknown_variable_type: این آیتم به دلیل نوع ناشناخته قابل نمایش نیست. برای جزئیات، کنسول مرورگر را بررسی کنید.
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: شفافیت
+
+# Select field: empty option placeholder
+unselected_option: (هیچ‌کدام)
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: انتخاب فایل
+    image: انتخاب تصویر
+
+  # Search input labels
+  search_for_file: جستجوی فایل‌ها
+  search_for_image: جستجوی تصاویر
+
+  # Locations panel aria-label
+  locations: مکان‌ها
+
+  # Asset folder options
+  folder:
+    field: دارایی‌های فیلد
+    entry: دارایی‌های ورودی
+    file: دارایی‌های فایل
+    collection: دارایی‌های مجموعه
+    global: دارایی‌های عمومی
+
+  # Error messages
+  error:
+    invalid_key: کلید API شما نامعتبر یا منقضی شده است. لطفاً دوباره بررسی کرده و تلاش کنید.
+    search_fetch_failed: خطایی هنگام جستجوی دارایی‌ها رخ داد. لطفاً بعداً دوباره تلاش کنید.
+    image_fetch_failed: خطایی هنگام دانلود دارایی انتخاب‌شده رخ داد. لطفاً بعداً دوباره تلاش کنید.
+
+  # Stock photo panels
+  available_images: تصاویر موجود
+
+  # URL entry option
+  enter_url: ورود آدرس URL
+  enter_file_url: 'آدرس URL فایل را وارد کنید:'
+  enter_image_url: 'آدرس URL تصویر را وارد کنید:'
+
+  # Large file warning dialog
+  large_file:
+    title: فایل با حجم بالا
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: فایل نامعتبر
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: فایل‌ها قابل بارگذاری نیستند
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: اعتبار تصویر
+    description: 'در صورت امکان از اعتبار زیر استفاده کنید:'
+
+  # Unsaved asset badge
+  unsaved: ذخیره‌نشده
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ هیچ کاراکتری وارد نشده است. حداقل: {$min}. حداکثر: {$max}. }}
+      one {{ {$count} کاراکتر وارد شده است. حداقل: {$min}. حداکثر: {$max}. }}
+      *   {{ {$count} کاراکتر وارد شده است. حداقل: {$min}. حداکثر: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ هیچ کاراکتری وارد نشده است. حداقل: {$min}. }}
+      one {{ {$count} کاراکتر وارد شده است. حداقل: {$min}. }}
+      *   {{ {$count} کاراکتر وارد شده است. حداقل: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ هیچ کاراکتری وارد نشده است. حداکثر: {$max}. }}
+      one {{ {$count} کاراکتر وارد شده است. حداکثر: {$max}. }}
+      *   {{ {$count} کاراکتر وارد شده است. حداکثر: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: پخش‌کننده ویدیو یوتیوب
+
+# Date/time field: quick action buttons
+today: امروز
+now: اکنون
+
+# Rich-text editor: component field labels
+editor_components:
+  image: تصویر
+  src: منبع
+  alt: متن جایگزین
+  title: عنوان
+  link: لینک
+
+# Key-Value field: column headers and validation
+key_value:
+  key: کلید
+  value: مقدار
+  action: عملیات
+  empty_key: کلید الزامی است.
+  duplicate_key: کلید باید یکتا باشد.
+
+# Map field: location search and geolocation
+find_place: یافتن مکان
+use_your_location: استفاده از مکان شما
+
+# Geolocation error dialog
+geolocation_error_title: خطای موقعیت مکانی
+geolocation_error_body: خطایی هنگام دریافت موقعیت مکانی شما رخ داد.
+geolocation_unsupported: قابلیت Geolocation API توسط این مرورگر پشتیبانی نمی‌شود.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': بله
+  'false': خیر
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: سرویس به درستی پیکربندی نشده است.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: کلید API
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: '{$key} خود را برای {$service} وارد کنید.'
+      requested: در حال اعتبارسنجی…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: '{$key} ارائه شده نامعتبر است. لطفاً دوباره بررسی کرده و تلاش کنید.'
+    password:
+      # {$service} is the cloud service name
+      initial: 'رمز عبور خود را برای {$service} وارد کنید.'
+      requested: در حال ورود…
+      error: نام کاربری یا رمز عبور اشتباه است. لطفاً دوباره بررسی کرده و تلاش کنید.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: کتابخانه رسانه Cloudinary
+    activate:
+      button_label: فعال‌سازی Cloudinary
+      description: پس از ورود، دوباره روی دکمه ورود کلیک کنید تا ادامه دهید.
+    auth_key_label: عبارت سرّی API
+    open_library: باز کردن Cloudinary
+
+  uploadcare:
+    auth_key_label: کلید سرّی API
+
+  aws_s3:
+    auth_key_label: کلید دسترسی سرّی
+
+  cloudflare_r2:
+    auth_key_label: کلید دسترسی سرّی
+
+  digitalocean_spaces:
+    auth_key_label: کلید دسترسی سرّی
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ یک خطا در پیکربندی CMS وجود دارد. لطفاً مشکل را حل کرده و دوباره تلاش کنید. }}
+      *   {{ خطاهایی در پیکربندی CMS وجود دارد. لطفاً مشکلات را حل کرده و دوباره تلاش کنید. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: 'مجموعه {$collection}'
+    file: 'فایل {$file}'
+    component: 'کامپوننت {$component}'
+    # Don’t localize `{$field}`
+    field: 'فیلد `{$field}`'
+
+  # Configuration error messages
+  error:
+    no_secure_context: برنامه Sveltia CMS فقط با آدرس‌های HTTPS یا localhost کار می‌کند.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ آدرس فایل پیکربندی باید از پروتکل HTTPS یا آدرس localhost استفاده کند. }}
+        *   {{ آدرس‌های فایل پیکربندی باید از پروتکل HTTPS یا آدرس‌های localhost استفاده کنند. }}
+    fetch_failed: دریافت فایل پیکربندی امکان‌پذیر نبود.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: 'پاسخ HTTP با وضعیت {$status} بازگشت.'
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'دریافت فایل پیکربندی امکان‌پذیر نبود. برای جلوگیری از بارگذاری فایل `config.yml`، مقدار <a>`load_config_file: false`</a> را به شیء پیکربندی پاس داده شده به `CMS.init()` اضافه کنید.'
+    parse_failed: تجزیه فایل پیکربندی امکان‌پذیر نبود.
+    parse_failed_invalid_object: فایل پیکربندی یک شیء معتبر JavaScript نیست.
+    parse_failed_unsupported_type: فایل پیکربندی نوع فایل معتبری نیست. فقط فرمت‌های YAML، TOML و JSON پشتیبانی می‌شوند.
+    no_collection: مجموعه‌ها تعریف نشده‌اند.
+    # Don’t localize `hide`
+    no_visible_collection: 'حداقل یک مجموعه باید مرئی باشد. گزینه `hide` را بررسی کنید.'
+    missing_backend: بک‌اند تعریف نشده است.
+    missing_backend_name: نام بک‌اند تعریف نشده است.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: 'بک‌اند {$name} در Sveltia CMS <a>پشتیبانی نمی‌شود</a>.'
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: 'بک‌اند منسوخ‌شده {$name} در Sveltia CMS <a>پشتیبانی نمی‌شود</a>.'
+    unsupported_custom_backend: 'بک‌اند‌های سفارشی در Sveltia CMS <a>پشتیبانی نمی‌شوند</a>.'
+    unsupported_backend_suggestion: 'از یکی از <a>بک‌اندهای پشتیبانی‌شده</a> استفاده کنید.'
+    missing_repository: مخزن تعریف نشده است.
+    invalid_repository: 'مخزن پیکربندی‌شده نامعتبر است. باید به فرمت "owner/repo" باشد.'
+    oauth_implicit_flow: 'روش احراز هویت پیکربندی‌شده (implicit flow) در Sveltia CMS پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.'
+    github_pkce_unsupported: 'احراز هویت PKCE به دلیل محدودیت‌های GitHub هنوز پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.'
+    oauth_no_app_id: شناسه برنامه OAuth تعریف نشده است.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: 'گزینه `open_authoring` نیازمند حالت انتشار `editorial_workflow` است. برای جزئیات <a>مستندات</a> را ببینید.'
+    # Don’t localize `auth_methods`
+    no_auth_methods: 'گزینه `auth_methods` باید حداقل شامل یک روش باشد.'
+    missing_media_folder: پوشه رسانه تعریف نشده است.
+    public_folder_relative_path: 'پوشه عمومی پیکربندی‌شده نامعتبر است. باید یک مسیر مطلق با شروع از "/" باشد.'
+    public_folder_absolute_url: آدرس مطلق URL برای گزینه پوشه عمومی در Sveltia CMS پشتیبانی نمی‌شود.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: 'گزینه `transformations` شامل کلید پشتیبانی‌نشده `{$key}` است. باید `raster_image`، `svg` یا یک فرمت تصویر رستری پشتیبانی‌شده باشد.'
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: 'گزینه `quality` برای تغییر `{$key}` نامعتبر است. باید یک عدد صحیح بین ۰ تا ۱۰۰ باشد.'
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: 'گزینه `{$prop}` برای تغییر `{$key}` نامعتبر است. باید یک عدد صحیح مثبت باشد.'
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: 'مجموعه دارایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: 'نام مجموعه دارایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: 'نام‌های مجموعه دارایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_no_options: 'مجموعه باید حداقل یکی از گزینه‌های `folder`، `files` یا `divider` را تعریف کرده باشد.'
+    # Don’t localize `folder`, `files`, and `divider`
+    invalid_collection_multiple_options: 'مجموعه نمی‌تواند گزینه‌های `folder`، `files` و `divider` را هم‌زمان داشته باشد.'
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: 'پسوند `{$extension}` با فرمت `{$format}` مطابقت ندارد.'
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: 'قالب اسلاگ `{$slug}` نامعتبر است زیرا نمی‌تواند شامل اسلش باشد. برای سازماندهی ورودی‌ها در زیرپوشه‌ها، به جای `slug` از گزینه `path` استفاده کنید.'
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: 'گزینه `reorder` به گروه نمایی به نام `{$name}` ارجاع می‌دهد، اما چنین گروهی در گزینه `view_groups` تعریف نشده است.'
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: 'گزینه `sortable_fields` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.'
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: 'گزینه `view_groups` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.'
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: 'گزینه `view_filters` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.'
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: 'گروه نمایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: 'نام گروه نمایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
+    duplicate_view_group_name: 'نام‌های گروه نمایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: 'فیلتر نمایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: 'نام فیلتر نمایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
+    duplicate_view_filter_name: 'نام‌های فیلتر نمایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: 'مجموعه {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: 'نام مجموعه `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
+    duplicate_collection_name: 'نام‌های مجموعه باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: 'فایل مجموعه {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: 'نام فایل مجموعه `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
+    duplicate_collection_file_name: 'نام‌های فایل مجموعه باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    # Don’t localize `fields`
+    collection_no_fields: 'مجموعه باید گزینه `fields` را با حداقل یک فیلد تعریف کرده باشد.'
+    # Don’t localize `fields`
+    collection_file_no_fields: 'فایل مجموعه باید گزینه `fields` را با حداقل یک فیلد تعریف کرده باشد.'
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: 'در صورت استفاده از جانگهدار `locale` در مسیر `file`، فایل مجموعه باید دارای گزینه `i18n` تعریف‌شده باشد.'
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: 'فیلد {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: 'نام فیلد `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد. اگر می‌خواهید فیلدها را تو در تو کنید، <a>به جای نشانه‌گذاری نقطه‌ای از فیلدهای Object استفاده کنید</a>.'
+    duplicate_field_name: 'نام‌های فیلد باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: 'نوع متغیر {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: 'نام نوع متغیر `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
+    duplicate_variable_type: 'نام‌های نوع متغیر باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    date_field_type: 'نوع فیلد منسوخ‌شده Date در Sveltia CMS پشتیبانی نمی‌شود. از نوع فیلد DateTime با گزینه `type: date` استفاده کنید.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'منطقه زمانی نامعتبر: {$timeZone}. باید یک شناسه منطقه زمانی معتبر IANA مانند `America/New_York` یا `Asia/Tokyo` باشد.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: 'گزینه منسوخ‌شده `{$prop}` در Sveltia CMS پشتیبانی نمی‌شود. به جای آن از گزینه `{$newProp}` استفاده کنید.'
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: 'گزینه `allow_multiple` در Sveltia CMS پشتیبانی نمی‌شود. به جای آن از گزینه `multiple` استفاده کنید که مقدار پیش‌فرض آن `false` است.'
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: 'فیلد List نمی‌تواند گزینه‌های `field`، `fields` و `types` را هم‌زمان داشته باشد.'
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: 'نوع متغیر فیلد List نامعتبر است. گزینه `widget` روی `{$widget}` تنظیم شده است اما باید `object` باشد.'
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: 'فیلد Object نمی‌تواند گزینه‌های `fields` و `types` را هم‌زمان داشته باشد.'
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: 'مجموعه ارجاع‌شده `{$collection}` نامعتبر است یا تعریف نشده است.'
+    relation_field_invalid_collection_file: 'فایل ارجاع‌شده `{$file}` نامعتبر است یا تعریف نشده است.'
+    # Don’t localize `file`
+    relation_field_missing_file_name: 'گزینه `file` باید برای ارتباط با یک مجموعه فایل تعریف شود.'
+    relation_field_invalid_value_field: 'فیلد مقدار ارجاع‌شده `{$field}` نامعتبر است یا تعریف نشده است.'
+    unexpected: خطای غیرمنتظره
+
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: 'گزینه `{$option}` باید {$type} باشد.'
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'گزینه `{$option}` باید یکی از این مقادیر باشد: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: 'گزینه `{$option}` باید `{$value}` باشد.'
+    schema_invalid_empty_value: 'گزینه `{$option}` باید یک رشته خالی باشد.'
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: 'گزینه `{$option}` باید آرایه‌ای از {$count} آیتم باشد.'
+    schema_invalid_value: 'گزینه `{$option}` دارای مقدار نامعتبر است.'
+    schema_missing_option: 'گزینه `{$option}` الزامی است.'
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'یکی از این گزینه‌ها الزامی است: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: یک رشته
+      number: یک عدد
+      integer: یک عدد صحیح
+      boolean: یک مقدار بولین
+      array: یک آرایه
+      object: یک شیء
+      'null': خالی
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: شناسه برنامه OAuth تعریف نشده است. کاربران برای ورود باید یک توکن دسترسی ارائه دهند.
+    editorial_workflow_unsupported: گردش کار تحریریه در حال حاضر فقط با بک‌آندهای GitHub و GitLab پشتیبانی می‌شود.
+    open_authoring_unsupported_backend: قابلیت Open Authoring در حال حاضر فقط با بک‌اند GitHub پشتیبانی می‌شود.
+    nested_collections_unsupported: مجموعه‌های تو در تو هنوز در Sveltia CMS پشتیبانی نمی‌شوند.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: 'گزینه `{$prop}` در Sveltia CMS پشتیبانی نمی‌شود. این گزینه نادیده گرفته خواهد شد.'
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: 'هر دو گزینه `picker_utc` و گزینه‌های جدیدتر منطقه زمانی (`input_timezone` یا `output_utc`) تنظیم شده‌اند. گزینه‌های جدید اولویت دارند. حذف `picker_utc` را از پیکربندی خود مد نظر قرار دهید.'
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: 'گزینه `preview_path` از برچسب‌های تاریخ و زمان استفاده می‌کند، اما مجموعه هیچ فیلد DateTime برای خواندن آن‌ها ندارد، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.'
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: 'گزینه `preview_path_date_field` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما هیچ فیلد DateTime با این نام تعریف نشده است، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.'
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'برای جزئیات یادداشت‌های سازگاری را ببینید: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: برای تجربه بهتر توسعه‌دهندگان، می‌توانید فایل پیکربندی خود را در برابر طرحواره JSON مربوط به Sveltia CMS اعتبارسنجی کنید. برای جزئیات {$link} را ببینید.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: محلی
+  # Browser compatibility warnings
+  unsupported_browser: گردش کار محلی در مرورگر شما پشتیبانی نمی‌شود. لطفاً به جای آن از Chrome یا Edge استفاده کنید.
+  disabled: 'گردش کار محلی در مرورگر شما غیرفعال شده است. <a>در اینجا نحوه فعال‌سازی آن آمده است</a>.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'شما اکنون در حال مشاهده تابلوی گردش کار تحریریه هستید. پیش‌نویس‌ها: {$draft}. در حال بررسی: {$review}. آماده: {$ready}. در انتظار حذف: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'شما اکنون در حال مشاهده تابلوی گردش کار تحریریه هستید. پیش‌نویس‌ها: {$draft}. در حال بررسی: {$review}. در انتظار حذف: {$deletion}.'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
+status:
+  draft: پیش‌نویس
+  drafts: پیش‌نویس‌ها
+  in_review: در حال بررسی
+  ready: آماده
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: در انتظار حذف
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: لغو حذف
+  confirm_cancelling_deletion: آیا مطمئن هستید که می‌خواهید این حذف را لغو کنید؟ ورودی منتشرشده باقی خواهد ماند.
+  confirm_completing_deletion: آیا مطمئن هستید که می‌خواهید این ورودی را حذف کنید؟ بلافاصله حذف خواهد شد.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ ورودی برای حذف علامت‌گذاری شد. }}
+      *   {{ {$count} ورودی برای حذف علامت‌گذاری شدند. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ تغییرات دور انداخته شدند. }}
+      *   {{ تغییرات {$count} ورودی دور انداخته شدند. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: در حال لغو حذف…
+  deletion_cancelled: حذف لغو شد.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: لغو حذف امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: ورودی‌های منتشرنشده
+  published_entries: ورودی‌های منتشرشده
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'وضعیت: {$status}'
+  change_entry_status: تغییر وضعیت ورودی
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: در حال تغییر وضعیت…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: در حال به‌روزرسانی وضعیت…
+  status_updated: وضعیت به‌روزرسانی شد.
+  # Error notification when the status could not be changed
+  status_change_failed: تغییر وضعیت امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: ارسال برای بررسی
+  confirm_sending_for_review: تغییرات شما به عنوان پیش‌نویس ذخیره شده است. ورودی را برای بررسی ارسال می‌کنید تا فردی آن را بررسی و منتشر کند؟
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: انتشار ورودی
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: دور انداختن تغییرات
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: آیا مطمئن هستید که می‌خواهید این ورودی را حذف کنید؟ تا زمانی که حذف منتشر نشود، برداشته نخواهد شد. تا آن زمان همچنان آن را در فهرست ورودی‌ها با علامت "در انتظار حذف" خواهید یافت.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: این ورودی هنوز منتشر نشده است، بنابراین حذف آن باعث دور انداختن کامل آن می‌شود.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: این ورودی دارای تغییرات منتشرنشده است. دور انداختن آن‌ها نسخه منتشرشده را بازیابی خواهد کرد. خود ورودی حذف نخواهد شد.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+      *   {{ هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ یکی از آن‌ها هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
+      *   {{ {$count} مورد از آن‌ها هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهند ماند. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: آیا مطمئن هستید که می‌خواهید این ورودی را منتشر کنید؟ تغییرات شما بلافاصله اعمال خواهد شد.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: در حال انتشار ورودی…
+  entry_published: ورودی منتشر شد.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: در حال حذف ورودی…
+  discarding_changes: در حال دور انداختن تغییرات…
+  entry_deleted: ورودی حذف شد.
+  # Error notification when publishing fails
+  publishing_entry_failed: انتشار ورودی امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
+  # Workflow page: empty column message
+  no_entries: بدون ورودی.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: کشیدن برای تغییر وضعیت
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: فورک کردن مخزن
+  fork: فورک
+  confirm_forking_repository: برای پیشنهاد تغییرات در «{$repo}»، باید یک فورک از مخزن روی حساب کاربری شما ایجاد شود. تغییرات شما در آن فورک ذخیره می‌شود و یک مدیر قبل از آنلاین شدن آن‌ها را بررسی می‌کند.
+  # Error shown when the user declined the dialog above
+  fork_declined: برای پیشنهاد تغییرات به یک فورک از مخزن روی حساب کاربری خود نیاز دارید.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: ایجاد فورک از مخزن «{$repo}» روی حساب کاربری شما امکان‌پذیر نبود.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: بررسی دسترسی شما به مخزن «{$repo}» امکان‌پذیر نبود. لطفاً لحظاتی دیگر دوباره تلاش کنید.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: مخزن «{$repo}» اجازه فورک کردن را نمی‌دهد. از یک مدیر بخواهید قابلیت فورک را برای آن فعال کند.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: شما یک دعوت‌نامه معلق برای مخزن «{$repo}» دارید. آن را در GitHub بپذیرید، سپس دوباره وارد شوید.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: ورود شما شامل دسترسی به مخازن خصوصی نیست، بنابراین مخزن «{$repo}» قابل خواندن نیست. از یک مدیر بخواهید تنظیمات احراز هویت CMS را بررسی کند.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: فقط یک مدیر می‌تواند تغییرات این سایت را منتشر کند. ورودی خود را به عنوان "در حال بررسی" علامت‌گذاری کنید تا شخص دیگری آن را بررسی کند.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: این تغییر نمی‌تواند به طور مستقیم انجام شود. فقط ویرایش‌های ورودی‌ها را می‌توان برای بررسی پیشنهاد داد.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: تغییرات شما در فورک مخزن شما در «{$repo}» ذخیره شده و قبل از آنلاین شدن بررسی می‌شوند.
+  view_fork: مشاهده فورک
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: دسته‌بندی‌ها
+
+# Site Configuration Editor
+site_configuration_editor: ویرایشگر پیکربندی سایت
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: کلید API ذخیره شد.
+    api_key_removed: کلید API حذف شد.
+    api_key_invalid: کلید API ارائه شده نامعتبر است. لطفاً دوباره بررسی کرده و تلاش کنید.
+
+  # Preferences operation errors
+  error:
+    permission_denied: دسترسی به ذخیره‌سازی کوکی رد شده است. لطفاً مجوزهای مرورگر خود را بررسی کرده و دوباره تلاش کنید.
+
+  # Appearance panel
+  appearance:
+    title: ظاهر
+    theme: تم
+    select_theme: انتخاب تم
+
+  # Theme options
+  theme:
+    dark: تاریک
+    light: روشن
+
+  # Language panel
+  language:
+    title: زبان
+    ui_language:
+      title: زبان رابط کاربری
+      select_language: انتخاب زبان
+
+  # Contents panel
+  contents:
+    title: محتواها
+    editor:
+      title: ویرایشگر
+      use_draft_backup:
+        switch_label: پشتیبان‌گیری خودکار از پیش‌نویس‌های ورودی
+      close_on_save:
+        switch_label: بستن ویرایشگر پس از ذخیره پیش‌نویس
+      close_with_escape:
+        switch_label: بستن ویرایشگر با کلید Escape
+
+  # Internationalization panel
+  i18n:
+    title: بین‌المللی‌سازی
+    translators:
+      default:
+        title: سرویس ترجمه پیش‌فرض
+        select_service: انتخاب سرویس
+      api_keys:
+        title: کلیدهای API سرویس ترجمه
+        description: 'مدیریت کلیدهای API برای <a>سرویس‌های ترجمه</a>.'
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: 'کلید {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: 'در <a {$homeHref}>{$service}</a> ثبت‌نام کرده و <a {$apiKeyHref}>کلید API خود</a> را در اینجا وارد کنید تا ترجمه سریع فیلدهای متنی فعال شود.'
+
+  # Media panel
+  media:
+    title: رسانه
+    stock_photos:
+      api_keys:
+        title: کلیدهای API سرویس تصویر استوک
+        description: 'مدیریت کلیدهای API برای <a>سرویس‌های تصویر استوک</a>.'
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: 'کلید API سرویس {$service}'
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: 'در <a {$homeHref}>API سرویس {$service}</a> ثبت‌نام کرده و <a {$apiKeyHref}>کلید API خود</a> را در اینجا وارد کنید تا تصاویر استوک رایگان را درج کنید.'
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: 'تصاویر ارائه شده توسط {$service}'
+      no_services: 'هیچ <a>سرویس تصویر استوکی</a> پیکربندی نشده است.'
+    cloud_storage:
+      api_keys:
+        title: کلیدهای API سرویس ذخیره‌سازی ابری
+        description: 'مدیریت کلیدهای API برای <a>سرویس‌های ذخیره‌سازی ابری</a>.'
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: 'کلید API سرویس {$service}'
+      no_services: 'هیچ <a>سرویس ذخیره‌سازی ابری</a> پیکربندی نشده است.'
+
+  # Accessibility panel
+  accessibility:
+    title: دسترسی‌پذیری
+    underline_links:
+      title: زیرخط‌دار کردن لینک‌ها
+      description: نمایش زیرخط برای لینک‌ها در پیش‌نمایش ورودی و برچسب‌های رابط کاربری.
+      switch_label: همیشه لینک‌ها زیرخط‌دار باشند
+
+  # Advanced panel
+  advanced:
+    title: پیشرفته
+    beta:
+      title: ویژگی‌های بتا
+      description: فعال‌سازی برخی ویژگی‌های بتا که ممکن است ناپایدار یا ترجمه‌نشده باشند.
+      switch_label: پیوستن به برنامه بتا
+    developer_mode:
+      title: حالت توسعه‌دهنده
+      description: فعال‌سازی برخی ویژگی‌های مخصوص توسعه‌دهندگان، از جمله لوگ‌های تفصیلی کنسول و منوهای زمینه بومی.
+      switch_label: فعال‌سازی حالت توسعه‌دهنده
+    deploy_hook:
+      title: هوک انتشار (Deploy Hook)
+      description: آدرس وب‌هوک را وارد کنید تا هنگام فراخوانی دستی انتشار با انتخاب "انتشار تغییرات"، فراخوانی شود. اگر از GitHub Actions استفاده می‌کنید می‌توانید این را خالی بگذارید.
+      # Hook URL input
+      url:
+        field_label: آدرس URL هوک
+        saved: آدرس URL هوک ذخیره شد.
+        removed: آدرس URL هوک حذف شد.
+      # Authorization header input
+      auth:
+        field_label: هدر احراز هویت (مثلاً Bearer <token>) (اختیاری)
+        saved: هدر احراز هویت ذخیره شد.
+        removed: هدر احراز هویت حذف شد.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: مشاهده کتابخانه محتوا
+  view_asset_library: مشاهده کتابخانه دارایی‌ها
+  search: جستجو برای ورودی‌ها و دارایی‌ها
+  create_entry: ایجاد یک ورودی جدید
+  save_entry: ذخیره یک ورودی
+  cancel_editing: لغو ویرایش ورودی
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: تصویر AVIF
+  bmp: تصویر Bitmap
+  gif: تصویر GIF
+  ico: آیکون
+  jpeg: تصویر JPEG
+  jpg: تصویر JPEG
+  png: تصویر PNG
+  svg: تصویر SVG
+  tif: تصویر TIFF
+  tiff: تصویر TIFF
+  webp: تصویر WebP
+  # Video formats
+  avi: ویدیو AVI
+  m4v: ویدیو MP4
+  mov: ویدیو QuickTime
+  mp4: ویدیو MP4
+  mpeg: ویدیو MPEG
+  mpg: ویدیو MPEG
+  ogg: ویدیو Ogg
+  ogv: ویدیو Ogg
+  ts: ویدیو MPEG
+  webm: ویدیو WebM
+  3gp: ویدیو 3GPP
+  3g2: ویدیو 3GPP2
+  # Audio formats
+  aac: صوتی AAC
+  mid: صوتی MIDI
+  midi: صوتی MIDI
+  m4a: صوتی MP4
+  mp3: صوتی MP3
+  oga: صوتی Ogg
+  opus: صوتی OPUS
+  wav: صوتی WAV
+  weba: صوتی WebM
+  # Document formats
+  csv: صفحه گسترده CSV
+  doc: سند Word
+  docx: سند Word
+  odp: ارائه OpenDocument
+  ods: صفحه گسترده OpenDocument
+  odt: متن OpenDocument
+  pdf: سند PDF
+  ppt: ارائه PowerPoint
+  pptx: ارائه PowerPoint
+  rtf: سند متن غنی (RTF)
+  xls: صفحه گسترده Excel
+  xlsx: صفحه گسترده Excel
+  # Text formats
+  html: متن HTML
+  js: کد JavaScript
+  json: متن JSON
+  md: متن Markdown
+  toml: متن TOML
+  yaml: متن YAML
+  yml: متن YAML
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} بایت'
+  kb: '{$size} کیلوبایت'
+  mb: '{$size} مگابایت'
+  gb: '{$size} گیگابایت'
+  tb: '{$size} ترابایت'
