@@ -1508,7 +1508,7 @@ config:
     unsupported_custom_backend: 'بک‌اند‌های سفارشی در Sveltia CMS <a>پشتیبانی نمی‌شوند</a>.'
     unsupported_backend_suggestion: 'از یکی از <a>بک‌اندهای پشتیبانی‌شده</a> استفاده کنید.'
     missing_repository: مخزن تعریف نشده است.
-    invalid_repository: 'مخزن پیکربندی‌شده نامعتبر است. باید به فرمت "owner/repo" باشد.'
+    invalid_repository: 'مخزن پیکربندی‌شده نامعتبر است. باید به فرمت «owner/repo» باشد.'
     oauth_implicit_flow: 'روش احراز هویت پیکربندی‌شده (implicit flow) در Sveltia CMS پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.'
     github_pkce_unsupported: 'احراز هویت PKCE به دلیل محدودیت‌های GitHub هنوز پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.'
     oauth_no_app_id: شناسه برنامه OAuth تعریف نشده است.
@@ -1517,7 +1517,7 @@ config:
     # Don’t localize `auth_methods`
     no_auth_methods: 'گزینه `auth_methods` باید حداقل شامل یک روش باشد.'
     missing_media_folder: پوشه رسانه تعریف نشده است.
-    public_folder_relative_path: 'پوشه عمومی پیکربندی‌شده نامعتبر است. باید یک مسیر مطلق با شروع از "/" باشد.'
+    public_folder_relative_path: 'پوشه عمومی پیکربندی‌شده نامعتبر است. باید یک مسیر مطلق با شروع از «/» باشد.'
     public_folder_absolute_url: آدرس مطلق URL برای گزینه پوشه عمومی در Sveltia CMS پشتیبانی نمی‌شود.
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: 'گزینه `transformations` شامل کلید پشتیبانی‌نشده `{$key}` است. باید `raster_image`، `svg` یا یک فرمت تصویر رستری پشتیبانی‌شده باشد.'
@@ -1743,7 +1743,7 @@ workflow:
   # Confirmation message shown before deleting a published entry, replacing the direct
   # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
   # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
-  confirm_deleting_published_entry: آیا مطمئن هستید که می‌خواهید این ورودی را حذف کنید؟ تا زمانی که حذف منتشر نشود، برداشته نخواهد شد. تا آن زمان همچنان آن را در فهرست ورودی‌ها با علامت "در انتظار حذف" خواهید یافت.
+  confirm_deleting_published_entry: آیا مطمئن هستید که می‌خواهید این ورودی را حذف کنید؟ تا زمانی که حذف منتشر نشود، برداشته نخواهد شد. تا آن زمان همچنان آن را در فهرست ورودی‌ها با علامت «در انتظار حذف» خواهید یافت.
   # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
@@ -1809,7 +1809,7 @@ open_authoring:
   # {$repo} is the repository identifier
   private_repo_scope_required: ورود شما شامل دسترسی به مخازن خصوصی نیست، بنابراین مخزن «{$repo}» قابل خواندن نیست. از یک مدیر بخواهید تنظیمات احراز هویت CMS را بررسی کند.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
-  publish_unsupported: فقط یک مدیر می‌تواند تغییرات این سایت را منتشر کند. ورودی خود را به عنوان "در حال بررسی" علامت‌گذاری کنید تا شخص دیگری آن را بررسی کند.
+  publish_unsupported: فقط یک مدیر می‌تواند تغییرات این سایت را منتشر کند. ورودی خود را به عنوان «در حال بررسی» علامت‌گذاری کنید تا شخص دیگری آن را بررسی کند.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: این تغییر نمی‌تواند به طور مستقیم انجام شود. فقط ویرایش‌های ورودی‌ها را می‌توان برای بررسی پیشنهاد داد.
@@ -1934,7 +1934,7 @@ prefs:
       switch_label: فعال‌سازی حالت توسعه‌دهنده
     deploy_hook:
       title: هوک انتشار (Deploy Hook)
-      description: آدرس وب‌هوک را وارد کنید تا هنگام فراخوانی دستی انتشار با انتخاب "انتشار تغییرات"، فراخوانی شود. اگر از GitHub Actions استفاده می‌کنید می‌توانید این را خالی بگذارید.
+      description: آدرس وب‌هوک را وارد کنید تا هنگام فراخوانی دستی انتشار با انتخاب «انتشار تغییرات»، فراخوانی شود. اگر از GitHub Actions استفاده می‌کنید می‌توانید این را خالی بگذارید.
       # Hook URL input
       url:
         field_label: آدرس URL هوک
