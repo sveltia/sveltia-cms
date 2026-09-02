@@ -375,6 +375,7 @@
             id="{fieldId}-value"
             tabindex="0"
             class="filename"
+            dir="ltr"
             aria-readonly={readonly}
             aria-invalid={invalid}
             aria-required={required}

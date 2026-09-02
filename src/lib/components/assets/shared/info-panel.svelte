@@ -122,7 +122,7 @@
     <h4>{_('public_urls', { values: { count: 1 } })}</h4>
     <p>
       {#if publicURL}
-        <a href={publicURL} target="_blank" rel="noopener noreferrer">{publicURL}</a>
+        <a href={publicURL} dir="ltr" target="_blank" rel="noopener noreferrer">{publicURL}</a>
       {:else}
         –
       {/if}

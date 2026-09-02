@@ -42,7 +42,7 @@
 
 {#if segments.length}
   <!-- Hide the asset path from screen readers because the image comes with alt text -->
-  <span class="name" aria-hidden="true">
+  <span class="name" dir="ltr" aria-hidden="true">
     <TruncatedText lines={2}>
       {#each segments as segment, index (`${segment}-${index}`)}
         {#if index === segments.length - 1}
