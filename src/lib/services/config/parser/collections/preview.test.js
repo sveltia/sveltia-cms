@@ -119,4 +119,59 @@ describe('checkPreviewPath', () => {
       );
     });
   });
+
+  // An unresolvable tag used to fill in a random ID, which changed the preview URL on every render
+  // and spun the entry editor until Svelte killed the reactive graph
+  // @see https://github.com/sveltia/sveltia-cms/issues/943
+  describe('with a {{fields.*}} tag', () => {
+    test('says nothing when the tag names a field', () => {
+      check({ pathTemplate: 'blog/{{fields.title}}', fields: withoutDateField });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('warns when the tag names no field', () => {
+      check({ pathTemplate: 'blog/{{fields.slug}}', fields: withoutDateField });
+
+      expect(addMessage).toHaveBeenCalledWith({
+        type: 'warning',
+        strKey: 'preview_path_field_not_found',
+        values: { name: 'fields.slug' },
+        context,
+        collectors,
+      });
+    });
+
+    test('says nothing when a `default` transformation supplies a value', () => {
+      check({
+        pathTemplate: "blog/{{fields.slug | default('missing')}}",
+        fields: withoutDateField,
+      });
+
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('resolves a nested key path', () => {
+      const fields = /** @type {any} */ ([
+        { name: 'author', widget: 'object', fields: [{ name: 'name', widget: 'string' }] },
+      ]);
+
+      check({ pathTemplate: 'blog/{{fields.author.name}}', fields });
+      expect(addMessage).not.toHaveBeenCalled();
+
+      check({ pathTemplate: 'blog/{{fields.author.email}}', fields });
+
+      expect(addMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'preview_path_field_not_found',
+          values: { name: 'fields.author.email' },
+        }),
+      );
+    });
+
+    test('leaves bare tags alone, since they may be special tags rather than fields', () => {
+      // `{{slug}}` is the entry slug and `{{year}}` a date part; neither is a field
+      check({ pathTemplate: 'blog/{{slug}}', fields: withoutDateField });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+  });
 });

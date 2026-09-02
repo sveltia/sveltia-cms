@@ -1647,6 +1647,8 @@ config:
     preview_path_no_date_field: The `preview_path` option uses date and time tags, but the collection has no DateTime field to read them from, so the preview link won’t be shown.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: The `preview_path_date_field` option refers to a field named `{$name}`, but no DateTime field with that name is defined, so the preview link won’t be shown.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: The `preview_path` option refers to `{$name}`, but no such field is defined in the collection, so the preview link won’t be shown.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'See the compatibility notes for details: {$link}'

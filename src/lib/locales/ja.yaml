@@ -1564,6 +1564,8 @@ config:
     preview_path_no_date_field: '`preview_path` オプションで日時タグが使用されていますが、コレクションに参照可能な DateTime フィールドがないため、プレビューリンクは表示されません。'
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: '`preview_path_date_field` オプションで `{$name}` という名前のフィールドが指定されていますが、その名前の DateTime フィールドが定義されていないため、プレビューリンクは表示されません。'
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: '`preview_path` オプションで `{$name}` が参照されていますが、そのフィールドはコレクションに定義されていないため、プレビューリンクは表示されません。'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: '詳しくは互換性情報をご覧ください: {$link}'

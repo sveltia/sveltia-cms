@@ -1148,17 +1148,39 @@ describe('fillTemplate()', async () => {
     expect(result).toBe('My Post Title');
   });
 
-  test('fillTemplate falls back to a generated ID for preview_path tags with no matching field', async () => {
+  // A random fallback would change the preview URL on every render and spin the entry editor
+  // @see https://github.com/sveltia/sveltia-cms/issues/943
+  test('fillTemplate throws for preview_path tags with no matching field', async () => {
     await setupCmsConfig();
 
-    const result = fillTemplate('{{nonexistent}}', {
+    expect(() =>
+      fillTemplate('{{nonexistent}}', {
+        collection,
+        content: { title: 'My Post Title' },
+        type: 'preview_path',
+        entryFilePath: 'content/posts/2024/my-post.md',
+      }),
+    ).toThrow('Unresolvable template tag in preview path: nonexistent');
+  });
+
+  test('fillTemplate is stable for preview_path tags with no matching field', async () => {
+    await setupCmsConfig();
+
+    const options = /** @type {any} */ ({
       collection,
       content: { title: 'My Post Title' },
       type: 'preview_path',
       entryFilePath: 'content/posts/2024/my-post.md',
     });
 
-    expect(result).toMatch(/^[0-9a-f]{12}$/);
+    // The `default` transformation suppresses the fallback, so the result has to be identical
+    // across evaluations rather than merely defined
+    const results = [1, 2, 3].map(() =>
+      fillTemplate("{{fields.slug | default('missing')}}", options),
+    );
+
+    expect(new Set(results).size).toBe(1);
+    expect(results[0]).toBe('missing');
   });
 
   test('fillTemplate falls back to a generated ID for media_folder tags that are not file path tags', async () => {

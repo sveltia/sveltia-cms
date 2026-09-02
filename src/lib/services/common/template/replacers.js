@@ -117,7 +117,28 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     ),
   );
 
+  const { type, locale } = replaceSubContext;
+
+  // A random fallback keeps generated slugs and paths unique, but a `preview_path` is recomputed on
+  // every render and its result feeds a URL that an effect watches, so a value that changes on each
+  // pass sends the entry editor into an infinite render loop. There is nothing sensible to put in a
+  // preview URL for a tag that resolves to nothing anyway, so give up on the path instead and let
+  // `getPreviewPath()` render no link at all.
+  // @see https://github.com/sveltia/sveltia-cms/issues/943
+  /**
+   * Give up on a preview path whose tag resolves to nothing, so the caller can drop the link
+   * instead of building a URL around a value that changes on every render.
+   * @throws {Error} If the template is a `preview_path`.
+   */
+  const bailOnUnresolvableTag = () => {
+    if (type === 'preview_path') {
+      throw new Error(`Unresolvable template tag in preview path: ${tag}`);
+    }
+  };
+
   if (value === undefined && !hasDefaultTransformation) {
+    bailOnUnresolvableTag();
+
     return generateUUID('short');
   }
 
@@ -126,10 +147,10 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
     hasDefaultTransformation &&
     hasComplexNestedTemplateArgs
   ) {
+    bailOnUnresolvableTag();
+
     return `${generateUUID('short')}-${generateUUID('short')}`;
   }
-
-  const { type, locale } = replaceSubContext;
 
   if (transformations.length) {
     value = applyTransformations({
