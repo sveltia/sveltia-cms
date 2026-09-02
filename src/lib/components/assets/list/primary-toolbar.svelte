@@ -43,10 +43,10 @@
   {/if}
   <h2 role="none">
     {#key appLocale.current}
-      {$selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : ''}
+      <bdi>{$selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : ''}</bdi>
     {/key}
     {#if !env.isSmallScreen && $selectedAssetFolder?.internalPath !== undefined}
-      <span role="none">/{$selectedAssetFolder.internalPath}</span>
+      <span role="none" dir="ltr">/{$selectedAssetFolder.internalPath}</span>
     {/if}
   </h2>
   {#if !(env.isSmallScreen || env.isMediumScreen)}

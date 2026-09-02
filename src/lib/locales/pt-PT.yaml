@@ -774,9 +774,6 @@ uploading_files_progress: A carregar…
 uploading_files_failed: O carregamento falhou.
 
 # File metadata display
-# Shows file type and size in upload preview and asset info
-# {$type} is the localized file type label and {$size} is the formatted file size
-file_meta: '{$type} · {$size}'
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
 # {$type} is the original file type before conversion
 file_meta_converted_from_x: (convertido de {$type})
@@ -912,8 +909,6 @@ create_entry_title: A criar {$name}
 # {$collection} is the collection label
 create_entry_announcement: Está agora a criar uma nova entrada na coleção «{$collection}».
 # Editing an existing entry
-# {$collection} is the collection label and {$entry} is the entry label or slug
-edit_entry_title: '{$collection} › {$entry}'
 # {$entry} is the current entry label and {$collection} is the collection label
 edit_entry_announcement: Está agora a editar a entrada «{$entry}» na coleção «{$collection}».
 # {$file} is the file name and {$collection} is the collection label

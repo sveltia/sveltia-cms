@@ -751,9 +751,6 @@ uploading_files_progress: S’està pujant…
 uploading_files_failed: No s’ha pogut pujar.
 
 # File metadata display
-# Shows file type and size in upload preview and asset info
-# {$type} is the localized file type label and {$size} is the formatted file size
-file_meta: '{$type} · {$size}'
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
 # {$type} is the original file type before conversion
 file_meta_converted_from_x: (convertit de {$type})
@@ -889,8 +886,6 @@ create_entry_title: S’està creant {$name}
 # {$collection} is the collection label
 create_entry_announcement: Ara esteu creant una entrada nova a la col·lecció «{$collection}».
 # Editing an existing entry
-# {$collection} is the collection label and {$entry} is the entry label or slug
-edit_entry_title: '{$collection} › {$entry}'
 # {$entry} is the current entry label and {$collection} is the collection label
 edit_entry_announcement: Ara esteu editant l’entrada «{$entry}» de la col·lecció «{$collection}».
 # {$file} is the file name and {$collection} is the collection label

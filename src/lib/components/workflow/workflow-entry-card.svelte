@@ -134,14 +134,14 @@
       {/await}
     {/if}
     <span role="none" class="text">
-      <span role="none" class="collection">{collectionLabel}</span>
-      <span role="none" class="title">{summary}</span>
+      <span role="none" class="collection"><bdi>{collectionLabel}</bdi></span>
+      <span role="none" class="title"><bdi>{summary}</bdi></span>
     </span>
   </button>
   <footer role="none">
     <div role="none" class="meta">
       {#if pullRequest.author?.name}
-        <span role="none" class="author">{pullRequest.author.name}</span>
+        <span role="none" class="author"><bdi>{pullRequest.author.name}</bdi></span>
       {/if}
       <span role="none" class="date">
         {pullRequest.updatedDate.toLocaleDateString(appLocale.current ?? undefined, {

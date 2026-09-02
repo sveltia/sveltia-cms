@@ -40,7 +40,7 @@
   />
   <h2 role="none">
     <TruncatedText>
-      {$overlaidAsset?.name}
+      <bdi>{$overlaidAsset?.name}</bdi>
     </TruncatedText>
   </h2>
   {#if !env.isSmallScreen}

@@ -73,13 +73,13 @@
         }}
       />
     {/if}
-    <h2 role="none">{collectionLabel}</h2>
+    <h2 role="none"><bdi>{collectionLabel}</bdi></h2>
     {#if env.isSmallScreen}
       <Spacer flex />
     {:else}
       <div role="none" class="description">
         <TruncatedText>
-          {@html _sanitize(description || '')}
+          <bdi>{@html _sanitize(description || '')}</bdi>
         </TruncatedText>
       </div>
     {/if}

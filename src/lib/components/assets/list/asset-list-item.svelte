@@ -100,7 +100,7 @@
     <GridCell class="title">
       <div role="none" class="label">
         <TruncatedText lines={2}>
-          {name}
+          <bdi>{name}</bdi>
         </TruncatedText>
       </div>
     </GridCell>

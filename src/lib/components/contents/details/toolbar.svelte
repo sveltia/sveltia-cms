@@ -412,9 +412,7 @@
             {#if env.isSmallScreen}
               {entrySummary}
             {:else}
-              {_('edit_entry_title', {
-                values: { collection: collectionLabel, entry: entrySummary },
-              })}
+              <bdi>{collectionLabel}</bdi> › <bdi>{entrySummary}</bdi>
             {/if}
           {/if}
         </TruncatedText>

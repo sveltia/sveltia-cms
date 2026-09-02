@@ -788,9 +788,6 @@ uploading_files_progress: Nahrávání…
 uploading_files_failed: Nahrávání selhalo.
 
 # File metadata display
-# Shows file type and size in upload preview and asset info
-# {$type} is the localized file type label and {$size} is the formatted file size
-file_meta: '{$type} · {$size}'
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
 # {$type} is the original file type before conversion
 file_meta_converted_from_x: (převedeno z {$type})
@@ -938,8 +935,6 @@ create_entry_title: Vytváření {$name}
 # {$collection} is the collection label
 create_entry_announcement: Nyní vytváříte novou položku v kolekci „{$collection}“.
 # Editing an existing entry
-# {$collection} is the collection label and {$entry} is the entry label or slug
-edit_entry_title: '{$collection} › {$entry}'
 # {$entry} is the current entry label and {$collection} is the collection label
 edit_entry_announcement: Nyní upravujete položku „{$entry}“ v kolekci „{$collection}“.
 # {$file} is the file name and {$collection} is the collection label

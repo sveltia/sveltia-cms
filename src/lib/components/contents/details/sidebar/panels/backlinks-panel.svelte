@@ -64,7 +64,7 @@
               });
             }}
           >
-            <span class="summary">{ref.summary}</span>
+            <span class="summary"><bdi>{ref.summary}</bdi></span>
           </Button>
         {/each}
       </section>

@@ -77,7 +77,9 @@
   <div role="none" class="label">
     <TruncatedText lines={2}>
       {#key appLocale.current}
-        {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
+        <bdi>
+          {@html getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true })}
+        </bdi>
       {/key}
       {#if isCollectionIndexFile(collection, entry)}
         <Icon name={getIndexFile(collection)?.icon} class="home" />

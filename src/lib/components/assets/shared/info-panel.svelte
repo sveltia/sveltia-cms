@@ -132,9 +132,9 @@
     <h4>{_('file_paths', { values: { count: 1 } })}</h4>
     <p>
       {#if repoBlobURL}
-        <a href={repoBlobURL}>/{path}</a>
+        <a href={repoBlobURL} dir="ltr">/{path}</a>
       {:else}
-        /{path}
+        <bdi dir="ltr">/{path}</bdi>
       {/if}
     </p>
   </section>

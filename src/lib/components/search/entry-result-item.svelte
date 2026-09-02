@@ -69,22 +69,24 @@
       </GridCell>
       <GridCell class="collection">
         {#key appLocale.current}
-          {getCollectionLabel(collection)}
+          <bdi>{getCollectionLabel(collection)}</bdi>
         {/key}
       </GridCell>
       <GridCell class="title">
         <div role="none" class="label">
           <TruncatedText lines={2}>
-            {#if collectionFile}
-              {getCollectionFileLabel(collectionFile)}
-            {:else}
-              {#key appLocale.current}
-                {@html getEntrySummary(collection, entry, {
-                  useTemplate: true,
-                  allowMarkdown: true,
-                })}
-              {/key}
-            {/if}
+            <bdi>
+              {#if collectionFile}
+                {getCollectionFileLabel(collectionFile)}
+              {:else}
+                {#key appLocale.current}
+                  {@html getEntrySummary(collection, entry, {
+                    useTemplate: true,
+                    allowMarkdown: true,
+                  })}
+                {/key}
+              {/if}
+            </bdi>
           </TruncatedText>
         </div>
       </GridCell>

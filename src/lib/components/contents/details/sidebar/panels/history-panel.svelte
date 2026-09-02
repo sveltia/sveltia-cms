@@ -74,7 +74,7 @@
             <span class="avatar placeholder" aria-hidden="true"></span>
           {/if}
           <span class="details">
-            <span class="author">{commit.authorName}</span>
+            <span class="author"><bdi>{commit.authorName}</bdi></span>
             <span class="date">{formatDate(commit.date, appLocale.current)}</span>
           </span>
         </Button>
