@@ -39,6 +39,12 @@ export const refineState = (state, liveness) => {
  * Resolve the preview link for one entry and locale, combining the site configuration with the
  * deployment stores. This is a pure function, so components can call it inside a `$derived` with
  * the store values passed in and stay reactive.
+ *
+ * The liveness of the composed URL is deliberately not taken into account here. A liveness check is
+ * made from an effect that watches this URL, and it writes its result to the `pageLiveness` store,
+ * so reading that store to resolve the link would put the store on both ends of the same cycle: the
+ * check would change the link, the link would restart the check. Apply {@link refineState} to the
+ * returned `state` separately to fold the liveness in.
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry.
  * @param {InternalLocaleCode} args.locale Locale.
@@ -48,12 +54,12 @@ export const refineState = (state, liveness) => {
  * @param {WorkflowPullRequest} [args.pullRequest] Pull request holding the entry, if it’s an
  * unpublished Editorial Workflow entry.
  * @param {Record<string, DeployStatus>} args.deployments Value of the `deployments` store.
- * @param {Record<string, PageLiveness>} args.liveness Value of the `pageLiveness` store.
  * @param {string} args.productionSHA Value of the {@link productionSHA} store.
  * @param {boolean} [args.pollTimedOut] Value of the `deployPollTimedOut` store. Once the re-checks
  * have given up, the wait is over whatever the last reported state was.
  * @returns {EntryPreviewLink | undefined} Resolved link, or `undefined` when there’s nothing to
  * show.
+ * @see https://github.com/sveltia/sveltia-cms/issues/943
  */
 export const getEntryPreviewLink = ({
   entry,
@@ -62,7 +68,6 @@ export const getEntryPreviewLink = ({
   collectionFile,
   pullRequest,
   deployments: deployMap,
-  liveness,
   productionSHA: prodSHA,
   pollTimedOut = false,
 }) => {
@@ -81,7 +86,7 @@ export const getEntryPreviewLink = ({
     if (deploy && previewURL) {
       return {
         url: previewURL,
-        state: refineState(deploy.state, liveness[previewURL]),
+        state: deploy.state,
         isDeployPreview: true,
         awaitingPreview: false,
         // A preview address only arrives once the build is done, so the one thing left to check is
@@ -126,7 +131,7 @@ export const getEntryPreviewLink = ({
 
   return {
     url,
-    state: refineState(deploy?.state ?? 'unknown', liveness[url]),
+    state: deploy?.state ?? 'unknown',
     isDeployPreview: false,
     // The live site is exactly where a published entry can be seen, whatever a build is doing
     awaitingPreview: false,

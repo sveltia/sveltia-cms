@@ -11,7 +11,7 @@
   import { Button, Icon, MenuItem } from '@sveltia/ui';
 
   import { deployments, deployPollTimedOut, productionSHA } from '$lib/services/deployments';
-  import { getEntryPreviewLink } from '$lib/services/deployments/link';
+  import { getEntryPreviewLink, refineState } from '$lib/services/deployments/link';
   import { pageLiveness, pingURL } from '$lib/services/deployments/ping';
   import { openNewTab } from '$lib/services/utils/window';
 
@@ -59,6 +59,10 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  // `$pageLiveness` is deliberately left out of this derivation. The effect below watches `url` and
+  // writes that store, so reading it here would feed the check’s own result back into the URL it
+  // checks. The liveness is folded into `state` alone, which the effect doesn’t read
+  // @see https://github.com/sveltia/sveltia-cms/issues/943
   const link = $derived(
     getEntryPreviewLink({
       entry,
@@ -67,13 +71,14 @@
       collectionFile,
       pullRequest,
       deployments: $deployments,
-      liveness: $pageLiveness,
       productionSHA: $productionSHA,
       pollTimedOut: $deployPollTimedOut,
     }),
   );
   const url = $derived(link?.url);
-  const state = $derived(link?.state);
+  const state = $derived(
+    link ? refineState(link.state, url ? $pageLiveness[url] : undefined) : undefined,
+  );
   const isDeployPreview = $derived(link?.isDeployPreview ?? false);
   const pingable = $derived(link?.pingable ?? false);
   // The URL leads to the published version, or nowhere when the entry is new, so the control waits
@@ -111,10 +116,8 @@
   };
 
   $effect(() => {
-    // Read only these two values, not `link` itself. `link` is recreated whenever the liveness
-    // store changes, including by the check made here, so depending on it would make this effect
-    // re-run in a loop. These derived values stay the same across such an update, so the effect
-    // doesn’t re-run
+    // Neither of these reads the liveness store this effect writes, so the check can’t retrigger
+    // itself however the URL is composed
     const canPing = pingable;
     const pageURL = url;
 

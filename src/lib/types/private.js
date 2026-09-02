@@ -273,7 +273,8 @@
  * @typedef {object} EntryPreviewLink
  * @property {string} [url] URL to open. It’s `undefined` while a build has no URL yet, in which
  * case the UI shows a disabled control instead of a link.
- * @property {DeployState} state Current state.
+ * @property {DeployState} state Current state, as reported by the CI/CD provider. The liveness of
+ * the URL is not folded in here; apply `refineState()` to do that.
  * @property {boolean} isDeployPreview Whether the URL points at a deploy preview rather than the
  * production site.
  * @property {boolean} awaitingPreview Whether a deploy preview is expected for the entry but hasn’t

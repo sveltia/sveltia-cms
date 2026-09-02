@@ -26,7 +26,6 @@ const resolve = (overrides = {}) =>
       collectionFile: undefined,
       pullRequest: undefined,
       deployments: {},
-      liveness: {},
       productionSHA: '',
       ...overrides,
     }),
@@ -93,16 +92,18 @@ describe('Preview link composition', () => {
         ).toBe('pending');
       });
 
-      test('refines the state with the liveness result', () => {
+      // The liveness is folded in by the caller, via `refineState()`, so that the check made on
+      // this URL can’t change the URL it was made on
+      // @see https://github.com/sveltia/sveltia-cms/issues/943
+      test('reports the provider state without folding in the liveness', () => {
         vi.mocked(getEntryPreviewURL).mockReturnValue('https://example.com/posts/hello');
 
         expect(
           resolve({
             productionSHA: 'abc',
             deployments: { abc: { state: 'ready', checkedTime: 0 } },
-            liveness: { 'https://example.com/posts/hello': 'pending' },
           }).state,
-        ).toBe('pending');
+        ).toBe('ready');
       });
 
       test('falls back to the deployment URL when site_url is unset', () => {
@@ -154,9 +155,11 @@ describe('Preview link composition', () => {
         });
       });
 
-      test('keeps waiting when the page isn’t being served yet', () => {
+      test('marks a reported preview as worth checking for liveness', () => {
         // A preview address is only reported once the build is done, so a page that doesn’t answer
-        // is a CDN that hasn’t caught up rather than a build still running
+        // is a CDN that hasn’t caught up rather than a build still running. That distinction is
+        // made by the caller, which folds the liveness of this URL into the state with
+        // `refineState()`; here the build state is reported as the provider gave it
         vi.mocked(getEntryPreviewURL).mockReturnValue('https://preview.example.com/posts/hello');
 
         expect(
@@ -165,9 +168,8 @@ describe('Preview link composition', () => {
             deployments: {
               abc: { state: 'ready', url: 'https://preview.example.com', checkedTime: 0 },
             },
-            liveness: { 'https://preview.example.com/posts/hello': 'pending' },
           }),
-        ).toEqual(expect.objectContaining({ state: 'pending', pingable: true }));
+        ).toEqual(expect.objectContaining({ state: 'ready', pingable: true }));
       });
 
       test('returns undefined when the preview path cannot be composed', () => {
