@@ -1181,6 +1181,8 @@ entry_sidebar:
     title: Validation
     placeholder: Validation results will be shown here.
     no_errors_found: No errors found.
+    # Button in the panel header that validates the entry on demand
+    validate: Validate
 
   # History panel: shows entry commit history
   history:

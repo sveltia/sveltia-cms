@@ -6,6 +6,7 @@
   /**
    * @typedef {object} Props
    * @property {string} title The panel title.
+   * @property {Snippet} [actions] Controls shown at the end of the panel header.
    * @property {Snippet} [children] Slot content.
    */
 
@@ -13,6 +14,7 @@
   let {
     /* eslint-disable prefer-const */
     title,
+    actions = undefined,
     children = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -23,6 +25,7 @@
 <section role="group" class="panel" aria-labelledby="panel-{id}-label">
   <header>
     <h3 id="panel-{id}-label">{title}</h3>
+    {@render actions?.()}
   </header>
   <div>
     {@render children?.()}
@@ -41,12 +44,14 @@
     flex: none;
     display: flex;
     align-items: center;
+    gap: 8px;
     border-bottom: 1px solid var(--sui-secondary-border-color);
     padding: 0 16px;
     height: var(--sui-primary-toolbar-size);
   }
 
   h3 {
+    flex: auto;
     font-size: var(--sui-font-size-x-large);
   }
 

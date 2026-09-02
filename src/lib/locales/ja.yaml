@@ -1110,6 +1110,8 @@ entry_sidebar:
     title: バリデーション
     placeholder: 検証結果がここに表示されます。
     no_errors_found: エラーは見つかりませんでした。
+    # Button in the panel header that validates the entry on demand
+    validate: 検証
 
   # History panel: shows entry commit history
   history:

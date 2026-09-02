@@ -5,7 +5,9 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
-  import { highlightEditorField } from '$lib/services/contents/editor/fields';
+  import { validateEntry } from '$lib/services/contents/draft/validate';
+  import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
+  import { expandInvalidFields, highlightEditorField } from '$lib/services/contents/editor/fields';
   import { getField } from '$lib/services/contents/entry/fields';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
@@ -22,9 +24,51 @@
   );
 
   const getFieldArgs = $derived({ collectionName, fileName, currentValues, isIndexFile });
+
+  let validating = $state(false);
+
+  /**
+   * Validate the entry on demand, so what’s left to do can be checked without attempting a save.
+   * Every rule is applied, including the required fields that an Editorial Workflow draft can be
+   * saved without: the question this answers is what stands between the entry and being published,
+   * not whether it can be saved as it stands.
+   */
+  const validate = async () => {
+    const draft = $entryDraft;
+
+    if (!draft || validating) {
+      return;
+    }
+
+    validating = true;
+
+    // Custom field validators can be async, so wait for any in-flight results, as a save does
+    await awaitCustomFieldValidations();
+
+    if (!validateEntry()) {
+      expandInvalidFields({
+        collectionName: draft.collectionName,
+        fileName: draft.fileName,
+        currentValues: draft.currentValues,
+      });
+    }
+
+    validating = false;
+  };
 </script>
 
 <PanelContainer title={_('entry_sidebar.validation.title')}>
+  {#snippet actions()}
+    <Button
+      variant="tertiary"
+      size="small"
+      label={_('entry_sidebar.validation.validate')}
+      disabled={!$entryDraft || validating}
+      onclick={() => {
+        validate();
+      }}
+    />
+  {/snippet}
   {#if validities && hasResults}
     {#each Object.entries(validationMessages) as [locale, messagesByKey] (locale)}
       {@const valueMap = currentValues?.[locale]}
