@@ -3,6 +3,7 @@ import { get } from 'svelte/store';
 import { entryDraft } from '$lib/services/contents/draft';
 import { validateCustomField } from '$lib/services/contents/draft/validate/custom-fields';
 import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
+import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import {
   getField,
   getFieldKind,
@@ -51,6 +52,7 @@ import { getRegex } from '$lib/services/utils/regex';
  * @property {FlattenedEntryContent} valueMap Entry values.
  * @property {any} value Field value.
  * @property {string} [componentName] Rich text editor component name.
+ * @property {boolean} [enforceRequired] Whether an empty required field is marked as missing.
  */
 
 /**
@@ -112,11 +114,13 @@ export const validityProxyHandler = {
  * @param {boolean} args.required Whether the field is required.
  * @param {any} args.validation Pattern validation array or undefined.
  * @param {EntryValidityState} args.validity Validity state to update.
+ * @returns {{ empty: boolean }} Whether the field holds no value at all.
  */
 const validateScalarField = ({ value, required, validation, validity }) => {
   const trimmed = typeof value === 'string' ? value.trim() : value;
+  const empty = trimmed === undefined || trimmed === null || trimmed === '';
 
-  if (required && (trimmed === undefined || trimmed === null || trimmed === '')) {
+  if (required && empty) {
     validity.valueMissing = true;
   }
 
@@ -127,6 +131,8 @@ const validateScalarField = ({ value, required, validation, validity }) => {
       validity.patternMismatch = true;
     }
   }
+
+  return { empty };
 };
 
 /**
@@ -136,7 +142,7 @@ const validateScalarField = ({ value, required, validation, validity }) => {
  * @returns {EntryValidityState | undefined} Field validity.
  */
 export const validateAnyField = (args) => {
-  const { draft, locale, valueMap, componentName, validities } = args;
+  const { draft, locale, valueMap, componentName, validities, enforceRequired = true } = args;
   const { collection, collectionName, fileName, collectionFile, files, isIndexFile } = draft;
   let { keyPath, value } = args;
 
@@ -181,9 +187,11 @@ export const validateAnyField = (args) => {
   const required = isFieldRequired({ fieldConfig, locale });
   /** @type {EntryValidityState} */
   const validity = { ...DEFAULT_VALIDITY };
+  /** Whether the field holds no value at all, which each widget decides its own way. */
+  let empty = false;
 
   if (fieldType === 'list' || multiple) {
-    const { skip } = validateListField({
+    const { skip, empty: listEmpty } = validateListField({
       keyPath,
       value,
       valueMap,
@@ -196,10 +204,14 @@ export const validateAnyField = (args) => {
     });
 
     if (skip) return undefined;
+
+    empty = !!listEmpty;
   }
 
   if (fieldType === 'object') {
-    if (required && !value) {
+    empty = !value;
+
+    if (required && empty) {
       validity.valueMissing = true;
     }
   }
@@ -217,7 +229,9 @@ export const validateAnyField = (args) => {
     });
 
     if (result.skip) return undefined;
+
     keyPath = result.keyPath;
+    empty = !!result.empty;
   }
 
   if (fieldType === 'code') {
@@ -245,7 +259,7 @@ export const validateAnyField = (args) => {
   }
 
   if (!(['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(fieldType) || multiple)) {
-    validateScalarField({ value, required, validation, validity });
+    ({ empty } = validateScalarField({ value, required, validation, validity }));
   }
 
   const validateFieldFn = VALIDATE_FIELD_FUNCTIONS[fieldType];
@@ -256,6 +270,28 @@ export const validateAnyField = (args) => {
 
   // Validate custom field if applicable (uses cached result)
   validateCustomField({ locale, keyPath, validity });
+
+  // The remaining rules all describe a value, and an empty field has none: a pattern can’t be
+  // matched by something that isn’t there, nothing is long enough to clear a minimum length, an
+  // empty list is under any minimum item count, and a Number field with no number in it reports a
+  // type mismatch. Whether the field is required is the only thing left worth saying about it,
+  // which is what makes `required: false` mean anything for a field that also carries constraints.
+  // `tooLong` and `rangeOverflow` are left alone — an empty field can’t trigger them — and
+  // `customError` is a custom field component’s own call to make
+  if (empty) {
+    Object.assign(validity, {
+      patternMismatch: false,
+      tooShort: false,
+      rangeUnderflow: false,
+      typeMismatch: false,
+    });
+
+    // An Editorial Workflow draft that hasn’t been filled in yet can still be saved, so even a
+    // required field left empty goes unmarked while the entry is in the drafting stage
+    if (!enforceRequired) {
+      validity.valueMissing = false;
+    }
+  }
 
   return new Proxy(validity, validityProxyHandler);
 };
@@ -308,6 +344,9 @@ export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => 
     keyPath,
     value,
     valueMap,
+    // Match the last full validation, so a field the save deliberately left unmarked isn’t reported
+    // as missing the moment the user types in it
+    enforceRequired: isRequiredEnforced(draft),
     // The List, KeyValue and Code field validators skip a field that already has a validity state,
     // which is how {@link validateFields} validates such a field only once instead of once per
     // flattened key path. Here a single field is validated on its own, so hide the state from them
@@ -359,11 +398,15 @@ export const validateList = ({ fieldConfig, validateArgs }) => {
 /**
  * Validate the field values and return the results. Mimic the native `ValidityState` API.
  * @param {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.enforceRequired] Whether an empty required field is an error. When
+ * `false`, such a field is left unmarked, so nothing is shown for it in the editor either.
+ * @param {EntryDraft} [options.draft] Draft to validate. Defaults to the one open in the editor.
  * @returns {ValidationResults} Validation results.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
-export const validateFields = (valueStoreKey) => {
-  const draft = /** @type {EntryDraft} */ (get(entryDraft));
+export const validateFields = (valueStoreKey, options = {}) => {
+  const { enforceRequired = true, draft = /** @type {EntryDraft} */ (get(entryDraft)) } = options;
   const { collectionName, fileName, isIndexFile, currentLocales } = draft;
   /** @type {LocaleValidityMap} */
   const validities = {};
@@ -388,7 +431,7 @@ export const validateFields = (valueStoreKey) => {
       return;
     }
 
-    const validateArgs = { draft, locale, valueMap, validities };
+    const validateArgs = { draft, locale, valueMap, validities, enforceRequired };
 
     // Reset the state first
     validities[locale] = {};

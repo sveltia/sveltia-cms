@@ -15,6 +15,7 @@ import { createSavingEntryData } from '$lib/services/contents/draft/save/changes
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
+import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade';
@@ -94,7 +95,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
   // Otherwise a field made invalid moments ago would be validated against a stale verdict.
   await awaitCustomFieldValidations();
 
-  if (!validateEntry()) {
+  if (!validateEntry({ enforceRequired: isRequiredEnforced(draft) })) {
     expandInvalidFields({ collectionName, fileName, currentValues });
 
     throw new Error('validation_failed');

@@ -19,6 +19,7 @@
     publishWorkflowEntry,
     updateWorkflowStatus,
   } from '$lib/services/workflow/save';
+  import { validateWorkflowEntry } from '$lib/services/workflow/validate';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -157,6 +158,18 @@
   };
 
   /**
+   * Report that an action couldn’t be performed because the entry has validation errors. An entry
+   * can be saved as a draft with its required fields left empty, so it has to be checked before it
+   * moves towards being published.
+   * @param {string} messageKey I18n string key of the message to show.
+   */
+  const reportValidationErrors = (messageKey) => {
+    toastStatus = 'error';
+    toastMessage = messageKey;
+    showToast = true;
+  };
+
+  /**
    * Move the dragged entry to the given column, which changes the label on the pull request.
    * @param {WorkflowStatus} status New status.
    */
@@ -167,6 +180,12 @@
     dropTarget = undefined;
 
     if (!entry || entry.workflow.status === status) {
+      return;
+    }
+
+    if (status !== 'draft' && !validateWorkflowEntry(entry)) {
+      reportValidationErrors('workflow.status_change_blocked');
+
       return;
     }
 
@@ -340,13 +359,22 @@
   onOk={async () => {
     const entry = targetEntry;
 
-    if (entry) {
-      await runAction(
-        entry,
-        publishWorkflowEntry(entry),
-        targetIsDeletion ? DELETION_MESSAGES : PUBLISHING_MESSAGES,
-      );
+    if (!entry) {
+      return;
     }
+
+    // A removal has no content to check; publishing it is what carries the deletion out
+    if (!targetIsDeletion && !validateWorkflowEntry(entry)) {
+      reportValidationErrors('workflow.publish_blocked');
+
+      return;
+    }
+
+    await runAction(
+      entry,
+      publishWorkflowEntry(entry),
+      targetIsDeletion ? DELETION_MESSAGES : PUBLISHING_MESSAGES,
+    );
   }}
 >
   {_(

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField, isFieldMultiple, isFieldRequired } from '$lib/services/contents/entry/fields';
 
-import { validateEntry } from '.';
+import { validateDraft, validateEntry } from '.';
 
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/contents/draft');
@@ -179,6 +179,71 @@ describe('draft/validate', () => {
 
       expect(result).toBe(false);
       expect(callCount).toBeGreaterThan(0);
+    });
+
+    it('should accept an empty required field when required fields are not enforced', () => {
+      vi.mocked(entryDraft).update = vi.fn((fn) => fn(mockEntryDraft));
+
+      mockEntryDraft.currentValues = { en: { title: '' } };
+
+      vi.mocked(getField).mockReturnValue({ name: 'title', widget: 'string', required: true });
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      expect(validateEntry({ enforceRequired: false })).toBe(true);
+      expect(validateEntry()).toBe(false);
+    });
+
+    it('should still validate the slug when required fields are not enforced', () => {
+      vi.mocked(entryDraft).update = vi.fn((fn) => fn(mockEntryDraft));
+
+      mockEntryDraft.currentSlugs = { en: '' };
+      mockEntryDraft.slugEditor = { en: true };
+      mockEntryDraft.currentValues = { en: {} };
+
+      vi.mocked(getField).mockReturnValue(undefined);
+
+      expect(validateEntry({ enforceRequired: false })).toBe(false);
+    });
+  });
+
+  describe('validateDraft', () => {
+    it('should validate a draft that is not open in the editor', () => {
+      const otherDraft = {
+        ...mockEntryDraft,
+        currentValues: { en: { title: '' } },
+        extraValues: { en: {} },
+      };
+
+      vi.mocked(getField).mockReturnValue({ name: 'title', widget: 'string', required: true });
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      const result = validateDraft({ draft: otherDraft });
+
+      expect(result.valid).toBe(false);
+      expect(result.validities.en.title.valueMissing).toBe(true);
+      expect(result.validationMessages).toHaveProperty('en');
+    });
+
+    it('should not touch the entry draft store', () => {
+      const mockUpdate = vi.fn();
+
+      vi.mocked(entryDraft).update = mockUpdate;
+
+      const otherDraft = { ...mockEntryDraft, currentValues: { en: { title: 'Test Post' } } };
+
+      vi.mocked(getField).mockReturnValue({ name: 'title', widget: 'string' });
+
+      expect(validateDraft({ draft: otherDraft }).valid).toBe(true);
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should honour the `enforceRequired` option', () => {
+      const otherDraft = { ...mockEntryDraft, currentValues: { en: { title: '' } } };
+
+      vi.mocked(getField).mockReturnValue({ name: 'title', widget: 'string', required: true });
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      expect(validateDraft({ draft: otherDraft, enforceRequired: false }).valid).toBe(true);
     });
   });
 });

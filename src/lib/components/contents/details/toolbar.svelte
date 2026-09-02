@@ -39,6 +39,7 @@
   import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
   import { saveEntry } from '$lib/services/contents/draft/save';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
+  import { validateDraft } from '$lib/services/contents/draft/validate';
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
@@ -268,6 +269,19 @@
    * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
    */
   /**
+   * Check whether the entry that has just been saved is complete enough to be handed over for
+   * review. Required fields aren’t enforced while an entry is a draft, so it may have been saved
+   * with some of them empty. The check leaves the editor state alone: nothing is wrong with the
+   * draft as saved, so no errors are shown for it.
+   * @returns {boolean} Result.
+   */
+  const isReadyForReview = () => {
+    const draft = $entryDraft;
+
+    return !!draft && validateDraft({ draft }).valid;
+  };
+
+  /**
    * Ask whether the entry just saved should be handed over for review, and wait for the answer.
    * @returns {Promise<boolean>} `true` if the user wants to send it.
    */
@@ -296,7 +310,14 @@
       // Saving with Editorial Workflow leaves the entry as a draft, which nothing on screen says:
       // it hasn’t been handed to anyone yet, and the status menu that would do it is easy to miss.
       // Offer it as the next step instead, once, while the entry is still in the drafting stage
-      if ($workflowEnabled && savedDraft.workflow?.status === 'draft' && (await askForReview())) {
+      if (
+        $workflowEnabled &&
+        savedDraft.workflow?.status === 'draft' &&
+        // An incomplete entry isn’t ready to be handed over; the status menu is still there once
+        // the remaining fields have been filled in
+        isReadyForReview() &&
+        (await askForReview())
+      ) {
         try {
           await updateWorkflowStatus(savedDraft, 'pending_review');
         } catch (/** @type {any} */ ex) {

@@ -10,10 +10,11 @@ import { entryDraft } from '$lib/services/contents/draft';
  * Validate the slugs and return the results. At this time, we only check if the slug is empty when
  * the slug editor is shown.
  * @internal
+ * @param {EntryDraft} [draft] Draft to validate. Defaults to the one open in the editor.
  * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
  */
-export const validateSlugs = () => {
-  const { currentLocales, currentSlugs, slugEditor } = /** @type {EntryDraft} */ (get(entryDraft));
+export const validateSlugs = (draft = /** @type {EntryDraft} */ (get(entryDraft))) => {
+  const { currentLocales, currentSlugs, slugEditor } = draft;
   /** @type {LocaleValidityMap} */
   const validities = {};
   let valid = true;

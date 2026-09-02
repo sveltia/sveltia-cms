@@ -26,7 +26,8 @@ const KEY_PATH_REGEX = /(.+?)(?:\.[^.]*)?$/;
  * @param {boolean} args.required Whether the field is required.
  * @param {string | number} args.min Minimum allowed pairs.
  * @param {string | number} args.max Maximum allowed pairs.
- * @returns {{ skip: boolean, keyPath: string }} Whether to skip, and the resolved key path.
+ * @returns {{ skip: boolean, keyPath: string, empty?: boolean }} Whether to skip, the resolved key
+ * path, and whether the field holds no pairs at all.
  */
 export const validateKeyValueField = ({
   keyPath,
@@ -63,5 +64,5 @@ export const validateKeyValueField = ({
     validity.rangeOverflow = true;
   }
 
-  return { skip: false, keyPath: _keyPath };
+  return { skip: false, keyPath: _keyPath, empty: !pairs.length };
 };

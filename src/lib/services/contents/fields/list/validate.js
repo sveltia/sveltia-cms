@@ -30,7 +30,8 @@ const listKeyPathRegexCache = new Map();
  * @param {boolean} args.required Whether the field is required.
  * @param {string | number} args.min Minimum allowed items.
  * @param {string | number} args.max Maximum allowed items.
- * @returns {{ skip: boolean }} Whether the caller should skip further validation.
+ * @returns {{ skip: boolean, empty?: boolean }} Whether the caller should skip further validation,
+ * and whether the field holds no items at all.
  */
 export const validateListField = ({
   keyPath,
@@ -84,5 +85,5 @@ export const validateListField = ({
     validity.rangeOverflow = true;
   }
 
-  return { skip: false };
+  return { skip: false, empty: !size };
 };

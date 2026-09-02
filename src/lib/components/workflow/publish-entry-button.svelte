@@ -11,6 +11,7 @@
   import { entryDraft } from '$lib/services/contents/draft';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import { publishWorkflowEntry } from '$lib/services/workflow/save';
+  import { validateWorkflowEntry } from '$lib/services/workflow/validate';
 
   /**
    * @import { UnpublishedEntry } from '$lib/types/private';
@@ -37,6 +38,7 @@
   let publishing = $state(false);
   let showPublishDialog = $state(false);
   let showErrorToast = $state(false);
+  let showValidationToast = $state(false);
 
   // Publishing a removal is what deletes the entry, so the control is presented as Delete
   const deletion = $derived(entry.workflow.status === 'pending_deletion');
@@ -53,6 +55,15 @@
    * Publish the entry by merging the pull request, then go back to the entry list.
    */
   const publish = async () => {
+    // A pull request labelled ready elsewhere — by another CMS, or by hand — may never have been
+    // checked, and an entry can be saved as a draft with its required fields left empty. A removal
+    // has no content to check; publishing it is what carries the deletion out
+    if (!deletion && !validateWorkflowEntry(entry)) {
+      showValidationToast = true;
+
+      return;
+    }
+
     // Read the collection name up front: publishing takes the entry out of `unpublishedEntries`,
     // and the `entry` prop is derived from that store, so it’s `undefined` once the merge resolves
     const { collectionName } = entry.workflow;
@@ -100,4 +111,8 @@
 
 <Toast bind:show={showErrorToast}>
   <Alert status="error">{_('workflow.publishing_entry_failed')}</Alert>
+</Toast>
+
+<Toast bind:show={showValidationToast}>
+  <Alert status="error">{_('workflow.publish_blocked')}</Alert>
 </Toast>

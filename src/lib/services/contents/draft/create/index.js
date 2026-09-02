@@ -15,6 +15,7 @@ import { isPendingDeletion } from '$lib/services/workflow';
 
 /**
  * @import {
+ * EntryDraft,
  * InternalCollection,
  * InternalCollectionFile,
  * InternalEntryCollection,
@@ -81,7 +82,9 @@ export const getSlugEditorProp = ({ collection, collectionFile, originalSlugs })
 };
 
 /**
- * Create an entry draft.
+ * Build an entry draft object. This only assembles the values; it’s {@link createDraft} that opens
+ * the draft in the editor. A draft can also be built on its own to check an entry that isn’t being
+ * edited, in which case the application state is left untouched.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection that the entry belongs to.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
@@ -94,8 +97,9 @@ export const getSlugEditorProp = ({ collection, collectionFile, originalSlugs })
  * @param {LocaleExpanderMap} [args.expanderStates] Expander UI state. Can be set when resetting an
  * entry draft.
  * @param {boolean} [args.isIndexFile] Whether to edit the collection’s index file.
+ * @returns {EntryDraft} Entry draft.
  */
-export const createDraft = ({
+export const buildDraft = ({
   collection,
   collectionFile,
   originalEntry = {},
@@ -106,7 +110,7 @@ export const createDraft = ({
 }) => {
   const collectionName = collection.name;
   const fileName = collectionFile?.name;
-  const { id, slug, locales } = originalEntry;
+  const { id, locales } = originalEntry;
   const isNew = id === undefined;
 
   const { fields: regularFields = [], _i18n } =
@@ -160,13 +164,7 @@ export const createDraft = ({
     normalizeContentMap({ fields, contentMap: originalValues, defaultLocale });
   }
 
-  // Custom field validation state is keyed by locale and key path only, so discard it to prevent
-  // verdicts from a previous draft leaking into this one
-  resetCustomFieldValidation();
-  // The outgoing draft’s unsaved files are about to become unreachable; release what they hold
-  revokeDraftFileURLs();
-
-  entryDraft.set({
+  return {
     id: isNew ? crypto.randomUUID() : id,
     createdAt: Date.now(),
     isNew,
@@ -201,7 +199,37 @@ export const createDraft = ({
     // Any locale-agnostic view states will be put under the `_` key
     expanderStates: expanderStates ?? { _: {} },
     slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs }),
-  });
+  };
+};
+
+/**
+ * Create an entry draft and open it in the editor.
+ * @param {object} args Arguments. See {@link buildDraft}.
+ * @param {InternalCollection} args.collection Collection that the entry belongs to.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
+ * only.
+ * @param {any} [args.originalEntry] Entry to be edited, or a partial {@link Entry} object.
+ * @param {Record<string, string>} [args.dynamicValues] Dynamic default values for a new entry
+ * passed through URL parameters.
+ * @param {LocaleContentMap} [args.extraValues] Key is a locale code, value is a flattened object
+ * containing field values in rich text editor components. Can be set when resetting an entry draft.
+ * @param {LocaleExpanderMap} [args.expanderStates] Expander UI state. Can be set when resetting an
+ * entry draft.
+ * @param {boolean} [args.isIndexFile] Whether to edit the collection’s index file.
+ */
+export const createDraft = (args) => {
+  const { collection, collectionFile, originalEntry = {} } = args;
+  const collectionName = collection.name;
+  const fileName = collectionFile?.name;
+  const { slug } = originalEntry;
+
+  // Custom field validation state is keyed by locale and key path only, so discard it to prevent
+  // verdicts from a previous draft leaking into this one
+  resetCustomFieldValidation();
+  // The outgoing draft’s unsaved files are about to become unreachable; release what they hold
+  revokeDraftFileURLs();
+
+  entryDraft.set(buildDraft(args));
 
   // An entry awaiting deletion is read-only, so a cached draft would be neither restorable nor
   // useful

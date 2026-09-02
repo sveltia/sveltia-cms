@@ -1648,6 +1648,12 @@ workflow:
   status_updated: ステータスを更新しました。
   # Error notification when the status could not be changed
   status_change_failed: ステータスを変更できませんでした。再度お試しください。
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: エントリーにエラーがあります。ステータスを変更するには問題を修正してください。
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: エントリーにエラーがあります。公開するには問題を修正してください。
   # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: レビューを依頼

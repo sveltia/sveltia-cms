@@ -599,6 +599,128 @@ describe('draft/validate/fields', () => {
     });
   });
 
+  describe('validateFields with `enforceRequired: false`', () => {
+    it('should leave an empty required field unmarked', () => {
+      mockEntryDraft.currentValues = { en: { title: '' } };
+
+      vi.mocked(getField).mockReturnValue({ name: 'title', widget: 'string', required: true });
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      const result = validateFields('currentValues', { enforceRequired: false });
+
+      expect(result.valid).toBe(true);
+      expect(result.validities.en.title.valueMissing).toBe(false);
+      expect(result.validities.en.title.valid).toBe(true);
+    });
+
+    it('should not report a pattern, length or type error on an empty required field', async () => {
+      const { validateStringField } = await import('$lib/services/contents/fields/string/validate');
+      const { getRegex } = await import('$lib/services/utils/regex');
+
+      // An empty value fails a `pattern` and falls short of a `minlength`, neither of which should
+      // stop a draft from being saved
+      vi.mocked(getRegex).mockReturnValue(/^\d+$/);
+      vi.mocked(validateStringField).mockReturnValue({
+        validity: { tooShort: true, tooLong: false, typeMismatch: false },
+      });
+
+      mockEntryDraft.currentValues = { en: { code: '' } };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'code',
+        widget: 'string',
+        required: true,
+        minlength: 3,
+        pattern: ['^\\d+$', 'Digits only'],
+      });
+
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      const result = validateFields('currentValues', { enforceRequired: false });
+
+      expect(result.valid).toBe(true);
+      expect(result.validities.en.code.valid).toBe(true);
+      expect(result.validities.en.code.patternMismatch).toBe(false);
+      expect(result.validities.en.code.tooShort).toBe(false);
+    });
+
+    it('should not report a pattern error on an empty optional field', async () => {
+      // An optional field left empty has no value for a pattern to describe, so it stays valid
+      // whether or not required fields are being enforced
+      const { getRegex } = await import('$lib/services/utils/regex');
+
+      vi.mocked(getRegex).mockReturnValue(/^\d+$/);
+
+      mockEntryDraft.currentValues = { en: { code: '' } };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'code',
+        widget: 'string',
+        pattern: ['^\\d+$', 'Digits only'],
+      });
+
+      vi.mocked(isFieldRequired).mockReturnValue(false);
+
+      expect(validateFields('currentValues').valid).toBe(true);
+      expect(validateFields('currentValues', { enforceRequired: false }).valid).toBe(true);
+    });
+
+    it('should not report an empty required list as being under its `min`', async () => {
+      const { getListFieldInfo } = await import('$lib/services/contents/fields/list/helpers');
+
+      vi.mocked(getListFieldInfo).mockReturnValue({ hasSubFields: false });
+
+      mockEntryDraft.currentValues = { en: { tags: [] } };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'tags',
+        widget: 'list',
+        required: true,
+        min: 1,
+      });
+
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      const result = validateFields('currentValues', { enforceRequired: false });
+
+      expect(result.valid).toBe(true);
+      expect(result.validities.en.tags.rangeUnderflow).toBe(false);
+    });
+
+    it('should still reject a field with any other error', async () => {
+      const { validateStringField } = await import('$lib/services/contents/fields/string/validate');
+
+      vi.mocked(validateStringField).mockReturnValue({
+        validity: { tooShort: true, tooLong: false, typeMismatch: false },
+      });
+
+      mockEntryDraft.currentValues = { en: { title: 'ab' } };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'title',
+        widget: 'string',
+        required: true,
+        minlength: 5,
+      });
+
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      const result = validateFields('currentValues', { enforceRequired: false });
+
+      expect(result.valid).toBe(false);
+    });
+
+    it('should keep a valid entry valid', () => {
+      mockEntryDraft.currentValues = { en: { title: 'Test Post' } };
+
+      vi.mocked(getField).mockReturnValue({ name: 'title', widget: 'string' });
+
+      const result = validateFields('currentValues', { enforceRequired: false });
+
+      expect(result.valid).toBe(true);
+    });
+  });
+
   describe('Internal helpers (exported for testing)', () => {
     describe('DEFAULT_VALIDITY', () => {
       it('should have all validity flags set to false', () => {
@@ -1046,7 +1168,10 @@ describe('draft/validate/fields', () => {
         const result = validateAnyField(args);
 
         expect(result).toBeDefined();
-        expect(result.typeMismatch).toBe(true);
+        // No number to be the wrong type: an empty required field is simply missing
+        expect(result.typeMismatch).toBe(false);
+        expect(result.valueMissing).toBe(true);
+        expect(result.valid).toBe(false);
       });
 
       it('should validate required number field (float) with null value', () => {
@@ -1072,7 +1197,9 @@ describe('draft/validate/fields', () => {
         const result = validateAnyField(args);
 
         expect(result).toBeDefined();
-        expect(result.typeMismatch).toBe(true);
+        expect(result.typeMismatch).toBe(false);
+        expect(result.valueMissing).toBe(true);
+        expect(result.valid).toBe(false);
       });
 
       it('should validate number field with range overflow', () => {

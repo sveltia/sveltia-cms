@@ -55,7 +55,7 @@ describe('validateListField()', () => {
       max: Infinity,
     });
 
-    expect(result).toEqual({ skip: false });
+    expect(result).toEqual({ skip: false, empty: true });
     expect(validity.valueMissing).toBe(true);
   });
 

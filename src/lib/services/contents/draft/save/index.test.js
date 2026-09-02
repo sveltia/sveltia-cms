@@ -18,7 +18,7 @@ import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
-import { workflowEnabled } from '$lib/services/workflow';
+import { unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 import { saveEntry } from '.';
@@ -47,6 +47,9 @@ vi.mock('$lib/services/deployments/publish');
 vi.mock('$lib/services/workflow', () => ({
   workflowEnabled: { subscribe: vi.fn() },
   unpublishedEntries: { subscribe: vi.fn(() => vi.fn()) },
+}));
+vi.mock('$lib/services/workflow/branch', () => ({
+  getBranchName: vi.fn(({ collectionName, slug }) => `cms/${collectionName}/${slug}`),
 }));
 vi.mock('$lib/services/workflow/save');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
@@ -180,6 +183,80 @@ describe('draft/save/index', () => {
 
       // Nothing is published yet, because the changes only exist in a pull request
       expect(vi.mocked(setLastCommitPublishHint)).toHaveBeenCalledWith(false);
+    });
+
+    describe('required field enforcement', () => {
+      /**
+       * Make the mocked stores report that Editorial Workflow is enabled.
+       */
+      const enableWorkflow = () => {
+        mockGet.mockImplementation((store) => {
+          if (store === entryDraft) {
+            return mockDraft;
+          }
+
+          if (store === workflowEnabled) {
+            return true;
+          }
+
+          if (store === unpublishedEntries) {
+            return [];
+          }
+
+          return undefined;
+        });
+
+        vi.mocked(saveWorkflowChanges).mockResolvedValue({
+          commit: { sha: 'abc', files: {} },
+          savedEntries: [
+            {
+              id: 'test-id',
+              slug: 'test-post',
+              locales: { en: { slug: 'test-post', path: 'posts/test-post.md' } },
+            },
+          ],
+          savedAssets: [],
+        });
+      };
+
+      it('should enforce required fields without Editorial Workflow', async () => {
+        await saveEntry();
+
+        expect(validateEntry).toHaveBeenCalledWith({ enforceRequired: true });
+      });
+
+      it('should not enforce required fields for a new Editorial Workflow entry', async () => {
+        enableWorkflow();
+        await saveEntry();
+
+        expect(validateEntry).toHaveBeenCalledWith({ enforceRequired: false });
+      });
+
+      it('should not enforce required fields for an entry still in the drafting stage', async () => {
+        enableWorkflow();
+        mockDraft.isNew = false;
+        mockDraft.originalEntry = {
+          id: 'test-id',
+          slug: 'test-post',
+          workflow: { status: 'draft', pullRequest: { branch: 'cms/posts/test-post' } },
+        };
+        await saveEntry();
+
+        expect(validateEntry).toHaveBeenCalledWith({ enforceRequired: false });
+      });
+
+      it('should enforce required fields for an entry that has left the drafting stage', async () => {
+        enableWorkflow();
+        mockDraft.isNew = false;
+        mockDraft.originalEntry = {
+          id: 'test-id',
+          slug: 'test-post',
+          workflow: { status: 'pending_review', pullRequest: { branch: 'cms/posts/test-post' } },
+        };
+        await saveEntry();
+
+        expect(validateEntry).toHaveBeenCalledWith({ enforceRequired: true });
+      });
     });
 
     it('should throw validation error when entry is invalid', async () => {

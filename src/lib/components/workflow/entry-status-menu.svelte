@@ -10,6 +10,7 @@
   import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
   import { workflowStages } from '$lib/services/workflow/open-authoring';
   import { updateWorkflowStatus } from '$lib/services/workflow/save';
+  import { validateWorkflowEntry } from '$lib/services/workflow/validate';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -31,6 +32,7 @@
 
   let updating = $state(false);
   let showErrorToast = $state(false);
+  let showValidationToast = $state(false);
 
   const status = $derived(entry.workflow.status);
   const statusName = $derived(_(WORKFLOW_STATUS_LABELS[status]));
@@ -46,6 +48,14 @@
    */
   const changeStatus = async (newStatus) => {
     if (newStatus === status || updating) {
+      return;
+    }
+
+    // An entry can be saved as a draft with its required fields left empty, so it has to be checked
+    // before it moves towards being published
+    if (newStatus !== 'draft' && !validateWorkflowEntry(entry)) {
+      showValidationToast = true;
+
       return;
     }
 
@@ -91,4 +101,8 @@
 
 <Toast bind:show={showErrorToast}>
   <Alert status="error">{_('workflow.status_change_failed')}</Alert>
+</Toast>
+
+<Toast bind:show={showValidationToast}>
+  <Alert status="error">{_('workflow.status_change_blocked')}</Alert>
 </Toast>
