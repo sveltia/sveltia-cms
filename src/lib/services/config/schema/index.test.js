@@ -111,6 +111,45 @@ describe('config/schema/index', () => {
       customFieldTypeRegistry.clear();
     });
 
+    test('accepts a regular expression object where a pattern is expected', () => {
+      const patternSchema = prepareSchema({
+        type: 'object',
+        properties: {
+          fields: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                pattern: {
+                  type: 'array',
+                  items: [
+                    { anyOf: [{ type: 'string' }, { type: 'string', format: 'regex' }] },
+                    { type: 'string' },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // A configuration file can only hold a pattern as a string
+      expect(
+        validate({ fields: [{ pattern: ['^\\d{4}$', 'Four digits'] }] }, patternSchema),
+      ).toEqual([]);
+
+      // While the JS API also accepts a `RegExp` object
+      expect(
+        validate({ fields: [{ pattern: [/^\d{4}$/, 'Four digits'] }] }, patternSchema),
+      ).toEqual([]);
+
+      // Anything else is still a violation
+      expect(validate({ fields: [{ pattern: [42, 'Four digits'] }] }, patternSchema)).toEqual([
+        'config.error.schema_invalid_type option=pattern[0] ' +
+          'type=config.error.schema_value_type.string',
+      ]);
+    });
+
     test('skips validation when the schema cannot be used', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
