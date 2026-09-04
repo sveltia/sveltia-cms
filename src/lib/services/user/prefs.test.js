@@ -57,20 +57,21 @@ describe('prefs service', () => {
       mockDictionary[key] = {};
     });
 
-    global.document = /** @type {any} */ ({
-      documentElement: { dataset: {} },
+    // The jsdom document is shared by every test in this file, so start each one with a clean
+    // `<html>` element instead of replacing the global, which the DOM doesn’t allow
+    Object.keys(document.documentElement.dataset).forEach((key) => {
+      delete document.documentElement.dataset[key];
     });
 
-    global.window = /** @type {any} */ ({
-      matchMedia: vi.fn(() => ({ matches: false })),
-    });
-
-    global.navigator = /** @type {any} */ ({
-      languages: ['en-US', 'ja'],
-    });
+    // jsdom’s `matchMedia` always reports no match, so stub it to control the detected theme
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({ matches: false })),
+    );
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.resetModules();
   });
 
@@ -294,9 +295,10 @@ describe('prefs service', () => {
   });
 
   it('should use dark theme when system prefers dark mode', async () => {
-    global.window = /** @type {any} */ ({
-      matchMedia: vi.fn(() => ({ matches: true })),
-    });
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({ matches: true })),
+    );
 
     mockLocalStorage.get.mockResolvedValue({ theme: 'auto' });
 
@@ -304,13 +306,14 @@ describe('prefs service', () => {
 
     await wait();
 
-    expect(global.document.documentElement.dataset.theme).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe('dark');
   });
 
   it('should use light theme when system prefers light mode', async () => {
-    global.window = /** @type {any} */ ({
-      matchMedia: vi.fn(() => ({ matches: false })),
-    });
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({ matches: false })),
+    );
 
     mockLocalStorage.get.mockResolvedValue({ theme: 'auto' });
 
@@ -318,7 +321,7 @@ describe('prefs service', () => {
 
     await wait();
 
-    expect(global.document.documentElement.dataset.theme).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
   });
 
   it('should use an explicit theme without auto-detection', async () => {
@@ -328,7 +331,7 @@ describe('prefs service', () => {
 
     await wait();
 
-    expect(global.document.documentElement.dataset.theme).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe('dark');
   });
 
   it('should set prefsError on LocalStorage.get failure', async () => {

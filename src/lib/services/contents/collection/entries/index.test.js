@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { derived, get } from 'svelte/store';
+import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allEntries, allEntryFolders } from '$lib/services/contents';
@@ -14,9 +14,17 @@ import {
   selectedEntries,
 } from '$lib/services/contents/collection/entries';
 
+// Arguments of every `derived()` call, recorded outside the mock’s own call history, which is
+// cleared before the first test runs — the store is created once, while the module is imported
+const { derivedCalls } = vi.hoisted(() => ({ derivedCalls: /** @type {any[][]} */ ([]) }));
+
 // Mock dependencies
 vi.mock('svelte/store', () => ({
-  derived: vi.fn(() => ({ subscribe: vi.fn() })),
+  derived: vi.fn((...args) => {
+    derivedCalls.push(args);
+
+    return { subscribe: vi.fn() };
+  }),
   get: vi.fn(),
   writable: vi.fn(() => ({ subscribe: vi.fn() })),
 }));
@@ -62,7 +70,7 @@ vi.mock('$lib/services/utils/regex', () => ({
 
 describe('selectedEntryIdSet', () => {
   test('derives a Set of entry IDs from selectedEntries', () => {
-    const [, factory] = vi.mocked(derived).mock.calls[0];
+    const [, factory] = derivedCalls[0];
 
     expect(factory([{ id: 'a' }, { id: 'b' }])).toEqual(new Set(['a', 'b']));
     expect(factory([])).toEqual(new Set());

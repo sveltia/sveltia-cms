@@ -1,6 +1,6 @@
 # Sveltia CMS
 
-Modern, Git-based headless CMS, drop-in replacement for Netlify/Decap CMS. Svelte 5 (runes) with JavaScript, Vite 8, Vitest 4. ~710 source files, 255 test files, 7,200+ tests. Ships as a browser bundle (IIFE + ES module), loaded via CDN or npm.
+Modern, Git-based headless CMS, drop-in replacement for Netlify/Decap CMS. Svelte 5 (runes) with JavaScript, Vite 8, Vitest 5. ~840 source files, 312 test files, 8,500+ tests. Ships as a browser bundle (IIFE + ES module), loaded via CDN or npm.
 
 ## Setup
 
@@ -69,7 +69,7 @@ Build output: `package/dist/sveltia-cms.js` (IIFE), `package/dist/sveltia-cms.mj
 - Types: JSDoc comments (TypeScript-flavoured), centralized in `src/types/*.js`, imported via `@import`.
 - Svelte 5: runes syntax only — no legacy Svelte patterns. Use the Svelte MCP server / `svelte-file-editor` agent for any `.svelte` or `.svelte.js`/`.svelte.ts` work.
 - Prose: Canadian English in Markdown, American English in code/comments. Curly quotes in prose, straight quotes in source, backticks for inline code.
-- Tests: Vitest, co-located `*.test.js` files. Coverage tracked for `src/lib/{components,services}/**/*.js`; keep it at 100%. Use `sed` to spot uncovered lines in coverage reports.
+- Tests: Vitest, co-located `*.test.js` files. Coverage tracked for `src/lib/{components,services}/**/*.js`; keep it at 100%. Use `sed` to spot uncovered lines in coverage reports. `clearMocks` defaults to `true`, so calls a mock records while its module is imported are cleared before the first test runs — capture those arguments in a `vi.hoisted()` variable rather than reading `mock.calls`.
 - Target: modern browsers (ES2025).
 
 ```javascript
