@@ -70,6 +70,15 @@ describe('getComputedValue()', () => {
     expect(getComputedValue(getArgs('{{fields.title | upper}}'))).toBe('HELLO WORLD');
   });
 
+  test('should return a stable empty slug for an empty source field', () => {
+    // A random fallback would make the field recompute forever
+    // @see https://github.com/sveltia/sveltia-cms/issues/946
+    vi.mocked(getFieldDisplayValue).mockReturnValue('');
+
+    expect(getComputedValue(getArgs('{{fields.title | slugify}}'))).toBe('');
+    expect(getComputedValue(getArgs('{{fields.title | slugify}}'))).toBe('');
+  });
+
   test('should ignore an unknown tag', () => {
     expect(getComputedValue(getArgs('a-{{unknown}}-b'))).toBe('a--b');
   });

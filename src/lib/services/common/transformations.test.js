@@ -206,6 +206,22 @@ describe('Test applyTransformation()', () => {
     ).toBe('hello-world');
   });
 
+  test('slugify returns an empty string instead of a random UUID for an empty value', () => {
+    // A random fallback would make a Compute field recompute forever
+    // @see https://github.com/sveltia/sveltia-cms/issues/946
+    /**
+     * Apply the `slugify` transformation to the given value.
+     * @param {string} value Original value.
+     * @returns {string} Transformed value.
+     */
+    const slugifyValue = (value) =>
+      applyTransformation({ value, transformation: { method: 'slugify', args: {} } });
+
+    expect(['', '  ', '!!!'].map(slugifyValue)).toEqual(['', '', '']);
+    // The result must be stable across calls
+    expect(slugifyValue('')).toBe(slugifyValue(''));
+  });
+
   test('unknown transformation returns string value', () => {
     expect(
       applyTransformation({

@@ -183,7 +183,10 @@ export const applyTransformation = ({ fieldConfig, value, transformation, locale
     case 'lower':
       return applyLowerCaseTransformation(value);
     case 'slugify':
-      return slugify(String(value), { locale });
+      // Don’t fall back to a random UUID for an empty value; the transformation is used in Compute
+      // fields, where a value that changes on every render causes an infinite update loop
+      // @see https://github.com/sveltia/sveltia-cms/issues/946
+      return slugify(String(value), { fallback: false, locale });
     case 'date':
       return applyDateTransformation(
         value,
