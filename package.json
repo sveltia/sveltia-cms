@@ -84,13 +84,13 @@
     "@types/node": "^26.4.1",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
-    "@vitest/coverage-v8": "^4.1.11",
-    "cspell": "^10.2.0",
+    "@types/react-dom": "^19.2.7",
+    "@vitest/coverage-v8": "^5.0.0",
+    "cspell": "^10.2.1",
     "eslint": "^9.39.5",
     "eslint-config-airbnb-extended": "^3.2.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^64.3.4",
+    "eslint-plugin-jsdoc": "^64.3.5",
     "eslint-plugin-package-json": "^1.8.0",
     "eslint-plugin-svelte": "^3.23.0",
     "eslint-plugin-unused-imports": "^4.4.1",
@@ -108,7 +108,7 @@
     "ts-json-schema-generator": "^2.9.0",
     "typescript": "^6.0.3",
     "vite": "^8.2.2",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.0"
   },
   "publishConfig": {
     "directory": "package",
