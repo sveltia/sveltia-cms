@@ -2,13 +2,13 @@
   import { _ } from '@sveltia/i18n';
   import { Icon } from '@sveltia/ui';
   import { removeVisibilityResolver, waitForVisibility } from '@sveltia/utils/element';
-  import { sleep } from '@sveltia/utils/misc';
   import { onMount } from 'svelte';
 
   import {
     getAssetBlobURL,
     getAssetThumbnailURL,
     revokeAssetBlobURLIfNeeded,
+    revokeBlobURLIfNeeded,
   } from '$lib/services/assets/info';
   import { THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
   import { requestFlushSync } from '$lib/services/utils/render';
@@ -77,6 +77,37 @@
   );
 
   let updatingSrc = false;
+  /**
+   * Object URLs created by this preview. Every `getAssetThumbnailURL()` call returns a URL of its
+   * own, so these have to be released here — `revokeAssetBlobURLIfNeeded()` only knows about the
+   * one URL shared on the asset itself. Kept outside the reactive graph so the cleanup below can
+   * read it after the component is destroyed.
+   * @type {string[]}
+   */
+  const ownedURLs = [];
+
+  /**
+   * Remember an object URL this preview created, so that it can be released later.
+   * @param {string | undefined} url Object URL.
+   */
+  const ownURL = (url) => {
+    if (url && !ownedURLs.includes(url)) {
+      ownedURLs.push(url);
+    }
+  };
+
+  /**
+   * Release an object URL this preview created, once no element is displaying it any more.
+   * @param {string | undefined} url Object URL.
+   */
+  const releaseOwnedURL = (url) => {
+    const index = url ? ownedURLs.indexOf(url) : -1;
+
+    if (index > -1) {
+      ownedURLs.splice(index, 1);
+      revokeBlobURLIfNeeded(url);
+    }
+  };
 
   /**
    * Update the {@link src} property.
@@ -93,10 +124,20 @@
       await waitForVisibility(mediaElement);
     }
 
+    const previousSrc = src;
+
     try {
       src = isThumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset);
     } catch {
       hasError = true;
+    }
+
+    if (isThumbnail) {
+      ownURL(src);
+    }
+
+    if (previousSrc !== src) {
+      releaseOwnedURL(previousSrc);
     }
 
     if (blurBackground && !blurImageURL && src) {
@@ -120,21 +161,34 @@
       return;
     }
 
-    if (
-      isImage
-        ? !(/** @type {HTMLImageElement} */ (mediaElement).complete)
-        : !(/** @type {HTMLMediaElement} */ (mediaElement).readyState)
-    ) {
+    // The element’s own readiness only means anything once the DOM actually reflects `mediaSrc`.
+    // An `<img>` whose `src` attribute hasn’t been written yet reports `complete === true`, which
+    // would otherwise mark the preview loaded — and, back when that signal also revoked the blob
+    // URL, kill the image just as the real `src` was applied. @see
+    // https://github.com/sveltia/sveltia-cms/issues/944
+    const isSrcApplied = mediaElement.getAttribute('src') === mediaSrc;
+
+    const isReady =
+      isSrcApplied &&
+      (isImage
+        ? /** @type {HTMLImageElement} */ (mediaElement).complete
+        : !!(/** @type {HTMLMediaElement} */ (mediaElement).readyState));
+
+    if (!isReady) {
       // Not loaded yet; wait until it’s ready
-      await new Promise((resolve) => {
-        mediaElement?.addEventListener(
-          isImage ? 'load' : 'loadedmetadata',
-          () => {
-            resolve(undefined);
-          },
-          { once: true },
-        );
+      const failed = await new Promise((resolve) => {
+        mediaElement?.addEventListener(isImage ? 'load' : 'loadedmetadata', () => resolve(false), {
+          once: true,
+        });
+        mediaElement?.addEventListener('error', () => resolve(true), { once: true });
       });
+
+      if (failed) {
+        // Show the fallback icon rather than an empty tile that never finishes its transition
+        hasError = true;
+
+        return;
+      }
     }
 
     // Enable a dissolve transition
@@ -143,16 +197,6 @@
     }
 
     loaded = true;
-
-    // Revoke the thumbnail blob URL
-    if (asset && isThumbnail && src?.startsWith('blob:')) {
-      // Wait a bit before revoking the thumbnail blob URL to ensure the image is rendered.
-      // Otherwise, especially on Chrome, the image may fail to render without this delay. @see
-      // https://github.com/sveltia/sveltia-cms/issues/793
-      await sleep(500);
-
-      URL.revokeObjectURL(src);
-    }
   };
 
   $effect(() => {
@@ -162,6 +206,7 @@
     if (blurBackground && asset && !blurImageURL) {
       (async () => {
         blurImageURL = await getAssetThumbnailURL(asset, { cacheOnly: true });
+        ownURL(blurImageURL);
       })();
     }
   });
@@ -205,6 +250,14 @@
       if (asset) {
         revokeAssetBlobURLIfNeeded(asset);
       }
+
+      // The revocation is batched into the next frame and skips any URL an element is still
+      // displaying, which is what keeps an image that hasn’t finished decoding — or one that
+      // outlives this component — from losing its source. @see
+      // https://github.com/sveltia/sveltia-cms/issues/944
+      ownedURLs.splice(0).forEach((url) => {
+        revokeBlobURLIfNeeded(url);
+      });
 
       if (mediaElement) {
         removeVisibilityResolver(mediaElement);

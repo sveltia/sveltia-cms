@@ -320,26 +320,37 @@ const flushRevocations = () => {
 };
 
 /**
- * Revoke the blob URL for the given asset if it’s not being used in any elements.
+ * Revoke the given blob URL if it’s not being used in any elements.
  *
  * The revocations are batched, because every asset preview asks for one as it unmounts: leaving an
  * asset grid would otherwise run a document-wide query and a scan of every asset once per preview,
  * which is O(assets²) in the frame the page navigates away.
- * @param {Asset} asset Asset.
+ *
+ * Deferring to the next frame is also what keeps a still-decoding image working: the flush skips
+ * any URL an element is displaying, so a thumbnail is only released once nothing points at it.
+ * @param {string | undefined} url Blob URL, or `undefined`/a non-blob URL to ignore.
  */
-export const revokeAssetBlobURLIfNeeded = ({ blobURL }) => {
-  if (!blobURL) {
+export const revokeBlobURLIfNeeded = (url) => {
+  if (!url?.startsWith('blob:')) {
     return;
   }
 
   const isFirst = !pendingRevocations.size;
 
   // Queue before scheduling, so the flush can never observe an empty queue
-  pendingRevocations.add(blobURL);
+  pendingRevocations.add(url);
 
   if (isFirst) {
     window.requestAnimationFrame(flushRevocations);
   }
+};
+
+/**
+ * Revoke the blob URL for the given asset if it’s not being used in any elements.
+ * @param {Asset} asset Asset.
+ */
+export const revokeAssetBlobURLIfNeeded = ({ blobURL }) => {
+  revokeBlobURLIfNeeded(blobURL);
 };
 
 /**

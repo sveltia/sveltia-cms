@@ -24,6 +24,7 @@ import {
   getAssetThumbnailURL,
   getMediaFieldURL,
   revokeAssetBlobURLIfNeeded,
+  revokeBlobURLIfNeeded,
 } from './info';
 
 // Mock all dependencies
@@ -2828,6 +2829,44 @@ describe('assets/info', () => {
       expect(mockAssets[0].blobURL).toBeUndefined();
       expect(mockAssets[1].blobURL).toBe('blob:url-2');
       expect(mockAssets[2].blobURL).toBe('blob:url-3');
+    });
+
+    describe('revokeBlobURLIfNeeded', () => {
+      it('should do nothing without a URL', () => {
+        revokeBlobURLIfNeeded(undefined);
+
+        expect(global.window.requestAnimationFrame).not.toHaveBeenCalled();
+        expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+      });
+
+      it('should ignore a URL that is not an object URL', () => {
+        // A preview can fall back to a public URL, which must not reach the revocation queue
+        revokeBlobURLIfNeeded('https://example.com/assets/1.jpg');
+
+        expect(global.window.requestAnimationFrame).not.toHaveBeenCalled();
+        expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+      });
+
+      it('should revoke a thumbnail URL that no element is displaying', () => {
+        // A thumbnail URL belongs to one preview only, so it’s never stored on an asset
+        revokeBlobURLIfNeeded('blob:thumbnail-1');
+
+        expect(global.document.querySelectorAll).toHaveBeenCalledWith('[src^="blob:"]');
+        expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:thumbnail-1');
+      });
+
+      it('should keep a thumbnail URL that an element is still displaying', () => {
+        // An image that hasn’t finished decoding still holds the URL, so it has to stay valid
+        // @see https://github.com/sveltia/sveltia-cms/issues/944
+        // @ts-ignore
+        vi.mocked(global.document.querySelectorAll).mockReturnValue(
+          mockElements(['blob:thumbnail-1']),
+        );
+
+        revokeBlobURLIfNeeded('blob:thumbnail-1');
+
+        expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+      });
     });
   });
 });
