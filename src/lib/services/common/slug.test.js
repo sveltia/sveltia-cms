@@ -594,6 +594,43 @@ describe('Test slugify()', () => {
     expect(slugify('very-long-slug-name', { maxLength: 8 })).toBe('very-lon');
   });
 
+  test('maxLength parameter applies to the fallback UUID', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+      },
+    });
+
+    // The fallback is the last 12 characters of a UUID, and must be capped like any other slug
+    expect(slugify('')).toMatch(/^[0-9a-f]{12}$/);
+    expect(slugify('', { maxLength: 5 })).toMatch(/^[0-9a-f]{5}$/);
+    expect(slugify('   ', { maxLength: 8 })).toMatch(/^[0-9a-f]{8}$/);
+    expect(slugify('!!!', { maxLength: 1 })).toMatch(/^[0-9a-f]$/);
+    // A cap longer than the fallback leaves it untouched
+    expect(slugify('', { maxLength: 20 })).toMatch(/^[0-9a-f]{12}$/);
+    // Without a fallback, the empty result is returned as is
+    expect(slugify('', { fallback: false, maxLength: 5 })).toBe('');
+  });
+
+  test('maxLength config option applies to the fallback UUID', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: {
+        encoding: 'unicode',
+        clean_accents: false,
+        sanitize_replacement: '-',
+        maxlength: 6,
+      },
+    });
+
+    expect(slugify('')).toMatch(/^[0-9a-f]{6}$/);
+    expect(slugify('!!!')).toMatch(/^[0-9a-f]{6}$/);
+    expect(slugify('', { fallback: false })).toBe('');
+  });
+
   test('maxLength with special characters and transformations', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = writable({
