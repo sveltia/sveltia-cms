@@ -44,13 +44,16 @@ const OUTPUT_LOCALES_DIR = 'package/locales';
 /**
  * Get the list of the app’s locales based on the file names in the locales directory. The list is
  * injected into the bundle as `import.meta.env.VITE_APP_LOCALES` so that the app can register all
- * the available locales without bundling their strings.
+ * the available locales without bundling their strings. It’s sorted because `readdirSync()` returns
+ * entries in a filesystem-dependent order, which would otherwise let the same source tree produce
+ * different bundles on different build hosts.
  * @returns {string[]} Locale codes, e.g. `['en-US', 'ja']`.
  */
 const getAppLocales = () =>
   readdirSync(APP_LOCALES_DIR)
     .filter((name) => name.endsWith('.yaml'))
-    .map((name) => path.basename(name, '.yaml'));
+    .map((name) => path.basename(name, '.yaml'))
+    .sort();
 
 /**
  * Recursively squash multiline strings in a parsed YAML object into single lines.
