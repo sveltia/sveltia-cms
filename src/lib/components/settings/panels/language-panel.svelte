@@ -3,6 +3,7 @@
   import { Alert, Divider, Option, Select, Toast } from '@sveltia/ui';
 
   import { appLocaleLoading } from '$lib/services/app/i18n';
+  import { setState } from '$lib/services/app/onboarding';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { AUTO_PREF_VALUE, prefs } from '$lib/services/user/prefs.svelte';
 
@@ -71,6 +72,9 @@
         value={selectedLocale}
         onChange={(event) => {
           prefs.locale = event.detail.value;
+          // Suppress the new language infobar, which is pointless once the user has explicitly
+          // picked a language here
+          setState('newLanguageCta', true);
         }}
       >
         <Option

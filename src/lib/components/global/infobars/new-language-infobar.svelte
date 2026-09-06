@@ -52,14 +52,20 @@
     const { locale } = prefs;
 
     untrack(() => {
-      // Wait for the preferences to be loaded. The infobar is pointless while the language
-      // preference is `auto`, because the UI already follows the browser’s language settings
-      if (checked || !locale || locale === AUTO_PREF_VALUE) {
+      // Wait for the preferences to be loaded
+      if (checked || !locale) {
         return;
       }
 
+      // Make the check only once, when the preferences are loaded, so that the infobar never shows
+      // up right after the user has picked a language on the Settings dialog
       checked = true;
-      showInfobarIfNeeded();
+
+      // The infobar is pointless while the language preference is `auto`, because the UI already
+      // follows the browser’s language settings
+      if (locale !== AUTO_PREF_VALUE) {
+        showInfobarIfNeeded();
+      }
     });
   });
 </script>
