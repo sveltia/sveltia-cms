@@ -2,6 +2,7 @@ import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { commitChanges } from '$lib/services/backends/git/github/commits';
+import { fetchBlobText } from '$lib/services/backends/git/github/files';
 import { repository } from '$lib/services/backends/git/github/repository';
 import githubWorkflow, {
   createBranch,
@@ -29,6 +30,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends/git/github/commits');
+vi.mock('$lib/services/backends/git/github/files');
 vi.mock('$lib/services/backends/git/github/repository', () => ({
   repository: { owner: 'owner', repo: 'repo', branch: 'main' },
 }));
@@ -279,6 +281,54 @@ describe('GitHub Editorial Workflow service', () => {
       await fetchPullRequestFiles([pullRequest]);
 
       expect(pullRequest.files[0].text).toBeUndefined();
+    });
+
+    test('re-fetches a truncated blob with the REST API', async () => {
+      const pullRequest = /** @type {any} */ ({
+        branch: 'cms/posts/hello',
+        files: [
+          { path: 'content/posts/large.md', sha: '', size: 0, deleted: false },
+          { path: 'content/posts/small.md', sha: '', size: 0, deleted: false },
+          { path: 'static/large.png', sha: '', size: 0, deleted: false },
+        ],
+      });
+
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: {
+          file_0: {
+            oid: 'sha1',
+            byteSize: 543840,
+            isBinary: false,
+            isTruncated: true,
+            text: 'Cut short at 512 KB',
+          },
+          file_1: {
+            oid: 'sha2',
+            byteSize: 7,
+            isBinary: false,
+            isTruncated: false,
+            text: '# Hello',
+          },
+          // A binary file has no text to complete
+          file_2: {
+            oid: 'sha3',
+            byteSize: 999999,
+            isBinary: true,
+            isTruncated: true,
+            text: null,
+          },
+        },
+      });
+
+      vi.mocked(fetchBlobText).mockResolvedValue('Complete content of large.md');
+
+      await fetchPullRequestFiles([pullRequest]);
+
+      expect(fetchBlobText).toHaveBeenCalledOnce();
+      expect(fetchBlobText).toHaveBeenCalledWith({ owner: 'owner', repo: 'repo', sha: 'sha1' });
+      expect(pullRequest.files[0].text).toBe('Complete content of large.md');
+      expect(pullRequest.files[1].text).toBe('# Hello');
+      expect(pullRequest.files[2].text).toBeUndefined();
     });
 
     test('marks a file as deleted when the blob is missing', async () => {

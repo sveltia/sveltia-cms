@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
 import {
   fetchBlob,
+  fetchBlobText,
   fetchFileContents,
   fetchFileList,
   fetchFiles,
@@ -103,6 +104,8 @@ describe('GitHub files service', () => {
       expect(result).toContain('repository');
       expect(result).toContain('content_0: object(oid: "sha1")');
       expect(result).toContain('content_1: object(oid: "sha2")');
+      // The truncation flag is needed to detect an oversized blob
+      expect(result).toContain('... on Blob { text isTruncated }');
       expect(result).toContain('commit_0: ref(qualifiedName: $branch)');
       expect(result).toContain('commit_1: ref(qualifiedName: $branch)');
     });
@@ -145,6 +148,20 @@ describe('GitHub files service', () => {
       expect(result).toContain('commit_5:');
       expect(result).toContain('commit_6:');
       expect(result).toContain('commit_7:');
+    });
+  });
+
+  describe('fetchBlobText', () => {
+    test('retrieves the blob content with the REST API', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue('Full content');
+
+      const result = await fetchBlobText({ owner: 'test-owner', repo: 'test-repo', sha: 'sha1' });
+
+      expect(fetchAPI).toHaveBeenCalledWith('/repos/test-owner/test-repo/git/blobs/sha1', {
+        headers: { Accept: 'application/vnd.github.raw' },
+        responseType: 'text',
+      });
+      expect(result).toBe('Full content');
     });
   });
 
@@ -255,6 +272,50 @@ describe('GitHub files service', () => {
       expect(result['binary.jpg'].text).toBeUndefined();
       expect(result['binary.jpg']?.meta?.commitAuthor?.id).toBeUndefined();
       expect(result['binary.jpg']?.meta?.commitAuthor?.login).toBeUndefined();
+    });
+
+    test('re-fetches a truncated blob with the REST API', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'large.md', sha: 'sha1', size: 543840 },
+        { path: 'small.md', sha: 'sha2', size: 100 },
+      ]);
+
+      /**
+       * Create a commit history node as returned by the GraphQL API.
+       * @returns {any} Node.
+       */
+      const createCommit = () => ({
+        target: {
+          history: {
+            nodes: [
+              {
+                author: { name: 'Author', email: 'author@example.com', user: null },
+                committedDate: '2026-01-01T00:00:00Z',
+              },
+            ],
+          },
+        },
+      });
+
+      const results = {
+        content_0: { text: 'Cut short at 512 KB', isTruncated: true },
+        content_1: { text: 'Content of small.md', isTruncated: false },
+        commit_0: createCommit(),
+        commit_1: createCommit(),
+      };
+
+      vi.mocked(fetchAPI).mockResolvedValue('Complete content of large.md');
+
+      const result = await parseFileContents(fetchingFiles, results);
+
+      // Only the truncated blob is fetched again
+      expect(fetchAPI).toHaveBeenCalledOnce();
+      expect(fetchAPI).toHaveBeenCalledWith('/repos/test-owner/test-repo/git/blobs/sha1', {
+        headers: { Accept: 'application/vnd.github.raw' },
+        responseType: 'text',
+      });
+      expect(result['large.md'].text).toBe('Complete content of large.md');
+      expect(result['small.md'].text).toBe('Content of small.md');
     });
 
     test('handles multiple files with mixed user data', async () => {

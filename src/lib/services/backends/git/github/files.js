@@ -14,6 +14,7 @@ import {
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { dataLoadedProgress } from '$lib/services/contents';
 
@@ -59,7 +60,7 @@ export const getFileContentsQuery = (chunk, startIndex) => {
       if (type !== 'asset') {
         str.push(`
           content_${index}: object(oid: ${JSON.stringify(sha)}) {
-            ... on Blob { text }
+            ... on Blob { text isTruncated }
           }
         `);
       }
@@ -100,22 +101,63 @@ export const getFileContentsQuery = (chunk, startIndex) => {
 };
 
 /**
+ * Request a blob from the REST API. The `raw` media type asks for the file content itself, rather
+ * than the base64-wrapped JSON the endpoint returns by default.
+ * @param {object} args Arguments.
+ * @param {string} args.owner Repository owner.
+ * @param {string} args.repo Repository name.
+ * @param {string} args.sha Blob SHA-1 hash.
+ * @param {'text' | 'raw'} args.responseType Whether to read the content as text, or to hand the
+ * `Response` back so the caller can decide. Note that `raw` bypasses the shared error handling, so
+ * the caller has to check the status itself.
+ * @returns {Promise<string | Response>} File content or response, depending on `responseType`.
+ * @see https://docs.github.com/en/rest/git/blobs#get-a-blob
+ */
+const requestBlob = async ({ owner, repo, sha, responseType }) =>
+  /** @type {Promise<string | Response>} */ (
+    fetchAPI(`/repos/${owner}/${repo}/git/blobs/${sha}`, {
+      headers: { Accept: 'application/vnd.github.raw' },
+      responseType,
+    })
+  );
+
+/**
+ * Retrieve the text content of a blob with the REST API, which returns it in full. The GraphQL API
+ * cuts `Blob.text` off at 512 KB and reports it with `isTruncated`; keeping that shortened text
+ * would silently drop the tail of the file the next time the entry is saved.
+ * @param {object} args Arguments.
+ * @param {string} args.owner Repository owner.
+ * @param {string} args.repo Repository name.
+ * @param {string} args.sha Blob SHA-1 hash.
+ * @returns {Promise<string>} File content.
+ * @see https://github.com/sveltia/sveltia-cms/issues/950
+ * @see https://github.com/graphql-hive/graphql-inspector/issues/2079
+ */
+export const fetchBlobText = async ({ owner, repo, sha }) =>
+  /** @type {Promise<string>} */ (requestBlob({ owner, repo, sha, responseType: 'text' }));
+
+/**
  * Parse the file contents from the API response.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @param {Record<string, any>} results Results from the API.
  * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
  */
 export const parseFileContents = async (fetchingFiles, results) => {
+  /** @type {{ sha: string, data: { text?: string } }[]} */
+  const truncatedFiles = [];
+
   const entries = fetchingFiles.map(({ path, sha, size }, index) => {
     const {
       author: { name, email, user: _user },
       committedDate,
     } = results[`commit_${index}`].target.history.nodes[0];
 
+    const { text, isTruncated } = results[`content_${index}`] ?? {};
+
     const data = {
       sha,
       size: /** @type {number} */ (size),
-      text: results[`content_${index}`]?.text,
+      text,
       meta: {
         commitAuthor: {
           name,
@@ -127,7 +169,18 @@ export const parseFileContents = async (fetchingFiles, results) => {
       },
     };
 
+    if (isTruncated) {
+      truncatedFiles.push({ sha, data });
+    }
+
     return [path, data];
+  });
+
+  // Read any oversized blob again with the REST API, which has no such size cap
+  const { owner, repo } = repository;
+
+  await runConcurrently(truncatedFiles, async ({ sha, data }) => {
+    data.text = await fetchBlobText({ owner, repo, sha });
   });
 
   return Object.fromEntries(entries);
@@ -203,7 +256,6 @@ export const fetchFiles = async () => {
  * Fetch an asset as a Blob via the API.
  * @param {Asset} asset Asset to retrieve the file content.
  * @returns {Promise<Blob>} Blob data.
- * @see https://docs.github.com/en/rest/git/blobs#get-a-blob
  */
 export const fetchBlob = async (asset) => {
   // An asset attached to an unpublished entry is committed to a workflow branch, which lives in the
@@ -212,10 +264,7 @@ export const fetchBlob = async (asset) => {
   const { sha, path } = asset;
 
   const response = /** @type {Response} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/git/blobs/${sha}`, {
-      headers: { Accept: 'application/vnd.github.raw' },
-      responseType: 'raw',
-    })
+    await requestBlob({ owner, repo, sha, responseType: 'raw' })
   );
 
   // Handle SVG and other non-binary files

@@ -2,6 +2,7 @@ import { _ } from '@sveltia/i18n';
 import { get } from 'svelte/store';
 
 import { commitChanges } from '$lib/services/backends/git/github/commits';
+import { fetchBlobText } from '$lib/services/backends/git/github/files';
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -199,6 +200,7 @@ export const fetchPullRequestFiles = async (pullRequests) => {
             oid
             byteSize
             isBinary
+            isTruncated
             text
           }
         }
@@ -208,6 +210,8 @@ export const fetchPullRequestFiles = async (pullRequests) => {
 
   // A workflow branch lives in the contributor’s fork with Open Authoring, so that’s where the
   // blobs have to be read from
+  const workflowRepository = getWorkflowRepository();
+
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
     await fetchGraphQL(
       `
@@ -217,9 +221,12 @@ export const fetchPullRequestFiles = async (pullRequests) => {
           }
         }
       `,
-      getWorkflowRepository(),
+      workflowRepository,
     )
   );
+
+  /** @type {WorkflowFile[]} */
+  const truncatedFiles = [];
 
   targets.forEach(({ file }, index) => {
     const blob = result?.[`file_${index}`];
@@ -230,10 +237,20 @@ export const fetchPullRequestFiles = async (pullRequests) => {
         size: blob.byteSize,
         text: blob.isBinary ? undefined : (blob.text ?? undefined),
       });
+
+      if (!blob.isBinary && blob.isTruncated) {
+        truncatedFiles.push(file);
+      }
     } else {
       // The file may have been removed from the branch in the meantime
       file.deleted = true;
     }
+  });
+
+  // The GraphQL API cuts `Blob.text` off at 512 KB, so read any oversized blob again with the REST
+  // API, which returns it in full. @see https://github.com/sveltia/sveltia-cms/issues/950
+  await runConcurrently(truncatedFiles, async (file) => {
+    file.text = await fetchBlobText({ ...workflowRepository, sha: file.sha });
   });
 };
 
