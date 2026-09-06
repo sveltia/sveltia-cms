@@ -24,11 +24,11 @@ importers:
         specifier: ^2.3.1
         version: 2.3.1
       '@sveltia/i18n':
-        specifier: ^1.3.0
-        version: 1.3.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))
+        specifier: ^1.4.0
+        version: 1.4.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))
       '@sveltia/ui':
-        specifier: ^0.70.0
-        version: 0.70.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))(typescript@6.0.3)
+        specifier: ^0.70.1
+        version: 0.70.1(svelte@5.57.0(@typescript-eslint/types@8.69.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.1
         version: 0.12.1
@@ -1199,13 +1199,13 @@ packages:
       svelte: ^5.46.4
       vite: ^8.0.0-beta.7 || ^8.0.0
 
-  '@sveltia/i18n@1.3.0':
-    resolution: {integrity: sha512-Mg8RZ5rbjfsP0JY/YJber+65xio1HzhPWZBGF6D7yYNRQCEU64pnsGrU/hff8dhz651Y8j7PCygigOQyS8BvQw==}
+  '@sveltia/i18n@1.4.0':
+    resolution: {integrity: sha512-9oUBYOioX1hLxyQYeiKLxqv3P1jhnquzeHJlg/Pf9P1c1V7x/X7FcLr3PWU3vaxOEw4gK+gdMR66+8YwVsfyzw==}
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.70.0':
-    resolution: {integrity: sha512-Jcah/zOHH/Ya/yW176wz+aFoAiR7Ocw4e8TJyA4gNnUlRNCGsgX0DiKZpIN+PGBWD8pGe959m+izXeF6hCWdPA==}
+  '@sveltia/ui@0.70.1':
+    resolution: {integrity: sha512-jW0k+8X5P3hhtrdR6GTb49ZmkTjoLLXXF/8XVWzc6VGqV8C+kBh0s7lzHXLLJKgOuetJeN9dGs7EKGuPVmhYpw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -4841,12 +4841,12 @@ snapshots:
       vite: 8.2.2(@types/node@26.4.1)(yaml@2.9.0)
       vitefu: 1.1.3(vite@8.2.2(@types/node@26.4.1)(yaml@2.9.0))
 
-  '@sveltia/i18n@1.3.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))':
+  '@sveltia/i18n@1.4.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))':
     dependencies:
       messageformat: 4.0.0
       svelte: 5.57.0(@typescript-eslint/types@8.69.0)
 
-  '@sveltia/ui@0.70.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.70.1(svelte@5.57.0(@typescript-eslint/types@8.69.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.50.0(typescript@6.0.3)
       '@lexical/dragon': 0.50.0(typescript@6.0.3)
@@ -4859,7 +4859,7 @@ snapshots:
       '@lexical/selection': 0.50.0(typescript@6.0.3)
       '@lexical/table': 0.50.0(typescript@6.0.3)
       '@lexical/utils': 0.50.0(typescript@6.0.3)
-      '@sveltia/i18n': 1.3.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))
+      '@sveltia/i18n': 1.4.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))
       '@sveltia/utils': 0.12.1
       lexical: 0.50.0(typescript@6.0.3)
       svelte: 5.57.0(@typescript-eslint/types@8.69.0)
