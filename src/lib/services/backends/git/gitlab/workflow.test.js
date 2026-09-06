@@ -248,7 +248,11 @@ describe('GitLab Editorial Workflow service', () => {
         files: [{ path: 'content/posts/hello.md', sha: '', size: 0, deleted: false }],
       });
 
-      vi.mocked(fetchGraphQL).mockResolvedValue({});
+      // GitLab omits the node of a path it can’t resolve, rather than returning a null one
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        project: { repository: { blobs: { nodes: [] } } },
+      });
+
       await fetchMergeRequestFileContents(mergeRequest);
 
       expect(mergeRequest.files[0].deleted).toBe(true);

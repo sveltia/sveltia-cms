@@ -1,8 +1,9 @@
 import { get } from 'svelte/store';
 
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
+import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { repository } from '$lib/services/backends/git/gitlab/repository';
-import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { cmsConfig } from '$lib/services/config';
 import {
@@ -151,17 +152,17 @@ export const fetchMergeRequestFileContents = async (mergeRequest) => {
     return;
   }
 
-  const { project } = /** @type {Record<string, any>} */ (
-    await fetchGraphQL(FETCH_BLOBS_QUERY, {
-      branch: mergeRequest.branch,
-      paths: files.map(({ path }) => path),
-    })
+  // The blobs are fetched in batches, which are split further if the total size of a batch exceeds
+  // the API’s limit. An asset committed to a workflow branch is easily large enough to hit it on
+  // its own. @see https://docs.gitlab.com/api/graphql/#data-limits
+  const nodes = await fetchBlobNodes(
+    files.map(({ path }) => path),
+    FETCH_BLOBS_QUERY,
+    { branch: mergeRequest.branch },
   );
 
   /** @type {Map<string, Record<string, any>>} */
-  const blobMap = new Map(
-    (project?.repository?.blobs?.nodes ?? []).map((/** @type {any} */ node) => [node.path, node]),
-  );
+  const blobMap = new Map(nodes.map((/** @type {any} */ node) => [node.path, node]));
 
   files.forEach((file) => {
     const blob = blobMap.get(file.path);

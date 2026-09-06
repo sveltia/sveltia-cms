@@ -50,7 +50,11 @@ import { dataLoadedProgress } from '$lib/services/contents';
  */
 
 /**
+ * A blob node as returned by the GraphQL API. Which of these fields is populated depends on the
+ * query, as the callers of {@link fetchBlobNodes} select different ones.
  * @typedef {object} BlobItem
+ * @property {string} [path] Path of the file.
+ * @property {string} [oid] Blob’s object ID, which is a SHA-1 hash.
  * @property {string} [size] Size of the blob in bytes.
  * @property {string} [rawTextBlob] Raw text content of the blob.
  */
@@ -144,20 +148,64 @@ const FETCH_BLOBS_QUERY = `
 `;
 
 /**
+ * Fetch a single batch of blobs, halving the batch and trying again whenever the request fails.
+ * GitLab refuses a request whose blobs add up to more than 20 MB, and the sizes aren’t known in
+ * advance, so an oversized batch can only be discovered by attempting it. A single blob of any size
+ * is always accepted, which guarantees the split terminates; an error that survives all the way
+ * down to one path isn’t about the size, so it’s thrown as is. Because a failing half is awaited
+ * before the other one is requested, such an error surfaces after a handful of extra requests
+ * rather than a retry of every path.
+ * @param {string[]} paths List of file paths to fetch.
+ * @param {string} query GraphQL query string.
+ * @param {Record<string, any>} [variables] Any variable to be applied to the query, other than the
+ * paths.
+ * @returns {Promise<BlobItem[]>} Fetched blobs, in the same order as the given paths.
+ * @throws {Error} When a request for a single path fails.
+ * @see https://docs.gitlab.com/api/graphql/#data-limits
+ * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/212456
+ */
+export const fetchBlobBatch = async (paths, query, variables = {}) => {
+  /** @type {FetchBlobsResponse} */
+  let result;
+
+  try {
+    result = /** @type {FetchBlobsResponse} */ (await fetchGraphQL(query, { ...variables, paths }));
+  } catch (ex) {
+    // A request for a single blob is always within the size limit, so this error is about something
+    // else, and there’s nothing left to split anyway
+    if (paths.length === 1) {
+      throw ex;
+    }
+
+    const midPoint = Math.ceil(paths.length / 2);
+    const firstHalf = await fetchBlobBatch(paths.slice(0, midPoint), query, variables);
+    const secondHalf = await fetchBlobBatch(paths.slice(midPoint), query, variables);
+
+    return [...firstHalf, ...secondHalf];
+  }
+
+  // Read the response outside the `try` block, so a malformed one is reported as is instead of
+  // being mistaken for an oversized batch and retried
+  return result.project.repository.blobs.nodes;
+};
+
+/**
  * Fetch the blobs for the given file paths. This function retrieves the raw text contents of files
  * in the repository using the GitLab GraphQL API. It handles pagination by fetching a fixed number
  * of paths at a time, ensuring that the complexity score of the query does not exceed the limit.
  * @param {string[]} paths List of file paths to fetch.
  * @param {string} query GraphQL query string.
- * @returns {Promise<Record<string, BlobItem>>} Fetched blobs mapped by file path.
+ * @param {Record<string, any>} [variables] Any variable to be applied to the query, other than the
+ * paths.
+ * @returns {Promise<BlobItem[]>} Fetched blobs, in the same order as the given paths.
  * @see https://docs.gitlab.com/api/graphql/reference/#repositoryblob
  * @see https://docs.gitlab.com/api/graphql/reference/#tree
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
  * @see https://docs.gitlab.com/api/graphql/#limits
  */
-export const fetchBlobs = async (paths, query) => {
+export const fetchBlobNodes = async (paths, query, variables = {}) => {
   if (!paths.length) {
-    return {};
+    return [];
   }
 
   const { isSelfHosted = false } = repository;
@@ -176,19 +224,30 @@ export const fetchBlobs = async (paths, query) => {
   // @see https://gitlab.com/gitlab-org/gitlab/-/issues/576497
   // The batch size is reduced to 20 for self-hosted instances because they typically run on less
   // powerful hardware, which may lead to timeout issues.
+  // Only the first two conditions can be satisfied by a fixed count; the size of a blob is unknown
+  // until it’s fetched, so {@link fetchBlobBatch} handles the third one by splitting a batch that
+  // turns out to be too large.
   for (;;) {
     const currentPaths = fetchingPaths.splice(0, batchSize);
 
-    const result = /** @type {FetchBlobsResponse} */ (
-      await fetchGraphQL(query, { paths: currentPaths })
-    );
-
-    blobs.push(...result.project.repository.blobs.nodes);
+    blobs.push(...(await fetchBlobBatch(currentPaths, query, variables)));
 
     if (!fetchingPaths.length) {
       break;
     }
   }
+
+  return blobs;
+};
+
+/**
+ * Fetch the blobs for the given file paths, and map them back to those paths.
+ * @param {string[]} paths List of file paths to fetch.
+ * @param {string} query GraphQL query string.
+ * @returns {Promise<Record<string, BlobItem>>} Fetched blobs mapped by file path.
+ */
+export const fetchBlobs = async (paths, query) => {
+  const blobs = await fetchBlobNodes(paths, query);
 
   // Map the blobs back to their respective file paths
   return Object.fromEntries(paths.map((path, index) => [path, blobs[index]]));

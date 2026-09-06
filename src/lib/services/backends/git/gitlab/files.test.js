@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
   fetchBlob,
+  fetchBlobBatch,
   fetchBlobs,
   fetchCommits,
   fetchFileContents,
@@ -421,6 +422,108 @@ describe('GitLab files service', () => {
 
       expect(result['file1.md'].size).toBe(0);
       expect(result['file1.md'].text).toBe('content');
+    });
+  });
+
+  describe('fetchBlobBatch', () => {
+    /**
+     * Create a GraphQL response holding a node for each of the given paths.
+     * @param {string[]} paths File paths.
+     * @returns {any} Response.
+     */
+    const createResponse = (paths) => ({
+      project: {
+        repository: { blobs: { nodes: paths.map((path) => ({ path, rawTextBlob: path })) } },
+      },
+    });
+
+    /**
+     * Mock the API, rejecting any batch larger than the given number of paths, as the API does when
+     * the blobs in a request add up to more than 20 MB.
+     * @param {number} maxPaths Largest batch the mock accepts.
+     */
+    const mockSizeLimit = (maxPaths) => {
+      vi.mocked(fetchGraphQL).mockImplementation(async (_query, variables) => {
+        const currentPaths = /** @type {string[]} */ (variables?.paths);
+
+        if (currentPaths.length > maxPaths) {
+          throw new Error('Server responded with an error');
+        }
+
+        return createResponse(currentPaths);
+      });
+    };
+
+    test('returns the nodes of a batch that fits', async () => {
+      const paths = ['file0.md', 'file1.md'];
+
+      vi.mocked(fetchGraphQL).mockResolvedValue(createResponse(paths));
+
+      const result = await fetchBlobBatch(paths, 'query { blobs }', { branch: 'main' });
+
+      expect(fetchGraphQL).toHaveBeenCalledOnce();
+      expect(fetchGraphQL).toHaveBeenCalledWith('query { blobs }', { branch: 'main', paths });
+      expect(result).toEqual([
+        { path: 'file0.md', rawTextBlob: 'file0.md' },
+        { path: 'file1.md', rawTextBlob: 'file1.md' },
+      ]);
+    });
+
+    test('splits an oversized batch in half and keeps the order of the paths', async () => {
+      const paths = ['file0.md', 'file1.md', 'file2.md'];
+
+      mockSizeLimit(2);
+
+      const result = await fetchBlobBatch(paths, 'query { blobs }');
+
+      // The failed request, then one for each half
+      expect(fetchGraphQL).toHaveBeenCalledTimes(3);
+      expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toEqual(['file0.md', 'file1.md']);
+      expect(vi.mocked(fetchGraphQL).mock.calls[2][1]?.paths).toEqual(['file2.md']);
+      expect(result.map(({ path }) => path)).toEqual(paths);
+    });
+
+    test('splits repeatedly until every batch is accepted', async () => {
+      const paths = Array.from({ length: 8 }, (_, i) => `file${i}.md`);
+
+      // Only a single blob is small enough, which is the size the API always accepts
+      mockSizeLimit(1);
+
+      const result = await fetchBlobBatch(paths, 'query { blobs }');
+
+      expect(result.map(({ path }) => path)).toEqual(paths);
+    });
+
+    test('throws when a single path fails, with nothing left to split', async () => {
+      vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Server responded with an error'));
+
+      await expect(fetchBlobBatch(['file0.md'], 'query { blobs }')).rejects.toThrow(
+        'Server responded with an error',
+      );
+
+      expect(fetchGraphQL).toHaveBeenCalledOnce();
+    });
+
+    test('gives up quickly on an error that has nothing to do with the size', async () => {
+      const paths = Array.from({ length: 100 }, (_, i) => `file${i}.md`);
+
+      vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Unauthorized'));
+
+      await expect(fetchBlobBatch(paths, 'query { blobs }')).rejects.toThrow('Unauthorized');
+
+      // Halving 100 paths reaches a single one in seven steps, and the other half of a failed batch
+      // is never requested, so the list isn’t retried path by path
+      expect(fetchGraphQL).toHaveBeenCalledTimes(8);
+    });
+
+    test('reports a malformed response as is instead of retrying it', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({});
+
+      await expect(fetchBlobBatch(['file0.md', 'file1.md'], 'query { blobs }')).rejects.toThrow(
+        TypeError,
+      );
+
+      expect(fetchGraphQL).toHaveBeenCalledOnce();
     });
   });
 
