@@ -15,6 +15,7 @@ import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { dataLoadedProgress } from '$lib/services/contents';
 
 import {
+  createBatches,
   fetchBlob,
   fetchFileContents,
   fetchFileList,
@@ -174,10 +175,10 @@ describe('Gitea Files Service', () => {
         { path: 'file2.txt', sha: 'def456', size: 200, type: 'entry', name: 'file2.txt' },
       ];
 
-      const results = [
-        { content: 'SGVsbG8gd29ybGQ=', encoding: 'base64' },
-        { content: 'VGVzdCBjb250ZW50', encoding: 'base64' },
-      ];
+      const results = {
+        'file1.md': { content: 'SGVsbG8gd29ybGQ=', encoding: 'base64' },
+        'file2.txt': { content: 'VGVzdCBjb250ZW50', encoding: 'base64' },
+      };
 
       vi.mocked(decodeBase64)
         .mockResolvedValueOnce('Hello world')
@@ -208,7 +209,7 @@ describe('Gitea Files Service', () => {
         { path: 'file1.md', sha: 'abc123', size: 0, type: 'entry', name: 'file1.md' },
       ];
 
-      const results = [null];
+      const results = { 'file1.md': null };
       // @ts-ignore - Type compatibility in test
       const result = await parseFileContents(fetchingFiles, results);
 
@@ -229,7 +230,7 @@ describe('Gitea Files Service', () => {
         { path: 'file1.md', sha: 'abc123', size: 100, type: 'entry', name: 'file1.md' },
       ];
 
-      const results = [{ content: 'plain text', encoding: null }];
+      const results = { 'file1.md': { content: 'plain text', encoding: null } };
       const result = await parseFileContents(fetchingFiles, results);
 
       expect(result).toEqual({
@@ -249,9 +250,9 @@ describe('Gitea Files Service', () => {
         { path: 'file1.md', sha: 'abc123', size: undefined, type: 'entry', name: 'file1.md' },
       ];
 
-      const results = /** @type {import('./files.js').PartialContentsListItem[]} */ ([
-        { content: 'SGVsbG8=', encoding: 'base64' },
-      ]);
+      const results = /** @type {Record<string, import('./files.js').PartialContentsListItem>} */ ({
+        'file1.md': { content: 'SGVsbG8=', encoding: 'base64' },
+      });
 
       vi.mocked(decodeBase64).mockResolvedValueOnce('Hello');
 
@@ -266,6 +267,48 @@ describe('Gitea Files Service', () => {
         },
       });
     });
+
+    test('should leave a file that the API didn’t return empty', async () => {
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'file1.md', sha: 'abc123', size: 100, type: 'entry', name: 'file1.md' },
+      ];
+
+      const result = await parseFileContents(fetchingFiles, {});
+
+      expect(result).toEqual({
+        'file1.md': { sha: 'abc123', size: 100, text: '', meta: {} },
+      });
+    });
+  });
+
+  describe('createBatches', () => {
+    test('should return no batch for an empty list', () => {
+      expect(createBatches([], { maxItems: 10, maxResponseSize: Infinity })).toEqual([]);
+    });
+
+    test('should treat a file of unknown size as empty', () => {
+      // Intentionally testing undefined size
+      const files = /** @type {any[]} */ ([{ path: 'a.md' }, { path: 'b.md' }]);
+
+      expect(createBatches(files, { maxItems: 10, maxResponseSize: 100 })).toEqual([files]);
+    });
+
+    test('should give a file that exceeds the response size on its own a batch of its own', () => {
+      const files = /** @type {any[]} */ ([
+        { path: 'a.md', size: 10 },
+        { path: 'huge.md', size: 10_000 },
+        { path: 'b.md', size: 10 },
+      ]);
+
+      // A batch is never left empty, so the oversized file doesn’t stall the loop
+      expect(createBatches(files, { maxItems: 10, maxResponseSize: 100 })).toEqual([
+        [files[0]],
+        [files[1]],
+        [files[2]],
+      ]);
+    });
   });
 
   describe('fetchFileContents', () => {
@@ -279,8 +322,8 @@ describe('Gitea Files Service', () => {
       ];
 
       const mockResults = [
-        { content: 'SGVsbG8gd29ybGQ=', encoding: 'base64' },
-        { content: 'VGVzdCBjb250ZW50', encoding: 'base64' },
+        { path: 'file1.md', content: 'SGVsbG8gd29ybGQ=', encoding: 'base64' },
+        { path: 'file2.txt', content: 'VGVzdCBjb250ZW50', encoding: 'base64' },
       ];
 
       // Mock API settings response
@@ -318,7 +361,7 @@ describe('Gitea Files Service', () => {
         { path: 'file1.md', sha: 'abc123', size: 100, type: 'entry', name: 'file1.md' },
       ];
 
-      const mockResults = [{ content: 'SGVsbG8gd29ybGQ=', encoding: 'base64' }];
+      const mockResults = [{ sha: 'abc123', content: 'SGVsbG8gd29ybGQ=', encoding: 'base64' }];
 
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce({ default_paging_num: 30 })
@@ -347,8 +390,20 @@ describe('Gitea Files Service', () => {
 
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce({ default_paging_num: 30 })
-        .mockResolvedValueOnce(Array(30).fill({ content: 'dGVzdA==', encoding: 'base64' }))
-        .mockResolvedValueOnce(Array(5).fill({ content: 'dGVzdA==', encoding: 'base64' }));
+        .mockResolvedValueOnce(
+          Array.from({ length: 30 }, (_, i) => ({
+            path: `file${i}.md`,
+            content: 'dGVzdA==',
+            encoding: 'base64',
+          })),
+        )
+        .mockResolvedValueOnce(
+          Array.from({ length: 5 }, (_, i) => ({
+            path: `file${i + 30}.md`,
+            content: 'dGVzdA==',
+            encoding: 'base64',
+          })),
+        );
 
       vi.mocked(decodeBase64).mockResolvedValue('test');
 
@@ -369,7 +424,7 @@ describe('Gitea Files Service', () => {
 
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce({ default_paging_num: 30 })
-        .mockResolvedValueOnce([{ content: 'dGVzdA==', encoding: 'base64' }]);
+        .mockResolvedValueOnce([{ path: 'file1.md', content: 'dGVzdA==', encoding: 'base64' }]);
 
       vi.mocked(decodeBase64).mockResolvedValue('test');
 
@@ -383,6 +438,155 @@ describe('Gitea Files Service', () => {
           body: { files: ['file1.md'] }, // only entry files
         },
       );
+    });
+
+    test('should match the results to the files by identifier, not by position', async () => {
+      // An asset sits between the entry and the config file, but the request skips it, so a result
+      // can’t be matched to a file by its position in the list
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'content/a.md', sha: 'sha1', size: 10, type: 'entry', name: 'a.md' },
+        // @ts-ignore - Type compatibility in test
+        { path: 'static/img.png', sha: 'sha2', size: 20, type: 'asset', name: 'img.png' },
+        // @ts-ignore - Type compatibility in test
+        { path: '.gitattributes', sha: 'sha3', size: 30, type: 'config', name: '.gitattributes' },
+      ];
+
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ default_paging_num: 30 })
+        .mockResolvedValueOnce([
+          { path: 'content/a.md', content: 'QQ==', encoding: 'base64' },
+          { path: '.gitattributes', content: 'Qg==', encoding: 'base64' },
+        ]);
+
+      vi.mocked(decodeBase64).mockImplementation(async (content) =>
+        content === 'QQ==' ? 'entry text' : 'config text',
+      );
+
+      const result = await fetchFileContents(fetchingFiles);
+
+      expect(result['content/a.md'].text).toBe('entry text');
+      expect(result['.gitattributes'].text).toBe('config text');
+      // The asset’s content was never requested, so it gets none
+      expect(result['static/img.png'].text).toBe('');
+    });
+
+    test('should read an oversized blob from the raw endpoint', async () => {
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'content/small.md', sha: 'sha1', size: 100, type: 'entry', name: 'small.md' },
+        // @ts-ignore - Type compatibility in test
+        { path: 'content/large.md', sha: 'sha2', size: 2000, type: 'entry', name: 'large.md' },
+      ];
+
+      vi.mocked(fetchAPI).mockImplementation(async (path) => {
+        if (path === '/settings/api') {
+          return { default_paging_num: 30, default_max_blob_size: 1000 };
+        }
+
+        if (path.startsWith('/repos/test-owner/test-repo/raw/')) {
+          return 'Complete content of large.md';
+        }
+
+        return [{ path: 'content/small.md', content: 'QQ==', encoding: 'base64' }];
+      });
+
+      vi.mocked(decodeBase64).mockResolvedValue('Content of small.md');
+
+      const result = await fetchFileContents(fetchingFiles);
+
+      // Only the file within the limit is requested in bulk
+      expect(fetchAPI).toHaveBeenCalledWith('/repos/test-owner/test-repo/file-contents?ref=main', {
+        method: 'POST',
+        body: { files: ['content/small.md'] },
+      });
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/raw/content/large.md?ref=main',
+        { responseType: 'text' },
+      );
+
+      expect(result['content/small.md'].text).toBe('Content of small.md');
+      expect(result['content/large.md'].text).toBe('Complete content of large.md');
+      expect(dataLoadedProgress.set).toHaveBeenCalledWith(100);
+    });
+
+    test('should keep a batch within the item limit the instance reports', async () => {
+      /** @type {BaseFileListItem[]} */
+      // @ts-ignore - Type compatibility in test
+      const fetchingFiles = Array.from({ length: 6 }, (_, i) => ({
+        path: `file${i}.md`,
+        sha: `sha${i}`,
+        size: 100,
+        type: 'entry',
+        name: `file${i}.md`,
+      }));
+
+      // An instance can be configured to page more items than it will actually return
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ default_paging_num: 30, max_response_items: 4 })
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      await fetchFileContents(fetchingFiles);
+
+      expect(vi.mocked(fetchAPI).mock.calls[1][1]?.body).toEqual({
+        files: ['file0.md', 'file1.md', 'file2.md', 'file3.md'],
+      });
+      expect(vi.mocked(fetchAPI).mock.calls[2][1]?.body).toEqual({
+        files: ['file4.md', 'file5.md'],
+      });
+    });
+
+    test('should keep a batch within the combined response size', async () => {
+      /** @type {BaseFileListItem[]} */
+      // @ts-ignore - Type compatibility in test
+      const fetchingFiles = Array.from({ length: 3 }, (_, i) => ({
+        path: `file${i}.md`,
+        sha: `sha${i}`,
+        size: 300,
+        type: 'entry',
+        name: `file${i}.md`,
+      }));
+
+      // Base64 turns each 300-byte file into 400 bytes, so only two fit in one response
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({
+          default_paging_num: 30,
+          default_max_blob_size: 1000,
+          default_max_response_size: 1000,
+        })
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      await fetchFileContents(fetchingFiles);
+
+      expect(vi.mocked(fetchAPI).mock.calls[1][1]?.body).toEqual({
+        files: ['file0.md', 'file1.md'],
+      });
+      expect(vi.mocked(fetchAPI).mock.calls[2][1]?.body).toEqual({ files: ['file2.md'] });
+    });
+
+    test('should skip the bulk request when every file is oversized', async () => {
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'content/large.md', sha: 'sha1', size: 2000, type: 'entry', name: 'large.md' },
+      ];
+
+      vi.mocked(fetchAPI).mockImplementation(async (path) =>
+        path === '/settings/api'
+          ? { default_paging_num: 30, default_max_blob_size: 1000 }
+          : 'Complete content',
+      );
+
+      const result = await fetchFileContents(fetchingFiles);
+
+      // The settings request and the raw one, with no bulk request in between
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+      expect(result['content/large.md'].text).toBe('Complete content');
     });
 
     test('should return empty object when no files to fetch', async () => {
