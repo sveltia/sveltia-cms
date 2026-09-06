@@ -1950,6 +1950,18 @@ prefs:
         field_label: Authorization header (e.g., Bearer <token>) (optional)
         saved: Authorization header saved.
         removed: Authorization header removed.
+    clear_data:
+      title: Clear Data
+      # Clear File Cache button
+      file_cache:
+        description: Delete the locally cached file contents and image thumbnails to free up storage space or resolve issues caused by stale data.
+        button_label: Clear File Cache
+        confirmation: The locally cached file contents and image thumbnails will be deleted. Your unsaved drafts and settings will be kept, and any deleted data will be downloaded or generated again as needed. The CMS will be reloaded once done.
+      # Erase All Data button
+      all_data:
+        description: Delete everything the CMS keeps in this browser, including the cached files, unsaved drafts and settings. Anything already saved to your repository won’t be affected.
+        button_label: Erase All Data
+        confirmation: All the data stored in this browser will be deleted, including the cached file contents, image thumbnails, unsaved drafts, settings and sign-in state. Your repository won’t be affected, but any change you haven’t saved will be lost, and you’ll have to sign in again. The CMS will be reloaded once done.
 
 # ==============================================================================
 # Keyboard Shortcuts

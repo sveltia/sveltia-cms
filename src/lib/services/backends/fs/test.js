@@ -5,8 +5,16 @@ import { dataLoaded } from '$lib/services/contents';
  * @import { BackendService, CommitResults, FileChange, User } from '$lib/types/private';
  */
 
-const ROOT_DIR_NAME = 'sveltia-cms-test';
-const backendName = 'test-repo';
+/**
+ * Name of the directory in the origin private file system (OPFS) where the entry and asset files
+ * are stored.
+ */
+export const TEST_BACKEND_ROOT_DIR_NAME = 'sveltia-cms-test';
+/**
+ * Name of the test backend.
+ */
+export const TEST_BACKEND_NAME = 'test-repo';
+
 const label = 'Test';
 /**
  * @type {FileSystemDirectoryHandle | undefined}
@@ -28,12 +36,15 @@ const init = () => undefined;
  */
 const signIn = async () => {
   try {
-    rootDirHandle = await getDirectoryHandle(await navigator.storage.getDirectory(), ROOT_DIR_NAME);
+    rootDirHandle = await getDirectoryHandle(
+      await navigator.storage.getDirectory(),
+      TEST_BACKEND_ROOT_DIR_NAME,
+    );
   } catch {
     // Directory handle could not be acquired for security reasons, but we can ignore the error
   }
 
-  return { backendName };
+  return { backendName: TEST_BACKEND_NAME };
 };
 
 /**
@@ -69,7 +80,7 @@ const commitChanges = async (changes) => saveChanges(rootDirHandle, changes);
  */
 export default {
   isGit: false,
-  name: backendName,
+  name: TEST_BACKEND_NAME,
   label,
   init,
   signIn,
