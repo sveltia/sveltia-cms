@@ -50,6 +50,104 @@ export const selectedEntryIdSet = derived(
 );
 
 /**
+ * @typedef {object} EntryFilterCondition
+ * @property {FieldKeyPath} field Field key path to look at.
+ * @property {RegExp} [pattern] Compiled `pattern` option, if any. It takes precedence over
+ * {@link EntryFilterCondition.values}.
+ * @property {any[]} values Normalized `value` option.
+ */
+
+/**
+ * Cache for {@link getFilterCondition}, so the `pattern` regex is compiled once per collection
+ * rather than once per entry. Keyed by the collection object, which is replaced whenever the
+ * configuration is loaded again, so the stale conditions can be garbage collected.
+ * @type {WeakMap<InternalCollection, EntryFilterCondition | undefined>}
+ */
+const filterConditionCache = new WeakMap();
+
+/**
+ * Get the normalized `filter` option of the given collection.
+ * @param {InternalCollection} collection Collection.
+ * @returns {EntryFilterCondition | undefined} Condition, or `undefined` if the collection is not an
+ * entry collection or defines no usable filter.
+ */
+const getFilterCondition = (collection) => {
+  if (!filterConditionCache.has(collection)) {
+    const { filter } = collection._type === 'entry' ? collection : {};
+    const field = filter?.field;
+
+    filterConditionCache.set(
+      collection,
+      field === undefined
+        ? undefined
+        : {
+            field,
+            pattern: getRegex(filter?.pattern),
+            values:
+              filter?.value === undefined
+                ? []
+                : Array.isArray(filter.value)
+                  ? filter.value
+                  : [filter.value],
+          },
+    );
+  }
+
+  return filterConditionCache.get(collection);
+};
+
+/**
+ * Check if the given entry passes the given collection’s `filter` option. An entry that doesn’t is
+ * excluded from the collection’s entry list and can’t be opened in the content editor, so it must
+ * not be offered anywhere else either, such as in the search results.
+ *
+ * This doesn’t check that the entry belongs to the collection in the first place. Use
+ * {@link getListedCollections} to get the collections an entry is actually listed in.
+ * @param {InternalCollection} collection Collection.
+ * @param {Entry} entry Entry.
+ * @returns {boolean} Result.
+ * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
+ */
+export const matchesCollectionFilter = (collection, entry) => {
+  const condition = getFilterCondition(collection);
+
+  // The `filter` option is defined against the collection’s regular fields, while Hugo’s special
+  // index file has its own `index_file.fields` schema. The index file is identified by its path,
+  // not by its content, so the filter must not apply to it
+  if (!condition || isCollectionIndexFile(collection, entry)) {
+    return true;
+  }
+
+  const { field, pattern, values } = condition;
+
+  const value =
+    getPropertyValue({
+      entry,
+      locale: collection._i18n.defaultLocale,
+      collectionName: collection.name,
+      key: field,
+    }) ?? null;
+
+  if (pattern) {
+    return pattern.test(value);
+  }
+
+  return values.includes(value);
+};
+
+/**
+ * Get a list of collections the given entry is listed in, which are the collections the entry
+ * belongs to, minus any whose `filter` option the entry doesn’t pass.
+ * @param {Entry} entry Entry.
+ * @returns {InternalCollection[]} Collections.
+ */
+export const getListedCollections = (entry) =>
+  getAssociatedCollections(entry).filter((collection) =>
+    matchesCollectionFilter(collection, entry),
+  );
+
+/**
  * Scan `allEntries` for the entries belonging to the given collection. This is the uncached
  * implementation of {@link getEntriesByCollection}.
  * @param {string} collectionName Collection name.
@@ -62,23 +160,11 @@ const queryEntriesByCollection = (collectionName) => {
     return [];
   }
 
-  const {
-    _type,
-    _i18n: { defaultLocale: locale },
-  } = collection;
-
-  const { filter } = _type === 'entry' ? collection : {};
-  const filterField = filter?.field;
-  const filterPattern = getRegex(filter?.pattern);
-
-  const filterValues =
-    filter?.value === undefined ? [] : Array.isArray(filter.value) ? filter.value : [filter.value];
-
   // Pre-compute membership check to avoid calling getAssociatedCollections() per entry, which
   // internally does get(allEntryFolders).filter().sort() for each entry.
   let isMember;
 
-  if (_type === 'entry') {
+  if (collection._type === 'entry') {
     const fullPathRegEx = collection._file?.fullPathRegEx;
 
     isMember = fullPathRegEx
@@ -101,26 +187,9 @@ const queryEntriesByCollection = (collectionName) => {
     };
   }
 
-  return get(allEntries).filter((entry) => {
-    if (!isMember(entry)) {
-      return false;
-    }
-
-    // The `filter` option is defined against the collection’s regular fields, while Hugo’s special
-    // index file has its own `index_file.fields` schema. The index file is identified by its path,
-    // not by its content, so the filter must not apply to it
-    if (!filterField || isCollectionIndexFile(collection, entry)) {
-      return true;
-    }
-
-    const value = getPropertyValue({ entry, locale, collectionName, key: filterField }) ?? null;
-
-    if (filterPattern) {
-      return filterPattern.test(value);
-    }
-
-    return filterValues.includes(value);
-  });
+  return get(allEntries).filter(
+    (entry) => isMember(entry) && matchesCollectionFilter(collection, entry),
+  );
 };
 
 /**

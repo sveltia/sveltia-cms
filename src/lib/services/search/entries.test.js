@@ -1,8 +1,8 @@
 import { writable } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 
+import { getListedCollections } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 import { scanEntry, searchEntries } from './entries';
 
@@ -18,8 +18,8 @@ vi.mock('$lib/services/contents/collection/files', () => ({
   ]),
 }));
 
-vi.mock('$lib/services/contents/entry', () => ({
-  getAssociatedCollections: vi.fn((entry) => {
+vi.mock('$lib/services/contents/collection/entries', () => ({
+  getListedCollections: vi.fn((entry) => {
     // Return empty array for entries without mock collections
     if (entry.id.startsWith('no-collection')) {
       return [];
@@ -361,17 +361,29 @@ describe('searchEntries basic functionality', () => {
     expect(result.keyPath).toBeUndefined();
   });
 
-  it('should handle entries with no associated collections', () => {
+  it('should score no points for entries not listed in any collection', () => {
     const entry = createEntry('no-collection-entry', {
       title: 'Orphaned Entry',
       description: 'Entry with no collection',
     });
 
-    // Should still score points for content matches
+    // The entry can’t be opened, so a content match must not make it a result
     const result = scanEntry({ entry, terms: 'orphaned' });
 
-    expect(typeof result.points).toBe('number');
-    expect(result.points).toBeGreaterThanOrEqual(0);
+    expect(result.points).toBe(0);
+    expect(result.locale).toBeUndefined();
+    expect(result.keyPath).toBeUndefined();
+  });
+
+  it('should exclude entries filtered out of every collection from the results', () => {
+    const entries = [
+      createEntry('listed-entry', { title: 'Filtered Test' }),
+      createEntry('no-collection-filtered-out', { title: 'Filtered Test' }),
+    ];
+
+    const results = searchEntries({ entries, terms: 'filtered' });
+
+    expect(results.map(({ entry }) => entry.id)).toEqual(['listed-entry']);
   });
 
   it('should handle entries with boolean values in content', () => {
@@ -439,7 +451,7 @@ describe('searchEntries basic functionality', () => {
 
   it('should test collection name fallback when label is undefined', () => {
     // Override mock to return collection without label
-    vi.mocked(getAssociatedCollections).mockReturnValueOnce([
+    vi.mocked(getListedCollections).mockReturnValueOnce([
       /** @type {any} */ ({
         name: 'articles',
         // No label property - should fallback to name

@@ -2,8 +2,8 @@ import { derived } from 'svelte/store';
 
 import { appLocaleStore } from '$lib/services/app/i18n';
 import { allEntries } from '$lib/services/contents';
+import { getListedCollections } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { searchTerms } from '$lib/services/search';
 import { hasMatch, normalize } from '$lib/services/search/util';
@@ -31,28 +31,34 @@ export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) =>
   let locale = undefined;
   /** @type {FieldKeyPath | undefined} */
   let keyPath = undefined;
-  const collections = getAssociatedCollections(entry);
+  const collections = getListedCollections(entry);
 
-  if (collections.length) {
-    collections.forEach((collection) => {
-      // Check if the collection label or name matches
-      if (hasMatch({ value: collection.label || collection.name, terms, normalizedValueCache })) {
-        points += 10;
-      }
+  // An entry that every associated collection filters out can’t be opened — the content editor
+  // would show “Entry not found” — so it must not be listed as a result at all
+  if (!collections.length) {
+    return { entry, points: 0, locale, keyPath };
+  }
 
-      // Check if the file labels or names match
-      points += getCollectionFilesByEntry(collection, entry).filter((file) =>
-        hasMatch({ value: file.label || file.name, terms, normalizedValueCache }),
-      ).length;
-    });
-
-    const [collection] = collections;
-    const summary = getEntrySummary(collection, entry, { useTemplate: true, allowMarkdown: true });
-
-    // Check if the entry summary matches
-    if (hasMatch({ value: summary, terms, normalizedValueCache })) {
+  collections.forEach((collection) => {
+    // Check if the collection label or name matches
+    if (hasMatch({ value: collection.label || collection.name, terms, normalizedValueCache })) {
       points += 10;
     }
+
+    // Check if the file labels or names match
+    points += getCollectionFilesByEntry(collection, entry).filter((file) =>
+      hasMatch({ value: file.label || file.name, terms, normalizedValueCache }),
+    ).length;
+  });
+
+  const summary = getEntrySummary(collections[0], entry, {
+    useTemplate: true,
+    allowMarkdown: true,
+  });
+
+  // Check if the entry summary matches
+  if (hasMatch({ value: summary, terms, normalizedValueCache })) {
+    points += 10;
   }
 
   // Check if the entry content matches

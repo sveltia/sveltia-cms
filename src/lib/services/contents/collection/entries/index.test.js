@@ -9,8 +9,10 @@ import {
   canCreateIndexFile,
   getEntriesByAssetURL,
   getEntriesByCollection,
+  getListedCollections,
   hasAsset,
   MARKDOWN_IMAGE_REGEX,
+  matchesCollectionFilter,
   selectedEntries,
 } from '$lib/services/contents/collection/entries';
 
@@ -603,6 +605,133 @@ describe('getEntriesByCollection()', () => {
 
     vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? after : entries));
     expect(getEntriesByCollection('pages')).toHaveLength(2);
+  });
+});
+
+describe('matchesCollectionFilter()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetAllMocks();
+  });
+
+  test('returns true when the collection has no filter', () => {
+    const collection = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
+    const entry = { id: '1', locales: { en: { content: { status: 'draft' } } } };
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+  });
+
+  test('ignores the filter of a file collection', () => {
+    const collection = {
+      name: 'data',
+      _type: 'file',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'status', value: 'published' },
+    };
+
+    const entry = { id: '1', locales: { en: { content: { status: 'draft' } } } };
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+  });
+
+  test('compares the field value with the filter value', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'status', value: 'published' },
+    };
+
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    vi.mocked(getPropertyValue).mockReturnValueOnce('published').mockReturnValueOnce('draft');
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+
+    expect(getPropertyValue).toHaveBeenCalledWith({
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'status',
+    });
+  });
+
+  test('matches the field value against the filter pattern', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getRegex } = await import('$lib/services/utils/regex');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'status', pattern: '^published$' },
+    };
+
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    vi.mocked(getRegex).mockReturnValue(/^published$/);
+    vi.mocked(getPropertyValue).mockReturnValueOnce('published').mockReturnValueOnce('draft');
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+    // The condition is cached, so the pattern is compiled once per collection
+    expect(getRegex).toHaveBeenCalledTimes(1);
+  });
+
+  test('exempts Hugo’s special index file from the filter', async () => {
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'status', value: 'published' },
+    };
+
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(true);
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+  });
+});
+
+describe('getListedCollections()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetAllMocks();
+  });
+
+  test('omits the collections that filter the entry out', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const listed = { name: 'posts', _type: 'entry', _i18n: { defaultLocale: 'en' } };
+
+    const filtered = {
+      name: 'drafts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'status', value: 'draft' },
+    };
+
+    const entry = { id: '1', locales: { en: { content: { status: 'published' } } } };
+
+    vi.mocked(getAssociatedCollections).mockReturnValue([listed, filtered]);
+    vi.mocked(getPropertyValue).mockReturnValue('published');
+
+    expect(getListedCollections(entry)).toEqual([listed]);
+  });
+
+  test('returns an empty array when the entry belongs to no collection', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    vi.mocked(getAssociatedCollections).mockReturnValue([]);
+
+    expect(getListedCollections({ id: '1', locales: {} })).toEqual([]);
   });
 });
 

@@ -6,11 +6,11 @@
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getCollectionLabel } from '$lib/services/contents/collection';
+  import { getListedCollections } from '$lib/services/contents/collection/entries';
   import {
     getCollectionFileLabel,
     getCollectionFilesByEntry,
   } from '$lib/services/contents/collection/files';
-  import { getAssociatedCollections } from '$lib/services/contents/entry';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -94,7 +94,7 @@
   {/if}
 {/snippet}
 
-{#each getAssociatedCollections(entry) as collection (collection.name)}
+{#each getListedCollections(entry) as collection (collection.name)}
   {#await sleep() then}
     {#each getCollectionFilesByEntry(collection, entry) as collectionFile (collectionFile.name)}
       {#await sleep() then}
