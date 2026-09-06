@@ -341,9 +341,9 @@ asset_list: 媒體清單
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: '「{$collection}」集合'
+x_collection: 「{$collection}」集合
 # {$folder} is the current asset folder label
-x_asset_folder: '「{$folder}」媒體資料夾'
+x_asset_folder: 「{$folder}」媒體資料夾
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
@@ -484,7 +484,7 @@ back_to_asset_folder_list: 返回媒體資料夾清單
 # Search page: headings and aria-labels
 search_results: 搜尋結果
 # {$terms} is the current search query text
-search_results_for_x: '「{$terms}」的搜尋結果'
+search_results_for_x: 「{$terms}」的搜尋結果
 
 # Search result announcements (ARIA live regions)
 # Entry search results with counts
@@ -549,7 +549,8 @@ rename_x: '重新命名 {$name}'
 enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
-    * {{ 請輸入新名稱。使用該媒體檔案的 {$count} 個項目也將隨之更新。 }}
+    0   {{ 請輸入新名稱。 }}
+    *   {{ 請輸入新名稱。使用該媒體檔案的 {$count} 個項目也將隨之更新。 }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: 檔名不能為空。
@@ -939,7 +940,7 @@ content_options_x_locale: '{$locale} 內容選項'
 
 # Field container labels
 # {$field} is the field’s display label
-x_field: '「{$field}」欄位'
+x_field: 「{$field}」欄位
 
 # Field options menu
 show_field_options: 顯示欄位選項
@@ -1033,14 +1034,16 @@ editor:
     complete: |
       .input {$count :integer}
       .match $count
-        * {{ 從 {$source} 翻譯了 {$count} 個欄位。 }}
+        0   {{ 沒有從 {$source} 翻譯任何欄位。 }}
+        *   {{ 從 {$source} 翻譯了 {$count} 個欄位。 }}
   copy:
     none: 沒有需要複製的內容。
     # {$source} is the source language name and {$count} is the number of copied fields
     complete: |
       .input {$count :integer}
       .match $count
-        * {{ 從 {$source} 複製了 {$count} 個欄位。 }}
+        0   {{ 沒有從 {$source} 複製任何欄位。 }}
+        *   {{ 從 {$source} 複製了 {$count} 個欄位。 }}
 
 # ==============================================================================
 # Field Validation
@@ -1296,17 +1299,20 @@ character_counter:
   min_max: |
     .input {$count :integer}
     .match $count
-      * {{ 輸入 {$count} 個字元。最少：{$min}。最多：{$max}。 }}
+      0   {{ 尚未輸入字元。最少：{$min}。最多：{$max}。 }}
+      *   {{ 輸入 {$count} 個字元。最少：{$min}。最多：{$max}。 }}
   # {$count} is the current character count and {$min} is the minimum allowed count
   min: |
     .input {$count :integer}
     .match $count
-      * {{ 輸入 {$count} 個字元。最少：{$min}。 }}
+      0   {{ 尚未輸入字元。最少：{$min}。 }}
+      *   {{ 輸入 {$count} 個字元。最少：{$min}。 }}
   # {$count} is the current character count and {$max} is the maximum allowed count
   max: |
     .input {$count :integer}
     .match $count
-      * {{ 輸入 {$count} 個字元。最多：{$max}。 }}
+      0   {{ 尚未輸入字元。最多：{$max}。 }}
+      *   {{ 輸入 {$count} 個字元。最多：{$max}。 }}
 
 # YouTube video player iframe title
 youtube_video_player: YouTube 影片播放器
@@ -1461,9 +1467,9 @@ config:
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 媒體集合 {$count} 必須將 `name` 選項定義為非空字串。
     # {$name} is the invalid or duplicate asset collection name
-    invalid_asset_collection_name: 媒體集合名稱「{$name}」無效。不能包含特殊字元。
+    invalid_asset_collection_name: 媒體集合名稱 `{$name}` 無效。不能包含特殊字元。
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: 媒體集合名稱必須唯一，但「{$name}」使用了多次。
+    duplicate_asset_collection_name: 媒體集合名稱必須唯一，但 `{$name}` 使用了多次。
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_no_options: 集合必須定義 `folder`、`files` 或 `divider` 選項。
     # Don’t localize `folder`, `files`, and `divider`
@@ -1471,7 +1477,7 @@ config:
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: '`{$extension}` 副檔名與 `{$format}` 格式不相符。'
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: 網址代號模板「{$slug}」無效，因為它不能包含斜槓。要按子資料夾組織項目，請使用 `path` 選項而非 `slug`。
+    invalid_slug_slash: 網址代號模板 `{$slug}` 無效，因為它不能包含斜槓。要按子資料夾組織項目，請使用 `path` 選項而非 `slug`。
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: '`reorder` 選項指向名為 `{$name}` 的檢視分組，但 `view_groups` 選項中未定義該分組。'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
@@ -1493,13 +1499,13 @@ config:
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: 集合 {$count} 必須將 `name` 選項定義為非空字串。
     # {$name} is the invalid or duplicate collection name
-    invalid_collection_name: 集合名稱「{$name}」無效。不能包含特殊字元。
-    duplicate_collection_name: 集合名稱必須唯一，但「{$name}」使用了多次。
+    invalid_collection_name: 集合名稱 `{$name}` 無效。不能包含特殊字元。
+    duplicate_collection_name: 集合名稱必須唯一，但 `{$name}` 使用了多次。
     # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
     missing_collection_file_name: 集合檔案 {$count} 必須將 `name` 選項定義為非空字串。
     # {$name} is the invalid or duplicate collection file name
-    invalid_collection_file_name: 集合檔名「{$name}」無效。不能包含特殊字元。
-    duplicate_collection_file_name: 集合檔名必須唯一，但「{$name}」使用了多次。
+    invalid_collection_file_name: 集合檔名 `{$name}` 無效。不能包含特殊字元。
+    duplicate_collection_file_name: 集合檔名必須唯一，但 `{$name}` 使用了多次。
     # Don’t localize `fields`
     collection_no_fields: 集合必須將 `fields` 選項定義為至少包含一個欄位。
     # Don’t localize `fields`
@@ -1509,20 +1515,20 @@ config:
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: 欄位 {$count} 必須將 `name` 選項定義為非空字串。
     # {$name} is the invalid or duplicate field name
-    invalid_field_name: 欄位名稱「{$name}」無效。不能包含特殊字元。如果要巢狀欄位，<a>請使用 Object 欄位，而不是點號表示法</a>。
-    duplicate_field_name: 欄位名稱必須唯一，但「{$name}」使用了多次。
+    invalid_field_name: 欄位名稱 `{$name}` 無效。不能包含特殊字元。如果要巢狀欄位，<a>請使用 Object 欄位，而不是點號表示法</a>。
+    duplicate_field_name: 欄位名稱必須唯一，但 `{$name}` 使用了多次。
     # {$count} is the 1-based variable type index in the current types array
     missing_variable_type: 變數類型 {$count} 必須將 `name` 選項定義為非空字串。
     # {$name} is the invalid or duplicate variable type name
-    invalid_variable_type: 變數類型名稱「{$name}」無效。不能包含特殊字元。
-    duplicate_variable_type: 變數類型名稱必須唯一，但「{$name}」使用了多次。
+    invalid_variable_type: 變數類型名稱 `{$name}` 無效。不能包含特殊字元。
+    duplicate_variable_type: 變數類型名稱必須唯一，但 `{$name}` 使用了多次。
     date_field_type: 'Sveltia CMS 不支援已棄用的 Date 欄位類型。請改用帶有 `type: date` 選項的 DateTime 欄位類型。'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: '無效的時區：{$timeZone}。必須是有效的 IANA 時區識別碼，如 `America/New_York` 或 `Asia/Tokyo`。'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: 'Sveltia CMS 不支援已棄用的 `{$prop}` 選項。請改用 `{$newProp}` 選項。'
+    unsupported_deprecated_option: Sveltia CMS 不支援已棄用的 `{$prop}` 選項。請改用 `{$newProp}` 選項。
     # Don’t localize `allow_multiple`, `multiple`, and `false`
-    allow_multiple: 'Sveltia CMS 不支援 `allow_multiple` 選項。請改用 `multiple` 選項，其預設值為 `false`。'
+    allow_multiple: Sveltia CMS 不支援 `allow_multiple` 選項。請改用 `multiple` 選項，其預設值為 `false`。
     # Don’t localize `field`, `fields`, and `types`
     invalid_list_field: List 欄位不能同時設定 `field`、`fields` 和 `types` 選項。
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
@@ -1530,11 +1536,11 @@ config:
     # Don’t localize `fields`, and `types`
     invalid_object_field: Object 欄位不能同時設定 `fields` 和 `types` 選項。
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
-    relation_field_invalid_collection: 引用的集合「{$collection}」無效或未定義。
-    relation_field_invalid_collection_file: 引用的檔案「{$file}」無效或未定義。
+    relation_field_invalid_collection: 引用的集合 `{$collection}` 無效或未定義。
+    relation_field_invalid_collection_file: 引用的檔案 `{$file}` 無效或未定義。
     # Don’t localize `file`
     relation_field_missing_file_name: 關聯檔案集合時必須定義 `file` 選項。
-    relation_field_invalid_value_field: 引用的值欄位「{$field}」無效或未定義。
+    relation_field_invalid_value_field: 引用的值欄位 `{$field}` 無效或未定義。
     unexpected: 意外錯誤
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1571,7 +1577,7 @@ config:
     open_authoring_unsupported_backend: Open Authoring 目前僅支援 GitHub 後端。
     nested_collections_unsupported: Sveltia CMS 暫不支援巢狀集合。
     # {$prop} is the unsupported option name that will be ignored
-    unsupported_ignored_option: 'Sveltia CMS 不支援 `{$prop}` 選項。該選項將會被忽略。'
+    unsupported_ignored_option: Sveltia CMS 不支援 `{$prop}` 選項。該選項將會被忽略。
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: 同時設定了 `picker_utc` 和較新的時區選項（`input_timezone` 或 `output_utc`）。新選項將優先生效。請考慮從設定中移除 `picker_utc`。
     # Don’t localize `preview_path`
@@ -1879,7 +1885,7 @@ prefs:
         removed: Hook URL 已移除。
       # Authorization header input
       auth:
-        field_label: Authorization 標頭（例如 Bearer &lt;token&gt;）（選填）
+        field_label: Authorization 標頭（例如 Bearer <token>）（選填）
         saved: Authorization 標頭已儲存。
         removed: Authorization 標頭已移除。
 
