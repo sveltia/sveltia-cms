@@ -107,11 +107,31 @@ export const startViewTransition = (transitionType, updateContent) => {
   // and will throw a `TypeError` if provided.
   // @see https://developer.mozilla.org/en-US/docs/Web/API/Document/startViewTransition
   try {
-    activeTransition = document.startViewTransition(options);
-    activeTransition.finished.finally(() => {
-      activeTransition = null;
-    });
+    const transition = document.startViewTransition(options);
+
+    activeTransition = transition;
+
+    // The browser skips a transition it can’t animate — most often because the document is hidden,
+    // e.g. the user switched to another tab while a save was in flight — and says so by rejecting
+    // `ready` with an `InvalidStateError`. The `update` callback still runs, so the content is up
+    // to date and there’s nothing to recover from, but the rejection has to be observed or it
+    // reaches the console as `Uncaught (in promise) InvalidStateError`
+    transition.ready.catch(() => undefined);
+
+    // `finished` only rejects when `update` itself failed, which is a real error worth reporting.
+    // It also has to be observed here, because `finally()` re-throws whatever it received
+    transition.finished
+      .catch((/** @type {any} */ ex) => {
+        // eslint-disable-next-line no-console
+        console.error(ex);
+      })
+      .finally(() => {
+        activeTransition = null;
+      });
   } catch {
+    // A browser that throws while the transition is being set up leaves nothing to wait for, so
+    // don’t let a stale handle block every later transition
+    activeTransition = null;
     updateContent();
   }
 };

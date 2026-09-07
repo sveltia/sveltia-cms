@@ -972,7 +972,7 @@ describe('navigation', () => {
         if (fn) fn();
       });
 
-      const mockTransition = { finished: Promise.resolve() };
+      const mockTransition = { ready: Promise.resolve(), finished: Promise.resolve() };
 
       // @ts-ignore - Simplified mock for testing
       document.startViewTransition = vi.fn((config) => {
@@ -991,7 +991,7 @@ describe('navigation', () => {
 
     it('should use view transition API when document.startViewTransition is supported', async () => {
       const mockUpdateContent = vi.fn();
-      const mockTransition = { update: vi.fn() };
+      const mockTransition = { ready: Promise.resolve(), finished: Promise.resolve() };
       const { sleep } = await import('@sveltia/utils/misc');
       const { flushSync } = await import('svelte');
 
@@ -1021,28 +1021,125 @@ describe('navigation', () => {
 
     it('should handle backwards transition type', async () => {
       const mockUpdateContent = vi.fn();
-      const mockTransition = { finished: Promise.resolve() };
+      const mockTransition = { ready: Promise.resolve(), finished: Promise.resolve() };
 
-      document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
+      // @ts-ignore - Simplified mock for testing
+      document.startViewTransition = vi.fn((config) => {
+        config.update();
+
+        return mockTransition;
+      });
 
       startViewTransition('backwards', mockUpdateContent);
 
       await mockTransition.finished;
 
+      expect(document.startViewTransition).toHaveBeenCalledWith(
+        expect.objectContaining({ types: ['backwards'] }),
+      );
       expect(mockUpdateContent).toHaveBeenCalled();
     });
 
     it('should handle unknown transition type', async () => {
       const mockUpdateContent = vi.fn();
-      const mockTransition = { finished: Promise.resolve() };
+      const mockTransition = { ready: Promise.resolve(), finished: Promise.resolve() };
 
-      document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
+      // @ts-ignore - Simplified mock for testing
+      document.startViewTransition = vi.fn((config) => {
+        config.update();
+
+        return mockTransition;
+      });
 
       startViewTransition('unknown', mockUpdateContent);
 
       await mockTransition.finished;
 
+      expect(document.startViewTransition).toHaveBeenCalledWith(
+        expect.objectContaining({ types: ['unknown'] }),
+      );
       expect(mockUpdateContent).toHaveBeenCalled();
+    });
+
+    it('should observe a rejected ready promise when the transition is skipped', async () => {
+      const mockUpdateContent = vi.fn();
+      const unhandled = vi.fn();
+
+      // A skipped transition still runs `update` and still resolves `finished`; only `ready` is
+      // rejected, which is what reaches the console when nothing observes it
+      const mockTransition = {
+        ready: Promise.reject(new DOMException('Transition was aborted', 'InvalidStateError')),
+        finished: Promise.resolve(),
+      };
+
+      process.on('unhandledRejection', unhandled);
+      document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
+
+      startViewTransition('forwards', mockUpdateContent);
+
+      // Give the rejection a chance to go unhandled
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      process.off('unhandledRejection', unhandled);
+
+      expect(unhandled).not.toHaveBeenCalled();
+    });
+
+    it('should report and observe a rejected finished promise', async () => {
+      const mockUpdateContent = vi.fn();
+      const unhandled = vi.fn();
+      const error = new Error('update failed');
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      const mockTransition = {
+        ready: Promise.resolve(),
+        finished: Promise.reject(error),
+      };
+
+      process.on('unhandledRejection', unhandled);
+      document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
+
+      startViewTransition('forwards', mockUpdateContent);
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      process.off('unhandledRejection', unhandled);
+
+      expect(consoleError).toHaveBeenCalledWith(error);
+      expect(unhandled).not.toHaveBeenCalled();
+    });
+
+    it('should start a new transition once a skipped one has settled', async () => {
+      const mockUpdateContent = vi.fn();
+
+      const skipped = {
+        ready: Promise.reject(new DOMException('Transition was aborted', 'InvalidStateError')),
+        finished: Promise.resolve(),
+      };
+
+      const startViewTransitionMock = vi.fn().mockReturnValue(skipped);
+
+      document.startViewTransition = startViewTransitionMock;
+
+      startViewTransition('forwards', mockUpdateContent);
+
+      // Wait for `finished` to settle, which releases the guard against nested transitions
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      startViewTransitionMock.mockReturnValue({
+        ready: Promise.resolve(),
+        finished: Promise.resolve(),
+      });
+
+      startViewTransition('backwards', mockUpdateContent);
+
+      expect(startViewTransitionMock).toHaveBeenCalledTimes(2);
     });
 
     it('should handle TypeError when startViewTransition throws', async () => {
@@ -1086,7 +1183,7 @@ describe('navigation', () => {
   describe('goBack with history.back()', () => {
     it('should call window.history.back when history state has from property', async () => {
       const mockHistoryBack = vi.fn();
-      const mockTransition = { finished: Promise.resolve() };
+      const mockTransition = { ready: Promise.resolve(), finished: Promise.resolve() };
 
       // Mock history with state and back method
       Object.defineProperty(window, 'history', {
