@@ -94,6 +94,7 @@
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
   const type = $derived(hasVariableTypes ? valueMap[typeKeyPath] : undefined);
   const typeConfig = $derived(type ? types?.find(({ name }) => name === type) : undefined);
+  const unknownType = $derived(hasVariableTypes && !typeConfig);
   const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
   const summaryTemplate = $derived(hasVariableTypes ? typeConfig?.summary || summary : summary);
   const addButtonDisabled = $derived(locale !== defaultLocale && i18n === 'duplicate');
@@ -201,6 +202,10 @@
 
   onMount(() => {
     initializeExpanderState();
+
+    if (canEdit && hasValues && unknownType) {
+      warnUnknownType();
+    }
   });
 </script>
 
@@ -224,7 +229,6 @@
 {/if}
 
 {#if (!(!required || hasVariableTypes) || hasValues) && canEdit}
-  {@const unknownType = hasVariableTypes && !typeConfig}
   <div
     role="group"
     class="wrapper"
@@ -263,7 +267,6 @@
     <div role="none" class="item-list" id="object-{fieldId}-item-list">
       {#if unknownType}
         <Alert status="warning">{_('unknown_variable_type')}</Alert>
-        {warnUnknownType()}
       {:else if parentExpanded}
         {#each subFields as subField (subField.name)}
           {@const subFieldKeyPath = `${keyPath}.${subField.name}`}

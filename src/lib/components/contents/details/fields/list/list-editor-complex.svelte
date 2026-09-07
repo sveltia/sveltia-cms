@@ -58,7 +58,6 @@
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import {
    * ComplexListField,
-   * FieldKeyPath,
    * ListFieldWithSubField,
    * ListFieldWithSubFields,
    * ListFieldWithTypes,
@@ -505,19 +504,28 @@
   };
 
   /**
-   * Warn about unknown variable type.
-   * @param {object} args Arguments.
-   * @param {FieldKeyPath} args.itemKeyPath Item’s key path.
-   * @param {string} args.type Item’s type.
+   * Warn about unknown variable types used in the list items.
    */
-  const warnUnknownType = ({ itemKeyPath, type }) => {
-    const message = type
-      ? `The “${type}” type is not defined for the list field.`
-      : `The type key is not found in the list item. The item must include the “${typeKey}” ` +
-        `property with one of the defined types: ${types.map((t) => t.name).join(', ')}`;
+  const warnUnknownTypes = () => {
+    if (!hasVariableTypes) {
+      return;
+    }
 
-    // eslint-disable-next-line no-console
-    console.warn(`List item ${itemKeyPath}: ${message}`);
+    items.forEach((item, index) => {
+      const type = item?.[typeKey];
+
+      if (type && types.some(({ name }) => name === type)) {
+        return;
+      }
+
+      const message = type
+        ? `The “${type}” type is not defined for the list field.`
+        : `The type key is not found in the list item. The item must include the “${typeKey}” ` +
+          `property with one of the defined types: ${types.map((t) => t.name).join(', ')}`;
+
+      // eslint-disable-next-line no-console
+      console.warn(`List item ${keyPath}.${index}: ${message}`);
+    });
   };
 
   $effect(() => {
@@ -530,6 +538,7 @@
 
   onMount(() => {
     initializeExpanderState();
+    warnUnknownTypes();
   });
 </script>
 
@@ -732,7 +741,6 @@
           <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
             {#if unknownType}
               <Alert status="warning">{_('unknown_variable_type')}</Alert>
-              {warnUnknownType({ itemKeyPath, type })}
             {:else if expanded}
               {#each subFields as subField (subField.name)}
                 <VisibilityObserver>
