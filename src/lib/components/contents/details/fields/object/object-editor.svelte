@@ -224,72 +224,72 @@
 {/if}
 
 {#if (!(!required || hasVariableTypes) || hasValues) && canEdit}
-  {#if hasVariableTypes && !typeConfig}
-    <Alert status="warning">{_('unknown_variable_type')}</Alert>
-    {warnUnknownType()}
-  {:else}
-    <div
-      role="group"
-      class="wrapper"
-      class:expanded={parentExpanded}
-      aria-labelledby={parentExpanded ? undefined : `object-${fieldId}-summary`}
-    >
-      {#if !hideHeader}
-        <ObjectHeader
-          label={hasVariableTypes ? typeConfig?.label || type : ''}
-          controlId="object-{fieldId}-item-list"
-          expanded={parentExpanded}
-          toggleExpanded={subFields.length
-            ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
-            : undefined}
-        >
-          {#snippet endContent()}
-            {#if hasVariableTypes}
-              <Button
-                size="small"
-                iconic
-                disabled={addButtonDisabled}
-                aria-label={_('remove')}
-                onclick={() => {
-                  removeFields();
-                }}
-              >
-                {#snippet startIcon()}
-                  <Icon name="close" />
-                {/snippet}
-              </Button>
-            {/if}
-          {/snippet}
-        </ObjectHeader>
-      {/if}
-      <div role="none" class="item-list" id="object-{fieldId}-item-list">
-        {#if parentExpanded}
-          {#each subFields as subField (subField.name)}
-            {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
-            <VisibilityObserver>
-              <FieldEditor
-                keyPath={subFieldKeyPath}
-                typedKeyPath={hasVariableTypes && type
-                  ? `${typedKeyPath}<${type}>.${subField.name}`
-                  : subFieldKeyPath}
-                {locale}
-                fieldConfig={subField}
-              />
-            </VisibilityObserver>
-          {/each}
-        {:else}
-          {@const formattedSummary = _formatSummary()}
-          {#if formattedSummary}
-            <div role="none" class="summary" id="object-{fieldId}-summary">
-              <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
-                {formattedSummary}
-              </TruncatedText>
-            </div>
+  {@const unknownType = hasVariableTypes && !typeConfig}
+  <div
+    role="group"
+    class="wrapper"
+    class:unknown-type={unknownType}
+    class:expanded={parentExpanded}
+    aria-labelledby={parentExpanded ? undefined : `object-${fieldId}-summary`}
+  >
+    {#if !hideHeader}
+      <ObjectHeader
+        label={hasVariableTypes ? typeConfig?.label || type : ''}
+        controlId="object-{fieldId}-item-list"
+        expanded={parentExpanded}
+        toggleExpanded={subFields.length
+          ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
+          : undefined}
+      >
+        {#snippet endContent()}
+          {#if hasVariableTypes}
+            <Button
+              size="small"
+              iconic
+              disabled={addButtonDisabled}
+              aria-label={_('remove')}
+              onclick={() => {
+                removeFields();
+              }}
+            >
+              {#snippet startIcon()}
+                <Icon name="close" />
+              {/snippet}
+            </Button>
           {/if}
+        {/snippet}
+      </ObjectHeader>
+    {/if}
+    <div role="none" class="item-list" id="object-{fieldId}-item-list">
+      {#if unknownType}
+        <Alert status="warning">{_('unknown_variable_type')}</Alert>
+        {warnUnknownType()}
+      {:else if parentExpanded}
+        {#each subFields as subField (subField.name)}
+          {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
+          <VisibilityObserver>
+            <FieldEditor
+              keyPath={subFieldKeyPath}
+              typedKeyPath={hasVariableTypes && type
+                ? `${typedKeyPath}<${type}>.${subField.name}`
+                : subFieldKeyPath}
+              {locale}
+              fieldConfig={subField}
+            />
+          </VisibilityObserver>
+        {/each}
+      {:else}
+        {@const formattedSummary = _formatSummary()}
+        {#if formattedSummary}
+          <div role="none" class="summary" id="object-{fieldId}-summary">
+            <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
+              {formattedSummary}
+            </TruncatedText>
+          </div>
         {/if}
-      </div>
+      {/if}
     </div>
-  {/if}
+  </div>
 {/if}
 
 <style>
@@ -301,6 +301,15 @@
     &.expanded,
     &:has(.summary) {
       border-bottom-width: 2px;
+    }
+
+    &.unknown-type {
+      overflow: hidden;
+
+      :global(.alert) {
+        border-width: 0;
+        border-radius: 0;
+      }
     }
   }
 

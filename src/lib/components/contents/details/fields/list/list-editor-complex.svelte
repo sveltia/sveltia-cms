@@ -622,143 +622,143 @@
         {@const itemKeyPath = `${keyPath}.${index}`}
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
         {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
-        {#if hasVariableTypes && !typeConfig}
-          <Alert status="warning">{_('unknown_variable_type')}</Alert>
-          {warnUnknownType({ itemKeyPath, type })}
-        {:else}
-          {@const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
-          {@const subFields = hasVariableTypes
-            ? (typeConfig?.fields ?? [])
-            : (fields ?? (field ? [field] : []))}
-          {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
-          <div
-            role="group"
-            class="item"
-            class:dragging={dragIndex === index}
-            draggable={grabbedIndex === index}
-            ondragstart={(/** @type {DragEvent} */ event) => {
-              // A nested sortable list starts its own drag; the event just bubbles through here
-              if (event.target !== event.currentTarget) {
-                return;
-              }
+        {@const unknownType = hasVariableTypes && !typeConfig}
+        {@const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
+        {@const subFields = hasVariableTypes
+          ? (typeConfig?.fields ?? [])
+          : (fields ?? (field ? [field] : []))}
+        {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
+        <div
+          role="group"
+          class="item"
+          class:unknown-type={unknownType}
+          class:dragging={dragIndex === index}
+          draggable={grabbedIndex === index}
+          ondragstart={(/** @type {DragEvent} */ event) => {
+            // A nested sortable list starts its own drag; the event just bubbles through here
+            if (event.target !== event.currentTarget) {
+              return;
+            }
 
-              dragIndex = index;
-              previewOrder = [...displayOrder];
-              // Let the editor pane scroll while the pointer is dragged near its top or
-              // bottom edge, so a long list can be reordered without letting go
-              startAutoScroll(itemList);
+            dragIndex = index;
+            previewOrder = [...displayOrder];
+            // Let the editor pane scroll while the pointer is dragged near its top or
+            // bottom edge, so a long list can be reordered without letting go
+            startAutoScroll(itemList);
 
-              if (event.dataTransfer) {
-                event.dataTransfer.effectAllowed = 'move';
-                // Firefox doesn’t start a drag unless some data is attached to it
-                event.dataTransfer.setData('text/plain', _formatSummary(index, summaryTemplate));
-              }
-            }}
-            ondragend={(/** @type {DragEvent} */ event) => {
-              if (event.target !== event.currentTarget) {
-                return;
-              }
+            if (event.dataTransfer) {
+              event.dataTransfer.effectAllowed = 'move';
+              // Firefox doesn’t start a drag unless some data is attached to it
+              event.dataTransfer.setData('text/plain', _formatSummary(index, summaryTemplate));
+            }
+          }}
+          ondragend={(/** @type {DragEvent} */ event) => {
+            if (event.target !== event.currentTarget) {
+              return;
+            }
 
-              stopAutoScroll();
-              grabbedIndex = undefined;
-              dragIndex = undefined;
-              // A cancelled drag puts every item back where it started
-              previewOrder = undefined;
-            }}
+            stopAutoScroll();
+            grabbedIndex = undefined;
+            dragIndex = undefined;
+            // A cancelled drag puts every item back where it started
+            previewOrder = undefined;
+          }}
+        >
+          <ObjectHeader
+            label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
+            controlId="list-{fieldId}-item-{index}-body"
+            {expanded}
+            toggleExpanded={subFields.length
+              ? () => syncExpanderStates({ [itemKeyPath]: !expanded })
+              : undefined}
           >
-            <ObjectHeader
-              label={hasVariableTypes ? typeConfig?.label || typeConfig?.name : ''}
-              controlId="list-{fieldId}-item-{index}-body"
-              {expanded}
-              toggleExpanded={subFields.length
-                ? () => syncExpanderStates({ [itemKeyPath]: !expanded })
-                : undefined}
-            >
-              {#snippet centerContent()}
-                {#if allowReorder}
-                  <ReorderControls
-                    {index}
-                    itemCount={items.length}
-                    disabled={isDuplicateField || items.length < 2}
-                    icon="drag_handle"
-                    onGrab={() => {
-                      grabbedIndex = index;
-                    }}
-                    onRelease={() => {
-                      grabbedIndex = undefined;
-                    }}
-                    onMove={(to, action) => moveItem(index, to, action)}
-                  />
-                {/if}
-              {/snippet}
-              {#snippet endContent()}
-                {#if allowAdd}
-                  <MenuButton
-                    variant="ghost"
-                    size="small"
-                    iconic
-                    popupPosition="bottom-right"
-                    aria-label={_('list_item_options')}
-                    disabled={isAddDisabled}
-                  >
-                    {#snippet popup()}
-                      <Menu aria-label={_('list_item_options')}>
-                        {#if allowDuplicate}
-                          <MenuItem
-                            label={_('duplicate')}
-                            disabled={hasMaxItems}
-                            onclick={() => addItem({ index: index + 1, dupIndex: index })}
-                          />
-                        {/if}
-                        {@render addPositionItems(index, 'above')}
-                        {@render addPositionItems(index + 1, 'below')}
-                      </Menu>
-                    {/snippet}
-                  </MenuButton>
-                {/if}
-                {#if allowRemove}
-                  <Button
-                    variant="ghost"
-                    size="small"
-                    iconic
-                    aria-label={_('remove')}
-                    onclick={() => removeItem(index)}
-                  >
-                    {#snippet startIcon()}
-                      <Icon name="close" />
-                    {/snippet}
-                  </Button>
-                {/if}
-              {/snippet}
-            </ObjectHeader>
-            <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
-              {#if expanded}
-                {#each subFields as subField (subField.name)}
-                  <VisibilityObserver>
-                    <FieldEditor
-                      keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
-                      typedKeyPath={hasVariableTypes
-                        ? `${typedKeyPath}.*<${type}>.${subField.name}`
-                        : `${typedKeyPath}.*.${subField.name}`}
-                      {locale}
-                      fieldConfig={subField}
-                      context={hasSingleSubField ? 'single-subfield-list-field' : undefined}
-                    />
-                  </VisibilityObserver>
-                {/each}
-              {:else}
-                <div role="none" class="summary">
-                  {#if thumbnails[index]}
-                    <Image src={thumbnails[index]} variant="icon" cover />
-                  {/if}
-                  <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
-                    {_formatSummary(index, summaryTemplate)}
-                  </TruncatedText>
-                </div>
+            {#snippet centerContent()}
+              {#if allowReorder}
+                <ReorderControls
+                  {index}
+                  itemCount={items.length}
+                  disabled={isDuplicateField || items.length < 2}
+                  icon="drag_handle"
+                  onGrab={() => {
+                    grabbedIndex = index;
+                  }}
+                  onRelease={() => {
+                    grabbedIndex = undefined;
+                  }}
+                  onMove={(to, action) => moveItem(index, to, action)}
+                />
               {/if}
-            </div>
+            {/snippet}
+            {#snippet endContent()}
+              {#if allowAdd}
+                <MenuButton
+                  variant="ghost"
+                  size="small"
+                  iconic
+                  popupPosition="bottom-right"
+                  aria-label={_('list_item_options')}
+                  disabled={isAddDisabled}
+                >
+                  {#snippet popup()}
+                    <Menu aria-label={_('list_item_options')}>
+                      {#if allowDuplicate}
+                        <MenuItem
+                          label={_('duplicate')}
+                          disabled={hasMaxItems || unknownType}
+                          onclick={() => addItem({ index: index + 1, dupIndex: index })}
+                        />
+                      {/if}
+                      {@render addPositionItems(index, 'above')}
+                      {@render addPositionItems(index + 1, 'below')}
+                    </Menu>
+                  {/snippet}
+                </MenuButton>
+              {/if}
+              {#if allowRemove}
+                <Button
+                  variant="ghost"
+                  size="small"
+                  iconic
+                  aria-label={_('remove')}
+                  onclick={() => removeItem(index)}
+                >
+                  {#snippet startIcon()}
+                    <Icon name="close" />
+                  {/snippet}
+                </Button>
+              {/if}
+            {/snippet}
+          </ObjectHeader>
+          <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
+            {#if unknownType}
+              <Alert status="warning">{_('unknown_variable_type')}</Alert>
+              {warnUnknownType({ itemKeyPath, type })}
+            {:else if expanded}
+              {#each subFields as subField (subField.name)}
+                <VisibilityObserver>
+                  <FieldEditor
+                    keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
+                    typedKeyPath={hasVariableTypes
+                      ? `${typedKeyPath}.*<${type}>.${subField.name}`
+                      : `${typedKeyPath}.*.${subField.name}`}
+                    {locale}
+                    fieldConfig={subField}
+                    context={hasSingleSubField ? 'single-subfield-list-field' : undefined}
+                  />
+                </VisibilityObserver>
+              {/each}
+            {:else}
+              <div role="none" class="summary">
+                {#if thumbnails[index]}
+                  <Image src={thumbnails[index]} variant="icon" cover />
+                {/if}
+                <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
+                  {_formatSummary(index, summaryTemplate)}
+                </TruncatedText>
+              </div>
+            {/if}
           </div>
-        {/if}
+        </div>
       </VisibilityObserver>
     </div>
   {/each}
@@ -818,6 +818,15 @@
     border-color: var(--sui-secondary-border-color);
     border-radius: var(--sui-control-medium-border-radius);
     background-color: var(--sui-primary-background-color); /* for dragging opacity */
+
+    &.unknown-type {
+      overflow: hidden;
+
+      :global(.alert) {
+        border-width: 0;
+        border-radius: 0;
+      }
+    }
 
     /* The dragged item is left as a faint placeholder marking the gap it would drop into. The
       pointer already carries the browser’s own drag image of it, so showing it twice at full
