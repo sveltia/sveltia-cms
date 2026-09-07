@@ -303,7 +303,7 @@
           {#snippet popup()}
             <Menu aria-label={_('field_options')}>
               {#if canCopy}
-                <CopyMenuItems {locale} {otherLocales} {keyPath} />
+                <CopyMenuItems {locale} {otherLocales} {keyPath} submenu />
               {/if}
               {#if canRevert}
                 <MenuItem

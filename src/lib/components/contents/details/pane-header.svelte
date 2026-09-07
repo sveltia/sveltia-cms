@@ -135,7 +135,7 @@
         {#snippet popup()}
           <Menu aria-label={_('content_options_x_locale', { values: { locale: localeLabel } })}>
             {#if canCopy && $thisPane?.locale}
-              <CopyMenuItems locale={$thisPane.locale} {otherLocales} />
+              <CopyMenuItems locale={$thisPane.locale} {otherLocales} submenu />
             {/if}
             <MenuItem
               label={_('revert_changes')}

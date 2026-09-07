@@ -19,6 +19,9 @@
    * @property {InternalLocaleCode[]} otherLocales Other locales.
    * @property {FieldKeyPath} [keyPath] Field key path.
    * @property {boolean} [translate] Whether to translate the field.
+   * @property {boolean} [submenu] Whether to gather the source locales in a submenu when there’s
+   * more than one of them. Useful where the options share a menu with unrelated commands, which a
+   * long list of locales would otherwise bury.
    */
 
   /** @type {Props} */
@@ -28,8 +31,11 @@
     otherLocales,
     keyPath = '',
     translate = false,
+    submenu = false,
     /* eslint-enable prefer-const */
   } = $props();
+
+  const useSubmenu = $derived(submenu && otherLocales.length > 1);
 
   /**
    * Check if a menu item should be disabled.
@@ -47,17 +53,29 @@
     (translate && !(await $translator?.availability({ sourceLanguage, targetLanguage })));
 </script>
 
-{#each otherLocales as otherLocale (otherLocale)}
-  {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
-  {#await isMenuDisabled(languagePair) then disabled}
-    <MenuItem
-      label={_(translate ? 'translate_from_x' : 'copy_from_x', {
-        values: { locale: getLocaleLabel(otherLocale) },
-      })}
-      {disabled}
-      onclick={() => {
-        copyFromLocale({ ...languagePair, keyPath, translate });
-      }}
-    />
-  {/await}
-{/each}
+{#snippet localeItems()}
+  {#each otherLocales as otherLocale (otherLocale)}
+    {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
+    {#await isMenuDisabled(languagePair) then disabled}
+      <MenuItem
+        label={_(translate ? 'translate_from_x' : 'copy_from_x', {
+          values: { locale: getLocaleLabel(otherLocale) },
+        })}
+        {disabled}
+        onclick={() => {
+          copyFromLocale({ ...languagePair, keyPath, translate });
+        }}
+      />
+    {/await}
+  {/each}
+{/snippet}
+
+{#if useSubmenu}
+  <MenuItem label={_(translate ? 'translate_from' : 'copy_from')}>
+    {#snippet items()}
+      {@render localeItems()}
+    {/snippet}
+  </MenuItem>
+{:else}
+  {@render localeItems()}
+{/if}
