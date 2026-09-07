@@ -332,20 +332,21 @@
         }
       }
 
+      if (isNew) {
+        // Update the URL. A collection file is addressed by its name, while its `subPath` is the
+        // whole file path. This is done even when the editor is about to be closed, so the `new`
+        // route doesn’t stay in the session history: moving forward from the entry list then
+        // reopens the entry that was just created instead of a blank editor
+        goto(`/collections/${collectionName}/entries/${fileName ?? savedEntry.subPath}`, {
+          replaceState: true,
+          notifyChange: false,
+        });
+      }
+
       if (prefs.closeOnSave ?? true) {
         _goBack();
         $entryDraft = null;
       } else {
-        if (isNew) {
-          // Update the URL. A collection file is addressed by its name, while its `subPath` is
-          // the whole file path
-          goto(`/collections/${collectionName}/entries/${fileName ?? savedEntry.subPath}`, {
-            replaceState: true,
-            notifyChange: false,
-            transitionType: 'backwards',
-          });
-        }
-
         // Reset the draft
         createDraft({
           collection,
