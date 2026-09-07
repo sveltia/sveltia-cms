@@ -287,6 +287,8 @@
  * Common field properties that are shared among all field types.
  * @typedef {object} CommonFieldProps
  * @property {string} name Unique identifier for the field. It cannot include periods and spaces.
+ * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
+ * field value.
  * @property {boolean | 'duplicate' | 'translate' | 'none'} [i18n] Whether to enable the editor UI
  * in locales other than the default locale. Default: `false`. `duplicate` disables the UI in
  * non-default like `false` but automatically copies the default locale’s value to other locales.
@@ -298,8 +300,6 @@
 /**
  * Properties for a field that is visible in the editor UI.
  * @typedef {object} VisibleFieldProps
- * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
- * field value.
  * @property {string} [comment] Short description of the field to be displayed in the editor UI.
  * @property {string} [hint] Help message to be displayed below the input UI. Limited Markdown
  * formatting is supported: bold, italic, strikethrough and links.
