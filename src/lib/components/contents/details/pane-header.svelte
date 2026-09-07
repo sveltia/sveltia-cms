@@ -17,7 +17,8 @@
   import { getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { deployPollTimedOut } from '$lib/services/deployments';
+  import { deployments, deployPollTimedOut, productionSHA } from '$lib/services/deployments';
+  import { getEntryPreviewLink } from '$lib/services/deployments/link';
   import { recheckDeployments } from '$lib/services/deployments/poll';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
@@ -88,6 +89,22 @@
           ?.workflow.pullRequest
       : undefined,
   );
+  // `PreviewLinkButton` renders nothing when there’s no link to offer, so the link is resolved
+  // here as well — the divider above the button has to know whether anything will follow it
+  const previewLink = $derived(
+    originalEntry && collection && $thisPane
+      ? getEntryPreviewLink({
+          entry: originalEntry,
+          locale: $thisPane.locale,
+          collection,
+          collectionFile,
+          pullRequest,
+          deployments: $deployments,
+          productionSHA: $productionSHA,
+          pollTimedOut: $deployPollTimedOut,
+        })
+      : undefined,
+  );
 </script>
 
 <div role="none" {id} class="header">
@@ -145,7 +162,9 @@
               />
             {/if}
             {#if originalEntry && collection && $thisPane}
-              <Divider />
+              {#if previewLink || $deployPollTimedOut || prefs.devModeEnabled}
+                <Divider />
+              {/if}
               <PreviewLinkButton
                 as="menuitem"
                 entry={originalEntry}
