@@ -1645,7 +1645,7 @@ config:
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: The `preview_path` option refers to `{$name}`, but no such field is defined in the collection, so the preview link won’t be shown.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
-    schema_unknown_option: 'The `{$option}` option is not defined in the Sveltia CMS configuration schema. It will be ignored. Check for a typo.'
+    schema_unknown_option: 'The `{$option}` option is not defined in the Sveltia CMS configuration schema. It will be ignored. Check for a typo or a syntax mistake.'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'See the compatibility notes for details: {$link}'
