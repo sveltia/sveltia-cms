@@ -139,7 +139,7 @@ signing_in: Accesso in corso…
 # Button label and description for working with a local Git repository
 work_with_local_repo: Lavora con Repository Locale
 # {$repo} is the configured repository name shown when it is available
-work_with_local_repo_description: Quando richiesto, seleziona la cartella principale del repository "{$repo}".
+work_with_local_repo_description: Quando richiesto, seleziona la cartella principale del repository “{$repo}”.
 work_with_local_repo_description_no_repo: Quando richiesto, seleziona la cartella principale del tuo repository Git.
 # Button label for demo/test repository
 work_with_test_repo: Lavora con Repository di Test
@@ -152,9 +152,9 @@ sign_in_error:
   authentication_aborted: Autenticazione annullata. Riprova.
   invalid_token: Il token fornito non è valido. Controlla e riprova.
   # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
-  UNSUPPORTED_BACKEND: Il tuo backend Git non è supportato dall'autenticatore.
-  UNSUPPORTED_DOMAIN: Il tuo dominio non è autorizzato a usare l'autenticatore.
-  MISCONFIGURED_CLIENT: L'ID client o il secret dell'app OAuth non sono configurati.
+  UNSUPPORTED_BACKEND: Il tuo backend Git non è supportato dall’autenticatore.
+  UNSUPPORTED_DOMAIN: Il tuo dominio non è autorizzato a usare l’autenticatore.
+  MISCONFIGURED_CLIENT: L’ID client o il secret dell’app OAuth non sono configurati.
   AUTH_CODE_REQUEST_FAILED: Impossibile ricevere un codice di autorizzazione. Riprova più tardi.
   CSRF_DETECTED: Rilevato potenziale attacco CSRF. Flusso di autenticazione annullato.
   TOKEN_REQUEST_FAILED: Impossibile richiedere un token di accesso. Riprova più tardi.
@@ -182,8 +182,8 @@ unexpected_error: Errore Imprevisto
 entry_parse_errors: |
   .input {$count :integer}
   .match $count
-    one {{ Si è verificato un errore durante l'analisi di un file della voce. Controlla la console del browser per i dettagli. }}
-    *   {{ Si sono verificati errori durante l'analisi dei file delle voci. Controlla la console del browser per i dettagli. }}
+    one {{ Si è verificato un errore durante l’analisi di un file della voce. Controlla la console del browser per i dettagli. }}
+    *   {{ Si sono verificati errori durante l’analisi dei file delle voci. Controlla la console del browser per i dettagli. }}
 
 # ==============================================================================
 # Authentication and Account
@@ -299,7 +299,7 @@ join_discord: Unisciti a noi su Discord
 bluesky: Seguici su Bluesky
 
 # Update notification: infobar message and button
-update_available: È disponibile l'ultima versione di Sveltia CMS.
+update_available: È disponibile l’ultima versione di Sveltia CMS.
 update_now: Aggiorna Ora
 
 # Backend status notifications
@@ -348,8 +348,8 @@ x_asset_folder: Cartella File Multimediali “{$folder}”
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
-viewing_collection_list: Stai visualizzando l'elenco delle collezioni.
-viewing_asset_folder_list: Stai visualizzando l'elenco delle cartelle multimediali.
+viewing_collection_list: Stai visualizzando l’elenco delle collezioni.
+viewing_asset_folder_list: Stai visualizzando l’elenco delle cartelle multimediali.
 # Collection view announcements with entry counts
 # {$collection} is the collection label and {$count} is the number of entries in it
 viewing_x_collection: |
@@ -464,7 +464,7 @@ loading_entries: |
 entry_not_found: Voce non trovata.
 
 # Entry creation restrictions: tooltip and advisory messages
-creating_entries_disabled_by_admin: La creazione di nuove voci in questa collezione è stata disabilitata dall'amministratore.
+creating_entries_disabled_by_admin: La creazione di nuove voci in questa collezione è stata disabilitata dall’amministratore.
 # {$quota} is the collection’s maximum entry count
 creating_entries_disabled_by_quota: Non puoi aggiungere nuove voci a questa collezione perché ha raggiunto il suo limite di {$quota} voci.
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
@@ -477,9 +477,9 @@ creating_entries_nearing_quota: |
 # Navigation: back links and list labels
 back_to_collection: Torna alla Collezione
 collection_list: Elenco delle Collezioni
-back_to_collection_list: Torna all'Elenco delle Collezioni
+back_to_collection_list: Torna all’Elenco delle Collezioni
 asset_folder_list: Elenco delle Cartelle Multimediali
-back_to_asset_folder_list: Torna all'Elenco delle Cartelle Multimediali
+back_to_asset_folder_list: Torna all’Elenco delle Cartelle Multimediali
 
 # ==============================================================================
 # Search
@@ -570,10 +570,10 @@ enter_new_name_for_asset_error:
 change_file_extension: Cambia Estensione File
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
 confirm_file_extension_change:
-  change: Sei sicuro di voler cambiare l'estensione da “.{$oldExtension}” a “.{$newExtension}”?
-  add: Sei sicuro di voler aggiungere l'estensione “.{$newExtension}”?
-  remove: Sei sicuro di voler rimuovere l'estensione “.{$oldExtension}”?
-file_extension_change_warning: Il file potrebbe non essere visualizzato o gestito correttamente se l'estensione non corrisponde al formato reale del file.
+  change: Sei sicuro di voler cambiare l’estensione da “.{$oldExtension}” a “.{$newExtension}”?
+  add: Sei sicuro di voler aggiungere l’estensione “.{$newExtension}”?
+  remove: Sei sicuro di voler rimuovere l’estensione “.{$oldExtension}”?
+file_extension_change_warning: Il file potrebbe non essere visualizzato o gestito correttamente se l’estensione non corrisponde al formato reale del file.
 
 # Replace asset: menu item and dialog title
 replace_asset: Sostituisci File Multimediale
@@ -606,7 +606,7 @@ drop_files_or: |
 drop_image_files_or: |
   .input {$count :integer}
   .match $count
-    one {{ Trascina un'immagine qui o }}
+    one {{ Trascina un’immagine qui o }}
     *   {{ Trascina le immagini qui o }}
 
 # File picker and clipboard actions used by upload controls
@@ -632,7 +632,7 @@ drop_files_here: |
 unsupported_file_type: Tipo di File non Supportato
 # {$type} is the expected asset type label, such as image or document
 dropped_file_type_mismatch: 'Il file trascinato non è uno dei seguenti tipi: {$types}. Riprova.'
-dropped_image_type_mismatch: 'Il file trascinato non è supportato. Si possono inserire solo immagini di tipo : {$types}. Riprova.'
+dropped_image_type_mismatch: 'Il file trascinato non è supportato. Si possono inserire solo immagini di tipo: {$types}. Riprova.'
 
 # File chooser button label
 # {$count} is the number of files the picker allows the user to choose
@@ -724,8 +724,8 @@ saving_reorder_failed: Impossibile salvare il nuovo ordine delle voci. Riprova.
 processing_files: |
   .input {$count :integer}
   .match $count
-    one {{ Elaborazione di un file in corso. Potrebbe volerci un po' di tempo. }}
-    *   {{ Elaborazione dei file in corso. Potrebbe volerci un po' di tempo. }}
+    one {{ Elaborazione di un file in corso. Potrebbe volerci un po’ di tempo. }}
+    *   {{ Elaborazione dei file in corso. Potrebbe volerci un po’ di tempo. }}
 
 # Uploading section aria-label
 uploading_files: Caricamento File in corso
@@ -760,7 +760,7 @@ invalid_files: File Non Validi
 warning_invalid_files: |
   .input {$count :integer}
   .match $count
-    one {{ Questo file non può essere caricato perché è danneggiato o il suo contenuto non corrisponde all'estensione del file. Questo accade spesso quando una foto viene rinominata invece che convertita, ad esempio un'immagine HEIC salvata come file JPEG. Converti il file e riprova. }}
+    one {{ Questo file non può essere caricato perché è danneggiato o il suo contenuto non corrisponde all’estensione del file. Questo accade spesso quando una foto viene rinominata invece che convertita, ad esempio un’immagine HEIC salvata come file JPEG. Converti il file e riprova. }}
     *   {{ Questi file non possono essere caricati perché sono danneggiati o il loro contenuto non corrisponde alle estensioni dei file. Questo accade spesso quando le foto vengono rinominate invece che convertite, ad esempio immagini HEIC salvate come file JPEG. Converti i file e riprova. }}
 
 # File format validation when replacing an asset
@@ -1016,11 +1016,11 @@ deploy_preview:
   # Button and menu item shown when a preview URL is available for an unpublished entry
   view: Visualizza Anteprima
   # Shown while the site is still being built, with or without a URL to open yet
-  building: L'anteprima è ancora in fase di generazione.
+  building: L’anteprima è ancora in fase di generazione.
   # Shown when the build failed, so no preview is available
-  failed: Impossibile generare l'anteprima.
+  failed: Impossibile generare l’anteprima.
   # Shown briefly while the CI/CD provider is being queried
-  checking: Controllo disponibilità dell'anteprima…
+  checking: Controllo disponibilità dell’anteprima…
   # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
   check_again: Controlla Anteprima
   # Button label while the CMS is waiting for the provider to build a preview of this entry. The
@@ -1061,7 +1061,7 @@ edit_slug: Modifica Slug
 edit_slug_error:
   empty: Lo slug non può essere vuoto.
   invalid: Lo slug non può contenere caratteri speciali, inclusi slash e spazi.
-  duplicate: Questo slug è utilizzato per un'altra voce.
+  duplicate: Questo slug è utilizzato per un’altra voce.
 
 # Required field indicator
 required: Obbligatorio
@@ -1104,7 +1104,7 @@ validation:
     # {$min} is the minimum allowed value, already formatted for the input type
     datetime-local: La data/ora deve essere uguale o successiva al {$min}.
     date: La data deve essere uguale o successiva al {$min}.
-    time: L'ora deve essere uguale o successiva alle {$min}.
+    time: L’ora deve essere uguale o successiva alle {$min}.
     number: Il valore deve essere maggiore o uguale a {$min}.
     # {$min} is the minimum number of selected options
     select: |
@@ -1124,7 +1124,7 @@ validation:
     # {$max} is the maximum allowed value, already formatted for the input type
     datetime-local: La data/ora deve essere uguale o precedente al {$max}.
     date: La data deve essere uguale o precedente al {$max}.
-    time: L'ora deve essere uguale o precedente alle {$max}.
+    time: L’ora deve essere uguale o precedente alle {$max}.
     number: Il valore deve essere minore o uguale a {$max}.
     # {$max} is the maximum number of selected options
     select: |
@@ -1155,7 +1155,7 @@ validation:
   # Type validation errors
   type_mismatch:
     number: Inserisci un numero.
-    email: Inserisci un'email valida.
+    email: Inserisci un’email valida.
     url: Inserisci un URL valido.
 
   # Custom field validation error
@@ -1400,7 +1400,7 @@ use_your_location: Usa la Tua Posizione
 # Geolocation error dialog
 geolocation_error_title: Errore di Geolocalizzazione
 geolocation_error_body: Si è verificato un errore durante il recupero della tua posizione.
-geolocation_unsupported: L'API di geolocalizzazione non è supportata da questo browser.
+geolocation_unsupported: L’API di geolocalizzazione non è supportata da questo browser.
 
 # Boolean field: display labels
 # Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
@@ -1437,7 +1437,7 @@ cloud_storage:
     iframe_title: Libreria multimediale Cloudinary
     activate:
       button_label: Attiva Cloudinary
-      description: Dopo aver effettuato l'accesso, clicca di nuovo sul pulsante Accedi per continuare.
+      description: Dopo aver effettuato l’accesso, clicca di nuovo sul pulsante Accedi per continuare.
     auth_key_label: API Secret
     open_library: Apri Cloudinary
 
@@ -1464,7 +1464,7 @@ config:
   errors: |
     .input {$count :integer}
     .match $count
-      one {{ C'è un errore nella configurazione del CMS. Risolvi il problema e riprova. }}
+      one {{ C’è un errore nella configurazione del CMS. Risolvi il problema e riprova. }}
       *   {{ Ci sono errori nella configurazione del CMS. Risolvi i problemi e riprova. }}
 
   # Error location prefixes
@@ -1483,19 +1483,19 @@ config:
     insecure_urls: |
       .input {$count :integer}
       .match $count
-        one {{ L'URL del file di configurazione deve usare il protocollo HTTPS o un indirizzo localhost. }}
+        one {{ L’URL del file di configurazione deve usare il protocollo HTTPS o un indirizzo localhost. }}
         *   {{ Gli URL del file di configurazione devono usare il protocollo HTTPS o indirizzi localhost. }}
     fetch_failed: Impossibile recuperare il file di configurazione.
     # {$status} is the HTTP status code returned while fetching the config file
     fetch_failed_not_ok: La risposta HTTP ha restituito lo stato {$status}.
     # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
-    fetch_failed_with_manual_init: "Impossibile recuperare il file di configurazione. Per impedire il caricamento del file `config.yml`, aggiungi <a>`load_config_file: false`</a> all'oggetto di configurazione passato a `CMS.init()`."
+    fetch_failed_with_manual_init: 'Impossibile recuperare il file di configurazione. Per impedire il caricamento del file `config.yml`, aggiungi <a>`load_config_file: false`</a> all’oggetto di configurazione passato a `CMS.init()`.'
     parse_failed: Impossibile analizzare il file di configurazione.
     parse_failed_invalid_object: Il file di configurazione non è un oggetto JavaScript valido.
     parse_failed_unsupported_type: Il tipo di file di configurazione non è valido. Sono supportati solo YAML, TOML e JSON.
     no_collection: Le collezioni non sono state definite.
     # Don’t localize `hide`
-    no_visible_collection: Deve essere visibile almeno una collezione. Controlla l'opzione `hide`.
+    no_visible_collection: Deve essere visibile almeno una collezione. Controlla l’opzione `hide`.
     missing_backend: Il backend non è definito.
     missing_backend_name: Il nome del backend non è definito.
     # {$name} is the backend name from the CMS configuration
@@ -1505,25 +1505,25 @@ config:
     unsupported_custom_backend: I backend personalizzati <a>non sono supportati</a> in Sveltia CMS.
     unsupported_backend_suggestion: Usa invece uno dei <a>backend supportati</a>.
     missing_repository: Il repository non è stato definito.
-    invalid_repository: Il repository configurato non è valido. Deve essere nel formato "owner/repo".
+    invalid_repository: Il repository configurato non è valido. Deve essere nel formato “owner/repo”.
     oauth_implicit_flow: Il metodo di autenticazione configurato (flusso implicito) non è supportato in Sveltia CMS. Usa un <a>metodo di autenticazione</a> diverso.
-    github_pkce_unsupported: L'autorizzazione PKCE non è ancora supportata a causa delle limitazioni di GitHub. Usa un <a>metodo di autenticazione</a> diverso.
-    oauth_no_app_id: L'ID dell'applicazione OAuth non è stato definito.
+    github_pkce_unsupported: L’autorizzazione PKCE non è ancora supportata a causa delle limitazioni di GitHub. Usa un <a>metodo di autenticazione</a> diverso.
+    oauth_no_app_id: L’ID dell’applicazione OAuth non è stato definito.
     # Don’t localize `open_authoring` and `editorial_workflow`
-    open_authoring_no_workflow: L'opzione `open_authoring` richiede la modalità di pubblicazione `editorial_workflow`. Consulta la <a>documentazione</a> per i dettagli.
+    open_authoring_no_workflow: L’opzione `open_authoring` richiede la modalità di pubblicazione `editorial_workflow`. Consulta la <a>documentazione</a> per i dettagli.
     # Don’t localize `auth_methods`
-    no_auth_methods: L'opzione `auth_methods` deve contenere almeno un metodo.
+    no_auth_methods: L’opzione `auth_methods` deve contenere almeno un metodo.
     missing_media_folder: La cartella dei file multimediali non è stata definita.
-    public_folder_relative_path: La cartella pubblica configurata non è valida. Deve essere un percorso assoluto che inizia con "/".
-    public_folder_absolute_url: Un URL assoluto per l'opzione della cartella pubblica non è supportato in Sveltia CMS.
+    public_folder_relative_path: La cartella pubblica configurata non è valida. Deve essere un percorso assoluto che inizia con “/”.
+    public_folder_absolute_url: Un URL assoluto per l’opzione della cartella pubblica non è supportato in Sveltia CMS.
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
-    invalid_transformation_key: L'opzione `transformations` contiene una chiave `{$key}` non supportata. Deve essere `raster_image`, `svg` o un formato di immagine raster supportato.
+    invalid_transformation_key: L’opzione `transformations` contiene una chiave `{$key}` non supportata. Deve essere `raster_image`, `svg` o un formato di immagine raster supportato.
     # {$key} is the transformation key; Don’t localize `quality`
-    invalid_transformation_quality: L'opzione `quality` per la trasformazione `{$key}` non è valida. Deve essere un intero compreso tra 0 e 100.
+    invalid_transformation_quality: L’opzione `quality` per la trasformazione `{$key}` non è valida. Deve essere un intero compreso tra 0 e 100.
     # {$prop} is either `width` or `height`; {$key} is the transformation key
-    invalid_transformation_size: L'opzione `{$prop}` per la trasformazione `{$key}` non è valida. Deve essere un intero positivo.
+    invalid_transformation_size: L’opzione `{$prop}` per la trasformazione `{$key}` non è valida. Deve essere un intero positivo.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
-    missing_asset_collection_name: La collezione di file multimediali {$count} deve avere l'opzione `name` definita come stringa non vuota.
+    missing_asset_collection_name: La collezione di file multimediali {$count} deve avere l’opzione `name` definita come stringa non vuota.
     # {$name} is the invalid or duplicate asset collection name
     invalid_asset_collection_name: Il nome della collezione di file multimediali `{$name}` non è valido. Non deve contenere caratteri speciali.
     # {$name} is the duplicate asset collection name
@@ -1533,71 +1533,71 @@ config:
     # Don’t localize `folder`, `files`, and `divider`
     invalid_collection_multiple_options: La collezione non può avere contemporaneamente le opzioni `folder`, `files` e `divider`.
     # {$extension} is the file extension and {$format} is the configured content format
-    file_format_mismatch: L'estensione `{$extension}` non corrisponde al formato `{$format}`.
+    file_format_mismatch: L’estensione `{$extension}` non corrisponde al formato `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: Il modello di slug `{$slug}` non è valido poiché non può contenere slash. Per organizzare le voci in sottocartelle, usa l'opzione `path` invece di `slug`.
+    invalid_slug_slash: Il modello di slug `{$slug}` non è valido poiché non può contenere slash. Per organizzare le voci in sottocartelle, usa l’opzione `path` invece di `slug`.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
-    invalid_reorder_group: L'opzione `reorder` fa riferimento a un gruppo di visualizzazione chiamato `{$name}`, ma questo gruppo non è definito nell'opzione `view_groups`.
+    invalid_reorder_group: L’opzione `reorder` fa riferimento a un gruppo di visualizzazione chiamato `{$name}`, ma questo gruppo non è definito nell’opzione `view_groups`.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
-    invalid_sortable_field: L'opzione `sortable_fields` fa riferimento a un campo chiamato `{$name}`, ma questo campo non è definito nella collezione.
+    invalid_sortable_field: L’opzione `sortable_fields` fa riferimento a un campo chiamato `{$name}`, ma questo campo non è definito nella collezione.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
-    invalid_view_group_field: L'opzione `view_groups` fa riferimento a un campo chiamato `{$name}`, ma questo campo non è definito nella collezione.
+    invalid_view_group_field: L’opzione `view_groups` fa riferimento a un campo chiamato `{$name}`, ma questo campo non è definito nella collezione.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
-    invalid_view_filter_field: L'opzione `view_filters` fa riferimento a un campo chiamato `{$name}`, ma questo campo non è definito nella collezione.
+    invalid_view_filter_field: L’opzione `view_filters` fa riferimento a un campo chiamato `{$name}`, ma questo campo non è definito nella collezione.
     # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
-    missing_view_group_name: Il gruppo di visualizzazione {$count} deve avere l'opzione `name` definita come stringa non vuota.
+    missing_view_group_name: Il gruppo di visualizzazione {$count} deve avere l’opzione `name` definita come stringa non vuota.
     # {$name} is the invalid or duplicate view group name
     invalid_view_group_name: Il nome del gruppo di visualizzazione `{$name}` non è valido. Non deve contenere caratteri speciali.
     duplicate_view_group_name: I nomi dei gruppi di visualizzazione devono essere univoci, ma `{$name}` è usato più di una volta.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
-    missing_view_filter_name: Il filtro di visualizzazione {$count} deve avere l'opzione `name` definita come stringa non vuota.
+    missing_view_filter_name: Il filtro di visualizzazione {$count} deve avere l’opzione `name` definita come stringa non vuota.
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: Il nome del filtro di visualizzazione `{$name}` non è valido. Non deve contenere caratteri speciali.
     duplicate_view_filter_name: I nomi dei filtri di visualizzazione devono essere univoci, ma `{$name}` è usato più di una volta.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
-    missing_collection_name: La collezione {$count} deve avere l'opzione `name` definita come stringa non vuota.
+    missing_collection_name: La collezione {$count} deve avere l’opzione `name` definita come stringa non vuota.
     # {$name} is the invalid or duplicate collection name
     invalid_collection_name: Il nome della collezione `{$name}` non è valido. Non deve contenere caratteri speciali.
     duplicate_collection_name: I nomi delle collezioni devono essere univoci, ma `{$name}` è usato più di una volta.
     # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
-    missing_collection_file_name: Il file della collezione {$count} deve avere l'opzione `name` definita come stringa non vuota.
+    missing_collection_file_name: Il file della collezione {$count} deve avere l’opzione `name` definita come stringa non vuota.
     # {$name} is the invalid or duplicate collection file name
     invalid_collection_file_name: Il nome del file della collezione `{$name}` non è valido. Non deve contenere caratteri speciali.
     duplicate_collection_file_name: I nomi dei file di collezione devono essere univoci, ma `{$name}` è usato più di una volta.
     # Don’t localize `fields`
-    collection_no_fields: La collezione deve avere l'opzione `fields` definita con almeno un campo.
+    collection_no_fields: La collezione deve avere l’opzione `fields` definita con almeno un campo.
     # Don’t localize `fields`
-    collection_file_no_fields: Il file della collezione deve avere l'opzione `fields` definita con almeno un campo.
+    collection_file_no_fields: Il file della collezione deve avere l’opzione `fields` definita con almeno un campo.
     # Don’t localize `i18n`, `locale` and `file`
-    collection_file_i18n_required: Il file della collezione deve avere l'opzione `i18n` definita se il segnaposto `locale` viene utilizzato nel percorso `file`.
+    collection_file_i18n_required: Il file della collezione deve avere l’opzione `i18n` definita se il segnaposto `locale` viene utilizzato nel percorso `file`.
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
-    missing_field_name: Il campo {$count} deve avere l'opzione `name` definita come stringa non vuota.
+    missing_field_name: Il campo {$count} deve avere l’opzione `name` definita come stringa non vuota.
     # {$name} is the invalid or duplicate field name
     invalid_field_name: Il nome del campo `{$name}` non è valido. Non deve contenere caratteri speciali. Se vuoi annidare i campi, <a>usa i campi Object invece della notazione col punto</a>.
     duplicate_field_name: I nomi dei campi devono essere univoci, ma `{$name}` è usato più di una volta.
     # {$count} is the 1-based variable type index in the current types array
-    missing_variable_type: Il tipo di variabile {$count} deve avere l'opzione `name` definita come stringa non vuota.
+    missing_variable_type: Il tipo di variabile {$count} deve avere l’opzione `name` definita come stringa non vuota.
     # {$name} is the invalid or duplicate variable type name
     invalid_variable_type: Il nome del tipo di variabile `{$name}` non è valido. Non deve contenere caratteri speciali.
     duplicate_variable_type: I nomi dei tipi di variabile devono essere univoci, ma `{$name}` è usato più di una volta.
-    date_field_type: "Il tipo di campo Date deprecato non è supportato in Sveltia CMS. Usa invece il tipo di campo DateTime con l'opzione `type: date`."
+    date_field_type: 'Il tipo di campo Date deprecato non è supportato in Sveltia CMS. Usa invece il tipo di campo DateTime con l’opzione `type: date`.'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Fuso orario non valido: {$timeZone}. Deve essere un identificatore di fuso orario IANA valido come `Europe/Rome` o `America/New_York`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: L'opzione deprecata `{$prop}` non è supportata in Sveltia CMS. Usa invece l'opzione `{$newProp}`.
+    unsupported_deprecated_option: L’opzione deprecata `{$prop}` non è supportata in Sveltia CMS. Usa invece l’opzione `{$newProp}`.
     # Don’t localize `allow_multiple`, `multiple`, and `false`
-    allow_multiple: L'opzione `allow_multiple` non è supportata in Sveltia CMS. Usa invece l'opzione `multiple`, il cui valore predefinito è `false`.
+    allow_multiple: L’opzione `allow_multiple` non è supportata in Sveltia CMS. Usa invece l’opzione `multiple`, il cui valore predefinito è `false`.
     # Don’t localize `field`, `fields`, and `types`
     invalid_list_field: Il campo List non può avere contemporaneamente le opzioni `field`, `fields` e `types`.
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
-    invalid_list_variable_type: Il tipo di variabile del campo List non è valido. L'opzione `widget` è impostata su `{$widget}` ma deve essere `object`.
+    invalid_list_variable_type: Il tipo di variabile del campo List non è valido. L’opzione `widget` è impostata su `{$widget}` ma deve essere `object`.
     # Don’t localize `fields`, and `types`
     invalid_object_field: Il campo Object non può avere contemporaneamente le opzioni `fields` e `types`.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: La collezione di riferimento `{$collection}` non è valida o non è definita.
     relation_field_invalid_collection_file: Il file di riferimento `{$file}` non è valido o non è definito.
     # Don’t localize `file`
-    relation_field_missing_file_name: L'opzione `file` deve essere definita per una relazione a una collezione di file.
+    relation_field_missing_file_name: L’opzione `file` deve essere definita per una relazione a una collezione di file.
     relation_field_invalid_value_field: Il campo valore di riferimento `{$field}` non è valido o non è definito.
     unexpected: Errore imprevisto
 
@@ -1605,18 +1605,18 @@ config:
     # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
     # `view_filters[0].pattern`, relative to the collection, file or field named before it.
     # {$type} is a value type name from `schema_value_type` below
-    schema_invalid_type: "L'opzione `{$option}` deve essere {$type}."
+    schema_invalid_type: 'L’opzione `{$option}` deve essere {$type}.'
     # {$values} is a list of the values the option accepts
-    schema_invalid_enum: "L'opzione `{$option}` deve essere uno di questi valori: {$values}."
+    schema_invalid_enum: 'L’opzione `{$option}` deve essere uno di questi valori: {$values}.'
     # {$value} is the only value the option accepts
-    schema_invalid_const: "L'opzione `{$option}` deve essere `{$value}`."
-    schema_invalid_empty_value: "L'opzione `{$option}` deve essere una stringa vuota."
+    schema_invalid_const: 'L’opzione `{$option}` deve essere `{$value}`.'
+    schema_invalid_empty_value: 'L’opzione `{$option}` deve essere una stringa vuota.'
     # {$count} is the exact number of items the option must have
-    schema_invalid_item_count: "L'opzione `{$option}` deve essere un array di {$count} elementi."
-    schema_invalid_value: "L'opzione `{$option}` ha un valore non valido."
-    schema_missing_option: "L'opzione `{$option}` è obbligatoria."
+    schema_invalid_item_count: 'L’opzione `{$option}` deve essere un array di {$count} elementi.'
+    schema_invalid_value: 'L’opzione `{$option}` ha un valore non valido.'
+    schema_missing_option: 'L’opzione `{$option}` è obbligatoria.'
     # {$options} is a list of options, one of which must be defined
-    schema_missing_one_of: "È obbligatoria una di queste opzioni: {$options}."
+    schema_missing_one_of: 'È obbligatoria una di queste opzioni: {$options}.'
     # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
     # be …”
     schema_value_type:
@@ -1628,22 +1628,22 @@ config:
       object: un oggetto
       'null': vuota
 
-# Warning messages (logged to console)
+  # Warning messages (logged to console)
   warning:
-    oauth_no_app_id: L'ID dell'applicazione OAuth non è stato definito. Agli utenti è richiesto di fornire un token di accesso per accedere.
+    oauth_no_app_id: L’ID dell’applicazione OAuth non è stato definito. Agli utenti è richiesto di fornire un token di accesso per accedere.
     editorial_workflow_unsupported: Il Flusso Editoriale è attualmente supportato solo con i backend GitHub e GitLab.
-    open_authoring_unsupported_backend: L'Open Authoring è attualmente supportato solo con il backend GitHub.
+    open_authoring_unsupported_backend: L’Open Authoring è attualmente supportato solo con il backend GitHub.
     nested_collections_unsupported: Le collezioni nidificate non sono ancora supportate in Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
-    unsupported_ignored_option: L'opzione `{$prop}` non è supportata in Sveltia CMS. Verrà ignorata.
+    unsupported_ignored_option: L’opzione `{$prop}` non è supportata in Sveltia CMS. Verrà ignorata.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
-    conflicting_timezone_options: Sono impostate sia l'opzione `picker_utc` che le nuove opzioni di fuso orario (`input_timezone` o `output_utc`). Le nuove opzioni hanno la precedenza. Valuta di rimuovere `picker_utc` dalla tua configurazione.
+    conflicting_timezone_options: Sono impostate sia l’opzione `picker_utc` che le nuove opzioni di fuso orario (`input_timezone` o `output_utc`). Le nuove opzioni hanno la precedenza. Valuta di rimuovere `picker_utc` dalla tua configurazione.
     # Don’t localize `preview_path`
-    preview_path_no_date_field: L'opzione `preview_path` utilizza tag di data e ora, ma la collezione non ha un campo DateTime da cui leggerli, quindi il link di anteprima non verrà mostrato.
+    preview_path_no_date_field: L’opzione `preview_path` utilizza tag di data e ora, ma la collezione non ha un campo DateTime da cui leggerli, quindi il link di anteprima non verrà mostrato.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
-    preview_path_date_field_not_found: L'opzione `preview_path_date_field` fa riferimento a un campo chiamato `{$name}`, ma non è definito alcun campo DateTime con quel nome, quindi il link di anteprima non verrà mostrato.
+    preview_path_date_field_not_found: L’opzione `preview_path_date_field` fa riferimento a un campo chiamato `{$name}`, ma non è definito alcun campo DateTime con quel nome, quindi il link di anteprima non verrà mostrato.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
-    preview_path_field_not_found: L'opzione `preview_path` fa riferimento a `{$name}`, ma nessun campo con questo nome è definito nella collezione, quindi il link di anteprima non verrà mostrato.
+    preview_path_field_not_found: L’opzione `preview_path` fa riferimento a `{$name}`, ma nessun campo con questo nome è definito nella collezione, quindi il link di anteprima non verrà mostrato.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Vedi le note di compatibilità per i dettagli: {$link}'
@@ -1702,8 +1702,8 @@ workflow:
   deletion_pending: |
     .input {$count :integer}
     .match $count
-      one {{ Voce contrassegnata per l'eliminazione. }}
-      *   {{ {$count} voci contrassegnate per l'eliminazione. }}
+      one {{ Voce contrassegnata per l’eliminazione. }}
+      *   {{ {$count} voci contrassegnate per l’eliminazione. }}
   # Toast notification shown after the unpublished changes to an entry have been thrown away
   changes_discarded: |
     .input {$count :integer}
@@ -1714,7 +1714,7 @@ workflow:
   cancelling_deletion: Annullamento Eliminazione…
   deletion_cancelled: Eliminazione annullata.
   # Error notification when the deletion could not be cancelled
-  cancelling_deletion_failed: Impossibile annullare l'eliminazione. Riprova.
+  cancelling_deletion_failed: Impossibile annullare l’eliminazione. Riprova.
   # Group heading shown above the unpublished entries in the entry list
   unpublished_entries: Voci Non Pubblicate
   published_entries: Voci Pubblicate
@@ -1748,7 +1748,7 @@ workflow:
   # Confirmation message shown before deleting a published entry, replacing the direct
   # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
   # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
-  confirm_deleting_published_entry: Sei sicuro di voler eliminare questa voce? Non verrà rimossa finché l'eliminazione non sarà pubblicata. Fino ad allora la troverai nell'elenco delle voci, contrassegnata come In Attesa di Eliminazione.
+  confirm_deleting_published_entry: Sei sicuro di voler eliminare questa voce? Non verrà rimossa finché l’eliminazione non sarà pubblicata. Fino ad allora la troverai nell’elenco delle voci, contrassegnata come In Attesa di Eliminazione.
   # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
@@ -1814,7 +1814,7 @@ open_authoring:
   # {$repo} is the repository identifier
   private_repo_scope_required: Il tuo accesso non include i repository privati, quindi il repository “{$repo}” non può essere letto. Chiedi a un manutentore di controllare le impostazioni di autenticazione del CMS.
   # Error shown when a contributor tries to publish an entry, which only a maintainer can do
-  publish_unsupported: Solo un manutentore può pubblicare le modifiche su questo sito. Contrassegna la tua voce come In Revisione e qualcuno le darà un'occhiata.
+  publish_unsupported: Solo un manutentore può pubblicare le modifiche su questo sito. Contrassegna la tua voce come In Revisione e qualcuno le darà un’occhiata.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
   direct_commit_unsupported: Questa modifica non può essere fatta direttamente. Solo le modifiche alle voci possono essere suggerite per la revisione.
@@ -1843,7 +1843,7 @@ prefs:
 
   # Preferences operation errors
   error:
-    permission_denied: L'accesso all'archiviazione dei cookie è stato negato. Controlla i permessi del tuo browser e riprova.
+    permission_denied: L’accesso all’archiviazione dei cookie è stato negato. Controlla i permessi del tuo browser e riprova.
 
   # Appearance panel
   appearance:
@@ -1860,7 +1860,7 @@ prefs:
   language:
     title: Lingua
     ui_language:
-      title: Lingua dell'Interfaccia Utente
+      title: Lingua dell’Interfaccia Utente
       select_language: Seleziona Lingua
 
   # Contents panel
@@ -1871,9 +1871,9 @@ prefs:
       use_draft_backup:
         switch_label: Esegui automaticamente il backup delle bozze
       close_on_save:
-        switch_label: Chiudi l'editor dopo aver salvato una bozza
+        switch_label: Chiudi l’editor dopo aver salvato una bozza
       close_with_escape:
-        switch_label: Chiudi l'editor con il tasto Esc
+        switch_label: Chiudi l’editor con il tasto Esc
 
   # Internationalization panel
   i18n:
@@ -1923,7 +1923,7 @@ prefs:
     title: Accessibilità
     underline_links:
       title: Sottolinea Link
-      description: Mostra la sottolineatura per i link nell'anteprima della voce e nelle etichette dell'interfaccia utente.
+      description: Mostra la sottolineatura per i link nell’anteprima della voce e nelle etichette dell’interfaccia utente.
       switch_label: Sottolinea Sempre i Link
 
   # Advanced panel
@@ -1956,12 +1956,12 @@ prefs:
       file_cache:
         description: Elimina i contenuti dei file memorizzati nella cache locale e le miniature delle immagini per liberare spazio o risolvere problemi causati da dati obsoleti.
         button_label: Svuota Cache File
-        confirmation: I contenuti dei file e le miniature delle immagini nella cache locale verranno eliminati. Le tue bozze non salvate e le impostazioni verranno mantenute, e qualsiasi dato eliminato verrà scaricato o generato di nuovo in base alle necessità. Il CMS verrà ricaricato al termine dell'operazione.
+        confirmation: I contenuti dei file e le miniature delle immagini nella cache locale verranno eliminati. Le tue bozze non salvate e le impostazioni verranno mantenute, e qualsiasi dato eliminato verrà scaricato o generato di nuovo in base alle necessità. Il CMS verrà ricaricato al termine dell’operazione.
       # Erase All Data button
       all_data:
         description: Elimina tutto ciò che il CMS conserva in questo browser, inclusi i file memorizzati nella cache, le bozze non salvate e le impostazioni. Tutto ciò che è già stato salvato nel tuo repository non verrà interessato.
         button_label: Cancella Tutti i Dati
-        confirmation: Tutti i dati memorizzati in questo browser verranno eliminati, inclusi i contenuti dei file nella cache, le miniature, le bozze non salvate, le impostazioni e lo stato di accesso. Il tuo repository non verrà interessato, ma qualsiasi modifica non salvata andrà persa e dovrai accedere di nuovo. Il CMS verrà ricaricato al termine dell'operazione.
+        confirmation: Tutti i dati memorizzati in questo browser verranno eliminati, inclusi i contenuti dei file nella cache, le miniature, le bozze non salvate, le impostazioni e lo stato di accesso. Il tuo repository non verrà interessato, ma qualsiasi modifica non salvata andrà persa e dovrai accedere di nuovo. Il CMS verrà ricaricato al termine dell’operazione.
 
 # ==============================================================================
 # Keyboard Shortcuts
@@ -2051,4 +2051,3 @@ file_size_units:
   mb: '{$size} MB'
   gb: '{$size} GB'
   tb: '{$size} TB'
-  
