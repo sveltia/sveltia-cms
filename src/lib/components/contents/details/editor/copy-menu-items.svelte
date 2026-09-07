@@ -55,12 +55,13 @@
 
 {#snippet localeItems()}
   {#each otherLocales as otherLocale (otherLocale)}
+    {@const localeLabel = getLocaleLabel(otherLocale)}
     {@const languagePair = { sourceLanguage: otherLocale, targetLanguage: locale }}
     {#await isMenuDisabled(languagePair) then disabled}
       <MenuItem
-        label={_(translate ? 'translate_from_x' : 'copy_from_x', {
-          values: { locale: getLocaleLabel(otherLocale) },
-        })}
+        label={useSubmenu
+          ? localeLabel
+          : _(translate ? 'translate_from_x' : 'copy_from_x', { values: { locale: localeLabel } })}
         {disabled}
         onclick={() => {
           copyFromLocale({ ...languagePair, keyPath, translate });
