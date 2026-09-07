@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
+  import { Alert, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
   import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
   import { sanitize } from 'isomorphic-dompurify';
@@ -339,7 +339,9 @@
         />
         {@render afterInput()}
       {:else if getFieldKind(fieldConfig) === 'unknown'}
-        <div role="none">{_('unsupported_field_type_x', { values: { name: fieldType } })}</div>
+        <Alert status="warning">
+          {_('unsupported_field_type_x', { values: { name: fieldType } })}
+        </Alert>
       {:else}
         {@const Editor = editors[fieldType]}
         {@render beforeInput()}
