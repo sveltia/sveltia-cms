@@ -142,6 +142,7 @@ words:
   - strikethrough
   - stylelint
   - subfolders
+  - subschema
   - Supabase
   - sveltejs
   - Sveltia

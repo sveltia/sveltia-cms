@@ -285,16 +285,21 @@ const discriminateByRequired = (schema, branches, rewritten) => {
 /**
  * Adapt the published JSON schema for runtime validation.
  *
- * Two changes make the validator’s output usable. Unknown properties are allowed, because a
+ * Each union of object schemas becomes an `if`/`then`/`else` chain keyed on whatever identifies its
+ * branches, so that a mistyped option in a Markdown field is reported once against the Markdown
+ * field, instead of once for every field type the object failed to be.
+ *
+ * An unknown property is kept a violation, so that a typo or a mistake like a YAML flow mapping
+ * that silently gains a key is caught. It’s reported as a warning rather than an error, because a
  * configuration written for another CMS, or for a newer version of Sveltia CMS, carries options
- * that are simply ignored and shouldn’t stop anyone from signing in. And each union of object
- * schemas becomes an `if`/`then`/`else` chain keyed on whatever identifies its branches, so that a
- * mistyped option in a Markdown field is reported once against the Markdown field, instead of once
- * for every field type the object failed to be.
+ * that are simply ignored and shouldn’t stop anyone from signing in.
  * @param {Record<string, any>} schema Published schema.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.allowUnknownProperties] Whether to drop every `additionalProperties:
+ * false` from the schema, so an object may hold properties the schema doesn’t describe.
  * @returns {Record<string, any>} Schema to validate against.
  */
-export const prepareSchema = (schema) => {
+export const prepareSchema = (schema, { allowUnknownProperties = false } = {}) => {
   /**
    * Rewrite a node and everything below it.
    * @param {any} node Node to rewrite.
@@ -314,7 +319,10 @@ export const prepareSchema = (schema) => {
 
     Object.entries(node).forEach(([key, value]) => {
       // `anyOf` is handled below, once its branches have been rewritten
-      if (key !== 'anyOf' && !(key === 'additionalProperties' && value === false)) {
+      if (
+        key !== 'anyOf' &&
+        !(allowUnknownProperties && key === 'additionalProperties' && value === false)
+      ) {
         result[key] = rewrite(value);
       }
     });

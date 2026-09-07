@@ -177,14 +177,36 @@ const describeError = ({ keyword, params }, option) => {
  * branches of a union it was never meant to match and every object enclosing the actual mistake. To
  * keep the report readable, the branch selections the adapted schema introduces are dropped, only
  * the innermost location is kept, and the alternatives of a union are merged into a single message.
+ *
+ * An unknown property is reported as a warning rather than an error, because a configuration
+ * written for another CMS, or for a newer version of Sveltia CMS, carries options that are simply
+ * ignored. It’s reported on its own, before the rest, so that it survives the grouping below: the
+ * object holding it may well have another, unrelated problem deeper inside.
  * @param {object} args Arguments.
  * @param {CmsConfig} args.config Raw CMS configuration.
  * @param {SchemaValidationError[]} args.errors Validation errors.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
 export const reportSchemaErrors = ({ config, errors, collectors }) => {
+  errors
+    .filter(({ keyword }) => keyword === 'additionalProperties')
+    .forEach(({ instancePath, params }) => {
+      const { context, option } = locateError(config, instancePath);
+
+      addMessage({
+        type: 'warning',
+        strKey: 'schema_unknown_option',
+        values: { option: formatOption([...option, params.additionalProperty]) },
+        context,
+        collectors,
+      });
+    });
+
   // `if` errors only say which branch of a union was selected, which is never the problem
-  const relevant = errors.filter(({ keyword }) => keyword !== 'if');
+  const relevant = errors.filter(
+    ({ keyword }) => keyword !== 'if' && keyword !== 'additionalProperties',
+  );
+
   const paths = [...new Set(relevant.map(({ instancePath }) => instancePath))];
   // Anything wrong inside an object also fails the object itself, and the enclosing report is
   // always the vaguer of the two

@@ -92,6 +92,55 @@ describe('config/schema/validator', () => {
     ]);
   });
 
+  test('names each property the schema doesn’t describe', () => {
+    const validate = compileSchema({
+      type: 'object',
+      properties: { a: { type: 'string' } },
+      additionalProperties: false,
+    });
+
+    expect(validate({ a: 'x', b: 1, c: 2 })).toEqual([
+      { instancePath: '', keyword: 'additionalProperties', params: { additionalProperty: 'b' } },
+      { instancePath: '', keyword: 'additionalProperties', params: { additionalProperty: 'c' } },
+    ]);
+  });
+
+  // The validator rejects a known property whose value failed its own subschema with the same
+  // boolean schema it uses for an unknown one, which would otherwise be reported as a typo
+  test('doesn’t call a known property unknown when its value is invalid', () => {
+    const validate = compileSchema({
+      type: 'object',
+      properties: { a: { type: 'string' }, b: { type: 'object', required: ['c'] } },
+      additionalProperties: false,
+    });
+
+    expect(validate({ a: 1, b: {} })).toEqual([
+      { instancePath: '/a', keyword: 'type', params: { type: 'string' } },
+      { instancePath: '/b', keyword: 'required', params: { missingProperty: 'c' } },
+    ]);
+  });
+
+  test('reports an unknown property alongside an invalid one', () => {
+    const validate = compileSchema({
+      type: 'object',
+      properties: { a: { type: 'string' } },
+      additionalProperties: false,
+    });
+
+    expect(validate({ a: 1, b: 2 })).toEqual([
+      { instancePath: '', keyword: 'additionalProperties', params: { additionalProperty: 'b' } },
+      { instancePath: '/a', keyword: 'type', params: { type: 'string' } },
+    ]);
+  });
+
+  test('decodes an escaped unknown property name', () => {
+    const validate = compileSchema({ type: 'object', additionalProperties: false });
+
+    expect(validate({ 'a/b': 1 })).toEqual([
+      { instancePath: '', keyword: 'additionalProperties', params: { additionalProperty: 'a/b' } },
+    ]);
+  });
+
   test('resolves a nested object when listing its missing properties', () => {
     const validate = compileSchema({
       type: 'object',

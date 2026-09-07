@@ -50,16 +50,23 @@ const config = /** @type {any} */ ({
 /**
  * Collect the messages the given errors produce.
  * @param {Partial<SchemaValidationError>[]} errors Validation errors.
- * @returns {string[]} Messages.
+ * @returns {{ errors: string[], warnings: string[] }} Messages, by collector.
  */
-const report = (errors) => {
+const collect = (errors) => {
   /** @type {any} */
   const collectors = { errors: new Set(), warnings: new Set() };
 
   reportSchemaErrors({ config, errors: /** @type {any} */ (errors), collectors });
 
-  return [...collectors.errors];
+  return { errors: [...collectors.errors], warnings: [...collectors.warnings] };
 };
+
+/**
+ * Collect the error messages the given errors produce.
+ * @param {Partial<SchemaValidationError>[]} errors Validation errors.
+ * @returns {string[]} Messages.
+ */
+const report = (errors) => collect(errors).errors;
 
 describe('config/schema/errors', () => {
   describe('locateError', () => {
@@ -148,6 +155,65 @@ describe('config/schema/errors', () => {
   });
 
   describe('reportSchemaErrors', () => {
+    test('warns about an option the schema doesn’t describe', () => {
+      const { errors, warnings } = collect([
+        {
+          instancePath: '/collections/0/filter',
+          keyword: 'additionalProperties',
+          params: { additionalProperty: 'Regulation' },
+        },
+      ]);
+
+      // Ignoring an unknown option is safe, so it must not keep anyone out of the CMS
+      expect(errors).toEqual([]);
+      expect(warnings).toEqual([
+        'config.error_locator.collection collection=Blog: ' +
+          'config.warning.schema_unknown_option option=filter.Regulation',
+      ]);
+    });
+
+    test('warns about an unknown option of a field', () => {
+      expect(
+        collect([
+          {
+            instancePath: '/collections/0/fields/1/fields/0',
+            keyword: 'additionalProperties',
+            params: { additionalProperty: 'bogus' },
+          },
+        ]).warnings,
+      ).toEqual([
+        'config.error_locator.collection collection=Blog, ' +
+          'config.error_locator.field field=meta.desc: ' +
+          'config.warning.schema_unknown_option option=bogus',
+      ]);
+    });
+
+    test('keeps an unknown option when the object has another problem deeper inside', () => {
+      const { errors, warnings } = collect([
+        {
+          instancePath: '/collections/0/filter',
+          keyword: 'additionalProperties',
+          params: { additionalProperty: 'Regulation' },
+        },
+        {
+          instancePath: '/collections/0/filter/field',
+          keyword: 'type',
+          params: { type: 'string' },
+        },
+      ]);
+
+      expect(warnings).toEqual([
+        'config.error_locator.collection collection=Blog: ' +
+          'config.warning.schema_unknown_option option=filter.Regulation',
+      ]);
+
+      expect(errors).toEqual([
+        'config.error_locator.collection collection=Blog: ' +
+          'config.error.schema_invalid_type option=filter.field ' +
+          'type=config.error.schema_value_type.string',
+      ]);
+    });
+
     test('describes a wrong value type', () => {
       expect(
         report([

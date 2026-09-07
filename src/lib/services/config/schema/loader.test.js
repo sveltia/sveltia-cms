@@ -31,12 +31,17 @@ describe('config/schema/loader', () => {
 
   test('adapts the bundled schema for validation', async () => {
     mockSchema.current = {
-      definitions: { Root: { type: 'object', additionalProperties: false } },
+      definitions: {
+        Root: { anyOf: [{ $ref: '#/definitions/A' }, { $ref: '#/definitions/B' }] },
+        A: { properties: { widget: { const: 'a' } }, required: ['widget'] },
+        B: { properties: { widget: { const: 'b' } }, required: ['widget'] },
+      },
     };
 
     const { getConfigSchema } = await importLoader();
 
-    expect(getConfigSchema()?.definitions.Root.additionalProperties).toBeUndefined();
+    // The union is rewritten into a branch selection
+    expect(getConfigSchema()?.definitions.Root).toHaveProperty('if');
   });
 
   test('adapts the schema only once', async () => {

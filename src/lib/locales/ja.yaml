@@ -1561,6 +1561,8 @@ config:
     preview_path_date_field_not_found: '`preview_path_date_field` オプションで `{$name}` という名前のフィールドが指定されていますが、その名前の DateTime フィールドが定義されていないため、プレビューリンクは表示されません。'
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: '`preview_path` オプションで `{$name}` が参照されていますが、そのフィールドはコレクションに定義されていないため、プレビューリンクは表示されません。'
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: '`{$option}` オプションは Sveltia CMS の設定スキーマに定義されていません。このオプションは無視されます。入力ミスがないか確認してください。'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: '詳しくは互換性情報をご覧ください: {$link}'

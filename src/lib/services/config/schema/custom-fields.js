@@ -35,12 +35,13 @@ const getCustomFieldSchemas = () => {
     }
 
     // A registered schema describes the options the field type adds, not the whole field, so an
-    // `additionalProperties: false` in it would reject the common options every field has. Unknown
-    // options are tolerated everywhere else, so they are here too.
+    // `additionalProperties: false` in it would reject the common options every field has. The
+    // `CustomField` definition it’s applied alongside doesn’t constrain its properties either, so
+    // a custom field type accepts any option it hasn’t described.
     schemas.push({
       if: { required: ['widget'], properties: { widget: { const: name } } },
       // oxlint-disable-next-line unicorn/no-thenable -- `then` is a JSON Schema keyword here
-      then: prepareSchema(schema),
+      then: prepareSchema(schema, { allowUnknownProperties: true }),
     });
   });
 

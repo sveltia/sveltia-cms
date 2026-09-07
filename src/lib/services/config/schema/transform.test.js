@@ -13,7 +13,7 @@ const build = (definitions) => ({ $ref: '#/definitions/Root', definitions });
 
 describe('config/schema/transform', () => {
   describe('prepareSchema', () => {
-    test('allows unknown properties', () => {
+    test('keeps unknown properties a violation', () => {
       const { definitions } = prepareSchema(
         build({
           Root: {
@@ -24,6 +24,22 @@ describe('config/schema/transform', () => {
         }),
       );
 
+      expect(definitions.Root.additionalProperties).toBe(false);
+      expect(definitions.Root.properties.nested.additionalProperties).toBe(false);
+    });
+
+    test('allows unknown properties on request', () => {
+      const { definitions } = prepareSchema(
+        build({
+          Root: {
+            type: 'object',
+            additionalProperties: false,
+            properties: { nested: { type: 'object', additionalProperties: false } },
+          },
+        }),
+        { allowUnknownProperties: true },
+      );
+
       expect(definitions.Root.additionalProperties).toBeUndefined();
       expect(definitions.Root.properties.nested.additionalProperties).toBeUndefined();
     });
@@ -31,6 +47,7 @@ describe('config/schema/transform', () => {
     test('keeps an explicit additional property schema', () => {
       const { definitions } = prepareSchema(
         build({ Root: { type: 'object', additionalProperties: { type: 'string' } } }),
+        { allowUnknownProperties: true },
       );
 
       expect(definitions.Root.additionalProperties).toEqual({ type: 'string' });
