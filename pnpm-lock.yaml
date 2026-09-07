@@ -27,8 +27,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))
       '@sveltia/ui':
-        specifier: ^0.70.3
-        version: 0.70.3(svelte@5.57.0(@typescript-eslint/types@8.69.0))(typescript@6.0.3)
+        specifier: ^0.71.0
+        version: 0.71.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.1
         version: 0.12.1
@@ -1204,8 +1204,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.70.3':
-    resolution: {integrity: sha512-MVXDHI8+KfCHE0XU/VPguA9H06NXxv67XNq2N6WUWYD86nrhJFTzISqxQgFbe/1V18LBK6SzzzW4ApU6geNWAQ==}
+  '@sveltia/ui@0.71.0':
+    resolution: {integrity: sha512-3g2KCK1C15oRmREihmPL3mOtS+PtAxY0dJzaqpVOKoZezjRArUoDY7k7z4xid7n7MEi2jpxwASuZhrXxmkynYg==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -1904,8 +1904,8 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.4.14:
-    resolution: {integrity: sha512-dVoH9z+MY+C9IilgGCk3YfFqjLi3fChm2OiKJMzh6axrJ5qwxqWaZamgmHrpv22CN/KdbZJuGEGgfQoL00LTdg==}
+  dompurify@3.4.15:
+    resolution: {integrity: sha512-EUBjM+B+lkDE41iE82DDSCfkoPGfXx8IxFxPMjNzm/Uk4xDet77rTN9wqlxlVg71kK7XGuUMv6wUxJUwwv+Xyw==}
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
@@ -4846,7 +4846,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.57.0(@typescript-eslint/types@8.69.0)
 
-  '@sveltia/ui@0.70.3(svelte@5.57.0(@typescript-eslint/types@8.69.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.71.0(svelte@5.57.0(@typescript-eslint/types@8.69.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.50.0(typescript@6.0.3)
       '@lexical/dragon': 0.50.0(typescript@6.0.3)
@@ -5592,7 +5592,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.4.14:
+  dompurify@3.4.15:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -6545,7 +6545,7 @@ snapshots:
 
   isomorphic-dompurify@4.1.0:
     dependencies:
-      dompurify: 3.4.14
+      dompurify: 3.4.15
       jsdom: 30.0.1
     transitivePeerDependencies:
       - '@noble/hashes'
