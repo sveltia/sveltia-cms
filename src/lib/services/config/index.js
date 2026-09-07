@@ -154,6 +154,9 @@ export const initCmsConfig = async (manualConfig) => {
 
     cmsConfig.set(config);
     cmsConfigVersion.set(await getHash(stringify(config)));
+
+    // eslint-disable-next-line no-console
+    console.debug('CMS configuration:', config);
   } catch (/** @type {any} */ ex) {
     cmsConfigErrors.set(
       collectors.errors.size
