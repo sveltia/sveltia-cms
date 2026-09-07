@@ -43,6 +43,7 @@
     --sui-menu-border-width: 0;
     --sui-menu-border-radius: 0;
     --sui-menu-padding: 8px 0;
+    --sui-menu-divider-margin: 4px 0;
   }
 
   h3 {
