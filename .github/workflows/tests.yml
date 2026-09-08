@@ -24,7 +24,5 @@ jobs:
           version: latest
           runtime: node@26
           cache: true
-      - name: Install dependencies
-        run: pnpm install
       - name: ${{ matrix.task.name }}
         run: ${{ matrix.task.command }}

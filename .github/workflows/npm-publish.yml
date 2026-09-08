@@ -24,8 +24,6 @@ jobs:
           version: latest
           runtime: node@26
           cache: true
-      - name: Install dependencies
-        run: pnpm install
       - name: Build & publish the app
         run: pnpm publish --no-git-checks
       - name: Notify Discord of Release
