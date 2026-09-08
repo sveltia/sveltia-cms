@@ -38,23 +38,45 @@ describe('config/schema/loader', () => {
       },
     };
 
-    const { getConfigSchema } = await importLoader();
+    const { getConfigSchemas } = await importLoader();
 
     // The union is rewritten into a branch selection
-    expect(getConfigSchema()?.definitions.Root).toHaveProperty('if');
+    expect(getConfigSchemas()?.strict.definitions.Root).toHaveProperty('if');
+    expect(getConfigSchemas()?.lenient.definitions.Root).toHaveProperty('if');
+  });
+
+  test('prepares a variant that accepts unknown properties', async () => {
+    mockSchema.current = {
+      definitions: {
+        Root: {
+          type: 'object',
+          additionalProperties: false,
+          properties: { name: { type: 'string' } },
+        },
+      },
+    };
+
+    const { getConfigSchemas } = await importLoader();
+
+    expect(getConfigSchemas()?.strict.definitions.Root).toHaveProperty(
+      'additionalProperties',
+      false,
+    );
+
+    expect(getConfigSchemas()?.lenient.definitions.Root).not.toHaveProperty('additionalProperties');
   });
 
   test('adapts the schema only once', async () => {
     mockSchema.current = { definitions: { Root: { type: 'object' } } };
 
-    const { getConfigSchema } = await importLoader();
+    const { getConfigSchemas } = await importLoader();
 
-    expect(getConfigSchema()).toBe(getConfigSchema());
+    expect(getConfigSchemas()).toBe(getConfigSchemas());
   });
 
   test('skips validation when the app was built without a schema', async () => {
-    const { getConfigSchema } = await importLoader();
+    const { getConfigSchemas } = await importLoader();
 
-    expect(getConfigSchema()).toBeUndefined();
+    expect(getConfigSchemas()).toBeUndefined();
   });
 });

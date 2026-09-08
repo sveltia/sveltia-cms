@@ -34,7 +34,7 @@ vi.mock('$lib/services/config/deprecations', () => ({
 }));
 
 vi.mock('$lib/services/config/schema', () => ({
-  getConfigSchema: vi.fn().mockReturnValue(undefined),
+  getConfigSchemas: vi.fn().mockReturnValue(undefined),
   validateConfigSchema: vi.fn(),
 }));
 

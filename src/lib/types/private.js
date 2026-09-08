@@ -1513,6 +1513,17 @@
  */
 
 /**
+ * The two variants of the configuration schema the validator uses. An unknown property is only
+ * worth a warning, but it fails the object holding it all the same, so the violations that are
+ * real errors are collected from the variant that accepts it.
+ * @typedef {object} ConfigSchemas
+ * @property {Record<string, any>} strict Schema that rejects a property it doesn’t describe, used
+ * to find the options the schema doesn’t know about.
+ * @property {Record<string, any>} lenient Same schema with every `additionalProperties: false`
+ * removed, used to find everything else.
+ */
+
+/**
  * Relation field option.
  * @typedef {object} RelationOption
  * @property {string} label Option label.

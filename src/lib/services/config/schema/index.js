@@ -5,11 +5,11 @@ import { reportSchemaErrors } from '$lib/services/config/schema/errors';
 import { compileSchema } from '$lib/services/config/schema/validator';
 
 /**
- * @import { ConfigParserCollectors } from '$lib/types/private';
+ * @import { ConfigParserCollectors, ConfigSchemas } from '$lib/types/private';
  * @import { CmsConfig } from '$lib/types/public';
  */
 
-export { getConfigSchema } from '$lib/services/config/schema/loader';
+export { getConfigSchemas } from '$lib/services/config/schema/loader';
 
 /**
  * Replace every regular expression object in a configuration with its source string, so it can be
@@ -45,21 +45,35 @@ const replaceRegExps = (value) => {
  * instead of failing the configuration.
  * @param {object} args Arguments.
  * @param {CmsConfig} args.config Raw CMS configuration.
- * @param {Record<string, any> | undefined} args.schema Schema to validate against, if the app was
+ * @param {ConfigSchemas | undefined} args.schemas Schemas to validate against, if the app was
  * built with one.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
-export const validateConfigSchema = ({ config, schema, collectors }) => {
-  if (!schema) {
+export const validateConfigSchema = ({ config, schemas, collectors }) => {
+  if (!schemas) {
     return;
   }
 
   try {
-    const errors = compileSchema(applyCustomFieldSchemas(schema))(replaceRegExps(config));
+    const target = replaceRegExps(config);
+    const errors = compileSchema(applyCustomFieldSchemas(schemas.strict))(target);
 
-    if (errors.length) {
-      reportSchemaErrors({ config, errors, collectors });
+    if (!errors.length) {
+      return;
     }
+
+    const unknown = errors.filter(({ keyword }) => keyword === 'additionalProperties');
+
+    // A property the schema doesn’t describe is only worth a warning, but it fails the object
+    // holding it, and with it the branch of a union that object was meant to match — an
+    // `index_file` written as an object would be reported as having to be a boolean, the only
+    // branch left. So once an unknown property is found, everything else is collected again from
+    // the schema that accepts one, where only the genuine violations remain.
+    const violations = unknown.length
+      ? compileSchema(applyCustomFieldSchemas(schemas.lenient))(target)
+      : errors;
+
+    reportSchemaErrors({ config, errors: [...unknown, ...violations], collectors });
   } catch (ex) {
     // eslint-disable-next-line no-console
     console.warn('Skipping configuration schema validation', ex);

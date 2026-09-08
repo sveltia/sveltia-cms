@@ -11,7 +11,7 @@ import { getAllAssetFolders } from '$lib/services/config/folders/assets';
 import { getAllEntryFolders } from '$lib/services/config/folders/entries';
 import { fetchCmsConfig } from '$lib/services/config/loader';
 import { parseCmsConfig } from '$lib/services/config/parser';
-import { getConfigSchema, validateConfigSchema } from '$lib/services/config/schema';
+import { getConfigSchemas, validateConfigSchema } from '$lib/services/config/schema';
 import { allEntryFolders } from '$lib/services/contents';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
@@ -118,7 +118,7 @@ export const initCmsConfig = async (manualConfig) => {
     // Store the raw config so it can be used in the parser and config viewer
     Object.assign(rawCmsConfig, rawConfig);
 
-    validateConfigSchema({ config: rawConfig, schema: getConfigSchema(), collectors });
+    validateConfigSchema({ config: rawConfig, schemas: getConfigSchemas(), collectors });
     parseCmsConfig(rawConfig, collectors);
 
     if (collectors.errors.size) {
