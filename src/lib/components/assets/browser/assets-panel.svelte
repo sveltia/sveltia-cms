@@ -167,6 +167,12 @@
             gap: 8px;
             align-items: center;
             justify-content: space-between;
+
+            /* `Option` pins button descendants to `flex: none`, so a long name can’t shrink */
+            .truncated-text {
+              flex: auto;
+              min-width: 0;
+            }
           }
         }
       }
