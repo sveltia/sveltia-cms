@@ -49,7 +49,6 @@
       .listbox {
         gap: 4px;
         border-width: 0;
-        max-height: calc(100% - var(--sui-focus-ring-width) * 2);
 
         .option {
           button {
@@ -82,8 +81,6 @@
       .listbox.grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        height: auto;
-        max-height: none;
 
         .option {
           button {
