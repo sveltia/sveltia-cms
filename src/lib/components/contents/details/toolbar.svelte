@@ -33,7 +33,11 @@
   } from '$lib/services/contents/collection/data';
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { getCollectionFileLabel } from '$lib/services/contents/collection/files';
-  import { isNestedCollection, nestedFilterPath } from '$lib/services/contents/collection/nested';
+  import {
+    getSharedEntryFileName,
+    isNestedCollection,
+    nestedFilterPath,
+  } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
   import { createDraft } from '$lib/services/contents/draft/create';
@@ -106,6 +110,14 @@
   const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
   const collection = $derived($entryDraft?.collection);
   const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
+  /**
+   * Whether an entry is identified by its path within the collection folder rather than by a name
+   * of its own, which is the case in a nested collection that doesn’t store every entry as an index
+   * file. The slug editor can’t rename such an entry without relocating it, so it’s not offered.
+   */
+  const slugIsEntryPath = $derived(
+    !!collection && isNestedCollection(collection) && !getSharedEntryFileName(collection),
+  );
   const collectionFile = $derived($entryDraft?.collectionFile);
   const originalEntry = $derived($entryDraft?.originalEntry);
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
@@ -559,7 +571,8 @@
             isNew ||
             isIndexFile ||
             pendingDeletion ||
-            entryCollection?.delete === false}
+            entryCollection?.delete === false ||
+            slugIsEntryPath}
           onclick={() => {
             showEditSlugDialog = true;
           }}

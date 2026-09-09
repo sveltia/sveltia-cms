@@ -1,12 +1,18 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Dialog, TextInput } from '@sveltia/ui';
+  import { stripSlashes } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
 
   import { slugify } from '$lib/services/common/slug';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+  import {
+    getEntryDirPath,
+    getSharedEntryFileName,
+  } from '$lib/services/contents/collection/nested';
   import { entryDraft } from '$lib/services/contents/draft';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
+  import { createPath } from '$lib/services/utils/file';
   import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
   /**
@@ -31,8 +37,31 @@
     /** @type {UnpublishedEntry | undefined} */ ($entryDraft?.originalEntry),
   );
 
+  /**
+   * Folder the entry occupies, in a collection where every entry is an index file within one. The
+   * folder name is what identifies the entry, so renaming it is what the slug editor does there,
+   * and the entry keeps its place in the tree. The folder is shared by every locale, so there’s a
+   * single field rather than one per locale.
+   */
+  const ownFolderPath = $derived.by(() => {
+    const collection = $entryDraft?.collection;
+
+    if (!collection || $entryDraft?.isNew || !getSharedEntryFileName(collection)) {
+      return undefined;
+    }
+
+    return stripSlashes($entryDraft?.currentPath ?? '');
+  });
+
+  const renamesFolder = $derived(ownFolderPath !== undefined);
+  const parentPath = $derived(ownFolderPath ? getEntryDirPath(ownFolderPath) : '');
+  const folderName = $derived(ownFolderPath?.slice(ownFolderPath.lastIndexOf('/') + 1) ?? '');
+
   /** @type {string[]} */
   let otherSlugs = $state([]);
+  let updatedFolderName = $state('');
+  /** @type {SlugValidationResult} */
+  let folderValidation = $state(false);
   /** @type {Record<InternalLocaleCode, string>} */
   const updatedSlugs = $state({});
   /** @type {Record<InternalLocaleCode, SlugValidationResult>} */
@@ -69,6 +98,39 @@
       validations,
       Object.fromEntries(Object.keys(currentSlugs).map((locale) => [locale, false])),
     );
+
+    if (renamesFolder) {
+      updatedFolderName = folderName;
+      folderValidation = false;
+
+      // Only the folders sharing a parent with this one can be in the way
+      otherSlugs = getEntriesByCollection(collectionName)
+        .filter((entry) => entry.id !== originalEntry?.id)
+        .map(({ subPath }) => getEntryDirPath(subPath))
+        .filter((dirPath) => getEntryDirPath(dirPath) === parentPath)
+        .map((dirPath) => dirPath.slice(dirPath.lastIndexOf('/') + 1));
+    }
+  };
+
+  /**
+   * Validate the given slug or folder name.
+   * @param {string} name Name to validate.
+   * @returns {SlugValidationResult} The validation result.
+   */
+  const validateName = (name) => {
+    if (!name.trim()) {
+      return 'empty';
+    }
+
+    if (/[/\s]/.test(name)) {
+      return 'invalid';
+    }
+
+    if (otherSlugs.includes(name)) {
+      return 'duplicate';
+    }
+
+    return false;
   };
 
   /**
@@ -76,21 +138,7 @@
    * @param {InternalLocaleCode} locale The locale code to validate.
    * @returns {SlugValidationResult} The validation result.
    */
-  const validateSlug = (locale) => {
-    if (!updatedSlugs[locale].trim()) {
-      return 'empty';
-    }
-
-    if (/[/\s]/.test(updatedSlugs[locale])) {
-      return 'invalid';
-    }
-
-    if (otherSlugs.includes(updatedSlugs[locale])) {
-      return 'duplicate';
-    }
-
-    return false;
-  };
+  const validateSlug = (locale) => validateName(updatedSlugs[locale]);
 
   $effect(() => {
     if (open) {
@@ -103,42 +151,79 @@
   bind:open
   title={_('edit_slug')}
   okLabel={_('update')}
-  okDisabled={equal(currentSlugs, updatedSlugs) ||
-    Object.values(validations).some((invalid) => invalid !== false)}
+  okDisabled={renamesFolder
+    ? updatedFolderName === folderName || folderValidation !== false
+    : equal(currentSlugs, updatedSlugs) ||
+      Object.values(validations).some((invalid) => invalid !== false)}
   onOk={() => {
+    if (renamesFolder) {
+      // Renaming the folder is what moves the entry, so the rest of the save takes care of the
+      // entries and assets stored below it
+      /** @type {EntryDraft} */ ($entryDraft).currentPath = createPath([
+        parentPath,
+        slugify(updatedFolderName),
+      ]);
+
+      return;
+    }
+
     /** @type {EntryDraft} */ ($entryDraft).currentSlugs = Object.fromEntries(
       Object.entries(updatedSlugs).map(([locale, slug]) => [locale, slugify(slug, { locale })]),
     );
   }}
 >
-  <div role="none" class="locales">
-    {#each Object.keys(updatedSlugs) as locale (locale)}
+  {#if renamesFolder}
+    <div role="none" class="locales">
       <section>
-        {#if !['_', '_default'].includes(locale)}
-          <div role="none">
-            <h3>{getLocaleLabel(locale) ?? locale}</h3>
-          </div>
-        {/if}
         <div role="none">
           <TextInput
             dir="auto"
             flex
-            bind:value={updatedSlugs[locale]}
+            bind:value={updatedFolderName}
             oninput={() => {
-              validations[locale] = validateSlug(locale);
+              folderValidation = validateName(updatedFolderName);
             }}
-            invalid={validations[locale] !== false}
-            aria-errormessage="{componentId}-{locale}-error"
+            invalid={folderValidation !== false}
+            aria-errormessage="{componentId}-folder-error"
           />
-          <p id="{componentId}-{locale}-error" class="error">
-            {#if validations[locale]}
-              {_(`edit_slug_error.${validations[locale]}`)}
+          <p id="{componentId}-folder-error" class="error">
+            {#if folderValidation}
+              {_(`edit_slug_error.${folderValidation}`)}
             {/if}
           </p>
         </div>
       </section>
-    {/each}
-  </div>
+    </div>
+  {:else}
+    <div role="none" class="locales">
+      {#each Object.keys(updatedSlugs) as locale (locale)}
+        <section>
+          {#if !['_', '_default'].includes(locale)}
+            <div role="none">
+              <h3>{getLocaleLabel(locale) ?? locale}</h3>
+            </div>
+          {/if}
+          <div role="none">
+            <TextInput
+              dir="auto"
+              flex
+              bind:value={updatedSlugs[locale]}
+              oninput={() => {
+                validations[locale] = validateSlug(locale);
+              }}
+              invalid={validations[locale] !== false}
+              aria-errormessage="{componentId}-{locale}-error"
+            />
+            <p id="{componentId}-{locale}-error" class="error">
+              {#if validations[locale]}
+                {_(`edit_slug_error.${validations[locale]}`)}
+              {/if}
+            </p>
+          </div>
+        </section>
+      {/each}
+    </div>
+  {/if}
 </Dialog>
 
 <style>
