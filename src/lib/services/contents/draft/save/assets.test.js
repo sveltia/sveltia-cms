@@ -198,6 +198,45 @@ describe('Test resolveAssetFolderPaths()', () => {
     });
   });
 
+  test('nested collection, absolute media and public folders with the entry’s folder', async () => {
+    // @see https://github.com/decaporg/decap-cms/issues/7752
+    /** @type {any} */
+    const collection = {
+      ...collectionBase,
+      folder: 'src/dokument',
+      nested: { depth: 10 },
+      meta: { path: { widget: 'string', index_file: '_index' } },
+      _file: { ..._file, basePath: 'src/dokument', subPath: undefined },
+    };
+
+    /** @type {AssetFolderInfo} */
+    const dirNameAssetFolder = {
+      collectionName: 'documents',
+      internalPath: '/src/dokument/{{dirname}}',
+      publicPath: '/dokument/{{dirname}}',
+      entryRelative: false,
+      hasTemplateTags: true,
+    };
+
+    await setupAssetFolder(dirNameAssetFolder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder: dirNameAssetFolder,
+        fillSlugOptions: {
+          collection,
+          content: {},
+          type: 'media_folder',
+          currentSlug: 'nested/deeper/_index',
+          entryFilePath: 'src/dokument/nested/deeper/_index.md',
+        },
+      }),
+    ).toEqual({
+      resolvedInternalPath: '/src/dokument/nested/deeper',
+      resolvedPublicPath: '/dokument/nested/deeper',
+    });
+  });
+
   test('nested path, multiple folders, entry relative', async () => {
     /** @type {InternalCollection} */
     const collection = {
@@ -1498,6 +1537,91 @@ describe('Test resolveAssetFolderPaths()', () => {
 
     expect(result).toBeDefined();
     expect(result.resolvedInternalPath).toBeDefined();
+  });
+
+  describe('nested collection without a `path` option', () => {
+    const pagesFolder = {
+      collectionName: 'pages',
+      entryRelative: true,
+      hasTemplateTags: false,
+      internalPath: 'content/pages',
+      internalSubPath: '',
+      publicPath: '',
+    };
+
+    /**
+     * Create a nested collection that stores every entry as an index file.
+     * @param {object} [options] Options.
+     * @param {boolean} [options.subfolders] Whether the collection uses the `subfolders` mode.
+     * @param {InternalI18nOptions} [options.i18n] I18n options.
+     * @returns {InternalCollection} Collection.
+     */
+    const createCollection = ({ subfolders = true, i18n = i18nSingleFile } = {}) => ({
+      ...collectionBase,
+      name: 'pages',
+      folder: 'content/pages',
+      nested: { depth: 100, subfolders },
+      meta: { path: { index_file: '_index' } },
+      _file: { ..._file, basePath: 'content/pages', subPath: undefined },
+      _i18n: i18n,
+    });
+
+    /**
+     * Resolve the paths for the given collection and entry file.
+     * @param {InternalCollection} collection Collection.
+     * @param {string} entryFilePath Entry file path.
+     * @returns {string} Resolved internal path.
+     */
+    const resolveInternal = (collection, entryFilePath) =>
+      resolveAssetFolderPaths({
+        folder: pagesFolder,
+        fillSlugOptions: { collection, content: {}, currentSlug: 'about', entryFilePath },
+      }).resolvedInternalPath;
+
+    test('stores the assets next to the entry’s index file', async () => {
+      await setupAssetFolder(pagesFolder);
+
+      expect(resolveInternal(createCollection(), 'content/pages/about/_index.md')).toBe(
+        'content/pages/about',
+      );
+    });
+
+    test('stores the assets of a deeper entry in its own folder', async () => {
+      await setupAssetFolder(pagesFolder);
+
+      expect(resolveInternal(createCollection(), 'content/pages/about/team/_index.md')).toBe(
+        'content/pages/about/team',
+      );
+    });
+
+    test('keeps the locale suffix out of the folder name', async () => {
+      await setupAssetFolder(pagesFolder);
+
+      expect(
+        resolveInternal(
+          createCollection({ i18n: i18nMultiFile }),
+          'content/pages/about/_index.en.md',
+        ),
+      ).toBe('content/pages/about');
+    });
+
+    test('shares the collection folder with an entry that isn’t an index file', async () => {
+      await setupAssetFolder(pagesFolder);
+
+      // The folder belongs to the entry stored as its index file, not to this one
+      expect(resolveInternal(createCollection(), 'content/pages/about/notes.md')).toBe(
+        'content/pages',
+      );
+    });
+
+    test('shares the collection folder without the `subfolders` mode', async () => {
+      await setupAssetFolder(pagesFolder);
+
+      // Entries keep their own file names here, so no folder belongs to one alone
+      expect(
+        resolveInternal(createCollection({ subfolders: false }), 'content/pages/about/_index.md'),
+      ).toBe('content/pages');
+    });
   });
 });
 

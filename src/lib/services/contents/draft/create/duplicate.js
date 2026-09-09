@@ -104,6 +104,8 @@ export const duplicateDraft = () => {
     originalEntry: undefined,
     originalSlugs: {},
     currentSlugs: {},
+    // The duplicate starts out in the folder the original is in, which is now its own baseline
+    originalPath: draft.currentPath,
     slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs: {} }),
   });
 

@@ -15,6 +15,7 @@ const {
   mockGetAssetFolder,
   mockAllAssets,
   mockGetPathInfo,
+  mockGetEntriesByCollection,
 } = vi.hoisted(() => ({
   mockGetMediaFieldURL: vi.fn(),
   mockGetCollection: vi.fn(),
@@ -25,6 +26,7 @@ const {
   mockGetAssetFolder: vi.fn(),
   mockAllAssets: { set: vi.fn(), subscribe: vi.fn() },
   mockGetPathInfo: vi.fn(),
+  mockGetEntriesByCollection: vi.fn(() => /** @type {any[]} */ ([])),
 }));
 
 // Mock the dependencies with hoisted functions
@@ -50,6 +52,10 @@ vi.mock('$lib/services/assets/info', () => ({
 
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: mockGetCollection,
+}));
+
+vi.mock('$lib/services/contents/collection/entries', () => ({
+  getEntriesByCollection: mockGetEntriesByCollection,
 }));
 
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
@@ -986,6 +992,132 @@ describe('getAssociatedAssets', () => {
 
     // Should include the orphaned asset in the sub-folder
     expect(result).toContain(mockAsset);
+  });
+
+  describe('assets owned by a descendant entry', () => {
+    /**
+     * Set up a nested collection where `pages/about` holds the entry being looked at and
+     * `pages/about/team` holds another one.
+     * @param {any[]} assets Assets to expose through the store.
+     */
+    const setupNestedCollection = (assets) => {
+      mockGetCollection.mockReturnValue({ name: 'pages', _type: 'entry' });
+      mockIsCollectionIndexFile.mockReturnValue(false);
+      mockGetField.mockReturnValue(undefined);
+      mockGetAssetByPath.mockReturnValue(undefined);
+      mockGetAssetFoldersByPath.mockReturnValue([]);
+      mockGetAssetFolder.mockReturnValue({ entryRelative: true });
+      mockGetPathInfo.mockImplementation((/** @type {string} */ path) => ({
+        dirname: path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : undefined,
+        basename: path.slice(path.lastIndexOf('/') + 1),
+        filename: path.slice(path.lastIndexOf('/') + 1),
+        extension: '',
+      }));
+      mockAllAssets.subscribe.mockImplementation((/** @type {any} */ callback) => {
+        callback(assets);
+
+        return vi.fn();
+      });
+    };
+
+    const parentEntry = /** @type {any} */ ({
+      id: 'about',
+      locales: { en: { path: 'pages/about/_index.md', content: { title: 'About' } } },
+    });
+
+    const childEntry = /** @type {any} */ ({
+      id: 'team',
+      locales: { en: { path: 'pages/about/team/_index.md', content: { title: 'Team' } } },
+    });
+
+    test('leaves out the assets stored in a descendant entry’s folder', () => {
+      const ownAsset = /** @type {any} */ ({ path: 'pages/about/parent.jpg' });
+      const childAsset = /** @type {any} */ ({ path: 'pages/about/team/child.jpg' });
+
+      setupNestedCollection([ownAsset, childAsset]);
+      mockGetEntriesByCollection.mockReturnValue([parentEntry, childEntry]);
+
+      expect(
+        getAssociatedAssets({ entry: parentEntry, collectionName: 'pages', relative: true }),
+      ).toEqual([ownAsset]);
+    });
+
+    test('leaves out the assets in a subfolder of a descendant entry’s folder', () => {
+      const childAsset = /** @type {any} */ ({ path: 'pages/about/team/images/child.jpg' });
+
+      setupNestedCollection([childAsset]);
+      mockGetEntriesByCollection.mockReturnValue([parentEntry, childEntry]);
+
+      expect(
+        getAssociatedAssets({ entry: parentEntry, collectionName: 'pages', relative: true }),
+      ).toEqual([]);
+    });
+
+    test('keeps the assets in a subfolder that holds no entry', () => {
+      const ownAsset = /** @type {any} */ ({ path: 'pages/about/images/parent.jpg' });
+
+      setupNestedCollection([ownAsset]);
+      mockGetEntriesByCollection.mockReturnValue([parentEntry, childEntry]);
+
+      expect(
+        getAssociatedAssets({ entry: parentEntry, collectionName: 'pages', relative: true }),
+      ).toEqual([ownAsset]);
+    });
+
+    test('keeps its own assets when looking at the descendant', () => {
+      const childAsset = /** @type {any} */ ({ path: 'pages/about/team/child.jpg' });
+
+      setupNestedCollection([/** @type {any} */ ({ path: 'pages/about/parent.jpg' }), childAsset]);
+      mockGetEntriesByCollection.mockReturnValue([parentEntry, childEntry]);
+
+      expect(
+        getAssociatedAssets({ entry: childEntry, collectionName: 'pages', relative: true }),
+      ).toEqual([childAsset]);
+    });
+
+    test('collects the assets of every locale folder', () => {
+      // The `multiple_folders` i18n structure gives each locale a folder of its own
+      const enAsset = /** @type {any} */ ({ path: 'pages/en/about/en-pic.jpg' });
+      const deAsset = /** @type {any} */ ({ path: 'pages/de/about/de-pic.jpg' });
+
+      const entry = /** @type {any} */ ({
+        id: 'about',
+        locales: {
+          en: { path: 'pages/en/about/_index.md', content: { title: 'About' } },
+          de: { path: 'pages/de/about/_index.md', content: { title: 'Über uns' } },
+        },
+      });
+
+      setupNestedCollection([enAsset, deAsset]);
+      mockGetEntriesByCollection.mockReturnValue([entry]);
+
+      expect(getAssociatedAssets({ entry, collectionName: 'pages', relative: true })).toEqual([
+        enAsset,
+        deAsset,
+      ]);
+    });
+
+    test('keeps the assets of a folder shared with another entry', () => {
+      // Without the `subfolders` mode, entries are files sharing one folder, so neither owns it
+      const sharedAsset = /** @type {any} */ ({ path: 'pages/photo.jpg' });
+
+      const entry = /** @type {any} */ ({
+        id: 'overview',
+        locales: { en: { path: 'pages/overview.md', content: { title: 'Overview' } } },
+      });
+
+      const sibling = /** @type {any} */ ({
+        id: 'contact',
+        locales: { en: { path: 'pages/contact.md', content: { title: 'Contact' } } },
+      });
+
+      setupNestedCollection([sharedAsset]);
+      mockGetEntriesByCollection.mockReturnValue([entry, sibling]);
+
+      expect(getAssociatedAssets({ entry, collectionName: 'pages', relative: true })).toEqual([
+        sharedAsset,
+      ]);
+    });
   });
 
   test('returns undefined when assetFolderPath is undefined (line 124)', () => {

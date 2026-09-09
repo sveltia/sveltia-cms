@@ -6,6 +6,7 @@ import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets'
 import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { getMediaFieldURL } from '$lib/services/assets/info';
 import { getCollection } from '$lib/services/contents/collection';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getField } from '$lib/services/contents/entry/fields';
 
@@ -73,6 +74,38 @@ export const getEntryThumbnail = async (collection, entry) => {
 };
 
 /**
+ * Collect the folders below the given one that hold an entry of their own. In a nested collection,
+ * an entry can have others stored beneath it, and each of those keeps its media in its own folder,
+ * so those files belong to the descendant rather than to the entry being looked at.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Name of the collection the entry belongs to.
+ * @param {Entry} args.entry Entry being looked at.
+ * @param {string} args.entryFolderPath Folder the entry is stored in.
+ * @returns {Set<string>} Folder paths. A folder the entry shares with another one is not included,
+ * because neither entry owns it.
+ */
+const getDescendantEntryFolderPaths = ({ collectionName, entry, entryFolderPath }) => {
+  /** @type {Set<string>} */
+  const paths = new Set();
+
+  getEntriesByCollection(collectionName).forEach((otherEntry) => {
+    if (otherEntry.id === entry.id) {
+      return;
+    }
+
+    Object.values(otherEntry.locales).forEach(({ path }) => {
+      const dirPath = getPathInfo(path).dirname;
+
+      if (dirPath !== undefined && dirPath.startsWith(`${entryFolderPath}/`)) {
+        paths.add(dirPath);
+      }
+    });
+  });
+
+  return paths;
+};
+
+/**
  * Get a list of assets associated with the given entry.
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry.
@@ -126,12 +159,48 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
 
   // Add orphaned/unused entry-relative assets
   if (relative && getAssetFolder({ collectionName, fileName })?.entryRelative) {
-    const entryFolderPath = getPathInfo(Object.values(entry.locales)[0].path).dirname;
+    // With the `multiple_folders` and `multiple_root_folders` i18n structures, each locale has a
+    // folder of its own, so the entry’s assets are spread across all of them
+    const entryFolderPaths = new Set(
+      /** @type {string[]} */ (
+        Object.values(entry.locales)
+          .map(({ path }) => getPathInfo(path).dirname)
+          .filter((dirPath) => dirPath !== undefined)
+      ),
+    );
 
-    if (entryFolderPath !== undefined) {
-      const existingPaths = new Set(assets.map(({ path }) => path));
+    const existingPaths = new Set(assets.map(({ path }) => path));
+    const _allAssets = get(allAssets);
 
-      get(allAssets).forEach((asset) => {
+    entryFolderPaths.forEach((entryFolderPath) => {
+      const descendantFolderPaths = getDescendantEntryFolderPaths({
+        collectionName,
+        entry,
+        entryFolderPath,
+      });
+
+      /**
+       * Check whether the given folder belongs to an entry stored below this one, which owns the
+       * files in it.
+       * @param {string} assetFolderPath Folder holding an asset, at or below the entry folder.
+       * @returns {boolean} Result.
+       */
+      const isDescendantEntryFolder = (assetFolderPath) => {
+        // The entry folder is always an ancestor here, so there’s a slash to walk back to
+        let dirPath = assetFolderPath;
+
+        while (dirPath.length > entryFolderPath.length) {
+          if (descendantFolderPaths.has(dirPath)) {
+            return true;
+          }
+
+          dirPath = dirPath.slice(0, dirPath.lastIndexOf('/'));
+        }
+
+        return false;
+      };
+
+      _allAssets.forEach((asset) => {
         const assetFolderPath = getPathInfo(asset.path).dirname;
 
         if (
@@ -139,13 +208,14 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
           // Include assets in the entry folder and its subfolders
           (assetFolderPath === entryFolderPath ||
             assetFolderPath.startsWith(`${entryFolderPath}/`)) &&
+          !isDescendantEntryFolder(assetFolderPath) &&
           !existingPaths.has(asset.path)
         ) {
           assets.push(asset);
           existingPaths.add(asset.path);
         }
       });
-    }
+    });
   }
 
   return assets;

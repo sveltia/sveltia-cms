@@ -1,3 +1,4 @@
+import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 import { derived, get, writable } from 'svelte/store';
 
@@ -177,6 +178,8 @@ export const entryDraftModified = derived([entryDraft], ([draft]) => {
     currentLocales,
     originalSlugs,
     currentSlugs,
+    originalPath,
+    currentPath,
     originalValues,
     currentValues,
   } = draft;
@@ -184,6 +187,8 @@ export const entryDraftModified = derived([entryDraft], ([draft]) => {
   return (
     !equal(originalLocales, currentLocales) ||
     !equal(originalSlugs, currentSlugs) ||
+    // Moving an entry with the path editor is a change of its own, with no field to go with it
+    stripSlashes(originalPath ?? '') !== stripSlashes(currentPath ?? '') ||
     // Internal properties are excluded from the value comparison
     areValuesModified(originalValues, currentValues)
   );

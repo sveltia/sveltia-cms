@@ -143,6 +143,113 @@ describe('Test getEntryPathRegEx()', () => {
     expect('content/posts/my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
   });
 
+  test('generates regex for a nested collection with an unlimited depth', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/pages',
+      nestedDepth: Infinity,
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^content\\/pages\\/(?<subPath>[^/]+?(?:\\/[^/]+?)*)\\.md$');
+    expect('content/pages/_index.md'.match(regex)?.groups?.subPath).toBe('_index');
+    expect('content/pages/a/b/c/_index.md'.match(regex)?.groups?.subPath).toBe('a/b/c/_index');
+  });
+
+  test('generates regex for a nested collection with a limited depth', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/pages',
+      nestedDepth: 2,
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^content\\/pages\\/(?<subPath>[^/]+?(?:\\/[^/]+?){0,1})\\.md$');
+    expect('content/pages/a/_index.md'.match(regex)?.groups?.subPath).toBe('a/_index');
+    expect('content/pages/a/b/_index.md'.match(regex)).toBe(null);
+  });
+
+  test('generates regex for a nested collection with a subPath template', () => {
+    // A page bundle collection puts each entry in its own folder, and nesting means that folder can
+    // itself sit below others
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/pages',
+      subPath: '{{slug}}/_index',
+      nestedDepth: Infinity,
+      _i18n,
+    });
+
+    expect('content/pages/about/_index.md'.match(regex)?.groups?.subPath).toBe('about/_index');
+    expect('content/pages/about/team/_index.md'.match(regex)?.groups?.subPath).toBe(
+      'about/team/_index',
+    );
+    expect('content/pages/a/b/c/_index.md'.match(regex)?.groups?.subPath).toBe('a/b/c/_index');
+    // The template still excludes the files that don’t follow it
+    expect('content/pages/about/notes.md'.match(regex)).toBe(null);
+  });
+
+  test('counts the subPath template segments against the nested depth', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/pages',
+      subPath: '{{slug}}/_index',
+      nestedDepth: 4,
+      _i18n,
+    });
+
+    expect('content/pages/a/b/c/_index.md'.match(regex)?.groups?.subPath).toBe('a/b/c/_index');
+    expect('content/pages/a/b/c/d/_index.md'.match(regex)).toBe(null);
+  });
+
   test('generates regex with subPath template', () => {
     const _i18n = {
       ...baseI18nOptions,

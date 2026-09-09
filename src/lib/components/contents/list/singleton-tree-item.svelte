@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Icon, Option } from '@sveltia/ui';
+  import { Icon, TreeItem } from '@sveltia/ui';
 
   import { announcedPageStatus, goto } from '$lib/services/app/navigation';
 
@@ -29,7 +29,7 @@
 </script>
 
 <div class="wrapper" bind:this={wrapper}>
-  <Option
+  <TreeItem
     bind:selected
     label={label || name}
     onSelect={() => {
@@ -44,13 +44,13 @@
       // Reset the selected state and remove the focused class from the option
       // @todo Handle this in Sveltia UI
       selected = false;
-      wrapper?.querySelector('[role="option"]')?.classList.remove('focused');
+      wrapper?.querySelector('[role="treeitem"]')?.classList.remove('focused');
     }}
   >
     {#snippet startIcon()}
       <Icon name={icon || 'edit_document'} />
     {/snippet}
-  </Option>
+  </TreeItem>
 </div>
 
 <style>

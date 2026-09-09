@@ -112,6 +112,10 @@ vi.mock('$lib/services/contents', () => ({
 
 vi.mock('$lib/services/contents/collection', () => ({
   selectedCollection: _selectedCollection,
+  // Used by the nested collection helpers, which the entry list runs through
+  isEntryCollection: vi.fn(
+    (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
+  ),
 }));
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
@@ -1167,6 +1171,31 @@ describe('collection/view/index', () => {
 
       expect(state.quota).toBe(10);
       expect(state.remaining).toBe(7);
+    });
+
+    test('quota counts every entry in a nested collection, not just the listed folder', () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: '_index', subPath: '_index' },
+        { id: '2', slug: 'docs/_index', subPath: 'docs/_index' },
+        { id: '3', slug: 'docs/intro/_index', subPath: 'docs/intro/_index' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.set(mockEntries);
+      _selectedCollection.set(
+        /** @type {any} */ ({
+          name: 'pages',
+          _type: 'entry',
+          folder: 'content/pages',
+          nested: {},
+          create: true,
+          limit: 10,
+        }),
+      );
+
+      // The root folder only lists two of the three entries
+      expect(get(listedEntries)).toHaveLength(2);
+      expect(get(collectionState).remaining).toBe(7);
     });
 
     test('creationDisabled is false when canCreate is true and entries are under quota', () => {

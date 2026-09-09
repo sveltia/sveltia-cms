@@ -137,6 +137,52 @@ describe('Template handler functions', () => {
       ).toBe('');
     });
 
+    describe('nested collections', () => {
+      /**
+       * Create a context for a nested collection whose entries all share one file name.
+       * @param {Record<string, any>} overrides Override values for the context.
+       * @returns {Parameters<typeof handleSlugTag>[1]} The slug handler context.
+       */
+      const createNestedContext = (overrides) =>
+        createSlugContext({
+          type: 'preview_path',
+          ...overrides,
+          collection: /** @type {any} */ ({
+            name: 'pages',
+            folder: 'content/pages',
+            _type: 'entry',
+            nested: {},
+            meta: { path: { widget: 'string', index_file: '_index' } },
+          }),
+        });
+
+      test('should drop the shared index file name from the preview path', () => {
+        // @see https://github.com/decaporg/decap-cms/issues/4963
+        expect(
+          handleSlugTag('slug', createNestedContext({ currentSlug: 'guides/intro/_index' })),
+        ).toBe('guides/intro');
+      });
+
+      test('should return an empty string for the collection’s own index file', () => {
+        expect(handleSlugTag('slug', createNestedContext({ currentSlug: '_index' }))).toBe('');
+      });
+
+      test('should leave a slug that doesn’t end with the shared file name alone', () => {
+        expect(handleSlugTag('slug', createNestedContext({ currentSlug: 'guides/intro' }))).toBe(
+          'guides/intro',
+        );
+      });
+
+      test('should leave the slug alone outside a preview path', () => {
+        expect(
+          handleSlugTag(
+            'slug',
+            createNestedContext({ currentSlug: 'guides/intro/_index', type: 'media_folder' }),
+          ),
+        ).toBe('guides/intro/_index');
+      });
+    });
+
     test('should return slug for preview_path with non-index file', () => {
       expect(
         handleSlugTag(
@@ -164,13 +210,15 @@ describe('Template handler functions', () => {
 
   describe('handleFilePathTag()', () => {
     test('should return dirname from entry file path', () => {
+      // The folder is relative to the collection folder, with no leading slash
+      // @see https://github.com/decaporg/decap-cms/issues/7752
       expect(handleFilePathTag('dirname', 'content/posts/2024/my-post.md', 'content/posts')).toBe(
-        '/2024',
+        '2024',
       );
       expect(handleFilePathTag('dirname', 'content/blog/article.md', 'content/blog')).toBe('');
       expect(
         handleFilePathTag('dirname', 'content/posts/nested/folder/file.md', 'content/posts'),
-      ).toBe('/nested/folder');
+      ).toBe('nested/folder');
     });
 
     test('should return filename without extension', () => {

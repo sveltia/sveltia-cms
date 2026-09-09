@@ -2,6 +2,7 @@
   import { VisibilityObserver } from '@sveltia/ui';
 
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
+  import PathEditor from '$lib/components/contents/details/editor/path-editor.svelte';
   import SlugEditor from '$lib/components/contents/details/editor/slug-editor.svelte';
   import { entryDraft } from '$lib/services/contents/draft';
 
@@ -22,11 +23,17 @@
   } = $props();
 
   const fields = $derived($entryDraft?.fields ?? []);
+  const showPathEditor = $derived(
+    $entryDraft?.currentPath !== undefined && !$entryDraft?.isIndexFile,
+  );
 </script>
 
 <VisibilityObserver>
   {#if !!$entryDraft?.slugEditor[locale]}
     <SlugEditor {locale} />
+  {/if}
+  {#if showPathEditor}
+    <PathEditor {locale} />
   {/if}
   {#each fields as fieldConfig (fieldConfig.name)}
     <VisibilityObserver>

@@ -1,18 +1,16 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Divider, Icon, Listbox, Option, OptionGroup } from '@sveltia/ui';
+  import { Divider, Icon, OptionGroup, Tree, TreeItem } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
 
-  import SingletonOption from '$lib/components/contents/list/singleton-option.svelte';
+  import CollectionTreeItem from '$lib/components/contents/list/collection-tree-item.svelte';
+  import SingletonTreeItem from '$lib/components/contents/list/singleton-tree-item.svelte';
   import PublishButton from '$lib/components/global/toolbar/items/publish-button.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { cmsConfig } from '$lib/services/config';
-  import { allEntries } from '$lib/services/contents';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { env } from '$lib/services/user/env.svelte';
-  import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
   /**
    * @typedef {object} Props
@@ -45,45 +43,19 @@
       }}
     />
   {/if}
-  <Listbox aria-label={_('collection_list')} aria-controls="collection-container">
+  <!-- The chevron is the only way to expand or collapse a folder, so that activating a collection
+  or a folder always navigates to it -->
+  <Tree
+    aria-label={_('collection_list')}
+    aria-controls="collection-container"
+    expandOnSelect={false}
+  >
     {#if collections.length}
       <OptionGroup label={_('collections')}>
         {#each collections as collection, index (collection.name ?? index)}
           {#await sleep() then}
             {#if !('divider' in collection)}
-              {@const { name, label, icon } = collection}
-              <Option
-                label={label || name}
-                selected={env.isSmallScreen || isSearchPage
-                  ? false
-                  : $selectedCollection?.name === name}
-                onSelect={() => {
-                  goto(`/collections/${name}`, { transitionType: 'forwards' });
-                }}
-              >
-                {#snippet startIcon()}
-                  <Icon name={icon || 'bookmark_manager'} />
-                {/snippet}
-                {#snippet endIcon()}
-                  <!-- `$allEntries` is a key, because `getEntriesByCollection()` reads it
-                  indirectly, while `$unpublishedEntries` is tracked as a normal dependency -->
-                  {#key $allEntries}
-                    {@const count = (
-                      'files' in collection
-                        ? collection.files
-                        : mergeUnpublishedEntries(
-                            getEntriesByCollection(name),
-                            $unpublishedEntries.filter(
-                              ({ workflow }) => workflow.collectionName === name,
-                            ),
-                          )
-                    ).length}
-                    <span class="count" aria-label="({_('x_entries', { values: { count } })})">
-                      {numberFormatter.format(count)}
-                    </span>
-                  {/key}
-                {/snippet}
-              </Option>
+              <CollectionTreeItem {collection} {isSearchPage} />
             {:else if collection.divider}
               <Divider />
             {/if}
@@ -98,7 +70,7 @@
           {#each singletons as file, index (file.name ?? index)}
             {#await sleep() then}
               {#if !('divider' in file)}
-                <SingletonOption {file} />
+                <SingletonTreeItem {file} />
               {:else if file.divider}
                 <Divider />
               {/if}
@@ -109,7 +81,7 @@
         <!-- Show the singletons just like a file collection -->
         {@const count = singletons.length}
         <OptionGroup label={_('collections')}>
-          <Option
+          <TreeItem
             label={_('files')}
             selected={$selectedCollection?.name === '_singletons'}
             onSelect={() => {
@@ -124,9 +96,9 @@
                 {numberFormatter.format(count)}
               </span>
             {/snippet}
-          </Option>
+          </TreeItem>
         </OptionGroup>
       {/if}
     {/if}
-  </Listbox>
+  </Tree>
 </div>

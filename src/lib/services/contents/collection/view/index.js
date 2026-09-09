@@ -6,6 +6,11 @@ import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
+import {
+  filterNestedEntries,
+  isNestedCollection,
+  nestedFilterPath,
+} from '$lib/services/contents/collection/nested';
 import { filterEntries } from '$lib/services/contents/collection/view/filter';
 import {
   getReorderGroupingConditions,
@@ -75,24 +80,34 @@ export const reorderDirty = writable(false);
 let viewBeforeReorder;
 
 /**
- * List of all the entries for the selected entry collection.
+ * List of the entries shown in the entry list for the selected entry collection. For a nested
+ * collection, only the entries in the folder the user is currently browsing are included; the
+ * deeper ones are reachable through the collection tree in the primary sidebar.
  * @type {Readable<Entry[]>}
  */
 export const listedEntries = derived(
-  [allEntries, selectedCollection, unpublishedEntries, reordering],
-  ([_allEntries, _collection, _unpublishedEntries, _reordering], set) => {
+  [allEntries, selectedCollection, unpublishedEntries, reordering, nestedFilterPath],
+  ([_allEntries, _collection, _unpublishedEntries, _reordering, _nestedFilterPath], set) => {
     if (!_allEntries || !_collection) {
       set([]);
 
       return;
     }
 
+    /**
+     * Limit the entries to the folder currently browsed in a nested collection.
+     * @param {Entry[]} entries Entries to be filtered.
+     * @returns {Entry[]} Filtered entries.
+     */
+    const filterNested = (entries) =>
+      filterNestedEntries({ collection: _collection, entries, dirPath: _nestedFilterPath });
+
     const entries = getEntriesByCollection(_collection.name);
 
     // Don’t swap while reordering, because the reorder UI persists an order field on the published
     // entries, and the draft version must not leak into that commit
     if (_reordering) {
-      set(entries);
+      set(filterNested(entries));
 
       return;
     }
@@ -100,9 +115,13 @@ export const listedEntries = derived(
     // Show the pending changes rather than what’s live, so the list sorts, filters and groups by
     // them
     set(
-      swapUnpublishedEntries(
-        entries,
-        _unpublishedEntries.filter(({ workflow }) => workflow.collectionName === _collection.name),
+      filterNested(
+        swapUnpublishedEntries(
+          entries,
+          _unpublishedEntries.filter(
+            ({ workflow }) => workflow.collectionName === _collection.name,
+          ),
+        ),
       ),
     );
   },
@@ -117,8 +136,23 @@ export const listedEntries = derived(
  */
 export const listedUnpublishedEntries = derived(
   // Include `appLocale.current` as a dependency because `sortEntries()` may return localized labels
-  [unpublishedEntries, listedEntries, selectedCollection, currentView, reordering, appLocaleStore],
-  ([_unpublishedEntries, _listedEntries, _collection, _currentView, _reordering]) => {
+  [
+    unpublishedEntries,
+    listedEntries,
+    selectedCollection,
+    currentView,
+    reordering,
+    nestedFilterPath,
+    appLocaleStore,
+  ],
+  ([
+    _unpublishedEntries,
+    _listedEntries,
+    _collection,
+    _currentView,
+    _reordering,
+    _nestedFilterPath,
+  ]) => {
     if (_collection?._type !== 'entry' || _reordering) {
       return [];
     }
@@ -128,9 +162,13 @@ export const listedUnpublishedEntries = derived(
     const swappedIn = new Set(_listedEntries);
 
     /** @type {Entry[]} */
-    let entries = _unpublishedEntries.filter(
-      (entry) => entry.workflow.collectionName === _collection.name && !swappedIn.has(entry),
-    );
+    let entries = filterNestedEntries({
+      collection: _collection,
+      entries: _unpublishedEntries.filter(
+        (entry) => entry.workflow.collectionName === _collection.name && !swappedIn.has(entry),
+      ),
+      dirPath: _nestedFilterPath,
+    });
 
     if (!entries.length) {
       return [];
@@ -183,7 +221,14 @@ export const collectionState = derived(
       // review, so it’s not something an Open Authoring contributor can do
       const canReorder = !!_selectedCollection.reorder && !_openAuthoring;
       const quota = _selectedCollection?.limit ?? Infinity;
-      const remaining = quota < Infinity ? quota - _listedEntries.length : Infinity;
+
+      // In a nested collection, `listedEntries` only holds the folder being browsed, while the
+      // quota applies to the whole collection
+      const entryCount = isNestedCollection(_selectedCollection)
+        ? getEntriesByCollection(_selectedCollection.name).length
+        : _listedEntries.length;
+
+      const remaining = quota < Infinity ? quota - entryCount : Infinity;
 
       return {
         isEntryCollection: true,

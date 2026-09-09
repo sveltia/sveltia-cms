@@ -29,10 +29,12 @@
     selectedCollection,
   } from '$lib/services/contents/collection';
   import { contentUpdatesToast } from '$lib/services/contents/collection/data';
+  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import {
     getCollectionFileEntry,
     getCollectionFileLabel,
   } from '$lib/services/contents/collection/files';
+  import { getMetaPathConfig, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { entryDraft } from '$lib/services/contents/draft';
   import { createDraft } from '$lib/services/contents/draft/create';
@@ -47,7 +49,7 @@
    */
 
   const ROUTE_REGEX =
-    /^\/collections(?:\/(?<_collectionName>[^/]+)(?:\/(?<routeType>new|entries))?(?:\/(?<subPath>.+?))?)?$/;
+    /^\/collections(?:\/(?<_collectionName>[^/]+)(?:\/(?<routeType>new|entries|filter))?(?:\/(?<subPath>.+?))?)?$/;
 
   let isIndexPage = $state(false);
   let isSearchPage = $state(false);
@@ -113,6 +115,9 @@
       $selectedCollection = undefined;
     } else if ($selectedCollection?.name !== collection.name) {
       $selectedCollection = collection;
+      // The folder being browsed belongs to the collection it was opened from, so it can’t carry
+      // over to another one — a new entry would be created in a folder of the previous collection
+      $nestedFilterPath = '';
     }
 
     if (!collection || !$selectedCollection) {
@@ -127,17 +132,24 @@
     const collectionLabel = getCollectionLabel($selectedCollection);
     const _fileMap = '_fileMap' in $selectedCollection ? $selectedCollection._fileMap : undefined;
 
-    if (!routeType) {
-      if (subPath) {
-        // A collection route takes no path of its own, so anything between the collection name and
-        // an `entries`/`new` segment is a dead link, e.g. `#/collections/pages/foo/ever`
-        $showContentOverlay = false;
-        $announcedPageStatus = _('page_not_found');
-        notFoundKey = 'page_not_found';
+    if (!routeType && subPath) {
+      // A collection route takes no path of its own, so anything between the collection name and
+      // an `entries`/`new`/`filter` segment is a dead link, e.g. `#/collections/pages/foo/ever`
+      $showContentOverlay = false;
+      $announcedPageStatus = _('page_not_found');
+      notFoundKey = 'page_not_found';
 
-        return; // Not Found
-      }
+      return; // Not Found
+    }
 
+    // A nested collection’s folder is browsed at `/collections/{name}/filter/{path}`, while the
+    // collection route itself always shows the root folder. The editor routes leave the folder
+    // alone, so closing the editor returns the user to where they were.
+    if (routeType === 'filter' || !routeType) {
+      $nestedFilterPath = routeType === 'filter' ? (subPath ?? '') : '';
+    }
+
+    if (!routeType || routeType === 'filter') {
       $showContentOverlay = false;
       $announcedPageStatus = _('viewing_x_collection', {
         values: {
@@ -213,9 +225,17 @@
 
     // Entry collection
     if (routeType === 'new' && !subPath) {
+      // Decap CMS passes the folder for a new entry in a nested collection as `?path=`
+      const initialPath = getMetaPathConfig(collection) ? params.path : undefined;
+
+      if (initialPath !== undefined) {
+        delete params.path;
+      }
+
       createDraft({
         collection,
         dynamicValues: params,
+        initialPath,
         isIndexFile: !!window.history.state?.index,
       });
 
@@ -227,7 +247,9 @@
     } else if (routeType === 'entries' && subPath) {
       const originalEntry =
         getUnpublishedEntry({ collectionName, subPath }) ??
-        $listedEntries.find((entry) => entry.subPath === subPath);
+        // Not `listedEntries`, which a nested collection limits to the folder being browsed,
+        // while an entry can also be opened with a deep link
+        getEntriesByCollection(collectionName).find((entry) => entry.subPath === subPath);
 
       if (!originalEntry) {
         $entryDraft = undefined;

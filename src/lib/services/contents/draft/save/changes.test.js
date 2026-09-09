@@ -1452,6 +1452,65 @@ describe('draft/save/changes', () => {
     });
   });
 
+  describe('createSavingEntryData for a nested collection', () => {
+    it('should use the sub path as the entry slug', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(createEntryPath).mockImplementation(({ locale }) =>
+        locale === 'en'
+          ? 'content/pages/docs/guides/_index.md'
+          : `content/pages/docs/guides/_index.${locale}.md`,
+      );
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        id: 'test-uuid',
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          name: 'pages',
+          folder: 'content/pages',
+          nested: {},
+          _file: {
+            fullPathRegEx:
+              /^content\/pages\/(?<subPath>[^/]+?(?:\/[^/]+?)*)(?:\.(?<locale>fr))?\.md$/,
+          },
+          _i18n: {
+            i18nEnabled: true,
+            allLocales: ['en', 'fr'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'pages',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true, fr: true },
+        originalLocales: { en: false, fr: false },
+        currentValues: { en: { title: 'Test' }, fr: { title: 'Test' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test',
+        canonicalSlug: 'test',
+        localizedSlugs: undefined,
+      };
+
+      const { savingEntry } = await createSavingEntryData({ draft, slugs });
+
+      expect(savingEntry.subPath).toBe('docs/guides/_index');
+      expect(savingEntry.slug).toBe('docs/guides/_index');
+      expect(savingEntry.locales.en.slug).toBe('docs/guides/_index');
+      expect(savingEntry.locales.fr.slug).toBe('docs/guides/_index');
+    });
+  });
+
   describe('createSavingEntryData with database and caching', () => {
     it('should create IndexedDB when backend has databaseName', async () => {
       await import('@sveltia/utils/storage');
@@ -1993,7 +2052,8 @@ describe('draft/save/changes', () => {
       const { serializeContent } = await import('./serialize');
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
 
-      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      // Keep each locale at the path it already has, so the changes are updates rather than moves
+      vi.mocked(createEntryPath).mockImplementation(({ locale }) => `posts/${locale}/test.md`);
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
 

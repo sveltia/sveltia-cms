@@ -1,7 +1,12 @@
+import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 
 import { fillTemplate } from '$lib/services/common/template';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import {
+  getSharedEntryFileName,
+  usesCustomEntryPath,
+} from '$lib/services/contents/collection/nested';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import { createPath } from '$lib/services/utils/file';
 
@@ -49,6 +54,41 @@ export const buildPathByStructure = ({
 };
 
 /**
+ * Build the entry’s sub path from the folder chosen with the path editor. The file name within the
+ * folder is either the one shared by every entry in the collection, as configured with the
+ * `meta.path.index_file` option, or the entry’s own file name: the slug for a new entry, or the
+ * existing file name for an entry that’s only being moved. With a shared file name, the chosen
+ * folder is where a new entry is created rather than the entry’s own folder, which is named after
+ * the slug.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.slug Entry slug.
+ * @param {string | undefined} args.indexFileName File name shared by every entry in the collection,
+ * if any.
+ * @returns {string} Sub path without a file extension.
+ */
+export const buildCustomEntryPath = ({ draft, slug, indexFileName }) => {
+  const { isNew, originalEntry, currentPath } = draft;
+  const dirPath = stripSlashes(currentPath ?? '');
+
+  if (indexFileName) {
+    // Every entry shares one file name, so a folder is what makes an entry. A new entry therefore
+    // gets a folder of its own, named after the slug, within the folder the editor points at; an
+    // existing entry already has such a folder, and the editor points at it.
+    return isNew
+      ? createPath([dirPath, slug, indexFileName])
+      : createPath([dirPath, indexFileName]);
+  }
+
+  // The sub path already has the locale and the file extension stripped off
+  const originalFileName = originalEntry?.subPath
+    ? getPathInfo(originalEntry.subPath).basename
+    : undefined;
+
+  return createPath([dirPath, originalFileName ?? slug]);
+};
+
+/**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and entry collection’s subpath.
  * @param {object} args Arguments.
@@ -72,11 +112,19 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     return getLocalePath({ _i18n, locale, path: stripSlashes(file) });
   }
 
-  if (originalEntry?.locales[locale]?.slug === slug) {
+  const entryCollection = /** @type {InternalEntryCollection} */ (collection);
+  const indexFileName = getSharedEntryFileName(entryCollection);
+  // A blank folder in the path editor means the entry goes where it would without the editor, so
+  // the collection’s own `path` option and slug take over rather than the entry landing on a bare
+  // index file in the collection folder
+  // @see https://github.com/decaporg/decap-cms/issues/7094
+  const useCustomPath = usesCustomEntryPath(draft);
+
+  // The path editor decides where the entry goes, so the slug alone can’t tell whether the file has
+  // moved. Skip the shortcut below and rebuild the path from the folder the user has chosen.
+  if (!useCustomPath && originalEntry?.locales[locale]?.slug === slug) {
     return originalEntry.locales[locale].path;
   }
-
-  const entryCollection = /** @type {InternalEntryCollection} */ (collection);
 
   const {
     _file: { basePath, subPath, extension },
@@ -85,18 +133,21 @@ export const createEntryPath = ({ draft, locale, slug }) => {
   /**
    * Support entry collection’s subpath.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
+   * @see https://decapcms.org/docs/collection-nested/
    * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-file-paths
    */
   let path = isIndexFile
     ? /** @type {string} */ (getIndexFile(entryCollection)?.name)
-    : subPath
-      ? fillTemplate(subPath, {
-          collection: entryCollection,
-          locale,
-          content: currentValues[defaultLocale],
-          currentSlug: slug,
-        })
-      : slug;
+    : useCustomPath
+      ? buildCustomEntryPath({ draft, slug, indexFileName })
+      : subPath
+        ? fillTemplate(subPath, {
+            collection: entryCollection,
+            locale,
+            content: currentValues[defaultLocale],
+            currentSlug: slug,
+          })
+        : slug;
 
   // Remove extension from index file name if it already has one
   if (isIndexFile && path?.endsWith(`.${extension}`)) {

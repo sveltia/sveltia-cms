@@ -40,9 +40,60 @@ const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/bac
 const { createProxy } = await import('$lib/services/contents/draft/create/proxy');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
 const { cmsConfig } = await import('$lib/services/config');
-const { createDraft, getSlugEditorProp } = await import('.');
+const { nestedFilterPath } = await import('$lib/services/contents/collection/nested');
+const { createDraft, getOriginalPath, getSlugEditorProp } = await import('.');
 
 describe('contents/draft/create/index', () => {
+  describe('getOriginalPath', () => {
+    /**
+     * Create an entry collection with the `meta.path` option enabled.
+     * @param {boolean} [metaPath] Whether the path editor is enabled.
+     * @returns {any} Collection.
+     */
+    const createCollection = (metaPath = true) => ({
+      _type: 'entry',
+      name: 'pages',
+      folder: 'content/pages',
+      nested: {},
+      meta: metaPath ? { path: { widget: 'string' } } : undefined,
+    });
+
+    beforeEach(() => {
+      nestedFilterPath.set('');
+    });
+
+    it('should return undefined when the path editor is disabled', () => {
+      expect(
+        getOriginalPath({ collection: createCollection(false), originalEntry: {} }),
+      ).toBeUndefined();
+    });
+
+    it('should return the folder of an existing entry', () => {
+      expect(
+        getOriginalPath({
+          collection: createCollection(),
+          originalEntry: { subPath: 'docs/guides/_index' },
+        }),
+      ).toBe('docs/guides');
+    });
+
+    it('should use the given initial path for a new entry', () => {
+      expect(
+        getOriginalPath({
+          collection: createCollection(),
+          originalEntry: {},
+          initialPath: '/docs/guides/',
+        }),
+      ).toBe('docs/guides');
+    });
+
+    it('should fall back to the folder being browsed', () => {
+      nestedFilterPath.set('docs');
+
+      expect(getOriginalPath({ collection: createCollection(), originalEntry: {} })).toBe('docs');
+    });
+  });
+
   describe('getSlugEditorProp', () => {
     const baseI18n = {
       allLocales: ['en', 'ja'],

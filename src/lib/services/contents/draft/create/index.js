@@ -1,3 +1,4 @@
+import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
@@ -5,6 +6,11 @@ import {
   getIndexFile,
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
+import {
+  getEntryDirPath,
+  getMetaPathConfig,
+  nestedFilterPath,
+} from '$lib/services/contents/collection/nested';
 import { entryDraft, revokeDraftFileURLs } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { normalizeContentMap } from '$lib/services/contents/draft/create/normalize';
@@ -82,6 +88,32 @@ export const getSlugEditorProp = ({ collection, collectionFile, originalSlugs })
 };
 
 /**
+ * Get the `originalPath` property for an entry draft, which is the folder an entry is stored in,
+ * relative to the collection folder. It’s only used when the `meta.path` option is enabled, which
+ * lets the user move an entry by editing the path in the editor.
+ * @internal
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection that the entry belongs to.
+ * @param {any} args.originalEntry Entry to be edited, or a partial {@link Entry} object.
+ * @param {string} [args.initialPath] Folder for a new entry, passed through the `path` URL
+ * parameter. Defaults to the folder the user is currently browsing.
+ * @returns {string | undefined} Folder path, or `undefined` if the path editor is disabled.
+ */
+export const getOriginalPath = ({ collection, originalEntry, initialPath }) => {
+  if (!getMetaPathConfig(collection)) {
+    return undefined;
+  }
+
+  const { subPath } = originalEntry;
+
+  if (typeof subPath === 'string') {
+    return getEntryDirPath(subPath);
+  }
+
+  return stripSlashes(initialPath ?? get(nestedFilterPath));
+};
+
+/**
  * Build an entry draft object. This only assembles the values; it’s {@link createDraft} that opens
  * the draft in the editor. A draft can also be built on its own to check an entry that isn’t being
  * edited, in which case the application state is left untouched.
@@ -96,6 +128,8 @@ export const getSlugEditorProp = ({ collection, collectionFile, originalSlugs })
  * containing field values in rich text editor components. Can be set when resetting an entry draft.
  * @param {LocaleExpanderMap} [args.expanderStates] Expander UI state. Can be set when resetting an
  * entry draft.
+ * @param {string} [args.initialPath] Folder for a new entry in a collection with the `meta.path`
+ * option enabled, passed through the `path` URL parameter.
  * @param {boolean} [args.isIndexFile] Whether to edit the collection’s index file.
  * @returns {EntryDraft} Entry draft.
  */
@@ -106,6 +140,7 @@ export const buildDraft = ({
   dynamicValues,
   extraValues,
   expanderStates,
+  initialPath,
   isIndexFile = isCollectionIndexFile(collection, originalEntry),
 }) => {
   const collectionName = collection.name;
@@ -141,6 +176,8 @@ export const buildDraft = ({
   const originalLocales = Object.fromEntries(
     allLocales.map((locale) => [locale, enabledLocales.includes(locale)]),
   );
+
+  const originalPath = getOriginalPath({ collection, originalEntry, initialPath });
 
   const originalSlugs = isNew
     ? {}
@@ -181,6 +218,8 @@ export const buildDraft = ({
     currentLocales: structuredClone(originalLocales),
     originalSlugs,
     currentSlugs: structuredClone(originalSlugs),
+    originalPath,
+    currentPath: originalPath,
     originalValues,
     currentValues: Object.fromEntries(
       enabledLocales.map((locale) => [
@@ -215,6 +254,8 @@ export const buildDraft = ({
  * containing field values in rich text editor components. Can be set when resetting an entry draft.
  * @param {LocaleExpanderMap} [args.expanderStates] Expander UI state. Can be set when resetting an
  * entry draft.
+ * @param {string} [args.initialPath] Folder for a new entry in a collection with the `meta.path`
+ * option enabled, passed through the `path` URL parameter.
  * @param {boolean} [args.isIndexFile] Whether to edit the collection’s index file.
  */
 export const createDraft = (args) => {

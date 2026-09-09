@@ -1063,6 +1063,14 @@ edit_slug_error:
   invalid: The slug cannot contain special characters, including slashes and spaces.
   duplicate: This slug is used for another entry.
 
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Parent Folder
+edit_path_error:
+  invalid: The path cannot contain relative segments such as “..”.
+  recursive: The entry cannot be moved into one of its own subfolders.
+  duplicate: This path is used for another entry.
+
 # Required field indicator
 required: Required
 
@@ -1633,7 +1641,6 @@ config:
     oauth_no_app_id: OAuth application ID is not defined. Users are required to provide an access token to sign in.
     editorial_workflow_unsupported: Editorial Workflow is currently supported only with the GitHub and GitLab backends.
     open_authoring_unsupported_backend: Open Authoring is currently supported only with the GitHub backend.
-    nested_collections_unsupported: Nested collections are not yet supported in Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: The `{$prop}` option is not supported in Sveltia CMS. It will be ignored.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

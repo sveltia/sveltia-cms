@@ -25,6 +25,10 @@ import {
 // Mock external dependencies
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
+  // Used by the nested collection helpers, which the index file check runs through
+  isEntryCollection: vi.fn(
+    (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
+  ),
 }));
 
 vi.mock('$lib/services/contents/collection/files', () => ({

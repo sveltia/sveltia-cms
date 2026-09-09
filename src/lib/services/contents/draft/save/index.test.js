@@ -38,6 +38,9 @@ vi.mock('$lib/services/contents/draft/backup');
 vi.mock('$lib/services/api/events', () => ({
   callEventHooks: vi.fn(),
 }));
+vi.mock('$lib/services/contents/draft/save/asset-move', () => ({
+  buildEntryAssetMoveChanges: vi.fn(async () => ({ changes: [], savingAssets: [] })),
+}));
 vi.mock('$lib/services/contents/draft/save/changes');
 vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');

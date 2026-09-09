@@ -30,8 +30,6 @@ import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
  * @type {UnsupportedOption[]}
  */
 const UNSUPPORTED_OPTIONS = [
-  // @todo Remove this warning when Sveltia CMS adds support for nested collections.
-  { type: 'warning', prop: 'nested', strKey: 'nested_collections_unsupported' },
   // Deprecated camelCase option in Netlify/Decap CMS config, should be converted to snake_case.
   { prop: 'sortableFields', newProp: 'sortable_fields' },
 ];

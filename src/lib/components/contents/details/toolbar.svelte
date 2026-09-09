@@ -33,6 +33,7 @@
   } from '$lib/services/contents/collection/data';
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { getCollectionFileLabel } from '$lib/services/contents/collection/files';
+  import { isNestedCollection, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
   import { createDraft } from '$lib/services/contents/draft/create';
@@ -176,10 +177,23 @@
 
   /**
    * Go back to the previous page. If the entry is a singleton file, go to the collections list.
-   * Otherwise, go to the collection entries list.
+   * Otherwise, go to the collection entries list — the folder being browsed for a nested
+   * collection, so the user lands where they opened the entry from.
    */
   const _goBack = () => {
-    goBack(collectionName === '_singletons' ? '/collections' : `/collections/${collectionName}`);
+    if (collectionName === '_singletons') {
+      goBack('/collections');
+
+      return;
+    }
+
+    const dirPath = collection && isNestedCollection(collection) ? $nestedFilterPath : '';
+
+    goBack(
+      dirPath
+        ? `/collections/${collectionName}/filter/${dirPath}`
+        : `/collections/${collectionName}`,
+    );
   };
 
   /**

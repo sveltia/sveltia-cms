@@ -18,7 +18,6 @@ const mockI18nStrings = {
   'config.error.no_collection': 'No collection found',
   'config.error.missing_media_folder': 'Missing media_folder',
   'config.warning.editorial_workflow_unsupported': 'Editorial workflow is not supported',
-  'config.warning.nested_collections_unsupported': 'Nested collections are not supported',
   'config.error_locator.collection': 'Collection: {collection}',
   'config.error_locator.file': 'File: {file}',
   'config.error_locator.field': 'Field: {field}',
@@ -235,32 +234,6 @@ describe('Config Parser', () => {
       const warningArray = Array.from(collectors.warnings);
 
       expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(true);
-    });
-
-    it('should collect warnings for nested collections', async () => {
-      const { parseCmsConfig } = await import('.');
-      const collectors = createCollectors();
-
-      /** @type {any} */
-      const config = {
-        backend: { name: 'github', repo: 'owner/repo' },
-        media_folder: '/media',
-        collections: [
-          {
-            name: 'posts',
-            label: 'Posts',
-            folder: 'content/posts',
-            nested: true,
-            fields: [{ name: 'title', widget: 'string' }],
-          },
-        ],
-      };
-
-      parseCmsConfig(config, collectors);
-
-      const warningArray = Array.from(collectors.warnings);
-
-      expect(warningArray.some((w) => w.includes('Nested collections'))).toBe(true);
     });
 
     it('should collect errors for no collections', async () => {

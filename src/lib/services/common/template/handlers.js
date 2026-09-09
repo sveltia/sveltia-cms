@@ -1,6 +1,8 @@
 import { generateUUID } from '@sveltia/utils/crypto';
+import { stripSlashes } from '@sveltia/utils/string';
 
 import { DATE_TIME_FIELDS } from '$lib/services/common/template/constants';
+import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
 /**
@@ -48,7 +50,7 @@ export const handleSlugTag = (tag, context) => {
     return undefined;
   }
 
-  const { type, isIndexFile, currentSlug, content, identifierField } = context;
+  const { type, isIndexFile, currentSlug, content, identifierField, collection } = context;
 
   // Return an empty string instead of `_index` when generating the preview path for an index file
   // @see https://github.com/sveltia/sveltia-cms/issues/468
@@ -56,7 +58,25 @@ export const handleSlugTag = (tag, context) => {
     return '';
   }
 
-  return currentSlug ?? getEntrySummaryFromContent(content, { identifierField });
+  const slug = currentSlug ?? getEntrySummaryFromContent(content, { identifierField });
+
+  // In a nested collection, an entry’s slug is its path within the collection folder, which ends
+  // with the file name shared by every entry, e.g. `guides/intro/_index`. That file name is an
+  // implementation detail of the content folder, not part of the entry’s URL.
+  // @see https://github.com/decaporg/decap-cms/issues/4963
+  if (type === 'preview_path' && collection) {
+    const indexFileName = getSharedEntryFileName(collection);
+
+    if (indexFileName && slug.endsWith(`/${indexFileName}`)) {
+      return slug.slice(0, -indexFileName.length - 1);
+    }
+
+    if (indexFileName && slug === indexFileName) {
+      return '';
+    }
+  }
+
+  return slug;
 };
 
 /**
@@ -74,7 +94,10 @@ export const handleFilePathTag = (tag, entryFilePath, basePath) => {
 
   switch (tag) {
     case 'dirname': {
-      const pathAfterBase = entryFilePath.replace(basePath ?? '', '');
+      // The folder is relative to the collection folder, so it must not keep the slash left behind
+      // by the removed base path, or a template like `media/{{dirname}}` would produce `media//sub`
+      // @see https://github.com/decaporg/decap-cms/issues/7752
+      const pathAfterBase = stripSlashes(entryFilePath.replace(basePath ?? '', ''));
       const lastSlashIndex = pathAfterBase.lastIndexOf('/');
 
       return lastSlashIndex > 0 ? pathAfterBase.substring(0, lastSlashIndex) : '';

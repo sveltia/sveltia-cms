@@ -305,7 +305,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/2024/my-article.md',
     };
 
-    expect(fillTemplate('{{dirname}}', options)).toEqual('/2024');
+    expect(fillTemplate('{{dirname}}', options)).toEqual('2024');
     expect(fillTemplate('{{filename}}', options)).toEqual('my-article');
     expect(fillTemplate('{{extension}}', options)).toEqual('md');
 
@@ -340,7 +340,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/2024/my-article.md',
     };
 
-    expect(fillTemplate('{{dirname}}', options)).toEqual('/2024');
+    expect(fillTemplate('{{dirname}}', options)).toEqual('2024');
     expect(fillTemplate('{{filename}}', options)).toEqual('my-article');
     expect(fillTemplate('{{extension}}', options)).toEqual('md');
 
@@ -362,12 +362,12 @@ describe('fillTemplate()', async () => {
       {
         entryFilePath: 'content/posts/2024/article.md',
         basePath: 'content/posts',
-        expected: '/2024',
+        expected: '2024',
       },
       {
         entryFilePath: 'content/posts/2024/tech/article.md',
         basePath: 'content/posts',
-        expected: '/2024/tech',
+        expected: '2024/tech',
       },
       {
         entryFilePath: 'article.md',
@@ -845,7 +845,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/2024/_index.md',
     };
 
-    expect(fillTemplate('{{dirname}}', nestedOptions)).toEqual('/2024');
+    expect(fillTemplate('{{dirname}}', nestedOptions)).toEqual('2024');
     expect(
       fillTemplate('{{slug}}', {
         ...nestedOptions,
@@ -858,14 +858,14 @@ describe('fillTemplate()', async () => {
         ...nestedOptions,
         currentSlug: '_index',
       }),
-    ).toEqual('/2024/');
+    ).toEqual('2024/');
 
     expect(
       fillTemplate('{{dirname}}/{{slug}}', {
         ...nestedOptions,
         currentSlug: 'custom-slug',
       }),
-    ).toEqual('/2024/');
+    ).toEqual('2024/');
   });
 
   test('default transformation with nested template tag', async () => {
@@ -1132,7 +1132,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/2024/my-post.md',
     });
 
-    expect(result).toBe('/2024/uploads');
+    expect(result).toBe('2024/uploads');
   });
 
   test('fillTemplate resolves bare field name tags in preview_path templates', async () => {
@@ -1226,7 +1226,7 @@ describe('fillTemplate()', async () => {
       entryFilePath: 'content/posts/2024/my-post.md',
     });
 
-    expect(result2).toBe('/2024/article');
+    expect(result2).toBe('2024/article');
   });
 
   test('fillTemplate does not resolve field values in media_folder path templates', async () => {
@@ -1490,5 +1490,55 @@ describe('hasTemplateTags()', () => {
   test('should work with newlines and special whitespace', () => {
     expect(hasTemplateTags('line1\n{{title}}\nline2')).toBe(true);
     expect(hasTemplateTags('tab\t{{slug}}\ttab')).toBe(true);
+  });
+});
+
+describe('fillTemplate() for a nested collection', () => {
+  /** @type {any} */
+  const collection = {
+    name: 'pages',
+    folder: 'content/pages',
+    _type: 'entry',
+    _file: { basePath: 'content/pages' },
+    nested: { depth: 100 },
+    meta: { path: { widget: 'string', index_file: '_index' } },
+  };
+
+  test('leaves the index file name out of the preview path', () => {
+    // @see https://github.com/decaporg/decap-cms/issues/4963
+    expect(
+      fillTemplate('html/{{slug}}', {
+        type: 'preview_path',
+        collection,
+        content: {},
+        currentSlug: 'conversion-api/xhtml-converter/_index',
+        entryFilePath: 'content/pages/conversion-api/xhtml-converter/_index.md',
+      }),
+    ).toBe('html/conversion-api/xhtml-converter');
+  });
+
+  test('keeps the index file name in the entry file path', () => {
+    expect(
+      fillTemplate('{{slug}}', {
+        type: 'media_folder',
+        collection,
+        content: {},
+        currentSlug: 'conversion-api/xhtml-converter/_index',
+        entryFilePath: 'content/pages/conversion-api/xhtml-converter/_index.md',
+      }),
+    ).toBe('conversion-api/xhtml-converter/_index');
+  });
+
+  test('resolves the dirname of a nested entry for a media folder', () => {
+    // @see https://github.com/decaporg/decap-cms/issues/7752
+    expect(
+      fillTemplate('/src/dokument/{{dirname}}', {
+        type: 'media_folder',
+        collection,
+        content: {},
+        currentSlug: 'nested/deeper/_index',
+        entryFilePath: 'content/pages/nested/deeper/_index.md',
+      }),
+    ).toBe('/src/dokument/nested/deeper');
   });
 });

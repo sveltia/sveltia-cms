@@ -7,7 +7,9 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { canCreateIndexFile } from '$lib/services/contents/collection/entries';
   import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+  import { getMetaPathConfig, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
+  import { encodeFilePath } from '$lib/services/utils/file';
 
   /**
    * @typedef {object} Props
@@ -40,7 +42,16 @@
    * @param {boolean} [index] Whether to create the index file instead of a regular entry.
    */
   const openEditor = (index = false) => {
-    goto(`/collections/${collectionName}/new`, { state: { index }, transitionType: 'forwards' });
+    // Start a new entry in the folder the user is browsing, which the path editor picks up
+    const path =
+      !index && $selectedCollection && getMetaPathConfig($selectedCollection) && $nestedFilterPath
+        ? `?path=${encodeFilePath($nestedFilterPath)}`
+        : '';
+
+    goto(`/collections/${collectionName}/new${path}`, {
+      state: { index },
+      transitionType: 'forwards',
+    });
   };
 </script>
 

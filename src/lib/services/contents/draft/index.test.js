@@ -247,6 +247,52 @@ describe('draft/index', () => {
       expect(value).toBe(false);
     });
 
+    it('should return true when the entry path is modified', () => {
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalPath: 'docs',
+        currentPath: 'guides',
+        originalValues: { en: { title: 'Test' } },
+        currentValues: { en: { title: 'Test' } },
+      };
+
+      entryDraft.set(/** @type {any} */ (draft));
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(true);
+    });
+
+    it('should ignore surrounding slashes in the entry path', () => {
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalPath: 'docs',
+        currentPath: '/docs/',
+        originalValues: { en: { title: 'Test' } },
+        currentValues: { en: { title: 'Test' } },
+      };
+
+      entryDraft.set(/** @type {any} */ (draft));
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(false);
+    });
+
     it('should return true when locales are modified', () => {
       const draft = {
         originalLocales: { en: true },

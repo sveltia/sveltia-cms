@@ -2,6 +2,7 @@ import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
 import { validateFields } from '$lib/services/contents/draft/validate/fields';
+import { validatePath } from '$lib/services/contents/draft/validate/path';
 import { validateSlugs } from '$lib/services/contents/draft/validate/slugs';
 
 /**
@@ -41,9 +42,11 @@ export const validateDraft = ({ draft, enforceRequired = true }) => {
   // The slug is what the entry’s file is named after, so an empty or malformed one blocks the save
   // whether or not the entry is complete
   const { valid: slugsValid, validities: slugsValidities } = validateSlugs(draft);
+  // Likewise for the folder chosen with the path editor, which decides where the file goes
+  const { valid: pathValid, validities: pathValidities } = validatePath(draft);
 
   return {
-    valid: currentValuesValid && extraValuesValid && slugsValid,
+    valid: currentValuesValid && extraValuesValid && slugsValid && pathValid,
     validities: Object.fromEntries(
       Object.keys(currentValuesValidities).map((locale) => [
         locale,
@@ -51,6 +54,7 @@ export const validateDraft = ({ draft, enforceRequired = true }) => {
           ...currentValuesValidities[locale],
           ...extraValuesValidities[locale],
           ...slugsValidities[locale],
+          ...pathValidities[locale],
         },
       ]),
     ),

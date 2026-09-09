@@ -1297,19 +1297,25 @@
 /**
  * Nested collection options.
  * @typedef {object} NestedCollectionOptions
- * @property {number} [depth] Maximum depth to show nested items in the collection tree. Default:
+ * @property {number} [depth] Maximum number of path segments below the collection folder, which is
+ * both the depth of the collection tree and the depth at which entry files are looked up. Default:
  * `Infinity`.
- * @property {string} [summary] Summary template for a tree item. Default: `{{title}}`.
- * @property {boolean} [subfolders] Whether to include subfolders. Default: `true`.
+ * @property {string} [summary] Summary template for a tree item, which overrides the collection’s
+ * `summary` option. Default: the collection’s `summary` option value.
+ * @property {boolean} [subfolders] Whether each entry is stored as an index file in its own
+ * subfolder. If `false`, entries are regular files placed directly in the folders. Default: `true`.
  * @see https://decapcms.org/docs/collection-nested/
  */
 
 /**
  * Collection meta data’s path options.
  * @typedef {object} CollectionMetaDataPath
- * @property {'string'} [widget] Field type for editing the path name.
- * @property {string} [label] Label for the path editor.
- * @property {string} [index_file] Index file name to be used.
+ * @property {string} [widget] Field type for editing the path name. Accepted for compatibility with
+ * Netlify/Decap CMS but ignored: the editor is always a folder picker.
+ * @property {string} [label] Label for the path editor. Accepted for compatibility with
+ * Netlify/Decap CMS but ignored: the picker has a built-in, localized label.
+ * @property {string} [index_file] File name, without an extension, shared by every entry in the
+ * collection, e.g. `_index`. If omitted, each entry keeps its own file name.
  * @see https://decapcms.org/docs/collection-nested/
  */
 
@@ -1441,10 +1447,10 @@
  * [documentation](https://sveltiacms.app/en/docs/collections/entries#sorting) for details.
  * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
  * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.
- * @property {NestedCollectionOptions} [nested] Options for a nested collection. Note that nested
- * collections are not yet supported in Sveltia CMS.
- * @property {CollectionMetaData} [meta] Meta data for a nested collection. Note that nested
- * collections are not yet supported in Sveltia CMS.
+ * @property {NestedCollectionOptions} [nested] Options for a nested collection, which shows the
+ * entries in a folder tree and lets the user organize them in subfolders.
+ * @property {CollectionMetaData} [meta] Meta data for a nested collection, which enables the entry
+ * path editor. It has no effect without the `nested` option.
  * @property {CollectionIndexFile | boolean} [index_file] Index file inclusion options. If `true`,
  * the default index file name is `_index`, which is used for Hugo’s special index file. See the
  * [documentation](https://sveltiacms.app/en/docs/collections/entries#managing-hugo-s-special-index-file)

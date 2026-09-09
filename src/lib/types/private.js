@@ -938,6 +938,12 @@
  * @property {LocaleStateMap} currentLocales Current locale state.
  * @property {LocaleSlugMap} originalSlugs Key is a locale code, value is the original slug.
  * @property {LocaleSlugMap} currentSlugs Key is a locale code, value is the current slug.
+ * @property {string} [originalPath] Folder the entry is stored in, relative to the collection
+ * folder, at the time of draft creation. Only set when the collection’s `meta.path` option is
+ * enabled. An empty string for the collection’s root folder.
+ * @property {string} [currentPath] Folder the entry will be stored in, relative to the collection
+ * folder, as edited with the path editor. Only set when the collection’s `meta.path` option is
+ * enabled.
  * @property {LocaleContentMap} originalValues Key is a locale code, value is a flattened object
  * containing all the original field values.
  * @property {LocaleContentMap} currentValues Key is a locale code, value is a flattened, proxified

@@ -9,8 +9,10 @@ import {
 } from '$lib/services/contents/collection/data';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
+import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
+import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
@@ -121,6 +123,23 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
 
   changes.push(...cascadeChanges);
 
+  // Moving an entry in a nested collection takes everything below it to the new location
+  const { changes: moveChanges, savingEntries: movedEntries } = await buildNestedMoveChanges({
+    collection,
+    originalEntry,
+    savingEntry,
+  });
+
+  changes.push(...moveChanges);
+
+  // Assets stored next to the entry belong to it, so they follow it to its new folder
+  const { changes: assetMoveChanges, savingAssets: movedAssets } = await buildEntryAssetMoveChanges(
+    { collection, fileName, originalEntry, savingEntry, changes },
+  );
+
+  changes.push(...assetMoveChanges);
+  savingAssets.push(...movedAssets);
+
   /** @type {ChangeResults} */
   let results;
   /** @type {CommitOptions} */
@@ -140,7 +159,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
         })
       : await saveChanges({
           changes,
-          savingEntries: [savingEntry, ...cascadeEntries],
+          savingEntries: [savingEntry, ...cascadeEntries, ...movedEntries],
           savingAssets,
           options,
         });
@@ -159,7 +178,7 @@ export const saveEntry = async ({ skipCI = undefined } = {}) => {
     isNew,
   });
 
-  updateStores({ skipCI, count: 1 + cascadeEntries.length });
+  updateStores({ skipCI, count: 1 + cascadeEntries.length + movedEntries.length });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
 
   if (originalEntry) {

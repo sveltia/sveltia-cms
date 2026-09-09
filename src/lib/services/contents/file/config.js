@@ -6,6 +6,7 @@ import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constan
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { getNestedConfig } from '$lib/services/contents/collection/nested';
 import {
   EXTENSION_FORMAT_MAP,
   FORMAT_EXTENSION_MAP,
@@ -76,19 +77,48 @@ export const detectFileFormat = ({ extension, format }) => {
  * for route groups in frameworks like SvelteKit or Next.js, and should be matched literally.
  * @param {string} [subPath] Normalized `path` collection option.
  * @param {string} [indexFileName] File name for index file inclusion. Typically `_index`.
+ * @param {number} [nestedDepth] Maximum number of path segments below the collection folder, for a
+ * nested collection. `undefined` for a regular collection, where an entry is always a direct child
+ * of the collection folder.
  * @returns {string} File path matcher pattern.
  * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
+ * @see https://decapcms.org/docs/collection-nested/
  * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-file-paths
  */
-const getFilePathMatcher = (subPath, indexFileName) => {
+const getFilePathMatcher = (subPath, indexFileName, nestedDepth) => {
   if (!subPath) {
-    return '(?<subPath>[^/]+?)';
+    if (nestedDepth === undefined) {
+      return '(?<subPath>[^/]+?)';
+    }
+
+    // An entry can be stored in any folder below the collection folder, down to the configured
+    // depth. The depth is the number of path segments, the last of which is the file name.
+    const extraSegments = Number.isFinite(nestedDepth)
+      ? `{0,${Math.max(0, nestedDepth - 1)}}`
+      : '*';
+
+    return `(?<subPath>[^/]+?(?:\\/[^/]+?)${extraSegments})`;
   }
 
   const escapedSubPath = escapeRegExp(subPath).replace(ESCAPED_PLACEHOLDER_REGEX, '[^/]+?');
   const indexFileAlternative = indexFileName ? `|${indexFileName}` : '';
+  const fileMatcher = `${escapedSubPath}${indexFileAlternative}`;
 
-  return `(?<subPath>${escapedSubPath}${indexFileAlternative})`;
+  if (nestedDepth === undefined) {
+    return `(?<subPath>${fileMatcher})`;
+  }
+
+  // In a nested collection, the `path` option says where an entry sits within the folder holding
+  // it, not within the collection folder, so any number of folders can come first — down to the
+  // configured depth, which the `path` option itself already takes some of
+  const remainingDepth = Number.isFinite(nestedDepth)
+    ? Math.max(0, nestedDepth - subPath.split('/').length)
+    : undefined;
+
+  const folderMatcher =
+    remainingDepth === undefined ? '(?:[^/]+\\/)*' : `(?:[^/]+\\/){0,${remainingDepth}}`;
+
+  return `(?<subPath>${folderMatcher}(?:${fileMatcher}))`;
 };
 
 /**
@@ -100,6 +130,8 @@ const getFilePathMatcher = (subPath, indexFileName) => {
  * @param {string} args.basePath Normalized `folder` collection option.
  * @param {string} [args.subPath] Normalized `path` collection option.
  * @param {string} [args.indexFileName] File name for index file inclusion. Typically `_index`.
+ * @param {number} [args.nestedDepth] Maximum number of path segments below the collection folder,
+ * for a nested collection.
  * @param {InternalI18nOptions} args._i18n I18n configuration.
  * @returns {RegExp} Regular expression.
  */
@@ -109,6 +141,7 @@ export const getEntryPathRegEx = ({
   basePath,
   subPath,
   indexFileName,
+  nestedDepth,
   _i18n,
 }) => {
   const {
@@ -134,7 +167,7 @@ export const getEntryPathRegEx = ({
     i18nMultiRootFolder ? localeFolderMatcher : '',
     basePath ? `${escapeRegExp(basePath)}\\/` : '',
     i18nMultiFolder ? localeFolderMatcher : '',
-    getFilePathMatcher(subPath, indexFileName),
+    getFilePathMatcher(subPath, indexFileName, nestedDepth),
     i18nMultiFile ? localeFileMatcher : '',
     '\\.',
     escapeRegExp(detectFileExtension({ format, extension })),
@@ -197,6 +230,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
   const delimiter = file?.frontmatter_delimiter ?? _delimiter;
   const basePath = _isEntryCollection ? stripSlashes(/** @type {string} */ (folder)) : undefined;
   const indexFileName = _isEntryCollection ? getIndexFile(rawCollection)?.name : undefined;
+  const nestedDepth = _isEntryCollection ? getNestedConfig(rawCollection)?.depth : undefined;
 
   // @todo Remove the option prior to the 1.0 release.
   if (yamlQuote !== undefined) {
@@ -210,7 +244,15 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     subPath: _isEntryCollection ? subPath : undefined,
     fullPathRegEx:
       basePath !== undefined
-        ? getEntryPathRegEx({ extension, format, basePath, subPath, indexFileName, _i18n })
+        ? getEntryPathRegEx({
+            extension,
+            format,
+            basePath,
+            subPath,
+            indexFileName,
+            nestedDepth,
+            _i18n,
+          })
         : undefined,
     fullPath: filePath
       ? getLocalePath({ _i18n, locale: _i18n.defaultLocale, path: filePath })

@@ -1633,7 +1633,6 @@ config:
     oauth_no_app_id: OAuth application ID is not defined. Users are required to provide an access token to sign in.
     editorial_workflow_unsupported: Editorial Workflow is currently supported only with the GitHub and GitLab backends.
     open_authoring_unsupported_backend: Open Authoring is currently supported only with the GitHub backend.
-    nested_collections_unsupported: Nested collections are not yet supported in Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: The `{$prop}` option is not supported in Sveltia CMS. It will be ignored.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

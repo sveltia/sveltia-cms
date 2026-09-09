@@ -1487,7 +1487,6 @@ config:
   warning:
     oauth_no_app_id: Identyfikator aplikacji OAuth nie jest zdefiniowany. Użytkownicy muszą podać token dostępu, aby się zalogować.
     editorial_workflow_unsupported: Obieg redakcyjny nie jest jeszcze obsługiwany w Sveltia CMS.
-    nested_collections_unsupported: Zagnieżdżone kolekcje nie są jeszcze obsługiwane w Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Opcja `{$prop}` nie jest obsługiwana w Sveltia CMS. Zostanie zignorowana.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

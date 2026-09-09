@@ -610,7 +610,7 @@ describe('Collections Parser', () => {
           name: 'posts',
           folder: 'content/posts',
           fields: [],
-          nested: true,
+          sortableFields: ['title'],
         },
       };
 

@@ -266,12 +266,14 @@ const getEntriesGeneration = () => {
  * @param {boolean} [options.useTemplate] Whether to use the collection’s `summary` template if
  * available.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
+ * @param {string} [options.template] Summary template that overrides the collection’s `summary`
+ * option.
  * @returns {string} Formatted entry summary.
  */
 const formatEntrySummary = (
   collection,
   entry,
-  { locale, useTemplate = false, allowMarkdown = false } = {},
+  { locale, useTemplate = false, allowMarkdown = false, template } = {},
 ) => {
   if (isCollectionIndexFile(collection, entry)) {
     return /** @type {string} */ (getIndexFile(collection)?.label);
@@ -286,9 +288,10 @@ const formatEntrySummary = (
   const {
     _file: { basePath } = {},
     identifier_field: identifierField = 'title',
-    summary: summaryTemplate,
+    summary: collectionSummaryTemplate,
   } = _type === 'entry' ? collection : {};
 
+  const summaryTemplate = template ?? collectionSummaryTemplate;
   const { locales, slug, commitDate, commitAuthor } = entry;
 
   const { content = {}, path: entryPath = '' } =
@@ -340,12 +343,15 @@ const formatEntrySummary = (
  * @param {boolean} [options.useTemplate] Whether to use the collection’s `summary` template if
  * available.
  * @param {boolean} [options.allowMarkdown] Whether to allow Markdown and return HTML string.
+ * @param {string} [options.template] Summary template that overrides the collection’s `summary`
+ * option. Used for the folder labels in a nested collection’s tree, which have their own
+ * `nested.summary` option.
  * @returns {string} Formatted entry summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
  * @see https://sveltiacms.app/en/docs/collections/entries#summaries
  */
 export const getEntrySummary = (collection, entry, options = {}) => {
-  const { locale, useTemplate = false, allowMarkdown = false } = options;
+  const { locale, useTemplate = false, allowMarkdown = false, template } = options;
   let collectionCache = summaryCacheMap.get(entry);
 
   if (!collectionCache) {
@@ -366,6 +372,7 @@ export const getEntrySummary = (collection, entry, options = {}) => {
     locale ?? '',
     useTemplate ? '1' : '0',
     allowMarkdown ? '1' : '0',
+    template ?? '',
     // `Array.join()` turns an unset locale into an empty string
     appLocale.current,
     getEntriesGeneration(),

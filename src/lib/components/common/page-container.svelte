@@ -216,6 +216,46 @@
           }
         }
 
+        [role='tree'] {
+          margin: 8px;
+          border-width: 0;
+          padding: 0;
+          background-color: transparent;
+
+          [role='treeitem'] {
+            > .row {
+              border-radius: var(--sui-control-medium-border-radius);
+              padding-inline-end: 8px;
+
+              @media (pointer: coarse) {
+                min-height: 48px;
+              }
+
+              .icon {
+                flex: none;
+                transition: color 200ms;
+              }
+
+              .count {
+                flex: none;
+                padding: 2px;
+                color: var(--sui-tertiary-foreground-color);
+                font-size: var(--sui-font-size-small);
+                transition: color 200ms;
+              }
+            }
+
+            &[aria-selected='true'] > .row .count {
+              color: var(--sui-highlighted-foreground-color);
+            }
+
+            &.dragover > .row {
+              color: var(--sui-primary-accent-color-inverted) !important;
+              background-color: var(--sui-primary-accent-color) !important;
+            }
+          }
+        }
+
         .sui.divider {
           margin: 8px 0;
         }

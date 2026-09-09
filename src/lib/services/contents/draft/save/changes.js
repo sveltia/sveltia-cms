@@ -7,6 +7,7 @@ import { callEventHooks } from '$lib/services/api/events';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
+import { isNestedCollection } from '$lib/services/contents/collection/nested';
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
@@ -175,7 +176,7 @@ export const getPreviousSha = async ({ previousPath, cacheDB }) => {
  * @returns {Promise<FileChange>} File change information.
  */
 export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
-  const { collection, isNew, originalSlugs, originalEntry, collectionFile } = draft;
+  const { collection, isNew, originalEntry, collectionFile } = draft;
 
   const {
     _file,
@@ -183,8 +184,10 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const { slug, path, content } = savingEntry.locales[defaultLocale];
-  const renamed = !isNew && (originalSlugs?.[defaultLocale] ?? originalSlugs?._) !== slug;
   const previousPath = originalEntry?.locales[defaultLocale]?.path;
+  // Comparing the paths rather than the slugs also catches an entry moved with the path editor,
+  // which leaves the slug alone
+  const renamed = !isNew && !!previousPath && previousPath !== path;
 
   /**
    * Build the serialized content for the file. For `single_file_default_root`, the default locale’s
@@ -247,15 +250,8 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
  * @returns {Promise<FileChange | undefined>} File change information.
  */
 export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }) => {
-  const {
-    collection,
-    isNew,
-    originalLocales,
-    currentLocales,
-    originalSlugs,
-    originalEntry,
-    collectionFile,
-  } = draft;
+  const { collection, isNew, originalLocales, currentLocales, originalEntry, collectionFile } =
+    draft;
 
   const { _file } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
   const { slug, path, content } = savingEntry.locales[locale] ?? {};
@@ -263,8 +259,7 @@ export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }
   const previousSha = await getPreviousSha({ cacheDB, previousPath });
 
   if (currentLocales[locale]) {
-    const renamed =
-      !isNew && originalLocales[locale] && (originalSlugs?.[locale] ?? originalSlugs?._) !== slug;
+    const renamed = !isNew && !!originalLocales[locale] && !!previousPath && previousPath !== path;
 
     return {
       action: isNew || !originalLocales[locale] ? 'create' : renamed ? 'move' : 'update',
@@ -318,15 +313,34 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     slugs,
   });
 
+  /**
+   * Get the sub path of a file within the collection folder.
+   * @param {string} path File path.
+   * @returns {string} Sub path, falling back to the slug if the path can’t be parsed.
+   */
+  const getSubPath = (path) =>
+    _file.fullPathRegEx
+      ? (path.match(_file.fullPathRegEx)?.groups?.subPath ?? defaultLocaleSlug)
+      : defaultLocaleSlug;
+
+  const subPath = getSubPath(localizedEntryMap[defaultLocale].path);
+  // In a nested collection, an entry is identified by its path within the collection folder rather
+  // than by a file name, so that’s also the slug the entry gets when it’s read back from the
+  // repository. Use it here as well, or the entry saved in this session would differ from the same
+  // entry after a reload.
+  const nested = isNestedCollection(collection);
+
   /** @type {Entry} */
   const savingEntry = {
     id,
-    slug: defaultLocaleSlug,
-    subPath: _file.fullPathRegEx
-      ? (localizedEntryMap[defaultLocale].path.match(_file.fullPathRegEx)?.groups?.subPath ??
-        defaultLocaleSlug)
-      : defaultLocaleSlug,
-    locales: Object.fromEntries(Object.entries(localizedEntryMap)),
+    slug: nested ? subPath : defaultLocaleSlug,
+    subPath,
+    locales: Object.fromEntries(
+      Object.entries(localizedEntryMap).map(([locale, localizedEntry]) => [
+        locale,
+        nested ? { ...localizedEntry, slug: getSubPath(localizedEntry.path) } : localizedEntry,
+      ]),
+    ),
   };
 
   await callEventHooks({

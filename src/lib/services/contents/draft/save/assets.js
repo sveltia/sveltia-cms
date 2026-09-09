@@ -3,6 +3,7 @@ import equal from 'fast-deep-equal';
 import { getAssetsByDirName } from '$lib/services/assets';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { fillTemplate } from '$lib/services/common/template';
+import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { getFillSlugOptions } from '$lib/services/contents/draft/slugs';
 import {
@@ -21,6 +22,7 @@ import {
  * FileChange,
  * FillTemplateOptions,
  * FlattenedEntryContent,
+ * InternalCollection,
  * InternalEntryCollection,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, I18nFileStructure } from '$lib/types/public';
@@ -70,40 +72,79 @@ const fillTemplateIfNeeded = (pathString, fillSlugOptions) =>
   pathString.includes('{{') ? fillTemplate(pathString, fillSlugOptions) : pathString;
 
 /**
- * Extract the entry folder path from an entry file path. Removes file extension and the filename
- * suffix for nested entries (e.g., `/index`, `/_index`, or any custom filename from the `path`
- * config).
- * @param {string} entryFilePath Entry file path, e.g., `src/content/blog/hello-world.md`.
- * @param {string | undefined} subPath Collection’s file subPath template, e.g., `{{slug}}/index`.
- * @returns {string} Entry folder path, e.g., `src/content/blog/hello-world`.
- * @example
- * // Simple files
- * getEntryFolderPath('src/content/blog/hello-world.md', '{{slug}}')
- * // => 'src/content/blog/hello-world'
- * @example
- * // Nested files with `index`
- * getEntryFolderPath('src/content/blog/hello-world/index.md', '{{slug}}/index')
- * // => 'src/content/blog/hello-world'
- * @example
- * // Nested files with `_index`
- * getEntryFolderPath('content/learn/my-slug/_index.md', '{{slug}}/_index')
- * // => 'content/learn/my-slug'
+ * Check whether an entry file is the index file that every entry in a nested collection is stored
+ * as, which makes the folder holding it the entry’s own.
+ * @param {string} filePath Entry file path without its extension.
+ * @param {string | undefined} indexFileName Shared index file name, if the collection has one.
+ * @returns {boolean} Result.
  */
-const getEntryFolderPath = (entryFilePath, subPath) => {
-  // Remove file extension (always present)
-  const extensionIndex = entryFilePath.lastIndexOf('.');
-  let folderPath = entryFilePath.substring(0, extensionIndex);
-  // For nested entries where the path config has a fixed filename suffix (e.g., `{{slug}}/index` or
-  // `{{slug}}/_index`), strip that last segment to get the folder path. Paths like
-  // `{{year}}/{{month}}/{{slug}}` are not nested in this sense — the slug IS the last segment, so
-  // nothing is stripped.
-  const lastSubPathSegment = subPath?.includes('/') ? subPath.split('/').at(-1) : undefined;
-
-  if (lastSubPathSegment && !lastSubPathSegment.includes('{{')) {
-    folderPath = /** @type {string} */ (folderPath.match(FOLDER_PATH_REGEX)?.groups?.path);
+const isSharedIndexFile = (filePath, indexFileName) => {
+  if (!indexFileName) {
+    return false;
   }
 
-  return folderPath;
+  const fileName = filePath.slice(filePath.lastIndexOf('/') + 1);
+
+  // The `multiple_files` i18n structure appends the locale to the file name, e.g. `_index.en`
+  return fileName === indexFileName || fileName.startsWith(`${indexFileName}.`);
+};
+
+/**
+ * Get the path of the folder an entry occupies, which holds the entry’s relative assets along with
+ * anything else stored below it. Only some file structures give an entry a folder of its own; in
+ * the others, an entry is a file sharing a folder with the rest of the collection, so its relative
+ * assets are shared as well.
+ * @internal
+ * @param {InternalCollection} collection Collection the entry belongs to.
+ * @param {string} entryFilePath Entry file path, e.g. `content/blog/hello-world/index.md`.
+ * @returns {string | undefined} Folder path, e.g. `content/blog/hello-world`. `undefined` if the
+ * entry has no folder of its own.
+ * @example
+ * // A `path` option ending in a fixed file name gives the entry a folder
+ * getOwnedEntryFolderPath(collection, 'content/blog/hello-world/index.md') // `{{slug}}/index`
+ * // => 'content/blog/hello-world'
+ * @example
+ * // Every entry in a nested collection is an index file, with or without a `path` option
+ * getOwnedEntryFolderPath(collection, 'content/pages/about/_index.md') // `index_file: _index`
+ * // => 'content/pages/about'
+ * @example
+ * // The slug is the last segment here, so the entry file sits next to the folder named after it
+ * // with a `{{year}}/{{month}}/{{slug}}` path option
+ * getOwnedEntryFolderPath(collection, 'content/blog/2025/06/hello-world.md')
+ * // => 'content/blog/2025/06/hello-world'
+ * @example
+ * // A plain file collection shares one folder, so there’s nothing the entry owns
+ * getOwnedEntryFolderPath(collection, 'content/blog/hello-world.md') // no `path` option
+ * // => undefined
+ */
+export const getOwnedEntryFolderPath = (collection, entryFilePath) => {
+  if (collection._type !== 'entry') {
+    return undefined;
+  }
+
+  const { subPath } = /** @type {InternalEntryCollection} */ (collection)._file;
+  // Remove the file extension, which is always present
+  const filePath = entryFilePath.substring(0, entryFilePath.lastIndexOf('.'));
+  const lastSubPathSegment = subPath?.includes('/') ? subPath.split('/').at(-1) : undefined;
+
+  // The entry file has a fixed name within the folder holding it, either because the `path` option
+  // ends in one, or because the collection stores every entry as an index file. Either way the
+  // folder is the entry, so strip the file name off
+  if (
+    (!!lastSubPathSegment && !lastSubPathSegment.includes('{{')) ||
+    isSharedIndexFile(filePath, getSharedEntryFileName(collection))
+  ) {
+    return /** @type {string} */ (filePath.match(FOLDER_PATH_REGEX)?.groups?.path);
+  }
+
+  // The entry file is named after the slug, so a folder of the same name sits next to it. That only
+  // holds where the file path says which entry it belongs to: a `path` option with a folder of its
+  // own, such as `{{year}}/{{month}}/{{slug}}`, or a locale folder per entry
+  if (subPath?.includes('/') || MULTI_FOLDER_STRUCTURES.includes(collection._i18n.structure)) {
+    return filePath;
+  }
+
+  return undefined;
 };
 
 /**
@@ -111,33 +152,25 @@ const getEntryFolderPath = (entryFilePath, subPath) => {
  * @param {object} args Arguments.
  * @param {string} args.internalPath Internal path from folder config.
  * @param {string | undefined} args.internalSubPath Internal sub-path from folder config.
- * @param {string} args.entryFolderPath Resolved entry folder path.
- * @param {boolean} args.isMultiFolders Whether collection uses multi-folder i18n structure.
- * @param {boolean} args.isNestedEntry Whether entry uses nested file structure.
+ * @param {string | undefined} args.ownedFolderPath Folder the entry occupies, if it has one.
  * @param {FillTemplateOptions} args.fillSlugOptions Arguments for template filling.
  * @returns {string} Resolved internal path.
  */
 const resolveInternalPath = ({
   internalPath,
   internalSubPath,
-  entryFolderPath,
-  isMultiFolders,
-  isNestedEntry,
+  ownedFolderPath,
   fillSlugOptions,
 }) => {
   // We already know the entry file path, so we can resolve the internal path to the asset folder
-  // even when it’s entry-relative. We should use entryFolderPath (extracted from entryFilePath)
+  // even when it’s entry-relative. We should use the folder path extracted from entryFilePath
   // rather than reconstructing the path from templates, because when date-related template tags are
   // used in subPath (e.g., `{{year}}-{{month}}-{{day}}-{{slug}}/index`), the resolved path would be
   // different from the original entry path if we filled the template again. This would cause assets
-  // saved at a later date to be stored in a different folder than the entry itself. Instead, we use
-  // the already-resolved entryFolderPath which preserves the original date context. For nested
-  // entries or multi-folder structures, use entryFolderPath. For simple entries with single-file
-  // i18n or file collections, use internalPath (shared asset folder).
-  const shouldUseEntryFolderPath = isMultiFolders || isNestedEntry;
-
+  // saved at a later date to be stored in a different folder than the entry itself. An entry with
+  // no folder of its own shares the collection’s asset folder with the rest of the collection.
   const internalPathString = createPath([
-    shouldUseEntryFolderPath ? entryFolderPath : internalPath,
+    ownedFolderPath ?? internalPath,
     internalSubPath, // subfolder, e.g. `images` or an empty string
   ]);
 
@@ -212,15 +245,11 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
       : undefined;
 
   const subPathFolderPath = subPath?.match(FOLDER_PATH_REGEX)?.groups?.path ?? '';
-  const entryFolderPath = getEntryFolderPath(entryFilePath ?? '', subPath);
-  const isNestedEntry = subPath?.includes('/') ?? false;
 
   const resolvedInternalPath = resolveInternalPath({
     internalPath,
     internalSubPath,
-    entryFolderPath,
-    isMultiFolders,
-    isNestedEntry,
+    ownedFolderPath: getOwnedEntryFolderPath(collection, entryFilePath ?? ''),
     fillSlugOptions,
   });
 
