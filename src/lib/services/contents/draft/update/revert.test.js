@@ -103,6 +103,34 @@ describe('draft/update/revert', () => {
   });
 
   describe('revertChanges', () => {
+    it('restores the folder the entry is filed in', () => {
+      // Moving an entry with the path editor is a change of its own, so a full revert undoes it
+      mockEntryDraft.originalPath = 'company';
+      mockEntryDraft.currentPath = 'archive';
+
+      revertChanges();
+
+      expect(mockUpdate.mock.calls[0][0]().currentPath).toBe('company');
+    });
+
+    it('leaves the folder alone when only one locale is reverted', () => {
+      mockEntryDraft.originalPath = 'company';
+      mockEntryDraft.currentPath = 'archive';
+
+      revertChanges({ locale: 'en' });
+
+      expect(mockUpdate.mock.calls[0][0]().currentPath).toBe('archive');
+    });
+
+    it('leaves the folder alone when only one field is reverted', () => {
+      mockEntryDraft.originalPath = 'company';
+      mockEntryDraft.currentPath = 'archive';
+
+      revertChanges({ keyPath: 'title' });
+
+      expect(mockUpdate.mock.calls[0][0]().currentPath).toBe('archive');
+    });
+
     it('should revert all fields in all locales', () => {
       revertChanges();
 

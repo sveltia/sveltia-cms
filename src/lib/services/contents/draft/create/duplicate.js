@@ -1,6 +1,7 @@
 import { get } from 'svelte/store';
 
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
+import { getEntryDirPath, getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { entryDraft } from '$lib/services/contents/draft';
 import { getSlugEditorProp } from '$lib/services/contents/draft/create';
 import { showDuplicateToast } from '$lib/services/contents/editor';
@@ -96,6 +97,13 @@ export const duplicateDraft = () => {
     validities[locale] = {};
   });
 
+  const { currentPath } = draft;
+
+  const duplicatePath =
+    currentPath !== undefined && getSharedEntryFileName(collection)
+      ? getEntryDirPath(currentPath)
+      : currentPath;
+
   entryDraft.set({
     ...draft,
     id: crypto.randomUUID(),
@@ -104,8 +112,11 @@ export const duplicateDraft = () => {
     originalEntry: undefined,
     originalSlugs: {},
     currentSlugs: {},
-    // The duplicate starts out in the folder the original is in, which is now its own baseline
-    originalPath: draft.currentPath,
+    // The duplicate is filed alongside the original, not inside it. Where every entry owns a
+    // folder, `currentPath` is the original’s own folder, so the copy has to start from its parent
+    // and get a folder of its own there
+    originalPath: duplicatePath,
+    currentPath: duplicatePath,
     slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs: {} }),
   });
 

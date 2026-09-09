@@ -34,6 +34,15 @@ vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
   getOrderFieldKey: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/collection/nested', () => ({
+  getSharedEntryFileName: vi.fn(() => undefined),
+  getEntryDirPath: vi.fn((subPath) => {
+    const index = subPath.lastIndexOf('/');
+
+    return index === -1 ? '' : subPath.slice(0, index);
+  }),
+}));
+
 describe('contents/draft/create/duplicate', () => {
   /** @type {any} */
   let mockEntryDraft;
@@ -113,6 +122,72 @@ describe('contents/draft/create/duplicate', () => {
   });
 
   describe('duplicateDraft', () => {
+    it('files the copy alongside the original, not inside it', async () => {
+      const { getSharedEntryFileName } = await import('$lib/services/contents/collection/nested');
+
+      // Every entry owns a folder, so `currentPath` is the original entry’s own folder
+      vi.mocked(getSharedEntryFileName).mockReturnValue('_index');
+      mockEntryDraft.originalPath = 'company/about';
+      mockEntryDraft.currentPath = 'company/about';
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.currentPath).toBe('company');
+      expect(setCallArg.originalPath).toBe('company');
+    });
+
+    it('files a copy of a top-level entry in the collection root', async () => {
+      const { getSharedEntryFileName } = await import('$lib/services/contents/collection/nested');
+
+      vi.mocked(getSharedEntryFileName).mockReturnValue('_index');
+      mockEntryDraft.originalPath = 'about';
+      mockEntryDraft.currentPath = 'about';
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.currentPath).toBe('');
+    });
+
+    it('keeps the folder when entries are files rather than folders', async () => {
+      const { getSharedEntryFileName } = await import('$lib/services/contents/collection/nested');
+
+      // Without a shared file name the entry doesn’t own its folder, so the copy stays beside it
+      vi.mocked(getSharedEntryFileName).mockReturnValue(undefined);
+      mockEntryDraft.originalPath = 'products';
+      mockEntryDraft.currentPath = 'products';
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.currentPath).toBe('products');
+    });
+
+    it('leaves the path unset for a collection without the path editor', async () => {
+      const { getSharedEntryFileName } = await import('$lib/services/contents/collection/nested');
+
+      vi.mocked(getSharedEntryFileName).mockReturnValue(undefined);
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      duplicateDraft();
+
+      const setCallArg = mockEntryDraftSet.mock.calls[0][0];
+
+      expect(setCallArg.currentPath).toBeUndefined();
+      expect(setCallArg.originalPath).toBeUndefined();
+    });
+
     it('should remove canonical slug from all locales', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
 

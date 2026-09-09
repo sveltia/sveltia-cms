@@ -18,6 +18,18 @@ export const I18N_STRUCTURES = {
 };
 
 /**
+ * I18n structures that store each locale’s copy of the whole site below a folder named after it, so
+ * a locale name comes in front of a collection’s own folder. The other structures either keep one
+ * file per entry or put the locale folder inside the collection folder.
+ * @type {I18nFileStructure[]}
+ * @internal
+ */
+export const LOCALE_ROOT_FOLDER_STRUCTURES = [
+  I18N_STRUCTURES.MULTIPLE_FOLDERS_I18N_ROOT,
+  I18N_STRUCTURES.MULTIPLE_ROOT_FOLDERS,
+];
+
+/**
  * Default locale identifier.
  * @internal
  */

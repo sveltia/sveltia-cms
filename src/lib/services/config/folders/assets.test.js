@@ -32,9 +32,15 @@ describe('config/folders/assets', () => {
     it('records the locale folder names on entry-relative folders only', () => {
       const collections = [
         // Entry-relative: the assets sit beside the entry, so they can be below a locale folder
-        { name: 'posts', folder: 'content/posts', media_folder: '', public_folder: '' },
+        {
+          name: 'posts',
+          folder: 'content/posts',
+          media_folder: '',
+          public_folder: '',
+          i18n: true,
+        },
         // Absolute: one shared folder, which no locale folder ever precedes
-        { name: 'pages', folder: 'content/pages', media_folder: '/static/pages' },
+        { name: 'pages', folder: 'content/pages', media_folder: '/static/pages', i18n: true },
       ];
 
       vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
@@ -63,6 +69,125 @@ describe('config/folders/assets', () => {
         { collectionName: 'posts', entryRelative: true, localeFolderNames: ['en', 'de'] },
         { collectionName: 'pages', entryRelative: false, localeFolderNames: undefined },
       ]);
+    });
+
+    it('reads the locales a collection defines for itself', () => {
+      // `locales` can be set on the collection rather than at the site level
+      const collections = [
+        {
+          name: 'posts',
+          folder: 'content/posts',
+          media_folder: '',
+          public_folder: '',
+          i18n: { locales: ['en', 'fr'] },
+        },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        i18n: { structure: 'multiple_root_folders' },
+        collections,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      expect(
+        result.find(({ collectionName }) => collectionName === 'posts')?.localeFolderNames,
+      ).toEqual(['en', 'fr']);
+    });
+
+    it('leaves the locale folder names off for a structure with no locale folder in front', () => {
+      // `multiple_folders` puts the locale below the collection folder, not in front of it
+      const collections = [
+        {
+          name: 'posts',
+          folder: 'content/posts',
+          media_folder: '',
+          public_folder: '',
+          i18n: true,
+        },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        i18n: { structure: 'multiple_folders', locales: ['en', 'de'] },
+        collections,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      expect(
+        result.find(({ collectionName }) => collectionName === 'posts')?.localeFolderNames,
+      ).toBeUndefined();
+    });
+
+    it('leaves the locale folder names off when no structure is configured', () => {
+      // Without a `structure` option the default is `single_file`, which has no locale folder
+      const collections = [
+        {
+          name: 'posts',
+          folder: 'content/posts',
+          media_folder: '',
+          public_folder: '',
+          i18n: true,
+        },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        i18n: { locales: ['en', 'de'] },
+        collections,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      expect(
+        result.find(({ collectionName }) => collectionName === 'posts')?.localeFolderNames,
+      ).toBeUndefined();
+    });
+
+    it('leaves the locale folder names off when no locale is configured', () => {
+      const collections = [
+        {
+          name: 'posts',
+          folder: 'content/posts',
+          media_folder: '',
+          public_folder: '',
+          i18n: true,
+        },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        i18n: { structure: 'multiple_root_folders' },
+        collections,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      expect(
+        result.find(({ collectionName }) => collectionName === 'posts')?.localeFolderNames,
+      ).toBeUndefined();
     });
 
     it('leaves the locale folder names off when the site has no i18n', () => {

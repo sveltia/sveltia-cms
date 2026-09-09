@@ -154,13 +154,21 @@ export const revertLocale = ({ draft, keyPath, locale }) => {
  */
 export const revertChanges = ({ locale: targetLanguage = '', keyPath = '' } = {}) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { collection, collectionFile, currentValues } = draft;
+  const { collection, collectionFile, currentValues, originalPath } = draft;
   const { allLocales } = (collectionFile ?? collection)._i18n;
   const locales = targetLanguage ? [targetLanguage] : allLocales;
+  // Reverting one field or one locale only touches values. Reverting everything restores where the
+  // entry goes as well, or a move made with the path editor would survive the revert and still be
+  // committed on the next save
+  const revertsEverything = !targetLanguage && !keyPath;
 
   locales.forEach((locale) => {
     revertLocale({ draft, keyPath, locale });
   });
 
-  entryDraft.update(() => ({ ...draft, currentValues }));
+  entryDraft.update(() => ({
+    ...draft,
+    currentValues,
+    ...(revertsEverything ? { currentPath: originalPath } : {}),
+  }));
 };

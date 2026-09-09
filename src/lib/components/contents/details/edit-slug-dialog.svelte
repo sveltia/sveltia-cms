@@ -103,8 +103,12 @@
       updatedFolderName = folderName;
       folderValidation = false;
 
-      // Only the folders sharing a parent with this one can be in the way
-      otherSlugs = getEntriesByCollection(collectionName)
+      // Only the folders sharing a parent with this one can be in the way. The unpublished entries
+      // count too, the same way they do for the slug above
+      otherSlugs = [
+        ...getEntriesByCollection(collectionName),
+        ...getUnpublishedEntriesByCollection(collectionName),
+      ]
         .filter((entry) => entry.id !== originalEntry?.id)
         .map(({ subPath }) => getEntryDirPath(subPath))
         .filter((dirPath) => getEntryDirPath(dirPath) === parentPath)

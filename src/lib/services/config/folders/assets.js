@@ -4,6 +4,8 @@ import { compare, stripSlashes } from '@sveltia/utils/string';
 import { hasTemplateTags } from '$lib/services/common/template';
 import { getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/files';
+import { LOCALE_ROOT_FOLDER_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
+import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 
 /**
  * @import {
@@ -289,7 +291,6 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     collections,
     singletons,
     asset_collections: assetCollections,
-    i18n: { locales: localeFolderNames = [] } = {},
   } = config;
 
   const isGlobalFolderConfigured = _globalMediaFolder !== undefined;
@@ -398,15 +399,30 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     allFolders.unshift(allAssetsFolder);
   }
 
-  if (!localeFolderNames.length) {
-    return allFolders;
-  }
-
   // The `multiple_root_folders` i18n structure stores each locale’s copy of the whole site below a
   // folder named after it, so an entry-relative folder’s own files can sit one level deeper than
   // the collection `folder` option says. Record the locale names so the asset paths can be matched
-  // there too; the entry folders already carry the same information in their `folderPathMap`
-  return allFolders.map((folder) =>
-    folder.entryRelative ? { ...folder, localeFolderNames } : folder,
+  // there too; the entry folders already carry the same information in their `folderPathMap`.
+  // The locales are read per collection rather than from the site configuration, because a
+  // collection can define its own, and only the structures that put the locale in front matter
+  const localeFolderNameMap = new Map(
+    validCollections.map((collection) => {
+      const i18n = mergeI18nConfigs({ cmsConfig: config, collection });
+
+      const locales =
+        i18n?.structure && LOCALE_ROOT_FOLDER_STRUCTURES.includes(i18n.structure)
+          ? (i18n.locales ?? [])
+          : [];
+
+      return [collection.name, locales];
+    }),
   );
+
+  return allFolders.map((folder) => {
+    const localeFolderNames = folder.entryRelative
+      ? localeFolderNameMap.get(/** @type {string} */ (folder.collectionName))
+      : undefined;
+
+    return localeFolderNames?.length ? { ...folder, localeFolderNames } : folder;
+  });
 };

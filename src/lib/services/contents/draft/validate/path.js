@@ -12,6 +12,7 @@ import {
 import { entryDraft } from '$lib/services/contents/draft';
 import { buildCustomEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 /**
  * @import { EntryDraft, LocaleValidityMap } from '$lib/types/private';
@@ -49,9 +50,12 @@ const isPathTaken = (draft) => {
     indexFileName,
   });
 
-  return getEntriesByCollection(collection.name).some(
-    (entry) => entry.subPath === subPath && entry.id !== originalEntry?.id,
-  );
+  // The unpublished entries count too, or a folder already claimed by a draft awaiting review
+  // would be handed out twice and the two would collide when the branches are merged
+  return [
+    ...getEntriesByCollection(collection.name),
+    ...getUnpublishedEntriesByCollection(collection.name),
+  ].some((entry) => entry.subPath === subPath && entry.id !== originalEntry?.id);
 };
 
 /**

@@ -6,6 +6,7 @@ import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { entryDraft } from '$lib/services/contents/draft';
 import { validatePath } from '$lib/services/contents/draft/validate/path';
+import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 vi.mock('$lib/services/contents/collection', () => ({
   isEntryCollection: vi.fn(),
@@ -13,6 +14,10 @@ vi.mock('$lib/services/contents/collection', () => ({
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
+}));
+
+vi.mock('$lib/services/workflow', () => ({
+  getUnpublishedEntriesByCollection: vi.fn(() => []),
 }));
 
 vi.mock('$lib/services/contents/draft/slugs', () => ({
@@ -58,6 +63,7 @@ beforeEach(() => {
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
   );
   vi.mocked(getEntriesByCollection).mockReturnValue([]);
+  vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue([]);
 });
 
 describe('validatePath()', () => {
@@ -241,6 +247,25 @@ describe('validatePath()', () => {
       });
 
       expect(validatePath().valid).toBe(true);
+    });
+
+    test('rejects a destination already claimed by an unpublished entry', async () => {
+      // The published tree is still clear, but a draft awaiting review has taken the folder
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue(
+        /** @type {any} */ ([{ id: 'other', subPath: 'docs/_index' }]),
+      );
+
+      await setDraft({
+        collection: createCollection({ indexFile: '_index' }),
+        currentLocales: { en: true },
+        isNew: false,
+        originalEntry: { id: 'self', subPath: 'guides/_index' },
+        originalPath: 'guides',
+        currentPath: 'docs',
+      });
+
+      expect(validatePath().validities.en._path.duplicateError).toBe(true);
     });
 
     test('ignores the entry being edited', async () => {
