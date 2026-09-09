@@ -115,6 +115,18 @@ export const filterRealValues = (valueMap) =>
   Object.fromEntries(Object.entries(valueMap).filter(([key]) => !INTERNAL_PROP_REGEX.test(key)));
 
 /**
+ * Check whether a value map key holds content that the comparison below has to look at. Internal
+ * properties are bookkeeping rather than content. An `undefined` value is left out as well: it’s
+ * empty when the entry is written, so it makes no difference to the saved file whether the key is
+ * there, and a key holding one can’t always be reproduced — reverting a field assigns the original
+ * `undefined` back to a property that was just deleted, which leaves a state proxy without the key.
+ * @param {FlattenedEntryContent} valueMap Value map to look in.
+ * @param {string} key Key to check.
+ * @returns {boolean} Whether the key counts.
+ */
+const isRealKey = (valueMap, key) => !INTERNAL_PROP_REGEX.test(key) && valueMap[key] !== undefined;
+
+/**
  * Compare a locale’s original and current value maps, ignoring internal properties in the current
  * one. Equivalent to deep-comparing {@link filterRealValues} of the current map against the
  * original, but without building the filtered copy first.
@@ -126,7 +138,7 @@ const isValueMapModified = (originalValueMap, currentValueMap) => {
   let realKeyCount = 0;
 
   const anyValueChanged = Object.keys(currentValueMap).some((key) => {
-    if (INTERNAL_PROP_REGEX.test(key)) {
+    if (!isRealKey(currentValueMap, key)) {
       return false;
     }
 
@@ -138,7 +150,11 @@ const isValueMapModified = (originalValueMap, currentValueMap) => {
   });
 
   // Also catch keys that only exist in the original map, which the loop above cannot see
-  return anyValueChanged || Object.keys(originalValueMap).length !== realKeyCount;
+  return (
+    anyValueChanged ||
+    Object.keys(originalValueMap).filter((key) => isRealKey(originalValueMap, key)).length !==
+      realKeyCount
+  );
 };
 
 /**

@@ -356,6 +356,93 @@ describe('draft/index', () => {
       expect(value).toBe(true);
     });
 
+    it('should ignore a key holding `undefined` that only the original map has', () => {
+      // A Markdown entry with no body gets a `body` key with no value. Reverting a field deletes
+      // every current key and assigns the originals back, and assigning `undefined` to a deleted
+      // property leaves a state proxy without the key, so the current map can’t have it
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test', body: undefined } },
+        currentValues: { en: { title: 'Test' } },
+      };
+
+      entryDraft.set(draft);
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(false);
+    });
+
+    it('should ignore a key holding `undefined` that only the current map has', () => {
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test' } },
+        currentValues: { en: { title: 'Test', body: undefined } },
+      };
+
+      entryDraft.set(draft);
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(false);
+    });
+
+    it('should return true when a value is cleared to `undefined`', () => {
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test', body: 'Body' } },
+        currentValues: { en: { title: 'Test', body: undefined } },
+      };
+
+      entryDraft.set(draft);
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(true);
+    });
+
+    it('should return true when a value is filled in from `undefined`', () => {
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { title: 'Test', body: undefined } },
+        currentValues: { en: { title: 'Test', body: 'Body' } },
+      };
+
+      entryDraft.set(draft);
+
+      let value;
+
+      entryDraftModified.subscribe((v) => {
+        value = v;
+      });
+
+      expect(value).toBe(true);
+    });
+
     it('should detect deep changes in nested values', () => {
       const draft = {
         originalLocales: { en: true },
