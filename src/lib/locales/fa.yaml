@@ -1631,7 +1631,6 @@ config:
     oauth_no_app_id: شناسه برنامه OAuth تعریف نشده است. کاربران برای ورود باید یک توکن دسترسی ارائه دهند.
     editorial_workflow_unsupported: گردش کار تحریریه در حال حاضر فقط با بک‌آندهای GitHub و GitLab پشتیبانی می‌شود.
     open_authoring_unsupported_backend: قابلیت Open Authoring در حال حاضر فقط با بک‌اند GitHub پشتیبانی می‌شود.
-    nested_collections_unsupported: مجموعه‌های تو در تو هنوز در Sveltia CMS پشتیبانی نمی‌شوند.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: 'گزینه `{$prop}` در Sveltia CMS پشتیبانی نمی‌شود. این گزینه نادیده گرفته خواهد شد.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

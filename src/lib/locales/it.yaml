@@ -1633,7 +1633,6 @@ config:
     oauth_no_app_id: L’ID dell’applicazione OAuth non è stato definito. Agli utenti è richiesto di fornire un token di accesso per accedere.
     editorial_workflow_unsupported: Il Flusso Editoriale è attualmente supportato solo con i backend GitHub e GitLab.
     open_authoring_unsupported_backend: L’Open Authoring è attualmente supportato solo con il backend GitHub.
-    nested_collections_unsupported: Le collezioni nidificate non sono ancora supportate in Sveltia CMS.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: L’opzione `{$prop}` non è supportata in Sveltia CMS. Verrà ignorata.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`

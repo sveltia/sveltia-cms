@@ -1575,7 +1575,6 @@ config:
     oauth_no_app_id: 未定義 OAuth 應用程式 ID。使用者需要提供存取權杖才能登入。
     editorial_workflow_unsupported: Sveltia CMS 暫不支援編輯工作流程。
     open_authoring_unsupported_backend: Open Authoring 目前僅支援 GitHub 後端。
-    nested_collections_unsupported: Sveltia CMS 暫不支援巢狀集合。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Sveltia CMS 不支援 `{$prop}` 選項。該選項將會被忽略。
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
