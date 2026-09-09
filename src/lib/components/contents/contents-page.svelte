@@ -34,7 +34,11 @@
     getCollectionFileEntry,
     getCollectionFileLabel,
   } from '$lib/services/contents/collection/files';
-  import { getMetaPathConfig, nestedFilterPath } from '$lib/services/contents/collection/nested';
+  import {
+    getMetaPathConfig,
+    isNestedFolder,
+    nestedFilterPath,
+  } from '$lib/services/contents/collection/nested';
   import { listedEntries } from '$lib/services/contents/collection/view';
   import { entryDraft } from '$lib/services/contents/draft';
   import { createDraft } from '$lib/services/contents/draft/create';
@@ -135,6 +139,22 @@
     if (!routeType && subPath) {
       // A collection route takes no path of its own, so anything between the collection name and
       // an `entries`/`new`/`filter` segment is a dead link, e.g. `#/collections/pages/foo/ever`
+      $showContentOverlay = false;
+      $announcedPageStatus = _('page_not_found');
+      notFoundKey = 'page_not_found';
+
+      return; // Not Found
+    }
+
+    if (
+      routeType === 'filter' &&
+      !isNestedFolder({
+        collection,
+        entries: getEntriesByCollection(collectionName),
+        dirPath: subPath ?? '',
+      })
+    ) {
+      // The URL names a folder that no entry lives in, or a collection with no folders at all
       $showContentOverlay = false;
       $announcedPageStatus = _('page_not_found');
       notFoundKey = 'page_not_found';

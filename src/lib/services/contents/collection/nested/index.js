@@ -201,6 +201,28 @@ export const getEntryDirPath = (subPath) => {
 export const isDescendantPath = (dirPath, subPath) => !dirPath || subPath.startsWith(`${dirPath}/`);
 
 /**
+ * Check whether the given folder is part of a nested collection’s tree, which is what the folder
+ * route browses. A folder is there as long as it holds an entry, directly or further down; the
+ * collection’s root folder is always there, even while the collection is still empty.
+ * @param {object} args Arguments.
+ * @param {Collection | InternalCollection} args.collection Collection.
+ * @param {Entry[]} args.entries Entries in the collection.
+ * @param {string} args.dirPath Directory path relative to the collection folder. An empty string
+ * for the collection’s root folder.
+ * @returns {boolean} Result. Always `false` for a collection that isn’t nested, which has no
+ * folders to browse.
+ */
+export const isNestedFolder = ({ collection, entries, dirPath }) => {
+  if (!isNestedCollection(collection)) {
+    return false;
+  }
+
+  const basePath = stripSlashes(dirPath);
+
+  return !basePath || entries.some(({ subPath }) => isDescendantPath(basePath, subPath));
+};
+
+/**
  * Limit the given entries to those that should be listed while the user is browsing a folder of a
  * nested collection. Only the immediate children of the folder are listed, because the deeper
  * entries are reachable through the collection tree.

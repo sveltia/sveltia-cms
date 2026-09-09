@@ -12,6 +12,7 @@ import {
   getSharedEntryFileName,
   isDescendantPath,
   isNestedCollection,
+  isNestedFolder,
   nestedFilterPath,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
@@ -312,6 +313,47 @@ describe('isDescendantPath()', () => {
     expect(isDescendantPath('a', 'a/b')).toBe(true);
     expect(isDescendantPath('a', 'ab/c')).toBe(false);
     expect(isDescendantPath('a', 'a')).toBe(false);
+  });
+});
+
+describe('isNestedFolder()', () => {
+  const collection = { name: 'pages', folder: 'content/pages', nested: {} };
+  const entries = [entry('_index'), entry('docs/_index'), entry('docs/guides/deep/_index')];
+
+  test('accepts the collection’s root folder', () => {
+    expect(isNestedFolder({ collection, entries, dirPath: '' })).toBe(true);
+  });
+
+  test('accepts the root folder of an empty collection', () => {
+    expect(isNestedFolder({ collection, entries: [], dirPath: '' })).toBe(true);
+  });
+
+  test('accepts a folder that holds an entry', () => {
+    expect(isNestedFolder({ collection, entries, dirPath: 'docs' })).toBe(true);
+  });
+
+  test('accepts a folder that only holds one further down', () => {
+    // Nothing is stored in `docs/guides` itself, but it’s still part of the tree
+    expect(isNestedFolder({ collection, entries, dirPath: 'docs/guides' })).toBe(true);
+  });
+
+  test('ignores leading and trailing slashes', () => {
+    expect(isNestedFolder({ collection, entries, dirPath: '/docs/' })).toBe(true);
+  });
+
+  test('rejects a folder that no entry lives in', () => {
+    expect(isNestedFolder({ collection, entries, dirPath: 'missing' })).toBe(false);
+  });
+
+  test('rejects a folder that only shares a name prefix with one', () => {
+    expect(isNestedFolder({ collection, entries, dirPath: 'do' })).toBe(false);
+  });
+
+  test('rejects any folder in a collection that isn’t nested', () => {
+    const flatCollection = { name: 'pages', folder: 'content/pages' };
+
+    expect(isNestedFolder({ collection: flatCollection, entries, dirPath: 'docs' })).toBe(false);
+    expect(isNestedFolder({ collection: flatCollection, entries, dirPath: '' })).toBe(false);
   });
 });
 
