@@ -22,6 +22,7 @@ import {
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
+  isEntryCollection: vi.fn(() => true),
 }));
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(),

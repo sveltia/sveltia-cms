@@ -14,6 +14,7 @@ import {
   isNestedCollection,
   isNestedFolder,
   nestedFilterPath,
+  stripIndexFileName,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
 
@@ -313,6 +314,42 @@ describe('isDescendantPath()', () => {
     expect(isDescendantPath('a', 'a/b')).toBe(true);
     expect(isDescendantPath('a', 'ab/c')).toBe(false);
     expect(isDescendantPath('a', 'a')).toBe(false);
+  });
+});
+
+describe('stripIndexFileName()', () => {
+  const collection = {
+    name: 'pages',
+    folder: 'content/pages',
+    nested: {},
+    meta: { path: { index_file: '_index' } },
+  };
+
+  test('drops the shared file name from an entry’s path', () => {
+    expect(stripIndexFileName(collection, 'company/about/_index')).toBe('company/about');
+  });
+
+  test('drops it from a top-level entry too', () => {
+    expect(stripIndexFileName(collection, 'about/_index')).toBe('about');
+  });
+
+  test('leaves the collection’s own index file alone', () => {
+    // There would be nothing left of it, and an empty reference says nothing
+    expect(stripIndexFileName(collection, '_index')).toBe('_index');
+  });
+
+  test('leaves a name that merely ends with the same characters', () => {
+    expect(stripIndexFileName(collection, 'about/not_index')).toBe('about/not_index');
+  });
+
+  test('returns the slug as is without the subfolders mode', () => {
+    const flatCollection = { ...collection, nested: { subfolders: false } };
+
+    expect(stripIndexFileName(flatCollection, 'docs/intro')).toBe('docs/intro');
+  });
+
+  test('returns the slug as is for a collection that isn’t nested', () => {
+    expect(stripIndexFileName({ name: 'posts', folder: 'content/posts' }, 'hello')).toBe('hello');
   });
 });
 

@@ -1,5 +1,7 @@
+import { stripIndexFileName } from '$lib/services/contents/collection/nested';
+
 /**
- * @import { Entry, FlattenedEntryContent } from '$lib/types/private';
+ * @import { Entry, FlattenedEntryContent, InternalCollection } from '$lib/types/private';
  * @import { RelationFieldFilterOptions } from '$lib/types/public';
  */
 
@@ -46,6 +48,7 @@ export const resolveFilterValues = (filters, currentLocaleValues, currentSlug = 
  * @internal
  * @param {object} args Arguments.
  * @param {Entry[]} args.refEntries Reference entries.
+ * @param {InternalCollection} args.collection Collection the entries belong to.
  * @param {string} args.locale Current locale.
  * @param {string} [args.fileName] File name to filter by.
  * @param {RelationFieldFilterOptions[]} [args.entryFilters] Entry filters to apply.
@@ -54,6 +57,7 @@ export const resolveFilterValues = (filters, currentLocaleValues, currentSlug = 
  */
 export const filterAndPrepareEntries = ({
   refEntries,
+  collection,
   locale,
   fileName = undefined,
   entryFilters = [],
@@ -87,7 +91,11 @@ export const filterAndPrepareEntries = ({
           // targeted via `fields.slug` without ambiguity.
           const isEntrySlug = field === 'slug';
           const fieldKey = field.replace(/^fields\./, '');
-          const fieldValue = isEntrySlug ? refEntry.slug : content[fieldKey];
+
+          // Match the slug in the same shape a reference to the entry uses
+          const fieldValue = isEntrySlug
+            ? stripIndexFileName(collection, refEntry.slug)
+            : content[fieldKey];
 
           return exclude ? !values.includes(fieldValue) : values.includes(fieldValue);
         }),

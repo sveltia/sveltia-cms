@@ -74,6 +74,7 @@ const buildOptions = ({ locale, fieldConfig, refEntries, entryFilters = [] }) =>
 
   const filteredEntries = filterAndPrepareEntries({
     refEntries,
+    collection,
     locale,
     fileName,
     entryFilters,

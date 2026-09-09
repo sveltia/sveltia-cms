@@ -150,6 +150,25 @@ export const getSharedEntryFileName = (collection) =>
     : getMetaPathConfig(collection)?.indexFileName;
 
 /**
+ * Strip the file name shared by every entry in a nested collection from the given slug, which is
+ * the entry’s path within the collection folder. That name is how the content folder stores an
+ * entry, not part of how the entry is referred to — in a preview URL, or in another entry’s
+ * Relation field — so it’s left out of both.
+ * @param {Collection | InternalCollection} collection Collection the entry belongs to.
+ * @param {string} slug Entry slug.
+ * @returns {string} Slug without the trailing file name. The collection’s own index file is left
+ * alone, because there would be nothing left of it.
+ * @see https://github.com/decaporg/decap-cms/issues/4963
+ */
+export const stripIndexFileName = (collection, slug) => {
+  const indexFileName = getSharedEntryFileName(collection);
+
+  return indexFileName && slug.endsWith(`/${indexFileName}`)
+    ? slug.slice(0, -indexFileName.length - 1)
+    : slug;
+};
+
+/**
  * Check whether the folder chosen with the path editor is what decides where an entry goes. A blank
  * folder means the entry goes where it would without the editor, so the collection’s own `path`
  * option and slug take over; clearing a folder that was set, on the other hand, deliberately moves

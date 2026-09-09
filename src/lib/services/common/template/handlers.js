@@ -2,7 +2,10 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { stripSlashes } from '@sveltia/utils/string';
 
 import { DATE_TIME_FIELDS } from '$lib/services/common/template/constants';
-import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
+import {
+  getSharedEntryFileName,
+  stripIndexFileName,
+} from '$lib/services/contents/collection/nested';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 
 /**
@@ -65,15 +68,12 @@ export const handleSlugTag = (tag, context) => {
   // implementation detail of the content folder, not part of the entry’s URL.
   // @see https://github.com/decaporg/decap-cms/issues/4963
   if (type === 'preview_path' && collection) {
-    const indexFileName = getSharedEntryFileName(collection);
-
-    if (indexFileName && slug.endsWith(`/${indexFileName}`)) {
-      return slug.slice(0, -indexFileName.length - 1);
-    }
-
-    if (indexFileName && slug === indexFileName) {
+    // The collection’s own index file stands for the root of the preview path, so nothing is left
+    if (slug === getSharedEntryFileName(collection)) {
       return '';
     }
+
+    return stripIndexFileName(collection, slug);
   }
 
   return slug;

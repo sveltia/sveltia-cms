@@ -10,6 +10,8 @@ import {
  */
 
 describe('Test filterAndPrepareEntries()', () => {
+  /** Plain entry collection, where a slug is a name rather than a path. */
+  const collection = /** @type {any} */ ({ name: 'posts', folder: 'content/posts' });
   const locale = 'en';
 
   /** @type {Entry[]} */
@@ -49,7 +51,7 @@ describe('Test filterAndPrepareEntries()', () => {
   ];
 
   test('should return all entries with content when no filters', () => {
-    const result = filterAndPrepareEntries({ refEntries: entries, locale });
+    const result = filterAndPrepareEntries({ refEntries: entries, collection, locale });
 
     expect(result).toHaveLength(3);
     expect(result[0].refEntry.slug).toBe('entry-1');
@@ -57,7 +59,12 @@ describe('Test filterAndPrepareEntries()', () => {
   });
 
   test('should filter by fileName', () => {
-    const result = filterAndPrepareEntries({ refEntries: entries, locale, fileName: 'entry-2' });
+    const result = filterAndPrepareEntries({
+      refEntries: entries,
+      collection,
+      locale,
+      fileName: 'entry-2',
+    });
 
     expect(result).toHaveLength(1);
     expect(result[0].refEntry.slug).toBe('entry-2');
@@ -65,7 +72,13 @@ describe('Test filterAndPrepareEntries()', () => {
 
   test('should apply entry filters', () => {
     const filters = [{ field: 'status', values: ['published'] }];
-    const result = filterAndPrepareEntries({ refEntries: entries, locale, entryFilters: filters });
+
+    const result = filterAndPrepareEntries({
+      refEntries: entries,
+      collection,
+      locale,
+      entryFilters: filters,
+    });
 
     expect(result).toHaveLength(2);
     expect(result[0].refEntry.slug).toBe('entry-1');
@@ -73,7 +86,7 @@ describe('Test filterAndPrepareEntries()', () => {
   });
 
   test('should fall back to default locale', () => {
-    const result = filterAndPrepareEntries({ refEntries: entries, locale });
+    const result = filterAndPrepareEntries({ refEntries: entries, collection, locale });
 
     expect(result[2].content).toEqual({ title: 'Entry 3', status: 'published' });
   });
@@ -114,6 +127,7 @@ describe('Test filterAndPrepareEntries()', () => {
 
     const result = filterAndPrepareEntries({
       refEntries: multiEntries,
+      collection,
       locale,
       entryFilters: filters,
     });
@@ -151,7 +165,11 @@ describe('Test filterAndPrepareEntries()', () => {
       },
     ];
 
-    const result = filterAndPrepareEntries({ refEntries: entriesWithEmpty, locale: 'en' });
+    const result = filterAndPrepareEntries({
+      refEntries: entriesWithEmpty,
+      collection,
+      locale: 'en',
+    });
 
     expect(result).toHaveLength(1);
     expect(result[0].refEntry.slug).toBe('entry-1');
@@ -173,7 +191,11 @@ describe('Test filterAndPrepareEntries()', () => {
       },
     ];
 
-    const result = filterAndPrepareEntries({ refEntries: entriesWithWrongLocale, locale: 'en' });
+    const result = filterAndPrepareEntries({
+      refEntries: entriesWithWrongLocale,
+      collection,
+      locale: 'en',
+    });
 
     // Content is empty ({}) so hasContent is false — entry is excluded
     expect(result).toHaveLength(0);
@@ -181,7 +203,13 @@ describe('Test filterAndPrepareEntries()', () => {
 
   test('should exclude entries when exclude is true', () => {
     const filters = [{ field: 'status', values: ['published'], exclude: true }];
-    const result = filterAndPrepareEntries({ refEntries: entries, locale, entryFilters: filters });
+
+    const result = filterAndPrepareEntries({
+      refEntries: entries,
+      collection,
+      locale,
+      entryFilters: filters,
+    });
 
     expect(result).toHaveLength(1);
     expect(result[0].refEntry.slug).toBe('entry-2'); // the draft entry
@@ -190,7 +218,13 @@ describe('Test filterAndPrepareEntries()', () => {
   test('should skip filter when values array is empty', () => {
     // Empty values array means "no constraint" — all entries with content should pass
     const filters = [{ field: 'status', values: [] }];
-    const result = filterAndPrepareEntries({ refEntries: entries, locale, entryFilters: filters });
+
+    const result = filterAndPrepareEntries({
+      refEntries: entries,
+      collection,
+      locale,
+      entryFilters: filters,
+    });
 
     expect(result).toHaveLength(3);
   });
@@ -198,7 +232,13 @@ describe('Test filterAndPrepareEntries()', () => {
   test('should filter by entry slug when field is "slug"', () => {
     // Bare `slug` refers to the entry slug (refEntry.slug), not a content field
     const filters = [{ field: 'slug', values: ['entry-1'] }];
-    const result = filterAndPrepareEntries({ refEntries: entries, locale, entryFilters: filters });
+
+    const result = filterAndPrepareEntries({
+      refEntries: entries,
+      collection,
+      locale,
+      entryFilters: filters,
+    });
 
     expect(result).toHaveLength(1);
     expect(result[0].refEntry.slug).toBe('entry-1');
@@ -206,7 +246,13 @@ describe('Test filterAndPrepareEntries()', () => {
 
   test('should exclude entry by slug when field is "slug" and exclude is true', () => {
     const filters = [{ field: 'slug', values: ['entry-1'], exclude: true }];
-    const result = filterAndPrepareEntries({ refEntries: entries, locale, entryFilters: filters });
+
+    const result = filterAndPrepareEntries({
+      refEntries: entries,
+      collection,
+      locale,
+      entryFilters: filters,
+    });
 
     expect(result).toHaveLength(2);
     expect(result.map((r) => r.refEntry.slug)).toEqual(['entry-2', 'entry-3']);
@@ -238,6 +284,7 @@ describe('Test filterAndPrepareEntries()', () => {
 
     const result = filterAndPrepareEntries({
       refEntries: entriesWithSlugField,
+      collection,
       locale: 'en',
       entryFilters: filters,
     });
@@ -266,6 +313,7 @@ describe('Test filterAndPrepareEntries()', () => {
     // When viewing in 'de' locale with collection defaultLocale 'en'
     const result = filterAndPrepareEntries({
       refEntries: entriesWithDefaultLocale,
+      collection,
       locale: 'de',
       defaultLocale: 'en',
     });
@@ -291,6 +339,7 @@ describe('Test filterAndPrepareEntries()', () => {
     // When viewing in 'de' locale with collection defaultLocale 'en', but entry has neither
     const result = filterAndPrepareEntries({
       refEntries: entriesWithOnlyDefault,
+      collection,
       locale: 'de',
       defaultLocale: 'en',
     });

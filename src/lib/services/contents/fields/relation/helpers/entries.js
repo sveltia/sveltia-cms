@@ -1,4 +1,5 @@
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { stripIndexFileName } from '$lib/services/contents/collection/nested';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 import {
   analyzeListFields,
@@ -74,7 +75,11 @@ export const processEntry = ({
   identifierField,
   defaultLocale,
 }) => {
-  const { slug, locales } = refEntry;
+  const { locales } = refEntry;
+  // In a nested collection an entry’s slug is its path within the collection folder, ending with
+  // the file name shared by every entry. A reference to the entry leaves that name out, the same
+  // way a preview path does
+  const slug = stripIndexFileName(collection, refEntry.slug);
   const isIndexFile = isCollectionIndexFile(collection, refEntry);
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: '' };
