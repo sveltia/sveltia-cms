@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
-import { slugify } from '$lib/services/common/slug';
+import { getNewFolderName, slugify, validateNewFolderName } from '$lib/services/common/slug';
 
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents/collection/entries', () => ({
@@ -1080,5 +1080,103 @@ describe('Test slugify()', () => {
 
     expect(result1).toBe('hello~world');
     expect(result1).toBe(result2);
+  });
+});
+
+describe('Test getNewFolderName()', () => {
+  /**
+   * Give the slugifier the default options, which the folder name is built with.
+   * @returns {Promise<void>} Nothing.
+   */
+  const setUpConfig = async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: { encoding: 'unicode', clean_accents: false, sanitize_replacement: '-' },
+    });
+  };
+
+  test('slugifies what was typed', async () => {
+    await setUpConfig();
+    expect(getNewFolderName('My Guides')).toBe('my-guides');
+  });
+
+  test('trims the name first', async () => {
+    await setUpConfig();
+    expect(getNewFolderName('  Guides  ')).toBe('guides');
+  });
+
+  test('keeps a leading dot, which makes the folder hidden', async () => {
+    await setUpConfig();
+    expect(getNewFolderName('.config')).toBe('.config');
+  });
+
+  test('returns an empty string instead of a random name when nothing usable is left', async () => {
+    await setUpConfig();
+    // With the random fallback left on, this would be a short UUID and the name would be accepted
+    expect(getNewFolderName('!!!')).toBe('');
+  });
+});
+
+describe('Test validateNewFolderName()', () => {
+  const takenNames = ['hardware', 'software'];
+
+  /**
+   * Give the slugifier the default options, which the folder name is built with.
+   * @returns {Promise<void>} Nothing.
+   */
+  const setUpConfig = async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = writable({
+      slug: { encoding: 'unicode', clean_accents: false, sanitize_replacement: '-' },
+    });
+  };
+
+  test('accepts a name that isn’t taken', async () => {
+    await setUpConfig();
+    expect(validateNewFolderName({ takenNames, name: 'accessories' })).toBeUndefined();
+  });
+
+  test('accepts a name at the top level', async () => {
+    await setUpConfig();
+    expect(validateNewFolderName({ takenNames: [], name: 'guides' })).toBeUndefined();
+  });
+
+  test('rejects an empty name', async () => {
+    await setUpConfig();
+    expect(validateNewFolderName({ takenNames, name: '' })).toBe('empty');
+    expect(validateNewFolderName({ takenNames, name: '   ' })).toBe('empty');
+  });
+
+  test('rejects a name that would be more than one folder', async () => {
+    await setUpConfig();
+    expect(validateNewFolderName({ takenNames, name: 'a/b' })).toBe('invalid');
+  });
+
+  test('rejects a name that would make a hidden folder', async () => {
+    await setUpConfig();
+    expect(validateNewFolderName({ takenNames, name: '.' })).toBe('invalid');
+    expect(validateNewFolderName({ takenNames, name: '..' })).toBe('invalid');
+    expect(validateNewFolderName({ takenNames, name: '.config' })).toBe('invalid');
+  });
+
+  test('rejects a name that only becomes hidden once it’s slugified', async () => {
+    await setUpConfig();
+    expect(validateNewFolderName({ takenNames, name: '!.config' })).toBe('invalid');
+  });
+
+  test('rejects a name that slugifies to nothing', async () => {
+    await setUpConfig();
+    expect(validateNewFolderName({ takenNames, name: '!!!' })).toBe('invalid');
+  });
+
+  test('rejects a name that’s already taken', async () => {
+    await setUpConfig();
+    expect(validateNewFolderName({ takenNames, name: 'hardware' })).toBe('duplicate');
+    expect(validateNewFolderName({ takenNames, name: ' hardware ' })).toBe('duplicate');
+  });
+
+  test('rejects a name that’s taken once it’s slugified', async () => {
+    await setUpConfig();
+    expect(validateNewFolderName({ takenNames, name: 'Hardware' })).toBe('duplicate');
   });
 });

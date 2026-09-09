@@ -102,3 +102,42 @@ export const slugify = (
 
   return slug;
 };
+
+/**
+ * Turn what was typed in the new folder dialog into the name the folder is actually given. The name
+ * goes through the same slugification as an entry slug, so a folder created by hand looks like one
+ * created by saving an entry into it. The random fallback is turned off: a name made up entirely of
+ * characters that can’t be used would otherwise become a random string, which is no one’s idea of a
+ * folder name, so nothing is returned and the name is rejected instead.
+ * @param {string} name Name as typed.
+ * @returns {string} Folder name. An empty string if slugification leaves nothing behind.
+ */
+export const getNewFolderName = (name) => slugify(name.trim(), { fallback: false });
+
+/**
+ * Check whether a folder can be given the name typed in, either while creating one with the parent
+ * folder picker or while renaming one with the slug editor.
+ * @param {object} args Arguments.
+ * @param {string[]} args.takenNames Names of the folders already sharing the parent folder.
+ * @param {string} args.name Name to check, as typed.
+ * @returns {'empty' | 'invalid' | 'duplicate' | undefined} What stops the name from being used, or
+ * `undefined` if it can be used.
+ */
+export const validateNewFolderName = ({ takenNames, name }) => {
+  const trimmedName = name.trim();
+
+  if (!trimmedName) {
+    return 'empty';
+  }
+
+  const folderName = getNewFolderName(trimmedName);
+
+  // A name has to stay a single folder, a leading dot would hide the folder from the site and from
+  // most file listings, and slugification can leave nothing to name the folder with. The dot is
+  // looked for in the slugified name, which can start with one even when what was typed didn’t
+  if (!folderName || trimmedName.includes('/') || folderName.startsWith('.')) {
+    return 'invalid';
+  }
+
+  return takenNames.includes(folderName) ? 'duplicate' : undefined;
+};

@@ -208,6 +208,54 @@ export const getParentFolderTree = ({ collection, entries, excludePath }) =>
   buildTree({ collection, entries, pruneLeaves: false, excludePath });
 
 /**
+ * Add a folder that holds no entry yet to a tree, creating any missing folders above it, so that it
+ * can be chosen with the parent folder picker before anything is stored in it. A folder is labelled
+ * with its own name here, because a label of its own only comes from the entry it holds.
+ * @param {object} args Arguments.
+ * @param {NestedTreeNode[]} args.nodes Folders at the top level of the tree.
+ * @param {string} args.path Folder path relative to the collection folder.
+ * @returns {NestedTreeNode[]} Folders at the top level, with the new one in place and each level
+ * sorted by label. The tree is returned unchanged if the folder is already in it, or if the path is
+ * empty, which is the collection folder itself.
+ */
+export const addFolderToTree = ({ nodes, path }) => {
+  const segments = path.split('/').filter(Boolean);
+
+  /**
+   * Put the next segment in place among the given folders, recursing until the path runs out.
+   * @param {NestedTreeNode[]} siblings Folders sharing a parent.
+   * @param {string[]} remainingSegments Segments still to be added.
+   * @param {string} parentPath Path of the folder holding the siblings.
+   * @returns {NestedTreeNode[]} Folders sharing a parent, with the segment in place.
+   */
+  const addSegment = (siblings, [name, ...remaining], parentPath) => {
+    const nodePath = parentPath ? `${parentPath}/${name}` : name;
+    const existingNode = siblings.find((node) => node.path === nodePath);
+
+    if (existingNode) {
+      // The folder is already there, so only the folders below it can still be missing
+      return remaining.length
+        ? siblings.map((node) =>
+            node === existingNode
+              ? { ...node, children: addSegment(node.children, remaining, nodePath) }
+              : node,
+          )
+        : siblings;
+    }
+
+    const newNode = {
+      path: nodePath,
+      label: name,
+      children: remaining.length ? addSegment([], remaining, nodePath) : [],
+    };
+
+    return [...siblings, newNode].sort((a, b) => compare(a.label, b.label));
+  };
+
+  return segments.length ? addSegment(nodes, segments, '') : nodes;
+};
+
+/**
  * Look up a folder in a tree by its path.
  * @param {NestedTreeNode[]} nodes Nodes to search, at any level.
  * @param {string} path Folder path relative to the collection folder.

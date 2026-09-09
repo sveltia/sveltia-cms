@@ -1066,6 +1066,15 @@ edit_slug_error:
 # Entry path editing in a nested collection
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: Parent Folder
+new_parent_folder: New Folder
+new_parent_folder_create: Create
+new_parent_folder_name: Folder Name
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: The new folder will be created in “{$folder}”.
+new_parent_folder_error:
+  empty: The folder name cannot be empty.
+  invalid: The folder name cannot contain slashes or start with a dot, and must include letters or numbers.
+  duplicate: A folder with this name already exists here.
 edit_path_error:
   invalid: The path cannot contain relative segments such as “..”.
   recursive: The entry cannot be moved into one of its own subfolders.

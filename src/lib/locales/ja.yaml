@@ -1013,6 +1013,15 @@ edit_slug_error:
 # Entry path editing in a nested collection
 # Heading for the parent folder picker shown when the `meta.path` option is enabled
 entry_parent_folder: 親フォルダー
+new_parent_folder: 新しいフォルダー
+new_parent_folder_create: 作成
+new_parent_folder_name: フォルダー名
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: 新しいフォルダーは「{$folder}」内に作成されます。
+new_parent_folder_error:
+  empty: フォルダー名は空白にはできません。
+  invalid: フォルダー名にスラッシュを含めたり、ドットで始めたりすることはできません。文字か数字を含める必要があります。
+  duplicate: この名前のフォルダーは既に存在します。
 edit_path_error:
   invalid: パスに「..」などの相対パスを含めることはできません。
   recursive: エントリーを自身のサブフォルダーへ移動することはできません。

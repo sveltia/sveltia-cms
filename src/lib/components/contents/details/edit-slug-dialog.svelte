@@ -4,7 +4,7 @@
   import { stripSlashes } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
 
-  import { slugify } from '$lib/services/common/slug';
+  import { getNewFolderName, slugify, validateNewFolderName } from '$lib/services/common/slug';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import {
     getEntryDirPath,
@@ -165,7 +165,7 @@
       // entries and assets stored below it
       /** @type {EntryDraft} */ ($entryDraft).currentPath = createPath([
         parentPath,
-        slugify(updatedFolderName),
+        getNewFolderName(updatedFolderName),
       ]);
 
       return;
@@ -185,14 +185,18 @@
             flex
             bind:value={updatedFolderName}
             oninput={() => {
-              folderValidation = validateName(updatedFolderName);
+              // A folder name goes by different rules than a slug: it’s slugified on the way out,
+              // so what matters is that something usable survives and the folder doesn’t end up
+              // hidden behind a leading dot
+              folderValidation =
+                validateNewFolderName({ takenNames: otherSlugs, name: updatedFolderName }) ?? false;
             }}
             invalid={folderValidation !== false}
             aria-errormessage="{componentId}-folder-error"
           />
           <p id="{componentId}-folder-error" class="error">
             {#if folderValidation}
-              {_(`edit_slug_error.${folderValidation}`)}
+              {_(`new_parent_folder_error.${folderValidation}`)}
             {/if}
           </p>
         </div>

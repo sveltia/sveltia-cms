@@ -1,20 +1,23 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Icon, Popup, Tree } from '@sveltia/ui';
+  import { Button, Dialog, Icon, Popup, TextInput, Tree } from '@sveltia/ui';
   import { stripSlashes } from '@sveltia/utils/string';
 
   import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
   import ParentFolderTreeItem from '$lib/components/contents/details/editor/parent-folder-tree-item.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
+  import { getNewFolderName, validateNewFolderName } from '$lib/services/common/slug';
   import { allEntries } from '$lib/services/contents';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import {
     getEntryDirPath,
     getMetaPathConfig,
+    getNestedConfig,
     getSharedEntryFileName,
   } from '$lib/services/contents/collection/nested';
   import {
+    addFolderToTree,
     findNestedTreeNode,
     getParentFolderTree,
   } from '$lib/services/contents/collection/nested/tree';
@@ -44,6 +47,12 @@
   const config = $derived(collection ? getMetaPathConfig(collection) : undefined);
   const validity = $derived($entryDraft?.validities[locale]._path);
   const invalid = $derived(validity?.valid === false);
+  /**
+   * Whether this pane is the one that decides where the entry goes. Every locale is stored below
+   * the same path, so the folder is chosen once, in the default locale’s pane, and the others show
+   * it without offering to change it.
+   */
+  const isDefaultLocale = $derived(locale === collection?._i18n.defaultLocale);
 
   /**
    * Name of the folder the entry occupies, which travels with it when the entry is filed elsewhere.
@@ -67,6 +76,29 @@
   /** Folder the entry is filed in, which is the parent of its own folder if it has one. */
   const selectedPath = $derived(ownFolderName ? getEntryDirPath(currentPath) : currentPath);
 
+  /**
+   * Whether a folder can be created with the picker. In the `subfolders` mode a folder is an entry,
+   * so the tree grows as entries are created; otherwise entries are files, which never make a
+   * folder, leaving this as the only way to add one.
+   */
+  const canCreateFolder = $derived(
+    !!collection && getNestedConfig(collection)?.subfolders === false,
+  );
+
+  let newFolderDialogOpen = $state(false);
+  let newFolderName = $state('');
+  /**
+   * Whether the folder name has been typed in yet. An empty name is only reported once the field
+   * has been used, so the dialog doesn’t open with an error against a field nobody has touched.
+   */
+  let newFolderNameEdited = $state(false);
+  /**
+   * Folders created with the picker but not yet stored, because a folder only appears in the
+   * repository once an entry is saved in it.
+   * @type {string[]}
+   */
+  let newFolderPaths = $state([]);
+
   const rootNode = $derived.by(() => {
     if (!collection) {
       return undefined;
@@ -78,14 +110,17 @@
     return /** @type {NestedTreeNode} */ ({
       path: '',
       label: getCollectionLabel(collection),
-      children: getParentFolderTree({
-        collection,
-        entries: getEntriesByCollection(collection.name),
-        // An entry can’t be filed within itself
-        excludePath: ownFolderName
-          ? getEntryDirPath($entryDraft?.originalEntry?.subPath ?? '')
-          : undefined,
-      }),
+      children: newFolderPaths.reduce(
+        (nodes, path) => addFolderToTree({ nodes, path }),
+        getParentFolderTree({
+          collection,
+          entries: getEntriesByCollection(collection.name),
+          // An entry can’t be filed within itself
+          excludePath: ownFolderName
+            ? getEntryDirPath($entryDraft?.originalEntry?.subPath ?? '')
+            : undefined,
+        }),
+      ),
     });
   });
 
@@ -96,6 +131,23 @@
   /** @type {HTMLButtonElement | undefined} */
   let buttonElement = $state();
   let popupOpen = $state(false);
+  /** Names of the folders already in the folder the new one would be created in. */
+  const takenFolderNames = $derived(
+    ((rootNode ? findNestedTreeNode([rootNode], selectedPath)?.children : undefined) ?? []).map(
+      ({ path }) => path.slice(path.lastIndexOf('/') + 1),
+    ),
+  );
+
+  const newFolderError = $derived(
+    validateNewFolderName({ takenNames: takenFolderNames, name: newFolderName }),
+  );
+
+  const showNewFolderError = $derived(newFolderNameEdited && !!newFolderError);
+  /**
+   * Whether there’s a folder to choose. A collection whose entries all sit at the top level has
+   * nothing below the collection folder, leaving the picker with a single item and nothing to do.
+   */
+  const hasFolderChoice = $derived(!!rootNode?.children.length);
 
   /**
    * File the entry in the given folder. An entry that owns a folder keeps its name and takes
@@ -112,7 +164,9 @@
   };
 </script>
 
-{#if $entryDraft && config}
+<!-- A collection whose entries all sit at the top level has no folder to choose and, in the
+`subfolders` mode, no way to make one, which leaves nothing for the field to do -->
+{#if $entryDraft && config && (hasFolderChoice || canCreateFolder)}
   <FieldEditorGroup>
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{_('entry_parent_folder')}</h4>
@@ -135,6 +189,7 @@
         bind:element={buttonElement}
         class="parent-folder-button"
         variant="tertiary"
+        disabled={!hasFolderChoice || !isDefaultLocale}
         aria-haspopup="tree"
         aria-invalid={invalid}
         aria-labelledby="{fieldId}-label"
@@ -162,12 +217,73 @@
           </Tree>
         {/if}
       </Popup>
+      {#if canCreateFolder}
+        <!-- A folder that holds no entry can’t be in the tree, so it has to be created here. It
+        sits outside the picker, which is disabled when there’s nothing in the tree to choose -->
+        <Button
+          variant="ghost"
+          iconic
+          class="new-parent-folder-button"
+          disabled={!isDefaultLocale}
+          aria-label={_('new_parent_folder')}
+          onclick={() => {
+            newFolderName = '';
+            newFolderNameEdited = false;
+            newFolderDialogOpen = true;
+          }}
+        >
+          {#snippet startIcon()}
+            <Icon name="create_new_folder" />
+          {/snippet}
+        </Button>
+      {/if}
     </div>
   </FieldEditorGroup>
+  <Dialog
+    bind:open={newFolderDialogOpen}
+    title={_('new_parent_folder')}
+    okLabel={_('new_parent_folder_create')}
+    okDisabled={!!newFolderError}
+    onOk={() => {
+      const path = createPath([selectedPath, getNewFolderName(newFolderName)]);
+
+      newFolderPaths = [...newFolderPaths, path];
+      selectPath(path);
+    }}
+  >
+    <div role="none" class="new-parent-folder">
+      <div role="none">
+        <TextInput
+          dir="auto"
+          flex
+          aria-label={_('new_parent_folder_name')}
+          aria-errormessage="{fieldId}-new-folder-error"
+          invalid={showNewFolderError}
+          bind:value={newFolderName}
+          oninput={() => {
+            newFolderNameEdited = true;
+          }}
+        />
+        {#if showNewFolderError}
+          <ValidationError id="{fieldId}-new-folder-error">
+            {_(`new_parent_folder_error.${newFolderError}`)}
+          </ValidationError>
+        {/if}
+      </div>
+      <p role="none">
+        {_('new_parent_folder_description', {
+          values: { folder: selectedLabel },
+        })}
+      </p>
+    </div>
+  </Dialog>
 {/if}
 
 <style>
   .field-wrapper {
+    display: flex;
+    align-items: center;
+
     :global {
       /* Look like the `<Select>` trigger, which is a styled div rather than a button */
       .parent-folder-button {
@@ -175,7 +291,8 @@
         border-color: var(--sui-control-border-color);
         border-radius: var(--sui-textbox-border-radius);
         padding-inline: calc(var(--sui-textbox-height) / 4);
-        width: calc(100% - var(--sui-focus-ring-width) * 2);
+        flex: auto;
+        min-width: 0;
         height: var(--sui-textbox-height);
         color: var(--sui-control-foreground-color);
         background-color: var(--sui-disabled-background-color);
@@ -211,6 +328,26 @@
         min-width: 240px;
         max-height: 50vh;
       }
+
+      /* Stand beside the picker without stretching, so the folder name gets the room */
+      .new-parent-folder-button {
+        flex: none;
+        height: var(--sui-textbox-height);
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .new-parent-folder {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 320px;
+
+    p {
+      margin: 0;
+      color: var(--sui-secondary-foreground-color);
+      font-size: var(--sui-font-size-small);
     }
   }
 </style>

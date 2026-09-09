@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { isEntryCollection } from '$lib/services/contents/collection';
 import {
+  addFolderToTree,
   findNestedTreeNode,
   getNestedTree,
   getParentFolderTree,
@@ -284,5 +285,68 @@ describe('findNestedTreeNode()', () => {
 
   test('returns undefined for a folder that isn’t in the tree', () => {
     expect(findNestedTreeNode(nodes, 'missing')).toBeUndefined();
+  });
+});
+
+describe('addFolderToTree()', () => {
+  /**
+   * Create a tree node.
+   * @param {string} path Folder path.
+   * @param {NestedTreeNode[]} [children] Child folders.
+   * @returns {NestedTreeNode} Node.
+   */
+  const node = (path, children = []) => ({
+    path,
+    label: path.slice(path.lastIndexOf('/') + 1),
+    children,
+  });
+
+  test('adds a folder at the top level, sorted by label', () => {
+    expect(addFolderToTree({ nodes: [node('products')], path: 'guides' })).toEqual([
+      node('guides'),
+      node('products'),
+    ]);
+  });
+
+  test('adds a folder below an existing one', () => {
+    expect(addFolderToTree({ nodes: [node('products')], path: 'products/hardware' })).toEqual([
+      node('products', [node('products/hardware')]),
+    ]);
+  });
+
+  test('creates the missing folders above the new one', () => {
+    expect(addFolderToTree({ nodes: [], path: 'a/b/c' })).toEqual([
+      node('a', [node('a/b', [node('a/b/c')])]),
+    ]);
+  });
+
+  test('keeps the existing folders below an ancestor of the new folder', () => {
+    const nodes = [node('products', [node('products/hardware')])];
+
+    expect(addFolderToTree({ nodes, path: 'products/software' })).toEqual([
+      node('products', [node('products/hardware'), node('products/software')]),
+    ]);
+  });
+
+  test('leaves the folders beside an ancestor of the new folder alone', () => {
+    const nodes = [node('guides'), node('products', [node('products/hardware')])];
+
+    expect(addFolderToTree({ nodes, path: 'products/software' })).toEqual([
+      node('guides'),
+      node('products', [node('products/hardware'), node('products/software')]),
+    ]);
+  });
+
+  test('leaves a folder that’s already there alone', () => {
+    const nodes = [node('products', [node('products/hardware')])];
+
+    expect(addFolderToTree({ nodes, path: 'products' })).toEqual(nodes);
+  });
+
+  test('leaves the tree alone for the collection folder itself', () => {
+    const nodes = [node('products')];
+
+    expect(addFolderToTree({ nodes, path: '' })).toBe(nodes);
+    expect(addFolderToTree({ nodes, path: '/' })).toBe(nodes);
   });
 });
