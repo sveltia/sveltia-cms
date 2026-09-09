@@ -595,6 +595,71 @@ describe('assets/folders', () => {
       expect(getAssetFoldersByPath('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA/image.jpg')).toEqual([]);
     });
 
+    describe('with a locale root folder structure', () => {
+      /**
+       * Register one entry-relative folder that records the site’s locale folder names.
+       * @param {string[]} [localeFolderNames] Locale folder names.
+       */
+      const setupFolder = (localeFolderNames) => {
+        allAssetFolders.set([
+          /** @type {any} */ ({
+            collectionName: 'posts',
+            internalPath: 'content/posts',
+            publicPath: '',
+            entryRelative: true,
+            hasTemplateTags: false,
+            localeFolderNames,
+          }),
+        ]);
+      };
+
+      /**
+       * Look up the folders for an asset stored at the given path.
+       * @param {string} path Asset path.
+       * @returns {any[]} Matching folders.
+       */
+      const findFolders = (path) => {
+        getPathInfoMock.mockReturnValue({
+          filename: 'photo.jpg',
+          basename: 'photo.jpg',
+          dirname: path.slice(0, path.lastIndexOf('/')),
+        });
+
+        return getAssetFoldersByPath(path);
+      };
+
+      it('matches an asset below a locale folder', () => {
+        setupFolder(['en', 'de']);
+
+        expect(findFolders('de/content/posts/hello/photo.jpg')).toHaveLength(1);
+      });
+
+      it('matches an asset without a locale folder, which the default locale can omit', () => {
+        setupFolder(['en', 'de']);
+
+        expect(findFolders('content/posts/hello/photo.jpg')).toHaveLength(1);
+      });
+
+      it('leaves out a folder that only looks like a locale', () => {
+        setupFolder(['en', 'de']);
+
+        expect(findFolders('fr/content/posts/hello/photo.jpg')).toEqual([]);
+      });
+
+      it('matches only the bare collection folder without i18n', () => {
+        setupFolder(undefined);
+
+        expect(findFolders('content/posts/hello/photo.jpg')).toHaveLength(1);
+        expect(findFolders('de/content/posts/hello/photo.jpg')).toEqual([]);
+      });
+
+      it('treats regex metacharacters in a locale name as literals', () => {
+        setupFolder(['e.']);
+
+        expect(findFolders('en/content/posts/hello/photo.jpg')).toEqual([]);
+      });
+    });
+
     it('should match entry relative paths', () => {
       getPathInfoMock.mockReturnValue({
         filename: 'banner.jpg',

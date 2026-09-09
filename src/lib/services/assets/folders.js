@@ -87,6 +87,23 @@ export const getAssetFolder = (cond) => {
 };
 
 /**
+ * Build a regular expression matching the paths below an entry-relative folder, which are the
+ * collection’s own files and the assets stored alongside them. With the `multiple_root_folders`
+ * i18n structure the collection folder sits below a folder named after the locale, so a locale name
+ * is allowed in front of it — optionally, because `omit_default_locale_from_file_path` leaves the
+ * default locale’s files where they would be without i18n.
+ * @param {AssetFolderInfo} folder Asset folder.
+ * @returns {RegExp} Regular expression.
+ */
+const getEntryRelativePathRegEx = ({ internalPath, localeFolderNames }) => {
+  const localeMatcher = localeFolderNames?.length
+    ? `(?:(?:${localeFolderNames.map(escapeRegExp).join('|')})\\/)?`
+    : '';
+
+  return new RegExp(`^${localeMatcher}${escapeRegExp(/** @type {string} */ (internalPath))}\\/`);
+};
+
+/**
  * Cache for {@link getAssetFoldersByPath} to avoid recreating regexes on every call.
  * `items`: non-entry-relative folders with both regex variants pre-compiled.
  * `entryRelative`: folders whose paths are relative to their parent entry.
@@ -95,7 +112,7 @@ const assetFoldersByPathCache = {
   source: /** @type {AssetFolderInfo[] | undefined} */ (undefined),
   /** @type {Array<{ folder: AssetFolderInfo, regexSub: RegExp, regexExact: RegExp }>} */
   items: [],
-  /** @type {AssetFolderInfo[]} */
+  /** @type {Array<{ folder: AssetFolderInfo, regex: RegExp }>} */
   entryRelative: [],
 };
 
@@ -112,7 +129,7 @@ const getAssetFolderPathCache = () => {
 
   /** @type {Array<{ folder: AssetFolderInfo, regexSub: RegExp, regexExact: RegExp }>} */
   const items = [];
-  /** @type {AssetFolderInfo[]} */
+  /** @type {Array<{ folder: AssetFolderInfo, regex: RegExp }>} */
   const entryRelative = [];
 
   _allAssetFolders.forEach((folder) => {
@@ -123,7 +140,7 @@ const getAssetFolderPathCache = () => {
     }
 
     if (isRelative) {
-      entryRelative.push(folder);
+      entryRelative.push({ folder, regex: getEntryRelativePathRegEx(folder) });
     } else {
       // Pre-compile both regex variants so we don’t recreate them on every path lookup.
       // The internal path can contain template tags like `{{slug}}`, which we normalize to `.+?`.
@@ -166,7 +183,7 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = true } = {}) => 
   const dir = dirname ?? '';
 
   const results = [
-    ...entryRelative.filter(({ internalPath }) => path.startsWith(`${internalPath}/`)),
+    ...entryRelative.filter(({ regex }) => regex.test(path)).map(({ folder }) => folder),
     // Compare that the enclosing directory is exactly the same as the internal path, and ignore
     // any subdirectories, unless the `matchSubFolders` option is specified.
     ...items

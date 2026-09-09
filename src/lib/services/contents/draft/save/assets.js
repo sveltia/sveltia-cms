@@ -1,3 +1,4 @@
+import { getPathInfo } from '@sveltia/utils/file';
 import equal from 'fast-deep-equal';
 
 import { getAssetsByDirName } from '$lib/services/assets';
@@ -24,8 +25,9 @@ import {
  * FlattenedEntryContent,
  * InternalCollection,
  * InternalEntryCollection,
+ * InternalLocaleCode,
  * } from '$lib/types/private';
- * @import { FieldKeyPath, I18nFileStructure } from '$lib/types/public';
+ * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -43,17 +45,6 @@ import {
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
  * @property {AssetFolderInfo} folder Folder info.
  */
-
-/**
- * List of collection structures that use multiple folders for assets.
- * @type {I18nFileStructure[]}
- * @todo Remove the legacy `multiple_folders_i18n_root` structure prior to the 1.0 release.
- */
-const MULTI_FOLDER_STRUCTURES = [
-  'multiple_folders',
-  'multiple_folders_i18n_root', // deprecated
-  'multiple_root_folders', // new name
-];
 
 /**
  * Regex to extract the folder path from an entry file path. For example, it extracts `blog/post`
@@ -137,10 +128,10 @@ export const getOwnedEntryFolderPath = (collection, entryFilePath) => {
     return /** @type {string} */ (filePath.match(FOLDER_PATH_REGEX)?.groups?.path);
   }
 
-  // The entry file is named after the slug, so a folder of the same name sits next to it. That only
-  // holds where the file path says which entry it belongs to: a `path` option with a folder of its
-  // own, such as `{{year}}/{{month}}/{{slug}}`, or a locale folder per entry
-  if (subPath?.includes('/') || MULTI_FOLDER_STRUCTURES.includes(collection._i18n.structure)) {
+  // The `path` option puts the entry in a folder of its own, such as `{{year}}/{{month}}/{{slug}}`,
+  // and the entry file is named after the slug, so a folder of the same name sits next to it. A
+  // locale folder doesn’t count: it holds every entry of that locale, not this one
+  if (subPath?.includes('/')) {
     return filePath;
   }
 
@@ -148,29 +139,40 @@ export const getOwnedEntryFolderPath = (collection, entryFilePath) => {
 };
 
 /**
+ * Get the folder that holds an entry’s relative assets: the folder the entry occupies if it has one
+ * of its own, and otherwise the folder its file is stored in, which it shares with the rest of the
+ * collection. With a `multiple_folders` i18n structure that shared folder is the locale’s own, so
+ * the assets sit beside the entry either way.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection the entry belongs to.
+ * @param {string} args.entryFilePath Entry file path.
+ * @param {string} args.internalPath Internal path from folder config.
+ * @returns {string} Folder path.
+ */
+const getEntryAssetFolderPath = ({ collection, entryFilePath, internalPath }) =>
+  getOwnedEntryFolderPath(collection, entryFilePath) ??
+  // A file collection has no folder of its own to fall back on
+  (collection._type === 'entry'
+    ? (getPathInfo(entryFilePath).dirname ?? internalPath)
+    : internalPath);
+
+/**
  * Resolve the internal asset path for entry-relative assets.
  * @param {object} args Arguments.
- * @param {string} args.internalPath Internal path from folder config.
  * @param {string | undefined} args.internalSubPath Internal sub-path from folder config.
- * @param {string | undefined} args.ownedFolderPath Folder the entry occupies, if it has one.
+ * @param {string} args.assetFolderPath Folder holding the entry’s relative assets.
  * @param {FillTemplateOptions} args.fillSlugOptions Arguments for template filling.
  * @returns {string} Resolved internal path.
  */
-const resolveInternalPath = ({
-  internalPath,
-  internalSubPath,
-  ownedFolderPath,
-  fillSlugOptions,
-}) => {
+const resolveInternalPath = ({ internalSubPath, assetFolderPath, fillSlugOptions }) => {
   // We already know the entry file path, so we can resolve the internal path to the asset folder
   // even when it’s entry-relative. We should use the folder path extracted from entryFilePath
   // rather than reconstructing the path from templates, because when date-related template tags are
   // used in subPath (e.g., `{{year}}-{{month}}-{{day}}-{{slug}}/index`), the resolved path would be
   // different from the original entry path if we filled the template again. This would cause assets
-  // saved at a later date to be stored in a different folder than the entry itself. An entry with
-  // no folder of its own shares the collection’s asset folder with the rest of the collection.
+  // saved at a later date to be stored in a different folder than the entry itself.
   const internalPathString = createPath([
-    ownedFolderPath ?? internalPath,
+    assetFolderPath,
     internalSubPath, // subfolder, e.g. `images` or an empty string
   ]);
 
@@ -178,40 +180,22 @@ const resolveInternalPath = ({
 };
 
 /**
- * Resolve the public asset path for entry-relative assets.
+ * Resolve the public asset path for entry-relative assets, which is the path the field value is
+ * built from. The assets sit in the folder holding the entry, so the value is relative to the entry
+ * itself and needs nothing but the configured `public_folder`.
  * @param {object} args Arguments.
  * @param {string} args.publicPath Public path from folder config.
- * @param {string} args.subPathFolderPath Extracted folder path from collection’s subPath.
- * @param {string | undefined} args.subPath Collection’s file subPath template.
- * @param {boolean} args.isMultiFolders Whether collection uses multi-folder i18n structure.
  * @param {FillTemplateOptions} args.fillSlugOptions Arguments for template filling.
  * @returns {string} Resolved public path.
  */
-const resolvePublicPath = ({
-  publicPath,
-  subPathFolderPath,
-  subPath,
-  isMultiFolders,
-  fillSlugOptions,
-}) => {
+const resolvePublicPath = ({ publicPath, fillSlugOptions }) => {
   // Dot-only public path is a special case; the final path stored as the field value will be
   // `./image.png` rather than `image.png`
-  if (!isMultiFolders && /^\.?$/.test(publicPath)) {
+  if (/^\.?$/.test(publicPath)) {
     return publicPath;
   }
 
-  const publicPathString = isMultiFolders
-    ? // When multiple folders are used for i18n, the file structure would look like
-      // `{collection}/{locale}/{slug}.md` or `{collection}/{locale}/{slug}/index.md` and the asset
-      // path would be `{collection}/{slug}/{file}.jpg`
-      createPath([
-        ...Array((subPath?.match(/\//g) ?? []).length + 1).fill('..'),
-        publicPath,
-        subPathFolderPath,
-      ])
-    : publicPath;
-
-  return resolvePath(fillTemplateIfNeeded(publicPathString, fillSlugOptions));
+  return resolvePath(fillTemplateIfNeeded(publicPath, fillSlugOptions));
 };
 
 /**
@@ -237,29 +221,18 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
   }
 
   const { collection, entryFilePath } = fillSlugOptions;
-  const isMultiFolders = MULTI_FOLDER_STRUCTURES.includes(collection._i18n.structure);
-
-  const subPath =
-    collection._type === 'entry'
-      ? /** @type {InternalEntryCollection} */ (collection)._file.subPath
-      : undefined;
-
-  const subPathFolderPath = subPath?.match(FOLDER_PATH_REGEX)?.groups?.path ?? '';
 
   const resolvedInternalPath = resolveInternalPath({
-    internalPath,
     internalSubPath,
-    ownedFolderPath: getOwnedEntryFolderPath(collection, entryFilePath ?? ''),
+    assetFolderPath: getEntryAssetFolderPath({
+      collection,
+      entryFilePath: entryFilePath ?? '',
+      internalPath,
+    }),
     fillSlugOptions,
   });
 
-  const resolvedPublicPath = resolvePublicPath({
-    publicPath,
-    subPathFolderPath,
-    subPath,
-    isMultiFolders,
-    fillSlugOptions,
-  });
+  const resolvedPublicPath = resolvePublicPath({ publicPath, fillSlugOptions });
 
   return { resolvedInternalPath, resolvedPublicPath };
 };
@@ -268,11 +241,14 @@ export const resolveAssetFolderPaths = ({ folder, fillSlugOptions }) => {
  * Resolve the internal and public asset folder paths for a file being added to the given draft.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} [args.locale] Locale the file is being added to. Defaults to the
+ * default locale, which is enough to resolve the public path, the same for every locale.
+ * @param {string} [args.slug] Entry slug for that locale. Defaults to the default locale’s slug.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @param {AssetFolderInfo} args.folder Asset folder associated with a new file.
  * @returns {ResolvedAssetFolderPaths} Determined paths.
  */
-export const getAssetFolderPaths = ({ draft, defaultLocaleSlug, folder }) => {
+export const getAssetFolderPaths = ({ draft, locale, slug, defaultLocaleSlug, folder }) => {
   const { collection, collectionFile, isIndexFile } = draft;
 
   const {
@@ -285,7 +261,14 @@ export const getAssetFolderPaths = ({ draft, defaultLocaleSlug, folder }) => {
       ...getFillSlugOptions({ draft }),
       type: 'media_folder',
       currentSlug: defaultLocaleSlug,
-      entryFilePath: createEntryPath({ draft, locale: defaultLocale, slug: defaultLocaleSlug }),
+      // Resolve against the locale being edited: with a `multiple_folders` or
+      // `multiple_root_folders` i18n structure each locale has a folder of its own, and an asset
+      // referenced from one locale’s entry has to sit beside that entry
+      entryFilePath: createEntryPath({
+        draft,
+        locale: locale ?? defaultLocale,
+        slug: slug ?? defaultLocaleSlug,
+      }),
       isIndexFile,
     },
   });
@@ -306,14 +289,17 @@ export const createPublicURL = (publicPath, fileName) =>
  * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} [args.locale] Locale the file is being added to. See
+ * {@link getAssetFolderPaths}.
+ * @param {string} [args.slug] Entry slug for that locale.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @param {AssetFolderInfo} args.folder Asset folder associated with a new file.
  * @returns {{ assetFolderPaths: ResolvedAssetFolderPaths, assetNamesInSameFolder: string[],
  * savingAssetProps: SavingAsset }} Arguments.
  */
-export const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
+export const getAssetSavingInfo = ({ draft, locale, slug, defaultLocaleSlug, folder }) => {
   const { collectionName } = draft;
-  const assetFolderPaths = getAssetFolderPaths({ draft, defaultLocaleSlug, folder });
+  const assetFolderPaths = getAssetFolderPaths({ draft, locale, slug, defaultLocaleSlug, folder });
   const { resolvedInternalPath } = assetFolderPaths;
 
   return {
@@ -331,6 +317,9 @@ export const getAssetSavingInfo = ({ draft, defaultLocaleSlug, folder }) => {
  * @param {boolean} args.replace Whether to replace an existing file.
  * @param {string} args.blobURL Blob URL of the file.
  * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} [args.locale] Locale the file is being added to. See
+ * {@link getAssetFolderPaths}.
+ * @param {string} [args.slug] Entry slug for that locale.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {FlattenedEntryContent} args.content Localized content.
@@ -344,6 +333,8 @@ export const replaceBlobURL = async ({
   replace,
   blobURL,
   draft,
+  locale,
+  slug,
   defaultLocaleSlug,
   keyPath,
   content,
@@ -361,7 +352,7 @@ export const replaceBlobURL = async ({
     savingAssetProps,
     assetNamesInSameFolder,
     assetFolderPaths: { resolvedInternalPath, resolvedPublicPath },
-  } = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
+  } = getAssetSavingInfo({ draft, locale, slug, defaultLocaleSlug, folder });
 
   let fileName = '';
 

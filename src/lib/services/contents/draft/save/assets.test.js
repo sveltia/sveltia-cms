@@ -189,12 +189,12 @@ describe('Test resolveAssetFolderPaths()', () => {
           collection,
           content: {},
           currentSlug,
-          entryFilePath: 'src/content/blog/foo.md',
+          entryFilePath: 'src/content/blog/en/foo.md',
         },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo/images',
-      resolvedPublicPath: '../foo',
+      resolvedInternalPath: 'src/content/blog/en/images',
+      resolvedPublicPath: '',
     });
   });
 
@@ -254,12 +254,12 @@ describe('Test resolveAssetFolderPaths()', () => {
           collection,
           content: {},
           currentSlug,
-          entryFilePath: 'src/content/blog/foo/index.md',
+          entryFilePath: 'src/content/blog/en/foo/index.md',
         },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo/images',
-      resolvedPublicPath: '../../foo',
+      resolvedInternalPath: 'src/content/blog/en/foo/images',
+      resolvedPublicPath: '',
     });
   });
 
@@ -280,12 +280,12 @@ describe('Test resolveAssetFolderPaths()', () => {
           collection,
           content: {},
           currentSlug,
-          entryFilePath: 'src/content/blog/foo/_index.md',
+          entryFilePath: 'src/content/blog/en/foo/_index.md',
         },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo/images',
-      resolvedPublicPath: '../../foo',
+      resolvedInternalPath: 'src/content/blog/en/foo/images',
+      resolvedPublicPath: '',
     });
   });
 
@@ -341,12 +341,12 @@ describe('Test resolveAssetFolderPaths()', () => {
           collection,
           content: {},
           currentSlug,
-          entryFilePath: 'src/content/blog/foo.md',
+          entryFilePath: 'en/src/content/blog/foo.md',
         },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo/images',
-      resolvedPublicPath: '../foo',
+      resolvedInternalPath: 'en/src/content/blog/images',
+      resolvedPublicPath: '',
     });
   });
 
@@ -367,12 +367,12 @@ describe('Test resolveAssetFolderPaths()', () => {
           collection,
           content: {},
           currentSlug,
-          entryFilePath: 'src/content/blog/foo.md',
+          entryFilePath: 'en/src/content/blog/foo.md',
         },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo/images',
-      resolvedPublicPath: '../foo',
+      resolvedInternalPath: 'en/src/content/blog/images',
+      resolvedPublicPath: '',
     });
   });
 
@@ -393,12 +393,12 @@ describe('Test resolveAssetFolderPaths()', () => {
           collection,
           content: {},
           currentSlug,
-          entryFilePath: 'src/content/blog/foo/index.md',
+          entryFilePath: 'en/src/content/blog/foo/index.md',
         },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo/images',
-      resolvedPublicPath: '../../foo',
+      resolvedInternalPath: 'en/src/content/blog/foo/images',
+      resolvedPublicPath: '',
     });
   });
 
@@ -419,12 +419,12 @@ describe('Test resolveAssetFolderPaths()', () => {
           collection,
           content: {},
           currentSlug,
-          entryFilePath: 'src/content/blog/foo/index.md',
+          entryFilePath: 'en/src/content/blog/foo/index.md',
         },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo/images',
-      resolvedPublicPath: '../../foo',
+      resolvedInternalPath: 'en/src/content/blog/foo/images',
+      resolvedPublicPath: '',
     });
   });
 
@@ -781,12 +781,12 @@ describe('Test resolveAssetFolderPaths()', () => {
           collection,
           content: {},
           currentSlug,
-          entryFilePath: 'src/content/blog/foo.md',
+          entryFilePath: 'src/content/blog/en/foo.md',
         },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo/images',
-      resolvedPublicPath: '../foo',
+      resolvedInternalPath: 'src/content/blog/en/images',
+      resolvedPublicPath: '',
     });
   });
 
@@ -817,12 +817,12 @@ describe('Test resolveAssetFolderPaths()', () => {
           collection,
           content: {},
           currentSlug,
-          entryFilePath: 'src/content/blog/foo/index.md',
+          entryFilePath: 'src/content/blog/en/foo/index.md',
         },
       }),
     ).toEqual({
-      resolvedInternalPath: 'src/content/blog/foo/assets/media',
-      resolvedPublicPath: '../../foo',
+      resolvedInternalPath: 'src/content/blog/en/foo/assets/media',
+      resolvedPublicPath: '',
     });
   });
 
@@ -1511,6 +1511,89 @@ describe('Test resolveAssetFolderPaths()', () => {
     });
   });
 
+  test('fills template tags in an entry-relative media folder', async () => {
+    /** @type {InternalCollection} */
+    const collection = {
+      ...collectionBase,
+      _file: { ..._file, subPath: '{{slug}}' },
+      _i18n: i18nSingleFile,
+    };
+
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      hasTemplateTags: true,
+      internalPath: 'src/content/blog',
+      internalSubPath: 'images/{{slug}}',
+      publicPath: '',
+    };
+
+    await setupAssetFolder(folder);
+
+    expect(
+      resolveAssetFolderPaths({
+        folder,
+        fillSlugOptions: {
+          collection,
+          content: {},
+          currentSlug,
+          entryFilePath: 'src/content/blog/foo.md',
+        },
+      }).resolvedInternalPath,
+    ).toBe('src/content/blog/images/foo');
+  });
+
+  describe('multi-folder i18n', () => {
+    // The entry’s assets sit in the locale’s own folder, beside the entry file, so the value stored
+    // in the field resolves the same way it does without i18n
+    const cases = [
+      {
+        name: 'a plain file keeps its assets in the locale folder',
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        i18n: () => i18nMultiFolder,
+        subPath: '{{slug}}',
+        entryFilePath: 'src/content/blog/de/foo.md',
+        internalPath: 'src/content/blog/de/images',
+      },
+      {
+        name: 'an entry with a folder of its own keeps them in that folder',
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        i18n: () => i18nMultiFolder,
+        subPath: '{{slug}}/index',
+        entryFilePath: 'src/content/blog/de/foo/index.md',
+        internalPath: 'src/content/blog/de/foo/images',
+      },
+      {
+        name: 'a locale root folder works the same way',
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        i18n: () => i18nRootMultiFolders,
+        subPath: '{{slug}}',
+        entryFilePath: 'de/src/content/blog/foo.md',
+        internalPath: 'de/src/content/blog/images',
+      },
+    ];
+
+    cases.forEach(({ name, i18n, subPath, entryFilePath, internalPath }) => {
+      test(name, async () => {
+        /** @type {InternalCollection} */
+        const collection = { ...collectionBase, _file: { ..._file, subPath }, _i18n: i18n() };
+
+        await setupAssetFolder(relativeAssetFolder);
+
+        expect(
+          resolveAssetFolderPaths({
+            folder: relativeAssetFolder,
+            fillSlugOptions: { collection, content: {}, currentSlug, entryFilePath },
+          }),
+        ).toEqual({
+          resolvedInternalPath: internalPath,
+          // Relative to the entry file, so no `..` hops out of the locale folder
+          resolvedPublicPath: '',
+        });
+      });
+    });
+  });
+
   test('uses empty string fallback when entryFilePath is undefined (new entry, line 213)', async () => {
     // When entryFilePath is undefined (new entry not yet saved), `??` converts it to ''.
     // getEntryFolderPath('', subPath) is called with an empty folder path.
@@ -1605,22 +1688,23 @@ describe('Test resolveAssetFolderPaths()', () => {
       ).toBe('content/pages/about');
     });
 
-    test('shares the collection folder with an entry that isn’t an index file', async () => {
+    test('shares the folder with an entry that isn’t an index file', async () => {
       await setupAssetFolder(pagesFolder);
 
-      // The folder belongs to the entry stored as its index file, not to this one
+      // The folder belongs to the entry stored as its index file, so this one doesn’t own it and
+      // its assets are shared with the folder rather than travelling with the entry
       expect(resolveInternal(createCollection(), 'content/pages/about/notes.md')).toBe(
-        'content/pages',
+        'content/pages/about',
       );
     });
 
-    test('shares the collection folder without the `subfolders` mode', async () => {
+    test('shares the folder without the `subfolders` mode', async () => {
       await setupAssetFolder(pagesFolder);
 
       // Entries keep their own file names here, so no folder belongs to one alone
       expect(
         resolveInternal(createCollection({ subfolders: false }), 'content/pages/about/_index.md'),
-      ).toBe('content/pages');
+      ).toBe('content/pages/about');
     });
   });
 });
@@ -2080,7 +2164,8 @@ describe('Test replaceBlobURL()', () => {
 
     /** @type {any} */
     const folder2 = {
-      internalPath: 'images2',
+      internalPath: 'content/blog',
+      internalSubPath: 'images2',
       publicPath: 'images2',
       entryRelative: true,
       collectionName: 'blog',
@@ -2096,7 +2181,8 @@ describe('Test replaceBlobURL()', () => {
       {
         collectionName: 'blog',
         folder: {
-          internalPath: 'images1',
+          internalPath: 'content/blog',
+          internalSubPath: 'images1',
           publicPath: 'images1',
           entryRelative: true,
           collectionName: 'blog',
@@ -2125,11 +2211,11 @@ describe('Test replaceBlobURL()', () => {
       encodingEnabled: false,
     });
 
-    // File should be added separately to images2/ even though SHA matches
+    // File should be added separately to the images2/ sub-folder even though SHA matches
     expect(changes).toHaveLength(2);
     expect(changes[1]).toEqual({
       action: 'create',
-      path: 'images2/photo.jpg',
+      path: 'path/to/images2/photo.jpg',
       data: mockFile,
     });
     expect(savingAssets).toHaveLength(2);
@@ -2358,16 +2444,69 @@ describe('Test getAssetSavingInfo()', () => {
       collection: draft.collection,
       content: {},
       currentSlug: defaultLocaleSlug,
-      entryFilePath: 'src/content/blog/hello-world',
+      entryFilePath: 'src/content/blog/en/hello-world.md',
     });
 
-    mockCreateEntryPath.mockReturnValue('src/content/blog/hello-world.md');
+    mockCreateEntryPath.mockReturnValue('src/content/blog/en/hello-world.md');
 
     const result = getAssetSavingInfo({ draft, defaultLocaleSlug, folder });
 
-    expect(result.assetFolderPaths.resolvedInternalPath).toContain('hello-world');
+    // The entry is a plain file, so its assets sit beside it in the locale’s folder
+    expect(result.assetFolderPaths.resolvedInternalPath).toBe('src/content/blog/en');
     expect(result.assetNamesInSameFolder).toEqual([]);
     expect(result.savingAssetProps.collectionName).toBe('blog');
+  });
+
+  test('resolves the folder against the locale the file is added to', async () => {
+    /** @type {any} */
+    const draft = {
+      collection: {
+        name: 'blog',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en', structure: 'multiple_folders' },
+        _file: { basePath: 'src/content/blog', subPath: '{{slug}}' },
+      },
+      collectionName: 'blog',
+      collectionFile: undefined,
+      isIndexFile: false,
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'blog',
+      entryRelative: true,
+      internalPath: 'src/content/blog',
+      publicPath: '',
+    };
+
+    mockGetAssetsByDirName.mockReturnValue([]);
+
+    mockGetFillSlugOptions.mockReturnValue({
+      collection: draft.collection,
+      content: {},
+      currentSlug: 'hello-world',
+    });
+
+    mockCreateEntryPath.mockImplementation(
+      (/** @type {any} */ { locale }) => `src/content/blog/${locale}/hello-world.md`,
+    );
+
+    // The German pane’s upload belongs beside the German entry, not the default locale’s
+    expect(
+      getAssetSavingInfo({
+        draft,
+        locale: 'de',
+        slug: 'hello-world',
+        defaultLocaleSlug: 'hello-world',
+        folder,
+      }).assetFolderPaths.resolvedInternalPath,
+    ).toBe('src/content/blog/de');
+
+    // Without a locale, the default one stands in, which is all the public path needs
+    expect(
+      getAssetSavingInfo({ draft, defaultLocaleSlug: 'hello-world', folder }).assetFolderPaths
+        .resolvedInternalPath,
+    ).toBe('src/content/blog/en');
   });
 
   test('should normalize asset names', async () => {

@@ -118,6 +118,8 @@ export const createBaseSavingEntryData = async ({
 
             const replaceBlobArgs = {
               ...replaceBlobBaseArgs,
+              locale,
+              slug,
               keyPath,
               content,
               // Enable encoding for markdown fields to support embedded images

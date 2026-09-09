@@ -289,6 +289,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     collections,
     singletons,
     asset_collections: assetCollections,
+    i18n: { locales: localeFolderNames = [] } = {},
   } = config;
 
   const isGlobalFolderConfigured = _globalMediaFolder !== undefined;
@@ -397,5 +398,15 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     allFolders.unshift(allAssetsFolder);
   }
 
-  return allFolders;
+  if (!localeFolderNames.length) {
+    return allFolders;
+  }
+
+  // The `multiple_root_folders` i18n structure stores each locale’s copy of the whole site below a
+  // folder named after it, so an entry-relative folder’s own files can sit one level deeper than
+  // the collection `folder` option says. Record the locale names so the asset paths can be matched
+  // there too; the entry folders already carry the same information in their `folderPathMap`
+  return allFolders.map((folder) =>
+    folder.entryRelative ? { ...folder, localeFolderNames } : folder,
+  );
 };

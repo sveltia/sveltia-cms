@@ -29,6 +29,64 @@ describe('config/folders/assets', () => {
   });
 
   describe('getAllAssetFolders', () => {
+    it('records the locale folder names on entry-relative folders only', () => {
+      const collections = [
+        // Entry-relative: the assets sit beside the entry, so they can be below a locale folder
+        { name: 'posts', folder: 'content/posts', media_folder: '', public_folder: '' },
+        // Absolute: one shared folder, which no locale folder ever precedes
+        { name: 'pages', folder: 'content/pages', media_folder: '/static/pages' },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        i18n: { structure: 'multiple_root_folders', locales: ['en', 'de'] },
+        collections,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      expect(
+        result
+          .filter(({ collectionName }) => !!collectionName)
+          .map(({ collectionName, entryRelative, localeFolderNames }) => ({
+            collectionName,
+            entryRelative,
+            localeFolderNames,
+          })),
+      ).toEqual([
+        // Sorted by internal path, so the entry-relative collection folder comes first
+        { collectionName: 'posts', entryRelative: true, localeFolderNames: ['en', 'de'] },
+        { collectionName: 'pages', entryRelative: false, localeFolderNames: undefined },
+      ]);
+    });
+
+    it('leaves the locale folder names off when the site has no i18n', () => {
+      const collections = [
+        { name: 'posts', folder: 'content/posts', media_folder: '', public_folder: '' },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+      const folder = result.find(({ collectionName }) => collectionName === 'posts');
+
+      expect(folder?.entryRelative).toBe(true);
+      expect(folder?.localeFolderNames).toBeUndefined();
+    });
+
     it('should return default asset folders for minimal config', () => {
       vi.mocked(getValidCollections).mockReturnValue([]);
 

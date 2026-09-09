@@ -634,6 +634,9 @@
  * @property {TypedFieldKeyPath} [typedKeyPath] Field key path for a field-level asset folder.
  * @property {boolean} [isIndexFile] Whether the asset folder is for the special index file used
  * specifically in Hugo. It works only for field-level asset folders in an entry collection.
+ * @property {string[]} [localeFolderNames] Names of the locale folders that can precede
+ * `internalPath`, for an entry-relative folder in a site using the `multiple_root_folders` i18n
+ * structure. Unset when the site has no i18n configuration.
  * @property {string} [componentName] Custom editor component name for a field-level asset folder,
  * registered with `CMS.registerEditorComponent()`.
  * @property {string | undefined} internalPath Folder path on the repository/filesystem, relative to
