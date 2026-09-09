@@ -205,7 +205,6 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
 
 /**
  * Build a synthetic entry object with current values for live preview updates.
- * @internal
  * @param {object} args Arguments.
  * @param {Entry | undefined} args.originalEntry The original entry object.
  * @param {Record<InternalLocaleCode, FlattenedEntryContent>} args.currentValues Object with locale

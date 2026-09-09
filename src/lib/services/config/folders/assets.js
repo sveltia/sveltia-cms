@@ -57,7 +57,6 @@ const assetFolders = [];
 
 /**
  * Check if a folder string contains template tags.
- * @internal
  * @param {string} folder Folder string.
  * @returns {boolean} `true` if the folder contains template tags.
  */
@@ -66,7 +65,6 @@ export const hasTags = (folder) =>
 
 /**
  * Replace `{{media_folder}}` and `{{public_folder}}` template tags.
- * @internal
  * @param {string} folder Original folder path.
  * @param {object} context Context for replacement.
  * @param {string} context.globalMediaFolder Normalized global `media_folder` option.
@@ -82,7 +80,6 @@ export const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =
 
 /**
  * Get a normalized asset folder information given the arguments.
- * @internal
  * @param {NormalizeAssetFolderArgs} args Arguments.
  * @returns {AssetFolderInfo | undefined} Normalized asset folder information or `undefined` if
  * template tags are used but global folder information is not available.
@@ -151,7 +148,6 @@ export const normalizeAssetFolder = ({
 /**
  * Add an asset folder for a collection or collection file if it’s not the same as the global
  * asset folder.
- * @internal
  * @param {NormalizeAssetFolderArgs} args Arguments for {@link normalizeAssetFolder}.
  */
 export const addFolderIfNeeded = (args) => {
@@ -180,7 +176,6 @@ export const addFolderIfNeeded = (args) => {
 
 /**
  * Iterate through files in a file/singleton collection and add their folders.
- * @internal
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {(CollectionFile | CollectionDivider)[]} args.files Collection files. May include
@@ -210,7 +205,6 @@ export const iterateFiles = ({ collectionName, files, globalFolders }) => {
 
 /**
  * Handle field-level media folders and add them if needed.
- * @internal
  * @param {object} args Arguments.
  * @param {CollectedMediaField[]} args.fieldMediaFolders Collected field-level media folders.
  * @param {Collection[]} args.validCollections Valid collections.

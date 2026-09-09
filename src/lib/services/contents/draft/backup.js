@@ -134,7 +134,6 @@ export const saveBackup = async (draft) => {
 
 /**
  * Restore a draft backup to the current entry draft.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraftBackup} args.backup Backup to restore.
  * @param {string} args.collectionName Collection name.

@@ -14,7 +14,6 @@ import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * Update a flatten object with new properties by adding, updating and deleting properties.
- * @internal
  * @param {Record<string, any>} obj Original object.
  * @param {Record<string, any>} newProps New properties.
  */
@@ -43,7 +42,6 @@ const itemListRegexCache = new Map();
  *
  * The object is a draft’s live content, not a snapshot of it, and the caller writes the manipulated
  * list straight back into it, so the key paths have to be read as they are right now.
- * @internal
  * @param {Record<string, any>} obj Original object.
  * @param {FieldKeyPath} keyPath Dot-notated field name.
  * @returns {[values: any, remainder: any]} Unflatten values and flatten remainder.

@@ -56,7 +56,6 @@ const TYPE_MATCH_REGEX = /^(.*?)<([^>]+)>(.*)$/;
 /**
  * Regular expression to match the list key path, e.g. `field.0`, `field.1`, etc.
  * @type {RegExp}
- * @internal
  */
 export const LIST_KEY_PATH_REGEX = /\.\d+$/;
 

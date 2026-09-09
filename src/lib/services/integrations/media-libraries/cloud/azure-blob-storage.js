@@ -35,7 +35,6 @@ const MAX_RESULTS = 1000;
 
 /**
  * Get Azure Blob Storage library options from site config.
- * @internal
  * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
  * @returns {AzureMediaLibrary | false | undefined} Configuration object, or `false` if explicitly
  * disabled.

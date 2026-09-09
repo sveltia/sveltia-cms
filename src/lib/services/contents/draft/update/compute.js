@@ -173,7 +173,6 @@ const collectFromField = (args) => {
  * Compute field is picked up even before it holds anything — which is the case for a field added to
  * the configuration after the entry was written, and for one inside a rich text editor component,
  * where missing values are deliberately not filled in.
- * @internal
  * @param {object} args Arguments.
  * @param {Field[]} args.fields Field list.
  * @param {FlattenedEntryContent} args.valueMap Flattened entry content.
@@ -205,7 +204,6 @@ export const collectComputeFields = ({ fields, valueMap, getIndex, keyPathPrefix
  * Unlike an entry’s own fields, these aren’t known from the collection configuration: each
  * component instance records the component it was created from under its own key path prefix, and
  * the fields come from that component’s definition.
- * @internal
  * @param {FlattenedEntryContent} valueMap Flattened content of the `extraValues` store.
  * @param {() => ListItemIndex} getIndex Get the index of the list items in the content.
  * @returns {ComputeFieldInfo[]} Collected fields.

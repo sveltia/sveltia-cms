@@ -15,7 +15,6 @@ import { isObject } from '@sveltia/utils/object';
  * Merge the i18n configuration from the site, collection and file levels. The site configuration is
  * passed in rather than read from the `cmsConfig` store, so the function can also be used by the
  * config parser, which runs before the store is populated.
- * @internal
  * @param {object} args Arguments.
  * @param {CmsConfig | undefined} args.cmsConfig The site configuration.
  * @param {Collection | CollectionDivider | InternalSingletonCollection} args.collection The

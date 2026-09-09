@@ -31,7 +31,6 @@ import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * Initialize a Turndown service instance for converting HTML to Markdown.
- * @internal
  * @see https://github.com/mixmark-io/turndown
  */
 export const turndownService = new TurndownService({
@@ -45,7 +44,6 @@ turndownService.keep(['span', 'div']);
 
 /**
  * Get a list of fields to be copied or translated from the source locale to the target locale.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {CopyOptions} args.options Copy options.
@@ -89,7 +87,6 @@ export const getCopyingFieldMap = ({ draft, options }) => {
 
 /**
  * Update the toast notification.
- * @internal
  * @param {'info' | 'success' | 'error'} status Status.
  * @param {string} message Message key.
  * @param {object} context Context.
@@ -102,7 +99,6 @@ export const updateToast = (status, message, { count, sourceLanguage }) => {
 
 /**
  * Translate the field value(s) from another locale.
- * @internal
  * @param {object} args Arguments.
  * @param {LocaleContentMap} args.currentValues Current values for the entry draft. This will be
  * updated with the translated values.
@@ -163,7 +159,6 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
 
 /**
  * Copy the field value(s) from another locale.
- * @internal
  * @param {object} args Arguments.
  * @param {LocaleContentMap} args.currentValues Current values for the entry draft. This will be
  * updated with the copied values.

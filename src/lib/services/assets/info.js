@@ -51,7 +51,6 @@ const pendingAssetBlobs = new Map();
 /* v8 ignore next */
 /**
  * Reset the asset blob caches. This is used in tests to reset the state between tests.
- * @internal
  */
 export const _resetAssetBlobCache = () => {
   cachedBlobs.clear();
@@ -190,7 +189,6 @@ const pendingThumbnailBlobs = new Map();
 /**
  * Reset the thumbnail database. This is used in tests to reset the state of the thumbnail database
  * between tests.
- * @internal
  */
 export const _resetThumbnailDB = () => {
   thumbnailDB = undefined;
@@ -283,7 +281,6 @@ const pendingRevocations = new Set();
 /**
  * Discard the queued blob URL revocations. This is used in tests, where the animation frame that
  * would drain the queue is mocked out.
- * @internal
  */
 export const _resetRevocationQueue = () => {
   pendingRevocations.clear();

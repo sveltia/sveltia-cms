@@ -66,7 +66,6 @@ import { getRegex } from '$lib/services/utils/regex';
 /**
  * Default validity state for a field.
  * @type {EntryValidityState}
- * @internal
  */
 export const DEFAULT_VALIDITY = {
   valueMissing: false,
@@ -84,7 +83,6 @@ export const DEFAULT_VALIDITY = {
  * the current value, and returns an object with the same properties as `EntryValidityState` except
  * `valid`.
  * @type {Record<string, (args: ValidateFieldFuncArgs) => { validity: EntryValidityState }>}
- * @internal
  */
 export const VALIDATE_FIELD_FUNCTIONS = {
   datetime: validateDateTimeField,
@@ -95,7 +93,6 @@ export const VALIDATE_FIELD_FUNCTIONS = {
 
 /**
  * Proxy handler for validity state. Exported for testing only.
- * @internal
  */
 export const validityProxyHandler = {
   /**
@@ -137,7 +134,6 @@ const validateScalarField = ({ value, required, validation, validity }) => {
 
 /**
  * Validate each field.
- * @internal
  * @param {ValidateFieldArgs} args Arguments.
  * @returns {EntryValidityState | undefined} Field validity.
  */
@@ -298,7 +294,6 @@ export const validateAnyField = (args) => {
 
 /**
  * Validate a single field and update the validity state.
- * @internal
  * @param {ValidateFieldArgs} args Arguments.
  * @returns {boolean} Whether the field is valid.
  */
@@ -369,7 +364,6 @@ export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => 
 
 /**
  * Validate an array-type field.
- * @internal
  * @param {object} args Arguments.
  * @param {Field} args.fieldConfig Field configuration.
  * @param {ValidateFieldArgs} args.validateArgs Arguments for field validation.

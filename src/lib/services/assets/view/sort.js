@@ -6,7 +6,6 @@ import { sortItemsByKey } from '$lib/services/common/view';
 
 /**
  * Get an asset’s property value.
- * @internal
  * @param {Asset} asset Asset.
  * @param {string} key Sorting key. A field name of the asset or a special key like `commit_author`,
  * `commit_date`, or `name`.

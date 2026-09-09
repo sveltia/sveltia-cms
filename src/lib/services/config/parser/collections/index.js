@@ -36,7 +36,6 @@ const UNSUPPORTED_OPTIONS = [
 
 /**
  * Parse and validate a single entry collection configuration.
- * @internal
  * @param {object} context Context.
  * @param {CmsConfig} context.cmsConfig Raw CMS configuration.
  * @param {EntryCollection} context.collection Collection config to parse.
@@ -137,7 +136,6 @@ export const parseEntryCollection = (context, collectors) => {
 
 /**
  * Parse and validate a collection or divider configuration.
- * @internal
  * @param {object} context Context.
  * @param {CmsConfig} context.cmsConfig Raw CMS configuration.
  * @param {Collection | CollectionDivider} context.collection Collection config to parse.

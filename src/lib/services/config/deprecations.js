@@ -2,7 +2,6 @@
  * Mapping of deprecation warnings that have been issued once. This prevents flooding the console
  * with repeated warnings.
  * @type {Record<string, boolean>}
- * @internal
  */
 export const warnedOnceMap = {
   slug_length: false,
@@ -17,7 +16,6 @@ export const warnedOnceMap = {
 /**
  * Deprecation warning messages.
  * @type {Record<string, string>}
- * @internal
  */
 export const warningMessages = {
   slug_length:

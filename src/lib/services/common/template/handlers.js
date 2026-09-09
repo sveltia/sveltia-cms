@@ -14,7 +14,6 @@ import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary
 
 /**
  * Handles date-time related template tags.
- * @internal
  * @param {string} tag The template tag.
  * @param {Record<string, string>} dateTimeParts Date-time parts object.
  * @returns {string | undefined} The date-time value or undefined if not a date-time tag.
@@ -24,7 +23,6 @@ export const handleDateTimeTag = (tag, dateTimeParts) =>
 
 /**
  * Handles UUID-related template tags.
- * @internal
  * @param {string} tag The template tag.
  * @returns {string | undefined} The UUID value or undefined if not a UUID tag.
  */
@@ -43,7 +41,6 @@ export const handleUuidTag = (tag) => {
 
 /**
  * Handles slug-related template tags.
- * @internal
  * @param {string} tag Field name or special tag.
  * @param {ReplaceSubContext} context Replacement context.
  * @returns {string | undefined} The slug value or undefined if not a slug tag.
@@ -81,7 +78,6 @@ export const handleSlugTag = (tag, context) => {
 
 /**
  * Handles file path related template tags.
- * @internal
  * @param {string} tag The template tag.
  * @param {string | undefined} entryFilePath Entry file path.
  * @param {string | undefined} basePath Base path.

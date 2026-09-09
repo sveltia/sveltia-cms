@@ -210,7 +210,6 @@ const entriesByCollectionCache = {
 /**
  * Reset {@link entriesByCollectionCache}. Used in tests, where the stores are mocked and therefore
  * don’t change identity between cases.
- * @internal
  */
 export const _resetEntriesByCollectionCache = () => {
   entriesByCollectionCache.entrySource = undefined;

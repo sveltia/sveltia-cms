@@ -15,7 +15,6 @@ import { extractExifData } from '$lib/services/utils/media/image/exif';
  * element is guaranteed to fire either the success event or `error`; the latter resolves with an
  * empty result so that a file the browser cannot decode — a HEIC image saved with a `.jpg`
  * extension, say — never leaves the promise pending forever.
- * @internal
  * @param {object} args Arguments.
  * @param {HTMLImageElement | HTMLMediaElement} args.element Element to be probed.
  * @param {string} args.eventType Event that indicates the media info is available.
@@ -34,7 +33,6 @@ const probeSource = ({ element, eventType, src, getInfo }) =>
 
 /**
  * Get the dimensions of an image asset.
- * @internal
  * @param {string} src Source URL of the image.
  * @returns {Promise<SourceInfo>} Dimensions (width/height). `dimensions` is `undefined` if the
  * image cannot be decoded.
@@ -55,7 +53,6 @@ export const getImageSourceInfo = (src) => {
 
 /**
  * Get the dimensions and duration of a video or audio asset.
- * @internal
  * @param {string} src Source URL of the media.
  * @param {AssetKind} kind Media type: `video` or `audio`.
  * @returns {Promise<SourceInfo>} Dimensions and duration of the media. Both are `undefined` if the
@@ -85,7 +82,6 @@ export const getMediaSourceInfo = async (src, kind) => {
 
 /**
  * Get the dimensions and duration of an image, video or audio asset.
- * @internal
  * @param {string} src Source URL.
  * @param {AssetKind} kind Media type: `image`, `video` or `audio`.
  * @returns {Promise<SourceInfo>} Dimensions (width/height) and duration.

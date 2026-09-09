@@ -95,7 +95,6 @@ export const groupEntries = (entries, collection, conditions) => {
 
 /**
  * Initialize view groups for the given collection.
- * @internal
  * @param {InternalCollection | undefined} collection Collection to initialize groups for.
  * @param {(value: ViewGroup[]) => void} set Function to set the groups.
  */

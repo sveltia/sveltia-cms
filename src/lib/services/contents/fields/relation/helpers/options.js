@@ -33,7 +33,6 @@ import { getFieldReplacement } from '$lib/services/contents/fields/relation/help
 
 /**
  * Create a single relation option for non-list fields.
- * @internal
  * @param {object} params Parameters.
  * @param {TemplateStrings} params.templates Template strings.
  * @param {string[]} params.allFieldNames All field names to replace.

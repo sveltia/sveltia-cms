@@ -27,7 +27,6 @@ const cachedMetadata = new Map();
 /* v8 ignore next */
 /**
  * Reset the media metadata cache. This is used in tests to reset the state between tests.
- * @internal
  */
 export const _resetAssetMetadataCache = () => {
   cachedMetadata.clear();

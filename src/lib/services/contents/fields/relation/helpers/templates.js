@@ -36,7 +36,6 @@ import { normalizeFieldName } from '$lib/services/contents/fields/relation/helpe
 
 /**
  * Get the replacement value for a field name based on standard field types.
- * @internal
  * @param {string} fieldName The field name to get replacement for.
  * @param {ReplacementContext} context Context object containing `slug`, `locale`, and
  * `getDisplayValue` function.
@@ -70,7 +69,6 @@ export const getFieldReplacement = (fieldName, context, fallbackContext) => {
 
 /**
  * Replace all template tags in the given strings with actual values.
- * @internal
  * @param {RelationOption} templates Object containing `label`, `value`, and `searchValue`
  * templates.
  * @param {string[]} fieldNames Array of field names to replace.
@@ -94,7 +92,6 @@ export const replaceTemplateFields = (templates, fieldNames, context, fallbackCo
 
 /**
  * Extract field names from template strings.
- * @internal
  * @param {string} template Template string with field names in {{}} brackets.
  * @returns {string[]} Array of field names.
  */
@@ -112,7 +109,6 @@ export const extractFieldNames = (template) => {
 
 /**
  * Normalize and prepare field templates for processing.
- * @internal
  * @param {RelationField} fieldConfig Field configuration.
  * @param {string} identifierField Default identifier field.
  * @returns {TemplateStrings} Normalized field templates.

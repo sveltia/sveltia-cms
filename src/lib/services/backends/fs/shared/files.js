@@ -50,7 +50,6 @@ const FILE_PROCESS_BATCH_SIZE = 10;
 
 /**
  * Get a file or directory handle at the given path.
- * @internal
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {string | undefined} path Path to the file/directory.
  * @param {'file' | 'directory'} [type] Type of the handle to retrieve.
@@ -113,7 +112,6 @@ export const getDirectoryHandle = (rootDirHandle, path) =>
 
 /**
  * Create a regular expression that matches the given path, taking template tags into account.
- * @internal
  * @param {string} path Path.
  * @returns {RegExp} RegEx.
  */
@@ -130,7 +128,6 @@ export const getPathRegex = (path) => {
 
 /**
  * Retrieve all the files under the given directory recursively.
- * @internal
  * @param {FileSystemDirectoryHandle} dirHandle Directory handle.
  * @param {object} context Context object.
  * @param {FileSystemDirectoryHandle} context.rootDirHandle Root directory handle.
@@ -179,7 +176,6 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
 
 /**
  * Collect all scanning paths from entry and asset folders.
- * @internal
  * @returns {string[]} Unique list of normalized scanning paths.
  */
 export const collectScanningPaths = () => {
@@ -199,7 +195,6 @@ export const collectScanningPaths = () => {
 
 /**
  * Retrieve all files under the static directory.
- * @internal
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
  */
@@ -227,7 +222,6 @@ export const getAllFiles = async (rootDirHandle) => {
 
 /**
  * Parse text file info to create a complete entry or config file object.
- * @internal
  * @param {BaseFileListItem} fileInfo Entry or config file info.
  * @returns {Promise<BaseFileListItem>} Entry or config file with text content. We don’t populate
  * `size` and `sha` for entries and config files, as they are not needed.
@@ -263,7 +257,6 @@ export const parseTextFileInfo = async (fileInfo) => {
 
 /**
  * Parse asset file info to create a complete asset object.
- * @internal
  * @param {BaseAssetListItem} fileInfo Asset file info.
  * @returns {Promise<Asset>} Asset object.
  */
@@ -333,7 +326,6 @@ export const loadFiles = async (rootDirHandle) => {
  * Check if the `move` method is supported by the current browser. The `move` method is not
  * implemented in older browsers, and Brave supports the `move` method but throws an error for some
  * reason, so we need to check it by actually trying to use it.
- * @internal
  * @returns {boolean} `true` if the `move` method is supported, `false` otherwise.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/File_System_API#browser_compatibility
  * @see https://github.com/sveltia/sveltia-cms/discussions/676
@@ -344,7 +336,6 @@ export const canMoveFile = () => 'move' in FileSystemFileHandle.prototype && !en
  * Write data to a file using the provided file handle. This function is used to write data to a
  * file when we already have a file handle reference, such as when moving a file without changes. It
  * handles the case where the `createWritable` method is not supported by older versions of Safari.
- * @internal
  * @param {FileSystemFileHandle} fileHandle File handle to write to.
  * @param {FileSystemWriteChunkType} data Data to write to the file.
  */
@@ -367,7 +358,6 @@ export const writeFile = async (fileHandle, data) => {
 
 /**
  * Move a file from a previous path to a new path within the file system.
- * @internal
  * @param {object} args Arguments.
  * @param {FileSystemDirectoryHandle} args.rootDirHandle Root directory handle.
  * @param {string} args.previousPath The current path of the file to move.
@@ -399,7 +389,6 @@ export const moveFile = async ({ rootDirHandle, previousPath, path }) => {
 
 /**
  * Save data to a file at the specified path.
- * @internal
  * @param {object} args Arguments.
  * @param {FileSystemDirectoryHandle} args.rootDirHandle Root directory handle.
  * @param {FileSystemFileHandle} [args.fileHandle] File handle to write to. Provided if the file has
@@ -445,7 +434,6 @@ export const saveFile = async ({ rootDirHandle, fileHandle, path, data }) => {
 
 /**
  * Recursively delete empty parent directories.
- * @internal
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {string[]} pathSegments Array of directory path segments.
  */
@@ -471,7 +459,6 @@ export const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
 
 /**
  * Delete a file at the specified path within the file system.
- * @internal
  * @param {object} args Arguments.
  * @param {FileSystemDirectoryHandle} args.rootDirHandle Root directory handle.
  * @param {string} args.path The path to the file to be deleted.
@@ -489,7 +476,6 @@ export const deleteFile = async ({ rootDirHandle, path }) => {
 
 /**
  * Save a file to the file system based on the provided change options.
- * @internal
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {FileChange} change File change options.
  * @returns {Promise<?File>} Created or updated file, if available.

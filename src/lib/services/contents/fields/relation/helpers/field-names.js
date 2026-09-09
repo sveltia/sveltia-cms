@@ -6,7 +6,6 @@ import { hasTemplateTags } from '$lib/services/common/template';
 
 /**
  * Enclose the given field name in brackets if it doesn’t contain any brackets.
- * @internal
  * @param {string} fieldName Field name e.g. `{{name.first}}` or `name.first`.
  * @returns {string} Bracketed field name, e.g. `{{name.first}}`.
  */
@@ -26,7 +25,6 @@ export const normalizeFieldName = (fieldName) => {
 /**
  * Check if the given field configuration is a complex list field with subfields (e.g.
  * `cities.*.name`) and not just a simple list field (e.g. `skills.*`).
- * @internal
  * @param {Field | undefined} fieldConfig Field configuration object.
  * @returns {boolean} Whether the field is a complex list field.
  */

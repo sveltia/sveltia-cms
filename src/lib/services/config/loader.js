@@ -21,7 +21,6 @@ const SCHEMA_TIP_URL = 'https://sveltiacms.app/en/docs/config-basics#validation-
 
 /**
  * Fetch a single configuration file.
- * @internal
  * @param {object} link Link attributes.
  * @param {string} link.href File path.
  * @param {string} [link.type] MIME type.
@@ -120,7 +119,6 @@ export const fetchFile = async (
  * Get the path to the configuration file. Depending on the server or framework configuration, a
  * trailing slash may be removed from the CMS `/admin/` URL. In that case, we need to determine the
  * correct path to the configuration file.
- * @internal
  * @param {string} path Current `location.pathname` starting with a slash, like `/admin/`, `/admin`,
  * or `/admin/index.html`.
  * @returns {string} Path to the configuration file.
@@ -150,7 +148,6 @@ export const getConfigPath = (path) => {
 /**
  * Verify that all provided links are in a secure context. A secure context is defined as either an
  * HTTPS URL or a localhost address.
- * @internal
  * @param {ConfigLink[]} links Links to verify.
  * @returns {boolean} True if all links are secure, false otherwise.
  */

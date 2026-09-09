@@ -96,7 +96,6 @@ export const hasTemplateTags = (str) => TEMPLATE_TAG_REGEX.test(str);
 
 /**
  * Creates existing slugs list for uniqueness validation.
- * @internal
  * @param {string} collectionName Collection name.
  * @param {string | undefined} locale Locale string.
  * @returns {string[]} List of existing slugs.

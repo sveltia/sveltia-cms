@@ -5,7 +5,6 @@
 /**
  * I18n structure types.
  * @type {Record<string, I18nFileStructure>}
- * @internal
  * @todo Remove the legacy `MULTIPLE_FOLDERS_I18N_ROOT` structure prior to the 1.0 release.
  */
 export const I18N_STRUCTURES = {
@@ -22,7 +21,6 @@ export const I18N_STRUCTURES = {
  * a locale name comes in front of a collection’s own folder. The other structures either keep one
  * file per entry or put the locale folder inside the collection folder.
  * @type {I18nFileStructure[]}
- * @internal
  */
 export const LOCALE_ROOT_FOLDER_STRUCTURES = [
   I18N_STRUCTURES.MULTIPLE_FOLDERS_I18N_ROOT,
@@ -31,13 +29,11 @@ export const LOCALE_ROOT_FOLDER_STRUCTURES = [
 
 /**
  * Default locale identifier.
- * @internal
  */
 export const DEFAULT_LOCALE_KEY = '_default';
 
 /**
  * Default canonical slug configuration.
- * @internal
  */
 export const DEFAULT_CANONICAL_SLUG = {
   key: 'translationKey',

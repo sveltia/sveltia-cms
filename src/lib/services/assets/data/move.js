@@ -32,7 +32,6 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
 
 /**
  * Get base properties for the entry draft.
- * @internal
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry to get base properties for.
  * @returns {Partial<EntryDraft>} Base properties for the entry draft.
@@ -70,7 +69,6 @@ export const getDraftBaseProps = ({ entry }) => {
 
 /**
  * Add saving entry data to the stack.
- * @internal
  * @param {object} args Arguments.
  * @param {Partial<EntryDraft>} args.draftProps Entry draft properties.
  * @param {CollectionIndexFile} [args.indexFile] Index file of the collection.
@@ -99,7 +97,6 @@ export const addSavingEntryData = async ({ draftProps, indexFile, savingEntries,
 
 /**
  * Collect changes for the given entry.
- * @internal
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry to collect changes for.
  * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
@@ -136,7 +133,6 @@ export const collectEntryChanges = async ({ entry, savingEntries, changes }) => 
 
 /**
  * Collect changes for the given asset and update the entries that use it.
- * @internal
  * @param {object} args Arguments.
  * @param {AssetFolderInfo} args._globalAssetFolder Global asset folder.
  * @param {string} args.newPath New path for the asset.
@@ -178,7 +174,6 @@ export const collectEntryChangesFromAsset = async ({
 
 /**
  * Update the asset and entry stores after moving or renaming assets.
- * @internal
  * @param {object} args Arguments.
  * @param {'move' | 'rename'} args.action The action performed, either 'move' or 'rename'.
  * @param {MovingAsset[]} args.movedAssets The assets that have been moved or renamed.

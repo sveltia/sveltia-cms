@@ -43,7 +43,6 @@ const LIST_KEY_PATH_MATCH_REGEX = /\.(\d+)$/;
 
 /**
  * Analyze list field configurations and group them by base field name.
- * @internal
  * @param {string[]} allFieldNames All field names.
  * @param {GetFieldArgs} getFieldArgs Arguments for getField function.
  * @returns {Map<string, [string, any][]>} Grouped list field configurations.
@@ -88,7 +87,6 @@ const singleSubfieldRegexCache = new Map();
 
 /**
  * Process single subfield list fields (e.g., `skills.*`).
- * @internal
  * @param {object} params Parameters.
  * @param {string} params.baseFieldName Base field name.
  * @param {[string, any][]} params.groupEntries Group entries.
@@ -173,7 +171,6 @@ const complexListIndexRegexCache = new Map();
 
 /**
  * Get the subfield match from group entries.
- * @internal
  * @param {[string, any][]} groupEntries Group entries.
  * @returns {RegExpMatchArray | null} Subfield match.
  */
@@ -192,7 +189,6 @@ export const getSubFieldMatch = (groupEntries) => {
 
 /**
  * Process complex list fields (e.g., `cities.*.name`).
- * @internal
  * @param {object} params Parameters.
  * @param {[string, any][]} params.groupEntries Group entries.
  * @param {FlattenedEntryContent} params.content Entry content.
@@ -286,7 +282,6 @@ export const processComplexListField = ({
 
 /**
  * Process all list fields for an entry.
- * @internal
  * @param {object} params Parameters.
  * @param {Map<string, [string, any][]>} params.baseFieldGroups Grouped configs.
  * @param {FlattenedEntryContent} params.content Entry content.

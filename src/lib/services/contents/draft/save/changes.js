@@ -32,7 +32,6 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
 
 /**
  * Create base saving entry data.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {EntrySlugVariants} args.slugs Entry slugs.
@@ -152,7 +151,6 @@ export const createBaseSavingEntryData = async ({
 
 /**
  * Get the previous SHA of the file from the cache database.
- * @internal
  * @param {object} args Arguments.
  * @param {string | undefined} args.previousPath Previous file path.
  * @param {IndexedDB | undefined} args.cacheDB Cache database for file info.
@@ -170,7 +168,6 @@ export const getPreviousSha = async ({ previousPath, cacheDB }) => {
 
 /**
  * Get file change information for the entry draft, specifically for a single-file entry.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Entry} args.savingEntry Entry to be saved.
@@ -243,7 +240,6 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
 
 /**
  * Get file change information for the entry draft, specifically for a multi-file entry.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {Entry} args.savingEntry Entry to be saved.

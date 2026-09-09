@@ -85,7 +85,6 @@ const isSharedIndexFile = (filePath, indexFileName) => {
  * anything else stored below it. Only some file structures give an entry a folder of its own; in
  * the others, an entry is a file sharing a folder with the rest of the collection, so its relative
  * assets are shared as well.
- * @internal
  * @param {InternalCollection} collection Collection the entry belongs to.
  * @param {string} entryFilePath Entry file path, e.g. `content/blog/hello-world/index.md`.
  * @returns {string | undefined} Folder path, e.g. `content/blog/hello-world`. `undefined` if the
@@ -286,7 +285,6 @@ export const createPublicURL = (publicPath, fileName) =>
 
 /**
  * Get the information required to save an asset.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} [args.locale] Locale the file is being added to. See

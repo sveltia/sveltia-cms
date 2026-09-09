@@ -39,7 +39,6 @@ const getEndpoint = ({ account_id: accountId, jurisdiction = 'default' }) => {
 
 /**
  * Get Cloudflare R2 library options from site config.
- * @internal
  * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
  * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
  * disabled.

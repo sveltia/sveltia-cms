@@ -401,7 +401,6 @@ export const handleClientSideAuthPopup = async ({ backendName, apiConfig }) => {
  * Handle the authentication flow for a Git service provider. This function decides whether to
  * initiate a client-side or server-side authentication flow based on the configured backend name
  * and authentication type.
- * @internal
  * @param {object} args Arguments.
  * @param {boolean} args.auto Whether the sign-in process is automatic.
  * @param {ApiEndpointConfig} args.apiConfig API endpoint configuration.

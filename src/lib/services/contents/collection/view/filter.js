@@ -76,7 +76,6 @@ export const filterEntries = (entries, collection, filters) => {
 
 /**
  * Initialize view filters for a collection.
- * @internal
  * @param {any} collection Collection (entry or file).
  * @param {(options: ViewFilter[]) => void} set Callback to set the filter options.
  */

@@ -43,7 +43,6 @@ export const DEFAULT_I18N_CONFIG = {
 
 /**
  * Determines the appropriate structure based on file configuration.
- * @internal
  * @param {I18nFileStructure} defaultStructure The default structure from config.
  * @param {CollectionFile} [file] The collection file configuration.
  * @returns {I18nFileStructure} The determined structure.
@@ -68,7 +67,6 @@ export const determineStructure = (defaultStructure, file) => {
 
 /**
  * Creates the structure map based on i18n status and structure.
- * @internal
  * @param {boolean} i18nEnabled Whether i18n is enabled.
  * @param {string} structure The current structure.
  * @returns {I18nFileStructureMap} The structure map.
@@ -86,7 +84,6 @@ export const createStructureMap = (i18nEnabled, structure) => ({
 
 /**
  * Determines the default locale from the available locales.
- * @internal
  * @param {boolean} i18nEnabled Whether i18n is enabled.
  * @param {string[]} allLocales All available locales.
  * @param {string} [specifiedDefault] The specified default locale.
@@ -104,7 +101,6 @@ export const determineDefaultLocale = (i18nEnabled, allLocales, specifiedDefault
 
 /**
  * Determines the initial locales based on configuration.
- * @internal
  * @param {string | string[] | undefined} initialLocalesConfig The initial locales configuration.
  * @param {string[]} allLocales All available locales.
  * @param {string} defaultLocale The default locale.
@@ -129,7 +125,6 @@ export const determineInitialLocales = (initialLocalesConfig, allLocales, defaul
 
 /**
  * Determines whether the default locale should be omitted from the file path.
- * @internal
  * @param {boolean} omitDefaultLocale The raw `omit_default_locale_from_file_path` config value.
  * @param {I18nFileStructureMap} structureMap The structure map.
  * @param {CollectionFile} [file] The collection file configuration.

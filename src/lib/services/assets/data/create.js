@@ -22,7 +22,6 @@ import { formatFileName } from '$lib/services/utils/file';
  * Create a list of file objects to be uploaded, ensuring that names are unique and sanitized. A
  * file that overwrites an existing asset — because the user picked that asset to be replaced, or
  * because they chose to overwrite a same-named file — takes over the asset’s name and path.
- * @internal
  * @param {UploadingAssets} uploadingAssets Assets to be uploaded.
  * @returns {{ action: CommitAction, name: string, path: string, file: File }[]} An array of objects
  * representing the files to be uploaded, each containing the action type, name, path, and file
@@ -69,7 +68,6 @@ export const createFileList = (uploadingAssets) => {
 /**
  * Update the asset stores with new assets, ensuring that focused and overlaid assets are refreshed,
  * and displays a toast notification about the asset updates.
- * @internal
  * @param {object} args Arguments.
  * @param {number} args.count The number of files that were updated.
  */

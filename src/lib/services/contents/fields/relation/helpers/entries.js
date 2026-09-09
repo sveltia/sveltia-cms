@@ -47,7 +47,6 @@ import { replaceTemplateFields } from '$lib/services/contents/fields/relation/he
 
 /**
  * Process a single entry to generate relation options.
- * @internal
  * @param {object} params Parameters.
  * @param {Entry} params.refEntry Reference entry.
  * @param {FlattenedEntryContent} params.content Entry content.

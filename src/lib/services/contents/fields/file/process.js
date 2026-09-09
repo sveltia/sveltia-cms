@@ -31,7 +31,6 @@ const FOLDER_PATH_REGEX = /(?<path>.+?)(?:\/[^/]+)?$/;
 
 /**
  * Get the blob URL of an unsaved file that matches the given file.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft containing the resource.
  * @param {File} args.file File to be searched.

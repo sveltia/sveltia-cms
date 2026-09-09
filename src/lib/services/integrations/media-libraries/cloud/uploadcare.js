@@ -39,7 +39,6 @@ import { formatFileName } from '$lib/services/utils/file';
 
 /**
  * Get Uploadcare library options from site config.
- * @internal
  * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
  * @returns {UploadcareMediaLibrary | false | undefined} Configuration object, or `false` if
  * explicitly disabled.
@@ -52,7 +51,6 @@ export const getLibraryOptions = (config = get(cmsConfig)) =>
 
 /**
  * Get Uploadcare public key from library options.
- * @internal
  * @param {MediaField} [fieldConfig] Field configuration.
  * @returns {string | undefined} Public key.
  */
@@ -70,7 +68,6 @@ export const isEnabled = (fieldConfig) => !!getPublicKey(fieldConfig);
 
 /**
  * Parse API results into ExternalAsset format.
- * @internal
  * @param {UploadcareResource[]} results API results.
  * @param {object} [options] Additional options.
  * @param {MediaField} [options.fieldConfig] Field configuration for custom handling.
@@ -117,7 +114,6 @@ export const parseResults = (results, { fieldConfig } = {}) => {
 
 /**
  * Fetch files from Uploadcare API with pagination.
- * @internal
  * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey) and kind.
  * @param {object} [config] Additional configuration.
  * @param {number} [config.maxPages] Maximum number of pages to fetch. Default: 10.
@@ -212,7 +208,6 @@ export const search = async (query, options) => {
 
 /**
  * Generate a secure signature for Uploadcare upload.
- * @internal
  * @param {string} secretKey Secret key.
  * @param {number} expire Expiration timestamp.
  * @returns {Promise<string>} Signature.

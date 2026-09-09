@@ -93,7 +93,6 @@ const checkNamedViewOptions = ({ config, options, fields, optionType, context, c
  * options supports both an array (Netlify/Decap CMS compatible) and an object (Static CMS
  * compatible) format, so the raw options are read through the same parsers the runtime uses, and
  * the option lookup can’t diverge from it.
- * @internal
  * @param {object} context Context.
  * @param {CmsConfig} context.cmsConfig Raw CMS configuration.
  * @param {EntryCollection} context.collection Collection config to parse.

@@ -48,7 +48,6 @@ export const resolveOriginalKeyPath = (valueMap, keyPath) => {
 
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
- * @internal
  * @param {object} args Arguments.
  * @param {FieldKeyPath} args.keyPath Field key path to revert. If empty, all the fields will be
  * reverted.
@@ -92,7 +91,6 @@ export const revertFields = ({
 
 /**
  * Revert the changes made to the given locale.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {FieldKeyPath} args.keyPath Field key path to revert. If empty, all the fields will be

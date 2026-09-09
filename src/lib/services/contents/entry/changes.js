@@ -55,7 +55,6 @@ export const resolveCacheDB = (provided) => {
 
 /**
  * Build the file content for a single-file entry, taking i18n single-file structures into account.
- * @internal
  * @param {object} args Arguments.
  * @param {InternalCollection | InternalCollectionFile} args.config Collection or collection file
  * holding the i18n configuration.

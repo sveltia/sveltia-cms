@@ -33,19 +33,16 @@ import { isPendingDeletion } from '$lib/services/workflow';
 
 /**
  * Tag to enable the slug editor for the default locale.
- * @internal
  */
 export const SLUG_EDITOR_TAG = '{{fields._slug}}';
 
 /**
  * Tag to enable the slug editor for all locales.
- * @internal
  */
 export const LOCALIZED_SLUG_EDITOR_TAG = '{{fields._slug | localize}}';
 
 /**
  * Get the `slugEditor` property for an entry draft.
- * @internal
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection that the entry belongs to.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
@@ -91,7 +88,6 @@ export const getSlugEditorProp = ({ collection, collectionFile, originalSlugs })
  * Get the `originalPath` property for an entry draft, which is the folder an entry is stored in,
  * relative to the collection folder. It’s only used when the `meta.path` option is enabled, which
  * lets the user move an entry by editing the path in the editor.
- * @internal
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection that the entry belongs to.
  * @param {any} args.originalEntry Entry to be edited, or a partial {@link Entry} object.

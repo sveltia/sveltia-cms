@@ -101,7 +101,6 @@ export const CONFIG_PROPS = [
 
 /**
  * Get Cloudinary library options from site config.
- * @internal
  * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
  * @returns {CloudinaryMediaLibrary | false | undefined} Configuration object, or `false` if
  * explicitly disabled.
@@ -171,7 +170,6 @@ export const getMergedLibraryOptions = (fieldConfig) => {
 
 /**
  * Get Cloudinary configuration from site config.
- * @internal
  * @returns {{ cloudName?: string; apiKey?: string }} Cloudinary configuration.
  */
 export const getCloudConfig = () => {
@@ -195,7 +193,6 @@ export const isEnabled = (fieldConfig) => {
 
 /**
  * Convert transformation object to Cloudinary transformation string.
- * @internal
  * @param {Record<string, any>} transformation Transformation object. E.g. `{ width: 400, crop:
  * 'scale' }`.
  * @returns {string} Transformation string. E.g. `w_400,c_scale`.
@@ -278,7 +275,6 @@ export const transformationToString = (transformation) => {
 
 /**
  * Parse API results into ExternalAsset format.
- * @internal
  * @param {CloudinaryResource[]} results API results.
  * @param {object} [options] Additional options.
  * @param {MediaField} [options.fieldConfig] Field configuration for custom handling.
@@ -326,7 +322,6 @@ export const parseResults = (results, { fieldConfig } = {}) => {
 
 /**
  * Generate Basic Auth header for Cloudinary API.
- * @internal
  * @param {string} apiKey API key.
  * @param {string} apiSecret API secret.
  * @returns {string} Basic Auth header value.
@@ -340,7 +335,6 @@ export const generateAuthHeader = (apiKey, apiSecret) => {
 
 /**
  * Fetch resources from Cloudinary API with pagination.
- * @internal
  * @param {MediaLibraryFetchOptions} options Options containing the API secret (apiKey).
  * @param {object} [config] Additional configuration.
  * @param {number} [config.maxPages] Maximum number of pages to fetch. Default: 10.
@@ -442,7 +436,6 @@ export const search = async (query, options) => {
 
 /**
  * Generate signature for Cloudinary upload.
- * @internal
  * @param {Record<string, string | number>} params Parameters to sign.
  * @param {string} apiSecret API secret.
  * @returns {Promise<string>} Signature.

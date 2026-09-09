@@ -13,7 +13,6 @@ import { MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 
 /**
  * Parse a field to generate a sorted key path list.
- * @internal
  * @param {object} args Arguments.
  * @param {Field} args.field Single field.
  * @param {FieldKeyPath} args.keyPath Key path of the field.

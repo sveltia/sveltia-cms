@@ -34,7 +34,6 @@ import { sanitizePath } from '$lib/services/utils/file';
 
 /**
  * Template tag replacer subroutine.
- * @internal
  * @param {string} tag Field name or special tag.
  * @param {ReplaceSubContext} context Replacement context.
  * @returns {any} Replaced value.
@@ -91,7 +90,6 @@ export const replaceTemplateTag = (tag, context) => {
 
 /**
  * Template placeholder replacer.
- * @internal
  * @param {string} placeholder Field name or one of special tags. May contain transformations.
  * @param {ReplaceContext} context Context for replacement.
  * @returns {string} Replaced string.

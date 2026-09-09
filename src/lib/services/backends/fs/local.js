@@ -55,7 +55,6 @@ let rootDirHandle = undefined;
 /**
  * Get the project’s root directory handle so the app can read all the files under the directory.
  * The handle will be cached in IndexedDB for later use.
- * @internal
  * @param {object} [options] Options.
  * @param {boolean} [options.forceReload] Whether to force getting the handle.
  * @param {boolean} [options.showPicker] Whether to show the directory picker.

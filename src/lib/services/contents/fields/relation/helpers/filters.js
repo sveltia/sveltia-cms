@@ -11,7 +11,6 @@ const FIELD_TEMPLATE_REGEX = /^{{fields\.(.+?)}}$/;
  * Resolve `{{fields.fieldName}}` and `{{slug}}` template strings in filter values against the entry
  * currently being edited. Unresolvable templates are dropped from the values array so they do not
  * accidentally match `undefined` content fields.
- * @internal
  * @param {RelationFieldFilterOptions[]} filters Entry filters.
  * @param {FlattenedEntryContent | undefined} currentLocaleValues Current locale field values of the
  * entry being edited, or `undefined` when not available (e.g. backlink resolution).
@@ -45,7 +44,6 @@ export const resolveFilterValues = (filters, currentLocaleValues, currentSlug = 
 
 /**
  * Filter entries based on file name and entry filters.
- * @internal
  * @param {object} args Arguments.
  * @param {Entry[]} args.refEntries Reference entries.
  * @param {InternalCollection} args.collection Collection the entries belong to.

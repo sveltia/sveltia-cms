@@ -18,7 +18,6 @@ export const assetListSettings = writable();
 
 /**
  * Initialize {@link assetListSettings} and relevant subscribers.
- * @internal
  * @param {BackendService} _backend Backend service.
  */
 export const initSettings = async ({ repository }) => {

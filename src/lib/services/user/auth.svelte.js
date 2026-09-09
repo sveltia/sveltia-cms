@@ -94,7 +94,6 @@ export const logError = (ex, context = 'authentication') => {
 
 /**
  * Parse a magic link URL generated for QR code sign-in to extract the token and preferences.
- * @internal
  * @returns {{ _user: { token: string } | undefined, copiedPrefs: Record<string, any> | undefined
  * }} Object containing the user token and copied preferences.
  */
@@ -133,7 +132,6 @@ export const parseMagicLink = () => {
 
 /**
  * Find cached user info, including a compatible Netlify/Decap CMS user object.
- * @internal
  * @returns {Promise<Record<string, any> | undefined>} Cached user info, or undefined if not found.
  */
 export const getUserCache = async () => {
@@ -147,7 +145,6 @@ export const getUserCache = async () => {
 
 /**
  * Get the backend instance based on the cached user info or site config.
- * @internal
  * @param {Record<string, any> | undefined} _user Cached user info.
  * @returns {BackendService | undefined} Backend instance to be used.
  */

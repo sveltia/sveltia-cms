@@ -102,7 +102,6 @@ export const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
 
 /**
  * Parse file info and add additional metadata, such as name, size, and text content.
- * @internal
  * @param {object} args Arguments.
  * @param {BaseFileListItem} args.fileInfo File info.
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of fetched file metadata and content.
@@ -123,7 +122,6 @@ export const parseFileInfo = ({ fileInfo, fetchedFileMap }) => {
 
 /**
  * Parse a single asset file to create a complete, serialized asset.
- * @internal
  * @param {BaseAssetListItem} fileInfo Asset file info.
  * @returns {Asset} Parsed asset.
  */

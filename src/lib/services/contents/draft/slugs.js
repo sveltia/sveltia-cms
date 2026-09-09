@@ -60,7 +60,6 @@ export const getFillSlugOptions = ({ draft }) => {
 
 /**
  * Get the localized slug for the given locale.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.locale Locale.
@@ -121,7 +120,6 @@ export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
 /**
  * Get the localized slug map. This only applies when the i18n structure is multiple files or
  * folders, and the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
@@ -171,7 +169,6 @@ export const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
  * helps Sveltia CMS and some frameworks to link localized files. The default property name is
  * `translationKey` used in Hugo’s multilingual support, and the default value is the default
  * locale’s slug.
- * @internal
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.

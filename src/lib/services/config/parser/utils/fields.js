@@ -52,7 +52,6 @@ const getSubFields = (field) => {
  * Check if the given key path points to a field defined in the given field list. This is a lenient
  * version of `getField()`, which lives in the runtime module graph (stores, backends) this parser
  * runs before, and which needs entry values to resolve variable types.
- * @internal
  * @param {Field[]} fields Field list.
  * @param {FieldKeyPath} keyPath Field key path, e.g. `author.name` or `images.0.src`.
  * @returns {boolean} Whether the field is defined.

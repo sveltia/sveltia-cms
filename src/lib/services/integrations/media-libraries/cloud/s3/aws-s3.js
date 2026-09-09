@@ -16,7 +16,6 @@ import {
 
 /**
  * Get Amazon S3 library options from site config.
- * @internal
  * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
  * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
  * disabled.

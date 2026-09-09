@@ -16,7 +16,6 @@ const PATH_MATCH_REGEX = /(?<path>.+?)\.[^.]*$/;
 
 /**
  * Copy the default locale value to other locales if the field’s i18n strategy is `duplicate`.
- * @internal
  * @param {object} args Arguments.
  * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function.
  * @param {Field} args.fieldConfig Field configuration.

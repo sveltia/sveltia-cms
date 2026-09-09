@@ -28,7 +28,6 @@ import { unflattenMap } from '$lib/services/utils/object';
 
 /**
  * Create a field preview mounting function.
- * @internal
  * @param {object} args Arguments.
  * @param {InternalLocaleCode} args.locale Current locale.
  * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
@@ -57,7 +56,6 @@ export const createFieldPreviewMounter =
 
 /**
  * Create a widget preview function for React preview templates.
- * @internal
  * @param {(target: HTMLElement, keyPath: FieldKeyPath) => Record<string, any>} mountComponent
  * Function to mount Svelte components for field preview.
  * @returns {(keyPath: string) => ReactElement} Function that creates widget preview components.
@@ -91,7 +89,6 @@ export const createWidgetFor =
 
 /**
  * Create widgets map for an object value.
- * @internal
  * @param {Record<string, any>} obj Object value.
  * @param {string} basePath Base key path.
  * @param {(keyPath: string) => ReactElement} widgetFor Function to create widget previews.
@@ -104,7 +101,6 @@ export const createWidgetsMap = (obj, basePath, widgetFor) =>
 
 /**
  * Create a widgetsFor function.
- * @internal
  * @param {RawEntryContent} content Unflattened entry content.
  * @param {(keyPath: string) => ReactElement} widgetFor Function to create widget previews.
  * @returns {(name: string) => any} Function that gets widgets data structure for a field.

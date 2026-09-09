@@ -223,7 +223,6 @@ export const isAssetInSelectedFolder = ({ asset, folder, folderPath }) => {
  * made of the target folder path and the raw file name, which can collide with an existing asset or
  * with another pending file of the same name. The renaming logic mirrors `replaceBlobURL()`, which
  * determines the final names at save time.
- * @internal
  * @param {object} args Arguments.
  * @param {Asset[]} args.savedAssets Saved assets in the selected folder.
  * @param {Asset[]} args.unsavedAssets Unsaved assets in the selected folder.

@@ -61,7 +61,6 @@ const isPathTaken = (draft) => {
 /**
  * Validate the folder chosen with the entry path editor. The path editor is only shown when the
  * collection’s `meta.path` option is enabled, so an entry without one is always valid.
- * @internal
  * @param {EntryDraft} [draft] Draft to validate. Defaults to the one open in the editor.
  * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
  */
