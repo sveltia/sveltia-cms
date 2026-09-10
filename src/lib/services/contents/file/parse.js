@@ -130,7 +130,10 @@ export const parseFrontMatter = ({ collection, collectionFile, format, text }) =
 
   return {
     ...parsedHead,
-    ...(!bodyInline && !(bodyKey in parsedHead) ? { [bodyKey]: body } : {}),
+    // The formatter inserts a blank line between the closing delimiter and the body, so the regex
+    // above leaves that blank line as a leading line break. Strip it to make the value a faithful
+    // round-trip of what was written; otherwise a freshly-opened draft looks modified.
+    ...(!bodyInline && !(bodyKey in parsedHead) ? { [bodyKey]: body?.replace(/^\n/, '') } : {}),
   };
 };
 

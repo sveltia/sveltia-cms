@@ -256,7 +256,39 @@ describe('Test parseFrontMatter()', () => {
 
     expect(result.title).toBe('Test Post');
     expect(result.published).toBe(true);
-    expect(result.body).toBe('\nThis is the content body.');
+    expect(result.body).toBe('This is the content body.');
+  });
+
+  test('strips only the blank line written by the formatter', async () => {
+    const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
+
+    /** @type {any} */ (getFrontMatterDelimiters).mockReturnValue(['---', '---']);
+
+    const mockCollection = /** @type {any} */ ({
+      name: 'test-collection',
+      _file: {
+        format: 'frontmatter',
+        fmDelimiters: ['---', '---'],
+      },
+    });
+
+    // No blank line after the closing delimiter
+    expect(
+      parseFrontMatter({
+        collection: mockCollection,
+        format: 'yaml-frontmatter',
+        text: '---\ntitle: Test Post\n---\nThis is the content body.',
+      }).body,
+    ).toBe('This is the content body.');
+
+    // Two blank lines: the extra one belongs to the body
+    expect(
+      parseFrontMatter({
+        collection: mockCollection,
+        format: 'yaml-frontmatter',
+        text: '---\ntitle: Test Post\n---\n\n\nThis is the content body.',
+      }).body,
+    ).toBe('\nThis is the content body.');
   });
 
   test('parses TOML front matter', async () => {
@@ -290,7 +322,7 @@ describe('Test parseFrontMatter()', () => {
 
     expect(result.title).toBe('Test Post');
     expect(result.published).toBe(true);
-    expect(result.body).toBe('\nThis is the content body.');
+    expect(result.body).toBe('This is the content body.');
   });
 
   test('parses JSON front matter', async () => {
@@ -325,7 +357,7 @@ describe('Test parseFrontMatter()', () => {
 
     expect(result.title).toBe('Test Post');
     expect(result.published).toBe(true);
-    expect(result.body).toBe('\nThis is the content body.');
+    expect(result.body).toBe('This is the content body.');
   });
 
   test('handles content without front matter', async () => {
@@ -423,7 +455,7 @@ describe('Test parseFrontMatter()', () => {
       text,
     });
 
-    expect(result.body).toBe('\nContent without front matter data.');
+    expect(result.body).toBe('Content without front matter data.');
   });
 
   test('handles content with only front matter', async () => {
@@ -490,7 +522,7 @@ describe('Test parseFrontMatter()', () => {
     });
 
     expect(result.title).toBe('Custom Delimiters');
-    expect(result.body).toBe('\nContent body.');
+    expect(result.body).toBe('Content body.');
   });
 
   test('works with collection only (no collectionFile)', async () => {
@@ -515,7 +547,7 @@ describe('Test parseFrontMatter()', () => {
     });
 
     expect(result.title).toBe('Collection Only');
-    expect(result.body).toBe('\nContent.');
+    expect(result.body).toBe('Content.');
   });
 
   test('uses fmDelimiters directly when _file.format is not "frontmatter"', async () => {
@@ -545,7 +577,7 @@ describe('Test parseFrontMatter()', () => {
 
     expect(result.title).toBe('Direct Delimiters');
     expect(result.published).toBe(true);
-    expect(result.body).toBe('\nBody content.');
+    expect(result.body).toBe('Body content.');
   });
 
   test('uses fmDelimiters directly when _format is not frontmatter (line 80)', async () => {
@@ -577,7 +609,7 @@ describe('Test parseFrontMatter()', () => {
 
     expect(result.title).toBe('Direct Format');
     expect(result.published).toBe(true);
-    expect(result.body).toBe('\nBody content.');
+    expect(result.body).toBe('Body content.');
   });
 
   test('uses default delimiters when fmDelimiters is undefined (line 80)', async () => {
@@ -608,7 +640,7 @@ describe('Test parseFrontMatter()', () => {
 
     expect(result.title).toBe('Fallback Delimiters');
     expect(result.published).toBe(true);
-    expect(result.body).toBe('\nBody content.');
+    expect(result.body).toBe('Body content.');
   });
 
   test('reuses the cached regex for the same delimiter pair (frontMatterRegexCache)', () => {
@@ -645,7 +677,7 @@ describe('Test parseFrontMatter()', () => {
     expect(result1).toEqual(result2);
     expect(result1.title).toBe('Cached Entry');
     expect(result1.author).toBe('Tester');
-    expect(result1.body).toBe('\nBody text.');
+    expect(result1.body).toBe('Body text.');
   });
 });
 
@@ -766,7 +798,7 @@ describe('Test parseEntryFile()', () => {
 
     expect(result.title).toBe('Test Post');
     expect(result.published).toBe(true);
-    expect(result.body).toBe('\nThis is the content.');
+    expect(result.body).toBe('This is the content.');
   });
 
   test('handles yml format alias', async () => {
@@ -1054,7 +1086,7 @@ describe('Test parseEntryFile()', () => {
     });
 
     expect(result.title).toBe('Test Post');
-    expect(result.content).toBe('\nThis is the content field.');
+    expect(result.content).toBe('This is the content field.');
     expect(result.body).toBeUndefined();
   });
 
