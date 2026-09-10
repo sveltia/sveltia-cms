@@ -7,6 +7,7 @@ import { allEntries } from '$lib/services/contents';
 import {
   getUnpublishedEntriesByCollection,
   getUnpublishedEntry,
+  getUnpublishedEntryBySlug,
   hasPublishedVersion,
   mergeUnpublishedEntries,
   unpublishedEntries,
@@ -126,6 +127,39 @@ describe('workflow/index', () => {
       expect(
         getUnpublishedEntry({ collectionName: 'settings', subPath: 'data/site.yml' }),
       ).toBeUndefined();
+    });
+  });
+
+  describe('getUnpublishedEntryBySlug', () => {
+    test('finds the entry by the branch opened for it', () => {
+      const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+      // The branch keeps the slug the entry had when the pull request was opened
+      entry.slug = 'renamed';
+      entry.subPath = 'renamed';
+      unpublishedEntries.set([entry]);
+
+      expect(getUnpublishedEntryBySlug({ collectionName: 'posts', slug: 'hello' })).toBe(entry);
+      expect(
+        getUnpublishedEntryBySlug({ collectionName: 'posts', slug: 'renamed' }),
+      ).toBeUndefined();
+      expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'hello' })).toBeUndefined();
+    });
+
+    test('finds a nested entry whether or not its branch encodes the slashes', () => {
+      const encoded = createEntry({ collectionName: 'pages', subPath: 'about/ethos' });
+      const legacy = createEntry({ collectionName: 'pages', subPath: 'about/team' });
+
+      encoded.workflow.pullRequest.branch = 'cms/pages/about%2Fethos';
+      unpublishedEntries.set([encoded, legacy]);
+
+      expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'about/ethos' })).toBe(
+        encoded,
+      );
+      expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'about/team' })).toBe(
+        legacy,
+      );
+      expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'about' })).toBeUndefined();
     });
   });
 });

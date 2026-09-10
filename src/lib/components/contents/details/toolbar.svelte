@@ -61,7 +61,7 @@
     unpublishedEntries,
     workflowEnabled,
   } from '$lib/services/workflow';
-  import { getBranchName } from '$lib/services/workflow/branch';
+  import { isEntryBranch } from '$lib/services/workflow/branch';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import {
     deleteWorkflowEntry,
@@ -153,16 +153,17 @@
       ? getAssociatedAssets({ entry: originalEntry, collectionName, fileName, relative: true })
       : [],
   );
-  const workflowBranch = $derived(
-    $workflowEnabled && collectionName && originalEntry
-      ? getBranchName({ collectionName, slug: fileName ?? originalEntry.slug })
-      : undefined,
-  );
   // Look the entry up in the store rather than using `originalEntry` directly, so the status button
   // stays in sync when the status is changed elsewhere, e.g. on the Editorial Workflow page
   const unpublishedEntry = $derived(
-    workflowBranch
-      ? $unpublishedEntries.find(({ workflow }) => workflow.pullRequest.branch === workflowBranch)
+    $workflowEnabled && collectionName && originalEntry
+      ? $unpublishedEntries.find(({ workflow }) =>
+          isEntryBranch({
+            branch: workflow.pullRequest.branch,
+            collectionName,
+            slug: fileName ?? originalEntry.slug,
+          }),
+        )
       : undefined,
   );
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves

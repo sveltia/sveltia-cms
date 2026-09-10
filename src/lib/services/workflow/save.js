@@ -12,7 +12,7 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { forgetDeployments } from '$lib/services/deployments';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { getUnpublishedEntryBySlug, unpublishedEntries } from '$lib/services/workflow';
 import {
   mergeWorkflowAssets,
   publishWorkflowAssets,
@@ -144,7 +144,7 @@ export const saveWorkflowChanges = async ({
 
   const existingEntry =
     (currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined) ??
-    getUnpublishedEntryByBranch(getBranchName({ collectionName, slug }));
+    getUnpublishedEntryBySlug({ collectionName, slug });
 
   const branch =
     existingEntry?.workflow.pullRequest.branch ?? getBranchName({ collectionName, slug });
@@ -348,8 +348,14 @@ export const deleteWorkflowEntry = async (entry, collection, collectionFile, ass
   // the current slug would miss the pull request after the slug has been edited, leaving it open
   // and starting a second one
   const currentBranch = /** @type {UnpublishedEntry} */ (entry)?.workflow?.pullRequest.branch;
-  const branch = currentBranch ?? getBranchName({ collectionName, slug });
-  const existingEntry = getUnpublishedEntryByBranch(branch);
+
+  const existingEntry =
+    (currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined) ??
+    getUnpublishedEntryBySlug({ collectionName, slug });
+
+  const branch =
+    existingEntry?.workflow.pullRequest.branch ?? getBranchName({ collectionName, slug });
+
   // Remove the files as they stand on the branch. A pull request that renamed the entry has already
   // staged the deletion of the old paths there, so removing the new ones leaves nothing behind once
   // the merge lands

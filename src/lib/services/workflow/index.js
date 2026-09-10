@@ -3,6 +3,7 @@ import { derived, get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
+import { isEntryBranch } from '$lib/services/workflow/branch';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -77,6 +78,20 @@ export const getUnpublishedEntry = ({ collectionName, subPath }) =>
       (entry.workflow.fileName !== undefined
         ? entry.workflow.fileName === subPath
         : entry.subPath === subPath),
+  );
+
+/**
+ * Find the unpublished entry whose workflow branch addresses the given entry. This is the entry the
+ * branch was opened for, which stays the same after the slug has been edited, unlike the result of
+ * {@link getUnpublishedEntry}.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} args.slug Entry slug, or collection file name.
+ * @returns {UnpublishedEntry | undefined} Unpublished entry.
+ */
+export const getUnpublishedEntryBySlug = ({ collectionName, slug }) =>
+  get(unpublishedEntries).find(({ workflow }) =>
+    isEntryBranch({ branch: workflow.pullRequest.branch, collectionName, slug }),
   );
 
 /**

@@ -251,6 +251,65 @@ describe('workflow/save', () => {
       expect(getUnpublishedEntryByBranch('cms/posts/hello')?.subPath).toBe('hello-2');
     });
 
+    test('encodes the slashes of a nested entry slug in the branch name', async () => {
+      workflowService.savePullRequest.mockImplementation(
+        async (/** @type {any} */ { branch, status }) => ({
+          commit: { sha: 'abc', date: new Date('2026-01-01'), files: {} },
+          pullRequest: { branch, number: 1, status },
+        }),
+      );
+
+      // A page and its sub-page can both be in draft: Git couldn’t hold a branch `cms/pages/about`
+      // alongside `cms/pages/about/ethos`
+      await saveWorkflowChanges({ ...args, collectionName: 'pages', slug: 'about' });
+
+      await saveWorkflowChanges({
+        ...args,
+        collectionName: 'pages',
+        slug: 'about/ethos',
+        savingEntry: { ...savingEntry, id: 'new-2', slug: 'about/ethos', subPath: 'about/ethos' },
+      });
+
+      expect(workflowService.savePullRequest).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ branch: 'cms/pages/about', pullRequest: undefined }),
+      );
+      expect(workflowService.savePullRequest).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ branch: 'cms/pages/about%2Fethos', pullRequest: undefined }),
+      );
+      expect(getStoreValue(unpublishedEntries)).toHaveLength(2);
+    });
+
+    test('reuses a pull request whose branch keeps the slashes of the slug', async () => {
+      // A branch created by Netlify/Decap CMS or an earlier version, before slashes were encoded
+      const existing = createEntry('cms/pages/about/ethos');
+
+      upsertUnpublishedEntry(existing);
+
+      workflowService.savePullRequest.mockResolvedValue({
+        commit: { sha: 'def', date: new Date('2026-01-02'), files: {} },
+        pullRequest: existing.workflow.pullRequest,
+      });
+
+      // The entry was opened from the published list, so it doesn’t carry the branch itself
+      await saveWorkflowChanges({
+        ...args,
+        collectionName: 'pages',
+        slug: 'about/ethos',
+        savingEntry: { ...savingEntry, slug: 'about/ethos', subPath: 'about/ethos' },
+      });
+
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          branch: 'cms/pages/about/ethos',
+          pullRequest: existing.workflow.pullRequest,
+        }),
+      );
+
+      expect(getStoreValue(unpublishedEntries)).toHaveLength(1);
+    });
+
     test('captures the paths when a draft loaded without a rename is then renamed', async () => {
       // A pull request that hasn’t renamed anything yields an empty `previousPaths` on load
       const existing = createEntry('cms/posts/hello');
@@ -634,6 +693,36 @@ describe('workflow/save', () => {
 
       // The entry list matches the removal against where the entry sits on the configured branch
       expect(entry.workflow.previousPaths).toEqual(['content/posts/hello.md']);
+    });
+
+    test('reuses a pull request whose branch keeps the slashes of the slug', async () => {
+      // A branch created by Netlify/Decap CMS or an earlier version, before slashes were encoded
+      const pending = createEntry('cms/pages/about/ethos');
+
+      upsertUnpublishedEntry(pending);
+
+      const published = createPublishedEntry();
+
+      published.slug = 'about/ethos';
+      published.locales = {
+        _default: { slug: 'about/ethos', path: 'content/pages/about/ethos.md', content: {} },
+      };
+
+      // The entry was opened from the published list, so it doesn’t carry the branch itself
+      await deleteWorkflowEntry(
+        published,
+        /** @type {any} */ ({ name: 'pages', _type: 'entry' }),
+        undefined,
+      );
+
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          branch: 'cms/pages/about/ethos',
+          pullRequest: pending.workflow.pullRequest,
+        }),
+      );
+
+      expect(getStoreValue(unpublishedEntries)).toHaveLength(1);
     });
 
     test('fires the unpublish hooks when the removal is merged, not when it’s queued', async () => {

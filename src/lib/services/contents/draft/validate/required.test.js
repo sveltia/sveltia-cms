@@ -1,17 +1,23 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
 
-vi.mock('$lib/services/workflow', () => ({
-  workflowEnabled: writable(false),
-  unpublishedEntries: writable([]),
-}));
+vi.mock('$lib/services/workflow', async () => {
+  const entries = writable([]);
 
-vi.mock('$lib/services/workflow/branch', () => ({
-  getBranchName: vi.fn(({ collectionName, slug }) => `cms/${collectionName}/${slug}`),
-}));
+  return {
+    workflowEnabled: writable(false),
+    unpublishedEntries: entries,
+    getUnpublishedEntryBySlug: vi.fn(({ collectionName, slug }) =>
+      get(entries).find(
+        (/** @type {any} */ entry) =>
+          entry.workflow.pullRequest.branch === `cms/${collectionName}/${slug}`,
+      ),
+    ),
+  };
+});
 
 /** The mocked stores, which are writable unlike the derived ones they stand in for. */
 const enabled = /** @type {any} */ (workflowEnabled);

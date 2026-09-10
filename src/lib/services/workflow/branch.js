@@ -26,18 +26,36 @@ export const getBranchPrefix = () => {
 };
 
 /**
+ * Encode an entry slug for use in a branch name. A slug in a nested collection is a path, and Git
+ * can’t hold a branch `cms/pages/about` alongside `cms/pages/about/us`, because the former would
+ * have to be both a ref and a directory. So the slashes are percent-encoded, which keeps each entry
+ * to a single path segment. `%` is encoded as well, so the encoding can be reversed exactly.
+ * @param {string} slug Entry slug, e.g. `about/us`.
+ * @returns {string} Encoded slug, e.g. `about%2Fus`.
+ */
+const encodeSlug = (slug) => slug.replaceAll('%', '%25').replaceAll('/', '%2F');
+/**
+ * Reverse {@link encodeSlug}. A slash that wasn’t encoded, as in a branch created by Netlify/Decap
+ * CMS or an earlier version of Sveltia CMS, is left as it is, so such a branch still addresses its
+ * entry.
+ * @param {string} slug Encoded slug, e.g. `about%2Fus`.
+ * @returns {string} Entry slug, e.g. `about/us`.
+ */
+const decodeSlug = (slug) => slug.replaceAll('%2F', '/').replaceAll('%25', '%');
+
+/**
  * Get the Editorial Workflow branch name for the given entry.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
- * @param {string} args.slug Entry slug. It can be a path containing slashes.
- * @returns {string} Branch name, e.g. `cms/posts/hello-world`.
+ * @param {string} args.slug Entry slug. It can be a path containing slashes, which are encoded.
+ * @returns {string} Branch name, e.g. `cms/posts/hello-world` or `cms/pages/about%2Fus`.
  */
 export const getBranchName = ({ collectionName, slug }) =>
-  `${getBranchPrefix()}${collectionName}/${slug}`;
+  `${getBranchPrefix()}${collectionName}/${encodeSlug(slug)}`;
 
 /**
  * Parse an Editorial Workflow branch name to get the collection name and entry slug. The slug part
- * may contain slashes when the collection has a `path` configuration, so everything after the
+ * may contain slashes when the branch was created before they were encoded, so everything after the
  * collection name belongs to it.
  * @param {string} branch Branch name.
  * @returns {{ collectionName: string, slug: string } | undefined} Parsed result, or `undefined` if
@@ -58,5 +76,21 @@ export const parseBranchName = (branch) => {
     return undefined;
   }
 
-  return { collectionName: rest.slice(0, index), slug: rest.slice(index + 1) };
+  return { collectionName: rest.slice(0, index), slug: decodeSlug(rest.slice(index + 1)) };
+};
+
+/**
+ * Check whether the given Editorial Workflow branch addresses the given entry. The branch name is
+ * parsed rather than compared with a freshly generated one, so a branch that spells the slug
+ * differently, with the slashes left as they are, is matched as well.
+ * @param {object} args Arguments.
+ * @param {string} args.branch Branch name.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} args.slug Entry slug.
+ * @returns {boolean} `true` if the branch holds the entry.
+ */
+export const isEntryBranch = ({ branch, collectionName, slug }) => {
+  const parsed = parseBranchName(branch);
+
+  return parsed?.collectionName === collectionName && parsed.slug === slug;
 };

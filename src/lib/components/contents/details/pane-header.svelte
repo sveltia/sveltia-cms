@@ -24,7 +24,7 @@
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { openNewTab } from '$lib/services/utils/window';
   import { isPendingDeletion, unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
-  import { getBranchName } from '$lib/services/workflow/branch';
+  import { isEntryBranch } from '$lib/services/workflow/branch';
 
   /**
    * @import { Writable } from 'svelte/store';
@@ -75,20 +75,19 @@
   const canPreview = $derived($entryDraft?.canPreview ?? true);
   // Look the entry up in the store rather than reading the draft, so the preview link follows the
   // head commit as it moves with each save, the same way the entry toolbar does
-  const workflowBranch = $derived(
-    $workflowEnabled && $entryDraft?.collectionName && originalEntry
-      ? getBranchName({
-          collectionName: $entryDraft.collectionName,
-          slug: $entryDraft.fileName ?? originalEntry.slug,
-        })
-      : undefined,
-  );
-  const pullRequest = $derived(
-    workflowBranch
-      ? $unpublishedEntries.find(({ workflow }) => workflow.pullRequest.branch === workflowBranch)
-          ?.workflow.pullRequest
-      : undefined,
-  );
+  const pullRequest = $derived.by(() => {
+    const collectionName = $entryDraft?.collectionName;
+
+    if (!$workflowEnabled || !collectionName || !originalEntry) {
+      return undefined;
+    }
+
+    const slug = $entryDraft?.fileName ?? originalEntry.slug;
+
+    return $unpublishedEntries.find(({ workflow }) =>
+      isEntryBranch({ branch: workflow.pullRequest.branch, collectionName, slug }),
+    )?.workflow.pullRequest;
+  });
   // `PreviewLinkButton` renders nothing when there’s no link to offer, so the link is resolved
   // here as well — the divider above the button has to know whether anything will follow it
   const previewLink = $derived(

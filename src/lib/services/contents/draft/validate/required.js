@@ -1,7 +1,10 @@
 import { get } from 'svelte/store';
 
-import { unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
-import { getBranchName } from '$lib/services/workflow/branch';
+import {
+  getUnpublishedEntryBySlug,
+  unpublishedEntries,
+  workflowEnabled,
+} from '$lib/services/workflow';
 
 /**
  * @import { EntryDraft, UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -22,15 +25,13 @@ const getWorkflowStatus = ({ collectionName, fileName, originalEntry }) => {
   }
 
   const { workflow } = /** @type {UnpublishedEntry} */ (originalEntry);
+  const branch = workflow?.pullRequest?.branch;
 
-  const branch =
-    workflow?.pullRequest?.branch ??
-    getBranchName({ collectionName, slug: fileName ?? originalEntry.slug });
+  const unpublishedEntry = branch
+    ? get(unpublishedEntries).find((entry) => entry.workflow.pullRequest.branch === branch)
+    : getUnpublishedEntryBySlug({ collectionName, slug: fileName ?? originalEntry.slug });
 
-  return (
-    get(unpublishedEntries).find((entry) => entry.workflow.pullRequest.branch === branch)?.workflow
-      .status ?? workflow?.status
-  );
+  return unpublishedEntry?.workflow.status ?? workflow?.status;
 };
 
 /**
