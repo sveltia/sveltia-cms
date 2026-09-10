@@ -154,7 +154,7 @@ describe('DeepSeek Translator Service', () => {
         /** @type {string} */ (vi.mocked(fetch).mock.calls[0][1]?.body),
       );
 
-      expect(requestBody.model).toBe('deepseek-v4-flash');
+      expect(requestBody.model).toBe('deepseek-flash');
       expect(requestBody.stream).toBe(false);
       expect(requestBody.thinking).toEqual({ type: 'disabled' });
     });

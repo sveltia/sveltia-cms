@@ -14,7 +14,7 @@ import { availability, createAiTranslate } from './shared.js';
 
 const serviceId = 'deepseek';
 const serviceLabel = 'DeepSeek';
-const model = 'deepseek-v4-flash';
+const model = 'deepseek-flash';
 
 /**
  * Translation service using DeepSeek. Supports markdown content and preserves formatting.
