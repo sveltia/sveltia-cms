@@ -6,9 +6,12 @@ import {
   fetchBlobText,
   fetchFileContents,
   fetchFileList,
+  fetchFileMetadata,
   fetchFiles,
   getFileContentsQuery,
+  getFileMetadataQuery,
   parseFileContents,
+  parseFileMetadata,
 } from '$lib/services/backends/git/github/files';
 import {
   getWorkflowRepository,
@@ -91,61 +94,60 @@ describe('GitHub files service', () => {
 
   describe('getFileContentsQuery', () => {
     test('generates GraphQL query for file contents', () => {
-      const chunk = [
-        { type: 'blob', path: 'file1.txt', sha: 'sha1' },
-        { type: 'blob', path: 'file2.md', sha: 'sha2' },
-      ];
+      const chunk = /** @type {any[]} */ ([
+        { type: 'entry', path: 'file1.txt', sha: 'sha1' },
+        { type: 'entry', path: 'file2.md', sha: 'sha2' },
+      ]);
 
       const result = getFileContentsQuery(chunk, 0);
 
-      expect(result).toContain('query');
+      expect(result).toContain('query($owner: String!, $repo: String!)');
       expect(result).toContain('repository');
       expect(result).toContain('content_0: object(oid: "sha1")');
       expect(result).toContain('content_1: object(oid: "sha2")');
       // The truncation flag is needed to detect an oversized blob
       expect(result).toContain('... on Blob { text isTruncated }');
-      expect(result).toContain('commit_0: ref(qualifiedName: $branch)');
-      expect(result).toContain('commit_1: ref(qualifiedName: $branch)');
+      // The commit history is fetched separately, as it’s the slow part
+      expect(result).not.toContain('history(');
     });
 
     test('generates query with start index offset', () => {
-      const chunk = [{ type: 'blob', path: 'file.txt', sha: 'sha1' }];
-      const startIndex = 10;
-      const result = getFileContentsQuery(chunk, startIndex);
+      const chunk = /** @type {any[]} */ ([{ type: 'entry', path: 'file.txt', sha: 'sha1' }]);
+      const result = getFileContentsQuery(chunk, 10);
 
       expect(result).toContain('content_10:');
-      expect(result).toContain('commit_10:');
     });
 
-    test('skips content query for asset types', () => {
-      const chunk = [
-        { type: 'asset', path: 'image.jpg', sha: 'sha1' },
-        { type: 'blob', path: 'file.txt', sha: 'sha2' },
-      ];
-
-      const result = getFileContentsQuery(chunk, 0);
-
-      expect(result).not.toContain('content_0:');
-      expect(result).toContain('content_1:');
-      expect(result).toContain('commit_0:');
-      expect(result).toContain('commit_1:');
-    });
-
-    test('handles mixed asset and blob types with correct indices', () => {
-      const chunk = [
+    test('skips content query for asset types while keeping the indices', () => {
+      const chunk = /** @type {any[]} */ ([
         { type: 'asset', path: 'image.png', sha: 'sha1' },
         { type: 'asset', path: 'video.mp4', sha: 'sha2' },
-        { type: 'blob', path: 'doc.md', sha: 'sha3' },
-      ];
+        { type: 'entry', path: 'doc.md', sha: 'sha3' },
+      ]);
 
       const result = getFileContentsQuery(chunk, 5);
 
       expect(result).not.toContain('content_5:');
       expect(result).not.toContain('content_6:');
       expect(result).toContain('content_7:');
-      expect(result).toContain('commit_5:');
-      expect(result).toContain('commit_6:');
-      expect(result).toContain('commit_7:');
+    });
+  });
+
+  describe('getFileMetadataQuery', () => {
+    test('generates GraphQL query for the last commit of every file', () => {
+      const chunk = /** @type {any[]} */ ([
+        { type: 'asset', path: 'image.png', sha: 'sha1' },
+        { type: 'entry', path: 'doc.md', sha: 'sha2' },
+      ]);
+
+      const result = getFileMetadataQuery(chunk, 5);
+
+      expect(result).toContain('query($owner: String!, $repo: String!, $branch: String!)');
+      expect(result).toContain('commit_5: ref(qualifiedName: $branch)');
+      expect(result).toContain('history(first: 1, path: "image.png")');
+      expect(result).toContain('commit_6: ref(qualifiedName: $branch)');
+      expect(result).toContain('history(first: 1, path: "doc.md")');
+      expect(result).not.toContain('content_');
     });
   });
 
@@ -164,7 +166,7 @@ describe('GitHub files service', () => {
   });
 
   describe('parseFileContents', () => {
-    test('parses file contents successfully', async () => {
+    test('parses file contents, leaving the metadata for the second pass', async () => {
       const fetchingFiles = /** @type {any[]} */ ([
         { path: 'file1.txt', sha: 'sha1', size: 100, name: 'file1.txt' },
         { path: 'file2.md', sha: 'sha2', size: 200, name: 'file2.md' },
@@ -173,103 +175,29 @@ describe('GitHub files service', () => {
       const results = {
         content_0: { text: 'Content of file1' },
         content_1: { text: 'Content of file2' },
-        commit_0: {
-          target: {
-            history: {
-              nodes: [
-                {
-                  author: {
-                    name: 'Author 1',
-                    email: 'author1@example.com',
-                    user: { id: 'user1', login: 'author1' },
-                  },
-                  committedDate: '2023-01-01T00:00:00Z',
-                },
-              ],
-            },
-          },
-        },
-        commit_1: {
-          target: {
-            history: {
-              nodes: [
-                {
-                  author: {
-                    name: 'Author 2',
-                    email: 'author2@example.com',
-                    user: { id: 'user2', login: 'author2' },
-                  },
-                  committedDate: '2023-01-02T00:00:00Z',
-                },
-              ],
-            },
-          },
-        },
       };
 
       const result = await parseFileContents(fetchingFiles, results);
 
       expect(result).toEqual({
-        'file1.txt': {
-          sha: 'sha1',
-          size: 100,
-          text: 'Content of file1',
-          meta: {
-            commitAuthor: {
-              name: 'Author 1',
-              email: 'author1@example.com',
-              id: 'user1',
-              login: 'author1',
-            },
-            commitDate: new Date('2023-01-01T00:00:00Z'),
-          },
-        },
-        'file2.md': {
-          sha: 'sha2',
-          size: 200,
-          text: 'Content of file2',
-          meta: {
-            commitAuthor: {
-              name: 'Author 2',
-              email: 'author2@example.com',
-              id: 'user2',
-              login: 'author2',
-            },
-            commitDate: new Date('2023-01-02T00:00:00Z'),
-          },
-        },
+        'file1.txt': { sha: 'sha1', size: 100, text: 'Content of file1', meta: undefined },
+        'file2.md': { sha: 'sha2', size: 200, text: 'Content of file2', meta: undefined },
       });
     });
 
     test('handles missing text content', async () => {
       const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'binary.jpg', sha: 'sha1', size: 1000 },
+        { path: 'image.png', sha: 'sha1', size: 100, name: 'image.png' },
       ]);
 
-      const results = {
-        commit_0: {
-          target: {
-            history: {
-              nodes: [
-                {
-                  author: {
-                    name: 'Author',
-                    email: 'author@example.com',
-                    user: null,
-                  },
-                  committedDate: '2023-01-01T00:00:00Z',
-                },
-              ],
-            },
-          },
-        },
-      };
+      const result = await parseFileContents(fetchingFiles, {});
 
-      const result = await parseFileContents(fetchingFiles, results);
-
-      expect(result['binary.jpg'].text).toBeUndefined();
-      expect(result['binary.jpg']?.meta?.commitAuthor?.id).toBeUndefined();
-      expect(result['binary.jpg']?.meta?.commitAuthor?.login).toBeUndefined();
+      expect(result['image.png']).toEqual({
+        sha: 'sha1',
+        size: 100,
+        text: undefined,
+        meta: undefined,
+      });
     });
 
     test('re-fetches a truncated blob with the REST API', async () => {
@@ -278,28 +206,9 @@ describe('GitHub files service', () => {
         { path: 'small.md', sha: 'sha2', size: 100 },
       ]);
 
-      /**
-       * Create a commit history node as returned by the GraphQL API.
-       * @returns {any} Node.
-       */
-      const createCommit = () => ({
-        target: {
-          history: {
-            nodes: [
-              {
-                author: { name: 'Author', email: 'author@example.com', user: null },
-                committedDate: '2026-01-01T00:00:00Z',
-              },
-            ],
-          },
-        },
-      });
-
       const results = {
         content_0: { text: 'Cut short at 512 KB', isTruncated: true },
         content_1: { text: 'Content of small.md', isTruncated: false },
-        commit_0: createCommit(),
-        commit_1: createCommit(),
       };
 
       vi.mocked(fetchAPI).mockResolvedValue('Complete content of large.md');
@@ -315,260 +224,140 @@ describe('GitHub files service', () => {
       expect(result['large.md'].text).toBe('Complete content of large.md');
       expect(result['small.md'].text).toBe('Content of small.md');
     });
+  });
 
-    test('handles multiple files with mixed user data', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.txt', sha: 'sha1', size: 100 },
-        { path: 'file2.txt', sha: 'sha2', size: 100 },
-        { path: 'file3.txt', sha: 'sha3', size: 100 },
-      ]);
-
-      const results = {
-        content_0: { text: 'Content 1' },
-        content_1: { text: 'Content 2' },
-        content_2: { text: 'Content 3' },
-        commit_0: {
-          target: {
-            history: {
-              nodes: [
-                {
-                  author: {
-                    name: 'Author 1',
-                    email: 'author1@example.com',
-                    user: { id: 'u1', login: 'author1' },
-                  },
-                  committedDate: '2023-01-01T00:00:00Z',
-                },
-              ],
-            },
-          },
+  describe('parseFileMetadata', () => {
+    /**
+     * Create a commit history node as returned by the GraphQL API.
+     * @param {string} name Author name.
+     * @param {any} user GitHub user of the author, or `null` for an unlinked author.
+     * @param {string} date Commit date.
+     * @returns {any} Node.
+     */
+    const createCommit = (name, user, date) => ({
+      target: {
+        history: {
+          nodes: [{ author: { name, email: `${name}@example.com`, user }, committedDate: date }],
         },
-        commit_1: {
-          target: {
-            history: {
-              nodes: [
-                {
-                  author: {
-                    name: 'Author 2',
-                    email: 'author2@example.com',
-                    user: null,
-                  },
-                  committedDate: '2023-01-02T00:00:00Z',
-                },
-              ],
-            },
-          },
-        },
-        commit_2: {
-          target: {
-            history: {
-              nodes: [
-                {
-                  author: {
-                    name: 'Author 3',
-                    email: 'author3@example.com',
-                    user: { id: 'u3', login: 'author3' },
-                  },
-                  committedDate: '2023-01-03T00:00:00Z',
-                },
-              ],
-            },
-          },
-        },
-      };
-
-      const result = await parseFileContents(fetchingFiles, results);
-
-      expect(Object.keys(result)).toHaveLength(3);
-      expect(result['file1.txt']?.meta?.commitAuthor?.id).toBe('u1');
-      expect(result['file2.txt']?.meta?.commitAuthor?.id).toBeUndefined();
-      expect(result['file3.txt']?.meta?.commitAuthor?.login).toBe('author3');
+      },
     });
 
-    test('preserves all file metadata correctly', async () => {
+    test('parses the last commit of every file', () => {
       const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'path/to/file.txt', sha: 'abc123def456', size: 12345 },
+        { path: 'file1.txt', sha: 'sha1', size: 100 },
+        { path: 'image.png', sha: 'sha2', size: 200 },
       ]);
 
       const results = {
-        content_0: { text: 'File content here' },
-        commit_0: {
-          target: {
-            history: {
-              nodes: [
-                {
-                  author: {
-                    name: 'John Doe',
-                    email: 'john@example.com',
-                    user: { id: '12345', login: 'johndoe' },
-                  },
-                  committedDate: '2024-06-15T10:30:45Z',
-                },
-              ],
-            },
-          },
-        },
+        commit_0: createCommit(
+          'Author 1',
+          { id: 'user1', login: 'author1' },
+          '2023-01-01T00:00:00Z',
+        ),
+        // A commit whose author isn’t linked to a GitHub account
+        commit_1: createCommit('Author 2', null, '2023-01-02T00:00:00Z'),
       };
 
-      const result = await parseFileContents(fetchingFiles, results);
-      const parsed = result['path/to/file.txt'];
-
-      expect(parsed.sha).toBe('abc123def456');
-      expect(parsed.size).toBe(12345);
-      expect(parsed.text).toBe('File content here');
-      expect(parsed?.meta?.commitAuthor?.name).toBe('John Doe');
-      expect(parsed?.meta?.commitAuthor?.email).toBe('john@example.com');
-      expect(parsed?.meta?.commitDate).toEqual(new Date('2024-06-15T10:30:45Z'));
+      expect(parseFileMetadata(fetchingFiles, results)).toEqual({
+        'file1.txt': {
+          commitAuthor: {
+            name: 'Author 1',
+            email: 'Author 1@example.com',
+            id: 'user1',
+            login: 'author1',
+          },
+          commitDate: new Date('2023-01-01T00:00:00Z'),
+        },
+        'image.png': {
+          commitAuthor: {
+            name: 'Author 2',
+            email: 'Author 2@example.com',
+            id: undefined,
+            login: undefined,
+          },
+          commitDate: new Date('2023-01-02T00:00:00Z'),
+        },
+      });
     });
   });
 
   describe('fetchFileContents', () => {
+    /**
+     * Build a GraphQL response holding the text of the given files.
+     * @param {any[]} files Files.
+     * @returns {any} Response.
+     */
+    const createResponse = (files) => ({
+      repository: Object.fromEntries(
+        files.map(({ path }, i) => [`content_${i}`, { text: `Content of ${path}` }]),
+      ),
+    });
+
     test('fetches and parses file contents', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.txt', sha: 'sha1', size: 100 },
-        { path: 'file2.md', sha: 'sha2', size: 200 },
-      ]);
+      const fetchingFiles = /** @type {any[]} */ ([{ path: 'file.txt', sha: 'sha1', size: 100 }]);
 
-      const mockResults = {
-        repository: {
-          content_0: { text: 'Content 1' },
-          content_1: { text: 'Content 2' },
-          commit_0: {
-            target: {
-              history: {
-                nodes: [
-                  {
-                    author: {
-                      name: 'Author',
-                      email: 'author@example.com',
-                      user: { id: 'user1', login: 'author' },
-                    },
-                    committedDate: '2023-01-01T00:00:00Z',
-                  },
-                ],
-              },
-            },
-          },
-          commit_1: {
-            target: {
-              history: {
-                nodes: [
-                  {
-                    author: {
-                      name: 'Author',
-                      email: 'author@example.com',
-                      user: { id: 'user1', login: 'author' },
-                    },
-                    committedDate: '2023-01-01T00:00:00Z',
-                  },
-                ],
-              },
-            },
-          },
-        },
-      };
-
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
+      vi.mocked(fetchGraphQL).mockResolvedValue(createResponse(fetchingFiles));
 
       const result = await fetchFileContents(fetchingFiles);
 
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('content_0: object'));
       expect(startSimulatedProgress).toHaveBeenCalledWith(fetchingFiles.length);
       expect(stopProgress).toHaveBeenCalledOnce();
-      expect(result).toBeDefined();
+      expect(result['file.txt']).toEqual({
+        sha: 'sha1',
+        size: 100,
+        text: 'Content of file.txt',
+        meta: undefined,
+      });
     });
 
-    test('handles large file lists with chunking', async () => {
-      // Create a large file list that exceeds chunk size
-      const fetchingFiles = /** @type {any[]} */ (
-        Array.from({ length: 300 }, (_, i) => ({
-          path: `file${i}.txt`,
-          sha: `sha${i}`,
-          size: 100,
-        }))
-      );
-
-      const mockResults = {
-        repository: Object.fromEntries(
-          Array.from({ length: 300 }, (_, i) => [
-            `commit_${i}`,
-            {
-              target: {
-                history: {
-                  nodes: [
-                    {
-                      author: {
-                        name: 'Author',
-                        email: 'author@example.com',
-                        user: { id: 'user1', login: 'author' },
-                      },
-                      committedDate: '2023-01-01T00:00:00Z',
-                    },
-                  ],
-                },
-              },
-            },
-          ]),
-        ),
-      };
-
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
-
-      await fetchFileContents(fetchingFiles);
-
-      // Should make 2 GraphQL requests (300 files / 250 chunk size = 2 chunks)
-      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
-    });
-
-    test('applies delays between chunk requests', async () => {
+    test('splits a large file list into delayed chunks', async () => {
       const { sleep: mockSleep } = await import('@sveltia/utils/misc');
 
       const fetchingFiles = /** @type {any[]} */ (
-        Array.from({ length: 500 }, (_, i) => ({
-          path: `file${i}.txt`,
-          sha: `sha${i}`,
-          size: 100,
-        }))
+        Array.from({ length: 300 }, (_, i) => ({ path: `file${i}.txt`, sha: `sha${i}`, size: 100 }))
       );
 
-      const mockResults = {
-        repository: Object.fromEntries(
-          Array.from({ length: 500 }, (_, i) => [
-            `commit_${i}`,
-            {
-              target: {
-                history: {
-                  nodes: [
-                    {
-                      author: {
-                        name: 'Author',
-                        email: 'author@example.com',
-                        user: { id: 'user1', login: 'author' },
-                      },
-                      committedDate: '2023-01-01T00:00:00Z',
-                    },
-                  ],
-                },
-              },
-            },
-          ]),
-        ),
-      };
+      vi.mocked(fetchGraphQL).mockImplementation(async (query) => {
+        // Answer only the aliases the query asks for, as the API does
+        const aliases = [.../** @type {string} */ (query).matchAll(/content_(\d+):/g)].map(
+          ([, i]) => Number(i),
+        );
 
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
+        return {
+          repository: Object.fromEntries(
+            aliases.map((i) => [`content_${i}`, { text: `Content of ${fetchingFiles[i].path}` }]),
+          ),
+        };
+      });
+
+      const result = await fetchFileContents(fetchingFiles);
+
+      // 300 files / 250 per chunk = 2 requests; the second is delayed to avoid rate limiting
+      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+      expect(mockSleep).toHaveBeenCalledWith(0);
+      expect(mockSleep).toHaveBeenCalledWith(500);
+      expect(Object.keys(result)).toHaveLength(300);
+      expect(result['file299.txt'].text).toBe('Content of file299.txt');
+    });
+
+    test('makes exactly one request for a chunk-sized list', async () => {
+      const fetchingFiles = /** @type {any[]} */ (
+        Array.from({ length: 250 }, (_, i) => ({ path: `file${i}.txt`, sha: `sha${i}`, size: 100 }))
+      );
+
+      vi.mocked(fetchGraphQL).mockResolvedValue(createResponse(fetchingFiles));
 
       await fetchFileContents(fetchingFiles);
 
-      // Should make 2 GraphQL requests (300 files / 250 chunk size = 2 chunks)
-      // First request has index 0 (no delay), second has index 1 (500ms delay)
-      expect(mockSleep).toHaveBeenCalledWith(0);
-      expect(mockSleep).toHaveBeenCalledWith(500);
+      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
     });
 
     test('handles empty file list', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([]);
-      const result = await fetchFileContents(fetchingFiles);
+      const result = await fetchFileContents([]);
 
       expect(result).toEqual({});
+      expect(fetchGraphQL).not.toHaveBeenCalled();
       expect(startSimulatedProgress).toHaveBeenCalledWith(0);
       expect(stopProgress).toHaveBeenCalledOnce();
     });
@@ -582,46 +371,49 @@ describe('GitHub files service', () => {
       // Otherwise the interval would keep running behind the error message
       expect(stopProgress).toHaveBeenCalledOnce();
     });
+  });
 
-    test('handles exactly chunk size boundary', async () => {
+  describe('fetchFileMetadata', () => {
+    test('fetches the last commit of every file in chunks', async () => {
       const fetchingFiles = /** @type {any[]} */ (
-        Array.from({ length: 250 }, (_, i) => ({
-          path: `file${i}.txt`,
-          sha: `sha${i}`,
-          size: 100,
-        }))
+        Array.from({ length: 300 }, (_, i) => ({ path: `file${i}.txt`, sha: `sha${i}`, size: 100 }))
       );
 
-      const mockResults = {
-        repository: Object.fromEntries(
-          Array.from({ length: 250 }, (_, i) => [
-            `commit_${i}`,
-            {
-              target: {
-                history: {
-                  nodes: [
-                    {
-                      author: {
-                        name: 'Author',
-                        email: 'author@example.com',
-                        user: { id: 'user1', login: 'author' },
+      vi.mocked(fetchGraphQL).mockImplementation(async (query) => {
+        const aliases = [.../** @type {string} */ (query).matchAll(/commit_(\d+):/g)].map(([, i]) =>
+          Number(i),
+        );
+
+        return {
+          repository: Object.fromEntries(
+            aliases.map((i) => [
+              `commit_${i}`,
+              {
+                target: {
+                  history: {
+                    nodes: [
+                      {
+                        author: { name: `Author ${i}`, email: 'a@example.com', user: null },
+                        committedDate: '2023-01-01T00:00:00Z',
                       },
-                      committedDate: '2023-01-01T00:00:00Z',
-                    },
-                  ],
+                    ],
+                  },
                 },
               },
-            },
-          ]),
-        ),
-      };
+            ]),
+          ),
+        };
+      });
 
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
+      const result = await fetchFileMetadata(fetchingFiles);
 
-      await fetchFileContents(fetchingFiles);
-
-      // Should make exactly 1 GraphQL request
-      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('history(first: 1'));
+      // No progress bar: this runs in the background once the contents are shown
+      expect(startSimulatedProgress).not.toHaveBeenCalled();
+      expect(Object.keys(result)).toHaveLength(300);
+      expect(result['file299.txt'].commitAuthor?.name).toBe('Author 299');
+      expect(result['file299.txt'].commitDate).toEqual(new Date('2023-01-01T00:00:00Z'));
     });
   });
 
@@ -640,6 +432,7 @@ describe('GitHub files service', () => {
         fetchLastCommit,
         fetchFileList,
         fetchFileContents,
+        fetchFileMetadata,
       });
     });
 

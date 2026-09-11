@@ -11,6 +11,7 @@ import { prepareEntries } from '$lib/services/contents/file/process';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 
 import {
+  applyFileMetadata,
   fetchAndParseFiles,
   getFileList,
   parseAssetFileInfo,
@@ -436,6 +437,99 @@ describe('git/shared/fetch', () => {
     });
   });
 
+  describe('applyFileMetadata', () => {
+    const meta = {
+      commitAuthor: { name: 'Author', email: 'a@example.com', id: 1, login: 'author' },
+      commitDate: new Date('2024-01-01T00:00:00Z'),
+    };
+
+    beforeEach(() => {
+      allEntries.current = [];
+      allAssets.current = [];
+    });
+
+    it('should fill in the metadata of the fetched files, entries and assets', () => {
+      const fetchedFileMap = /** @type {any} */ ({
+        'posts/a.md': { sha: 'sha1', size: 1, text: '', meta: undefined },
+        'img/a.png': { sha: 'sha2', size: 1, meta: undefined },
+      });
+
+      const entry = /** @type {any} */ ({
+        id: 'a',
+        locales: { en: { path: 'posts/a.md' }, fr: { path: 'posts/a.fr.md' } },
+      });
+
+      const asset = /** @type {any} */ ({ path: 'img/a.png' });
+
+      allEntries.current = [entry];
+      allAssets.current = [asset];
+
+      applyFileMetadata({
+        fetchedFileMap,
+        metadataMap: { 'posts/a.md': meta, 'img/a.png': meta, 'other.md': meta },
+      });
+
+      // Cached along with the text, so the file isn’t fetched again next time
+      expect(fetchedFileMap['posts/a.md'].meta).toBe(meta);
+      expect(fetchedFileMap['img/a.png'].meta).toBe(meta);
+      expect(allEntries.current).toEqual([{ ...entry, ...meta }]);
+      expect(allAssets.current).toEqual([{ ...asset, ...meta }]);
+    });
+
+    it('should take the metadata from whichever file of an entry is known', () => {
+      const entry = /** @type {any} */ ({
+        id: 'a',
+        locales: { en: { path: 'posts/a.md' }, fr: { path: 'posts/a.fr.md' } },
+      });
+
+      allEntries.current = [entry];
+
+      applyFileMetadata({ fetchedFileMap: {}, metadataMap: { 'posts/a.fr.md': meta } });
+
+      expect(allEntries.current[0].commitDate).toBe(meta.commitDate);
+    });
+
+    it('should leave an entry or asset saved in the meantime alone', () => {
+      const newer = new Date('2024-06-01T00:00:00Z');
+
+      const entry = /** @type {any} */ ({
+        id: 'a',
+        locales: { en: { path: 'posts/a.md' } },
+        commitDate: newer,
+      });
+
+      const asset = /** @type {any} */ ({ path: 'img/a.png', commitDate: newer });
+      const entries = [entry];
+      const assets = [asset];
+
+      allEntries.current = entries;
+      allAssets.current = assets;
+
+      applyFileMetadata({
+        fetchedFileMap: {},
+        metadataMap: { 'posts/a.md': meta, 'img/a.png': meta },
+      });
+
+      // Nothing changed, so the store arrays aren’t even replaced
+      expect(allEntries.current).toBe(entries);
+      expect(allAssets.current).toBe(assets);
+      expect(entry.commitDate).toBe(newer);
+    });
+
+    it('should not touch the stores when nothing matches', () => {
+      const entries = [/** @type {any} */ ({ id: 'a', locales: { en: { path: 'posts/a.md' } } })];
+      const assets = [/** @type {any} */ ({ path: 'img/a.png' })];
+
+      allEntries.current = entries;
+      allAssets.current = assets;
+
+      applyFileMetadata({ fetchedFileMap: {}, metadataMap: { 'unrelated.md': meta } });
+
+      expect(allEntries.current).toBe(entries);
+      expect(allAssets.current).toBe(assets);
+    });
+  });
+
   describe('updateCache', () => {
     it('should save new entries and delete unused ones', async () => {
       const allFiles = [{ path: 'file1.md' }, { path: 'file2.md' }, { path: 'file3.md' }];
@@ -745,6 +839,131 @@ describe('git/shared/fetch', () => {
 
       expect(prepareEntries).toHaveBeenCalled();
       expect(mockFetchFileContents).toHaveBeenCalledWith(allFilesArray);
+    });
+
+    describe('deferred metadata', () => {
+      const meta = {
+        commitAuthor: { name: 'Author', email: 'a@example.com', id: 1, login: 'author' },
+        commitDate: new Date('2024-01-01T00:00:00Z'),
+      };
+
+      /** @type {any} */
+      let entryFile;
+      /** @type {any} */
+      let assetFile;
+      /** @type {any} */
+      let entry;
+
+      beforeEach(() => {
+        // Fresh objects each time: restoring the cache assigns onto the file items in place
+        entryFile = { path: 'posts/a.md', name: 'a.md', sha: 'sha1', size: 10 };
+        assetFile = { path: 'img/a.png', name: 'a.png', sha: 'sha2', size: 20 };
+        entry = { id: 'a', locales: { en: { path: 'posts/a.md' } } };
+
+        vi.mocked(createFileList).mockReturnValue({
+          count: 2,
+          entryFiles: [entryFile],
+          assetFiles: [assetFile],
+          configFiles: [],
+          allFiles: [entryFile, assetFile],
+        });
+        vi.mocked(prepareEntries).mockResolvedValue({ entries: [entry], errors: [] });
+        mockFetchFileContents.mockResolvedValue({
+          'posts/a.md': { sha: 'sha1', size: 10, text: 'text', meta: undefined },
+          'img/a.png': { sha: 'sha2', size: 20, meta: undefined },
+        });
+        allEntries.current = [];
+        allAssets.current = [];
+      });
+
+      it('should show the contents first, then fill in the metadata and cache it', async () => {
+        /** @type {any[]} */
+        const order = [];
+        const { promise, resolve } = Promise.withResolvers();
+
+        const fetchFileMetadata = vi.fn(async () => {
+          order.push(['metadata requested', dataLoaded.current]);
+
+          return promise;
+        });
+
+        const run = fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+          fetchFileMetadata,
+        });
+
+        await vi.waitFor(() => {
+          expect(fetchFileMetadata).toHaveBeenCalledWith([entryFile, assetFile]);
+        });
+
+        // The stores were populated before the metadata was even requested
+        expect(order).toEqual([['metadata requested', true]]);
+        expect(allEntries.current[0].commitDate).toBeUndefined();
+        expect(mockCacheDB.saveEntries).not.toHaveBeenCalled();
+
+        resolve({ 'posts/a.md': meta, 'img/a.png': meta });
+        await run;
+
+        expect(allEntries.current[0].commitDate).toBe(meta.commitDate);
+        expect(allAssets.current[0].commitDate).toBe(meta.commitDate);
+        // Cached only once complete, as a file without metadata counts as not fetched
+        expect(mockCacheDB.saveEntries).toHaveBeenCalledWith([
+          ['posts/a.md', expect.objectContaining({ text: 'text', meta })],
+          ['img/a.png', expect.objectContaining({ meta })],
+        ]);
+      });
+
+      it('should keep the contents usable when the metadata cannot be fetched', async () => {
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        await fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+          fetchFileMetadata: vi.fn().mockRejectedValue(new Error('rate limited')),
+        });
+
+        expect(dataLoaded.current).toBe(true);
+        expect(allEntries.current).toEqual([entry]);
+        expect(consoleError).toHaveBeenCalledWith(
+          'Failed to fetch the commit metadata.',
+          expect.any(Error),
+        );
+        // Still cached without metadata; such a file is fetched again next time
+        expect(mockCacheDB.saveEntries).toHaveBeenCalledWith([
+          ['posts/a.md', expect.objectContaining({ meta: undefined })],
+          ['img/a.png', expect.objectContaining({ meta: undefined })],
+        ]);
+
+        consoleError.mockRestore();
+      });
+
+      it('should not request the metadata when every file was cached', async () => {
+        const fetchFileMetadata = vi.fn();
+
+        mockCacheDB.entries.mockResolvedValue([
+          ['posts/a.md', { sha: 'sha1', size: 10, text: 'text', meta }],
+          ['img/a.png', { sha: 'sha2', size: 20, meta }],
+        ]);
+
+        await fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+          fetchFileMetadata,
+        });
+
+        expect(mockFetchFileContents).not.toHaveBeenCalled();
+        expect(fetchFileMetadata).not.toHaveBeenCalled();
+      });
     });
 
     it('should handle entries with parsing errors', async () => {

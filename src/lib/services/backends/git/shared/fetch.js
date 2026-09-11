@@ -22,8 +22,14 @@ import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
  * BaseFileListItemProps,
  * Entry,
  * RepositoryContentsMap,
+ * RepositoryFileMetadata,
  * RepositoryInfo,
  * } from '$lib/types/private';
+ */
+
+/**
+ * @typedef {Record<string, RepositoryFileMetadata>} RepositoryMetadataMap Commit metadata of
+ * entry/asset files, keyed with a file path.
  */
 
 /**
@@ -155,6 +161,66 @@ export const updateStores = ({ entries, assets, configFiles, errors = [] }) => {
 };
 
 /**
+ * Fill in the commit metadata that was left out of the first fetch, once it has arrived. The
+ * stores are only replaced if something actually changed, and an entry or asset that already has
+ * its metadata — one saved while the metadata was on its way — is left alone, as its commit is
+ * newer than the one looked up.
+ * @param {object} args Arguments.
+ * @param {RepositoryContentsMap} args.fetchedFileMap Map of fetched file data, updated in place so
+ * the metadata is cached along with the text.
+ * @param {RepositoryMetadataMap} args.metadataMap Commit metadata of the fetched files.
+ */
+export const applyFileMetadata = ({ fetchedFileMap, metadataMap }) => {
+  Object.entries(metadataMap).forEach(([path, meta]) => {
+    if (fetchedFileMap[path]) {
+      fetchedFileMap[path].meta = meta;
+    }
+  });
+
+  let entriesChanged = false;
+  let assetsChanged = false;
+
+  const entries = allEntries.current.map((entry) => {
+    if (entry.commitDate) {
+      return entry;
+    }
+
+    // An entry takes its metadata from whichever of its files is known, as when it was parsed
+    const meta = Object.values(entry.locales)
+      .map(({ path }) => metadataMap[path])
+      .find(Boolean);
+
+    if (!meta) {
+      return entry;
+    }
+
+    entriesChanged = true;
+
+    return { ...entry, ...meta };
+  });
+
+  const assets = allAssets.current.map((asset) => {
+    const meta = asset.commitDate ? undefined : metadataMap[asset.path];
+
+    if (!meta) {
+      return asset;
+    }
+
+    assetsChanged = true;
+
+    return { ...asset, ...meta };
+  });
+
+  if (entriesChanged) {
+    allEntries.current = entries;
+  }
+
+  if (assetsChanged) {
+    allAssets.current = assets;
+  }
+};
+
+/**
  * Update the file cache by saving new entries and deleting unused ones.
  * @param {object} args Arguments.
  * @param {IndexedDB} args.cacheDB The cache database instance.
@@ -216,7 +282,12 @@ const deferRejection = (promise) => {
  * file list.
  * @param {(fetchingFiles: BaseFileListItem[]) => Promise<RepositoryContentsMap>
  * } args.fetchFileContents Function to fetch the metadata of entry/asset files as well as text file
- * contents.
+ * contents. If {@link fetchFileMetadata} is given, this is expected to leave the metadata out.
+ * @param {(fetchingFiles: BaseFileListItem[]) => Promise<RepositoryMetadataMap>
+ * } [args.fetchFileMetadata] Function to fetch the commit metadata of entry/asset files separately.
+ * Looking up the last commit of every file is by far the slowest part of a cold start on some
+ * services, and nothing in the UI needs it right away, so with this the contents are shown as soon
+ * as they arrive and the metadata is filled in afterwards.
  */
 export const fetchAndParseFiles = async ({
   repository,
@@ -225,6 +296,7 @@ export const fetchAndParseFiles = async ({
   fetchLastCommit,
   fetchFileList,
   fetchFileContents,
+  fetchFileMetadata,
 }) => {
   const { databaseName, branch: branchName } = repository;
   const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
@@ -307,5 +379,20 @@ export const fetchAndParseFiles = async ({
 
   updateStores({ entries, assets, configFiles: configFileItems, errors });
 
+  if (fetchFileMetadata && fetchingFiles.length) {
+    try {
+      applyFileMetadata({
+        fetchedFileMap,
+        metadataMap: await fetchFileMetadata(fetchingFiles),
+      });
+    } catch (/** @type {any} */ ex) {
+      // The contents are already usable without it. A file cached without metadata is fetched
+      // again next time, so this isn’t permanent either
+      // eslint-disable-next-line no-console
+      console.error('Failed to fetch the commit metadata.', ex);
+    }
+  }
+
+  // Cached once the metadata is there, as a file without it is treated as not fetched yet
   await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
 };

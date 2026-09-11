@@ -25,6 +25,7 @@ import { startSimulatedProgress } from '$lib/services/backends/git/shared/progre
  * BaseFileListItemProps,
  * RepositoryContentsMap,
  * } from '$lib/types/private';
+ * @import { RepositoryMetadataMap } from '$lib/services/backends/git/shared/fetch';
  */
 
 /**
@@ -46,27 +47,53 @@ export const fetchFileList = async (lastHash) => {
 };
 
 /**
- * Get a query string for fetching file contents and metadata from the repository.
- * @param {any[]} chunk Sliced `fetchingFileList`.
+ * Number of files requested per GraphQL query. The API has no hard limit on aliases, but a bigger
+ * query takes longer to answer and is more likely to time out.
+ */
+const CHUNK_SIZE = 250;
+
+/**
+ * Get a query string for fetching the text contents of the given files from the repository.
+ * @param {BaseFileListItem[]} chunk Sliced `fetchingFiles`.
  * @param {number} startIndex Start index.
  * @returns {string} Query string.
  */
 export const getFileContentsQuery = (chunk, startIndex) => {
   const innerQuery = chunk
-    .map(({ type, path, sha }, i) => {
-      const str = [];
-      const index = startIndex + i;
-
-      if (type !== 'asset') {
-        str.push(`
-          content_${index}: object(oid: ${JSON.stringify(sha)}) {
-            ... on Blob { text isTruncated }
-          }
-        `);
+    .map(({ type, sha }, i) => {
+      // Only a text file has content to read; an asset is just listed for its metadata
+      if (type === 'asset') {
+        return '';
       }
 
-      str.push(`
-        commit_${index}: ref(qualifiedName: $branch) {
+      return `
+        content_${startIndex + i}: object(oid: ${JSON.stringify(sha)}) {
+          ... on Blob { text isTruncated }
+        }
+      `;
+    })
+    .join('');
+
+  return `
+    query($owner: String!, $repo: String!) {
+      repository(owner: $owner, name: $repo) {
+        ${innerQuery}
+      }
+    }
+  `;
+};
+
+/**
+ * Get a query string for fetching the last commit of each of the given files from the repository.
+ * @param {BaseFileListItem[]} chunk Sliced `fetchingFiles`.
+ * @param {number} startIndex Start index.
+ * @returns {string} Query string.
+ */
+export const getFileMetadataQuery = (chunk, startIndex) => {
+  const innerQuery = chunk
+    .map(
+      ({ path }, i) => `
+        commit_${startIndex + i}: ref(qualifiedName: $branch) {
           target {
             ... on Commit {
               history(first: 1, path: ${JSON.stringify(path)}) {
@@ -85,10 +112,8 @@ export const getFileContentsQuery = (chunk, startIndex) => {
             }
           }
         }
-      `);
-
-      return str.join('');
-    })
+      `,
+    )
     .join('');
 
   return `
@@ -140,34 +165,16 @@ export const fetchBlobText = async ({ owner, repo, sha }) =>
  * Parse the file contents from the API response.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @param {Record<string, any>} results Results from the API.
- * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
+ * @returns {Promise<RepositoryContentsMap>} Parsed file contents map. The commit metadata is left
+ * out; it’s fetched separately with {@link fetchFileMetadata}.
  */
 export const parseFileContents = async (fetchingFiles, results) => {
   /** @type {{ sha: string, data: { text?: string } }[]} */
   const truncatedFiles = [];
 
   const entries = fetchingFiles.map(({ path, sha, size }, index) => {
-    const {
-      author: { name, email, user: _user },
-      committedDate,
-    } = results[`commit_${index}`].target.history.nodes[0];
-
     const { text, isTruncated } = results[`content_${index}`] ?? {};
-
-    const data = {
-      sha,
-      size: /** @type {number} */ (size),
-      text,
-      meta: {
-        commitAuthor: {
-          name,
-          email,
-          id: _user?.id,
-          login: _user?.login,
-        },
-        commitDate: new Date(committedDate),
-      },
-    };
+    const data = { sha, size: /** @type {number} */ (size), text, meta: undefined };
 
     if (isTruncated) {
       truncatedFiles.push({ sha, data });
@@ -187,37 +194,77 @@ export const parseFileContents = async (fetchingFiles, results) => {
 };
 
 /**
- * Fetch the metadata of entry/asset files as well as text file contents.
+ * Parse the file metadata from the API response.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
+ * @param {Record<string, any>} results Results from the API.
+ * @returns {RepositoryMetadataMap} Parsed file metadata map.
+ */
+export const parseFileMetadata = (fetchingFiles, results) =>
+  Object.fromEntries(
+    fetchingFiles.map(({ path }, index) => {
+      const {
+        author: { name, email, user: _user },
+        committedDate,
+      } = results[`commit_${index}`].target.history.nodes[0];
+
+      return [
+        path,
+        {
+          commitAuthor: { name, email, id: _user?.id, login: _user?.login },
+          commitDate: new Date(committedDate),
+        },
+      ];
+    }),
+  );
+
+/**
+ * Query the API for the given files, a chunk at a time, and merge the aliased results.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
+ * @param {(chunk: BaseFileListItem[], startIndex: number) => string} getQuery Function to build
+ * the query for a chunk.
+ * @returns {Promise<Record<string, any>>} Merged results, keyed by alias.
+ */
+const fetchInChunks = async (fetchingFiles, getQuery) => {
+  /** @type {BaseFileListItem[][]} */
+  const chunks = [];
+  /** @type {Record<string, any>} */
+  const results = {};
+
+  for (let i = 0; i < fetchingFiles.length; i += CHUNK_SIZE) {
+    chunks.push(fetchingFiles.slice(i, i + CHUNK_SIZE));
+  }
+
+  // Split the file list into chunks and repeat requests to avoid API timeout
+  await Promise.all(
+    chunks.map(async (chunk, index) => {
+      // Add a short delay to avoid Too Many Requests error
+      await sleep(index * 500);
+
+      const result = /** @type {{ repository: Record<string, any> }} */ (
+        await fetchGraphQL(getQuery(chunk, index * CHUNK_SIZE))
+      );
+
+      Object.assign(results, result.repository);
+    }),
+  );
+
+  return results;
+};
+
+/**
+ * Fetch the text contents of entry/config files. The commit metadata of the files is not included;
+ * see {@link fetchFileMetadata}.
  * @param {BaseFileListItem[]} fetchingFiles Base file list.
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
 export const fetchFileContents = async (fetchingFiles) => {
-  /** @type {any[][]} */
-  const chunks = [];
-  const chunkSize = 250;
-  /** @type {Record<string, any>} */
-  const results = {};
   // Show a simulated progress bar because the request waiting time is long
   const stopProgress = startSimulatedProgress(fetchingFiles.length);
-
-  for (let i = 0; i < fetchingFiles.length; i += chunkSize) {
-    chunks.push(fetchingFiles.slice(i, i + chunkSize));
-  }
+  /** @type {Record<string, any>} */
+  let results;
 
   try {
-    // Split the file list into chunks and repeat requests to avoid API timeout
-    await Promise.all(
-      chunks.map(async (chunk, index) => {
-        // Add a short delay to avoid Too Many Requests error
-        await sleep(index * 500);
-
-        const result = /** @type {{ repository: Record<string, any> }} */ (
-          await fetchGraphQL(getFileContentsQuery(chunk, index * chunkSize))
-        );
-
-        Object.assign(results, result.repository);
-      }),
-    );
+    results = await fetchInChunks(fetchingFiles, getFileContentsQuery);
   } finally {
     // Also on failure, so the interval doesn’t keep running behind the error message
     stopProgress();
@@ -225,6 +272,16 @@ export const fetchFileContents = async (fetchingFiles) => {
 
   return parseFileContents(fetchingFiles, results);
 };
+
+/**
+ * Fetch the last commit of each entry/asset file. Looking up the history of every path is the slow
+ * part of a cold start — far slower than reading the blobs — so it’s done in this second pass,
+ * after the contents have been shown.
+ * @param {BaseFileListItem[]} fetchingFiles Base file list.
+ * @returns {Promise<RepositoryMetadataMap>} Fetched metadata map.
+ */
+export const fetchFileMetadata = async (fetchingFiles) =>
+  parseFileMetadata(fetchingFiles, await fetchInChunks(fetchingFiles, getFileMetadataQuery));
 
 /**
  * Fetch file list from the backend service, download/parse all the entry files, then cache them in
@@ -247,6 +304,7 @@ export const fetchFiles = async () => {
     fetchLastCommit,
     fetchFileList,
     fetchFileContents,
+    fetchFileMetadata,
   });
 };
 
