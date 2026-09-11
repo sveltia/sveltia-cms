@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { hasMatch, normalize } from './util';
+import { getNormalizedValueCache, hasMatch, normalize } from './util';
 
 describe('normalize', () => {
   it('should normalize basic strings', () => {
@@ -98,5 +98,31 @@ describe('hasMatch', () => {
 
     expect(hasMatch({ value: 'Café', terms: 'cached', normalizedValueCache })).toBe(true);
     expect(normalizedValueCache.get('Café')).toBe('cached-value');
+  });
+});
+
+describe('getNormalizedValueCache', () => {
+  it('should keep one cache per object across calls', () => {
+    const entry = { id: 'a' };
+    const cache = getNormalizedValueCache(entry);
+
+    expect(cache).toBeInstanceOf(Map);
+    expect(getNormalizedValueCache(entry)).toBe(cache);
+  });
+
+  it('should keep the caches of different objects apart', () => {
+    const a = getNormalizedValueCache({ id: 'a' });
+    const b = getNormalizedValueCache({ id: 'b' });
+
+    expect(a).not.toBe(b);
+  });
+
+  it('should retain normalized values for later searches', () => {
+    const entry = { id: 'a' };
+    const normalizedValueCache = getNormalizedValueCache(entry);
+
+    expect(hasMatch({ value: 'Café', terms: 'cafe', normalizedValueCache })).toBe(true);
+    // A later search on the same object finds the value already normalized
+    expect(getNormalizedValueCache(entry).get('Café')).toBe('cafe');
   });
 });

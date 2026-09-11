@@ -3,7 +3,7 @@ import { getListedCollections } from '$lib/services/contents/collection/entries'
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { searchTerms } from '$lib/services/search';
-import { hasMatch, normalize } from '$lib/services/search/util';
+import { getNormalizedValueCache, hasMatch, normalize } from '$lib/services/search/util';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
@@ -18,7 +18,8 @@ import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workf
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry to scan.
  * @param {string} args.terms Search terms.
- * @param {NormalizedValueCache} [args.normalizedValueCache] Normalized value cache.
+ * @param {NormalizedValueCache} [args.normalizedValueCache] Normalized value cache shared within
+ * one search, for values that many entries have in common, such as collection labels.
  * @returns {EntrySearchResult} Single search result.
  */
 export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) => {
@@ -53,8 +54,12 @@ export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) =>
     allowMarkdown: true,
   });
 
+  // The entry’s own values are normalized once and kept for later searches, as long as the entry
+  // object is around
+  const entryValueCache = getNormalizedValueCache(entry);
+
   // Check if the entry summary matches
-  if (hasMatch({ value: summary, terms, normalizedValueCache })) {
+  if (hasMatch({ value: summary, terms, normalizedValueCache: entryValueCache })) {
     points += 10;
   }
 
@@ -64,9 +69,9 @@ export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) =>
       const matched =
         (typeof value === 'string' &&
           !!value &&
-          hasMatch({ value, terms, normalizedValueCache })) ||
+          hasMatch({ value, terms, normalizedValueCache: entryValueCache })) ||
         (typeof value === 'number' &&
-          hasMatch({ value: String(value), terms, normalizedValueCache }));
+          hasMatch({ value: String(value), terms, normalizedValueCache: entryValueCache }));
 
       // If this is the first match, store the locale and key path
       if (matched && !locale && !keyPath) {

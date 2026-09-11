@@ -3,6 +3,31 @@
  */
 
 /**
+ * Normalized value caches that outlive a single search, keyed by the object the values belong to,
+ * typically an entry. Normalizing every field of every entry is what a search mostly spends its
+ * time on, and the values rarely change between two searches, so the work is kept for as long as
+ * the object is around; a saved or reloaded entry is a new object, so its cache starts over.
+ * @type {WeakMap<object, NormalizedValueCache>}
+ */
+const persistentCaches = new WeakMap();
+
+/**
+ * Get the normalized value cache for the given object, creating it on first use.
+ * @param {object} owner Object the values belong to.
+ * @returns {NormalizedValueCache} Cache.
+ */
+export const getNormalizedValueCache = (owner) => {
+  let cache = persistentCaches.get(owner);
+
+  if (!cache) {
+    cache = new Map();
+    persistentCaches.set(owner, cache);
+  }
+
+  return cache;
+};
+
+/**
  * Normalize the given string for search value comparison. Since `transliterate` is slow, we only
  * apply basic normalization.
  * @param {string} value Original value.

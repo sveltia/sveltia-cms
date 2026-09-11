@@ -44,6 +44,7 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
 }));
 
 vi.mock('$lib/services/search/util', () => ({
+  getNormalizedValueCache: vi.fn(() => new Map()),
   hasMatch: vi.fn(({ value, terms }) => {
     // Simple case-insensitive substring match
     const normalizedValue = String(value).toLowerCase();
@@ -132,6 +133,22 @@ describe('searchEntries basic functionality', () => {
     expect(result).toHaveProperty('points');
     expect(typeof result.points).toBe('number');
     expect(result.points).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should normalize the entry’s own values through a cache tied to the entry', async () => {
+    const { getNormalizedValueCache, hasMatch } = await import('$lib/services/search/util');
+    const entryCache = new Map();
+    const entry = createEntry('cached-entry', { title: 'Cached Title' });
+
+    vi.mocked(getNormalizedValueCache).mockReturnValue(entryCache);
+
+    scanEntry({ entry, terms: 'cached', normalizedValueCache: new Map() });
+
+    expect(getNormalizedValueCache).toHaveBeenCalledWith(entry);
+    // The content values go through the entry’s cache, not the per-search one
+    expect(hasMatch).toHaveBeenCalledWith(
+      expect.objectContaining({ value: 'Cached Title', normalizedValueCache: entryCache }),
+    );
   });
 
   it('should handle entries with complex content', () => {
