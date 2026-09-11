@@ -4,7 +4,12 @@ import { getFieldConfigMap, getPreviewData } from '$lib/services/contents/fields
 
 /**
  * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
- * @import { CustomField, CustomFieldControl, CustomFieldControlProps } from '$lib/types/public';
+ * @import {
+ * CustomField,
+ * CustomFieldAddFileOptions,
+ * CustomFieldControl,
+ * CustomFieldControlProps,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -47,7 +52,8 @@ export const resolveControl = (ctrl) => {
  * Build the props for a custom field control component. The `entry` prop lets a control read any
  * value in the entry being edited, including the values of sibling fields, so that it can render
  * options derived from them. It’s rebuilt whenever the draft is updated, so the control is always
- * given the latest content.
+ * given the latest content. The `addFile` prop lets a control hand a file to the CMS, so that it’s
+ * uploaded along with the entry; the blob URL it resolves to is meant to be stored in the value.
  * @param {object} args Arguments.
  * @param {string | null | undefined} args.fieldId Field ID.
  * @param {string | null | undefined} args.fieldClassName Class name for the wrapper element.
@@ -56,6 +62,8 @@ export const resolveControl = (ctrl) => {
  * @param {EntryDraft | null | undefined} args.draft Draft entry state.
  * @param {InternalLocaleCode} args.locale Current locale.
  * @param {(value: any) => void} args.onChange Change handler.
+ * @param {(file: File | Blob, options?: CustomFieldAddFileOptions) => Promise<string>}
+ * args.addFile Handler to add a file to the entry draft.
  * @param {(instance: any) => void} args.handleRef Ref callback.
  * @returns {CustomFieldControlProps & { ref?: (instance: any) => void }} Props for React rendering.
  */
@@ -67,6 +75,7 @@ export const buildControlProps = ({
   draft,
   locale,
   onChange,
+  addFile,
   handleRef,
 }) => ({
   value: currentValue,
@@ -75,5 +84,6 @@ export const buildControlProps = ({
   classNameWrapper: fieldClassName ?? '',
   entry: draft ? getPreviewData({ draft, locale }).entryMap : undefined,
   onChange,
+  addFile,
   ref: handleRef,
 });

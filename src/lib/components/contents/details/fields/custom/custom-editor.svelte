@@ -46,11 +46,16 @@
     unregisterCustomFieldInstance,
   } from '$lib/services/contents/draft/validate/custom-fields';
   import { buildControlProps, resolveControl } from '$lib/services/contents/fields/custom/editor';
+  import { addFileToDraft } from '$lib/services/contents/fields/custom/files';
 
   /**
    * @import { Root } from 'react-dom/client';
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
-   * @import { CustomField, CustomFieldControl } from '$lib/types/public';
+   * @import {
+   * CustomField,
+   * CustomFieldAddFileOptions,
+   * CustomFieldControl,
+   * } from '$lib/types/public';
    */
 
   /**
@@ -61,7 +66,8 @@
    */
 
   /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const { valueStoreKey = 'currentValues', parentComponentNames = [] } =
+    getContext('field-editor') ?? {};
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -69,6 +75,7 @@
     locale,
     fieldId,
     keyPath,
+    typedKeyPath,
     fieldConfig,
     currentValue,
     required = true,
@@ -87,6 +94,7 @@
 
   const { i18n = false } = $derived(fieldConfig);
   const resolvedControl = $derived(resolveControl(control));
+  const componentName = parentComponentNames.at(-1);
 
   /**
    * Handle value changes from the React component. Don’t use two-way binding here to avoid
@@ -99,6 +107,29 @@
     } else if ($entryDraft) {
       $entryDraft[valueStoreKey][locale][keyPath] = value;
     }
+  };
+
+  /**
+   * Add a file to the entry draft on behalf of the React component, so that it’s uploaded along
+   * with the entry. The draft is read when the file is added rather than when the props are built,
+   * so a control that keeps the function around can still use it after the draft has been updated.
+   * @param {File | Blob} file File to be added.
+   * @param {CustomFieldAddFileOptions} [options] Options.
+   * @returns {Promise<string>} Blob URL to be stored in the field value.
+   */
+  const handleAddFile = async (file, options) => {
+    if (!$entryDraft) {
+      throw new Error('addFile() can only be called while an entry is being edited');
+    }
+
+    return addFileToDraft({
+      draft: $entryDraft,
+      fieldConfig,
+      typedKeyPath,
+      componentName,
+      file,
+      options,
+    });
   };
 
   /**
@@ -137,6 +168,7 @@
       draft: $entryDraft,
       locale,
       onChange: handleChange,
+      addFile: handleAddFile,
       handleRef,
     });
 

@@ -2012,6 +2012,14 @@
  */
 
 /**
+ * Options for the `addFile` prop of a custom field control.
+ * @typedef {object} CustomFieldAddFileOptions
+ * @property {string} [name] File name, including the extension. Required when a `Blob` is given
+ * instead of a `File`; otherwise it overrides the file’s own name. The name is sanitized and, if
+ * another asset in the target folder already has it, made unique when the entry is saved.
+ */
+
+/**
  * Props for custom field control React components.
  * @typedef {object} CustomFieldControlProps
  * @property {any} value Current field value. The widget should display this value and call
@@ -2030,6 +2038,16 @@
  * `undefined` if the control is rendered outside an entry draft.
  * @property {(value: any) => void} onChange Callback function that must be called with the new
  * value whenever the user changes the field. This updates the entry draft.
+ * @property {(file: File | Blob, options?: CustomFieldAddFileOptions) => Promise<string>} addFile
+ * Function to add a file to the entry draft, so that the file is committed along with the entry
+ * when the entry is saved, in the same way as a file picked in a built-in File/Image field. It
+ * resolves to a temporary blob URL, which should be stored in the field value with `onChange`,
+ * either as the value itself or anywhere within an object or array value. When the entry is saved,
+ * the blob URL is replaced with the public path of the uploaded file. The file goes to the field’s
+ * own `media_folder` if the option is defined, otherwise to the collection’s or the global one, and
+ * the field’s or the global `media_library` options, such as `max_file_size` and
+ * `transformations`, are applied. It rejects with an error if the file cannot be used. Files that
+ * are added but no longer referenced in the value when the entry is saved are discarded.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */

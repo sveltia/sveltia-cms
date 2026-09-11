@@ -79,6 +79,7 @@ describe('contents/fields/custom/helpers', () => {
 
   it('builds props for the React widget with immutable field data', () => {
     const onChange = vi.fn();
+    const addFile = vi.fn();
     const handleRef = vi.fn();
 
     const props = buildControlProps({
@@ -89,6 +90,7 @@ describe('contents/fields/custom/helpers', () => {
       draft: undefined,
       locale: 'en',
       onChange,
+      addFile,
       handleRef,
     });
 
@@ -96,6 +98,7 @@ describe('contents/fields/custom/helpers', () => {
     expect(props.forID).toBe('field-id');
     expect(props.classNameWrapper).toBe('custom-class');
     expect(props.onChange).toBe(onChange);
+    expect(props.addFile).toBe(addFile);
     expect(props.ref).toBe(handleRef);
     expect(props.field.get('widget')).toBe('text');
     expect(props.field.get('name')).toBe('custom');
@@ -111,6 +114,7 @@ describe('contents/fields/custom/helpers', () => {
       draft: undefined,
       locale: 'en',
       onChange: vi.fn(),
+      addFile: vi.fn(),
       handleRef: vi.fn(),
     });
 
@@ -127,6 +131,7 @@ describe('contents/fields/custom/helpers', () => {
       draft: undefined,
       locale: 'en',
       onChange: vi.fn(),
+      addFile: vi.fn(),
       handleRef: vi.fn(),
     });
 
@@ -143,6 +148,7 @@ describe('contents/fields/custom/helpers', () => {
       draft: undefined,
       locale: 'en',
       onChange: vi.fn(),
+      addFile: vi.fn(),
       handleRef: vi.fn(),
     });
 
@@ -162,6 +168,7 @@ describe('contents/fields/custom/helpers', () => {
       draft,
       locale: 'en',
       onChange: vi.fn(),
+      addFile: vi.fn(),
       handleRef: vi.fn(),
     });
 
@@ -177,6 +184,7 @@ describe('contents/fields/custom/helpers', () => {
       draft: undefined,
       locale: 'en',
       onChange: vi.fn(),
+      addFile: vi.fn(),
       handleRef: vi.fn(),
     });
 

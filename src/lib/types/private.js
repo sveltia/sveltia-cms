@@ -8,6 +8,7 @@
  * Collection,
  * CollectionDivider,
  * CollectionFile,
+ * CustomField,
  * DateTimeFieldProps,
  * DateTimeInputType,
  * EntryCollection,
@@ -1475,7 +1476,8 @@
  * Collected Media field during config parsing. It will be processed later to enable field-specific
  * asset folders.
  * @typedef {object} CollectedMediaField
- * @property {MediaField} fieldConfig File/Image field config.
+ * @property {MediaField | CustomField} fieldConfig File/Image field config, or the config of a
+ * custom field whose control can add files to the entry draft.
  * @property {ConfigParserContext} context Field parser context.
  */
 

@@ -1,3 +1,4 @@
+import { parseCustomFieldConfig } from '$lib/services/config/parser/fields/custom';
 import { parseDateTimeFieldConfig } from '$lib/services/config/parser/fields/datetime';
 import { parseFileFieldConfig } from '$lib/services/config/parser/fields/file';
 import { parseListFieldConfig } from '$lib/services/config/parser/fields/list';
@@ -6,6 +7,7 @@ import { parseObjectFieldConfig } from '$lib/services/config/parser/fields/objec
 import { parseRelationFieldConfig } from '$lib/services/config/parser/fields/relation';
 import { parseRichTextFieldConfig } from '$lib/services/config/parser/fields/rich-text';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
+import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 
 /**
  * @import { Field } from '$lib/types/public';
@@ -49,7 +51,12 @@ export const parseFieldConfig = (args) => {
     },
   };
 
-  parsers[fieldType]?.(newArgs);
+  // A field type that isn’t built in is a custom one. It’s parsed whether or not it has been
+  // registered, because the registration itself isn’t the parser’s concern.
+  const isBuiltIn = /** @type {string[]} */ (BUILTIN_FIELD_TYPES).includes(fieldType);
+  const parser = parsers[fieldType] ?? (isBuiltIn ? undefined : parseCustomFieldConfig);
+
+  parser?.(newArgs);
 
   if (fieldType === 'date') {
     addMessage({ ...newArgs, strKey: 'date_field_type' });

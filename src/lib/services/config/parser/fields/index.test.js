@@ -91,6 +91,42 @@ describe('Field Collectors', () => {
       expect(mediaField.context.typedKeyPath).toBe('cover_image');
     });
 
+    it('should collect media fields of custom field types', async () => {
+      const { parseFields } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts' },
+        typedKeyPath: '',
+      };
+
+      /** @type {any} */
+      const fields = [
+        {
+          name: 'photo',
+          widget: 'derived-image',
+          media_folder: '/uploads/photos',
+        },
+        {
+          // A `media_folder` on a built-in field type that doesn’t support it is left alone
+          name: 'title',
+          widget: 'string',
+          media_folder: '/uploads/titles',
+        },
+      ];
+
+      parseFields(fields, context, collectors);
+
+      expect(collectors.mediaFields.size).toBe(1);
+
+      const [mediaField] = [...collectors.mediaFields];
+
+      expect(mediaField.fieldConfig).toBe(fields[0]);
+      expect(mediaField.context.typedKeyPath).toBe('photo');
+    });
+
     it('should collect media fields in object field subfields', async () => {
       const { parseFields } = await import('.');
       const collectors = createCollectors();
