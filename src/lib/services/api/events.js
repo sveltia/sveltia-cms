@@ -74,8 +74,21 @@ export const callEventHooks = async ({
     return;
   }
 
-  // The hooks receive the entry as an Immutable Map
-  const { isMap } = await loadImmutable();
+  /** @type {import('immutable')['isMap']} */
+  let isMap;
+
+  // The hooks receive the entry as an Immutable Map. Saving must not depend on the library being
+  // reachable, so if it can’t be loaded, the hooks are skipped rather than the operation failing —
+  // possibly after the commit has already been made, in the case of a `post*` event
+  try {
+    ({ isMap } = await loadImmutable());
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(`Skipping the ${type} event hooks: Immutable.js could not be loaded`, error);
+
+    return;
+  }
+
   const { slug, locales } = entry;
   const otherLocales = Object.keys(locales).filter((locale) => locale !== defaultLocale);
   // A multi-file i18n entry can be missing its default locale file, in which case any locale

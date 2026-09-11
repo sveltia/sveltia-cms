@@ -725,6 +725,18 @@ describe('GitLab files service', () => {
       expect(result['file1.md'].size).toBe(0);
     });
 
+    test('stops the simulated progress when a request fails', async () => {
+      const files = /** @type {any} */ ([
+        { path: 'file1.md', sha: 'sha1', type: 'entry', size: 0, name: 'file1.md' },
+      ]);
+
+      vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Unauthorized'));
+
+      await expect(fetchFileContents(files)).rejects.toThrow('Unauthorized');
+      // Otherwise the interval would keep running behind the error message
+      expect(stopProgress).toHaveBeenCalledOnce();
+    });
+
     test('fetches file contents with large file count in multiple batches', async () => {
       vi.mocked(repository).isSelfHosted = false;
 

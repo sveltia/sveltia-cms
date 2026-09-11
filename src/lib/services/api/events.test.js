@@ -1,6 +1,7 @@
 import { fromJS, isMap } from 'immutable';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { loadImmutable } from '$lib/services/api/immutable';
 import { eventHookRegistry } from '$lib/services/api/registries';
 
 import { callEventHooks, SUPPORTED_EVENT_TYPES, UPDATABLE_EVENT_TYPES } from './events';
@@ -27,6 +28,9 @@ vi.mock('$lib/services/api/immutable', async () => {
   const immutable = await vi.importActual('immutable');
 
   return {
+    /**
+     *
+     */
     getImmutable: () => immutable,
     loadImmutable: vi.fn(async () => immutable),
     preloadImmutable: vi.fn(),
@@ -137,6 +141,36 @@ describe('events module', () => {
           entry: expect.any(Object),
         }),
       );
+    });
+
+    it('should skip the hooks rather than fail when Immutable.js cannot be loaded', async () => {
+      const handler = vi.fn();
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      eventHookRegistry.add(/** @type {any} */ ({ name: 'postSave', handler }));
+      vi.mocked(loadImmutable).mockRejectedValueOnce(new Error('offline'));
+
+      // Saving must not depend on the CDN; a `post*` hook failing here would surface an error
+      // after the commit has already been made
+      await expect(
+        callEventHooks(
+          /** @type {any} */ ({
+            type: 'postSave',
+            entry: { slug: 'test-post', locales: { en: { content: {}, path: 'posts/a.md' } } },
+            collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+            collectionFile: null,
+            isNew: false,
+          }),
+        ),
+      ).resolves.toBeUndefined();
+
+      expect(handler).not.toHaveBeenCalled();
+      expect(consoleError).toHaveBeenCalledWith(
+        'Skipping the postSave event hooks: Immutable.js could not be loaded',
+        expect.any(Error),
+      );
+
+      consoleError.mockRestore();
     });
 
     it('should fall back to another locale when the default one has no file', async () => {

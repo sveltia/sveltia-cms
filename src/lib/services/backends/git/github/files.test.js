@@ -573,6 +573,16 @@ describe('GitHub files service', () => {
       expect(stopProgress).toHaveBeenCalledOnce();
     });
 
+    test('stops the simulated progress when a request fails', async () => {
+      const fetchingFiles = /** @type {any[]} */ ([{ path: 'file.txt', sha: 'sha1', size: 100 }]);
+
+      vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Unauthorized'));
+
+      await expect(fetchFileContents(fetchingFiles)).rejects.toThrow('Unauthorized');
+      // Otherwise the interval would keep running behind the error message
+      expect(stopProgress).toHaveBeenCalledOnce();
+    });
+
     test('handles exactly chunk size boundary', async () => {
       const fetchingFiles = /** @type {any[]} */ (
         Array.from({ length: 250 }, (_, i) => ({

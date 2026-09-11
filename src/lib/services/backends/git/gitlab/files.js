@@ -369,9 +369,15 @@ export const fetchFileContents = async (fetchingFiles) => {
   const stopProgress = startSimulatedProgress(fetchingFiles.length);
   // Fetch blobs for entry/config files only
   const textPaths = fetchingFiles.filter(({ type }) => type !== 'asset').map(({ path }) => path);
-  const blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY);
+  /** @type {Awaited<ReturnType<typeof fetchBlobs>>} */
+  let blobs;
 
-  stopProgress();
+  try {
+    blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY);
+  } finally {
+    // Also on failure, so the interval doesn’t keep running behind the error message
+    stopProgress();
+  }
 
   return parseFileContents({ fetchingFiles, blobs });
 };

@@ -42,7 +42,17 @@ let turndownServicePromise;
 export const getTurndownService = async () => {
   turndownServicePromise ??= (async () => {
     /** @type {{ default: typeof import('turndown') }} */
-    const { default: TurndownService } = await loadModule('turndown', 'lib/turndown.browser.es.js');
+    let module;
+
+    try {
+      module = await loadModule('turndown', 'lib/turndown.browser.es.js');
+    } catch (error) {
+      // Let a later call try again, e.g. once the network is back
+      turndownServicePromise = undefined;
+      throw error;
+    }
+
+    const { default: TurndownService } = module;
 
     const service = new TurndownService({
       headingStyle: 'atx',

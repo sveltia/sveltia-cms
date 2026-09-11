@@ -204,21 +204,24 @@ export const fetchFileContents = async (fetchingFiles) => {
     chunks.push(fetchingFiles.slice(i, i + chunkSize));
   }
 
-  // Split the file list into chunks and repeat requests to avoid API timeout
-  await Promise.all(
-    chunks.map(async (chunk, index) => {
-      // Add a short delay to avoid Too Many Requests error
-      await sleep(index * 500);
+  try {
+    // Split the file list into chunks and repeat requests to avoid API timeout
+    await Promise.all(
+      chunks.map(async (chunk, index) => {
+        // Add a short delay to avoid Too Many Requests error
+        await sleep(index * 500);
 
-      const result = /** @type {{ repository: Record<string, any> }} */ (
-        await fetchGraphQL(getFileContentsQuery(chunk, index * chunkSize))
-      );
+        const result = /** @type {{ repository: Record<string, any> }} */ (
+          await fetchGraphQL(getFileContentsQuery(chunk, index * chunkSize))
+        );
 
-      Object.assign(results, result.repository);
-    }),
-  );
-
-  stopProgress();
+        Object.assign(results, result.repository);
+      }),
+    );
+  } finally {
+    // Also on failure, so the interval doesn’t keep running behind the error message
+    stopProgress();
+  }
 
   return parseFileContents(fetchingFiles, results);
 };

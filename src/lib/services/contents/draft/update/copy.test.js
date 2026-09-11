@@ -230,6 +230,23 @@ describe('draft/update/copy', () => {
       expect(await getTurndownService()).toBe(service);
       expect(MockTurndownService).toHaveBeenCalledTimes(1);
     });
+
+    it('should try again after a failed load', async () => {
+      // A fresh module instance, so the service cached by the previous test is out of the way
+      vi.resetModules();
+
+      const { getTurndownService: getFreshTurndownService } = await import('./copy');
+
+      vi.mocked(loadModule).mockRejectedValueOnce(new Error('offline'));
+
+      await expect(getFreshTurndownService()).rejects.toThrow('offline');
+
+      // The failure isn’t cached, so the next call loads the library
+      const service = await getFreshTurndownService();
+
+      expect(service).toBeDefined();
+      expect(loadModule).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('getCopyingFieldMap (internal)', () => {
