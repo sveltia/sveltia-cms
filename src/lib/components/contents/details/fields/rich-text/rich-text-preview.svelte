@@ -130,6 +130,26 @@
   });
 
   /**
+   * The Markdown split into blocks, each with a key that identifies it by content rather than by
+   * position: editing near the top of a long document then only re-renders the block that changed,
+   * instead of every block after it. Identical blocks are told apart by their occurrence.
+   * @type {{ key: string, block: string }[]}
+   */
+  const keyedBlocks = $derived.by(() => {
+    // A scratch counter for this computation, not state
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
+    const occurrences = /** @type {Map<string, number>} */ (new Map());
+
+    return splitMarkdownBlocks(markdown).map((block) => {
+      const occurrence = occurrences.get(block) ?? 0;
+
+      occurrences.set(block, occurrence + 1);
+
+      return { key: `${occurrence}\n${block}`, block };
+    });
+  });
+
+  /**
    * Fetch the syntax highlighter for any language used in the given Markdown, then trigger a
    * re-render so the code blocks pick up the highlighting.
    *
@@ -341,7 +361,7 @@
 
 <div role="none" data-rich-text-preview bind:this={container}>
   {#if observerReady && markdown}
-    {#each splitMarkdownBlocks(markdown) as block, index (`${index}-${block}`)}
+    {#each keyedBlocks as { key, block } (key)}
       {@html parseMarkdown(block)}
     {/each}
   {/if}
