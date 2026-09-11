@@ -4,7 +4,7 @@
 
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { validateEntry } from '$lib/services/contents/draft/validate';
   import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
   import { expandInvalidFields, highlightEditorField } from '$lib/services/contents/editor/fields';
@@ -16,8 +16,10 @@
    * @import { VisibleField } from '$lib/types/public';
    */
 
+  const entryDraft = getEntryDraftContext();
+
   const { validationMessages, collectionName, fileName, currentValues, isIndexFile, validities } =
-    $derived(/** @type {EntryDraft} */ ($entryDraft ?? {}));
+    $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
 
   const hasResults = $derived(
     Object.values(validities ?? {}).some((map) => !!Object.keys(map).length),
@@ -34,7 +36,7 @@
    * not whether it can be saved as it stands.
    */
   const validate = async () => {
-    const draft = $entryDraft;
+    const draft = entryDraft.current;
 
     if (!draft || validating) {
       return;
@@ -45,12 +47,8 @@
     // Custom field validators can be async, so wait for any in-flight results, as a save does
     await awaitCustomFieldValidations();
 
-    if (!validateEntry()) {
-      expandInvalidFields({
-        collectionName: draft.collectionName,
-        fileName: draft.fileName,
-        currentValues: draft.currentValues,
-      });
+    if (!validateEntry({ draft })) {
+      expandInvalidFields({ draft });
     }
 
     validating = false;
@@ -63,7 +61,7 @@
       variant="tertiary"
       size="small"
       label={_('entry_sidebar.validation.validate')}
-      disabled={!$entryDraft || validating}
+      disabled={!entryDraft.current || validating}
       onclick={() => {
         validate();
       }}

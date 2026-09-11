@@ -1,19 +1,17 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 
 import {
   copyFields,
-  copyFromLocale as copyFromLocaleUpdate,
+  copyFromLocale,
   getCopyingFieldMap,
   translateFields,
   turndownService,
   updateToast,
 } from './copy';
 
-vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/editor');
 vi.mock('$lib/services/contents/entry/fields');
 vi.mock('$lib/services/integrations/translators');
@@ -33,8 +31,13 @@ vi.mock('svelte/store', async () => {
 
 describe('draft/update/copy', () => {
   let mockEntryDraft;
-  let mockUpdate;
   let mockGet;
+  /**
+   * Copy or translate field values from another locale in the mock entry draft.
+   * @param {any} options Copy options.
+   * @returns {Promise<void>} Result.
+   */
+  const copyFromLocaleUpdate = (options) => copyFromLocale({ draft: mockEntryDraft, options });
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -59,23 +62,7 @@ describe('draft/update/copy', () => {
       },
     };
 
-    mockUpdate = vi.fn((fn) => {
-      if (typeof fn === 'function') {
-        return fn(mockEntryDraft);
-      }
-
-      return mockEntryDraft;
-    });
-
-    mockGet.mockImplementation((store) => {
-      if (store === entryDraft) {
-        return mockEntryDraft;
-      }
-
-      return undefined;
-    });
-
-    vi.mocked(entryDraft).update = mockUpdate;
+    mockGet.mockReturnValue(undefined);
 
     vi.mocked(getField).mockImplementation(({ keyPath }) => {
       if (keyPath === 'title') {
@@ -99,7 +86,6 @@ describe('draft/update/copy', () => {
       });
 
       expect(mockEntryDraft.currentValues.ja.title).toBe('English Title');
-      expect(mockUpdate).toHaveBeenCalled();
     });
 
     it('should not copy already populated fields', async () => {
@@ -160,16 +146,16 @@ describe('draft/update/copy', () => {
       });
 
       // Empty values should not be copied
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockEntryDraft.currentValues.ja.title).toBe('');
+      expect(mockEntryDraft.currentValues.ja.body).toBe('English Body');
     });
 
     it('should show info toast when no fields to copy', async () => {
+      const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
+
       // Set all target fields to same value as source (already copied)
       mockEntryDraft.currentValues.ja.title = 'English Title';
       mockEntryDraft.currentValues.ja.body = 'English Body';
-
-      // Clear any previous calls from setup
-      mockUpdate.mockClear();
 
       await copyFromLocaleUpdate({
         sourceLanguage: 'en',
@@ -177,17 +163,17 @@ describe('draft/update/copy', () => {
         translate: false,
       });
 
-      // Should not call update when nothing to copy
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(vi.mocked(copyFromLocaleToast.set)).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'info', message: 'copy.none', count: 0 }),
+      );
     });
 
     it('should show info toast when no fields to translate', async () => {
+      const { copyFromLocaleToast } = await import('$lib/services/contents/editor');
+
       // Set all target fields to already have content
       mockEntryDraft.currentValues.ja.title = 'Already has content';
       mockEntryDraft.currentValues.ja.body = 'Already has content';
-
-      // Clear any previous calls from setup
-      mockUpdate.mockClear();
 
       await copyFromLocaleUpdate({
         sourceLanguage: 'en',
@@ -195,8 +181,9 @@ describe('draft/update/copy', () => {
         translate: true,
       });
 
-      // Should not call update when nothing to translate
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(vi.mocked(copyFromLocaleToast.set)).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'info', message: 'translation.none', count: 0 }),
+      );
     });
 
     it('should call translateFields when translate is true', async () => {
@@ -215,10 +202,6 @@ describe('draft/update/copy', () => {
           };
         }
 
-        if (store === entryDraft) {
-          return mockEntryDraft;
-        }
-
         return undefined;
       });
 
@@ -229,7 +212,7 @@ describe('draft/update/copy', () => {
       });
 
       expect(mockTranslate).toHaveBeenCalled();
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockEntryDraft.currentValues.ja.title).toBe('Japanese Title');
     });
   });
 
@@ -479,10 +462,6 @@ describe('draft/update/copy', () => {
           };
         }
 
-        if (store === entryDraft) {
-          return mockEntryDraft;
-        }
-
         return undefined;
       });
 
@@ -533,10 +512,6 @@ describe('draft/update/copy', () => {
           };
         }
 
-        if (store === entryDraft) {
-          return mockEntryDraft;
-        }
-
         return undefined;
       });
 
@@ -584,10 +559,6 @@ describe('draft/update/copy', () => {
           };
         }
 
-        if (store === entryDraft) {
-          return mockEntryDraft;
-        }
-
         return undefined;
       });
 
@@ -627,10 +598,6 @@ describe('draft/update/copy', () => {
             markdownSupported: true,
             translate: mockTranslate,
           };
-        }
-
-        if (store === entryDraft) {
-          return mockEntryDraft;
         }
 
         return undefined;
@@ -682,10 +649,6 @@ describe('draft/update/copy', () => {
             markdownSupported: false, // triggers both parse() and turndown()
             translate: mockTranslate,
           };
-        }
-
-        if (store === entryDraft) {
-          return mockEntryDraft;
         }
 
         return undefined;

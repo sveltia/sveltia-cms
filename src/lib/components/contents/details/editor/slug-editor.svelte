@@ -5,8 +5,10 @@
 
   import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+
+  const entryDraft = getEntryDraftContext();
 
   let {
     /* eslint-disable prefer-const */
@@ -16,20 +18,20 @@
 
   const fieldId = $props.id();
 
-  const collection = $derived($entryDraft?.collection);
-  const collectionFile = $derived($entryDraft?.collectionFile);
+  const collection = $derived(entryDraft.current?.collection);
+  const collectionFile = $derived(entryDraft.current?.collectionFile);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
-  const slugEditor = $derived($entryDraft?.slugEditor[locale]);
+  const slugEditor = $derived(entryDraft.current?.slugEditor[locale]);
   const required = $derived(slugEditor === true);
   const readonly = $derived(slugEditor === 'readonly');
-  const validity = $derived($entryDraft?.validities[locale]._slug);
+  const validity = $derived(entryDraft.current?.validities[locale]._slug);
   const invalid = $derived(!readonly && validity?.valid === false);
 
   let inputValue = $state('');
 
   $effect(() => {
     if (readonly) {
-      inputValue = $entryDraft?.currentSlugs[locale] ?? '';
+      inputValue = entryDraft.current?.currentSlugs[locale] ?? '';
     }
   });
 
@@ -37,11 +39,13 @@
     void [inputValue];
 
     untrack(() => {
-      if ($entryDraft) {
+      const draft = entryDraft.current;
+
+      if (draft) {
         // Update the slug for the current locale and for the other readonly locales
-        Object.entries($entryDraft.slugEditor).forEach(([_locale, enabled]) => {
+        Object.entries(draft.slugEditor).forEach(([_locale, enabled]) => {
           if (locale === _locale || (locale === defaultLocale && enabled === 'readonly')) {
-            $entryDraft.currentSlugs[_locale] = inputValue;
+            draft.currentSlugs[_locale] = inputValue;
           }
         });
       }
@@ -49,7 +53,7 @@
   });
 </script>
 
-{#if $entryDraft}
+{#if entryDraft.current}
   <FieldEditorGroup>
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{_('slug')}</h4>

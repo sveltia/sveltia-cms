@@ -1,26 +1,23 @@
-import { get } from 'svelte/store';
-
 import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
 import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { DraftValueStoreKey, EntryDraft, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath, KeyValueField } from '$lib/types/public';
  */
 
 /**
- * Get key-value pairs from the draft store.
+ * Get key-value pairs from the entry draft.
  * @param {object} args Arguments.
- * @param {Writable<EntryDraft>} args.entryDraft Draft store.
+ * @param {EntryDraft} args.draft Entry draft.
  * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {FieldKeyPath} args.keyPath Field key path.
  * @param {InternalLocaleCode} args.locale Current pane’s locale.
  * @returns {[string, string][]} Key-value pairs.
  */
-export const getPairs = ({ entryDraft, valueStoreKey = 'currentValues', keyPath, locale }) =>
-  getPairsFromContent(get(entryDraft)[valueStoreKey][locale] ?? {}, keyPath);
+export const getPairs = ({ draft, valueStoreKey = 'currentValues', keyPath, locale }) =>
+  getPairsFromContent(draft[valueStoreKey][locale] ?? {}, keyPath);
 
 /**
  * Validate the given key-value pairs.
@@ -43,9 +40,9 @@ export const validatePairs = ({ pairs, edited }) =>
   });
 
 /**
- * Save the key-value pairs to the draft store.
+ * Save the key-value pairs to the entry draft.
  * @param {object} args Arguments.
- * @param {Writable<EntryDraft>} args.entryDraft Draft store.
+ * @param {EntryDraft} args.draft Entry draft.
  * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {KeyValueField} args.fieldConfig Field configuration.
  * @param {FieldKeyPath} args.keyPath Field key path.
@@ -53,7 +50,7 @@ export const validatePairs = ({ pairs, edited }) =>
  * @param {[string, string][]} args.pairs Key-value pairs.
  */
 export const savePairs = ({
-  entryDraft,
+  draft,
   valueStoreKey = 'currentValues',
   keyPath,
   locale,
@@ -61,21 +58,14 @@ export const savePairs = ({
   pairs,
 }) => {
   const { i18n } = fieldConfig;
+  const valueStore = draft[valueStoreKey];
 
-  entryDraft.update((draft) => {
-    if (draft) {
-      const valueStore = draft[valueStoreKey];
-
-      forEachTargetLocale({ valueStore, locale, i18n }, (content) => {
-        setPairs(content, keyPath, pairs);
-      });
-
-      // Keys edited in the default locale have to reach the other locales
-      if (i18n === 'duplicate_keys' && locale === draft.defaultLocale) {
-        syncDuplicateKeys({ valueStore, defaultLocale: locale, keyPath });
-      }
-    }
-
-    return draft;
+  forEachTargetLocale({ valueStore, locale, i18n }, (content) => {
+    setPairs(content, keyPath, pairs);
   });
+
+  // Keys edited in the default locale have to reach the other locales
+  if (i18n === 'duplicate_keys' && locale === draft.defaultLocale) {
+    syncDuplicateKeys({ valueStore, defaultLocale: locale, keyPath });
+  }
 };

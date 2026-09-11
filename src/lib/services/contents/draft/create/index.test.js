@@ -12,7 +12,6 @@ vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
 }));
 
 vi.mock('$lib/services/contents/draft', () => ({
-  entryDraft: { set: vi.fn(), subscribe: vi.fn() },
   revokeDraftFileURLs: vi.fn(),
 }));
 
@@ -20,7 +19,7 @@ vi.mock('$lib/services/contents/draft/backup', () => ({
   restoreBackupIfNeeded: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/draft/create/proxy', () => ({
+vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
   createProxy: vi.fn((args) => args.target),
 }));
 
@@ -35,13 +34,18 @@ vi.mock('$lib/services/contents/draft/defaults', async (importOriginal) => ({
 const { getIndexFile, isCollectionIndexFile } =
   await import('$lib/services/contents/collection/entries/index-file');
 
-const { entryDraft } = await import('$lib/services/contents/draft');
+const { revokeDraftFileURLs } = await import('$lib/services/contents/draft');
 const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');
-const { createProxy } = await import('$lib/services/contents/draft/create/proxy');
+const { createProxy } = await import('$lib/services/contents/draft/create/proxy.svelte');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
 const { cmsConfig } = await import('$lib/services/config');
 const { nestedFilterPath } = await import('$lib/services/contents/collection/nested');
 const { createDraft, getOriginalPath, getSlugEditorProp } = await import('.');
+/**
+ * Fake entry draft state.
+ * @type {{ current: any }}
+ */
+let entryDraft;
 
 describe('contents/draft/create/index', () => {
   describe('getOriginalPath', () => {
@@ -226,6 +230,8 @@ describe('contents/draft/create/index', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    entryDraft = { current: undefined };
+
     // Setup default mocks
     isCollectionIndexFile.mockReturnValue(false);
     getIndexFile.mockReturnValue(undefined);
@@ -256,9 +262,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection });
+      createDraft({ entryDraft, collection });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           collectionName: 'posts',
           isNew: true,
@@ -303,9 +309,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection, originalEntry });
+      createDraft({ entryDraft, collection, originalEntry });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           collectionName: 'posts',
           isNew: false,
@@ -345,11 +351,11 @@ describe('contents/draft/create/index', () => {
         locales: { en: { content: { title: 'Test Post' }, slug: 'test-post' } },
       };
 
-      createDraft({ collection, originalEntry });
+      createDraft({ entryDraft, collection, originalEntry });
 
       const expectedValues = { title: 'Test Post', chargeSpeed: '', aBoolean: true };
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           originalValues: { en: expectedValues },
           currentValues: { en: expectedValues },
@@ -381,9 +387,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection, collectionFile });
+      createDraft({ entryDraft, collection, collectionFile });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           collectionName: 'pages',
           fileName: 'about',
@@ -407,9 +413,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection });
+      createDraft({ entryDraft, collection });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           canPreview: false,
         }),
@@ -441,9 +447,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection, collectionFile });
+      createDraft({ entryDraft, collection, collectionFile });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           canPreview: false,
         }),
@@ -471,9 +477,9 @@ describe('contents/draft/create/index', () => {
         // no editor property → collection.editor?.preview = undefined
       };
 
-      createDraft({ collection });
+      createDraft({ entryDraft, collection });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           canPreview: true, // falls through to the literal `true` at line 120
         }),
@@ -493,9 +499,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection });
+      createDraft({ entryDraft, collection });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           defaultLocale: 'en',
           originalLocales: { en: true, fr: true, ja: false },
@@ -517,11 +523,11 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection });
+      createDraft({ entryDraft, collection });
 
       expect(createProxy).toHaveBeenCalledWith(
         expect.objectContaining({
-          draft: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
+          draft: entryDraft.current,
           locale: 'en',
           target: expect.any(Object),
         }),
@@ -543,7 +549,7 @@ describe('contents/draft/create/index', () => {
 
       const dynamicValues = { title: 'Dynamic Title' };
 
-      createDraft({ collection, dynamicValues });
+      createDraft({ entryDraft, collection, dynamicValues });
 
       expect(getDefaultValues).toHaveBeenCalledWith({
         fields: collection.fields,
@@ -568,9 +574,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection });
+      createDraft({ entryDraft, collection });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           defaultLocale: 'en',
           slugEditor: { en: true, ja: 'readonly' },
@@ -593,9 +599,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection });
+      createDraft({ entryDraft, collection });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           defaultLocale: 'en',
           slugEditor: { en: true, ja: true },
@@ -625,9 +631,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection, originalEntry });
+      createDraft({ entryDraft, collection, originalEntry });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           defaultLocale: 'en',
           slugEditor: { en: false },
@@ -657,9 +663,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection, originalEntry });
+      createDraft({ entryDraft, collection, originalEntry });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           defaultLocale: 'en',
           slugEditor: { en: false },
@@ -691,9 +697,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection, collectionFile });
+      createDraft({ entryDraft, collection, collectionFile });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           defaultLocale: 'en',
           slugEditor: { en: false },
@@ -721,9 +727,9 @@ describe('contents/draft/create/index', () => {
 
       getIndexFile.mockReturnValue(indexFile);
 
-      createDraft({ collection, isIndexFile: true });
+      createDraft({ entryDraft, collection, isIndexFile: true });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           isIndexFile: true,
           fields: indexFile.fields,
@@ -754,13 +760,33 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection, originalEntry });
+      createDraft({ entryDraft, collection, originalEntry });
 
-      expect(restoreBackupIfNeeded).toHaveBeenCalledWith({
-        collectionName: 'posts',
-        fileName: undefined,
-        slug: 'test-slug',
-      });
+      expect(restoreBackupIfNeeded).toHaveBeenCalledWith({ draft: entryDraft.current });
+    });
+
+    it('should replace the outgoing draft, releasing its file URLs', () => {
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        fields: [],
+        _i18n: {
+          allLocales: ['en'],
+          initialLocales: ['en'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+      };
+
+      const outgoingDraft = { files: { 'blob:one': {} } };
+
+      entryDraft.current = outgoingDraft;
+
+      const draft = createDraft({ entryDraft, collection });
+
+      expect(revokeDraftFileURLs).toHaveBeenCalledWith(outgoingDraft);
+      expect(entryDraft.current).toBe(draft);
+      expect(draft.interacted).toBe(false);
     });
 
     it('should not restore a backup for an entry awaiting deletion', () => {
@@ -785,7 +811,7 @@ describe('contents/draft/create/index', () => {
         workflow: { status: 'pending_deletion' },
       });
 
-      createDraft({ collection, originalEntry });
+      createDraft({ entryDraft, collection, originalEntry });
 
       expect(restoreBackupIfNeeded).not.toHaveBeenCalled();
     });
@@ -808,9 +834,9 @@ describe('contents/draft/create/index', () => {
         ja: { richTextField: '<p>リッチコンテンツ</p>' },
       };
 
-      createDraft({ collection, extraValues });
+      createDraft({ entryDraft, collection, extraValues });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           extraValues,
         }),
@@ -830,9 +856,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection });
+      createDraft({ entryDraft, collection });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           extraValues: { en: {}, ja: {} },
         }),
@@ -854,9 +880,9 @@ describe('contents/draft/create/index', () => {
 
       const expanderStates = { en: { section1: true }, _: {} };
 
-      createDraft({ collection, expanderStates });
+      createDraft({ entryDraft, collection, expanderStates });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           expanderStates,
         }),
@@ -876,9 +902,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection });
+      createDraft({ entryDraft, collection });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           expanderStates: { _: {} },
         }),
@@ -909,9 +935,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection, originalEntry });
+      createDraft({ entryDraft, collection, originalEntry });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           defaultLocale: 'en',
           originalSlugs: { _: 'test-post' },
@@ -945,9 +971,9 @@ describe('contents/draft/create/index', () => {
         },
       };
 
-      createDraft({ collection, originalEntry });
+      createDraft({ entryDraft, collection, originalEntry });
 
-      expect(entryDraft.set).toHaveBeenCalledWith(
+      expect(entryDraft.current).toEqual(
         expect.objectContaining({
           defaultLocale: 'en',
           // 'translationKey' not in {} → takes { _: slug } path

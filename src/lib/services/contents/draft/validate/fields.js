@@ -1,6 +1,3 @@
-import { get } from 'svelte/store';
-
-import { entryDraft } from '$lib/services/contents/draft';
 import { validateCustomField } from '$lib/services/contents/draft/validate/custom-fields';
 import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
@@ -92,16 +89,21 @@ export const VALIDATE_FIELD_FUNCTIONS = {
 };
 
 /**
- * Proxy handler for validity state. Exported for testing only.
+ * Finalize a validity state by adding the `valid` property, which is `true` when none of the
+ * constraint flags is set. Mimics the native `ValidityState.valid` property.
+ *
+ * This is a plain property rather than a getter or a Proxy trap: the validity state is stored in
+ * the reactive entry draft, whose `$state` proxy reads own properties only, so a computed property
+ * would be invisible there.
+ * @param {EntryValidityState} validity Validity state without the `valid` property.
+ * @returns {EntryValidityState} Validity state with the `valid` property.
  */
-export const validityProxyHandler = {
-  /**
-   * Proxy getter.
-   * @param {EntryValidityState} obj Object itself.
-   * @param {string} prop Property name.
-   * @returns {boolean | undefined} Property value.
-   */
-  get: (obj, prop) => (prop === 'valid' ? !Object.values(obj).some(Boolean) : obj[prop]),
+export const finalizeValidity = (validity) => {
+  const finalized = { ...validity };
+
+  finalized.valid = !Object.values(validity).some(Boolean);
+
+  return finalized;
 };
 
 /**
@@ -289,7 +291,7 @@ export const validateAnyField = (args) => {
     }
   }
 
-  return new Proxy(validity, validityProxyHandler);
+  return finalizeValidity(validity);
 };
 
 /**
@@ -392,15 +394,14 @@ export const validateList = ({ fieldConfig, validateArgs }) => {
 /**
  * Validate the field values and return the results. Mimic the native `ValidityState` API.
  * @param {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
- * @param {object} [options] Options.
+ * @param {object} options Options.
+ * @param {EntryDraft} options.draft Draft to validate.
  * @param {boolean} [options.enforceRequired] Whether an empty required field is an error. When
  * `false`, such a field is left unmarked, so nothing is shown for it in the editor either.
- * @param {EntryDraft} [options.draft] Draft to validate. Defaults to the one open in the editor.
  * @returns {ValidationResults} Validation results.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ValidityState
  */
-export const validateFields = (valueStoreKey, options = {}) => {
-  const { enforceRequired = true, draft = /** @type {EntryDraft} */ (get(entryDraft)) } = options;
+export const validateFields = (valueStoreKey, { draft, enforceRequired = true }) => {
   const { collectionName, fileName, isIndexFile, currentLocales } = draft;
   /** @type {LocaleValidityMap} */
   const validities = {};

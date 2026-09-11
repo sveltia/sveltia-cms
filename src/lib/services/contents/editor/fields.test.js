@@ -1,15 +1,67 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 
 import {
-  expandInvalidFields,
+  expandInvalidFields as _expandInvalidFields,
+  getInitialExpanderState as _getInitialExpanderState,
+  syncExpanderStates as _syncExpanderStates,
   getExpanderKeys,
-  getInitialExpanderState,
   highlightEditorField,
-  syncExpanderStates,
 } from './fields.js';
+
+/**
+ * Spy recording every write to the mock draft’s expander states.
+ */
+const expanderWrites = vi.fn();
+
+/**
+ * Create an expander state map that records its writes with {@link expanderWrites}.
+ * @param {Record<string, boolean>} [initial] Initial states.
+ * @returns {Record<string, boolean>} State map.
+ */
+const createExpanderStates = (initial = {}) =>
+  new Proxy(initial, {
+    /**
+     * Record the write, then apply it.
+     * @param {Record<string, boolean>} obj Target object.
+     * @param {string} key Key path.
+     * @param {boolean} value State.
+     * @returns {boolean} `true` to signal success.
+     */
+    set: (obj, key, value) => {
+      expanderWrites(key, value);
+      obj[key] = value;
+
+      return true;
+    },
+  });
+
+/**
+ * Mock entry draft.
+ * @type {any}
+ */
+let mockState;
+/**
+ * Sync the mock draft’s expander states.
+ * @param {Record<string, boolean>} stateMap Map of key path and state.
+ * @returns {void} Nothing.
+ */
+const syncExpanderStates = (stateMap) => _syncExpanderStates({ draft: mockState, stateMap });
+/**
+ * Get an initial expander state in the mock draft.
+ * @param {any} args Arguments other than the draft.
+ * @returns {boolean} State.
+ */
+const getInitialExpanderState = (args) => _getInitialExpanderState({ draft: mockState, ...args });
+
+/**
+ * Expand the invalid fields in the mock draft, with the given properties overridden.
+ * @param {object} [override] Draft properties to override.
+ * @returns {void} Nothing.
+ */
+const expandInvalidFields = (override = {}) =>
+  _expandInvalidFields({ draft: { ...mockState, ...override } });
 
 /**
  * Wait for the microtask in which `syncExpanderStates` writes its batched changes to the store.
@@ -19,42 +71,6 @@ const flush = async () => {
   await Promise.resolve();
   await Promise.resolve();
 };
-
-// Mock dependencies before importing
-vi.mock('$lib/services/contents/draft', () => {
-  // Create a proper mock store that can be used with get()
-  const mockDraft = {
-    expanderStates: { _: {} },
-    currentValues: {},
-    validities: {},
-    isIndexFile: false,
-  };
-
-  const mockEntryDraft = {
-    update: vi.fn().mockImplementation((fn) => {
-      const updated = fn(mockDraft);
-
-      if (updated) {
-        Object.assign(mockDraft, updated);
-      }
-
-      return updated;
-    }),
-    subscribe: vi.fn().mockImplementation((callback) => {
-      callback(mockDraft);
-      return vi.fn(); // unsubscribe function
-    }),
-    set: vi.fn(),
-    // Expose mock state for testing
-    _mockState: mockDraft,
-  };
-
-  // For get() function to work, we need to make the mock behave like a store
-  // The get() function checks for a subscribe method and calls it
-  return {
-    entryDraft: mockEntryDraft,
-  };
-});
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   LIST_KEY_PATH_REGEX: /\.\d+$/,
@@ -91,12 +107,14 @@ describe('editor/fields', () => {
     vi.clearAllMocks();
 
     // Reset the mock draft state
-    const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-    mockState.expanderStates = { _: {} };
-    mockState.currentValues = {};
-    mockState.validities = {};
-    mockState.isIndexFile = false;
+    mockState = {
+      collectionName: 'posts',
+      fileName: undefined,
+      expanderStates: { _: createExpanderStates() },
+      currentValues: {},
+      validities: {},
+      isIndexFile: false,
+    };
   });
 
   describe('function exports', () => {
@@ -230,35 +248,23 @@ describe('editor/fields', () => {
       }).not.toThrow();
     });
 
-    it('should call entryDraft.update when executed', async () => {
+    it('should write to the draft when executed', async () => {
       syncExpanderStates({
         'test.field': true,
       });
 
       // The function should attempt to update the draft
       await flush();
-      expect(entryDraft.update).toHaveBeenCalled();
+      expect(expanderWrites).toHaveBeenCalledWith('test.field', true);
     });
 
     it('should skip update when state already matches (lines 54-56)', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.expanderStates = {
-        _: {
+        _: createExpanderStates({
           'field.0': true,
           'content#': false,
-        },
+        }),
       };
-
-      entryDraft.update = vi.fn().mockImplementation((fn) => {
-        const updated = fn(mockState);
-
-        if (updated) {
-          Object.assign(mockState, updated);
-        }
-
-        return updated;
-      });
 
       syncExpanderStates({
         'field.0': true,
@@ -267,28 +273,16 @@ describe('editor/fields', () => {
 
       // Writing to the store would re-render the whole editor, so it must be skipped entirely
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
 
     it('should update state when it differs (lines 54-56 opposite branch)', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.expanderStates = {
-        _: {
+        _: createExpanderStates({
           'field.0': false,
           'content#': true,
-        },
+        }),
       };
-
-      entryDraft.update = vi.fn().mockImplementation((fn) => {
-        const updated = fn(mockState);
-
-        if (updated) {
-          Object.assign(mockState, updated);
-        }
-
-        return updated;
-      });
 
       syncExpanderStates({
         'field.0': true,
@@ -296,61 +290,51 @@ describe('editor/fields', () => {
       });
 
       await flush();
-      expect(entryDraft.update).toHaveBeenCalled();
+      expect(expanderWrites).toHaveBeenCalled();
       // After the update, the state should be changed
       expect(mockState.expanderStates._['field.0']).toBe(true);
       expect(mockState.expanderStates._['content#']).toBe(false);
     });
 
-    it('should handle null draft (line 54 if condition)', () => {
-      entryDraft.update = vi.fn().mockImplementation((fn) => {
-        // Pass null as the draft to test the if (_draft) condition
-        const updated = fn(null);
-
-        return updated;
-      });
-
-      expect(() => {
-        syncExpanderStates({
-          'field.0': true,
-          'content#': false,
-        });
-      }).not.toThrow();
-    });
-
     it('should do nothing when the draft has no expander states', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.expanderStates = undefined;
 
       syncExpanderStates({ 'field.0': true });
 
       await flush();
 
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
 
-    it('should coalesce calls made in the same tick into a single store write', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      entryDraft.update = vi.fn().mockImplementation((fn) => fn(mockState));
-
+    it('should coalesce calls made in the same tick into a single write', async () => {
       // One call per mounting Object/List editor
       syncExpanderStates({ 'a#': true });
       syncExpanderStates({ 'b#': false });
       syncExpanderStates({ 'c#': true });
 
+      // Nothing is written until the tick ends
+      expect(expanderWrites).not.toHaveBeenCalled();
+
       await flush();
 
-      expect(entryDraft.update).toHaveBeenCalledTimes(1);
+      expect(expanderWrites).toHaveBeenCalledTimes(3);
       expect(mockState.expanderStates._).toEqual({ 'a#': true, 'b#': false, 'c#': true });
     });
 
+    it('should keep the pending states of different drafts apart', async () => {
+      /** @type {any} */
+      const otherDraft = { expanderStates: { _: createExpanderStates() } };
+
+      syncExpanderStates({ 'a#': true });
+      _syncExpanderStates({ draft: otherDraft, stateMap: { 'b#': false } });
+
+      await flush();
+
+      expect(mockState.expanderStates._).toEqual({ 'a#': true });
+      expect(otherDraft.expanderStates._).toEqual({ 'b#': false });
+    });
+
     it('should treat a queued state as the current one', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      entryDraft.update = vi.fn().mockImplementation((fn) => fn(mockState));
-
       syncExpanderStates({ 'queued#': false });
 
       // Not written to the draft yet, but must already be visible to a remounting editor
@@ -364,15 +348,15 @@ describe('editor/fields', () => {
 
       await flush();
 
-      expect(entryDraft.update).toHaveBeenCalledTimes(1);
+      expect(expanderWrites).toHaveBeenCalledTimes(1);
       expect(mockState.expanderStates._['queued#']).toBe(false);
     });
 
-    it('should not write to the store when the state map is empty', async () => {
+    it('should not write to the draft when the state map is empty', async () => {
       syncExpanderStates({});
 
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
   });
 
@@ -420,25 +404,21 @@ describe('editor/fields', () => {
       }).not.toThrow();
     });
 
-    it('should call entryDraft.update when executed', async () => {
+    it('should not write to the draft when nothing has to be expanded', async () => {
       expandInvalidFields({
         collectionName: 'test',
         currentValues: { en: {} },
       });
 
-      // No expandable object/list ancestor, so the state map is empty and the store
-      // must be left untouched to avoid re-rendering the whole editor
+      // No expandable object/list ancestor, so the state map is empty and the draft
+      // must be left untouched
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
 
     it('should expand the parent object of an invalid nested field', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = { en: { 'details.title': { valid: false } } };
       mockState.currentValues = { en: { 'details.title': '' } };
-
-      entryDraft.update = vi.fn().mockImplementation((fn) => fn(mockState));
 
       vi.mocked(getField).mockImplementation(({ keyPath }) =>
         keyPath === 'details'
@@ -452,7 +432,7 @@ describe('editor/fields', () => {
       });
 
       await flush();
-      expect(entryDraft.update).toHaveBeenCalled();
+      expect(expanderWrites).toHaveBeenCalled();
       expect(mockState.expanderStates._['details#']).toBe(true);
     });
   });
@@ -484,11 +464,7 @@ describe('editor/fields', () => {
       }).not.toThrow();
     });
 
-    it('should handle entryDraft update calls', async () => {
-      const mockUpdate = vi.fn();
-
-      vi.mocked(entryDraft.update).mockImplementation(mockUpdate);
-
+    it('should handle draft writes', async () => {
       syncExpanderStates({
         field1: true,
         field2: false,
@@ -500,16 +476,14 @@ describe('editor/fields', () => {
       });
 
       // Only `syncExpanderStates` writes: `expandInvalidFields` has no invalid field to expand,
-      // so it produces an empty state map and must not touch the store
+      // so it produces an empty state map and must not touch the draft
       await flush();
-      expect(mockUpdate).toHaveBeenCalledTimes(1);
+      expect(expanderWrites).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('getInitialExpanderState - auto collapsed behavior', () => {
     it('should handle collapsed auto with values', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.currentValues = {
         en: {
           'details.title': 'Test',
@@ -527,8 +501,6 @@ describe('editor/fields', () => {
     });
 
     it('should handle collapsed auto without values', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.currentValues = {
         en: {},
       };
@@ -544,8 +516,6 @@ describe('editor/fields', () => {
 
     it('should reuse cached regex on repeated calls with the same key', () => {
       // Calling twice with the same key exercises the expanderRegexCache hit path.
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.currentValues = { en: { 'section.title': 'Hi' } };
 
       const result1 = getInitialExpanderState({ key: 'section#', locale: 'en', collapsed: 'auto' });
@@ -555,8 +525,6 @@ describe('editor/fields', () => {
     });
 
     it('should use existing state if available', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.expanderStates = { _: { 'test.0': true } };
 
       const result = getInitialExpanderState({
@@ -569,8 +537,6 @@ describe('editor/fields', () => {
     });
 
     it('should return false when existing state is false', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.expanderStates = { _: { 'test.0': false } };
 
       const result = getInitialExpanderState({
@@ -678,8 +644,6 @@ describe('editor/fields', () => {
 
   describe('expandInvalidFields - validity handling', () => {
     it('should handle invalid fields', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = {
         en: {
           title: { valid: false },
@@ -701,8 +665,6 @@ describe('editor/fields', () => {
     });
 
     it('should handle multiple locales with validities', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = {
         en: {
           field1: { valid: false },
@@ -729,8 +691,6 @@ describe('editor/fields', () => {
     });
 
     it('should skip valid fields', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = {
         en: {
           field1: { valid: true },
@@ -751,12 +711,10 @@ describe('editor/fields', () => {
       // No expandable object/list ancestor, so the state map is empty and the store
       // must be left untouched to avoid re-rendering the whole editor
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
 
     it('should expand expander keys for invalid fields (line 141)', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = {
         en: {
           'details.title': { valid: false },
@@ -790,12 +748,10 @@ describe('editor/fields', () => {
       // No expandable object/list ancestor, so the state map is empty and the store
       // must be left untouched to avoid re-rendering the whole editor
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
 
     it('should handle getExpanderKeys returning multiple keys for an invalid field', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       // Create a nested invalid field
       mockState.validities = {
         en: {
@@ -822,12 +778,10 @@ describe('editor/fields', () => {
       });
 
       await flush();
-      expect(entryDraft.update).toHaveBeenCalled();
+      expect(expanderWrites).toHaveBeenCalled();
     });
 
     it('should handle multiple invalid fields in the same locale (line 131)', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = {
         en: {
           field1: { valid: false },
@@ -866,13 +820,11 @@ describe('editor/fields', () => {
       // No expandable object/list ancestor, so the state map is empty and the store
       // must be left untouched to avoid re-rendering the whole editor
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
 
     it('should exercise the conditional branch at line 38 with regex test (collapsed auto)', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {
           'details.title': 'Test',
@@ -893,9 +845,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 with no matching values (collapsed auto)', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {
           'other.field': 'value',
@@ -914,9 +864,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 regex test with matching value (collapsed auto expands)', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {
           'section.title': 'My Section', // Matches regex ^section\.[^\.]+$ with truthy value
@@ -938,9 +886,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 regex test with falsy values (collapsed auto)', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {
           'section.title': '',
@@ -961,9 +907,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 with 0 as value (falsy but valid)', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {
           'count.value': 0, // 0 is falsy, so !!0 is false
@@ -983,9 +927,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 regex branch where regex.test fails', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {
           section: 'value', // No dot, so regex won't match ^section\.[^\.]+$
@@ -1006,9 +948,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 with mixed matching and non-matching keys', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {
           'meta.title': 'Test', // Matches regex and truthy
@@ -1029,9 +969,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 with first entry matching truthy condition', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {
           'author.name': 'John Doe', // First entry, matches and truthy
@@ -1051,9 +989,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 with regex special characters (needs escaping)', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {
           'config[].name': 'value', // Special regex chars that need escaping
@@ -1073,9 +1009,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 empty valueMap case', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: {}, // Empty map
       };
@@ -1092,9 +1026,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 with undefined locale in currentValues', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         // 'en' locale not present, will use ?? {} fallback
       };
@@ -1111,9 +1043,7 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 38 with null valueMap (using ?? fallback)', () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
-      mockState.expanderStates = { _: {} };
+      mockState.expanderStates = { _: createExpanderStates() };
       mockState.currentValues = {
         en: null, // Explicitly null
       };
@@ -1130,8 +1060,6 @@ describe('editor/fields', () => {
     });
 
     it('should exercise line 131 with multiple invalid fields per locale', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = {
         en: {
           field1: { valid: false },
@@ -1162,12 +1090,10 @@ describe('editor/fields', () => {
       // No expandable object/list ancestor, so the state map is empty and the store
       // must be left untouched to avoid re-rendering the whole editor
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
 
     it('should exercise line 131 forEach with getExpanderKeys returning keys (line 138-141)', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = {
         en: {
           'author.profile': { valid: false },
@@ -1207,12 +1133,10 @@ describe('editor/fields', () => {
       });
 
       await flush();
-      expect(entryDraft.update).toHaveBeenCalled();
+      expect(expanderWrites).toHaveBeenCalled();
     });
 
     it('should handle empty validityMap for a locale (line 131)', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = {
         en: {}, // Empty validity map for en
         ja: {
@@ -1239,12 +1163,10 @@ describe('editor/fields', () => {
       // No expandable object/list ancestor, so the state map is empty and the store
       // must be left untouched to avoid re-rendering the whole editor
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
 
     it('should skip valid fields at line 132-137 (valid: true)', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = {
         en: {
           field1: { valid: true }, // valid is true, should skip
@@ -1273,12 +1195,10 @@ describe('editor/fields', () => {
       // No expandable object/list ancestor, so the state map is empty and the store
       // must be left untouched to avoid re-rendering the whole editor
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
 
     it('should handle null validities (line 131 with ?? fallback)', async () => {
-      const mockState = /** @type {any} */ (entryDraft)._mockState;
-
       mockState.validities = null; // null validities, should use ?? {} fallback
 
       mockState.currentValues = {
@@ -1299,7 +1219,7 @@ describe('editor/fields', () => {
       // No expandable object/list ancestor, so the state map is empty and the store
       // must be left untouched to avoid re-rendering the whole editor
       await flush();
-      expect(entryDraft.update).not.toHaveBeenCalled();
+      expect(expanderWrites).not.toHaveBeenCalled();
     });
   });
 });

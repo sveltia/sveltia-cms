@@ -11,7 +11,7 @@
   import { getAssetByPath } from '$lib/services/assets';
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { getMediaKind } from '$lib/services/assets/kinds';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { activeInlineEditors } from '$lib/services/contents/editor';
   import { getUnsavedFileDisplayPath } from '$lib/services/contents/fields/file/helpers';
   import { formatFileName, isEquivalentFileExtension } from '$lib/services/utils/file';
@@ -45,6 +45,8 @@
    * shortcut or button, called with the destination index and the `data-action` of the activated
    * control. Reordering is only offered when this is given.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
   const {
@@ -131,8 +133,8 @@
     if (file) {
       const name = decodeURI(file.name.normalize());
 
-      return $entryDraft
-        ? getUnsavedFileDisplayPath({ draft: $entryDraft, blobURL: value, fileName: name })
+      return entryDraft.current
+        ? getUnsavedFileDisplayPath({ draft: entryDraft.current, blobURL: value, fileName: name })
         : name;
     }
 
@@ -178,7 +180,7 @@
    * which is the current field value, remains the same, so no other references have to be updated.
    */
   const renameFile = () => {
-    if (!file || !$entryDraft?.files[value]) {
+    if (!file || !entryDraft.current?.files[value]) {
       return;
     }
 
@@ -187,7 +189,7 @@
       lastModified: file.lastModified,
     });
 
-    $entryDraft.files[value].file = newFile;
+    entryDraft.current.files[value].file = newFile;
     file = newFile;
     editing = false;
   };
@@ -214,8 +216,8 @@
    */
   const updateProps = async () => {
     // Restore `file` after a draft backup is restored
-    if (value?.startsWith('blob:') && $entryDraft) {
-      file = $entryDraft.files[value]?.file;
+    if (value?.startsWith('blob:') && entryDraft.current) {
+      file = entryDraft.current.files[value]?.file;
     }
 
     // Update the `src` when an asset is selected

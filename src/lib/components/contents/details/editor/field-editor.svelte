@@ -14,7 +14,8 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { CustomEditor, editors } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
-  import { entryDraft, INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
+  import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
     resolveOriginalKeyPath,
     revertChanges,
@@ -34,6 +35,7 @@
    * @import { Writable } from 'svelte/store';
    * @import {
    * DraftValueStoreKey,
+   * EntryDraft,
    * FieldContext,
    * FieldEditorContext,
    * InternalLocaleCode,
@@ -63,6 +65,8 @@
    * @property {string} [componentName] Name of the parent rich text editor component, if any.
    * @property {DraftValueStoreKey} [valueStoreKey] Key to store the values in {@link EntryDraft}.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /**
    * Options for {@link sanitize}.
@@ -112,18 +116,15 @@
       return;
     }
 
+    const draft = entryDraft.current;
     const store = valueStoreKey;
     const _locale = locale;
     const _keyPath = keyPath;
 
     queueMicrotask(() => {
-      entryDraft.update((draft) => {
-        if (draft) {
-          draft[store][_locale][_keyPath] = value;
-        }
-
-        return draft;
-      });
+      if (draft) {
+        draft[store][_locale][_keyPath] = value;
+      }
     });
   };
 
@@ -171,9 +172,9 @@
   );
   const hasExtraLabels = $derived(!!(prefix || suffix || beforeInputLabel || afterInputLabel));
   const isList = $derived(fieldType === 'list' || multiple);
-  const collection = $derived($entryDraft?.collection);
-  const collectionFile = $derived($entryDraft?.collectionFile);
-  const originalValues = $derived($entryDraft?.originalValues);
+  const collection = $derived(entryDraft.current?.collection);
+  const collectionFile = $derived(entryDraft.current?.collectionFile);
+  const originalValues = $derived(entryDraft.current?.originalValues);
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
@@ -192,7 +193,7 @@
   const canCopy = $derived(!inEditorComponent && canTranslate && otherLocales.length);
   const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));
   const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
-  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({ valueMap, keyPath, isList, isCustomFieldType: !!customFieldType }),
@@ -236,11 +237,11 @@
 
     return equal(currentValue, originalValue);
   });
-  const validity = $derived($entryDraft?.validities[locale][keyPath]);
+  const validity = $derived(entryDraft.current?.validities[locale][keyPath]);
   const fieldLabel = $derived(label || fieldName);
   // An entry awaiting deletion is shown for reference only. Unlike `readonly`, which is also set
   // for a duplicated locale, this hides the options that would change the content
-  const pendingDeletion = $derived(isPendingDeletion($entryDraft?.originalEntry));
+  const pendingDeletion = $derived(isPendingDeletion(entryDraft.current?.originalEntry));
   const readonly = $derived(
     readonlyOption ||
       pendingDeletion ||
@@ -280,7 +281,7 @@
   {/if}
 {/snippet}
 
-{#if $entryDraft && canEdit && fieldType !== 'hidden'}
+{#if entryDraft.current && canEdit && fieldType !== 'hidden'}
   <FieldEditorGroup
     aria-label={_('x_field', { values: { field: fieldLabel } })}
     data-field-type={fieldType}
@@ -316,7 +317,11 @@
                   label={_('revert_changes')}
                   disabled={isRevertDisabled}
                   onclick={() => {
-                    revertChanges({ locale, keyPath });
+                    revertChanges({
+                      draft: /** @type {EntryDraft} */ (entryDraft.current),
+                      locale,
+                      keyPath,
+                    });
                   }}
                 />
               {/if}
@@ -332,7 +337,7 @@
     {/if}
     {#if validity?.valid === false}
       <ValidationError id="{fieldId}-error">
-        {$entryDraft?.validationMessages[locale][keyPath]?.join(' ')}
+        {entryDraft.current?.validationMessages[locale][keyPath]?.join(' ')}
       </ValidationError>
     {/if}
     <div role="none" class="field-wrapper" class:has-extra-labels={hasExtraLabels}>

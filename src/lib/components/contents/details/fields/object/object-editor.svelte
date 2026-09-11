@@ -13,8 +13,9 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { entryDraft, suspendAutoDuplication } from '$lib/services/contents/draft';
+  import { suspendAutoDuplication } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
     copyDefaultLocaleValues,
     forEachTargetLocale,
@@ -44,6 +45,8 @@
    * @property {object | undefined} currentValue Field value.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {FieldEditorContext} */
   const { fieldContext, valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
   // Hide the header/expander if in a single subfield list field because it’s redundant
@@ -72,13 +75,13 @@
   } = $derived(fieldConfig);
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
-  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
-  const collection = $derived($entryDraft?.collection);
-  const collectionName = $derived($entryDraft?.collectionName ?? '');
-  const collectionFile = $derived($entryDraft?.collectionFile);
-  const fileName = $derived($entryDraft?.fileName);
+  const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
+  const collection = $derived(entryDraft.current?.collection);
+  const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  const collectionFile = $derived(entryDraft.current?.collectionFile);
+  const fileName = $derived(entryDraft.current?.fileName);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
-  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const getFieldArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
   const hasValues = $derived(
     Object.entries(valueMap).some(
@@ -89,7 +92,9 @@
     fieldContext === 'rich-text-editor-component' || locale === defaultLocale || i18n !== false,
   );
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
-  const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
+  const parentExpanded = $derived(
+    entryDraft.current?.expanderStates?._[parentExpandedKeyPath] ?? true,
+  );
   const hasVariableTypes = $derived(Array.isArray(types));
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
   const type = $derived(hasVariableTypes ? valueMap[typeKeyPath] : undefined);
@@ -103,13 +108,18 @@
    * Initialize the expander state.
    */
   const initializeExpanderState = () => {
-    if (hideHeader) {
+    const draft = entryDraft.current;
+
+    if (hideHeader || !draft) {
       return;
     }
 
     const key = parentExpandedKeyPath;
 
-    syncExpanderStates({ [key]: getInitialExpanderState({ key, locale, collapsed }) });
+    syncExpanderStates({
+      draft,
+      stateMap: { [key]: getInitialExpanderState({ draft, key, locale, collapsed }) },
+    });
   };
 
   /**
@@ -123,13 +133,16 @@
     // Avoid triggering the Proxy’s i18n duplication strategy for descendant fields. The suspension
     // has to span the `await` below, because the values are written after it
     suspendAutoDuplication(async () => {
+      const draft = entryDraft.current;
+
+      if (!draft) {
+        return;
+      }
+
       if (_type) {
-        forEachTargetLocale(
-          { valueStore: $entryDraft?.[valueStoreKey], locale, i18n },
-          (_valueMap) => {
-            _valueMap[typeKeyPath] = _type;
-          },
-        );
+        forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (_valueMap) => {
+          _valueMap[typeKeyPath] = _type;
+        });
 
         // Wait until `subFields` is updated
         await tick();
@@ -143,21 +156,20 @@
       const newValueMap =
         locale === defaultLocale
           ? newContent
-          : copyDefaultLocaleValues(newContent, locale, { keyPathPrefix: keyPath });
+          : copyDefaultLocaleValues({
+              draft,
+              content: newContent,
+              targetLanguage: locale,
+              keyPathPrefix: keyPath,
+            });
 
-      forEachTargetLocale(
-        { valueStore: $entryDraft?.[valueStoreKey], locale, i18n },
-        (_valueMap, _locale) => {
-          // Apply the new values while keeping the Proxy
-          /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale] = Object.assign(
-            _valueMap,
-            toRaw({ ...newValueMap, ..._valueMap }),
-          );
+      forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (_valueMap) => {
+        // Apply the new values through the Proxy
+        Object.assign(_valueMap, toRaw({ ...newValueMap, ..._valueMap }));
 
-          // Disable validation
-          delete (/** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][keyPath]);
-        },
-      );
+        // Disable validation
+        delete _valueMap[keyPath];
+      });
     });
 
   /**
@@ -165,18 +177,18 @@
    */
   const removeFields = () => {
     forEachTargetLocale(
-      { valueStore: $entryDraft?.[valueStoreKey], locale, i18n },
-      (_valueMap, _locale) => {
+      { valueStore: entryDraft.current?.[valueStoreKey], locale, i18n },
+      (_valueMap) => {
         // Assign `null` before deleting each property, so the draft proxy can revalidate the field.
         // The value map is the draft’s live map, which is mutated right below, so its key paths
         // have to be read as they are right now
         getKeysByPrefix(_valueMap, `${keyPath}.`, { live: true }).forEach((_keyPath) => {
-          /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][_keyPath] = null;
-          delete $entryDraft?.[valueStoreKey][_locale][_keyPath];
+          _valueMap[_keyPath] = null;
+          delete _valueMap[_keyPath];
         });
 
         // Enable validation
-        /** @type {EntryDraft} */ ($entryDraft)[valueStoreKey][_locale][keyPath] = null;
+        _valueMap[keyPath] = null;
       },
     );
   };
@@ -242,7 +254,11 @@
         controlId="object-{fieldId}-item-list"
         expanded={parentExpanded}
         toggleExpanded={subFields.length
-          ? () => syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded })
+          ? () =>
+              syncExpanderStates({
+                draft: /** @type {EntryDraft} */ (entryDraft.current),
+                stateMap: { [parentExpandedKeyPath]: !parentExpanded },
+              })
           : undefined}
       >
         {#snippet endContent()}

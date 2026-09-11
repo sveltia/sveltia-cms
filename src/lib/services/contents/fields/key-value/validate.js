@@ -1,12 +1,9 @@
-import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getPairs } from '$lib/services/contents/fields/key-value/helpers';
+import { getPairsFromContent } from '$lib/services/contents/fields/key-value/pairs';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import {
- * EntryDraft,
  * EntryValidityState,
  * GetFieldArgs,
  * LocaleValidityMap,
@@ -53,8 +50,7 @@ export const validateKeyValueField = ({
     return { skip: true, keyPath };
   }
 
-  const _entryDraft = /** @type {Writable<EntryDraft>} */ (entryDraft);
-  const pairs = getPairs({ entryDraft: _entryDraft, keyPath: _keyPath, locale });
+  const pairs = getPairsFromContent(getFieldArgs.valueMap ?? {}, _keyPath);
 
   if (required && !pairs.length) {
     validity.valueMissing = true;

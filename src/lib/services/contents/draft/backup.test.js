@@ -1,11 +1,12 @@
-/* eslint-disable max-classes-per-file */
 // @ts-nocheck
 
+import { isProxy } from 'node:util/types';
+
 import { IndexedDB } from '@sveltia/utils/storage';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfigVersion } from '$lib/services/config';
-import { entryDraftInteracted, entryDraftModified } from '$lib/services/contents/draft';
+import { isDraftModified } from '$lib/services/contents/draft';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 vi.mock('@sveltia/utils/storage');
@@ -15,13 +16,16 @@ vi.mock('@sveltia/utils/file', () => ({
 vi.mock('@sveltia/utils/object', () => ({
   toRaw: vi.fn((val) => val),
 }));
+
+const { toRaw } = await import('@sveltia/utils/object');
+
 vi.mock('$lib/services/config');
-// Mock only the draft store itself, so the real `suspendAutoDuplication` still runs its callback
+// Mock only the modification check, so the real `suspendAutoDuplication` still runs its callback
 vi.mock('$lib/services/contents/draft', async () => ({
   ...(await vi.importActual('$lib/services/contents/draft')),
-  entryDraft: { subscribe: vi.fn(), set: vi.fn(), update: vi.fn() },
+  isDraftModified: vi.fn(() => false),
 }));
-vi.mock('$lib/services/contents/draft/create/proxy', () => ({
+vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
   createProxy: vi.fn(({ target }) => target),
 }));
 vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
@@ -61,6 +65,8 @@ describe('draft/backup', () => {
   };
 
   let mockGet;
+  /** Whether the user has interacted with the editor, copied into the drafts below. */
+  let interacted = false;
   let deleteBackup;
   let getBackup;
   let saveBackup;
@@ -70,7 +76,7 @@ describe('draft/backup', () => {
   let restoreBackupIfNeeded;
   let showBackupToastIfNeeded;
   let resetBackupToastState;
-  let entryDraft;
+  let scheduleBackup;
 
   // Mock IndexedDB constructor to return our mock (must happen before importing backup module)
   // Vitest 4 requires proper constructor with 'class' keyword
@@ -90,10 +96,10 @@ describe('draft/backup', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mockPrefs.useDraftBackup = true;
+    interacted = false;
 
     // Import module (happens once, uses the mock set up above)
     const backupModule = await import('./backup');
-    const draftModule = await import('.');
 
     ({
       deleteBackup,
@@ -105,8 +111,8 @@ describe('draft/backup', () => {
       restoreBackupIfNeeded,
       showBackupToastIfNeeded,
       resetBackupToastState,
+      scheduleBackup,
     } = backupModule);
-    ({ entryDraft } = draftModule);
 
     const { get } = await import('svelte/store');
 
@@ -122,20 +128,14 @@ describe('draft/backup', () => {
         return 'v1.0.0';
       }
 
-      if (store === entryDraftModified) {
-        return false;
-      }
-
-      if (store === entryDraftInteracted) {
-        return false;
-      }
-
       if (store === backupModule.backupToastState) {
         return { saved: false, restored: false, deleted: false };
       }
 
       return undefined;
     });
+    vi.mocked(isDraftModified).mockReturnValue(false);
+    interacted = false;
   });
 
   describe('deleteBackup', () => {
@@ -239,16 +239,10 @@ describe('draft/backup', () => {
           return 'v1.0.0';
         }
 
-        if (store === entryDraftModified) {
-          return true;
-        }
-
-        if (store === entryDraftInteracted) {
-          return true;
-        }
-
         return undefined;
       });
+      vi.mocked(isDraftModified).mockReturnValue(true);
+      interacted = true;
 
       const draft = {
         collectionName: 'posts',
@@ -258,6 +252,7 @@ describe('draft/backup', () => {
         currentSlugs: { en: 'my-post' },
         currentValues: { en: { title: 'My Post' } },
         files: {},
+        interacted,
       };
 
       await saveBackup(draft);
@@ -281,16 +276,10 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === entryDraftInteracted) {
-          return true;
-        }
-
-        if (store === entryDraftModified) {
-          return false;
-        }
-
         return undefined;
       });
+      vi.mocked(isDraftModified).mockReturnValue(false);
+      interacted = true;
 
       mockBackupDB.get.mockResolvedValue(undefined);
 
@@ -302,6 +291,7 @@ describe('draft/backup', () => {
         currentSlugs: { en: 'my-post' },
         currentValues: { en: { title: 'My Post' } },
         files: {},
+        interacted,
       };
 
       await saveBackup(draft);
@@ -319,16 +309,10 @@ describe('draft/backup', () => {
           return 'v1.0.0';
         }
 
-        if (store === entryDraftInteracted) {
-          return true;
-        }
-
-        if (store === entryDraftModified) {
-          return false;
-        }
-
         return undefined;
       });
+      vi.mocked(isDraftModified).mockReturnValue(false);
+      interacted = true;
 
       const existingBackup = {
         timestamp: new Date(),
@@ -351,6 +335,7 @@ describe('draft/backup', () => {
         currentSlugs: { en: 'my-post' },
         currentValues: { en: { title: 'My Post' } },
         files: {},
+        interacted,
       };
 
       await saveBackup(draft);
@@ -377,6 +362,7 @@ describe('draft/backup', () => {
         currentSlugs: { en: 'my-post' },
         currentValues: { en: { title: 'My Post' } },
         files: {},
+        interacted,
       };
 
       await saveBackup(draft);
@@ -397,16 +383,10 @@ describe('draft/backup', () => {
           return 'v1.0.0';
         }
 
-        if (store === entryDraftInteracted) {
-          return true;
-        }
-
-        if (store === entryDraftModified) {
-          return true;
-        }
-
         return undefined;
       });
+      vi.mocked(isDraftModified).mockReturnValue(true);
+      interacted = true;
 
       const draft = {
         collectionName: 'posts',
@@ -416,6 +396,7 @@ describe('draft/backup', () => {
         currentSlugs: { en: 'my-post' },
         currentValues: { en: { title: 'My Post' } },
         files: {},
+        interacted,
       };
 
       await saveBackup(draft);
@@ -434,16 +415,10 @@ describe('draft/backup', () => {
           return 'v1.0.0';
         }
 
-        if (store === entryDraftInteracted) {
-          return true;
-        }
-
-        if (store === entryDraftModified) {
-          return true;
-        }
-
         return undefined;
       });
+      vi.mocked(isDraftModified).mockReturnValue(true);
+      interacted = true;
 
       const draft = {
         collectionName: 'pages',
@@ -453,6 +428,7 @@ describe('draft/backup', () => {
         currentSlugs: { en: 'about' },
         currentValues: { en: { title: 'About' } },
         files: {},
+        interacted,
       };
 
       await saveBackup(draft);
@@ -475,16 +451,10 @@ describe('draft/backup', () => {
           return 'v1.0.0';
         }
 
-        if (store === entryDraftInteracted) {
-          return true;
-        }
-
-        if (store === entryDraftModified) {
-          return true;
-        }
-
         return undefined;
       });
+      vi.mocked(isDraftModified).mockReturnValue(true);
+      interacted = true;
 
       const draft = {
         collectionName: 'posts',
@@ -494,6 +464,7 @@ describe('draft/backup', () => {
         currentSlugs: {},
         currentValues: { en: { title: 'New Post' } },
         files: {},
+        interacted,
       };
 
       await saveBackup(draft);
@@ -506,22 +477,74 @@ describe('draft/backup', () => {
       );
     });
 
+    it('should store plain objects that IndexedDB can clone, not `$state` proxies', async () => {
+      const { toRaw: actualToRaw } = await vi.importActual('@sveltia/utils/object');
+
+      vi.mocked(toRaw).mockImplementation(actualToRaw);
+      vi.mocked(isDraftModified).mockReturnValue(true);
+
+      /**
+       * Stand in for a `$state` proxy, which the test environment doesn’t create: Svelte resolves
+       * to its server build here, where `$state()` returns the value as is.
+       * @param {object} value Value to wrap.
+       * @returns {object} Proxy.
+       */
+      const proxify = (value) => new Proxy(value, {});
+      const file = new File(['x'], 'image.png', { type: 'image/png' });
+
+      const draft = proxify({
+        collectionName: 'posts',
+        fileName: undefined,
+        originalEntry: { slug: 'my-post' },
+        currentLocales: proxify({ en: true, fr: false }),
+        currentSlugs: proxify({ en: 'my-post' }),
+        currentValues: proxify({ en: proxify({ title: 'My Post' }) }),
+        files: proxify({
+          'blob:http://localhost/abc': proxify({
+            file,
+            folder: proxify({ internalPath: 'img' }),
+            replace: false,
+          }),
+        }),
+        interacted: true,
+      });
+
+      await saveBackup(draft);
+
+      const [backup] = mockBackupDB.put.mock.calls[0];
+
+      /**
+       * Check whether the value or anything below it is a `Proxy`, which IndexedDB can’t clone.
+       * @param {any} value Value to check.
+       * @returns {boolean} Result.
+       */
+      const containsProxy = (value) =>
+        isProxy(value) ||
+        (!!value &&
+          typeof value === 'object' &&
+          !(value instanceof File) &&
+          Object.values(value).some(containsProxy));
+
+      expect(containsProxy(backup)).toBe(false);
+      expect(backup.currentLocales).toEqual({ en: true, fr: false });
+      expect(backup.currentValues).toEqual({ en: { title: 'My Post' } });
+      expect(backup.files['blob:http://localhost/abc']).toEqual({
+        file,
+        folder: { internalPath: 'img' },
+        replace: false,
+      });
+    });
+
     it('should not save backup when user has not interacted with the editor', async () => {
       mockGet.mockImplementation((store) => {
         if (store === prefs) {
           return { useDraftBackup: true };
         }
 
-        if (store === entryDraftInteracted) {
-          return false;
-        }
-
-        if (store === entryDraftModified) {
-          return true;
-        }
-
         return undefined;
       });
+      vi.mocked(isDraftModified).mockReturnValue(true);
+      interacted = false;
 
       const draft = {
         collectionName: 'posts',
@@ -531,6 +554,7 @@ describe('draft/backup', () => {
         currentSlugs: { en: 'my-post' },
         currentValues: { en: { title: 'My Post' } },
         files: {},
+        interacted,
       };
 
       await saveBackup(draft);
@@ -556,11 +580,11 @@ describe('draft/backup', () => {
       ...override,
     });
 
+    /** @type {any} */
+    let updatedDraft;
+
     beforeEach(() => {
-      // Make entryDraft.update call the callback with the mock draft
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        updater(createMockDraft());
-      });
+      updatedDraft = createMockDraft();
     });
 
     it('should restore backup to entry draft without errors', () => {
@@ -576,7 +600,7 @@ describe('draft/backup', () => {
       };
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -592,20 +616,15 @@ describe('draft/backup', () => {
         files: {},
       };
 
-      let updatedDraft;
+      updatedDraft = createMockDraft();
 
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        updatedDraft = createMockDraft();
-        updater(updatedDraft);
-      });
-
-      restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+      restoreBackup({ backup, draft: updatedDraft });
 
       expect(updatedDraft.currentLocales).toEqual({ en: true, fr: false });
       expect(updatedDraft.currentSlugs).toEqual({ en: 'restored-post' });
     });
 
-    it('should handle backup with blob URLs in values using entryDraft.update callback', () => {
+    it('should handle backup with blob URLs in values', () => {
       const testFile = new File(['file content'], 'image.png', { type: 'image/png' });
 
       const backup = {
@@ -620,7 +639,7 @@ describe('draft/backup', () => {
       };
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -647,7 +666,7 @@ describe('draft/backup', () => {
       };
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -667,14 +686,9 @@ describe('draft/backup', () => {
       };
 
       /** @type {any} */
-      let updatedDraft;
+      updatedDraft = createMockDraft();
 
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        updatedDraft = createMockDraft();
-        updater(updatedDraft);
-      });
-
-      restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+      restoreBackup({ backup, draft: updatedDraft });
 
       // Legacy format is no longer migrated — the blob URL is skipped entirely
       expect(Object.keys(updatedDraft.files)).toHaveLength(0);
@@ -693,7 +707,7 @@ describe('draft/backup', () => {
       };
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -720,7 +734,7 @@ describe('draft/backup', () => {
       };
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -738,17 +752,13 @@ describe('draft/backup', () => {
 
       const existingLocaleContent = { title: 'Old Title', body: 'Old Body', extra: 'keep' };
 
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        const draft = createMockDraft({
-          currentValues: { en: existingLocaleContent },
-          originalValues: { en: { title: 'Original' } },
-        });
-
-        updater(draft);
+      updatedDraft = createMockDraft({
+        currentValues: { en: existingLocaleContent },
+        originalValues: { en: { title: 'Original' } },
       });
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -765,17 +775,13 @@ describe('draft/backup', () => {
       };
 
       // Draft only has 'en' locale currently
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        const draft = createMockDraft({
-          currentValues: { en: {} }, // no 'fr' locale
-          originalValues: {},
-        });
-
-        updater(draft);
+      updatedDraft = createMockDraft({
+        currentValues: { en: {} }, // no 'fr' locale
+        originalValues: {},
       });
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: 'about' });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -791,17 +797,13 @@ describe('draft/backup', () => {
         files: {},
       };
 
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        const draft = createMockDraft({
-          currentValues: { en: {}, fr: {} },
-          originalValues: { en: {} }, // fr has no originalValues
-        });
-
-        updater(draft);
+      updatedDraft = createMockDraft({
+        currentValues: { en: {}, fr: {} },
+        originalValues: { en: {} }, // fr has no originalValues
       });
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -818,28 +820,7 @@ describe('draft/backup', () => {
       };
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'pages', fileName: 'about' });
-      }).not.toThrow();
-    });
-
-    it('should return draft unchanged when draft is null in update callback', () => {
-      const backup = {
-        timestamp: new Date(),
-        cmsConfigVersion: 'v1.0.0',
-        collectionName: 'posts',
-        slug: 'my-post',
-        currentLocales: { en: true },
-        currentSlugs: { en: 'my-post' },
-        currentValues: { en: { title: 'Title' } },
-        files: {},
-      };
-
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        updater(null);
-      });
-
-      expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -863,7 +844,7 @@ describe('draft/backup', () => {
       };
 
       expect(() => {
-        restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+        restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
     });
 
@@ -886,14 +867,9 @@ describe('draft/backup', () => {
         files: {},
       };
 
-      let updatedDraft;
+      updatedDraft = createMockDraft();
 
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        updatedDraft = createMockDraft();
-        updater(updatedDraft);
-      });
-
-      restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+      restoreBackup({ backup, draft: updatedDraft });
 
       expect(updatedDraft.currentValues.en.author).toEqual({});
       expect(updatedDraft.currentValues.en['author.name']).toBe('Alice');
@@ -917,18 +893,12 @@ describe('draft/backup', () => {
         files: {},
       };
 
-      let updatedDraft;
-
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        updatedDraft = createMockDraft({
-          collection: { reorder: true },
-          originalEntry: { locales: { en: { content: { title: 'Old Title', order: 7 } } } },
-        });
-
-        updater(updatedDraft);
+      updatedDraft = createMockDraft({
+        collection: { reorder: true },
+        originalEntry: { locales: { en: { content: { title: 'Old Title', order: 7 } } } },
       });
 
-      restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+      restoreBackup({ backup, draft: updatedDraft });
 
       // The restored order should use the live value (7), not the stale backup value (3)
       expect(updatedDraft.currentValues.en.order).toBe(7);
@@ -952,22 +922,16 @@ describe('draft/backup', () => {
         files: {},
       };
 
-      let capturedValueMap;
-
-      vi.mocked(entryDraft.update).mockImplementation((updater) => {
-        const draft = createMockDraft({
-          collection: { reorder: true },
-          originalEntry: undefined, // new entry — no live order
-          currentValues: { en: {} },
-          originalValues: { en: {} },
-        });
-
-        // Intercept the valueMap mutation
-        updater(draft);
-        capturedValueMap = backup.currentValues.en;
+      updatedDraft = createMockDraft({
+        collection: { reorder: true },
+        originalEntry: undefined, // new entry — no live order
+        currentValues: { en: {} },
+        originalValues: { en: {} },
       });
 
-      restoreBackup({ backup, collectionName: 'posts', fileName: undefined });
+      restoreBackup({ backup, draft: updatedDraft });
+
+      const capturedValueMap = backup.currentValues.en;
 
       // The order field should be removed so assignManualSortOrder can recompute it at save time
       expect('order' in capturedValueMap).toBe(false);
@@ -1001,6 +965,24 @@ describe('draft/backup', () => {
   });
 
   describe('restoreBackupIfNeeded', () => {
+    /**
+     * Create a draft to restore a backup to.
+     * @param {object} [override] Override properties for the draft.
+     * @returns {any} Draft.
+     */
+    const createRestoreDraft = (override = {}) => ({
+      collectionName: 'posts',
+      fileName: undefined,
+      originalEntry: { slug: 'my-post' },
+      currentLocales: { en: true },
+      currentSlugs: { en: 'my-post' },
+      currentValues: { en: {} },
+      originalValues: { en: {} },
+      files: {},
+      interacted: false,
+      ...override,
+    });
+
     it('should not restore if preference is disabled', async () => {
       mockPrefs.useDraftBackup = false;
 
@@ -1012,7 +994,7 @@ describe('draft/backup', () => {
         return undefined;
       });
 
-      await restoreBackupIfNeeded({ collectionName: 'posts', slug: 'my-post' });
+      await restoreBackupIfNeeded({ draft: createRestoreDraft() });
 
       expect(mockBackupDB.get).not.toHaveBeenCalled();
     });
@@ -1031,7 +1013,7 @@ describe('draft/backup', () => {
 
       mockBackupDB.get.mockResolvedValue(undefined);
 
-      await restoreBackupIfNeeded({ collectionName: 'posts', slug: 'my-post' });
+      await restoreBackupIfNeeded({ draft: createRestoreDraft() });
 
       // Should proceed to check for backup since useDraftBackup defaults to true
       expect(mockBackupDB.get).toHaveBeenCalledWith(['posts', 'my-post']);
@@ -1052,7 +1034,7 @@ describe('draft/backup', () => {
 
       mockBackupDB.get.mockResolvedValue(undefined);
 
-      await restoreBackupIfNeeded({ collectionName: 'posts', slug: 'my-post' });
+      await restoreBackupIfNeeded({ draft: createRestoreDraft() });
 
       expect(mockBackupDB.get).toHaveBeenCalledWith(['posts', 'my-post']);
     });
@@ -1083,7 +1065,7 @@ describe('draft/backup', () => {
 
       mockBackupDB.get.mockResolvedValue(backup);
 
-      const promise = restoreBackupIfNeeded({ collectionName: 'posts', slug: 'my-post' });
+      const promise = restoreBackupIfNeeded({ draft: createRestoreDraft() });
 
       // Wait a bit for promise to start
       await new Promise((resolve) => {
@@ -1143,7 +1125,7 @@ describe('draft/backup', () => {
 
       mockBackupDB.get.mockResolvedValue(backup);
 
-      const promise = restoreBackupIfNeeded({ collectionName: 'posts', slug: 'my-post' });
+      const promise = restoreBackupIfNeeded({ draft: createRestoreDraft() });
 
       // Wait a bit for promise to start
       await new Promise((resolve) => {
@@ -1194,9 +1176,11 @@ describe('draft/backup', () => {
 
       mockBackupDB.get.mockResolvedValue(undefined);
 
-      await restoreBackupIfNeeded({ collectionName: 'pages', fileName: 'about' });
+      await restoreBackupIfNeeded({
+        draft: createRestoreDraft({ collectionName: 'pages', fileName: 'about' }),
+      });
 
-      expect(mockBackupDB.get).toHaveBeenCalledWith(['pages', '']);
+      expect(mockBackupDB.get).toHaveBeenCalledWith(['pages', 'about']);
     });
 
     it('should return early when dialog is dismissed without selecting an option', async () => {
@@ -1225,7 +1209,7 @@ describe('draft/backup', () => {
 
       mockBackupDB.get.mockResolvedValue(backup);
 
-      const promise = restoreBackupIfNeeded({ collectionName: 'posts', slug: 'my-post' });
+      const promise = restoreBackupIfNeeded({ draft: createRestoreDraft() });
 
       await new Promise((resolve) => {
         setTimeout(resolve, 10);
@@ -1262,7 +1246,7 @@ describe('draft/backup', () => {
         return undefined;
       });
 
-      await showBackupToastIfNeeded();
+      await showBackupToastIfNeeded(undefined);
 
       expect(mockBackupDB.get).not.toHaveBeenCalled();
     });
@@ -1276,14 +1260,10 @@ describe('draft/backup', () => {
           return {};
         }
 
-        if (store === entryDraft) {
-          return null;
-        }
-
         return undefined;
       });
 
-      await showBackupToastIfNeeded();
+      await showBackupToastIfNeeded(null);
 
       // Should proceed past the pref check (draft is null so no DB call)
       expect(mockBackupDB.get).not.toHaveBeenCalled();
@@ -1295,14 +1275,10 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === entryDraft) {
-          return null;
-        }
-
         return undefined;
       });
 
-      await showBackupToastIfNeeded();
+      await showBackupToastIfNeeded(null);
 
       expect(mockBackupDB.get).not.toHaveBeenCalled();
     });
@@ -1313,10 +1289,6 @@ describe('draft/backup', () => {
           return { useDraftBackup: true };
         }
 
-        if (store === entryDraft) {
-          return { collectionName: 'posts', originalEntry: { slug: 'my-post' } };
-        }
-
         if (store === backupToastState) {
           return { saved: true, restored: false, deleted: false };
         }
@@ -1324,7 +1296,10 @@ describe('draft/backup', () => {
         return undefined;
       });
 
-      await showBackupToastIfNeeded();
+      await showBackupToastIfNeeded({
+        collectionName: 'posts',
+        originalEntry: { slug: 'my-post' },
+      });
 
       expect(mockBackupDB.get).not.toHaveBeenCalled();
     });
@@ -1337,10 +1312,6 @@ describe('draft/backup', () => {
 
         if (store === cmsConfigVersion) {
           return 'v1.0.0';
-        }
-
-        if (store === entryDraft) {
-          return { collectionName: 'posts', originalEntry: { slug: 'my-post' } };
         }
 
         if (store === backupToastState) {
@@ -1363,7 +1334,10 @@ describe('draft/backup', () => {
 
       mockBackupDB.get.mockResolvedValue(backup);
 
-      await showBackupToastIfNeeded();
+      await showBackupToastIfNeeded({
+        collectionName: 'posts',
+        originalEntry: { slug: 'my-post' },
+      });
 
       expect(mockBackupDB.get).toHaveBeenCalledWith(['posts', 'my-post']);
       // The backupToastState.set is called when backup exists, covering line 263
@@ -1380,10 +1354,6 @@ describe('draft/backup', () => {
           return 'v1.0.0';
         }
 
-        if (store === entryDraft) {
-          return { collectionName: 'posts', originalEntry: { slug: 'no-backup-post' } };
-        }
-
         if (store === backupToastState) {
           return { saved: false, restored: false, deleted: false };
         }
@@ -1393,7 +1363,10 @@ describe('draft/backup', () => {
 
       mockBackupDB.get.mockResolvedValue(null);
 
-      await showBackupToastIfNeeded();
+      await showBackupToastIfNeeded({
+        collectionName: 'posts',
+        originalEntry: { slug: 'no-backup-post' },
+      });
 
       expect(mockBackupDB.get).toHaveBeenCalledWith(['posts', 'no-backup-post']);
       // When backup is null, backupToastState.set should NOT be called
@@ -1410,11 +1383,6 @@ describe('draft/backup', () => {
           return 'v1.0.0';
         }
 
-        if (store === entryDraft) {
-          // New entry: no originalEntry
-          return { collectionName: 'posts', originalEntry: undefined };
-        }
-
         if (store === backupToastState) {
           return { saved: false, restored: false, deleted: false };
         }
@@ -1424,7 +1392,7 @@ describe('draft/backup', () => {
 
       mockBackupDB.get.mockResolvedValue(null);
 
-      await showBackupToastIfNeeded();
+      await showBackupToastIfNeeded({ collectionName: 'posts', originalEntry: undefined });
 
       // Called with '' slug (new entry: originalEntry?.slug → undefined → ?? '' → '')
       expect(mockBackupDB.get).toHaveBeenCalledWith(['posts', '']);
@@ -1450,6 +1418,65 @@ describe('draft/backup', () => {
         restored: false,
         deleted: false,
       });
+    });
+  });
+
+  describe('scheduleBackup', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.mocked(isDraftModified).mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    /**
+     * Create a draft the user has interacted with.
+     * @param {string} title Title.
+     * @returns {any} Draft.
+     */
+    const createDraft = (title) => ({
+      collectionName: 'posts',
+      fileName: undefined,
+      originalEntry: { slug: 'test-post' },
+      currentLocales: { en: true },
+      currentSlugs: { en: 'test-post' },
+      currentValues: { en: { title } },
+      files: {},
+      interacted: true,
+    });
+
+    it('should save a backup once the draft has settled', async () => {
+      scheduleBackup(createDraft('Hello'));
+
+      expect(mockBackupDB.put).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(600);
+
+      expect(mockBackupDB.put).toHaveBeenCalledWith(
+        expect.objectContaining({ currentValues: { en: { title: 'Hello' } } }),
+      );
+    });
+
+    it('should only save the latest of the drafts scheduled in a row', async () => {
+      scheduleBackup(createDraft('Hel'));
+      await vi.advanceTimersByTimeAsync(300);
+      scheduleBackup(createDraft('Hello'));
+      await vi.advanceTimersByTimeAsync(600);
+
+      expect(mockBackupDB.put).toHaveBeenCalledTimes(1);
+      expect(mockBackupDB.put).toHaveBeenCalledWith(
+        expect.objectContaining({ currentValues: { en: { title: 'Hello' } } }),
+      );
+    });
+
+    it('should drop a pending backup when the draft is gone', async () => {
+      scheduleBackup(createDraft('Hello'));
+      scheduleBackup(null);
+      await vi.advanceTimersByTimeAsync(600);
+
+      expect(mockBackupDB.put).not.toHaveBeenCalled();
     });
   });
 
@@ -1499,89 +1526,6 @@ describe('draft/backup', () => {
     });
   });
 
-  describe('entryDraft subscription', () => {
-    it('should call saveBackup after timeout when draft and backupDB exist', async () => {
-      vi.useFakeTimers();
-
-      vi.resetModules();
-
-      // Re-apply the IndexedDB mock after module reset
-      vi.doMock('@sveltia/utils/storage', () => {
-        /**
-         * Mock IndexedDB.
-         */
-        class MockDB {
-          /**
-           * Constructor.
-           */
-          constructor() {
-            this.get = vi.fn().mockResolvedValue(undefined);
-            this.put = vi.fn().mockResolvedValue(undefined);
-            this.delete = vi.fn().mockResolvedValue(undefined);
-          }
-        }
-
-        return { IndexedDB: MockDB };
-      });
-
-      // Mock entryDraft to call subscriber with a draft right away
-      vi.doMock('$lib/services/contents/draft', () => ({
-        entryDraft: {
-          subscribe: vi.fn((cb) => {
-            cb({
-              collectionName: 'posts',
-              fileName: undefined,
-              originalEntry: { slug: 'test-post' },
-              currentLocales: {},
-              currentSlugs: {},
-              currentValues: {},
-              files: {},
-            });
-
-            return vi.fn();
-          }),
-        },
-        entryDraftModified: {
-          subscribe: vi.fn((cb) => {
-            cb(true);
-
-            return vi.fn();
-          }),
-        },
-        entryDraftInteracted: { set: vi.fn() },
-        i18nAutoDupEnabled: { set: vi.fn() },
-      }));
-
-      vi.doMock('$lib/services/backends', () => ({
-        backend: {
-          subscribe: vi.fn((callback) => {
-            callback({ repository: { databaseName: 'test-db' } });
-
-            return vi.fn();
-          }),
-        },
-      }));
-
-      vi.doMock('svelte/store', async () => {
-        const actual = await vi.importActual('svelte/store');
-
-        return {
-          ...actual,
-          get: vi.fn(() => ({ useDraftBackup: true })),
-        };
-      });
-
-      const backupModule = await import('./backup');
-
-      // Advance time past the 500ms debounce
-      vi.advanceTimersByTime(600);
-
-      vi.useRealTimers();
-
-      expect(backupModule).toBeDefined();
-    });
-  });
-
   describe('backend subscription false branch (L276 false — _backend falsy)', () => {
     it('should set backupDB to null when backend fires with null', async () => {
       // The outer if is `_backend && !backupDB`. When _backend is null/falsy, the condition is
@@ -1595,53 +1539,6 @@ describe('draft/backup', () => {
             return vi.fn();
           }),
         },
-      }));
-
-      const mod = await import('./backup');
-
-      expect(mod).toBeDefined();
-    });
-  });
-
-  describe('entryDraft subscription resets interaction flag on new draft', () => {
-    it('should reset entryDraftInteracted when a draft with a new id is loaded', async () => {
-      vi.resetModules();
-
-      const mockInteracted = { set: vi.fn() };
-
-      vi.doMock('$lib/services/contents/draft', () => ({
-        entryDraft: {
-          subscribe: vi.fn((cb) => {
-            cb({ id: 'draft-1', collectionName: 'posts' });
-            return vi.fn();
-          }),
-        },
-        entryDraftModified: { subscribe: vi.fn(() => vi.fn()) },
-        entryDraftInteracted: mockInteracted,
-        i18nAutoDupEnabled: { set: vi.fn() },
-      }));
-
-      await import('./backup');
-
-      expect(mockInteracted.set).toHaveBeenCalledWith(false);
-    });
-  });
-
-  describe('entryDraft subscription false branch (L295 false — draft falsy)', () => {
-    it('should not set a timeout when draft is null', async () => {
-      // `if (draft && backupDB)` → false when draft is null/falsy → L295 false branch.
-      vi.resetModules();
-
-      vi.doMock('$lib/services/contents/draft', () => ({
-        entryDraft: {
-          subscribe: vi.fn((cb) => {
-            cb(null); // falsy draft → L295 false (no setTimeout)
-            return vi.fn();
-          }),
-        },
-        entryDraftModified: { subscribe: vi.fn(() => vi.fn()) },
-        entryDraftInteracted: { set: vi.fn() },
-        i18nAutoDupEnabled: { set: vi.fn() },
       }));
 
       const mod = await import('./backup');

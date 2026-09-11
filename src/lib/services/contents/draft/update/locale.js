@@ -1,15 +1,13 @@
 import { toRaw } from '@sveltia/utils/object';
-import { get } from 'svelte/store';
 
-import { entryDraft, suspendAutoDuplication } from '$lib/services/contents/draft';
-import { createProxy } from '$lib/services/contents/draft/create/proxy';
+import { suspendAutoDuplication } from '$lib/services/contents/draft';
+import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getDuplicateKeysFieldKeyPaths } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  * @import { Field, FieldKeyPath, HiddenField } from '$lib/types/public';
  */
@@ -43,19 +41,20 @@ export const forEachTargetLocale = ({ valueStore, locale, i18n }, callback) => {
 
 /**
  * Populate the given localized content with values from the default locale.
- * @param {FlattenedEntryContent} content Original content for the current locale.
- * @param {InternalLocaleCode} targetLanguage Target locale.
- * @param {object} [options] Options.
- * @param {FieldKeyPath} [options.keyPathPrefix] Key path of the parent Object field being
- * populated, e.g. `blocks.0.image`. When specified, only the keys under that key path are returned,
- * so unrelated default locale fields — including list items that don’t exist in the target locale
- * — are not copied over. The whole default locale content is still used to look up field
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {FlattenedEntryContent} args.content Original content for the current locale.
+ * @param {InternalLocaleCode} args.targetLanguage Target locale.
+ * @param {FieldKeyPath} [args.keyPathPrefix] Key path of the parent Object field being populated,
+ * e.g. `blocks.0.image`. When specified, only the keys under that key path are returned, so
+ * unrelated default locale fields — including list items that don’t exist in the target locale —
+ * are not copied over. The whole default locale content is still used to look up field
  * configurations, which requires sibling keys such as a variable type key.
  * @returns {FlattenedEntryContent} Updated content.
  */
-export const copyDefaultLocaleValues = (content, targetLanguage, { keyPathPrefix } = {}) => {
+export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPathPrefix }) => {
   const { collectionName, fileName, collection, collectionFile, currentValues, isIndexFile } =
-    /** @type {EntryDraft} */ (get(entryDraft));
+    draft;
 
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   /** @type {FlattenedEntryContent} */
@@ -142,41 +141,34 @@ export const copyDefaultLocaleValues = (content, targetLanguage, { keyPathPrefix
 };
 
 /**
- * Enable or disable the given locale’s content output for the current entry draft.
- * @param {InternalLocaleCode} locale Locale.
+ * Enable or disable the given locale’s content output for the entry draft.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.locale Locale.
  */
-export const toggleLocale = (locale) => {
-  /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
-    const { fields, defaultLocale, currentLocales, currentValues, validities, validationMessages } =
-      _draft;
+export const toggleLocale = ({ draft, locale }) => {
+  const { fields, defaultLocale, currentLocales, currentValues, validities, validationMessages } =
+    draft;
 
-    const enabled = !currentLocales[locale];
+  const enabled = !currentLocales[locale];
 
-    // Initialize the content for the locale
-    if (enabled && !currentValues[locale]) {
-      const { collectionName, fileName, originalValues } = _draft;
-      const newContent = getDefaultValues({ fields, locale, defaultLocale });
+  currentLocales[locale] = enabled;
 
-      return {
-        ..._draft,
-        currentLocales: { ...currentLocales, [locale]: enabled },
-        originalValues: { ...originalValues, [locale]: newContent },
-        currentValues: {
-          ...currentValues,
-          [locale]: createProxy({
-            draft: { collectionName, fileName },
-            locale,
-            target: copyDefaultLocaleValues(newContent, locale),
-          }),
-        },
-      };
-    }
+  // Initialize the content for the locale
+  if (enabled && !currentValues[locale]) {
+    const newContent = getDefaultValues({ fields, locale, defaultLocale });
 
-    return {
-      ..._draft,
-      currentLocales: { ...currentLocales, [locale]: enabled },
-      validities: { ...validities, [locale]: {} },
-      validationMessages: { ...validationMessages, [locale]: {} },
-    };
-  });
+    draft.originalValues[locale] = newContent;
+
+    currentValues[locale] = createProxy({
+      draft,
+      locale,
+      target: copyDefaultLocaleValues({ draft, content: newContent, targetLanguage: locale }),
+    });
+
+    return;
+  }
+
+  validities[locale] = {};
+  validationMessages[locale] = {};
 };

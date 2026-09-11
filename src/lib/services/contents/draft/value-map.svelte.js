@@ -1,4 +1,6 @@
-import { entryDraft } from '$lib/services/contents/draft';
+import { untrack } from 'svelte';
+
+import { getValueMapVersion } from '$lib/services/contents/draft/create/proxy.svelte';
 
 /**
  * @import {
@@ -10,51 +12,52 @@ import { entryDraft } from '$lib/services/contents/draft';
  */
 
 /**
- * Cache of value map snapshots for the current entry draft, keyed by value store key and locale.
- * This is intentionally a plain `Map`, not a `SvelteMap`: it’s a memo of the store’s current value,
- * and making it reactive would add a spurious dependency to every field editor that reads it.
- * @type {Map<string, FlattenedEntryContent>}
+ * Cache of value map snapshots, keyed by the value map proxy each was taken from, along with the
+ * proxy’s version at the time. This is intentionally a plain `WeakMap`, not a `SvelteMap`: it’s a
+ * memo, and making it reactive would add a spurious dependency to every field editor that reads it.
+ * The entries are garbage-collected along with the drafts.
+ * @type {WeakMap<FlattenedEntryContent, { version: number, snapshot: FlattenedEntryContent }>}
  */
-// eslint-disable-next-line svelte/prefer-svelte-reactivity
-const snapshotCache = new Map();
-
-// Any assignment to the draft ends up calling `entryDraft.set()` — including a nested one made
-// through the `$entryDraft` store in a component, which Svelte compiles to a store mutation — so
-// clearing the cache here keeps the snapshots exactly as fresh as a per-component `$derived`.
-// A `delete` is the exception: Svelte doesn’t compile it to a store mutation, so a caller dropping
-// a key has to do it within an `entryDraft.update()` block, or the snapshot taken by whoever reads
-// the store next would still list the deleted key.
-entryDraft.subscribe(() => {
-  snapshotCache.clear();
-});
+const snapshotCache = new WeakMap();
 
 /**
  * Get a snapshot of the flattened entry content for the given locale, detached from the Proxy in
- * {@link EntryDraft}. The result is cached and shared between callers until the draft is updated
+ * {@link EntryDraft}. The result is cached and shared between callers until the values are updated
  * next. The editor renders one component per field, and each of them needs the whole content to
  * resolve variable types and list items, so snapshotting it separately in every component is
  * prohibitively expensive for large entries.
+ *
+ * Called from a `$derived`, this only depends on the value map’s version rather than on every value
+ * in it, so the derived is recomputed once per update and hands back the shared snapshot.
  * @param {EntryDraft | null | undefined} draft Entry draft.
  * @param {InternalLocaleCode} locale Locale code.
  * @param {DraftValueStoreKey} [valueStoreKey] Key to read the values from.
  * @returns {FlattenedEntryContent} Flattened entry content. An empty object if unavailable.
  */
 export const getValueMapSnapshot = (draft, locale, valueStoreKey = 'currentValues') => {
-  if (!draft) {
+  const valueMap = draft?.[valueStoreKey]?.[locale];
+
+  if (!valueMap) {
     return {};
   }
 
-  const cacheKey = `${valueStoreKey}\n${locale}`;
-  const cached = snapshotCache.get(cacheKey);
+  const version = getValueMapVersion(valueMap);
 
-  if (cached) {
-    return cached;
+  // A plain object, e.g. in a draft built for a one-off validation, has no version to memoize on
+  if (version === undefined) {
+    return $state.snapshot(valueMap);
   }
 
-  /** @type {FlattenedEntryContent} */
-  const snapshot = $state.snapshot(draft[valueStoreKey]?.[locale]) ?? {};
+  const cached = snapshotCache.get(valueMap);
 
-  snapshotCache.set(cacheKey, snapshot);
+  if (cached?.version === version) {
+    return cached.snapshot;
+  }
+
+  // The version is the only dependency a reactive caller needs
+  const snapshot = untrack(() => $state.snapshot(valueMap));
+
+  snapshotCache.set(valueMap, { version, snapshot });
 
   return snapshot;
 };

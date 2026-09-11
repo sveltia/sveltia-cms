@@ -1,12 +1,8 @@
-import { get } from 'svelte/store';
-
-import { entryDraft } from '$lib/services/contents/draft';
 import { validateFields } from '$lib/services/contents/draft/validate/fields';
 import { validatePath } from '$lib/services/contents/draft/validate/path';
 import { validateSlugs } from '$lib/services/contents/draft/validate/slugs';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import {
  * EntryDraft,
  * LocaleValidationMessagesMap,
@@ -71,22 +67,19 @@ export const validateDraft = ({ draft, enforceRequired = true }) => {
 };
 
 /**
- * Validate the field values, update the validity for all the fields, and return the final results
- * as a boolean.
- * @param {object} [options] Options.
- * @param {boolean} [options.enforceRequired] Whether an empty required field makes the entry
- * invalid. See {@link validateDraft}.
+ * Validate the field values, update the validity for all the fields in the draft, and return the
+ * final results as a boolean.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft to validate.
+ * @param {boolean} [args.enforceRequired] Whether an empty required field makes the entry invalid.
+ * See {@link validateDraft}.
  * @returns {boolean} Whether the entry draft is valid.
  */
-export const validateEntry = ({ enforceRequired = true } = {}) => {
-  const draft = /** @type {EntryDraft} */ (get(entryDraft));
+export const validateEntry = ({ draft, enforceRequired = true }) => {
   const { valid, validities, validationMessages } = validateDraft({ draft, enforceRequired });
 
-  /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
-    ..._draft,
-    validities,
-    validationMessages,
-  }));
+  draft.validities = validities;
+  draft.validationMessages = validationMessages;
 
   return valid;
 };

@@ -1,8 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc */
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { entryDraft } from '$lib/services/contents/draft';
 import {
   collectComponentComputeFields,
   collectComputeFields,
@@ -17,9 +15,6 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
 }));
 vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({
   getComponentDef: vi.fn(),
-}));
-vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: { devModeEnabled: false },
 }));
 
 /** @type {any} */
@@ -155,7 +150,7 @@ describe('collectComponentComputeFields()', () => {
   });
 });
 
-describe('updateComputedValues()', () => {
+describe('updateComputedValues(draft)', () => {
   /** @type {any} */
   let draft;
 
@@ -173,12 +168,10 @@ describe('updateComputedValues()', () => {
       currentValues: { en: { title: 'Hello', slug: '' } },
       extraValues: { en: {} },
     };
-
-    entryDraft.set(draft);
   });
 
   test('should write the computed value and report the change', () => {
-    expect(updateComputedValues()).toBe(true);
+    expect(updateComputedValues(draft)).toBe(true);
     expect(draft.currentValues.en.slug).toBe('post-Hello');
   });
 
@@ -191,7 +184,7 @@ describe('updateComputedValues()', () => {
       { name: 'blocks', widget: 'list', types: [{ name: 'text', fields: [{ name: 'body' }] }] },
     ];
 
-    expect(updateComputedValues()).toBe(false);
+    expect(updateComputedValues(draft)).toBe(false);
     expect(draft.currentValues.en.slug).toBe('');
   });
 
@@ -199,42 +192,21 @@ describe('updateComputedValues()', () => {
     draft.fields = [{ name: 'author', widget: 'object', fields: [SLUG_FIELD] }];
     draft.currentValues.en = { 'author.name': 'Kohei' };
 
-    expect(updateComputedValues()).toBe(true);
+    expect(updateComputedValues(draft)).toBe(true);
     expect(draft.currentValues.en['author.slug']).toBe('');
   });
 
   test('should settle on the second run', () => {
-    updateComputedValues();
+    updateComputedValues(draft);
 
-    expect(updateComputedValues()).toBe(false);
-  });
-
-  test('should notify the subscribers once a value has changed', () => {
-    const subscriber = vi.fn();
-    const unsubscribe = entryDraft.subscribe(subscriber);
-
-    subscriber.mockClear();
-    updateComputedValues();
-    expect(subscriber).toHaveBeenCalledTimes(1);
-
-    subscriber.mockClear();
-    updateComputedValues();
-    expect(subscriber).not.toHaveBeenCalled();
-
-    unsubscribe();
-  });
-
-  test('should do nothing without a draft', () => {
-    entryDraft.set(null);
-
-    expect(updateComputedValues()).toBe(false);
+    expect(updateComputedValues(draft)).toBe(false);
   });
 
   test('should skip a disabled locale', () => {
     draft.currentLocales = { en: true, fr: false };
     draft.currentValues.fr = { title: 'Bonjour', slug: '' };
 
-    updateComputedValues();
+    updateComputedValues(draft);
 
     expect(draft.currentValues.fr.slug).toBe('');
   });
@@ -244,7 +216,7 @@ describe('updateComputedValues()', () => {
     draft.currentLocales = { en: true, fr: true };
     draft.currentValues.fr = { title: 'Bonjour', slug: '' };
 
-    updateComputedValues();
+    updateComputedValues(draft);
 
     expect(draft.currentValues.en.slug).toBe('post-Hello');
     expect(draft.currentValues.fr.slug).toBe('');
@@ -256,7 +228,7 @@ describe('updateComputedValues()', () => {
     draft.currentLocales = { en: true, fr: true };
     draft.currentValues.fr = { title: 'Bonjour', slug: '' };
 
-    updateComputedValues();
+    updateComputedValues(draft);
 
     expect(draft.currentValues.fr.slug).toBe('post-Bonjour');
   });
@@ -266,7 +238,7 @@ describe('updateComputedValues()', () => {
     draft.currentLocales = { en: true, fr: true };
     draft.currentValues.fr = { title: 'Bonjour', slug: '' };
 
-    updateComputedValues();
+    updateComputedValues(draft);
 
     expect(draft.currentValues.en.slug).toBe('');
     expect(draft.currentValues.fr.slug).toBe('post-Bonjour');
@@ -284,7 +256,7 @@ describe('updateComputedValues()', () => {
     draft.currentValues.fr = { title: 'Bonjour', slug: '' };
     draft.extraValues.fr = { 'body:c1:__sc_component_name': 'image', 'body:c1:caption': 'A' };
 
-    updateComputedValues();
+    updateComputedValues(draft);
 
     expect(draft.extraValues.fr['body:c1:slug']).toBe('');
   });
@@ -298,7 +270,7 @@ describe('updateComputedValues()', () => {
       'items.2.name': 'C',
     };
 
-    updateComputedValues();
+    updateComputedValues(draft);
 
     expect(draft.currentValues.en['items.0.slug']).toBe(0);
     expect(draft.currentValues.en['items.1.slug']).toBe(1);
@@ -312,14 +284,13 @@ describe('updateComputedValues()', () => {
       'items.1.slug': 1,
     };
 
-    expect(updateComputedValues()).toBe(false);
+    expect(updateComputedValues(draft)).toBe(false);
     expect(Object.keys(draft.currentValues.en)).not.toContain('items.2.slug');
   });
 
-  test('should keep the draft as the store value', () => {
-    updateComputedValues();
+  test('should resolve the values with the display value helper', () => {
+    updateComputedValues(draft);
 
-    expect(get(entryDraft)).toBe(draft);
     expect(vi.mocked(getFieldDisplayValue)).toHaveBeenCalled();
   });
 });

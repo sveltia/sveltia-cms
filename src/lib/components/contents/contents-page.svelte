@@ -1,7 +1,7 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Alert, Toast } from '@sveltia/ui';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
@@ -40,8 +40,8 @@
     nestedFilterPath,
   } from '$lib/services/contents/collection/nested';
   import { listedEntries } from '$lib/services/contents/collection/view';
-  import { entryDraft } from '$lib/services/contents/draft';
   import { createDraft } from '$lib/services/contents/draft/create';
+  import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
   import { showContentOverlay } from '$lib/services/contents/editor';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { isSearchRoute } from '$lib/services/search/navigation';
@@ -71,6 +71,11 @@
    */
   let awaitingDrafts = $state(false);
   let editorLocale = $state();
+
+  /**
+   * Draft open in the content editor overlay, if any.
+   */
+  const entryDraft = new EntryDraftState();
 
   const MainContent = $derived('files' in ($selectedCollection ?? {}) ? FileList : EntryList);
 
@@ -225,7 +230,7 @@
 
         if (!collectionFile) {
           // The URL names a file that isn’t part of this collection
-          $entryDraft = undefined;
+          entryDraft.current = undefined;
           $announcedPageStatus = _('file_not_found');
 
           return; // Not Found
@@ -238,10 +243,11 @@
           getCollectionFileEntry(collectionName, subPath);
 
         if (originalEntry) {
-          createDraft({ collection, collectionFile, originalEntry });
+          createDraft({ entryDraft, collection, collectionFile, originalEntry });
         } else {
           // File is not yet created
           createDraft({
+            entryDraft,
             collection,
             collectionFile,
             originalEntry: {
@@ -261,7 +267,7 @@
         });
       } else {
         // A file collection has no `new` route, and `entries` needs a file name
-        $entryDraft = undefined;
+        entryDraft.current = undefined;
         $announcedPageStatus = _('file_not_found');
       }
 
@@ -278,6 +284,7 @@
       }
 
       createDraft({
+        entryDraft,
         collection,
         dynamicValues: params,
         initialPath,
@@ -297,14 +304,14 @@
         getEntriesByCollection(collectionName).find((entry) => entry.subPath === subPath);
 
       if (!originalEntry) {
-        $entryDraft = undefined;
+        entryDraft.current = undefined;
         $announcedPageStatus = _('entry_not_found');
 
         return; // Not Found
       }
 
       if (appLocale.current) {
-        createDraft({ collection, originalEntry });
+        createDraft({ entryDraft, collection, originalEntry });
 
         $announcedPageStatus = _('edit_entry_announcement', {
           values: {
@@ -315,7 +322,7 @@
       }
     } else {
       // `new` with a sub path or `entries` without one, e.g. `#/collections/posts/new/foo`
-      $entryDraft = undefined;
+      entryDraft.current = undefined;
       $announcedPageStatus = _('entry_not_found');
     }
   };
@@ -330,7 +337,8 @@
 
   $effect(() => {
     if (awaitingDrafts && $workflowDataReady) {
-      navigate();
+      // Opening an entry reads and replaces the draft, which is no reason to navigate again
+      untrack(() => navigate());
     }
   });
 </script>
@@ -390,7 +398,7 @@
 </PageContainer>
 
 {#if $showContentOverlay}
-  <ContentDetailsOverlay {editorLocale} loading={awaitingDrafts} />
+  <ContentDetailsOverlay {entryDraft} {editorLocale} loading={awaitingDrafts} />
 {/if}
 
 <Toast bind:show={$contentUpdatesToast.saved}>

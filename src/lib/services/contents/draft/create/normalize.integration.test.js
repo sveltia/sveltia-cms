@@ -1,5 +1,4 @@
 // @ts-nocheck
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -47,18 +46,22 @@ vi.mock('$lib/services/contents/draft/backup', () => ({
 const { getCollection } = await import('$lib/services/contents/collection');
 const { fieldConfigCacheMap } = await import('$lib/services/contents/entry/fields');
 const { createDraft } = await import('$lib/services/contents/draft/create');
-const { entryDraft } = await import('$lib/services/contents/draft');
+const { EntryDraftState } = await import('$lib/services/contents/draft/state.svelte');
 const { validateEntry } = await import('$lib/services/contents/draft/validate');
 const { serializeContent } = await import('$lib/services/contents/draft/save/serialize');
 
 describe('contents/draft/create/normalize (integration)', () => {
+  /** @type {EntryDraftState} */
+  let entryDraft;
+
   beforeEach(() => {
-    createDraft({ collection, originalEntry });
+    entryDraft = new EntryDraftState();
+    createDraft({ entryDraft, collection, originalEntry });
   });
 
   it('should load an existing entry with the values missing from the file filled in', () => {
     // https://github.com/sveltia/sveltia-cms/issues/650
-    expect(get(entryDraft).currentValues._default).toEqual({
+    expect(entryDraft.current.currentValues._default).toEqual({
       name: 'EV Ultra 240S',
       chargeSpeed: '',
       featured: true,
@@ -66,17 +69,19 @@ describe('contents/draft/create/normalize (integration)', () => {
 
     // The filled-in values are part of the original values as well, so the entry isn’t reported as
     // modified just for having been opened
-    expect(get(entryDraft).originalValues._default).toEqual(get(entryDraft).currentValues._default);
+    expect(entryDraft.current.originalValues._default).toEqual(
+      entryDraft.current.currentValues._default,
+    );
   });
 
   it('should apply the new validation rules to an existing entry', () => {
     // https://github.com/sveltia/sveltia-cms/issues/395
-    expect(validateEntry()).toBe(false);
-    expect(get(entryDraft).validities._default.chargeSpeed.valueMissing).toBe(true);
+    expect(validateEntry({ draft: entryDraft.current })).toBe(false);
+    expect(entryDraft.current.validities._default.chargeSpeed.valueMissing).toBe(true);
 
-    get(entryDraft).currentValues._default.chargeSpeed = '240kW';
+    entryDraft.current.currentValues._default.chargeSpeed = '240kW';
 
-    expect(validateEntry()).toBe(true);
+    expect(validateEntry({ draft: entryDraft.current })).toBe(true);
   });
 
   it('should keep a hand-written entry’s mistyped values from destroying the output', () => {
@@ -102,6 +107,7 @@ describe('contents/draft/create/normalize (integration)', () => {
     fieldConfigCacheMap.clear();
 
     createDraft({
+      entryDraft,
       collection: shapeCollection,
       originalEntry: {
         id: 'entry-2',
@@ -117,7 +123,7 @@ describe('contents/draft/create/normalize (integration)', () => {
       },
     });
 
-    const draft = get(entryDraft);
+    const draft = entryDraft.current;
 
     draft.currentValues._default['author.name'] = 'Me';
     draft.currentValues._default['tags.0.label'] = 'News';

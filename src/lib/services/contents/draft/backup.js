@@ -6,22 +6,19 @@ import { get, writable } from 'svelte/store';
 import { backend } from '$lib/services/backends';
 import { cmsConfigVersion } from '$lib/services/config';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
-import {
-  entryDraft,
-  entryDraftInteracted,
-  entryDraftModified,
-  suspendAutoDuplication,
-} from '$lib/services/contents/draft';
-import { createProxy } from '$lib/services/contents/draft/create/proxy';
+import { isDraftModified, suspendAutoDuplication } from '$lib/services/contents/draft';
+import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { Writable } from 'svelte/store';
  * @import {
+ * AssetFolderInfo,
  * EntryDraft,
  * EntryDraftBackup,
  * LocaleContentMap,
  * LocaleSlugMap,
+ * LocaleStateMap,
  * } from '$lib/types/private';
  */
 
@@ -89,37 +86,55 @@ export const getBackup = async (collectionName, slug = '') => {
 };
 
 /**
+ * Get the slug part of the key a draft’s backup is stored under.
+ * @param {EntryDraft} draft Draft.
+ * @returns {string} Entry slug. An empty string for a new entry.
+ */
+const getBackupSlug = ({ fileName, originalEntry }) => fileName ?? originalEntry?.slug ?? '';
+
+/**
  * Backup the entry draft to IndexedDB.
  * @param {EntryDraft} draft Draft.
  */
 export const saveBackup = async (draft) => {
-  if (!(prefs.useDraftBackup ?? true) || !get(entryDraftInteracted)) {
+  // Skip if the user hasn’t manually interacted with the editor, so that only programmatic changes,
+  // e.g. Lexical markdown reformatting, don’t trigger a backup
+  if (!(prefs.useDraftBackup ?? true) || !draft.interacted) {
     return;
   }
 
   const {
     collectionName,
-    fileName,
-    originalEntry,
     currentLocales = {},
     currentSlugs = {},
     currentValues = {},
     files,
   } = draft;
 
-  const slug = fileName ?? originalEntry?.slug ?? '';
+  const slug = getBackupSlug(draft);
 
-  if (get(entryDraftModified)) {
+  if (isDraftModified(draft)) {
+    // The draft is a `$state` proxy, which IndexedDB can’t clone, so every part of the backup has
+    // to be copied to a plain object. `File` objects are cloneable as they are
     /** @type {EntryDraftBackup} */
     const backup = {
       timestamp: new Date(),
       cmsConfigVersion: /** @type {string} */ (get(cmsConfigVersion)),
       collectionName,
       slug,
-      currentLocales,
+      currentLocales: /** @type {LocaleStateMap} */ (toRaw(currentLocales)),
       currentSlugs: /** @type {LocaleSlugMap} */ (toRaw(currentSlugs)),
       currentValues: /** @type {LocaleContentMap} */ (toRaw(currentValues)),
-      files,
+      files: Object.fromEntries(
+        Object.entries(files ?? {}).map(([blobURL, { file, folder, replace }]) => [
+          blobURL,
+          {
+            file,
+            folder: folder ? /** @type {AssetFolderInfo} */ (toRaw(folder)) : folder,
+            replace,
+          },
+        ]),
+      ),
     };
 
     await backupDB?.put(backup);
@@ -133,99 +148,92 @@ export const saveBackup = async (draft) => {
 };
 
 /**
- * Restore a draft backup to the current entry draft.
+ * Restore a draft backup to the given entry draft.
  * @param {object} args Arguments.
  * @param {EntryDraftBackup} args.backup Backup to restore.
- * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {EntryDraft} args.draft Entry draft to restore the backup to.
  */
-export const restoreBackup = ({ backup, collectionName, fileName }) => {
+export const restoreBackup = ({ backup, draft }) => {
   const { currentLocales, currentSlugs, currentValues, files } = backup;
   const fileURLs = new Map();
 
   suspendAutoDuplication(() => {
-    entryDraft.update((draft) => {
-      if (draft) {
-        draft.currentLocales = currentLocales;
-        draft.currentSlugs = currentSlugs;
+    draft.currentLocales = currentLocales;
+    draft.currentSlugs = currentSlugs;
 
-        // Reconcile a stale manual-sort order field. The backup may have been taken before
-        // another reorder/renumber operation rewrote this entry’s `order`. For existing entries,
-        // prefer the value persisted on the live entry; for new entries, drop the field entirely
-        // so `assignManualSortOrder` can compute a fresh value at save time. Without this,
-        // restoring an old backup would clobber the latest order with a stale one.
-        const orderKey = getOrderFieldKey(draft.collection);
+    // Reconcile a stale manual-sort order field. The backup may have been taken before another
+    // reorder/renumber operation rewrote this entry’s `order`. For existing entries, prefer the
+    // value persisted on the live entry; for new entries, drop the field entirely so
+    // `assignManualSortOrder` can compute a fresh value at save time. Without this, restoring an
+    // old backup would clobber the latest order with a stale one.
+    const orderKey = getOrderFieldKey(draft.collection);
 
-        Object.entries(currentValues).forEach(([locale, valueMap]) => {
-          if (orderKey && orderKey in valueMap) {
-            const liveOrder = draft.originalEntry?.locales[locale]?.content?.[orderKey];
+    Object.entries(currentValues).forEach(([locale, valueMap]) => {
+      if (orderKey && orderKey in valueMap) {
+        const liveOrder = draft.originalEntry?.locales[locale]?.content?.[orderKey];
 
-            if (liveOrder !== undefined) {
-              valueMap[orderKey] = liveOrder;
+        if (liveOrder !== undefined) {
+          valueMap[orderKey] = liveOrder;
+        } else {
+          delete valueMap[orderKey];
+        }
+      }
+
+      Object.entries(valueMap).forEach(([keyPath, value]) => {
+        if (typeof value === 'string') {
+          [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
+            const cache = files[blobURL];
+            const { file } = cache ?? {};
+
+            if (!cache || !file) {
+              return;
+            }
+
+            let newURL = '';
+
+            if (fileURLs.has(file)) {
+              newURL = fileURLs.get(file);
             } else {
-              delete valueMap[orderKey];
+              // Regenerate a blob URL
+              newURL = URL.createObjectURL(file);
+
+              draft.files[newURL] = cache;
+              fileURLs.set(file, newURL);
             }
-          }
 
-          Object.entries(valueMap).forEach(([keyPath, value]) => {
-            if (typeof value === 'string') {
-              [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
-                const cache = files[blobURL];
-                const { file } = cache ?? {};
-
-                if (!cache || !file) {
-                  return;
-                }
-
-                let newURL = '';
-
-                if (fileURLs.has(file)) {
-                  newURL = fileURLs.get(file);
-                } else {
-                  // Regenerate a blob URL
-                  newURL = URL.createObjectURL(file);
-
-                  draft.files[newURL] = cache;
-                  fileURLs.set(file, newURL);
-                }
-
-                value = value.replaceAll(blobURL, newURL);
-              });
-
-              valueMap[keyPath] = value;
-            }
+            value = value.replaceAll(blobURL, newURL);
           });
 
-          if (draft.currentValues[locale]) {
-            Object.assign(draft.currentValues[locale], valueMap);
-          } else {
-            draft.currentValues[locale] = createProxy({
-              draft: { collectionName, fileName },
-              locale,
-              target: structuredClone(valueMap),
-            });
-          }
+          valueMap[keyPath] = value;
+        }
+      });
 
-          const newValueMap = draft.currentValues[locale];
-          const keys = Object.keys(newValueMap);
-
-          keys.forEach((keyPath) => {
-            const value = newValueMap[keyPath];
-
-            // Remove an optional object field’s default `null` value when subfields are added
-            // @see https://github.com/sveltia/sveltia-cms/issues/840
-            if (value === null && keys.some((k) => k.startsWith(`${keyPath}.`))) {
-              newValueMap[keyPath] = {};
-            }
-          });
-
-          if (!draft.originalValues[locale]) {
-            draft.originalValues[locale] = {};
-          }
+      if (draft.currentValues[locale]) {
+        Object.assign(draft.currentValues[locale], valueMap);
+      } else {
+        draft.currentValues[locale] = createProxy({
+          draft,
+          locale,
+          target: structuredClone(valueMap),
         });
       }
 
-      return draft;
+      const newValueMap = draft.currentValues[locale];
+      const keys = Object.keys(newValueMap);
+
+      keys.forEach((keyPath) => {
+        const value = newValueMap[keyPath];
+
+        // Remove an optional object field’s default `null` value when subfields are added
+        // @see https://github.com/sveltia/sveltia-cms/issues/840
+        if (value === null && keys.some((k) => k.startsWith(`${keyPath}.`))) {
+          newValueMap[keyPath] = {};
+        }
+      });
+
+      if (!draft.originalValues[locale]) {
+        draft.originalValues[locale] = {};
+      }
     });
   });
 };
@@ -233,15 +241,15 @@ export const restoreBackup = ({ backup, collectionName, fileName }) => {
 /**
  * Check if a draft backup is available, and restore it if requested by the user.
  * @param {object} args Arguments.
- * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File/singleton collection only.
- * @param {string} [args.slug] Entry slug. Existing entry only.
+ * @param {EntryDraft} args.draft Entry draft to restore the backup to.
  */
-export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '' }) => {
+export const restoreBackupIfNeeded = async ({ draft }) => {
   if (!(prefs.useDraftBackup ?? true)) {
     return;
   }
 
+  const { collectionName } = draft;
+  const slug = getBackupSlug(draft);
   const backup = await getBackup(collectionName, slug);
 
   if (!backup) {
@@ -262,8 +270,8 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
   }
 
   if (doRestore) {
-    restoreBackup({ backup, collectionName, fileName });
-    entryDraftInteracted.set(true);
+    restoreBackup({ backup, draft });
+    draft.interacted = true;
   } else {
     await deleteBackup(collectionName, slug);
   }
@@ -272,14 +280,13 @@ export const restoreBackupIfNeeded = async ({ collectionName, fileName, slug = '
 };
 
 /**
- * Check if the current entry’s draft backup has been saved, and if so, show a toast notification.
+ * Check if the given entry draft’s backup has been saved, and if so, show a toast notification.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
  */
-export const showBackupToastIfNeeded = async () => {
+export const showBackupToastIfNeeded = async (draft) => {
   if (!(prefs.useDraftBackup ?? true)) {
     return;
   }
-
-  const draft = get(entryDraft);
 
   if (!draft || get(backupToastState).saved) {
     return;
@@ -316,22 +323,18 @@ backend.subscribe((_backend) => {
   backupDB = null;
 });
 
-// Automatically backup the draft; use a timer to avoid typing lag
-/** @type {string | undefined} */
-let lastDraftId;
-
-entryDraft.subscribe((draft) => {
+/**
+ * Schedule a backup of the given entry draft, cancelling any backup scheduled before. The editor
+ * calls this whenever the draft changes; the timer avoids typing lag. Call it with no draft when
+ * the editor is closed, so that a pending backup of the draft that is gone is dropped as well.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
+ */
+export const scheduleBackup = (draft) => {
   globalThis.clearTimeout(backupTimeout);
-
-  // Reset the interaction flag when a new draft is loaded or the editor is closed
-  if (draft?.id !== lastDraftId) {
-    lastDraftId = draft?.id;
-    entryDraftInteracted.set(false);
-  }
 
   if (draft && backupDB) {
     backupTimeout = globalThis.setTimeout(() => {
       saveBackup(draft);
     }, 500);
   }
-});
+};

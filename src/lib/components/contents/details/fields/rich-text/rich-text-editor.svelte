@@ -17,7 +17,7 @@
 
   import { customComponentRegistry } from '$lib/services/api/registries';
   import { cmsConfig } from '$lib/services/config';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getField } from '$lib/services/contents/entry/fields';
   import {
@@ -63,6 +63,8 @@
    * @property {string | undefined} currentValue Field value.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   const DATA_URL_REGEX = /^data:(?<type>image\/.+?);base64,.+/;
 
   const defaultConfig = $cmsConfig?.field_defaults?.richtext ?? {};
@@ -106,10 +108,10 @@
     minimal = defaultConfig.minimal ?? false,
   } = $derived(fieldConfig);
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
-  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
-  const collectionName = $derived($entryDraft?.collectionName ?? '');
-  const fileName = $derived($entryDraft?.fileName);
-  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
+  const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
+  const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  const fileName = $derived(entryDraft.current?.fileName);
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const buttons = $derived(
     [
       ..._buttons,
@@ -182,7 +184,7 @@
     const outer = /** @type {HTMLElement} */ (target)?.closest('div');
     const editor = getNearestEditorFromDOMNode(outer);
 
-    if (!$entryDraft || !imageComponent || !outer?.matches('.lexical-root') || !editor) {
+    if (!entryDraft.current || !imageComponent || !outer?.matches('.lexical-root') || !editor) {
       return;
     }
 
@@ -195,7 +197,7 @@
       fieldConfig: /** @type {ImageField} */ (srcFieldConfig),
     });
 
-    const draft = $entryDraft;
+    const draft = entryDraft.current;
     const folder = targetAssetFolder;
 
     // eslint-disable-next-line no-restricted-syntax
@@ -380,7 +382,9 @@
     }
 
     // Skip cleanup when used as a nested component editor
-    if (!$entryDraft || inEditorComponent) {
+    const draft = entryDraft.current;
+
+    if (!draft || inEditorComponent) {
       return;
     }
 
@@ -389,14 +393,14 @@
     // Remove values that are not present in the editor anymore. Otherwise, they will trigger
     // validation errors when the entry is saved.
     cleanupTimeout = window.setTimeout(() => {
-      Object.keys($entryDraft?.extraValues[locale] ?? {}).forEach((key) => {
+      Object.keys(draft.extraValues[locale] ?? {}).forEach((key) => {
         const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
 
         if (
           prefix?.startsWith(`${keyPath}:`) &&
           !wrapper?.querySelector(`[data-key-path-prefix="${prefix}"]`)
         ) {
-          delete $entryDraft.extraValues[locale][key];
+          delete draft.extraValues[locale][key];
         }
       });
     }, 500);

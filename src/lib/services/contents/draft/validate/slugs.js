@@ -1,7 +1,3 @@
-import { get } from 'svelte/store';
-
-import { entryDraft } from '$lib/services/contents/draft';
-
 /**
  * @import { EntryDraft, LocaleValidityMap } from '$lib/types/private';
  */
@@ -9,10 +5,10 @@ import { entryDraft } from '$lib/services/contents/draft';
 /**
  * Validate the slugs and return the results. At this time, we only check if the slug is empty when
  * the slug editor is shown.
- * @param {EntryDraft} [draft] Draft to validate. Defaults to the one open in the editor.
+ * @param {EntryDraft} draft Draft to validate.
  * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
  */
-export const validateSlugs = (draft = /** @type {EntryDraft} */ (get(entryDraft))) => {
+export const validateSlugs = (draft) => {
   const { currentLocales, currentSlugs, slugEditor } = draft;
   /** @type {LocaleValidityMap} */
   const validities = {};

@@ -10,7 +10,6 @@ import {
 } from '$lib/services/contents/collection/data';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
-import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
@@ -21,7 +20,7 @@ import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 import { unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
-import { saveEntry } from '.';
+import { saveEntry as _saveEntry } from '.';
 
 vi.mock('$lib/services/backends');
 vi.mock('$lib/services/backends/git/shared/integration');
@@ -70,6 +69,12 @@ vi.mock('svelte/store', async () => {
 describe('draft/save/index', () => {
   let mockDraft;
   let mockGet;
+  /**
+   * Save the mock draft.
+   * @param {object} [options] Options other than the draft.
+   * @returns {Promise<any>} Saved entry.
+   */
+  const saveEntry = (options = {}) => _saveEntry({ draft: mockDraft, ...options });
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -91,10 +96,6 @@ describe('draft/save/index', () => {
     };
 
     mockGet.mockImplementation((store) => {
-      if (store === entryDraft) {
-        return mockDraft;
-      }
-
       if (store === skipCIConfigured) {
         return true;
       }
@@ -152,10 +153,6 @@ describe('draft/save/index', () => {
 
     it('should save through Editorial Workflow when enabled', async () => {
       mockGet.mockImplementation((store) => {
-        if (store === entryDraft) {
-          return mockDraft;
-        }
-
         if (store === workflowEnabled) {
           return true;
         }
@@ -194,10 +191,6 @@ describe('draft/save/index', () => {
        */
       const enableWorkflow = () => {
         mockGet.mockImplementation((store) => {
-          if (store === entryDraft) {
-            return mockDraft;
-          }
-
           if (store === workflowEnabled) {
             return true;
           }
@@ -225,14 +218,14 @@ describe('draft/save/index', () => {
       it('should enforce required fields without Editorial Workflow', async () => {
         await saveEntry();
 
-        expect(validateEntry).toHaveBeenCalledWith({ enforceRequired: true });
+        expect(validateEntry).toHaveBeenCalledWith({ draft: mockDraft, enforceRequired: true });
       });
 
       it('should not enforce required fields for a new Editorial Workflow entry', async () => {
         enableWorkflow();
         await saveEntry();
 
-        expect(validateEntry).toHaveBeenCalledWith({ enforceRequired: false });
+        expect(validateEntry).toHaveBeenCalledWith({ draft: mockDraft, enforceRequired: false });
       });
 
       it('should not enforce required fields for an entry still in the drafting stage', async () => {
@@ -245,7 +238,7 @@ describe('draft/save/index', () => {
         };
         await saveEntry();
 
-        expect(validateEntry).toHaveBeenCalledWith({ enforceRequired: false });
+        expect(validateEntry).toHaveBeenCalledWith({ draft: mockDraft, enforceRequired: false });
       });
 
       it('should enforce required fields for an entry that has left the drafting stage', async () => {
@@ -258,7 +251,7 @@ describe('draft/save/index', () => {
         };
         await saveEntry();
 
-        expect(validateEntry).toHaveBeenCalledWith({ enforceRequired: true });
+        expect(validateEntry).toHaveBeenCalledWith({ draft: mockDraft, enforceRequired: true });
       });
     });
 
@@ -266,7 +259,7 @@ describe('draft/save/index', () => {
       vi.mocked(validateEntry).mockReturnValue(false);
 
       await expect(saveEntry()).rejects.toThrow('validation_failed');
-      expect(expandInvalidFields).toHaveBeenCalled();
+      expect(expandInvalidFields).toHaveBeenCalledWith({ draft: mockDraft });
     });
 
     it('should handle save failure', async () => {
@@ -303,10 +296,6 @@ describe('draft/save/index', () => {
 
     it('should handle non-git backend', async () => {
       mockGet.mockImplementation((store) => {
-        if (store === entryDraft) {
-          return mockDraft;
-        }
-
         if (store === skipCIConfigured) {
           return false;
         }

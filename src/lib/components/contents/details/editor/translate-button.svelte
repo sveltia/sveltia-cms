@@ -3,7 +3,7 @@
   import { Button, Icon, Menu, MenuButton } from '@sveltia/ui';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { copyFromLocale } from '$lib/services/contents/draft/update/copy';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { translator } from '$lib/services/integrations/translators';
@@ -22,6 +22,8 @@
    * @property {FieldKeyPath} [keyPath] Field key path.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -33,9 +35,9 @@
   } = $props();
 
   const sourceDisabled = $derived(
-    !$entryDraft?.currentLocales[locale] ||
+    !entryDraft.current?.currentLocales[locale] ||
       // An entry awaiting deletion is read-only, so there’s nothing to translate into
-      isPendingDeletion($entryDraft?.originalEntry),
+      isPendingDeletion(entryDraft.current?.originalEntry),
   );
 
   /**
@@ -45,7 +47,7 @@
    */
   const isButtonDisabled = async ({ sourceLanguage, targetLanguage }) =>
     sourceDisabled ||
-    !$entryDraft?.currentLocales[sourceLanguage] ||
+    !entryDraft.current?.currentLocales[sourceLanguage] ||
     !(await $translator?.availability({ sourceLanguage, targetLanguage }));
 </script>
 
@@ -66,7 +68,12 @@
       title={label}
       {disabled}
       onclick={() => {
-        copyFromLocale({ ...languagePair, keyPath, translate: true });
+        if (entryDraft.current) {
+          copyFromLocale({
+            draft: entryDraft.current,
+            options: { ...languagePair, keyPath, translate: true },
+          });
+        }
       }}
     >
       {#snippet startIcon()}

@@ -1,45 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { entryDraft } from '$lib/services/contents/draft';
-import { createProxy } from '$lib/services/contents/draft/create/proxy';
+import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
 
-import { copyDefaultLocaleValues, forEachTargetLocale, toggleLocale } from './locale';
+import {
+  copyDefaultLocaleValues as _copyDefaultLocaleValues,
+  forEachTargetLocale,
+  toggleLocale,
+} from './locale';
 
-// Keep the real `suspendAutoDuplication` so it still runs its callback and toggles the store,
-// which the tests below spy on
-vi.mock('$lib/services/contents/draft', async () => ({
-  ...(await vi.importActual('$lib/services/contents/draft')),
-}));
-vi.mock('$lib/services/contents/draft/create/proxy');
+vi.mock('$lib/services/contents/draft/create/proxy.svelte');
 vi.mock('$lib/services/contents/draft/defaults');
 vi.mock('$lib/services/contents/entry/fields');
-vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: { devModeEnabled: false },
-}));
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
 
 describe('draft/update/locale', () => {
   /** @type {any} */
   let mockEntryDraft;
-  /** @type {any} */
-  let mockUpdate;
-  let mockGet;
+
+  /**
+   * Populate the given content from the mock entry draft’s default locale.
+   * @param {Record<string, any>} content Content.
+   * @param {string} targetLanguage Target locale.
+   * @param {{ keyPathPrefix?: string }} [options] Options.
+   * @returns {Record<string, any>} Updated content.
+   */
+  const copyDefaultLocaleValues = (content, targetLanguage, { keyPathPrefix } = {}) =>
+    _copyDefaultLocaleValues({ draft: mockEntryDraft, content, targetLanguage, keyPathPrefix });
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    const { get } = await import('svelte/store');
-
-    mockGet = vi.mocked(get);
 
     mockEntryDraft = {
       collectionName: 'posts',
@@ -71,25 +61,8 @@ describe('draft/update/locale', () => {
         },
       },
       validities: { en: {} },
+      validationMessages: { en: {} },
     };
-
-    mockUpdate = vi.fn((fn) => {
-      if (typeof fn === 'function') {
-        return fn(mockEntryDraft);
-      }
-
-      return mockEntryDraft;
-    });
-
-    mockGet.mockImplementation((store) => {
-      if (store === entryDraft) {
-        return mockEntryDraft;
-      }
-
-      return undefined;
-    });
-
-    vi.mocked(entryDraft).update = mockUpdate;
 
     vi.mocked(createProxy).mockImplementation(({ target }) => target);
 
@@ -725,12 +698,9 @@ describe('draft/update/locale', () => {
 
   describe('toggleLocale', () => {
     it('should enable a locale', () => {
-      toggleLocale('ja');
+      toggleLocale({ draft: mockEntryDraft, locale: 'ja' });
 
-      expect(mockUpdate).toHaveBeenCalled();
-
-      const updateFn = mockUpdate.mock.calls[0][0];
-      const result = updateFn(mockEntryDraft);
+      const result = mockEntryDraft;
 
       expect(result.currentLocales.ja).toBe(true);
       expect(result.currentValues.ja).toBeDefined();
@@ -741,26 +711,27 @@ describe('draft/update/locale', () => {
       mockEntryDraft.currentValues.ja = { title: 'Japanese Title' };
       mockEntryDraft.validities.ja = {};
 
-      toggleLocale('ja');
+      toggleLocale({ draft: mockEntryDraft, locale: 'ja' });
 
-      expect(mockUpdate).toHaveBeenCalled();
-
-      const updateFn = mockUpdate.mock.calls[0][0];
-      const result = updateFn(mockEntryDraft);
+      const result = mockEntryDraft;
 
       expect(result.currentLocales.ja).toBe(false);
     });
 
     it('should initialize new locale with default values', () => {
-      toggleLocale('ja');
+      toggleLocale({ draft: mockEntryDraft, locale: 'ja' });
 
-      expect(mockUpdate).toHaveBeenCalled();
       expect(vi.mocked(getDefaultValues)).toHaveBeenCalledWith({
         fields: mockEntryDraft.fields,
         locale: 'ja',
         defaultLocale: 'en',
       });
-      expect(vi.mocked(createProxy)).toHaveBeenCalled();
+      expect(vi.mocked(createProxy)).toHaveBeenCalledWith({
+        draft: mockEntryDraft,
+        locale: 'ja',
+        target: expect.any(Object),
+      });
+      expect(mockEntryDraft.originalValues.ja).toEqual({ title: '', body: '', date: '' });
     });
 
     it('should not reinitialize locale values when already exists', () => {
@@ -768,12 +739,9 @@ describe('draft/update/locale', () => {
       mockEntryDraft.currentValues.ja = { title: 'Existing' };
       mockEntryDraft.originalValues.ja = { title: 'Existing' };
 
-      toggleLocale('ja');
+      toggleLocale({ draft: mockEntryDraft, locale: 'ja' });
 
-      expect(mockUpdate).toHaveBeenCalled();
-
-      const updateFn = mockUpdate.mock.calls[0][0];
-      const result = updateFn(mockEntryDraft);
+      const result = mockEntryDraft;
 
       expect(result.currentLocales.ja).toBe(true);
       expect(result.currentValues.ja.title).toBe('Existing');
@@ -784,12 +752,9 @@ describe('draft/update/locale', () => {
       mockEntryDraft.currentValues.ja = { title: 'Japanese' };
       mockEntryDraft.validities.ja = { title: { valid: false } };
 
-      toggleLocale('ja');
+      toggleLocale({ draft: mockEntryDraft, locale: 'ja' });
 
-      expect(mockUpdate).toHaveBeenCalled();
-
-      const updateFn = mockUpdate.mock.calls[0][0];
-      const result = updateFn(mockEntryDraft);
+      const result = mockEntryDraft;
 
       expect(result.validities.ja).toEqual({});
     });

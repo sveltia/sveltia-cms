@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { get, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -50,14 +50,24 @@ vi.mock('$lib/services/contents/draft/backup', () => ({
 
 const { fieldConfigCacheMap } = await import('$lib/services/contents/entry/fields');
 const { createDraft } = await import('$lib/services/contents/draft/create');
-const { entryDraft } = await import('$lib/services/contents/draft');
-const { validateEntry } = await import('$lib/services/contents/draft/validate');
+const { EntryDraftState } = await import('$lib/services/contents/draft/state.svelte');
+const { validateEntry: _validateEntry } = await import('$lib/services/contents/draft/validate');
 const { isRequiredEnforced } = await import('$lib/services/contents/draft/validate/required');
 
 describe('contents/draft/validate (integration)', () => {
+  /** @type {EntryDraftState} */
+  let entryDraft;
+  /**
+   * Validate the draft open in the editor.
+   * @param {object} [options] Options other than the draft.
+   * @returns {boolean} Whether the draft is valid.
+   */
+  const validateEntry = (options = {}) => _validateEntry({ draft: entryDraft.current, ...options });
+
   beforeEach(() => {
     fieldConfigCacheMap.clear();
-    createDraft({ collection });
+    entryDraft = new EntryDraftState();
+    createDraft({ entryDraft, collection });
   });
 
   it('should not hold an empty optional field to its constraints', () => {
@@ -65,7 +75,7 @@ describe('contents/draft/validate (integration)', () => {
     // moment it was left empty, which blocked every save — draft or not
     validateEntry();
 
-    const { validities } = get(entryDraft);
+    const { validities } = entryDraft.current;
 
     expect(validities._default.note.valid).toBe(true);
     expect(validities._default.extras.valid).toBe(true);
@@ -73,14 +83,14 @@ describe('contents/draft/validate (integration)', () => {
 
   it('should reject an empty entry when required fields are enforced', () => {
     expect(validateEntry()).toBe(false);
-    expect(get(entryDraft).validities._default.code.valueMissing).toBe(true);
+    expect(entryDraft.current.validities._default.code.valueMissing).toBe(true);
   });
 
   it('should accept the same entry as a draft, with nothing marked', () => {
     // @see https://github.com/decaporg/decap-cms/issues/464
     expect(validateEntry({ enforceRequired: false })).toBe(true);
 
-    const { validities, validationMessages } = get(entryDraft);
+    const { validities, validationMessages } = entryDraft.current;
 
     // Not just unblocked: an empty required field is left unmarked, so the editor shows no error on
     // a draft that saved successfully
@@ -91,34 +101,34 @@ describe('contents/draft/validate (integration)', () => {
   it('should leave the fields unmarked while the user goes on editing', () => {
     // A draft save marks nothing, and neither does the per-keystroke revalidation that follows: a
     // field emptied again would otherwise light up as an error moments after a successful save
-    expect(isRequiredEnforced(get(entryDraft))).toBe(false);
+    expect(isRequiredEnforced(entryDraft.current)).toBe(false);
     expect(validateEntry({ enforceRequired: false })).toBe(true);
 
-    const { currentValues } = get(entryDraft);
+    const { currentValues } = entryDraft.current;
 
     currentValues._default.code = '123';
     currentValues._default.code = '';
 
-    expect(get(entryDraft).validities._default.code.valueMissing).toBe(false);
-    expect(get(entryDraft).validationMessages._default.code).toEqual([]);
+    expect(entryDraft.current.validities._default.code.valueMissing).toBe(false);
+    expect(entryDraft.current.validationMessages._default.code).toEqual([]);
   });
 
   it('should still reject a constraint that a value present has broken', () => {
     // A field that has been filled in is held to its rules: a list short of its `min` isn’t “not
     // filled in yet”, it’s wrong, and the same goes for a value over a `max`
-    const { currentValues } = get(entryDraft);
+    const { currentValues } = entryDraft.current;
 
     currentValues._default['tags.0'] = 'one';
 
     expect(validateEntry({ enforceRequired: false })).toBe(false);
-    expect(get(entryDraft).validities._default.tags.rangeUnderflow).toBe(true);
+    expect(entryDraft.current.validities._default.tags.rangeUnderflow).toBe(true);
   });
 
   it('should still reject an error that isn’t about the field being empty', () => {
     // Two digits: short of `minlength` and no match for the pattern, with a value present
-    get(entryDraft).currentValues._default.code = '12';
+    entryDraft.current.currentValues._default.code = '12';
 
     expect(validateEntry({ enforceRequired: false })).toBe(false);
-    expect(get(entryDraft).validities._default.code.patternMismatch).toBe(true);
+    expect(entryDraft.current.validities._default.code.patternMismatch).toBe(true);
   });
 });

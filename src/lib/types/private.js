@@ -963,6 +963,9 @@
  * containing the expander UI state.
  * @property {Record<LocaleCode, boolean | 'readonly'>} slugEditor Whether to show the slug editor
  * for each locale.
+ * @property {boolean} interacted Whether the user has manually interacted with the entry editor.
+ * This prevents auto-backup from triggering when only programmatic changes (e.g. Lexical markdown
+ * reformatting) have occurred.
  */
 
 /**

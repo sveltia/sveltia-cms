@@ -4,7 +4,7 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { getMediaKind } from '$lib/services/assets/kinds';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
 
   /**
    * @import { AssetKind } from '$lib/types/private';
@@ -17,6 +17,8 @@
    * @property {MediaField} fieldConfig Field configuration.
    * @property {string} [typedKeyPath] Field key path for field-level media folders.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
   let {
@@ -34,9 +36,9 @@
 
   const { widget: fieldType } = $derived(fieldConfig);
   const isImageField = $derived(fieldType === 'image');
-  const entry = $derived($entryDraft?.originalEntry);
-  const collectionName = $derived($entryDraft?.collectionName ?? '');
-  const fileName = $derived($entryDraft?.fileName);
+  const entry = $derived(entryDraft.current?.originalEntry);
+  const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  const fileName = $derived(entryDraft.current?.fileName);
 
   $effect(() => {
     void [value];

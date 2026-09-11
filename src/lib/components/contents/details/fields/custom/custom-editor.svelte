@@ -38,13 +38,14 @@
   import { getContext, onMount } from 'svelte';
 
   import { fieldStateContext } from '$lib/services/api/field-state';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import {
     registerCustomFieldInstance,
     triggerCustomFieldValidation,
     unregisterCustomFieldInstance,
   } from '$lib/services/contents/draft/validate/custom-fields';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { buildControlProps, resolveControl } from '$lib/services/contents/fields/custom/editor';
   import { addFileToDraft } from '$lib/services/contents/fields/custom/files';
 
@@ -64,6 +65,8 @@
    * @property {any} currentValue Current field value.
    * @property {CustomFieldControl | string} control React component or component name string.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues', parentComponentNames = [] } =
@@ -102,10 +105,16 @@
    * @param {any} value New value from the React component.
    */
   const handleChange = (value) => {
+    const draft = entryDraft.current;
+
+    if (!draft) {
+      return;
+    }
+
     if (Array.isArray(value) || isObject(value)) {
-      updateNonPrimitiveValue({ valueStoreKey, locale, keyPath, i18n, value });
-    } else if ($entryDraft) {
-      $entryDraft[valueStoreKey][locale][keyPath] = value;
+      updateNonPrimitiveValue({ draft, valueStoreKey, locale, keyPath, i18n, value });
+    } else {
+      draft[valueStoreKey][locale][keyPath] = value;
     }
   };
 
@@ -118,12 +127,12 @@
    * @returns {Promise<string>} Blob URL to be stored in the field value.
    */
   const handleAddFile = async (file, options) => {
-    if (!$entryDraft) {
+    if (!entryDraft.current) {
       throw new Error('addFile() can only be called while an entry is being edited');
     }
 
     return addFileToDraft({
-      draft: $entryDraft,
+      draft: entryDraft.current,
       fieldConfig,
       typedKeyPath,
       componentName,
@@ -162,10 +171,7 @@
       fieldClassName: getInputClassName(),
       fieldConfig,
       currentValue,
-      // Reading the draft here makes the `$effect` below rerender the component whenever any field
-      // in the entry is updated, so that a control showing values derived from other fields, such
-      // as dynamically generated select options, stays up to date
-      draft: $entryDraft,
+      draft: entryDraft.current,
       locale,
       onChange: handleChange,
       addFile: handleAddFile,
@@ -195,6 +201,12 @@
   });
 
   $effect(() => {
+    // Depend on every field in the locale, so that a control showing values derived from other
+    // fields, such as dynamically generated select options, stays up to date. The values are read
+    // through a cache shared between controls when the props are built, so they have to be tracked
+    // here
+    void getValueMapSnapshot(entryDraft.current, locale, valueStoreKey);
+
     // Update the component when currentValue changes externally (e.g., via revert or copy)
     if (reactRoot && resolvedControl) {
       renderComponent();

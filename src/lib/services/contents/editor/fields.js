@@ -1,7 +1,5 @@
 import { escapeRegExp } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
-import { entryDraft } from '$lib/services/contents/draft';
 import { getField, LIST_KEY_PATH_REGEX } from '$lib/services/contents/entry/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -10,7 +8,6 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * EntryDraft,
  * FlattenedEntryContent,
  * InternalLocaleCode,
- * LocaleContentMap,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, ObjectField, ListField } from '$lib/types/public';
  */
@@ -21,29 +18,24 @@ import { getOrCreate } from '$lib/services/utils/cache';
  */
 const expanderRegexCache = new Map();
 /**
- * Expander state changes accumulated by {@link syncExpanderStates}, waiting to be written to
- * {@link entryDraft}. `undefined` when no flush is scheduled.
- * @type {Record<FieldKeyPath, boolean> | undefined}
+ * Expander state changes accumulated by {@link syncExpanderStates}, waiting to be written to the
+ * entry draft, keyed by draft. A draft has no entry when no flush is scheduled for it.
+ * @type {WeakMap<EntryDraft, Record<FieldKeyPath, boolean>>}
  */
-let pendingExpanderStates;
+const pendingExpanderStates = new WeakMap();
 
 /**
- * Apply the accumulated expander state changes to the entry draft in a single store update.
+ * Apply the accumulated expander state changes to the entry draft in one go.
+ * @param {EntryDraft} draft Entry draft.
  */
-const flushExpanderStates = () => {
+const flushExpanderStates = (draft) => {
   // Always set, because the flush is only scheduled right after the map is created
-  const stateMap = /** @type {Record<FieldKeyPath, boolean>} */ (pendingExpanderStates);
+  const stateMap = /** @type {Record<FieldKeyPath, boolean>} */ (pendingExpanderStates.get(draft));
 
-  pendingExpanderStates = undefined;
+  pendingExpanderStates.delete(draft);
 
-  entryDraft.update((_draft) => {
-    if (_draft) {
-      Object.entries(stateMap).forEach(([keyPath, expanded]) => {
-        _draft.expanderStates._[keyPath] = expanded;
-      });
-    }
-
-    return _draft;
+  Object.entries(stateMap).forEach(([keyPath, expanded]) => {
+    draft.expanderStates._[keyPath] = expanded;
   });
 };
 
@@ -52,6 +44,7 @@ const flushExpanderStates = () => {
  * to `auto`, it checks if there are any values in the object. Otherwise, it uses the `collapsed`
  * option directly, which defaults to `false` (expanded).
  * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.key Key path of the item. For a List field, it’s a key path of the list
  * item, e.g. `authors.0`. For an Object field, it’s a key path of the object with the `#` suffix,
  * e.g. `details#`.
@@ -59,17 +52,16 @@ const flushExpanderStates = () => {
  * @param {boolean | 'auto'} [args.collapsed] The `collapsed` option value.
  * @returns {boolean} Whether th expander should be expanded.
  */
-export const getInitialExpanderState = ({ key, locale, collapsed = false }) => {
-  const _draft = get(entryDraft);
+export const getInitialExpanderState = ({ draft, key, locale, collapsed = false }) => {
   // A state that is queued but not written yet is still the authoritative one
-  const currentState = pendingExpanderStates?.[key] ?? _draft?.expanderStates?._[key];
+  const currentState = pendingExpanderStates.get(draft)?.[key] ?? draft.expanderStates?._[key];
 
   if (currentState !== undefined) {
     return currentState;
   }
 
   if (collapsed === 'auto') {
-    const valueMap = _draft?.currentValues?.[locale] ?? {};
+    const valueMap = draft.currentValues?.[locale] ?? {};
     const cleanKey = key.replace(/#$/, '');
 
     // Pre-compile and cache the regex — same key path is queried on every editor render.
@@ -87,34 +79,38 @@ export const getInitialExpanderState = ({ key, locale, collapsed = false }) => {
 
 /**
  * Sync the field object/list expander states between locales.
- * @param {Record<FieldKeyPath, boolean>} stateMap Map of key path and state.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {Record<FieldKeyPath, boolean>} args.stateMap Map of key path and state.
  */
-export const syncExpanderStates = (stateMap) => {
-  const currentStates = get(entryDraft)?.expanderStates?._;
+export const syncExpanderStates = ({ draft, stateMap }) => {
+  const currentStates = draft.expanderStates?._;
 
   if (!currentStates) {
     return;
   }
 
+  let pendingStates = pendingExpanderStates.get(draft);
+
   const changes = Object.entries(stateMap).filter(
-    ([keyPath, expanded]) =>
-      (pendingExpanderStates?.[keyPath] ?? currentStates[keyPath]) !== expanded,
+    ([keyPath, expanded]) => (pendingStates?.[keyPath] ?? currentStates[keyPath]) !== expanded,
   );
 
-  // Writing to the store notifies every subscriber, which re-renders the whole editor. Object/List
-  // editors call this as they mount, so revealing n of them — by expanding a field or merely
-  // scrolling — would otherwise cost O(n²). Drop no-op changes, and coalesce the rest into a single
-  // store write per tick, which is enough to collapse a whole mount storm into one update.
+  // Object/List editors call this as they mount, so revealing n of them — by expanding a field or
+  // merely scrolling — would write to the draft n times in a row. Drop no-op changes, and coalesce
+  // the rest into a single write per tick, which is enough to collapse a whole mount storm into
+  // one update.
   if (!changes.length) {
     return;
   }
 
-  if (!pendingExpanderStates) {
-    pendingExpanderStates = {};
-    queueMicrotask(flushExpanderStates);
+  if (!pendingStates) {
+    pendingStates = {};
+    pendingExpanderStates.set(draft, pendingStates);
+    queueMicrotask(() => flushExpanderStates(draft));
   }
 
-  Object.assign(pendingExpanderStates, Object.fromEntries(changes));
+  Object.assign(pendingStates, Object.fromEntries(changes));
 };
 
 /**
@@ -175,13 +171,11 @@ export const getExpanderKeys = ({
 
 /**
  * Expand any invalid fields, including the parent list/object(s).
- * @param {object} args Partial arguments for {@link getField}.
- * @param {string} args.collectionName Collection name.
- * @param {string} [args.fileName] Collection file name. File/singleton collection only.
- * @param {LocaleContentMap} args.currentValues Field values.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
  */
-export const expandInvalidFields = ({ collectionName, fileName, currentValues }) => {
-  const { validities, isIndexFile } = /** @type {EntryDraft} */ (get(entryDraft));
+export const expandInvalidFields = ({ draft }) => {
+  const { collectionName, fileName, currentValues, validities, isIndexFile } = draft;
   /** @type {Record<FieldKeyPath, boolean>} */
   const stateMap = {};
 
@@ -201,7 +195,7 @@ export const expandInvalidFields = ({ collectionName, fileName, currentValues })
     });
   });
 
-  syncExpanderStates(stateMap);
+  syncExpanderStates({ draft, stateMap });
 };
 
 /**

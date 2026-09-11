@@ -4,9 +4,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { entryDraft } from '$lib/services/contents/draft';
 import { getSlugs, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
-import { validatePath } from '$lib/services/contents/draft/validate/path';
+import { validatePath as _validatePath } from '$lib/services/contents/draft/validate/path';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -28,12 +27,10 @@ vi.mock('$lib/services/contents/draft/slugs', () => ({
   hasLocalizedSlugs: vi.fn(() => false),
 }));
 
-vi.mock('$lib/services/contents/draft');
-
 vi.mock('svelte/store', async () => {
   const actual = await vi.importActual('svelte/store');
 
-  return { ...actual, get: vi.fn() };
+  return { ...actual, get: vi.fn(() => []) };
 });
 
 /**
@@ -52,15 +49,22 @@ const createCollection = ({ subfolders = true, metaPath = true, indexFile } = {}
   _i18n: { defaultLocale: 'en', structureMap: {} },
 });
 
+/** @type {any} */
+let currentDraft;
+
 /**
  * Make {@link validatePath} read the given draft.
  * @param {any} draft Entry draft.
  */
 const setDraft = async (draft) => {
-  const { get } = await import('svelte/store');
-
-  vi.mocked(get).mockImplementation((store) => (store === entryDraft ? draft : []));
+  currentDraft = draft;
 };
+
+/**
+ * Validate the path of the draft set with {@link setDraft}.
+ * @returns {object} Validation results.
+ */
+const validatePath = () => _validatePath(currentDraft);
 
 beforeEach(() => {
   vi.clearAllMocks();

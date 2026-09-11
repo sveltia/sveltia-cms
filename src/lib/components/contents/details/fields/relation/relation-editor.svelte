@@ -10,7 +10,7 @@
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getOptions } from '$lib/services/contents/fields/relation/helpers';
 
   /**
@@ -23,6 +23,8 @@
    * @property {RelationField} fieldConfig Field configuration.
    * @property {string | string[] | undefined} currentValue Field value.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
@@ -53,8 +55,10 @@
       ? [getCollectionFileEntry(collectionName, fileName)].filter((entry) => !!entry)
       : getEntriesByCollection(collectionName),
   );
-  const currentLocaleValues = $derived($entryDraft?.[valueStoreKey]?.[locale]);
-  const currentSlug = $derived($entryDraft?.currentSlugs[locale] ?? $entryDraft?.currentSlugs._);
+  const currentLocaleValues = $derived(entryDraft.current?.[valueStoreKey]?.[locale]);
+  const currentSlug = $derived(
+    entryDraft.current?.currentSlugs[locale] ?? entryDraft.current?.currentSlugs._,
+  );
   /** @type {SelectField} */
   const selectFieldConfig = $derived({
     ...fieldConfig,

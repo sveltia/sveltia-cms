@@ -1,8 +1,5 @@
-import { get } from 'svelte/store';
-
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
-import { entryDraft } from '$lib/services/contents/draft';
 import { buildDraft } from '$lib/services/contents/draft/create';
 import { validateDraft, validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
@@ -21,22 +18,20 @@ import { expandInvalidFields } from '$lib/services/contents/editor/fields';
  * and the invalid fields are expanded to show the errors just as a failed save does. Otherwise —
  * the Editorial Workflow board — a throwaway draft is built from the entry’s saved content, leaving
  * the editor state alone.
- * @param {UnpublishedEntry} entry Entry to check.
+ * @param {object} args Arguments.
+ * @param {UnpublishedEntry} args.entry Entry to check.
+ * @param {EntryDraft | null} [args.draft] Draft open in the editor, if any.
  * @returns {boolean} Whether the entry can move on. An entry whose collection is no longer
  * configured can’t be checked against anything, so it’s left alone.
  * @see https://github.com/decaporg/decap-cms/issues/464
  */
-export const validateWorkflowEntry = (entry) => {
-  const openDraft = /** @type {EntryDraft | null | undefined} */ (get(entryDraft));
-
-  if (openDraft?.originalEntry?.id === entry.id) {
-    if (validateEntry()) {
+export const validateWorkflowEntry = ({ entry, draft }) => {
+  if (draft?.originalEntry?.id === entry.id) {
+    if (validateEntry({ draft })) {
       return true;
     }
 
-    const { collectionName, fileName, currentValues } = openDraft;
-
-    expandInvalidFields({ collectionName, fileName, currentValues });
+    expandInvalidFields({ draft });
 
     return false;
   }

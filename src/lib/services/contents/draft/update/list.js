@@ -1,13 +1,11 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
-import { get } from 'svelte/store';
 
-import { entryDraft, suspendAutoDuplication } from '$lib/services/contents/draft';
+import { suspendAutoDuplication } from '$lib/services/contents/draft';
 import { getSubtree } from '$lib/services/contents/entry/subtree';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { DraftValueStoreKey, EntryDraft, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
@@ -62,6 +60,7 @@ export const getItemList = (obj, keyPath) => {
 /**
  * Update the value in a list field.
  * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} args.locale Target locale.
  * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {FieldKeyPath} args.keyPath Dot-notated field name.
@@ -70,12 +69,12 @@ export const getItemList = (obj, keyPath) => {
  * list and view state list. The typical usage is `list.splice()`.
  */
 export const updateListField = ({
+  draft,
   locale,
   valueStoreKey = 'currentValues',
   keyPath,
   manipulate,
 }) => {
-  const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { collection, collectionFile } = draft;
   const { defaultLocale } = (collectionFile ?? collection)._i18n;
   const [valueList, valueListRemainder] = getItemList(draft[valueStoreKey][locale], keyPath);
@@ -87,21 +86,17 @@ export const updateListField = ({
   manipulate({ valueList, expanderStateList });
 
   suspendAutoDuplication(() => {
-    /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => {
-      updateObject(_draft[valueStoreKey][locale], {
-        ...flatten({ [keyPath]: valueList }),
-        ...valueListRemainder,
-      });
-
-      if (locale === defaultLocale) {
-        updateObject(_draft.expanderStates._, {
-          ...flatten({ [keyPath]: expanderStateList }),
-          ...expanderStateListRemainder,
-        });
-      }
-
-      return _draft;
+    updateObject(draft[valueStoreKey][locale], {
+      ...flatten({ [keyPath]: valueList }),
+      ...valueListRemainder,
     });
+
+    if (locale === defaultLocale) {
+      updateObject(draft.expanderStates._, {
+        ...flatten({ [keyPath]: expanderStateList }),
+        ...expanderStateListRemainder,
+      });
+    }
   });
 };
 
@@ -119,10 +114,8 @@ const getMultiValueList = (values, keyPath) => getSubtree(values, keyPath, { liv
  * Move an item of a multi-value field, such as a File or Image field with the `multiple` option
  * enabled, to another position. The reordered list is written back over the existing numbered keys,
  * which all still exist because reordering doesn’t change the item count.
- *
- * Just like {@link removeMultiValueItem}, the whole manipulation is done within a single
- * {@link entryDraft} update, so that subscribers never observe a half-reordered list.
  * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} args.locale Target locale.
  * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {FieldKeyPath} args.keyPath Dot-notated field name.
@@ -130,27 +123,24 @@ const getMultiValueList = (values, keyPath) => getSubtree(values, keyPath, { liv
  * @param {number} args.to Index to move the item to.
  */
 export const moveMultiValueItem = ({
+  draft,
   locale,
   valueStoreKey = 'currentValues',
   keyPath,
   from,
   to,
 }) => {
-  /** @type {Writable<EntryDraft>} */ (entryDraft).update((draft) => {
-    const values = draft[valueStoreKey][locale];
-    const list = getMultiValueList(values, keyPath);
+  const values = draft[valueStoreKey][locale];
+  const list = getMultiValueList(values, keyPath);
 
-    if (from === to || !(from in list) || !(to in list)) {
-      return draft;
-    }
+  if (from === to || !(from in list) || !(to in list)) {
+    return;
+  }
 
-    list.splice(to, 0, ...list.splice(from, 1));
+  list.splice(to, 0, ...list.splice(from, 1));
 
-    list.forEach((value, index) => {
-      values[`${keyPath}.${index}`] = value;
-    });
-
-    return draft;
+  list.forEach((value, index) => {
+    values[`${keyPath}.${index}`] = value;
   });
 };
 
@@ -161,41 +151,33 @@ export const moveMultiValueItem = ({
  *
  * The draft is the single source of truth for the field editor, so nothing is returned; the editor
  * re-renders from the updated draft.
- *
- * The whole manipulation is done within a single {@link entryDraft} update. Deleting a property
- * doesn’t notify the store on its own — only an assignment does — so shifting the values with
- * separate assignments would leave subscribers, including the shared value map snapshot, holding a
- * map that still contains the removed key. The next removal would then read that key back and write
- * its stale value into the list.
  * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} args.locale Target locale.
  * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {FieldKeyPath} args.keyPath Dot-notated field name.
  * @param {number} args.index Index of the item to remove.
  */
 export const removeMultiValueItem = ({
+  draft,
   locale,
   valueStoreKey = 'currentValues',
   keyPath,
   index,
 }) => {
-  /** @type {Writable<EntryDraft>} */ (entryDraft).update((draft) => {
-    const values = draft[valueStoreKey][locale];
+  const values = draft[valueStoreKey][locale];
 
-    for (let i = index; ; i += 1) {
-      const currentKey = `${keyPath}.${i}`;
-      const nextKey = `${keyPath}.${i + 1}`;
+  for (let i = index; ; i += 1) {
+    const currentKey = `${keyPath}.${i}`;
+    const nextKey = `${keyPath}.${i + 1}`;
 
-      if (nextKey in values) {
-        values[currentKey] = values[nextKey];
-      } else {
-        // Assign `null` before deleting the property, so the draft proxy can revalidate the field
-        values[currentKey] = null;
-        delete values[currentKey];
-        break;
-      }
+    if (nextKey in values) {
+      values[currentKey] = values[nextKey];
+    } else {
+      // Assign `null` before deleting the property, so the draft proxy can revalidate the field
+      values[currentKey] = null;
+      delete values[currentKey];
+      break;
     }
-
-    return draft;
-  });
+  }
 };

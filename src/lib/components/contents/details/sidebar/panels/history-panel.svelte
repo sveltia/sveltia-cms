@@ -5,7 +5,7 @@
 
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { backend } from '$lib/services/backends';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { fetchEntryHistory } from '$lib/services/contents/entry/history';
   import { formatDate } from '$lib/services/utils/date';
   import { openNewTab } from '$lib/services/utils/window';
@@ -13,6 +13,8 @@
   /**
    * @import { FileCommit } from '$lib/types/private';
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FileCommit[]} */
   let commits = $state([]);
@@ -23,7 +25,7 @@
    * Load the commit history for the current entry, using the external cache.
    */
   const load = async () => {
-    const entry = $entryDraft?.originalEntry;
+    const entry = entryDraft.current?.originalEntry;
 
     if (!entry) {
       return;

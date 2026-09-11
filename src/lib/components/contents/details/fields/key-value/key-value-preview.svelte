@@ -9,13 +9,12 @@
   import equal from 'fast-deep-equal';
   import { untrack } from 'svelte';
 
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getPairs } from '$lib/services/contents/fields/key-value/helpers';
 
   /**
-   * @import { Writable } from 'svelte/store';
-   * @import { EntryDraft, FieldPreviewProps } from '$lib/types/private';
+   * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { KeyValueField } from '$lib/types/public';
    */
 
@@ -24,6 +23,8 @@
    * @property {KeyValueField} fieldConfig Field configuration.
    * @property {Record<string, string> | undefined} currentValue Field value.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldPreviewProps & Props} */
   let {
@@ -49,8 +50,13 @@
    * Update the key-value {@link pairs} whenever the draft store is updated.
    */
   const updatePairs = () => {
-    const _entryDraft = /** @type {Writable<EntryDraft>} */ (entryDraft);
-    const updatedPairs = getPairs({ entryDraft: _entryDraft, keyPath, locale });
+    const draft = entryDraft.current;
+
+    if (!draft) {
+      return;
+    }
+
+    const updatedPairs = getPairs({ draft, keyPath, locale });
 
     if (!equal(pairs, updatedPairs)) {
       pairs = updatedPairs;
@@ -58,8 +64,8 @@
   };
 
   $effect(() => {
-    if ($entryDraft) {
-      void [getValueMapSnapshot($entryDraft, locale)];
+    if (entryDraft.current) {
+      void [getValueMapSnapshot(entryDraft.current, locale)];
 
       untrack(() => {
         updatePairs();

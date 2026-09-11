@@ -8,7 +8,7 @@
 
   import { goBack } from '$lib/services/app/navigation';
   import { getCollection } from '$lib/services/contents/collection';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import { publishWorkflowEntry } from '$lib/services/workflow/save';
   import { validateWorkflowEntry } from '$lib/services/workflow/validate';
@@ -25,6 +25,8 @@
    * the pull request as it stands and throw those changes away, so the control is disabled until
    * they’re saved. It doesn’t apply to a removal, which has no content to publish.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
   let {
@@ -58,7 +60,7 @@
     // A pull request labelled ready elsewhere — by another CMS, or by hand — may never have been
     // checked, and an entry can be saved as a draft with its required fields left empty. A removal
     // has no content to check; publishing it is what carries the deletion out
-    if (!deletion && !validateWorkflowEntry(entry)) {
+    if (!deletion && !validateWorkflowEntry({ entry, draft: entryDraft.current })) {
       showValidationToast = true;
 
       return;
@@ -72,7 +74,7 @@
 
     try {
       await publishWorkflowEntry(entry);
-      $entryDraft = null;
+      entryDraft.current = null;
       goBack(`/collections/${collectionName}`);
     } catch (/** @type {any} */ ex) {
       showErrorToast = true;

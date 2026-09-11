@@ -1,28 +1,47 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
+import { updateNonPrimitiveValue as _updateNonPrimitiveValue } from '.';
 
-import { updateNonPrimitiveValue } from '.';
-
-// Keep the real `suspendAutoDuplication` so it still runs its callback and toggles the store,
-// which the tests below spy on
-vi.mock('$lib/services/contents/draft', async () => ({
-  ...(await vi.importActual('$lib/services/contents/draft')),
+const { isAutoDuplicationEnabled } = vi.hoisted(() => ({
+  isAutoDuplicationEnabled: vi.fn(() => true),
 }));
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
 
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
+vi.mock('$lib/services/contents/draft', () => ({
+  isAutoDuplicationEnabled,
+  suspendAutoDuplication: vi.fn((fn) => {
+    isAutoDuplicationEnabled.mockReturnValue(false);
+
+    try {
+      return fn();
+    } finally {
+      isAutoDuplicationEnabled.mockReturnValue(true);
+    }
+  }),
+}));
 
 describe('draft/update/index', () => {
   /** @type {any} */
   let mockEntryDraft;
-  /** @type {any} */
+  /**
+   * Stand-in for the draft update the editor used to make, recording the update so a test can
+   * replay it on a draft of its own.
+   * @type {any}
+   */
   let mockUpdate;
+
+  /**
+   * Update the mock entry draft.
+   * @param {any} args Arguments for {@link _updateNonPrimitiveValue} other than the draft.
+   * @returns {any} Whatever the recorded update returns.
+   */
+  const updateNonPrimitiveValue = (args) =>
+    mockUpdate((/** @type {any} */ draft) => {
+      if (draft) {
+        _updateNonPrimitiveValue({ draft, ...args });
+      }
+
+      return draft;
+    });
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -53,9 +72,6 @@ describe('draft/update/index', () => {
 
       return mockEntryDraft;
     });
-
-    vi.mocked(entryDraft).update = mockUpdate;
-    vi.mocked(i18nAutoDupEnabled).set = vi.fn();
   });
 
   describe('updateNonPrimitiveValue', () => {
@@ -71,8 +87,7 @@ describe('draft/update/index', () => {
       });
 
       expect(mockUpdate).toHaveBeenCalled();
-      expect(vi.mocked(i18nAutoDupEnabled).set).toHaveBeenNthCalledWith(1, false);
-      expect(vi.mocked(i18nAutoDupEnabled).set).toHaveBeenLastCalledWith(true);
+      expect(mockEntryDraft.currentValues.en['settings.theme']).toBe('light');
     });
 
     it('should update only the specified locale when i18n is "none"', () => {
@@ -374,7 +389,9 @@ describe('draft/update/index', () => {
       expect(result.currentValues.en.items).toEqual([]);
     });
 
-    it('should toggle i18nAutoDupEnabled correctly', () => {
+    it('should suspend the automatic i18n duplication while writing', async () => {
+      const { suspendAutoDuplication } = await import('$lib/services/contents/draft');
+
       updateNonPrimitiveValue({
         valueStoreKey: 'currentValues',
         keyPath: 'settings',
@@ -383,12 +400,8 @@ describe('draft/update/index', () => {
         value: { theme: 'light' },
       });
 
-      const { calls } = vi.mocked(i18nAutoDupEnabled).set.mock;
-
-      // Should be disabled at start
-      expect(calls[0][0]).toBe(false);
-      // Should be enabled at end
-      expect(calls[calls.length - 1][0]).toBe(true);
+      expect(suspendAutoDuplication).toHaveBeenCalled();
+      expect(isAutoDuplicationEnabled()).toBe(true);
     });
 
     it('should update currentValues by default when no valueStoreKey is specified', () => {

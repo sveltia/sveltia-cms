@@ -10,7 +10,6 @@ import {
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
-import { entryDraft } from '$lib/services/contents/draft';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
@@ -84,21 +83,21 @@ const assignManualSortOrder = (draft) => {
 
 /**
  * Save the entry draft.
- * @param {object} [options] Options.
- * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft to save.
+ * @param {boolean} [args.skipCI] Whether to disable automatic deployments for the change.
  * @returns {Promise<Entry>} Saved entry.
  * @throws {Error} When the entry could not be validated or saved.
  */
-export const saveEntry = async ({ skipCI = undefined } = {}) => {
-  const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { isNew, collection, collectionName, fileName, currentValues, originalEntry } = draft;
+export const saveEntry = async ({ draft, skipCI = undefined }) => {
+  const { isNew, collection, collectionName, fileName, originalEntry } = draft;
 
   // Custom field validators can be async, so wait for any in-flight results before validating.
   // Otherwise a field made invalid moments ago would be validated against a stale verdict.
   await awaitCustomFieldValidations();
 
-  if (!validateEntry({ enforceRequired: isRequiredEnforced(draft) })) {
-    expandInvalidFields({ collectionName, fileName, currentValues });
+  if (!validateEntry({ draft, enforceRequired: isRequiredEnforced(draft) })) {
+    expandInvalidFields({ draft });
 
     throw new Error('validation_failed');
   }

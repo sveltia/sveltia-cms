@@ -1,7 +1,7 @@
 <script>
   import { CustomPreview, previews } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
   import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
@@ -21,6 +21,8 @@
    * @property {boolean} [showLabel] Whether to show the field label/header. Defaults to `true`.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -36,9 +38,9 @@
   const { label = '', preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const multiple = $derived(isFieldMultiple(fieldConfig));
   const isList = $derived(fieldType === 'list' || multiple);
-  const collection = $derived($entryDraft?.collection);
-  const collectionFile = $derived($entryDraft?.collectionFile);
-  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale));
+  const collection = $derived(entryDraft.current?.collection);
+  const collectionFile = $derived(entryDraft.current?.collectionFile);
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
   const { i18nEnabled, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );

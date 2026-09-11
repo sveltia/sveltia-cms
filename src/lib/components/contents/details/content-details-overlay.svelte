@@ -23,11 +23,16 @@
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
-  import { entryDraft, entryDraftInteracted } from '$lib/services/contents/draft';
   import {
     resetBackupToastState,
+    scheduleBackup,
     showBackupToastIfNeeded,
   } from '$lib/services/contents/draft/backup';
+  import { getValueMapVersion } from '$lib/services/contents/draft/create/proxy.svelte';
+  import {
+    setEntryDraftContext,
+    setEntryDraftRoot,
+  } from '$lib/services/contents/draft/state.svelte';
   import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
   import {
     editorFirstPane,
@@ -41,14 +46,18 @@
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
+  import { prefs } from '$lib/services/user/prefs.svelte';
 
   /**
+   * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
    * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
    * @import { FieldKeyPath } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
+   * @property {EntryDraftState} entryDraft Draft to edit. The editor components below read it
+   * from the context.
    * @property {string | undefined} [editorLocale] The locale to open the editor in.
    * @property {boolean} [loading] Whether the entry is still being resolved. That happens when it
    * was opened with a deep link before the Editorial Workflow drafts have been fetched.
@@ -57,10 +66,14 @@
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
+    entryDraft,
     editorLocale = undefined,
     loading = false,
     /* eslint-enable prefer-const */
   } = $props();
+
+  // svelte-ignore state_referenced_locally
+  setEntryDraftContext(entryDraft);
 
   let restoring = false;
   let switching = false;
@@ -76,7 +89,7 @@
   /** @type {HTMLElement | undefined} */
   let secondPaneContentArea = $state();
 
-  const notFound = $derived($entryDraft === undefined);
+  const notFound = $derived(entryDraft.current === undefined);
   const {
     isNew = true,
     canPreview = true,
@@ -86,7 +99,7 @@
     fileName,
     isIndexFile,
     currentValues,
-  } = $derived(/** @type {EntryDraft} */ ($entryDraft ?? {}));
+  } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
   const { showPreview, showSecondPane = true } = $derived($entryEditorSettings ?? {});
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
@@ -162,7 +175,7 @@
    * Hide the preview pane if it’s disabled by the user or the collection/file.
    */
   const switchPanes = async () => {
-    if (!$entryDraft || switching) {
+    if (!entryDraft.current || switching) {
       return;
     }
 
@@ -256,8 +269,8 @@
    * @param {Event} event DOM event.
    */
   const markInteracted = (event) => {
-    if (event.isTrusted && !$entryDraftInteracted) {
-      $entryDraftInteracted = true;
+    if (event.isTrusted && entryDraft.current && !entryDraft.current.interacted) {
+      entryDraft.current.interacted = true;
     }
   };
 
@@ -318,6 +331,12 @@
   const highlightEditorField = async ({ locale, keyPath }) => {
     await ensureEditPaneVisible(locale);
 
+    const draft = entryDraft.current;
+
+    if (!draft) {
+      return;
+    }
+
     const valueMap = currentValues?.[locale] ?? {};
 
     const expanderKeys = getExpanderKeys({
@@ -328,7 +347,10 @@
       isIndexFile,
     });
 
-    syncExpanderStates(Object.fromEntries(expanderKeys.map((key) => [key, true])));
+    syncExpanderStates({
+      draft,
+      stateMap: Object.fromEntries(expanderKeys.map((key) => [key, true])),
+    });
 
     window.requestAnimationFrame(() => {
       const targetField = document.querySelector(
@@ -386,7 +408,7 @@
 
   onMount(() => {
     if (!$showContentOverlay) {
-      $entryDraft = null;
+      entryDraft.current = null;
     }
 
     window.addEventListener('message', onmessage);
@@ -397,13 +419,57 @@
   });
 
   $effect(() => {
-    void [$entryDraft];
+    if (wrapper) {
+      // Rich text editor components are mounted outside the component tree, so they look the
+      // draft up through the DOM rather than the context
+      setEntryDraftRoot(wrapper, entryDraft);
+    }
+  });
+
+  $effect(() => {
+    if (prefs.devModeEnabled) {
+      // eslint-disable-next-line no-console
+      console.info('entryDraft', entryDraft.current);
+    }
+  });
+
+  $effect(() => {
+    const draft = entryDraft.current;
+
+    if (!draft) {
+      return;
+    }
+
+    // Depend on every field value at the cost of one dependency per locale, without walking the
+    // values: each value map proxy counts its writes
+    Object.values(draft.currentValues).forEach(getValueMapVersion);
+    // The extra values of rich text editor components are plain `$state` objects with no version,
+    // so they have to be read to be tracked. They are few, so the walk is cheap
+    Object.values(draft.extraValues).forEach((valueMap) => void $state.snapshot(valueMap));
+    void $state.snapshot(draft.currentLocales);
 
     untrack(() => {
       // Resolve the Compute fields here rather than in their own editors, which only run while
       // they are rendered — a collapsed or off-screen list item renders none of its fields
-      updateComputedValues();
+      updateComputedValues(draft);
     });
+  });
+
+  $effect(() => {
+    const draft = entryDraft.current;
+
+    if (draft) {
+      // Depend on everything that goes into a backup
+      Object.values(draft.currentValues).forEach(getValueMapVersion);
+      void $state.snapshot(draft.currentLocales);
+      void $state.snapshot(draft.currentSlugs);
+      // The files map holds `File` objects, which can’t be snapshotted; a file can be replaced
+      Object.values(draft.files).forEach(({ file }) => void file);
+      void draft.interacted;
+    }
+
+    // Back up the draft automatically whenever it changes, or drop a pending backup once it’s gone
+    untrack(() => scheduleBackup(draft));
   });
 
   $effect(() => {
@@ -438,7 +504,7 @@
     if (wrapper) {
       (async () => {
         if (!$showContentOverlay) {
-          await showBackupToastIfNeeded();
+          await showBackupToastIfNeeded(entryDraft.current);
         } else if (hidden) {
           hidden = false;
           await switchPanes();
@@ -509,13 +575,13 @@
   aria-label={_('content_editor')}
   bind:this={wrapper}
 >
-  {#key $entryDraft?.id}
+  {#key entryDraft.current?.id}
     <Toolbar disabled={loading || (isNew && creationDisabled)} />
     {#if loading}
       <EmptyState>
         <div role="none">{_('loading_entries', { values: { count: 1 } })}</div>
       </EmptyState>
-    {:else if $entryDraft === null}
+    {:else if entryDraft.current === null}
       <!-- Hide the content after saving a draft -->
     {:else if notFound || (isNew && creationDisabled)}
       <EmptyState>

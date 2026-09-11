@@ -1,6 +1,3 @@
-import { get } from 'svelte/store';
-
-import { entryDraft } from '$lib/services/contents/draft';
 import { getListItemIndexes, indexListItems } from '$lib/services/contents/entry/content-index';
 import { getComputedValue } from '$lib/services/contents/fields/compute/helpers';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
@@ -311,7 +308,7 @@ const updateLocaleComputedValues = ({ draft, valueStoreKey, locale, valueMap }) 
 };
 
 /**
- * Resolve every Compute field in the current entry draft and write the results back.
+ * Resolve every Compute field in the given entry draft and write the results back.
  *
  * A Compute field derives its value from the rest of the content, so it has to be resolved again
  * whenever anything changes — including a change the user can’t see, such as a list item removed
@@ -320,17 +317,12 @@ const updateLocaleComputedValues = ({ draft, valueStoreKey, locale, valueMap }) 
  * runs while it’s rendered, and neither a collapsed list item nor one that has yet to be scrolled
  * into view renders its fields.
  *
- * A value is written only when it actually changes, so the store update this ends with settles on
- * the next run instead of looping.
+ * A value is written only when it actually changes, so an effect calling this settles on the next
+ * run instead of looping.
+ * @param {EntryDraft} draft Entry draft.
  * @returns {boolean} Whether any value has changed.
  */
-export const updateComputedValues = () => {
-  const draft = get(entryDraft);
-
-  if (!draft) {
-    return false;
-  }
-
+export const updateComputedValues = (draft) => {
   const { currentLocales, fields } = draft;
   let changed = false;
 
@@ -354,11 +346,6 @@ export const updateComputedValues = () => {
       });
     },
   );
-
-  if (changed) {
-    // Notify the subscribers, including the shared value map snapshot, of the values just written
-    entryDraft.update((_draft) => _draft);
-  }
 
   return changed;
 };

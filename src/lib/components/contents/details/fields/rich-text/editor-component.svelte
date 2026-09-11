@@ -9,22 +9,63 @@
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import { replaceTemplateTags } from '$lib/services/common/template';
   import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
-  import { entryDraft } from '$lib/services/contents/draft';
   import { normalizeContent } from '$lib/services/contents/draft/create/normalize';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
+  import {
+    getEntryDraftByElement,
+    setEntryDraftContext,
+  } from '$lib/services/contents/draft/state.svelte';
   import { validateFields } from '$lib/services/contents/draft/validate/fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
   import { unflattenMap } from '$lib/services/utils/object';
 
   /**
+   * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
    * @import {
    * DraftValueStoreKey,
+   * EntryDraft,
    * InternalLocaleCode,
    * TypedFieldKeyPath,
    * } from '$lib/types/private';
    * @import { EditorComponentMode, Field, FieldKeyPath, RawEntryContent } from '$lib/types/public';
    */
+
+  /**
+   * Entry draft state of the editor this component is rendered in. Lexical mounts the component
+   * outside the Svelte component tree, so the state can’t come from the context; it’s looked up
+   * through the DOM once the component is in place, along with the locale and key path below.
+   * @type {EntryDraftState | undefined}
+   */
+  let entryDraft = $state();
+
+  // The field editors rendered below expect the state in the context, which has to be set now,
+  // before the state is resolved, so hand them a stand-in that follows it
+  setEntryDraftContext({
+    /**
+     * Get the current draft.
+     * @returns {EntryDraft | null | undefined} Draft.
+     */
+    get current() {
+      return entryDraft?.current;
+    },
+    /**
+     * Replace the current draft.
+     * @param {EntryDraft | null | undefined} draft Draft.
+     */
+    set current(draft) {
+      if (entryDraft) {
+        entryDraft.current = draft;
+      }
+    },
+    /**
+     * Get whether the current draft has been modified.
+     * @returns {boolean} Result.
+     */
+    get modified() {
+      return entryDraft?.modified ?? false;
+    },
+  });
 
   /**
    * @typedef {object} Props
@@ -119,11 +160,11 @@
    * @type {RawEntryContent | undefined}
    */
   const currentValues = $derived.by(() => {
-    if (!($entryDraft && locale && keyPath)) {
+    if (!(entryDraft?.current && locale && keyPath)) {
       return undefined;
     }
 
-    const valueMap = getValueMapSnapshot($entryDraft, locale, valueStoreKey);
+    const valueMap = getValueMapSnapshot(entryDraft.current, locale, valueStoreKey);
 
     return unflattenMap(
       Object.fromEntries(
@@ -147,16 +188,18 @@
    * Restore values from snapshot, used on cancel (dialog mode only).
    */
   const restoreValues = () => {
-    if ($entryDraft && locale && keyPath && valuesSnapshot) {
+    const draft = entryDraft?.current;
+
+    if (draft && locale && keyPath && valuesSnapshot) {
       // Clear current values
-      Object.keys($entryDraft[valueStoreKey][locale] ?? {}).forEach((key) => {
+      Object.keys(draft[valueStoreKey][locale] ?? {}).forEach((key) => {
         if (key.startsWith(keyPathPrefix)) {
-          delete $entryDraft[valueStoreKey][locale][key];
+          delete draft[valueStoreKey][locale][key];
         }
       });
       // Restore snapshot
       Object.assign(
-        $entryDraft[valueStoreKey][locale],
+        draft[valueStoreKey][locale],
         Object.fromEntries(
           Object.entries(flatten(valuesSnapshot)).map(([key, value]) => [
             `${keyPathPrefix}${key}`,
@@ -179,25 +222,16 @@
    * Handle OK button click. Validates fields and only closes if valid (dialog mode only).
    */
   const handleOk = () => {
-    const { validities: extraValidities } = validateFields('extraValues');
+    const draft = entryDraft?.current;
 
-    entryDraft.update((_draft) => {
-      if (!_draft) {
-        return _draft;
-      }
+    if (!draft) {
+      return;
+    }
 
-      return {
-        ..._draft,
-        validities: Object.fromEntries(
-          Object.keys(_draft.validities).map((loc) => [
-            loc,
-            {
-              ..._draft.validities[loc],
-              ...extraValidities[loc],
-            },
-          ]),
-        ),
-      };
+    const { validities: extraValidities } = validateFields('extraValues', { draft });
+
+    Object.keys(draft.validities).forEach((loc) => {
+      Object.assign(draft.validities[loc], extraValidities[loc]);
     });
 
     const localeValidities = extraValidities[locale] ?? {};
@@ -308,7 +342,9 @@
 
   onMount(() => {
     window.requestAnimationFrame(() => {
-      // Get the locale and key path from the closest containers
+      // Get the draft state, locale and key path from the closest containers
+      entryDraft = getEntryDraftByElement(wrapper);
+
       const localeContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-locale]'));
       const keyPathContainer = /** @type {HTMLElement} */ (wrapper?.closest('[data-key-path]'));
 
@@ -329,17 +365,19 @@
     });
 
     return () => {
+      const draft = entryDraft?.current;
+
       // Remove the values and validities from the draft when the component is unmounted
-      if ($entryDraft) {
-        Object.keys($entryDraft[valueStoreKey][locale] ?? {}).forEach((key) => {
+      if (draft) {
+        Object.keys(draft[valueStoreKey][locale] ?? {}).forEach((key) => {
           if (key.startsWith(keyPathPrefix)) {
-            delete $entryDraft[valueStoreKey][locale][key];
+            delete draft[valueStoreKey][locale][key];
           }
         });
 
-        Object.keys($entryDraft.validities[locale] ?? {}).forEach((key) => {
+        Object.keys(draft.validities[locale] ?? {}).forEach((key) => {
           if (key.startsWith(keyPathPrefix)) {
-            delete $entryDraft.validities[locale][key];
+            delete draft.validities[locale][key];
           }
         });
       }
@@ -350,8 +388,8 @@
     void [values, locale, keyPath];
 
     untrack(() => {
-      if ($entryDraft && locale && keyPath) {
-        const { defaultLocale } = $entryDraft;
+      if (entryDraft?.current && locale && keyPath) {
+        const { defaultLocale } = entryDraft.current;
 
         values ??= unflatten(getDefaultValues({ fields, locale, defaultLocale })) ?? {};
         values.__sc_component_name = componentName;
@@ -384,17 +422,7 @@
             ]),
           );
 
-          // Use `entryDraft.update()` instead of `Object.assign()` directly so that the store
-          // notifies subscribers and `currentValues` re-derives immediately.
-          entryDraft.update((_draft) => {
-            if (!_draft) {
-              return _draft;
-            }
-
-            Object.assign(_draft[valueStoreKey][locale], newEntries);
-
-            return _draft;
-          });
+          Object.assign(entryDraft.current[valueStoreKey][locale], newEntries);
         }
       }
     });

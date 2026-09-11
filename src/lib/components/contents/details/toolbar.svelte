@@ -39,10 +39,10 @@
     nestedFilterPath,
   } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
-  import { entryDraft, entryDraftModified } from '$lib/services/contents/draft';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
   import { saveEntry } from '$lib/services/contents/draft/save';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { validateDraft } from '$lib/services/contents/draft/validate';
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
@@ -78,6 +78,8 @@
    * @property {boolean} [disabled] Whether to disable controls other than the Back button.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -105,10 +107,10 @@
   /** @type {MenuButton | undefined} */
   let menuButton = $state();
 
-  const notFound = $derived($entryDraft === undefined);
-  const isNew = $derived($entryDraft?.isNew ?? true);
-  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
-  const collection = $derived($entryDraft?.collection);
+  const notFound = $derived(entryDraft.current === undefined);
+  const isNew = $derived(entryDraft.current?.isNew ?? true);
+  const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
+  const collection = $derived(entryDraft.current?.collection);
   const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
   /**
    * Whether an entry is identified by its path within the collection folder rather than by a name
@@ -118,8 +120,8 @@
   const slugIsEntryPath = $derived(
     !!collection && isNestedCollection(collection) && !getSharedEntryFileName(collection),
   );
-  const collectionFile = $derived($entryDraft?.collectionFile);
-  const originalEntry = $derived($entryDraft?.originalEntry);
+  const collectionFile = $derived(entryDraft.current?.collectionFile);
+  const originalEntry = $derived(entryDraft.current?.originalEntry);
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
@@ -133,7 +135,7 @@
     // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );
-  const canPreview = $derived($entryDraft?.canPreview ?? true);
+  const canPreview = $derived(entryDraft.current?.canPreview ?? true);
   const showSecondPane = $derived($entryEditorSettings?.showSecondPane ?? true);
   // There’s only something to put in the second pane when another locale can be edited alongside
   // the first one, or when the entry has a preview
@@ -142,9 +144,9 @@
   // is locked meanwhile rather than just the button that started it
   const busy = $derived(saving || deleting);
   const controlsDisabled = $derived(disabled || busy);
-  const modified = $derived(isNew || $entryDraftModified);
+  const modified = $derived(isNew || entryDraft.modified);
   const errorCount = $derived(
-    Object.values($entryDraft?.validities ?? {})
+    Object.values(entryDraft.current?.validities ?? {})
       .flatMap((validity) => Object.values(validity).map(({ valid }) => !valid))
       .filter(Boolean).length,
   );
@@ -303,7 +305,7 @@
    * @returns {boolean} Result.
    */
   const isReadyForReview = () => {
-    const draft = $entryDraft;
+    const draft = entryDraft.current;
 
     return !!draft && validateDraft({ draft }).valid;
   };
@@ -324,14 +326,16 @@
    * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
    */
   const save = async ({ skipCI = undefined } = {}) => {
+    const draft = entryDraft.current;
+
     saving = true;
 
-    if (!collection) {
+    if (!collection || !draft) {
       return;
     }
 
     try {
-      const savedEntry = await saveEntry({ skipCI });
+      const savedEntry = await saveEntry({ draft, skipCI });
       const savedDraft = /** @type {UnpublishedEntry} */ (savedEntry);
 
       // Saving with Editorial Workflow leaves the entry as a draft, which nothing on screen says:
@@ -372,15 +376,16 @@
 
       if (prefs.closeOnSave ?? true) {
         _goBack();
-        $entryDraft = null;
+        entryDraft.current = null;
       } else {
         // Reset the draft
         createDraft({
+          entryDraft,
           collection,
           collectionFile,
           originalEntry: savedEntry,
-          extraValues: $entryDraft?.extraValues,
-          expanderStates: $entryDraft?.expanderStates,
+          extraValues: draft.extraValues,
+          expanderStates: draft.expanderStates,
         });
       }
     } catch (/** @type {any} */ ex) {
@@ -526,7 +531,7 @@
                   notifyChange: false,
                   transitionType: 'forwards',
                 });
-                duplicateDraft();
+                duplicateDraft(entryDraft);
               }}
             />
           {/if}
@@ -582,7 +587,9 @@
           label={_('revert_all_changes')}
           disabled={!modified || pendingDeletion}
           onclick={() => {
-            revertChanges();
+            if (entryDraft.current) {
+              revertChanges({ draft: entryDraft.current });
+            }
           }}
         />
         {#if $deployPollTimedOut}
@@ -623,7 +630,7 @@
             label={_('sync_scrolling')}
             checked={$entryEditorSettings?.syncScrolling}
             disabled={!showSecondPane ||
-              (!canPreview && Object.keys($entryDraft?.currentValues ?? {}).length === 1)}
+              (!canPreview && Object.keys(entryDraft.current?.currentValues ?? {}).length === 1)}
             onChange={() => {
               entryEditorSettings.update((view = {}) => ({
                 ...view,

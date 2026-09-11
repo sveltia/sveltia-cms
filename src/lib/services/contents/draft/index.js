@@ -1,8 +1,5 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
-import { derived, get, writable } from 'svelte/store';
-
-import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * Regex to match internal properties added to list items, which should be excluded from output.
@@ -10,21 +7,8 @@ import { prefs } from '$lib/services/user/prefs.svelte';
 export const INTERNAL_PROP_REGEX = /\.__sc_\w+$/;
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import { EntryDraft, FlattenedEntryContent, LocaleContentMap } from '$lib/types/private';
  */
-
-/**
- * @type {Writable<EntryDraft | null | undefined>}
- */
-export const entryDraft = writable();
-
-/**
- * Whether to enable automatic i18n duplication in proxies in {@link entryDraft}. This can be
- * temporarily disabled for performance reasons when making large changes to the values. Use
- * {@link suspendAutoDuplication} rather than writing to this store directly.
- */
-export const i18nAutoDupEnabled = writable(true);
 
 /**
  * Nesting depth of the {@link suspendAutoDuplication} calls currently in flight.
@@ -32,7 +16,15 @@ export const i18nAutoDupEnabled = writable(true);
 let autoDupSuspendDepth = 0;
 
 /**
- * Run the given function with the automatic i18n duplication in {@link entryDraft} suspended.
+ * Whether the automatic i18n duplication in the draft value proxies is currently enabled. It’s
+ * temporarily disabled for performance reasons when making large changes to the values. Use
+ * {@link suspendAutoDuplication} to disable it.
+ * @returns {boolean} Result.
+ */
+export const isAutoDuplicationEnabled = () => !autoDupSuspendDepth;
+
+/**
+ * Run the given function with the automatic i18n duplication in the draft value proxies suspended.
  *
  * A caller that writes a `duplicate` field to every locale itself has to stop the proxy from
  * duplicating the same value again. Suspensions nest — the proxy is re-enabled only once the
@@ -45,17 +37,12 @@ let autoDupSuspendDepth = 0;
  */
 export const suspendAutoDuplication = (fn) => {
   autoDupSuspendDepth += 1;
-  i18nAutoDupEnabled.set(false);
 
   /**
    * Release this suspension, re-enabling the duplication if it was the outermost one.
    */
   const release = () => {
     autoDupSuspendDepth -= 1;
-
-    if (!autoDupSuspendDepth) {
-      i18nAutoDupEnabled.set(true);
-    }
   };
 
   /** @type {any} */
@@ -78,14 +65,7 @@ export const suspendAutoDuplication = (fn) => {
 };
 
 /**
- * Whether the user has manually interacted with the entry editor. This prevents auto-backup from
- * triggering when only programmatic changes (e.g. Lexical markdown reformatting) have occurred.
- */
-export const entryDraftInteracted = writable(false);
-
-/**
- * Revoke the blob URLs of the current draft’s unsaved files, except those the incoming draft still
- * refers to.
+ * Revoke the blob URLs of the given outgoing draft’s unsaved files.
  *
  * Each of these URLs keeps its entire file in memory until it’s revoked, and nothing else releases
  * them: the URL is the field value for the duration of the editing session, and is swapped for the
@@ -93,16 +73,11 @@ export const entryDraftInteracted = writable(false);
  * still registered with the browser, so every image attached in the editor would stay in memory
  * until the page is reloaded. A restored backup regenerates its URLs from the stored files, so
  * discarding them here doesn’t break that.
- * @param {Record<string, any>} [nextFiles] The incoming draft’s file map. Duplicating an entry
- * carries the same map over, and those URLs are still displayed, so they must be kept.
+ * @param {EntryDraft | null | undefined} draft The outgoing draft, if any.
  */
-export const revokeDraftFileURLs = (nextFiles = {}) => {
-  const { files } = get(entryDraft) ?? {};
-
-  Object.keys(files ?? {}).forEach((blobURL) => {
-    if (!(blobURL in nextFiles)) {
-      URL.revokeObjectURL(blobURL);
-    }
+export const revokeDraftFileURLs = (draft) => {
+  Object.keys(draft?.files ?? {}).forEach((blobURL) => {
+    URL.revokeObjectURL(blobURL);
   });
 };
 
@@ -178,13 +153,15 @@ const areValuesModified = (originalValues, currentValues) => {
 };
 
 /**
- * Whether the current {@link entryDraft} has been modified.
+ * Check whether the given entry draft has been modified.
  *
- * This is recomputed on every draft update — so on every keystroke in the editor — hence the
- * hand-rolled value comparison instead of deep-comparing a filtered copy of the whole content.
- * @type {Readable<boolean>}
+ * Called from a `$derived`, this is recomputed whenever any of the compared values changes — so on
+ * every keystroke in the editor — hence the hand-rolled value comparison instead of deep-comparing
+ * a filtered copy of the whole content.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
+ * @returns {boolean} Whether the draft has been modified. `false` if there is no draft.
  */
-export const entryDraftModified = derived([entryDraft], ([draft]) => {
+export const isDraftModified = (draft) => {
   if (!draft) {
     return false;
   }
@@ -208,11 +185,4 @@ export const entryDraftModified = derived([entryDraft], ([draft]) => {
     // Internal properties are excluded from the value comparison
     areValuesModified(originalValues, currentValues)
   );
-});
-
-entryDraft.subscribe((draft) => {
-  if (prefs.devModeEnabled) {
-    // eslint-disable-next-line no-console
-    console.info('entryDraft', draft);
-  }
-});
+};

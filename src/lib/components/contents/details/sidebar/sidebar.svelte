@@ -6,7 +6,7 @@
   import HistoryPanel from '$lib/components/contents/details/sidebar/panels/history-panel.svelte';
   import ValidationPanel from '$lib/components/contents/details/sidebar/panels/validation-panel.svelte';
   import { backend } from '$lib/services/backends';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getReferencingRelationFields } from '$lib/services/contents/entry/relations';
 
@@ -23,13 +23,16 @@
    * @property {Component} panel The panel component to render when the tab is active.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** Whether any Relation field anywhere in the site can reference the current entry. */
   const isReferenced = $derived.by(() => {
-    const collectionName = $entryDraft?.collectionName;
+    const collectionName = entryDraft.current?.collectionName;
 
     return (
       !!collectionName &&
-      getReferencingRelationFields({ collectionName, fileName: $entryDraft?.fileName }).length > 0
+      getReferencingRelationFields({ collectionName, fileName: entryDraft.current?.fileName })
+        .length > 0
     );
   });
 
@@ -46,7 +49,7 @@
       key: 'history',
       label: _('entry_sidebar.history.title'),
       icon: 'history',
-      disabled: !$backend?.isGit || !!$entryDraft?.isNew,
+      disabled: !$backend?.isGit || !!entryDraft.current?.isNew,
       panel: HistoryPanel,
     },
     {

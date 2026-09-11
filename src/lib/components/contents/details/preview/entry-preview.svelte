@@ -8,7 +8,7 @@
     customPreviewStyleRegistry,
     customPreviewTemplateRegistry,
   } from '$lib/services/api/registries';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { preparePreviewTemplateProps } from '$lib/services/contents/editor/preview-templates';
 
   /**
@@ -19,6 +19,8 @@
    * @typedef {object} Props
    * @property {InternalLocaleCode} locale Current pane’s locale.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
   let {
@@ -31,12 +33,12 @@
     collectionName,
     fileName,
     fields = [],
-  } = $derived(/** @type {EntryDraft} */ ($entryDraft ?? {}));
+  } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
   const styleURLs = $derived([...customPreviewStyleRegistry]);
   const reactComponent = $derived(customPreviewTemplateRegistry.get(fileName ?? collectionName));
   const reactProps = $derived(
-    $entryDraft && reactComponent
-      ? preparePreviewTemplateProps({ draft: $state.snapshot($entryDraft), locale })
+    entryDraft.current && reactComponent
+      ? preparePreviewTemplateProps({ draft: $state.snapshot(entryDraft.current), locale })
       : undefined,
   );
 </script>

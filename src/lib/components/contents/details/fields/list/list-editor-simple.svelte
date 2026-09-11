@@ -19,6 +19,7 @@
 
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import { getDirection } from '$lib/services/contents/i18n';
   import {
@@ -43,6 +44,7 @@
 
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -149,7 +151,18 @@
    * Write the rows to the draft.
    */
   const updateValue = () => {
-    updateNonPrimitiveValue({ valueStoreKey, locale, keyPath, i18n, value: getStoredValue() });
+    const draft = entryDraft.current;
+
+    if (draft) {
+      updateNonPrimitiveValue({
+        draft,
+        valueStoreKey,
+        locale,
+        keyPath,
+        i18n,
+        value: getStoredValue(),
+      });
+    }
   };
 
   /**

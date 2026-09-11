@@ -9,7 +9,7 @@
   import { onMount } from 'svelte';
 
   import { warnDeprecation } from '$lib/services/config/deprecations';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getInitialValue } from '$lib/services/contents/fields/uuid/helpers';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
@@ -24,6 +24,8 @@
    * @property {string | undefined} currentValue Field value.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
@@ -37,8 +39,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const collection = $derived($entryDraft?.collection);
-  const collectionFile = $derived($entryDraft?.collectionFile);
+  const collection = $derived(entryDraft.current?.collection);
+  const collectionFile = $derived(entryDraft.current?.collectionFile);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
 
   // Generate the default value here instead of in `create.js` because `getDefaultValues()` doesn’t

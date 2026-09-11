@@ -2,7 +2,7 @@
   import { Checkbox, CheckboxGroup, SelectTags } from '@sveltia/ui';
   import { getContext } from 'svelte';
 
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListField } from '$lib/services/contents/draft/update/list';
   import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
 
@@ -15,6 +15,8 @@
    * @typedef {object} Props
    * @property {SelectFieldValue[] | undefined} currentValue Field value.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
@@ -42,12 +44,14 @@
    * {@link updateListField}.
    */
   const updateList = (manipulate) => {
+    const draft = entryDraft.current;
+
     // Avoid an error while navigating pages
-    if ($entryDraft) {
+    if (draft) {
       forEachTargetLocale(
-        { valueStore: $entryDraft[valueStoreKey], locale, i18n },
+        { valueStore: draft[valueStoreKey], locale, i18n },
         (_valueMap, _locale) => {
-          updateListField({ locale: _locale, valueStoreKey, keyPath, manipulate });
+          updateListField({ draft, locale: _locale, valueStoreKey, keyPath, manipulate });
         },
       );
     }

@@ -183,7 +183,7 @@
       return;
     }
 
-    if (status !== 'draft' && !validateWorkflowEntry(entry)) {
+    if (status !== 'draft' && !validateWorkflowEntry({ entry })) {
       reportValidationErrors('workflow.status_change_blocked');
 
       return;
@@ -364,7 +364,7 @@
     }
 
     // A removal has no content to check; publishing it is what carries the deletion out
-    if (!targetIsDeletion && !validateWorkflowEntry(entry)) {
+    if (!targetIsDeletion && !validateWorkflowEntry({ entry })) {
       reportValidationErrors('workflow.publish_blocked');
 
       return;

@@ -6,6 +6,7 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, Menu, MenuButton, MenuItemRadio, Toast } from '@sveltia/ui';
 
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { env } from '$lib/services/user/env.svelte';
   import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
   import { workflowStages } from '$lib/services/workflow/open-authoring';
@@ -21,6 +22,8 @@
    * @property {UnpublishedEntry} entry Unpublished entry being edited.
    * @property {boolean} [disabled] Whether to disable the control.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
   let {
@@ -53,7 +56,7 @@
 
     // An entry can be saved as a draft with its required fields left empty, so it has to be checked
     // before it moves towards being published
-    if (newStatus !== 'draft' && !validateWorkflowEntry(entry)) {
+    if (newStatus !== 'draft' && !validateWorkflowEntry({ entry, draft: entryDraft.current })) {
       showValidationToast = true;
 
       return;

@@ -2,7 +2,6 @@ import { parse } from 'marked';
 import { get } from 'svelte/store';
 import TurndownService from 'turndown';
 
-import { entryDraft } from '$lib/services/contents/draft';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
@@ -10,7 +9,6 @@ import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { EntryDraft, InternalLocaleCode, LocaleContentMap } from '$lib/types/private';
  * @import { FieldKeyPath, ListField } from '$lib/types/public';
  */
@@ -178,11 +176,12 @@ export const copyFields = ({ currentValues, options, copingFieldMap }) => {
 
 /**
  * Copy or translate field value(s) from another locale.
- * @param {CopyOptions} options Copy options.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {CopyOptions} args.options Copy options.
  */
-export const copyFromLocale = async (options) => {
+export const copyFromLocale = async ({ draft, options }) => {
   const { sourceLanguage, translate = false } = options;
-  const draft = /** @type {EntryDraft} */ (get(entryDraft));
   const { currentValues } = draft;
   const copingFieldMap = getCopyingFieldMap({ draft, options });
   const count = Object.keys(copingFieldMap).length;
@@ -198,9 +197,4 @@ export const copyFromLocale = async (options) => {
   } else {
     copyFields({ currentValues, options, copingFieldMap });
   }
-
-  /** @type {Writable<EntryDraft>} */ (entryDraft).update((_draft) => ({
-    ..._draft,
-    currentValues,
-  }));
 };

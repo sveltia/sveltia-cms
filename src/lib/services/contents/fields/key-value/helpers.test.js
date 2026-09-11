@@ -1,19 +1,10 @@
-import { get, writable } from 'svelte/store';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import { getPairs, savePairs, validatePairs } from './helpers';
 
 /**
  * @import { KeyValueField } from '$lib/types/public';
  */
-
-// Mock dependencies
-vi.mock('$lib/services/contents/draft', async () => ({
-  ...(await vi.importActual('$lib/services/contents/draft')),
-  i18nAutoDupEnabled: {
-    set: vi.fn(),
-  },
-}));
 
 /** @type {Pick<KeyValueField, 'widget' | 'name'>} */
 const baseFieldConfig = {
@@ -23,7 +14,7 @@ const baseFieldConfig = {
 
 describe('Test getPairs()', () => {
   test('should extract key-value pairs from entry draft', () => {
-    const entryDraft = writable({
+    const draft = {
       currentValues: {
         _default: {
           'metadata.key1': 'value1',
@@ -31,12 +22,12 @@ describe('Test getPairs()', () => {
           'other.key': 'otherValue',
         },
       },
-    });
+    };
 
     const keyPath = 'metadata';
     const locale = '_default';
     // @ts-expect-error - Using minimal mock for testing
-    const result = getPairs({ entryDraft, keyPath, locale });
+    const result = getPairs({ draft, keyPath, locale });
 
     expect(result).toEqual([
       ['key1', 'value1'],
@@ -45,50 +36,50 @@ describe('Test getPairs()', () => {
   });
 
   test('should return empty array when no matching keys', () => {
-    const entryDraft = writable({
+    const draft = {
       currentValues: {
         _default: {
           'other.key': 'value',
         },
       },
-    });
+    };
 
     const keyPath = 'metadata';
     const locale = '_default';
     // @ts-expect-error - Using minimal mock for testing
-    const result = getPairs({ entryDraft, keyPath, locale });
+    const result = getPairs({ draft, keyPath, locale });
 
     expect(result).toEqual([]);
   });
 
   test('should handle missing locale in draft', () => {
-    const entryDraft = writable({
+    const draft = {
       currentValues: {
         _default: {},
       },
-    });
+    };
 
     const keyPath = 'metadata';
     const locale = 'missing_locale'; // Non-existent locale
     // @ts-expect-error - Using minimal mock for testing
-    const result = getPairs({ entryDraft, keyPath, locale });
+    const result = getPairs({ draft, keyPath, locale });
 
     expect(result).toEqual([]);
   });
 
   test('should handle different locales', () => {
-    const entryDraft = writable({
+    const draft = {
       currentValues: {
         en: {
           'metadata.key1': 'english value',
         },
       },
-    });
+    };
 
     const keyPath = 'metadata';
     const locale = 'en';
     // @ts-expect-error - Using minimal mock for testing
-    const result = getPairs({ entryDraft, keyPath, locale });
+    const result = getPairs({ draft, keyPath, locale });
 
     expect(result).toEqual([['key1', 'english value']]);
   });
@@ -173,14 +164,14 @@ describe('Test validatePairs()', () => {
 
 describe('Test savePairs()', () => {
   test('should save pairs to entry draft', () => {
-    const entryDraft = writable({
+    const draft = {
       currentValues: {
         _default: {
           'metadata.oldKey': 'oldValue',
           'other.key': 'otherValue',
         },
       },
-    });
+    };
 
     /** @type {KeyValueField} */
     const fieldConfig = {
@@ -198,23 +189,17 @@ describe('Test savePairs()', () => {
     ];
 
     // @ts-expect-error - Using minimal mock for testing
-    savePairs({ entryDraft, fieldConfig, keyPath, locale, pairs });
+    savePairs({ draft, fieldConfig, keyPath, locale, pairs });
 
-    const draft = entryDraft;
-
-    if (draft && typeof draft.subscribe === 'function') {
-      draft.subscribe((value) => {
-        expect(value.currentValues._default).toEqual({
-          'metadata.newkey1': 'newValue1',
-          'metadata.newkey2': 'newValue2',
-          'other.key': 'otherValue',
-        });
-      })();
-    }
+    expect(draft.currentValues._default).toEqual({
+      'metadata.newkey1': 'newValue1',
+      'metadata.newkey2': 'newValue2',
+      'other.key': 'otherValue',
+    });
   });
 
   test('should handle i18n locales', () => {
-    const entryDraft = writable({
+    const draft = {
       currentValues: {
         _default: {
           'metadata.oldKey': 'defaultValue',
@@ -226,7 +211,7 @@ describe('Test savePairs()', () => {
           'metadata.oldKey': 'frenchValue',
         },
       },
-    });
+    };
 
     /** @type {KeyValueField} */
     const fieldConfig = {
@@ -240,27 +225,21 @@ describe('Test savePairs()', () => {
     const pairs = [['newkey', 'englishNewValue']];
 
     // @ts-expect-error - Using minimal mock for testing
-    savePairs({ entryDraft, fieldConfig, keyPath, locale, pairs });
+    savePairs({ draft, fieldConfig, keyPath, locale, pairs });
 
-    const draft = entryDraft;
-
-    if (draft && typeof draft.subscribe === 'function') {
-      draft.subscribe((value) => {
-        expect(value.currentValues._default).toEqual({
-          'metadata.oldKey': 'defaultValue',
-        });
-        expect(value.currentValues.en).toEqual({
-          'metadata.newkey': 'englishNewValue',
-        });
-        expect(value.currentValues.fr).toEqual({
-          'metadata.oldKey': 'frenchValue',
-        });
-      })();
-    }
+    expect(draft.currentValues._default).toEqual({
+      'metadata.oldKey': 'defaultValue',
+    });
+    expect(draft.currentValues.en).toEqual({
+      'metadata.newkey': 'englishNewValue',
+    });
+    expect(draft.currentValues.fr).toEqual({
+      'metadata.oldKey': 'frenchValue',
+    });
   });
 
   test('should handle duplicate i18n setting', () => {
-    const entryDraft = writable({
+    const draft = {
       currentValues: {
         _default: {
           'metadata.oldKey': 'defaultValue',
@@ -269,7 +248,7 @@ describe('Test savePairs()', () => {
           'metadata.oldKey': 'englishValue',
         },
       },
-    });
+    };
 
     /** @type {KeyValueField} */
     const fieldConfig = {
@@ -283,41 +262,35 @@ describe('Test savePairs()', () => {
     const pairs = [['newkey', 'newValue']];
 
     // @ts-expect-error - Using minimal mock for testing
-    savePairs({ entryDraft, fieldConfig, keyPath, locale, pairs });
+    savePairs({ draft, fieldConfig, keyPath, locale, pairs });
 
-    const draft = entryDraft;
-
-    if (draft && typeof draft.subscribe === 'function') {
-      draft.subscribe((value) => {
-        expect(value.currentValues._default).toEqual({
-          'metadata.newkey': 'newValue',
-        });
-        expect(value.currentValues.en).toEqual({
-          'metadata.newkey': 'newValue',
-        });
-      })();
-    }
+    expect(draft.currentValues._default).toEqual({
+      'metadata.newkey': 'newValue',
+    });
+    expect(draft.currentValues.en).toEqual({
+      'metadata.newkey': 'newValue',
+    });
   });
 
   describe('with the `duplicate_keys` i18n strategy', () => {
     /** @type {KeyValueField} */
     const fieldConfig = { ...baseFieldConfig, i18n: 'duplicate_keys' };
     /**
-     * Create a draft store holding the given locale contents.
+     * Create a draft holding the given locale contents.
      * @param {Record<string, Record<string, any>>} currentValues Locale contents.
-     * @returns {any} Draft store.
+     * @returns {any} Draft.
      */
-    const createDraft = (currentValues) => writable({ defaultLocale: 'en', currentValues });
+    const createDraft = (currentValues) => ({ defaultLocale: 'en', currentValues });
 
     test('should mirror the keys to the other locales when editing the default locale', () => {
-      const entryDraft = createDraft({
+      const draft = createDraft({
         en: { 'metadata.a': '1', 'metadata.b': '2', title: 'Hello' },
         fr: { 'metadata.a': 'un', 'metadata.b': 'deux', title: 'Bonjour' },
         de: { metadata: null, title: 'Hallo' },
       });
 
       savePairs({
-        entryDraft,
+        draft,
         fieldConfig,
         keyPath: 'metadata',
         locale: 'en',
@@ -328,7 +301,7 @@ describe('Test savePairs()', () => {
         ],
       });
 
-      expect(get(entryDraft).currentValues).toEqual({
+      expect(draft.currentValues).toEqual({
         en: { title: 'Hello', 'metadata.a': '1', 'metadata.bee': '2', 'metadata.c': '3' },
         // `b` was renamed to `bee` and keeps its value, `c` is new
         fr: { title: 'Bonjour', 'metadata.a': 'un', 'metadata.bee': 'deux', 'metadata.c': '' },
@@ -337,13 +310,13 @@ describe('Test savePairs()', () => {
     });
 
     test('should only save the values when editing another locale', () => {
-      const entryDraft = createDraft({
+      const draft = createDraft({
         en: { 'metadata.a': '1', 'metadata.b': '2' },
         fr: { 'metadata.a': 'un', 'metadata.b': 'deux' },
       });
 
       savePairs({
-        entryDraft,
+        draft,
         fieldConfig,
         keyPath: 'metadata',
         locale: 'fr',
@@ -353,7 +326,7 @@ describe('Test savePairs()', () => {
         ],
       });
 
-      expect(get(entryDraft).currentValues).toEqual({
+      expect(draft.currentValues).toEqual({
         en: { 'metadata.a': '1', 'metadata.b': '2' },
         fr: { 'metadata.a': 'UN', 'metadata.b': 'DEUX' },
       });
@@ -444,34 +417,6 @@ describe('Test savePairs()', () => {
       const result = validatePairs({ pairs, edited });
 
       expect(result).toEqual([undefined, undefined, undefined]);
-    });
-  });
-
-  describe('savePairs - null draft handling (line 60)', () => {
-    test('should handle null draft gracefully', async () => {
-      const { i18nAutoDupEnabled } = await import('$lib/services/contents/draft');
-      const entryDraft = writable(null);
-
-      /** @type {KeyValueField} */
-      const fieldConfig = {
-        ...baseFieldConfig,
-        i18n: undefined,
-      };
-
-      const keyPath = 'metadata';
-      const locale = '_default';
-      /** @type {[string, string][]} */
-      const pairs = [['key1', 'value1']];
-
-      // Should not throw error even with null draft
-      expect(() => {
-        // @ts-expect-error - Testing null draft edge case
-        savePairs({ entryDraft, fieldConfig, keyPath, locale, pairs });
-      }).not.toThrow();
-
-      // Nothing is written, so the auto-duplication is never suspended. Suspension itself is
-      // covered by `suspendAutoDuplication()` and `forEachTargetLocale()`
-      expect(i18nAutoDupEnabled.set).not.toHaveBeenCalled();
     });
   });
 });

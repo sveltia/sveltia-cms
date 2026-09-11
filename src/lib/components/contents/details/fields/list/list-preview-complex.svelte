@@ -10,7 +10,7 @@
 
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getSubtree } from '$lib/services/contents/entry/subtree';
   import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
@@ -31,6 +31,8 @@
    * @property {string[] | undefined} currentValue Field value.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
@@ -46,7 +48,9 @@
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
   /** @type {Record<string, any>[]} */
-  const items = $derived(getSubtree(getValueMapSnapshot($entryDraft, locale), keyPath) ?? []);
+  const items = $derived(
+    getSubtree(getValueMapSnapshot(entryDraft.current, locale), keyPath) ?? [],
+  );
 </script>
 
 {#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}

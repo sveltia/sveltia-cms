@@ -22,7 +22,7 @@
     findNestedTreeNode,
     getParentFolderTree,
   } from '$lib/services/contents/collection/nested/tree';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { createPath } from '$lib/services/utils/file';
   import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
@@ -36,6 +36,8 @@
    * @property {InternalLocaleCode} locale Current pane’s locale.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -45,9 +47,9 @@
 
   const fieldId = $props.id();
 
-  const collection = $derived(/** @type {InternalCollection} */ ($entryDraft?.collection));
+  const collection = $derived(/** @type {InternalCollection} */ (entryDraft.current?.collection));
   const config = $derived(collection ? getMetaPathConfig(collection) : undefined);
-  const validity = $derived($entryDraft?.validities[locale]._path);
+  const validity = $derived(entryDraft.current?.validities[locale]._path);
   const invalid = $derived(validity?.valid === false);
   /**
    * Whether this pane is the one that decides where the entry goes. The folder is chosen once, in
@@ -65,9 +67,14 @@
    * is a file rather than a folder.
    */
   const ownFolderName = $derived.by(() => {
-    const subPath = $entryDraft?.originalEntry?.subPath;
+    const subPath = entryDraft.current?.originalEntry?.subPath;
 
-    if ($entryDraft?.isNew || !subPath || !collection || !getSharedEntryFileName(collection)) {
+    if (
+      entryDraft.current?.isNew ||
+      !subPath ||
+      !collection ||
+      !getSharedEntryFileName(collection)
+    ) {
       return undefined;
     }
 
@@ -76,7 +83,7 @@
     return dirPath ? dirPath.slice(dirPath.lastIndexOf('/') + 1) : undefined;
   });
 
-  const currentPath = $derived(stripSlashes($entryDraft?.currentPath ?? ''));
+  const currentPath = $derived(stripSlashes(entryDraft.current?.currentPath ?? ''));
   /** Folder the entry is filed in, which is the parent of its own folder if it has one. */
   const selectedPath = $derived(ownFolderName ? getEntryDirPath(currentPath) : currentPath);
 
@@ -133,7 +140,7 @@
           entries,
           // An entry can’t be filed within itself
           excludePath: ownFolderName
-            ? getEntryDirPath($entryDraft?.originalEntry?.subPath ?? '')
+            ? getEntryDirPath(entryDraft.current?.originalEntry?.subPath ?? '')
             : undefined,
           // Each pane names the folders in its own language
           locale,
@@ -190,8 +197,8 @@
    * @param {string} path Chosen folder path.
    */
   const selectPath = (path) => {
-    if ($entryDraft) {
-      $entryDraft.currentPath = ownFolderName ? createPath([path, ownFolderName]) : path;
+    if (entryDraft.current) {
+      entryDraft.current.currentPath = ownFolderName ? createPath([path, ownFolderName]) : path;
     }
 
     // The popup closes itself for a menu item or an option, so a tree has to say when it’s done
@@ -201,7 +208,7 @@
 
 <!-- A collection whose entries all sit at the top level has no folder to choose and, in the
 `subfolders` mode, no way to make one, which leaves nothing for the field to do -->
-{#if $entryDraft && config && (hasFolderChoice || canCreateFolder)}
+{#if entryDraft.current && config && (hasFolderChoice || canCreateFolder)}
   <FieldEditorGroup>
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{_('entry_parent_folder')}</h4>

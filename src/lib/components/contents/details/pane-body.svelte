@@ -5,7 +5,7 @@
 
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
@@ -23,6 +23,8 @@
    * @property {HTMLElement} [thatPaneContentArea] Another pane’s content area.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -36,7 +38,7 @@
   const { syncScrolling } = $derived($entryEditorSettings ?? {});
   const locale = $derived($thisPane?.locale);
   const mode = $derived($thisPane?.mode);
-  const hasContent = $derived(!!locale && !!$entryDraft?.currentValues[locale]);
+  const hasContent = $derived(!!locale && !!entryDraft.current?.currentValues[locale]);
   const labelOptions = $derived({
     values: { locale: locale ? (getLocaleLabel(locale) ?? locale) : '' },
   });
@@ -143,7 +145,7 @@
 </script>
 
 <div role="none" {id} class="wrapper">
-  {#if locale && $entryDraft?.currentLocales[locale]}
+  {#if locale && entryDraft.current?.currentLocales[locale]}
     <div role="none" class="content" bind:this={contentArea}>
       <MainContent {locale} />
     </div>
@@ -156,8 +158,8 @@
         variant="tertiary"
         label={_(hasContent ? 'reenable_x_locale' : 'enable_x_locale', labelOptions)}
         onclick={() => {
-          if (locale) {
-            toggleLocale(locale);
+          if (locale && entryDraft.current) {
+            toggleLocale({ draft: entryDraft.current, locale });
           }
         }}
       />

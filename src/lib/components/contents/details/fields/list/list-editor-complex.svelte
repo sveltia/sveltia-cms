@@ -31,8 +31,8 @@
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import { getMediaFieldURL } from '$lib/services/assets/info';
-  import { entryDraft } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListField } from '$lib/services/contents/draft/update/list';
   import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
@@ -69,6 +69,8 @@
    * @property {ComplexListField} fieldConfig Field configuration.
    * @property {Record<string, any>[]} currentValue Field value.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues', parentComponentNames = [] } =
@@ -108,23 +110,25 @@
   const { fields } = $derived(/** @type {ListFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
-  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
-  const collection = $derived($entryDraft?.collection);
-  const collectionName = $derived($entryDraft?.collectionName ?? '');
-  const collectionFile = $derived($entryDraft?.collectionFile);
-  const fileName = $derived($entryDraft?.fileName);
+  const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
+  const collection = $derived(entryDraft.current?.collection);
+  const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  const collectionFile = $derived(entryDraft.current?.collectionFile);
+  const fileName = $derived(entryDraft.current?.fileName);
   const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
-  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
-  const parentExpanded = $derived($entryDraft?.expanderStates?._[parentExpandedKeyPath] ?? true);
+  const parentExpanded = $derived(
+    entryDraft.current?.expanderStates?._[parentExpandedKeyPath] ?? true,
+  );
   /** @type {Record<string, any>[]} */
   const items = $derived(getSubtree(valueMap, keyPath) ?? []);
   const itemExpanderStates = $derived(
     items.map((_item, index) => {
       const key = `${keyPath}.${index}`;
 
-      return [key, $entryDraft?.expanderStates?._[key] ?? true];
+      return [key, entryDraft.current?.expanderStates?._[key] ?? true];
     }),
   );
   const hasMaxItems = $derived(items.length >= max);
@@ -175,16 +179,32 @@
   );
 
   /**
+   * Update the expander states of the list and its items.
+   * @param {Record<string, boolean>} stateMap Map of key path and state.
+   */
+  const updateExpanderStates = (stateMap) => {
+    if (entryDraft.current) {
+      syncExpanderStates({ draft: entryDraft.current, stateMap });
+    }
+  };
+
+  /**
    * Initialize the expander state.
    */
   const initializeExpanderState = () => {
-    syncExpanderStates({
+    const draft = entryDraft.current;
+
+    if (!draft) {
+      return;
+    }
+
+    updateExpanderStates({
       [parentExpandedKeyPath]: minimizeCollapsed === 'auto' ? !items.length : !minimizeCollapsed,
       ...Object.fromEntries(
         items.map((__, index) => {
           const key = `${keyPath}.${index}`;
 
-          return [key, getInitialExpanderState({ key, locale, collapsed })];
+          return [key, getInitialExpanderState({ draft, key, locale, collapsed })];
         }),
       ),
     });
@@ -196,10 +216,16 @@
    * See {@link updateListField}.
    */
   const updateComplexList = (manipulate) => {
+    const draft = entryDraft.current;
+
+    if (!draft) {
+      return;
+    }
+
     forEachTargetLocale(
-      { valueStore: $entryDraft?.[valueStoreKey], locale, i18n },
+      { valueStore: draft[valueStoreKey], locale, i18n },
       (_valueMap, _locale) => {
-        updateListField({ locale: _locale, valueStoreKey, keyPath, manipulate });
+        updateListField({ draft, locale: _locale, valueStoreKey, keyPath, manipulate });
       },
     );
   };
@@ -270,7 +296,7 @@
     });
 
     // Expand the parent if it is collapsed to show the newly added item
-    syncExpanderStates({ [parentExpandedKeyPath]: true });
+    updateExpanderStates({ [parentExpandedKeyPath]: true });
 
     await sleep(50);
     // Move the placeholder into view
@@ -474,7 +500,7 @@
 
     return getMediaFieldURL({
       value: thumbnailValue,
-      entry: $entryDraft?.originalEntry,
+      entry: entryDraft.current?.originalEntry,
       collectionName,
       fileName,
       componentName,
@@ -573,7 +599,7 @@
       aria-expanded={parentExpanded}
       aria-controls="list-{fieldId}-item-list"
       onclick={() => {
-        syncExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
+        updateExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
       }}
     >
       {#snippet startIcon()}
@@ -596,7 +622,7 @@
         label={_('expand_all')}
         disabled={itemExpanderStates.every(([, value]) => value)}
         onclick={() => {
-          syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])));
+          updateExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])));
         }}
       />
       <Button
@@ -605,7 +631,7 @@
         label={_('collapse_all')}
         disabled={itemExpanderStates.every(([, value]) => !value)}
         onclick={() => {
-          syncExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])));
+          updateExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])));
         }}
       />
     {/if}
@@ -632,7 +658,7 @@
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
         {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
         {@const unknownType = hasVariableTypes && !typeConfig}
-        {@const expanded = $entryDraft?.expanderStates?._[itemKeyPath] ?? true}
+        {@const expanded = entryDraft.current?.expanderStates?._[itemKeyPath] ?? true}
         {@const subFields = hasVariableTypes
           ? (typeConfig?.fields ?? [])
           : (fields ?? (field ? [field] : []))}
@@ -678,7 +704,7 @@
             controlId="list-{fieldId}-item-{index}-body"
             {expanded}
             toggleExpanded={subFields.length
-              ? () => syncExpanderStates({ [itemKeyPath]: !expanded })
+              ? () => updateExpanderStates({ [itemKeyPath]: !expanded })
               : undefined}
           >
             {#snippet centerContent()}

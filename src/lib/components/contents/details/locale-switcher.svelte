@@ -3,7 +3,7 @@
   import { Divider, Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
   import { writable } from 'svelte/store';
 
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -21,6 +21,8 @@
    * @property {Writable<?EntryEditorPane>} [thatPane] Another pane’s mode and locale.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -30,8 +32,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const collection = $derived($entryDraft?.collection);
-  const collectionFile = $derived($entryDraft?.collectionFile);
+  const collection = $derived(entryDraft.current?.collection);
+  const collectionFile = $derived(entryDraft.current?.collectionFile);
   const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const listedLocales = $derived(
     env.isSmallScreen || env.isMediumScreen
@@ -39,13 +41,13 @@
       : allLocales.filter((locale) => !($thatPane?.mode === 'edit' && $thatPane.locale === locale)),
   );
   const hasAnyError = $derived(
-    Object.entries($entryDraft?.validities ?? {}).some(
+    Object.entries(entryDraft.current?.validities ?? {}).some(
       ([locale, validityMap]) =>
         listedLocales.includes(locale) &&
         Object.values(validityMap ?? {}).some(({ valid }) => !valid),
     ),
   );
-  const canPreview = $derived($entryDraft?.canPreview ?? true);
+  const canPreview = $derived(entryDraft.current?.canPreview ?? true);
   const useDropDown = $derived(env.isSmallScreen || env.isMediumScreen || allLocales.length >= 5);
   const SelectComponent = $derived(useDropDown ? Select : SelectButtonGroup);
   const OptionComponent = $derived(useDropDown ? Option : SelectButton);
@@ -71,8 +73,8 @@
     <div role="none" class="inner">
       {#each listedLocales as locale (locale)}
         {@const label = getLocaleLabel(locale) ?? locale}
-        {@const disabled = !$entryDraft?.currentLocales[locale]}
-        {@const hasError = Object.values($entryDraft?.validities[locale] ?? {}).some(
+        {@const disabled = !entryDraft.current?.currentLocales[locale]}
+        {@const hasError = Object.values(entryDraft.current?.validities[locale] ?? {}).some(
           ({ valid }) => !valid,
         )}
         <OptionComponent

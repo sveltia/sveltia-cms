@@ -10,7 +10,8 @@
   import PreviewButton from '$lib/components/contents/details/preview-button.svelte';
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import { backend } from '$lib/services/backends';
-  import { entryDraft, filterRealValues } from '$lib/services/contents/draft';
+  import { filterRealValues } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
@@ -38,6 +39,8 @@
    * @property {Writable<?EntryEditorPane>} [thatPane] Another pane’s mode and locale.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -47,42 +50,43 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const collection = $derived($entryDraft?.collection);
-  const collectionFile = $derived($entryDraft?.collectionFile);
-  const originalEntry = $derived($entryDraft?.originalEntry);
-  const originalValues = $derived($entryDraft?.originalValues ?? {});
+  const collection = $derived(entryDraft.current?.collection);
+  const collectionFile = $derived(entryDraft.current?.collectionFile);
+  const originalEntry = $derived(entryDraft.current?.originalEntry);
+  const originalValues = $derived(entryDraft.current?.originalValues ?? {});
   const { i18nEnabled, saveAllLocales, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
-  const isLocaleEnabled = $derived($entryDraft?.currentLocales[$thisPane?.locale ?? '']);
+  const isLocaleEnabled = $derived(entryDraft.current?.currentLocales[$thisPane?.locale ?? '']);
   const isOnlyLocale = $derived(
-    Object.values($entryDraft?.currentLocales ?? {}).filter((enabled) => enabled).length === 1,
+    Object.values(entryDraft.current?.currentLocales ?? {}).filter((enabled) => enabled).length ===
+      1,
   );
   const otherLocales = $derived(
     i18nEnabled ? allLocales.filter((l) => l !== $thisPane?.locale) : [],
   );
   const canCopy = $derived(!!otherLocales.length);
   // Every option in the menu edits the content, which an entry awaiting deletion doesn’t allow
-  const pendingDeletion = $derived(isPendingDeletion($entryDraft?.originalEntry));
+  const pendingDeletion = $derived(isPendingDeletion(entryDraft.current?.originalEntry));
   const canRevert = $derived(
     $thisPane?.locale &&
       !equal(
         originalValues[$thisPane.locale],
         // Exclude internal properties from the comparison
-        filterRealValues(getValueMapSnapshot($entryDraft, $thisPane.locale)),
+        filterRealValues(getValueMapSnapshot(entryDraft.current, $thisPane.locale)),
       ),
   );
-  const canPreview = $derived($entryDraft?.canPreview ?? true);
+  const canPreview = $derived(entryDraft.current?.canPreview ?? true);
   // Look the entry up in the store rather than reading the draft, so the preview link follows the
   // head commit as it moves with each save, the same way the entry toolbar does
   const pullRequest = $derived.by(() => {
-    const collectionName = $entryDraft?.collectionName;
+    const collectionName = entryDraft.current?.collectionName;
 
     if (!$workflowEnabled || !collectionName || !originalEntry) {
       return undefined;
     }
 
-    const slug = $entryDraft?.fileName ?? originalEntry.slug;
+    const slug = entryDraft.current?.fileName ?? originalEntry.slug;
 
     return $unpublishedEntries.find(({ workflow }) =>
       isEntryBranch({ branch: workflow.pullRequest.branch, collectionName, slug }),
@@ -140,7 +144,9 @@
               label={_('revert_changes')}
               disabled={!canRevert}
               onclick={() => {
-                revertChanges({ locale: $thisPane?.locale });
+                if (entryDraft.current) {
+                  revertChanges({ draft: entryDraft.current, locale: $thisPane?.locale });
+                }
               }}
             />
             {#if !saveAllLocales && $thisPane?.locale}
@@ -149,14 +155,16 @@
                 label={_(
                   isLocaleEnabled
                     ? 'disable_x_locale'
-                    : $entryDraft?.currentValues[$thisPane.locale]
+                    : entryDraft.current?.currentValues[$thisPane.locale]
                       ? 'reenable_x_locale'
                       : 'enable_x_locale',
                   { values: { locale: localeLabel } },
                 )}
                 disabled={$thisPane.locale === defaultLocale || (isLocaleEnabled && isOnlyLocale)}
                 onclick={() => {
-                  toggleLocale($thisPane?.locale ?? '');
+                  if (entryDraft.current) {
+                    toggleLocale({ draft: entryDraft.current, locale: $thisPane?.locale ?? '' });
+                  }
                 }}
               />
             {/if}

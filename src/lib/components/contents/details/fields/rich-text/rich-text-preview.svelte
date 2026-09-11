@@ -16,7 +16,7 @@
   import { customComponentRegistry } from '$lib/services/api/registries';
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { cmsConfig } from '$lib/services/config';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { BUILTIN_COMPONENTS } from '$lib/services/contents/fields/rich-text';
   import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
   import {
@@ -39,6 +39,8 @@
    * @property {MarkdownField | RichTextField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   use(markedBidi());
 
@@ -91,9 +93,9 @@
    */
   let requestedLanguages = '';
 
-  const entry = $derived($entryDraft?.originalEntry);
-  const collectionName = $derived($entryDraft?.collectionName ?? '');
-  const fileName = $derived($entryDraft?.fileName);
+  const entry = $derived(entryDraft.current?.originalEntry);
+  const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  const fileName = $derived(entryDraft.current?.fileName);
   const {
     sanitize_preview: doSanitize = defaultConfig.sanitize_preview ?? true,
     editor_components: _editorComponents = defaultConfig.editor_components ??

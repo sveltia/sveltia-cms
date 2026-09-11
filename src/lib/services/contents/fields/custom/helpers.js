@@ -39,15 +39,15 @@ export const getFieldConfigMap = (fieldConfig) => {
 };
 
 /**
- * Short-lived cache of {@link buildPreviewData} results, keyed by locale. Building the data walks
- * the whole entry and deep-converts it to Immutable Maps, so when several custom field controls
- * and previews render in response to one change, they should share a computation instead of
- * repeating it.
+ * Short-lived cache of {@link buildPreviewData} results, keyed by draft and locale. Building the
+ * data walks the whole entry and deep-converts it to Immutable Maps, so when several custom field
+ * controls and previews render in response to one change, they should share a computation instead
+ * of repeating it.
  *
  * The cache is only valid for the current microtask: the entry draft is mutated in place rather
  * than replaced, so the draft object cannot be used to detect changes, and holding the data any
  * longer would risk serving stale content.
- * @type {Map<string, ReturnType<typeof buildPreviewData>>}
+ * @type {Map<EntryDraft, Map<string, ReturnType<typeof buildPreviewData>>>}
  */
 const previewDataCache = new Map();
 /** Whether a microtask to flush {@link previewDataCache} has already been scheduled. */
@@ -62,7 +62,8 @@ let previewDataCacheFlushScheduled = false;
  * @returns {ReturnType<typeof buildPreviewData>} Preview data.
  */
 export const getPreviewData = ({ draft, locale }) => {
-  const cached = previewDataCache.get(locale);
+  const draftCache = previewDataCache.get(draft) ?? new Map();
+  const cached = draftCache.get(locale);
 
   if (cached) {
     return cached;
@@ -70,7 +71,8 @@ export const getPreviewData = ({ draft, locale }) => {
 
   const data = buildPreviewData({ draft, locale: /** @type {any} */ (locale) });
 
-  previewDataCache.set(locale, data);
+  draftCache.set(locale, data);
+  previewDataCache.set(draft, draftCache);
 
   if (!previewDataCacheFlushScheduled) {
     previewDataCacheFlushScheduled = true;

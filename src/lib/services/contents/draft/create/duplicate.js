@@ -1,36 +1,28 @@
-import { get } from 'svelte/store';
-
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
 import { getEntryDirPath, getSharedEntryFileName } from '$lib/services/contents/collection/nested';
-import { entryDraft } from '$lib/services/contents/draft';
 import { getSlugEditorProp } from '$lib/services/contents/draft/create';
+import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { showDuplicateToast } from '$lib/services/contents/editor';
 import { getAliasesKey, removeAliases } from '$lib/services/contents/entry/aliases';
 import { getField, LIST_KEY_PATH_REGEX } from '$lib/services/contents/entry/fields';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
+import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { EntryDraft } from '$lib/types/private';
+ * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
+ * @import { EntryDraft, LocaleContentMap } from '$lib/types/private';
  * @import { HiddenField, UuidField } from '$lib/types/public';
  */
 
 /**
- * Duplicate the current entry draft.
+ * Duplicate the entry draft open in the editor, replacing it with the duplicate.
+ * @param {EntryDraftState} entryDraft Entry draft state.
+ * @returns {EntryDraft} Duplicated draft.
  */
-export const duplicateDraft = () => {
-  const draft = /** @type {EntryDraft} */ (get(entryDraft));
-
-  const {
-    collectionName,
-    fileName,
-    collection,
-    collectionFile,
-    fields,
-    currentValues,
-    validities,
-    isIndexFile,
-  } = draft;
+export const duplicateDraft = (entryDraft) => {
+  const draft = /** @type {EntryDraft} */ (entryDraft.current);
+  const { collectionName, fileName, collection, collectionFile, fields, isIndexFile } = draft;
 
   const {
     defaultLocale,
@@ -39,6 +31,16 @@ export const duplicateDraft = () => {
 
   const orderFieldKey = getOrderFieldKey(collection);
   const aliasesKey = getAliasesKey({ collection, fields });
+
+  // Work on detached copies of the values: the duplicate gets value proxies of its own below, and
+  // changing the original draft’s values here would needlessly run their revalidation
+  /** @type {LocaleContentMap} */
+  const currentValues = Object.fromEntries(
+    Object.entries(draft.currentValues).map(([locale, valueMap]) => [
+      locale,
+      getSnapshot(valueMap),
+    ]),
+  );
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
     // Remove the canonical slug
@@ -92,11 +94,6 @@ export const duplicateDraft = () => {
     });
   });
 
-  // Reset the validities
-  Object.keys(validities).forEach((locale) => {
-    validities[locale] = {};
-  });
-
   const { currentPath } = draft;
 
   const duplicatePath =
@@ -104,7 +101,9 @@ export const duplicateDraft = () => {
       ? getEntryDirPath(currentPath)
       : currentPath;
 
-  entryDraft.set({
+  // The original draft is discarded, so the rest of its state can be carried over as is
+  /** @type {EntryDraft} */
+  const newDraft = createState({
     ...draft,
     id: crypto.randomUUID(),
     createdAt: Date.now(),
@@ -117,8 +116,20 @@ export const duplicateDraft = () => {
     // and get a folder of its own there
     originalPath: duplicatePath,
     currentPath: duplicatePath,
+    // The value proxies are created below, as they need a reference to the new draft
+    currentValues: {},
+    // Reset the validities
+    validities: Object.fromEntries(Object.keys(draft.validities).map((locale) => [locale, {}])),
     slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs: {} }),
+    interacted: false,
   });
 
+  Object.entries(currentValues).forEach(([locale, valueMap]) => {
+    newDraft.currentValues[locale] = createProxy({ draft: newDraft, locale, target: valueMap });
+  });
+
+  entryDraft.current = newDraft;
   showDuplicateToast.set(true);
+
+  return newDraft;
 };

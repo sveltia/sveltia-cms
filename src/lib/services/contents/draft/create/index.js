@@ -11,15 +11,17 @@ import {
   getMetaPathConfig,
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
-import { entryDraft, revokeDraftFileURLs } from '$lib/services/contents/draft';
+import { revokeDraftFileURLs } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { normalizeContentMap } from '$lib/services/contents/draft/create/normalize';
-import { createProxy } from '$lib/services/contents/draft/create/proxy';
+import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { resetCustomFieldValidation } from '$lib/services/contents/draft/validate/custom-fields';
+import { createState } from '$lib/services/utils/state.svelte';
 import { isPendingDeletion } from '$lib/services/workflow';
 
 /**
+ * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
  * @import {
  * EntryDraft,
  * InternalCollection,
@@ -113,6 +115,9 @@ export const getOriginalPath = ({ collection, originalEntry, initialPath }) => {
  * Build an entry draft object. This only assembles the values; it’s {@link createDraft} that opens
  * the draft in the editor. A draft can also be built on its own to check an entry that isn’t being
  * edited, in which case the application state is left untouched.
+ *
+ * The draft is a deeply reactive `$state` object, so the editor components can read and mutate it
+ * directly, and each of them is only updated when a value it actually reads changes.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection that the entry belongs to.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
@@ -197,7 +202,8 @@ export const buildDraft = ({
     normalizeContentMap({ fields, contentMap: originalValues, defaultLocale });
   }
 
-  return {
+  /** @type {EntryDraft} */
+  const draft = createState({
     id: isNew ? crypto.randomUUID() : id,
     createdAt: Date.now(),
     isNew,
@@ -217,16 +223,8 @@ export const buildDraft = ({
     originalPath,
     currentPath: originalPath,
     originalValues,
-    currentValues: Object.fromEntries(
-      enabledLocales.map((locale) => [
-        locale,
-        createProxy({
-          draft: { collectionName, fileName, isIndexFile },
-          locale,
-          target: structuredClone(originalValues[locale]),
-        }),
-      ]),
-    ),
+    // The value proxies are created below, as they need a reference to the reactive draft
+    currentValues: {},
     files: {},
     extraValues: extraValues ?? Object.fromEntries(allLocales.map((locale) => [locale, {}])),
     validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
@@ -234,12 +232,25 @@ export const buildDraft = ({
     // Any locale-agnostic view states will be put under the `_` key
     expanderStates: expanderStates ?? { _: {} },
     slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs }),
-  };
+    interacted: false,
+  });
+
+  enabledLocales.forEach((locale) => {
+    draft.currentValues[locale] = createProxy({
+      draft,
+      locale,
+      target: structuredClone(originalValues[locale]),
+    });
+  });
+
+  return draft;
 };
 
 /**
  * Create an entry draft and open it in the editor.
- * @param {object} args Arguments. See {@link buildDraft}.
+ * @param {object} args Arguments. See {@link buildDraft} for the rest.
+ * @param {EntryDraftState} args.entryDraft Entry draft state of the editor to open the draft in.
+ * Any draft currently held there is replaced.
  * @param {InternalCollection} args.collection Collection that the entry belongs to.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
  * only.
@@ -253,24 +264,26 @@ export const buildDraft = ({
  * @param {string} [args.initialPath] Folder for a new entry in a collection with the `meta.path`
  * option enabled, passed through the `path` URL parameter.
  * @param {boolean} [args.isIndexFile] Whether to edit the collection’s index file.
+ * @returns {EntryDraft} Created draft.
  */
-export const createDraft = (args) => {
-  const { collection, collectionFile, originalEntry = {} } = args;
-  const collectionName = collection.name;
-  const fileName = collectionFile?.name;
-  const { slug } = originalEntry;
+export const createDraft = ({ entryDraft, ...args }) => {
+  const { originalEntry = {} } = args;
 
   // Custom field validation state is keyed by locale and key path only, so discard it to prevent
   // verdicts from a previous draft leaking into this one
   resetCustomFieldValidation();
   // The outgoing draft’s unsaved files are about to become unreachable; release what they hold
-  revokeDraftFileURLs();
+  revokeDraftFileURLs(entryDraft.current);
 
-  entryDraft.set(buildDraft(args));
+  const draft = buildDraft(args);
+
+  entryDraft.current = draft;
 
   // An entry awaiting deletion is read-only, so a cached draft would be neither restorable nor
   // useful
   if (!isPendingDeletion(originalEntry)) {
-    restoreBackupIfNeeded({ collectionName, fileName, slug });
+    restoreBackupIfNeeded({ draft });
   }
+
+  return draft;
 };

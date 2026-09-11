@@ -1,36 +1,28 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 
-import { resolveOriginalKeyPath, revertChanges, revertFields, revertLocale } from './revert';
+import {
+  revertChanges as _revertChanges,
+  resolveOriginalKeyPath,
+  revertFields,
+  revertLocale,
+} from './revert';
 
-vi.mock('$lib/services/contents/draft');
 vi.mock('$lib/services/contents/entry/fields');
-vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: { devModeEnabled: false },
-}));
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
 
 describe('draft/update/revert', () => {
   let mockEntryDraft;
-  let mockUpdate;
-  let mockGet;
+  /**
+   * Revert changes made to the mock entry draft.
+   * @param {any} [args] Arguments other than the draft.
+   * @returns {void} Nothing.
+   */
+  const revertChanges = (args = {}) => _revertChanges({ draft: mockEntryDraft, ...args });
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    const { get } = await import('svelte/store');
-
-    mockGet = vi.mocked(get);
 
     mockEntryDraft = {
       collection: {
@@ -67,24 +59,6 @@ describe('draft/update/revert', () => {
       },
     };
 
-    mockUpdate = vi.fn((fn) => {
-      if (typeof fn === 'function') {
-        return fn(mockEntryDraft);
-      }
-
-      return mockEntryDraft;
-    });
-
-    mockGet.mockImplementation((store) => {
-      if (store === entryDraft) {
-        return mockEntryDraft;
-      }
-
-      return undefined;
-    });
-
-    vi.mocked(entryDraft).update = mockUpdate;
-
     vi.mocked(getField).mockImplementation(({ keyPath }) => {
       if (keyPath === 'title') {
         return { name: 'title', widget: 'string', i18n: 'translate' };
@@ -110,7 +84,7 @@ describe('draft/update/revert', () => {
 
       revertChanges();
 
-      expect(mockUpdate.mock.calls[0][0]().currentPath).toBe('company');
+      expect(mockEntryDraft.currentPath).toBe('company');
     });
 
     it('restores the slugs', () => {
@@ -121,7 +95,7 @@ describe('draft/update/revert', () => {
 
       revertChanges();
 
-      const { currentSlugs } = mockUpdate.mock.calls[0][0]();
+      const { currentSlugs } = mockEntryDraft;
 
       expect(currentSlugs).toEqual({ en: 'company', ja: 'kaisha' });
       // A copy, so that editing the slug again doesn’t alter the original
@@ -134,7 +108,7 @@ describe('draft/update/revert', () => {
 
       revertChanges({ locale: 'ja' });
 
-      expect(mockUpdate.mock.calls[0][0]().currentSlugs).toEqual({ en: 'company', ja: 'kigyou' });
+      expect(mockEntryDraft.currentSlugs).toEqual({ en: 'company', ja: 'kigyou' });
     });
 
     it('leaves the folder alone when only one locale is reverted', () => {
@@ -143,7 +117,7 @@ describe('draft/update/revert', () => {
 
       revertChanges({ locale: 'en' });
 
-      expect(mockUpdate.mock.calls[0][0]().currentPath).toBe('archive');
+      expect(mockEntryDraft.currentPath).toBe('archive');
     });
 
     it('leaves the folder alone when only one field is reverted', () => {
@@ -152,13 +126,12 @@ describe('draft/update/revert', () => {
 
       revertChanges({ keyPath: 'title' });
 
-      expect(mockUpdate.mock.calls[0][0]().currentPath).toBe('archive');
+      expect(mockEntryDraft.currentPath).toBe('archive');
     });
 
     it('should revert all fields in all locales', () => {
       revertChanges();
 
-      expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.en.title).toBe('Original Title');
       expect(mockEntryDraft.currentValues.en.body).toBe('Original Body');
       expect(mockEntryDraft.currentValues.ja.title).toBe('Original Japanese Title');
@@ -167,7 +140,6 @@ describe('draft/update/revert', () => {
     it('should revert all fields in specific locale', () => {
       revertChanges({ locale: 'en' });
 
-      expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.en.title).toBe('Original Title');
       expect(mockEntryDraft.currentValues.en.body).toBe('Original Body');
     });
@@ -175,7 +147,6 @@ describe('draft/update/revert', () => {
     it('should revert specific field in all locales', () => {
       revertChanges({ keyPath: 'title' });
 
-      expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.en.title).toBe('Original Title');
       expect(mockEntryDraft.currentValues.ja.title).toBe('Original Japanese Title');
     });
@@ -183,7 +154,6 @@ describe('draft/update/revert', () => {
     it('should revert specific field in specific locale', () => {
       revertChanges({ locale: 'en', keyPath: 'title' });
 
-      expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.en.title).toBe('Original Title');
       // Other values should remain modified
       expect(mockEntryDraft.currentValues.en.body).toBe('Modified Body');
@@ -192,7 +162,6 @@ describe('draft/update/revert', () => {
     it('should only revert translatable fields in non-default locale', () => {
       revertChanges({ locale: 'ja' });
 
-      expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.ja.title).toBe('Original Japanese Title');
       expect(mockEntryDraft.currentValues.ja.body).toBe('Original Japanese Body');
     });
@@ -200,7 +169,6 @@ describe('draft/update/revert', () => {
     it('should revert all fields including i18n-duplicate in default locale', () => {
       revertChanges({ locale: 'en' });
 
-      expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.en.title).toBe('Original Title');
       expect(mockEntryDraft.currentValues.en.date).toBe('2024-01-01');
     });
@@ -208,7 +176,6 @@ describe('draft/update/revert', () => {
     it('should handle empty keyPath as reverting all fields', () => {
       revertChanges({ locale: 'en', keyPath: '' });
 
-      expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.en.title).toBe('Original Title');
       expect(mockEntryDraft.currentValues.en.body).toBe('Original Body');
     });
@@ -227,7 +194,6 @@ describe('draft/update/revert', () => {
 
       revertChanges({ locale: 'en', keyPath: 'metadata.author' });
 
-      expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.en['metadata.author']).toBe('Original Author');
     });
 

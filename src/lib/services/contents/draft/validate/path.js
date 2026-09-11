@@ -1,5 +1,4 @@
 import { stripSlashes } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
@@ -9,7 +8,6 @@ import {
   isDescendantPath,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
-import { entryDraft } from '$lib/services/contents/draft';
 import {
   buildCustomEntryPath,
   keepsOriginalPath,
@@ -87,10 +85,10 @@ const isPathTaken = (draft) => {
 /**
  * Validate the folder chosen with the entry path editor. The path editor is only shown when the
  * collection’s `meta.path` option is enabled, so an entry without one is always valid.
- * @param {EntryDraft} [draft] Draft to validate. Defaults to the one open in the editor.
+ * @param {EntryDraft} draft Draft to validate.
  * @returns {{ valid: boolean, validities: LocaleValidityMap }} Validation results.
  */
-export const validatePath = (draft = /** @type {EntryDraft} */ (get(entryDraft))) => {
+export const validatePath = (draft) => {
   const { collection, currentLocales, originalPath, currentPath } = draft;
 
   if (!getMetaPathConfig(collection)) {

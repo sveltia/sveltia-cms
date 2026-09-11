@@ -9,7 +9,7 @@
 
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 
   /**
@@ -27,6 +27,8 @@
    * @property {object | undefined} currentValue Field value.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {FieldPreviewProps & Props} */
   let {
     /* eslint-disable prefer-const */
@@ -39,7 +41,7 @@
 
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
-  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale));
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
   const hasValues = $derived(
     Object.entries(valueMap).some(
       ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && !!value,

@@ -1,19 +1,13 @@
 // @ts-nocheck
-import { get } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  entryDraft,
-  entryDraftModified,
   filterRealValues,
-  i18nAutoDupEnabled,
+  isAutoDuplicationEnabled,
+  isDraftModified,
   revokeDraftFileURLs,
   suspendAutoDuplication,
 } from '.';
-
-vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: { devModeEnabled: false },
-}));
 
 describe('draft/index', () => {
   describe('filterRealValues', () => {
@@ -65,69 +59,8 @@ describe('draft/index', () => {
     });
   });
 
-  describe('entryDraft', () => {
-    it('should initialize as undefined', () => {
-      let value;
-
-      entryDraft.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBeUndefined();
-    });
-
-    it('should be writable', () => {
-      const draft = {
-        collectionName: 'posts',
-        originalValues: { en: { title: 'Original' } },
-        currentValues: { en: { title: 'Original' } },
-      };
-
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraft.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toEqual(draft);
-    });
-  });
-
-  describe('i18nAutoDupEnabled', () => {
-    it('should initialize as true', () => {
-      let value;
-
-      i18nAutoDupEnabled.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
-    });
-
-    it('should be writable', () => {
-      i18nAutoDupEnabled.set(false);
-
-      let value;
-
-      i18nAutoDupEnabled.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(false);
-
-      // Reset
-      i18nAutoDupEnabled.set(true);
-    });
-  });
-
   describe('suspendAutoDuplication', () => {
-    /**
-     * Read the current value of the store.
-     * @returns {boolean} Current value.
-     */
-    const current = () => get(i18nAutoDupEnabled);
+    const current = isAutoDuplicationEnabled;
 
     it('should suspend for the duration of the callback and restore afterwards', () => {
       expect(current()).toBe(true);
@@ -201,29 +134,13 @@ describe('draft/index', () => {
     });
   });
 
-  describe('entryDraftModified', () => {
+  describe('isDraftModified', () => {
     it('should return false when draft is undefined', () => {
-      entryDraft.set(undefined);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(false);
+      expect(isDraftModified(undefined)).toBe(false);
     });
 
     it('should return false when draft is null', () => {
-      entryDraft.set(null);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(false);
+      expect(isDraftModified(null)).toBe(false);
     });
 
     it('should return false when draft values are unchanged', () => {
@@ -236,15 +153,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Test' } },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(false);
+      expect(isDraftModified(draft)).toBe(false);
     });
 
     it('should return true when the entry path is modified', () => {
@@ -259,15 +168,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Test' } },
       };
 
-      entryDraft.set(/** @type {any} */ (draft));
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should ignore surrounding slashes in the entry path', () => {
@@ -282,15 +183,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Test' } },
       };
 
-      entryDraft.set(/** @type {any} */ (draft));
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(false);
+      expect(isDraftModified(draft)).toBe(false);
     });
 
     it('should return true when locales are modified', () => {
@@ -303,15 +196,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Test' } },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should return true when slugs are modified', () => {
@@ -324,15 +209,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Test' } },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should return true when values are modified', () => {
@@ -345,15 +222,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Modified Test' } },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should ignore a key holding `undefined` that only the original map has', () => {
@@ -369,15 +238,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Test' } },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(false);
+      expect(isDraftModified(draft)).toBe(false);
     });
 
     it('should ignore a key holding `undefined` that only the current map has', () => {
@@ -390,15 +251,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Test', body: undefined } },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(false);
+      expect(isDraftModified(draft)).toBe(false);
     });
 
     it('should return true when a value is cleared to `undefined`', () => {
@@ -411,15 +264,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Test', body: undefined } },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should return true when a value is filled in from `undefined`', () => {
@@ -432,15 +277,7 @@ describe('draft/index', () => {
         currentValues: { en: { title: 'Test', body: 'Body' } },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should detect deep changes in nested values', () => {
@@ -453,15 +290,7 @@ describe('draft/index', () => {
         currentValues: { en: { metadata: { author: 'Jane' } } },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should return false when currentValues only differ by internal properties', () => {
@@ -480,15 +309,7 @@ describe('draft/index', () => {
         },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(false);
+      expect(isDraftModified(draft)).toBe(false);
     });
 
     it('should return true when currentValues differ by both real and internal properties', () => {
@@ -506,15 +327,7 @@ describe('draft/index', () => {
         },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should ignore internal properties across multiple locales', () => {
@@ -533,121 +346,67 @@ describe('draft/index', () => {
         },
       };
 
-      entryDraft.set(draft);
-
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(false);
+      expect(isDraftModified(draft)).toBe(false);
     });
 
     it('should return true when a locale is added to currentValues', () => {
-      entryDraft.set({
+      const draft = {
         originalLocales: { en: true },
         currentLocales: { en: true },
         originalSlugs: { en: 'test' },
         currentSlugs: { en: 'test' },
         originalValues: { en: { title: 'Test' } },
         currentValues: { en: { title: 'Test' }, ja: { title: 'Test' } },
-      });
+      };
 
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should return true when a locale is missing from originalValues', () => {
-      entryDraft.set({
+      const draft = {
         originalLocales: { en: true },
         currentLocales: { en: true },
         originalSlugs: { en: 'test' },
         currentSlugs: { en: 'test' },
         originalValues: { en: { title: 'Test' }, ja: undefined },
         currentValues: { en: { title: 'Test' }, ja: { title: 'Test' } },
-      });
+      };
 
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should return true when a field is removed from currentValues', () => {
-      entryDraft.set({
+      const draft = {
         originalLocales: { en: true },
         currentLocales: { en: true },
         originalSlugs: { en: 'test' },
         currentSlugs: { en: 'test' },
         originalValues: { en: { title: 'Test', subtitle: 'Sub' } },
         currentValues: { en: { title: 'Test' } },
-      });
+      };
 
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
 
     it('should return true when a field is added to currentValues', () => {
-      entryDraft.set({
+      const draft = {
         originalLocales: { en: true },
         currentLocales: { en: true },
         originalSlugs: { en: 'test' },
         currentSlugs: { en: 'test' },
         originalValues: { en: { title: 'Test' } },
         currentValues: { en: { title: 'Test', subtitle: 'Sub' } },
-      });
+      };
 
-      let value;
-
-      entryDraftModified.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toBe(true);
+      expect(isDraftModified(draft)).toBe(true);
     });
   });
 
   describe('revokeDraftFileURLs', () => {
-    /**
-     * Set the draft store to a minimal draft holding the given unsaved files. The value maps are
-     * included because `entryDraftModified` reads them whenever the store changes.
-     * @param {Record<string, any> | undefined} files File map keyed by blob URL.
-     */
-    const setDraftFiles = (files) => {
-      entryDraft.set(
-        files === undefined
-          ? null
-          : {
-              originalLocales: {},
-              currentLocales: {},
-              originalSlugs: {},
-              currentSlugs: {},
-              originalValues: {},
-              currentValues: {},
-              files,
-            },
-      );
-    };
-
-    it('should revoke every blob URL held by the current draft', () => {
+    it('should revoke every blob URL held by the given draft', () => {
       const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
-      setDraftFiles({ 'blob:one': { file: {} }, 'blob:two': { file: {} } });
-      revokeDraftFileURLs();
+      revokeDraftFileURLs({ files: { 'blob:one': { file: {} }, 'blob:two': { file: {} } } });
 
       expect(revoke).toHaveBeenCalledTimes(2);
       expect(revoke).toHaveBeenCalledWith('blob:one');
@@ -656,50 +415,17 @@ describe('draft/index', () => {
       revoke.mockRestore();
     });
 
-    it('should keep the URLs the incoming draft still refers to', () => {
-      const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-
-      setDraftFiles({ 'blob:kept': { file: {} }, 'blob:dropped': { file: {} } });
-      revokeDraftFileURLs({ 'blob:kept': { file: {} } });
-
-      expect(revoke).toHaveBeenCalledTimes(1);
-      expect(revoke).toHaveBeenCalledWith('blob:dropped');
-
-      revoke.mockRestore();
-    });
-
     it('should do nothing when there is no draft or no files', () => {
       const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
-      setDraftFiles(undefined);
-      revokeDraftFileURLs();
-      setDraftFiles({});
-      revokeDraftFileURLs();
+      revokeDraftFileURLs(undefined);
+      revokeDraftFileURLs(null);
+      revokeDraftFileURLs({ files: {} });
+      revokeDraftFileURLs({});
 
       expect(revoke).not.toHaveBeenCalled();
 
       revoke.mockRestore();
-    });
-  });
-
-  describe('devModeEnabled subscription', () => {
-    it('should log draft to console when devModeEnabled is true', async () => {
-      // Reset modules to reimport with different mock
-      vi.resetModules();
-
-      // Mock prefs with devModeEnabled true
-      vi.doMock('$lib/services/user/prefs.svelte', () => ({
-        prefs: { devModeEnabled: true },
-      }));
-
-      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
-      // Re-import the module with new mocks
-      await import('.');
-
-      // The subscription should have logged on import
-      // (Note: Testing this fully would require accessing internal module state)
-      consoleSpy.mockRestore();
     });
   });
 });

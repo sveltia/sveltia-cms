@@ -1,44 +1,24 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { entryDraft } from '$lib/services/contents/draft';
-
-import { validateSlugs } from './slugs';
-
-vi.mock('$lib/services/contents/draft');
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
+import { validateSlugs as _validateSlugs } from './slugs';
 
 describe('draft/validate/slugs', () => {
   let mockEntryDraft;
-  let mockGet;
+  /**
+   * Validate the mock entry draft’s slugs.
+   * @returns {object} Validation results.
+   */
+  const validateSlugs = () => _validateSlugs(mockEntryDraft);
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    const { get } = await import('svelte/store');
-
-    mockGet = vi.mocked(get);
 
     mockEntryDraft = {
       currentLocales: { en: true },
       currentSlugs: { en: 'test-post' },
       slugEditor: { en: false },
     };
-
-    mockGet.mockImplementation((store) => {
-      if (store === entryDraft) {
-        return mockEntryDraft;
-      }
-
-      return undefined;
-    });
   });
 
   describe('validateSlugs', () => {

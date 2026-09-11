@@ -1,6 +1,3 @@
-import { get } from 'svelte/store';
-
-import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs';
@@ -151,16 +148,15 @@ export const revertLocale = ({ draft, keyPath, locale }) => {
 
 /**
  * Revert the changes made to the given field or all the fields to the default value(s).
- * @param {object} [args] Arguments.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} [args.locale] Target locale, e.g. `ja`. Can be empty if reverting
  * everything.
  * @param {FieldKeyPath} [args.keyPath] Flattened (dot-notated) object keys that will be used for
  * searching the source values. Omit this if copying all the fields. If the triggered field is the
  * List or Object type, this will likely match multiple fields.
  */
-export const revertChanges = ({ locale: targetLanguage = '', keyPath = '' } = {}) => {
-  const draft = /** @type {EntryDraft} */ (get(entryDraft));
-
+export const revertChanges = ({ draft, locale: targetLanguage = '', keyPath = '' }) => {
   const {
     collection,
     collectionName,
@@ -192,11 +188,8 @@ export const revertChanges = ({ locale: targetLanguage = '', keyPath = '' } = {}
     getFieldArgs: { collectionName, fileName, isIndexFile },
   });
 
-  entryDraft.update(() => ({
-    ...draft,
-    currentValues,
-    ...(revertsEverything
-      ? { currentPath: originalPath, currentSlugs: structuredClone(originalSlugs) }
-      : {}),
-  }));
+  if (revertsEverything) {
+    draft.currentPath = originalPath;
+    draft.currentSlugs = { ...originalSlugs };
+  }
 };

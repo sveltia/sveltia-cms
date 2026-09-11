@@ -11,7 +11,7 @@
   import { getContext, untrack } from 'svelte';
 
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
@@ -22,8 +22,7 @@
   import { getDirection } from '$lib/services/contents/i18n';
 
   /**
-   * @import { Writable } from 'svelte/store';
-   * @import { EntryDraft, FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import { KeyValueField } from '$lib/types/public';
    */
 
@@ -32,6 +31,8 @@
    * @property {KeyValueField} fieldConfig Field configuration.
    * @property {Record<string, string> | undefined} currentValue Field value.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
@@ -56,7 +57,7 @@
   } = $derived(fieldConfig);
   const keyLabel = $derived(_keyLabel || _('key_value.key'));
   const valueLabel = $derived(_valueLabel || _('key_value.value'));
-  const defaultLocale = $derived($entryDraft?.defaultLocale);
+  const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   // With the `duplicate_keys` i18n strategy, the keys are mirrored from the default locale, so they
   // can only be edited — and pairs added or removed — there; the values are editable in any locale
   const keysReadonly = $derived(
@@ -79,14 +80,18 @@
    * Update the {@link pairs} whenever the current values are changed.
    */
   const updatePairs = () => {
-    if (!$entryDraft) {
+    const draft = entryDraft.current;
+
+    if (!draft) {
       return;
     }
 
-    const _entryDraft = /** @type {Writable<EntryDraft>} */ (entryDraft);
-    const updatedPairs = getPairs({ entryDraft: _entryDraft, valueStoreKey, keyPath, locale });
+    const updatedPairs = getPairs({ draft, valueStoreKey, keyPath, locale });
+    // A pair whose key is still empty hasn’t been written to the draft — adding one removes the
+    // `null` placeholder from the draft, which is what runs this — so it doesn’t count as a change
+    const savedPairs = pairs.filter(([key]) => key.trim());
 
-    if (!equal(pairs, updatedPairs)) {
+    if (!equal(savedPairs, updatedPairs)) {
       pairs = [...updatedPairs];
       // Preserve existing IDs for unchanged positions; assign new IDs for new pairs
       pairIds = updatedPairs.map((_pair, i) => {
@@ -101,9 +106,9 @@
       edited = updatedPairs.map(() => false);
     }
 
-    if (!pairs.length && $entryDraft[valueStoreKey][locale][keyPath] !== null) {
+    if (!pairs.length && draft[valueStoreKey][locale][keyPath] !== null) {
       // Enable validation
-      $entryDraft[valueStoreKey][locale][keyPath] = null;
+      draft[valueStoreKey][locale][keyPath] = null;
     }
   };
 
@@ -111,11 +116,13 @@
    * Add an empty pair to the {@link pairs} array.
    */
   const addPair = () => {
-    if (!$entryDraft) {
+    const draft = entryDraft.current;
+
+    if (!draft) {
       return;
     }
 
-    forEachTargetLocale({ valueStore: $entryDraft[valueStoreKey], locale, i18n }, (content) => {
+    forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (content) => {
       // Remove `null` added for validation
       delete content[keyPath];
     });
@@ -146,19 +153,19 @@
    * Update the draft store whenever the {@link pairs} is updated.
    */
   const updateStore = () => {
+    const draft = entryDraft.current;
+
     validations = validatePairs({ pairs, edited });
 
-    if (!$entryDraft || validations.some(Boolean) || pairs.some(([key]) => !key.trim())) {
+    if (!draft || validations.some(Boolean) || pairs.some(([key]) => !key.trim())) {
       return;
     }
 
-    const _entryDraft = /** @type {Writable<EntryDraft>} */ (entryDraft);
-
-    savePairs({ entryDraft: _entryDraft, valueStoreKey, fieldConfig, keyPath, locale, pairs });
+    savePairs({ draft, valueStoreKey, fieldConfig, keyPath, locale, pairs });
   };
 
   $effect(() => {
-    void [getValueMapSnapshot($entryDraft, locale, valueStoreKey)];
+    void [getValueMapSnapshot(entryDraft.current, locale, valueStoreKey)];
 
     untrack(() => {
       updatePairs();

@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { MenuItem } from '@sveltia/ui';
 
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { copyFromLocale } from '$lib/services/contents/draft/update/copy';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
@@ -24,6 +24,8 @@
    * long list of locales would otherwise bury.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -43,13 +45,13 @@
    * @returns {Promise<boolean>} Whether the menu item should be disabled.
    */
   const isMenuDisabled = async ({ sourceLanguage, targetLanguage }) =>
-    !$entryDraft?.currentLocales[targetLanguage] ||
-    !$entryDraft.currentLocales[sourceLanguage] ||
-    (!!keyPath && !getValueMapSnapshot($entryDraft, sourceLanguage)[keyPath]) ||
+    !entryDraft.current?.currentLocales[targetLanguage] ||
+    !entryDraft.current.currentLocales[sourceLanguage] ||
+    (!!keyPath && !getValueMapSnapshot(entryDraft.current, sourceLanguage)[keyPath]) ||
     (!translate &&
       !!keyPath &&
-      getValueMapSnapshot($entryDraft, sourceLanguage)[keyPath] ===
-        getValueMapSnapshot($entryDraft, targetLanguage)[keyPath]) ||
+      getValueMapSnapshot(entryDraft.current, sourceLanguage)[keyPath] ===
+        getValueMapSnapshot(entryDraft.current, targetLanguage)[keyPath]) ||
     (translate && !(await $translator?.availability({ sourceLanguage, targetLanguage })));
 </script>
 
@@ -64,7 +66,12 @@
           : _(translate ? 'translate_from_x' : 'copy_from_x', { values: { locale: localeLabel } })}
         {disabled}
         onclick={() => {
-          copyFromLocale({ ...languagePair, keyPath, translate });
+          if (entryDraft.current) {
+            copyFromLocale({
+              draft: entryDraft.current,
+              options: { ...languagePair, keyPath, translate },
+            });
+          }
         }}
       />
     {/await}

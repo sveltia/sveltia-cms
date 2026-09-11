@@ -12,8 +12,8 @@
     getSharedEntryFileName,
   } from '$lib/services/contents/collection/nested';
   import { getFolderName, getOwnFolderName } from '$lib/services/contents/collection/nested/i18n';
-  import { entryDraft } from '$lib/services/contents/draft';
   import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { createPath } from '$lib/services/utils/file';
   import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
@@ -31,13 +31,15 @@
    * @typedef {false | 'empty' | 'invalid' | 'duplicate'} SlugValidationResult
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let { open = $bindable(false) } = $props();
 
-  const collectionName = $derived($entryDraft?.collectionName ?? '');
-  const currentSlugs = $derived($entryDraft?.currentSlugs ?? {});
+  const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  const currentSlugs = $derived(entryDraft.current?.currentSlugs ?? {});
   const originalEntry = $derived(
-    /** @type {UnpublishedEntry | undefined} */ ($entryDraft?.originalEntry),
+    /** @type {UnpublishedEntry | undefined} */ (entryDraft.current?.originalEntry),
   );
 
   /**
@@ -46,17 +48,17 @@
    * and the entry keeps its place in the tree.
    */
   const ownFolderPath = $derived.by(() => {
-    const collection = $entryDraft?.collection;
+    const collection = entryDraft.current?.collection;
 
-    if (!collection || $entryDraft?.isNew || !getSharedEntryFileName(collection)) {
+    if (!collection || entryDraft.current?.isNew || !getSharedEntryFileName(collection)) {
       return undefined;
     }
 
-    return stripSlashes($entryDraft?.currentPath ?? '');
+    return stripSlashes(entryDraft.current?.currentPath ?? '');
   });
 
   const renamesFolder = $derived(ownFolderPath !== undefined);
-  const defaultLocale = $derived($entryDraft?.defaultLocale ?? '_default');
+  const defaultLocale = $derived(entryDraft.current?.defaultLocale ?? '_default');
   /**
    * Whether the folder goes by a different name in each locale. That’s the case when the slugs are
    * localized, as the folder is named after the slug; otherwise the folder is shared by every
@@ -64,7 +66,7 @@
    * @see https://github.com/sveltia/sveltia-cms/issues/962
    */
   const localizesFolder = $derived(
-    renamesFolder && !!$entryDraft && hasLocalizedSlugs($entryDraft.collection),
+    renamesFolder && !!entryDraft.current && hasLocalizedSlugs(entryDraft.current.collection),
   );
 
   /**
@@ -85,11 +87,11 @@
     return {
       [defaultLocale]: ownFolderPath,
       ...Object.fromEntries(
-        Object.entries($entryDraft?.currentSlugs ?? {})
+        Object.entries(entryDraft.current?.currentSlugs ?? {})
           .filter(
             ([locale, slug]) =>
               locale !== defaultLocale &&
-              !!$entryDraft?.currentLocales[locale] &&
+              !!entryDraft.current?.currentLocales[locale] &&
               !!getOwnFolderName(slug ?? ''),
           )
           .map(([locale, slug]) => [locale, getEntryDirPath(/** @type {string} */ (slug))]),
@@ -194,7 +196,7 @@
    * rest of the save takes care of the entries and assets stored below it.
    */
   const renameFolders = () => {
-    const draft = /** @type {EntryDraft} */ ($entryDraft);
+    const draft = /** @type {EntryDraft} */ (entryDraft.current);
     let { currentPath, currentSlugs: slugs } = draft;
 
     Object.entries(updatedFolderNames).forEach(([locale, name]) => {
@@ -215,8 +217,8 @@
       }
     });
 
-    // Assign through the store so that the editor picks up the change
-    $entryDraft = { ...draft, currentPath, currentSlugs: slugs };
+    draft.currentPath = currentPath;
+    draft.currentSlugs = slugs;
   };
 
   /**
@@ -269,7 +271,7 @@
       return;
     }
 
-    /** @type {EntryDraft} */ ($entryDraft).currentSlugs = Object.fromEntries(
+    /** @type {EntryDraft} */ (entryDraft.current).currentSlugs = Object.fromEntries(
       Object.entries(updatedSlugs).map(([locale, slug]) => [locale, slugify(slug, { locale })]),
     );
   }}

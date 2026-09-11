@@ -19,7 +19,7 @@
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
   import FileEditorItem from '$lib/components/contents/details/fields/file/file-editor-item.svelte';
   import UploadButton from '$lib/components/contents/details/fields/file/upload-button.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
     moveMultiValueItem,
     removeMultiValueItem,
@@ -60,6 +60,8 @@
    * @property {MediaField} fieldConfig Field configuration.
    * @property {string | string[] | undefined} currentValue Field value.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorContext} */
   const {
@@ -124,10 +126,10 @@
     accept,
     choose_url: canEnterURL = true,
   } = $derived(fieldConfig);
-  const entry = $derived($entryDraft?.originalEntry);
-  const collectionName = $derived($entryDraft?.collectionName ?? '');
-  const fileName = $derived($entryDraft?.fileName);
-  const isIndexFile = $derived($entryDraft?.isIndexFile ?? false);
+  const entry = $derived(entryDraft.current?.originalEntry);
+  const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  const fileName = $derived(entryDraft.current?.fileName);
+  const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
   const isImageField = $derived(fieldType === 'image');
   const kind = $derived(isImageField ? 'image' : undefined);
   const defaultLibraryOptions = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
@@ -143,7 +145,7 @@
   );
   const targetFolder = $derived(getDefaultAssetFolder(assetLibraryFolderMap));
   const targetFolderPath = $derived(
-    getTargetFolderPath({ entry: $entryDraft?.originalEntry, folder: targetFolder }),
+    getTargetFolderPath({ entry: entryDraft.current?.originalEntry, folder: targetFolder }),
   );
   const listedAssets = $derived(
     listAssets({
@@ -220,7 +222,9 @@
    * @param {SelectedResource[]} selectedResources Selected resources.
    */
   const onResourcesSelect = async (selectedResources) => {
-    if (!$entryDraft) {
+    const draft = entryDraft.current;
+
+    if (!draft) {
       return;
     }
 
@@ -239,7 +243,7 @@
           resource.folder = targetFolder;
         }
 
-        return processResource({ draft: $entryDraft, resource, libraryConfig });
+        return processResource({ draft, resource, libraryConfig });
       }),
     );
 
@@ -248,7 +252,7 @@
     let hasValidResource = false;
 
     const lastIndex = multiple
-      ? (Object.keys($entryDraft[valueStoreKey][locale])
+      ? (Object.keys(draft[valueStoreKey][locale])
           .filter((key) => key.startsWith(`${keyPath}.`))
           .map((key) => Number(key.replace(`${keyPath}.`, '')))
           .pop() ?? -1)
@@ -261,7 +265,7 @@
         if (multiple) {
           const targetIndex = replaceMode ? replaceIndex : lastIndex + 1 + index;
 
-          $entryDraft[valueStoreKey][locale][`${keyPath}.${targetIndex}`] = value;
+          draft[valueStoreKey][locale][`${keyPath}.${targetIndex}`] = value;
         } else {
           // Encode spaces as `%20` when the field is used in the rich text editor component to
           // avoid issues with Markdown parsers that do not support unencoded spaces in URLs.
@@ -337,11 +341,13 @@
    * @param {number} index Index of the item to remove.
    */
   const removeItem = (index) => {
-    if (!$entryDraft) {
+    const draft = entryDraft.current;
+
+    if (!draft) {
       return;
     }
 
-    removeMultiValueItem({ locale, valueStoreKey, keyPath, index });
+    removeMultiValueItem({ draft, locale, valueStoreKey, keyPath, index });
   };
 
   /**
@@ -352,11 +358,13 @@
    * focus can be restored to the matching control on the item once it has moved.
    */
   const moveItem = async (from, to, action = 'reorder') => {
-    if (!$entryDraft) {
+    const draft = entryDraft.current;
+
+    if (!draft) {
       return;
     }
 
-    moveMultiValueItem({ locale, valueStoreKey, keyPath, from, to });
+    moveMultiValueItem({ draft, locale, valueStoreKey, keyPath, from, to });
 
     await sleep(50);
     // Move the focus back to the control on the item that was just moved, so that it can be used
@@ -437,9 +445,12 @@
   };
 
   $effect(() => {
+    const draft = entryDraft.current;
+
     (async () => {
-      if ($entryDraft?.files) {
-        unsavedAssets = await getUnsavedAssets({ draft: $entryDraft, targetFolderPath });
+      if (draft?.files) {
+        // The draft’s files are read synchronously, so their changes are tracked as well
+        unsavedAssets = await getUnsavedAssets({ draft, targetFolderPath });
       } else {
         unsavedAssets = [];
       }
@@ -555,7 +566,7 @@
   multiple={replaceMode ? false : multiple}
   {accept}
   {canEnterURL}
-  {entryDraft}
+  draft={entryDraft.current}
   {fieldConfig}
   {assetLibraryFolderMap}
   {enabledCloudServiceEntries}

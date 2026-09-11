@@ -67,7 +67,7 @@
    * @property {MediaLibraryAssetKind} [kind] Asset kind.
    * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
-   * @property {Writable<EntryDraft | null | undefined>} [entryDraft] Associated entry draft.
+   * @property {EntryDraft | null | undefined} [draft] Associated entry draft.
    * @property {MediaField} [fieldConfig] Field configuration.
    * @property {AssetLibraryFolderMap} assetLibraryFolderMap Default asset library folder map.
    * @property {[string, MediaLibraryService][]} enabledCloudServiceEntries List of enabled cloud
@@ -88,7 +88,7 @@
     // svelte-ignore state_referenced_locally
     accept = kind === 'image' ? SUPPORTED_IMAGE_TYPES.join(',') : undefined,
     canEnterURL = true,
-    entryDraft,
+    draft = undefined,
     fieldConfig,
     assetLibraryFolderMap,
     enabledCloudServiceEntries,
@@ -146,7 +146,7 @@
     return folder;
   });
   const targetFolderPath = $derived(
-    getTargetFolderPath({ entry: $entryDraft?.originalEntry, folder: selectedFolder }),
+    getTargetFolderPath({ entry: draft?.originalEntry, folder: selectedFolder }),
   );
   const slugificationEnabled = $derived(
     getDefaultMediaLibraryOptions({ fieldConfig }).config.slugify_filename,
@@ -274,15 +274,13 @@
   });
 
   $effect(() => {
-    void $entryDraft?.files;
     // Somehow we need to snapshot `droppedAssets` here to make Svelte aware of its changes
     void $state.snapshot(droppedAssets);
 
     (async () => {
       unsavedAssets = [
-        ...($entryDraft?.files
-          ? await getUnsavedAssets({ draft: $entryDraft, targetFolderPath })
-          : []),
+        // The draft’s files are read synchronously, so their changes are tracked as well
+        ...(draft?.files ? await getUnsavedAssets({ draft, targetFolderPath }) : []),
         ...Object.values(droppedAssets),
       ];
     })();

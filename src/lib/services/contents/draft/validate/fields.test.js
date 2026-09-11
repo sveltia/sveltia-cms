@@ -1,40 +1,38 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { entryDraft } from '$lib/services/contents/draft';
 import {
   getField,
   getFieldKind,
   isFieldMultiple,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
-import { getPairs } from '$lib/services/contents/fields/key-value/helpers';
+import { getPairsFromContent } from '$lib/services/contents/fields/key-value/pairs';
 
 import {
+  validateFields as _validateFields,
   DEFAULT_VALIDITY,
+  finalizeValidity,
   revalidateField,
   validateAnyField,
   validateField,
-  validateFields,
   validateList,
-  validityProxyHandler,
 } from './fields';
 
 vi.mock('$lib/services/contents/entry/fields');
-vi.mock('$lib/services/contents/draft');
-vi.mock('$lib/services/contents/fields/key-value/helpers');
+vi.mock('$lib/services/contents/fields/key-value/pairs');
 vi.mock('$lib/services/contents/fields/list/helpers');
 vi.mock('$lib/services/contents/fields/rich-text');
 vi.mock('$lib/services/contents/fields/string/validate');
 vi.mock('$lib/services/contents/draft/validate/messages', () => ({
   getFieldValidationMessages: vi.fn(() => []),
 }));
+vi.mock('$lib/services/contents/draft/validate/required', () => ({
+  isRequiredEnforced: vi.fn(() => true),
+}));
 vi.mock('$lib/services/common/template');
 vi.mock('$lib/services/config');
 vi.mock('$lib/services/utils/regex');
-vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: { devModeEnabled: false },
-}));
 vi.mock('$lib/components/contents/details/fields', () => {
   const editors = {};
 
@@ -71,25 +69,21 @@ vi.mock('$lib/services/api/registries', () => {
     customFieldTypeRegistry: registry,
   };
 });
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
 
 describe('draft/validate/fields', () => {
   let mockEntryDraft;
-  let mockGet;
+
+  /**
+   * Validate the mock entry draft’s fields.
+   * @param {string} valueStoreKey Value store key.
+   * @param {object} [options] Options other than the draft.
+   * @returns {object} Validation results.
+   */
+  const validateFields = (valueStoreKey, options = {}) =>
+    _validateFields(valueStoreKey, { draft: mockEntryDraft, ...options });
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    const { get } = await import('svelte/store');
-
-    mockGet = vi.mocked(get);
 
     mockEntryDraft = {
       collection: {
@@ -111,14 +105,6 @@ describe('draft/validate/fields', () => {
       currentSlugs: { en: 'test-post' },
       slugEditor: { en: false },
     };
-
-    mockGet.mockImplementation((store) => {
-      if (store === entryDraft) {
-        return mockEntryDraft;
-      }
-
-      return undefined;
-    });
 
     vi.mocked(isFieldRequired).mockReturnValue(false);
     vi.mocked(isFieldMultiple).mockReturnValue(false);
@@ -746,45 +732,32 @@ describe('draft/validate/fields', () => {
       });
     });
 
-    describe('validityProxyHandler', () => {
+    describe('finalizeValidity', () => {
       it('should add a valid property that reflects all other properties', () => {
-        const validity1 = new Proxy({ ...DEFAULT_VALIDITY }, validityProxyHandler);
-
-        expect(validity1.valid).toBe(true);
-
-        const validity2 = new Proxy(
-          { ...DEFAULT_VALIDITY, valueMissing: true },
-          validityProxyHandler,
-        );
-
-        expect(validity2.valid).toBe(false);
+        expect(finalizeValidity({ ...DEFAULT_VALIDITY }).valid).toBe(true);
+        expect(finalizeValidity({ ...DEFAULT_VALIDITY, valueMissing: true }).valid).toBe(false);
       });
 
       it('should return false if any validity flag is true', () => {
-        const validity = new Proxy(
-          {
-            valueMissing: false,
-            tooShort: false,
-            tooLong: true,
-            rangeUnderflow: false,
-            rangeOverflow: false,
-            patternMismatch: false,
-            typeMismatch: false,
-          },
-          validityProxyHandler,
-        );
+        const validity = finalizeValidity({
+          valueMissing: false,
+          tooShort: false,
+          tooLong: true,
+          rangeUnderflow: false,
+          rangeOverflow: false,
+          patternMismatch: false,
+          typeMismatch: false,
+        });
 
         expect(validity.valid).toBe(false);
       });
 
-      it('should pass through other property accesses', () => {
-        const validity = new Proxy(
-          { ...DEFAULT_VALIDITY, valueMissing: true },
-          validityProxyHandler,
-        );
+      it('should keep the other properties as plain own properties', () => {
+        const validity = finalizeValidity({ ...DEFAULT_VALIDITY, valueMissing: true });
 
         expect(validity.valueMissing).toBe(true);
         expect(validity.tooShort).toBe(false);
+        expect(Object.keys(validity)).toContain('valid');
       });
     });
 
@@ -1474,7 +1447,7 @@ describe('draft/validate/fields', () => {
 
         vi.mocked(isFieldRequired).mockReturnValue(true);
 
-        vi.mocked(getPairs).mockReturnValue(pairs);
+        vi.mocked(getPairsFromContent).mockReturnValue(pairs);
 
         const result = validateAnyField(args);
 
@@ -1504,7 +1477,7 @@ describe('draft/validate/fields', () => {
 
         vi.mocked(isFieldRequired).mockReturnValue(true);
 
-        vi.mocked(getPairs).mockReturnValue([]);
+        vi.mocked(getPairsFromContent).mockReturnValue([]);
 
         const result = validateAnyField(args);
 
@@ -1537,7 +1510,7 @@ describe('draft/validate/fields', () => {
         vi.mocked(isFieldRequired).mockReturnValue(false);
 
         // Only 1 pair, but min is 3
-        vi.mocked(getPairs).mockReturnValue([{ key: 'key1', value: 'value1' }]);
+        vi.mocked(getPairsFromContent).mockReturnValue([{ key: 'key1', value: 'value1' }]);
 
         const result = validateAnyField(args);
 
@@ -1571,7 +1544,7 @@ describe('draft/validate/fields', () => {
         vi.mocked(isFieldRequired).mockReturnValue(false);
 
         // 3 pairs but max is 2
-        vi.mocked(getPairs).mockReturnValue([
+        vi.mocked(getPairsFromContent).mockReturnValue([
           { key: 'k1', value: 'v1' },
           { key: 'k2', value: 'v2' },
           { key: 'k3', value: 'v3' },
@@ -1653,7 +1626,7 @@ describe('draft/validate/fields', () => {
 
         vi.mocked(isFieldRequired).mockReturnValue(false);
 
-        vi.mocked(getPairs).mockReturnValue([]);
+        vi.mocked(getPairsFromContent).mockReturnValue([]);
 
         // This should skip early return when keyvalue path is already validated
         const result = validateAnyField(args);

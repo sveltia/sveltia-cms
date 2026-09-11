@@ -2,44 +2,28 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { entryDraft, i18nAutoDupEnabled } from '$lib/services/contents/draft';
-
 import {
+  moveMultiValueItem as _moveMultiValueItem,
+  removeMultiValueItem as _removeMultiValueItem,
+  updateListField as _updateListField,
   getItemList,
-  moveMultiValueItem,
-  removeMultiValueItem,
-  updateListField,
   updateObject,
 } from './list';
 
-// Keep the real `suspendAutoDuplication` so it still runs its callback and toggles the store,
-// which the tests below spy on
-vi.mock('$lib/services/contents/draft', async () => ({
-  ...(await vi.importActual('$lib/services/contents/draft')),
+const { suspendAutoDuplication } = vi.hoisted(() => ({
+  suspendAutoDuplication: vi.fn((fn) => fn()),
 }));
-vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: { devModeEnabled: false },
-}));
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
 
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
+vi.mock('$lib/services/contents/draft', () => ({ suspendAutoDuplication }));
 
 describe('draft/update/list', () => {
   let mockEntryDraft;
-  let mockUpdate;
-  let mockGet;
+  const updateListField = (args) => _updateListField({ draft: mockEntryDraft, ...args });
+  const moveMultiValueItem = (args) => _moveMultiValueItem({ draft: mockEntryDraft, ...args });
+  const removeMultiValueItem = (args) => _removeMultiValueItem({ draft: mockEntryDraft, ...args });
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    const { get } = await import('svelte/store');
-
-    mockGet = vi.mocked(get);
 
     mockEntryDraft = {
       collection: {
@@ -61,26 +45,6 @@ describe('draft/update/list', () => {
         },
       },
     };
-
-    mockUpdate = vi.fn((fn) => {
-      if (typeof fn === 'function') {
-        return fn(mockEntryDraft);
-      }
-
-      return mockEntryDraft;
-    });
-
-    mockGet.mockImplementation((store) => {
-      if (store === entryDraft) {
-        return mockEntryDraft;
-      }
-
-      return undefined;
-    });
-
-    vi.mocked(entryDraft).update = mockUpdate;
-
-    vi.mocked(i18nAutoDupEnabled).set = vi.fn();
   });
 
   describe('updateListField', () => {
@@ -93,9 +57,8 @@ describe('draft/update/list', () => {
         },
       });
 
-      expect(mockUpdate).toHaveBeenCalled();
-      expect(vi.mocked(i18nAutoDupEnabled).set).toHaveBeenCalledWith(false);
-      expect(vi.mocked(i18nAutoDupEnabled).set).toHaveBeenCalledWith(true);
+      expect(mockEntryDraft.currentValues.en['tags.3']).toBe('tag4');
+      expect(suspendAutoDuplication).toHaveBeenCalled();
     });
 
     // https://github.com/sveltia/sveltia-cms/issues/939
@@ -128,8 +91,6 @@ describe('draft/update/list', () => {
           valueList.splice(1, 1);
         },
       });
-
-      expect(mockUpdate).toHaveBeenCalled();
     });
 
     it('should reorder items in list', () => {
@@ -142,8 +103,6 @@ describe('draft/update/list', () => {
           valueList.push(first);
         },
       });
-
-      expect(mockUpdate).toHaveBeenCalled();
     });
 
     it('should handle expander states for default locale', () => {
@@ -155,8 +114,6 @@ describe('draft/update/list', () => {
           expanderStateList.push(false);
         },
       });
-
-      expect(mockUpdate).toHaveBeenCalled();
     });
 
     it('should not manipulate expander states for non-default locale', () => {
@@ -173,8 +130,6 @@ describe('draft/update/list', () => {
           expect(expanderStateList).toEqual([]);
         },
       });
-
-      expect(mockUpdate).toHaveBeenCalled();
     });
 
     it('should support custom valueStoreKey', () => {
@@ -193,8 +148,6 @@ describe('draft/update/list', () => {
           valueList.push('original3');
         },
       });
-
-      expect(mockUpdate).toHaveBeenCalled();
     });
 
     it('should handle empty list', () => {
@@ -208,21 +161,16 @@ describe('draft/update/list', () => {
           valueList.push('tag1');
         },
       });
-
-      expect(mockUpdate).toHaveBeenCalled();
     });
 
-    it('should disable and re-enable i18nAutoDup', () => {
-      const mockSet = vi.mocked(i18nAutoDupEnabled).set;
-
+    it('should write with the automatic i18n duplication suspended', () => {
       updateListField({
         locale: 'en',
         keyPath: 'tags',
         manipulate: () => {},
       });
 
-      expect(mockSet).toHaveBeenNthCalledWith(1, false);
-      expect(mockSet).toHaveBeenNthCalledWith(2, true);
+      expect(suspendAutoDuplication).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -447,12 +395,6 @@ describe('draft/update/list', () => {
       expect(items()).toEqual(['a.png', 'b.png', 'c.png', 'd.png']);
     });
 
-    it('should reorder the list within a single store update', () => {
-      moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 0, to: 3 });
-
-      expect(mockUpdate).toHaveBeenCalledTimes(1);
-    });
-
     it('should not return the updated list', () => {
       expect(
         moveMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', from: 0, to: 1 }),
@@ -461,28 +403,6 @@ describe('draft/update/list', () => {
   });
 
   describe('removeMultiValueItem', () => {
-    /**
-     * Record the state of the value map as seen by the store subscribers, which is the state left
-     * when the `entryDraft.update()` callback returns.
-     * @param {string} locale Locale code.
-     * @param {string} [valueStoreKey] Value store key.
-     * @returns {Record<string, any>[]} Snapshots, one per update call.
-     */
-    const trackUpdates = (locale, valueStoreKey = 'currentValues') => {
-      /** @type {Record<string, any>[]} */
-      const snapshots = [];
-
-      mockUpdate.mockImplementation((fn) => {
-        const draft = fn(mockEntryDraft);
-
-        snapshots.push({ ...draft[valueStoreKey][locale] });
-
-        return draft;
-      });
-
-      return snapshots;
-    };
-
     beforeEach(() => {
       mockEntryDraft.currentValues.en = {
         title: 'Hello',
@@ -558,19 +478,6 @@ describe('draft/update/list', () => {
       expect(
         removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 }),
       ).toBeUndefined();
-    });
-
-    it('should drop the unused key within a single store update', () => {
-      // Deleting a property doesn’t notify the store, so the deletion has to be done before the
-      // update completes. Otherwise subscribers — including the shared value map snapshot — would
-      // still see the removed key, and the next removal would read its stale value back.
-      const snapshots = trackUpdates('en');
-
-      removeMultiValueItem({ locale: 'en', keyPath: 'blocks.0.photos', index: 0 });
-
-      expect(mockUpdate).toHaveBeenCalledTimes(1);
-      expect(snapshots).toHaveLength(1);
-      expect(snapshots[0]).not.toHaveProperty('blocks.0.photos.3');
     });
 
     it('should keep removing one item at a time on successive calls', () => {

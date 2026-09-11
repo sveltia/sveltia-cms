@@ -5,7 +5,7 @@
   @see https://sveltiacms.app/en/docs/fields/code
 -->
 <script>
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 
   /**
@@ -18,6 +18,8 @@
    * @property {CodeField} fieldConfig Field configuration.
    * @property {string | Record<string, string> | undefined} currentValue Field value.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -34,7 +36,7 @@
     output_code_only: outputCodeOnly = false,
     keys: outputKeys = { code: 'code', lang: 'lang' },
   } = $derived(fieldConfig);
-  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale));
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
   const codeKeyPath = $derived(`${keyPath}.${outputKeys.code}`);
   const langKeyPath = $derived(`${keyPath}.${outputKeys.lang}`);
   const code = $derived(outputCodeOnly ? currentValue : valueMap[codeKeyPath]);

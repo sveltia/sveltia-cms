@@ -4,7 +4,7 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import PathEditor from '$lib/components/contents/details/editor/path-editor.svelte';
   import SlugEditor from '$lib/components/contents/details/editor/slug-editor.svelte';
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
 
   /**
    * @import { InternalLocaleCode } from '$lib/types/private';
@@ -15,6 +15,8 @@
    * @property {InternalLocaleCode} locale Current pane’s locale.
    */
 
+  const entryDraft = getEntryDraftContext();
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -22,14 +24,14 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const fields = $derived($entryDraft?.fields ?? []);
+  const fields = $derived(entryDraft.current?.fields ?? []);
   const showPathEditor = $derived(
-    $entryDraft?.currentPath !== undefined && !$entryDraft?.isIndexFile,
+    entryDraft.current?.currentPath !== undefined && !entryDraft.current?.isIndexFile,
   );
 </script>
 
 <VisibilityObserver>
-  {#if !!$entryDraft?.slugEditor[locale]}
+  {#if !!entryDraft.current?.slugEditor[locale]}
     <SlugEditor {locale} />
   {/if}
   {#if showPathEditor}

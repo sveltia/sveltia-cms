@@ -10,7 +10,7 @@
   import { isObject } from '@sveltia/utils/object';
   import { getContext, untrack } from 'svelte';
 
-  import { entryDraft } from '$lib/services/contents/draft';
+  import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 
   /**
@@ -23,6 +23,8 @@
    * @property {CodeField} fieldConfig Field configuration.
    * @property {string | Record<string, string> | undefined} currentValue Field value.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorContext} */
   const { valueStoreKey = 'currentValues' } = getContext('field-editor') ?? {};
@@ -50,7 +52,7 @@
     output_code_only: outputCodeOnly = false,
     keys: outputKeys = { code: 'code', lang: 'lang' },
   } = $derived(fieldConfig);
-  const valueMap = $derived(getValueMapSnapshot($entryDraft, locale, valueStoreKey));
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const codeKeyPath = $derived(`${keyPath}.${outputKeys.code}`);
   const langKeyPath = $derived(`${keyPath}.${outputKeys.lang}`);
 
@@ -92,17 +94,17 @@
       if (currentValue !== code) {
         currentValue = code;
       }
-    } else if ($entryDraft) {
+    } else if (entryDraft.current) {
       if (!isObject(valueMap[keyPath]) || Object.keys(valueMap[keyPath]).length) {
-        $entryDraft[valueStoreKey][locale][keyPath] = {};
+        entryDraft.current[valueStoreKey][locale][keyPath] = {};
       }
 
       if (valueMap[codeKeyPath] !== code) {
-        $entryDraft[valueStoreKey][locale][codeKeyPath] = code;
+        entryDraft.current[valueStoreKey][locale][codeKeyPath] = code;
       }
 
       if (valueMap[langKeyPath] !== lang) {
-        $entryDraft[valueStoreKey][locale][langKeyPath] = lang;
+        entryDraft.current[valueStoreKey][locale][langKeyPath] = lang;
       }
     }
   };
