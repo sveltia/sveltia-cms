@@ -573,7 +573,9 @@
  * @property {string} sha Git object ID (SHA-1 hash) for the file.
  * @property {number} size File size in bytes.
  * @property {string} [text] Raw text for a plaintext file, like HTML or Markdown.
- * @property {RepositoryFileMetadata} meta Metadata from the repository.
+ * @property {RepositoryFileMetadata} [meta] Metadata from the repository. Missing while it’s still
+ * being fetched separately from the text, or if that fetch failed; such a file counts as not fully
+ * fetched yet.
  */
 
 /**

@@ -312,7 +312,7 @@ describe('GitLab files service', () => {
         commits,
       });
 
-      expect(result['file1.md'].meta.commitAuthor).toEqual({
+      expect(result['file1.md'].meta?.commitAuthor).toEqual({
         name: 'No Author',
         email: 'none@example.com',
         id: undefined,

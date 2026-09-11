@@ -364,8 +364,25 @@ export const fetchAndParseFiles = async ({
 
   restoreCachedFileData({ allFiles, cachedFiles });
 
+  // A file is fetched again until its metadata is cached along with its text
   const fetchingFiles = allFiles.filter(({ meta }) => !meta);
-  const fetchedFileMap = fetchingFiles.length ? await fetchFileContents(fetchingFiles) : {};
+
+  // With a separate metadata pass, the text may already be in the cache from a run that was
+  // interrupted before its metadata pass finished, in which case only the metadata is missing. An
+  // asset never has any text to read
+  const contentFiles = fetchFileMetadata
+    ? fetchingFiles.filter(({ type, text }) => type !== 'asset' && text === undefined)
+    : fetchingFiles;
+
+  // What’s known about each file being fetched, to be completed below and then cached
+  /** @type {RepositoryContentsMap} */
+  const fetchedFileMap = Object.fromEntries(
+    fetchingFiles.map(({ path, sha, size, text }) => [path, { sha, size, text, meta: undefined }]),
+  );
+
+  if (contentFiles.length) {
+    Object.assign(fetchedFileMap, await fetchFileContents(contentFiles));
+  }
 
   const { entries, errors } = await prepareEntries(
     entryFiles.map(
@@ -386,19 +403,22 @@ export const fetchAndParseFiles = async ({
   updateStores({ entries, assets, configFiles: configFileItems, errors });
 
   if (fetchFileMetadata && fetchingFiles.length) {
+    // Cache the text right away, so that a reload before the slower metadata pass has finished
+    // only costs that pass next time, not the contents again
+    await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
+
     try {
       applyFileMetadata({
         fetchedFileMap,
         metadataMap: await fetchFileMetadata(fetchingFiles),
       });
     } catch (/** @type {any} */ ex) {
-      // The contents are already usable without it. A file cached without metadata is fetched
-      // again next time, so this isn’t permanent either
+      // The contents are already usable without it, and the metadata is fetched again next time
       // eslint-disable-next-line no-console
       console.error('Failed to fetch the commit metadata.', ex);
     }
   }
 
-  // Cached once the metadata is there, as a file without it is treated as not fetched yet
+  // Cached with the metadata, which is what marks a file as fetched
   await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
 };

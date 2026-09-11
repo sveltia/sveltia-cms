@@ -902,8 +902,8 @@ describe('git/shared/fetch', () => {
 
       beforeEach(() => {
         // Fresh objects each time: restoring the cache assigns onto the file items in place
-        entryFile = { path: 'posts/a.md', name: 'a.md', sha: 'sha1', size: 10 };
-        assetFile = { path: 'img/a.png', name: 'a.png', sha: 'sha2', size: 20 };
+        entryFile = { path: 'posts/a.md', name: 'a.md', sha: 'sha1', size: 10, type: 'entry' };
+        assetFile = { path: 'img/a.png', name: 'a.png', sha: 'sha2', size: 20, type: 'asset' };
         entry = { id: 'a', locales: { en: { path: 'posts/a.md' } } };
 
         vi.mocked(createFileList).mockReturnValue({
@@ -946,20 +946,59 @@ describe('git/shared/fetch', () => {
           expect(fetchFileMetadata).toHaveBeenCalledWith([entryFile, assetFile]);
         });
 
-        // The stores were populated before the metadata was even requested
+        // The stores were populated before the metadata was even requested…
         expect(order).toEqual([['metadata requested', true]]);
         expect(allEntries.current[0].commitDate).toBeUndefined();
-        expect(mockCacheDB.saveEntries).not.toHaveBeenCalled();
+        // …and so was the cache, with the text, in case the load is interrupted from here on
+        expect(mockCacheDB.saveEntries).toHaveBeenCalledOnce();
+        expect(mockCacheDB.saveEntries).toHaveBeenCalledWith([
+          ['posts/a.md', { sha: 'sha1', size: 10, text: 'text', meta: undefined }],
+          ['img/a.png', { sha: 'sha2', size: 20, text: undefined, meta: undefined }],
+        ]);
 
         resolve({ 'posts/a.md': meta, 'img/a.png': meta });
         await run;
 
         expect(allEntries.current[0].commitDate).toBe(meta.commitDate);
         expect(allAssets.current[0].commitDate).toBe(meta.commitDate);
-        // Cached only once complete, as a file without metadata counts as not fetched
-        expect(mockCacheDB.saveEntries).toHaveBeenCalledWith([
+        // Cached again once complete, as it’s the metadata that marks a file as fetched
+        expect(mockCacheDB.saveEntries).toHaveBeenCalledTimes(2);
+        expect(mockCacheDB.saveEntries).toHaveBeenLastCalledWith([
           ['posts/a.md', expect.objectContaining({ text: 'text', meta })],
           ['img/a.png', expect.objectContaining({ meta })],
+        ]);
+      });
+
+      it('should only fetch the metadata of a file whose text is already cached', async () => {
+        const fetchFileMetadata = vi.fn().mockResolvedValue({
+          'posts/a.md': meta,
+          'img/a.png': meta,
+        });
+
+        // Cached by a run that was interrupted before its metadata pass finished
+        mockCacheDB.entries.mockResolvedValue([
+          ['posts/a.md', { sha: 'sha1', size: 10, text: 'cached text', meta: undefined }],
+        ]);
+
+        await fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+          fetchFileMetadata,
+        });
+
+        // The text isn’t requested again, and an asset has none to request
+        expect(mockFetchFileContents).not.toHaveBeenCalled();
+        // The metadata is requested for both
+        expect(fetchFileMetadata).toHaveBeenCalledWith([entryFile, assetFile]);
+        expect(prepareEntries).toHaveBeenCalledWith([
+          expect.objectContaining({ path: 'posts/a.md', text: 'cached text' }),
+        ]);
+        expect(mockCacheDB.saveEntries).toHaveBeenLastCalledWith([
+          ['posts/a.md', { sha: 'sha1', size: 10, text: 'cached text', meta }],
+          ['img/a.png', { sha: 'sha2', size: 20, text: undefined, meta }],
         ]);
       });
 
