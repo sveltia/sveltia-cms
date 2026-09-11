@@ -70,6 +70,10 @@ const wait = () =>
 describe('branding', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // The icon effect fetches the logo whenever `cmsConfig` changes, in every test below, so never
+    // let it reach the real network. A request that took a while to settle would otherwise reset
+    // `appIconURLs` in the middle of a later test
+    global.fetch = vi.fn();
   });
 
   describe('constants', () => {
@@ -389,6 +393,51 @@ describe('branding', () => {
       // Wait for async operation to complete
       await vi.waitFor(() => {
         expect(appIconURLs.current).toBeUndefined();
+      });
+    });
+
+    it('ignores a run that settles after the logo has changed', async () => {
+      /**
+       * Settle the first logo request.
+       * @type {(response: any) => void}
+       */
+      let resolveFirstFetch = () => {};
+      const mockBlob = new Blob(['fake-image-data'], { type: 'image/png' });
+      const mockTransformedBlob = new Blob(['fake-webp-data'], { type: 'image/webp' });
+
+      vi.mocked(global.fetch)
+        // The first logo takes a while to load
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              resolveFirstFetch = resolve;
+            }),
+        )
+        // The second one is instant
+        // @ts-expect-error - partial mock of Response
+        .mockResolvedValueOnce({ ok: true, blob: () => Promise.resolve(mockBlob) });
+
+      vi.mocked(transformImage).mockResolvedValue(mockTransformedBlob);
+      vi.mocked(encodeBase64).mockResolvedValue('second');
+
+      cmsConfig.current = /** @type {any} */ ({ logo: { src: 'https://example.com/first.png' } });
+      await wait();
+      cmsConfig.current = /** @type {any} */ ({ logo: { src: 'https://example.com/second.png' } });
+
+      await vi.waitFor(() => {
+        expect(appIconURLs.current).toEqual({
+          small: 'data:image/webp;base64,second',
+          large: 'data:image/webp;base64,second',
+        });
+      });
+
+      // The first request fails once it finally settles, which must not discard the current icons
+      resolveFirstFetch({ ok: false });
+      await wait();
+
+      expect(appIconURLs.current).toEqual({
+        small: 'data:image/webp;base64,second',
+        large: 'data:image/webp;base64,second',
       });
     });
   });

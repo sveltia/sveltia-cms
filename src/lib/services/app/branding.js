@@ -82,9 +82,16 @@ const getDataURL = async (blob, options) => {
 export const appIconURLs = createRawState();
 
 createRootEffect(() => {
+  // Set when a newer logo supersedes this run. Fetching and transforming the logo is asynchronous,
+  // so a run that started earlier may settle after a later one has, and it must not overwrite the
+  // newer icons with its own stale ones
+  let superseded = false;
   const logoURL = appLogoURL.current;
 
   (async () => {
+    /** @type {{ small: string, large: string } | undefined} */
+    let iconURLs;
+
     try {
       const response = await fetch(logoURL);
 
@@ -99,11 +106,20 @@ createRootEffect(() => {
         getDataURL(blob, THUMBNAIL_TRANSFORM_OPTIONS),
       ]);
 
-      appIconURLs.current = { small, large };
+      iconURLs = { small, large };
     } catch {
-      appIconURLs.current = undefined;
+      iconURLs = undefined;
+    }
+
+    if (!superseded) {
+      appIconURLs.current = iconURLs;
     }
   })();
+
+  // Called before the next run starts
+  return () => {
+    superseded = true;
+  };
 });
 
 /**
