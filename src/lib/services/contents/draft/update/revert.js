@@ -169,12 +169,14 @@ export const revertChanges = ({ locale: targetLanguage = '', keyPath = '' } = {}
     isIndexFile,
     currentValues,
     originalPath,
+    originalSlugs,
   } = draft;
 
   const { allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
   const locales = targetLanguage ? [targetLanguage] : allLocales;
   // Reverting one field or one locale only touches values. Reverting everything restores where the
-  // entry goes as well, or a move made with the path editor would survive the revert and still be
+  // entry goes as well — the folder chosen with the path editor and the slugs, which name the file
+  // or its folder in each locale — or a move or rename would survive the revert and still be
   // committed on the next save
   const revertsEverything = !targetLanguage && !keyPath;
 
@@ -193,6 +195,8 @@ export const revertChanges = ({ locale: targetLanguage = '', keyPath = '' } = {}
   entryDraft.update(() => ({
     ...draft,
     currentValues,
-    ...(revertsEverything ? { currentPath: originalPath } : {}),
+    ...(revertsEverything
+      ? { currentPath: originalPath, currentSlugs: structuredClone(originalSlugs) }
+      : {}),
   }));
 };

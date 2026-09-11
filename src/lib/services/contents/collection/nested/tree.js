@@ -8,7 +8,7 @@ import {
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
 /**
- * @import { Entry, InternalCollection } from '$lib/types/private';
+ * @import { Entry, InternalCollection, InternalLocaleCode } from '$lib/types/private';
  */
 
 /**
@@ -106,9 +106,11 @@ const collectFolders = ({ entries, indexFileName, subfolders }) => {
  * @param {Entry | undefined} args.indexEntry Entry that represents the folder, if any.
  * @param {string | undefined} args.summaryTemplate Summary template from the `nested.summary`
  * option.
+ * @param {InternalLocaleCode} [args.locale] Locale to label the folder in. Defaults to the default
+ * locale.
  * @returns {string} Label.
  */
-const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate }) => {
+const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate, locale }) => {
   const folderName = path.slice(path.lastIndexOf('/') + 1);
 
   if (!indexEntry) {
@@ -116,8 +118,11 @@ const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate }) => {
   }
 
   return (
-    getEntrySummary(collection, indexEntry, { useTemplate: true, template: summaryTemplate }) ||
-    folderName
+    getEntrySummary(collection, indexEntry, {
+      locale,
+      useTemplate: true,
+      template: summaryTemplate,
+    }) || folderName
   );
 };
 
@@ -128,10 +133,11 @@ const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate }) => {
  * @param {Entry[]} args.entries Entries in the collection.
  * @param {boolean} args.pruneLeaves Whether to leave out a folder that has no subfolder of its own.
  * @param {string} [args.excludePath] Folder to leave out along with everything below it.
+ * @param {InternalLocaleCode} [args.locale] Locale to label the folders in.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label. An empty array if the collection
  * is not a nested collection or has no folder to show.
  */
-const buildTree = ({ collection, entries, pruneLeaves, excludePath }) => {
+const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) => {
   const config = getNestedConfig(collection);
 
   if (!config) {
@@ -169,6 +175,7 @@ const buildTree = ({ collection, entries, pruneLeaves, excludePath }) => {
           path,
           indexEntry: folders.get(path),
           summaryTemplate,
+          locale,
         }),
         children: buildNodes(path),
       }))
@@ -202,10 +209,13 @@ export const getNestedTree = ({ collection, entries }) =>
  * @param {Entry[]} args.entries Entries in the collection.
  * @param {string} [args.excludePath] Folder to leave out along with everything below it, so an
  * entry can’t be filed within itself.
+ * @param {InternalLocaleCode} [args.locale] Locale to label the folders in, which is the locale of
+ * the pane showing the tree. A folder is labelled with its entry’s summary, so with localized
+ * content each pane names the folders in its own language.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label.
  */
-export const getParentFolderTree = ({ collection, entries, excludePath }) =>
-  buildTree({ collection, entries, pruneLeaves: false, excludePath });
+export const getParentFolderTree = ({ collection, entries, excludePath, locale }) =>
+  buildTree({ collection, entries, pruneLeaves: false, excludePath, locale });
 
 /**
  * Add a folder that holds no entry yet to a tree, creating any missing folders above it, so that it

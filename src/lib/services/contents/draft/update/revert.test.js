@@ -113,6 +113,30 @@ describe('draft/update/revert', () => {
       expect(mockUpdate.mock.calls[0][0]().currentPath).toBe('company');
     });
 
+    it('restores the slugs', () => {
+      // A slug edited with the slug editor names the file, or the folder in a nested collection, so
+      // a full revert undoes the rename too
+      mockEntryDraft.originalSlugs = { en: 'company', ja: 'kaisha' };
+      mockEntryDraft.currentSlugs = { en: 'company', ja: 'kigyou' };
+
+      revertChanges();
+
+      const { currentSlugs } = mockUpdate.mock.calls[0][0]();
+
+      expect(currentSlugs).toEqual({ en: 'company', ja: 'kaisha' });
+      // A copy, so that editing the slug again doesn’t alter the original
+      expect(currentSlugs).not.toBe(mockEntryDraft.originalSlugs);
+    });
+
+    it('leaves the slugs alone when only one locale is reverted', () => {
+      mockEntryDraft.originalSlugs = { en: 'company', ja: 'kaisha' };
+      mockEntryDraft.currentSlugs = { en: 'company', ja: 'kigyou' };
+
+      revertChanges({ locale: 'ja' });
+
+      expect(mockUpdate.mock.calls[0][0]().currentSlugs).toEqual({ en: 'company', ja: 'kigyou' });
+    });
+
     it('leaves the folder alone when only one locale is reverted', () => {
       mockEntryDraft.originalPath = 'company';
       mockEntryDraft.currentPath = 'archive';

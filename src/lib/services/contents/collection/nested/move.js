@@ -1,3 +1,4 @@
+import { fillTemplate } from '$lib/services/common/template';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
   getEntryDirPath,
@@ -6,6 +7,7 @@ import {
 } from '$lib/services/contents/collection/nested';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import {
   buildSingleFileContent,
   createSyntheticDraft,
@@ -104,6 +106,56 @@ const moveEntry = ({ entry, dirMove, localeDirMoves }) => {
   }
 
   return { ...entry, slug: newSubPath, subPath: newSubPath, locales };
+};
+
+/**
+ * Refresh the canonical slug of a moved entry. In a nested collection with localized slugs, the
+ * localized files are linked by the default locale’s sub path, which has just changed, so each file
+ * gets the new one, or the link would go stale and stop matching the entry’s own location.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection the entry belongs to.
+ * @param {Entry} args.entry Moved entry.
+ * @returns {Entry} Entry with the canonical slug updated in every locale that has content. The
+ * given entry is returned as is when the slugs aren’t localized, because the canonical slug is
+ * then not maintained by the CMS.
+ * @see https://github.com/sveltia/sveltia-cms/issues/962
+ */
+const updateCanonicalSlug = ({ collection, entry }) => {
+  if (!hasLocalizedSlugs(collection)) {
+    return entry;
+  }
+
+  const {
+    _i18n: {
+      defaultLocale,
+      canonicalSlug: { key, value: template },
+    },
+  } = collection;
+
+  const { subPath, locales } = entry;
+
+  const canonicalSlug =
+    template === '{{slug}}'
+      ? subPath
+      : fillTemplate(template, {
+          collection: /** @type {InternalEntryCollection} */ (collection),
+          locale: defaultLocale,
+          content: locales[defaultLocale]?.content ?? {},
+          currentSlug: subPath,
+        });
+
+  return {
+    ...entry,
+    locales: Object.fromEntries(
+      Object.entries(locales).map(([locale, localizedEntry]) => [
+        locale,
+        localizedEntry.content
+          ? // Copy the content, which is shared with the entry in the store
+            { ...localizedEntry, content: { ...localizedEntry.content, [key]: canonicalSlug } }
+          : localizedEntry,
+      ]),
+    ),
+  };
 };
 
 /**
@@ -248,7 +300,14 @@ export const buildNestedMoveChanges = async ({
   const movedEntries = descendants.flatMap((entry) => {
     const movedEntry = moveEntry({ entry, dirMove, localeDirMoves });
 
-    return movedEntry ? [{ originalEntry: entry, movedEntry }] : [];
+    return movedEntry
+      ? [
+          {
+            originalEntry: entry,
+            movedEntry: updateCanonicalSlug({ collection, entry: movedEntry }),
+          },
+        ]
+      : [];
   });
 
   // Nothing moves when the folder keeps its name in every locale

@@ -254,6 +254,22 @@ describe('getParentFolderTree()', () => {
     ).toEqual(['guides']);
   });
 
+  test('labels the folders in the given locale', () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/962
+    vi.mocked(getEntrySummary).mockImplementation((_collection, { title }, { locale }) =>
+      locale === 'fr' ? `${title} (fr)` : title,
+    );
+
+    const entries = [entry('about/_index', 'About')];
+
+    expect(getParentFolderTree({ collection, entries, locale: 'fr' })).toEqual([
+      { path: 'about', label: 'About (fr)', children: [] },
+    ]);
+    expect(getParentFolderTree({ collection, entries })).toEqual([
+      { path: 'about', label: 'About', children: [] },
+    ]);
+  });
+
   test('keeps the other folders when nothing is excluded', () => {
     const entries = [entry('docs/_index', 'Documentation'), entry('guides/_index', 'Guides')];
 

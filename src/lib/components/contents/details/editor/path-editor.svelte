@@ -16,6 +16,7 @@
     getNestedConfig,
     getSharedEntryFileName,
   } from '$lib/services/contents/collection/nested';
+  import { localizeDirPath } from '$lib/services/contents/collection/nested/i18n';
   import {
     addFolderToTree,
     findNestedTreeNode,
@@ -49,9 +50,11 @@
   const validity = $derived($entryDraft?.validities[locale]._path);
   const invalid = $derived(validity?.valid === false);
   /**
-   * Whether this pane is the one that decides where the entry goes. Every locale is stored below
-   * the same path, so the folder is chosen once, in the default locale’s pane, and the others show
-   * it without offering to change it.
+   * Whether this pane is the one that decides where the entry goes. The folder is chosen once, in
+   * the default locale’s pane, and the others show it without offering to change it. With localized
+   * slugs the folders go by localized names, so the other panes show the folder as it’s named in
+   * their own locale.
+   * @see https://github.com/sveltia/sveltia-cms/issues/962
    */
   const isDefaultLocale = $derived(locale === collection?._i18n.defaultLocale);
 
@@ -132,13 +135,32 @@
           excludePath: ownFolderName
             ? getEntryDirPath($entryDraft?.originalEntry?.subPath ?? '')
             : undefined,
+          // Each pane names the folders in its own language
+          locale,
         }),
       ),
     });
   });
 
+  /**
+   * Folder path as it is in this pane’s locale. The tree is keyed by the default locale’s paths,
+   * which is how the entry is identified, but a localized file is stored below the localized
+   * folder chain, so that’s what this pane describes the choice with.
+   */
+  const localizedSelectedPath = $derived.by(() => {
+    if (!collection || isDefaultLocale) {
+      return selectedPath;
+    }
+
+    // `$allEntries` is a key, the same way it is for the tree
+    void $allEntries;
+
+    return localizeDirPath({ collection, dirPath: selectedPath, locale });
+  });
+
   const selectedLabel = $derived(
-    (rootNode ? findNestedTreeNode([rootNode], selectedPath)?.label : undefined) ?? selectedPath,
+    (rootNode ? findNestedTreeNode([rootNode], selectedPath)?.label : undefined) ??
+      localizedSelectedPath,
   );
 
   /** @type {HTMLButtonElement | undefined} */
@@ -207,7 +229,7 @@
         aria-invalid={invalid}
         aria-labelledby="{fieldId}-label"
         aria-errormessage="{fieldId}-error"
-        aria-description={selectedPath || undefined}
+        aria-description={localizedSelectedPath || undefined}
       >
         {#snippet startIcon()}
           <Icon name={selectedPath ? 'folder' : 'bookmark_manager'} />

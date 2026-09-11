@@ -2,6 +2,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { fillTemplate } from '$lib/services/common/template';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
@@ -13,6 +14,10 @@ import {
   resolveCacheDB,
 } from '$lib/services/contents/entry/changes';
 import { formatEntryFile } from '$lib/services/contents/file/format';
+
+vi.mock('$lib/services/common/template', () => ({
+  fillTemplate: vi.fn(),
+}));
 
 vi.mock('$lib/services/contents/collection', () => ({
   isEntryCollection: vi.fn(),
@@ -431,6 +436,158 @@ describe('buildNestedMoveChanges()', () => {
           previousPath: 'content/pages/fr/a-propos/equipe/_index.md',
         }),
       ]);
+    });
+
+    test('refreshes the canonical slug of every moved file', async () => {
+      const localizedCollection = {
+        ...i18nCollection,
+        _type: 'entry',
+        slug: '{{title | localize}}',
+        _i18n: {
+          ...i18nCollection._i18n,
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        },
+      };
+
+      const original = i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' });
+
+      // The stale key links the files, and nothing else in the content is touched
+      original.locales.en.content.translationKey = 'about/team/_index';
+      original.locales.fr.content.translationKey = 'about/team/_index';
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        original,
+      ]);
+
+      const { savingEntries } = await buildNestedMoveChanges({
+        collection: localizedCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(savingEntries[0].locales.en.content).toEqual({
+        title: '2',
+        translationKey: 'company/team/_index',
+      });
+      expect(savingEntries[0].locales.fr.content).toEqual({
+        title: '2',
+        translationKey: 'company/team/_index',
+      });
+      // The entry in the store is left alone
+      expect(original.locales.fr.content.translationKey).toBe('about/team/_index');
+      expect(vi.mocked(serializeContent)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locale: 'fr',
+          valueMap: expect.objectContaining({ translationKey: 'company/team/_index' }),
+        }),
+      );
+    });
+
+    test('fills a custom canonical slug template', async () => {
+      const localizedCollection = {
+        ...i18nCollection,
+        _type: 'entry',
+        slug: '{{title | localize}}',
+        _i18n: {
+          ...i18nCollection._i18n,
+          canonicalSlug: { key: 'translationKey', value: 'page-{{slug}}' },
+        },
+      };
+
+      vi.mocked(fillTemplate).mockImplementation((template, { currentSlug }) =>
+        template.replace('{{slug}}', currentSlug),
+      );
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' }),
+      ]);
+
+      const { savingEntries } = await buildNestedMoveChanges({
+        collection: localizedCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(savingEntries[0].locales.en.content.translationKey).toBe('page-company/team/_index');
+      expect(fillTemplate).toHaveBeenCalledWith(
+        'page-{{slug}}',
+        expect.objectContaining({ locale: 'en', currentSlug: 'company/team/_index' }),
+      );
+    });
+
+    test('fills a custom canonical slug template without the default locale’s content', async () => {
+      // A pull request touching only a non-default locale leaves the entry without a default
+      // locale file, and the template is still filled from what there is
+      const localizedCollection = {
+        ...i18nCollection,
+        _type: 'entry',
+        slug: '{{title | localize}}',
+        _i18n: {
+          ...i18nCollection._i18n,
+          canonicalSlug: { key: 'translationKey', value: 'page-{{slug}}' },
+        },
+      };
+
+      vi.mocked(fillTemplate).mockImplementation((template, { currentSlug }) =>
+        template.replace('{{slug}}', currentSlug),
+      );
+
+      const descendant = i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' });
+
+      descendant.locales.en.content = undefined;
+      vi.mocked(getEntriesByCollection).mockReturnValue([descendant]);
+
+      const { savingEntries } = await buildNestedMoveChanges({
+        collection: localizedCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(fillTemplate).toHaveBeenCalledWith(
+        'page-{{slug}}',
+        expect.objectContaining({ content: {}, currentSlug: 'company/team/_index' }),
+      );
+      expect(savingEntries[0].locales.fr.content.translationKey).toBe('page-company/team/_index');
+    });
+
+    test('skips a locale without content when refreshing the canonical slug', async () => {
+      const localizedCollection = {
+        ...i18nCollection,
+        _type: 'entry',
+        slug: '{{title | localize}}',
+        _i18n: {
+          ...i18nCollection._i18n,
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        },
+      };
+
+      const descendant = i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' });
+
+      descendant.locales.fr.content = undefined;
+      vi.mocked(getEntriesByCollection).mockReturnValue([descendant]);
+
+      const { savingEntries } = await buildNestedMoveChanges({
+        collection: localizedCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(savingEntries[0].locales.fr.content).toBeUndefined();
+      expect(savingEntries[0].locales.en.content.translationKey).toBe('company/team/_index');
+    });
+
+    test('leaves the content alone when the slugs are not localized', async () => {
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' }),
+      ]);
+
+      const { savingEntries } = await buildNestedMoveChanges({
+        collection: i18nCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(savingEntries[0].locales.en.content).toEqual({ title: '2' });
     });
 
     test('returns nothing when no file moves', async () => {
