@@ -537,6 +537,151 @@ describe('buildMarkdownWithPreviews', () => {
     expect(md1).toBe('<aside class="tip">First</aside> and <aside class="tip">Second</aside>');
     expect(md2).toBe(md1);
   });
+
+  describe('nested components', () => {
+    const nested = '<A>\n\nouter\n\n<B>\n\ninner\n\n</B>\n\n</A>';
+
+    /**
+     * Create a definition with an element preview that records the props it receives.
+     * @param {string} name Tag name.
+     * @returns {import('$lib/types/public').EditorComponentDefinition & { toPreview: any }} Def.
+     */
+    const elementDef = (name) => ({
+      id: name,
+      label: name,
+      fields: [{ name: 'body', widget: 'richtext' }],
+      pattern: new RegExp(`<${name}>\\s*(?<body>[\\s\\S]*?)\\s*<\\/${name}>`),
+      toBlock: ({ body }) => `<${name}>${body}</${name}>`,
+      toPreview: vi.fn(
+        () =>
+          /** @type {HTMLElement} */ (/** @type {unknown} */ ({ nodeType: 1, localName: name })),
+      ),
+    });
+
+    it('should pass the raw nested content to the outer component (outer registered first)', () => {
+      const A = elementDef('A');
+      const B = elementDef('B');
+      const { markdown, previewMap } = buildMarkdownWithPreviews(nested, [A, B]);
+
+      expect(A.toPreview).toHaveBeenCalledWith({ body: 'outer\n\n<B>\n\ninner\n\n</B>' });
+      expect(B.toPreview).not.toHaveBeenCalled();
+      expect(previewMap.size).toBe(1);
+      expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+    });
+
+    it('should pass the raw nested content to the outer component (inner registered first)', () => {
+      const A = elementDef('A');
+      const B = elementDef('B');
+      const { markdown, previewMap } = buildMarkdownWithPreviews(nested, [B, A]);
+
+      expect(A.toPreview).toHaveBeenCalledWith({ body: 'outer\n\n<B>\n\ninner\n\n</B>' });
+      expect(B.toPreview).not.toHaveBeenCalled();
+      expect(previewMap.size).toBe(1);
+      expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+    });
+
+    it('should substitute a component exposed by a string preview regardless of order', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const A = {
+        ...elementDef('A'),
+        toPreview: ({ body }) => `<div class="a">${body}</div>`,
+      };
+
+      const B = elementDef('B');
+      const expected = /^<div class="a">outer\n\n<span data-component-key="[^"]+"><\/span><\/div>$/;
+      const first = buildMarkdownWithPreviews(nested, [A, B]);
+
+      expect(first.markdown).toMatch(expected);
+      expect(first.previewMap.size).toBe(2);
+      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' });
+
+      const second = buildMarkdownWithPreviews(nested, [B, A]);
+
+      expect(second.markdown).toMatch(expected);
+      expect(second.previewMap.size).toBe(2);
+    });
+
+    it('should reuse nested previews from the previous map across passes', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const A = {
+        ...elementDef('A'),
+        toPreview: ({ body }) => `<div class="a">${body}</div>`,
+      };
+
+      const B = elementDef('B');
+      const { previewMap } = buildMarkdownWithPreviews(nested, [A, B]);
+      const { previewMap: secondMap } = buildMarkdownWithPreviews(nested, [A, B], previewMap);
+      const [, keyB] = previewMap.keys();
+
+      expect(B.toPreview).toHaveBeenCalledTimes(1);
+      expect(secondMap.get(keyB)).toBe(previewMap.get(keyB));
+    });
+
+    it('should prefer the longest match when two patterns start at the same index', () => {
+      const short = elementDef('A');
+
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const long = {
+        ...elementDef('A'),
+        id: 'long',
+        pattern: /<A>[\s\S]*<\/A> tail/,
+      };
+
+      const input = '<A>x</A> tail';
+      const { markdown } = buildMarkdownWithPreviews(input, [short, long]);
+
+      expect(long.toPreview).toHaveBeenCalledTimes(1);
+      expect(short.toPreview).not.toHaveBeenCalled();
+      expect(markdown).toMatch(/^<span data-component-key="[^"]+"><\/span>$/);
+    });
+
+    it('should prefer the earliest definition when two patterns match the same range', () => {
+      const first = elementDef('A');
+      const second = { ...elementDef('A'), id: 'second' };
+      const { previewMap } = buildMarkdownWithPreviews('<A>x</A>', [first, second]);
+
+      expect(first.toPreview).toHaveBeenCalledTimes(1);
+      expect(second.toPreview).not.toHaveBeenCalled();
+      expect(previewMap.size).toBe(1);
+    });
+
+    it('should ignore zero-length matches', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const def = {
+        id: 'empty',
+        label: 'Empty',
+        fields: [],
+        pattern: /x*/g,
+        toBlock: () => '',
+        toPreview: vi.fn(() => '<hr>'),
+      };
+
+      const { markdown, previewMap } = buildMarkdownWithPreviews('abc', [def]);
+
+      expect(markdown).toBe('abc');
+      expect(previewMap.size).toBe(0);
+      expect(def.toPreview).not.toHaveBeenCalled();
+    });
+
+    it('should stop after a bounded number of passes when a preview reproduces its syntax', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const def = {
+        id: 'loop',
+        label: 'Loop',
+        fields: [],
+        pattern: /\[loop\]/,
+        toBlock: () => '[loop]',
+        // The preview contains the component syntax again, which would otherwise never settle
+        toPreview: vi.fn(() => '<b>[loop]</b>'),
+      };
+
+      const { markdown, previewMap } = buildMarkdownWithPreviews('[loop]', [def]);
+
+      expect(def.toPreview).toHaveBeenCalledTimes(10);
+      expect(previewMap.size).toBe(10);
+      expect(markdown).toBe(`${'<b>'.repeat(10)}[loop]${'</b>'.repeat(10)}`);
+    });
+  });
 });
 
 describe('splitMarkdownBlocks', () => {

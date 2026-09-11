@@ -16,6 +16,9 @@ import {
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
+import { renderRichText } from './rich-text';
+// Don’t use `$lib` above, or the function will not be declared in the generated `index.d.ts` file
+
 /**
  * @import {
  * AppEventListener,
@@ -329,6 +332,7 @@ const CMS = new Proxy(
     registerPreviewStyle,
     registerPreviewTemplate,
     registerWidget: registerFieldType, // alias for backward compatibility with Netlify/Decap CMS
+    renderRichText,
   },
   {
     // eslint-disable-next-line jsdoc/require-jsdoc
@@ -374,4 +378,5 @@ export {
   registerPreviewStyle,
   registerPreviewTemplate,
   registerFieldType as registerWidget, // alias for backward compatibility with Netlify/Decap CMS
+  renderRichText,
 };

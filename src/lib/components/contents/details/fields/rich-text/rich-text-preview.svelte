@@ -22,6 +22,7 @@
   import {
     buildMarkdownWithPreviews,
     COMPONENT_QUERY_SELECTOR,
+    CONTAINER_QUERY_SELECTOR,
     IMAGE_QUERY_SELECTOR,
     sanitizeRichTextHTML,
     splitMarkdownBlocks,
@@ -155,11 +156,25 @@
   };
 
   /**
+   * Check if the given element belongs to this preview rather than a nested preview rendered with
+   * `CMS.renderRichText()` inside an element preview. Since the `MutationObserver` watches the
+   * whole subtree, a placeholder or image added by a nested preview is also reported here, but it
+   * has to be handled by the nested preview, which owns the corresponding preview map.
+   * @param {Element} element Element to check.
+   * @returns {boolean} `true` if the element is owned by this preview.
+   */
+  const isOwnElement = (element) => element.closest(CONTAINER_QUERY_SELECTOR) === container;
+
+  /**
    * Render a component preview into the specified placeholder element based on its
    * `data-component-key` attribute.
    * @param {HTMLElement} element The placeholder element to render the component preview into.
    */
   const renderComponent = (element) => {
+    if (!isOwnElement(element)) {
+      return;
+    }
+
     const key = element.dataset.componentKey;
     const preview = key ? previewMap.get(key) : undefined;
 
@@ -197,14 +212,16 @@
   };
 
   /**
-   * Dispatch an `Unmount` event on any DOM element preview that’s no longer connected to the
-   * document, so the developer can destroy the component mounted on the element.
-   * @param {boolean} [all] Whether to notify every element preview regardless of its connection
-   * state. Used when the field preview itself is being destroyed.
+   * Dispatch an `Unmount` event on any DOM element preview that’s no longer in the container, so
+   * the developer can destroy the component mounted on the element. The container itself may be
+   * detached from the document when this is a nested preview rendered with `CMS.renderRichText()`
+   * inside an element preview that’s not yet inserted, so `isConnected` cannot be used here.
+   * @param {boolean} [all] Whether to notify every element preview regardless of its state. Used
+   * when the field preview itself is being destroyed.
    */
   const notifyRemovedPreviews = (all = false) => {
     previewNodes.forEach((node) => {
-      if (all || !node.isConnected) {
+      if (all || !container?.contains(node)) {
         previewNodes.delete(node);
         node.dispatchEvent(new CustomEvent('Unmount'));
       }
@@ -218,6 +235,10 @@
    * @param {HTMLImageElement} element The image element to replace the `src` of.
    */
   const replaceImageSrc = async (element) => {
+    if (!isOwnElement(element)) {
+      return;
+    }
+
     element.dataset.processed = 'true';
 
     const value = /** @type {string} */ (element.getAttribute('src'));
@@ -316,7 +337,7 @@
   });
 </script>
 
-<div role="none" bind:this={container}>
+<div role="none" data-rich-text-preview bind:this={container}>
   {#if observerReady && markdown}
     {#each splitMarkdownBlocks(markdown) as block, index (`${index}-${block}`)}
       {@html parseMarkdown(block)}

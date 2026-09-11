@@ -76,6 +76,9 @@ vi.mock('$lib/services/api/events', () => ({
 vi.mock('$lib/components/app.svelte', () => ({
   default: {},
 }));
+vi.mock('./rich-text', () => ({
+  renderRichText: vi.fn(),
+}));
 
 // Now import after all setup
 const CMS = (await import('.')).default;

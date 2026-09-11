@@ -1882,8 +1882,19 @@
  * element with a Svelte or Vue component mounted on it) or a React element is inserted as is
  * without sanitization, so the developer is responsible for escaping any user-provided content. An
  * `HTMLElement` preview receives an `Unmount` event once it’s removed from the preview pane, which
- * can be used to destroy the mounted component.
+ * can be used to destroy the mounted component. The value of a nested RichText or Markdown field
+ * is passed verbatim, including any nested component syntax; use `CMS.renderRichText()` to render
+ * it within an `HTMLElement` preview.
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
+ * @see https://sveltiacms.app/en/docs/api/editor-components
+ */
+
+/**
+ * Options for the `CMS.renderRichText()` API.
+ * @typedef {object} RenderRichTextOptions
+ * @property {Partial<Omit<RichTextField, 'widget'>>} [fieldConfig] RichText field options to be
+ * applied to the preview, such as `editor_components` and `sanitize_preview`. The output is
+ * sanitized by default, regardless of the `field_defaults` config.
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
 
