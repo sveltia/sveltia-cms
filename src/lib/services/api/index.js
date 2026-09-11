@@ -5,6 +5,7 @@ import App from '$lib/components/app.svelte';
 import { COMPATIBILITY_URL, UNSUPPORTED_FUNC_NAMES } from '$lib/services/api/compatibility';
 import { SUPPORTED_EVENT_TYPES } from '$lib/services/api/events';
 import { getFieldTypeDefinition } from '$lib/services/api/field-types';
+import { preloadImmutable } from '$lib/services/api/immutable';
 import {
   customComponentRegistry,
   customFieldTypeRegistry,
@@ -206,6 +207,9 @@ const registerEventListener = (eventListener) => {
   }
 
   eventHookRegistry.add(eventListener);
+  // The handler receives an Immutable Map, so start loading the library now rather than when the
+  // event fires
+  preloadImmutable();
 };
 
 /**
@@ -269,6 +273,9 @@ const registerPreviewTemplate = (name, component) => {
   }
 
   customPreviewTemplateRegistry.set(name, component);
+  // The template receives Immutable Maps, so start loading the library now rather than when the
+  // preview opens
+  preloadImmutable();
 };
 
 /**
@@ -313,6 +320,9 @@ const registerFieldType = (name, control, preview, schema) => {
   }
 
   customFieldTypeRegistry.set(name, { control, preview, schema });
+  // The components receive Immutable Maps, so start loading the library now rather than when the
+  // editor opens
+  preloadImmutable();
 };
 
 /**

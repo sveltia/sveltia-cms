@@ -1,8 +1,8 @@
 import { isObject } from '@sveltia/utils/object';
 import { flatten } from 'flat';
-import { isMap } from 'immutable';
 
 import { createEntryMap } from '$lib/services/api/helpers';
+import { loadImmutable } from '$lib/services/api/immutable';
 import { eventHookRegistry } from '$lib/services/api/registries';
 import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
 import { user } from '$lib/services/user/account.svelte';
@@ -68,6 +68,14 @@ export const callEventHooks = async ({
     _i18n: { defaultLocale },
   } = collectionFile ?? collection;
 
+  const hooks = [...eventHookRegistry].filter((hook) => hook.name === type);
+
+  if (!hooks.length) {
+    return;
+  }
+
+  // The hooks receive the entry as an Immutable Map
+  const { isMap } = await loadImmutable();
   const { slug, locales } = entry;
   const otherLocales = Object.keys(locales).filter((locale) => locale !== defaultLocale);
   // A multi-file i18n entry can be missing its default locale file, in which case any locale
@@ -77,12 +85,7 @@ export const callEventHooks = async ({
 
   // We need to use a for loop here to call handlers sequentially
   // eslint-disable-next-line no-restricted-syntax
-  for (const hook of eventHookRegistry) {
-    if (hook.name !== type) {
-      // eslint-disable-next-line no-continue
-      continue;
-    }
-
+  for (const hook of hooks) {
     // eslint-disable-next-line no-await-in-loop
     const updatedMap = await hook.handler({
       author: { login, name },

@@ -10,6 +10,7 @@
   import { onMount } from 'svelte';
 
   import { fieldStateContext } from '$lib/services/api/field-state';
+  import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { buildPreviewProps } from '$lib/services/contents/fields/custom/preview';
@@ -49,7 +50,7 @@
    * Render the React component with the current props.
    */
   const renderComponent = () => {
-    if (!container) {
+    if (!container || !immutableLoaded.current) {
       return;
     }
 
@@ -77,7 +78,13 @@
   };
 
   onMount(() => {
-    renderComponent();
+    // The preview receives Immutable Maps. The library is normally loaded by the time the editor
+    // opens, as `CMS.registerFieldType()` starts loading it, but wait for it in any case; the
+    // effect below renders the preview once it’s there
+    loadImmutable().catch((/** @type {Error} */ error) => {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    });
 
     return () => {
       reactRoot?.unmount();
@@ -91,7 +98,8 @@
     // here. The re-render stays cheap.
     void getValueMapSnapshot(entryDraft.current, locale);
 
-    if (reactRoot) {
+    // Render the preview once the container and the library are ready, then keep it up to date
+    if (immutableLoaded.current && container) {
       renderComponent();
     }
   });

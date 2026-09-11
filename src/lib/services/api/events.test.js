@@ -22,6 +22,18 @@ const { getAssociatedAssets } = await import('$lib/services/contents/entry/asset
  * Tests use simplified test objects that don't match full type definitions.
  * Type errors are suppressed below as they are expected for unit test mocks.
  */
+// The library is loaded from the CDN at runtime; hand the real module to the code under test
+vi.mock('$lib/services/api/immutable', async () => {
+  const immutable = await vi.importActual('immutable');
+
+  return {
+    getImmutable: () => immutable,
+    loadImmutable: vi.fn(async () => immutable),
+    preloadImmutable: vi.fn(),
+    immutableLoaded: { current: true },
+  };
+});
+
 describe('events module', () => {
   describe('SUPPORTED_EVENT_TYPES', () => {
     it('should contain all expected event types', async () => {

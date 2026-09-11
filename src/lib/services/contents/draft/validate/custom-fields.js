@@ -1,5 +1,6 @@
 import { _ } from '@sveltia/i18n';
 
+import { loadImmutable } from '$lib/services/api/immutable';
 import { getFieldConfigMap } from '$lib/services/contents/fields/custom/helpers';
 
 /**
@@ -142,6 +143,9 @@ export const triggerCustomFieldValidation = async ({ locale, keyPath, value, fie
   });
 
   const promise = (async () => {
+    // The validator receives the field configuration as an Immutable Map
+    await loadImmutable();
+
     const field = getFieldConfigMap(fieldConfig);
     /** @type {{ valid: boolean, message?: string }} */
     let outcome;

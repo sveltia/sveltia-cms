@@ -26,6 +26,18 @@ vi.mock('$lib/services/api/helpers', () => ({
   })),
 }));
 
+// The library is loaded from the CDN at runtime; hand the real module to the code under test
+vi.mock('$lib/services/api/immutable', async () => {
+  const immutable = await vi.importActual('immutable');
+
+  return {
+    getImmutable: () => immutable,
+    loadImmutable: vi.fn(async () => immutable),
+    preloadImmutable: vi.fn(),
+    immutableLoaded: { current: true },
+  };
+});
+
 describe('contents/fields/custom/preview-helpers', () => {
   it('returns undefined when the preview component or entry draft is missing', () => {
     expect(

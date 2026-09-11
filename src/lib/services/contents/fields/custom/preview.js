@@ -1,5 +1,4 @@
-import { fromJS } from 'immutable';
-
+import { getImmutable } from '$lib/services/api/immutable';
 import { getFieldConfigMap, getPreviewData } from '$lib/services/contents/fields/custom/helpers';
 
 /**
@@ -30,7 +29,9 @@ export const buildPreviewProps = ({ locale, fieldConfig, currentValue, draft, pr
   return {
     value: currentValue,
     field: getFieldConfigMap(fieldConfig),
-    metadata: /** @type {MapOf<any>} */ (fieldsMetaData.get(fieldConfig.name) ?? fromJS({})),
+    metadata: /** @type {MapOf<any>} */ (
+      fieldsMetaData.get(fieldConfig.name) ?? getImmutable().fromJS({})
+    ),
     getAsset,
     entry: entryMap,
     fieldsMetaData,

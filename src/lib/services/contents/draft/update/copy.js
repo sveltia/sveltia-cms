@@ -1,6 +1,6 @@
 import { parse } from 'marked';
-import TurndownService from 'turndown';
 
+import { loadModule } from '$lib/services/app/dependencies';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
@@ -27,17 +27,37 @@ import { prefs } from '$lib/services/user/prefs.svelte';
  */
 
 /**
- * Initialize a Turndown service instance for converting HTML to Markdown.
+ * Turndown service instance, created on first use.
+ * @type {Promise<import('turndown')> | undefined}
+ */
+let turndownServicePromise;
+
+/**
+ * Get a Turndown service instance for converting HTML to Markdown. The library is only needed when
+ * a translator without Markdown support hands HTML back, so it’s loaded from the CDN on demand
+ * rather than shipped in the bundle.
+ * @returns {Promise<import('turndown')>} Service instance.
  * @see https://github.com/mixmark-io/turndown
  */
-export const turndownService = new TurndownService({
-  headingStyle: 'atx',
-  bulletListMarker: '-',
-  codeBlockStyle: 'fenced',
-});
+export const getTurndownService = async () => {
+  turndownServicePromise ??= (async () => {
+    /** @type {{ default: typeof import('turndown') }} */
+    const { default: TurndownService } = await loadModule('turndown', 'lib/turndown.browser.es.js');
 
-// @ts-ignore Silence a false type error
-turndownService.keep(['span', 'div']);
+    const service = new TurndownService({
+      headingStyle: 'atx',
+      bulletListMarker: '-',
+      codeBlockStyle: 'fenced',
+    });
+
+    // @ts-ignore Silence a false type error
+    service.keep(['span', 'div']);
+
+    return service;
+  })();
+
+  return turndownServicePromise;
+};
 
 /**
  * Get a list of fields to be copied or translated from the source locale to the target locale.
@@ -143,13 +163,18 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
       { apiKey, sourceLanguage, targetLanguage },
     );
 
+    const needsTurndown =
+      !markdownSupported && Object.values(copingFieldMap).some(({ isMarkdown }) => isMarkdown);
+
+    const turndownService = needsTurndown ? await getTurndownService() : undefined;
+
     Object.entries(copingFieldMap).forEach(([_keyPath, { isMarkdown }], index) => {
       const value = translatedValues[index];
 
       // Convert the value back to Markdown if needed
       currentValues[targetLanguage][_keyPath] =
         // @ts-ignore Silence a false type error
-        isMarkdown && !markdownSupported ? turndownService.turndown(value) : value;
+        isMarkdown && turndownService ? turndownService.turndown(value) : value;
     });
 
     updateToast('success', 'translation.complete', { count, sourceLanguage });

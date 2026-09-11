@@ -1,6 +1,5 @@
-import { fromJS } from 'immutable';
-
 import { AssetProxy } from '$lib/services/api/asset-proxy';
+import { getImmutable } from '$lib/services/api/immutable';
 import { allAssets, getAssetByPath, isAssetInFolder } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
@@ -56,7 +55,7 @@ export const createEntryMap = ({
   associatedAssets,
 }) =>
   // @ts-ignore
-  fromJS({
+  getImmutable().fromJS({
     // Entry data for the default locale
     data: unflattenMap(content),
     // Entry data for other locales
@@ -199,7 +198,7 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
     }
   });
 
-  return /** @type {import('immutable').MapOf<any>} */ (fromJS(metaData));
+  return /** @type {import('immutable').MapOf<any>} */ (getImmutable().fromJS(metaData));
 };
 
 /**

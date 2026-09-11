@@ -1,4 +1,3 @@
-import { fromJS, Map as ImmutableMap } from 'immutable';
 import { createElement } from 'react';
 import { mount, unmount } from 'svelte';
 
@@ -8,6 +7,7 @@ import {
   convertEntryToMap,
   getAssociatedPreviewAssets,
 } from '$lib/services/api/helpers';
+import { getImmutable } from '$lib/services/api/immutable';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { createEntryDraftMountContext } from '$lib/services/contents/draft/state.svelte';
@@ -100,7 +100,7 @@ export const createWidgetFor =
  * @returns {MapOf<any>} Immutable Map of widgets.
  */
 export const createWidgetsMap = (obj, basePath, widgetFor) =>
-  ImmutableMap(
+  getImmutable().Map(
     Object.fromEntries(Object.keys(obj).map((key) => [key, widgetFor(`${basePath}.${key}`)])),
   );
 
@@ -126,6 +126,8 @@ export const createWidgetsFor =
     if (value === null || value === undefined) {
       return value;
     }
+
+    const { fromJS, Map: ImmutableMap } = getImmutable();
 
     if (Array.isArray(value)) {
       return value.map((item, index) => {

@@ -4,6 +4,8 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { preloadImmutable } from '$lib/services/api/immutable';
+
 // Set up window and document objects BEFORE any imports
 // @ts-ignore
 global.Element = class Element {};
@@ -36,8 +38,8 @@ global.document = {
 };
 
 // Mock dependencies BEFORE import
-vi.mock('immutable', () => ({
-  Map: class ImmutableMap {},
+vi.mock('$lib/services/api/immutable', () => ({
+  preloadImmutable: vi.fn(),
 }));
 vi.mock('svelte', () => ({
   mount: vi.fn(),
@@ -564,6 +566,8 @@ describe('CMS.registerEventListener()', () => {
 
     // @ts-ignore
     expect(() => CMS.registerEventListener(listener)).not.toThrow();
+    // The handler will receive an Immutable Map, so the library is loaded ahead of time
+    expect(preloadImmutable).toHaveBeenCalled();
   });
 
   test('registers all supported event types', () => {
@@ -697,6 +701,8 @@ describe('CMS.registerPreviewTemplate()', () => {
 
     // @ts-ignore
     expect(() => CMS.registerPreviewTemplate('posts', component)).not.toThrow();
+    // The template will receive Immutable Maps, so the library is loaded ahead of time
+    expect(preloadImmutable).toHaveBeenCalled();
   });
 
   test('throws TypeError when name is not a non-empty string', () => {
@@ -751,6 +757,8 @@ describe('CMS.registerFieldType()', () => {
 
     // @ts-ignore
     expect(() => CMS.registerFieldType('test', control)).not.toThrow();
+    // The components will receive Immutable Maps, so the library is loaded ahead of time
+    expect(preloadImmutable).toHaveBeenCalled();
   });
 
   test('registers field type with string control', () => {

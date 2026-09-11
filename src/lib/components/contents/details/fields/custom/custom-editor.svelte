@@ -38,6 +38,7 @@
   import { getContext, onMount } from 'svelte';
 
   import { fieldStateContext } from '$lib/services/api/field-state';
+  import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import {
@@ -160,7 +161,7 @@
    * Render the React component with the current props.
    */
   const renderComponent = () => {
-    if (!container || !resolvedControl) {
+    if (!container || !resolvedControl || !immutableLoaded.current) {
       return;
     }
 
@@ -191,7 +192,13 @@
   };
 
   onMount(() => {
-    renderComponent();
+    // The control receives Immutable Maps. The library is normally loaded by the time the editor
+    // opens, as `CMS.registerFieldType()` starts loading it, but wait for it in any case; the
+    // effect below renders the control once it’s there
+    loadImmutable().catch((/** @type {Error} */ error) => {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    });
 
     return () => {
       reactRoot?.unmount();
@@ -207,8 +214,9 @@
     // here
     void getValueMapSnapshot(entryDraft.current, locale, valueStoreKey);
 
-    // Update the component when currentValue changes externally (e.g., via revert or copy)
-    if (reactRoot && resolvedControl) {
+    // Render the component once the container and the library are ready, and update it when
+    // currentValue changes externally (e.g., via revert or copy)
+    if (immutableLoaded.current && container && resolvedControl) {
       renderComponent();
     }
 

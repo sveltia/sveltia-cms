@@ -1,17 +1,33 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { loadModule } from '$lib/services/app/dependencies';
 import { getField } from '$lib/services/contents/entry/fields';
 
 import {
   copyFields,
   copyFromLocale,
   getCopyingFieldMap,
+  getTurndownService,
   translateFields,
-  turndownService,
   updateToast,
 } from './copy';
 
+// Stand-in for the Turndown library loaded from the CDN
+const mockTurndown = vi.hoisted(() => vi.fn());
+const mockKeep = vi.hoisted(() => vi.fn());
+
+const MockTurndownService = vi.hoisted(() =>
+  vi.fn(function TurndownService() {
+    this.turndown = mockTurndown;
+    this.keep = mockKeep;
+  }),
+);
+
+vi.mock('$lib/services/app/dependencies', () => ({
+  getUnpkgURL: vi.fn(() => ''),
+  loadModule: vi.fn(async () => ({ default: MockTurndownService })),
+}));
 vi.mock('$lib/services/contents/editor', () => ({
   copyFromLocaleToast: { current: undefined },
   translatorApiKeyDialogState: { current: { show: false, multiple: false } },
@@ -24,7 +40,6 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { apiKeys: {} },
 }));
 vi.mock('marked');
-vi.mock('turndown');
 describe('draft/update/copy', () => {
   let mockEntryDraft;
   /**
@@ -199,11 +214,21 @@ describe('draft/update/copy', () => {
     });
   });
 
-  describe('turndownService (internal)', () => {
-    it('should be exported and available', () => {
-      // The turndownService is exported and can be imported
-      expect(turndownService).toBeDefined();
-      expect(typeof turndownService).toBe('object');
+  describe('getTurndownService()', () => {
+    it('should load the library from the CDN once and configure it', async () => {
+      const service = await getTurndownService();
+
+      expect(loadModule).toHaveBeenCalledWith('turndown', 'lib/turndown.browser.es.js');
+      expect(MockTurndownService).toHaveBeenCalledWith({
+        headingStyle: 'atx',
+        bulletListMarker: '-',
+        codeBlockStyle: 'fenced',
+      });
+      expect(mockKeep).toHaveBeenCalledWith(['span', 'div']);
+
+      // The same instance is reused
+      expect(await getTurndownService()).toBe(service);
+      expect(MockTurndownService).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -604,7 +629,7 @@ describe('draft/update/copy', () => {
       const mockTranslate = vi.fn().mockResolvedValue(['<h1>Japanese Title</h1>']);
 
       vi.mocked(parse).mockReturnValue('<h1>English Title</h1>');
-      vi.mocked(turndownService.turndown).mockReturnValue('# Japanese Title');
+      mockTurndown.mockReturnValue('# Japanese Title');
 
       prefs.apiKeys = { google: 'test-api-key' };
 
@@ -634,7 +659,7 @@ describe('draft/update/copy', () => {
       // translator receives the HTML version
       expect(mockTranslate).toHaveBeenCalledWith(['<h1>English Title</h1>'], expect.any(Object));
       // turndown converts HTML back to markdown
-      expect(vi.mocked(turndownService.turndown)).toHaveBeenCalledWith('<h1>Japanese Title</h1>');
+      expect(mockTurndown).toHaveBeenCalledWith('<h1>Japanese Title</h1>');
       expect(currentValues.ja.body).toBe('# Japanese Title');
     });
   });

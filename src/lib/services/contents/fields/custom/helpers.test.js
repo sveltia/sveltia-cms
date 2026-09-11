@@ -10,6 +10,18 @@ vi.mock('$lib/services/api/helpers', () => ({
   buildPreviewData: vi.fn(({ draft, locale }) => ({ entryMap: { draft, locale } })),
 }));
 
+// The library is loaded from the CDN at runtime; hand the real module to the code under test
+vi.mock('$lib/services/api/immutable', async () => {
+  const immutable = await vi.importActual('immutable');
+
+  return {
+    getImmutable: () => immutable,
+    loadImmutable: vi.fn(async () => immutable),
+    preloadImmutable: vi.fn(),
+    immutableLoaded: { current: true },
+  };
+});
+
 describe('contents/fields/custom/helpers', () => {
   describe('getFieldConfigMap', () => {
     it('converts a field configuration to an Immutable Map', () => {

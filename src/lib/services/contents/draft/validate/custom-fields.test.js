@@ -14,6 +14,18 @@ import {
 /** @type {any} */
 const fieldConfig = { widget: 'custom', name: 'title' };
 
+// The library is loaded from the CDN at runtime; hand the real module to the code under test
+vi.mock('$lib/services/api/immutable', async () => {
+  const immutable = await vi.importActual('immutable');
+
+  return {
+    getImmutable: () => immutable,
+    loadImmutable: vi.fn(async () => immutable),
+    preloadImmutable: vi.fn(),
+    immutableLoaded: { current: true },
+  };
+});
+
 describe('draft/validate/custom-fields', () => {
   beforeEach(() => {
     resetCustomFieldValidation();
@@ -405,6 +417,11 @@ describe('draft/validate/custom-fields', () => {
         fieldConfig,
       });
 
+      // The validator is only called once the library is loaded
+      await vi.waitFor(() => {
+        expect(resolvers).toHaveLength(2);
+      });
+
       // Resolve out of order: the newer call settles first, the stale one afterwards
       resolvers[1]({ error: { message: 'New value is invalid' } });
       resolvers[0](true);
@@ -443,6 +460,11 @@ describe('draft/validate/custom-fields', () => {
         keyPath: 'test.late',
         value: 'value',
         fieldConfig,
+      });
+
+      // The validator is only called once the library is loaded
+      await vi.waitFor(() => {
+        expect(resolve).toBeDefined();
       });
 
       unregisterCustomFieldInstance({ locale: 'en', keyPath: 'test.late' });

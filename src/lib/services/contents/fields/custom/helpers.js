@@ -1,6 +1,5 @@
-import { fromJS } from 'immutable';
-
 import { buildPreviewData } from '$lib/services/api/helpers';
+import { getImmutable } from '$lib/services/api/immutable';
 
 /**
  * @import { MapOf } from 'immutable';
@@ -31,7 +30,7 @@ export const getFieldConfigMap = (fieldConfig) => {
     return cached;
   }
 
-  const map = /** @type {MapOf<CustomField>} */ (fromJS(fieldConfig));
+  const map = /** @type {MapOf<CustomField>} */ (getImmutable().fromJS(fieldConfig));
 
   fieldConfigMapCache.set(fieldConfig, map);
 

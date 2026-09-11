@@ -4,6 +4,7 @@
 
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+  import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
   import {
     customPreviewStyleRegistry,
     customPreviewTemplateRegistry,
@@ -36,8 +37,9 @@
   } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
   const styleURLs = $derived([...customPreviewStyleRegistry]);
   const reactComponent = $derived(customPreviewTemplateRegistry.get(fileName ?? collectionName));
+  // The template receives Immutable Maps, so the props can only be built once the library is loaded
   const reactProps = $derived(
-    entryDraft.current && reactComponent
+    entryDraft.current && reactComponent && immutableLoaded.current
       ? preparePreviewTemplateProps({
           entryDraft,
           draft: $state.snapshot(entryDraft.current),
@@ -45,6 +47,16 @@
         })
       : undefined,
   );
+
+  $effect(() => {
+    if (reactComponent) {
+      // Normally already in flight, as `CMS.registerPreviewTemplate()` starts loading the library
+      loadImmutable().catch((/** @type {Error} */ error) => {
+        // eslint-disable-next-line no-console
+        console.error(error);
+      });
+    }
+  });
 </script>
 
 {#snippet children()}

@@ -20,6 +20,18 @@ vi.doMock('$lib/services/api/helpers', () => ({
 
 const { buildControlProps, resolveControl } = await import('./editor');
 
+// The library is loaded from the CDN at runtime; hand the real module to the code under test
+vi.mock('$lib/services/api/immutable', async () => {
+  const immutable = await vi.importActual('immutable');
+
+  return {
+    getImmutable: () => immutable,
+    loadImmutable: vi.fn(async () => immutable),
+    preloadImmutable: vi.fn(),
+    immutableLoaded: { current: true },
+  };
+});
+
 describe('contents/fields/custom/helpers', () => {
   beforeEach(() => {
     // Reset the registry before each test
