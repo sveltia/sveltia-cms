@@ -61,7 +61,7 @@ Build output: `package/dist/sveltia-cms.js` (IIFE), `package/dist/sveltia-cms.mj
 
 ## CI
 
-`.github/workflows/tests.yml` runs on every push: Check, Test, Build in parallel, using `.nvmrc` Node version and pnpm. A PR must pass ESLint, Prettier, all tests, Svelte compiler checks, the production build, and the unused-imports check.
+`.github/workflows/tests.yml` runs on every push: Check, Test (three Vitest shards), Build in parallel, using `.nvmrc` Node version and pnpm. A PR must pass ESLint, Prettier, all tests, Svelte compiler checks, the production build, and the unused-imports check.
 
 ## Conventions
 

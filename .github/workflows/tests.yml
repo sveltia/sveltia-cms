@@ -11,8 +11,14 @@ jobs:
         task:
           - name: Check
             command: pnpm check
-          - name: Test
-            command: pnpm test
+          # The test files are split into shards that run in parallel, as spawning a worker per
+          # file is what takes most of the time on the runner
+          - name: Test (1/3)
+            command: pnpm test --shard=1/3
+          - name: Test (2/3)
+            command: pnpm test --shard=2/3
+          - name: Test (3/3)
+            command: pnpm test --shard=3/3
           - name: Build
             command: pnpm build
     steps:
