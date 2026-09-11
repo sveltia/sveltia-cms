@@ -414,6 +414,14 @@ export default defineConfig({
     // set to keep the other packages resolving as they do in the app
     ...(process.env.VITEST ? { conditions: ['module', 'browser', 'development|production'] } : {}),
   },
+  optimizeDeps: {
+    // The `strings` export of Sveltia UI collects the package’s locale files with
+    // `import.meta.glob()`, which only works when Vite processes the module itself. Pre-bundling
+    // would leave the object empty, and every UI string would show up as a raw `_sui.*` key in
+    // development. Production is unaffected: the default locale is imported from the YAML file
+    // directly, and the other locales are fetched from the CDN
+    exclude: ['@sveltia/ui'],
+  },
   define: {
     'import.meta.env.VITE_APP_LOCALES': JSON.stringify(getAppLocales().join(',')),
   },
