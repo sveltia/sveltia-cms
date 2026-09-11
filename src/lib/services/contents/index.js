@@ -1,36 +1,36 @@
-import { get, writable } from 'svelte/store';
-
 import { getCollection } from '$lib/services/contents/collection';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { Entry, EntryFolderInfo, InternalEntryCollection } from '$lib/types/private';
  */
 
 /**
- * @type {Writable<boolean>}
+ * Whether the entries and assets have been loaded from the backend.
+ * @type {{ current: boolean }}
  */
-export const dataLoaded = writable(false);
+export const dataLoaded = createRawState(false);
 
 /**
- * @type {Writable<number | undefined>}
+ * Number of files loaded so far, if the backend reports the loading progress.
+ * @type {{ current: number | undefined }}
  */
-export const dataLoadedProgress = writable();
+export const dataLoadedProgress = createRawState();
 
 /**
- * @type {Writable<EntryFolderInfo[]>}
+ * @type {{ current: EntryFolderInfo[] }}
  */
-export const allEntryFolders = writable([]);
+export const allEntryFolders = createRawState([]);
 
 /**
- * @type {Writable<Entry[]>}
+ * @type {{ current: Entry[] }}
  */
-export const allEntries = writable([]);
+export const allEntries = createRawState([]);
 
 /**
- * @type {Writable<Error[]>}
+ * @type {{ current: Error[] }}
  */
-export const entryParseErrors = writable([]);
+export const entryParseErrors = createRawState([]);
 
 /**
  * Cache for {@link getEntryFoldersByPath} to avoid rescanning `allEntryFolders` on every call.
@@ -51,7 +51,7 @@ const entryFoldersByPathCache = {
  * @returns {typeof entryFoldersByPathCache} Cache object.
  */
 const getEntryFolderCache = () => {
-  const _allEntryFolders = get(allEntryFolders);
+  const _allEntryFolders = allEntryFolders.current;
 
   if (_allEntryFolders === entryFoldersByPathCache.source) {
     return entryFoldersByPathCache;

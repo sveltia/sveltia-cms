@@ -1,4 +1,5 @@
 // @ts-nocheck
+// @vitest-environment jsdom
 
 import { isProxy } from 'node:util/types';
 
@@ -7,7 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfigVersion } from '$lib/services/config';
 import { isDraftModified } from '$lib/services/contents/draft';
-import { prefs } from '$lib/services/user/prefs.svelte';
 
 vi.mock('@sveltia/utils/storage');
 vi.mock('@sveltia/utils/file', () => ({
@@ -19,7 +19,9 @@ vi.mock('@sveltia/utils/object', () => ({
 
 const { toRaw } = await import('@sveltia/utils/object');
 
-vi.mock('$lib/services/config');
+vi.mock('$lib/services/config', () => ({
+  cmsConfigVersion: { current: undefined },
+}));
 // Mock only the modification check, so the real `suspendAutoDuplication` still runs its callback
 vi.mock('$lib/services/contents/draft', async () => ({
   ...(await vi.importActual('$lib/services/contents/draft')),
@@ -32,14 +34,8 @@ vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
   getOrderFieldKey: vi.fn(() => undefined),
 }));
 vi.mock('$lib/services/backends', () => ({
-  backend: {
-    subscribe: vi.fn((callback) => {
-      // Simulate the backend being initialized
-      callback({ repository: { databaseName: 'test-db' } });
-
-      return vi.fn(); // unsubscribe function
-    }),
-  },
+  // Simulate the backend being initialized
+  backend: { current: { repository: { databaseName: 'test-db' } } },
 }));
 
 const mockPrefs = vi.hoisted(() => ({ useDraftBackup: /** @type {boolean | undefined} */ (true) }));
@@ -47,14 +43,6 @@ const mockPrefs = vi.hoisted(() => ({ useDraftBackup: /** @type {boolean | undef
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: mockPrefs,
 }));
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
 
 describe('draft/backup', () => {
   /** @type {any} */
@@ -64,7 +52,6 @@ describe('draft/backup', () => {
     delete: vi.fn(),
   };
 
-  let mockGet;
   /** Whether the user has interacted with the editor, copied into the drafts below. */
   let interacted = false;
   let deleteBackup;
@@ -101,6 +88,11 @@ describe('draft/backup', () => {
     // Import module (happens once, uses the mock set up above)
     const backupModule = await import('./backup');
 
+    // Wait for the effect that initializes the database
+    await new Promise((resolve) => {
+      setTimeout(resolve);
+    });
+
     ({
       deleteBackup,
       getBackup,
@@ -114,26 +106,10 @@ describe('draft/backup', () => {
       scheduleBackup,
     } = backupModule);
 
-    const { get } = await import('svelte/store');
-
-    mockGet = vi.mocked(get);
-
     // Mock stores
-    mockGet.mockImplementation((store) => {
-      if (store === prefs) {
-        return { useDraftBackup: true };
-      }
-
-      if (store === cmsConfigVersion) {
-        return 'v1.0.0';
-      }
-
-      if (store === backupModule.backupToastState) {
-        return { saved: false, restored: false, deleted: false };
-      }
-
-      return undefined;
-    });
+    mockPrefs.useDraftBackup = true;
+    cmsConfigVersion.current = 'v1.0.0';
+    backupModule.backupToastState.current = { saved: false, restored: false, deleted: false };
     vi.mocked(isDraftModified).mockReturnValue(false);
     interacted = false;
   });
@@ -230,17 +206,8 @@ describe('draft/backup', () => {
 
   describe('saveBackup', () => {
     it('should save backup when draft is modified', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
       vi.mocked(isDraftModified).mockReturnValue(true);
       interacted = true;
 
@@ -271,13 +238,7 @@ describe('draft/backup', () => {
     });
 
     it('should not save backup when draft is not modified', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
       vi.mocked(isDraftModified).mockReturnValue(false);
       interacted = true;
 
@@ -300,17 +261,8 @@ describe('draft/backup', () => {
     });
 
     it('should delete existing backup when draft is not modified', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
       vi.mocked(isDraftModified).mockReturnValue(false);
       interacted = true;
 
@@ -346,14 +298,6 @@ describe('draft/backup', () => {
     it('should not save backup when preference is disabled', async () => {
       mockPrefs.useDraftBackup = false;
 
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: false };
-        }
-
-        return undefined;
-      });
-
       const draft = {
         collectionName: 'posts',
         fileName: undefined,
@@ -373,18 +317,6 @@ describe('draft/backup', () => {
     it('should default to enabled (true) when useDraftBackup is undefined', async () => {
       mockPrefs.useDraftBackup = undefined;
 
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          // useDraftBackup is not set → `?? true` defaults to true
-          return {};
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
       vi.mocked(isDraftModified).mockReturnValue(true);
       interacted = true;
 
@@ -406,17 +338,8 @@ describe('draft/backup', () => {
     });
 
     it('should use fileName for file collection', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
       vi.mocked(isDraftModified).mockReturnValue(true);
       interacted = true;
 
@@ -442,17 +365,8 @@ describe('draft/backup', () => {
     });
 
     it('should handle new entry with empty slug', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
       vi.mocked(isDraftModified).mockReturnValue(true);
       interacted = true;
 
@@ -536,13 +450,7 @@ describe('draft/backup', () => {
     });
 
     it('should not save backup when user has not interacted with the editor', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
       vi.mocked(isDraftModified).mockReturnValue(true);
       interacted = false;
 
@@ -940,23 +848,11 @@ describe('draft/backup', () => {
 
   describe('stores', () => {
     it('should initialize restoreDialogState with show: false', () => {
-      let value;
-
-      restoreDialogState.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toEqual({ show: false });
+      expect(restoreDialogState.current).toEqual({ show: false });
     });
 
     it('should initialize backupToastState with default state', () => {
-      let value;
-
-      backupToastState.subscribe((v) => {
-        value = v;
-      });
-
-      expect(value).toEqual({
+      expect(backupToastState.current).toEqual({
         saved: false,
         restored: false,
         deleted: false,
@@ -986,14 +882,6 @@ describe('draft/backup', () => {
     it('should not restore if preference is disabled', async () => {
       mockPrefs.useDraftBackup = false;
 
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: false };
-        }
-
-        return undefined;
-      });
-
       await restoreBackupIfNeeded({ draft: createRestoreDraft() });
 
       expect(mockBackupDB.get).not.toHaveBeenCalled();
@@ -1001,15 +889,6 @@ describe('draft/backup', () => {
 
     it('should default to enabled when useDraftBackup is undefined', async () => {
       mockPrefs.useDraftBackup = undefined;
-
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          // useDraftBackup is not set → `?? true` defaults to true
-          return {};
-        }
-
-        return undefined;
-      });
 
       mockBackupDB.get.mockResolvedValue(undefined);
 
@@ -1020,17 +899,8 @@ describe('draft/backup', () => {
     });
 
     it('should not restore if backup does not exist', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
 
       mockBackupDB.get.mockResolvedValue(undefined);
 
@@ -1040,17 +910,8 @@ describe('draft/backup', () => {
     });
 
     it('should show restore dialog and restore backup when user confirms', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
 
       const backup = {
         timestamp: new Date(),
@@ -1073,11 +934,7 @@ describe('draft/backup', () => {
       });
 
       // Simulate user confirming restore
-      let dialogState;
-
-      restoreDialogState.subscribe((state) => {
-        dialogState = state;
-      });
+      const dialogState = restoreDialogState.current;
 
       if (dialogState?.resolve) {
         dialogState.resolve(true);
@@ -1086,11 +943,7 @@ describe('draft/backup', () => {
       await promise;
 
       // Check that toast state was updated
-      let toastState;
-
-      backupToastState.subscribe((state) => {
-        toastState = state;
-      });
+      const toastState = backupToastState.current;
 
       expect(toastState).toEqual({
         saved: false,
@@ -1100,17 +953,8 @@ describe('draft/backup', () => {
     });
 
     it('should delete backup when user cancels restore', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
 
       const backup = {
         timestamp: new Date(),
@@ -1133,11 +977,7 @@ describe('draft/backup', () => {
       });
 
       // Simulate user canceling restore
-      let dialogState;
-
-      restoreDialogState.subscribe((state) => {
-        dialogState = state;
-      });
+      const dialogState = restoreDialogState.current;
 
       if (dialogState?.resolve) {
         dialogState.resolve(false);
@@ -1148,11 +988,7 @@ describe('draft/backup', () => {
       expect(mockBackupDB.delete).toHaveBeenCalledWith(['posts', 'my-post']);
 
       // Check that toast state was updated
-      let toastState;
-
-      backupToastState.subscribe((state) => {
-        toastState = state;
-      });
+      const toastState = backupToastState.current;
 
       expect(toastState).toEqual({
         saved: false,
@@ -1162,17 +998,8 @@ describe('draft/backup', () => {
     });
 
     it('should handle file collection with fileName', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
 
       mockBackupDB.get.mockResolvedValue(undefined);
 
@@ -1184,17 +1011,8 @@ describe('draft/backup', () => {
     });
 
     it('should return early when dialog is dismissed without selecting an option', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
 
       const backup = {
         timestamp: new Date(),
@@ -1216,11 +1034,7 @@ describe('draft/backup', () => {
       });
 
       // Simulate dialog being dismissed (resolve with undefined)
-      let dialogState;
-
-      restoreDialogState.subscribe((state) => {
-        dialogState = state;
-      });
+      const dialogState = restoreDialogState.current;
 
       if (dialogState?.resolve) {
         dialogState.resolve(undefined);
@@ -1238,14 +1052,6 @@ describe('draft/backup', () => {
     it('should not show toast if preference is disabled', async () => {
       mockPrefs.useDraftBackup = false;
 
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: false };
-        }
-
-        return undefined;
-      });
-
       await showBackupToastIfNeeded(undefined);
 
       expect(mockBackupDB.get).not.toHaveBeenCalled();
@@ -1254,15 +1060,6 @@ describe('draft/backup', () => {
     it('should default to enabled when useDraftBackup is undefined', async () => {
       mockPrefs.useDraftBackup = undefined;
 
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          // useDraftBackup not set → defaults to true
-          return {};
-        }
-
-        return undefined;
-      });
-
       await showBackupToastIfNeeded(null);
 
       // Should proceed past the pref check (draft is null so no DB call)
@@ -1270,13 +1067,7 @@ describe('draft/backup', () => {
     });
 
     it('should not show toast if no draft exists', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
 
       await showBackupToastIfNeeded(null);
 
@@ -1284,17 +1075,8 @@ describe('draft/backup', () => {
     });
 
     it('should not show toast if toast already saved', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === backupToastState) {
-          return { saved: true, restored: false, deleted: false };
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      backupToastState.current = { saved: true, restored: false, deleted: false };
 
       await showBackupToastIfNeeded({
         collectionName: 'posts',
@@ -1305,21 +1087,9 @@ describe('draft/backup', () => {
     });
 
     it('should show toast when backup exists', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        if (store === backupToastState) {
-          return { saved: false, restored: false, deleted: false };
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
+      backupToastState.current = { saved: false, restored: false, deleted: false };
 
       const backup = {
         timestamp: new Date(),
@@ -1345,21 +1115,9 @@ describe('draft/backup', () => {
 
     it('should not show toast when backup does not exist (null)', async () => {
       // Covers the false branch of `if (backup) {` at line 263
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        if (store === backupToastState) {
-          return { saved: false, restored: false, deleted: false };
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
+      backupToastState.current = { saved: false, restored: false, deleted: false };
 
       mockBackupDB.get.mockResolvedValue(null);
 
@@ -1374,21 +1132,9 @@ describe('draft/backup', () => {
 
     it('should handle entry with no originalEntry (new entry)', async () => {
       // Covers originalEntry?.slug when originalEntry is undefined (line 261)
-      mockGet.mockImplementation((store) => {
-        if (store === prefs) {
-          return { useDraftBackup: true };
-        }
-
-        if (store === cmsConfigVersion) {
-          return 'v1.0.0';
-        }
-
-        if (store === backupToastState) {
-          return { saved: false, restored: false, deleted: false };
-        }
-
-        return undefined;
-      });
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
+      backupToastState.current = { saved: false, restored: false, deleted: false };
 
       mockBackupDB.get.mockResolvedValue(null);
 
@@ -1402,16 +1148,12 @@ describe('draft/backup', () => {
   describe('resetBackupToastState', () => {
     it('should reset toast state to default', () => {
       // First set some values
-      backupToastState.set({ saved: true, restored: true, deleted: true });
+      backupToastState.current = { saved: true, restored: true, deleted: true };
 
       // Reset
       resetBackupToastState();
 
-      let state;
-
-      backupToastState.subscribe((s) => {
-        state = s;
-      });
+      const state = backupToastState.current;
 
       expect(state).toEqual({
         saved: false,
@@ -1480,29 +1222,44 @@ describe('draft/backup', () => {
     });
   });
 
-  describe('backend subscription', () => {
-    it('should set backupDB to null when backend has no databaseName', async () => {
-      // Re-import to get fresh backend subscription
+  describe('backend effect', () => {
+    it('should not use a database when the backend has no repository', async () => {
+      // Re-import to get a fresh backend effect
       vi.resetModules();
 
-      // Mock backend without databaseName
+      // Mock backend without repository
       vi.doMock('$lib/services/backends', () => ({
-        backend: {
-          subscribe: vi.fn((callback) => {
-            // Simulate backend with no repository
-            callback({ repository: undefined });
-
-            return vi.fn();
-          }),
-        },
+        backend: { current: { repository: undefined } },
       }));
 
-      // This import will trigger the backend subscription
-      await import('./backup');
+      const { deleteBackup: _deleteBackup } = await import('./backup');
 
-      // The backupDB should be set to null (we can't directly test this as it's private,
-      // but we can verify behavior)
-      // This test mainly ensures the code path is covered
+      // Wait for the effect that initializes the database
+      await new Promise((resolve) => {
+        setTimeout(resolve);
+      });
+
+      await _deleteBackup('posts', 'my-post');
+
+      expect(mockBackupDB.delete).not.toHaveBeenCalled();
+    });
+
+    it('should not use a database when the repository has no database name', async () => {
+      vi.resetModules();
+
+      vi.doMock('$lib/services/backends', () => ({
+        backend: { current: { repository: { databaseName: undefined } } },
+      }));
+
+      const { deleteBackup: _deleteBackup } = await import('./backup');
+
+      await new Promise((resolve) => {
+        setTimeout(resolve);
+      });
+
+      await _deleteBackup('posts', 'my-post');
+
+      expect(mockBackupDB.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -1526,24 +1283,23 @@ describe('draft/backup', () => {
     });
   });
 
-  describe('backend subscription false branch (L276 false — _backend falsy)', () => {
-    it('should set backupDB to null when backend fires with null', async () => {
-      // The outer if is `_backend && !backupDB`. When _backend is null/falsy, the condition is
-      // false → body skipped → backupDB = null.  This covers L276 if false branch.
+  describe('backend effect without a backend', () => {
+    it('should not use a database when there is no backend', async () => {
       vi.resetModules();
 
       vi.doMock('$lib/services/backends', () => ({
-        backend: {
-          subscribe: vi.fn((callback) => {
-            callback(null); // falsy _backend → L276 false (body skipped)
-            return vi.fn();
-          }),
-        },
+        backend: { current: null },
       }));
 
-      const mod = await import('./backup');
+      const { deleteBackup: _deleteBackup } = await import('./backup');
 
-      expect(mod).toBeDefined();
+      await new Promise((resolve) => {
+        setTimeout(resolve);
+      });
+
+      await _deleteBackup('posts', 'my-post');
+
+      expect(mockBackupDB.delete).not.toHaveBeenCalled();
     });
   });
 });

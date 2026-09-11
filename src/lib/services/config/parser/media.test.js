@@ -40,10 +40,6 @@ vi.mock('@sveltia/i18n', () => ({
 
 const mockGetStore = vi.fn();
 
-vi.mock('svelte/store', () => ({
-  get: mockGetStore,
-}));
-
 vi.mock('$lib/services/integrations/media-libraries/cloud', () => ({
   CLOUD_MEDIA_LIBRARY_NAMES: ['cloudinary', 'uploadcare'],
 }));

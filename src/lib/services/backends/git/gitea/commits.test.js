@@ -14,10 +14,6 @@ const fetchAPIMock = vi.hoisted(() => vi.fn());
 const encodeBase64Mock = vi.hoisted(() => vi.fn());
 const createCommitMessageMock = vi.hoisted(() => vi.fn());
 
-vi.mock('svelte/store', () => ({
-  get: getMock,
-}));
-
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key) => key),
 }));

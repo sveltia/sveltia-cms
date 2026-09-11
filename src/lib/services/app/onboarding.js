@@ -1,9 +1,9 @@
 import { IndexedDB } from '@sveltia/utils/storage';
-import { derived, get, toStore, writable } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
 import { user } from '$lib/services/user/account.svelte';
 import { env } from '$lib/services/user/env.svelte';
+import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
  * The IndexedDB instance for storing UI settings.
@@ -11,19 +11,22 @@ import { env } from '$lib/services/user/env.svelte';
  */
 let uiSettingsDB;
 
-export const canShowMobileSignInDialog = derived(
-  [
-    toStore(() => env.isLargeScreen),
-    toStore(() => env.hasMouse),
-    toStore(() => env.isLocalHost),
-    backend,
-    toStore(() => user.account),
-  ],
-  ([_isLargeScreen, _hasMouse, _isLocalHost, _backend, _user]) =>
-    _isLargeScreen && _hasMouse && !_isLocalHost && !!_backend?.isGit && !!_user?.token,
+/**
+ * Whether the dialog offering to sign in on a mobile device can be shown.
+ */
+export const canShowMobileSignInDialog = createDerivedState(
+  () =>
+    env.isLargeScreen &&
+    env.hasMouse &&
+    !env.isLocalHost &&
+    !!backend.current?.isGit &&
+    !!user.account?.token,
 );
 
-export const showMobileSignInDialog = writable(false);
+/**
+ * Whether to show the dialog offering to sign in on a mobile device.
+ */
+export const showMobileSignInDialog = createRawState(false);
 
 /**
  * Get the IndexedDB instance for storing UI settings.
@@ -34,7 +37,7 @@ const getDatabase = () => {
     return uiSettingsDB;
   }
 
-  const { databaseName } = get(backend)?.repository ?? {};
+  const { databaseName } = backend.current?.repository ?? {};
 
   if (!databaseName) {
     return undefined;

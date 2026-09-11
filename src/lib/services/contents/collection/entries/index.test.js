@@ -1,8 +1,8 @@
 // @ts-nocheck
 
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { cmsConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders } from '$lib/services/contents';
 import {
   _resetEntriesByCollectionCache,
@@ -14,34 +14,21 @@ import {
   MARKDOWN_IMAGE_REGEX,
   matchesCollectionFilter,
   selectedEntries,
+  selectedEntryIdSet,
 } from '$lib/services/contents/collection/entries';
 
-// Arguments of every `derived()` call, recorded outside the mock’s own call history, which is
-// cleared before the first test runs — the store is created once, while the module is imported
-const { derivedCalls } = vi.hoisted(() => ({ derivedCalls: /** @type {any[][]} */ ([]) }));
-
 // Mock dependencies
-vi.mock('svelte/store', () => ({
-  derived: vi.fn((...args) => {
-    derivedCalls.push(args);
-
-    return { subscribe: vi.fn() };
-  }),
-  get: vi.fn(),
-  writable: vi.fn(() => ({ subscribe: vi.fn() })),
-}));
-
 vi.mock('$lib/services/assets/info', () => ({
   getMediaFieldURL: vi.fn(),
 }));
 
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents', () => ({
-  allEntries: { subscribe: vi.fn() },
-  allEntryFolders: { subscribe: vi.fn() },
+  allEntries: { current: undefined },
+  allEntryFolders: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -72,10 +59,11 @@ vi.mock('$lib/services/utils/regex', () => ({
 
 describe('selectedEntryIdSet', () => {
   test('derives a Set of entry IDs from selectedEntries', () => {
-    const [, factory] = derivedCalls[0];
+    selectedEntries.current = [{ id: 'a' }, { id: 'b' }];
+    expect(selectedEntryIdSet.current).toEqual(new Set(['a', 'b']));
 
-    expect(factory([{ id: 'a' }, { id: 'b' }])).toEqual(new Set(['a', 'b']));
-    expect(factory([])).toEqual(new Set());
+    selectedEntries.current = [];
+    expect(selectedEntryIdSet.current).toEqual(new Set());
   });
 });
 
@@ -156,7 +144,7 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
 
     // Mock getAssociatedCollections to return collections with minimal required properties
     vi.mocked(getAssociatedCollections)
@@ -194,7 +182,7 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
     vi.mocked(getPropertyValue)
       .mockReturnValueOnce('published')
@@ -232,7 +220,7 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     // Mock getRegex to return null since we're not using pattern matching
     vi.mocked(getRegex).mockReturnValue(null);
     // Mock getAssociatedCollections to return 'posts' collection for each entry
@@ -275,7 +263,7 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     // Mock getRegex to return null since we're not using pattern matching
     vi.mocked(getRegex).mockReturnValue(null);
     // Mock getAssociatedCollections to return 'posts' collection for each entry
@@ -320,7 +308,7 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     vi.mocked(getRegex).mockReturnValue(null);
     vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'news' }]);
     vi.mocked(isCollectionIndexFile).mockImplementation((_collection, entry) => entry.id === '2');
@@ -355,7 +343,7 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
 
     const result = getEntriesByCollection('posts');
 
@@ -382,7 +370,7 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
 
     const result = getEntriesByCollection('posts');
 
@@ -421,7 +409,8 @@ describe('getEntriesByCollection()', () => {
     vi.mocked(getCollection).mockReturnValue(collection);
     // Dispatch on the store rather than call order: `getEntriesByCollection()` reads both stores
     // up front to validate its cache.
-    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? folders : entries));
+    allEntryFolders.current = folders;
+    allEntries.current = entries;
 
     const result = getEntriesByCollection('singleton');
 
@@ -450,7 +439,8 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? folders : entries));
+    allEntryFolders.current = folders;
+    allEntries.current = entries;
 
     const result = getEntriesByCollection('pages');
 
@@ -478,7 +468,8 @@ describe('getEntriesByCollection()', () => {
     ];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? folders : entries));
+    allEntryFolders.current = folders;
+    allEntries.current = entries;
 
     const result = getEntriesByCollection('pages');
 
@@ -508,7 +499,7 @@ describe('getEntriesByCollection()', () => {
     const entries = [{ id: '1', locales: { en: { content: {} } } }];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     vi.mocked(getRegex).mockReturnValue(null);
     vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
     // Return undefined to trigger the `?? null` fallback
@@ -528,7 +519,7 @@ describe('getEntriesByCollection()', () => {
     const entries = [{ id: '1', locales: { en: { content: {} } } }];
 
     vi.mocked(getCollection).mockReturnValue(collection);
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
 
     const first = getEntriesByCollection('posts');
@@ -554,7 +545,7 @@ describe('getEntriesByCollection()', () => {
       _type: 'entry',
       _i18n: { defaultLocale: 'en' },
     }));
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     vi.mocked(getAssociatedCollections).mockImplementation((entry) => [
       { name: entry.id === '1' ? 'posts' : 'pages' },
     ]);
@@ -573,10 +564,10 @@ describe('getEntriesByCollection()', () => {
     vi.mocked(getCollection).mockReturnValue(collection);
     vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
 
-    vi.mocked(get).mockImplementation((store) => (store === allEntries ? before : []));
+    allEntries.current = before;
     expect(getEntriesByCollection('posts')).toHaveLength(1);
 
-    vi.mocked(get).mockImplementation((store) => (store === allEntries ? after : []));
+    allEntries.current = after;
     expect(getEntriesByCollection('posts')).toHaveLength(2);
   });
 
@@ -600,10 +591,12 @@ describe('getEntriesByCollection()', () => {
 
     vi.mocked(getCollection).mockReturnValue(collection);
 
-    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? before : entries));
+    allEntryFolders.current = before;
+    allEntries.current = entries;
     expect(getEntriesByCollection('pages')).toHaveLength(1);
 
-    vi.mocked(get).mockImplementation((store) => (store === allEntryFolders ? after : entries));
+    allEntryFolders.current = after;
+    allEntries.current = entries;
     expect(getEntriesByCollection('pages')).toHaveLength(2);
   });
 });
@@ -1404,7 +1397,7 @@ describe('getEntriesByAssetURL()', () => {
       _type: 'entry',
     };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    cmsConfig.current = { _baseURL: 'https://example.com' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1447,7 +1440,7 @@ describe('getEntriesByAssetURL()', () => {
       _type: 'entry',
     };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    cmsConfig.current = { _baseURL: 'https://example.com' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1460,7 +1453,7 @@ describe('getEntriesByAssetURL()', () => {
   });
 
   test('handles blob URLs correctly', async () => {
-    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    cmsConfig.current = { _baseURL: 'https://example.com' };
 
     const result = await getEntriesByAssetURL('blob:test.jpg', { entries: [] });
 
@@ -1468,7 +1461,7 @@ describe('getEntriesByAssetURL()', () => {
   });
 
   test('handles baseURL replacement', async () => {
-    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com/' });
+    cmsConfig.current = { _baseURL: 'https://example.com/' };
 
     const result = await getEntriesByAssetURL('https://example.com/test.jpg', { entries: [] });
 
@@ -1509,7 +1502,7 @@ describe('getEntriesByAssetURL()', () => {
       _type: 'entry',
     };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    cmsConfig.current = { _baseURL: 'https://example.com' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1556,7 +1549,7 @@ describe('getEntriesByAssetURL()', () => {
       _type: 'entry',
     };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    cmsConfig.current = { _baseURL: 'https://example.com' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1604,7 +1597,7 @@ describe('getEntriesByAssetURL()', () => {
       file: 'config/main.yml',
     };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    cmsConfig.current = { _baseURL: 'https://example.com' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([mockCollectionFile]);
@@ -1652,7 +1645,7 @@ describe('getEntriesByAssetURL()', () => {
       _type: 'entry',
     };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: 'https://example.com' });
+    cmsConfig.current = { _baseURL: 'https://example.com' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1691,7 +1684,7 @@ describe('getEntriesByAssetURL()', () => {
 
     const mockCollection = { name: 'posts', _type: 'entry' };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    cmsConfig.current = { _baseURL: '' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1731,7 +1724,7 @@ describe('getEntriesByAssetURL()', () => {
 
     const mockCollection = { name: 'posts', _type: 'entry' };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    cmsConfig.current = { _baseURL: '' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1767,7 +1760,7 @@ describe('getEntriesByAssetURL()', () => {
 
     const mockCollection = { name: 'posts', _type: 'entry' };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    cmsConfig.current = { _baseURL: '' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1811,7 +1804,7 @@ describe('getEntriesByAssetURL()', () => {
 
     const mockCollection = { name: 'posts', _type: 'entry' };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    cmsConfig.current = { _baseURL: '' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1855,7 +1848,7 @@ describe('getEntriesByAssetURL()', () => {
 
     const mockCollection = { name: 'posts', _type: 'entry' };
 
-    vi.mocked(get).mockReturnValue({ _baseURL: '' });
+    cmsConfig.current = { _baseURL: '' };
     vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
     vi.mocked(isCollectionIndexFile).mockReturnValue(false);
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
@@ -1876,9 +1869,9 @@ describe('getEntriesByAssetURL()', () => {
 });
 
 describe('selectedEntries', () => {
-  test('is exported as a writable store', () => {
-    expect(selectedEntries).toBeDefined();
-    expect(typeof selectedEntries.subscribe).toBe('function');
+  test('is exported as reactive state', () => {
+    selectedEntries.current = [];
+    expect(selectedEntries.current).toEqual([]);
   });
 });
 
@@ -1919,7 +1912,7 @@ describe('canCreateIndexFile()', () => {
       { id: '2', slug: 'post-2', locales: { en: { content: {} } } },
     ];
 
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     vi.mocked(getAssociatedCollections)
       .mockReturnValueOnce([{ name: 'posts' }])
       .mockReturnValueOnce([{ name: 'posts' }]);
@@ -1949,7 +1942,7 @@ describe('canCreateIndexFile()', () => {
       { id: '2', slug: 'post-1', locales: { en: { content: {} } } },
     ];
 
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     vi.mocked(getAssociatedCollections)
       .mockReturnValueOnce([{ name: 'posts' }])
       .mockReturnValueOnce([{ name: 'posts' }]);
@@ -1979,7 +1972,7 @@ describe('canCreateIndexFile()', () => {
       { id: '2', slug: 'post-1', locales: { en: { content: {} } } },
     ];
 
-    vi.mocked(get).mockReturnValue(entries);
+    allEntries.current = entries;
     vi.mocked(getAssociatedCollections)
       .mockReturnValueOnce([{ name: 'posts' }])
       .mockReturnValueOnce([{ name: 'posts' }]);

@@ -1,6 +1,5 @@
 import { _ } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
-import { get } from 'svelte/store';
 
 import { fetchDefaultBranchName, repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -28,7 +27,7 @@ const FORK_POLL = {
  * @returns {boolean} `true` if the `open_authoring` backend option is enabled.
  */
 export const isOpenAuthoringConfigured = () => {
-  const { backend } = get(cmsConfig) ?? {};
+  const { backend } = cmsConfig.current ?? {};
 
   return backend?.name === 'github' && backend.open_authoring === true;
 };
@@ -40,7 +39,7 @@ export const isOpenAuthoringConfigured = () => {
  * @returns {RepositoryPath} Repository owner and name.
  */
 export const getWorkflowRepository = () => {
-  const fork = get(forkedRepository);
+  const fork = forkedRepository.current;
 
   return fork ?? { owner: repository.owner, repo: repository.repo };
 };
@@ -377,7 +376,7 @@ export const syncFork = async ({ owner, repo }) => {
  * @see https://sveltiacms.app/en/docs/workflows/open
  */
 export const initOpenAuthoring = async () => {
-  forkedRepository.set(undefined);
+  forkedRepository.current = undefined;
 
   const { canWrite, allowForking } = await fetchRepositoryAccess();
 
@@ -398,7 +397,7 @@ export const initOpenAuthoring = async () => {
 
   if (existingFork) {
     await syncFork(existingFork);
-    forkedRepository.set(existingFork);
+    forkedRepository.current = existingFork;
 
     return;
   }
@@ -417,5 +416,5 @@ export const initOpenAuthoring = async () => {
     });
   }
 
-  forkedRepository.set(await createFork());
+  forkedRepository.current = await createFork();
 };

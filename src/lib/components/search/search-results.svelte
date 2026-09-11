@@ -15,10 +15,10 @@
     </Toolbar>
   {/if}
   <div role="none" class="results">
-    {#if $searchMode === 'contents'}
+    {#if searchMode.current === 'contents'}
       <EntryResults />
     {/if}
-    {#if $searchMode === 'assets'}
+    {#if searchMode.current === 'assets'}
       <AssetResults />
     {/if}
   </div>

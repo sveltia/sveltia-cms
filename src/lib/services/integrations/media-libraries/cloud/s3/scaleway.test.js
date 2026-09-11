@@ -1,5 +1,6 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { cmsConfig } from '$lib/services/config';
 
 import scalewayObjectStorageService, {
   getLibraryOptions,
@@ -10,12 +11,8 @@ import scalewayObjectStorageService, {
 } from './scaleway';
 
 // Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
-
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('./index', () => ({
@@ -43,7 +40,7 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(get).mockReturnValue({
+    cmsConfig.current = /** @type {any} */ ({
       media_libraries: {
         scaleway_object_storage: {
           access_key_id: mockAccessKeyId,
@@ -103,13 +100,13 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
     });
 
     it('should return false when config is missing', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(isEnabled()).toBe(false);
     });
 
     it('should return false when credentials are missing', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           scaleway_object_storage: {},
         },
@@ -119,7 +116,7 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
     });
 
     it('should return true when field-level config is present', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(
         isEnabled(
@@ -138,7 +135,7 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
     });
 
     it('should return false when field-level config has missing credentials', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(
         isEnabled(
@@ -165,7 +162,7 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
     });
 
     it('should return config from legacy media_library format', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_library: {
           name: 'scaleway_object_storage',
           access_key_id: mockAccessKeyId,
@@ -185,7 +182,7 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
     });
 
     it('should return undefined when neither media_libraries nor matching media_library exists', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_library: { name: 'other_service' },
       });
 
@@ -221,7 +218,7 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
     it('list should use explicit public_url when set in config', async () => {
       const core = await import('./core');
 
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           scaleway_object_storage: {
             access_key_id: mockAccessKeyId,
@@ -274,7 +271,7 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
     });
 
     it('list should reject when config is not available', async () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       await expect(
         list({ kind: undefined, apiKey: 'secret', fieldConfig: undefined }),
@@ -282,7 +279,7 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
     });
 
     it('search should reject when config is not available', async () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       await expect(
         search('photo', { kind: undefined, apiKey: 'secret', fieldConfig: undefined }),
@@ -290,7 +287,7 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
     });
 
     it('upload should reject when config is not available', async () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       await expect(upload([], { apiKey: 'secret', fieldConfig: undefined })).rejects.toThrow(
         'Scaleway Object Storage configuration is not available',

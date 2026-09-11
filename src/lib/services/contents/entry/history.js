@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { backend } from '$lib/services/backends';
 
 /**
@@ -30,7 +28,7 @@ export const fetchEntryHistory = async (entry) => {
     return cached;
   }
 
-  const _backend = get(backend);
+  const _backend = backend.current;
 
   if (!_backend?.fetchFileCommits) {
     return { commits: [], loading: false, error: false };

@@ -1,5 +1,4 @@
 import { stripSlashes } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 import {
@@ -108,7 +107,7 @@ export const getOriginalPath = ({ collection, originalEntry, initialPath }) => {
     return getEntryDirPath(subPath);
   }
 
-  return stripSlashes(initialPath ?? get(nestedFilterPath));
+  return stripSlashes(initialPath ?? nestedFilterPath.current);
 };
 
 /**
@@ -159,7 +158,7 @@ export const buildDraft = ({
     indexFile?.editor?.preview ??
     collectionFile?.editor?.preview ??
     collection.editor?.preview ??
-    get(cmsConfig)?.editor?.preview ??
+    cmsConfig.current?.editor?.preview ??
     true;
 
   const {

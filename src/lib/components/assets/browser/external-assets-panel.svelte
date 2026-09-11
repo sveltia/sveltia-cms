@@ -84,10 +84,10 @@
 
   // Use the grid view for Picsum as it doesn’t provide description for the assets, and the list
   // view relies on the description to show asset information.
-  const viewType = $derived(serviceId === 'picsum' ? 'grid' : $selectAssetsView?.type);
+  const viewType = $derived(serviceId === 'picsum' ? 'grid' : selectAssetsView.current?.type);
   const isStockAssets = $derived(serviceType === 'stock_assets');
   const allMediaLibraryOptions = $derived(
-    fieldConfig?.media_libraries?.all ?? $cmsConfig?.media_libraries?.all ?? {},
+    fieldConfig?.media_libraries?.all ?? cmsConfig.current?.media_libraries?.all ?? {},
   );
   const maxSize = $derived(
     /** @type {number} */ (allMediaLibraryOptions.max_file_size ?? Infinity),

@@ -1,7 +1,6 @@
-import { writable } from 'svelte/store';
+import { createDeepState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { EntryEditorPane, InternalLocaleCode, SelectAssetsView } from '$lib/types/private';
  */
 
@@ -23,33 +22,32 @@ import { writable } from 'svelte/store';
 export const MIN_PANE_SIZE = 30;
 
 /**
- * @type {Writable<boolean>}
+ * Whether the content details overlay is shown.
  */
-export const showContentOverlay = writable(false);
+export const showContentOverlay = createRawState(false);
 
 /**
- * @type {Writable<boolean>}
+ * Whether to show the toast notification for a duplicated entry.
  */
-export const showDuplicateToast = writable(false);
+export const showDuplicateToast = createRawState(false);
 
 /**
  * Number of inline editors that are currently active in the entry editor, such as the file name
  * editor in a File/Image field. While any of them is active, the Escape key shortcut to close the
  * entry editor is disabled, so the key can be used to cancel the inline editing instead.
- * @type {Writable<number>}
  */
-export const activeInlineEditors = writable(0);
+export const activeInlineEditors = createRawState(0);
 
 /**
- * @type {Writable<{ show: boolean, multiple: boolean, resolve?: (value?: string) => void }>}
+ * @type {{ current: { show: boolean, multiple: boolean, resolve?: (value?: string) => void } }}
  */
-export const translatorApiKeyDialogState = writable({ show: false, multiple: false });
+export const translatorApiKeyDialogState = createDeepState({ show: false, multiple: false });
 
 /**
  * Copy/translation toast state.
- * @type {Writable<CopyToastState>}
+ * @type {{ current: CopyToastState }}
  */
-export const copyFromLocaleToast = writable({
+export const copyFromLocaleToast = createDeepState({
   id: undefined,
   show: false,
   status: 'success',
@@ -59,17 +57,17 @@ export const copyFromLocaleToast = writable({
 });
 
 /**
- * @type {Writable<?EntryEditorPane>}
+ * @type {{ current: ?EntryEditorPane }}
  */
-export const editorFirstPane = writable(null);
+export const editorFirstPane = createRawState(null);
 
 /**
- * @type {Writable<?EntryEditorPane>}
+ * @type {{ current: ?EntryEditorPane }}
  */
-export const editorSecondPane = writable(null);
+export const editorSecondPane = createRawState(null);
 
 /**
  * View settings for the Select Assets dialog.
- * @type {Writable<SelectAssetsView | undefined>}
+ * @type {{ current: SelectAssetsView | undefined }}
  */
-export const selectAssetsView = writable();
+export const selectAssetsView = createRawState();

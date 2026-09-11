@@ -89,7 +89,7 @@
 >
   {#snippet popup()}
     <Menu aria-label={_('workflow.change_entry_status')}>
-      {#each $workflowStages as _status (_status)}
+      {#each workflowStages.current as _status (_status)}
         <MenuItemRadio
           label={_(WORKFLOW_STATUS_LABELS[_status])}
           checked={_status === status}

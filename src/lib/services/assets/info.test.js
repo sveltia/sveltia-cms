@@ -1,7 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable max-classes-per-file */
 
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as cloudStorageModule from '$lib/services/integrations/media-libraries/cloud';
@@ -33,20 +32,16 @@ vi.mock('@sveltia/utils/misc');
 vi.mock('@sveltia/utils/storage');
 vi.mock('@sveltia/utils/string');
 vi.mock('mime');
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(() => ({
-    subscribe: vi.fn(),
-    set: vi.fn(),
-    update: vi.fn(),
-  })),
-  readable: vi.fn(() => ({
-    subscribe: vi.fn(),
-  })),
-  derived: vi.fn(() => ({
-    subscribe: vi.fn(),
-  })),
-}));
+
+/** @type {{ current: any }} */
+const mockBackendState = vi.hoisted(() => ({ current: undefined }));
+/** @type {{ current: any }} */
+const mockCmsConfigState = vi.hoisted(() => ({ current: undefined }));
+/** @type {{ current: any }} */
+const mockGlobalAssetFolder = vi.hoisted(() => ({ current: undefined }));
+/** @type {{ current: any[] }} */
+const mockAllAssets = vi.hoisted(() => ({ current: [] }));
+
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key) => key),
   addMessages: vi.fn(),
@@ -56,36 +51,19 @@ vi.mock('@sveltia/i18n', () => ({
 vi.mock('$lib/services/assets', () => ({
   getAssetByPath: vi.fn(),
   isRelativePath: vi.fn((path) => !/^[/@]/.test(path)),
-  focusedAsset: {
-    set: vi.fn(),
-    subscribe: vi.fn(),
-  },
-  allAssets: {
-    subscribe: vi.fn(),
-  },
+  focusedAsset: { current: undefined },
+  allAssets: mockAllAssets,
 }));
 vi.mock('$lib/services/backends', () => ({
-  backend: {
-    subscribe: vi.fn(),
-    _mockValue: 'backend',
-  },
+  backend: mockBackendState,
 }));
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: {
-    subscribe: vi.fn(),
-    _mockValue: 'cmsConfig',
-  },
+  cmsConfig: mockCmsConfigState,
 }));
 vi.mock('$lib/services/assets/folders', () => ({
   getAssetFoldersByPath: vi.fn(),
-  globalAssetFolder: {
-    subscribe: vi.fn(),
-    _mockValue: 'globalAssetFolder',
-  },
-  selectedAssetFolder: {
-    subscribe: vi.fn(),
-    _mockValue: 'selectedAssetFolder',
-  },
+  globalAssetFolder: mockGlobalAssetFolder,
+  selectedAssetFolder: { current: undefined },
 }));
 vi.mock('$lib/services/contents/collection/entries');
 vi.mock('$lib/services/utils/file');
@@ -155,18 +133,10 @@ describe('assets/info', () => {
     };
 
     // Setup mocks
-    const getMock = vi.mocked(get);
-
-    getMock.mockImplementation((store) => {
-      // Match the specific store references from the imports
-      if (store && typeof store === 'object' && '_mockValue' in store) {
-        if (store._mockValue === 'backend') return mockBackend;
-        if (store._mockValue === 'cmsConfig') return mockCmsConfig;
-        if (store._mockValue === 'globalAssetFolder') return mockAsset.folder;
-      }
-
-      return undefined;
-    });
+    mockBackendState.current = mockBackend;
+    mockCmsConfigState.current = mockCmsConfig;
+    mockGlobalAssetFolder.current = mockAsset.folder;
+    mockAllAssets.current = [];
 
     // Mock URL.createObjectURL
     // @ts-ignore
@@ -634,17 +604,9 @@ describe('assets/info', () => {
         return new RegExp(`^${regexParts.join('/')}`);
       });
 
-      const getMock = vi.mocked(get);
-
-      getMock.mockImplementation((store) => {
-        if (store && typeof store === 'object' && '_mockValue' in store) {
-          if (store._mockValue === 'backend') return mockBackend;
-          if (store._mockValue === 'cmsConfig') return mockCmsConfig;
-          if (store._mockValue === 'globalAssetFolder') return mockAsset.folder;
-        }
-
-        return undefined;
-      });
+      mockBackendState.current = mockBackend;
+      mockCmsConfigState.current = mockCmsConfig;
+      mockGlobalAssetFolder.current = mockAsset.folder;
     });
 
     it('should generate public URL for global asset', () => {
@@ -2608,30 +2570,13 @@ describe('assets/info', () => {
         querySelectorAll: vi.fn(() => /** @type {any} */ ([])),
       });
 
-      // Setup get mock to handle the allAssets store
-      const getMock = vi.mocked(get);
-      const previousImplementation = getMock.getMockImplementation();
-
-      getMock.mockImplementation((store) => {
-        // Handle existing store types
-        if (store && typeof store === 'object' && '_mockValue' in store) {
-          if (store._mockValue === 'backend') return mockBackend;
-          if (store._mockValue === 'cmsConfig') return mockCmsConfig;
-          if (store._mockValue === 'globalAssetFolder') return mockAsset.folder;
-        }
-
-        // For allAssets or any other store without _mockValue identifier, return mock assets
-        // We identify allAssets by checking if it has a subscribe method (standard Svelte store)
-        if (
-          store &&
-          typeof store === 'object' &&
-          'subscribe' in store &&
-          !('_mockValue' in store)
-        ) {
-          return mockAssets;
-        }
-
-        return previousImplementation?.(store);
+      // Read `mockAssets` lazily, because some tests reassign it
+      Object.defineProperty(mockAllAssets, 'current', {
+        configurable: true,
+        get: () => mockAssets,
+        set: (assets) => {
+          mockAssets = assets;
+        },
       });
     });
 

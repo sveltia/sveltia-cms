@@ -61,7 +61,8 @@
   // The card has no locale of its own, so the link points at the entry’s default one
   const defaultLocale = $derived((collectionFile ?? collection)?._i18n?.defaultLocale);
   const deployState = $derived(
-    (pullRequest.headSHA ? $deployments[pullRequest.headSHA]?.state : undefined) ?? 'unknown',
+    (pullRequest.headSHA ? deployments.current[pullRequest.headSHA]?.state : undefined) ??
+      'unknown',
   );
   const summary = $derived.by(() => {
     // `appLocale.current` is a key, because the labels can be localized
@@ -80,11 +81,13 @@
   // hide the control altogether. An Open Authoring contributor can’t merge a pull request on the
   // configured repository, so they never get the control
   const canPublish = $derived(
-    !$openAuthoring && (status === 'pending_publish' || deletion) && collection?.publish !== false,
+    !openAuthoring.current &&
+      (status === 'pending_publish' || deletion) &&
+      collection?.publish !== false,
   );
   // Deleting an entry that has a published version only throws away the pending changes.
-  // `$allEntries` is a dependency, because the entry can be published from another view
-  const publishedVersionExists = $derived(!!$allEntries && hasPublishedVersion(entry));
+  // `allEntries.current` is a dependency, because the entry can be published from another view
+  const publishedVersionExists = $derived(!!allEntries.current && hasPublishedVersion(entry));
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
   // the published version untouched, so it stays available even when deletion is disabled
   const canDelete = $derived(

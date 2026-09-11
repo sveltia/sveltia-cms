@@ -1,15 +1,13 @@
-import { derived, get } from 'svelte/store';
-
 import { backend } from '$lib/services/backends';
 import { skipCIConfigured } from '$lib/services/backends/git/shared/integration';
 import { cmsConfig } from '$lib/services/config';
 import { deployments, productionSHA } from '$lib/services/deployments';
 import { DEPLOY_TTL } from '$lib/services/deployments/constants';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 import { unpublishedEntries } from '$lib/services/workflow';
 
 /**
- * @import { Readable } from 'svelte/store';
  * @import { BackendService, DeployStatus, DeployTarget } from '$lib/types/private';
  */
 
@@ -60,18 +58,18 @@ export const cancelDeployResolution = () => {
  * @returns {DeployTarget[]} Targets, without duplicates.
  */
 export const getDeployTargets = () => {
-  const branch = get(backend)?.repository?.branch ?? '';
+  const branch = backend.current?.repository?.branch ?? '';
   /** @type {DeployTarget[]} */
   const targets = [];
   const seen = new Set();
-  const prodSHA = get(productionSHA);
+  const prodSHA = productionSHA.current;
 
   if (prodSHA) {
     targets.push({ sha: prodSHA, branch, kind: 'production' });
     seen.add(prodSHA);
   }
 
-  get(unpublishedEntries).forEach(({ workflow: { pullRequest } }) => {
+  unpublishedEntries.current.forEach(({ workflow: { pullRequest } }) => {
     const { headSHA, branch: prBranch } = pullRequest;
 
     if (headSHA && !seen.has(headSHA)) {
@@ -87,9 +85,9 @@ export const getDeployTargets = () => {
  * The commits worth looking up, recomputed whenever the branch head moves or the open pull requests
  * change — which is what a save does. Anything watching the deploy state uses this rather than
  * calling {@link getDeployTargets} once, so a commit made during the session is picked up.
- * @type {Readable<DeployTarget[]>}
+ * @type {{ readonly current: DeployTarget[] }}
  */
-export const deployTargets = derived([productionSHA, unpublishedEntries], () => getDeployTargets());
+export const deployTargets = createDerivedState(() => getDeployTargets());
 
 /**
  * Whether it’s worth asking the backend about deployments at all. There’s nothing to look up when
@@ -99,9 +97,9 @@ export const deployTargets = derived([productionSHA, unpublishedEntries], () => 
  * @returns {boolean} Result.
  */
 export const canResolveDeployments = () => {
-  const { show_preview_links: showLinks = true } = get(cmsConfig) ?? {};
+  const { show_preview_links: showLinks = true } = cmsConfig.current ?? {};
 
-  return (showLinks || get(skipCIConfigured)) && !!get(backend)?.fetchDeployments;
+  return (showLinks || skipCIConfigured.current) && !!backend.current?.fetchDeployments;
 };
 
 /**
@@ -119,21 +117,19 @@ const isFresh = (status) =>
  */
 export const markLookupPending = () => {
   const targets = getDeployTargets();
+  const map = deployments.current;
 
-  deployments.update((map) => {
-    /** @type {Record<string, DeployStatus>} */
-    const additions = Object.fromEntries(
-      targets
-        .filter(({ sha }) => !map[sha])
-        .map(({ sha }) => [
-          sha,
-          /** @type {DeployStatus} */ ({ state: 'checking', checkedTime: 0 }),
-        ]),
-    );
+  /** @type {Record<string, DeployStatus>} */
+  const additions = Object.fromEntries(
+    targets
+      .filter(({ sha }) => !map[sha])
+      .map(({ sha }) => [sha, /** @type {DeployStatus} */ ({ state: 'checking', checkedTime: 0 })]),
+  );
 
-    // Leave the store alone when there’s nothing to add, so subscribers aren’t woken for nothing
-    return Object.keys(additions).length ? { ...map, ...additions } : map;
-  });
+  // Leave the state alone when there’s nothing to add, so readers aren’t woken for nothing
+  if (Object.keys(additions).length) {
+    deployments.current = { ...map, ...additions };
+  }
 };
 
 /**
@@ -159,10 +155,10 @@ export const resolveDeployments = async ({ force = false, pendingOnly = false } 
 
   // Guaranteed by the check above
   const fetchDeployments = /** @type {NonNullable<BackendService['fetchDeployments']>} */ (
-    get(backend)?.fetchDeployments
+    backend.current?.fetchDeployments
   );
 
-  const cached = get(deployments);
+  const cached = deployments.current;
 
   const targets = getDeployTargets().filter(({ sha }) => {
     if (force) {
@@ -198,14 +194,14 @@ export const resolveDeployments = async ({ force = false, pendingOnly = false } 
 
   // Only a commit with no result yet shows as being checked; re-checking a known one in the
   // background shouldn’t flip the UI back to a loading state on every poll
-  deployments.update((map) => ({
-    ...map,
+  deployments.current = {
+    ...deployments.current,
     ...Object.fromEntries(
       targets
-        .filter(({ sha }) => !map[sha])
+        .filter(({ sha }) => !deployments.current[sha])
         .map(({ sha }) => [sha, { state: 'checking', checkedTime: 0 }]),
     ),
-  }));
+  };
 
   /** @type {Record<string, DeployStatus>} */
   let results;
@@ -234,7 +230,7 @@ export const resolveDeployments = async ({ force = false, pendingOnly = false } 
   }
 
   report('resolved', results);
-  deployments.update((map) => ({ ...map, ...results }));
+  deployments.current = { ...deployments.current, ...results };
 };
 
 /**
@@ -242,7 +238,7 @@ export const resolveDeployments = async ({ force = false, pendingOnly = false } 
  * @returns {Promise<void>}
  */
 export const refreshProductionSHA = async () => {
-  const fetchBranchHeadSHA = get(backend)?.fetchBranchHeadSHA;
+  const fetchBranchHeadSHA = backend.current?.fetchBranchHeadSHA;
 
   if (!fetchBranchHeadSHA) {
     return;
@@ -252,7 +248,7 @@ export const refreshProductionSHA = async () => {
     const sha = (await fetchBranchHeadSHA()) ?? '';
 
     report('tracking the branch head', sha);
-    productionSHA.set(sha);
+    productionSHA.current = sha;
   } catch (ex) {
     // eslint-disable-next-line no-console
     console.error('Failed to fetch the branch head commit.', ex);

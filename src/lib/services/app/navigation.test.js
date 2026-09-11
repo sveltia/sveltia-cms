@@ -1,9 +1,13 @@
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { showAssetOverlay } from '$lib/services/assets/view';
+import { cmsConfig } from '$lib/services/config';
+import { showContentOverlay } from '$lib/services/contents/editor';
 
 import {
   goBack,
   goto,
+  hasOverlay,
   openProductionSite,
   parseLocation,
   redirectLegacyEntryLink,
@@ -76,28 +80,15 @@ Object.defineProperty(globalThis, 'HashChangeEvent', {
 
 // Mock dependencies
 vi.mock('$lib/services/assets/view', () => ({
-  showAssetOverlay: { subscribe: vi.fn() },
+  showAssetOverlay: { current: undefined },
 }));
 
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents/editor', () => ({
-  showContentOverlay: { subscribe: vi.fn() },
-}));
-
-vi.mock('svelte/store', () => ({
-  derived: vi.fn((stores, callback) => {
-    // Call the callback to ensure code coverage for derived functions
-    if (Array.isArray(stores)) {
-      callback([...stores].map(() => false));
-    }
-
-    return { subscribe: vi.fn() };
-  }),
-  get: vi.fn(),
-  writable: vi.fn(),
+  showContentOverlay: { current: undefined },
 }));
 
 vi.mock('@sveltia/utils/misc', () => ({
@@ -892,7 +883,7 @@ describe('navigation', () => {
 
   describe('openProductionSite', () => {
     it('should open display_url when available', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         display_url: 'https://my-site.com',
         _siteURL: 'https://fallback.com',
       });
@@ -907,7 +898,7 @@ describe('navigation', () => {
     });
 
     it('should fall back to _siteURL when no display_url', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         _siteURL: 'https://fallback.com',
       });
 
@@ -921,7 +912,7 @@ describe('navigation', () => {
     });
 
     it('should use root path when no URLs available', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       openProductionSite();
 
@@ -1163,20 +1154,21 @@ describe('navigation', () => {
     });
   });
 
-  describe('hasOverlay derived store', () => {
-    it('should test the derived callback logic for hasOverlay', () => {
-      // The hasOverlay store is derived from [showContentOverlay, showAssetOverlay]
-      // The callback returns true if either overlay is shown
-      /**
-       * Test callback for hasOverlay derived store.
-       * @type {(a: boolean, b: boolean) => boolean}
-       */
-      const callback = (contentOverlay, assetOverlay) => contentOverlay || assetOverlay;
+  describe('hasOverlay derived state', () => {
+    it('should be true if either overlay is shown', () => {
+      showContentOverlay.current = false;
+      showAssetOverlay.current = false;
+      expect(hasOverlay.current).toBe(false);
 
-      expect(callback(false, false)).toBe(false);
-      expect(callback(true, false)).toBe(true);
-      expect(callback(false, true)).toBe(true);
-      expect(callback(true, true)).toBe(true);
+      showContentOverlay.current = true;
+      expect(hasOverlay.current).toBe(true);
+
+      showContentOverlay.current = false;
+      showAssetOverlay.current = true;
+      expect(hasOverlay.current).toBe(true);
+
+      showContentOverlay.current = true;
+      expect(hasOverlay.current).toBe(true);
     });
   });
 

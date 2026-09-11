@@ -208,7 +208,7 @@ export const fetchFileContents = async (fetchingFiles) => {
     return {};
   }
 
-  dataLoadedProgress.set(0);
+  dataLoadedProgress.current = 0;
 
   // Ask the instance for the limits it applies to a response, so a request can be kept within them
   const {
@@ -237,7 +237,7 @@ export const fetchFileContents = async (fetchingFiles) => {
    */
   const advanceProgress = (count) => {
     fetchedCount += count;
-    dataLoadedProgress.set(Math.ceil((fetchedCount / textFiles.length) * 100));
+    dataLoadedProgress.current = Math.ceil((fetchedCount / textFiles.length) * 100);
   };
 
   // Use the new bulk API endpoint to fetch multiple files at once
@@ -274,7 +274,7 @@ export const fetchFileContents = async (fetchingFiles) => {
     advanceProgress(1);
   });
 
-  dataLoadedProgress.set(undefined);
+  dataLoadedProgress.current = undefined;
 
   return fileMap;
 };

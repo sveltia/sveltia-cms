@@ -1,5 +1,4 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
 import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -58,18 +57,20 @@ describe('fillTemplate()', async () => {
    */
   const setupCmsConfig = async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      backend: { name: 'github' },
-      media_folder: 'static/images/uploads',
-      collections: [collection],
-      _siteURL: '',
-      _baseURL: '',
-      slug: {
-        encoding: 'unicode',
-        clean_accents: false,
-        sanitize_replacement: '-',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        media_folder: 'static/images/uploads',
+        collections: [collection],
+        _siteURL: '',
+        _baseURL: '',
+        slug: {
+          encoding: 'unicode',
+          clean_accents: false,
+          sanitize_replacement: '-',
+        },
       },
-    });
+    };
   };
 
   test('short slug', async () => {
@@ -108,19 +109,21 @@ describe('fillTemplate()', async () => {
 
   test('date/time with explicit utc timezone config', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      backend: { name: 'github' },
-      media_folder: 'static/images/uploads',
-      collections: [collection],
-      _siteURL: '',
-      _baseURL: '',
-      slug: {
-        encoding: 'unicode',
-        clean_accents: false,
-        sanitize_replacement: '-',
-        timezone: 'utc',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        media_folder: 'static/images/uploads',
+        collections: [collection],
+        _siteURL: '',
+        _baseURL: '',
+        slug: {
+          encoding: 'unicode',
+          clean_accents: false,
+          sanitize_replacement: '-',
+          timezone: 'utc',
+        },
       },
-    });
+    };
 
     const template = '{{year}}-{{month}}-{{day}}-{{hour}}-{{minute}}-{{second}}';
     const dateTimeParts = getDateTimeParts({ timeZone: 'UTC' });
@@ -133,19 +136,21 @@ describe('fillTemplate()', async () => {
 
   test('date/time with local timezone config', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      backend: { name: 'github' },
-      media_folder: 'static/images/uploads',
-      collections: [collection],
-      _siteURL: '',
-      _baseURL: '',
-      slug: {
-        encoding: 'unicode',
-        clean_accents: false,
-        sanitize_replacement: '-',
-        timezone: 'local',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        media_folder: 'static/images/uploads',
+        collections: [collection],
+        _siteURL: '',
+        _baseURL: '',
+        slug: {
+          encoding: 'unicode',
+          clean_accents: false,
+          sanitize_replacement: '-',
+          timezone: 'local',
+        },
       },
-    });
+    };
 
     const template = '{{year}}-{{month}}-{{day}}-{{hour}}-{{minute}}-{{second}}';
     // Should produce a valid date/time format using the local timezone
@@ -553,19 +558,21 @@ describe('fillTemplate()', async () => {
 
   test('slug max length from new maxlength config option', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      backend: { name: 'github' },
-      media_folder: 'static/images/uploads',
-      collections: [collection],
-      _siteURL: '',
-      _baseURL: '',
-      slug: {
-        encoding: 'unicode',
-        clean_accents: false,
-        sanitize_replacement: '-',
-        maxlength: 30,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        media_folder: 'static/images/uploads',
+        collections: [collection],
+        _siteURL: '',
+        _baseURL: '',
+        slug: {
+          encoding: 'unicode',
+          clean_accents: false,
+          sanitize_replacement: '-',
+          maxlength: 30,
+        },
       },
-    });
+    };
 
     const longContent = {
       title:
@@ -588,19 +595,21 @@ describe('fillTemplate()', async () => {
 
   test('legacy slug_length overrides config maxlength option', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      backend: { name: 'github' },
-      media_folder: 'static/images/uploads',
-      collections: [collection],
-      _siteURL: '',
-      _baseURL: '',
-      slug: {
-        encoding: 'unicode',
-        clean_accents: false,
-        sanitize_replacement: '-',
-        maxlength: 50,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        media_folder: 'static/images/uploads',
+        collections: [collection],
+        _siteURL: '',
+        _baseURL: '',
+        slug: {
+          encoding: 'unicode',
+          clean_accents: false,
+          sanitize_replacement: '-',
+          maxlength: 50,
+        },
       },
-    });
+    };
 
     vi.clearAllMocks();
 
@@ -642,19 +651,21 @@ describe('fillTemplate()', async () => {
 
   test('path template with currentSlug is not truncated by maxlength', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      backend: { name: 'github' },
-      media_folder: 'static/images/uploads',
-      collections: [collection],
-      _siteURL: '',
-      _baseURL: '',
-      slug: {
-        encoding: 'unicode',
-        clean_accents: false,
-        sanitize_replacement: '-',
-        maxlength: 64,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        media_folder: 'static/images/uploads',
+        collections: [collection],
+        _siteURL: '',
+        _baseURL: '',
+        slug: {
+          encoding: 'unicode',
+          clean_accents: false,
+          sanitize_replacement: '-',
+          maxlength: 64,
+        },
       },
-    });
+    };
 
     const longSlug = 'a'.repeat(64);
     const content = { title: 'Some Title' };

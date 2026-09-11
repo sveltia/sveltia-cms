@@ -17,12 +17,12 @@
    * @import { Asset } from '$lib/types/private';
    */
 
-  const viewType = $derived($currentView.type);
-  const folder = $derived($targetAssetFolder);
+  const viewType = $derived(currentView.current.type);
+  const folder = $derived(targetAssetFolder.current);
   // Uploading to the media library commits straight to the configured branch rather than going
   // through review, so it’s not something an Open Authoring contributor can do. An asset attached
   // to an entry is committed with that entry, so it’s unaffected
-  const uploadDisabled = $derived($openAuthoring || !canCreateAsset(folder));
+  const uploadDisabled = $derived(openAuthoring.current || !canCreateAsset(folder));
 </script>
 
 <ListContainer aria-label={_('asset_list')}>
@@ -30,17 +30,17 @@
     disabled={uploadDisabled}
     multiple={true}
     onDrop={({ files }) => {
-      $uploadingAssets = { folder, files };
+      uploadingAssets.current = { folder, files };
     }}
   >
-    {#if Object.values($assetGroups).flat(1).length}
+    {#if Object.values(assetGroups.current).flat(1).length}
       <ListingGrid
         id="asset-list"
         {viewType}
         aria-label={_('assets')}
-        aria-rowcount={$listedAssets.length}
+        aria-rowcount={listedAssets.current.length}
       >
-        {#each Object.entries($assetGroups) as [name, assets] (name)}
+        {#each Object.entries(assetGroups.current) as [name, assets] (name)}
           {#await sleep() then}
             <GridBody label={name !== '*' ? name : undefined}>
               <InfiniteScroll items={assets} itemKey="path">

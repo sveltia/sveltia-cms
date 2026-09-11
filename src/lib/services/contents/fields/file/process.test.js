@@ -1,5 +1,6 @@
-import { writable } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { allAssets } from '$lib/services/assets';
 
 import { processResource } from './process';
 
@@ -16,17 +17,8 @@ vi.mock('isomorphic-dompurify', () => ({
   sanitize: vi.fn(),
 }));
 
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(() => ({
-    subscribe: vi.fn(),
-    set: vi.fn(),
-    update: vi.fn(),
-  })),
-}));
-
 vi.mock('$lib/services/assets', () => ({
-  allAssets: writable([]),
+  allAssets: { current: [] },
 }));
 
 vi.mock('$lib/services/assets/info', () => ({
@@ -57,8 +49,6 @@ describe('Test processResource()', () => {
   /** @type {import('vitest').MockedFunction<any>} */
   let domPurifyMock;
   /** @type {import('vitest').MockedFunction<any>} */
-  let getMock;
-  /** @type {import('vitest').MockedFunction<any>} */
   let getAssetPublicURLMock;
   /** @type {import('vitest').MockedFunction<any>} */
   let transformFileMock;
@@ -75,7 +65,6 @@ describe('Test processResource()', () => {
     const { getHash } = await import('@sveltia/utils/crypto');
     const equal = (await import('fast-deep-equal')).default;
     const { sanitize } = await import('isomorphic-dompurify');
-    const { get } = await import('svelte/store');
     const { getAssetPublicURL } = await import('$lib/services/assets/info');
     const { transformFile } = await import('$lib/services/integrations/media-libraries/default');
     const { getGitHash } = await import('$lib/services/utils/file');
@@ -83,7 +72,6 @@ describe('Test processResource()', () => {
     getHashMock = /** @type {any} */ (vi.mocked(getHash));
     equalMock = /** @type {any} */ (vi.mocked(equal));
     domPurifyMock = /** @type {any} */ (vi.mocked(sanitize));
-    getMock = /** @type {any} */ (vi.mocked(get));
     getAssetPublicURLMock = /** @type {any} */ (vi.mocked(getAssetPublicURL));
     transformFileMock = /** @type {any} */ (vi.mocked(transformFile));
     getGitHashMock = /** @type {any} */ (vi.mocked(getGitHash));
@@ -92,7 +80,7 @@ describe('Test processResource()', () => {
 
     // Default mock implementations
     domPurifyMock.mockImplementation((/** @type {string} */ input) => String(input));
-    getMock.mockReturnValue([]);
+    allAssets.current = /** @type {any} */ ([]);
     vi.mocked(isValidImage).mockResolvedValue(true);
   });
 
@@ -221,7 +209,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([]);
+    allAssets.current = /** @type {any} */ ([]);
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });
@@ -251,7 +239,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([]);
+    allAssets.current = /** @type {any} */ ([]);
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig: {} });
@@ -287,7 +275,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([]);
+    allAssets.current = /** @type {any} */ ([]);
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });
@@ -328,7 +316,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([existingAsset]);
+    allAssets.current = /** @type {any} */ ([existingAsset]);
     equalMock.mockReturnValue(true);
     getAssetPublicURLMock.mockReturnValue('/uploads/existing.jpg');
 
@@ -370,7 +358,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([]);
+    allAssets.current = /** @type {any} */ ([]);
     transformFileMock.mockResolvedValue(transformedFile);
 
     // @ts-ignore - Test with simplified types
@@ -547,7 +535,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([]);
+    allAssets.current = /** @type {any} */ ([]);
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig: undefined });
@@ -607,7 +595,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([personAAsset]);
+    allAssets.current = /** @type {any} */ ([personAAsset]);
     equalMock.mockReturnValue(true);
 
     // @ts-ignore - Test with simplified types
@@ -670,7 +658,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([personBAsset]);
+    allAssets.current = /** @type {any} */ ([personBAsset]);
     equalMock.mockReturnValue(true);
     getAssetPublicURLMock.mockReturnValue('assets/images/photo.jpg');
 
@@ -727,7 +715,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([otherAsset]);
+    allAssets.current = /** @type {any} */ ([otherAsset]);
     equalMock.mockReturnValue(true);
 
     // @ts-ignore - Test with simplified types
@@ -780,7 +768,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([existingAsset]);
+    allAssets.current = /** @type {any} */ ([existingAsset]);
     equalMock.mockReturnValue(true);
     getAssetPublicURLMock.mockReturnValue('/photo.jpg');
 
@@ -833,7 +821,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([existingAsset]);
+    allAssets.current = /** @type {any} */ ([existingAsset]);
     equalMock.mockReturnValue(true);
     getAssetPublicURLMock.mockReturnValue('/photo.jpg');
 
@@ -883,7 +871,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([]);
+    allAssets.current = /** @type {any} */ ([]);
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });
@@ -912,7 +900,7 @@ describe('Test processResource()', () => {
 
     getHashMock.mockResolvedValue('new-hash');
     getGitHashMock.mockResolvedValue('git-hash');
-    getMock.mockReturnValue([]);
+    allAssets.current = /** @type {any} */ ([]);
 
     // @ts-ignore - Test with simplified types
     await processResource({ draft, resource, libraryConfig });

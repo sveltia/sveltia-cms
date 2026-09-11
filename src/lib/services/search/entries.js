@@ -1,16 +1,13 @@
-import { derived } from 'svelte/store';
-
-import { appLocaleStore } from '$lib/services/app/i18n';
 import { allEntries } from '$lib/services/contents';
 import { getListedCollections } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { searchTerms } from '$lib/services/search';
 import { hasMatch, normalize } from '$lib/services/search/util';
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
 /**
- * @import { Readable } from 'svelte/store';
  * @import { Entry, EntrySearchResult, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  * @import { NormalizedValueCache } from '$lib/services/search/util';
@@ -108,14 +105,15 @@ export const searchEntries = ({ entries, terms }) => {
 };
 
 /**
- * Hold entry search results for the current search terms.
- * @type {Readable<EntrySearchResult[]>}
+ * Hold entry search results for the current search terms. `getEntrySummary()` may return a
+ * localized label, and it reads the current app locale, so the results are also recomputed when the
+ * locale changes.
+ * @type {{ readonly current: EntrySearchResult[] }}
  * @todo Search relation fields.
  */
-export const entrySearchResults = derived(
-  // Include `appLocale.current` as a dependency because `getEntrySummary()` may return a localized
-  // label
-  [allEntries, unpublishedEntries, searchTerms, appLocaleStore],
-  ([entries, drafts, terms]) =>
-    searchEntries({ entries: mergeUnpublishedEntries(entries, drafts), terms }),
+export const entrySearchResults = createDerivedState(() =>
+  searchEntries({
+    entries: mergeUnpublishedEntries(allEntries.current, unpublishedEntries.current),
+    terms: searchTerms.current,
+  }),
 );

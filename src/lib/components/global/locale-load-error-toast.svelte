@@ -13,14 +13,14 @@
   let showToast = $state(false);
 
   $effect(() => {
-    if ($appLocaleLoadError) {
+    if (appLocaleLoadError.current) {
       showToast = true;
     }
   });
 </script>
 
-{#if $appLocaleLoadError}
-  {@const { locale } = $appLocaleLoadError}
+{#if appLocaleLoadError.current}
+  {@const { locale } = appLocaleLoadError.current}
   <Toast bind:show={showToast}>
     <Alert status="error">
       {_('locale_load_failed', { values: { locale: getLocaleLabel(locale) ?? locale } })}

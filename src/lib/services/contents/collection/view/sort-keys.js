@@ -1,20 +1,15 @@
 import { _ } from '@sveltia/i18n';
 import { unique } from '@sveltia/utils/array';
-import equal from 'fast-deep-equal';
-import { derived, get } from 'svelte/store';
 
-import { appLocaleStore } from '$lib/services/app/i18n';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
-import { currentView } from '$lib/services/contents/collection/view';
-import { entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { parseCustomSortableFields } from '$lib/services/contents/collection/view/utils';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isNumeric } from '$lib/services/utils/number';
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Readable } from 'svelte/store';
  * @import { InternalEntryCollection, SortingConditions, SortOrder } from '$lib/types/private';
  * @import { Field, FieldKeyPath, NumberField } from '$lib/types/public';
  */
@@ -223,35 +218,26 @@ export const getSortKeyLabel = ({ collection, key }) => {
 };
 
 /**
- * List of available sort keys for the selected entry collection.
- * @type {Readable<{ key: string, label: string }[]>}
+ * List of available sort keys for the selected entry collection. `getSortKeyLabel()` may return a
+ * localized label, and it reads the current app locale, so the list is also recomputed when the
+ * locale changes.
+ * @type {{ readonly current: { key: string, label: string }[] }}
  */
-export const sortKeys = derived(
-  // Include `appLocale.current` as a dependency because `getSortKeyLabel()` may return a localized
-  // label
-  [selectedCollection, allEntries, appLocaleStore],
-  ([collection, _allEntries], set) => {
-    // Disable sorting for file/singleton collection
-    if (!collection || !('folder' in collection)) {
-      set([]);
+export const sortKeys = createDerivedState(() => {
+  const collection = selectedCollection.current;
 
-      return;
-    }
+  // Disable sorting for file/singleton collection
+  if (!collection || !('folder' in collection)) {
+    return [];
+  }
 
-    const view = get(entryListSettings)?.[collection.name] ?? { type: 'list' };
+  const { current: _allEntries } = allEntries;
 
-    const { keys, default: defaultSort } = getSortConfig({
-      collection,
-      isCommitAuthorAvailable: _allEntries.some((entry) => !!entry.commitAuthor),
-      isCommitDateAvailable: _allEntries.some((entry) => !!entry.commitDate),
-    });
+  const { keys } = getSortConfig({
+    collection,
+    isCommitAuthorAvailable: _allEntries.some((entry) => !!entry.commitAuthor),
+    isCommitDateAvailable: _allEntries.some((entry) => !!entry.commitDate),
+  });
 
-    view.sort ??= defaultSort;
-
-    set(keys.map((key) => ({ key, label: getSortKeyLabel({ collection, key }) })));
-
-    if (!equal(view, get(currentView))) {
-      currentView.set(view);
-    }
-  },
-);
+  return keys.map((key) => ({ key, label: getSortKeyLabel({ collection, key }) }));
+});

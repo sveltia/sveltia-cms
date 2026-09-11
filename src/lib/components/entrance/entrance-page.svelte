@@ -23,8 +23,8 @@
   };
 
   $effect(() => {
-    if ($cmsConfigLoaded) {
-      $announcedPageStatus = _('welcome_message', { values: { name: $appTitle } });
+    if (cmsConfigLoaded.current) {
+      announcedPageStatus.current = _('welcome_message', { values: { name: appTitle.current } });
     }
   });
 </script>
@@ -35,17 +35,17 @@
 
 <div role="none" class="container">
   <div role="none" class="inner">
-    {#if $cmsConfigLoaded}
-      <img src={$appLogoURL} alt="" class="logo" />
-      <h1>{$appTitle}</h1>
+    {#if cmsConfigLoaded.current}
+      <img src={appLogoURL.current} alt="" class="logo" />
+      <h1>{appTitle.current}</h1>
     {/if}
-    {#if $cmsConfigErrors.length}
+    {#if cmsConfigErrors.current.length}
       <div role="alert" class="message">
         <div role="none">
-          {_('config.errors', { values: { count: $cmsConfigErrors.length } })}
+          {_('config.errors', { values: { count: cmsConfigErrors.current.length } })}
         </div>
         <ul class="error">
-          {#each $cmsConfigErrors as error (error)}
+          {#each cmsConfigErrors.current as error (error)}
             <li>
               {@render parseMarkdown(error)}
             </li>
@@ -56,7 +56,7 @@
       <div role="alert" class="message">
         {_(`prefs.error.${prefsError.current.type}`)}
       </div>
-    {:else if !$cmsConfig || !Object.keys(prefs).length}
+    {:else if !cmsConfig.current || !Object.keys(prefs).length}
       <div role="alert" class="message">{_('loading_cms_config')}</div>
     {:else if auth.signInError.message && auth.signInError.context === 'dataFetch'}
       <div role="alert">
@@ -66,20 +66,20 @@
         </div>
       </div>
       <SignIn />
-    {:else if $inAuthPopup}
+    {:else if inAuthPopup.current}
       <div role="alert" class="message">{_('authorizing')}</div>
     {:else if !user.account || auth.unauthenticated}
       <SignIn />
-    {:else if !$dataLoaded}
+    {:else if !dataLoaded.current}
       <div role="alert" class="message">{_('loading_site_data')}</div>
-      {#if $dataLoadedProgress !== undefined}
-        <Progressbar now={$dataLoadedProgress} />
+      {#if dataLoadedProgress.current !== undefined}
+        <Progressbar now={dataLoadedProgress.current} />
       {/if}
     {/if}
   </div>
 </div>
 
-{#if $cmsConfigLoaded && $appTitle !== DEFAULT_APP_TITLE}
+{#if cmsConfigLoaded.current && appTitle.current !== DEFAULT_APP_TITLE}
   <div role="none" class="powered-by">
     {_('powered_by', { values: { name: DEFAULT_APP_TITLE } })}
   </div>

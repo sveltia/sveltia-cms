@@ -9,7 +9,7 @@
   /** @type {MenuButton | undefined} */
   let menuButton = $state();
 
-  const isLocalRepo = $derived($backendName === 'local');
+  const isLocalRepo = $derived(backendName.current === 'local');
   const hasAvatar = $derived(!!user.account?.avatarURL);
 </script>
 

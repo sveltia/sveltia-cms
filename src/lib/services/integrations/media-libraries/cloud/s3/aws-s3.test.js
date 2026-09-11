@@ -1,15 +1,12 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { cmsConfig } from '$lib/services/config';
 
 import awsS3Service, { getLibraryOptions, isEnabled, list, search, upload } from './aws-s3';
 
 // Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
-
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('./index', () => ({
@@ -37,7 +34,7 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(get).mockReturnValue({
+    cmsConfig.current = /** @type {any} */ ({
       media_libraries: {
         aws_s3: {
           access_key_id: mockAccessKeyId,
@@ -91,13 +88,13 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
     });
 
     it('should return false when config is missing', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(isEnabled()).toBe(false);
     });
 
     it('should return false when credentials are missing', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           aws_s3: {
             config: {},
@@ -109,7 +106,7 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
     });
 
     it('should return true when field-level config is present', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(
         isEnabled(
@@ -128,7 +125,7 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
     });
 
     it('should return false when field-level config has missing credentials', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(
         isEnabled(
@@ -207,7 +204,7 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
     });
 
     it('should reject when config is not available', async () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       await expect(
         list({
@@ -245,7 +242,7 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
     });
 
     it('should reject when config is not available', async () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       await expect(
         search('photo', {
@@ -279,7 +276,7 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
     });
 
     it('should reject when config is not available', async () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 

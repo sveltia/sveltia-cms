@@ -1,7 +1,9 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
-import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
+
+import { allEntries } from '$lib/services/contents';
+import { selectedCollection } from '$lib/services/contents/collection';
 
 import {
   DEFAULT_SORT_KEYS,
@@ -9,6 +11,7 @@ import {
   getSortConfig,
   getSortKeyLabel,
   getSortKeyType,
+  sortKeys,
   SPECIAL_SORT_KEY_TYPES,
   SPECIAL_SORT_KEYS,
 } from './sort-keys';
@@ -23,6 +26,10 @@ vi.mock('@sveltia/i18n', () => ({
 }));
 
 vi.mock('$lib/services/config');
+vi.mock('$lib/services/contents', () => ({ allEntries: { current: [] } }));
+vi.mock('$lib/services/contents/collection', () => ({
+  selectedCollection: { current: undefined },
+}));
 vi.mock('$lib/services/contents/entry/fields');
 
 describe('Test getSortConfig()', async () => {
@@ -96,11 +103,13 @@ describe('Test getSortConfig()', async () => {
   };
 
   // @ts-ignore
-  (await import('$lib/services/config')).cmsConfig = writable({
-    backend: { name: 'github' },
-    media_folder: 'static/uploads',
-    collections: [{ ...collectionBase }],
-  });
+  (await import('$lib/services/config')).cmsConfig = {
+    current: {
+      backend: { name: 'github' },
+      media_folder: 'static/uploads',
+      collections: [{ ...collectionBase }],
+    },
+  };
 
   test('sortable_fields not defined', () => {
     expect(
@@ -1103,120 +1112,55 @@ describe('Test getSortKeyLabel()', () => {
   });
 });
 
-describe('Test sortKeys store', () => {
-  test('sortKeys derived store initializes correctly', async () => {
-    const { sortKeys } = await import('./sort-keys');
+describe('Test sortKeys state', () => {
+  test('is empty when no collection is selected', () => {
+    selectedCollection.current = undefined;
 
-    expect(sortKeys).toBeDefined();
-    expect(typeof sortKeys.subscribe).toBe('function');
-
-    // Subscribe to the store to verify it works
-    const unsubscribe = sortKeys.subscribe(() => {
-      // Store is subscribed successfully
-    });
-
-    unsubscribe();
+    expect(sortKeys.current).toEqual([]);
   });
 
-  test('sortKeys store sets empty array for file/singleton collections', async () => {
-    const { sortKeys } = await import('./sort-keys');
-    let result = /** @type {any} */ ([]);
-
-    const unsubscribe = sortKeys.subscribe((_value) => {
-      result = _value;
+  test('is empty for file/singleton collections', () => {
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'settings',
+      _type: 'file',
+      files: [],
     });
 
-    // For file collections, sortKeys returns an empty array
-    expect(Array.isArray(result)).toBe(true);
-
-    unsubscribe();
+    expect(sortKeys.current).toEqual([]);
   });
 
-  test('sortKeys store returns sort key objects with label', async () => {
-    const { sortKeys } = await import('./sort-keys');
-    let sortKeysResult = /** @type {any} */ ([]);
+  test('lists the sort keys with labels for an entry collection', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
 
-    const unsubscribe = sortKeys.subscribe((_value) => {
-      sortKeysResult = _value;
-    });
-
-    // The sortKeys store should return an array of objects
-    expect(Array.isArray(sortKeysResult)).toBe(true);
-
-    // Each item should have key and label properties if not empty
-    if (sortKeysResult.length > 0) {
-      expect(sortKeysResult[0]).toHaveProperty('key');
-      expect(sortKeysResult[0]).toHaveProperty('label');
-    }
-
-    unsubscribe();
-  });
-
-  test('sortKeys store executes full callback when selectedCollection is a folder collection', async () => {
-    const { sortKeys } = await import('./sort-keys');
-    const { selectedCollection } = await import('$lib/services/contents/collection');
-    const { allEntries } = await import('$lib/services/contents');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const { entryListSettings } = await import('$lib/services/contents/collection/view/settings');
+    vi.mocked(getField).mockImplementation(({ keyPath }) =>
+      keyPath === 'title' ? { name: 'title', widget: 'string' } : undefined,
+    );
 
     /** @type {any} */
     const folderCollection = {
       name: 'posts',
       _type: 'entry',
       folder: 'content/posts',
-      _i18n: {
-        i18nEnabled: false,
-        allLocales: ['_default'],
-        initialLocales: ['_default'],
-        defaultLocale: '_default',
-        structure: 'single_file',
-        structureMap: {
-          i18nSingleFile: false,
-          i18nSingleFileDefaultRoot: false,
-          i18nMultiFile: false,
-          i18nMultiFolder: false,
-          i18nMultiRootFolder: false,
-        },
-        canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
-        omitDefaultLocaleFromFilePath: false,
-        omitDefaultLocaleFromPreviewPath: false,
-      },
-      _file: { extension: 'json', format: 'json' },
-      _thumbnailFieldNames: [],
       fields: [{ name: 'title', widget: 'string' }],
     };
 
-    entryListSettings.set(undefined);
-    currentView.set({ type: 'list' });
+    allEntries.current = /** @type {any[]} */ ([
+      {
+        id: 'posts/post-1',
+        slug: 'post-1',
+        commitAuthor: 'user',
+        commitDate: new Date(),
+        locales: { _default: { path: 'content/posts/post-1.json', content: {} } },
+      },
+    ]);
+    selectedCollection.current = folderCollection;
 
-    allEntries.set(
-      /** @type {any[]} */ ([
-        {
-          id: 'posts/post-1',
-          slug: 'post-1',
-          commitAuthor: 'user',
-          commitDate: new Date(),
-          locales: { _default: { path: 'content/posts/post-1.json', content: {} } },
-        },
-      ]),
-    );
-
-    selectedCollection.set(folderCollection);
-
-    let sortKeysResult = /** @type {any} */ (null);
-
-    const unsubscribe = sortKeys.subscribe((_value) => {
-      sortKeysResult = _value;
-    });
-
-    // With a folder collection and entries, the full callback runs (covers lines 253-254:
-    // isCommitAuthorAvailable/isCommitDateAvailable, line 262: currentView.set)
-    expect(Array.isArray(sortKeysResult)).toBe(true);
-
-    unsubscribe();
+    // The default `author` and `date` keys take precedence over the commit author and date, and
+    // they are dropped because the collection has no such fields
+    expect(sortKeys.current).toEqual([{ key: 'title', label: 'title' }]);
 
     // Clean up
-    selectedCollection.set(undefined);
-    allEntries.set([]);
+    selectedCollection.current = undefined;
+    allEntries.current = [];
   });
 });

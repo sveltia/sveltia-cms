@@ -1,6 +1,5 @@
 import { unique } from '@sveltia/utils/array';
 import { IndexedDB } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
@@ -25,21 +24,21 @@ import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
  * @param {string[]} args.assetPaths List of associated asset paths.
  */
 export const updateStores = ({ ids, assetPaths }) => {
-  const _allEntries = get(allEntries);
+  const _allEntries = allEntries.current;
   const idSet = new Set(ids);
 
-  allEntries.set(_allEntries.filter((file) => !idSet.has(file.id)));
+  allEntries.current = _allEntries.filter((file) => !idSet.has(file.id));
 
-  contentUpdatesToast.set({
+  contentUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
     deleted: true,
     count: ids.length,
-  });
+  };
 
   if (assetPaths.length) {
     const assetPathSet = new Set(assetPaths);
 
-    allAssets.update((assets) => assets.filter((asset) => !assetPathSet.has(asset.path)));
+    allAssets.current = allAssets.current.filter((asset) => !assetPathSet.has(asset.path));
   }
 };
 
@@ -49,7 +48,7 @@ export const updateStores = ({ ids, assetPaths }) => {
  * @param {Asset[]} [assets] List of associated assets to be deleted.
  */
 export const deleteEntries = async (entries, assets = []) => {
-  const databaseName = get(backend)?.repository?.databaseName;
+  const databaseName = backend.current?.repository?.databaseName;
   const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
   const changes = /** @type {FileChange[]} */ ([]);
   const action = 'delete';
@@ -80,7 +79,9 @@ export const deleteEntries = async (entries, assets = []) => {
   // When the collection has manual reordering enabled, bundle the renumber updates of the remaining
   // entries into the same commit so that delete + renumber is one atomic operation. The same
   // file-cache handle is reused to avoid opening a second IndexedDB connection.
-  const collection = /** @type {InternalEntryCollection | undefined} */ (get(selectedCollection));
+  const collection = /** @type {InternalEntryCollection | undefined} */ (
+    selectedCollection.current
+  );
 
   const { changes: renumberChanges, savingEntries: renumberSavingEntries } =
     await buildRenumberChanges(collection, {
@@ -95,7 +96,7 @@ export const deleteEntries = async (entries, assets = []) => {
     savingEntries: renumberSavingEntries,
     options: {
       commitType: 'delete',
-      collection: get(selectedCollection),
+      collection: selectedCollection.current,
     },
   });
 

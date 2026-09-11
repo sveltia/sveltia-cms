@@ -1,6 +1,6 @@
-import { get } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
+import { cmsConfig } from '$lib/services/config';
 import {
   formatEntryFile,
   formatFrontMatter,
@@ -15,20 +15,7 @@ import {
 
 // Mock the cmsConfig store
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: {
-    subscribe: vi.fn(),
-    set: vi.fn(),
-  },
-}));
-
-// Mock the get function from svelte/store to return our mock config
-vi.mock('svelte/store', () => ({
-  get: vi.fn(() => ({
-    output: {
-      yaml: { indent_size: 2, quote: 'none' },
-      json: { indent_style: 'space', indent_size: 2 },
-    },
-  })),
+  cmsConfig: { current: undefined },
 }));
 
 // Mock custom file formats
@@ -281,7 +268,7 @@ image:
 
   test('uses empty legacyOptions when not provided (line 53)', () => {
     // Mock get to return undefined for output.yaml to test the ?? {} fallback on line 52
-    vi.mocked(get).mockReturnValueOnce({ output: { yaml: undefined } });
+    cmsConfig.current = /** @type {any} */ ({ output: { yaml: undefined } });
 
     const result = formatYAML(object);
 
@@ -328,7 +315,7 @@ image:
 
   test('uses empty options when cmsConfig.output.json is undefined (line 20)', () => {
     // Mock get to return undefined for output.json to test the ?? {} fallback
-    vi.mocked(get).mockReturnValueOnce({ output: { json: undefined } });
+    cmsConfig.current = /** @type {any} */ ({ output: { json: undefined } });
 
     const result = formatJSON(object);
 

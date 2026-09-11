@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Import the stores and functions to test
@@ -21,78 +20,78 @@ import {
 describe('editor/index', () => {
   beforeEach(() => {
     // Reset all stores to their initial values
-    showContentOverlay.set(false);
-    showDuplicateToast.set(false);
-    activeInlineEditors.set(0);
-    translatorApiKeyDialogState.set({ show: false, multiple: false });
-    copyFromLocaleToast.set({
+    showContentOverlay.current = false;
+    showDuplicateToast.current = false;
+    activeInlineEditors.current = 0;
+    translatorApiKeyDialogState.current = { show: false, multiple: false };
+    copyFromLocaleToast.current = {
       id: undefined,
       show: false,
       status: 'success',
       message: undefined,
       count: 1,
       sourceLanguage: undefined,
-    });
-    editorFirstPane.set(null);
-    editorSecondPane.set(null);
-    selectAssetsView.set(undefined);
+    };
+    editorFirstPane.current = null;
+    editorSecondPane.current = null;
+    selectAssetsView.current = undefined;
     // Clear the Set
     customPreviewStyleRegistry.clear();
   });
 
   describe('showContentOverlay', () => {
     it('should initialize as false', () => {
-      expect(get(showContentOverlay)).toBe(false);
+      expect(showContentOverlay.current).toBe(false);
     });
 
     it('should update when set to true', () => {
-      showContentOverlay.set(true);
-      expect(get(showContentOverlay)).toBe(true);
+      showContentOverlay.current = true;
+      expect(showContentOverlay.current).toBe(true);
     });
 
     it('should update when set to false', () => {
-      showContentOverlay.set(true);
-      showContentOverlay.set(false);
-      expect(get(showContentOverlay)).toBe(false);
+      showContentOverlay.current = true;
+      showContentOverlay.current = false;
+      expect(showContentOverlay.current).toBe(false);
     });
   });
 
   describe('showDuplicateToast', () => {
     it('should initialize as false', () => {
-      expect(get(showDuplicateToast)).toBe(false);
+      expect(showDuplicateToast.current).toBe(false);
     });
 
     it('should update when set to true', () => {
-      showDuplicateToast.set(true);
-      expect(get(showDuplicateToast)).toBe(true);
+      showDuplicateToast.current = true;
+      expect(showDuplicateToast.current).toBe(true);
     });
 
     it('should update when set to false', () => {
-      showDuplicateToast.set(true);
-      showDuplicateToast.set(false);
-      expect(get(showDuplicateToast)).toBe(false);
+      showDuplicateToast.current = true;
+      showDuplicateToast.current = false;
+      expect(showDuplicateToast.current).toBe(false);
     });
   });
 
   describe('activeInlineEditors', () => {
     it('should initialize as zero', () => {
-      expect(get(activeInlineEditors)).toBe(0);
+      expect(activeInlineEditors.current).toBe(0);
     });
 
     it('should count multiple active editors', () => {
-      activeInlineEditors.update((count) => count + 1);
-      activeInlineEditors.update((count) => count + 1);
-      expect(get(activeInlineEditors)).toBe(2);
-      activeInlineEditors.update((count) => count - 1);
-      expect(get(activeInlineEditors)).toBe(1);
-      activeInlineEditors.update((count) => count - 1);
-      expect(get(activeInlineEditors)).toBe(0);
+      activeInlineEditors.current += 1;
+      activeInlineEditors.current += 1;
+      expect(activeInlineEditors.current).toBe(2);
+      activeInlineEditors.current -= 1;
+      expect(activeInlineEditors.current).toBe(1);
+      activeInlineEditors.current -= 1;
+      expect(activeInlineEditors.current).toBe(0);
     });
   });
 
   describe('translatorApiKeyDialogState', () => {
     it('should initialize with correct default values', () => {
-      const state = get(translatorApiKeyDialogState);
+      const state = translatorApiKeyDialogState.current;
 
       expect(state).toEqual({
         show: false,
@@ -101,43 +100,43 @@ describe('editor/index', () => {
     });
 
     it('should update show property', () => {
-      translatorApiKeyDialogState.set({ show: true, multiple: false });
-      expect(get(translatorApiKeyDialogState).show).toBe(true);
+      translatorApiKeyDialogState.current = { show: true, multiple: false };
+      expect(translatorApiKeyDialogState.current.show).toBe(true);
     });
 
     it('should update multiple property', () => {
-      translatorApiKeyDialogState.set({ show: false, multiple: true });
-      expect(get(translatorApiKeyDialogState).multiple).toBe(true);
+      translatorApiKeyDialogState.current = { show: false, multiple: true };
+      expect(translatorApiKeyDialogState.current.multiple).toBe(true);
     });
 
     it('should include resolve function when provided', () => {
       const mockResolve = vi.fn();
 
-      translatorApiKeyDialogState.set({
+      translatorApiKeyDialogState.current = {
         show: true,
         multiple: false,
         resolve: mockResolve,
-      });
+      };
 
-      const state = get(translatorApiKeyDialogState);
+      const state = translatorApiKeyDialogState.current;
 
       expect(state.resolve).toBe(mockResolve);
     });
 
-    it('should update using the update method', () => {
-      translatorApiKeyDialogState.update((state) => ({
-        ...state,
+    it('should update by spreading the current state', () => {
+      translatorApiKeyDialogState.current = {
+        ...translatorApiKeyDialogState.current,
         show: true,
-      }));
+      };
 
-      expect(get(translatorApiKeyDialogState).show).toBe(true);
-      expect(get(translatorApiKeyDialogState).multiple).toBe(false);
+      expect(translatorApiKeyDialogState.current.show).toBe(true);
+      expect(translatorApiKeyDialogState.current.multiple).toBe(false);
     });
   });
 
   describe('copyFromLocaleToast', () => {
     it('should initialize with correct default values', () => {
-      const toast = get(copyFromLocaleToast);
+      const toast = copyFromLocaleToast.current;
 
       expect(toast).toEqual({
         id: undefined,
@@ -159,18 +158,18 @@ describe('editor/index', () => {
         sourceLanguage: 'en',
       };
 
-      copyFromLocaleToast.set(newToast);
-      expect(get(copyFromLocaleToast)).toEqual(newToast);
+      copyFromLocaleToast.current = newToast;
+      expect(copyFromLocaleToast.current).toEqual(newToast);
     });
 
-    it('should update individual properties using update method', () => {
-      copyFromLocaleToast.update((toast) => ({
-        ...toast,
+    it('should update individual properties by spreading the current state', () => {
+      copyFromLocaleToast.current = {
+        ...copyFromLocaleToast.current,
         show: true,
         count: 3,
-      }));
+      };
 
-      const updated = get(copyFromLocaleToast);
+      const updated = copyFromLocaleToast.current;
 
       expect(updated.show).toBe(true);
       expect(updated.count).toBe(3);
@@ -178,22 +177,22 @@ describe('editor/index', () => {
     });
 
     it('should handle different status values', () => {
-      copyFromLocaleToast.set({
+      copyFromLocaleToast.current = {
         id: 1,
         show: true,
         status: /** @type {'info'} */ ('info'),
         message: 'Info message',
         count: 1,
         sourceLanguage: 'fr',
-      });
+      };
 
-      expect(get(copyFromLocaleToast).status).toBe('info');
+      expect(copyFromLocaleToast.current.status).toBe('info');
     });
   });
 
   describe('editorFirstPane', () => {
     it('should initialize as null', () => {
-      expect(get(editorFirstPane)).toBeNull();
+      expect(editorFirstPane.current).toBeNull();
     });
 
     it('should update when set to a pane value', () => {
@@ -202,25 +201,23 @@ describe('editor/index', () => {
         locale: 'en',
       });
 
-      editorFirstPane.set(pane);
-      expect(get(editorFirstPane)).toBe(pane);
+      editorFirstPane.current = pane;
+      expect(editorFirstPane.current).toBe(pane);
     });
 
     it('should reset to null', () => {
-      editorFirstPane.set(
-        /** @type {import('$lib/types/private').EntryEditorPane} */ ({
-          mode: 'preview',
-          locale: 'en',
-        }),
-      );
-      editorFirstPane.set(null);
-      expect(get(editorFirstPane)).toBeNull();
+      editorFirstPane.current = /** @type {import('$lib/types/private').EntryEditorPane} */ ({
+        mode: 'preview',
+        locale: 'en',
+      });
+      editorFirstPane.current = null;
+      expect(editorFirstPane.current).toBeNull();
     });
   });
 
   describe('editorSecondPane', () => {
     it('should initialize as null', () => {
-      expect(get(editorSecondPane)).toBeNull();
+      expect(editorSecondPane.current).toBeNull();
     });
 
     it('should update when set to a pane value', () => {
@@ -229,25 +226,23 @@ describe('editor/index', () => {
         locale: 'en',
       });
 
-      editorSecondPane.set(pane);
-      expect(get(editorSecondPane)).toBe(pane);
+      editorSecondPane.current = pane;
+      expect(editorSecondPane.current).toBe(pane);
     });
 
     it('should reset to null', () => {
-      editorSecondPane.set(
-        /** @type {import('$lib/types/private').EntryEditorPane} */ ({
-          mode: 'edit',
-          locale: 'en',
-        }),
-      );
-      editorSecondPane.set(null);
-      expect(get(editorSecondPane)).toBeNull();
+      editorSecondPane.current = /** @type {import('$lib/types/private').EntryEditorPane} */ ({
+        mode: 'edit',
+        locale: 'en',
+      });
+      editorSecondPane.current = null;
+      expect(editorSecondPane.current).toBeNull();
     });
   });
 
   describe('selectAssetsView', () => {
     it('should initialize as undefined', () => {
-      expect(get(selectAssetsView)).toBeUndefined();
+      expect(selectAssetsView.current).toBeUndefined();
     });
 
     it('should update when set to a view object', () => {
@@ -256,8 +251,8 @@ describe('editor/index', () => {
         sortBy: 'name',
       });
 
-      selectAssetsView.set(view);
-      expect(get(selectAssetsView)).toEqual(view);
+      selectAssetsView.current = view;
+      expect(selectAssetsView.current).toEqual(view);
     });
 
     it('should handle different view types', () => {
@@ -265,14 +260,14 @@ describe('editor/index', () => {
         type: 'list',
       });
 
-      selectAssetsView.set(listView);
-      expect(get(selectAssetsView)).toEqual(listView);
+      selectAssetsView.current = listView;
+      expect(selectAssetsView.current).toEqual(listView);
     });
 
     it('should reset to undefined', () => {
-      selectAssetsView.set({ type: 'grid' });
-      selectAssetsView.set(undefined);
-      expect(get(selectAssetsView)).toBeUndefined();
+      selectAssetsView.current = { type: 'grid' };
+      selectAssetsView.current = undefined;
+      expect(selectAssetsView.current).toBeUndefined();
     });
   });
 
@@ -468,46 +463,6 @@ describe('editor/index', () => {
       expect(entries).toHaveLength(2);
       expect(entries[0][0]).toBe('posts');
       expect(entries[1][0]).toBe('pages');
-    });
-  });
-
-  describe('store reactivity', () => {
-    it('should trigger subscriptions when stores are updated', () => {
-      const mockCallback = vi.fn();
-      const unsubscribe = showContentOverlay.subscribe(mockCallback);
-
-      // Initial call with current value
-      expect(mockCallback).toHaveBeenCalledWith(false);
-
-      // Update should trigger subscription
-      showContentOverlay.set(true);
-      expect(mockCallback).toHaveBeenCalledWith(true);
-
-      unsubscribe();
-    });
-
-    it('should handle multiple subscribers', () => {
-      const mockCallback1 = vi.fn();
-      const mockCallback2 = vi.fn();
-      const unsubscribe1 = copyFromLocaleToast.subscribe(mockCallback1);
-      const unsubscribe2 = copyFromLocaleToast.subscribe(mockCallback2);
-
-      const newToast = {
-        id: 456,
-        show: true,
-        status: /** @type {'info'} */ ('info'),
-        message: 'Test message',
-        count: 2,
-        sourceLanguage: 'es',
-      };
-
-      copyFromLocaleToast.set(newToast);
-
-      expect(mockCallback1).toHaveBeenCalledWith(newToast);
-      expect(mockCallback2).toHaveBeenCalledWith(newToast);
-
-      unsubscribe1();
-      unsubscribe2();
     });
   });
 });

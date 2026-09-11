@@ -7,7 +7,6 @@
   import ParentFolderTreeItem from '$lib/components/contents/details/editor/parent-folder-tree-item.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { getNewFolderName, validateNewFolderName } from '$lib/services/common/slug';
-  import { allEntries } from '$lib/services/contents';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import {
@@ -115,10 +114,6 @@
       return undefined;
     }
 
-    // `$allEntries` is a key, because `getEntriesByCollection()` reads it indirectly, while
-    // `$unpublishedEntries` is tracked as a normal dependency
-    void $allEntries;
-
     const { name } = collection;
 
     // With Editorial Workflow a section can be started and filled in one sitting: a page that only
@@ -127,7 +122,7 @@
     // folders as they’ll be once the drafts land
     const entries = mergeUnpublishedEntries(
       getEntriesByCollection(name),
-      $unpublishedEntries.filter(({ workflow }) => workflow.collectionName === name),
+      unpublishedEntries.current.filter(({ workflow }) => workflow.collectionName === name),
     );
 
     return /** @type {NestedTreeNode} */ ({
@@ -158,9 +153,6 @@
     if (!collection || isDefaultLocale) {
       return selectedPath;
     }
-
-    // `$allEntries` is a key, the same way it is for the tree
-    void $allEntries;
 
     return localizeDirPath({ collection, dirPath: selectedPath, locale });
   });

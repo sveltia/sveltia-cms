@@ -1,4 +1,3 @@
-import { writable } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getDefaultValueMap } from './defaults';
@@ -14,7 +13,7 @@ vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
 
 // Mock the config store
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: writable({}),
+  cmsConfig: { current: {} },
 }));
 
 /** @type {Pick<MediaField, 'widget' | 'name'>} */

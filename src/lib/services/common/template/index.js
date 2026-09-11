@@ -1,6 +1,5 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { truncate } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import { TEMPLATE_TAG_REGEX } from '$lib/services/common/template/constants';
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
@@ -134,7 +133,7 @@ export const fillTemplate = (template, options) => {
     _file: { basePath } = {},
   } = _type === 'entry' ? collection : {};
 
-  const slugOptions = get(cmsConfig)?.slug;
+  const slugOptions = cmsConfig.current?.slug;
   // @todo Remove the legacy option prior to the 1.0 release.
   const maxlength = legacySlugLength ?? slugOptions?.maxlength;
   const timeZone = slugOptions?.timezone === 'local' ? undefined : 'UTC';

@@ -1,14 +1,13 @@
 import { sleep } from '@sveltia/utils/misc';
 import { flushSync } from 'svelte';
-import { derived, get, writable } from 'svelte/store';
 
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
+import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { openNewTab } from '$lib/services/utils/window';
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import { InternalCmsConfig } from '$lib/types/private';
  */
 
@@ -28,23 +27,20 @@ import { openNewTab } from '$lib/services/utils/window';
  * Whether the app has an overlay. Some elements have to be `inert` while an overlay is displayed.
  * We cannot use the `<Modal>` component for these overlays because it will make everything inert,
  * including the toast notifications and announced page title.
- * @type {Readable<boolean>}
  */
-export const hasOverlay = derived(
-  [showContentOverlay, showAssetOverlay],
-  ([_showContentOverlay, _showAssetOverlay]) => _showContentOverlay || _showAssetOverlay,
+export const hasOverlay = createDerivedState(
+  () => showContentOverlay.current || showAssetOverlay.current,
 );
 
 /**
- * @type {Writable<string>}
+ * Name of the currently selected page.
  */
-export const selectedPageName = writable('');
+export const selectedPageName = createRawState('');
 
 /**
  * Page status to be announced by screen readers.
- * @type {Writable<string>}
  */
-export const announcedPageStatus = writable('');
+export const announcedPageStatus = createRawState('');
 
 /**
  * Parse the URL and return the decoded result.
@@ -327,7 +323,7 @@ export const goBack = (path, options = {}) => {
  */
 export const openProductionSite = () => {
   const { display_url: displayURL, _siteURL: siteURL } = /** @type {InternalCmsConfig} */ (
-    get(cmsConfig)
+    cmsConfig.current
   );
 
   openNewTab(displayURL || siteURL || '/');

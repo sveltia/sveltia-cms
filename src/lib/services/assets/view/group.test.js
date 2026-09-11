@@ -9,10 +9,6 @@ vi.mock('@sveltia/utils/string', () => ({
   compare: vi.fn(),
 }));
 
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
-
 vi.mock('@sveltia/i18n', () => ({
   _: (/** @type {string} */ key) => (key === 'other' ? 'Other' : key),
 }));
@@ -27,19 +23,15 @@ describe('assets/view/group', () => {
   /** @type {import('vitest').MockedFunction<any>} */
   let compareMock;
   /** @type {import('vitest').MockedFunction<any>} */
-  let getMock;
-  /** @type {import('vitest').MockedFunction<any>} */
   let getRegexMock;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     const { compare } = await import('@sveltia/utils/string');
-    const { get } = await import('svelte/store');
     const { getRegex } = await import('$lib/services/utils/regex');
 
     compareMock = /** @type {any} */ (vi.mocked(compare));
-    getMock = /** @type {any} */ (vi.mocked(get));
     getRegexMock = /** @type {any} */ (vi.mocked(getRegex));
 
     // Default compare implementation for sorting
@@ -50,7 +42,6 @@ describe('assets/view/group', () => {
     });
 
     // Mock get() for currentView store — _ is called directly via @sveltia/i18n mock
-    getMock.mockReturnValue(() => 'Other');
 
     // Mock getRegex to return null by default (when no pattern)
     getRegexMock.mockReturnValue(null);

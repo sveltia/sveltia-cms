@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -18,7 +16,7 @@ export const WORKFLOW_BRANCH_PREFIX = 'cms';
  * @returns {string} Branch name prefix, e.g. `cms/` or `cms/contributor/repo/`.
  */
 export const getBranchPrefix = () => {
-  const fork = get(forkedRepository);
+  const fork = forkedRepository.current;
 
   return fork
     ? `${WORKFLOW_BRANCH_PREFIX}/${fork.owner}/${fork.repo}/`

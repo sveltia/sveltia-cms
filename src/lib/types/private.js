@@ -1,6 +1,5 @@
 /**
  * @import { Component } from 'svelte';
- * @import { Writable } from 'svelte/store';
  * @import {
  * BackendName,
  * BodyFieldOptions,
@@ -1272,8 +1271,8 @@
  * nested, the first element is the top-level component, and the last element is the immediate
  * parent component. If the field is not in a rich text editor component, the array is empty.
  * @property {DraftValueStoreKey} valueStoreKey Key to store the values in {@link EntryDraft}.
- * @property {Writable<Component>} [extraHint] Component to render an extra hint in the field
- * editor.
+ * @property {{ current: Component | undefined }} [extraHint] Component to render an extra hint in
+ * the field editor.
  */
 
 /**
@@ -1440,7 +1439,7 @@
  */
 
 /**
- * Shape of the `processedAssets` store.
+ * Shape of the `processedAssets` state.
  * @typedef {object} ProcessedAssets
  * @property {boolean} processing Whether the files are being processed.
  * @property {File[]} validFiles Files that can be uploaded.

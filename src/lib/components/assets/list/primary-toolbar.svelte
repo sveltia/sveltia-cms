@@ -21,15 +21,17 @@
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   const assets = $derived.by(() => {
-    if ($selectedAssets.length) return [...$selectedAssets];
-    if ($focusedAsset) return [$focusedAsset];
+    if (selectedAssets.current.length) return [...selectedAssets.current];
+    if (focusedAsset.current) return [focusedAsset.current];
     return [];
   });
 
   // Uploading to the media library commits straight to the configured branch rather than going
   // through review, so it’s not something an Open Authoring contributor can do. An asset attached
   // to an entry is committed with that entry, so it’s unaffected
-  const uploadDisabled = $derived($openAuthoring || !canCreateAsset($targetAssetFolder));
+  const uploadDisabled = $derived(
+    openAuthoring.current || !canCreateAsset(targetAssetFolder.current),
+  );
 </script>
 
 <Toolbar variant="primary" aria-label={_('folder')}>
@@ -43,30 +45,34 @@
   {/if}
   <h2 role="none">
     {#key appLocale.current}
-      <bdi>{$selectedAssetFolder ? getFolderLabelByCollection($selectedAssetFolder) : ''}</bdi>
+      <bdi
+        >{selectedAssetFolder.current
+          ? getFolderLabelByCollection(selectedAssetFolder.current)
+          : ''}</bdi
+      >
     {/key}
-    {#if !env.isSmallScreen && $selectedAssetFolder?.internalPath !== undefined}
-      <span role="none" dir="ltr">/{$selectedAssetFolder.internalPath}</span>
+    {#if !env.isSmallScreen && selectedAssetFolder.current?.internalPath !== undefined}
+      <span role="none" dir="ltr">/{selectedAssetFolder.current.internalPath}</span>
     {/if}
   </h2>
   {#if !(env.isSmallScreen || env.isMediumScreen)}
-    <PreviewAssetButton asset={$focusedAsset} />
-    <CopyAssetsButton assets={$focusedAsset ? [$focusedAsset] : []} />
+    <PreviewAssetButton asset={focusedAsset.current} />
+    <CopyAssetsButton assets={focusedAsset.current ? [focusedAsset.current] : []} />
     <DownloadAssetsButton {assets} />
     <DeleteAssetsButton
       {assets}
       buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
       dialogDescription={_(
-        assets.length > 1 && assets.length === $listedAssets.length
+        assets.length > 1 && assets.length === listedAssets.current.length
           ? 'confirm_deleting_all_assets'
           : 'confirm_deleting_selected_assets',
         { values: { count: assets.length } },
       )}
     />
-    <EditOptionsButton asset={$focusedAsset} />
+    <EditOptionsButton asset={focusedAsset.current} />
   {/if}
   <FloatingActionButtonWrapper>
-    {#if !env.isSmallScreen || ($listedAssets.length && !uploadDisabled)}
+    {#if !env.isSmallScreen || (listedAssets.current.length && !uploadDisabled)}
       <UploadAssetsButton label={env.isSmallScreen ? undefined : _('upload')} />
     {/if}
   </FloatingActionButtonWrapper>

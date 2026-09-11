@@ -22,6 +22,7 @@
     collectionState,
     listedEntries,
     reordering,
+    setReorderMode,
   } from '$lib/services/contents/collection/view';
   import { env } from '$lib/services/user/env.svelte';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -44,11 +45,13 @@
   const _sanitize = (str) =>
     sanitize(/** @type {string} */ (marked.parseInline(str)), SANITIZE_OPTIONS);
 
-  const name = $derived($selectedCollection?.name ?? '');
-  const description = $derived($selectedCollection?.description);
+  const name = $derived(selectedCollection.current?.name ?? '');
+  const description = $derived(selectedCollection.current?.description);
   const collectionLabel = $derived(
     // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
-    appLocale.current && $selectedCollection ? getCollectionLabel($selectedCollection) : name,
+    appLocale.current && selectedCollection.current
+      ? getCollectionLabel(selectedCollection.current)
+      : name,
   );
   const {
     isEntryCollection,
@@ -59,11 +62,11 @@
     remaining,
     nearingQuota,
     creationDisabled,
-  } = $derived($collectionState);
-  const deleteDisabled = $derived(!$selectedEntries.length || !canDelete);
+  } = $derived(collectionState.current);
+  const deleteDisabled = $derived(!selectedEntries.current.length || !canDelete);
 </script>
 
-{#if $selectedCollection}
+{#if selectedCollection.current}
   <Toolbar variant="primary" aria-label={_('collection')}>
     {#if env.isSmallScreen}
       <BackButton
@@ -83,16 +86,18 @@
         </TruncatedText>
       </div>
     {/if}
-    {#if isEntryCollection && $reordering}
+    {#if isEntryCollection && reordering.current}
       <ReorderControls />
     {:else if isEntryCollection}
       <!-- Taking a published entry off the site is a maintainer’s call, and the entry list has no
       other bulk action, so a contributor has nothing to select entries for -->
-      {#if !env.isSmallScreen && !$openAuthoring}
+      {#if !env.isSmallScreen && !openAuthoring.current}
         <Button
           variant="ghost"
           label={_('delete')}
-          aria-label={_('delete_selected_entries', { values: { count: $selectedEntries.length } })}
+          aria-label={_('delete_selected_entries', {
+            values: { count: selectedEntries.current.length },
+          })}
           disabled={deleteDisabled}
           onclick={() => {
             showDeleteDialog = true;
@@ -104,14 +109,14 @@
           variant="ghost"
           label={_('reorder')}
           aria-label={_('reorder_entries')}
-          disabled={!$listedEntries.length}
+          disabled={!listedEntries.current.length}
           onclick={() => {
-            $reordering = true;
+            setReorderMode(true);
           }}
         />
       {/if}
       <FloatingActionButtonWrapper>
-        {#if !env.isSmallScreen || ($listedEntries.length && !creationDisabled)}
+        {#if !env.isSmallScreen || (listedEntries.current.length && !creationDisabled)}
           <CreateEntryButton
             collectionName={name}
             label={env.isSmallScreen ? undefined : _('create')}

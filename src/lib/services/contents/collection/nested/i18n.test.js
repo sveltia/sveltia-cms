@@ -10,7 +10,7 @@ import {
   hasLocalizedFolders,
   localizeDirPath,
 } from '$lib/services/contents/collection/nested/i18n';
-import { mergeUnpublishedEntries } from '$lib/services/workflow';
+import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
 vi.mock('$lib/services/contents/collection', () => ({
   isEntryCollection: vi.fn(),
@@ -22,14 +22,8 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
 
 vi.mock('$lib/services/workflow', () => ({
   mergeUnpublishedEntries: vi.fn((entries, drafts) => [...entries, ...drafts]),
-  unpublishedEntries: { subscribe: vi.fn() },
+  unpublishedEntries: { current: [] },
 }));
-
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return { ...actual, get: vi.fn(() => []) };
-});
 
 /**
  * Create an entry stored at the given sub path in each locale.
@@ -188,10 +182,8 @@ describe('localizeDirPath()', () => {
   });
 
   test('counts the unpublished entries', async () => {
-    const { get } = await import('svelte/store');
-
     vi.mocked(getEntriesByCollection).mockReturnValue([]);
-    vi.mocked(get).mockReturnValue([
+    unpublishedEntries.current = /** @type {any} */ ([
       {
         ...entry('9', { en: 'docs/_index', fr: 'documentation/_index' }),
         workflow: { collectionName: 'pages' },

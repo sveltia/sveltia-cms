@@ -3,18 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 // Mock the config service to prevent issues with uninitialized stores
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn((callback) => callback({})) },
+  cmsConfig: { current: {} },
 }));
-
-// Mock svelte/store get function to return empty config
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({})),
-  };
-});
 
 // Import after mocks are set up
 const { createKeyPathList } = await import('./key-path.js');

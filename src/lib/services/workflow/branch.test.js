@@ -5,7 +5,7 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 describe('workflow/branch', () => {
   afterEach(() => {
-    forkedRepository.set(undefined);
+    forkedRepository.current = undefined;
   });
 
   describe('getBranchName', () => {
@@ -35,7 +35,7 @@ describe('workflow/branch', () => {
     });
 
     test('includes the fork path with Open Authoring', () => {
-      forkedRepository.set({ owner: 'contributor', repo: 'repo' });
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
 
       expect(getBranchName({ collectionName: 'posts', slug: 'hello-world' })).toBe(
         'cms/contributor/repo/posts/hello-world',
@@ -89,7 +89,7 @@ describe('workflow/branch', () => {
     });
 
     test('parses a fork branch with Open Authoring', () => {
-      forkedRepository.set({ owner: 'contributor', repo: 'repo' });
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
 
       expect(parseBranchName('cms/contributor/repo/posts/hello-world')).toEqual({
         collectionName: 'posts',

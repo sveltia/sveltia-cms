@@ -12,19 +12,22 @@
   import { sortKeys } from '$lib/services/assets/view/sort-keys';
   import { env } from '$lib/services/user/env.svelte';
 
-  const hasListedAssets = $derived(!!$listedAssets.length);
-  const hasMultipleAssets = $derived($listedAssets.length > 1);
+  const hasListedAssets = $derived(!!listedAssets.current.length);
+  const hasMultipleAssets = $derived(listedAssets.current.length > 1);
 </script>
 
 <Toolbar variant="secondary" aria-label={_('asset_list')}>
   {#if !(env.isSmallScreen || env.isMediumScreen)}
-    <ItemSelector allItems={Object.values($assetGroups).flat(1)} selectedItems={selectedAssets} />
+    <ItemSelector
+      allItems={Object.values(assetGroups.current).flat(1)}
+      selectedItems={selectedAssets}
+    />
   {/if}
   <Spacer flex />
   <SortMenu
     disabled={!hasMultipleAssets}
     {currentView}
-    sortKeys={$sortKeys}
+    sortKeys={sortKeys.current}
     aria-controls="asset-list"
   />
   <FilterMenu
@@ -42,15 +45,15 @@
       variant="ghost"
       iconic
       disabled={!hasListedAssets}
-      pressed={!!$currentView.showInfo}
+      pressed={!!currentView.current.showInfo}
       aria-controls="asset-info"
-      aria-expanded={!!$currentView.showInfo}
-      aria-label={_($currentView.showInfo ? 'hide_info' : 'show_info')}
+      aria-expanded={!!currentView.current.showInfo}
+      aria-label={_(currentView.current.showInfo ? 'hide_info' : 'show_info')}
       onclick={() => {
-        currentView.update((view) => ({
-          ...view,
-          showInfo: !$currentView.showInfo,
-        }));
+        currentView.current = {
+          ...currentView.current,
+          showInfo: !currentView.current.showInfo,
+        };
       }}
     >
       {#snippet startIcon()}

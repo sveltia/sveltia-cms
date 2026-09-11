@@ -7,24 +7,6 @@ vi.mock('@sveltia/utils/crypto', () => ({
   getHash: vi.fn().mockResolvedValue('mock-hash'),
 }));
 
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn((store) => {
-      // Handle the i18n _ store
-      if (store && typeof store === 'function') {
-        // Return a mock translation function
-        return (/** @type {string} */ key) => key;
-      }
-
-      // Default mock behavior for other stores
-      return { devModeEnabled: false };
-    }),
-  };
-});
-
 vi.mock('$lib/services/config/loader', () => ({
   fetchCmsConfig: vi.fn(),
 }));
@@ -47,12 +29,12 @@ vi.mock('$lib/services/config/folders/entries', () => ({
 }));
 
 vi.mock('$lib/services/assets/folders', () => ({
-  allAssetFolders: { set: vi.fn() },
-  selectedAssetFolder: { subscribe: vi.fn() },
+  allAssetFolders: { current: [] },
+  selectedAssetFolder: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents', () => ({
-  allEntryFolders: { set: vi.fn() },
+  allEntryFolders: { current: [] },
 }));
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({
@@ -83,9 +65,9 @@ describe('config/index', () => {
 
   afterEach(() => {
     // Reset stores
-    cmsConfig.set(undefined);
-    cmsConfigErrors.set([]);
-    cmsConfigVersion.set('0');
+    cmsConfig.current = undefined;
+    cmsConfigErrors.current = [];
+    cmsConfigVersion.current = '0';
   });
 
   describe('constants', () => {
@@ -104,26 +86,17 @@ describe('config/index', () => {
     });
 
     describe('cmsConfigLoaded', () => {
-      it('should be exported as a readable store', () => {
+      it('should be exported as reactive state', () => {
         expect(cmsConfigLoaded).toBeDefined();
         expect(typeof cmsConfigLoaded).toBe('object');
-        expect(typeof cmsConfigLoaded.subscribe).toBe('function');
+        expect('current' in cmsConfigLoaded).toBe(true);
       });
 
       it('should be false when cmsConfig is undefined and cmsConfigErrors is empty', async () => {
-        cmsConfig.set(undefined);
-        cmsConfigErrors.set([]);
+        cmsConfig.current = undefined;
+        cmsConfigErrors.current = [];
 
-        const loadedState = await new Promise((resolve) => {
-          /* eslint-disable prefer-const */
-          /** @type {() => void} */
-          let unsubscribe;
-
-          unsubscribe = cmsConfigLoaded.subscribe((value) => {
-            unsubscribe?.();
-            resolve(value);
-          });
-        });
+        const loadedState = cmsConfigLoaded.current;
 
         expect(loadedState).toBe(false);
       });
@@ -136,37 +109,19 @@ describe('config/index', () => {
           collections: [{ name: 'posts', label: 'Posts', folder: 'posts' }],
         };
 
-        cmsConfig.set(mockConfig);
-        cmsConfigErrors.set([]);
+        cmsConfig.current = mockConfig;
+        cmsConfigErrors.current = [];
 
-        const loadedState = await new Promise((resolve) => {
-          /* eslint-disable prefer-const */
-          /** @type {() => void} */
-          let unsubscribe;
-
-          unsubscribe = cmsConfigLoaded.subscribe((value) => {
-            unsubscribe?.();
-            resolve(value);
-          });
-        });
+        const loadedState = cmsConfigLoaded.current;
 
         expect(loadedState).toBe(true);
       });
 
       it('should be true when cmsConfigErrors has entries', async () => {
-        cmsConfig.set(undefined);
-        cmsConfigErrors.set(['Error 1', 'Error 2']);
+        cmsConfig.current = undefined;
+        cmsConfigErrors.current = ['Error 1', 'Error 2'];
 
-        const loadedState = await new Promise((resolve) => {
-          /* eslint-disable prefer-const */
-          /** @type {() => void} */
-          let unsubscribe;
-
-          unsubscribe = cmsConfigLoaded.subscribe((value) => {
-            unsubscribe?.();
-            resolve(value);
-          });
-        });
+        const loadedState = cmsConfigLoaded.current;
 
         expect(loadedState).toBe(true);
       });
@@ -178,19 +133,10 @@ describe('config/index', () => {
           media_folder: 'uploads',
         };
 
-        cmsConfig.set(mockConfig);
-        cmsConfigErrors.set(['Some error']);
+        cmsConfig.current = mockConfig;
+        cmsConfigErrors.current = ['Some error'];
 
-        const loadedState = await new Promise((resolve) => {
-          /* eslint-disable prefer-const */
-          /** @type {() => void} */
-          let unsubscribe;
-
-          unsubscribe = cmsConfigLoaded.subscribe((value) => {
-            unsubscribe?.();
-            resolve(value);
-          });
-        });
+        const loadedState = cmsConfigLoaded.current;
 
         expect(loadedState).toBe(true);
       });
@@ -263,18 +209,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      const errors = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfigErrors.subscribe((err) => {
-          if (err) {
-            unsubscribe?.();
-            resolve(err);
-          }
-        });
-      });
+      const errors = cmsConfigErrors.current;
 
       expect(errors).toBeDefined();
       expect(errors).toContain('config.error.no_secure_context');
@@ -303,18 +238,7 @@ describe('config/index', () => {
 
       expect(fetchcmsConfigMock).toHaveBeenCalledWith();
 
-      const config = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfig.subscribe((cfg) => {
-          if (cfg) {
-            unsubscribe?.();
-            resolve(cfg);
-          }
-        });
-      });
+      const config = /** @type {any} */ (cmsConfig.current);
 
       expect(config).toBeDefined();
       expect(config?.backend.name).toBe('github');
@@ -342,18 +266,7 @@ describe('config/index', () => {
 
       expect(fetchcmsConfigMock).not.toHaveBeenCalled();
 
-      const config = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfig.subscribe((cfg) => {
-          if (cfg) {
-            unsubscribe?.();
-            resolve(cfg);
-          }
-        });
-      });
+      const config = /** @type {any} */ (cmsConfig.current);
 
       expect(config).toBeDefined();
       expect(config?.backend.name).toBe('github');
@@ -387,18 +300,7 @@ describe('config/index', () => {
 
       expect(fetchcmsConfigMock).toHaveBeenCalledWith({ manualInit: true });
 
-      const config = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfig.subscribe((cfg) => {
-          if (cfg) {
-            unsubscribe?.();
-            resolve(cfg);
-          }
-        });
-      });
+      const config = /** @type {any} */ (cmsConfig.current);
 
       expect(config).toBeDefined();
       expect(config?.backend.repo).toBe('different/repo');
@@ -410,18 +312,7 @@ describe('config/index', () => {
 
       await initCmsConfig(/** @type {any} */ ('not-an-object'));
 
-      const errors = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfigErrors.subscribe((err) => {
-          if (err) {
-            unsubscribe?.();
-            resolve(err);
-          }
-        });
-      });
+      const errors = cmsConfigErrors.current;
 
       expect(errors).toBeDefined();
       expect(errors).toContain('config.error.parse_failed');
@@ -455,18 +346,7 @@ describe('config/index', () => {
 
       expect(fetchcmsConfigMock).toHaveBeenCalledWith({ manualInit: true });
 
-      const config = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfig.subscribe((cfg) => {
-          if (cfg) {
-            unsubscribe?.();
-            resolve(cfg);
-          }
-        });
-      });
+      const config = /** @type {any} */ (cmsConfig.current);
 
       expect(config).toBeDefined();
       expect(config?.backend.repo).toBe('different/repo');
@@ -493,18 +373,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      const config = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfig.subscribe((cfg) => {
-          if (cfg) {
-            unsubscribe?.();
-            resolve(cfg);
-          }
-        });
-      });
+      const config = /** @type {any} */ (cmsConfig.current);
 
       expect(config?._siteURL).toBe('https://example.com');
       expect(config?._baseURL).toBe('https://example.com');
@@ -530,18 +399,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      const config = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfig.subscribe((cfg) => {
-          if (cfg) {
-            unsubscribe?.();
-            resolve(cfg);
-          }
-        });
-      });
+      const config = /** @type {any} */ (cmsConfig.current);
 
       // In test environment, DEV should be true
       expect(config?._siteURL).toBeDefined();
@@ -568,18 +426,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      const config = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfig.subscribe((cfg) => {
-          if (cfg) {
-            unsubscribe?.();
-            resolve(cfg);
-          }
-        });
-      });
+      const config = /** @type {any} */ (cmsConfig.current);
 
       expect(config?._siteURL).toBe('not-a-valid-url');
       // When site_url is not a valid URL, _baseURL should be empty string
@@ -618,18 +465,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      const config = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfig.subscribe((cfg) => {
-          if (cfg) {
-            unsubscribe?.();
-            resolve(cfg);
-          }
-        });
-      });
+      const config = /** @type {any} */ (cmsConfig.current);
 
       expect(config?.collections?.[0].folder).toBe('');
       expect(config?.collections?.[1].folder).toBe('');
@@ -657,25 +493,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      // Wait for version to be set
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100);
-      });
-
-      const version = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfigVersion.subscribe((ver) => {
-          if (ver && ver !== '0') {
-            unsubscribe?.();
-            resolve(ver);
-          }
-        });
-      });
-
-      expect(version).toBe('config-hash-123');
+      expect(cmsConfigVersion.current).toBe('config-hash-123');
     });
 
     it('should handle validation errors', async () => {
@@ -690,18 +508,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      const errors = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfigErrors.subscribe((err) => {
-          if (err) {
-            unsubscribe?.();
-            resolve(err);
-          }
-        });
-      });
+      const errors = cmsConfigErrors.current;
 
       expect(errors).toBeDefined();
     });
@@ -713,18 +520,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      const errors = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfigErrors.subscribe((err) => {
-          if (err) {
-            unsubscribe?.();
-            resolve(err);
-          }
-        });
-      });
+      const errors = cmsConfigErrors.current;
 
       expect(errors).toBeDefined();
       expect(errors).toContain('config.error.unexpected');
@@ -763,18 +559,7 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      const config = await new Promise((resolve) => {
-        /* eslint-disable prefer-const */
-        /** @type {() => void} */
-        let unsubscribe;
-
-        unsubscribe = cmsConfig.subscribe((cfg) => {
-          if (cfg) {
-            unsubscribe?.();
-            resolve(cfg);
-          }
-        });
-      });
+      const config = /** @type {any} */ (cmsConfig.current);
 
       expect(config?.collections?.[0]?.folder).toBe('');
       expect(config?.collections?.[1]?.folder).toBe('');

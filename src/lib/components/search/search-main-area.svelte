@@ -17,11 +17,13 @@
       <Toolbar variant="primary">
         <BackButton
           aria-label={_(
-            $searchMode === 'assets' ? 'back_to_asset_folder_list' : 'back_to_collection_list',
+            searchMode.current === 'assets'
+              ? 'back_to_asset_folder_list'
+              : 'back_to_collection_list',
           )}
           onclick={() => {
-            $searchTerms = '';
-            goto($searchMode === 'assets' ? '/assets' : '/collections', {
+            searchTerms.current = '';
+            goto(searchMode.current === 'assets' ? '/assets' : '/collections', {
               transitionType: 'backwards',
             });
           }}

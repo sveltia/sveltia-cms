@@ -1,54 +1,45 @@
-import { derived, get, writable } from 'svelte/store';
-
 import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
+import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { isEntryBranch } from '$lib/services/workflow/branch';
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import { Entry, UnpublishedEntry } from '$lib/types/private';
  */
 
 /**
  * Whether Editorial Workflow is enabled. It requires both the `editorial_workflow` publish mode in
  * the site configuration and a backend service that implements the feature.
- * @type {Readable<boolean>}
  */
-export const workflowEnabled = derived(
-  [cmsConfig, backend],
-  ([_cmsConfig, _backend]) =>
-    _cmsConfig?.publish_mode === 'editorial_workflow' && !!_backend?.workflow,
+export const workflowEnabled = createDerivedState(
+  () => cmsConfig.current?.publish_mode === 'editorial_workflow' && !!backend.current?.workflow,
 );
 
 /**
  * List of unpublished entries retrieved from the backend’s open pull requests.
- * @type {Writable<UnpublishedEntry[]>}
+ * @type {{ current: UnpublishedEntry[] }}
  */
-export const unpublishedEntries = writable([]);
+export const unpublishedEntries = createRawState([]);
 
 /**
  * Whether the unpublished entry list is being loaded or updated.
- * @type {Writable<boolean>}
  */
-export const unpublishedEntriesLoading = writable(false);
+export const unpublishedEntriesLoading = createRawState(false);
 
 /**
  * Whether the unpublished entries have been loaded at least once, successfully or not.
- * @type {Writable<boolean>}
  */
-export const unpublishedEntriesLoaded = writable(false);
+export const unpublishedEntriesLoaded = createRawState(false);
 
 /**
  * Whether everything needed to resolve an entry is available. The unpublished entries are fetched
  * after the initial data load, so an entry opened with a deep link can’t be resolved until they
  * arrive: a draft for a new entry wouldn’t be found at all, and a draft updating a published entry
  * would fall back to the published version.
- * @type {Readable<boolean>}
  */
-export const workflowDataReady = derived(
-  [workflowEnabled, unpublishedEntriesLoaded],
-  ([_workflowEnabled, _unpublishedEntriesLoaded]) => !_workflowEnabled || _unpublishedEntriesLoaded,
+export const workflowDataReady = createDerivedState(
+  () => !workflowEnabled.current || unpublishedEntriesLoaded.current,
 );
 
 /**
@@ -58,7 +49,9 @@ export const workflowDataReady = derived(
  */
 export const getUnpublishedEntriesByCollection = (collectionName) =>
   collectionName
-    ? get(unpublishedEntries).filter(({ workflow }) => workflow.collectionName === collectionName)
+    ? unpublishedEntries.current.filter(
+        ({ workflow }) => workflow.collectionName === collectionName,
+      )
     : [];
 
 /**
@@ -71,7 +64,7 @@ export const getUnpublishedEntriesByCollection = (collectionName) =>
  * @returns {UnpublishedEntry | undefined} Unpublished entry.
  */
 export const getUnpublishedEntry = ({ collectionName, subPath }) =>
-  get(unpublishedEntries).find(
+  unpublishedEntries.current.find(
     (entry) =>
       entry.workflow.collectionName === collectionName &&
       // A collection file is addressed by its name, while its `subPath` is the whole file path
@@ -90,7 +83,7 @@ export const getUnpublishedEntry = ({ collectionName, subPath }) =>
  * @returns {UnpublishedEntry | undefined} Unpublished entry.
  */
 export const getUnpublishedEntryBySlug = ({ collectionName, slug }) =>
-  get(unpublishedEntries).find(({ workflow }) =>
+  unpublishedEntries.current.find(({ workflow }) =>
     isEntryBranch({ branch: workflow.pullRequest.branch, collectionName, slug }),
   );
 
@@ -180,7 +173,7 @@ export const hasPublishedVersion = (entry) => {
 
   // `allEntries` only holds published entries; an unpublished one lives in `unpublishedEntries`
   // until it’s merged
-  return get(allEntries).some((publishedEntry) =>
+  return allEntries.current.some((publishedEntry) =>
     Object.values(publishedEntry.locales).some(({ path }) => paths.has(path)),
   );
 };

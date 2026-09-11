@@ -1,14 +1,13 @@
 // @ts-nocheck
 
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
-import { writable } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { clearFileCache, eraseAllData } from '$lib/services/app/cache';
 import { backend } from '$lib/services/backends';
 
 vi.mock('$lib/services/backends', () => ({
-  backend: writable(null),
+  backend: { current: null },
   gitBackendServices: { github: {}, gitlab: {}, gitea: {} },
 }));
 
@@ -29,7 +28,7 @@ let deleteDatabase;
 let deleteRequestEvent;
 
 beforeEach(() => {
-  backend.set(null);
+  backend.current = null;
   clear = vi.fn(async () => undefined);
   // eslint-disable-next-line func-names, prefer-arrow-callback
   IndexedDB.mockImplementation(function () {
@@ -60,7 +59,7 @@ beforeEach(() => {
 
 describe('clearFileCache()', () => {
   test('clears the cache stores in the backend database', async () => {
-    backend.set({ name: 'github', repository: { databaseName: 'github:owner/repo' } });
+    backend.current = { name: 'github', repository: { databaseName: 'github:owner/repo' } };
 
     await clearFileCache();
 
@@ -79,7 +78,7 @@ describe('clearFileCache()', () => {
   });
 
   test('does nothing when the repository has no database name', async () => {
-    backend.set({ name: 'github', repository: {} });
+    backend.current = { name: 'github', repository: {} };
 
     await clearFileCache();
 
@@ -87,7 +86,7 @@ describe('clearFileCache()', () => {
   });
 
   test('deletes the OPFS directory with the test backend', async () => {
-    backend.set({ name: 'test-repo' });
+    backend.current = { name: 'test-repo' };
 
     await clearFileCache();
 
@@ -96,7 +95,7 @@ describe('clearFileCache()', () => {
   });
 
   test('ignores an error while deleting the OPFS directory', async () => {
-    backend.set({ name: 'test-repo' });
+    backend.current = { name: 'test-repo' };
     removeEntry.mockRejectedValue(new Error('Not found'));
 
     await expect(clearFileCache()).resolves.toBeUndefined();
@@ -105,7 +104,7 @@ describe('clearFileCache()', () => {
 
 describe('eraseAllData()', () => {
   test('deletes the database, local storage entries and OPFS directory', async () => {
-    backend.set({ name: 'github', repository: { databaseName: 'github:owner/repo' } });
+    backend.current = { name: 'github', repository: { databaseName: 'github:owner/repo' } };
 
     LocalStorage.keys.mockResolvedValue([
       'sveltia-cms.prefs',
@@ -129,7 +128,7 @@ describe('eraseAllData()', () => {
   });
 
   test('deletes the databases left behind by other repositories', async () => {
-    backend.set({ name: 'github', repository: { databaseName: 'github:owner/repo' } });
+    backend.current = { name: 'github', repository: { databaseName: 'github:owner/repo' } };
 
     databases.mockResolvedValue([
       { name: 'github:owner/repo' },
@@ -149,7 +148,7 @@ describe('eraseAllData()', () => {
   });
 
   test('works without a database when the backend has none', async () => {
-    backend.set({ name: 'test-repo' });
+    backend.current = { name: 'test-repo' };
 
     await eraseAllData();
 
@@ -158,7 +157,7 @@ describe('eraseAllData()', () => {
   });
 
   test('falls back to the current database when enumeration is unavailable', async () => {
-    backend.set({ name: 'github', repository: { databaseName: 'github:owner/repo' } });
+    backend.current = { name: 'github', repository: { databaseName: 'github:owner/repo' } };
     vi.stubGlobal('indexedDB', { deleteDatabase });
 
     await eraseAllData();
@@ -167,7 +166,7 @@ describe('eraseAllData()', () => {
   });
 
   test('falls back to the current database when enumeration fails', async () => {
-    backend.set({ name: 'github', repository: { databaseName: 'github:owner/repo' } });
+    backend.current = { name: 'github', repository: { databaseName: 'github:owner/repo' } };
     databases.mockRejectedValue(new Error('Denied'));
 
     await eraseAllData();
@@ -176,7 +175,7 @@ describe('eraseAllData()', () => {
   });
 
   test.for(['onerror', 'onblocked'])('resolves on the %s event', async (event) => {
-    backend.set({ name: 'github', repository: { databaseName: 'github:owner/repo' } });
+    backend.current = { name: 'github', repository: { databaseName: 'github:owner/repo' } };
     deleteRequestEvent = event;
 
     await expect(eraseAllData()).resolves.toBeUndefined();

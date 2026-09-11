@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { searchMode, searchTerms } from '.';
@@ -6,146 +5,118 @@ import { searchMode, searchTerms } from '.';
 describe('search stores', () => {
   beforeEach(() => {
     // Reset stores to initial state
-    searchMode.set(null);
-    searchTerms.set('');
+    searchMode.current = null;
+    searchTerms.current = '';
   });
 
   describe('searchMode', () => {
     it('should initialize with null value', () => {
-      expect(get(searchMode)).toBe(null);
+      expect(searchMode.current).toBe(null);
     });
 
     it('should accept "entries" mode', () => {
-      searchMode.set('contents');
+      searchMode.current = 'contents';
 
-      expect(get(searchMode)).toBe('contents');
+      expect(searchMode.current).toBe('contents');
     });
 
     it('should accept "assets" mode', () => {
-      searchMode.set('assets');
+      searchMode.current = 'assets';
 
-      expect(get(searchMode)).toBe('assets');
+      expect(searchMode.current).toBe('assets');
     });
 
     it('should accept null to reset mode', () => {
-      searchMode.set('contents');
-      searchMode.set(null);
+      searchMode.current = 'contents';
+      searchMode.current = null;
 
-      expect(get(searchMode)).toBe(null);
-    });
-
-    it('should notify subscribers when value changes', () => {
-      let notifiedValue = null;
-
-      const unsubscribe = searchMode.subscribe((value) => {
-        notifiedValue = value;
-      });
-
-      searchMode.set('assets');
-
-      expect(notifiedValue).toBe('assets');
-
-      unsubscribe();
+      expect(searchMode.current).toBe(null);
     });
   });
 
   describe('searchTerms', () => {
     it('should initialize with empty string', () => {
-      expect(get(searchTerms)).toBe('');
+      expect(searchTerms.current).toBe('');
     });
 
     it('should store search terms', () => {
-      searchTerms.set('test query');
+      searchTerms.current = 'test query';
 
-      expect(get(searchTerms)).toBe('test query');
+      expect(searchTerms.current).toBe('test query');
     });
 
     it('should handle empty search terms', () => {
-      searchTerms.set('test');
-      searchTerms.set('');
+      searchTerms.current = 'test';
+      searchTerms.current = '';
 
-      expect(get(searchTerms)).toBe('');
+      expect(searchTerms.current).toBe('');
     });
 
     it('should handle whitespace in search terms', () => {
-      searchTerms.set('  search with spaces  ');
+      searchTerms.current = '  search with spaces  ';
 
-      expect(get(searchTerms)).toBe('  search with spaces  ');
+      expect(searchTerms.current).toBe('  search with spaces  ');
     });
 
     it('should handle special characters in search terms', () => {
       const specialTerms = 'test@example.com & "quotes" + symbols';
 
-      searchTerms.set(specialTerms);
+      searchTerms.current = specialTerms;
 
-      expect(get(searchTerms)).toBe(specialTerms);
+      expect(searchTerms.current).toBe(specialTerms);
     });
 
     it('should handle unicode characters in search terms', () => {
       const unicodeTerms = 'café naïve résumé 测试';
 
-      searchTerms.set(unicodeTerms);
+      searchTerms.current = unicodeTerms;
 
-      expect(get(searchTerms)).toBe(unicodeTerms);
-    });
-
-    it('should notify subscribers when value changes', () => {
-      let notifiedValue = null;
-
-      const unsubscribe = searchTerms.subscribe((value) => {
-        notifiedValue = value;
-      });
-
-      searchTerms.set('new search');
-
-      expect(notifiedValue).toBe('new search');
-
-      unsubscribe();
+      expect(searchTerms.current).toBe(unicodeTerms);
     });
 
     it('should maintain independent state from searchMode', () => {
-      searchMode.set('contents');
-      searchTerms.set('test search');
+      searchMode.current = 'contents';
+      searchTerms.current = 'test search';
 
-      expect(get(searchMode)).toBe('contents');
-      expect(get(searchTerms)).toBe('test search');
+      expect(searchMode.current).toBe('contents');
+      expect(searchTerms.current).toBe('test search');
 
-      searchMode.set('assets');
+      searchMode.current = 'assets';
 
-      expect(get(searchMode)).toBe('assets');
-      expect(get(searchTerms)).toBe('test search'); // Should remain unchanged
+      expect(searchMode.current).toBe('assets');
+      expect(searchTerms.current).toBe('test search'); // Should remain unchanged
     });
   });
 
   describe('store interactions', () => {
     it('should allow both stores to be updated independently', () => {
-      searchMode.set('contents');
-      searchTerms.set('first search');
+      searchMode.current = 'contents';
+      searchTerms.current = 'first search';
 
-      expect(get(searchMode)).toBe('contents');
-      expect(get(searchTerms)).toBe('first search');
+      expect(searchMode.current).toBe('contents');
+      expect(searchTerms.current).toBe('first search');
 
-      searchTerms.set('second search');
+      searchTerms.current = 'second search';
 
-      expect(get(searchMode)).toBe('contents'); // Should remain unchanged
-      expect(get(searchTerms)).toBe('second search');
+      expect(searchMode.current).toBe('contents'); // Should remain unchanged
+      expect(searchTerms.current).toBe('second search');
 
-      searchMode.set('assets');
+      searchMode.current = 'assets';
 
-      expect(get(searchMode)).toBe('assets');
-      expect(get(searchTerms)).toBe('second search'); // Should remain unchanged
+      expect(searchMode.current).toBe('assets');
+      expect(searchTerms.current).toBe('second search'); // Should remain unchanged
     });
 
     it('should handle rapid updates to both stores', () => {
-      searchMode.set('contents');
-      searchTerms.set('query1');
-      searchMode.set('assets');
-      searchTerms.set('query2');
-      searchMode.set(null);
-      searchTerms.set('');
+      searchMode.current = 'contents';
+      searchTerms.current = 'query1';
+      searchMode.current = 'assets';
+      searchTerms.current = 'query2';
+      searchMode.current = null;
+      searchTerms.current = '';
 
-      expect(get(searchMode)).toBe(null);
-      expect(get(searchTerms)).toBe('');
+      expect(searchMode.current).toBe(null);
+      expect(searchTerms.current).toBe('');
     });
   });
 });

@@ -100,32 +100,32 @@
     isIndexFile,
     currentValues,
   } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
-  const { showPreview, showSecondPane = true } = $derived($entryEditorSettings ?? {});
+  const { showPreview, showSecondPane = true } = $derived(entryEditorSettings.current ?? {});
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
   const paneStateKey = $derived(
     collectionFile?.name ? [collection?.name, collectionFile.name].join('|') : collection?.name,
   );
-  const { canCreate, quota, creationDisabled } = $derived($collectionState);
+  const { canCreate, quota, creationDisabled } = $derived(collectionState.current);
 
   const [firstPaneSize, secondPaneSize, minPaneSize] = $derived.by(() => {
-    if (!$editorFirstPane && !$editorSecondPane) {
+    if (!editorFirstPane.current && !editorSecondPane.current) {
       return [0, 0, 0];
     }
 
-    if (!$editorFirstPane || !$editorSecondPane) {
-      return [$editorFirstPane ? 100 : 0, $editorSecondPane ? 100 : 0, 0];
+    if (!editorFirstPane.current || !editorSecondPane.current) {
+      return [editorFirstPane.current ? 100 : 0, editorSecondPane.current ? 100 : 0, 0];
     }
 
     if (
-      typeof $editorFirstPane.width === 'number' &&
-      typeof $editorSecondPane.width === 'number' &&
-      $editorFirstPane.width >= MIN_PANE_SIZE &&
-      $editorSecondPane.width >= MIN_PANE_SIZE &&
-      $editorFirstPane.width + $editorSecondPane.width === 100
+      typeof editorFirstPane.current.width === 'number' &&
+      typeof editorSecondPane.current.width === 'number' &&
+      editorFirstPane.current.width >= MIN_PANE_SIZE &&
+      editorSecondPane.current.width >= MIN_PANE_SIZE &&
+      editorFirstPane.current.width + editorSecondPane.current.width === 100
     ) {
-      return [$editorFirstPane.width, $editorSecondPane.width, MIN_PANE_SIZE];
+      return [editorFirstPane.current.width, editorSecondPane.current.width, MIN_PANE_SIZE];
     }
 
     return [50, 50, MIN_PANE_SIZE];
@@ -137,7 +137,7 @@
    */
   const restorePanes = async () => {
     let [_editorFirstPane, _editorSecondPane] =
-      $entryEditorSettings?.paneStates?.[paneStateKey ?? ''] ?? [];
+      entryEditorSettings.current?.paneStates?.[paneStateKey ?? ''] ?? [];
 
     // Override the locale if specified
     if (editorLocale) {
@@ -163,8 +163,8 @@
 
     restoring = true;
     await tick();
-    $editorFirstPane = _editorFirstPane;
-    $editorSecondPane = env.isSmallScreen || env.isMediumScreen ? null : _editorSecondPane;
+    editorFirstPane.current = _editorFirstPane;
+    editorSecondPane.current = env.isSmallScreen || env.isMediumScreen ? null : _editorSecondPane;
     await tick();
     restoring = false;
 
@@ -187,18 +187,23 @@
       return;
     }
 
-    $editorFirstPane = { mode: 'edit', locale: $editorFirstPane?.locale ?? defaultLocale };
+    editorFirstPane.current = {
+      mode: 'edit',
+      locale: editorFirstPane.current?.locale ?? defaultLocale,
+    };
 
     if (env.isSmallScreen || env.isMediumScreen || !showSecondPane) {
-      $editorSecondPane = null;
+      editorSecondPane.current = null;
     } else if (!showPreview || !canPreview) {
       const otherLocales = i18nEnabled
-        ? allLocales.filter((l) => l !== $editorFirstPane?.locale)
+        ? allLocales.filter((l) => l !== editorFirstPane.current?.locale)
         : [];
 
-      $editorSecondPane = otherLocales.length ? { mode: 'edit', locale: otherLocales[0] } : null;
+      editorSecondPane.current = otherLocales.length
+        ? { mode: 'edit', locale: otherLocales[0] }
+        : null;
     } else {
-      $editorSecondPane = { mode: 'preview', locale: $editorFirstPane.locale };
+      editorSecondPane.current = { mode: 'preview', locale: editorFirstPane.current.locale };
     }
 
     switching = false;
@@ -208,17 +213,26 @@
    * Save the pane state to IndexedDB.
    */
   const savePanes = () => {
-    if (!collection || restoring || !$editorFirstPane || !$editorSecondPane || !paneStateKey) {
+    if (
+      !collection ||
+      restoring ||
+      !editorFirstPane.current ||
+      !editorSecondPane.current ||
+      !paneStateKey
+    ) {
       return;
     }
 
-    entryEditorSettings.update((view = {}) => ({
-      ...view,
+    // Don’t track the settings being updated, as this is called from an effect
+    const settings = untrack(() => entryEditorSettings.current);
+
+    entryEditorSettings.current = {
+      ...settings,
       paneStates: {
-        ...view.paneStates,
-        [paneStateKey]: [$editorFirstPane, $editorSecondPane],
+        ...settings?.paneStates,
+        [paneStateKey]: [editorFirstPane.current, editorSecondPane.current],
       },
-    }));
+    };
   };
 
   /**
@@ -261,7 +275,10 @@
       return;
     }
 
-    [$editorFirstPane, $editorSecondPane] = [$editorSecondPane, $editorFirstPane];
+    [editorFirstPane.current, editorSecondPane.current] = [
+      editorSecondPane.current,
+      editorFirstPane.current,
+    ];
   };
 
   /**
@@ -292,8 +309,8 @@
    * @param {InternalLocaleCode} locale Locale code.
    */
   const ensureEditPaneVisible = async (locale) => {
-    const firstPane = $editorFirstPane;
-    const secondPane = $editorSecondPane;
+    const firstPane = editorFirstPane.current;
+    const secondPane = editorSecondPane.current;
 
     // Already visible in an edit pane
     if (
@@ -305,15 +322,15 @@
 
     // Prefer switching a preview pane to edit mode for the target locale
     if (secondPane?.mode === 'preview') {
-      $editorSecondPane = { mode: 'edit', locale };
+      editorSecondPane.current = { mode: 'edit', locale };
     } else if (firstPane?.mode === 'preview') {
-      $editorFirstPane = { mode: 'edit', locale };
+      editorFirstPane.current = { mode: 'edit', locale };
     } else if (secondPane) {
       // Both are edit panes for other locales; switch the second one
-      $editorSecondPane = { mode: 'edit', locale };
+      editorSecondPane.current = { mode: 'edit', locale };
     } else {
       // Single-pane layout
-      $editorFirstPane = { mode: 'edit', locale };
+      editorFirstPane.current = { mode: 'edit', locale };
     }
 
     // Wait for the DOM to update after the pane switch
@@ -407,7 +424,7 @@
   };
 
   onMount(() => {
-    if (!$showContentOverlay) {
+    if (!showContentOverlay.current) {
       entryDraft.current = null;
     }
 
@@ -475,8 +492,8 @@
   $effect(() => {
     if (paneStateKey) {
       // Reset the editor panes
-      $editorFirstPane = null;
-      $editorSecondPane = null;
+      editorFirstPane.current = null;
+      editorSecondPane.current = null;
     }
   });
 
@@ -496,14 +513,14 @@
   });
 
   $effect(() => {
-    void [$editorFirstPane, $editorSecondPane];
+    void [editorFirstPane.current, editorSecondPane.current];
     savePanes();
   });
 
   $effect(() => {
     if (wrapper) {
       (async () => {
-        if (!$showContentOverlay) {
+        if (!showContentOverlay.current) {
           await showBackupToastIfNeeded(entryDraft.current);
         } else if (hidden) {
           hidden = false;
@@ -518,8 +535,8 @@
 </script>
 
 {#snippet firstPane()}
-  {#if $editorFirstPane}
-    {@const { locale, mode } = $editorFirstPane}
+  {#if editorFirstPane.current}
+    {@const { locale, mode } = editorFirstPane.current}
     <div class="pane-wrapper">
       <Group
         class="pane"
@@ -542,8 +559,8 @@
 {/snippet}
 
 {#snippet secondPane()}
-  {#if $editorSecondPane}
-    {@const { locale, mode } = $editorSecondPane}
+  {#if editorSecondPane.current}
+    {@const { locale, mode } = editorSecondPane.current}
     <div class="pane-wrapper">
       <Group
         class="pane"
@@ -600,7 +617,7 @@
             onclick={() => {
               // The draft is gone when the entry couldn’t be found, so fall back to the collection
               // the URL pointed at
-              const targetCollection = collectionName ?? $selectedCollection?.name;
+              const targetCollection = collectionName ?? selectedCollection.current?.name;
 
               goto(targetCollection ? `/collections/${targetCollection}` : '/collections', {
                 replaceState: true,
@@ -616,12 +633,19 @@
       <div role="none" class="body" onpointerdown={markInteracted} onkeydown={markInteracted}>
         {#key `${collectionName}|${fileName}|${isIndexFile}`}
           <div role="none" class="content-area">
-            {#if $editorFirstPane && $editorSecondPane}
+            {#if editorFirstPane.current && editorSecondPane.current}
               {#if firstPaneSize && secondPaneSize}
                 <ResizablePaneGroup
                   onResize={({ sizes }) => {
-                    if ($editorFirstPane && $editorSecondPane) {
-                      [$editorFirstPane.width, $editorSecondPane.width] = sizes;
+                    if (editorFirstPane.current && editorSecondPane.current) {
+                      const [firstWidth, secondWidth] = sizes;
+
+                      // Replace the objects rather than mutating them, so the change is noticed
+                      editorFirstPane.current = { ...editorFirstPane.current, width: firstWidth };
+                      editorSecondPane.current = {
+                        ...editorSecondPane.current,
+                        width: secondWidth,
+                      };
                     }
                   }}
                 >
@@ -645,9 +669,9 @@
                   </ResizablePane>
                 </ResizablePaneGroup>
               {/if}
-            {:else if $editorFirstPane}
+            {:else if editorFirstPane.current}
               {@render firstPane()}
-            {:else if $editorSecondPane}
+            {:else if editorSecondPane.current}
               {@render secondPane()}
             {:else}
               <Spacer flex />
@@ -665,7 +689,7 @@
 
 <BackupFeedback />
 
-<Toast bind:show={$showDuplicateToast}>
+<Toast bind:show={showDuplicateToast.current}>
   <Alert status="success">
     {_('entry_duplicated')}
   </Alert>

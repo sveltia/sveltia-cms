@@ -1,5 +1,4 @@
 import { fromJS } from 'immutable';
-import { get } from 'svelte/store';
 
 import { AssetProxy } from '$lib/services/api/asset-proxy';
 import { allAssets, getAssetByPath, isAssetInFolder } from '$lib/services/assets';
@@ -238,7 +237,7 @@ export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
   const assetFolder = getAssetFolder({ collectionName, fileName });
 
   if (assetFolder) {
-    return get(allAssets).filter((asset) => isAssetInFolder(asset, assetFolder));
+    return allAssets.current.filter((asset) => isAssetInFolder(asset, assetFolder));
   }
 
   return [];

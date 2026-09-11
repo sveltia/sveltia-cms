@@ -1,5 +1,4 @@
 import { stripSlashes } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/gitea/auth';
 import { commitChanges, fetchFileCommits } from '$lib/services/backends/git/gitea/commits';
@@ -27,7 +26,7 @@ import { prefs } from '$lib/services/user/prefs.svelte';
  * not Gitea/Forgejo.
  */
 export const init = () => {
-  const { backend } = get(cmsConfig) ?? {};
+  const { backend } = cmsConfig.current ?? {};
 
   if (backend?.name !== BACKEND_NAME) {
     return undefined;

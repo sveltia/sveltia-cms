@@ -3,7 +3,6 @@ import { getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { isURL } from '@sveltia/utils/string';
 import merge from 'deepmerge';
-import { derived, writable } from 'svelte/store';
 import { stringify } from 'yaml';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
@@ -14,9 +13,9 @@ import { parseCmsConfig } from '$lib/services/config/parser';
 import { getConfigSchemas, validateConfigSchema } from '$lib/services/config/schema';
 import { allEntryFolders } from '$lib/services/contents';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import { ConfigParserCollectors, InternalCmsConfig } from '$lib/types/private';
  * @import { CmsConfig } from '$lib/types/public';
  */
@@ -41,27 +40,25 @@ export const DEV_SITE_URL = DEV
 export const rawCmsConfig = {};
 
 /**
- * @type {Writable<InternalCmsConfig | undefined>}
+ * @type {{ current: InternalCmsConfig | undefined }}
  */
-export const cmsConfig = writable();
+export const cmsConfig = createRawState();
 
 /**
- * @type {Writable<string | undefined>}
+ * @type {{ current: string | undefined }}
  */
-export const cmsConfigVersion = writable();
+export const cmsConfigVersion = createRawState();
 
 /**
- * @type {Writable<string[]>}
+ * @type {{ current: string[] }}
  */
-export const cmsConfigErrors = writable([]);
+export const cmsConfigErrors = createRawState([]);
 
 /**
  * Whether the CMS configuration has been loaded, regardless of whether it contains errors.
- * @type {Readable<boolean>}
  */
-export const cmsConfigLoaded = derived(
-  [cmsConfig, cmsConfigErrors],
-  ([_cmsConfig, _cmsConfigErrors]) => !!_cmsConfig || !!_cmsConfigErrors.length,
+export const cmsConfigLoaded = createDerivedState(
+  () => !!cmsConfig.current || !!cmsConfigErrors.current.length,
 );
 
 /**
@@ -76,14 +73,34 @@ export const collectors = {
 };
 
 /**
+ * Update the entry and asset folder lists based on the given configuration.
+ * @param {InternalCmsConfig} config Parsed configuration.
+ */
+const updateFolders = (config) => {
+  const _allEntryFolders = getAllEntryFolders(config);
+  const _allAssetFolders = getAllAssetFolders(config, [...collectors.mediaFields]);
+
+  // `getCollection` depends on `allAssetFolders`
+  allEntryFolders.current = _allEntryFolders;
+  allAssetFolders.current = _allAssetFolders;
+
+  if (prefs.devModeEnabled) {
+    // eslint-disable-next-line no-console
+    console.info('allEntryFolders', _allEntryFolders);
+    // eslint-disable-next-line no-console
+    console.info('allAssetFolders', _allAssetFolders);
+  }
+};
+
+/**
  * Initialize the CMS configuration state by loading the YAML file and optionally merge the object
  * with one specified with `CMS.init()`.
  * @param {CmsConfig} [manualConfig] Raw configuration specified with manual initialization.
  * @todo Normalize configuration object.
  */
 export const initCmsConfig = async (manualConfig) => {
-  cmsConfig.set(undefined);
-  cmsConfigErrors.set([]);
+  cmsConfig.current = undefined;
+  cmsConfigErrors.current = [];
 
   Object.assign(collectors, {
     errors: new Set(),
@@ -152,46 +169,23 @@ export const initCmsConfig = async (manualConfig) => {
       }
     });
 
-    cmsConfig.set(config);
-    cmsConfigVersion.set(await getHash(stringify(config)));
+    cmsConfig.current = config;
+    updateFolders(config);
+    cmsConfigVersion.current = await getHash(stringify(config));
 
     // eslint-disable-next-line no-console
     console.debug('CMS configuration:', config);
+
+    if (prefs.devModeEnabled) {
+      // eslint-disable-next-line no-console
+      console.info('collectors', collectors);
+    }
   } catch (/** @type {any} */ ex) {
-    cmsConfigErrors.set(
-      collectors.errors.size
-        ? [...collectors.errors]
-        : [ex.name === 'Error' ? ex.message : _('config.error.unexpected')],
-    );
+    cmsConfigErrors.current = collectors.errors.size
+      ? [...collectors.errors]
+      : [ex.name === 'Error' ? ex.message : _('config.error.unexpected')];
 
     // eslint-disable-next-line no-console
     console.error(ex, ex.cause);
   }
 };
-
-cmsConfig.subscribe((config) => {
-  if (prefs.devModeEnabled) {
-    // eslint-disable-next-line no-console
-    console.info('cmsConfig', config);
-    // eslint-disable-next-line no-console
-    console.info('collectors', collectors);
-  }
-
-  if (!config) {
-    return;
-  }
-
-  const _allEntryFolders = getAllEntryFolders(config);
-  const _allAssetFolders = getAllAssetFolders(config, [...collectors.mediaFields]);
-
-  // `getCollection` depends on `allAssetFolders`
-  allEntryFolders.set(_allEntryFolders);
-  allAssetFolders.set(_allAssetFolders);
-
-  if (prefs.devModeEnabled) {
-    // eslint-disable-next-line no-console
-    console.info('allEntryFolders', _allEntryFolders);
-    // eslint-disable-next-line no-console
-    console.info('allAssetFolders', _allAssetFolders);
-  }
-});

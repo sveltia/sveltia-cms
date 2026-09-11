@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { cmsConfig } from '$lib/services/config';
 
 /**
@@ -56,7 +54,7 @@ const SOURCE_RANK = { deployment: 2, status: 1, check: 0 };
  * @returns {string} Configured context, or an empty string if the option is unset.
  */
 export const getPreviewContext = () => {
-  const { backend } = get(cmsConfig) ?? {};
+  const { backend } = cmsConfig.current ?? {};
 
   // @ts-ignore The option is GitHub/GitLab only
   return /** @type {GitBackend} */ (backend ?? {}).preview_context ?? '';

@@ -33,7 +33,7 @@ const createPullRequest = ({ branch = 'cms/posts/hello', files = [] } = {}) => (
 describe('workflow/entries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    allEntries.set([]);
+    allEntries.current = [];
     vi.mocked(createFileList).mockReturnValue(
       /** @type {any} */ ({ entryFiles: [], assetFiles: [] }),
     );
@@ -216,7 +216,7 @@ describe('workflow/entries', () => {
         locales: { _default: { slug: 'hello', path: 'content/posts/hello.md', content: {} } },
       });
 
-      allEntries.set([
+      allEntries.current = [
         publishedEntry,
         /** @type {any} */ ({
           id: 'other',
@@ -224,7 +224,7 @@ describe('workflow/entries', () => {
           subPath: 'other',
           locales: { _default: { slug: 'other', path: 'content/posts/other.md', content: {} } },
         }),
-      ]);
+      ];
 
       const deletedFile = { path: 'content/posts/hello.md', folder: { collectionName: 'posts' } };
 
@@ -265,7 +265,7 @@ describe('workflow/entries', () => {
        * @returns {Promise<any>} Converted entry.
        */
       const convertPartial = async ({ changedPath, publishedPaths, locale, slug = '' }) => {
-        allEntries.set([
+        allEntries.current = [
           /** @type {any} */ ({
             id: 'published',
             slug: 'hello',
@@ -277,7 +277,7 @@ describe('workflow/entries', () => {
               ]),
             ),
           }),
-        ]);
+        ];
 
         vi.mocked(createFileList).mockReturnValue(
           /** @type {any} */ ({
@@ -343,7 +343,7 @@ describe('workflow/entries', () => {
       test('takes the identity from the published entry, not a localized slug', async () => {
         // With `canonicalSlugKey` the locales carry different slugs, so the one parsed from a
         // non-default locale file must not become the entry’s slug
-        allEntries.set([
+        allEntries.current = [
           /** @type {any} */ ({
             id: 'published',
             slug: 'english-title',
@@ -353,7 +353,7 @@ describe('workflow/entries', () => {
               ja: { slug: 'nihongo', path: 'blog/nihongo.ja.md', content: {} },
             },
           }),
-        ]);
+        ];
 
         vi.mocked(createFileList).mockReturnValue(
           /** @type {any} */ ({
@@ -387,14 +387,14 @@ describe('workflow/entries', () => {
       });
 
       test('keeps the pull request’s slug when it renamed the entry', async () => {
-        allEntries.set([
+        allEntries.current = [
           /** @type {any} */ ({
             id: 'published',
             slug: 'old',
             subPath: 'old',
             locales: { en: { slug: 'old', path: 'blog/old.en.md', content: {} } },
           }),
-        ]);
+        ];
 
         vi.mocked(createFileList)
           .mockReturnValueOnce(
@@ -457,7 +457,7 @@ describe('workflow/entries', () => {
       });
 
       test('leaves an entirely new entry alone', async () => {
-        allEntries.set([]);
+        allEntries.current = [];
 
         vi.mocked(createFileList).mockReturnValue(
           /** @type {any} */ ({

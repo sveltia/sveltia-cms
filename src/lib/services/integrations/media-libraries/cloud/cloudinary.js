@@ -2,12 +2,11 @@
 
 import { sleep } from '@sveltia/utils/misc';
 import { isObject } from '@sveltia/utils/object';
-import { get, writable } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import {
  * ExternalAsset,
  * MediaLibraryFetchOptions,
@@ -32,21 +31,18 @@ import { cmsConfig } from '$lib/services/config';
 
 /**
  * Whether the Cloudinary Media Library integration is activated.
- * @type {Writable<boolean>}
  */
-export const activated = writable(false);
+export const activated = createRawState(false);
 
 /**
  * Whether the Cloudinary Media Library console is loaded.
- * @type {Writable<boolean>}
  */
-export const consoleLoaded = writable(false);
+export const consoleLoaded = createRawState(false);
 
 /**
  * Whether the Cloudinary Media Library dialog is open.
- * @type {Writable<boolean>}
  */
-export const dialogOpen = writable(false);
+export const dialogOpen = createRawState(false);
 
 /**
  * @typedef {object} CloudinaryListResponse
@@ -106,7 +102,7 @@ export const CONFIG_PROPS = [
  * explicitly disabled.
  */
 export const getLibraryOptions = (config) => {
-  const _cmsConfig = get(cmsConfig);
+  const _cmsConfig = cmsConfig.current;
 
   config ??= _cmsConfig;
 

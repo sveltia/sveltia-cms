@@ -1,5 +1,4 @@
 import { IndexedDB } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 
 import { allBackendServices } from '$lib/services/backends';
 import { loadFiles, saveChanges } from '$lib/services/backends/fs/shared/files';
@@ -119,7 +118,7 @@ export const getRootDirHandle = async ({ forceReload = false, showPicker = true 
  * @returns {RepositoryInfo | undefined} Repository info.
  */
 const init = () => {
-  const { name: service } = /** @type {InternalCmsConfig} */ (get(cmsConfig)).backend;
+  const { name: service } = /** @type {InternalCmsConfig} */ (cmsConfig.current).backend;
 
   remoteRepository = allBackendServices[service]?.init?.();
 

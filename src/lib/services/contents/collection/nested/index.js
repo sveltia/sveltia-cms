@@ -1,12 +1,11 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
-import { writable } from 'svelte/store';
 
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { EXTENSION_FORMAT_MAP, MARKDOWN_EXTENSIONS } from '$lib/services/contents/file';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { Entry, InternalCollection } from '$lib/types/private';
  * @import { Collection, EntryCollection } from '$lib/types/public';
  */
@@ -64,9 +63,9 @@ const normalizeIndexFileName = (name) => {
  * Directory path, relative to the selected collection’s folder, that the entry list is currently
  * limited to. An empty string means the collection’s root folder. Only relevant while a nested
  * collection is selected.
- * @type {Writable<string>}
+ * @type {{ current: string }}
  */
-export const nestedFilterPath = writable('');
+export const nestedFilterPath = createRawState('');
 
 /**
  * Get the normalized options for a nested collection.

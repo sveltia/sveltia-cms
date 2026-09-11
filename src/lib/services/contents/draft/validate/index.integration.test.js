@@ -1,5 +1,4 @@
 // @ts-nocheck
-import { writable } from 'svelte/store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -36,12 +35,12 @@ vi.mock('$lib/services/contents/collection', async (importOriginal) => ({
 
 // Editorial Workflow enabled, which is what makes a draft save skip the required fields
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: writable({ publish_mode: 'editorial_workflow' }),
+  cmsConfig: { current: { publish_mode: 'editorial_workflow' } },
 }));
 
 vi.mock('$lib/services/backends', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
-  backend: writable({ workflow: {} }),
+  backend: { current: { workflow: {} } },
 }));
 
 vi.mock('$lib/services/contents/draft/backup', () => ({

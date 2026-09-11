@@ -28,49 +28,54 @@
    */
 
   const entryCollection = $derived(
-    $selectedCollection?._type === 'entry'
-      ? /** @type {InternalEntryCollection} */ ($selectedCollection)
+    selectedCollection.current?._type === 'entry'
+      ? /** @type {InternalEntryCollection} */ (selectedCollection.current)
       : undefined,
   );
   const collectionName = $derived(entryCollection?.name);
   const thumbnailFieldNames = $derived(entryCollection?._thumbnailFieldNames ?? []);
   // The unpublished entries are listed in their own group above the published ones, so they count
   // towards the list total as well
-  const listedEntryCount = $derived($listedEntries.length + $listedUnpublishedEntries.length);
+  const listedEntryCount = $derived(
+    listedEntries.current.length + listedUnpublishedEntries.current.length,
+  );
   const hasListedEntries = $derived(!!listedEntryCount);
   const hasMultipleEntries = $derived(listedEntryCount > 1);
 </script>
 
-{#if entryCollection && !$reordering}
+{#if entryCollection && !reordering.current}
   <Toolbar variant="secondary" aria-label={_('entry_list')}>
-    {#if !(env.isSmallScreen || env.isMediumScreen) && !$openAuthoring}
+    {#if !(env.isSmallScreen || env.isMediumScreen) && !openAuthoring.current}
       <ItemSelector
-        allItems={[...$listedUnpublishedEntries, ...$entryGroups.flatMap(({ entries }) => entries)]}
+        allItems={[
+          ...listedUnpublishedEntries.current,
+          ...entryGroups.current.flatMap(({ entries }) => entries),
+        ]}
         selectedItems={selectedEntries}
       />
     {/if}
     <Spacer flex />
     <SortMenu
-      disabled={!hasMultipleEntries || !$sortKeys.length}
+      disabled={!hasMultipleEntries || !sortKeys.current.length}
       {currentView}
-      sortKeys={$sortKeys}
+      sortKeys={sortKeys.current}
       {collectionName}
       aria-controls="entry-list"
     />
-    {#if $viewFilters?.length}
+    {#if viewFilters.current?.length}
       <FilterMenu
         disabled={!hasMultipleEntries}
         {currentView}
-        filters={$viewFilters}
+        filters={viewFilters.current}
         multiple={true}
         aria-controls="entry-list"
       />
     {/if}
-    {#if $viewGroups?.length}
+    {#if viewGroups.current?.length}
       <GroupMenu
         disabled={!hasMultipleEntries}
         {currentView}
-        groups={$viewGroups}
+        groups={viewGroups.current}
         aria-controls="entry-list"
       />
     {/if}
@@ -83,15 +88,15 @@
         variant="ghost"
         iconic
         disabled={!hasListedEntries || !getAssetFolder({ collectionName })}
-        pressed={!!$currentView.showMedia}
+        pressed={!!currentView.current.showMedia}
         aria-controls="collection-assets"
-        aria-expanded={$currentView.showMedia}
-        aria-label={_($currentView.showMedia ? 'hide_assets' : 'show_assets')}
+        aria-expanded={currentView.current.showMedia}
+        aria-label={_(currentView.current.showMedia ? 'hide_assets' : 'show_assets')}
         onclick={() => {
-          currentView.update((view) => ({
-            ...view,
-            showMedia: !$currentView.showMedia,
-          }));
+          currentView.current = {
+            ...currentView.current,
+            showMedia: !currentView.current.showMedia,
+          };
         }}
       >
         {#snippet startIcon()}

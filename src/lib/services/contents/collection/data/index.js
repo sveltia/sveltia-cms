@@ -1,7 +1,6 @@
-import { writable } from 'svelte/store';
+import { createDeepState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { UpdateToastState } from '$lib/types/private';
  */
 
@@ -21,6 +20,7 @@ export const UPDATE_TOAST_DEFAULT_STATE = {
 };
 
 /**
- * @type {Writable<UpdateToastState>}
+ * State of the content updates toast notification.
+ * @type {{ current: UpdateToastState }}
  */
-export const contentUpdatesToast = writable({ ...UPDATE_TOAST_DEFAULT_STATE });
+export const contentUpdatesToast = createDeepState({ ...UPDATE_TOAST_DEFAULT_STATE });

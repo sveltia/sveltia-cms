@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { pageLiveness, pingURL, resetPageLiveness } from '$lib/services/deployments/ping';
@@ -34,7 +33,7 @@ describe('Preview page liveness', () => {
       { responseType: 'raw' },
     );
 
-    expect(get(pageLiveness)[`${origin}/posts/hello`]).toBe('ready');
+    expect(pageLiveness.current[`${origin}/posts/hello`]).toBe('ready');
   });
 
   test('reports a missing page as still building', async () => {
@@ -93,13 +92,13 @@ describe('Preview page liveness', () => {
 
     await pingURL(`${origin}/a`);
 
-    const before = get(pageLiveness);
+    const before = pageLiveness.current;
 
     vi.setSystemTime(new Date('2026-08-17T00:01:00Z'));
     await pingURL(`${origin}/a`);
 
     // The same object identity, so a component effect reading the store doesn’t re-run
-    expect(get(pageLiveness)).toBe(before);
+    expect(pageLiveness.current).toBe(before);
   });
 
   test('stops remembering pages once the cap is passed', async () => {
@@ -114,7 +113,7 @@ describe('Preview page liveness', () => {
       await pingURL(url);
     }
 
-    const remembered = get(pageLiveness);
+    const remembered = pageLiveness.current;
 
     expect(Object.keys(remembered).length).toBeLessThanOrEqual(100);
     // The most recent page is still there
@@ -148,7 +147,7 @@ describe('Preview page liveness', () => {
       await pingURL(url);
     }
 
-    const remembered = get(pageLiveness);
+    const remembered = pageLiveness.current;
 
     // The stale ones were the first to go, so every recent page survives
     recent.forEach((url) => expect(remembered[url]).toBe('ready'));
@@ -161,7 +160,7 @@ describe('Preview page liveness', () => {
     await pingURL(`${origin}/a`);
     resetPageLiveness();
 
-    expect(get(pageLiveness)).toEqual({});
+    expect(pageLiveness.current).toEqual({});
 
     await pingURL(`${origin}/a`);
 

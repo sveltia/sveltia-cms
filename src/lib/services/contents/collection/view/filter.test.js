@@ -1,43 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { filterEntries, parseFilterConfig } from './filter';
+import { selectedCollection } from '$lib/services/contents/collection';
+
+import { filterEntries, parseFilterConfig, viewFilters } from './filter';
 
 /**
  * @import { Entry, FilteringConditions, InternalCollection } from '$lib/types/private';
  */
 
 // Mock dependencies
-vi.mock('svelte/store', () => ({
-  derived: vi.fn(() => ({
-    subscribe: vi.fn(() => vi.fn()),
-  })),
-  get: vi.fn(() => ({})),
-  toStore: vi.fn((getter) => ({
-    subscribe: vi.fn((fn) => {
-      fn(getter());
-      return vi.fn();
-    }),
-  })),
-  writable: vi.fn(() => ({ subscribe: vi.fn() })),
-}));
-
-vi.mock('$lib/services/assets/view', () => ({
-  currentView: {
-    subscribe: vi.fn(() => vi.fn()),
-    set: vi.fn(),
-  },
-}));
-
 vi.mock('$lib/services/contents/collection', () => ({
-  selectedCollection: {
-    subscribe: vi.fn(() => vi.fn()),
-  },
+  selectedCollection: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents/collection/view/settings', () => ({
-  entryListSettings: {
-    subscribe: vi.fn(() => vi.fn()),
-  },
+  entryListSettings: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
@@ -493,195 +470,65 @@ describe('Test parseFilterConfig()', () => {
   });
 });
 
-describe('initializeViewFilters', () => {
-  test('calls set with empty array when collection is undefined', async () => {
-    const { initializeViewFilters } = await import('./filter');
-    const mockSet = vi.fn();
-
-    initializeViewFilters(undefined, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([]);
+describe('viewFilters', () => {
+  beforeEach(() => {
+    selectedCollection.current = undefined;
   });
 
-  test('calls set with empty array for file collection', async () => {
-    const { initializeViewFilters } = await import('./filter');
-    const mockSet = vi.fn();
+  test('is empty when no collection is selected', () => {
+    expect(viewFilters.current).toEqual([]);
+  });
 
-    const fileCollection = /** @type {any} */ ({
-      name: 'pages',
+  test('is empty for a file collection', () => {
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'settings',
       _type: 'file',
       files: [],
-      _fileMap: {},
     });
 
-    initializeViewFilters(fileCollection, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([]);
+    expect(viewFilters.current).toEqual([]);
   });
 
-  test('processes and sets filters for entry collection', async () => {
-    const { initializeViewFilters } = await import('./filter');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const mockSet = vi.fn();
-
-    vi.mocked(currentView).update = vi.fn();
-
-    const entryCollection = /** @type {any} */ ({
+  test('lists the filters of the selected entry collection', () => {
+    selectedCollection.current = /** @type {any} */ ({
       name: 'posts',
       _type: 'entry',
       folder: 'content/posts',
       view_filters: [
-        { field: 'status', pattern: 'published', name: 'published' },
-        { field: 'category', pattern: 'tech', name: 'tech' },
+        { field: 'author', pattern: 'john', label: 'John' },
+        { field: 'status', pattern: 'draft', label: 'Draft' },
       ],
     });
 
-    initializeViewFilters(entryCollection, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([
-      { field: 'status', pattern: 'published', name: 'published' },
-      { field: 'category', pattern: 'tech', name: 'tech' },
+    expect(viewFilters.current).toEqual([
+      { field: 'author', pattern: 'john', label: 'John' },
+      { field: 'status', pattern: 'draft', label: 'Draft' },
     ]);
-
-    expect(vi.mocked(currentView).update).toHaveBeenCalled();
   });
 
-  test('handles entry collection with no view_filters', async () => {
-    const { initializeViewFilters } = await import('./filter');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const mockSet = vi.fn();
-
-    vi.mocked(currentView).update = vi.fn();
-
-    const entryCollection = /** @type {any} */ ({
+  test('is empty for an entry collection without view_filters', () => {
+    selectedCollection.current = /** @type {any} */ ({
       name: 'posts',
       _type: 'entry',
       folder: 'content/posts',
     });
 
-    initializeViewFilters(entryCollection, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([]);
-
-    expect(vi.mocked(currentView).update).toHaveBeenCalled();
+    expect(viewFilters.current).toEqual([]);
   });
 
-  test('handles entry collection with view_filters object format', async () => {
-    const { initializeViewFilters } = await import('./filter');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const mockSet = vi.fn();
-
-    vi.mocked(currentView).update = vi.fn();
-
-    const entryCollection = /** @type {any} */ ({
+  test('supports the view_filters object format', () => {
+    selectedCollection.current = /** @type {any} */ ({
       name: 'posts',
       _type: 'entry',
       folder: 'content/posts',
       view_filters: {
-        filters: [
-          { field: 'status', pattern: 'published', name: 'published' },
-          { field: 'category', pattern: 'tech', name: 'tech' },
-        ],
-        default: 'published',
+        default: 'drafts',
+        filters: [{ name: 'drafts', field: 'draft', pattern: true, label: 'Drafts' }],
       },
     });
 
-    initializeViewFilters(entryCollection, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([
-      { field: 'status', pattern: 'published', name: 'published' },
-      { field: 'category', pattern: 'tech', name: 'tech' },
+    expect(viewFilters.current).toEqual([
+      { name: 'drafts', field: 'draft', pattern: true, label: 'Drafts' },
     ]);
-
-    expect(vi.mocked(currentView).update).toHaveBeenCalled();
-  });
-
-  test('sets default filter when currentView has no existing filters (defaultFilter truthy branch)', async () => {
-    const { initializeViewFilters } = await import('./filter');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const mockSet = vi.fn();
-
-    // Make update invoke its callback so the ternary branch is executed
-    // @ts-ignore
-    vi.mocked(currentView).update = vi.fn((cb) => cb({ filters: undefined }));
-
-    const entryCollection = /** @type {any} */ ({
-      name: 'posts',
-      _type: 'entry',
-      folder: 'content/posts',
-      view_filters: {
-        filters: [{ field: 'status', pattern: 'published', name: 'published' }],
-        default: 'published',
-      },
-    });
-
-    initializeViewFilters(entryCollection, mockSet);
-
-    // The update callback should be called with the defaultFilter wrapped in an array.
-    // Note: parseFilterConfig strips the 'name' from the returned default object.
-    const updateCallback = vi.mocked(currentView).update.mock.calls[0][0];
-    // @ts-ignore
-    const result = updateCallback({ filters: undefined });
-
-    expect(result.filters).toEqual([{ field: 'status', pattern: 'published' }]);
-  });
-});
-
-describe('Test viewFilters store', () => {
-  test('viewFilters derived callback calls initializeViewFilters when selectedCollection changes', async () => {
-    vi.resetModules();
-
-    // Use the real svelte/store functions for this isolated test
-    const {
-      writable,
-      derived: realDerived,
-      get: realGet,
-    } = /** @type {typeof import('svelte/store')} */ (await vi.importActual('svelte/store'));
-
-    vi.doMock('svelte/store', () => ({
-      derived: realDerived,
-      get: realGet,
-      writable,
-    }));
-
-    const _selectedCollection = writable(/** @type {any} */ (undefined));
-    const _currentView = writable({ type: 'list' });
-
-    vi.doMock('$lib/services/contents/collection', () => ({
-      selectedCollection: _selectedCollection,
-    }));
-
-    vi.doMock('$lib/services/contents/collection/view', () => ({
-      currentView: _currentView,
-    }));
-
-    vi.doMock('$lib/services/contents/entry/fields', () => ({
-      getPropertyValue: vi.fn(),
-    }));
-
-    vi.doMock('$lib/services/utils/regex', () => ({
-      getRegex: vi.fn(),
-    }));
-
-    const { viewFilters } = await import('./filter');
-    let filterValues = /** @type {any} */ (null);
-
-    const unsub = viewFilters.subscribe((value) => {
-      filterValues = value;
-    });
-
-    // Set a folder collection with view_filters to exercise line 124
-    _selectedCollection.set(
-      /** @type {any} */ ({
-        name: 'posts',
-        _type: 'entry',
-        folder: 'content/posts',
-        view_filters: [{ field: 'status', pattern: 'published', name: 'published' }],
-      }),
-    );
-
-    expect(Array.isArray(filterValues)).toBe(true);
-
-    unsub();
   });
 });

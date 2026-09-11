@@ -12,11 +12,6 @@ vi.mock('@sveltia/i18n', () => ({
 }));
 
 const mockGetStore = vi.fn();
-
-vi.mock('svelte/store', () => ({
-  get: mockGetStore,
-}));
-
 const mockAddMessage = vi.fn();
 const mockCheckUnsupportedOptions = vi.fn();
 

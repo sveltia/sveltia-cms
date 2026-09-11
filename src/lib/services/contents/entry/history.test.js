@@ -3,23 +3,14 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(() => ({ subscribe: vi.fn() })),
-}));
-
 vi.mock('$lib/services/backends', () => ({
-  backend: { subscribe: vi.fn() },
+  backend: { current: undefined },
 }));
 
 describe('history', () => {
-  /** @type {typeof import('svelte/store').get} */
-  let mockGet;
-
   beforeEach(async () => {
     vi.resetModules();
     vi.clearAllMocks();
-    mockGet = (await import('svelte/store')).get;
   });
 
   /**
@@ -33,7 +24,7 @@ describe('history', () => {
       const fetchFileCommits = vi.fn().mockResolvedValue(commits);
       const entry = { id: 'entry-1', locales: { _default: { path: 'content/posts/hello.md' } } };
 
-      mockGet.mockReturnValue({ fetchFileCommits });
+      (await import('$lib/services/backends')).backend.current = { fetchFileCommits };
 
       const { fetchEntryHistory } = await importModule();
       const result1 = await fetchEntryHistory(entry);
@@ -51,7 +42,7 @@ describe('history', () => {
     test('returns empty result when backend has no fetchFileCommits', async () => {
       const entry = { id: 'entry-1', locales: { _default: { path: 'content/posts/hello.md' } } };
 
-      mockGet.mockReturnValue({});
+      (await import('$lib/services/backends')).backend.current = {};
 
       const { fetchEntryHistory } = await importModule();
       const result = await fetchEntryHistory(entry);
@@ -75,7 +66,7 @@ describe('history', () => {
         },
       };
 
-      mockGet.mockReturnValue({ fetchFileCommits });
+      (await import('$lib/services/backends')).backend.current = { fetchFileCommits };
 
       const { fetchEntryHistory } = await importModule();
       const result = await fetchEntryHistory(entry);
@@ -98,7 +89,7 @@ describe('history', () => {
         },
       };
 
-      mockGet.mockReturnValue({ fetchFileCommits });
+      (await import('$lib/services/backends')).backend.current = { fetchFileCommits };
 
       const { fetchEntryHistory } = await importModule();
 
@@ -111,7 +102,7 @@ describe('history', () => {
       const fetchFileCommits = vi.fn().mockRejectedValue(new Error('API error'));
       const entry = { id: 'entry-4', locales: { _default: { path: 'content/posts/hello.md' } } };
 
-      mockGet.mockReturnValue({ fetchFileCommits });
+      (await import('$lib/services/backends')).backend.current = { fetchFileCommits };
 
       const { fetchEntryHistory } = await importModule();
       const result = await fetchEntryHistory(entry);
@@ -123,7 +114,7 @@ describe('history', () => {
       const fetchFileCommits = vi.fn().mockRejectedValue(new Error('API error'));
       const entry = { id: 'entry-5', locales: { _default: { path: 'content/posts/hello.md' } } };
 
-      mockGet.mockReturnValue({ fetchFileCommits });
+      (await import('$lib/services/backends')).backend.current = { fetchFileCommits };
 
       const { fetchEntryHistory } = await importModule();
       const result1 = await fetchEntryHistory(entry);
@@ -144,7 +135,7 @@ describe('history', () => {
       const fetchFileCommits = vi.fn().mockResolvedValue(commits);
       const entry = { id: 'entry-6', locales: { _default: { path: 'content/posts/hello.md' } } };
 
-      mockGet.mockReturnValue({ fetchFileCommits });
+      (await import('$lib/services/backends')).backend.current = { fetchFileCommits };
 
       const { fetchEntryHistory, clearEntryHistoryCache } = await importModule();
 
@@ -176,7 +167,7 @@ describe('history', () => {
       const entry1 = { id: 'entry-a', locales: { _default: { path: 'content/posts/a.md' } } };
       const entry2 = { id: 'entry-b', locales: { _default: { path: 'content/posts/b.md' } } };
 
-      mockGet.mockReturnValue(backendObj);
+      (await import('$lib/services/backends')).backend.current = backendObj;
 
       const { fetchEntryHistory, clearEntryHistoryCache } = await importModule();
 

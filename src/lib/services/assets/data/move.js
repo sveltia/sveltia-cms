@@ -1,5 +1,4 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { get } from 'svelte/store';
 
 import { focusedAsset, getAssetByInternalPath, overlaidAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
@@ -179,27 +178,27 @@ export const collectEntryChangesFromAsset = async ({
  * @param {MovingAsset[]} args.movedAssets The assets that have been moved or renamed.
  */
 export const updateStores = ({ action, movedAssets }) => {
-  const focusedAssetPath = get(focusedAsset)?.path;
+  const focusedAssetPath = focusedAsset.current?.path;
   const _focusedAsset = movedAssets.find((a) => a.asset.path === focusedAssetPath);
-  const overlaidAssetPath = get(overlaidAsset)?.path;
+  const overlaidAssetPath = overlaidAsset.current?.path;
   const _overlaidAsset = movedAssets.find((a) => a.asset.path === overlaidAssetPath);
 
   // Replace the existing asset
   if (_focusedAsset) {
-    focusedAsset.set(getAssetByInternalPath(_focusedAsset.path));
+    focusedAsset.current = getAssetByInternalPath(_focusedAsset.path);
   }
 
   // Replace the existing asset
   if (_overlaidAsset) {
-    overlaidAsset.set(getAssetByInternalPath(_overlaidAsset.path));
+    overlaidAsset.current = getAssetByInternalPath(_overlaidAsset.path);
   }
 
-  assetUpdatesToast.set({
+  assetUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
     moved: action === 'move',
     renamed: action === 'rename',
     count: movedAssets.length,
-  });
+  };
 };
 
 /**
@@ -208,7 +207,7 @@ export const updateStores = ({ action, movedAssets }) => {
  * @param {MovingAsset[]} movingAssets Assets to be moved/renamed.
  */
 export const moveAssets = async (action, movingAssets) => {
-  const _globalAssetFolder = get(globalAssetFolder);
+  const _globalAssetFolder = globalAssetFolder.current;
   /** @type {FileChange[]} */
   const changes = [];
   /** @type {Entry[]} */

@@ -59,9 +59,9 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  // `$pageLiveness` is deliberately left out of this derivation. The effect below watches `url` and
-  // writes that store, so reading it here would feed the check’s own result back into the URL it
-  // checks. The liveness is folded into `state` alone, which the effect doesn’t read
+  // `pageLiveness.current` is deliberately left out of this derivation. The effect below watches
+  // `url` and writes that state, so reading it here would feed the check’s own result back into the
+  // URL it checks. The liveness is folded into `state` alone, which the effect doesn’t read
   // @see https://github.com/sveltia/sveltia-cms/issues/943
   const link = $derived(
     getEntryPreviewLink({
@@ -70,14 +70,14 @@
       collection,
       collectionFile,
       pullRequest,
-      deployments: $deployments,
-      productionSHA: $productionSHA,
-      pollTimedOut: $deployPollTimedOut,
+      deployments: deployments.current,
+      productionSHA: productionSHA.current,
+      pollTimedOut: deployPollTimedOut.current,
     }),
   );
   const url = $derived(link?.url);
   const state = $derived(
-    link ? refineState(link.state, url ? $pageLiveness[url] : undefined) : undefined,
+    link ? refineState(link.state, url ? pageLiveness.current[url] : undefined) : undefined,
   );
   const isDeployPreview = $derived(link?.isDeployPreview ?? false);
   const pingable = $derived(link?.pingable ?? false);

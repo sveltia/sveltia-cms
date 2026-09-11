@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { cmsConfig } from '$lib/services/config';
+
 // Mock dependencies
-const mockGet = vi.fn();
 const mockLoadFiles = vi.fn();
 const mockSaveChanges = vi.fn();
 const mockInit = vi.fn();
@@ -9,10 +10,6 @@ const mockInit = vi.fn();
 const mockDBGet = vi.fn();
 const mockDBSet = vi.fn();
 const mockDBDelete = vi.fn();
-
-vi.mock('svelte/store', () => ({
-  get: mockGet,
-}));
 
 vi.mock('@sveltia/utils/storage', () => {
   /**
@@ -40,7 +37,7 @@ vi.mock('$lib/services/backends/fs/shared/files', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('$lib/services/backends', () => ({
@@ -81,7 +78,7 @@ describe('Local Backend Service', () => {
         showDirectoryPicker: /** @type {any} */ (vi.fn()),
       });
 
-      mockGet.mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         backend: { name: 'github' },
       });
       mockInit.mockReturnValue({
@@ -427,7 +424,7 @@ describe('Local Backend Service', () => {
         databaseName: 'test-db',
       };
 
-      mockGet.mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         backend: { name: 'github' },
       });
 
@@ -442,7 +439,7 @@ describe('Local Backend Service', () => {
     });
 
     it('should initialize without remote repository when backend has no databaseName', async () => {
-      mockGet.mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         backend: { name: 'github' },
       });
 
@@ -471,7 +468,7 @@ describe('Local Backend Service', () => {
         databaseName: 'gitlab-db',
       };
 
-      mockGet.mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         backend: { name: 'gitlab' },
       });
 
@@ -661,7 +658,7 @@ describe('Local Backend Service', () => {
     });
 
     it('should handle signOut when no DB is initialized', async () => {
-      mockGet.mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         backend: { name: 'github' },
       });
 
@@ -759,7 +756,7 @@ describe('Local Backend Service', () => {
         databaseName: 'test-db',
       };
 
-      mockGet.mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         backend: { name: 'github' },
       });
 
@@ -775,7 +772,7 @@ describe('Local Backend Service', () => {
     });
 
     it('should use empty repository props when no remote repository', async () => {
-      mockGet.mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         backend: { name: 'github' },
       });
 

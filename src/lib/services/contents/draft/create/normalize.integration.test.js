@@ -36,7 +36,7 @@ vi.mock('$lib/services/contents/collection', async (importOriginal) => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn(() => () => {}) },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents/draft/backup', () => ({

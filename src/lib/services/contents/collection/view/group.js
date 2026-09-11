@@ -1,5 +1,4 @@
 import { _ } from '@sveltia/i18n';
-import { derived, get } from 'svelte/store';
 
 import { buildGroupMap } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
@@ -7,6 +6,7 @@ import { getReorderGroupName } from '$lib/services/contents/collection/entries/r
 import { currentView } from '$lib/services/contents/collection/view';
 import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
 import { getPropertyValue } from '$lib/services/contents/entry/fields';
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
  * @import { Entry, GroupingConditions, InternalCollection } from '$lib/types/private';
@@ -75,7 +75,7 @@ export const groupEntries = (entries, collection, conditions) => {
     _i18n: { defaultLocale: locale },
   } = collection;
 
-  const sortCondition = get(currentView).sort;
+  const sortCondition = currentView.current.sort;
   const otherKey = _('other');
 
   const sortedGroups = buildGroupMap(
@@ -94,32 +94,16 @@ export const groupEntries = (entries, collection, conditions) => {
 };
 
 /**
- * Initialize view groups for the given collection.
- * @param {InternalCollection | undefined} collection Collection to initialize groups for.
- * @param {(value: ViewGroup[]) => void} set Function to set the groups.
+ * View groups for the selected entry collection.
+ * @type {{ readonly current: ViewGroup[] }}
  */
-export const initializeViewGroups = (collection, set) => {
+export const viewGroups = createDerivedState(() => {
+  const collection = selectedCollection.current;
+
   // Disable grouping for file/singleton collection
   if (!collection || !('folder' in collection)) {
-    set([]);
-
-    return;
+    return [];
   }
 
-  const { options, default: defaultGroup } = parseGroupConfig(collection.view_groups);
-
-  set(options);
-
-  currentView.update((_view) => ({
-    ..._view,
-    group: _view.group === undefined ? defaultGroup : _view.group,
-  }));
-};
-
-/**
- * View groups for the selected entry collection.
- * @type {import('svelte/store').Readable<ViewGroup[]>}
- */
-export const viewGroups = derived([selectedCollection], ([collection], set) => {
-  initializeViewGroups(collection, set);
+  return parseGroupConfig(collection.view_groups).options;
 });

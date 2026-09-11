@@ -1,6 +1,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
+  import { untrack } from 'svelte';
 
   import BacklinksPanel from '$lib/components/contents/details/sidebar/panels/backlinks-panel.svelte';
   import HistoryPanel from '$lib/components/contents/details/sidebar/panels/history-panel.svelte';
@@ -49,7 +50,7 @@
       key: 'history',
       label: _('entry_sidebar.history.title'),
       icon: 'history',
-      disabled: !$backend?.isGit || !!entryDraft.current?.isNew,
+      disabled: !backend.current?.isGit || !!entryDraft.current?.isNew,
       panel: HistoryPanel,
     },
     {
@@ -62,7 +63,7 @@
   ]);
 
   /** @type {string | null} */
-  let activeTab = $state($entryEditorSettings?.sidebarPanel ?? null);
+  let activeTab = $state(entryEditorSettings.current?.sidebarPanel ?? null);
 
   /** The displayed tab, falling back to Validation if the saved tab is unavailable. */
   const EffectiveTab = $derived(
@@ -70,7 +71,10 @@
   );
 
   $effect(() => {
-    entryEditorSettings.update((view = {}) => ({ ...view, sidebarPanel: activeTab }));
+    // Only track `activeTab`, not the settings being updated
+    const settings = untrack(() => entryEditorSettings.current);
+
+    entryEditorSettings.current = { ...settings, sidebarPanel: activeTab };
   });
 </script>
 

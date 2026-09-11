@@ -2,7 +2,6 @@
   import { _ } from '@sveltia/i18n';
   import { Icon, Menu, MenuItem, Spacer, Toolbar } from '@sveltia/ui';
   import { onMount } from 'svelte';
-  import { get } from 'svelte/store';
 
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
@@ -37,11 +36,11 @@
 
     const { panelKey } = match.groups;
 
-    selectedPanel = panelKey ? get(panels).find((panel) => panel.key === panelKey) : undefined;
+    selectedPanel = panelKey ? panels.current.find((panel) => panel.key === panelKey) : undefined;
     notFound = !!panelKey && !selectedPanel;
 
     if (notFound) {
-      $announcedPageStatus = _('page_not_found');
+      announcedPageStatus.current = _('page_not_found');
     }
   };
 
@@ -82,7 +81,7 @@
             <NotFound message={_('page_not_found')} backPath="/settings" />
           {:else}
             <Menu aria-label={_('settings')}>
-              {#each get(panels) as { key, icon } (key)}
+              {#each panels.current as { key, icon } (key)}
                 <MenuItem
                   label={_(`prefs.${key}.title`)}
                   onclick={() => goto(`/settings/${key}`, { transitionType: 'forwards' })}

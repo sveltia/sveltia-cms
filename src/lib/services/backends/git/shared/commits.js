@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { cmsConfig } from '$lib/services/config';
 import { getCollectionLabel } from '$lib/services/contents/collection';
 import { user } from '$lib/services/user/account.svelte';
@@ -60,7 +58,7 @@ export const createCommitMessage = (
     commit_messages: customCommitMessages = {},
     skip_ci: skipCIEnabled,
     automatic_deployments: autoDeploy,
-  } = /** @type {GitBackend} */ (get(cmsConfig)?.backend ?? {});
+  } = /** @type {GitBackend} */ (cmsConfig.current?.backend ?? {});
 
   const { email = '', login = '', name = '' } = /** @type {User} */ (user.account);
   const [firstSlug = ''] = changes.map((item) => item.slug).filter(Boolean);
@@ -93,7 +91,7 @@ export const createCommitMessage = (
 
   // With Open Authoring the commit is made by an outside contributor, so the message can be wrapped
   // to record who wrote it. The default template is the message on its own, which changes nothing
-  if (get(openAuthoring)) {
+  if (openAuthoring.current) {
     message = (customCommitMessages.openAuthoring || DEFAULT_COMMIT_MESSAGES.openAuthoring)
       .replaceAll('{{message}}', message)
       .replaceAll('{{author-email}}', email)

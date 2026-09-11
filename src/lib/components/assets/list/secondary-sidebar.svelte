@@ -8,10 +8,10 @@
   import { env } from '$lib/services/user/env.svelte';
 </script>
 
-{#if env.isLargeScreen && $currentView.showInfo}
+{#if env.isLargeScreen && currentView.current.showInfo}
   <Group id="asset-info" class="secondary-sidebar" aria-label={_('asset_info')}>
-    {#if $focusedAsset}
-      <InfoPanel asset={$focusedAsset} showPreview={true} />
+    {#if focusedAsset.current}
+      <InfoPanel asset={focusedAsset.current} showPreview={true} />
     {:else}
       <EmptyState>
         <span role="none">{_('select_asset_show_info')}</span>

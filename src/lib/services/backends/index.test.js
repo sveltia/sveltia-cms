@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -6,6 +5,7 @@ import {
   backend,
   backendName,
   gitBackendServices,
+  selectBackend,
   unsupportedBackends,
   validBackendNames,
 } from '.';
@@ -90,73 +90,70 @@ describe('Backend Services Index', () => {
     });
   });
 
-  describe('backendName store', () => {
-    test('should be a writable store', () => {
-      expect(backendName).toHaveProperty('set');
-      expect(backendName).toHaveProperty('update');
-      expect(backendName).toHaveProperty('subscribe');
-    });
-
+  describe('backendName state', () => {
     test('should initialize with undefined', () => {
-      const value = get(backendName);
-
-      expect(value).toBeUndefined();
+      expect(backendName.current).toBeUndefined();
     });
 
     test('should update value when set', () => {
-      backendName.set('github');
-      expect(get(backendName)).toBe('github');
+      backendName.current = 'github';
+      expect(backendName.current).toBe('github');
     });
   });
 
-  describe('backend store', () => {
-    test('should be a readable store', () => {
-      expect(backend).toHaveProperty('subscribe');
-    });
-
+  describe('backend state', () => {
     test('should return undefined when no backend name is set', () => {
-      backendName.set(undefined);
+      backendName.current = undefined;
 
-      const value = get(backend);
-
-      expect(value).toBeUndefined();
+      expect(backend.current).toBeUndefined();
     });
 
-    test('should return backend service when valid name is set', () => {
-      // Mock the init function
-      const mockInit = vi.fn();
+    test('should return the backend service when a valid name is set', () => {
+      backendName.current = 'github';
 
-      allBackendServices.github.init = mockInit;
+      expect(backend.current).toBe(allBackendServices.github);
+    });
+  });
 
-      backendName.set('github');
-
-      const value = get(backend);
-
-      expect(value).toBe(allBackendServices.github);
-      expect(mockInit).toHaveBeenCalled();
+  describe('selectBackend', () => {
+    beforeEach(() => {
+      selectBackend(undefined);
     });
 
-    test('should call init when backend changes', () => {
+    test('should select and initialize the backend service', () => {
       const mockInit = vi.fn();
 
       allBackendServices.gitlab.init = mockInit;
 
-      backendName.set('gitlab');
-      get(backend); // Trigger the derived store
-
-      expect(mockInit).toHaveBeenCalled();
+      expect(selectBackend('gitlab')).toBe(allBackendServices.gitlab);
+      expect(backendName.current).toBe('gitlab');
+      expect(backend.current).toBe(allBackendServices.gitlab);
+      expect(mockInit).toHaveBeenCalledTimes(1);
     });
 
-    test('should not call init again for the same backend', () => {
+    test('should not initialize the same backend again', () => {
       const mockInit = vi.fn();
 
       allBackendServices.gitea.init = mockInit;
 
-      backendName.set('gitea');
-      get(backend); // First access
-      get(backend); // Second access
+      selectBackend('gitea');
+      selectBackend('gitea');
 
       expect(mockInit).toHaveBeenCalledTimes(1);
+    });
+
+    test('should deselect the backend', () => {
+      selectBackend('github');
+
+      expect(selectBackend(undefined)).toBeUndefined();
+      expect(backendName.current).toBeUndefined();
+      expect(backend.current).toBeUndefined();
+    });
+
+    test('should return undefined for an unknown backend', () => {
+      expect(selectBackend('unknown')).toBeUndefined();
+      expect(backendName.current).toBe('unknown');
+      expect(backend.current).toBeUndefined();
     });
   });
 

@@ -129,7 +129,7 @@ export const duplicateDraft = (entryDraft) => {
   });
 
   entryDraft.current = newDraft;
-  showDuplicateToast.set(true);
+  showDuplicateToast.current = true;
 
   return newDraft;
 };

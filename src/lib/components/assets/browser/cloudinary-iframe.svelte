@@ -38,7 +38,7 @@
 
 {#if src}
   <!-- Keep the content so that the iframe is not destroyed when the modal is closed -->
-  <Modal bind:open={$dialogOpen} keepContent>
+  <Modal bind:open={dialogOpen.current} keepContent>
     <iframe
       {src}
       id="cloudinary-iframe"

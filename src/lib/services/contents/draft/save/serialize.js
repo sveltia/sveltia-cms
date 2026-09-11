@@ -2,7 +2,6 @@ import { isObject, toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
-import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
@@ -155,7 +154,7 @@ const finalizeContent = ({
   const sortedMap = {};
 
   const { omit_empty_optional_fields: omitEmptyOptionalFields = false } =
-    get(cmsConfig)?.output ?? {};
+    cmsConfig.current?.output ?? {};
 
   const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
   const copyArgs = { locale, unsortedMap, sortedMap, isTomlOutput, omitEmptyOptionalFields };

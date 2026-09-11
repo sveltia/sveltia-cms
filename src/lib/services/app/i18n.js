@@ -9,15 +9,11 @@ import { strings as componentStrings } from '@sveltia/ui';
 import defaultComponentStrings from '@sveltia/ui/locales/en-US.yaml';
 import { getPathInfo } from '@sveltia/utils/file';
 import { LocalStorage } from '@sveltia/utils/storage';
-import { toStore, writable } from 'svelte/store';
 
 import defaultLocaleStrings from '$lib/locales/en-US.yaml';
 import { UNPKG_BASE_URL, version } from '$lib/services/app';
 import { navigatorLocale, PREFS_STORAGE_KEY } from '$lib/services/user/prefs.svelte';
-
-/**
- * @import { Readable, Writable } from 'svelte/store';
- */
+import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
  * Default application locale. This is the only locale bundled with the app; the strings for the
@@ -73,24 +69,18 @@ const LOCALE_CACHE_KEY = 'sveltia-cms.locale';
 const loadedLocaleStrings = new Map();
 
 /**
- * Current application locale as a Svelte store, derived from `locale` of `sveltia-i18n`.
- * @type {Readable<string>}
- */
-export const appLocaleStore = toStore(() => appLocale.current);
-
-/**
  * Locale being loaded from the CDN, if any. Bundled locales are switched instantly, so this is only
  * set while a remote locale file is being fetched.
- * @type {Writable<string | undefined>}
+ * @type {{ current: string | undefined }}
  */
-export const appLocaleLoading = writable();
+export const appLocaleLoading = createRawState();
 
 /**
  * Locale that couldn’t be loaded from the CDN, if any. A new object is stored for each failure, so
  * that retrying the same locale still triggers a new notification.
- * @type {Writable<{ locale: string } | undefined>}
+ * @type {{ current: { locale: string } | undefined }}
  */
-export const appLocaleLoadError = writable();
+export const appLocaleLoadError = createRawState();
 
 /**
  * Get the cached strings for the given locale from the local storage. The cache is discarded when
@@ -173,7 +163,7 @@ const loadLocaleStrings = async (locale) => {
     return cachedStrings;
   }
 
-  appLocaleLoading.set(locale);
+  appLocaleLoading.current = locale;
 
   try {
     const strings = await fetchLocaleStrings(locale);
@@ -185,10 +175,10 @@ const loadLocaleStrings = async (locale) => {
   } catch (ex) {
     // Let the caller know about the failure, then rethrow so that `sveltia-i18n` falls back to the
     // default locale
-    appLocaleLoadError.set({ locale });
+    appLocaleLoadError.current = { locale };
     throw ex;
   } finally {
-    appLocaleLoading.set(undefined);
+    appLocaleLoading.current = undefined;
   }
 };
 
@@ -316,8 +306,8 @@ export const initAppLocale = () => {
   });
 
   // Keep the cache in sync with the active locale, including when the language is switched with the
-  // app settings. The subscription lives as long as the app, so it’s never cancelled.
-  appLocaleStore.subscribe((locale) => {
-    updateLocaleCache(locale);
+  // app settings. The effect lives as long as the app, so it’s never stopped.
+  createRootEffect(() => {
+    updateLocaleCache(appLocale.current);
   });
 };

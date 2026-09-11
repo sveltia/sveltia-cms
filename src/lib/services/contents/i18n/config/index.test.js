@@ -1,4 +1,3 @@
-import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
 import {
@@ -95,10 +94,12 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('no i18n defined at top-level or collection-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      collections: [collectionWithoutI18n],
-    });
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        collections: [collectionWithoutI18n],
+      },
+    };
 
     expect(normalizeI18nConfig(collectionWithoutI18n)).toEqual(DEFAULT_I18N_CONFIG);
 
@@ -113,15 +114,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('no i18n defined at collection-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_folders',
-        locales: ['en', 'de', 'fr'],
-        default_locale: 'fr',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_folders',
+          locales: ['en', 'de', 'fr'],
+          default_locale: 'fr',
+        },
+        collections: [collectionWithoutI18n],
       },
-      collections: [collectionWithoutI18n],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithoutI18n)).toEqual(DEFAULT_I18N_CONFIG);
 
@@ -136,13 +139,15 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with locales, no structure, no default_locale', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        locales: ['en', 'fr'],
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          locales: ['en', 'fr'],
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
@@ -204,15 +209,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with locales, structure and default_locale', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_folders',
-        locales: ['en', 'de', 'fr'],
-        default_locale: 'fr',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_folders',
+          locales: ['en', 'de', 'fr'],
+          default_locale: 'fr',
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'multiple_folders',
@@ -282,16 +289,18 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('partial config override at collection-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_folders',
-        allLocales: ['en', 'de', 'fr'],
-        initialLocales: ['en', 'de', 'fr'],
-        default_locale: 'fr',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_folders',
+          allLocales: ['en', 'de', 'fr'],
+          initialLocales: ['en', 'de', 'fr'],
+          default_locale: 'fr',
+        },
+        collections: [collectionWithPartialI18nOverride],
       },
-      collections: [collectionWithPartialI18nOverride],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithPartialI18nOverride)).toEqual({
       structure: 'single_file',
@@ -315,15 +324,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('complete config override at collection-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_folders',
-        locales: ['en', 'de', 'fr'],
-        default_locale: 'fr',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_folders',
+          locales: ['en', 'de', 'fr'],
+          default_locale: 'fr',
+        },
+        collections: [collectionWithCompleteI18nOverride],
       },
-      collections: [collectionWithCompleteI18nOverride],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithCompleteI18nOverride)).toEqual({
       structure: 'multiple_folders',
@@ -347,15 +358,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('partial config override at file-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_folders',
-        locales: ['en', 'de', 'fr'],
-        default_locale: 'fr',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_folders',
+          locales: ['en', 'de', 'fr'],
+          default_locale: 'fr',
+        },
+        collections: [collectionWithPartialI18nOverride],
       },
-      collections: [collectionWithPartialI18nOverride],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithPartialI18nOverride)).toEqual({
       structure: 'single_file',
@@ -428,15 +441,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('complete config override at file-level', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_folders',
-        locales: ['en', 'de', 'fr'],
-        default_locale: 'fr',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_folders',
+          locales: ['en', 'de', 'fr'],
+          default_locale: 'fr',
+        },
+        collections: [collectionWithPartialI18nOverride],
       },
-      collections: [collectionWithPartialI18nOverride],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithI18n, collectionFileWithCompleteI18nOverride)).toEqual(
       {
@@ -514,14 +529,16 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with `save_all_locales: false`', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        locales: ['en', 'de', 'fr'],
-        save_all_locales: false,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          locales: ['en', 'de', 'fr'],
+          save_all_locales: false,
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
@@ -545,14 +562,16 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with initial locales', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        locales: ['en', 'de', 'fr'],
-        initial_locales: ['en', 'de'],
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          locales: ['en', 'de', 'fr'],
+          initial_locales: ['en', 'de'],
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
@@ -576,14 +595,16 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with initial locales with all locales', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        locales: ['en', 'de', 'fr'],
-        initial_locales: 'all',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          locales: ['en', 'de', 'fr'],
+          initial_locales: 'all',
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
@@ -607,14 +628,16 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with initial locales with default locale', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        locales: ['en', 'de', 'fr'],
-        initial_locales: 'default',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          locales: ['en', 'de', 'fr'],
+          initial_locales: 'default',
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
@@ -638,14 +661,16 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with initial locales without default locale', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        locales: ['en', 'de', 'fr'],
-        initial_locales: ['de'],
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          locales: ['en', 'de', 'fr'],
+          initial_locales: ['de'],
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
       structure: 'single_file',
@@ -669,15 +694,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_filename in multi-file structure (line 222)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_files',
-        locales: ['en', 'de', 'fr'],
-        omit_default_locale_from_filename: true,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_files',
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_filename: true,
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     // When no file param, the ternary at line 222 uses structureMap.i18nMultiFile
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
@@ -702,15 +729,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_filename in single-file structure (line 222)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'single_file',
-        locales: ['en', 'de', 'fr'],
-        omit_default_locale_from_filename: true,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'single_file',
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_filename: true,
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     // When no file param and structure is single_file, line 222 returns false
     expect(normalizeI18nConfig(collectionWithI18n)).toEqual({
@@ -735,15 +764,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_filename and file with locale placeholder (line 223)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_folders', // File will change this to multiple_files
-        locales: ['en', 'de', 'fr'],
-        omit_default_locale_from_filename: true,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_folders', // File will change this to multiple_files
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_filename: true,
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     const fileWithLocale = {
       name: 'translations',
@@ -775,15 +806,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_filename and file without locale placeholder (line 223)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_files', // File will change this to single_file
-        locales: ['en', 'de', 'fr'],
-        omit_default_locale_from_filename: true,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_files', // File will change this to single_file
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_filename: true,
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     const fileWithoutLocale = {
       name: 'sitedata',
@@ -815,15 +848,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with new omit_default_locale_from_file_path option and file pattern', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_files',
-        locales: ['en', 'de', 'fr'],
-        omit_default_locale_from_file_path: true, // New option name
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_files',
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_file_path: true, // New option name
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     const fileWithLocale = {
       name: 'translations',
@@ -854,15 +889,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_file_path and folder pattern (multiple_folders)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_folders',
-        locales: ['en', 'de', 'fr'],
-        omit_default_locale_from_file_path: true,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_folders',
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_file_path: true,
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     const fileWithFolderLocale = {
       name: 'products',
@@ -894,15 +931,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with omit_default_locale_from_file_path and root folder pattern', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_root_folders',
-        locales: ['en', 'de', 'fr'],
-        omit_default_locale_from_file_path: true,
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_root_folders',
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_file_path: true,
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     const fileWithRootFolderLocale = {
       name: 'settings',
@@ -934,16 +973,18 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('backward compatibility: both legacy and new option names work together (new option takes precedence)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_files',
-        locales: ['en', 'de', 'fr'],
-        omit_default_locale_from_filename: false, // Legacy option
-        omit_default_locale_from_file_path: true, // New option
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_files',
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_filename: false, // Legacy option
+          omit_default_locale_from_file_path: true, // New option
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     const fileWithLocale = {
       name: 'translations',
@@ -975,15 +1016,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('backward compatibility: legacy option still works when new option is not provided', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_files',
-        locales: ['en', 'de', 'fr'],
-        omit_default_locale_from_filename: true, // Legacy option only
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_files',
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_filename: true, // Legacy option only
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     const fileWithLocale = {
       name: 'translations',
@@ -1015,15 +1058,17 @@ describe('Test normalizeI18nConfig()', () => {
 
   test('config with deprecated multiple_folders_i18n_root structure triggers warnDeprecation (line 238)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
-      ...cmsConfigBase,
-      i18n: {
-        structure: 'multiple_folders_i18n_root',
-        locales: ['en', 'de'],
-        default_locale: 'en',
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_folders_i18n_root',
+          locales: ['en', 'de'],
+          default_locale: 'en',
+        },
+        collections: [collectionWithI18n],
       },
-      collections: [collectionWithI18n],
-    });
+    };
 
     const result = normalizeI18nConfig(collectionWithI18n);
 

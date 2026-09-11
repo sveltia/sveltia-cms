@@ -1,7 +1,7 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
+import { backend } from '$lib/services/backends';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 
 import { createFileList } from './process.js';
@@ -17,11 +17,6 @@ import { saveChanges } from './save.js';
  */
 
 // Mock all dependencies
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
-
 vi.mock('@sveltia/utils/storage', () => {
   /**
    * Mock IndexedDB class.
@@ -53,20 +48,20 @@ vi.mock('@sveltia/utils/storage', () => {
 });
 
 vi.mock('$lib/services/assets', () => ({
-  allAssets: { update: vi.fn() },
+  allAssets: { current: [] },
 }));
 
 vi.mock('$lib/services/backends', () => ({
-  backend: {},
+  backend: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents', () => ({
-  allEntries: { update: vi.fn() },
+  allEntries: { current: [] },
   getEntryFoldersByPath: vi.fn(),
 }));
 
 vi.mock('$lib/services/user/account.svelte', () => ({
-  user: {},
+  user: { account: { name: 'Test User', email: 'test@example.com' } },
 }));
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({
@@ -96,13 +91,10 @@ describe('Backend Services Integration', () => {
     vi.clearAllMocks();
 
     // Set up default mocks
-    vi.mocked(get).mockImplementation(() => ({
+    /** @type {any} */ (backend).current = {
       commitChanges: mockCommitChanges,
       repository: { databaseName: 'test-db' },
-      name: 'Test User',
-      email: 'test@example.com',
-      devModeEnabled: false,
-    }));
+    };
 
     mockCommitChanges.mockResolvedValue({
       sha: 'abc123',

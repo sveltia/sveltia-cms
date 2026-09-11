@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import {
   focusedAsset,
   getAssetByInternalPath,
@@ -72,25 +70,25 @@ export const createFileList = (uploadingAssets) => {
  * @param {number} args.count The number of files that were updated.
  */
 export const updatedStores = ({ count }) => {
-  const _focusedAsset = get(focusedAsset);
-  const _overlaidAsset = get(overlaidAsset);
+  const _focusedAsset = focusedAsset.current;
+  const _overlaidAsset = overlaidAsset.current;
 
   // Replace the existing asset
   if (_focusedAsset) {
-    focusedAsset.set(getAssetByInternalPath(_focusedAsset.path));
+    focusedAsset.current = getAssetByInternalPath(_focusedAsset.path);
   }
 
   // Replace the existing asset
   if (_overlaidAsset) {
-    overlaidAsset.set(getAssetByInternalPath(_overlaidAsset.path));
+    overlaidAsset.current = getAssetByInternalPath(_overlaidAsset.path);
   }
 
-  assetUpdatesToast.set({
+  assetUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
-    published: get(skipCIConfigured) && !get(skipCIEnabled),
+    published: skipCIConfigured.current && !skipCIEnabled.current,
     count,
-  });
+  };
 };
 
 /**

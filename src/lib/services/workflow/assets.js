@@ -16,26 +16,23 @@ export const mergeWorkflowAssets = (assets) => {
     return;
   }
 
-  allAssets.update((_allAssets) => {
-    // A map keeps the existing order, so a merged asset doesn’t jump to the end of the media
-    // library
-    const assetMap = new Map(_allAssets.map((asset) => [asset.path, asset]));
+  // A map keeps the existing order, so a merged asset doesn’t jump to the end of the media library
+  const assetMap = new Map(allAssets.current.map((asset) => [asset.path, asset]));
 
-    assets.forEach((asset) => {
-      const existing = assetMap.get(asset.path);
+  assets.forEach((asset) => {
+    const existing = assetMap.get(asset.path);
 
-      assetMap.set(asset.path, {
-        ...asset,
-        workflow: {
-          branch: /** @type {string} */ (asset.workflow?.branch),
-          // Don’t let a re-save of the same draft overwrite the original published version
-          replacedAsset: existing?.workflow ? existing.workflow.replacedAsset : existing,
-        },
-      });
+    assetMap.set(asset.path, {
+      ...asset,
+      workflow: {
+        branch: /** @type {string} */ (asset.workflow?.branch),
+        // Don’t let a re-save of the same draft overwrite the original published version
+        replacedAsset: existing?.workflow ? existing.workflow.replacedAsset : existing,
+      },
     });
-
-    return [...assetMap.values()];
   });
+
+  allAssets.current = [...assetMap.values()];
 };
 
 /**
@@ -44,10 +41,8 @@ export const mergeWorkflowAssets = (assets) => {
  * @param {string} branch Workflow branch name.
  */
 export const removeWorkflowAssets = (branch) => {
-  allAssets.update((_allAssets) =>
-    _allAssets.flatMap((asset) =>
-      asset.workflow?.branch === branch ? (asset.workflow.replacedAsset ?? []) : asset,
-    ),
+  allAssets.current = allAssets.current.flatMap((asset) =>
+    asset.workflow?.branch === branch ? (asset.workflow.replacedAsset ?? []) : asset,
   );
 };
 
@@ -57,15 +52,13 @@ export const removeWorkflowAssets = (branch) => {
  * @param {string} branch Workflow branch name.
  */
 export const publishWorkflowAssets = (branch) => {
-  allAssets.update((_allAssets) =>
-    _allAssets.map((asset) => {
-      if (asset.workflow?.branch !== branch) {
-        return asset;
-      }
+  allAssets.current = allAssets.current.map((asset) => {
+    if (asset.workflow?.branch !== branch) {
+      return asset;
+    }
 
-      const { workflow: _workflow, ...publishedAsset } = asset;
+    const { workflow: _workflow, ...publishedAsset } = asset;
 
-      return publishedAsset;
-    }),
-  );
+    return publishedAsset;
+  });
 };

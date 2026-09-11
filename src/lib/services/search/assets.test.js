@@ -1,4 +1,3 @@
-import { writable } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 
 import { searchAssets } from './assets';
@@ -10,11 +9,11 @@ import { hasMatch, normalize } from './util';
 
 // Mock only the stores, not the util functions
 vi.mock('$lib/services/assets', () => ({
-  publishedAssets: writable([]),
+  publishedAssets: { current: [] },
 }));
 
 vi.mock('$lib/services/search', () => ({
-  searchTerms: writable(''),
+  searchTerms: { current: '' },
 }));
 
 describe('searchAssets integration', () => {
@@ -115,20 +114,14 @@ describe('searchAssets integration', () => {
 });
 
 describe('assetSearchResults derived store', () => {
-  it('should execute the derived store callback', async () => {
+  it('should compute the results from the assets and search terms', async () => {
     // Import after mocks are set up
     const { assetSearchResults } = await import('./assets');
-    // The mock replaces the real read-only store with a writable one
+    // The mock replaces the real read-only state with a writable one
     const allAssets = /** @type {any} */ ((await import('$lib/services/assets')).publishedAssets);
     const { searchTerms } = await import('$lib/services/search');
-    let callbackExecuted = false;
 
-    const unsubscribe = assetSearchResults.subscribe(() => {
-      callbackExecuted = true;
-    });
-
-    // Trigger store updates to force the derived callback (line 34 execution)
-    allAssets.set([
+    allAssets.current = [
       /** @type {any} */ ({
         name: 'profile.jpg',
         path: '/assets/profile.jpg',
@@ -143,11 +136,9 @@ describe('assetSearchResults derived store', () => {
           hasTemplateTags: false,
         },
       }),
-    ]);
-    searchTerms.set('profile');
+    ];
+    searchTerms.current = 'profile';
 
-    // The callback should have executed
-    expect(callbackExecuted).toBe(true);
-    unsubscribe();
+    expect(assetSearchResults.current).toEqual([expect.objectContaining({ name: 'profile.jpg' })]);
   });
 });

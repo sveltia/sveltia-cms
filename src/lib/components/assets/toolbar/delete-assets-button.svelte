@@ -34,7 +34,7 @@
   const Component = $derived(useButton ? Button : MenuItem);
   // Deleting a file from the media library commits straight to the configured branch rather than
   // going through review, so it’s not something an Open Authoring contributor can do
-  const disabled = $derived(!assets.length || $openAuthoring);
+  const disabled = $derived(!assets.length || openAuthoring.current);
 </script>
 
 <Component

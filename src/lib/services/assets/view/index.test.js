@@ -1,47 +1,48 @@
-/* eslint-disable jsdoc/require-param-description */
-/* eslint-disable jsdoc/require-description */
 /* eslint-disable jsdoc/require-jsdoc */
+// @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getFolderLabelByCollection, showAssetOverlay, showUploadAssetsDialog } from '.';
+import { filterAssets } from '$lib/services/assets/view/filter';
+import { groupAssets } from '$lib/services/assets/view/group';
+import { initSettings } from '$lib/services/assets/view/settings';
+import { sortAssets } from '$lib/services/assets/view/sort';
 
-const { _backendAv, _assetListSettingsAv } = vi.hoisted(() => {
-  /**
-   * Minimal writable store factory.
-   * @template T
-   * @param {T} initial Initial value.
-   * @returns {import('svelte/store').Writable<T>} Writable store.
-   */
-  const w = (initial) => {
-    let value = initial;
-    /** @type {Set<(v: T) => void>} */
-    const subs = new Set();
+import {
+  assetGroups,
+  currentView,
+  getFolderLabelByCollection,
+  listedAssetIndexMap,
+  listedAssets,
+  showAssetOverlay,
+  showUploadAssetsConfirmDialog,
+  showUploadAssetsDialog,
+} from '.';
 
-    /** @param {T} v */
-    const setFn = (v) => {
-      value = v;
-      subs.forEach((run) => run(value));
-    };
-
-    return {
-      subscribe(run) {
-        subs.add(run);
-        run(value);
-        return () => subs.delete(run);
-      },
-      set: setFn,
-      update(fn) {
-        setFn(fn(value));
-      },
-    };
-  };
+// Real reactive boxes are used for the mocked state, so that the derived state and effects in the
+// module under test react to changes made by the tests
+const {
+  _publishedAssets,
+  _selectedAssets,
+  _uploadingAssets,
+  _selectedAssetFolder,
+  _backend,
+  _prefs,
+} = await vi.hoisted(async () => {
+  const { createRawState } = await import('$lib/services/utils/state.svelte');
 
   return {
-    /** @type {import('svelte/store').Writable<any>} */
-    _backendAv: w(/** @type {any} */ (null)),
-    /** @type {import('svelte/store').Writable<any>} */
-    _assetListSettingsAv: w(/** @type {any} */ (undefined)),
+    /** @type {{ current: any }} */
+    _publishedAssets: createRawState([]),
+    /** @type {{ current: any[] }} */
+    _selectedAssets: createRawState([]),
+    /** @type {{ current: any }} */
+    _uploadingAssets: createRawState({ folder: undefined, files: [] }),
+    /** @type {{ current: any }} */
+    _selectedAssetFolder: createRawState(undefined),
+    /** @type {{ current: any }} */
+    _backend: createRawState(null),
+    _prefs: { devModeEnabled: false },
   };
 });
 
@@ -69,22 +70,13 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 }));
 
 vi.mock('$lib/services/assets', () => ({
-  publishedAssets: { subscribe: vi.fn(() => vi.fn()) },
-  selectedAssets: {
-    subscribe: vi.fn(() => vi.fn()),
-    set: vi.fn(),
-  },
-  uploadingAssets: {
-    subscribe: vi.fn((callback) => {
-      // Default mock with empty files
-      callback(/** @type {any} */ ({ files: [] }));
-      return vi.fn();
-    }),
-  },
+  publishedAssets: _publishedAssets,
+  selectedAssets: _selectedAssets,
+  uploadingAssets: _uploadingAssets,
 }));
 
 vi.mock('$lib/services/assets/folders', () => ({
-  selectedAssetFolder: { subscribe: vi.fn(() => vi.fn()) },
+  selectedAssetFolder: _selectedAssetFolder,
 }));
 
 vi.mock('$lib/services/assets/view/filter', () => ({
@@ -100,80 +92,77 @@ vi.mock('$lib/services/assets/view/sort', () => ({
 }));
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: { devModeEnabled: false },
+  prefs: _prefs,
 }));
 
 vi.mock('$lib/services/backends', () => ({
-  backend: _backendAv,
+  backend: _backend,
 }));
 
 vi.mock('$lib/services/assets/view/settings', () => ({
-  assetListSettings: _assetListSettingsAv,
+  assetListSettings: { current: undefined },
   initSettings: vi.fn(),
 }));
 
+/**
+ * Wait for the effects to run.
+ * @returns {Promise<void>} Promise that resolves after a short delay.
+ */
+const wait = () =>
+  new Promise((resolve) => {
+    setTimeout(resolve, 10);
+  });
+
+/**
+ * Create a mock asset.
+ * @param {string} path Asset path.
+ * @param {any} [folder] Asset folder.
+ * @returns {any} Asset.
+ */
+const createAsset = (path, folder = undefined) => ({
+  path,
+  name: path.split('/').pop(),
+  sha: `sha-${path}`,
+  size: 1024,
+  kind: 'image',
+  folder,
+});
+
 describe('assets/view/index', () => {
-  beforeEach(() => {
-    _backendAv.set(null);
-    _assetListSettingsAv.set(undefined);
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    _backend.current = null;
+    _prefs.devModeEnabled = false;
+    _publishedAssets.current = [];
+    _selectedAssets.current = [];
+    _uploadingAssets.current = { folder: undefined, files: [] };
+    _selectedAssetFolder.current = undefined;
+    currentView.current = { type: 'grid', showInfo: true };
+    await wait();
   });
   describe('showAssetOverlay', () => {
-    it('should be defined as a store', () => {
+    it('should be defined as reactive state', () => {
       expect(showAssetOverlay).toBeDefined();
-      expect(typeof showAssetOverlay.subscribe).toBe('function');
+      expect('current' in showAssetOverlay).toBe(true);
     });
   });
 
   describe('showUploadAssetsDialog', () => {
-    it('should be defined as a store', () => {
+    it('should be defined as reactive state', () => {
       expect(showUploadAssetsDialog).toBeDefined();
-      expect(typeof showUploadAssetsDialog.subscribe).toBe('function');
+      expect('current' in showUploadAssetsDialog).toBe(true);
+    });
+  });
+
+  describe('showUploadAssetsConfirmDialog', () => {
+    it('should be false when uploadingAssets.files is empty', () => {
+      expect(showUploadAssetsConfirmDialog.current).toBe(false);
     });
 
-    it('should set to false when uploadingAssets.files is empty', async () => {
-      const mockCallback = vi.fn();
+    it('should be true when uploadingAssets.files has items', () => {
+      _uploadingAssets.current = { folder: undefined, files: [new File(['a'], 'a.txt')] };
 
-      showUploadAssetsDialog.subscribe(mockCallback);
-
-      expect(mockCallback).toHaveBeenCalledWith(false);
-    });
-
-    it('should trigger when uploadingAssets has files to exercise line 36', async () => {
-      vi.resetModules();
-
-      const mockCallback = vi.fn();
-      const { uploadingAssets } = await import('$lib/services/assets');
-
-      vi.mocked(uploadingAssets.subscribe).mockImplementationOnce((callback) => {
-        callback(/** @type {any} */ ({ files: [new File(['test'], 'test.jpg')] }));
-        return vi.fn();
-      });
-
-      const { showUploadAssetsConfirmDialog } = await import('.');
-
-      showUploadAssetsConfirmDialog.subscribe(mockCallback);
-
-      expect(mockCallback).toHaveBeenCalled();
-    });
-
-    it('should set to true when uploadingAssets.files has items', async () => {
-      const mockCallback = vi.fn();
-      const { uploadingAssets } = await import('$lib/services/assets');
-      const uploadMock = vi.mocked(uploadingAssets);
-
-      uploadMock.subscribe.mockImplementationOnce((callback) => {
-        callback(
-          /** @type {any} */ ({
-            folder: undefined,
-            files: [new File(['test'], 'test.jpg')],
-          }),
-        );
-        return vi.fn();
-      });
-
-      showUploadAssetsDialog.subscribe(mockCallback);
-
-      expect(mockCallback).toHaveBeenCalled();
+      expect(showUploadAssetsConfirmDialog.current).toBe(true);
     });
   });
 
@@ -388,433 +377,156 @@ describe('assets/view/index', () => {
   });
 
   describe('currentView', () => {
-    it('should be defined as a store', async () => {
-      const { currentView } = await import('.');
-
+    it('should be defined as reactive state', () => {
       expect(currentView).toBeDefined();
-      expect(typeof currentView.subscribe).toBe('function');
+      expect('current' in currentView).toBe(true);
     });
   });
 
-  describe('listedAssets store with different scenarios', () => {
-    it('should return all assets when selectedAssetFolder is undefined', async () => {
-      vi.resetModules();
+  describe('listedAssets', () => {
+    const globalFolder = {
+      collectionName: undefined,
+      internalPath: 'images',
+      publicPath: '/images',
+    };
 
-      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
-      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
+    const blogFolder = { collectionName: 'blog', internalPath: 'blog', publicPath: '/blog' };
 
-      const mockAssetList = /** @type {any[]} */ ([
-        {
-          path: '/images/photo1.jpg',
-          name: 'photo1.jpg',
-          sha: 'sha1',
-          size: 1024,
-          kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/images',
-            publicPath: '/images',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
-          commitAuthor: { name: 'Alice', email: 'alice@example.com' },
-          commitDate: new Date('2023-01-01'),
-        },
+    beforeEach(() => {
+      _publishedAssets.current = [
+        createAsset('images/photo1.jpg', globalFolder),
+        createAsset('blog/photo2.jpg', blogFolder),
+      ];
+    });
+
+    it('should list all the assets when no folder is selected', () => {
+      expect(listedAssets.current.map(({ path }) => path)).toEqual([
+        'images/photo1.jpg',
+        'blog/photo2.jpg',
       ]);
-
-      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
-        callback(mockAssetList);
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
-        callback(undefined);
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
-
-      const { listedAssets } = await import('.');
-      const mockAssetCallback = vi.fn();
-
-      listedAssets.subscribe(mockAssetCallback);
-
-      expect(mockAssetCallback).toHaveBeenCalled();
+      // A copy is returned
+      expect(listedAssets.current).not.toBe(_publishedAssets.current);
     });
 
-    it('should return empty array when publishedAssets is null', async () => {
-      vi.resetModules();
+    it('should list all the assets when the All Assets folder is selected', () => {
+      _selectedAssetFolder.current = { collectionName: undefined, internalPath: undefined };
 
-      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
-      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
-
-      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
-        callback(/** @type {any} */ (null));
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
-        callback(
-          /** @type {any} */ ({
-            collectionName: undefined,
-            internalPath: '/images',
-            publicPath: '/images',
-            entryRelative: false,
-            hasTemplateTags: false,
-          }),
-        );
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
-
-      const { listedAssets } = await import('.');
-      const mockAssetCallback = vi.fn();
-
-      listedAssets.subscribe(mockAssetCallback);
-
-      expect(mockAssetCallback).toHaveBeenCalled();
+      expect(listedAssets.current).toHaveLength(2);
     });
 
-    it('should handle empty asset list from filter', async () => {
-      vi.resetModules();
+    it('should be empty when there are no assets', () => {
+      _publishedAssets.current = null;
 
-      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
-      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
-      const emptyAssetList = /** @type {any[]} */ ([]);
-
-      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
-        callback(emptyAssetList);
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
-        callback(
-          /** @type {any} */ ({
-            collectionName: undefined,
-            internalPath: '/images',
-            publicPath: '/images',
-            entryRelative: false,
-            hasTemplateTags: false,
-          }),
-        );
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
-
-      const { listedAssets } = await import('.');
-      const mockAssetCallback = vi.fn();
-
-      listedAssets.subscribe(mockAssetCallback);
-
-      expect(mockAssetCallback).toHaveBeenCalled();
+      expect(listedAssets.current).toEqual([]);
     });
 
-    it('should match the selected folder by identity as well as by value', async () => {
-      vi.resetModules();
+    it('should filter the assets by the selected folder', () => {
+      _selectedAssetFolder.current = blogFolder;
 
-      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
-      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
+      expect(listedAssets.current.map(({ path }) => path)).toEqual(['blog/photo2.jpg']);
+    });
 
-      const folder = /** @type {any} */ ({
-        collectionName: undefined,
-        internalPath: '/images',
-        publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-        label: 'Images',
-      });
+    it('should match the selected folder by value as well as by identity', () => {
+      // A folder restored from the history state is an equal but separate object
+      _selectedAssetFolder.current = { ...blogFolder };
 
-      const mockAssetList = /** @type {any[]} */ ([
-        // Shares the folder object, as assets loaded from the backend do
-        { path: '/images/a.jpg', name: 'a.jpg', sha: 'a', size: 1, kind: 'image', folder },
-        // An equal but separate object, as a folder restored from history state produces
-        {
-          path: '/images/b.jpg',
-          name: 'b.jpg',
-          sha: 'b',
-          size: 2,
-          kind: 'image',
-          folder: { ...folder },
-        },
-        // Same paths but a different folder — must not be included
-        {
-          path: '/other/c.jpg',
-          name: 'c.jpg',
-          sha: 'c',
-          size: 3,
-          kind: 'image',
-          folder: { ...folder, internalPath: '/other' },
-        },
+      expect(listedAssets.current.map(({ path }) => path)).toEqual(['blog/photo2.jpg']);
+    });
+
+    it('should map each asset path to its position via listedAssetIndexMap', () => {
+      const indexMap = listedAssetIndexMap.current;
+
+      expect([...indexMap]).toEqual([
+        ['images/photo1.jpg', 0],
+        ['blog/photo2.jpg', 1],
       ]);
-
-      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
-        callback(mockAssetList);
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
-        callback(folder);
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
-
-      const { listedAssets } = await import('.');
-      /** @type {any[] | undefined} */
-      let listed;
-
-      listedAssets.subscribe((value) => {
-        listed = value;
-      });
-
-      expect(listed?.map((/** @type {any} */ a) => a.path)).toEqual([
-        '/images/a.jpg',
-        '/images/b.jpg',
-      ]);
+      expect(indexMap.get('missing')).toBeUndefined();
     });
 
-    it('should filter assets when folder with internalPath is selected', async () => {
-      vi.resetModules();
+    it('should reset the selected assets when the listed assets change', async () => {
+      _selectedAssets.current = [createAsset('images/photo1.jpg', globalFolder)];
+      _selectedAssetFolder.current = blogFolder;
+      await wait();
 
-      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
-      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
-
-      const mockAssetList = /** @type {any[]} */ ([
-        {
-          path: '/images/photo1.jpg',
-          name: 'photo1.jpg',
-          sha: 'sha1',
-          size: 1024,
-          kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/images',
-            publicPath: '/images',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
-          commitAuthor: { name: 'Alice', email: 'alice@example.com' },
-          commitDate: new Date('2023-01-01'),
-        },
-      ]);
-
-      const selectedFolder = /** @type {any} */ ({
-        collectionName: undefined,
-        internalPath: '/images',
-        publicPath: '/images',
-        entryRelative: false,
-        hasTemplateTags: false,
-      });
-
-      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
-        callback(mockAssetList);
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
-        callback(selectedFolder);
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
-
-      const { listedAssets } = await import('.');
-      const mockAssetCallback = vi.fn();
-
-      listedAssets.subscribe(mockAssetCallback);
-
-      expect(mockAssetCallback).toHaveBeenCalled();
+      expect(_selectedAssets.current).toEqual([]);
     });
 
-    it('should map each asset path to its position via listedAssetIndexMap', async () => {
-      vi.resetModules();
-
-      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
-      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
-
-      const mockAssetList = /** @type {any[]} */ ([
-        { path: '/images/a.jpg', name: 'a.jpg', sha: 'a', size: 1, kind: 'image' },
-        { path: '/images/b.jpg', name: 'b.jpg', sha: 'b', size: 2, kind: 'image' },
-      ]);
-
-      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
-        callback(mockAssetList);
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
-        callback(/** @type {any} */ (undefined));
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
-
-      const { listedAssetIndexMap } = await import('.');
-      /** @type {Map<string, number> | undefined} */
-      let indexMap;
-
-      listedAssetIndexMap.subscribe((value) => {
-        indexMap = value;
-      });
-
-      expect([.../** @type {Map<string, number>} */ (indexMap)]).toEqual([
-        ['/images/a.jpg', 0],
-        ['/images/b.jpg', 1],
-      ]);
-      expect(
-        /** @type {Map<string, number>} */ (indexMap).get('/images/missing.jpg'),
-      ).toBeUndefined();
-    });
-  });
-
-  describe('assetGroups derived store', () => {
-    it('should sort, filter, and group assets', async () => {
-      vi.resetModules();
-
-      const { filterAssets } = await import('$lib/services/assets/view/filter');
-      const { sortAssets } = await import('$lib/services/assets/view/sort');
-      const { groupAssets } = await import('$lib/services/assets/view/group');
-      const mockSortFn = vi.mocked(sortAssets);
-      const mockFilterFn = vi.mocked(filterAssets);
-      const mockGroupFn = vi.mocked(groupAssets);
-
-      const mockAssets = /** @type {any[]} */ ([
-        {
-          path: '/images/photo1.jpg',
-          name: 'photo1.jpg',
-          sha: 'sha1',
-          size: 1024,
-          kind: 'image',
-          folder: {
-            collectionName: undefined,
-            internalPath: '/images',
-            publicPath: '/images',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
-          commitAuthor: { name: 'Alice', email: 'alice@example.com' },
-          commitDate: new Date('2023-01-01'),
-        },
-      ]);
-
-      const mockGroups = /** @type {any} */ ({ '*': mockAssets });
-
-      mockSortFn.mockReturnValue(mockAssets);
-      mockFilterFn.mockReturnValue(mockAssets);
-      mockGroupFn.mockReturnValue(mockGroups);
-
-      const { assetGroups } = await import('.');
-      const mockCallback = vi.fn();
-
-      assetGroups.subscribe(mockCallback);
-
-      await new Promise((resolve) => {
-        setTimeout(resolve, 10);
-      });
-
-      expect(mockCallback).toHaveBeenCalled();
-    });
-  });
-
-  describe('backend.subscribe and assetGroups coverage branches', () => {
-    it('should call initSettings when backend becomes truthy and assetListSettings is falsy', async () => {
-      const { initSettings } = await import('$lib/services/assets/view/settings');
-
-      // _backendAv starts as null (covers &&-short-circuit / binary-expr false path at module load)
-      // Set backend truthy with entryListSettings still undefined → initSettings called
-      _assetListSettingsAv.set(undefined);
-      _backendAv.set(/** @type {any} */ ({ repository: { databaseName: 'test-db' } }));
-
-      expect(vi.mocked(initSettings)).toHaveBeenCalledWith({
-        repository: { databaseName: 'test-db' },
-      });
-    });
-
-    it('should skip set(groups) when computed groups equal current store value (L117 false)', async () => {
-      // Cover L117 false: trigger two computations with the same groups result so that
-      // equal(get(assetGroups), groups) === true → !equal() === false → skip set.
-      // First computation: groups=mockGroups, get(assetGroups)=undefined → not equal → set →
-      //   assetGroups.value = mockGroups.
-      // Second computation (triggered by currentView update): groups=mockGroups still,
-      //   get(assetGroups)=mockGroups → equal → skip → L117 false covered.
-      vi.resetModules();
-
-      const { publishedAssets: allAssets, selectedAssets } = await import('$lib/services/assets');
-      const { selectedAssetFolder } = await import('$lib/services/assets/folders');
-      const { filterAssets } = await import('$lib/services/assets/view/filter');
-      const { sortAssets } = await import('$lib/services/assets/view/sort');
-      const { groupAssets } = await import('$lib/services/assets/view/group');
-      const mockAssets = /** @type {any[]} */ ([]);
-      const mockGroups = /** @type {any} */ ({ '*': [] });
-
-      vi.mocked(sortAssets).mockReturnValue(mockAssets);
-      vi.mocked(filterAssets).mockReturnValue(mockAssets);
-      vi.mocked(groupAssets).mockReturnValue(mockGroups);
-
-      vi.mocked(allAssets.subscribe).mockImplementationOnce((callback) => {
-        callback(/** @type {any} */ ([]));
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssetFolder.subscribe).mockImplementationOnce((callback) => {
-        callback(/** @type {any} */ (undefined));
-        return vi.fn();
-      });
-
-      vi.mocked(selectedAssets.set).mockImplementationOnce(() => {});
-
-      const { assetGroups, currentView } = await import('.');
-      const mockCallback = vi.fn();
-
-      assetGroups.subscribe(mockCallback);
-
-      // First computation sets assetGroups.value = mockGroups (true branch).
-      // Update currentView to trigger a second computation — groups is still mockGroups,
-      // get(assetGroups) is now mockGroups → equal → skip → L117 false branch fires.
-      currentView.set(/** @type {any} */ ({ type: 'grid', showInfo: false }));
-
-      await new Promise((resolve) => {
-        setTimeout(resolve, 10);
-      });
-
-      expect(mockCallback).toHaveBeenCalled();
-    });
-  });
-
-  describe('listedAssets subscription with dev mode', () => {
-    it('should not log assets to console when dev mode is disabled', async () => {
-      vi.resetModules();
-
+    it('should not log the assets to the console when dev mode is disabled', async () => {
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-      vi.doMock('$lib/services/user/prefs.svelte', () => ({
-        prefs: { devModeEnabled: false },
-      }));
+      _selectedAssetFolder.current = blogFolder;
+      await wait();
 
-      await import('.');
-
-      // Should not have been called for logging when dev mode is disabled
-      expect(consoleSpy).not.toHaveBeenCalledWith('listedAssets', expect.any(Array));
-
+      expect(consoleSpy).not.toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
 
-    it('should log assets to console when dev mode is enabled', async () => {
-      vi.resetModules();
-
+    it('should log the assets to the console when dev mode is enabled', async () => {
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-      vi.doMock('$lib/services/user/prefs.svelte', () => ({
-        prefs: { devModeEnabled: true },
-      }));
-
-      await import('.');
+      _prefs.devModeEnabled = true;
+      _selectedAssetFolder.current = blogFolder;
+      await wait();
 
       expect(consoleSpy).toHaveBeenCalledWith('listedAssets', expect.any(Array));
-
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('assetGroups', () => {
+    const asset = createAsset('images/photo1.jpg');
+
+    beforeEach(() => {
+      _publishedAssets.current = [asset];
+      vi.mocked(sortAssets).mockImplementation((assets) => assets);
+      vi.mocked(filterAssets).mockImplementation((assets) => assets);
+      vi.mocked(groupAssets).mockImplementation((assets) => ({ '*': assets }));
+    });
+
+    it('should sort, filter, and group the listed assets', () => {
+      currentView.current = {
+        type: 'grid',
+        showInfo: true,
+        sort: { key: 'name', order: 'ascending' },
+        filter: { field: 'kind', pattern: 'image' },
+        group: { field: 'kind' },
+      };
+
+      expect(assetGroups.current).toEqual({ '*': [asset] });
+      expect(sortAssets).toHaveBeenCalledWith([asset], { key: 'name', order: 'ascending' });
+      expect(filterAssets).toHaveBeenCalledWith([asset], { field: 'kind', pattern: 'image' });
+      expect(groupAssets).toHaveBeenCalledWith([asset], { field: 'kind' });
+    });
+
+    it('should keep the same groups when the computed groups are equal', () => {
+      const groups = assetGroups.current;
+
+      // Change the view without affecting the result
+      currentView.current = { type: 'list', showInfo: true };
+
+      expect(assetGroups.current).toBe(groups);
+    });
+
+    it('should return new groups when the computed groups differ', () => {
+      const groups = assetGroups.current;
+
+      _publishedAssets.current = [asset, createAsset('images/photo2.jpg')];
+
+      expect(assetGroups.current).not.toBe(groups);
+      expect(assetGroups.current).toEqual({ '*': _publishedAssets.current });
+    });
+  });
+
+  describe('backend effect', () => {
+    it('should initialize the settings once a backend is selected', async () => {
+      _backend.current = { repository: { databaseName: 'test-db' } };
+      await wait();
+
+      expect(initSettings).toHaveBeenCalledWith({ repository: { databaseName: 'test-db' } });
+    });
+
+    it('should not initialize the settings without a backend', async () => {
+      expect(initSettings).not.toHaveBeenCalled();
     });
   });
 });

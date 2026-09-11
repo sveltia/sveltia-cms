@@ -136,7 +136,7 @@
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
-  const showSecondPane = $derived($entryEditorSettings?.showSecondPane ?? true);
+  const showSecondPane = $derived(entryEditorSettings.current?.showSecondPane ?? true);
   // There’s only something to put in the second pane when another locale can be edited alongside
   // the first one, or when the entry has a preview
   const canShowSecondPane = $derived((i18nEnabled && allLocales.length > 1) || canPreview);
@@ -158,8 +158,8 @@
   // Look the entry up in the store rather than using `originalEntry` directly, so the status button
   // stays in sync when the status is changed elsewhere, e.g. on the Editorial Workflow page
   const unpublishedEntry = $derived(
-    $workflowEnabled && collectionName && originalEntry
-      ? $unpublishedEntries.find(({ workflow }) =>
+    workflowEnabled.current && collectionName && originalEntry
+      ? unpublishedEntries.current.find(({ workflow }) =>
           isEntryBranch({
             branch: workflow.pullRequest.branch,
             collectionName,
@@ -171,16 +171,16 @@
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
   // the published version untouched, so it stays available even when deletion is disabled
   const canDelete = $derived(entryCollection?.delete !== false);
-  // `$allEntries` is a dependency, because the entry can be published from another view
+  // `allEntries.current` is a dependency, because the entry can be published from another view
   const publishedVersionExists = $derived(
-    !!unpublishedEntry && !!$allEntries && hasPublishedVersion(unpublishedEntry),
+    !!unpublishedEntry && !!allEntries.current && hasPublishedVersion(unpublishedEntry),
   );
   // Deleting an entry that was never published just throws the draft away; anything else takes an
   // entry off the site
   const discardsDraft = $derived(!!unpublishedEntry && !publishedVersionExists);
   // Taking a published entry off the site is a maintainer’s call. An Open Authoring contributor can
   // discard their own draft, but not propose the removal of something already live
-  const canDeleteEntry = $derived(canDelete && (discardsDraft || !$openAuthoring));
+  const canDeleteEntry = $derived(canDelete && (discardsDraft || !openAuthoring.current));
   // An entry awaiting deletion is read-only: there’s nothing to save or move through the stages,
   // only the deletion itself to carry out or call off
   const pendingDeletion = $derived(isPendingDeletion(unpublishedEntry));
@@ -202,7 +202,7 @@
       return;
     }
 
-    const dirPath = collection && isNestedCollection(collection) ? $nestedFilterPath : '';
+    const dirPath = collection && isNestedCollection(collection) ? nestedFilterPath.current : '';
 
     goBack(
       dirPath
@@ -239,7 +239,7 @@
     }
 
     if (toastState) {
-      contentUpdatesToast.set({ ...UPDATE_TOAST_DEFAULT_STATE, count: 1, ...toastState });
+      contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, count: 1, ...toastState };
     }
 
     _goBack();
@@ -260,7 +260,7 @@
         return { deleted: true };
       }
 
-      if (originalEntry && $workflowEnabled && collection) {
+      if (originalEntry && workflowEnabled.current && collection) {
         await deleteWorkflowEntry(originalEntry, collection, collectionFile, associatedAssets);
 
         return { deleted: true, deletionPending: true };
@@ -342,7 +342,7 @@
       // it hasn’t been handed to anyone yet, and the status menu that would do it is easy to miss.
       // Offer it as the next step instead, once, while the entry is still in the drafting stage
       if (
-        $workflowEnabled &&
+        workflowEnabled.current &&
         savedDraft.workflow?.status === 'draft' &&
         // An incomplete entry isn’t ready to be handed over; the status menu is still there once
         // the remaining fields have been filled in
@@ -423,7 +423,7 @@
 <Toolbar variant="primary" aria-label={_('primary')}>
   <BackButton
     aria-label={_('cancel_editing')}
-    useShortcut={prefs.closeWithEscape && !$activeInlineEditors}
+    useShortcut={prefs.closeWithEscape && !activeInlineEditors.current}
     onclick={() => {
       _goBack();
     }}
@@ -460,10 +460,12 @@
   {/if}
   {#if pendingDeletion}
     <!-- Nothing to save: the entry is shown for reference until the deletion is carried out -->
-  {:else if $skipCIConfigured && !$workflowEnabled}
+  {:else if skipCIConfigured.current && !workflowEnabled.current}
     <SplitButton
       variant="primary"
-      label={_($skipCIEnabled ? (saving ? 'saving' : 'save') : saving ? 'publishing' : 'publish')}
+      label={_(
+        skipCIEnabled.current ? (saving ? 'saving' : 'save') : saving ? 'publishing' : 'publish',
+      )}
       disabled={controlsDisabled || !modified}
       keyShortcuts="Accel+S"
       onclick={() => {
@@ -474,9 +476,9 @@
         <!-- Show the opposite option: if automatic deployments are enabled, allow to disable it -->
         <Menu>
           <MenuItem
-            label={_($skipCIEnabled ? 'save_and_publish' : 'save_without_publishing')}
+            label={_(skipCIEnabled.current ? 'save_and_publish' : 'save_without_publishing')}
             onclick={() => {
-              save({ skipCI: !$skipCIEnabled });
+              save({ skipCI: !skipCIEnabled.current });
             }}
           />
         </Menu>
@@ -514,7 +516,7 @@
             !collectionFile &&
             !isIndexFile &&
             entryCollection?.duplicate !== false &&
-            !$collectionState.creationDisabled &&
+            !collectionState.current.creationDisabled &&
             // @todo Enable duplication for Hugo’s page bundles = the `path` option. We need to
             // duplicate assets along with the entry.
             // @see https://github.com/sveltia/sveltia-cms/issues/526
@@ -592,7 +594,7 @@
             }
           }}
         />
-        {#if $deployPollTimedOut}
+        {#if deployPollTimedOut.current}
           <Divider />
           <MenuItem
             label={_('deploy_preview.check_again')}
@@ -608,34 +610,34 @@
             checked={showSecondPane}
             disabled={!canShowSecondPane}
             onChange={() => {
-              entryEditorSettings.update((view = {}) => ({
-                ...view,
-                showSecondPane: !(view.showSecondPane ?? true),
-              }));
+              entryEditorSettings.current = {
+                ...entryEditorSettings.current,
+                showSecondPane: !(entryEditorSettings.current?.showSecondPane ?? true),
+              };
             }}
           />
           <!-- The preview is rendered in the second pane, so it’s unavailable while hidden -->
           <MenuItemCheckbox
             label={_('show_preview')}
-            checked={$entryEditorSettings?.showPreview}
+            checked={entryEditorSettings.current?.showPreview}
             disabled={!showSecondPane || !canPreview}
             onChange={() => {
-              entryEditorSettings.update((view = {}) => ({
-                ...view,
-                showPreview: !view.showPreview,
-              }));
+              entryEditorSettings.current = {
+                ...entryEditorSettings.current,
+                showPreview: !entryEditorSettings.current?.showPreview,
+              };
             }}
           />
           <MenuItemCheckbox
             label={_('sync_scrolling')}
-            checked={$entryEditorSettings?.syncScrolling}
+            checked={entryEditorSettings.current?.syncScrolling}
             disabled={!showSecondPane ||
               (!canPreview && Object.keys(entryDraft.current?.currentValues ?? {}).length === 1)}
             onChange={() => {
-              entryEditorSettings.update((view = {}) => ({
-                ...view,
-                syncScrolling: !view.syncScrolling,
-              }));
+              entryEditorSettings.current = {
+                ...entryEditorSettings.current,
+                syncScrolling: !entryEditorSettings.current?.syncScrolling,
+              };
             }}
           />
         {/if}
@@ -650,8 +652,8 @@
   </Alert>
 </Toast>
 
-<Toast id={$copyFromLocaleToast.id} bind:show={$copyFromLocaleToast.show}>
-  {@const { status, message, count, sourceLanguage } = $copyFromLocaleToast}
+<Toast id={copyFromLocaleToast.current.id} bind:show={copyFromLocaleToast.current.show}>
+  {@const { status, message, count, sourceLanguage } = copyFromLocaleToast.current}
   <Alert {status}>
     {_(`editor.${message}`, {
       values: {
@@ -694,7 +696,7 @@
 >
   {#if unpublishedEntry && !publishedVersionExists}
     {_('workflow.confirm_deleting_unpublished_entry')}
-  {:else if $workflowEnabled}
+  {:else if workflowEnabled.current}
     <!-- The removal is committed to a pull request rather than to the configured branch -->
     {_('workflow.confirm_deleting_published_entry')}
   {:else}

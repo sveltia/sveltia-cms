@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -7,16 +6,13 @@ import {
   normalizeURL,
   pickDeployment,
 } from '$lib/services/backends/git/shared/deployment';
+import { cmsConfig } from '$lib/services/config';
 
 /**
  * @import { DeployCandidate } from '$lib/services/backends/git/shared/deployment';
  */
 
-vi.mock('$lib/services/config', () => ({ cmsConfig: { subscribe: vi.fn() } }));
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
+vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 
 /**
  * Create a candidate with sensible defaults.
@@ -34,12 +30,12 @@ const createCandidate = (overrides = {}) => ({
 describe('Git deployment selection', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(get).mockReturnValue({ backend: { name: 'github' } });
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
   });
 
   describe('getPreviewContext', () => {
     test('returns the configured context', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         backend: { name: 'github', preview_context: 'netlify/site/deploy-preview' },
       });
 
@@ -51,12 +47,12 @@ describe('Git deployment selection', () => {
     });
 
     test('returns an empty string without a backend', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
       expect(getPreviewContext()).toBe('');
     });
 
     test('returns an empty string without a config', () => {
-      vi.mocked(get).mockReturnValue(undefined);
+      cmsConfig.current = undefined;
       expect(getPreviewContext()).toBe('');
     });
   });
@@ -454,7 +450,7 @@ describe('Git deployment selection', () => {
 
     describe('with preview_context configured', () => {
       beforeEach(() => {
-        vi.mocked(get).mockReturnValue({
+        cmsConfig.current = /** @type {any} */ ({
           backend: { name: 'github', preview_context: 'Deploy-Preview' },
         });
       });
@@ -507,7 +503,7 @@ describe('Git deployment selection', () => {
       });
 
       test('accepts a check run the configured context names, whatever it’s called', () => {
-        vi.mocked(get).mockReturnValue({
+        cmsConfig.current = /** @type {any} */ ({
           backend: { name: 'github', preview_context: 'my-provider/deployment' },
         });
 

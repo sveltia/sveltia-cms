@@ -135,21 +135,21 @@
     console.debug('Cloudinary Panel received message:', data);
 
     if (data.type === 'login' && data.consoleDomain) {
-      $activated = true;
-      $dialogOpen = true;
+      activated.current = true;
+      dialogOpen.current = true;
     }
 
     if (data.type === 'consoleLoaded') {
-      $consoleLoaded = true;
+      consoleLoaded.current = true;
     }
 
     if (data.type === 'ML_WIDGET_INSERT_DATA') {
-      $dialogOpen = false;
+      dialogOpen.current = false;
       onInsert(data.data);
     }
 
     if (data.type === 'ML_WIDGET_HIDE') {
-      $dialogOpen = false;
+      dialogOpen.current = false;
     }
   };
 
@@ -163,7 +163,7 @@
   });
 
   $effect(() => {
-    if (libOptions && $consoleLoaded) {
+    if (libOptions && consoleLoaded.current) {
       sendMessage();
     }
   });
@@ -171,12 +171,12 @@
 
 {#if !hidden}
   <EmptyState>
-    {#if $activated}
+    {#if activated.current}
       <Button
         variant="primary"
         label={_('cloud_storage.cloudinary.open_library')}
         onclick={() => {
-          $dialogOpen = true;
+          dialogOpen.current = true;
         }}
       />
     {:else}

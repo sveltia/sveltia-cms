@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
@@ -63,7 +63,7 @@ describe('contents/draft/create/index', () => {
     });
 
     beforeEach(() => {
-      nestedFilterPath.set('');
+      nestedFilterPath.current = '';
     });
 
     it('should return undefined when the path editor is disabled', () => {
@@ -92,7 +92,7 @@ describe('contents/draft/create/index', () => {
     });
 
     it('should fall back to the folder being browsed', () => {
-      nestedFilterPath.set('docs');
+      nestedFilterPath.current = 'docs';
 
       expect(getOriginalPath({ collection: createCollection(), originalEntry: {} })).toBe('docs');
     });
@@ -238,11 +238,7 @@ describe('contents/draft/create/index', () => {
     createProxy.mockImplementation((args) => args.target);
     getDefaultValues.mockReturnValue({});
 
-    cmsConfig.subscribe.mockImplementation((callback) => {
-      callback({ editor: { preview: true } });
-
-      return vi.fn();
-    });
+    cmsConfig.current = /** @type {any} */ ({ editor: { preview: true } });
   });
 
   describe('createDraft', () => {
@@ -459,10 +455,8 @@ describe('contents/draft/create/index', () => {
     it('should use true fallback when no editor.preview is set anywhere (line 120)', () => {
       // Covers the `true` fallback: when none of indexFile/collectionFile/collection/cmsConfig
       // define editor.preview, the ?? chain falls all the way to `true`.
-      cmsConfig.subscribe.mockImplementation((callback) => {
-        callback({}); // no editor property → cmsConfig?.editor?.preview = undefined
-        return vi.fn();
-      });
+      // No editor property → cmsConfig?.editor?.preview = undefined
+      cmsConfig.current = /** @type {any} */ ({});
 
       const collection = {
         name: 'posts',

@@ -11,28 +11,28 @@
   import { assetUpdatesToast } from '$lib/services/assets/data';
 </script>
 
-<Toast bind:show={$assetUpdatesToast.saved}>
+<Toast bind:show={assetUpdatesToast.current.saved}>
   <Alert status="success">
-    {_($assetUpdatesToast.published ? 'assets_saved_and_published' : 'assets_saved', {
-      values: { count: $assetUpdatesToast.count },
+    {_(assetUpdatesToast.current.published ? 'assets_saved_and_published' : 'assets_saved', {
+      values: { count: assetUpdatesToast.current.count },
     })}
   </Alert>
 </Toast>
 
-<Toast bind:show={$assetUpdatesToast.moved}>
+<Toast bind:show={assetUpdatesToast.current.moved}>
   <Alert status="success">
-    {_('assets_moved', { values: { count: $assetUpdatesToast.count } })}
+    {_('assets_moved', { values: { count: assetUpdatesToast.current.count } })}
   </Alert>
 </Toast>
 
-<Toast bind:show={$assetUpdatesToast.renamed}>
+<Toast bind:show={assetUpdatesToast.current.renamed}>
   <Alert status="success">
-    {_('assets_renamed', { values: { count: $assetUpdatesToast.count } })}
+    {_('assets_renamed', { values: { count: assetUpdatesToast.current.count } })}
   </Alert>
 </Toast>
 
-<Toast bind:show={$assetUpdatesToast.deleted}>
+<Toast bind:show={assetUpdatesToast.current.deleted}>
   <Alert status="success">
-    {_('assets_deleted', { values: { count: $assetUpdatesToast.count } })}
+    {_('assets_deleted', { values: { count: assetUpdatesToast.current.count } })}
   </Alert>
 </Toast>

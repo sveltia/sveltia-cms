@@ -1,6 +1,6 @@
 import { _ } from '@sveltia/i18n';
 import equal from 'fast-deep-equal';
-import { derived, get, writable } from 'svelte/store';
+import { untrack } from 'svelte';
 
 import { publishedAssets, selectedAssets, uploadingAssets } from '$lib/services/assets';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
@@ -12,31 +12,31 @@ import { backend } from '$lib/services/backends';
 import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
 import { getCollectionFile, getCollectionFileLabel } from '$lib/services/contents/collection/files';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import {
+  createDerivedState,
+  createRawState,
+  createRootEffect,
+} from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import { Asset, AssetFolderInfo, AssetListView } from '$lib/types/private';
  */
 
 /**
  * Whether the asset details overlay is shown.
- * @type {Writable<boolean>}
  */
-export const showAssetOverlay = writable(false);
+export const showAssetOverlay = createRawState(false);
 
 /**
  * Whether to show the Upload Assets dialog.
  */
-export const showUploadAssetsDialog = writable(false);
+export const showUploadAssetsDialog = createRawState(false);
 
 /**
- * @type {Readable<boolean>}
+ * Whether to show the Upload Assets confirmation dialog.
  */
-export const showUploadAssetsConfirmDialog = derived(
-  [uploadingAssets],
-  ([_uploadingAssets], set) => {
-    set(!!_uploadingAssets.files.length);
-  },
+export const showUploadAssetsConfirmDialog = createDerivedState(
+  () => !!uploadingAssets.current.files.length,
 );
 
 /**
@@ -84,75 +84,81 @@ export const defaultView = {
 
 /**
  * View settings for the selected asset collection.
- * @type {Writable<AssetListView>}
+ * @type {{ current: AssetListView }}
  */
-export const currentView = writable({ type: 'grid', showInfo: true });
+export const currentView = createRawState({ type: 'grid', showInfo: true });
 
 /**
  * List of all the assets for the selected asset collection.
- * @type {Readable<Asset[]>}
  */
-export const listedAssets = derived(
-  [publishedAssets, selectedAssetFolder],
-  ([_allAssets, _selectedAssetFolder], set) => {
-    if (_allAssets && _selectedAssetFolder && _selectedAssetFolder.internalPath !== undefined) {
-      // An asset’s folder is usually the very object the selection was made from, so identity
-      // settles it without walking the folder; the deep comparison is the fallback for a folder
-      // restored from `window.history.state`, which is an equal but separate object.
-      set(
-        _allAssets.filter(
-          ({ folder }) => folder === _selectedAssetFolder || equal(folder, _selectedAssetFolder),
-        ),
-      );
-    } else {
-      set(_allAssets ? [..._allAssets] : []);
-    }
-  },
-);
+export const listedAssets = createDerivedState(() => {
+  const { current: _allAssets } = publishedAssets;
+  const { current: _selectedAssetFolder } = selectedAssetFolder;
+
+  if (_allAssets && _selectedAssetFolder && _selectedAssetFolder.internalPath !== undefined) {
+    // An asset’s folder is usually the very object the selection was made from, so identity
+    // settles it without walking the folder; the deep comparison is the fallback for a folder
+    // restored from `window.history.state`, which is an equal but separate object.
+    return _allAssets.filter(
+      ({ folder }) => folder === _selectedAssetFolder || equal(folder, _selectedAssetFolder),
+    );
+  }
+
+  return _allAssets ? [..._allAssets] : [];
+});
 
 /**
  * Map from asset path to the asset’s index in {@link listedAssets}, used by list rows to resolve
  * their `aria-rowindex` in O(1). Rows are appended by an infinite scroller and never unmounted, so
  * once a large folder has been scrolled through, an `indexOf()` per row would make every subsequent
  * list update O(n²).
- * @type {Readable<Map<string, number>>}
  */
-export const listedAssetIndexMap = derived(
-  [listedAssets],
-  ([_listedAssets]) => new Map(_listedAssets.map((asset, index) => [asset.path, index])),
+export const listedAssetIndexMap = createDerivedState(
+  () => new Map(listedAssets.current.map((asset, index) => [asset.path, index])),
 );
 
 /**
- * Sorted, filtered and grouped assets for the selected asset collection.
- * @type {Readable<Record<string, Asset[]>>}
+ * Last computed value of {@link assetGroups}, reused when the new value is deeply equal, so that
+ * the list is not re-rendered needlessly.
+ * @type {Record<string, Asset[]>}
  */
-export const assetGroups = derived(
-  [listedAssets, currentView],
-  ([_listedAssets, _currentView], set) => {
-    /** @type {Asset[]} */
-    let assets = [..._listedAssets];
+let previousAssetGroups = {};
 
-    assets = sortAssets(assets, _currentView.sort);
-    assets = filterAssets(assets, _currentView.filter);
+/**
+ * Sorted, filtered and grouped assets for the selected asset collection.
+ * @type {{ readonly current: Record<string, Asset[]> }}
+ */
+export const assetGroups = createDerivedState(() => {
+  const { current: _currentView } = currentView;
+  /** @type {Asset[]} */
+  let assets = [...listedAssets.current];
 
-    const groups = groupAssets(assets, _currentView.group);
+  assets = sortAssets(assets, _currentView.sort);
+  assets = filterAssets(assets, _currentView.filter);
 
-    if (!equal(get(assetGroups), groups)) {
-      set(groups);
-    }
-  },
-);
+  const groups = groupAssets(assets, _currentView.group);
 
-backend.subscribe((_backend) => {
-  if (_backend && !get(assetListSettings)) {
+  if (!equal(previousAssetGroups, groups)) {
+    previousAssetGroups = groups;
+  }
+
+  return previousAssetGroups;
+});
+
+createRootEffect(() => {
+  const { current: _backend } = backend;
+
+  if (_backend && !untrack(() => assetListSettings.current)) {
     initSettings(_backend);
   }
 });
 
-listedAssets.subscribe((assets) => {
-  selectedAssets.set([]);
+createRootEffect(() => {
+  const assets = listedAssets.current;
 
-  if (prefs.devModeEnabled) {
+  selectedAssets.current = [];
+
+  if (untrack(() => prefs.devModeEnabled)) {
     // eslint-disable-next-line no-console
     console.info('listedAssets', assets);
   }

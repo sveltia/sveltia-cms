@@ -1,5 +1,4 @@
 import { parse } from 'marked';
-import { get } from 'svelte/store';
 import TurndownService from 'turndown';
 
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
@@ -92,7 +91,14 @@ export const getCopyingFieldMap = ({ draft, options }) => {
  * @param {InternalLocaleCode} context.sourceLanguage Source locale, e.g. `en`.
  */
 export const updateToast = (status, message, { count, sourceLanguage }) => {
-  copyFromLocaleToast.set({ id: Date.now(), show: true, status, message, count, sourceLanguage });
+  copyFromLocaleToast.current = {
+    id: Date.now(),
+    show: true,
+    status,
+    message,
+    count,
+    sourceLanguage,
+  };
 };
 
 /**
@@ -104,7 +110,7 @@ export const updateToast = (status, message, { count, sourceLanguage }) => {
  * @param {CopyingFieldMap} args.copingFieldMap Copied or translated field values.
  */
 export const translateFields = async ({ currentValues, options, copingFieldMap }) => {
-  const { serviceId } = get(translator);
+  const { serviceId } = translator.current;
   const { sourceLanguage, targetLanguage } = options;
   const count = Object.keys(copingFieldMap).length;
   let apiKey = prefs.apiKeys?.[serviceId];
@@ -112,7 +118,7 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
   if (!apiKey) {
     const { promise, resolve } = Promise.withResolvers();
 
-    translatorApiKeyDialogState.set({ show: true, multiple: count > 1, resolve });
+    translatorApiKeyDialogState.current = { show: true, multiple: count > 1, resolve };
 
     // The promise will be resolved once the user enters an API key on the dialog
     apiKey = await promise;
@@ -124,7 +130,7 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
 
   // Get the translator service again in case the user has selected a different service in the API
   // key dialog, which will update the `translator` store
-  const { markdownSupported, translate } = get(translator);
+  const { markdownSupported, translate } = translator.current;
 
   updateToast('info', 'translation.started', { count, sourceLanguage });
 

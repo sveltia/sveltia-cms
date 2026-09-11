@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -22,8 +21,8 @@ const NOW = new Date('2026-08-17T00:00:00Z').getTime();
  * @param {number} [checkedTime] When the backend was queried. Default: just after the hint.
  */
 const recordDeployment = (state, checkedTime = NOW + 1000) => {
-  productionSHA.set('prod');
-  deployments.set({ prod: { state, checkedTime } });
+  productionSHA.current = 'prod';
+  deployments.current = { prod: { state, checkedTime } };
 };
 
 describe('Publish state', () => {
@@ -40,63 +39,63 @@ describe('Publish state', () => {
   describe('setLastCommitPublishHint', () => {
     test('records the expectation with the current time', () => {
       setLastCommitPublishHint(false);
-      expect(get(lastCommitPublishHint)).toEqual({ published: false, time: NOW });
+      expect(lastCommitPublishHint.current).toEqual({ published: false, time: NOW });
     });
   });
 
   describe('isLastCommitPublished', () => {
     test('is published before anything has been looked up', () => {
-      expect(get(isLastCommitPublished)).toBe(true);
+      expect(isLastCommitPublished.current).toBe(true);
     });
 
     test('follows the hint while the provider has said nothing', () => {
       setLastCommitPublishHint(false);
-      expect(get(isLastCommitPublished)).toBe(false);
+      expect(isLastCommitPublished.current).toBe(false);
 
       setLastCommitPublishHint(true);
-      expect(get(isLastCommitPublished)).toBe(true);
+      expect(isLastCommitPublished.current).toBe(true);
     });
 
     test('follows the hint when no commit is being tracked', () => {
       setLastCommitPublishHint(false);
-      deployments.set({ prod: { state: 'ready', checkedTime: NOW + 1000 } });
+      deployments.current = { prod: { state: 'ready', checkedTime: NOW + 1000 } };
 
-      expect(get(isLastCommitPublished)).toBe(false);
+      expect(isLastCommitPublished.current).toBe(false);
     });
 
     test('reports a finished build as published, whatever the message said', () => {
       setLastCommitPublishHint(false);
       recordDeployment('ready');
 
-      expect(get(isLastCommitPublished)).toBe(true);
+      expect(isLastCommitPublished.current).toBe(true);
     });
 
     test('reports a running build as published, so the user isn’t asked to trigger another', () => {
       setLastCommitPublishHint(false);
       recordDeployment('pending');
 
-      expect(get(isLastCommitPublished)).toBe(true);
+      expect(isLastCommitPublished.current).toBe(true);
     });
 
     test('reports a failed build as unpublished, so it can be retried', () => {
       setLastCommitPublishHint(true);
       recordDeployment('error');
 
-      expect(get(isLastCommitPublished)).toBe(false);
+      expect(isLastCommitPublished.current).toBe(false);
     });
 
     test('falls back to the hint when the provider reported nothing', () => {
       setLastCommitPublishHint(false);
       recordDeployment('unknown');
 
-      expect(get(isLastCommitPublished)).toBe(false);
+      expect(isLastCommitPublished.current).toBe(false);
     });
 
     test('falls back to the hint while a commit is being looked up', () => {
       setLastCommitPublishHint(false);
       recordDeployment('checking', 0);
 
-      expect(get(isLastCommitPublished)).toBe(false);
+      expect(isLastCommitPublished.current).toBe(false);
     });
 
     test('ignores a deployment read before the hint was recorded', () => {
@@ -105,7 +104,7 @@ describe('Publish state', () => {
       recordDeployment('error', NOW - 1000);
       setLastCommitPublishHint(true);
 
-      expect(get(isLastCommitPublished)).toBe(true);
+      expect(isLastCommitPublished.current).toBe(true);
     });
   });
 });

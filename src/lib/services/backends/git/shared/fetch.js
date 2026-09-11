@@ -1,6 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 import { getAssetKind } from '$lib/services/assets/kinds';
@@ -42,7 +41,7 @@ import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
  * @returns {Promise<BaseFileList>} The file list.
  */
 export const getFileList = async ({ metaDB, lastCommitHash, cachedFileEntries, fetchFileList }) => {
-  const lastConfigHash = get(cmsConfigVersion);
+  const lastConfigHash = cmsConfigVersion.current;
 
   const {
     last_config_hash: cachedConfigHash,
@@ -141,11 +140,11 @@ export const parseAssetFileInfo = (fileInfo) => {
  * @param {Error[]} [args.errors] List of errors encountered while parsing entries.
  */
 export const updateStores = ({ entries, assets, configFiles, errors = [] }) => {
-  allEntries.set(entries);
-  allAssets.set(assets);
-  gitConfigFiles.set(configFiles);
-  entryParseErrors.set(errors);
-  dataLoaded.set(true);
+  allEntries.current = entries;
+  allAssets.current = assets;
+  gitConfigFiles.current = configFiles;
+  entryParseErrors.current = errors;
+  dataLoaded.current = true;
 };
 
 /**

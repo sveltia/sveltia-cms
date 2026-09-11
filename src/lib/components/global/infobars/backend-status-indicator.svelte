@@ -22,11 +22,11 @@
    * Check if an update is available.
    */
   const checkStatus = async () => {
-    if (!$backend?.checkStatus) {
+    if (!backend.current?.checkStatus) {
       return;
     }
 
-    status = await $backend.checkStatus();
+    status = await backend.current.checkStatus();
   };
 
   /**
@@ -54,7 +54,7 @@
   const init = () => {
     if (mounted) {
       // Cannot get the status of the local backend or a self-hosted Git instance
-      if ($backend?.checkStatus && !$backend.repository?.isSelfHosted) {
+      if (backend.current?.checkStatus && !backend.current.repository?.isSelfHosted) {
         startChecking();
       } else {
         stopChecking();
@@ -72,7 +72,7 @@
   });
 
   $effect(() => {
-    void [mounted, $backend, $cmsConfig];
+    void [mounted, backend.current, cmsConfig.current];
     init();
   });
 </script>
@@ -82,12 +82,12 @@
     status={status === 'major' ? 'error' : 'warning'}
     --sui-infobar-message-justify-content="center"
   >
-    {_(`backend_status.${status}_incident`, { values: { service: $backend?.label } })}
+    {_(`backend_status.${status}_incident`, { values: { service: backend.current?.label } })}
     <Button
       variant="link"
       label={_('details')}
       onclick={() => {
-        openNewTab($backend?.statusDashboardURL);
+        openNewTab(backend.current?.statusDashboardURL);
       }}
     />
   </Infobar>

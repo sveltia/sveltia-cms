@@ -49,10 +49,6 @@ function mockTranslate(key, options) {
 const mockGet = vi.fn();
 const mockGetListFormatter = vi.fn();
 
-vi.mock('svelte/store', () => ({
-  get: mockGet,
-}));
-
 vi.mock('@sveltia/i18n', () => ({
   _: mockTranslate,
   locale: { current: 'en-US', set: vi.fn() },

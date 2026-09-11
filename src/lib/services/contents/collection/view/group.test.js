@@ -3,32 +3,22 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { getReorderGroupingConditions, groupEntries, parseGroupConfig } from './group';
+import { selectedCollection } from '$lib/services/contents/collection';
+import { currentView } from '$lib/services/contents/collection/view';
+
+import { getReorderGroupingConditions, groupEntries, parseGroupConfig, viewGroups } from './group';
 
 // Mock all dependencies
-vi.mock('@sveltia/i18n', () => ({
-  _: (key) => (key === 'other' ? 'Other' : key),
+vi.mock('$lib/services/contents/collection', () => ({
+  selectedCollection: { current: undefined },
 }));
 
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  toStore: vi.fn((getter) => ({
-    subscribe: vi.fn((fn) => {
-      fn(getter());
-      return vi.fn();
-    }),
-  })),
-  writable: vi.fn(() => ({
-    subscribe: vi.fn(() => vi.fn()),
-    set: vi.fn(),
-    update: vi.fn(),
-  })),
-  derived: vi.fn(() => ({
-    subscribe: vi.fn(() => vi.fn()),
-  })),
-  readable: vi.fn(() => ({
-    subscribe: vi.fn(() => vi.fn()),
-  })),
+vi.mock('$lib/services/contents/collection/view', () => ({
+  currentView: { current: { type: 'list' } },
+}));
+
+vi.mock('@sveltia/i18n', () => ({
+  _: (key) => (key === 'other' ? 'Other' : key),
 }));
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
@@ -43,7 +33,6 @@ vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
   getReorderGroupName: vi.fn(),
 }));
 
-const { get } = await import('svelte/store');
 const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
 const { getReorderGroupName } = await import('$lib/services/contents/collection/entries/reorder');
 
@@ -131,7 +120,7 @@ describe('groupEntries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(get).mockReturnValue({ sort: undefined });
+    currentView.current = { sort: undefined };
   });
 
   test('should return ungrouped entries when no conditions', () => {
@@ -556,7 +545,7 @@ describe('groupEntries', () => {
     vi.mocked(getRegex).mockReturnValue(/^(\d{4})/);
 
     // Mock currentView store to return descending sort on date field
-    vi.mocked(get).mockReturnValue({ sort: { key: 'date', order: 'descending' } });
+    currentView.current = { sort: { key: 'date', order: 'descending' } };
 
     // @ts-ignore - Mock data for testing
     const conditions = { field: 'date', pattern: '(\\d{4})' };
@@ -619,7 +608,7 @@ describe('groupEntries', () => {
     // Regex matches only strings starting with a 4-digit year
     vi.mocked(getRegex).mockReturnValue(/^\d{4}/);
 
-    vi.mocked(get).mockReturnValue({ sort: { key: 'tag', order: 'ascending' } });
+    currentView.current = { sort: { key: 'tag', order: 'ascending' } };
 
     // @ts-ignore
     const conditions = { field: 'tag', pattern: '^\\d{4}' };
@@ -752,40 +741,27 @@ describe('Test parseGroupConfig()', () => {
   });
 });
 
-describe('initializeViewGroups', () => {
-  test('calls set with empty array when collection is undefined', async () => {
-    const { initializeViewGroups } = await import('./group');
-    const mockSet = vi.fn();
-
-    initializeViewGroups(undefined, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([]);
+describe('viewGroups', () => {
+  beforeEach(() => {
+    selectedCollection.current = undefined;
   });
 
-  test('calls set with empty array for file collection', async () => {
-    const { initializeViewGroups } = await import('./group');
-    const mockSet = vi.fn();
+  test('is empty when no collection is selected', () => {
+    expect(viewGroups.current).toEqual([]);
+  });
 
-    const fileCollection = /** @type {any} */ ({
-      name: 'pages',
+  test('is empty for a file collection', () => {
+    selectedCollection.current = /** @type {any} */ ({
+      name: 'settings',
       _type: 'file',
       files: [],
-      _fileMap: {},
     });
 
-    initializeViewGroups(fileCollection, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([]);
+    expect(viewGroups.current).toEqual([]);
   });
 
-  test('processes and sets groups for entry collection', async () => {
-    const { initializeViewGroups } = await import('./group');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const mockSet = vi.fn();
-
-    vi.mocked(currentView).update = vi.fn();
-
-    const entryCollection = /** @type {any} */ ({
+  test('lists the groups of the selected entry collection', () => {
+    selectedCollection.current = /** @type {any} */ ({
       name: 'posts',
       _type: 'entry',
       folder: 'content/posts',
@@ -795,170 +771,33 @@ describe('initializeViewGroups', () => {
       ],
     });
 
-    initializeViewGroups(entryCollection, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([
+    expect(viewGroups.current).toEqual([
       { field: 'author', pattern: 'john', name: 'john' },
       { field: 'status', pattern: 'draft', name: 'draft' },
     ]);
-
-    expect(vi.mocked(currentView).update).toHaveBeenCalled();
   });
 
-  test('handles entry collection with no view_groups', async () => {
-    const { initializeViewGroups } = await import('./group');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const mockSet = vi.fn();
-
-    vi.mocked(currentView).update = vi.fn();
-
-    const entryCollection = /** @type {any} */ ({
+  test('is empty for an entry collection without view_groups', () => {
+    selectedCollection.current = /** @type {any} */ ({
       name: 'posts',
       _type: 'entry',
       folder: 'content/posts',
     });
 
-    initializeViewGroups(entryCollection, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([]);
-
-    expect(vi.mocked(currentView).update).toHaveBeenCalled();
+    expect(viewGroups.current).toEqual([]);
   });
 
-  test('handles entry collection with view_groups object format', async () => {
-    const { initializeViewGroups } = await import('./group');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const mockSet = vi.fn();
-
-    vi.mocked(currentView).update = vi.fn();
-
-    const entryCollection = /** @type {any} */ ({
+  test('supports the view_groups object format', () => {
+    selectedCollection.current = /** @type {any} */ ({
       name: 'posts',
       _type: 'entry',
       folder: 'content/posts',
       view_groups: {
-        groups: [
-          { field: 'author', pattern: 'john', name: 'john' },
-          { field: 'status', pattern: 'draft', name: 'draft' },
-        ],
-        default: 'john',
+        default: 'author',
+        groups: [{ field: 'author', name: 'author' }],
       },
     });
 
-    initializeViewGroups(entryCollection, mockSet);
-
-    expect(mockSet).toHaveBeenCalledWith([
-      { field: 'author', pattern: 'john', name: 'john' },
-      { field: 'status', pattern: 'draft', name: 'draft' },
-    ]);
-
-    expect(vi.mocked(currentView).update).toHaveBeenCalled();
-  });
-
-  test('sets defaultGroup when currentView.group is undefined (defaultGroup truthy branch)', async () => {
-    const { initializeViewGroups } = await import('./group');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const mockSet = vi.fn();
-
-    // Make update invoke its callback so the ternary branch executes
-    vi.mocked(currentView).update = vi.fn((cb) => cb({ group: undefined }));
-
-    const entryCollection = /** @type {any} */ ({
-      name: 'posts',
-      _type: 'entry',
-      folder: 'content/posts',
-      view_groups: {
-        groups: [{ field: 'author', pattern: 'john', name: 'john' }],
-        default: 'john',
-      },
-    });
-
-    initializeViewGroups(entryCollection, mockSet);
-
-    const updateCallback = vi.mocked(currentView).update.mock.calls[0][0];
-    const result = updateCallback({ group: undefined });
-
-    // Note: parseGroupConfig strips the 'name' from the returned default object.
-    expect(result.group).toEqual({ field: 'author', pattern: 'john' });
-  });
-
-  test('keeps existing group when currentView.group is already set (false branch of _view.group === undefined)', async () => {
-    const { initializeViewGroups } = await import('./group');
-    const { currentView } = await import('$lib/services/contents/collection/view');
-    const mockSet = vi.fn();
-    const existingGroup = { field: 'status', pattern: 'draft' };
-
-    // Invoke callback with a pre-existing group → false branch of the ternary
-    vi.mocked(currentView).update = vi.fn((cb) => cb({ group: existingGroup }));
-
-    const entryCollection = /** @type {any} */ ({
-      name: 'posts',
-      _type: 'entry',
-      folder: 'content/posts',
-      view_groups: [{ field: 'status', pattern: 'draft', name: 'draft' }],
-    });
-
-    initializeViewGroups(entryCollection, mockSet);
-
-    const updateCallback = vi.mocked(currentView).update.mock.calls[0][0];
-    const result = updateCallback({ group: existingGroup });
-
-    // group should remain unchanged (false branch: keep existing)
-    expect(result.group).toEqual(existingGroup);
-  });
-});
-
-describe('Test viewGroups store', () => {
-  test('viewGroups derived callback calls initializeViewGroups when selectedCollection changes', async () => {
-    vi.resetModules();
-
-    // Use the real svelte/store functions for this isolated test
-    const { writable, derived: realDerived, get: realGet } = await vi.importActual('svelte/store');
-
-    vi.doMock('svelte/store', () => ({
-      derived: realDerived,
-      get: realGet,
-      writable,
-    }));
-
-    const _selectedCollection = writable(/** @type {any} */ (undefined));
-    const _currentView = writable({ type: 'list' });
-
-    vi.doMock('$lib/services/contents/collection', () => ({
-      selectedCollection: _selectedCollection,
-    }));
-
-    vi.doMock('$lib/services/contents/collection/view', () => ({
-      currentView: _currentView,
-    }));
-
-    vi.doMock('$lib/services/contents/entry/fields', () => ({
-      getPropertyValue: vi.fn(),
-    }));
-
-    vi.doMock('$lib/services/utils/regex', () => ({
-      getRegex: vi.fn(),
-    }));
-
-    const { viewGroups } = await import('./group');
-    let groupValues = /** @type {any} */ (null);
-
-    const unsub = viewGroups.subscribe((value) => {
-      groupValues = value;
-    });
-
-    // Set a folder collection with view_groups to exercise line 137
-    _selectedCollection.set(
-      /** @type {any} */ ({
-        name: 'posts',
-        _type: 'entry',
-        folder: 'content/posts',
-        view_groups: [{ field: 'status', pattern: 'published', name: 'published' }],
-      }),
-    );
-
-    expect(Array.isArray(groupValues)).toBe(true);
-
-    unsub();
+    expect(viewGroups.current).toEqual([{ field: 'author', name: 'author' }]);
   });
 });

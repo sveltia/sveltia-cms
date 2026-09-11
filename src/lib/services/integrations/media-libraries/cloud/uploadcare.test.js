@@ -1,5 +1,6 @@
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { cmsConfig } from '$lib/services/config';
 
 import uploadcareService, {
   generateSignature,
@@ -13,17 +14,8 @@ import uploadcareService, {
 } from './uploadcare';
 
 // Mock dependencies
-vi.mock('svelte/store', async (importOriginal) => {
-  const actual = /** @type {any} */ (await importOriginal());
-
-  return {
-    ...actual,
-    get: vi.fn(),
-  };
-});
-
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('@sveltia/utils/misc', () => ({
@@ -45,7 +37,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     vi.clearAllMocks();
 
     // Mock the cmsConfig to return uploadcare config
-    vi.mocked(get).mockReturnValue({
+    cmsConfig.current = /** @type {any} */ ({
       media_libraries: {
         uploadcare: {
           config: {
@@ -98,11 +90,10 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
       const key = getPublicKey();
 
       expect(key).toBe(mockPublicKey);
-      expect(get).toHaveBeenCalled();
     });
 
     it('should return undefined when config is missing', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       const key = getPublicKey();
 
@@ -110,7 +101,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should return undefined when uploadcare config is missing', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {},
       });
 
@@ -129,7 +120,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should return undefined when config is missing', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       const options = getLibraryOptions();
 
@@ -137,7 +128,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should support legacy media_library config', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_library: {
           name: 'uploadcare',
           config: {
@@ -153,7 +144,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should return undefined for non-uploadcare media_library', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_library: {
           name: 'other-service',
           config: {},
@@ -172,13 +163,13 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should return false when config is missing', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(isEnabled()).toBe(false);
     });
 
     it('should return false when public key is missing', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           uploadcare: {
             config: {},
@@ -190,7 +181,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should return false when uploadcare config is missing', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {},
       });
 
@@ -198,7 +189,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should return true when field-level config is present', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(
         isEnabled(
@@ -217,7 +208,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should return false when field-level config has missing public key', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(
         isEnabled(
@@ -451,7 +442,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should use custom cdnBase when configured', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           uploadcare: {
             config: {
@@ -488,7 +479,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should include filename in downloadURL when autoFilename is true', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           uploadcare: {
             config: {
@@ -524,7 +515,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should not include filename when autoFilename is false', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           uploadcare: {
             config: {
@@ -560,7 +551,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should include defaultOperations in downloadURL when configured for images', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           uploadcare: {
             config: {
@@ -598,7 +589,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should not apply defaultOperations to videos', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           uploadcare: {
             config: {
@@ -635,7 +626,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should combine defaultOperations with autoFilename for images', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           uploadcare: {
             config: {
@@ -674,7 +665,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should use all options together for images: cdnBase, defaultOperations, and autoFilename', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           uploadcare: {
             config: {
@@ -717,7 +708,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should use field-level config over global config', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           uploadcare: {
             config: {
@@ -803,7 +794,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     it('should use empty options when all fallbacks are exhausted', () => {
       // Test line 77: when both getLibraryOptions(fieldConfig) and getLibraryOptions()
       // return undefined, should fall back to empty object {}
-      vi.mocked(get).mockReturnValue({}); // No uploadcare config
+      cmsConfig.current = /** @type {any} */ ({}); // No uploadcare config
 
       const mockResults = [
         {
@@ -1039,7 +1030,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should reject when public key is not configured', async () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       await expect(list({ apiKey: '' })).rejects.toThrow('Uploadcare public key is not configured');
     });
@@ -1262,7 +1253,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should reject when public key is not configured', async () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       await expect(search('test', { apiKey: '' })).rejects.toThrow(
         'Uploadcare public key is not configured',
@@ -1356,7 +1347,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     let originalCrypto;
 
     beforeEach(() => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: { uploadcare: { config: { publicKey: mockPublicKey } } },
       });
       // Save original crypto and mock it
@@ -1551,7 +1542,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     it('should reject when public key is not configured', async () => {
-      vi.mocked(get).mockReturnValue({ media_libraries: {} });
+      cmsConfig.current = /** @type {any} */ ({ media_libraries: {} });
 
       const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
 

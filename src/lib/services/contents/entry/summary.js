@@ -4,7 +4,6 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
-import { get } from 'svelte/store';
 
 import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
@@ -245,7 +244,7 @@ let entriesGeneration = 0;
  * @returns {number} Generation number.
  */
 const getEntriesGeneration = () => {
-  const entries = get(allEntries);
+  const entries = allEntries.current;
 
   if (entries !== lastAllEntries) {
     lastAllEntries = entries;

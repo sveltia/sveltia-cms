@@ -1,61 +1,45 @@
-import { get } from 'svelte/store';
+// @vitest-environment jsdom
+
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { deployPollTimedOut } from '$lib/services/deployments';
+import { deployments, deployPollTimedOut } from '$lib/services/deployments';
 import { POLL_INTERVAL, POLL_MAX_DURATION } from '$lib/services/deployments/constants';
 import { recheckDeployments, retainDeployPolling } from '$lib/services/deployments/poll';
 import {
   cancelDeployResolution,
+  deployTargets,
   markLookupPending,
   resolveDeployments,
 } from '$lib/services/deployments/resolve';
 
 /** Whether the mocked backend can report deployments. */
 let canResolve = true;
-/** @type {any[]} */
-let targets;
-/** @type {Record<string, any>} */
-let states;
-/**
- * Subscribers to the mocked target store, so a test can announce a new commit.
- * @type {any[]}
- */
-const targetSubscribers = [];
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({ prefs: { devModeEnabled: false } }));
-vi.mock('$lib/services/deployments/resolve', () => ({
-  cancelDeployResolution: vi.fn(),
-  markLookupPending: vi.fn(),
-  /**
-   * Report whether the backend can answer, which a test can turn off.
-   * @returns {boolean} Result.
-   */
-  canResolveDeployments: () => canResolve,
-  deployTargets: {
-    /**
-     * Report the current targets and keep the subscriber for later updates.
-     * @param {(value: any) => void} run Subscriber.
-     * @returns {() => void} Function to stop listening.
-     */
-    subscribe: (run) => {
-      targetSubscribers.push(run);
-      run(targets);
+vi.mock('$lib/services/deployments/resolve', async () => {
+  const { createRawState } = await import('$lib/services/utils/state.svelte');
 
-      return () => {
-        targetSubscribers.splice(targetSubscribers.indexOf(run), 1);
-      };
-    },
-  },
-  resolveDeployments: vi.fn(),
-}));
+  return {
+    cancelDeployResolution: vi.fn(),
+    markLookupPending: vi.fn(),
+    /**
+     * Report whether the backend can answer, which a test can turn off.
+     * @returns {boolean} Result.
+     */
+    canResolveDeployments: () => canResolve,
+    // A real reactive box, so the poller’s effect notices a new commit
+    deployTargets: createRawState([]),
+    resolveDeployments: vi.fn(),
+  };
+});
 
 /**
- * Replace the tracked commits and tell the poller about it, as a save would.
+ * Replace the tracked commits, as a save would, and let the poller notice it.
  * @param {any[]} next New targets.
  */
-const setTargets = (next) => {
-  targets = next;
-  targetSubscribers.forEach((run) => run(targets));
+const setTargets = async (next) => {
+  /** @type {any} */ (deployTargets).current = next;
+  await vi.advanceTimersByTimeAsync(0);
 };
 
 /**
@@ -77,16 +61,6 @@ const retain = () => {
   return release;
 };
 
-vi.mock('$lib/services/deployments', async (importOriginal) => {
-  const original = /** @type {object} */ (await importOriginal());
-
-  return {
-    ...original,
-    // Stand in for the store so the poller sees whatever state the test sets up
-    deployments: { subscribe: /** @type {any} */ (undefined) },
-  };
-});
-
 describe('Deployment polling', () => {
   beforeEach(async () => {
     vi.useFakeTimers();
@@ -95,26 +69,11 @@ describe('Deployment polling', () => {
     vi.mocked(cancelDeployResolution).mockReset();
     vi.mocked(markLookupPending).mockReset();
     canResolve = true;
-    targets = [{ sha: 'a', branch: 'main', kind: 'production' }];
-    states = { a: { state: 'pending', checkedTime: 0 } };
-
-    const { deployments } = await import('$lib/services/deployments');
-
-    // `get` on a plain object store isn’t possible, so back it with a real subscribe
-    Object.assign(deployments, {
-      /**
-       * Report the current states.
-       * @param {(value: any) => void} run Subscriber.
-       * @returns {() => void} Unsubscriber.
-       */
-      subscribe: (run) => {
-        run(states);
-
-        return () => undefined;
-      },
-    });
-
-    deployPollTimedOut.set(false);
+    /** @type {any} */ (deployTargets).current = [{ sha: 'a', branch: 'main', kind: 'production' }];
+    deployments.current = { a: { state: 'pending', checkedTime: 0 } };
+    deployPollTimedOut.current = false;
+    // Let the effects settle
+    await vi.advanceTimersByTimeAsync(0);
   });
 
   afterEach(() => {
@@ -145,7 +104,7 @@ describe('Deployment polling', () => {
   test('stops once every build has settled', async () => {
     const release = retain();
 
-    states = { a: { state: 'ready', checkedTime: 0 } };
+    deployments.current = { a: { state: 'ready', checkedTime: 0 } };
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
 
     expect(resolveDeployments).toHaveBeenCalledTimes(1);
@@ -159,7 +118,7 @@ describe('Deployment polling', () => {
   });
 
   test('sends no request when nothing is pending to begin with', () => {
-    states = { a: { state: 'error', checkedTime: 0 } };
+    deployments.current = { a: { state: 'error', checkedTime: 0 } };
 
     const release = retain();
 
@@ -171,7 +130,7 @@ describe('Deployment polling', () => {
   test('gives an unreported commit a few checks before stopping', async () => {
     // A provider can take a moment to post its first status after a push, so an empty answer isn’t
     // taken as proof that there’s no build coming
-    states = { a: { state: 'unknown', checkedTime: 0 } };
+    deployments.current = { a: { state: 'unknown', checkedTime: 0 } };
 
     const release = retain();
 
@@ -187,16 +146,16 @@ describe('Deployment polling', () => {
 
   test('picks up a new commit after a save, once the previous one settled', async () => {
     // The site was built long ago, so the editor opens with nothing to wait for
-    states = { old: { state: 'ready', checkedTime: 0 } };
-    setTargets([{ sha: 'old', branch: 'main', kind: 'production' }]);
+    deployments.current = { old: { state: 'ready', checkedTime: 0 } };
+    await setTargets([{ sha: 'old', branch: 'main', kind: 'production' }]);
 
     const release = retain();
 
     expect(vi.getTimerCount()).toBe(0);
 
     // Saving moves the branch head to a commit nothing is known about yet
-    states = {};
-    setTargets([{ sha: 'new', branch: 'main', kind: 'production' }]);
+    deployments.current = {};
+    await setTargets([{ sha: 'new', branch: 'main', kind: 'production' }]);
 
     expect(vi.getTimerCount()).toBe(1);
 
@@ -226,8 +185,8 @@ describe('Deployment polling', () => {
     expect(vi.getTimerCount()).toBe(0);
 
     // A save moves the tracked commit while that request is still in flight
-    states = {};
-    setTargets([{ sha: 'b', branch: 'main', kind: 'production' }]);
+    deployments.current = {};
+    await setTargets([{ sha: 'b', branch: 'main', kind: 'production' }]);
     expect(vi.getTimerCount()).toBe(1);
 
     // The older request comes back; its chain has been retired and must not schedule its own check
@@ -248,7 +207,7 @@ describe('Deployment polling', () => {
     expect(markLookupPending).toHaveBeenCalledTimes(1);
 
     // The same commits, so the run carries on rather than starting over
-    setTargets([{ sha: 'a', branch: 'main', kind: 'production' }]);
+    await setTargets([{ sha: 'a', branch: 'main', kind: 'production' }]);
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
 
     expect(markLookupPending).toHaveBeenCalledTimes(1);
@@ -256,10 +215,14 @@ describe('Deployment polling', () => {
     release();
   });
 
-  test('stops watching for new commits once every holder has released', () => {
+  test('stops watching for new commits once every holder has released', async () => {
     retain()();
+    vi.mocked(markLookupPending).mockClear();
 
-    expect(targetSubscribers).toHaveLength(0);
+    // A new commit no longer restarts the loop
+    await setTargets([{ sha: 'b', branch: 'main', kind: 'production' }]);
+
+    expect(markLookupPending).not.toHaveBeenCalled();
   });
 
   test('says why it isn’t re-checking while dev mode is on', async () => {
@@ -267,7 +230,7 @@ describe('Deployment polling', () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
 
     prefs.devModeEnabled = true;
-    states = { a: { state: 'ready', checkedTime: 0 } };
+    deployments.current = { a: { state: 'ready', checkedTime: 0 } };
 
     retain()();
 
@@ -295,7 +258,7 @@ describe('Deployment polling', () => {
 
     await vi.advanceTimersByTimeAsync(POLL_MAX_DURATION + POLL_INTERVAL * 2);
 
-    expect(get(deployPollTimedOut)).toBe(true);
+    expect(deployPollTimedOut.current).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
 
     release();
@@ -349,11 +312,11 @@ describe('Deployment polling', () => {
       const release = retain();
 
       await vi.advanceTimersByTimeAsync(POLL_MAX_DURATION + POLL_INTERVAL * 2);
-      expect(get(deployPollTimedOut)).toBe(true);
+      expect(deployPollTimedOut.current).toBe(true);
 
       await recheckDeployments();
 
-      expect(get(deployPollTimedOut)).toBe(false);
+      expect(deployPollTimedOut.current).toBe(false);
       // A pending build is still pending, so the automatic re-checks pick up again
       expect(vi.getTimerCount()).toBe(1);
 

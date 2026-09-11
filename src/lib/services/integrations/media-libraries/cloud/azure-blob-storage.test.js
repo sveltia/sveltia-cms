@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { cmsConfig } from '$lib/services/config';
 
 import azureBlobStorageService, {
   buildContainerUrl,
@@ -18,12 +19,8 @@ import azureBlobStorageService, {
 } from './azure-blob-storage';
 
 // Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
-
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 global.fetch = vi.fn();
@@ -79,7 +76,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(get).mockReturnValue({
+    cmsConfig.current = /** @type {any} */ ({
       media_libraries: { azure_blob_storage: config },
     });
   });
@@ -130,7 +127,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     });
 
     it('should return options from the legacy `media_library` option', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_library: { name: 'azure_blob_storage', ...config },
       });
 
@@ -138,13 +135,13 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     });
 
     it('should return undefined when another library is configured', () => {
-      vi.mocked(get).mockReturnValue({ media_library: { name: 'cloudinary' } });
+      cmsConfig.current = /** @type {any} */ ({ media_library: { name: 'cloudinary' } });
 
       expect(getLibraryOptions()).toBeUndefined();
     });
 
     it('should return false when explicitly disabled', () => {
-      vi.mocked(get).mockReturnValue({ media_libraries: { azure_blob_storage: false } });
+      cmsConfig.current = /** @type {any} */ ({ media_libraries: { azure_blob_storage: false } });
 
       expect(getLibraryOptions()).toBe(false);
     });
@@ -166,7 +163,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     });
 
     it('should return true when a custom endpoint is given instead of the account name', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: {
           azure_blob_storage: { container, endpoint: 'https://cdn.example.com' },
         },
@@ -176,7 +173,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     });
 
     it('should return false when the container is missing', () => {
-      vi.mocked(get).mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         media_libraries: { azure_blob_storage: { account_name: accountName } },
       });
 
@@ -184,13 +181,15 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     });
 
     it('should return false when the account name and endpoint are both missing', () => {
-      vi.mocked(get).mockReturnValue({ media_libraries: { azure_blob_storage: { container } } });
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: { azure_blob_storage: { container } },
+      });
 
       expect(isEnabled()).toBe(false);
     });
 
     it('should return false when not configured', () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       expect(isEnabled()).toBe(false);
     });
@@ -606,7 +605,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     });
 
     it('should reject when the library is not configured', async () => {
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
 
       const message = 'Azure Blob Storage configuration is not available';
 

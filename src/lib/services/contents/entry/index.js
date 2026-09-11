@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import dayjsCustomParseFormat from 'dayjs/plugin/customParseFormat';
 import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjsUTC from 'dayjs/plugin/utc';
-import { get } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
 import { fillTemplate } from '$lib/services/common/template';
@@ -170,7 +169,7 @@ export const getPreviewPath = ({
  * @see https://decapcms.org/docs/deploy-preview-links/
  */
 export const getEntryPreviewURL = (entry, locale, collection, collectionFile, options = {}) => {
-  const { show_preview_links: showLinks = true, _baseURL } = get(cmsConfig) ?? {};
+  const { show_preview_links: showLinks = true, _baseURL } = cmsConfig.current ?? {};
   const baseURL = options.baseURL || _baseURL;
   const { slug, path, content } = entry.locales[locale] ?? {};
 
@@ -202,4 +201,4 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile, op
  * @returns {string} URL on the repository.
  */
 export const getEntryRepoBlobURL = (entry, locale) =>
-  `${get(backend)?.repository?.blobBaseURL}/${entry.locales[locale]?.path}?plain=1`;
+  `${backend.current?.repository?.blobBaseURL}/${entry.locales[locale]?.path}?plain=1`;

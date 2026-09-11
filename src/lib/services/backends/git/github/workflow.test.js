@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { commitChanges } from '$lib/services/backends/git/github/commits';
@@ -27,7 +26,8 @@ import githubWorkflow, {
   updateStatus,
 } from '$lib/services/backends/git/github/workflow';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { forkedRepository, openAuthoring } from '$lib/services/workflow/open-authoring';
+import { cmsConfig } from '$lib/services/config';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends/git/github/commits');
 vi.mock('$lib/services/backends/git/github/files');
@@ -35,11 +35,7 @@ vi.mock('$lib/services/backends/git/github/repository', () => ({
   repository: { owner: 'owner', repo: 'repo', branch: 'main' },
 }));
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/config', () => ({ cmsConfig: { subscribe: vi.fn() } }));
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
+vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 
 /**
  * Create a raw pull request node as returned by the GraphQL API.
@@ -69,8 +65,8 @@ const createNode = (overrides = {}) => ({
 });
 
 /**
- * Stub the store reader used across the workflow service: the site configuration, and the Open
- * Authoring state that decides which of the two flows a call takes.
+ * Stub the state read across the workflow service: the site configuration, and the Open Authoring
+ * state that decides which of the two flows a call takes.
  * @param {object} [args] Arguments.
  * @param {object | null} [args.backend] Backend configuration, or `null` for no configuration at
  * all. It can’t be `undefined`, which the parameter default would replace.
@@ -78,17 +74,8 @@ const createNode = (overrides = {}) => ({
  * the Open Authoring flow on.
  */
 const mockStores = ({ backend = { name: 'github' }, fork = undefined } = {}) => {
-  vi.mocked(get).mockImplementation((/** @type {any} */ store) => {
-    if (store === forkedRepository) {
-      return fork;
-    }
-
-    if (store === openAuthoring) {
-      return !!fork;
-    }
-
-    return backend ? { backend } : undefined;
-  });
+  forkedRepository.current = /** @type {any} */ (fork);
+  cmsConfig.current = /** @type {any} */ (backend ? { backend } : undefined);
 };
 
 describe('GitHub Editorial Workflow service', () => {

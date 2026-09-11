@@ -6,13 +6,12 @@
   import { getField } from '$lib/services/contents/entry/fields';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import { AssetListView, EntryListView } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
-   * @property {Writable<EntryListView | AssetListView>} currentView Current view details.
+   * @property {{ current: EntryListView | AssetListView }} currentView Current view details.
    * @property {string} aria-controls The `aria-controls` attribute for the menu.
    * @property {string} [label] Menu button label.
    * @property {boolean} [disabled] Whether to disable the button.
@@ -47,9 +46,10 @@
                 : order,
               { values: { label: _label } },
             )}
-            checked={$currentView.sort?.key === key && $currentView.sort.order === order}
+            checked={currentView.current.sort?.key === key &&
+              currentView.current.sort.order === order}
             onSelect={() => {
-              currentView.update((view) => ({ ...view, sort: { key, order } }));
+              currentView.current = { ...currentView.current, sort: { key, order } };
             }}
           />
         {/each}

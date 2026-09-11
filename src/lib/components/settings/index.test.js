@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
@@ -35,7 +34,7 @@ describe('Settings panels', () => {
   });
 
   test('should have appearance panel', () => {
-    const panelList = get(panels);
+    const panelList = panels.current;
     const appearancePanel = panelList.find((panel) => panel.key === 'appearance');
 
     expect(appearancePanel).toBeDefined();
@@ -44,7 +43,7 @@ describe('Settings panels', () => {
   });
 
   test('should have language panel', () => {
-    const panelList = get(panels);
+    const panelList = panels.current;
     const languagePanel = panelList.find((panel) => panel.key === 'language');
 
     expect(languagePanel).toBeDefined();
@@ -53,7 +52,7 @@ describe('Settings panels', () => {
   });
 
   test('should have contents panel', () => {
-    const panelList = get(panels);
+    const panelList = panels.current;
     const contentsPanel = panelList.find((panel) => panel.key === 'contents');
 
     expect(contentsPanel).toBeDefined();
@@ -62,7 +61,7 @@ describe('Settings panels', () => {
   });
 
   test('should have i18n panel', () => {
-    const panelList = get(panels);
+    const panelList = panels.current;
     const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
 
     expect(i18nPanel).toBeDefined();
@@ -71,7 +70,7 @@ describe('Settings panels', () => {
   });
 
   test('should have media panel', () => {
-    const panelList = get(panels);
+    const panelList = panels.current;
     const mediaPanel = panelList.find((panel) => panel.key === 'media');
 
     expect(mediaPanel).toBeDefined();
@@ -80,7 +79,7 @@ describe('Settings panels', () => {
   });
 
   test('should have accessibility panel', () => {
-    const panelList = get(panels);
+    const panelList = panels.current;
     const accessibilityPanel = panelList.find((panel) => panel.key === 'accessibility');
 
     expect(accessibilityPanel).toBeDefined();
@@ -89,7 +88,7 @@ describe('Settings panels', () => {
   });
 
   test('should have advanced panel', () => {
-    const panelList = get(panels);
+    const panelList = panels.current;
     const advancedPanel = panelList.find((panel) => panel.key === 'advanced');
 
     expect(advancedPanel).toBeDefined();
@@ -98,7 +97,7 @@ describe('Settings panels', () => {
   });
 
   test('should enable i18n panel when multiple locales configured', () => {
-    cmsConfig.set({
+    cmsConfig.current = {
       backend: { name: 'github', repo: 'test/test' },
       media_folder: 'static/images',
       collections: [],
@@ -109,16 +108,16 @@ describe('Settings panels', () => {
       },
       _siteURL: 'http://localhost',
       _baseURL: 'http://localhost',
-    });
+    };
 
-    const panelList = get(panels);
+    const panelList = panels.current;
     const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
 
     expect(i18nPanel?.enabled).toBe(true);
   });
 
   test('should disable i18n panel when single locale configured', () => {
-    cmsConfig.set({
+    cmsConfig.current = {
       backend: { name: 'github', repo: 'test/test' },
       media_folder: 'static/images',
       collections: [],
@@ -129,24 +128,24 @@ describe('Settings panels', () => {
       },
       _siteURL: 'http://localhost',
       _baseURL: 'http://localhost',
-    });
+    };
 
-    const panelList = get(panels);
+    const panelList = panels.current;
     const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
 
     expect(i18nPanel?.enabled).toBe(false);
   });
 
   test('should disable i18n panel when no locales configured', () => {
-    cmsConfig.set({
+    cmsConfig.current = {
       backend: { name: 'github', repo: 'test/test' },
       media_folder: 'static/images',
       collections: [],
       _siteURL: 'http://localhost',
       _baseURL: 'http://localhost',
-    });
+    };
 
-    const panelList = get(panels);
+    const panelList = panels.current;
     const i18nPanel = panelList.find((panel) => panel.key === 'i18n');
 
     expect(i18nPanel?.enabled).toBe(false);

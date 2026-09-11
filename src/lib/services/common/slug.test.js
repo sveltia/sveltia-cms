@@ -1,9 +1,10 @@
-import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
 import { getNewFolderName, slugify, validateNewFolderName } from '$lib/services/common/slug';
 
-vi.mock('$lib/services/config');
+vi.mock('$lib/services/config', () => ({
+  cmsConfig: { current: undefined },
+}));
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
 }));
@@ -21,13 +22,13 @@ vi.mock('$lib/services/utils/file', () => ({
 describe('Test slugify()', () => {
   test('basic slugification with default settings', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('hello-world');
     expect(slugify('Hello   World')).toBe('hello-world'); // Multiple spaces
@@ -38,13 +39,13 @@ describe('Test slugify()', () => {
 
   test('special characters and punctuation', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('Hello, World!')).toBe('hello-world');
     expect(slugify('Hello@World#2024')).toBe('hello-world-2024');
@@ -60,13 +61,13 @@ describe('Test slugify()', () => {
 
   test('consecutive hyphen consolidation', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     // Test consecutive hyphens are consolidated
     expect(slugify('Hello---World')).toBe('hello-world');
@@ -85,13 +86,13 @@ describe('Test slugify()', () => {
 
   test('consecutive hyphen consolidation with custom replacement', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '_',
       },
-    });
+    };
 
     // Test consecutive underscores are consolidated
     expect(slugify('Hello___World')).toBe('hello_world');
@@ -101,13 +102,13 @@ describe('Test slugify()', () => {
 
   test('unicode characters with unicode encoding', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('こんにちは 世界')).toBe('こんにちは-世界'); // Japanese
     expect(slugify('안녕하세요 세계')).toBe('안녕하세요-세계'); // Korean
@@ -118,13 +119,13 @@ describe('Test slugify()', () => {
 
   test('ascii encoding', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'ascii',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('hello-world');
     expect(slugify('Hello-World_123')).toBe('hello-world_123'); // Underscores and numbers preserved
@@ -136,13 +137,13 @@ describe('Test slugify()', () => {
 
   test('accent cleaning', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: true,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('Café')).toBe('cafe');
     expect(slugify('résumé')).toBe('resume');
@@ -156,13 +157,13 @@ describe('Test slugify()', () => {
 
   test('locale option for accent cleaning', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: true,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     // Swedish locale: ö→o (vs default ö→oe)
     expect(slugify('Björk', { locale: 'sv' })).toBe('bjork');
@@ -174,38 +175,38 @@ describe('Test slugify()', () => {
 
     // locale option has no effect when clean_accents is false
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('Björk', { locale: 'sv' })).toBe('björk'); // No transliteration applied
   });
 
   test('custom sanitize replacement', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '_',
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('hello_world');
     expect(slugify('Hello   World  Test')).toBe('hello_world_test');
 
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '',
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('helloworld');
     expect(slugify('Hello   World  Test')).toBe('helloworldtest');
@@ -213,13 +214,13 @@ describe('Test slugify()', () => {
 
   test('empty and whitespace strings', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('', { fallback: false })).toBe('');
     expect(slugify('   ', { fallback: false })).toBe('');
@@ -228,7 +229,7 @@ describe('Test slugify()', () => {
 
   test('no site config', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable(null);
+    (await import('$lib/services/config')).cmsConfig.current = null;
 
     // Should use default values
     expect(slugify('Hello World')).toBe('hello-world');
@@ -237,12 +238,12 @@ describe('Test slugify()', () => {
 
   test('partial site config', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         clean_accents: true,
         // encoding and sanitize_replacement should use defaults
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('hello-world'); // Default replacement
     expect(slugify('Café')).toBe('cafe'); // Accent cleaning enabled
@@ -251,13 +252,13 @@ describe('Test slugify()', () => {
 
   test('edge cases', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('---', { fallback: false })).toBe(''); // All hyphens get consolidated and trimmed, resulting in empty string
     expect(slugify('123')).toBe('123'); // Numbers only
@@ -284,7 +285,7 @@ describe('Test slugify()', () => {
     };
 
     // @ts-ignore
-    cmsConfigMock.set(originalConfig);
+    cmsConfigMock.current = originalConfig;
 
     // Test with fallback=true (default behavior)
     expect(slugify('', { fallback: true })).toMatch(/[0-9a-f]{12}/); // Should return UUID
@@ -312,26 +313,26 @@ describe('Test slugify()', () => {
 
     // Test fallback with ASCII encoding
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'ascii',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('こんにちは', { fallback: true })).toMatch(/[0-9a-f]{12}/); // Non-ASCII with fallback=true
     expect(slugify('こんにちは', { fallback: false })).toBe(''); // Non-ASCII with fallback=false
 
     // Test fallback with accent cleaning
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: true,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     expect(slugify('éà', { fallback: true })).toBe('ea'); // Valid content after cleaning
     expect(slugify('', { fallback: true })).toMatch(/[0-9a-f]{12}/); // Empty with fallback=true
@@ -343,13 +344,13 @@ describe('Test slugify()', () => {
     const cmsConfigMock = (await import('$lib/services/config')).cmsConfig;
 
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '_',
       },
-    });
+    };
 
     expect(slugify('Hello World', { fallback: true })).toBe('hello_world');
     expect(slugify('Hello World', { fallback: false })).toBe('hello_world');
@@ -363,14 +364,14 @@ describe('Test slugify()', () => {
 
     // Test with trim enabled (default behavior)
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         trim: true,
       },
-    });
+    };
 
     expect(slugify('-Hello World-')).toBe('hello-world'); // Leading and trailing hyphens trimmed
     expect(slugify('---Hello---World---')).toBe('hello-world'); // Multiple consecutive hyphens trimmed
@@ -381,14 +382,14 @@ describe('Test slugify()', () => {
 
     // Test with trim disabled
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         trim: false,
       },
-    });
+    };
 
     expect(slugify('-Hello World-')).toBe('-hello-world-'); // Leading and trailing hyphens preserved
     expect(slugify('---Hello---World---')).toBe('-hello-world-'); // Consecutive hyphens consolidated but not trimmed
@@ -404,14 +405,14 @@ describe('Test slugify()', () => {
 
     // Test with underscore replacement and trim enabled
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '_',
         trim: true,
       },
-    });
+    };
 
     expect(slugify('_Hello World_')).toBe('hello_world'); // Leading and trailing underscores trimmed
     expect(slugify('___Hello___World___')).toBe('hello_world'); // Multiple consecutive underscores trimmed
@@ -421,14 +422,14 @@ describe('Test slugify()', () => {
 
     // Test with underscore replacement and trim disabled
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '_',
         trim: false,
       },
-    });
+    };
 
     expect(slugify('_Hello World_')).toBe('_hello_world_'); // Leading and trailing underscores preserved
     expect(slugify('___Hello___World___')).toBe('_hello_world_'); // Consecutive underscores consolidated but not trimmed
@@ -443,14 +444,14 @@ describe('Test slugify()', () => {
 
     // Test with dot replacement character (needs escaping in regex)
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '.',
         trim: true,
       },
-    });
+    };
 
     expect(slugify('.Hello World.')).toBe('hello.world'); // Leading and trailing dots trimmed
     expect(slugify('...Hello...World...')).toBe('hello.world'); // Multiple consecutive dots trimmed
@@ -458,14 +459,14 @@ describe('Test slugify()', () => {
 
     // Test with dot replacement and trim disabled
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '.',
         trim: false,
       },
-    });
+    };
 
     expect(slugify('.Hello World.')).toBe('.hello.world.'); // Leading and trailing dots preserved
     expect(slugify('...Hello...World...')).toBe('.hello.world.'); // Consecutive dots consolidated but not trimmed
@@ -477,27 +478,27 @@ describe('Test slugify()', () => {
 
     // When replacement is empty, trim option should have no effect
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '',
         trim: true,
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('helloworld'); // No replacement character to trim
     expect(slugify(' Hello World ')).toBe('helloworld'); // Spaces removed, no replacement to trim
 
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '',
         trim: false,
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('helloworld'); // Same result regardless of trim option
     expect(slugify(' Hello World ')).toBe('helloworld'); // Same result regardless of trim option
@@ -509,14 +510,14 @@ describe('Test slugify()', () => {
 
     // Test that fallback works correctly with trim enabled
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         trim: true,
       },
-    });
+    };
 
     // With only replacement chars and trim enabled, result is empty and fallback to UUID
     expect(slugify('-', { fallback: true })).toMatch(/[0-9a-f]{12}/);
@@ -526,14 +527,14 @@ describe('Test slugify()', () => {
 
     // Test with trim disabled - replacement characters should be preserved, no fallback needed
     // @ts-ignore
-    cmsConfigMock.set({
+    cmsConfigMock.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         trim: false,
       },
-    });
+    };
 
     expect(slugify('-', { fallback: true })).toBe('-'); // No fallback needed since result is not empty
     expect(slugify('---', { fallback: true })).toBe('-'); // Consecutive chars consolidated but not trimmed
@@ -543,13 +544,13 @@ describe('Test slugify()', () => {
 
   test('maxLength parameter option', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     // Test with parameter option
     expect(slugify('hello-world', { maxLength: 5 })).toBe('hello');
@@ -562,14 +563,14 @@ describe('Test slugify()', () => {
 
   test('maxLength config option', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         maxlength: 10,
       },
-    });
+    };
 
     // Test with config option
     expect(slugify('hello-world')).toBe('hello-worl');
@@ -579,14 +580,14 @@ describe('Test slugify()', () => {
 
   test('maxLength parameter overrides config option', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         maxlength: 10,
       },
-    });
+    };
 
     // Parameter should override config
     expect(slugify('hello-world', { maxLength: 5 })).toBe('hello');
@@ -596,13 +597,13 @@ describe('Test slugify()', () => {
 
   test('maxLength parameter applies to the fallback UUID', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     // The fallback is the last 12 characters of a UUID, and must be capped like any other slug
     expect(slugify('')).toMatch(/^[0-9a-f]{12}$/);
@@ -617,14 +618,14 @@ describe('Test slugify()', () => {
 
   test('maxLength config option applies to the fallback UUID', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         maxlength: 6,
       },
-    });
+    };
 
     expect(slugify('')).toMatch(/^[0-9a-f]{6}$/);
     expect(slugify('!!!')).toMatch(/^[0-9a-f]{6}$/);
@@ -633,13 +634,13 @@ describe('Test slugify()', () => {
 
   test('maxLength with special characters and transformations', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     // Test that maxLength is applied after all transformations
     expect(slugify('Hello, World!', { maxLength: 8 })).toBe('hello-wo');
@@ -649,14 +650,14 @@ describe('Test slugify()', () => {
 
   test('maxLength with accent cleaning', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: true,
         sanitize_replacement: '-',
         maxlength: 10,
       },
-    });
+    };
 
     // Test that maxLength is applied after accent cleaning
     expect(slugify('Café-Paris')).toBe('cafe-paris'); // Without maxLength constraint (10 chars)
@@ -666,14 +667,14 @@ describe('Test slugify()', () => {
 
   test('maxLength with ASCII encoding', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'ascii',
         clean_accents: false,
         sanitize_replacement: '-',
         maxlength: 12,
       },
-    });
+    };
 
     // Test maxLength with ASCII encoding
     expect(slugify('Hello World')).toBe('hello-world'); // 11 chars, within limit
@@ -683,14 +684,14 @@ describe('Test slugify()', () => {
 
   test('maxLength with custom replacement character', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '_',
         maxlength: 10,
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('hello_worl');
     expect(slugify('Hello World', { maxLength: 5 })).toBe('hello');
@@ -699,7 +700,7 @@ describe('Test slugify()', () => {
 
   test('maxLength with trim option', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -707,13 +708,13 @@ describe('Test slugify()', () => {
         trim: true,
         maxlength: 10,
       },
-    });
+    };
 
     // Note: trim is applied before maxLength, so we get the character at position 10
     expect(slugify('hello-world-test')).toBe('hello-worl');
 
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -721,21 +722,21 @@ describe('Test slugify()', () => {
         trim: false,
         maxlength: 10,
       },
-    });
+    };
 
     expect(slugify('-hello-world-')).toBe('-hello-wor');
   });
 
   test('maxLength with fallback', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         maxlength: 8,
       },
-    });
+    };
 
     // Valid content should be truncated
     expect(slugify('hello-world', { fallback: true })).toBe('hello-wo');
@@ -752,13 +753,13 @@ describe('Test slugify()', () => {
 
   test('maxLength edge cases', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
       },
-    });
+    };
 
     // Zero maxLength
     expect(slugify('hello', { maxLength: 0 })).toBe('');
@@ -776,14 +777,14 @@ describe('Test slugify()', () => {
 
   test('maxLength with unicode characters', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         maxlength: 10,
       },
-    });
+    };
 
     // Unicode characters (including emoji) should be counted by grapheme clusters
     // 'こんにちは-世界' is 8 graphemes, within maxlength: 10 config
@@ -794,14 +795,14 @@ describe('Test slugify()', () => {
 
   test('lowercase option enabled (default)', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         lowercase: true,
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('hello-world');
     expect(slugify('HELLO WORLD')).toBe('hello-world');
@@ -812,14 +813,14 @@ describe('Test slugify()', () => {
 
   test('lowercase option disabled', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         lowercase: false,
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('Hello-World');
     expect(slugify('HELLO WORLD')).toBe('HELLO-WORLD');
@@ -830,14 +831,14 @@ describe('Test slugify()', () => {
 
   test('lowercase with accent cleaning', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: true,
         sanitize_replacement: '-',
         lowercase: true,
       },
-    });
+    };
 
     expect(slugify('CAFÉ')).toBe('cafe');
     expect(slugify('Montréal')).toBe('montreal');
@@ -848,14 +849,14 @@ describe('Test slugify()', () => {
 
   test('lowercase false with accent cleaning', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: true,
         sanitize_replacement: '-',
         lowercase: false,
       },
-    });
+    };
 
     expect(slugify('CAFÉ')).toBe('CAFE');
     expect(slugify('Montréal')).toBe('Montreal');
@@ -866,14 +867,14 @@ describe('Test slugify()', () => {
 
   test('lowercase with ASCII encoding', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'ascii',
         clean_accents: false,
         sanitize_replacement: '-',
         lowercase: true,
       },
-    });
+    };
 
     expect(slugify('HELLO WORLD')).toBe('hello-world');
     expect(slugify('File123TEST')).toBe('file123test');
@@ -882,14 +883,14 @@ describe('Test slugify()', () => {
 
   test('lowercase false with ASCII encoding', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'ascii',
         clean_accents: false,
         sanitize_replacement: '-',
         lowercase: false,
       },
-    });
+    };
 
     expect(slugify('HELLO WORLD')).toBe('HELLO-WORLD');
     expect(slugify('File123TEST')).toBe('File123TEST');
@@ -898,27 +899,27 @@ describe('Test slugify()', () => {
 
   test('lowercase with custom sanitize replacement', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '_',
         lowercase: true,
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('hello_world');
     expect(slugify('HELLO WORLD')).toBe('hello_world');
 
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '_',
         lowercase: false,
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('Hello_World');
     expect(slugify('HELLO WORLD')).toBe('HELLO_WORLD');
@@ -926,7 +927,7 @@ describe('Test slugify()', () => {
 
   test('lowercase with maxLength', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -934,13 +935,13 @@ describe('Test slugify()', () => {
         lowercase: true,
         maxlength: 10,
       },
-    });
+    };
 
     expect(slugify('HELLO WORLD')).toBe('hello-worl');
     expect(slugify('HELLO-WORLD', { maxLength: 5 })).toBe('hello');
 
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -948,7 +949,7 @@ describe('Test slugify()', () => {
         lowercase: false,
         maxlength: 10,
       },
-    });
+    };
 
     expect(slugify('HELLO WORLD')).toBe('HELLO-WORL');
     expect(slugify('HELLO-WORLD', { maxLength: 5 })).toBe('HELLO');
@@ -956,7 +957,7 @@ describe('Test slugify()', () => {
 
   test('lowercase with trim option', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -964,13 +965,13 @@ describe('Test slugify()', () => {
         trim: true,
         lowercase: true,
       },
-    });
+    };
 
     expect(slugify('-HELLO WORLD-')).toBe('hello-world');
     expect(slugify('---HELLO-WORLD---')).toBe('hello-world');
 
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
@@ -978,7 +979,7 @@ describe('Test slugify()', () => {
         trim: true,
         lowercase: false,
       },
-    });
+    };
 
     expect(slugify('-HELLO WORLD-')).toBe('HELLO-WORLD');
     expect(slugify('---HELLO-WORLD---')).toBe('HELLO-WORLD');
@@ -986,14 +987,14 @@ describe('Test slugify()', () => {
 
   test('lowercase with unicode characters', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         lowercase: true,
       },
-    });
+    };
 
     expect(slugify('Привет Мир')).toBe('привет-мир'); // Russian
     expect(slugify('ПРИВЕТ МИР')).toBe('привет-мир'); // Russian uppercase
@@ -1001,14 +1002,14 @@ describe('Test slugify()', () => {
     expect(slugify('HELLO 🌍 WORLD')).toBe('hello-🌍-world'); // Emoji
 
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         lowercase: false,
       },
-    });
+    };
 
     expect(slugify('Привет Мир')).toBe('Привет-Мир'); // Russian
     expect(slugify('ПРИВЕТ МИР')).toBe('ПРИВЕТ-МИР'); // Russian uppercase
@@ -1017,14 +1018,14 @@ describe('Test slugify()', () => {
 
   test('lowercase default behavior', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         // lowercase not specified, should default to true
       },
-    });
+    };
 
     expect(slugify('Hello World')).toBe('hello-world');
     expect(slugify('HELLO WORLD')).toBe('hello-world');
@@ -1032,14 +1033,14 @@ describe('Test slugify()', () => {
 
   test('lowercase with fallback', async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         lowercase: true,
       },
-    });
+    };
 
     // Fallback UUID should be lowercase
     const resultLowercase = slugify('', { fallback: true });
@@ -1047,14 +1048,14 @@ describe('Test slugify()', () => {
     expect(resultLowercase).toMatch(/^[0-9a-f]{12}$/); // All lowercase
 
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '-',
         lowercase: false,
       },
-    });
+    };
 
     // Fallback UUID should be lowercase (UUID is always lowercase)
     const resultPreserveCase = slugify('', { fallback: true });
@@ -1066,13 +1067,13 @@ describe('Test slugify()', () => {
     // Uses a replacement character (~) not used in any other test to guarantee a cache miss on
     // the first call, so the second call exercises the slugReplacementRegexCache hit path.
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: {
         encoding: 'unicode',
         clean_accents: false,
         sanitize_replacement: '~',
       },
-    });
+    };
 
     const result1 = slugify('Hello World');
     // Second call: cache hit — same regexes reused from slugReplacementRegexCache.
@@ -1090,9 +1091,9 @@ describe('Test getNewFolderName()', () => {
    */
   const setUpConfig = async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: { encoding: 'unicode', clean_accents: false, sanitize_replacement: '-' },
-    });
+    };
   };
 
   test('slugifies what was typed', async () => {
@@ -1126,9 +1127,9 @@ describe('Test validateNewFolderName()', () => {
    */
   const setUpConfig = async () => {
     // @ts-ignore
-    (await import('$lib/services/config')).cmsConfig = writable({
+    (await import('$lib/services/config')).cmsConfig.current = {
       slug: { encoding: 'unicode', clean_accents: false, sanitize_replacement: '-' },
-    });
+    };
   };
 
   test('accepts a name that isn’t taken', async () => {

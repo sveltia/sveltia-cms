@@ -35,7 +35,7 @@
     onSelect={() => {
       // Announce the selected singleton file. The Content Editor will not open until
       // the user presses Enter.
-      $announcedPageStatus = _('singleton_selected_announcement', {
+      announcedPageStatus.current = _('singleton_selected_announcement', {
         values: { file: label || name },
       });
     }}

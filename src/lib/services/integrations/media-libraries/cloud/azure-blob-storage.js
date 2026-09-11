@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
 import { sleep } from '@sveltia/utils/misc';
-import { get } from 'svelte/store';
 
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config';
@@ -39,7 +38,7 @@ const MAX_RESULTS = 1000;
  * @returns {AzureMediaLibrary | false | undefined} Configuration object, or `false` if explicitly
  * disabled.
  */
-export const getLibraryOptions = (config = get(cmsConfig)) =>
+export const getLibraryOptions = (config = cmsConfig.current) =>
   /** @type {AzureMediaLibrary | false | undefined} */ (
     config?.media_libraries?.azure_blob_storage
   ) ??

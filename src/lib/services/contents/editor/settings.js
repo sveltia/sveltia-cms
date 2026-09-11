@@ -1,28 +1,30 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
-import { get, writable } from 'svelte/store';
+import { untrack } from 'svelte';
 
 import { backend } from '$lib/services/backends';
 import { selectAssetsView } from '$lib/services/contents/editor';
+import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { BackendService, EntryEditorView } from '$lib/types/private';
  */
 
 /**
- * @type {Writable<EntryEditorView | undefined>}
+ * View settings for the entry editor.
+ * @type {{ current: EntryEditorView | undefined }}
  */
-export const entryEditorSettings = writable();
+export const entryEditorSettings = createRawState();
 
 /**
- * Store unsubscribe functions to prevent memory leaks.
- * @type {{ entryEditorSettingsUnsubscribe?: () => void, selectAssetsViewUnsubscribe?: () => void }}
+ * Functions to stop the effects created by {@link initSettings}, so that they don’t pile up when
+ * the settings are initialized again.
+ * @type {{ entryEditorSettings?: () => void, selectAssetsView?: () => void }}
  */
-const unsubscribers = {};
+const effectStoppers = {};
 
 /**
- * Initialize {@link entryEditorSettings}, {@link selectAssetsView} and relevant subscribers.
+ * Initialize {@link entryEditorSettings}, {@link selectAssetsView} and relevant effects.
  * @param {BackendService} _backend Backend service.
  */
 export const initSettings = async ({ repository }) => {
@@ -38,14 +40,16 @@ export const initSettings = async ({ repository }) => {
     ...(await settingsDB?.get(storageKey)),
   };
 
-  entryEditorSettings.set(settings);
-  selectAssetsView.set(settings.selectAssetsView);
+  entryEditorSettings.current = settings;
+  selectAssetsView.current = settings.selectAssetsView;
 
-  // Unsubscribe from previous subscribers to prevent memory leaks
-  unsubscribers.entryEditorSettingsUnsubscribe?.();
-  unsubscribers.selectAssetsViewUnsubscribe?.();
+  // Stop the previous effects to prevent memory leaks
+  effectStoppers.entryEditorSettings?.();
+  effectStoppers.selectAssetsView?.();
 
-  unsubscribers.entryEditorSettingsUnsubscribe = entryEditorSettings.subscribe((_settings) => {
+  effectStoppers.entryEditorSettings = createRootEffect(() => {
+    const { current: _settings } = entryEditorSettings;
+
     (async () => {
       try {
         if (!equal(_settings, await settingsDB?.get(storageKey))) {
@@ -57,21 +61,28 @@ export const initSettings = async ({ repository }) => {
     })();
   });
 
-  unsubscribers.selectAssetsViewUnsubscribe = selectAssetsView.subscribe((view) => {
+  effectStoppers.selectAssetsView = createRootEffect(() => {
+    const view = selectAssetsView.current;
+
     if (!view || !Object.keys(view).length) {
       return;
     }
 
-    const savedView = get(entryEditorSettings)?.selectAssetsView ?? {};
+    untrack(() => {
+      const _settings = entryEditorSettings.current;
+      const savedView = _settings?.selectAssetsView ?? {};
 
-    if (!equal(view, savedView)) {
-      entryEditorSettings.update((_settings) => ({ ..._settings, selectAssetsView: view }));
-    }
+      if (!equal(view, savedView)) {
+        entryEditorSettings.current = { ..._settings, selectAssetsView: view };
+      }
+    });
   });
 };
 
-backend.subscribe((_backend) => {
-  if (_backend && !get(entryEditorSettings)) {
+createRootEffect(() => {
+  const { current: _backend } = backend;
+
+  if (_backend && !untrack(() => entryEditorSettings.current)) {
     initSettings(_backend);
   }
 });

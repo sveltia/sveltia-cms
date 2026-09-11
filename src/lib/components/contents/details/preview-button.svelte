@@ -3,13 +3,12 @@
   import { Button, Icon } from '@sveltia/ui';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import { EntryEditorPane } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
-   * @property {Writable<?EntryEditorPane>} thisPane This pane’s mode and locale.
+   * @property {{ current: ?EntryEditorPane }} thisPane This pane’s mode and locale.
    */
 
   /** @type {Props} */
@@ -24,11 +23,11 @@
   variant="ghost"
   iconic
   aria-label={_('preview')}
-  pressed={$thisPane?.mode === 'preview'}
+  pressed={thisPane.current?.mode === 'preview'}
   onclick={() => {
-    $thisPane = {
-      mode: $thisPane?.mode === 'preview' ? 'edit' : 'preview',
-      locale: $thisPane?.locale ?? '',
+    thisPane.current = {
+      mode: thisPane.current?.mode === 'preview' ? 'edit' : 'preview',
+      locale: thisPane.current?.locale ?? '',
     };
   }}
 >

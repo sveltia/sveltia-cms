@@ -5,15 +5,14 @@
   import { env } from '$lib/services/user/env.svelte';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import { AssetListView, EntryListView, SelectAssetsView } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {boolean} [disabled] Whether to disable the buttons.
-   * @property {Writable<EntryListView | AssetListView | SelectAssetsView>} currentView Current view
-   * details.
+   * @property {{ current: EntryListView | AssetListView | SelectAssetsView }} currentView Current
+   * view details.
    */
 
   /** @type {Props & Record<string, any>} */
@@ -25,7 +24,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const isGridView = $derived($currentView.type === 'grid');
+  const isGridView = $derived(currentView.current.type === 'grid');
 </script>
 
 <div role="none" class="wrapper">
@@ -38,7 +37,7 @@
         iconic
         aria-label={_('list_view')}
         onSelect={() => {
-          currentView.update((view) => ({ ...view, type: 'list' }));
+          currentView.current = { ...currentView.current, type: 'list' };
         }}
       >
         {#snippet startIcon()}
@@ -52,7 +51,7 @@
         iconic
         aria-label={_('grid_view')}
         onSelect={() => {
-          currentView.update((view) => ({ ...view, type: 'grid' }));
+          currentView.current = { ...currentView.current, type: 'grid' };
         }}
       >
         {#snippet startIcon()}
@@ -67,7 +66,7 @@
       iconic
       aria-label={_(isGridView ? 'switch_to_list_view' : 'switch_to_grid_view')}
       onclick={() => {
-        currentView.update((view) => ({ ...view, type: isGridView ? 'list' : 'grid' }));
+        currentView.current = { ...currentView.current, type: isGridView ? 'list' : 'grid' };
       }}
     >
       {#snippet startIcon()}

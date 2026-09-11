@@ -50,11 +50,11 @@
       {/if}
       <MenuItem
         label={_('assets')}
-        disabled={$openAuthoring}
+        disabled={openAuthoring.current}
         onclick={async () => {
           goto('/assets', { transitionType: 'forwards' });
           await sleep(100);
-          $showUploadAssetsDialog = true;
+          showUploadAssetsDialog.current = true;
         }}
       />
     </Menu>

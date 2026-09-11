@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
 import { sleep } from '@sveltia/utils/misc';
-import { get } from 'svelte/store';
 
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config';
@@ -19,7 +18,7 @@ import { parseXml } from '$lib/services/utils/xml';
  * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
  * disabled.
  */
-export const getLibraryOptions = (serviceId, config = get(cmsConfig)) =>
+export const getLibraryOptions = (serviceId, config = cmsConfig.current) =>
   /** @type {S3MediaLibrary | false | undefined} */ (config?.media_libraries?.[serviceId]) ??
   (config?.media_library?.name === serviceId
     ? /** @type {S3MediaLibrary} */ (config?.media_library)

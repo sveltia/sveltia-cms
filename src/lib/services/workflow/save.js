@@ -1,6 +1,5 @@
 import { _ } from '@sveltia/i18n';
 import { unique } from '@sveltia/utils/array';
-import { get } from 'svelte/store';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { backend } from '$lib/services/backends';
@@ -43,7 +42,7 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  * @throws {Error} When the current backend doesn’t support Editorial Workflow.
  */
 const getWorkflowService = () => {
-  const workflow = get(backend)?.workflow;
+  const workflow = backend.current?.workflow;
 
   if (!workflow) {
     throw new Error('Editorial Workflow is not supported by the current backend');
@@ -80,7 +79,7 @@ const getEventHookArgs = (entry) => {
  * @returns {UnpublishedEntry | undefined} Unpublished entry.
  */
 export const getUnpublishedEntryByBranch = (branch) =>
-  get(unpublishedEntries).find(({ workflow }) => workflow.pullRequest.branch === branch);
+  unpublishedEntries.current.find(({ workflow }) => workflow.pullRequest.branch === branch);
 
 /**
  * Replace or append the given unpublished entry in the {@link unpublishedEntries} store, keyed by
@@ -90,12 +89,10 @@ export const getUnpublishedEntryByBranch = (branch) =>
  */
 export const upsertUnpublishedEntry = (entry) => {
   const { branch } = entry.workflow.pullRequest;
+  const entries = unpublishedEntries.current;
+  const index = entries.findIndex((e) => e.workflow.pullRequest.branch === branch);
 
-  unpublishedEntries.update((entries) => {
-    const index = entries.findIndex((e) => e.workflow.pullRequest.branch === branch);
-
-    return index === -1 ? [...entries, entry] : entries.with(index, entry);
-  });
+  unpublishedEntries.current = index === -1 ? [...entries, entry] : entries.with(index, entry);
 };
 
 /**
@@ -103,8 +100,8 @@ export const upsertUnpublishedEntry = (entry) => {
  * @param {string} branch Branch name.
  */
 export const removeUnpublishedEntry = (branch) => {
-  unpublishedEntries.update((entries) =>
-    entries.filter((e) => e.workflow.pullRequest.branch !== branch),
+  unpublishedEntries.current = unpublishedEntries.current.filter(
+    (e) => e.workflow.pullRequest.branch !== branch,
   );
 };
 
@@ -282,15 +279,13 @@ export const publishWorkflowEntry = async (entry) => {
     ...(_workflow.previousPaths ?? []),
   ]);
 
-  allEntries.update((entries) => {
-    const remaining = entries.filter(
-      (e) => !Object.values(e.locales).some(({ path }) => paths.has(path)),
-    );
+  const remaining = allEntries.current.filter(
+    (e) => !Object.values(e.locales).some(({ path }) => paths.has(path)),
+  );
 
-    // Publishing a removal takes the entry off the configured branch rather than putting a new
-    // version on it
-    return deletion ? remaining : [...remaining, publishedEntry];
-  });
+  // Publishing a removal takes the entry off the configured branch rather than putting a new
+  // version on it
+  allEntries.current = deletion ? remaining : [...remaining, publishedEntry];
 
   removeUnpublishedEntry(pullRequest.branch);
   publishWorkflowAssets(pullRequest.branch);
@@ -335,7 +330,7 @@ export const discardWorkflowEntry = async (entry) => {
 export const deleteWorkflowEntry = async (entry, collection, collectionFile, assets = []) => {
   // Taking a published entry off the site is a maintainer’s call. A contributor can discard their
   // own draft, which leaves the published version alone, but not propose a removal
-  if (get(openAuthoring)) {
+  if (openAuthoring.current) {
     throw new Error('Cannot delete a published entry as an Open Authoring contributor', {
       cause: new Error(_('open_authoring.direct_commit_unsupported')),
     });

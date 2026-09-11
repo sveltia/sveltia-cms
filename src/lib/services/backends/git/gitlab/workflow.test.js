@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
@@ -16,17 +15,14 @@ import gitlabWorkflow, {
   updateStatus,
 } from '$lib/services/backends/git/gitlab/workflow';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { cmsConfig } from '$lib/services/config';
 
 vi.mock('$lib/services/backends/git/gitlab/commits');
 vi.mock('$lib/services/backends/git/gitlab/repository', () => ({
   repository: { owner: 'group/sub', repo: 'project', branch: 'main' },
 }));
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/config', () => ({ cmsConfig: { subscribe: vi.fn() } }));
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
+vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 
 const PROJECT_ID = encodeURIComponent('group/sub/project');
 /**
@@ -58,7 +54,7 @@ const createItem = (overrides = {}) => ({
 describe('GitLab Editorial Workflow service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(get).mockReturnValue({ backend: { name: 'gitlab' } });
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitlab' } });
     vi.mocked(fetchAPI).mockResolvedValue({});
     vi.mocked(fetchGraphQL).mockResolvedValue({});
   });
@@ -599,7 +595,7 @@ describe('GitLab Editorial Workflow service', () => {
     });
 
     test('uses a squash merge when configured', async () => {
-      vi.mocked(get).mockReturnValue({ backend: { name: 'gitlab', squash_merges: true } });
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitlab', squash_merges: true } });
 
       await publish(
         /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', title: 't', headSHA: 'sha1' }),
@@ -614,7 +610,7 @@ describe('GitLab Editorial Workflow service', () => {
     });
 
     test('falls back to a regular merge without the config', async () => {
-      vi.mocked(get).mockReturnValue(undefined);
+      cmsConfig.current = undefined;
 
       await publish(/** @type {any} */ ({ number: 1, branch: 'cms/posts/hello', title: 't' }));
 

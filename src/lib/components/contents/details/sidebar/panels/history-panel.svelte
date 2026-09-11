@@ -49,8 +49,8 @@
   {:else if commits.length > 0}
     <div role="list" class="commits">
       {#each commits as commit (commit.sha)}
-        {@const commitURL = $backend?.repository?.commitBaseURL
-          ? `${$backend.repository.commitBaseURL}/${commit.sha}`
+        {@const commitURL = backend.current?.repository?.commitBaseURL
+          ? `${backend.current.repository.commitBaseURL}/${commit.sha}`
           : undefined}
         <Button
           class="ref"

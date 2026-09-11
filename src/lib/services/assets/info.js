@@ -2,7 +2,6 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
-import { get } from 'svelte/store';
 
 import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
@@ -115,7 +114,7 @@ const downloadOnce = (key, download) => {
  */
 const fetchAssetBlob = async (asset) => {
   const { name } = asset;
-  const blob = await get(backend)?.fetchBlob?.(asset);
+  const blob = await backend.current?.fetchBlob?.(asset);
 
   if (!blob) {
     throw new Error('Failed to retrieve blob');
@@ -200,7 +199,7 @@ export const _resetThumbnailDB = () => {
  */
 const initThumbnailDB = () => {
   if (thumbnailDB === undefined) {
-    const { databaseName } = get(backend)?.repository ?? {};
+    const { databaseName } = backend.current?.repository ?? {};
 
     thumbnailDB = databaseName ? new IndexedDB(databaseName, 'asset-thumbnails') : null;
   }
@@ -309,7 +308,7 @@ const flushRevocations = () => {
   });
 
   // Update the store directly because the passed `asset` can be a proxy
-  get(allAssets).forEach((asset) => {
+  allAssets.current.forEach((asset) => {
     if (asset.blobURL !== undefined && urls.has(asset.blobURL)) {
       delete asset.blobURL;
     }
@@ -374,7 +373,7 @@ export const getAssetPublicURL = (
         // used for multiple collections, and the public path can be different for each
         (getAssetFoldersByPath(asset.path).find(
           ({ collectionName }) => collectionName !== undefined,
-        ) ?? get(globalAssetFolder));
+        ) ?? globalAssetFolder.current);
 
   // Try to determine an entry-relative path if the asset is in the same folder as the entry, or a
   // sub-folder of it
@@ -412,7 +411,7 @@ export const getAssetPublicURL = (
   }
 
   const { _baseURL: baseURL = '', output: { encode_file_path: encodingEnabled = false } = {} } =
-    /** @type {InternalCmsConfig} */ (get(cmsConfig));
+    /** @type {InternalCmsConfig} */ (cmsConfig.current);
 
   let path = hasTemplateTags
     ? asset.path.replace(

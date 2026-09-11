@@ -1,7 +1,6 @@
 // @ts-nocheck
 
 import { IndexedDB } from '@sveltia/utils/storage';
-import { writable } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { backend } from '$lib/services/backends';
@@ -12,7 +11,7 @@ import {
   resolveCacheDB,
 } from '$lib/services/contents/entry/changes';
 
-vi.mock('$lib/services/backends', () => ({ backend: writable(null) }));
+vi.mock('$lib/services/backends', () => ({ backend: { current: null } }));
 
 vi.mock('$lib/services/contents/draft/save/changes', () => ({
   getPreviousSha: vi.fn(async ({ previousPath }) =>
@@ -34,7 +33,7 @@ const _file = { format: 'yaml-frontmatter' };
 
 beforeEach(() => {
   vi.clearAllMocks();
-  backend.set(null);
+  backend.current = null;
 });
 
 describe('createSyntheticDraft()', () => {
@@ -73,7 +72,7 @@ describe('resolveCacheDB()', () => {
   });
 
   test('opens a handle for the current backend', () => {
-    backend.set({ repository: { databaseName: 'db' } });
+    backend.current = { repository: { databaseName: 'db' } };
     resolveCacheDB();
     expect(IndexedDB).toHaveBeenCalledWith('db', 'file-cache');
   });

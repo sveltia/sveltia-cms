@@ -1,17 +1,16 @@
-import { get, writable } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
 
 vi.mock('$lib/services/workflow', async () => {
-  const entries = writable([]);
+  const entries = { current: [] };
 
   return {
-    workflowEnabled: writable(false),
+    workflowEnabled: { current: false },
     unpublishedEntries: entries,
     getUnpublishedEntryBySlug: vi.fn(({ collectionName, slug }) =>
-      get(entries).find(
+      entries.current.find(
         (/** @type {any} */ entry) =>
           entry.workflow.pullRequest.branch === `cms/${collectionName}/${slug}`,
       ),
@@ -19,7 +18,7 @@ vi.mock('$lib/services/workflow', async () => {
   };
 });
 
-/** The mocked stores, which are writable unlike the derived ones they stand in for. */
+/** The mocked state, which is writable unlike the derived state it stands in for. */
 const enabled = /** @type {any} */ (workflowEnabled);
 const entries = /** @type {any} */ (unpublishedEntries);
 
@@ -40,12 +39,12 @@ const draftFor = (status) => ({
 
 describe('contents/draft/validate/required', () => {
   beforeEach(() => {
-    enabled.set(true);
-    entries.set([]);
+    enabled.current = true;
+    entries.current = [];
   });
 
   test('enforces the required fields without Editorial Workflow', () => {
-    enabled.set(false);
+    enabled.current = false;
 
     expect(isRequiredEnforced(draftFor('draft'))).toBe(true);
     expect(isRequiredEnforced(/** @type {any} */ ({}))).toBe(true);
@@ -69,13 +68,13 @@ describe('contents/draft/validate/required', () => {
     const draft = draftFor('draft');
 
     // The entry was opened as a draft and handed over for review since, from the status menu or the
-    // Editorial Workflow page. The draft still holds the entry as it was, so the store decides
-    entries.set([
+    // Editorial Workflow page. The draft still holds the entry as it was, so the state decides
+    entries.current = [
       {
         id: 'entry-1',
         workflow: { status: 'pending_review', pullRequest: { branch: 'cms/posts/my-post' } },
       },
-    ]);
+    ];
 
     expect(isRequiredEnforced(draft)).toBe(true);
   });
@@ -83,12 +82,12 @@ describe('contents/draft/validate/required', () => {
   test('finds the entry by the branch derived from its slug', () => {
     const draft = draftFor();
 
-    entries.set([
+    entries.current = [
       {
         id: 'entry-1',
         workflow: { status: 'pending_publish', pullRequest: { branch: 'cms/posts/my-post' } },
       },
-    ]);
+    ];
 
     expect(isRequiredEnforced(draft)).toBe(true);
   });

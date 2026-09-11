@@ -2,7 +2,6 @@
   import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuButton, MenuItem, Spacer, Toolbar } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { writable } from 'svelte/store';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
@@ -23,20 +22,20 @@
   import { recheckDeployments } from '$lib/services/deployments/poll';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
+  import { createRawState } from '$lib/services/utils/state.svelte';
   import { openNewTab } from '$lib/services/utils/window';
   import { isPendingDeletion, unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
   import { isEntryBranch } from '$lib/services/workflow/branch';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import { EntryEditorPane } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {string} id The wrapper element’s `id` attribute.
-   * @property {Writable<?EntryEditorPane>} thisPane This pane’s mode and locale.
-   * @property {Writable<?EntryEditorPane>} [thatPane] Another pane’s mode and locale.
+   * @property {{ current: ?EntryEditorPane }} thisPane This pane’s mode and locale.
+   * @property {{ current: ?EntryEditorPane }} [thatPane] Another pane’s mode and locale.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -46,7 +45,7 @@
     /* eslint-disable prefer-const */
     id,
     thisPane,
-    thatPane = writable(null),
+    thatPane = createRawState(null),
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -57,23 +56,25 @@
   const { i18nEnabled, saveAllLocales, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
-  const isLocaleEnabled = $derived(entryDraft.current?.currentLocales[$thisPane?.locale ?? '']);
+  const isLocaleEnabled = $derived(
+    entryDraft.current?.currentLocales[thisPane.current?.locale ?? ''],
+  );
   const isOnlyLocale = $derived(
     Object.values(entryDraft.current?.currentLocales ?? {}).filter((enabled) => enabled).length ===
       1,
   );
   const otherLocales = $derived(
-    i18nEnabled ? allLocales.filter((l) => l !== $thisPane?.locale) : [],
+    i18nEnabled ? allLocales.filter((l) => l !== thisPane.current?.locale) : [],
   );
   const canCopy = $derived(!!otherLocales.length);
   // Every option in the menu edits the content, which an entry awaiting deletion doesn’t allow
   const pendingDeletion = $derived(isPendingDeletion(entryDraft.current?.originalEntry));
   const canRevert = $derived(
-    $thisPane?.locale &&
+    thisPane.current?.locale &&
       !equal(
-        originalValues[$thisPane.locale],
+        originalValues[thisPane.current.locale],
         // Exclude internal properties from the comparison
-        filterRealValues(getValueMapSnapshot(entryDraft.current, $thisPane.locale)),
+        filterRealValues(getValueMapSnapshot(entryDraft.current, thisPane.current.locale)),
       ),
   );
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
@@ -82,29 +83,29 @@
   const pullRequest = $derived.by(() => {
     const collectionName = entryDraft.current?.collectionName;
 
-    if (!$workflowEnabled || !collectionName || !originalEntry) {
+    if (!workflowEnabled.current || !collectionName || !originalEntry) {
       return undefined;
     }
 
     const slug = entryDraft.current?.fileName ?? originalEntry.slug;
 
-    return $unpublishedEntries.find(({ workflow }) =>
+    return unpublishedEntries.current.find(({ workflow }) =>
       isEntryBranch({ branch: workflow.pullRequest.branch, collectionName, slug }),
     )?.workflow.pullRequest;
   });
   // `PreviewLinkButton` renders nothing when there’s no link to offer, so the link is resolved
   // here as well — the divider above the button has to know whether anything will follow it
   const previewLink = $derived(
-    originalEntry && collection && $thisPane
+    originalEntry && collection && thisPane.current
       ? getEntryPreviewLink({
           entry: originalEntry,
-          locale: $thisPane.locale,
+          locale: thisPane.current.locale,
           collection,
           collectionFile,
           pullRequest,
-          deployments: $deployments,
-          productionSHA: $productionSHA,
-          pollTimedOut: $deployPollTimedOut,
+          deployments: deployments.current,
+          productionSHA: productionSHA.current,
+          pollTimedOut: deployPollTimedOut.current,
         })
       : undefined,
   );
@@ -118,15 +119,15 @@
         <PreviewButton {thisPane} />
       {/if}
     {:else if !(env.isSmallScreen || env.isMediumScreen)}
-      <h3 role="none">{$thisPane?.mode === 'preview' ? _('preview') : _('edit')}</h3>
+      <h3 role="none">{thisPane.current?.mode === 'preview' ? _('preview') : _('edit')}</h3>
     {:else if canPreview}
       <PreviewButton {thisPane} />
     {/if}
     <Spacer flex />
-    {#if $thisPane?.mode === 'edit'}
-      {@const localeLabel = getLocaleLabel($thisPane.locale) ?? $thisPane.locale}
+    {#if thisPane.current?.mode === 'edit'}
+      {@const localeLabel = getLocaleLabel(thisPane.current.locale) ?? thisPane.current.locale}
       {#if canCopy}
-        <TranslateButton locale={$thisPane.locale} {otherLocales} />
+        <TranslateButton locale={thisPane.current.locale} {otherLocales} />
       {/if}
       <MenuButton
         variant="ghost"
@@ -137,50 +138,54 @@
       >
         {#snippet popup()}
           <Menu aria-label={_('content_options_x_locale', { values: { locale: localeLabel } })}>
-            {#if canCopy && $thisPane?.locale}
-              <CopyMenuItems locale={$thisPane.locale} {otherLocales} submenu />
+            {#if canCopy && thisPane.current?.locale}
+              <CopyMenuItems locale={thisPane.current.locale} {otherLocales} submenu />
             {/if}
             <MenuItem
               label={_('revert_changes')}
               disabled={!canRevert}
               onclick={() => {
                 if (entryDraft.current) {
-                  revertChanges({ draft: entryDraft.current, locale: $thisPane?.locale });
+                  revertChanges({ draft: entryDraft.current, locale: thisPane.current?.locale });
                 }
               }}
             />
-            {#if !saveAllLocales && $thisPane?.locale}
+            {#if !saveAllLocales && thisPane.current?.locale}
               <Divider />
               <MenuItem
                 label={_(
                   isLocaleEnabled
                     ? 'disable_x_locale'
-                    : entryDraft.current?.currentValues[$thisPane.locale]
+                    : entryDraft.current?.currentValues[thisPane.current.locale]
                       ? 'reenable_x_locale'
                       : 'enable_x_locale',
                   { values: { locale: localeLabel } },
                 )}
-                disabled={$thisPane.locale === defaultLocale || (isLocaleEnabled && isOnlyLocale)}
+                disabled={thisPane.current.locale === defaultLocale ||
+                  (isLocaleEnabled && isOnlyLocale)}
                 onclick={() => {
                   if (entryDraft.current) {
-                    toggleLocale({ draft: entryDraft.current, locale: $thisPane?.locale ?? '' });
+                    toggleLocale({
+                      draft: entryDraft.current,
+                      locale: thisPane.current?.locale ?? '',
+                    });
                   }
                 }}
               />
             {/if}
-            {#if originalEntry && collection && $thisPane}
-              {#if previewLink || $deployPollTimedOut || prefs.devModeEnabled}
+            {#if originalEntry && collection && thisPane.current}
+              {#if previewLink || deployPollTimedOut.current || prefs.devModeEnabled}
                 <Divider />
               {/if}
               <PreviewLinkButton
                 as="menuitem"
                 entry={originalEntry}
-                locale={$thisPane.locale}
+                locale={thisPane.current.locale}
                 {collection}
                 {collectionFile}
                 {pullRequest}
               />
-              {#if $deployPollTimedOut}
+              {#if deployPollTimedOut.current}
                 <MenuItem
                   label={_('deploy_preview.check_again')}
                   onclick={() => {
@@ -190,14 +195,14 @@
               {/if}
               {#if prefs.devModeEnabled}
                 <MenuItem
-                  disabled={!$backend?.repository?.blobBaseURL}
+                  disabled={!backend.current?.repository?.blobBaseURL}
                   label={_('view_on_x', {
-                    values: { service: $backend?.repository?.label },
+                    values: { service: backend.current?.repository?.label },
                     default: _('view_in_repository'),
                   })}
                   onclick={() => {
-                    if (originalEntry && $thisPane) {
-                      openNewTab(getEntryRepoBlobURL(originalEntry, $thisPane.locale));
+                    if (originalEntry && thisPane.current) {
+                      openNewTab(getEntryRepoBlobURL(originalEntry, thisPane.current.locale));
                     }
                   }}
                 />

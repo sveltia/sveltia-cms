@@ -1,5 +1,4 @@
 import { IndexedDB } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
@@ -53,7 +52,7 @@ export const getCommitAuthor = () => {
  * @param {CommitResults} args.commit Commit results.
  */
 export const updateCache = async ({ changes, commit }) => {
-  const { databaseName } = get(backend)?.repository ?? {};
+  const { databaseName } = backend.current?.repository ?? {};
 
   if (!databaseName) {
     return;
@@ -107,10 +106,10 @@ export const updateCache = async ({ changes, commit }) => {
 export const updateStores = ({ changes, savedEntries, savedAssets }) => {
   const savedEntryIds = new Set(savedEntries.map((e) => e.id));
 
-  allEntries.update((entries) => [
-    ...entries.filter((e) => !savedEntryIds.has(e.id)),
+  allEntries.current = [
+    ...allEntries.current.filter((e) => !savedEntryIds.has(e.id)),
     ...savedEntries,
-  ]);
+  ];
 
   const excludingPaths = new Set(savedAssets.map((a) => a.path));
 
@@ -122,10 +121,10 @@ export const updateStores = ({ changes, savedEntries, savedAssets }) => {
     }
   });
 
-  allAssets.update((assets) => [
-    ...assets.filter((a) => !excludingPaths.has(a.path)),
+  allAssets.current = [
+    ...allAssets.current.filter((a) => !excludingPaths.has(a.path)),
     ...savedAssets,
-  ]);
+  ];
 };
 
 /**
@@ -139,7 +138,7 @@ export const updateStores = ({ changes, savedEntries, savedAssets }) => {
  * entries, and saved assets.
  */
 export const saveChanges = async ({ changes, savingEntries = [], savingAssets = [], options }) => {
-  const { commitChanges } = /** @type {BackendService} */ (get(backend));
+  const { commitChanges } = /** @type {BackendService} */ (backend.current);
 
   /** @type {CommitResults} */
   const commit = {
@@ -172,7 +171,7 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
   // The site is rebuilt from this commit, so the deploy state the UI reports is now about the
   // user’s own change. Editorial Workflow commits don’t come through here; they land on a workflow
   // branch and are tracked by the pull request instead
-  productionSHA.set(commit.sha);
+  productionSHA.current = commit.sha;
 
   return { commit, savedEntries, savedAssets };
 };

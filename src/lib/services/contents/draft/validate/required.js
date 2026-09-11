@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import {
   getUnpublishedEntryBySlug,
   unpublishedEntries,
@@ -28,7 +26,7 @@ const getWorkflowStatus = ({ collectionName, fileName, originalEntry }) => {
   const branch = workflow?.pullRequest?.branch;
 
   const unpublishedEntry = branch
-    ? get(unpublishedEntries).find((entry) => entry.workflow.pullRequest.branch === branch)
+    ? unpublishedEntries.current.find((entry) => entry.workflow.pullRequest.branch === branch)
     : getUnpublishedEntryBySlug({ collectionName, slug: fileName ?? originalEntry.slug });
 
   return unpublishedEntry?.workflow.status ?? workflow?.status;
@@ -46,4 +44,4 @@ const getWorkflowStatus = ({ collectionName, fileName, originalEntry }) => {
  */
 export const isRequiredEnforced = (draft) =>
   // An entry that has no pull request yet starts as a draft
-  !get(workflowEnabled) || (getWorkflowStatus(draft) ?? 'draft') !== 'draft';
+  !workflowEnabled.current || (getWorkflowStatus(draft) ?? 'draft') !== 'draft';

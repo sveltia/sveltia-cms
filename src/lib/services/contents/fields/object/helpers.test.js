@@ -1,4 +1,3 @@
-import { writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
 import { formatSummary } from '$lib/services/contents/fields/object/helpers';
@@ -7,33 +6,35 @@ vi.mock('$lib/services/config');
 
 describe('Test formatSummary() — comprehensive tests', async () => {
   // @ts-ignore
-  (await import('$lib/services/config')).cmsConfig = writable({
-    backend: { name: 'github' },
-    media_folder: 'static/uploads',
-    collections: [
-      {
-        name: 'posts',
-        folder: 'content/posts',
-        fields: [
-          {
-            name: 'metadata',
-            widget: 'object',
-            fields: [
-              { name: 'title', widget: 'string' },
-              { name: 'name', widget: 'string' },
-              { name: 'description', widget: 'text' },
-              { name: 'author', widget: 'string' },
-              { name: 'featured', widget: 'boolean' },
-              { name: 'date', widget: 'date', picker_utc: true, time_format: false },
-              { name: 'hidden_field', widget: 'hidden' },
-              { name: 'tags', widget: 'list', field: { name: 'tag', widget: 'string' } },
-              { name: 'rating', widget: 'number' },
-            ],
-          },
-        ],
-      },
-    ],
-  });
+  (await import('$lib/services/config')).cmsConfig = {
+    current: {
+      backend: { name: 'github' },
+      media_folder: 'static/uploads',
+      collections: [
+        {
+          name: 'posts',
+          folder: 'content/posts',
+          fields: [
+            {
+              name: 'metadata',
+              widget: 'object',
+              fields: [
+                { name: 'title', widget: 'string' },
+                { name: 'name', widget: 'string' },
+                { name: 'description', widget: 'text' },
+                { name: 'author', widget: 'string' },
+                { name: 'featured', widget: 'boolean' },
+                { name: 'date', widget: 'date', picker_utc: true, time_format: false },
+                { name: 'hidden_field', widget: 'hidden' },
+                { name: 'tags', widget: 'list', field: { name: 'tag', widget: 'string' } },
+                { name: 'rating', widget: 'number' },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  };
 
   const baseArgs = {
     collectionName: 'posts',

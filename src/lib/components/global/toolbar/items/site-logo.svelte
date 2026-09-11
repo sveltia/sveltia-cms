@@ -5,9 +5,14 @@
   import { appLogoURL, DEFAULT_APP_LOGO_URL } from '$lib/services/app/branding';
   import { openProductionSite } from '$lib/services/app/navigation';
   import { cmsConfig } from '$lib/services/config';
+
+  const showInHeader = $derived(
+    appLogoURL.current !== DEFAULT_APP_LOGO_URL &&
+      (cmsConfig.current?.logo?.show_in_header ?? true),
+  );
 </script>
 
-{#if $appLogoURL !== DEFAULT_APP_LOGO_URL && ($cmsConfig?.logo?.show_in_header ?? true)}
+{#if showInHeader}
   <Button
     variant="ghost"
     iconic
@@ -16,7 +21,7 @@
       openProductionSite();
     }}
   >
-    <img src={$appLogoURL} alt="" class="logo" />
+    <img src={appLogoURL.current} alt="" class="logo" />
   </Button>
 {/if}
 

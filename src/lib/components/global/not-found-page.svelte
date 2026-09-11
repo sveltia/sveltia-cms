@@ -8,7 +8,7 @@
   import { announcedPageStatus } from '$lib/services/app/navigation';
 
   onMount(() => {
-    $announcedPageStatus = _('page_not_found');
+    announcedPageStatus.current = _('page_not_found');
   });
 </script>
 

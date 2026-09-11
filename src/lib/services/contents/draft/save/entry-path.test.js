@@ -25,14 +25,8 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
 
 vi.mock('$lib/services/workflow', () => ({
   mergeUnpublishedEntries: vi.fn((entries) => entries),
-  unpublishedEntries: { subscribe: vi.fn() },
+  unpublishedEntries: { current: [] },
 }));
-
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return { ...actual, get: vi.fn(() => []) };
-});
 
 describe('contents/draft/save/entry-path', () => {
   let mockFillTemplate;

@@ -1,43 +1,53 @@
 import equal from 'fast-deep-equal';
-import { get, writable } from 'svelte/store';
+import { untrack } from 'svelte';
 
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { currentView, defaultView } from '$lib/services/assets/view';
 import { initViewSettingsStorage } from '$lib/services/common/view';
+import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { AssetListView, BackendService } from '$lib/types/private';
  */
 
 /**
  * View settings for all the asset collection.
- * @type {Writable<Record<string, AssetListView> | undefined>}
+ * @type {{ current: Record<string, AssetListView> | undefined }}
  */
-export const assetListSettings = writable();
+export const assetListSettings = createRawState();
 
 /**
- * Initialize {@link assetListSettings} and relevant subscribers.
+ * Initialize {@link assetListSettings} and relevant effects.
  * @param {BackendService} _backend Backend service.
  */
 export const initSettings = async ({ repository }) => {
   await initViewSettingsStorage(repository, 'assets-view', assetListSettings);
 
-  selectedAssetFolder.subscribe((folder) => {
-    const view =
-      get(assetListSettings)?.[folder?.internalPath ?? '*'] ?? structuredClone(defaultView);
+  // Restore the view settings when a different folder is selected
+  createRootEffect(() => {
+    const folder = selectedAssetFolder.current;
 
-    if (!equal(view, get(currentView))) {
-      currentView.set(view);
-    }
+    untrack(() => {
+      const view =
+        assetListSettings.current?.[folder?.internalPath ?? '*'] ?? structuredClone(defaultView);
+
+      if (!equal(view, currentView.current)) {
+        currentView.current = view;
+      }
+    });
   });
 
-  currentView.subscribe((view) => {
-    const path = get(selectedAssetFolder)?.internalPath ?? '*';
-    const savedView = get(assetListSettings)?.[path] ?? {};
+  // Save the view settings when the view is changed
+  createRootEffect(() => {
+    const view = currentView.current;
 
-    if (!equal(view, savedView)) {
-      assetListSettings.update((_settings) => ({ ..._settings, [path]: view }));
-    }
+    untrack(() => {
+      const path = selectedAssetFolder.current?.internalPath ?? '*';
+      const savedView = assetListSettings.current?.[path] ?? {};
+
+      if (!equal(view, savedView)) {
+        assetListSettings.current = { ...assetListSettings.current, [path]: view };
+      }
+    });
   });
 };

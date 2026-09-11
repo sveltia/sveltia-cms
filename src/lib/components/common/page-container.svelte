@@ -1,7 +1,6 @@
 <script>
   import { ResizableHandle, ResizablePane, ResizablePaneGroup } from '@sveltia/ui';
   import { IndexedDB } from '@sveltia/utils/storage';
-  import { get } from 'svelte/store';
 
   import { hasOverlay } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
@@ -45,7 +44,7 @@
   const restoreSidebarWidth = async () => {
     if (!uiSettingsKey) return;
 
-    const { databaseName } = get(backend)?.repository ?? {};
+    const { databaseName } = backend.current?.repository ?? {};
 
     uiSettingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
     sidebarWidth = (await uiSettingsDB?.get(uiSettingsKey))?.sidebarWidth ?? 240;
@@ -65,12 +64,12 @@
   };
 
   $effect.pre(() => {
-    void [$hasOverlay];
+    void [hasOverlay.current];
 
     // `ResizablePaneGroup` doesn’t work well when the container is inert, so we need to wait until
     // the overlay is actually gone before restoring the sidebar width.
     window.requestAnimationFrame(() => {
-      if (!$hasOverlay) {
+      if (!hasOverlay.current) {
         restoreSidebarWidth();
       }
     });
@@ -81,7 +80,7 @@
   role="group"
   id="page-container"
   class="outer {className}"
-  inert={$hasOverlay}
+  inert={hasOverlay.current}
   {...rest}
   bind:this={container}
 >

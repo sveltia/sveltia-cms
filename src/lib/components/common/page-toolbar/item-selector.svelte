@@ -3,14 +3,13 @@
   import { Checkbox } from '@sveltia/ui';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import { Asset, Entry } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {(Entry | Asset)[]} allItems All available items.
-   * @property {Writable<(Entry | Asset)[]>} selectedItems Selected items.
+   * @property {{ current: (Entry | Asset)[] }} selectedItems Selected items.
    */
 
   /** @type {Props} */
@@ -22,7 +21,7 @@
   } = $props();
 
   const totalCount = $derived(allItems.length);
-  const selectedCount = $derived($selectedItems.length);
+  const selectedCount = $derived(selectedItems.current.length);
   const anySelected = $derived(!!selectedCount);
   const allSelected = $derived(anySelected && selectedCount === totalCount);
 </script>
@@ -33,8 +32,7 @@
     aria-label={_('select_all')}
     checked={anySelected && !allSelected ? 'mixed' : anySelected}
     onChange={() => {
-      // Use `set` because assignment doesn’t work with Runes
-      selectedItems.set(allSelected ? [] : [...allItems]);
+      selectedItems.current = allSelected ? [] : [...allItems];
     }}
   />
   {#if anySelected}

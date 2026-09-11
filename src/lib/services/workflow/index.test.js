@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { backend, backendName } from '$lib/services/backends';
@@ -37,60 +36,60 @@ const createEntry = ({ collectionName, subPath }) => ({
 
 describe('workflow/index', () => {
   beforeEach(() => {
-    unpublishedEntries.set([]);
-    unpublishedEntriesLoaded.set(false);
-    allEntries.set([]);
-    cmsConfig.set(undefined);
-    backendName.set(undefined);
+    unpublishedEntries.current = [];
+    unpublishedEntriesLoaded.current = false;
+    allEntries.current = [];
+    cmsConfig.current = undefined;
+    backendName.current = undefined;
   });
 
   describe('workflowDataReady', () => {
     test('is true right away when the feature is disabled', () => {
-      backendName.set('github');
-      cmsConfig.set(/** @type {any} */ ({ publish_mode: 'simple' }));
-      expect(get(workflowDataReady)).toBe(true);
+      backendName.current = 'github';
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'simple' });
+      expect(workflowDataReady.current).toBe(true);
     });
 
     test('waits for the unpublished entries when the feature is enabled', () => {
-      backendName.set('github');
-      cmsConfig.set(/** @type {any} */ ({ publish_mode: 'editorial_workflow' }));
-      expect(get(workflowDataReady)).toBe(false);
+      backendName.current = 'github';
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
+      expect(workflowDataReady.current).toBe(false);
 
-      unpublishedEntriesLoaded.set(true);
-      expect(get(workflowDataReady)).toBe(true);
+      unpublishedEntriesLoaded.current = true;
+      expect(workflowDataReady.current).toBe(true);
     });
   });
 
   describe('workflowEnabled', () => {
     test('is false without the editorial_workflow publish mode', () => {
-      backendName.set('github');
-      cmsConfig.set(/** @type {any} */ ({ publish_mode: 'simple' }));
-      expect(get(workflowEnabled)).toBe(false);
+      backendName.current = 'github';
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'simple' });
+      expect(workflowEnabled.current).toBe(false);
     });
 
     test('is false when the backend doesn’t implement the feature', () => {
-      backendName.set('gitea');
-      cmsConfig.set(/** @type {any} */ ({ publish_mode: 'editorial_workflow' }));
-      expect(get(backend)?.workflow).toBeUndefined();
-      expect(get(workflowEnabled)).toBe(false);
+      backendName.current = 'gitea';
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
+      expect(backend.current?.workflow).toBeUndefined();
+      expect(workflowEnabled.current).toBe(false);
     });
 
     test.each(['github', 'gitlab'])(
       'is true with the %s backend and the editorial_workflow publish mode',
       (name) => {
-        backendName.set(name);
-        cmsConfig.set(/** @type {any} */ ({ publish_mode: 'editorial_workflow' }));
-        expect(get(workflowEnabled)).toBe(true);
+        backendName.current = name;
+        cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
+        expect(workflowEnabled.current).toBe(true);
       },
     );
   });
 
   describe('getUnpublishedEntriesByCollection', () => {
     test('filters the entries by collection', () => {
-      unpublishedEntries.set([
+      unpublishedEntries.current = [
         createEntry({ collectionName: 'posts', subPath: 'a' }),
         createEntry({ collectionName: 'pages', subPath: 'b' }),
-      ]);
+      ];
 
       expect(getUnpublishedEntriesByCollection('posts')).toHaveLength(1);
       expect(getUnpublishedEntriesByCollection('pages')).toHaveLength(1);
@@ -98,17 +97,17 @@ describe('workflow/index', () => {
     });
 
     test('returns an empty array without a collection name', () => {
-      unpublishedEntries.set([createEntry({ collectionName: 'posts', subPath: 'a' })]);
+      unpublishedEntries.current = [createEntry({ collectionName: 'posts', subPath: 'a' })];
       expect(getUnpublishedEntriesByCollection(undefined)).toEqual([]);
     });
   });
 
   describe('getUnpublishedEntry', () => {
     test('finds the entry by collection name and sub path', () => {
-      unpublishedEntries.set([
+      unpublishedEntries.current = [
         createEntry({ collectionName: 'posts', subPath: 'a' }),
         createEntry({ collectionName: 'posts', subPath: 'b' }),
-      ]);
+      ];
 
       expect(getUnpublishedEntry({ collectionName: 'posts', subPath: 'b' })?.subPath).toBe('b');
       expect(getUnpublishedEntry({ collectionName: 'posts', subPath: 'c' })).toBeUndefined();
@@ -119,7 +118,7 @@ describe('workflow/index', () => {
       const entry = createEntry({ collectionName: 'settings', subPath: 'data/site.yml' });
 
       entry.workflow.fileName = 'site';
-      unpublishedEntries.set([entry]);
+      unpublishedEntries.current = [entry];
 
       // The URL carries the file name, while the entry’s `subPath` is the whole file path
       expect(getUnpublishedEntry({ collectionName: 'settings', subPath: 'site' })).toBe(entry);
@@ -137,7 +136,7 @@ describe('workflow/index', () => {
       // The branch keeps the slug the entry had when the pull request was opened
       entry.slug = 'renamed';
       entry.subPath = 'renamed';
-      unpublishedEntries.set([entry]);
+      unpublishedEntries.current = [entry];
 
       expect(getUnpublishedEntryBySlug({ collectionName: 'posts', slug: 'hello' })).toBe(entry);
       expect(
@@ -151,7 +150,7 @@ describe('workflow/index', () => {
       const legacy = createEntry({ collectionName: 'pages', subPath: 'about/team' });
 
       encoded.workflow.pullRequest.branch = 'cms/pages/about%2Fethos';
-      unpublishedEntries.set([encoded, legacy]);
+      unpublishedEntries.current = [encoded, legacy];
 
       expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'about/ethos' })).toBe(
         encoded,
@@ -166,15 +165,15 @@ describe('workflow/index', () => {
 
 describe('hasPublishedVersion', () => {
   beforeEach(() => {
-    allEntries.set([]);
+    allEntries.current = [];
   });
 
   test('is true when a published entry shares a file path', () => {
     const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
 
-    allEntries.set([
+    allEntries.current = [
       /** @type {any} */ ({ id: 'p1', locales: { _default: { path: 'content/posts/hello.md' } } }),
-    ]);
+    ];
 
     expect(hasPublishedVersion(entry)).toBe(true);
   });
@@ -184,9 +183,9 @@ describe('hasPublishedVersion', () => {
 
     entry.workflow.previousPaths = ['content/posts/hello.md'];
 
-    allEntries.set([
+    allEntries.current = [
       /** @type {any} */ ({ id: 'p1', locales: { _default: { path: 'content/posts/hello.md' } } }),
-    ]);
+    ];
 
     expect(hasPublishedVersion(entry)).toBe(true);
   });
@@ -194,12 +193,12 @@ describe('hasPublishedVersion', () => {
   test('is false for an entry that has never been published', () => {
     const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
 
-    allEntries.set([
+    allEntries.current = [
       /** @type {any} */ ({ id: 'p1', locales: { _default: { path: 'content/posts/other.md' } } }),
-    ]);
+    ];
 
     expect(hasPublishedVersion(entry)).toBe(false);
-    allEntries.set([]);
+    allEntries.current = [];
     expect(hasPublishedVersion(entry)).toBe(false);
   });
 
@@ -222,9 +221,9 @@ describe('hasPublishedVersion', () => {
       workflow: {},
     });
 
-    allEntries.set([
+    allEntries.current = [
       /** @type {any} */ ({ id: 'p1', locales: { fr: { path: 'content/posts/fr/hello.md' } } }),
-    ]);
+    ];
 
     expect(hasPublishedVersion(entry)).toBe(true);
   });

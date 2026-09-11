@@ -11,14 +11,13 @@
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import { EntryEditorPane } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {string} id The wrapper element’s `id` attribute.
-   * @property {Writable<?EntryEditorPane>} thisPane This pane’s mode and locale.
+   * @property {{ current: ?EntryEditorPane }} thisPane This pane’s mode and locale.
    * @property {HTMLElement} [thisPaneContentArea] This pane’s content area.
    * @property {HTMLElement} [thatPaneContentArea] Another pane’s content area.
    */
@@ -35,9 +34,9 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { syncScrolling } = $derived($entryEditorSettings ?? {});
-  const locale = $derived($thisPane?.locale);
-  const mode = $derived($thisPane?.mode);
+  const { syncScrolling } = $derived(entryEditorSettings.current ?? {});
+  const locale = $derived(thisPane.current?.locale);
+  const mode = $derived(thisPane.current?.mode);
   const hasContent = $derived(!!locale && !!entryDraft.current?.currentValues[locale]);
   const labelOptions = $derived({
     values: { locale: locale ? (getLocaleLabel(locale) ?? locale) : '' },
@@ -139,7 +138,7 @@
     // Initialize the scroll synchronization when the content area is ready. The pane mode is also a
     // dependency because the edit mode always uses the main content area, while the preview mode
     // may use an iframe if a custom preview stylesheet is provided.
-    void [$thisPane?.mode, contentArea];
+    void [thisPane.current?.mode, contentArea];
     initializeScrollSync();
   });
 </script>

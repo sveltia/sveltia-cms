@@ -1,10 +1,5 @@
-import { derived } from 'svelte/store';
-
 import { deployments, lastCommitPublishHint, productionSHA } from '$lib/services/deployments';
-
-/**
- * @import { Readable } from 'svelte/store';
- */
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
  * Record what the last commit is expected to have done, worked out without asking the CI/CD
@@ -18,7 +13,7 @@ import { deployments, lastCommitPublishHint, productionSHA } from '$lib/services
  * @param {boolean} published Whether the last commit is expected to have started a deployment.
  */
 export const setLastCommitPublishHint = (published) => {
-  lastCommitPublishHint.set({ published, time: Date.now() });
+  lastCommitPublishHint.current = { published, time: Date.now() };
 };
 
 /**
@@ -33,26 +28,24 @@ export const setLastCommitPublishHint = (published) => {
  * Everything else falls back to the expectation. Nothing reported is ambiguous: the provider may
  * have skipped the commit, or the repository may have no CI connected to the Git service at all,
  * and the two are indistinguishable from a single commit.
- * @type {Readable<boolean>}
  */
-export const isLastCommitPublished = derived(
-  [lastCommitPublishHint, deployments, productionSHA],
-  ([{ published, time }, deployMap, sha]) => {
-    const status = sha ? deployMap[sha] : undefined;
+export const isLastCommitPublished = createDerivedState(() => {
+  const { published, time } = lastCommitPublishHint.current;
+  const { current: sha } = productionSHA;
+  const status = sha ? deployments.current[sha] : undefined;
 
-    // A commit still being looked up reports no time, so it falls back here as well
-    if (!status || status.checkedTime <= time) {
-      return published;
-    }
-
-    if (status.state === 'ready' || status.state === 'pending') {
-      return true;
-    }
-
-    if (status.state === 'error') {
-      return false;
-    }
-
+  // A commit still being looked up reports no time, so it falls back here as well
+  if (!status || status.checkedTime <= time) {
     return published;
-  },
-);
+  }
+
+  if (status.state === 'ready' || status.state === 'pending') {
+    return true;
+  }
+
+  if (status.state === 'error') {
+    return false;
+  }
+
+  return published;
+});

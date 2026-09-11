@@ -1,6 +1,9 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { backend } from '$lib/services/backends';
+import { cmsConfig } from '$lib/services/config';
+
 import {
   createBaseSavingEntryData,
   createSavingEntryData,
@@ -13,9 +16,15 @@ vi.mock('@sveltia/utils/crypto');
 vi.mock('@sveltia/utils/file');
 vi.mock('@sveltia/utils/object');
 vi.mock('@sveltia/utils/storage');
-vi.mock('$lib/services/assets/folders');
-vi.mock('$lib/services/backends');
-vi.mock('$lib/services/config');
+vi.mock('$lib/services/assets/folders', () => ({
+  globalAssetFolder: { current: undefined },
+}));
+vi.mock('$lib/services/backends', () => ({
+  backend: { current: undefined },
+}));
+vi.mock('$lib/services/config', () => ({
+  cmsConfig: { current: undefined },
+}));
 vi.mock('$lib/services/contents/draft/save/assets');
 vi.mock('$lib/services/contents/draft/save/entry-path');
 vi.mock('$lib/services/contents/draft/save/serialize');
@@ -26,30 +35,13 @@ vi.mock('$lib/services/api/events', () => ({
   callEventHooks: vi.fn(),
 }));
 vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: { subscribe: vi.fn(() => vi.fn()) },
+  prefs: {},
 }));
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
-
 describe('draft/save/changes', () => {
-  let mockGet;
-
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    const { get } = await import('svelte/store');
-
-    mockGet = vi.mocked(get);
-
-    // Mock the stores used in changes.js
-    // Default return undefined for any store
-    mockGet.mockReturnValue(undefined);
+    cmsConfig.current = undefined;
+    backend.current = undefined;
 
     // Mock getDefaultMediaLibraryOptions to return expected structure
     const { getDefaultMediaLibraryOptions } =
@@ -1020,8 +1012,8 @@ describe('draft/save/changes', () => {
       vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
       vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
 
-      // Mock cmsConfig to return undefined (Line 69: get(cmsConfig)?.output ?? {})
-      mockGet.mockReturnValue(undefined);
+      // Mock cmsConfig to return undefined
+      cmsConfig.current = undefined;
 
       const draft = {
         collection: {
@@ -1062,7 +1054,7 @@ describe('draft/save/changes', () => {
       vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
 
       // Mock cmsConfig to return config with output and encodingEnabled
-      mockGet.mockReturnValue({
+      cmsConfig.current = /** @type {any} */ ({
         output: {
           encode_file_path: true,
         },
@@ -1695,19 +1687,11 @@ describe('draft/save/changes', () => {
         IndexedDB: mockIndexedDB,
       }));
 
-      // Mock backend store to return database name
-      mockGet.mockImplementation((store) => {
-        const storeString = store?.toString?.();
-
-        if (storeString && storeString.includes('backend')) {
-          return {
-            repository: {
-              databaseName: 'test-db',
-            },
-          };
-        }
-
-        return undefined;
+      // Mock backend state to return database name
+      backend.current = /** @type {any} */ ({
+        repository: {
+          databaseName: 'test-db',
+        },
       });
 
       const draft = {
@@ -1760,8 +1744,6 @@ describe('draft/save/changes', () => {
       vi.doMock('@sveltia/utils/storage', () => ({
         IndexedDB: mockIndexedDB,
       }));
-
-      mockGet.mockReturnValue(undefined);
 
       const draft = {
         id: 'test-uuid',
@@ -2334,12 +2316,12 @@ describe('draft/save/changes', () => {
       vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
       vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
 
-      // Mock backend store to return object with databaseName (line 302)
-      mockGet.mockImplementation(() => ({
+      // Mock backend state to return object with databaseName (line 302)
+      backend.current = /** @type {any} */ ({
         repository: {
           databaseName: 'cms-db-test',
         },
-      }));
+      });
 
       const draft = {
         id: 'test-uuid',

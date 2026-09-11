@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
 import { sleep } from '@sveltia/utils/misc';
-import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 import { formatFileName } from '$lib/services/utils/file';
@@ -43,7 +42,7 @@ import { formatFileName } from '$lib/services/utils/file';
  * @returns {UploadcareMediaLibrary | false | undefined} Configuration object, or `false` if
  * explicitly disabled.
  */
-export const getLibraryOptions = (config = get(cmsConfig)) =>
+export const getLibraryOptions = (config = cmsConfig.current) =>
   config?.media_libraries?.uploadcare ??
   (config?.media_library?.name === 'uploadcare'
     ? /** @type {UploadcareMediaLibrary} */ (config?.media_library)

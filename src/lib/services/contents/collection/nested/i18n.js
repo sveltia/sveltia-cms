@@ -1,6 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
@@ -90,7 +89,7 @@ const getAllEntries = (collection) => {
 
   return mergeUnpublishedEntries(
     getEntriesByCollection(name),
-    get(unpublishedEntries).filter(({ workflow }) => workflow.collectionName === name),
+    unpublishedEntries.current.filter(({ workflow }) => workflow.collectionName === name),
   );
 };
 

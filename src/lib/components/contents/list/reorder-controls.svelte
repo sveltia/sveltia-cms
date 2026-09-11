@@ -2,7 +2,7 @@
   @component
   Save/Cancel buttons shown in the collection toolbar while the entry list is in reorder mode. Owns
   the saving state and the error toast, so the parent toolbar only needs to render this component
-  when `$reordering` is `true`.
+  when `reordering.current` is `true`.
 -->
 <script>
   import { _ } from '@sveltia/i18n';
@@ -13,7 +13,7 @@
   import {
     reorderDirty,
     reorderedEntries,
-    reordering,
+    setReorderMode,
   } from '$lib/services/contents/collection/view';
 
   /**
@@ -28,15 +28,15 @@
   variant="primary"
   label={_('done')}
   aria-label={_('done_reordering_entries')}
-  disabled={saving || !$reorderDirty}
+  disabled={saving || !reorderDirty.current}
   onclick={async () => {
-    const collection = /** @type {InternalEntryCollection} */ ($selectedCollection);
+    const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
 
     saving = true;
 
     try {
-      await reorderEntries(collection, $reorderedEntries);
-      $reordering = false;
+      await reorderEntries(collection, reorderedEntries.current);
+      setReorderMode(false);
     } catch (/** @type {any} */ ex) {
       // eslint-disable-next-line no-console
       console.error(ex);
@@ -52,7 +52,7 @@
   aria-label={_('cancel_reordering_entries')}
   disabled={saving}
   onclick={() => {
-    $reordering = false;
+    setReorderMode(false);
   }}
 />
 

@@ -26,8 +26,8 @@
 
   const numberFormatter = $derived(Intl.NumberFormat(appLocale.current));
   // @ts-ignore Dividers can be included in the collection list
-  const collections = $derived($cmsConfig?.collections?.filter(({ hide }) => !hide) ?? []);
-  const singletons = $derived($cmsConfig?.singletons ?? []);
+  const collections = $derived(cmsConfig.current?.collections?.filter(({ hide }) => !hide) ?? []);
+  const singletons = $derived(cmsConfig.current?.singletons ?? []);
 </script>
 
 <div role="none" class="primary-sidebar">
@@ -83,7 +83,7 @@
         <OptionGroup label={_('collections')}>
           <TreeItem
             label={_('files')}
-            selected={$selectedCollection?.name === '_singletons'}
+            selected={selectedCollection.current?.name === '_singletons'}
             onSelect={() => {
               goto('/collections/_singletons', { transitionType: 'forwards' });
             }}

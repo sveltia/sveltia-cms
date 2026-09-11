@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { LocalStorage } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
@@ -29,16 +28,12 @@ vi.mock('@sveltia/utils/storage');
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: {
-    subscribe: vi.fn((fn) => {
-      fn({
-        backend: {
-          name: 'github',
-          site_domain: 'example.com',
-        },
-      });
-
-      return () => {};
-    }),
+    current: {
+      backend: {
+        name: 'github',
+        site_domain: 'example.com',
+      },
+    },
   },
 }));
 
@@ -94,7 +89,7 @@ describe('git/shared/auth', () => {
 
   describe('inAuthPopup store', () => {
     it('should be a writable store with initial value false', () => {
-      expect(get(inAuthPopup)).toBe(false);
+      expect(inAuthPopup.current).toBe(false);
     });
   });
 
@@ -984,7 +979,7 @@ describe('git/shared/auth', () => {
         apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
       });
 
-      expect(get(inAuthPopup)).toBe(true);
+      expect(inAuthPopup.current).toBe(true);
     });
 
     it('should redirect to auth URL when no code is present', async () => {
@@ -1013,7 +1008,7 @@ describe('git/shared/auth', () => {
         apiConfig: { clientId: 'test-client', tokenURL: 'https://gitlab.com/oauth/token' },
       });
 
-      expect(get(inAuthPopup)).toBe(true);
+      expect(inAuthPopup.current).toBe(true);
     });
 
     it('should pass includeCredentials through to finishClientSideAuth', async () => {
@@ -1054,15 +1049,11 @@ describe('git/shared/auth', () => {
 
     it('should handle GitHub server-side auth flow', async () => {
       mockWindow.open.mockReturnValue(mockPopup);
-      vi.mocked(cmsConfig.subscribe).mockImplementation((fn) => {
-        fn({
-          backend: {
-            name: 'github',
-            site_domain: 'example.com',
-          },
-        });
-
-        return () => {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'github',
+          site_domain: 'example.com',
+        },
       });
 
       const apiConfig = {
@@ -1101,16 +1092,12 @@ describe('git/shared/auth', () => {
 
     it('should handle GitLab PKCE auth flow', async () => {
       mockWindow.open.mockReturnValue(mockPopup);
-      vi.mocked(cmsConfig.subscribe).mockImplementation((fn) => {
-        fn({
-          backend: {
-            name: 'gitlab',
-            site_domain: 'example.com',
-            auth_type: 'pkce',
-          },
-        });
-
-        return () => {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitlab',
+          site_domain: 'example.com',
+          auth_type: 'pkce',
+        },
       });
 
       const apiConfig = {
@@ -1164,15 +1151,11 @@ describe('git/shared/auth', () => {
 
     it('should handle Gitea PKCE auth flow', async () => {
       mockWindow.open.mockReturnValue(mockPopup);
-      vi.mocked(cmsConfig.subscribe).mockImplementation((_fn) => {
-        _fn({
-          backend: {
-            name: 'gitea',
-            site_domain: 'gitea.example.com',
-          },
-        });
-
-        return () => {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitea',
+          site_domain: 'gitea.example.com',
+        },
       });
 
       const apiConfig = {
@@ -1224,15 +1207,11 @@ describe('git/shared/auth', () => {
     });
 
     it('should return undefined for automatic sign-in with Gitea PKCE', async () => {
-      vi.mocked(cmsConfig.subscribe).mockImplementation((fn) => {
-        fn({
-          backend: {
-            name: 'gitea',
-            site_domain: 'gitea.example.com',
-          },
-        });
-
-        return () => {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitea',
+          site_domain: 'gitea.example.com',
+        },
       });
 
       const apiConfig = {
@@ -1248,15 +1227,11 @@ describe('git/shared/auth', () => {
     });
 
     it('should return undefined for automatic sign-in with GitHub', async () => {
-      vi.mocked(cmsConfig.subscribe).mockImplementation((fn) => {
-        fn({
-          backend: {
-            name: 'github',
-            site_domain: 'example.com',
-          },
-        });
-
-        return () => {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'github',
+          site_domain: 'example.com',
+        },
       });
 
       const apiConfig = {
@@ -1278,15 +1253,11 @@ describe('git/shared/auth', () => {
       };
       mockWindow.name = 'auth';
 
-      vi.mocked(cmsConfig.subscribe).mockImplementation((fn) => {
-        fn({
-          backend: {
-            name: 'gitea',
-            site_domain: 'gitea.example.com',
-          },
-        });
-
-        return () => {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitea',
+          site_domain: 'gitea.example.com',
+        },
       });
 
       vi.mocked(LocalStorage.get).mockResolvedValue({
@@ -1350,15 +1321,11 @@ describe('git/shared/auth', () => {
     });
 
     it('should call handleAuthFlow and return tokens when token is not provided', async () => {
-      vi.mocked(cmsConfig.subscribe).mockImplementation((fn) => {
-        fn({
-          backend: {
-            name: 'github',
-            site_domain: 'example.com',
-          },
-        });
-
-        return () => {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'github',
+          site_domain: 'example.com',
+        },
       });
 
       const apiConfig = {
@@ -1402,15 +1369,11 @@ describe('git/shared/auth', () => {
     });
 
     it('should return undefined for automatic sign-in without token', async () => {
-      vi.mocked(cmsConfig.subscribe).mockImplementation((fn) => {
-        fn({
-          backend: {
-            name: 'github',
-            site_domain: 'example.com',
-          },
-        });
-
-        return () => {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'github',
+          site_domain: 'example.com',
+        },
       });
 
       const apiConfig = {
@@ -1432,15 +1395,11 @@ describe('git/shared/auth', () => {
     });
 
     it('should handle handleAuthFlow returning undefined', async () => {
-      vi.mocked(cmsConfig.subscribe).mockImplementation((fn) => {
-        fn({
-          backend: {
-            name: 'gitea',
-            site_domain: 'gitea.example.com',
-          },
-        });
-
-        return () => {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitea',
+          site_domain: 'gitea.example.com',
+        },
       });
 
       mockWindow.opener = {

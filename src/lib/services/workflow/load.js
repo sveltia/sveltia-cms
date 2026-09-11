@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { backend } from '$lib/services/backends';
 import {
   unpublishedEntries,
@@ -17,25 +15,25 @@ import { convertPullRequests } from '$lib/services/workflow/entries';
  * @returns {Promise<void>}
  */
 export const loadUnpublishedEntries = async () => {
-  const workflow = get(backend)?.workflow;
+  const workflow = backend.current?.workflow;
 
-  if (!get(workflowEnabled) || !workflow) {
+  if (!workflowEnabled.current || !workflow) {
     return;
   }
 
-  unpublishedEntriesLoading.set(true);
+  unpublishedEntriesLoading.current = true;
 
   try {
     const { entries, assets } = await convertPullRequests(await workflow.fetchPullRequests());
 
-    unpublishedEntries.set(entries);
+    unpublishedEntries.current = entries;
     mergeWorkflowAssets(assets);
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console
     console.error(ex);
   } finally {
-    unpublishedEntriesLoading.set(false);
+    unpublishedEntriesLoading.current = false;
     // Mark as loaded even on failure, so a deep link isn’t stuck on the loading state forever
-    unpublishedEntriesLoaded.set(true);
+    unpublishedEntriesLoaded.current = true;
   }
 };

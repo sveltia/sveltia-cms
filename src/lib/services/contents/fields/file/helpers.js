@@ -1,7 +1,6 @@
 import { getHash } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
 import equal from 'fast-deep-equal';
-import { get } from 'svelte/store';
 
 import { allAssets, fillInternalPathTemplate } from '$lib/services/assets';
 import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
@@ -58,7 +57,7 @@ export const getAssetLibraryFolderMap = ({
   const fileAssetFolder = fileName ? getAssetFolder({ collectionName, fileName }) : undefined;
   const collectionAssetFolder = getAssetFolder({ collectionName });
   const entryAssetFolder = fileAssetFolder ?? collectionAssetFolder;
-  const globalFolder = get(globalAssetFolder);
+  const globalFolder = globalAssetFolder.current;
 
   /** @type {AssetLibraryFolderMap} */
   const map = {
@@ -90,7 +89,7 @@ export const getAssetLibraryFolderMap = ({
   };
 
   // Add asset collection folders
-  get(allAssetFolders).forEach((folder) => {
+  allAssetFolders.current.forEach((folder) => {
     if (folder.isAssetCollection && folder.collectionName) {
       map[folder.collectionName] = { folder, enabled: true };
     }
@@ -303,7 +302,7 @@ export const listAssets = ({
   const isInSelectedFolder = (asset) => isAssetInSelectedFolder({ asset, folder, folderPath });
 
   const resolved = resolveUnsavedAssetPaths({
-    savedAssets: get(allAssets).filter(isInSelectedFolder),
+    savedAssets: allAssets.current.filter(isInSelectedFolder),
     unsavedAssets: unsavedAssets.filter(isInSelectedFolder),
     slugificationEnabled,
   });

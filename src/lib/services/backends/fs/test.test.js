@@ -152,7 +152,7 @@ describe('Test Backend Service', () => {
       await testBackend.fetchFiles();
 
       expect(mockLoadFiles).not.toHaveBeenCalled();
-      expect(dataLoaded.set).toHaveBeenCalledWith(true);
+      expect(dataLoaded.current).toEqual(true);
     });
 
     it('should handle case where signIn was not called', async () => {
@@ -161,7 +161,7 @@ describe('Test Backend Service', () => {
       await testBackend.fetchFiles();
 
       expect(mockLoadFiles).not.toHaveBeenCalled();
-      expect(dataLoaded.set).toHaveBeenCalledWith(true);
+      expect(dataLoaded.current).toEqual(true);
     });
   });
 

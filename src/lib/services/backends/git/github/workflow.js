@@ -1,5 +1,4 @@
 import { _ } from '@sveltia/i18n';
-import { get } from 'svelte/store';
 
 import { commitChanges } from '$lib/services/backends/git/github/commits';
 import { fetchBlobText } from '$lib/services/backends/git/github/files';
@@ -400,7 +399,7 @@ export const fetchForkBranchPullRequests = async (branches) => {
     return map;
   }
 
-  const fork = get(forkedRepository);
+  const fork = forkedRepository.current;
 
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
     await fetchGraphQL(getFetchForkPullRequestsQuery(branches))
@@ -599,7 +598,7 @@ export const fetchForkPullRequests = async () => {
  * @returns {Promise<WorkflowPullRequest[]>} Pull requests.
  */
 export const fetchPullRequests = async () =>
-  get(openAuthoring) ? fetchForkPullRequests() : fetchLabelledPullRequests();
+  openAuthoring.current ? fetchForkPullRequests() : fetchLabelledPullRequests();
 
 /**
  * Query to fetch what the `createRef` mutation needs: the node ID of the repository the branch is
@@ -754,7 +753,7 @@ export const createBranch = async (branch) => {
     // committed onto rather than wiped, the way it was before. With Open Authoring a draft is a
     // branch without a pull request, so there’s no telling a leftover from a live one; the branch
     // is kept, and it shows up as a draft the next time the fork is listed
-    if (!get(openAuthoring) && !(await hasOpenPullRequest(branch))) {
+    if (!openAuthoring.current && !(await hasOpenPullRequest(branch))) {
       await resetBranch(branch, sha);
 
       return sha;
@@ -829,7 +828,7 @@ export const updateDraftState = async (pullRequest, isDraft) => {
  */
 export const createPullRequest = async ({ branch, title, status }) => {
   const { owner, repo, branch: baseBranch } = repository;
-  const fork = get(forkedRepository);
+  const fork = forkedRepository.current;
   const isDraft = status === 'draft';
 
   const result = /** @type {Record<string, any>} */ (
@@ -893,7 +892,7 @@ export const savePullRequest = async ({ changes, options, branch, title, status,
   // is opened when they hand the entry over for review, so maintainers aren’t notified about work
   // that isn’t ready for them. A removal has no review stages to move through, so its pull request
   // is opened right away like it is in the regular flow
-  if (get(openAuthoring) && status === 'draft') {
+  if (openAuthoring.current && status === 'draft') {
     return {
       commit,
       pullRequest: {
@@ -997,7 +996,7 @@ export const updateForkStatus = async (pullRequest, status) => {
  * @returns {Promise<WorkflowPullRequest>} Updated pull request.
  */
 export const updateStatus = async (pullRequest, status) => {
-  if (get(openAuthoring)) {
+  if (openAuthoring.current) {
     return updateForkStatus(pullRequest, status);
   }
 
@@ -1020,14 +1019,14 @@ export const updateStatus = async (pullRequest, status) => {
  * @see https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request
  */
 export const publish = async (pullRequest) => {
-  if (get(openAuthoring)) {
+  if (openAuthoring.current) {
     throw new Error('Cannot publish as an Open Authoring contributor', {
       cause: new Error(_('open_authoring.publish_unsupported')),
     });
   }
 
   const { owner, repo } = repository;
-  const { backend } = get(cmsConfig) ?? {};
+  const { backend } = cmsConfig.current ?? {};
   const squash = backend && 'squash_merges' in backend ? !!backend.squash_merges : false;
 
   await fetchAPI(`/repos/${owner}/${repo}/pulls/${pullRequest.number}/merge`, {

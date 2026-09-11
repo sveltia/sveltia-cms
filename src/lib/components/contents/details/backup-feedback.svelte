@@ -6,7 +6,7 @@
   import { showContentOverlay } from '$lib/services/contents/editor';
 
   const now = $derived(new Date());
-  const { resolve, timestamp } = $derived($restoreDialogState);
+  const { resolve, timestamp } = $derived(restoreDialogState.current);
   const sameYear = $derived(now.getUTCFullYear() === timestamp?.getUTCFullYear());
   const sameMonth = $derived(sameYear && now.getUTCMonth() === timestamp?.getUTCMonth());
   const sameDay = $derived(sameMonth && now.getUTCDate() === timestamp?.getUTCDate());
@@ -21,16 +21,16 @@
   );
 
   $effect(() => {
-    if (!$showContentOverlay && $restoreDialogState.show) {
+    if (!showContentOverlay.current && restoreDialogState.current.show) {
       // Close the dialog when the Content Editor is closed
-      $restoreDialogState.show = false;
+      restoreDialogState.current.show = false;
       resolve?.();
     }
   });
 </script>
 
 <ConfirmationDialog
-  bind:open={$restoreDialogState.show}
+  bind:open={restoreDialogState.current.show}
   title={_('restore_backup_title')}
   okLabel={_('restore')}
   cancelLabel={_('discard')}
@@ -44,19 +44,19 @@
   {_('restore_backup_description', { values: { datetime } })}
 </ConfirmationDialog>
 
-<Toast bind:show={$backupToastState.saved}>
+<Toast bind:show={backupToastState.current.saved}>
   <Alert status="info">
     {_('draft_backup_saved')}
   </Alert>
 </Toast>
 
-<Toast bind:show={$backupToastState.restored}>
+<Toast bind:show={backupToastState.current.restored}>
   <Alert status="success">
     {_('draft_backup_restored')}
   </Alert>
 </Toast>
 
-<Toast bind:show={$backupToastState.deleted}>
+<Toast bind:show={backupToastState.current.deleted}>
   <Alert status="info">
     {_('draft_backup_deleted')}
   </Alert>

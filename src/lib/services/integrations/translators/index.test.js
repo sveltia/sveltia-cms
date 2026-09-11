@@ -87,24 +87,6 @@ vi.mock('./mistral.js', () => ({
   },
 }));
 
-vi.mock('svelte/store', () => {
-  // Capture the getter function passed to toStore for direct testing
-  const mockToStore = vi.fn((getter) => {
-    /** @type {any} */ (globalThis).testToStoreGetter = getter; // Capture the getter
-    return { subscribe: vi.fn() };
-  });
-
-  return {
-    toStore: mockToStore,
-    get: vi.fn(),
-    writable: vi.fn(() => ({
-      subscribe: vi.fn(),
-      set: vi.fn(),
-      update: vi.fn(),
-    })),
-  };
-});
-
 /** @type {{ defaultTranslationService: string | undefined }} */
 const mockPrefs = vi.hoisted(
   () =>
@@ -200,59 +182,23 @@ describe('Translator Services Index', () => {
     });
   });
 
-  describe('translator store', () => {
-    it('should be a derived store', () => {
-      expect(translator).toBeDefined();
-      expect(typeof translator).toBe('object');
-      expect(translator).toHaveProperty('subscribe');
-      // Derived stores only have subscribe method, not set/update
-      expect(translator).not.toHaveProperty('set');
-      expect(translator).not.toHaveProperty('update');
-    });
-
+  describe('translator state', () => {
     it('should default to Google translator', () => {
-      // The store should be initialized with the Google translator by default
-      expect(translator).toBeDefined();
-    });
-
-    it('should test derived callback with default prefs', () => {
-      const getter = /** @type {any} */ (globalThis).testToStoreGetter;
-
-      expect(getter).toBeDefined();
-
-      // Test the getter with empty prefs (should default to google)
       mockPrefs.defaultTranslationService = undefined;
 
-      const result = getter();
-
-      expect(result).toBe(allTranslationServices.google);
+      expect(translator.current).toBe(allTranslationServices.google);
     });
 
-    it('should test derived callback with openai prefs', () => {
-      const getter = /** @type {any} */ (globalThis).testToStoreGetter;
-
-      expect(getter).toBeDefined();
-
-      // Test the getter with prefs specifying openai
+    it('should follow the preference', () => {
       mockPrefs.defaultTranslationService = 'openai';
 
-      const result = getter();
-
-      expect(result).toBe(allTranslationServices.openai);
+      expect(translator.current).toBe(allTranslationServices.openai);
     });
 
-    it('should test derived callback fallback for unknown service', () => {
-      const getter = /** @type {any} */ (globalThis).testToStoreGetter;
-
-      expect(getter).toBeDefined();
-
-      // Test the getter with prefs specifying an unknown service
+    it('should fall back to Google for an unknown service', () => {
       mockPrefs.defaultTranslationService = 'deepl';
 
-      const result = getter();
-
-      // Should fallback to google when service is not found
-      expect(result).toBe(allTranslationServices.google);
+      expect(translator.current).toBe(allTranslationServices.google);
     });
   });
 

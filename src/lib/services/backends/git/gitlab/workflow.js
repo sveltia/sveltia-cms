@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { repository } from '$lib/services/backends/git/gitlab/repository';
@@ -401,7 +399,7 @@ export const updateStatus = async (pullRequest, status) => {
  * @see https://docs.gitlab.com/api/merge_requests/#merge-a-merge-request
  */
 export const publish = async (pullRequest) => {
-  const { backend } = get(cmsConfig) ?? {};
+  const { backend } = cmsConfig.current ?? {};
   const squash = backend && 'squash_merges' in backend ? !!backend.squash_merges : false;
 
   await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}/merge`, {

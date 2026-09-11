@@ -67,7 +67,7 @@
 
   const DATA_URL_REGEX = /^data:(?<type>image\/.+?);base64,.+/;
 
-  const defaultConfig = $cmsConfig?.field_defaults?.richtext ?? {};
+  const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
   /** @type {FieldEditorContext} */
   const { fieldContext, parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
   const inEditorComponent = fieldContext === 'rich-text-editor-component';

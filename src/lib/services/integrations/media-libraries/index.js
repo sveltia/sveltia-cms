@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { cmsConfig } from '$lib/services/config';
 
 /**
@@ -14,7 +12,7 @@ import { cmsConfig } from '$lib/services/config';
  * @returns {Record<string, any> | false} Options, or `false` if the library is explicitly disabled.
  */
 export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
-  const _cmsConfig = get(cmsConfig);
+  const _cmsConfig = cmsConfig.current;
 
   // `all` provides shared defaults merged into the `default` library’s `config`. Other libraries
   // (e.g. Cloudinary) pass `config` directly to their SDK, so we must not pollute it.

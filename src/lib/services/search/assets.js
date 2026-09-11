@@ -1,11 +1,9 @@
-import { derived } from 'svelte/store';
-
 import { publishedAssets } from '$lib/services/assets';
 import { searchTerms } from '$lib/services/search';
 import { hasMatch, normalize } from '$lib/services/search/util';
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Readable } from 'svelte/store';
  * @import { Asset } from '$lib/types/private';
  * @import { NormalizedValueCache } from '$lib/services/search/util';
  */
@@ -32,8 +30,7 @@ export const searchAssets = ({ assets, terms }) => {
 
 /**
  * Hold asset search results for the current search terms.
- * @type {Readable<Asset[]>}
  */
-export const assetSearchResults = derived([publishedAssets, searchTerms], ([assets, terms]) =>
-  searchAssets({ assets, terms }),
+export const assetSearchResults = createDerivedState(() =>
+  searchAssets({ assets: publishedAssets.current, terms: searchTerms.current }),
 );

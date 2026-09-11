@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getCollection } from '$lib/services/contents/collection';
@@ -19,45 +18,45 @@ vi.mock('$lib/services/contents/collection', () => ({
 describe('contents/index', () => {
   beforeEach(() => {
     // Reset stores before each test
-    dataLoaded.set(false);
-    dataLoadedProgress.set(undefined);
-    allEntryFolders.set([]);
-    allEntries.set([]);
-    entryParseErrors.set([]);
+    dataLoaded.current = false;
+    dataLoadedProgress.current = undefined;
+    allEntryFolders.current = [];
+    allEntries.current = [];
+    entryParseErrors.current = [];
     vi.clearAllMocks();
   });
 
   describe('store initialization', () => {
     it('should initialize dataLoaded as false', () => {
-      expect(get(dataLoaded)).toBe(false);
+      expect(dataLoaded.current).toBe(false);
     });
 
     it('should initialize dataLoadedProgress as undefined', () => {
-      expect(get(dataLoadedProgress)).toBeUndefined();
+      expect(dataLoadedProgress.current).toBeUndefined();
     });
 
     it('should initialize allEntryFolders as empty array', () => {
-      expect(get(allEntryFolders)).toEqual([]);
+      expect(allEntryFolders.current).toEqual([]);
     });
 
     it('should initialize allEntries as empty array', () => {
-      expect(get(allEntries)).toEqual([]);
+      expect(allEntries.current).toEqual([]);
     });
 
     it('should initialize entryParseErrors as empty array', () => {
-      expect(get(entryParseErrors)).toEqual([]);
+      expect(entryParseErrors.current).toEqual([]);
     });
   });
 
   describe('getEntryFoldersByPath', () => {
     it('should return empty array when no folders match', () => {
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: 'content/posts',
           filePathMap: undefined,
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/pages/about.md');
 
@@ -65,7 +64,7 @@ describe('contents/index', () => {
     });
 
     it('should return matching folders with filePathMap', () => {
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: 'content/posts',
@@ -81,7 +80,7 @@ describe('contents/index', () => {
             en: 'content/pages/about.md',
           },
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/posts/en/post.md');
 
@@ -102,7 +101,7 @@ describe('contents/index', () => {
           }),
       );
 
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: 'content/posts',
@@ -113,7 +112,7 @@ describe('contents/index', () => {
           folderPath: 'content/posts/blog',
           filePathMap: undefined,
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/posts/blog/test.md');
 
@@ -133,13 +132,13 @@ describe('contents/index', () => {
         }),
       );
 
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: 'content/posts',
           filePathMap: undefined,
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/posts/hello.md');
 
@@ -158,13 +157,13 @@ describe('contents/index', () => {
         }),
       );
 
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: 'content/posts',
           filePathMap: undefined,
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/pages/about.md');
 
@@ -172,7 +171,7 @@ describe('contents/index', () => {
     });
 
     it('should handle folder without folderPath', () => {
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: undefined,
@@ -180,7 +179,7 @@ describe('contents/index', () => {
             en: 'content/posts/test.md',
           },
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/posts/test.md');
 
@@ -200,7 +199,7 @@ describe('contents/index', () => {
         }),
       );
 
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'news',
           folderPath: 'content/updates/news',
@@ -212,7 +211,7 @@ describe('contents/index', () => {
           folderPath: undefined,
           filePathMap: { _default: 'content/updates/news/_index.md' },
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/updates/news/_index.md');
 
@@ -223,7 +222,7 @@ describe('contents/index', () => {
     });
 
     it('should return every file folder that declares the same path', () => {
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'alpha',
           folderPath: undefined,
@@ -234,7 +233,7 @@ describe('contents/index', () => {
           folderPath: undefined,
           filePathMap: { en: 'content/shared.md' },
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/shared.md');
 
@@ -254,7 +253,7 @@ describe('contents/index', () => {
         }),
       );
 
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'alpha',
           folderPath: undefined,
@@ -265,7 +264,7 @@ describe('contents/index', () => {
           folderPath: undefined,
           filePathMap: undefined,
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/shared.md');
 
@@ -277,13 +276,13 @@ describe('contents/index', () => {
     it('should handle collection without _file property', () => {
       vi.mocked(getCollection).mockReturnValue(undefined);
 
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: 'content/posts',
           filePathMap: undefined,
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/posts/hello.md');
 
@@ -291,7 +290,7 @@ describe('contents/index', () => {
     });
 
     it('should handle multiple matches from filePathMap', () => {
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: 'content/posts',
@@ -300,7 +299,7 @@ describe('contents/index', () => {
             fr: 'content/posts/test.md',
           },
         }),
-      ]);
+      ];
 
       const result = getEntryFoldersByPath('content/posts/test.md');
 
@@ -309,7 +308,7 @@ describe('contents/index', () => {
     });
 
     it('should handle empty allEntryFolders', () => {
-      allEntryFolders.set([]);
+      allEntryFolders.current = [];
 
       const result = getEntryFoldersByPath('content/posts/test.md');
 
@@ -317,13 +316,13 @@ describe('contents/index', () => {
     });
 
     it('should reuse cache when allEntryFolders has not changed', () => {
-      allEntryFolders.set([
+      allEntryFolders.current = [
         /** @type {any} */ ({
           collectionName: 'posts',
           folderPath: 'content/posts',
           filePathMap: { en: 'content/posts/test.md' },
         }),
-      ]);
+      ];
 
       // First call populates the cache.
       const result1 = getEntryFoldersByPath('content/posts/test.md');

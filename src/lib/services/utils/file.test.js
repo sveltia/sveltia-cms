@@ -15,28 +15,6 @@ import {
   sanitizePath,
 } from '$lib/services/utils/file';
 
-// Mock svelte/store
-vi.mock('svelte/store', () => ({
-  get: vi.fn((store) => {
-    if (typeof store === 'function') {
-      return store();
-    }
-
-    return 'en';
-  }),
-  writable: vi.fn(() => ({
-    subscribe: vi.fn(),
-    set: vi.fn(),
-    update: vi.fn(),
-  })),
-  readable: vi.fn(() => ({
-    subscribe: vi.fn(),
-  })),
-  derived: vi.fn(() => ({
-    subscribe: vi.fn(),
-  })),
-}));
-
 // Mock i18n dependencies
 vi.mock('@sveltia/i18n', () => ({
   locale: { current: 'en', set: vi.fn() },

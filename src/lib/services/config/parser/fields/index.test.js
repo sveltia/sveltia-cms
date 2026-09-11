@@ -33,10 +33,6 @@ vi.mock('@sveltia/i18n', () => ({
 
 const mockGetStore = vi.fn();
 
-vi.mock('svelte/store', () => ({
-  get: mockGetStore,
-}));
-
 /**
  * Create a fresh collectors object for testing.
  * @returns {ConfigParserCollectors} Collectors instance.

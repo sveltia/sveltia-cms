@@ -1,6 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
@@ -170,7 +169,7 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
     );
 
     const existingPaths = new Set(assets.map(({ path }) => path));
-    const _allAssets = get(allAssets);
+    const _allAssets = allAssets.current;
 
     entryFolderPaths.forEach((entryFolderPath) => {
       const descendantFolderPaths = getDescendantEntryFolderPaths({

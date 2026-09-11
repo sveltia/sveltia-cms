@@ -2,10 +2,10 @@ import { _ } from '@sveltia/i18n';
 import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
-import { get, writable } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 import { isSecureURL } from '$lib/services/utils/networking';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
  * @import {
@@ -17,7 +17,10 @@ import { isSecureURL } from '$lib/services/utils/networking';
  * @import { GitBackend } from '$lib/types/public';
  */
 
-export const inAuthPopup = writable(false);
+/**
+ * Whether the app is running in the authentication popup window.
+ */
+export const inAuthPopup = createRawState(false);
 
 /**
  * Open a popup window for authentication.
@@ -381,7 +384,7 @@ export const finishClientSideAuth = async ({ backendName, apiConfig, code, state
  * @param {ApiEndpointConfig} args.apiConfig API endpoint configuration.
  */
 export const handleClientSideAuthPopup = async ({ backendName, apiConfig }) => {
-  inAuthPopup.set(true);
+  inAuthPopup.current = true;
 
   const { search } = window.location;
   const { code, state } = Object.fromEntries(new URLSearchParams(search));
@@ -408,7 +411,7 @@ export const handleClientSideAuthPopup = async ({ backendName, apiConfig }) => {
  * the sign-in process is automatic or the flow is being done in a popup window.
  */
 export const handleAuthFlow = async ({ auto, apiConfig }) => {
-  const { backend } = /** @type {InternalCmsConfig} */ (get(cmsConfig));
+  const { backend } = /** @type {InternalCmsConfig} */ (cmsConfig.current);
 
   const {
     name: backendName,

@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { allAssets } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob } from '$lib/services/assets/info';
@@ -85,7 +83,7 @@ export const buildEntryAssetMoveChanges = async ({
   }
 
   const takenPaths = new Set(changes.map(({ path }) => path));
-  const assets = get(allAssets);
+  const assets = allAssets.current;
   /** @type {FileChange[]} */
   const moveChanges = [];
   /** @type {Asset[]} */

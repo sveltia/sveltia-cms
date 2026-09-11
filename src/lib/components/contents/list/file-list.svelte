@@ -17,7 +17,7 @@
    */
 
   const files = $derived(
-    /** @type {InternalFileCollection} */ ($selectedCollection)?.files.filter(
+    /** @type {InternalFileCollection} */ (selectedCollection.current)?.files.filter(
       isValidCollectionFile,
     ) ?? [],
   );
@@ -30,8 +30,8 @@
    */
   const statuses = $derived(
     Object.fromEntries(
-      $unpublishedEntries
-        .filter(({ workflow }) => workflow.collectionName === $selectedCollection?.name)
+      unpublishedEntries.current
+        .filter(({ workflow }) => workflow.collectionName === selectedCollection.current?.name)
         .map(({ workflow }) => [workflow.fileName, workflow.status]),
     ),
   );
@@ -45,7 +45,7 @@
           {#await sleep() then}
             <GridRow
               onclick={() => {
-                goto(`/collections/${$selectedCollection?.name}/entries/${name}`, {
+                goto(`/collections/${selectedCollection.current?.name}/entries/${name}`, {
                   transitionType: 'forwards',
                 });
               }}

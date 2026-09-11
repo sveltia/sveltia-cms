@@ -1,7 +1,6 @@
 import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { globalAssetFolder } from '$lib/services/assets/folders';
@@ -90,7 +89,7 @@ const getNestedCanonicalSlug = ({ draft, slugs: { defaultLocaleSlug, localizedSl
  */
 export const createBaseSavingEntryData = async ({ draft, slugs }) => {
   const { defaultLocaleSlug, localizedSlugs } = slugs;
-  const _globalAssetFolder = get(globalAssetFolder);
+  const _globalAssetFolder = globalAssetFolder.current;
 
   const {
     collection,
@@ -113,7 +112,7 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
   const changes = [];
   /** @type {Asset[]} */
   const savingAssets = [];
-  const { encode_file_path: encodingEnabled = false } = get(cmsConfig)?.output ?? {};
+  const { encode_file_path: encodingEnabled = false } = cmsConfig.current?.output ?? {};
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap: {}, isIndexFile };
   const replaceBlobBaseArgs = { draft, defaultLocaleSlug, changes, savingAssets };
@@ -404,7 +403,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     isNew: draft.isNew,
   });
 
-  const databaseName = get(backend)?.repository?.databaseName;
+  const databaseName = backend.current?.repository?.databaseName;
   const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
   const getFileChangeArgs = { draft, savingEntry, cacheDB };
 

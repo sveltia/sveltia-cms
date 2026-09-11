@@ -1,6 +1,5 @@
 import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
-import { get } from 'svelte/store';
 
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
@@ -93,7 +92,7 @@ export const commitChanges = async (changes, options) => {
   // An Open Authoring contributor can’t write to the configured repository at all, so a change that
   // doesn’t go through Editorial Workflow has nowhere to land. Fail here with an explanation rather
   // than letting the API reject the commit with a bare permission error
-  if (get(openAuthoring) && !options.branch) {
+  if (openAuthoring.current && !options.branch) {
     throw new Error('Cannot commit directly to the configured repository', {
       cause: new Error(_('open_authoring.direct_commit_unsupported')),
     });

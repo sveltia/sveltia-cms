@@ -22,39 +22,39 @@
    */
 
   const collection = $derived(
-    /** @type {InternalEntryCollection | undefined} */ ($selectedCollection),
+    /** @type {InternalEntryCollection | undefined} */ (selectedCollection.current),
   );
-  const viewType = $derived($reordering ? 'list' : $currentView.type);
-  const allEntries = $derived($entryGroups.flatMap(({ entries }) => entries));
+  const viewType = $derived(reordering.current ? 'list' : currentView.current.type);
+  const allEntries = $derived(entryGroups.current.flatMap(({ entries }) => entries));
 </script>
 
 <ListContainer aria-label={_('entry_list')}>
   {#if collection}
-    {#if allEntries.length || $listedUnpublishedEntries.length}
+    {#if allEntries.length || listedUnpublishedEntries.current.length}
       {@const { defaultLocale } = collection._i18n}
       <ListingGrid
         {viewType}
         id="entry-list"
         aria-label={_('entries')}
-        aria-rowcount={$listedEntries.length + $listedUnpublishedEntries.length}
+        aria-rowcount={listedEntries.current.length + listedUnpublishedEntries.current.length}
       >
         <!-- @todo Implement custom table column option that can replace summary template -->
-        {#if $reordering}
+        {#if reordering.current}
           <EntryReorderList {collection} {viewType} />
         {:else}
-          {#if $listedUnpublishedEntries.length}
+          {#if listedUnpublishedEntries.current.length}
             <GridBody label={_('workflow.unpublished_entries')}>
-              {#each $listedUnpublishedEntries as entry (entry.id)}
+              {#each listedUnpublishedEntries.current as entry (entry.id)}
                 <EntryListItem {collection} {entry} {viewType} />
               {/each}
             </GridBody>
           {/if}
-          {#each $entryGroups as { name, entries } (name)}
+          {#each entryGroups.current as { name, entries } (name)}
             {#await sleep() then}
               <GridBody
                 label={name !== '*'
                   ? name
-                  : $listedUnpublishedEntries.length
+                  : listedUnpublishedEntries.current.length
                     ? _('workflow.published_entries')
                     : undefined}
               >
@@ -76,7 +76,7 @@
           {/each}
         {/if}
       </ListingGrid>
-    {:else if $listedEntries.length}
+    {:else if listedEntries.current.length}
       <EmptyState>
         <span role="none">{_('no_entries_found')}</span>
       </EmptyState>

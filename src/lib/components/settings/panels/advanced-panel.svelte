@@ -53,7 +53,7 @@
     />
   </div>
 </section>
-{#if $skipCIConfigured}
+{#if skipCIConfigured.current}
   <section>
     <h3>
       {_('prefs.advanced.deploy_hook.title')}

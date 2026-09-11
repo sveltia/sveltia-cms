@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { searchMode, searchTerms } from '$lib/services/search';
 
 const ROUTE_REGEX = /^\/search\/(?<terms>.+)$/;
@@ -20,12 +18,12 @@ export const isSearchRoute = (path) => {
 
   const { terms } = groups;
 
-  if (terms && terms !== get(searchTerms)) {
-    searchTerms.set(terms);
+  if (terms && terms !== searchTerms.current) {
+    searchTerms.current = terms;
   }
 
-  if (!get(searchMode)) {
-    searchMode.set('contents');
+  if (!searchMode.current) {
+    searchMode.current = 'contents';
   }
 
   return true;

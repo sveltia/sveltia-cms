@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { cmsConfig } from '$lib/services/config';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import {
@@ -154,7 +152,7 @@ export const determineOmitDefaultLocale = (omitDefaultLocale, structureMap, file
  */
 export const normalizeI18nConfig = (collection, file) => {
   const config = mergeI18nConfigs({
-    cmsConfig: /** @type {InternalCmsConfig} */ (get(cmsConfig)),
+    cmsConfig: /** @type {InternalCmsConfig} */ (cmsConfig.current),
     collection,
     file,
   });

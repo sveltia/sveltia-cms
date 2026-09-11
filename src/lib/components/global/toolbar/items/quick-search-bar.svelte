@@ -22,11 +22,11 @@
    * @param {string} terms New search terms.
    */
   const navigate = (terms) => {
-    const hadTerms = !!$searchTerms;
+    const hadTerms = !!searchTerms.current;
     const { path } = parseLocation();
     const searching = path.startsWith('/search/');
 
-    $searchTerms = terms;
+    searchTerms.current = terms;
 
     if (terms) {
       goto(`/search/${terms}`, { replaceState: searching });
@@ -40,19 +40,19 @@
 
   $effect(() => {
     // Restore search terms when the page is reloaded
-    if (searchBar && $searchTerms !== searchBar?.value) {
-      searchBar.value = $searchTerms;
+    if (searchBar && searchTerms.current !== searchBar?.value) {
+      searchBar.value = searchTerms.current;
     }
   });
 </script>
 
 <div role="none" class="wrapper">
-  {#if $searchMode}
+  {#if searchMode.current}
     <SearchBar
       bind:this={searchBar}
       debounce
       keyShortcuts="Accel+F"
-      placeholder={_(`search_placeholder_${$searchMode}`)}
+      placeholder={_(`search_placeholder_${searchMode.current}`)}
       --sui-textbox-placeholder-text-align="center"
       {onclick}
       oninput={({ target }) => {

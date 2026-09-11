@@ -41,8 +41,8 @@
   const selectedAssetFolderLabel = $derived(
     // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized
     // label
-    appLocale.current && $selectedAssetFolder
-      ? getFolderLabelByCollection($selectedAssetFolder)
+    appLocale.current && selectedAssetFolder.current
+      ? getFolderLabelByCollection(selectedAssetFolder.current)
       : '',
   );
 
@@ -58,7 +58,7 @@
     notFound = false;
 
     if (!match?.groups) {
-      $showAssetOverlay = false;
+      showAssetOverlay.current = false;
       // Check if it’s the search page, which has a different URL pattern (`#/search/{query}`)
       isSearchPage = isSearchRoute(path);
 
@@ -70,9 +70,9 @@
     if (!folderPath) {
       if (env.isSmallScreen) {
         // Show the asset folder list only
-        $selectedAssetFolder = undefined;
-        $showAssetOverlay = false;
-        $announcedPageStatus = _('viewing_asset_folder_list');
+        selectedAssetFolder.current = undefined;
+        showAssetOverlay.current = false;
+        announcedPageStatus.current = _('viewing_asset_folder_list');
         isIndexPage = true;
       } else {
         // Redirect to All Assets
@@ -84,16 +84,16 @@
 
     const folder =
       window.history.state?.folder ??
-      $allAssetFolders.find(({ internalPath, collectionName }) =>
+      allAssetFolders.current.find(({ internalPath, collectionName }) =>
         folderPath === '-/all'
           ? internalPath === undefined && collectionName === undefined
           : internalPath === folderPath,
       );
 
     if (!folder && !fileName) {
-      $selectedAssetFolder = undefined;
-      $showAssetOverlay = false;
-      $announcedPageStatus = _('asset_folder_not_found');
+      selectedAssetFolder.current = undefined;
+      showAssetOverlay.current = false;
+      announcedPageStatus.current = _('asset_folder_not_found');
       notFound = true;
 
       return; // Not Found
@@ -103,40 +103,40 @@
       // A folder path that comes with a file name doesn’t have to be a configured asset folder,
       // because an asset can live in a subfolder of one. The asset itself is looked up by its full
       // path below, so leave the resolution to that
-      $selectedAssetFolder = undefined;
-    } else if (!equal($selectedAssetFolder, folder)) {
-      $selectedAssetFolder = folder;
+      selectedAssetFolder.current = undefined;
+    } else if (!equal(selectedAssetFolder.current, folder)) {
+      selectedAssetFolder.current = folder;
     }
 
     if (!fileName) {
       // Wait for `selectedAssetFolderLabel` to be updated
       await sleep(100);
 
-      $showAssetOverlay = false;
-      $announcedPageStatus = _('viewing_x_asset_folder', {
+      showAssetOverlay.current = false;
+      announcedPageStatus.current = _('viewing_x_asset_folder', {
         values: {
           folder: selectedAssetFolderLabel,
-          count: $listedAssets.length,
+          count: listedAssets.current.length,
         },
       });
 
       return;
     }
 
-    $overlaidAsset = fileName
-      ? $allAssets.find((asset) => asset.path === `${folderPath}/${fileName}`)
+    overlaidAsset.current = fileName
+      ? allAssets.current.find((asset) => asset.path === `${folderPath}/${fileName}`)
       : undefined;
-    $announcedPageStatus = $overlaidAsset
-      ? _('viewing_x_asset_details', { values: { name: $overlaidAsset.name } })
+    announcedPageStatus.current = overlaidAsset.current
+      ? _('viewing_x_asset_details', { values: { name: overlaidAsset.current.name } })
       : _('file_not_found');
-    $showAssetOverlay = true;
+    showAssetOverlay.current = true;
   };
 
   onMount(() => {
     navigate();
 
     return () => {
-      $showAssetOverlay = false;
+      showAssetOverlay.current = false;
     };
   });
 </script>
@@ -171,7 +171,7 @@
           <PrimaryToolbar />
         {/snippet}
         {#snippet secondaryToolbar()}
-          {#if $listedAssets.length}
+          {#if listedAssets.current.length}
             <SecondaryToolbar />
           {/if}
         {/snippet}
@@ -186,7 +186,7 @@
   {/snippet}
 </PageContainer>
 
-{#if $showAssetOverlay}
+{#if showAssetOverlay.current}
   <AssetDetailsOverlay />
 {/if}
 

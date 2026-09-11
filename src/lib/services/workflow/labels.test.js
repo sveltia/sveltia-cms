@@ -1,6 +1,6 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { cmsConfig } from '$lib/services/config';
 import {
   getAllStatusLabels,
   getKnownLabelPrefixes,
@@ -9,12 +9,10 @@ import {
   getStatusLabel,
 } from '$lib/services/workflow/labels';
 
-vi.mock('$lib/services/config', () => ({ cmsConfig: { subscribe: vi.fn() } }));
-vi.mock('svelte/store', () => ({ get: vi.fn() }));
-
+vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 describe('workflow/labels', () => {
   beforeEach(() => {
-    vi.mocked(get).mockReturnValue({ backend: { name: 'github' } });
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
   });
 
   describe('getLabelPrefix', () => {
@@ -23,17 +21,22 @@ describe('workflow/labels', () => {
     });
 
     test('returns the configured prefix', () => {
-      vi.mocked(get).mockReturnValue({ backend: { name: 'github', cms_label_prefix: 'cms/' } });
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', cms_label_prefix: 'cms/' },
+      });
       expect(getLabelPrefix()).toBe('cms/');
     });
 
     test('falls back to the default prefix when the option is an empty string', () => {
-      vi.mocked(get).mockReturnValue({ backend: { name: 'github', cms_label_prefix: '' } });
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', cms_label_prefix: '' },
+      });
       expect(getLabelPrefix()).toBe('sveltia-cms/');
     });
 
     test('falls back to the default prefix when the config is not loaded', () => {
-      vi.mocked(get).mockReturnValue(undefined);
+      cmsConfig.current = undefined;
+
       expect(getLabelPrefix()).toBe('sveltia-cms/');
     });
   });
@@ -44,7 +47,9 @@ describe('workflow/labels', () => {
     });
 
     test('puts a custom prefix first, keeping the default', () => {
-      vi.mocked(get).mockReturnValue({ backend: { name: 'github', cms_label_prefix: 'cms/' } });
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', cms_label_prefix: 'cms/' },
+      });
 
       expect(getKnownLabelPrefixes()).toEqual([
         'cms/',
@@ -63,7 +68,9 @@ describe('workflow/labels', () => {
     });
 
     test('always writes with the configured prefix', () => {
-      vi.mocked(get).mockReturnValue({ backend: { name: 'github', cms_label_prefix: 'cms/' } });
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', cms_label_prefix: 'cms/' },
+      });
       expect(getStatusLabel('draft')).toBe('cms/draft');
     });
   });
@@ -89,7 +96,9 @@ describe('workflow/labels', () => {
     });
 
     test('includes a custom prefix', () => {
-      vi.mocked(get).mockReturnValue({ backend: { name: 'github', cms_label_prefix: 'cms/' } });
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', cms_label_prefix: 'cms/' },
+      });
       expect(getAllStatusLabels()).toContain('cms/draft');
       expect(getAllStatusLabels()).toContain('sveltia-cms/draft');
     });
@@ -111,14 +120,18 @@ describe('workflow/labels', () => {
     });
 
     test('recognizes a custom prefix as well as the known ones', () => {
-      vi.mocked(get).mockReturnValue({ backend: { name: 'github', cms_label_prefix: 'cms/' } });
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', cms_label_prefix: 'cms/' },
+      });
       expect(getStatusFromLabels(['cms/draft'])).toBe('draft');
       expect(getStatusFromLabels(['sveltia-cms/draft'])).toBe('draft');
       expect(getStatusFromLabels(['decap-cms/draft'])).toBe('draft');
     });
 
     test('gives precedence to the configured prefix', () => {
-      vi.mocked(get).mockReturnValue({ backend: { name: 'github', cms_label_prefix: 'cms/' } });
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', cms_label_prefix: 'cms/' },
+      });
 
       expect(getStatusFromLabels(['decap-cms/draft', 'cms/pending_publish'])).toBe(
         'pending_publish',

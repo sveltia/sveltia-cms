@@ -28,12 +28,16 @@
   } = $props();
 
   const hasOptions = $derived(
-    // Use `$allEntries` as a trigger to update the state when a new entry is created
-    $allEntries && $selectedCollection ? canCreateIndexFile($selectedCollection) : false,
+    // Use `allEntries.current` as a trigger to update the state when a new entry is created
+    allEntries.current && selectedCollection.current
+      ? canCreateIndexFile(selectedCollection.current)
+      : false,
   );
   const indexFileLabel = $derived(
     // `appLocale.current` is a key, because `getIndexFile` can return a localized label
-    appLocale.current && $selectedCollection ? getIndexFile($selectedCollection)?.label : '',
+    appLocale.current && selectedCollection.current
+      ? getIndexFile(selectedCollection.current)?.label
+      : '',
   );
   const ButtonComponent = $derived(hasOptions ? SplitButton : Button);
 
@@ -44,8 +48,11 @@
   const openEditor = (index = false) => {
     // Start a new entry in the folder the user is browsing, which the path editor picks up
     const path =
-      !index && $selectedCollection && getMetaPathConfig($selectedCollection) && $nestedFilterPath
-        ? `?path=${encodeFilePath($nestedFilterPath)}`
+      !index &&
+      selectedCollection.current &&
+      getMetaPathConfig(selectedCollection.current) &&
+      nestedFilterPath.current
+        ? `?path=${encodeFilePath(nestedFilterPath.current)}`
         : '';
 
     goto(`/collections/${collectionName}/new${path}`, {
@@ -58,7 +65,7 @@
 <ButtonComponent
   variant="primary"
   iconic={!label}
-  disabled={$collectionState.creationDisabled}
+  disabled={collectionState.current.creationDisabled}
   {label}
   aria-label={_('create_new_entry')}
   {keyShortcuts}

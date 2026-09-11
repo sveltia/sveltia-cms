@@ -21,9 +21,9 @@
   /** @type {Blob | undefined} */
   let blob = $state();
 
-  const kind = $derived($overlaidAsset?.kind);
-  const blobURL = $derived($overlaidAsset?.blobURL);
-  const name = $derived($overlaidAsset?.name);
+  const kind = $derived(overlaidAsset.current?.kind);
+  const blobURL = $derived(overlaidAsset.current?.blobURL);
+  const name = $derived(overlaidAsset.current?.name);
 
   /**
    * Move focus to the wrapper once the overlay is loaded.
@@ -39,16 +39,18 @@
   };
 
   $effect(() => {
-    if ($overlaidAsset) {
+    const asset = overlaidAsset.current;
+
+    if (asset) {
       (async () => {
-        blob = await getAssetBlob($overlaidAsset);
+        blob = await getAssetBlob(asset);
       })();
     }
   });
 
   $effect(() => {
     if (wrapper) {
-      if ($showAssetOverlay) {
+      if (showAssetOverlay.current) {
         moveFocus();
       }
     }
@@ -56,19 +58,19 @@
 </script>
 
 <div role="group" class="wrapper" aria-label={_('asset_editor')} bind:this={wrapper}>
-  {#key $overlaidAsset?.sha}
+  {#key overlaidAsset.current?.sha}
     <Toolbar />
     <div role="none" class="row">
       <div role="none" class="preview">
-        {#if !$overlaidAsset}
+        {#if !overlaidAsset.current}
           <NotFound
             message={_('file_not_found')}
-            backPath="/assets/{$selectedAssetFolder?.internalPath ?? '-/all'}"
+            backPath="/assets/{selectedAssetFolder.current?.internalPath ?? '-/all'}"
           />
         {:else if kind && isMediaKind(kind)}
           <AssetPreview
             {kind}
-            asset={$overlaidAsset}
+            asset={overlaidAsset.current}
             blurBackground={['image', 'video'].includes(kind)}
             checkerboard={kind === 'image'}
             alt={kind === 'image' ? name : undefined}
@@ -77,7 +79,7 @@
         {:else if blob?.type === 'application/pdf'}
           <iframe src={blobURL} title={name} sandbox="allow-scripts"></iframe>
         {:else if blob?.type && isTextFileType(blob.type)}
-          {#await $overlaidAsset?.text ?? blob.text() then text}
+          {#await overlaidAsset.current?.text ?? blob.text() then text}
             {#if name?.endsWith('.md')}
               {#await parse(text, { breaks: true, async: true }) then rawHTML}
                 <div role="figure" class="markdown">
@@ -96,8 +98,8 @@
           </EmptyState>
         {/if}
       </div>
-      {#if $overlaidAsset}
-        <InfoPanel asset={$overlaidAsset} />
+      {#if overlaidAsset.current}
+        <InfoPanel asset={overlaidAsset.current} />
       {/if}
     </div>
   {/key}

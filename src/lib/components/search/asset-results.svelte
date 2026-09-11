@@ -14,10 +14,10 @@
    */
 
   $effect(() => {
-    $announcedPageStatus = _('viewing_asset_search_results', {
+    announcedPageStatus.current = _('viewing_asset_search_results', {
       values: {
-        terms: $searchTerms,
-        count: $assetSearchResults.length,
+        terms: searchTerms.current,
+        count: assetSearchResults.current.length,
       },
     });
   });
@@ -26,14 +26,14 @@
 <Group aria-labelledby="search-results-assets">
   <!-- <h3 role="none" id="search-results-assets">{_('assets')}</h3> -->
   <div role="none">
-    {#if $assetSearchResults.length}
+    {#if assetSearchResults.current.length}
       <ListingGrid
         viewType="list"
         aria-label={_('assets')}
-        aria-rowcount={$assetSearchResults.length}
+        aria-rowcount={assetSearchResults.current.length}
       >
-        {#key $searchTerms}
-          <InfiniteScroll items={$assetSearchResults} itemKey="path">
+        {#key searchTerms.current}
+          <InfiniteScroll items={assetSearchResults.current} itemKey="path">
             {#snippet renderItem(/** @type {Asset} */ asset)}
               {#await sleep() then}
                 <AssetResultItem {asset} />
@@ -42,7 +42,7 @@
           </InfiniteScroll>
         {/key}
       </ListingGrid>
-    {:else if $searchTerms}
+    {:else if searchTerms.current}
       <EmptyState>
         <span role="none">{_('no_files_found')}</span>
       </EmptyState>

@@ -46,7 +46,6 @@
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import {
    * Asset,
    * AssetLibraryFolderMap,
@@ -287,7 +286,7 @@
   });
 
   $effect(() => {
-    if (!$showContentOverlay) {
+    if (!showContentOverlay.current) {
       open = false;
     }
   });
@@ -303,9 +302,9 @@
 
 {#snippet headerItems()}
   {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary') || (isStockLibrary && libraryName !== 'picsum')}
-    {#if $selectAssetsView}
+    {#if selectAssetsView.current}
       <ViewSwitcher
-        currentView={(() => /** @type {Writable<SelectAssetsView>} */ (selectAssetsView))()}
+        currentView={(() => /** @type {{ current: SelectAssetsView }} */ (selectAssetsView))()}
         aria-controls="select-assets-grid"
       />
     {/if}
@@ -395,8 +394,8 @@
                 label={serviceLabel}
                 selected={libraryName === serviceId}
                 onclick={() => {
-                  if (serviceId === 'cloudinary' && $cloudinaryActivated) {
-                    $cloudinaryDialogOpen = true;
+                  if (serviceId === 'cloudinary' && cloudinaryActivated.current) {
+                    cloudinaryDialogOpen.current = true;
                   }
                 }}
               />

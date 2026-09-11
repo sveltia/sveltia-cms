@@ -27,10 +27,10 @@
   } = $props();
 
   const { path, label, children } = $derived(node);
-  const isCurrentCollection = $derived($selectedCollection?.name === collectionName);
-  const selected = $derived(isCurrentCollection && $nestedFilterPath === path);
+  const isCurrentCollection = $derived(selectedCollection.current?.name === collectionName);
+  const selected = $derived(isCurrentCollection && nestedFilterPath.current === path);
   const hasCurrentDescendant = $derived(
-    isCurrentCollection && isDescendantPath(path, $nestedFilterPath),
+    isCurrentCollection && isDescendantPath(path, nestedFilterPath.current),
   );
 
   let expanded = $state(false);

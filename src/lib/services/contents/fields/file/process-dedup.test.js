@@ -13,21 +13,8 @@ vi.mock('isomorphic-dompurify', () => ({
   sanitize: vi.fn(),
 }));
 
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(() => ({
-    subscribe: vi.fn(),
-    set: vi.fn(),
-    update: vi.fn(),
-  })),
-}));
-
 vi.mock('$lib/services/assets', () => ({
-  allAssets: /** @type {any} */ ({
-    subscribe: vi.fn(),
-    set: vi.fn(),
-    update: vi.fn(),
-  }),
+  allAssets: { current: [] },
 }));
 
 vi.mock('$lib/services/assets/info', () => ({

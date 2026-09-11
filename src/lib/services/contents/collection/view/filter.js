@@ -1,11 +1,9 @@
-import { derived } from 'svelte/store';
-
 import { matchesFilter } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
-import { currentView } from '$lib/services/contents/collection/view';
 import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
 import { getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getRegex } from '$lib/services/utils/regex';
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
  * @import { Entry, FilteringConditions, InternalEntryCollection } from '$lib/types/private';
@@ -75,32 +73,16 @@ export const filterEntries = (entries, collection, filters) => {
 };
 
 /**
- * Initialize view filters for a collection.
- * @param {any} collection Collection (entry or file).
- * @param {(options: ViewFilter[]) => void} set Callback to set the filter options.
+ * View filters for the selected entry collection.
+ * @type {{ readonly current: ViewFilter[] }}
  */
-export const initializeViewFilters = (collection, set) => {
+export const viewFilters = createDerivedState(() => {
+  const collection = selectedCollection.current;
+
   // Disable filters for file/singleton collection
   if (!collection || !('folder' in collection)) {
-    set([]);
-
-    return;
+    return [];
   }
 
-  const { options, default: defaultFilter } = parseFilterConfig(collection.view_filters);
-
-  set(options);
-
-  currentView.update((_view) => ({
-    ..._view,
-    filters: _view.filters ?? (defaultFilter ? [defaultFilter] : undefined),
-  }));
-};
-
-/**
- * View filters for the selected entry collection.
- * @type {import('svelte/store').Readable<ViewFilter[]>}
- */
-export const viewFilters = derived([selectedCollection], ([collection], set) => {
-  initializeViewFilters(collection, set);
+  return parseFilterConfig(collection.view_filters).options;
 });

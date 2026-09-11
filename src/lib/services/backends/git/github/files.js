@@ -199,11 +199,11 @@ export const fetchFileContents = async (fetchingFiles) => {
   /** @type {Record<string, any>} */
   const results = {};
 
-  dataLoadedProgress.set(0);
+  dataLoadedProgress.current = 0;
 
   // Show a fake progressbar because the request waiting time is long
   const dataLoadedProgressInterval = window.setInterval(() => {
-    dataLoadedProgress.update((progress = 0) => progress + 1);
+    dataLoadedProgress.current = (dataLoadedProgress.current ?? 0) + 1;
   }, fetchingFileList.length / 10);
 
   for (let i = 0; i < fetchingFileList.length; i += chunkSize) {
@@ -225,7 +225,7 @@ export const fetchFileContents = async (fetchingFiles) => {
   );
 
   window.clearInterval(dataLoadedProgressInterval);
-  dataLoadedProgress.set(undefined);
+  dataLoadedProgress.current = undefined;
 
   return parseFileContents(fetchingFileList, results);
 };

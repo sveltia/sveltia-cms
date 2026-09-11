@@ -3,14 +3,13 @@
   import { Menu, MenuButton, MenuItemCheckbox, MenuItemRadio } from '@sveltia/ui';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import { AssetListView, EntryListView } from '$lib/types/private';
    * @import { ViewFilter } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {Writable<EntryListView | AssetListView>} currentView Current view details.
+   * @property {{ current: EntryListView | AssetListView }} currentView Current view details.
    * @property {string} aria-controls The `aria-controls` attribute for the menu.
    * @property {string} [label] Menu button label.
    * @property {boolean} [disabled] Whether to disable the button.
@@ -39,49 +38,48 @@
       {#if multiple}
         {#each filters as filter (`${filter.field}|${String(filter.pattern)}`)}
           {@const { label: _label, field, pattern } = filter}
-          {@const index = ($currentView.filters || []).findIndex(
+          {@const index = (currentView.current.filters || []).findIndex(
             (f) => f.field === field && String(f.pattern) === String(pattern),
           )}
           <MenuItemCheckbox
             label={_label}
             checked={index > -1}
             onChange={() => {
-              currentView.update((view) => {
-                const updatedFilters = view.filters ? [...view.filters] : [];
+              const view = currentView.current;
+              const updatedFilters = view.filters ? [...view.filters] : [];
 
-                if (index > -1) {
-                  updatedFilters.splice(index, 1);
-                } else {
-                  updatedFilters.push({ field, pattern });
-                }
+              if (index > -1) {
+                updatedFilters.splice(index, 1);
+              } else {
+                updatedFilters.push({ field, pattern });
+              }
 
-                return { ...view, filters: updatedFilters };
-              });
+              currentView.current = { ...view, filters: updatedFilters };
             }}
           />
         {/each}
       {:else}
         <MenuItemRadio
           label={noneLabel || _('sort_keys.none')}
-          checked={!$currentView.filter}
+          checked={!currentView.current.filter}
           onSelect={() => {
-            currentView.update((view) => ({
-              ...view,
+            currentView.current = {
+              ...currentView.current,
               filter: undefined,
-            }));
+            };
           }}
         />
         {#each filters as filter (`${filter.field}|${String(filter.pattern)}`)}
           {@const { label: _label, field, pattern } = filter}
           <MenuItemRadio
             label={_label}
-            checked={$currentView.filter?.field === field &&
-              String($currentView.filter.pattern) === String(pattern)}
+            checked={currentView.current.filter?.field === field &&
+              String(currentView.current.filter.pattern) === String(pattern)}
             onSelect={() => {
-              currentView.update((view) => ({
-                ...view,
+              currentView.current = {
+                ...currentView.current,
                 filter: { field, pattern },
-              }));
+              };
             }}
           />
         {/each}

@@ -13,7 +13,7 @@
   /** @type {FilePicker | undefined} */
   let filePicker = $state();
 
-  const { originalAssets } = $derived($uploadingAssets);
+  const { originalAssets } = $derived(uploadingAssets.current);
   // Use the first asset because replacement only supports one asset for now
   const originalAsset = $derived(originalAssets?.[0]);
   const multiple = $derived(!originalAsset);
@@ -30,29 +30,29 @@
       return;
     }
 
-    $uploadingAssets = {
-      folder: originalAsset ? originalAsset.folder : $targetAssetFolder,
+    uploadingAssets.current = {
+      folder: originalAsset ? originalAsset.folder : targetAssetFolder.current,
       files,
       originalAssets,
     };
-    $showUploadAssetsDialog = false;
+    showUploadAssetsDialog.current = false;
   };
 
   $effect(() => {
     // Open the file picker directly if drag & drop is not supported (on mobile)
-    if (!env.hasMouse && $showUploadAssetsDialog) {
+    if (!env.hasMouse && showUploadAssetsDialog.current) {
       filePicker?.open();
     }
   });
 
   $effect(() => {
-    if (!$showAssetOverlay) {
-      $showUploadAssetsDialog = false;
+    if (!showAssetOverlay.current) {
+      showUploadAssetsDialog.current = false;
     }
   });
 
   $effect(() => {
-    if (!$showUploadAssetsDialog) {
+    if (!showUploadAssetsDialog.current) {
       // A replacement request is written to the store before this dialog opens, and consumed by
       // `onSelect` above. Dismissing the dialog would otherwise leave it behind, and the next
       // ordinary upload would be treated as a replacement of that asset — with the wrong dialog
@@ -60,8 +60,8 @@
       // `onSelect` stores the files before it closes the dialog, so a non-empty list here means a
       // selection was made and the request is still in use.
       untrack(() => {
-        if (!$uploadingAssets.files.length && $uploadingAssets.originalAssets) {
-          $uploadingAssets = { folder: undefined, files: [] };
+        if (!uploadingAssets.current.files.length && uploadingAssets.current.originalAssets) {
+          uploadingAssets.current = { folder: undefined, files: [] };
         }
       });
     }
@@ -73,7 +73,7 @@
     title={originalAsset
       ? _('replace_x', { values: { name: originalAsset.name } })
       : _('upload_assets')}
-    bind:open={$showUploadAssetsDialog}
+    bind:open={showUploadAssetsDialog.current}
     showOk={false}
   >
     <!--
@@ -100,7 +100,7 @@
       onSelect(files);
     }}
     onCancel={() => {
-      $showUploadAssetsDialog = false;
+      showUploadAssetsDialog.current = false;
     }}
   />
 {/if}

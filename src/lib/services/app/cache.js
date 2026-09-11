@@ -1,5 +1,4 @@
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 
 import { backend, gitBackendServices } from '$lib/services/backends';
 import { TEST_BACKEND_NAME, TEST_BACKEND_ROOT_DIR_NAME } from '$lib/services/backends/fs/test';
@@ -48,7 +47,7 @@ const clearTestBackendFiles = async () => {
  * @returns {Promise<void>}
  */
 export const clearFileCache = async () => {
-  const _backend = get(backend);
+  const _backend = backend.current;
   const { databaseName } = _backend?.repository ?? {};
 
   if (databaseName) {
@@ -69,7 +68,7 @@ export const clearFileCache = async () => {
  * @returns {Promise<string[]>} Database names.
  */
 const getDatabaseNames = async () => {
-  const { databaseName } = get(backend)?.repository ?? {};
+  const { databaseName } = backend.current?.repository ?? {};
   const names = new Set(databaseName ? [databaseName] : []);
 
   try {

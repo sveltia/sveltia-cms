@@ -259,10 +259,10 @@
     }
 
     // Let the Escape key cancel the editing instead of closing the entry editor
-    activeInlineEditors.update((count) => count + 1);
+    activeInlineEditors.current += 1;
 
     return () => {
-      activeInlineEditors.update((count) => count - 1);
+      activeInlineEditors.current -= 1;
     };
   });
 </script>

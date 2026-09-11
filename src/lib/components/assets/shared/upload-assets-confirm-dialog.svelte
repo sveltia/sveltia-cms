@@ -23,10 +23,11 @@
   let uploading = $state(false);
   let uploadFailed = $state(false);
 
-  const { files: originalFiles, folder, originalAssets } = $derived($uploadingAssets);
+  const { files: originalFiles, folder, originalAssets } = $derived(uploadingAssets.current);
   const originalAsset = $derived(originalAssets?.[0]);
-  const { processing, validFiles, oversizedFiles, invalidFiles, transformedFileMap } =
-    $derived($processedAssets);
+  const { processing, validFiles, oversizedFiles, invalidFiles, transformedFileMap } = $derived(
+    processedAssets.current,
+  );
   const { max_file_size: maxSize } = $derived(getDefaultMediaLibraryOptions().config);
   const assetsInSameFolder = $derived(
     originalAsset || folder?.internalPath === undefined
@@ -59,15 +60,15 @@
   });
 
   $effect(() => {
-    if (!$showAssetOverlay) {
+    if (!showAssetOverlay.current) {
       // Close the dialog
-      $uploadingAssets = { folder: undefined, files: [] };
+      uploadingAssets.current = { folder: undefined, files: [] };
     }
   });
 </script>
 
 <ConfirmationDialog
-  open={$showUploadAssetsConfirmDialog}
+  open={showUploadAssetsConfirmDialog.current}
   title={_(originalAsset ? 'replace_asset' : 'upload_assets')}
   okLabel={_(originalAsset ? 'replace' : 'upload')}
   okDisabled={!files.length}
@@ -89,11 +90,11 @@
       uploading = false;
       // Clear the selection whatever happened, so a failed upload doesn’t leave the store holding
       // files that no dialog is showing any more
-      $uploadingAssets = { folder: undefined, files: [] };
+      uploadingAssets.current = { folder: undefined, files: [] };
     }
   }}
   onCancel={() => {
-    $uploadingAssets = { folder: undefined, files: [] };
+    uploadingAssets.current = { folder: undefined, files: [] };
   }}
 >
   {#if processing}

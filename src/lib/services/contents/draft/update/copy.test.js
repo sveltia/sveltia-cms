@@ -12,26 +12,21 @@ import {
   updateToast,
 } from './copy';
 
-vi.mock('$lib/services/contents/editor');
+vi.mock('$lib/services/contents/editor', () => ({
+  copyFromLocaleToast: { current: undefined },
+  translatorApiKeyDialogState: { current: { show: false, multiple: false } },
+}));
 vi.mock('$lib/services/contents/entry/fields');
-vi.mock('$lib/services/integrations/translators');
+vi.mock('$lib/services/integrations/translators', () => ({
+  translator: { current: undefined },
+}));
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: { apiKeys: {} },
 }));
 vi.mock('marked');
 vi.mock('turndown');
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
-
 describe('draft/update/copy', () => {
   let mockEntryDraft;
-  let mockGet;
   /**
    * Copy or translate field values from another locale in the mock entry draft.
    * @param {any} options Copy options.
@@ -41,10 +36,6 @@ describe('draft/update/copy', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    const { get } = await import('svelte/store');
-
-    mockGet = vi.mocked(get);
 
     mockEntryDraft = {
       collectionName: 'posts',
@@ -61,8 +52,6 @@ describe('draft/update/copy', () => {
         },
       },
     };
-
-    mockGet.mockReturnValue(undefined);
 
     vi.mocked(getField).mockImplementation(({ keyPath }) => {
       if (keyPath === 'title') {
@@ -163,7 +152,7 @@ describe('draft/update/copy', () => {
         translate: false,
       });
 
-      expect(vi.mocked(copyFromLocaleToast.set)).toHaveBeenCalledWith(
+      expect(copyFromLocaleToast.current).toEqual(
         expect.objectContaining({ status: 'info', message: 'copy.none', count: 0 }),
       );
     });
@@ -181,7 +170,7 @@ describe('draft/update/copy', () => {
         translate: true,
       });
 
-      expect(vi.mocked(copyFromLocaleToast.set)).toHaveBeenCalledWith(
+      expect(copyFromLocaleToast.current).toEqual(
         expect.objectContaining({ status: 'info', message: 'translation.none', count: 0 }),
       );
     });
@@ -193,17 +182,11 @@ describe('draft/update/copy', () => {
 
       prefs.apiKeys = { google: 'test-api-key' };
 
-      mockGet.mockImplementation((store) => {
-        if (store === translator) {
-          return {
-            serviceId: 'google',
-            markdownSupported: true,
-            translate: mockTranslate,
-          };
-        }
-
-        return undefined;
-      });
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: true,
+        translate: mockTranslate,
+      };
 
       await copyFromLocaleUpdate({
         sourceLanguage: 'en',
@@ -409,7 +392,7 @@ describe('draft/update/copy', () => {
 
       updateToast('success', 'copy.complete', { count: 1, sourceLanguage: 'en' });
 
-      expect(vi.mocked(copyFromLocaleToast).set).toHaveBeenCalledWith({
+      expect(copyFromLocaleToast.current).toEqual({
         id: expect.any(Number),
         show: true,
         status: 'success',
@@ -453,25 +436,26 @@ describe('draft/update/copy', () => {
 
       prefs.apiKeys = {};
 
-      mockGet.mockImplementation((store) => {
-        if (store === translator) {
-          return {
-            serviceId: 'google',
-            markdownSupported: false,
-            translate: vi.fn(),
-          };
-        }
-
-        return undefined;
-      });
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: false,
+        translate: vi.fn(),
+      };
 
       const { translatorApiKeyDialogState } = await import('$lib/services/contents/editor');
 
       // Mock the dialog state to immediately resolve with undefined (user cancels)
-      vi.mocked(translatorApiKeyDialogState).set = vi.fn((state) => {
-        if (state.show && state.resolve) {
-          state.resolve(undefined);
-        }
+      Object.defineProperty(translatorApiKeyDialogState, 'current', {
+        configurable: true,
+        /**
+         * Resolve the dialog right away.
+         * @param {any} state Dialog state.
+         */
+        set: (state) => {
+          if (state.show && state.resolve) {
+            state.resolve(undefined);
+          }
+        },
       });
 
       const currentValues = {
@@ -503,17 +487,11 @@ describe('draft/update/copy', () => {
 
       prefs.apiKeys = { google: 'test-api-key' };
 
-      mockGet.mockImplementation((store) => {
-        if (store === translator) {
-          return {
-            serviceId: 'google',
-            markdownSupported: true,
-            translate: mockTranslate,
-          };
-        }
-
-        return undefined;
-      });
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: true,
+        translate: mockTranslate,
+      };
 
       const currentValues = {
         en: { title: 'English Title' },
@@ -550,17 +528,11 @@ describe('draft/update/copy', () => {
 
       prefs.apiKeys = { google: 'test-api-key' };
 
-      mockGet.mockImplementation((store) => {
-        if (store === translator) {
-          return {
-            serviceId: 'google',
-            markdownSupported: true,
-            translate: mockTranslate,
-          };
-        }
-
-        return undefined;
-      });
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: true,
+        translate: mockTranslate,
+      };
 
       const currentValues = {
         en: { body: '# English Title' },
@@ -591,17 +563,11 @@ describe('draft/update/copy', () => {
 
       prefs.apiKeys = { google: 'test-api-key' };
 
-      mockGet.mockImplementation((store) => {
-        if (store === translator) {
-          return {
-            serviceId: 'google',
-            markdownSupported: true,
-            translate: mockTranslate,
-          };
-        }
-
-        return undefined;
-      });
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: true,
+        translate: mockTranslate,
+      };
 
       const currentValues = {
         en: { title: 'English Title', body: 'English Body' },
@@ -642,17 +608,11 @@ describe('draft/update/copy', () => {
 
       prefs.apiKeys = { google: 'test-api-key' };
 
-      mockGet.mockImplementation((store) => {
-        if (store === translator) {
-          return {
-            serviceId: 'google',
-            markdownSupported: false, // triggers both parse() and turndown()
-            translate: mockTranslate,
-          };
-        }
-
-        return undefined;
-      });
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: false, // triggers both parse() and turndown()
+        translate: mockTranslate,
+      };
 
       const currentValues = {
         en: { body: '# English Title' },

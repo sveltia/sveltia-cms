@@ -1,15 +1,12 @@
-import { writable } from 'svelte/store';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
+ * What is being searched, or `null` while the search page is not shown.
+ * @type {{ current: 'contents' | 'assets' | null }}
  */
+export const searchMode = createRawState(null);
 
 /**
- * @type {Writable<'contents' | 'assets' | null>}
+ * Current search terms.
  */
-export const searchMode = writable(null);
-
-/**
- * @type {Writable<string>}
- */
-export const searchTerms = writable('');
+export const searchTerms = createRawState('');

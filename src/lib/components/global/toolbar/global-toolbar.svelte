@@ -14,7 +14,7 @@
   import { prefs } from '$lib/services/user/prefs.svelte';
 </script>
 
-<div role="none" class="toolbar-wrapper" inert={$hasOverlay}>
+<div role="none" class="toolbar-wrapper" inert={hasOverlay.current}>
   <Toolbar variant="primary" aria-label={_('global')}>
     <div role="none" class="buttons">
       <SiteLogo />

@@ -4,17 +4,11 @@ import { deleteAssets, updateStores } from './delete.js';
 
 // Mock dependencies
 vi.mock('$lib/services/assets', () => ({
-  focusedAsset: {
-    update: vi.fn(),
-    subscribe: vi.fn(() => vi.fn()),
-  },
+  focusedAsset: { current: undefined },
 }));
 
 vi.mock('$lib/services/assets/data', () => ({
-  assetUpdatesToast: {
-    set: vi.fn(),
-    subscribe: vi.fn(() => vi.fn()),
-  },
+  assetUpdatesToast: { current: undefined },
 }));
 
 vi.mock('$lib/services/backends/save', () => ({
@@ -67,16 +61,12 @@ describe('assets/data/delete', () => {
       const { focusedAsset } = await import('$lib/services/assets');
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
 
-      vi.mocked(focusedAsset.update).mockImplementation((fn) => {
-        const result = fn(mockFocusedAsset);
-
-        expect(result).toBeUndefined();
-      });
+      focusedAsset.current = mockFocusedAsset;
 
       updateStores({ assets: deletedAssets });
 
-      expect(focusedAsset.update).toHaveBeenCalledTimes(1);
-      expect(assetUpdatesToast.set).toHaveBeenCalledWith({
+      expect(focusedAsset.current).toBeUndefined();
+      expect(assetUpdatesToast.current).toEqual({
         saved: false,
         published: false,
         deleted: true,
@@ -89,30 +79,22 @@ describe('assets/data/delete', () => {
       const mockFocusedAsset = createMockAsset('/images/different.jpg', 'different.jpg');
       const { focusedAsset } = await import('$lib/services/assets');
 
-      vi.mocked(focusedAsset.update).mockImplementation((fn) => {
-        const result = fn(mockFocusedAsset);
-
-        expect(result).toBe(mockFocusedAsset);
-      });
+      focusedAsset.current = mockFocusedAsset;
 
       updateStores({ assets: deletedAssets });
 
-      expect(focusedAsset.update).toHaveBeenCalledTimes(1);
+      expect(focusedAsset.current).toBe(mockFocusedAsset);
     });
 
     it('should handle undefined focused asset', async () => {
       const deletedAssets = [createMockAsset('/images/photo1.jpg', 'photo1.jpg')];
       const { focusedAsset } = await import('$lib/services/assets');
 
-      vi.mocked(focusedAsset.update).mockImplementation((fn) => {
-        const result = fn(undefined);
-
-        expect(result).toBeUndefined();
-      });
+      focusedAsset.current = undefined;
 
       updateStores({ assets: deletedAssets });
 
-      expect(focusedAsset.update).toHaveBeenCalledTimes(1);
+      expect(focusedAsset.current).toBeUndefined();
     });
   });
 
@@ -177,7 +159,7 @@ describe('assets/data/delete', () => {
 
       await deleteAssets(assetsToDelete);
 
-      expect(assetUpdatesToast.set).toHaveBeenCalledWith({
+      expect(assetUpdatesToast.current).toEqual({
         saved: false,
         published: false,
         deleted: true,

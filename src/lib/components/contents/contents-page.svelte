@@ -77,7 +77,9 @@
    */
   const entryDraft = new EntryDraftState();
 
-  const MainContent = $derived('files' in ($selectedCollection ?? {}) ? FileList : EntryList);
+  const MainContent = $derived(
+    'files' in (selectedCollection.current ?? {}) ? FileList : EntryList,
+  );
 
   /**
    * Navigate to the content list or content details page given the URL hash.
@@ -96,12 +98,12 @@
     delete params._locale;
 
     // `/collections/_singletons` should not be used unless there is only the singleton collection
-    if ($selectedCollection?.name === '_singletons' && getValidCollections().length) {
-      $selectedCollection = undefined;
+    if (selectedCollection.current?.name === '_singletons' && getValidCollections().length) {
+      selectedCollection.current = undefined;
     }
 
     if (!match?.groups) {
-      $showContentOverlay = false;
+      showContentOverlay.current = false;
       // Check if it’s the search page, which has a different URL pattern (`#/search/{query}`)
       isSearchPage = isSearchRoute(path);
 
@@ -113,13 +115,14 @@
     if (!_collectionName) {
       if (env.isSmallScreen) {
         // Show the collection list only
-        $selectedCollection = undefined;
-        $showContentOverlay = false;
-        $announcedPageStatus = _('viewing_collection_list');
+        selectedCollection.current = undefined;
+        showContentOverlay.current = false;
+        announcedPageStatus.current = _('viewing_collection_list');
         isIndexPage = true;
       } else {
         // Redirect to the selected, first or singleton collection
-        const collection = $selectedCollection || getFirstCollection() || getSingletonCollection();
+        const collection =
+          selectedCollection.current || getFirstCollection() || getSingletonCollection();
 
         goto(`/collections/${collection?.name}`, { replaceState: true });
       }
@@ -131,31 +134,33 @@
     const collection = getCollection(_collectionName);
 
     if (!collection || collection.hide) {
-      $selectedCollection = undefined;
-    } else if ($selectedCollection?.name !== collection.name) {
-      $selectedCollection = collection;
+      selectedCollection.current = undefined;
+    } else if (selectedCollection.current?.name !== collection.name) {
+      selectedCollection.current = collection;
       // The folder being browsed belongs to the collection it was opened from, so it can’t carry
       // over to another one — a new entry would be created in a folder of the previous collection
-      $nestedFilterPath = '';
+      nestedFilterPath.current = '';
     }
 
-    if (!collection || !$selectedCollection) {
-      $showContentOverlay = false;
-      $announcedPageStatus = _('collection_not_found');
+    if (!collection || !selectedCollection.current) {
+      showContentOverlay.current = false;
+      announcedPageStatus.current = _('collection_not_found');
       notFoundKey = 'collection_not_found';
 
       return; // Not Found
     }
 
-    const { name: collectionName } = $selectedCollection;
-    const collectionLabel = getCollectionLabel($selectedCollection);
-    const _fileMap = '_fileMap' in $selectedCollection ? $selectedCollection._fileMap : undefined;
+    const { name: collectionName } = selectedCollection.current;
+    const collectionLabel = getCollectionLabel(selectedCollection.current);
+
+    const _fileMap =
+      '_fileMap' in selectedCollection.current ? selectedCollection.current._fileMap : undefined;
 
     if (!routeType && subPath) {
       // A collection route takes no path of its own, so anything between the collection name and
       // an `entries`/`new`/`filter` segment is a dead link, e.g. `#/collections/pages/foo/ever`
-      $showContentOverlay = false;
-      $announcedPageStatus = _('page_not_found');
+      showContentOverlay.current = false;
+      announcedPageStatus.current = _('page_not_found');
       notFoundKey = 'page_not_found';
 
       return; // Not Found
@@ -174,20 +179,20 @@
         dirPath: subPath ?? '',
       })
     ) {
-      $showContentOverlay = false;
+      showContentOverlay.current = false;
 
       // The folder may live in a draft that hasn’t been fetched yet, as when the page is reloaded
       // while browsing it. Only an absent folder has to wait: one the published entries hold is
       // resolved right away
-      if (!$workflowDataReady) {
+      if (!workflowDataReady.current) {
         awaitingDrafts = true;
-        $announcedPageStatus = _('loading');
+        announcedPageStatus.current = _('loading');
 
         return;
       }
 
       // The URL names a folder that no entry lives in, or a collection with no folders at all
-      $announcedPageStatus = _('page_not_found');
+      announcedPageStatus.current = _('page_not_found');
       notFoundKey = 'page_not_found';
 
       return; // Not Found
@@ -197,28 +202,28 @@
     // collection route itself always shows the root folder. The editor routes leave the folder
     // alone, so closing the editor returns the user to where they were.
     if (routeType === 'filter' || !routeType) {
-      $nestedFilterPath = routeType === 'filter' ? (subPath ?? '') : '';
+      nestedFilterPath.current = routeType === 'filter' ? (subPath ?? '') : '';
     }
 
     if (!routeType || routeType === 'filter') {
-      $showContentOverlay = false;
-      $announcedPageStatus = _('viewing_x_collection', {
+      showContentOverlay.current = false;
+      announcedPageStatus.current = _('viewing_x_collection', {
         values: {
           collection: collectionLabel,
-          count: $listedEntries.length,
+          count: listedEntries.current.length,
         },
       });
 
       return;
     }
 
-    $showContentOverlay = true;
+    showContentOverlay.current = true;
 
     // An entry opened with a deep link can’t be resolved until the drafts are in either. Show a
     // loading state in the meantime
-    if (routeType === 'entries' && subPath && !$workflowDataReady) {
+    if (routeType === 'entries' && subPath && !workflowDataReady.current) {
       awaitingDrafts = true;
-      $announcedPageStatus = _('loading_entries', { values: { count: 1 } });
+      announcedPageStatus.current = _('loading_entries', { values: { count: 1 } });
 
       return;
     }
@@ -231,7 +236,7 @@
         if (!collectionFile) {
           // The URL names a file that isn’t part of this collection
           entryDraft.current = undefined;
-          $announcedPageStatus = _('file_not_found');
+          announcedPageStatus.current = _('file_not_found');
 
           return; // Not Found
         }
@@ -259,7 +264,7 @@
           });
         }
 
-        $announcedPageStatus = _(`edit_${collection._type}_announcement`, {
+        announcedPageStatus.current = _(`edit_${collection._type}_announcement`, {
           values: {
             collection: collectionLabel,
             file: getCollectionFileLabel(collectionFile),
@@ -268,7 +273,7 @@
       } else {
         // A file collection has no `new` route, and `entries` needs a file name
         entryDraft.current = undefined;
-        $announcedPageStatus = _('file_not_found');
+        announcedPageStatus.current = _('file_not_found');
       }
 
       return;
@@ -291,7 +296,7 @@
         isIndexFile: !!window.history.state?.index,
       });
 
-      $announcedPageStatus = _('create_entry_announcement', {
+      announcedPageStatus.current = _('create_entry_announcement', {
         values: {
           collection: collectionLabel,
         },
@@ -305,7 +310,7 @@
 
       if (!originalEntry) {
         entryDraft.current = undefined;
-        $announcedPageStatus = _('entry_not_found');
+        announcedPageStatus.current = _('entry_not_found');
 
         return; // Not Found
       }
@@ -313,17 +318,17 @@
       if (appLocale.current) {
         createDraft({ entryDraft, collection, originalEntry });
 
-        $announcedPageStatus = _('edit_entry_announcement', {
+        announcedPageStatus.current = _('edit_entry_announcement', {
           values: {
             collection: collectionLabel,
-            entry: getEntrySummary($selectedCollection, originalEntry),
+            entry: getEntrySummary(selectedCollection.current, originalEntry),
           },
         });
       }
     } else {
       // `new` with a sub path or `entries` without one, e.g. `#/collections/posts/new/foo`
       entryDraft.current = undefined;
-      $announcedPageStatus = _('entry_not_found');
+      announcedPageStatus.current = _('entry_not_found');
     }
   };
 
@@ -331,12 +336,12 @@
     navigate();
 
     return () => {
-      $showContentOverlay = false;
+      showContentOverlay.current = false;
     };
   });
 
   $effect(() => {
-    if (awaitingDrafts && $workflowDataReady) {
+    if (awaitingDrafts && workflowDataReady.current) {
       // Opening an entry reads and replaces the draft, which is no reason to navigate again
       untrack(() => navigate());
     }
@@ -371,18 +376,18 @@
             collection:
               // `appLocale.current` is a key, because `getCollectionLabel` can return a localized
               // label
-              appLocale.current && $selectedCollection
-                ? getCollectionLabel($selectedCollection)
+              appLocale.current && selectedCollection.current
+                ? getCollectionLabel(selectedCollection.current)
                 : '',
           },
         })}
-        aria-description={$selectedCollection?.description}
+        aria-description={selectedCollection.current?.description}
       >
         {#snippet primaryToolbar()}
           <PrimaryToolbar />
         {/snippet}
         {#snippet secondaryToolbar()}
-          {#if $selectedCollection?._type === 'entry' && $listedEntries.length}
+          {#if selectedCollection.current?._type === 'entry' && listedEntries.current.length}
             <SecondaryToolbar />
           {/if}
         {/snippet}
@@ -397,32 +402,35 @@
   {/snippet}
 </PageContainer>
 
-{#if $showContentOverlay}
+{#if showContentOverlay.current}
   <ContentDetailsOverlay {entryDraft} {editorLocale} loading={awaitingDrafts} />
 {/if}
 
-<Toast bind:show={$contentUpdatesToast.saved}>
+<Toast bind:show={contentUpdatesToast.current.saved}>
   <Alert status="success">
-    {_($contentUpdatesToast.published ? 'entry_saved_and_published' : 'entry_saved', {
-      values: { count: $contentUpdatesToast.count },
+    {_(contentUpdatesToast.current.published ? 'entry_saved_and_published' : 'entry_saved', {
+      values: { count: contentUpdatesToast.current.count },
     })}
   </Alert>
 </Toast>
 
-<Toast bind:show={$contentUpdatesToast.deletionCancelled}>
+<Toast bind:show={contentUpdatesToast.current.deletionCancelled}>
   <Alert status="success">{_('workflow.deletion_cancelled')}</Alert>
 </Toast>
 
-<Toast bind:show={$contentUpdatesToast.discarded}>
+<Toast bind:show={contentUpdatesToast.current.discarded}>
   <Alert status="success">
-    {_('workflow.changes_discarded', { values: { count: $contentUpdatesToast.count } })}
+    {_('workflow.changes_discarded', { values: { count: contentUpdatesToast.current.count } })}
   </Alert>
 </Toast>
 
-<Toast bind:show={$contentUpdatesToast.deleted}>
+<Toast bind:show={contentUpdatesToast.current.deleted}>
   <Alert status="success">
-    {_($contentUpdatesToast.deletionPending ? 'workflow.deletion_pending' : 'entries_deleted', {
-      values: { count: $contentUpdatesToast.count },
-    })}
+    {_(
+      contentUpdatesToast.current.deletionPending ? 'workflow.deletion_pending' : 'entries_deleted',
+      {
+        values: { count: contentUpdatesToast.current.count },
+      },
+    )}
   </Alert>
 </Toast>

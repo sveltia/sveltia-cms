@@ -365,12 +365,12 @@ export const parseFileContents = async ({ fetchingFiles, blobs, sizes = {}, comm
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
 export const fetchFileContents = async (fetchingFiles) => {
-  dataLoadedProgress.set(0);
+  dataLoadedProgress.current = 0;
 
   // Show a fake progressbar because the request waiting time is long
   const dataLoadedProgressInterval = window.setInterval(() => {
     /* v8 ignore next */
-    dataLoadedProgress.update((progress = 0) => progress + 1);
+    dataLoadedProgress.current = (dataLoadedProgress.current ?? 0) + 1;
   }, fetchingFiles.length / 10);
 
   // Fetch blobs for entry/config files only
@@ -378,7 +378,7 @@ export const fetchFileContents = async (fetchingFiles) => {
   const blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY);
 
   window.clearInterval(dataLoadedProgressInterval);
-  dataLoadedProgress.set(undefined);
+  dataLoadedProgress.current = undefined;
 
   return parseFileContents({ fetchingFiles, blobs });
 };

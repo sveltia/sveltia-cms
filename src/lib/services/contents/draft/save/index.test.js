@@ -23,9 +23,15 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
 import { saveEntry as _saveEntry } from '.';
 
 vi.mock('$lib/services/backends');
-vi.mock('$lib/services/backends/git/shared/integration');
+vi.mock('$lib/services/backends/git/shared/integration', () => ({
+  skipCIConfigured: { current: false },
+  skipCIEnabled: { current: false },
+}));
 vi.mock('$lib/services/backends/save');
-vi.mock('$lib/services/contents/collection/data');
+vi.mock('$lib/services/contents/collection/data', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  contentUpdatesToast: { current: undefined },
+}));
 vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
   getOrderFieldKey: vi.fn(() => undefined),
 }));
@@ -47,28 +53,18 @@ vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/entry/history');
 vi.mock('$lib/services/deployments/publish');
 vi.mock('$lib/services/workflow', () => ({
-  workflowEnabled: { subscribe: vi.fn() },
-  unpublishedEntries: { subscribe: vi.fn(() => vi.fn()) },
+  workflowEnabled: { current: undefined },
+  unpublishedEntries: { current: undefined },
 }));
 vi.mock('$lib/services/workflow/branch', () => ({
   getBranchName: vi.fn(({ collectionName, slug }) => `cms/${collectionName}/${slug}`),
 }));
 vi.mock('$lib/services/workflow/save');
 vi.mock('$lib/services/user/prefs.svelte', () => ({
-  prefs: { subscribe: vi.fn(() => vi.fn()) },
+  prefs: {},
 }));
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({ devModeEnabled: false })),
-  };
-});
-
 describe('draft/save/index', () => {
   let mockDraft;
-  let mockGet;
   /**
    * Save the mock draft.
    * @param {object} [options] Options other than the draft.
@@ -79,10 +75,6 @@ describe('draft/save/index', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    const { get } = await import('svelte/store');
-
-    mockGet = vi.mocked(get);
 
     mockDraft = {
       collection: {
@@ -95,17 +87,10 @@ describe('draft/save/index', () => {
       currentValues: { en: { title: 'Test Post' } },
     };
 
-    mockGet.mockImplementation((store) => {
-      if (store === skipCIConfigured) {
-        return true;
-      }
-
-      if (store === skipCIEnabled) {
-        return false;
-      }
-
-      return undefined;
-    });
+    /** @type {any} */ (skipCIConfigured).current = true;
+    /** @type {any} */ (skipCIEnabled).current = false;
+    /** @type {any} */ (workflowEnabled).current = false;
+    unpublishedEntries.current = [];
 
     vi.mocked(validateEntry).mockReturnValue(true);
     vi.mocked(getSlugs).mockReturnValue({
@@ -136,7 +121,7 @@ describe('draft/save/index', () => {
     });
 
     vi.mocked(callEventHooks).mockResolvedValue(undefined);
-    vi.mocked(contentUpdatesToast).set = vi.fn();
+    contentUpdatesToast.current = /** @type {any} */ (undefined);
     vi.mocked(deleteBackup).mockResolvedValue(undefined);
   });
 
@@ -152,13 +137,7 @@ describe('draft/save/index', () => {
     });
 
     it('should save through Editorial Workflow when enabled', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === workflowEnabled) {
-          return true;
-        }
-
-        return undefined;
-      });
+      /** @type {any} */ (workflowEnabled).current = true;
 
       vi.mocked(saveWorkflowChanges).mockResolvedValue({
         commit: { sha: 'abc', files: {} },
@@ -190,17 +169,8 @@ describe('draft/save/index', () => {
        * Make the mocked stores report that Editorial Workflow is enabled.
        */
       const enableWorkflow = () => {
-        mockGet.mockImplementation((store) => {
-          if (store === workflowEnabled) {
-            return true;
-          }
-
-          if (store === unpublishedEntries) {
-            return [];
-          }
-
-          return undefined;
-        });
+        /** @type {any} */ (workflowEnabled).current = true;
+        unpublishedEntries.current = [];
 
         vi.mocked(saveWorkflowChanges).mockResolvedValue({
           commit: { sha: 'abc', files: {} },
@@ -271,7 +241,7 @@ describe('draft/save/index', () => {
     it('should update toast with published status for git backend', async () => {
       await saveEntry();
 
-      expect(vi.mocked(contentUpdatesToast).set).toHaveBeenCalledWith({
+      expect(contentUpdatesToast.current).toEqual({
         ...UPDATE_TOAST_DEFAULT_STATE,
         saved: true,
         published: true,
@@ -284,7 +254,7 @@ describe('draft/save/index', () => {
     it('should handle skipCI option', async () => {
       await saveEntry({ skipCI: true });
 
-      expect(vi.mocked(contentUpdatesToast).set).toHaveBeenCalledWith({
+      expect(contentUpdatesToast.current).toEqual({
         ...UPDATE_TOAST_DEFAULT_STATE,
         saved: true,
         published: false,
@@ -295,17 +265,11 @@ describe('draft/save/index', () => {
     });
 
     it('should handle non-git backend', async () => {
-      mockGet.mockImplementation((store) => {
-        if (store === skipCIConfigured) {
-          return false;
-        }
-
-        return undefined;
-      });
+      /** @type {any} */ (skipCIConfigured).current = false;
 
       await saveEntry();
 
-      expect(vi.mocked(contentUpdatesToast).set).toHaveBeenCalledWith({
+      expect(contentUpdatesToast.current).toEqual({
         ...UPDATE_TOAST_DEFAULT_STATE,
         saved: true,
         published: false,

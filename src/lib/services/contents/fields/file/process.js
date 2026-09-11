@@ -1,7 +1,6 @@
 import { getHash } from '@sveltia/utils/crypto';
 import equal from 'fast-deep-equal';
 import { sanitize } from 'isomorphic-dompurify';
-import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 import { getAssetPublicURL } from '$lib/services/assets/info';
@@ -116,7 +115,7 @@ export const getUnsavedAssets = async ({ draft, targetFolderPath }) =>
  * @returns {Asset[]} Filtered saved assets.
  */
 const getSavedAssetsForEntry = (draft, folder) => {
-  const savedAssets = get(allAssets);
+  const savedAssets = allAssets.current;
 
   if (!folder?.entryRelative) {
     return savedAssets;

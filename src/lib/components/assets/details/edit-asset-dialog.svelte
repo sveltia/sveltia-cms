@@ -11,7 +11,7 @@
    * @import { Asset } from '$lib/types/private';
    */
 
-  const asset = $derived($editingAsset);
+  const asset = $derived(editingAsset.current);
   let open = $state(false);
   /** @type {Blob | undefined} */
   let blob = $state();
@@ -36,7 +36,7 @@
    * Reset the state.
    */
   const resetState = () => {
-    $editingAsset = undefined;
+    editingAsset.current = undefined;
     blob = undefined;
     originalValue = undefined;
     currentValue = undefined;
@@ -65,7 +65,7 @@
   });
 
   $effect(() => {
-    if (!$showAssetOverlay) {
+    if (!showAssetOverlay.current) {
       open = false;
     }
   });

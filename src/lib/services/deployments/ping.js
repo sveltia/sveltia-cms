@@ -1,18 +1,16 @@
-import { writable } from 'svelte/store';
-
 import { PING_TTL } from '$lib/services/deployments/constants';
 import { sendRequest } from '$lib/services/utils/networking';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import { PageLiveness } from '$lib/types/private';
  */
 
 /**
  * Liveness of preview pages, keyed by the full URL.
- * @type {Writable<Record<string, PageLiveness>>}
+ * @type {{ current: Record<string, PageLiveness> }}
  */
-export const pageLiveness = writable({});
+export const pageLiveness = createRawState({});
 
 /**
  * How many pages to remember. A result is only useful for {@link PING_TTL}, so the cap is about
@@ -29,7 +27,7 @@ const cache = new Map();
 
 /**
  * Drop the pages least worth remembering once the cache outgrows its cap: the results that have
- * expired first, then the oldest of what’s left. The store is trimmed in step, so the two can’t
+ * expired first, then the oldest of what’s left. The state is trimmed in step, so the two can’t
  * drift apart.
  */
 const prune = () => {
@@ -52,8 +50,8 @@ const prune = () => {
 
   dropped.forEach((url) => cache.delete(url));
 
-  pageLiveness.update((map) =>
-    Object.fromEntries(Object.entries(map).filter(([url]) => !dropped.has(url))),
+  pageLiveness.current = Object.fromEntries(
+    Object.entries(pageLiveness.current).filter(([url]) => !dropped.has(url)),
   );
 };
 
@@ -121,8 +119,11 @@ export const pingURL = async (url) => {
   const result = await promise;
 
   // Skip an update that changes nothing, so a component checking the URL from an effect that reads
-  // the store doesn’t loop
-  pageLiveness.update((map) => (map[url] === result ? map : { ...map, [url]: result }));
+  // the state doesn’t loop
+  pageLiveness.current =
+    pageLiveness.current[url] === result
+      ? pageLiveness.current
+      : { ...pageLiveness.current, [url]: result };
 
   return result;
 };
@@ -133,5 +134,5 @@ export const pingURL = async (url) => {
  */
 export const resetPageLiveness = () => {
   cache.clear();
-  pageLiveness.set({});
+  pageLiveness.current = {};
 };

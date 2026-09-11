@@ -6,7 +6,7 @@
   import { hasOverlay } from '$lib/services/app/navigation';
 </script>
 
-<BottomNavigation inert={$hasOverlay}>
+<BottomNavigation inert={hasOverlay.current}>
   <Toolbar variant="primary" aria-label={_('global')}>
     <div role="none" class="buttons">
       <PageSwitcher />

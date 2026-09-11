@@ -1,6 +1,5 @@
 import { _ } from '@sveltia/i18n';
 import { stripSlashes } from '@sveltia/utils/string';
-import { get, writable } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 import {
@@ -10,9 +9,9 @@ import {
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getFileConfig } from '$lib/services/contents/file/config';
 import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import {
  * CollectionType,
  * InternalCollection,
@@ -32,9 +31,10 @@ import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
  */
 
 /**
- * @type {Writable<InternalCollection | undefined>}
+ * Currently selected collection.
+ * @type {{ current: InternalCollection | undefined }}
  */
-export const selectedCollection = writable();
+export const selectedCollection = createRawState();
 
 /**
  * @type {Map<string, InternalCollection | undefined>}
@@ -119,7 +119,7 @@ export const isValidCollection = (collection, { visible = undefined, type = unde
  */
 export const getValidCollections = ({
   /* v8 ignore next */
-  collections = get(cmsConfig)?.collections ?? [],
+  collections = cmsConfig.current?.collections ?? [],
   visible,
   type,
 } = {}) =>
@@ -215,7 +215,7 @@ export const parseFileCollection = (rawCollection, _i18n, files) => ({
  * are defined.
  */
 export const getSingletonCollection = () => {
-  const singletons = get(cmsConfig)?.singletons;
+  const singletons = cmsConfig.current?.singletons;
 
   if (!Array.isArray(singletons)) {
     return undefined;
@@ -338,5 +338,5 @@ export const getCollectionIndex = (collectionName) => {
     return 9999999;
   }
 
-  return get(cmsConfig)?.collections?.findIndex(({ name }) => name === collectionName) ?? -1;
+  return cmsConfig.current?.collections?.findIndex(({ name }) => name === collectionName) ?? -1;
 };

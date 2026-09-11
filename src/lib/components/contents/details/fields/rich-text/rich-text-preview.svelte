@@ -57,7 +57,7 @@
     },
   });
 
-  const defaultConfig = $cmsConfig?.field_defaults?.richtext ?? {};
+  const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
   /** @type {SvelteMap<HTMLElement, import('react-dom/client').Root>} */
   const reactRoots = new SvelteMap();
   /**

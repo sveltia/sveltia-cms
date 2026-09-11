@@ -1,19 +1,19 @@
-import { derived } from 'svelte/store';
-
 import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Readable } from 'svelte/store';
  * @import { GitBackend } from '$lib/types/public';
  */
 
 /**
  * Whether the skip CI configuration is explicitly set in the CMS configuration. This is used to
  * determine if the skip CI option should be shown in the UI.
- * @type {Readable<boolean>}
  */
-export const skipCIConfigured = derived([cmsConfig, backend], ([_cmsConfig, _backend]) => {
+export const skipCIConfigured = createDerivedState(() => {
+  const { current: _cmsConfig } = cmsConfig;
+  const { current: _backend } = backend;
+
   if (!_cmsConfig || !_backend?.isGit) {
     return false;
   }
@@ -27,9 +27,11 @@ export const skipCIConfigured = derived([cmsConfig, backend], ([_cmsConfig, _bac
 
 /**
  * Whether the skip CI option is enabled in the CMS configuration.
- * @type {Readable<boolean>}
  */
-export const skipCIEnabled = derived([cmsConfig, backend], ([_cmsConfig, _backend]) => {
+export const skipCIEnabled = createDerivedState(() => {
+  const { current: _cmsConfig } = cmsConfig;
+  const { current: _backend } = backend;
+
   if (!_cmsConfig || !_backend?.isGit) {
     return false;
   }

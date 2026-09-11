@@ -19,12 +19,12 @@
 
   let showInfobar = $state(false);
 
-  const fork = $derived($forkedRepository);
+  const fork = $derived(forkedRepository.current);
   const repoPath = $derived(fork ? `${fork.owner}/${fork.repo}` : '');
   // The fork lives on the same service as the configured repository, which can be a GitHub
   // Enterprise Server instance rather than github.com
   const forkURL = $derived.by(() => {
-    const { repoURL } = $backend?.repository ?? {};
+    const { repoURL } = backend.current?.repository ?? {};
 
     return fork && repoURL ? new URL(`/${repoPath}`, repoURL).href : '';
   });

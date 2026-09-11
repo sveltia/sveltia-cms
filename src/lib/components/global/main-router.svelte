@@ -47,8 +47,8 @@
     assets: AssetsPage,
     search: env.isSmallScreen
       ? SearchPage
-      : $searchMode
-        ? { contents: ContentsPage, assets: AssetsPage }[$searchMode]
+      : searchMode.current
+        ? { contents: ContentsPage, assets: AssetsPage }[searchMode.current]
         : SearchPage,
     workflow: WorkflowPage,
     config: ConfigPage,
@@ -58,7 +58,9 @@
   });
 
   const SelectedPage = $derived(
-    $selectedPageName === NOT_FOUND_PAGE_NAME ? NotFoundPage : pages[$selectedPageName],
+    selectedPageName.current === NOT_FOUND_PAGE_NAME
+      ? NotFoundPage
+      : pages[selectedPageName.current],
   );
 
   /**
@@ -66,8 +68,8 @@
    * any other unknown path.
    */
   const showNotFound = () => {
-    $selectedPageName = NOT_FOUND_PAGE_NAME;
-    $searchMode = null;
+    selectedPageName.current = NOT_FOUND_PAGE_NAME;
+    searchMode.current = null;
   };
 
   /**
@@ -107,16 +109,16 @@
       return;
     }
 
-    if ($selectedPageName !== pageName) {
-      $selectedPageName = pageName;
+    if (selectedPageName.current !== pageName) {
+      selectedPageName.current = pageName;
     }
 
     if (pageName === 'collections') {
-      $searchMode = 'contents';
+      searchMode.current = 'contents';
     } else if (pageName === 'assets') {
-      $searchMode = 'assets';
+      searchMode.current = 'assets';
     } else if (pageName !== 'search') {
-      $searchMode = null;
+      searchMode.current = null;
     }
   };
 
@@ -133,7 +135,7 @@
 
 <NewLanguageInfobar />
 
-{#if $canShowMobileSignInDialog}
+{#if canShowMobileSignInDialog.current}
   <MobilePromoInfobar />
   <MobileSignInDialog />
 {/if}

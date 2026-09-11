@@ -6,7 +6,6 @@
   import { sanitize } from 'isomorphic-dompurify';
   import { parseInline } from 'marked';
   import { getContext, setContext } from 'svelte';
-  import { writable } from 'svelte/store';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
@@ -28,11 +27,11 @@
     isFieldRequired,
   } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { createRawState } from '$lib/services/utils/state.svelte';
   import { isPendingDeletion } from '$lib/services/workflow';
 
   /**
    * @import { Component } from 'svelte';
-   * @import { Writable } from 'svelte/store';
    * @import {
    * DraftValueStoreKey,
    * EntryDraft,
@@ -128,8 +127,8 @@
     });
   };
 
-  /** @type {Writable<Component>} */
-  const extraHint = writable();
+  /** @type {{ current: Component | undefined }} */
+  const extraHint = createRawState();
 
   setContext(
     'field-editor',
@@ -363,8 +362,8 @@
         {@render afterInput()}
       {/if}
     </div>
-    {#if !readonly && (hint || $extraHint)}
-      {@const ExtraHint = $extraHint}
+    {#if !readonly && (hint || extraHint.current)}
+      {@const ExtraHint = extraHint.current}
       <div role="none" class="footer">
         {#if hint}
           <p class="hint">{@html _sanitize(hint)}</p>

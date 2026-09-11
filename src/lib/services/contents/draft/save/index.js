@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { callEventHooks } from '$lib/services/api/events';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
@@ -38,14 +36,14 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
 const updateStores = ({ skipCI, count }) => {
   // With Editorial Workflow, changes go to a pull request, so nothing is published yet
   const published =
-    !get(workflowEnabled) && get(skipCIConfigured) && !(skipCI ?? get(skipCIEnabled));
+    !workflowEnabled.current && skipCIConfigured.current && !(skipCI ?? skipCIEnabled.current);
 
-  contentUpdatesToast.set({
+  contentUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
     saved: true,
     published,
     count,
-  });
+  };
 
   setLastCommitPublishHint(published);
 };
@@ -145,7 +143,7 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
   const options = { commitType: isNew ? 'create' : 'update', collection, skipCI };
 
   try {
-    results = get(workflowEnabled)
+    results = workflowEnabled.current
       ? await saveWorkflowChanges({
           changes,
           savingEntry,

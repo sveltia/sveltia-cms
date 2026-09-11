@@ -61,7 +61,7 @@ const fetchFiles = async () => {
   if (rootDirHandle) {
     await loadFiles(rootDirHandle);
   } else {
-    dataLoaded.set(true);
+    dataLoaded.current = true;
   }
 };
 

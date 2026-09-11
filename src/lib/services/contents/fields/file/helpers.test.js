@@ -15,25 +15,17 @@ import {
 vi.mock('@sveltia/utils/crypto');
 vi.mock('@sveltia/utils/file');
 vi.mock('fast-deep-equal');
-vi.mock('$lib/services/assets', async () => {
-  const { writable } = await import('svelte/store');
-
-  return {
-    allAssets: writable(/** @type {import('$lib/types/private').Asset[]} */ ([])),
-    fillInternalPathTemplate: vi.fn(),
-  };
-});
-vi.mock('$lib/services/assets/folders', async () => {
-  const { writable, derived } = await import('svelte/store');
-
-  return {
-    allAssetFolders: writable(/** @type {import('$lib/types/private').AssetFolderInfo[]} */ ([])),
-    globalAssetFolder: derived([writable([])], ([_allAssetFolders], set) => {
-      set(undefined);
-    }),
-    getAssetFolder: vi.fn(),
-  };
-});
+vi.mock('$lib/services/assets', () => ({
+  allAssets: { current: /** @type {import('$lib/types/private').Asset[]} */ ([]) },
+  fillInternalPathTemplate: vi.fn(),
+}));
+vi.mock('$lib/services/assets/folders', () => ({
+  allAssetFolders: {
+    current: /** @type {import('$lib/types/private').AssetFolderInfo[]} */ ([]),
+  },
+  globalAssetFolder: { current: undefined },
+  getAssetFolder: vi.fn(),
+}));
 
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getSlugs: vi.fn(),
@@ -59,7 +51,7 @@ const { getPathInfo: getActualPathInfo } = /** @type {any} */ (
 describe('contents/fields/file/helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    allAssetFolders.set([]);
+    allAssetFolders.current = [];
   });
 
   afterEach(() => {
@@ -553,7 +545,7 @@ describe('contents/fields/file/helpers', () => {
         };
 
         vi.mocked(getAssetFolder).mockReturnValue(mockCollectionFolder);
-        allAssetFolders.set([mockAssetCollection1, mockAssetCollection2]);
+        allAssetFolders.current = [mockAssetCollection1, mockAssetCollection2];
 
         const result = getAssetLibraryFolderMap({
           collectionName: 'posts',
@@ -588,7 +580,7 @@ describe('contents/fields/file/helpers', () => {
         };
 
         vi.mocked(getAssetFolder).mockReturnValue(mockCollectionFolder);
-        allAssetFolders.set([mockAssetCollectionWithoutName]);
+        allAssetFolders.current = [mockAssetCollectionWithoutName];
 
         const result = getAssetLibraryFolderMap({
           collectionName: 'posts',
@@ -619,7 +611,7 @@ describe('contents/fields/file/helpers', () => {
         };
 
         vi.mocked(getAssetFolder).mockReturnValue(mockCollectionFolder);
-        allAssetFolders.set([mockRegularFolder]);
+        allAssetFolders.current = [mockRegularFolder];
 
         const result = getAssetLibraryFolderMap({
           collectionName: 'posts',
@@ -657,7 +649,7 @@ describe('contents/fields/file/helpers', () => {
         };
 
         vi.mocked(getAssetFolder).mockReturnValue(mockCollectionFolder);
-        allAssetFolders.set([mockAssetCollection, mockRegularFolder]);
+        allAssetFolders.current = [mockAssetCollection, mockRegularFolder];
 
         const result = getAssetLibraryFolderMap({
           collectionName: 'posts',
@@ -1237,7 +1229,7 @@ describe('contents/fields/file/helpers', () => {
     });
 
     beforeEach(() => {
-      allAssets.set([]);
+      allAssets.current = [];
       // `listAssets` resolves unsaved asset paths, which needs the real path parser
       vi.mocked(getPathInfo).mockImplementation(getActualPathInfo);
     });
@@ -1254,7 +1246,7 @@ describe('contents/fields/file/helpers', () => {
     });
 
     it('should include matching assets from the allAssets store', () => {
-      allAssets.set([makeAsset('photo.jpg')]);
+      allAssets.current = [makeAsset('photo.jpg')];
 
       const result = listAssets({
         kind: undefined,
@@ -1280,7 +1272,7 @@ describe('contents/fields/file/helpers', () => {
     });
 
     it('should combine allAssets and unsavedAssets', () => {
-      allAssets.set([makeAsset('saved.jpg')]);
+      allAssets.current = [makeAsset('saved.jpg')];
 
       const result = listAssets({
         kind: undefined,
@@ -1293,7 +1285,7 @@ describe('contents/fields/file/helpers', () => {
     });
 
     it('should filter by kind when kind is provided', () => {
-      allAssets.set([makeAsset('photo.jpg', 'image'), makeAsset('video.mp4', 'video')]);
+      allAssets.current = [makeAsset('photo.jpg', 'image'), makeAsset('video.mp4', 'video')];
 
       const result = listAssets({
         kind: 'image',
@@ -1307,7 +1299,7 @@ describe('contents/fields/file/helpers', () => {
     });
 
     it('should include all kinds when kind is undefined', () => {
-      allAssets.set([makeAsset('photo.jpg', 'image'), makeAsset('video.mp4', 'video')]);
+      allAssets.current = [makeAsset('photo.jpg', 'image'), makeAsset('video.mp4', 'video')];
 
       const result = listAssets({
         kind: undefined,
@@ -1320,7 +1312,7 @@ describe('contents/fields/file/helpers', () => {
     });
 
     it('should sort assets alphabetically by name', () => {
-      allAssets.set([makeAsset('c.jpg'), makeAsset('a.jpg'), makeAsset('b.jpg')]);
+      allAssets.current = [makeAsset('c.jpg'), makeAsset('a.jpg'), makeAsset('b.jpg')];
 
       const result = listAssets({
         kind: undefined,
@@ -1333,7 +1325,7 @@ describe('contents/fields/file/helpers', () => {
     });
 
     it('should place unsaved assets before saved assets regardless of name order', () => {
-      allAssets.set([makeAsset('alpha.jpg')]);
+      allAssets.current = [makeAsset('alpha.jpg')];
 
       const unsaved = /** @type {any} */ ({ ...makeAsset('zeta.jpg'), unsaved: true });
 
@@ -1354,7 +1346,7 @@ describe('contents/fields/file/helpers', () => {
       const inFolder = makeAsset('photo.jpg');
       const outOfFolder = { ...makeAsset('other.jpg'), folder: otherFolder };
 
-      allAssets.set([inFolder, outOfFolder]);
+      allAssets.current = [inFolder, outOfFolder];
 
       const result = listAssets({
         kind: undefined,
@@ -1368,7 +1360,7 @@ describe('contents/fields/file/helpers', () => {
     });
 
     it('should return empty array when folder is undefined', () => {
-      allAssets.set([makeAsset('photo.jpg')]);
+      allAssets.current = [makeAsset('photo.jpg')];
 
       const result = listAssets({
         kind: undefined,
@@ -1397,7 +1389,7 @@ describe('contents/fields/file/helpers', () => {
       });
 
       it('should rename an unsaved asset that collides with a saved asset', () => {
-        allAssets.set([makeAsset('photo.jpg')]);
+        allAssets.current = [makeAsset('photo.jpg')];
 
         const result = listAssets({
           kind: undefined,
@@ -1430,7 +1422,7 @@ describe('contents/fields/file/helpers', () => {
       });
 
       it('should keep the name of a replacing file and hide the asset it overwrites', () => {
-        allAssets.set([makeAsset('photo.jpg'), makeAsset('other.jpg')]);
+        allAssets.current = [makeAsset('photo.jpg'), makeAsset('other.jpg')];
 
         const result = listAssets({
           kind: undefined,
@@ -1447,7 +1439,7 @@ describe('contents/fields/file/helpers', () => {
       });
 
       it('should not rename an unsaved asset with a unique name', () => {
-        allAssets.set([makeAsset('photo.jpg')]);
+        allAssets.current = [makeAsset('photo.jpg')];
 
         const unsaved = makeUnsavedAsset('draft.jpg');
 

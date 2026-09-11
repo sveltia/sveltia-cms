@@ -66,7 +66,9 @@
    * {@link reorderGroups}.
    */
   const publishOrder = (groups = reorderGroups) => {
-    reorderedEntries.set($entryGroups.flatMap(({ name, entries }) => groups[name] ?? entries));
+    reorderedEntries.current = entryGroups.current.flatMap(
+      ({ name, entries }) => groups[name] ?? entries,
+    );
   };
 
   /**
@@ -81,7 +83,7 @@
     if (from === to) return;
 
     reorderGroups[groupName] = moveListItem(reorderGroups[groupName] ?? [], from, to);
-    reorderDirty.set(true);
+    reorderDirty.current = true;
     publishOrder();
   };
 
@@ -99,7 +101,7 @@
       if (commit) {
         // The pointer may well have returned to where it started, in which case nothing moved
         if ((reorderGroups[name] ?? []).some((entry, index) => entry.id !== entries[index]?.id)) {
-          reorderDirty.set(true);
+          reorderDirty.current = true;
           publishOrder();
         }
       } else {
@@ -112,8 +114,9 @@
   };
 
   // Snapshot the entry groups exactly once when this component mounts (i.e. when the user enters
-  // reorder mode). Any subsequent reactive updates to `$entryGroups` — for example, a background
-  // refresh after another tab’s commit — must not clobber the user’s in-progress drag arrangement.
+  // reorder mode). Any subsequent reactive updates to `entryGroups.current` — for example, a
+  // background refresh after another tab’s commit — must not clobber the user’s in-progress drag
+  // arrangement.
   // The reorder UI takes ownership of the list until Save or Cancel. `onMount` runs once and never
   // re-subscribes, which is exactly the lifetime we need here (vs. `$effect` + `untrack`).
   onMount(() => {
@@ -122,7 +125,7 @@
     const indexFileName = getIndexFile(collection)?.name;
 
     const initial = Object.fromEntries(
-      $entryGroups.map(({ name, entries }) => [
+      entryGroups.current.map(({ name, entries }) => [
         name,
         sortEntriesByOrderField(
           indexFileName ? entries.filter((entry) => entry.slug !== indexFileName) : entries,
@@ -137,7 +140,7 @@
 </script>
 
 <div role="none" class="wrapper">
-  {#each $entryGroups as { name, entries } (name)}
+  {#each entryGroups.current as { name, entries } (name)}
     {#await sleep() then}
       <GridBody label={name !== '*' ? name : undefined}>
         {@const localEntries = reorderGroups[name] ?? entries}
@@ -153,7 +156,7 @@
             class="sui grid-row"
             class:drag-source={draggedEntry?.id === entry.id}
             tabindex="0"
-            aria-rowindex={$listedEntryIndexMap.get(entry.id) ?? -1}
+            aria-rowindex={listedEntryIndexMap.current.get(entry.id) ?? -1}
             aria-selected="false"
             draggable="true"
             ondragstart={(/** @type {DragEvent} */ event) => {

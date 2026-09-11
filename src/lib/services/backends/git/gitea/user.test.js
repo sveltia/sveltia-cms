@@ -7,13 +7,8 @@ import { getUserProfile } from './user.js';
  */
 
 // Mock dependencies with vi.hoisted to ensure proper hoisting
-const getMock = vi.hoisted(() => vi.fn());
 const fetchAPIMock = vi.hoisted(() => vi.fn());
 const mockUserState = vi.hoisted(() => ({ account: /** @type {any} */ (null) }));
-
-vi.mock('svelte/store', () => ({
-  get: getMock,
-}));
 
 vi.mock('$lib/services/backends/git/gitea/constants', () => ({
   BACKEND_NAME: 'gitea',

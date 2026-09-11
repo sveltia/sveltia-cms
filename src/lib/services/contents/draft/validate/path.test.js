@@ -19,19 +19,13 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
 vi.mock('$lib/services/workflow', () => ({
   getUnpublishedEntriesByCollection: vi.fn(() => []),
   mergeUnpublishedEntries: vi.fn((entries) => entries),
-  unpublishedEntries: { subscribe: vi.fn() },
+  unpublishedEntries: { current: [] },
 }));
 
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getSlugs: vi.fn(() => ({ defaultLocaleSlug: 'new-page' })),
   hasLocalizedSlugs: vi.fn(() => false),
 }));
-
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return { ...actual, get: vi.fn(() => []) };
-});
 
 /**
  * Create a nested collection with the path editor enabled.

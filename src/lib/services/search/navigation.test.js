@@ -1,5 +1,4 @@
-import { get } from 'svelte/store';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { searchMode, searchTerms } from '$lib/services/search';
 
@@ -8,8 +7,8 @@ import { isSearchRoute } from './navigation';
 describe('isSearchRoute', () => {
   beforeEach(() => {
     // Reset stores to initial state before each test
-    searchMode.set(null);
-    searchTerms.set('');
+    searchMode.current = null;
+    searchTerms.current = '';
   });
 
   describe('route matching', () => {
@@ -47,83 +46,78 @@ describe('isSearchRoute', () => {
       const result = isSearchRoute('/search/hello');
 
       expect(result).toBe(true);
-      expect(get(searchTerms)).toBe('hello');
+      expect(searchTerms.current).toBe('hello');
     });
 
     it('should decode URL-encoded search terms', () => {
       isSearchRoute('/search/hello%20world');
 
-      expect(get(searchTerms)).toBe('hello%20world');
+      expect(searchTerms.current).toBe('hello%20world');
     });
 
     it('should not update searchTerms if they are already set to the same value', () => {
-      searchTerms.set('hello');
+      searchTerms.current = 'hello';
 
-      let updateCount = 0;
-
-      const unsubscribe = searchTerms.subscribe(() => {
-        updateCount += 1;
-      });
+      const setter = vi.spyOn(searchTerms, 'current', 'set');
 
       isSearchRoute('/search/hello');
 
-      // The initial subscription call increments by 1, navigating doesn't cause additional changes
-      expect(updateCount).toBe(1);
-      expect(get(searchTerms)).toBe('hello');
+      expect(setter).not.toHaveBeenCalled();
+      expect(searchTerms.current).toBe('hello');
 
-      unsubscribe();
+      setter.mockRestore();
     });
 
     it('should update searchTerms when navigating to a search route with different terms', () => {
-      searchTerms.set('old');
+      searchTerms.current = 'old';
 
       isSearchRoute('/search/new');
 
-      expect(get(searchTerms)).toBe('new');
+      expect(searchTerms.current).toBe('new');
     });
 
     it('should preserve empty string if route has no terms after /search/', () => {
-      searchTerms.set('previous');
+      searchTerms.current = 'previous';
 
       const result = isSearchRoute('/search/');
 
       expect(result).toBe(false);
-      expect(get(searchTerms)).toBe('previous');
+      expect(searchTerms.current).toBe('previous');
     });
   });
 
   describe('store updates - searchMode', () => {
     it('should set searchMode to "contents" when currently null', () => {
-      expect(get(searchMode)).toBe(null);
+      expect(searchMode.current).toBe(null);
 
       isSearchRoute('/search/test');
 
-      expect(get(searchMode)).toBe('contents');
+      expect(searchMode.current).toBe('contents');
     });
 
     it('should not override existing searchMode if already set', () => {
-      searchMode.set('assets');
+      searchMode.current = 'assets';
 
       isSearchRoute('/search/test');
 
-      expect(get(searchMode)).toBe('assets');
+      expect(searchMode.current).toBe('assets');
     });
 
     it('should set searchMode to "contents" even if searchTerms are not updated', () => {
-      searchTerms.set('test');
-      searchMode.set(null);
+      searchTerms.current = 'test';
+      searchMode.current = null;
 
       isSearchRoute('/search/test');
 
-      expect(get(searchMode)).toBe('contents');
+      expect(searchMode.current).toBe('contents');
     });
 
     it('should maintain searchMode if it is already set to "contents"', () => {
-      searchMode.set('contents');
+      searchMode.current = 'contents';
 
       isSearchRoute('/search/new-terms');
 
-      expect(get(searchMode)).toBe('contents');
+      expect(searchMode.current).toBe('contents');
     });
   });
 
@@ -131,31 +125,31 @@ describe('isSearchRoute', () => {
     it('should update both stores when navigating to a new search route', () => {
       isSearchRoute('/search/query');
 
-      expect(get(searchTerms)).toBe('query');
-      expect(get(searchMode)).toBe('contents');
+      expect(searchTerms.current).toBe('query');
+      expect(searchMode.current).toBe('contents');
     });
 
     it('should handle multiple consecutive searches with different terms', () => {
       isSearchRoute('/search/first');
-      expect(get(searchTerms)).toBe('first');
-      expect(get(searchMode)).toBe('contents');
+      expect(searchTerms.current).toBe('first');
+      expect(searchMode.current).toBe('contents');
 
       isSearchRoute('/search/second');
-      expect(get(searchTerms)).toBe('second');
-      expect(get(searchMode)).toBe('contents');
+      expect(searchTerms.current).toBe('second');
+      expect(searchMode.current).toBe('contents');
 
       isSearchRoute('/search/third');
-      expect(get(searchTerms)).toBe('third');
-      expect(get(searchMode)).toBe('contents');
+      expect(searchTerms.current).toBe('third');
+      expect(searchMode.current).toBe('contents');
     });
 
     it('should handle switching between different search modes', () => {
       isSearchRoute('/search/results1');
-      expect(get(searchMode)).toBe('contents');
+      expect(searchMode.current).toBe('contents');
 
-      searchMode.set('assets');
+      searchMode.current = 'assets';
       isSearchRoute('/search/results2');
-      expect(get(searchMode)).toBe('assets');
+      expect(searchMode.current).toBe('assets');
     });
   });
 
@@ -165,25 +159,25 @@ describe('isSearchRoute', () => {
 
       isSearchRoute(`/search/${longTerm}`);
 
-      expect(get(searchTerms)).toBe(longTerm);
+      expect(searchTerms.current).toBe(longTerm);
     });
 
     it('should handle search terms with Unicode characters', () => {
       isSearchRoute('/search/café');
 
-      expect(get(searchTerms)).toBe('café');
+      expect(searchTerms.current).toBe('café');
     });
 
     it('should handle search terms with slashes encoded as %2F', () => {
       isSearchRoute('/search/path%2Fto%2Ffile');
 
-      expect(get(searchTerms)).toBe('path%2Fto%2Ffile');
+      expect(searchTerms.current).toBe('path%2Fto%2Ffile');
     });
 
     it('should handle search terms with query-like patterns', () => {
       isSearchRoute('/search/key=value&other=test');
 
-      expect(get(searchTerms)).toBe('key=value&other=test');
+      expect(searchTerms.current).toBe('key=value&other=test');
     });
   });
 
@@ -201,8 +195,8 @@ describe('isSearchRoute', () => {
     });
 
     it('should maintain correct return value after store modifications', () => {
-      searchMode.set('assets');
-      searchTerms.set('existing');
+      searchMode.current = 'assets';
+      searchTerms.current = 'existing';
 
       expect(isSearchRoute('/search/new')).toBe(true);
       expect(isSearchRoute('/contents')).toBe(false);

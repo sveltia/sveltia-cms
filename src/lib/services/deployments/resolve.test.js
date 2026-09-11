@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { backend } from '$lib/services/backends';
@@ -16,44 +15,17 @@ import {
 } from '$lib/services/deployments/resolve';
 import { unpublishedEntries } from '$lib/services/workflow';
 
-vi.mock('$lib/services/backends', () => ({ backend: { subscribe: vi.fn() } }));
+vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
 vi.mock('$lib/services/backends/git/shared/integration', () => ({
-  skipCIConfigured: { subscribe: vi.fn() },
+  skipCIConfigured: { current: undefined },
 }));
-vi.mock('$lib/services/config', () => ({ cmsConfig: { subscribe: vi.fn() } }));
+vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 vi.mock('$lib/services/user/prefs.svelte', () => ({ prefs: { devModeEnabled: false } }));
 
-/** @type {any[]} */
-let entries = [];
+vi.mock('$lib/services/workflow', () => ({ unpublishedEntries: { current: [] } }));
 
-vi.mock('$lib/services/workflow', () => ({
-  unpublishedEntries: {
-    /**
-     * Report the current entries. A real subscription is needed, because `deployTargets` derives
-     * from this store.
-     * @param {(value: any) => void} run Subscriber.
-     * @returns {() => void} Function to stop listening.
-     */
-    subscribe: (run) => {
-      run(entries);
-
-      return () => undefined;
-    },
-  },
-}));
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
-
-/** The real store reader, used for every store the mock doesn’t stand in for. */
-const { get: readStore } = /** @type {any} */ (await vi.importActual('svelte/store'));
 /** @type {any} */
 let backendService;
-/** @type {any} */
-let config;
-/** @type {boolean} */
-let skipCI;
 
 /**
  * Create an unpublished entry with the given pull request properties.
@@ -69,9 +41,9 @@ describe('Deployment resolution', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-17T00:00:00Z'));
     resetDeployments();
-    entries = [];
-    config = { show_preview_links: true };
-    skipCI = false;
+    unpublishedEntries.current = [];
+    cmsConfig.current = /** @type {any} */ ({ show_preview_links: true });
+    /** @type {any} */ (skipCIConfigured).current = false;
 
     backendService = {
       repository: { branch: 'main' },
@@ -79,25 +51,7 @@ describe('Deployment resolution', () => {
       fetchDeployments: vi.fn(async () => ({})),
     };
 
-    vi.mocked(get).mockImplementation((store) => {
-      if (store === backend) {
-        return backendService;
-      }
-
-      if (store === unpublishedEntries) {
-        return entries;
-      }
-
-      if (store === cmsConfig) {
-        return config;
-      }
-
-      if (store === skipCIConfigured) {
-        return skipCI;
-      }
-
-      return readStore(store);
-    });
+    /** @type {any} */ (backend).current = backendService;
   });
 
   afterEach(() => {
@@ -110,14 +64,14 @@ describe('Deployment resolution', () => {
     });
 
     test('includes the production commit', () => {
-      productionSHA.set('prod');
+      productionSHA.current = 'prod';
 
       expect(getDeployTargets()).toEqual([{ sha: 'prod', branch: 'main', kind: 'production' }]);
     });
 
     test('includes each pull request head commit', () => {
-      productionSHA.set('prod');
-      entries = [
+      productionSHA.current = 'prod';
+      unpublishedEntries.current = [
         createEntry({ headSHA: 'a', branch: 'cms/posts/a' }),
         createEntry({ headSHA: 'b', branch: 'cms/posts/b' }),
       ];
@@ -130,7 +84,11 @@ describe('Deployment resolution', () => {
     });
 
     test('skips a duplicate and a pull request with no head commit', () => {
-      entries = [createEntry({ headSHA: 'a' }), createEntry({ headSHA: 'a' }), createEntry()];
+      unpublishedEntries.current = [
+        createEntry({ headSHA: 'a' }),
+        createEntry({ headSHA: 'a' }),
+        createEntry(),
+      ];
 
       expect(getDeployTargets()).toEqual([
         { sha: 'a', branch: 'cms/posts/hello', kind: 'preview' },
@@ -139,7 +97,8 @@ describe('Deployment resolution', () => {
 
     test('falls back to an empty branch without repository info', () => {
       backendService = {};
-      productionSHA.set('prod');
+      /** @type {any} */ (backend).current = backendService;
+      productionSHA.current = 'prod';
 
       expect(getDeployTargets()).toEqual([{ sha: 'prod', branch: '', kind: 'production' }]);
     });
@@ -147,54 +106,46 @@ describe('Deployment resolution', () => {
 
   describe('deployTargets', () => {
     test('recomputes when the branch head moves', () => {
-      /** @type {any[]} */
-      let seen = [];
-
-      const unsubscribe = deployTargets.subscribe((value) => {
-        seen = value;
-      });
-
-      expect(seen).toEqual([]);
+      expect(deployTargets.current).toEqual([]);
 
       // A save moves the head, and whatever is watching the deploy state has to notice
-      productionSHA.set('prod');
+      productionSHA.current = 'prod';
 
-      expect(seen).toEqual([{ sha: 'prod', branch: 'main', kind: 'production' }]);
-
-      unsubscribe();
+      expect(deployTargets.current).toEqual([{ sha: 'prod', branch: 'main', kind: 'production' }]);
     });
   });
 
   describe('markLookupPending', () => {
     test('marks a commit nothing is known about, so no stale answer is shown meanwhile', () => {
-      productionSHA.set('prod');
+      productionSHA.current = 'prod';
 
       markLookupPending();
 
-      expect(get(deployments).prod).toEqual({ state: 'checking', checkedTime: 0 });
+      expect(deployments.current.prod).toEqual({ state: 'checking', checkedTime: 0 });
     });
 
     test('leaves a commit that already has a result alone', () => {
-      productionSHA.set('prod');
-      deployments.set({ prod: { state: 'ready', checkedTime: 5 } });
+      productionSHA.current = 'prod';
+      deployments.current = { prod: { state: 'ready', checkedTime: 5 } };
 
-      const before = get(deployments);
+      const before = deployments.current;
 
       markLookupPending();
 
       // The same object, so subscribers aren’t woken for nothing
-      expect(get(deployments)).toBe(before);
+      expect(deployments.current).toBe(before);
     });
   });
 
   describe('resolveDeployments', () => {
     test('does nothing when the backend has no support', async () => {
       backendService = { repository: { branch: 'main' } };
-      productionSHA.set('prod');
+      /** @type {any} */ (backend).current = backendService;
+      productionSHA.current = 'prod';
 
       await resolveDeployments();
 
-      expect(get(deployments)).toEqual({});
+      expect(deployments.current).toEqual({});
     });
 
     test('does nothing without a target', async () => {
@@ -204,8 +155,8 @@ describe('Deployment resolution', () => {
     });
 
     test('does nothing when preview links are turned off', async () => {
-      config = { show_preview_links: false };
-      productionSHA.set('prod');
+      cmsConfig.current = /** @type {any} */ ({ show_preview_links: false });
+      productionSHA.current = 'prod';
 
       await resolveDeployments();
 
@@ -214,9 +165,9 @@ describe('Deployment resolution', () => {
 
     test('looks a commit up with preview links off when skip CI is configured', async () => {
       // The Publish Changes button needs the answer even where no link is shown for it
-      config = { show_preview_links: false };
-      skipCI = true;
-      productionSHA.set('prod');
+      cmsConfig.current = /** @type {any} */ ({ show_preview_links: false });
+      /** @type {any} */ (skipCIConfigured).current = true;
+      productionSHA.current = 'prod';
 
       await resolveDeployments();
 
@@ -224,8 +175,8 @@ describe('Deployment resolution', () => {
     });
 
     test('treats a missing config as preview links being on', async () => {
-      config = undefined;
-      productionSHA.set('prod');
+      cmsConfig.current = /** @type {any} */ (undefined);
+      productionSHA.current = 'prod';
 
       await resolveDeployments();
 
@@ -234,14 +185,14 @@ describe('Deployment resolution', () => {
 
     test('skips a finished build when only pending ones are wanted', async () => {
       // One entry still building shouldn’t drag every settled commit on the board along with it
-      productionSHA.set('prod');
-      entries = [createEntry({ headSHA: 'a' }), createEntry({ headSHA: 'b' })];
+      productionSHA.current = 'prod';
+      unpublishedEntries.current = [createEntry({ headSHA: 'a' }), createEntry({ headSHA: 'b' })];
 
-      deployments.set({
+      deployments.current = {
         prod: { state: 'ready', checkedTime: 0 },
         a: { state: 'error', checkedTime: 0 },
         b: { state: 'pending', checkedTime: 0 },
-      });
+      };
 
       await resolveDeployments({ pendingOnly: true });
 
@@ -253,8 +204,8 @@ describe('Deployment resolution', () => {
     test('re-reads a running build however recently it was seen', async () => {
       // The freshness window is for reopening a view, not for the loop — deferring to it would
       // throttle the checks to one per window and make the interval meaningless
-      productionSHA.set('prod');
-      deployments.set({ prod: { state: 'pending', checkedTime: Date.now() } });
+      productionSHA.current = 'prod';
+      deployments.current = { prod: { state: 'pending', checkedTime: Date.now() } };
 
       await resolveDeployments({ pendingOnly: true });
 
@@ -264,8 +215,8 @@ describe('Deployment resolution', () => {
     });
 
     test('still defers to the freshness window outside the loop', async () => {
-      productionSHA.set('prod');
-      deployments.set({ prod: { state: 'pending', checkedTime: Date.now() } });
+      productionSHA.current = 'prod';
+      deployments.current = { prod: { state: 'pending', checkedTime: Date.now() } };
 
       await resolveDeployments();
 
@@ -273,8 +224,8 @@ describe('Deployment resolution', () => {
     });
 
     test('looks at a finished build again when forced', async () => {
-      productionSHA.set('prod');
-      deployments.set({ prod: { state: 'ready', checkedTime: Date.now() } });
+      productionSHA.current = 'prod';
+      deployments.current = { prod: { state: 'ready', checkedTime: Date.now() } };
 
       await resolveDeployments({ force: true, pendingOnly: true });
 
@@ -282,7 +233,7 @@ describe('Deployment resolution', () => {
     });
 
     test('records the results returned by the backend', async () => {
-      productionSHA.set('prod');
+      productionSHA.current = 'prod';
       backendService.fetchDeployments.mockResolvedValue({
         prod: { state: 'ready', url: 'https://example.com', checkedTime: 1 },
       });
@@ -293,7 +244,7 @@ describe('Deployment resolution', () => {
         { sha: 'prod', branch: 'main', kind: 'production' },
       ]);
 
-      expect(get(deployments).prod).toEqual({
+      expect(deployments.current.prod).toEqual({
         state: 'ready',
         url: 'https://example.com',
         checkedTime: 1,
@@ -301,7 +252,7 @@ describe('Deployment resolution', () => {
     });
 
     test('marks a commit with no result yet as being checked', async () => {
-      productionSHA.set('prod');
+      productionSHA.current = 'prod';
 
       // Settle the pending request by hand, so the test controls when the response lands
       /** @type {any} */
@@ -315,15 +266,15 @@ describe('Deployment resolution', () => {
 
       const promise = resolveDeployments();
 
-      expect(get(deployments).prod).toEqual({ state: 'checking', checkedTime: 0 });
+      expect(deployments.current.prod).toEqual({ state: 'checking', checkedTime: 0 });
 
       release({});
       await promise;
     });
 
     test('leaves a known result alone while re-checking it', async () => {
-      productionSHA.set('prod');
-      deployments.set({ prod: { state: 'pending', checkedTime: 0 } });
+      productionSHA.current = 'prod';
+      deployments.current = { prod: { state: 'pending', checkedTime: 0 } };
 
       // Settle the pending request by hand, so the test controls when the response lands
       /** @type {any} */
@@ -337,15 +288,15 @@ describe('Deployment resolution', () => {
 
       const promise = resolveDeployments();
 
-      expect(get(deployments).prod.state).toBe('pending');
+      expect(deployments.current.prod.state).toBe('pending');
 
       release({});
       await promise;
     });
 
     test('skips a commit whose result is still fresh', async () => {
-      productionSHA.set('prod');
-      deployments.set({ prod: { state: 'ready', checkedTime: Date.now() } });
+      productionSHA.current = 'prod';
+      deployments.current = { prod: { state: 'ready', checkedTime: Date.now() } };
 
       await resolveDeployments();
 
@@ -353,8 +304,8 @@ describe('Deployment resolution', () => {
     });
 
     test('re-queries a stale result', async () => {
-      productionSHA.set('prod');
-      deployments.set({ prod: { state: 'ready', checkedTime: Date.now() - 60_000 } });
+      productionSHA.current = 'prod';
+      deployments.current = { prod: { state: 'ready', checkedTime: Date.now() - 60_000 } };
 
       await resolveDeployments();
 
@@ -362,8 +313,8 @@ describe('Deployment resolution', () => {
     });
 
     test('re-queries a fresh result when forced', async () => {
-      productionSHA.set('prod');
-      deployments.set({ prod: { state: 'ready', checkedTime: Date.now() } });
+      productionSHA.current = 'prod';
+      deployments.current = { prod: { state: 'ready', checkedTime: Date.now() } };
 
       await resolveDeployments({ force: true });
 
@@ -371,8 +322,8 @@ describe('Deployment resolution', () => {
     });
 
     test('re-queries a commit still marked as being checked', async () => {
-      productionSHA.set('prod');
-      deployments.set({ prod: { state: 'checking', checkedTime: Date.now() } });
+      productionSHA.current = 'prod';
+      deployments.current = { prod: { state: 'checking', checkedTime: Date.now() } };
 
       await resolveDeployments();
 
@@ -382,18 +333,21 @@ describe('Deployment resolution', () => {
     test('records an unknown state when the backend fails', async () => {
       const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-      productionSHA.set('prod');
+      productionSHA.current = 'prod';
       backendService.fetchDeployments.mockRejectedValue(new Error('Rate limited'));
 
       await resolveDeployments();
 
-      expect(get(deployments).prod).toEqual({ state: 'unknown', checkedTime: expect.any(Number) });
+      expect(deployments.current.prod).toEqual({
+        state: 'unknown',
+        checkedTime: expect.any(Number),
+      });
       expect(error).toHaveBeenCalled();
       error.mockRestore();
     });
 
     test('discards a response that a later lookup has superseded', async () => {
-      productionSHA.set('prod');
+      productionSHA.current = 'prod';
 
       // Settle the first request by hand, so it can be made to return last
       /** @type {any} */
@@ -416,11 +370,11 @@ describe('Deployment resolution', () => {
       await scheduled;
 
       // The manual re-check started later, so the older answer doesn’t land on top of it
-      expect(get(deployments).prod.state).toBe('ready');
+      expect(deployments.current.prod.state).toBe('ready');
     });
 
     test('discards a response that lands after the resolution was cancelled', async () => {
-      productionSHA.set('prod');
+      productionSHA.current = 'prod';
 
       // Settle the pending request by hand, so the test controls when the response lands
       /** @type {any} */
@@ -439,7 +393,7 @@ describe('Deployment resolution', () => {
       await promise;
 
       // Still the placeholder, not the late result
-      expect(get(deployments).prod).toEqual({ state: 'checking', checkedTime: 0 });
+      expect(deployments.current.prod).toEqual({ state: 'checking', checkedTime: 0 });
     });
   });
 
@@ -449,7 +403,7 @@ describe('Deployment resolution', () => {
       const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
 
       prefs.devModeEnabled = true;
-      productionSHA.set('prod');
+      productionSHA.current = 'prod';
 
       // A fresh timestamp, so the second lookup below is a cache hit rather than a re-query
       const resolved = { prod: { state: 'ready', checkedTime: Date.now() } };
@@ -482,7 +436,8 @@ describe('Deployment resolution', () => {
 
       prefs.devModeEnabled = true;
       backendService = { repository: { branch: 'main' } };
-      productionSHA.set('prod');
+      /** @type {any} */ (backend).current = backendService;
+      productionSHA.current = 'prod';
 
       await resolveDeployments();
 
@@ -502,36 +457,37 @@ describe('Deployment resolution', () => {
 
       await refreshProductionSHA();
 
-      expect(get(productionSHA)).toBe('abc');
+      expect(productionSHA.current).toBe('abc');
     });
 
     test('records an empty value when the commit is unavailable', async () => {
       backendService.fetchBranchHeadSHA.mockResolvedValue(undefined);
-      productionSHA.set('old');
+      productionSHA.current = 'old';
 
       await refreshProductionSHA();
 
-      expect(get(productionSHA)).toBe('');
+      expect(productionSHA.current).toBe('');
     });
 
     test('does nothing when the backend has no support', async () => {
       backendService = { repository: { branch: 'main' } };
-      productionSHA.set('old');
+      /** @type {any} */ (backend).current = backendService;
+      productionSHA.current = 'old';
 
       await refreshProductionSHA();
 
-      expect(get(productionSHA)).toBe('old');
+      expect(productionSHA.current).toBe('old');
     });
 
     test('keeps the previous value when the request fails', async () => {
       const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
       backendService.fetchBranchHeadSHA.mockRejectedValue(new Error('Not found'));
-      productionSHA.set('old');
+      productionSHA.current = 'old';
 
       await refreshProductionSHA();
 
-      expect(get(productionSHA)).toBe('old');
+      expect(productionSHA.current).toBe('old');
       expect(error).toHaveBeenCalled();
       error.mockRestore();
     });
@@ -542,8 +498,15 @@ describe('Deployment resolution', () => {
       const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
       // Nothing awaits this call, so anything thrown here would otherwise go unreported
-      vi.mocked(get).mockImplementation(() => {
-        throw new Error('Store unavailable');
+      Object.defineProperty(backend, 'current', {
+        configurable: true,
+        /**
+         * Fail on read.
+         * @throws {Error} Always.
+         */
+        get: () => {
+          throw new Error('State unavailable');
+        },
       });
 
       await expect(initDeployments()).resolves.toBeUndefined();
@@ -553,6 +516,11 @@ describe('Deployment resolution', () => {
       );
 
       error.mockRestore();
+      Object.defineProperty(backend, 'current', {
+        configurable: true,
+        writable: true,
+        value: undefined,
+      });
     });
 
     test('resolves the production commit and then its deployment', async () => {
@@ -563,8 +531,8 @@ describe('Deployment resolution', () => {
 
       await initDeployments();
 
-      expect(get(productionSHA)).toBe('abc');
-      expect(get(deployments).abc).toEqual({ state: 'ready', checkedTime: 1 });
+      expect(productionSHA.current).toBe('abc');
+      expect(deployments.current.abc).toEqual({ state: 'ready', checkedTime: 1 });
     });
   });
 });

@@ -3,14 +3,13 @@
   import { Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import { AssetListView, EntryListView } from '$lib/types/private';
    * @import { ViewGroup } from '$lib/types/public';
    */
 
   /**
    * @typedef {object} Props
-   * @property {Writable<EntryListView | AssetListView>} currentView Current view details.
+   * @property {{ current: EntryListView | AssetListView }} currentView Current view details.
    * @property {string} aria-controls The `aria-controls` attribute for the menu.
    * @property {string} [label] Menu button label.
    * @property {boolean} [disabled] Whether to disable the button.
@@ -36,25 +35,25 @@
     <Menu aria-label={_('grouping_options')} aria-controls={ariaControls}>
       <MenuItemRadio
         label={noneLabel || _('sort_keys.none')}
-        checked={!$currentView.group}
+        checked={!currentView.current.group}
         onSelect={() => {
-          currentView.update((view) => ({
-            ...view,
+          currentView.current = {
+            ...currentView.current,
             group: null,
-          }));
+          };
         }}
       />
       {#each groups as group (`${group.field}|${String(group.pattern)}`)}
         {@const { label: _label, field, pattern } = group}
         <MenuItemRadio
           label={_label}
-          checked={$currentView.group?.field === field &&
-            String($currentView.group.pattern) === String(pattern)}
+          checked={currentView.current.group?.field === field &&
+            String(currentView.current.group.pattern) === String(pattern)}
           onSelect={() => {
-            currentView.update((view) => ({
-              ...view,
+            currentView.current = {
+              ...currentView.current,
               group: { field, pattern },
-            }));
+            };
           }}
         />
       {/each}

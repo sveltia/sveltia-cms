@@ -1,7 +1,6 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
-import { derived, get, writable } from 'svelte/store';
 
 import {
   allAssetFolders,
@@ -21,9 +20,13 @@ import { getCollectionFilesByEntry } from '$lib/services/contents/collection/fil
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
 import { createPath, decodeFilePath, resolvePath } from '$lib/services/utils/file';
+import {
+  createDerivedState,
+  createRawState,
+  createRootEffect,
+} from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import {
  * Asset,
  * AssetFolderInfo,
@@ -40,9 +43,9 @@ const ENTRY_FOLDER_REGEX = /^(?<entryFolder>.+?)(?:\/[^/]+)?$/;
 
 /**
  * List of all assets.
- * @type {Writable<Asset[]>}
+ * @type {{ current: Asset[] }}
  */
-export const allAssets = writable([]);
+export const allAssets = createRawState([]);
 
 /**
  * List of the assets that exist on the configured branch, which is {@link allAssets} minus the ones
@@ -50,14 +53,13 @@ export const allAssets = writable([]);
  * because most asset actions — renaming, moving, deleting — can’t operate on a file that only lives
  * on a pull request branch. Entry previews still resolve against {@link allAssets}, so an image
  * attached to an unpublished entry is displayed where it’s used.
- * @type {Readable<Asset[]>}
  */
-export const publishedAssets = derived([allAssets], ([_allAssets]) =>
+export const publishedAssets = createDerivedState(() =>
   // Keep the same array reference when there’s nothing to filter out, to avoid needless downstream
   // recomputation
-  _allAssets.some(({ workflow }) => workflow)
-    ? _allAssets.filter(({ workflow }) => !workflow)
-    : _allAssets,
+  allAssets.current.some(({ workflow }) => workflow)
+    ? allAssets.current.filter(({ workflow }) => !workflow)
+    : allAssets.current,
 );
 
 /**
@@ -72,7 +74,7 @@ const assetPathCache = { source: undefined, map: new Map() };
  * @returns {Map<string, Asset>} Map.
  */
 const getAssetPathMap = () => {
-  const _allAssets = get(allAssets);
+  const _allAssets = allAssets.current;
 
   if (_allAssets !== assetPathCache.source) {
     assetPathCache.source = _allAssets;
@@ -102,73 +104,78 @@ export const getAssetKey = ({ unsaved, blobURL, path }) => (unsaved && blobURL ?
 
 /**
  * Selected assets.
- * @type {Writable<Asset[]>}
+ * @type {{ current: Asset[] }}
  */
-export const selectedAssets = writable([]);
+export const selectedAssets = createRawState([]);
 
 /**
  * Set of selected asset paths, for O(1) membership checks in list items.
- * @type {import('svelte/store').Readable<Set<string>>}
  */
-export const selectedAssetPathSet = derived(
-  selectedAssets,
-  ($selectedAssets) => new Set($selectedAssets.map((asset) => asset.path)),
+export const selectedAssetPathSet = createDerivedState(
+  () => new Set(selectedAssets.current.map((asset) => asset.path)),
 );
 
 /**
  * Asset currently focused in the UI.
- * @type {Writable<Asset | undefined>}
+ * @type {{ current: Asset | undefined }}
  */
-export const focusedAsset = writable();
+export const focusedAsset = createRawState();
 
 /**
  * Asset to be displayed in `<AssetDetailsOverlay>`.
- * @type {Writable<Asset | undefined>}
+ * @type {{ current: Asset | undefined }}
  */
-export const overlaidAsset = writable();
+export const overlaidAsset = createRawState();
 
 /**
  * Assets currently being uploaded.
- * @type {Writable<UploadingAssets>}
+ * @type {{ current: UploadingAssets }}
  */
-export const uploadingAssets = writable({ folder: undefined, files: [] });
+export const uploadingAssets = createRawState({ folder: undefined, files: [] });
 
 /**
  * Asset currently being edited.
- * @type {Writable<Asset | undefined>}
+ * @type {{ current: Asset | undefined }}
  */
-export const editingAsset = writable();
+export const editingAsset = createRawState();
 
 /**
  * Asset currently being renamed.
- * @type {Writable<Asset | undefined>}
+ * @type {{ current: Asset | undefined }}
  */
-export const renamingAsset = writable();
+export const renamingAsset = createRawState();
 
 /**
- * Asset currently being processed.
- * @type {Readable<ProcessedAssets>}
+ * Get the initial state of {@link processedAssets}, before any file is processed.
+ * @returns {ProcessedAssets} State.
  */
-export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], set, update) => {
+const getInitialProcessedAssets = () => ({
+  processing: false,
+  validFiles: [],
+  oversizedFiles: [],
+  invalidFiles: [],
+  transformedFileMap: new WeakMap(),
+});
+
+/**
+ * Assets currently being processed. Updated whenever {@link uploadingAssets} changes.
+ * @type {{ current: ProcessedAssets }}
+ */
+export const processedAssets = createRawState(getInitialProcessedAssets());
+
+createRootEffect(() => {
   // Set when a newer selection supersedes this run. Processing a file is asynchronous and can take
   // a while — transcoding a large image, for one — so a run that started earlier may well settle
   // after a later one has, and it must not overwrite the newer results with its own stale ones.
   let superseded = false;
-
-  set({
-    processing: false,
-    validFiles: [],
-    oversizedFiles: [],
-    invalidFiles: [],
-    transformedFileMap: new WeakMap(),
-  });
-
-  const originalFiles = _uploadingAssets.files;
+  const originalFiles = uploadingAssets.current.files;
   const { config } = getDefaultMediaLibraryOptions();
+
+  processedAssets.current = getInitialProcessedAssets();
 
   (async () => {
     if (originalFiles.length && config.transformations) {
-      update((state) => ({ ...state, processing: true }));
+      processedAssets.current = { ...getInitialProcessedAssets(), processing: true };
     }
 
     const results = await Promise.all(originalFiles.map((file) => processFile(file, config)));
@@ -177,7 +184,7 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
       return;
     }
 
-    update(() => ({
+    processedAssets.current = {
       processing: false,
       validFiles: results
         .filter(({ oversized, invalid }) => !oversized && !invalid)
@@ -191,10 +198,10 @@ export const processedAssets = derived([uploadingAssets], ([_uploadingAssets], s
           .filter(({ originalFile }) => originalFile !== undefined)
           .map(({ file, originalFile }) => [file, /** @type {File} */ (originalFile)]),
       ),
-    }));
+    };
   })();
 
-  // Called by `derived` before the next run starts, and when the last subscriber goes away
+  // Called before the next run starts
   return () => {
     superseded = true;
   };
@@ -387,7 +394,7 @@ export const getAssetByRelativePath = ({
           : undefined,
         collectionName ? getAssetFolder({ collectionName, fileName }) : undefined,
         collectionName ? getAssetFolder({ collectionName }) : undefined,
-        get(globalAssetFolder),
+        globalAssetFolder.current,
       ].filter((folder) => !!folder && !folder.hasTemplateTags)
     );
 
@@ -472,8 +479,8 @@ export const getAssetByAbsolutePath = ({
     typedKeyPath ? getAssetFolder({ collectionName, fileName, typedKeyPath }) : undefined,
     getAssetFolder({ collectionName, fileName }),
     getAssetFolder({ collectionName }),
-    get(globalAssetFolder),
-    get(allAssetFolders).findLast((folder) => {
+    globalAssetFolder.current,
+    allAssetFolders.current.findLast((folder) => {
       const publicPath = folder.publicPath ?? '';
       const normalizedPath = escapeRegExp(publicPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
 
@@ -578,7 +585,7 @@ export const isAssetInFolder = ({ folder: assetFolder }, folder) =>
  * @returns {Asset[]} Assets.
  */
 export const getAssetsByFolder = (folder) =>
-  get(allAssets).filter((asset) => isAssetInFolder(asset, folder));
+  allAssets.current.filter((asset) => isAssetInFolder(asset, folder));
 
 /**
  * Get a list of assets stored in the given internal directory.
@@ -586,11 +593,13 @@ export const getAssetsByFolder = (folder) =>
  * @returns {Asset[]} Assets.
  */
 export const getAssetsByDirName = (dirname) =>
-  get(allAssets).filter((a) => getPathInfo(a.path).dirname === dirname);
+  allAssets.current.filter((a) => getPathInfo(a.path).dirname === dirname);
 
 // Reset the asset selection when a different folder is selected
-selectedAssetFolder.subscribe(() => {
-  focusedAsset.set(undefined);
+createRootEffect(() => {
+  // Read the folder so that the effect re-runs whenever it changes
+  void selectedAssetFolder.current;
+  focusedAsset.current = undefined;
 });
 
 /**

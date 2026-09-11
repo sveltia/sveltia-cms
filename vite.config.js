@@ -406,6 +406,13 @@ export default defineConfig({
       $lib: path.resolve('./src/lib/'),
     },
     extensions: ['.js', '.svelte'],
+    // Vitest doesn’t use the `browser` condition by default, so the `svelte` package would resolve
+    // to its server build even in the `jsdom` environment, while the `.svelte.js` modules are
+    // compiled for the client there. Runtime functions like `untrack()` and `flushSync()` would
+    // then come from a different runtime than the one the compiled modules use, and wouldn’t work.
+    // The list replaces Vite’s defaults rather than extending them, so spell out the full client
+    // set to keep the other packages resolving as they do in the app
+    ...(process.env.VITEST ? { conditions: ['module', 'browser', 'development|production'] } : {}),
   },
   define: {
     'import.meta.env.VITE_APP_LOCALES': JSON.stringify(getAppLocales().join(',')),

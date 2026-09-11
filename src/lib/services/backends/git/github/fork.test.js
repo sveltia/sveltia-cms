@@ -1,5 +1,4 @@
 import { _ } from '@sveltia/i18n';
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -56,8 +55,8 @@ const createResponse = (ok, body = {}, { status = undefined, headers = {} } = {}
 describe('GitHub fork service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    forkedRepository.set(undefined);
-    cmsConfig.set(/** @type {any} */ ({ backend: { name: 'github', open_authoring: true } }));
+    forkedRepository.current = undefined;
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', open_authoring: true } });
     user.account = /** @type {any} */ ({ login: 'contributor', token: 'token' });
     Object.assign(repository, { owner: 'owner', repo: 'repo', branch: 'main' });
   });
@@ -68,13 +67,15 @@ describe('GitHub fork service', () => {
     });
 
     test('is off without the option, with another backend, or without a config', () => {
-      cmsConfig.set(/** @type {any} */ ({ backend: { name: 'github' } }));
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
       expect(isOpenAuthoringConfigured()).toBe(false);
 
-      cmsConfig.set(/** @type {any} */ ({ backend: { name: 'gitlab', open_authoring: true } }));
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'gitlab', open_authoring: true },
+      });
       expect(isOpenAuthoringConfigured()).toBe(false);
 
-      cmsConfig.set(undefined);
+      cmsConfig.current = undefined;
       expect(isOpenAuthoringConfigured()).toBe(false);
     });
   });
@@ -85,7 +86,7 @@ describe('GitHub fork service', () => {
     });
 
     test('is the fork once one is set', () => {
-      forkedRepository.set({ owner: 'contributor', repo: 'repo' });
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
       expect(getWorkflowRepository()).toEqual({ owner: 'contributor', repo: 'repo' });
     });
   });
@@ -483,7 +484,7 @@ describe('GitHub fork service', () => {
 
       await initOpenAuthoring();
 
-      expect(get(forkedRepository)).toBeUndefined();
+      expect(forkedRepository.current).toBeUndefined();
       expect(requestForkPermission).not.toHaveBeenCalled();
     });
 
@@ -506,7 +507,7 @@ describe('GitHub fork service', () => {
 
       await initOpenAuthoring();
 
-      expect(get(forkedRepository)).toEqual({ owner: 'contributor', repo: 'repo' });
+      expect(forkedRepository.current).toEqual({ owner: 'contributor', repo: 'repo' });
       expect(requestForkPermission).not.toHaveBeenCalled();
       expect(fetchAPI).toHaveBeenNthCalledWith(
         3,
@@ -565,7 +566,7 @@ describe('GitHub fork service', () => {
       await initOpenAuthoring();
 
       expect(requestForkPermission).toHaveBeenCalledWith('owner/repo');
-      expect(get(forkedRepository)).toEqual({ owner: 'contributor', repo: 'repo' });
+      expect(forkedRepository.current).toEqual({ owner: 'contributor', repo: 'repo' });
     });
 
     test('stops when the repository doesn’t allow forking', async () => {
@@ -596,7 +597,7 @@ describe('GitHub fork service', () => {
         'Permission to fork the repository was declined',
       );
 
-      expect(get(forkedRepository)).toBeUndefined();
+      expect(forkedRepository.current).toBeUndefined();
     });
   });
 });

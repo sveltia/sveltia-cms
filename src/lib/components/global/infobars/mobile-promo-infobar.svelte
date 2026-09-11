@@ -32,7 +32,7 @@
     variant="link"
     label={_('mobile_promo_button')}
     onclick={() => {
-      $showMobileSignInDialog = true;
+      showMobileSignInDialog.current = true;
       hideInfobar();
     }}
   />

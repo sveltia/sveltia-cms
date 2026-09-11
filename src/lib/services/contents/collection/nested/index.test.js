@@ -33,7 +33,7 @@ beforeEach(() => {
   vi.mocked(isEntryCollection).mockImplementation(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
   );
-  nestedFilterPath.set('');
+  nestedFilterPath.current = '';
 });
 
 describe('getNestedConfig()', () => {

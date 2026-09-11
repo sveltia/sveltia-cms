@@ -14,10 +14,10 @@
    */
 
   $effect(() => {
-    $announcedPageStatus = _('viewing_entry_search_results', {
+    announcedPageStatus.current = _('viewing_entry_search_results', {
       values: {
-        terms: $searchTerms,
-        count: $entrySearchResults.length,
+        terms: searchTerms.current,
+        count: entrySearchResults.current.length,
       },
     });
   });
@@ -26,14 +26,14 @@
 <Group aria-labelledby="search-results-entries">
   <!-- <h3 role="none" id="search-results-entries">{_('entries')}</h3> -->
   <div role="none">
-    {#if $entrySearchResults.length}
+    {#if entrySearchResults.current.length}
       <ListingGrid
         viewType="list"
         aria-label={_('entries')}
-        aria-rowcount={$entrySearchResults.length}
+        aria-rowcount={entrySearchResults.current.length}
       >
-        {#key $searchTerms}
-          <InfiniteScroll items={$entrySearchResults} itemKey="id">
+        {#key searchTerms.current}
+          <InfiniteScroll items={entrySearchResults.current} itemKey="id">
             {#snippet renderItem(/** @type {EntrySearchResult} */ result)}
               {#await sleep() then}
                 <EntryResultItem {result} />
@@ -42,7 +42,7 @@
           </InfiniteScroll>
         {/key}
       </ListingGrid>
-    {:else if $searchTerms}
+    {:else if searchTerms.current}
       <EmptyState>
         <span role="none">{_('no_entries_found')}</span>
       </EmptyState>

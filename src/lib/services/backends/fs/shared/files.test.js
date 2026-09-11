@@ -1958,9 +1958,9 @@ describe('scanDir', () => {
 });
 
 describe('collectScanningPaths', () => {
-  /** @type {import('svelte/store').Writable<import('$lib/types/private').EntryFolderInfo[]>} */
+  /** @type {{ current: import('$lib/types/private').EntryFolderInfo[] }} */
   let allEntryFolders;
-  /** @type {import('svelte/store').Writable<import('$lib/types/private').AssetFolderInfo[]>} */
+  /** @type {{ current: import('$lib/types/private').AssetFolderInfo[] }} */
   let allAssetFolders;
 
   beforeEach(async () => {
@@ -1972,12 +1972,12 @@ describe('collectScanningPaths', () => {
     allAssetFolders = folders.allAssetFolders;
 
     // Reset stores to empty state
-    allEntryFolders.set([]);
-    allAssetFolders.set([]);
+    allEntryFolders.current = [];
+    allAssetFolders.current = [];
   });
 
   test('should collect and deduplicate paths from entry and asset folders', () => {
-    allEntryFolders.set([
+    allEntryFolders.current = [
       {
         collectionName: 'posts',
         filePathMap: {
@@ -1991,9 +1991,9 @@ describe('collectScanningPaths', () => {
           folder1: 'content/drafts',
         },
       },
-    ]);
+    ];
 
-    allAssetFolders.set([
+    allAssetFolders.current = [
       {
         collectionName: 'images',
         internalPath: 'static/images',
@@ -2015,7 +2015,7 @@ describe('collectScanningPaths', () => {
         entryRelative: false,
         hasTemplateTags: false,
       }, // Should be filtered out
-    ]);
+    ];
 
     const paths = collectScanningPaths();
 
@@ -2035,7 +2035,7 @@ describe('collectScanningPaths', () => {
   });
 
   test('should strip slashes and deduplicate paths', () => {
-    allEntryFolders.set([
+    allEntryFolders.current = [
       {
         collectionName: 'posts',
         filePathMap: {
@@ -2043,9 +2043,9 @@ describe('collectScanningPaths', () => {
           field2: 'content/posts',
         },
       },
-    ]);
+    ];
 
-    allAssetFolders.set([
+    allAssetFolders.current = [
       {
         collectionName: 'images',
         internalPath: '/static/images/',
@@ -2053,7 +2053,7 @@ describe('collectScanningPaths', () => {
         entryRelative: false,
         hasTemplateTags: false,
       },
-    ]);
+    ];
 
     const paths = collectScanningPaths();
 
@@ -2064,7 +2064,7 @@ describe('collectScanningPaths', () => {
   });
 
   test('should prefer filePathMap over folderPathMap when filePathMap exists', () => {
-    allEntryFolders.set([
+    allEntryFolders.current = [
       {
         collectionName: 'mixed',
         filePathMap: {
@@ -2074,9 +2074,9 @@ describe('collectScanningPaths', () => {
           folder1: 'content/folders',
         },
       },
-    ]);
+    ];
 
-    allAssetFolders.set([]);
+    allAssetFolders.current = [];
 
     const paths = collectScanningPaths();
 
@@ -2085,16 +2085,16 @@ describe('collectScanningPaths', () => {
   });
 
   test('should use folderPathMap when filePathMap is not present', () => {
-    allEntryFolders.set([
+    allEntryFolders.current = [
       {
         collectionName: 'folders',
         folderPathMap: {
           folder1: 'content/folders',
         },
       },
-    ]);
+    ];
 
-    allAssetFolders.set([]);
+    allAssetFolders.current = [];
 
     const paths = collectScanningPaths();
 
@@ -2103,14 +2103,14 @@ describe('collectScanningPaths', () => {
 
   test('should return empty paths when entry folder has no filePathMap and no folderPathMap (L187 binary-expr)', () => {
     // An entry folder with neither filePathMap nor folderPathMap exercises `folderPathMap ?? {}`.
-    allEntryFolders.set([
+    allEntryFolders.current = [
       /** @type {any} */ ({
         collectionName: 'empty-collection',
         // No filePathMap, no folderPathMap
       }),
-    ]);
+    ];
 
-    allAssetFolders.set([]);
+    allAssetFolders.current = [];
 
     const paths = collectScanningPaths();
 
@@ -2120,9 +2120,9 @@ describe('collectScanningPaths', () => {
 });
 
 describe('getAllFiles', () => {
-  /** @type {import('svelte/store').Writable<import('$lib/types/private').EntryFolderInfo[]>} */
+  /** @type {{ current: import('$lib/types/private').EntryFolderInfo[] }} */
   let allEntryFolders;
-  /** @type {import('svelte/store').Writable<import('$lib/types/private').AssetFolderInfo[]>} */
+  /** @type {{ current: import('$lib/types/private').AssetFolderInfo[] }} */
   let allAssetFolders;
 
   beforeEach(async () => {
@@ -2132,18 +2132,18 @@ describe('getAllFiles', () => {
     allEntryFolders = contents.allEntryFolders;
     allAssetFolders = foldersModule.allAssetFolders;
 
-    allEntryFolders.set([]);
-    allAssetFolders.set([]);
+    allEntryFolders.current = [];
+    allAssetFolders.current = [];
   });
 
   test('should return array of BaseFileListItemProps for files found under a path', async () => {
-    allEntryFolders.set([
+    allEntryFolders.current = [
       /** @type {any} */ ({
         collectionName: 'posts',
         folderPathMap: { folder: 'content/posts' },
       }),
-    ]);
-    allAssetFolders.set([]);
+    ];
+    allAssetFolders.current = [];
 
     const postsDir = createMockDirectoryHandle('posts');
     const fileHandle = createMockFileHandle('post.md');
@@ -2188,8 +2188,8 @@ describe('getAllFiles', () => {
   });
 
   test('should return empty array when no scanning paths match', async () => {
-    allEntryFolders.set([]);
-    allAssetFolders.set([]);
+    allEntryFolders.current = [];
+    allAssetFolders.current = [];
 
     const rootDirHandle = createMockDirectoryHandle('root');
 
@@ -2214,11 +2214,16 @@ describe('loadFiles', () => {
     const mockEntries = [/** @type {any} */ ({ id: '1', slug: 'post-1' })];
     /** @type {any[]} */
     const mockErrors = [];
-    const mockAllEntries = { set: vi.fn() };
-    const mockAllAssets = { set: vi.fn() };
-    const mockGitConfigFiles = { set: vi.fn() };
-    const mockEntryParseErrors = { set: vi.fn() };
-    const mockDataLoaded = { set: vi.fn() };
+    /** @type {{ current: any }} */
+    const mockAllEntries = { current: undefined };
+    /** @type {{ current: any }} */
+    const mockAllAssets = { current: undefined };
+    /** @type {{ current: any }} */
+    const mockGitConfigFiles = { current: undefined };
+    /** @type {{ current: any }} */
+    const mockEntryParseErrors = { current: undefined };
+    /** @type {{ current: any }} */
+    const mockDataLoaded = { current: undefined };
 
     const fakeFile = {
       handle: /** @type {any} */ ({
@@ -2253,11 +2258,9 @@ describe('loadFiles', () => {
       sha: '',
     };
 
-    const { writable: writ } = await import('svelte/store');
-
     vi.doMock('$lib/services/contents', () => ({
       allEntries: mockAllEntries,
-      allEntryFolders: writ([]),
+      allEntryFolders: { current: [] },
       dataLoaded: mockDataLoaded,
       entryParseErrors: mockEntryParseErrors,
     }));
@@ -2267,7 +2270,7 @@ describe('loadFiles', () => {
     }));
 
     vi.doMock('$lib/services/assets/folders', () => ({
-      allAssetFolders: writ([]),
+      allAssetFolders: { current: [] },
     }));
 
     vi.doMock('$lib/services/backends/git/shared/config', () => ({
@@ -2320,11 +2323,11 @@ describe('loadFiles', () => {
 
     await loadFiles(rootDirHandle);
 
-    expect(mockAllEntries.set).toHaveBeenCalledWith(mockEntries);
-    expect(mockAllAssets.set).toHaveBeenCalledWith(expect.any(Array));
-    expect(mockDataLoaded.set).toHaveBeenCalledWith(true);
-    expect(mockEntryParseErrors.set).toHaveBeenCalledWith(mockErrors);
-    expect(mockGitConfigFiles.set).toHaveBeenCalledWith(expect.any(Array));
+    expect(mockAllEntries.current).toEqual(mockEntries);
+    expect(mockAllAssets.current).toEqual(expect.any(Array));
+    expect(mockDataLoaded.current).toEqual(true);
+    expect(mockEntryParseErrors.current).toEqual(mockErrors);
+    expect(mockGitConfigFiles.current).toEqual(expect.any(Array));
   });
 });
 

@@ -1,4 +1,4 @@
-import { get } from 'svelte/store';
+import { untrack } from 'svelte';
 
 import { deployments, deployPollTimedOut } from '$lib/services/deployments';
 import { POLL_INTERVAL, POLL_MAX_DURATION } from '$lib/services/deployments/constants';
@@ -10,6 +10,7 @@ import {
   resolveDeployments,
 } from '$lib/services/deployments/resolve';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
  * How many checks to keep making while a commit has nothing reported against it. A provider can
@@ -41,9 +42,9 @@ let generation = 0;
  * @returns {boolean} Result.
  */
 const isSettled = () => {
-  const map = get(deployments);
+  const map = deployments.current;
 
-  return get(deployTargets).every(({ sha }) => {
+  return deployTargets.current.every(({ sha }) => {
     const state = map[sha]?.state;
 
     if (state === 'ready' || state === 'error') {
@@ -63,10 +64,7 @@ const isSettled = () => {
  * Identify the current set of tracked commits, so a change to it can be noticed.
  * @returns {string} Key.
  */
-const getTargetKey = () =>
-  get(deployTargets)
-    .map(({ sha }) => sha)
-    .join(',');
+const getTargetKey = () => deployTargets.current.map(({ sha }) => sha).join(',');
 
 /**
  * Drop the scheduled check and retire the current run, so a request still in flight can’t carry the
@@ -109,7 +107,7 @@ const schedule = () => {
   if (Date.now() - startTime > POLL_MAX_DURATION) {
     // A build this long is either stuck or reporting through a channel the CMS can’t read, so hand
     // it over to the manual re-check rather than requesting forever
-    deployPollTimedOut.set(true);
+    deployPollTimedOut.current = true;
     stop();
 
     return;
@@ -140,7 +138,7 @@ const restart = () => {
   supersede();
   attempts = 0;
   startTime = Date.now();
-  deployPollTimedOut.set(false);
+  deployPollTimedOut.current = false;
 
   if (canResolveDeployments()) {
     // Say a lookup is coming before making it, so nothing shows a stale answer in the meantime
@@ -164,12 +162,13 @@ export const retainDeployPolling = () => {
     // Saving moves the branch head, or gives a pull request a new head commit, and that’s exactly
     // when the state needs watching again — by which time the loop has usually stopped, because
     // everything it knew about had already settled
-    unwatch = deployTargets.subscribe(() => {
+    unwatch = createRootEffect(() => {
       const key = getTargetKey();
 
       if (key !== lastKey) {
         lastKey = key;
-        restart();
+        // Only track the targets, not the state the lookup reads and writes
+        untrack(restart);
       }
     });
 
@@ -203,7 +202,7 @@ export const retainDeployPolling = () => {
  */
 export const recheckDeployments = async () => {
   supersede();
-  deployPollTimedOut.set(false);
+  deployPollTimedOut.current = false;
 
   await resolveDeployments({ force: true });
 

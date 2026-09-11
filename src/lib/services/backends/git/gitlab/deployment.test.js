@@ -1,19 +1,15 @@
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fetchBranchHeadSHA, fetchDeployments } from '$lib/services/backends/git/gitlab/deployment';
 import { repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { cmsConfig } from '$lib/services/config';
 
 vi.mock('$lib/services/backends/git/gitlab/repository', () => ({
   repository: { owner: 'group/sub', repo: 'project', branch: 'main' },
 }));
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/config', () => ({ cmsConfig: { subscribe: vi.fn() } }));
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
+vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 
 const PROJECT_ID = encodeURIComponent('group/sub/project');
 
@@ -32,7 +28,7 @@ const createTarget = (overrides = {}) => ({
 describe('GitLab deployment service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(get).mockReturnValue({ backend: { name: 'gitlab' } });
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'gitlab' } });
   });
 
   describe('fetchBranchHeadSHA', () => {

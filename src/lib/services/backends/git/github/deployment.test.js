@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -8,15 +7,12 @@ import {
 } from '$lib/services/backends/git/github/deployment';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { cmsConfig } from '$lib/services/config';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/config', () => ({ cmsConfig: { subscribe: vi.fn() } }));
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
+vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 
 /**
  * Build a `repository` payload with one aliased commit per entry.
@@ -35,7 +31,7 @@ describe('GitHub deployment service', () => {
       repo: 'test-repo',
       branch: 'main',
     });
-    vi.mocked(get).mockReturnValue({ backend: { name: 'github' } });
+    cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
   });
 
   describe('triggerDeployment', () => {

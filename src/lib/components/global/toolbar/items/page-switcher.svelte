@@ -23,19 +23,19 @@
 
     // Hide Assets page if there is no asset folder configured
     // @todo Remove this condition when the Asset Library supports external storage providers
-    if ($allAssetFolders.length) {
+    if (allAssetFolders.current.length) {
       _pages.push({
         key: 'assets',
         label: _('assets'),
         icon: 'photo',
         link: env.isSmallScreen
           ? '/assets'
-          : `/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`,
+          : `/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`,
         searchMode: 'assets',
       });
     }
 
-    if ($workflowEnabled) {
+    if (workflowEnabled.current) {
       _pages.push({
         key: 'workflow',
         label: _('editorial_workflow'),
@@ -45,7 +45,7 @@
       });
     }
 
-    if ($backendName === 'local') {
+    if (backendName.current === 'local') {
       // _pages.push({
       //   key: 'config',
       //   label: _('cms_config'),
@@ -74,7 +74,7 @@
       <SelectButton
         variant="ghost"
         iconic
-        selected={$selectedPageName === key || $searchMode === sMode}
+        selected={selectedPageName.current === key || searchMode.current === sMode}
         aria-label={label}
         keyShortcuts="Alt+{index + 1}"
         onclick={() => {

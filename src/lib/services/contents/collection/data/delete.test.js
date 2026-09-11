@@ -1,11 +1,10 @@
-import { get, writable } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { deleteEntries, updateStores } from './delete';
 
 // Mock dependencies
 vi.mock('$lib/services/assets', () => ({
-  allAssets: writable([]),
+  allAssets: { current: [] },
 }));
 
 vi.mock('$lib/services/backends/save', () => ({
@@ -13,15 +12,15 @@ vi.mock('$lib/services/backends/save', () => ({
 }));
 
 vi.mock('$lib/services/contents', () => ({
-  allEntries: writable([]),
+  allEntries: { current: [] },
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
-  selectedCollection: writable(null),
+  selectedCollection: { current: null },
 }));
 
 vi.mock('$lib/services/contents/collection/data', () => ({
-  contentUpdatesToast: writable(null),
+  contentUpdatesToast: { current: null },
   UPDATE_TOAST_DEFAULT_STATE: {
     count: 0,
     created: false,
@@ -31,7 +30,7 @@ vi.mock('$lib/services/contents/collection/data', () => ({
 }));
 
 vi.mock('$lib/services/backends', () => ({
-  backend: writable(null),
+  backend: { current: null },
 }));
 
 vi.mock('@sveltia/utils/storage', () => ({
@@ -64,11 +63,11 @@ describe('Test updateStores()', () => {
       { id: '3', slug: 'post-3', locales: { en: { title: 'Post 3' } } },
     ];
 
-    allEntries.set(/** @type {any} */ (mockEntries));
+    allEntries.current = /** @type {any} */ (mockEntries);
 
     updateStores({ ids: ['1', '3'], assetPaths: [] });
 
-    const updatedEntries = get(allEntries);
+    const updatedEntries = allEntries.current;
 
     expect(updatedEntries).toEqual([
       { id: '2', slug: 'post-2', locales: { en: { title: 'Post 2' } } },
@@ -81,7 +80,7 @@ describe('Test updateStores()', () => {
 
     updateStores({ ids: ['1', '2', '3'], assetPaths: [] });
 
-    expect(get(contentUpdatesToast)).toEqual({
+    expect(contentUpdatesToast.current).toEqual({
       ...UPDATE_TOAST_DEFAULT_STATE,
       deleted: true,
       count: 3,
@@ -97,11 +96,11 @@ describe('Test updateStores()', () => {
       { path: '/images/image3.jpg', name: 'image3.jpg' },
     ];
 
-    allAssets.set(/** @type {any} */ (mockAssets));
+    allAssets.current = /** @type {any} */ (mockAssets);
 
     updateStores({ ids: ['1'], assetPaths: ['/images/image1.jpg', '/images/image3.jpg'] });
 
-    const updatedAssets = get(allAssets);
+    const updatedAssets = allAssets.current;
 
     expect(updatedAssets).toEqual([{ path: '/images/image2.jpg', name: 'image2.jpg' }]);
   });
@@ -113,14 +112,14 @@ describe('Test updateStores()', () => {
     const initialEntries = [{ id: '1', slug: 'post-1' }];
     const initialAssets = [{ path: '/image.jpg' }];
 
-    allEntries.set(/** @type {any} */ (initialEntries));
-    allAssets.set(/** @type {any} */ (initialAssets));
+    allEntries.current = /** @type {any} */ (initialEntries);
+    allAssets.current = /** @type {any} */ (initialAssets);
 
     updateStores({ ids: [], assetPaths: [] });
 
-    expect(get(allEntries)).toEqual(initialEntries);
-    expect(get(allAssets)).toEqual(initialAssets);
-    expect(get(contentUpdatesToast)).toEqual(
+    expect(allEntries.current).toEqual(initialEntries);
+    expect(allAssets.current).toEqual(initialAssets);
+    expect(contentUpdatesToast.current).toEqual(
       expect.objectContaining({
         deleted: true,
         count: 0,
@@ -156,7 +155,7 @@ describe('Test deleteEntries()', () => {
       },
     ];
 
-    selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
+    selectedCollection.current = /** @type {any} */ ({ name: 'posts' });
 
     await deleteEntries(/** @type {any} */ (mockEntries));
 
@@ -296,14 +295,14 @@ describe('Test deleteEntries()', () => {
       },
     ];
 
-    allEntries.set(/** @type {any} */ (mockEntries));
+    allEntries.current = /** @type {any} */ (mockEntries);
 
     const mockAssets = [{ path: '/images/image.jpg', sha: 'asset-sha' }];
 
     await deleteEntries(/** @type {any} */ ([mockEntries[0]]), /** @type {any} */ (mockAssets));
 
     // Verify stores are updated with correct IDs and asset paths
-    expect(get(allEntries)).toEqual([
+    expect(allEntries.current).toEqual([
       {
         id: '2',
         slug: 'post-2',
@@ -311,7 +310,7 @@ describe('Test deleteEntries()', () => {
       },
     ]);
 
-    expect(get(contentUpdatesToast)).toEqual(
+    expect(contentUpdatesToast.current).toEqual(
       expect.objectContaining({
         deleted: true,
         count: 1,
@@ -407,7 +406,7 @@ describe('Test deleteEntries()', () => {
       },
     ];
 
-    selectedCollection.set(/** @type {any} */ ({ name: 'posts' }));
+    selectedCollection.current = /** @type {any} */ ({ name: 'posts' });
 
     await deleteEntries(/** @type {any} */ (mockEntries));
 
@@ -420,15 +419,7 @@ describe('Test deleteEntries()', () => {
     const { IndexedDB } = await import('@sveltia/utils/storage');
 
     // Mock backend with valid databaseName
-    vi.mocked(backend).subscribe = vi.fn((handler) => {
-      handler(
-        /** @type {any} */ ({
-          repository: { databaseName: 'my-database' },
-        }),
-      );
-
-      return () => {};
-    });
+    /** @type {any} */ (backend).current = { repository: { databaseName: 'my-database' } };
 
     const mockEntries = [
       {
@@ -453,7 +444,7 @@ describe('Test deleteEntries()', () => {
     const { selectedCollection } = await import('$lib/services/contents/collection');
     const collection = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
 
-    selectedCollection.set(collection);
+    selectedCollection.current = collection;
 
     const renumberChange = /** @type {any} */ ({
       action: 'update',
@@ -510,7 +501,7 @@ describe('Test deleteEntries()', () => {
     const { saveChanges } = await import('$lib/services/backends/save');
     const { selectedCollection } = await import('$lib/services/contents/collection');
 
-    selectedCollection.set(/** @type {any} */ ({ name: 'pages', _type: 'file' }));
+    selectedCollection.current = /** @type {any} */ ({ name: 'pages', _type: 'file' });
 
     // The default mock returns no changes, which is what `buildRenumberChanges` does internally for
     // non-entry collections too.

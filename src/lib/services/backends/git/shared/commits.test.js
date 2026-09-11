@@ -3,13 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createCommitMessage, hasSkipCIMarker } from './commits';
 
-// Mock the get function from svelte/store
-const mockCmsConfig = {
+const mockCmsConfig = vi.hoisted(() => ({
   backend: {
     commit_messages: {},
     skip_ci: false,
   },
-};
+}));
 
 const mockUser = vi.hoisted(() => ({
   login: 'test-user',
@@ -20,27 +19,20 @@ const mockUser = vi.hoisted(() => ({
 // Whether the commit is being made by an Open Authoring contributor
 const mockState = vi.hoisted(() => ({ openAuthoring: false }));
 
-vi.mock('svelte/store', () => ({
-  get: vi.fn((store) => {
-    // Mock different returns based on what store is being accessed
-    if (store?.name === 'cmsConfig') {
-      return mockCmsConfig;
-    }
-
-    if (store?.name === 'openAuthoring') {
-      return mockState.openAuthoring;
-    }
-
-    return null;
-  }),
-}));
-
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { name: 'cmsConfig' },
+  cmsConfig: { current: mockCmsConfig },
 }));
 
 vi.mock('$lib/services/workflow/open-authoring', () => ({
-  openAuthoring: { name: 'openAuthoring' },
+  openAuthoring: {
+    /**
+     * Get the current mock value.
+     * @returns {boolean} Value.
+     */
+    get current() {
+      return mockState.openAuthoring;
+    },
+  },
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({

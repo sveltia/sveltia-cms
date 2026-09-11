@@ -14,9 +14,9 @@
 
   const deployHookURL = $derived(prefs.deployHookURL);
   const deployHookAuthHeader = $derived(prefs.deployHookAuthHeader);
-  const triggerDeployment = $derived($backend?.triggerDeployment);
+  const triggerDeployment = $derived(backend.current?.triggerDeployment);
   const canPublish = $derived(
-    (!!deployHookURL || typeof triggerDeployment === 'function') && !$isLastCommitPublished,
+    (!!deployHookURL || typeof triggerDeployment === 'function') && !isLastCommitPublished.current,
   );
 
   /** @type {'info' | 'error'} */
@@ -61,7 +61,7 @@
   };
 </script>
 
-{#if $skipCIConfigured}
+{#if skipCIConfigured.current}
   <Button
     variant="secondary"
     size={env.isSmallScreen ? 'small' : 'medium'}

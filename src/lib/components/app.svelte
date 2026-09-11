@@ -89,7 +89,7 @@
   let transitioned = $state(false);
 
   $effect(() => {
-    if ($dataLoaded && user.account) {
+    if (dataLoaded.current && user.account) {
       startViewTransition('forwards', () => {
         transitioned = true;
       });
@@ -104,14 +104,14 @@
 <svelte:head>
   <meta name="referrer" content="same-origin" />
   <meta name="robots" content="noindex" />
-  {#if $cmsConfigLoaded}
-    <title>{$appTitle}</title>
-    <link rel="icon" href={$appLogoURL} type={$appLogoType} />
-    {#if $appIconURLs}
-      <link rel="apple-touch-icon" href={$appIconURLs.large} />
+  {#if cmsConfigLoaded.current}
+    <title>{appTitle.current}</title>
+    <link rel="icon" href={appLogoURL.current} type={appLogoType.current} />
+    {#if appIconURLs.current}
+      <link rel="apple-touch-icon" href={appIconURLs.current.large} />
     {/if}
-    {#if $appManifestURL}
-      <link rel="manifest" href={$appManifestURL} />
+    {#if appManifestURL.current}
+      <link rel="manifest" href={appManifestURL.current} />
     {/if}
   {/if}
   {#if DEV_SITE_URL}
@@ -140,21 +140,21 @@
       <LocaleLoadErrorToast />
       <UpdateNotification />
       <ForkPermissionDialog />
-      {#if $backend}
+      {#if backend.current}
         <BackendStatusIndicator />
       {/if}
-      {#if user.account && $dataLoaded}
+      {#if user.account && dataLoaded.current}
         <OpenAuthoringIndicator />
       {/if}
       <div role="none" class="main">
-        {#if user.account && $dataLoaded && transitioned}
+        {#if user.account && dataLoaded.current && transitioned}
           <MainRouter />
         {:else}
           <EntrancePage />
         {/if}
       </div>
     </div>
-    <div role="status">{$announcedPageStatus}</div>
+    <div role="status">{announcedPageStatus.current}</div>
   {/if}
 </AppShell>
 

@@ -4,7 +4,7 @@ import { createFileList, saveAssets, updatedStores } from './create.js';
 
 // Mock dependencies
 vi.mock('$lib/services/assets', () => ({
-  allAssets: { subscribe: vi.fn() },
+  allAssets: { current: undefined },
   focusedAsset: { set: vi.fn() },
   overlaidAsset: { set: vi.fn() },
   getAssetByInternalPath: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock('$lib/services/backends/save', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('$lib/services/integrations/media-libraries/default', () => ({
@@ -50,50 +50,28 @@ vi.mock('$lib/services/contents/collection/data', () => ({
   },
 }));
 
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-}));
-
 vi.mock('$lib/services/backends/git/shared/integration', () => ({
   skipCIConfigured: {
-    subscribe: vi.fn((callback) => {
-      callback(false);
-      return vi.fn();
-    }),
+    current: false,
   },
   skipCIEnabled: {
-    subscribe: vi.fn((callback) => {
-      callback(false);
-      return vi.fn();
-    }),
+    current: false,
   },
 }));
 
 // Mock dependencies
 vi.mock('$lib/services/assets', () => ({
   allAssets: {
-    subscribe: vi.fn((callback) => {
-      callback([]);
-      return vi.fn();
-    }),
+    current: [],
   },
-  focusedAsset: {
-    set: vi.fn(),
-    subscribe: vi.fn(() => vi.fn()),
-  },
-  overlaidAsset: {
-    set: vi.fn(),
-    subscribe: vi.fn(() => vi.fn()),
-  },
+  focusedAsset: { current: undefined },
+  overlaidAsset: { current: undefined },
   getAssetByInternalPath: vi.fn(),
   getAssetsByDirName: vi.fn().mockReturnValue([]),
 }));
 
 vi.mock('$lib/services/assets/data', () => ({
-  assetUpdatesToast: {
-    set: vi.fn(),
-    subscribe: vi.fn(() => vi.fn()),
-  },
+  assetUpdatesToast: { current: undefined },
 }));
 
 vi.mock('$lib/services/assets/kinds', () => ({
@@ -106,10 +84,7 @@ vi.mock('$lib/services/backends/save', () => ({
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: {
-    subscribe: vi.fn((callback) => {
-      callback({ backend: { skip_ci: true } });
-      return vi.fn();
-    }),
+    current: { backend: { skip_ci: true } },
   },
 }));
 
@@ -614,16 +589,12 @@ describe('assets/data/create', () => {
     it('should update toast with save count', async () => {
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
       const { skipCIConfigured } = await import('$lib/services/backends/git/shared/integration');
-      const { get } = await import('svelte/store');
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === skipCIConfigured) return false;
-        return undefined;
-      });
+      /** @type {any} */ (skipCIConfigured).current = false;
 
       updatedStores({ count: 3 });
 
-      expect(assetUpdatesToast.set).toHaveBeenCalledWith({
+      expect(assetUpdatesToast.current).toEqual({
         saved: true,
         published: false,
         deleted: false,
@@ -637,17 +608,12 @@ describe('assets/data/create', () => {
       const { skipCIConfigured, skipCIEnabled } =
         await import('$lib/services/backends/git/shared/integration');
 
-      const { get } = await import('svelte/store');
-
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === skipCIConfigured) return true;
-        if (store === skipCIEnabled) return false;
-        return undefined;
-      });
+      /** @type {any} */ (skipCIConfigured).current = true;
+      /** @type {any} */ (skipCIEnabled).current = false;
 
       updatedStores({ count: 1 });
 
-      expect(assetUpdatesToast.set).toHaveBeenCalledWith(
+      expect(assetUpdatesToast.current).toEqual(
         expect.objectContaining({ saved: true, published: true, count: 1 }),
       );
     });
@@ -658,24 +624,18 @@ describe('assets/data/create', () => {
       const { skipCIConfigured, skipCIEnabled } =
         await import('$lib/services/backends/git/shared/integration');
 
-      const { get } = await import('svelte/store');
-
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === skipCIConfigured) return true;
-        if (store === skipCIEnabled) return true;
-        return undefined;
-      });
+      /** @type {any} */ (skipCIConfigured).current = true;
+      /** @type {any} */ (skipCIEnabled).current = true;
 
       updatedStores({ count: 1 });
 
-      expect(assetUpdatesToast.set).toHaveBeenCalledWith(
+      expect(assetUpdatesToast.current).toEqual(
         expect.objectContaining({ saved: true, published: false, count: 1 }),
       );
     });
 
     it('should update focusedAsset when it exists', async () => {
       const { focusedAsset, getAssetByInternalPath } = await import('$lib/services/assets');
-      const { get } = await import('svelte/store');
 
       const oldAsset = {
         path: '/images/old.jpg',
@@ -691,21 +651,17 @@ describe('assets/data/create', () => {
         size: 2048,
       };
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === focusedAsset) return oldAsset;
-        return undefined;
-      });
+      focusedAsset.current = /** @type {any} */ (oldAsset);
       vi.mocked(getAssetByInternalPath).mockReturnValue(/** @type {any} */ (newAsset));
 
       updatedStores({ count: 1 });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/old.jpg');
-      expect(focusedAsset.set).toHaveBeenCalledWith(newAsset);
+      expect(focusedAsset.current).toEqual(newAsset);
     });
 
     it('should update overlaidAsset when it exists', async () => {
       const { overlaidAsset, getAssetByInternalPath } = await import('$lib/services/assets');
-      const { get } = await import('svelte/store');
 
       const oldAsset = {
         path: '/images/old.jpg',
@@ -721,23 +677,18 @@ describe('assets/data/create', () => {
         size: 2048,
       };
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === overlaidAsset) return oldAsset;
-        return undefined;
-      });
+      overlaidAsset.current = /** @type {any} */ (oldAsset);
       vi.mocked(getAssetByInternalPath).mockReturnValue(/** @type {any} */ (newAsset));
 
       updatedStores({ count: 1 });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/old.jpg');
-      expect(overlaidAsset.set).toHaveBeenCalledWith(newAsset);
+      expect(overlaidAsset.current).toEqual(newAsset);
     });
 
     it('should update both focusedAsset and overlaidAsset when they exist', async () => {
       const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
         await import('$lib/services/assets');
-
-      const { get } = await import('svelte/store');
 
       const oldFocused = {
         path: '/images/focused.jpg',
@@ -761,11 +712,8 @@ describe('assets/data/create', () => {
         updated: true,
       };
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === focusedAsset) return oldFocused;
-        if (store === overlaidAsset) return oldOverlaid;
-        return undefined;
-      });
+      focusedAsset.current = /** @type {any} */ (oldFocused);
+      overlaidAsset.current = /** @type {any} */ (oldOverlaid);
       vi.mocked(getAssetByInternalPath).mockImplementation(
         (path) => /** @type {any} */ (path === '/images/focused.jpg' ? newFocused : newOverlaid),
       );
@@ -774,8 +722,8 @@ describe('assets/data/create', () => {
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/focused.jpg');
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/overlaid.jpg');
-      expect(focusedAsset.set).toHaveBeenCalledWith(newFocused);
-      expect(overlaidAsset.set).toHaveBeenCalledWith(newOverlaid);
+      expect(focusedAsset.current).toEqual(newFocused);
+      expect(overlaidAsset.current).toEqual(newOverlaid);
     });
   });
 

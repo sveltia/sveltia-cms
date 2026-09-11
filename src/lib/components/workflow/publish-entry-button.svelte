@@ -48,7 +48,7 @@
   // the review stages but leave the actual publishing to someone else. An Open Authoring
   // contributor can’t merge a pull request on the configured repository, so they never see it
   const visible = $derived(
-    !$openAuthoring &&
+    !openAuthoring.current &&
       (entry.workflow.status === 'pending_publish' || deletion) &&
       getCollection(entry.workflow.collectionName)?.publish !== false,
   );

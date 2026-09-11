@@ -52,7 +52,7 @@
       !!keyPath &&
       getValueMapSnapshot(entryDraft.current, sourceLanguage)[keyPath] ===
         getValueMapSnapshot(entryDraft.current, targetLanguage)[keyPath]) ||
-    (translate && !(await $translator?.availability({ sourceLanguage, targetLanguage })));
+    (translate && !(await translator.current?.availability({ sourceLanguage, targetLanguage })));
 </script>
 
 {#snippet localeItems()}

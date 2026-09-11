@@ -1,10 +1,9 @@
 import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 
 import { goto, parseLocation } from '$lib/services/app/navigation';
-import { backend, backendName } from '$lib/services/backends';
+import { backend, backendName, selectBackend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
 import { resetDeployments } from '$lib/services/deployments';
@@ -81,7 +80,7 @@ export const logError = (ex, context = 'authentication') => {
 
   if (ex.name === 'AbortError') {
     message = _(
-      get(backendName) === 'local'
+      backendName.current === 'local'
         ? 'sign_in_error.picker_dismissed'
         : 'sign_in_error.authentication_aborted',
     );
@@ -158,11 +157,9 @@ export const getBackend = (_user) => {
   const _backendName =
     _user?.backendName === 'local' || _user?.backendName === 'proxy'
       ? 'local'
-      : /** @type {InternalCmsConfig} */ (get(cmsConfig)).backend.name;
+      : /** @type {InternalCmsConfig} */ (cmsConfig.current).backend.name;
 
-  backendName.set(_backendName);
-
-  return get(backend);
+  return selectBackend(_backendName);
 };
 
 /**
@@ -247,9 +244,8 @@ export const signInAutomatically = async () => {
  */
 export const signInManually = async (_backendName, token) => {
   resetError();
-  backendName.set(_backendName);
 
-  const _backend = get(backend);
+  const _backend = selectBackend(_backendName);
 
   if (!_backend) {
     return;
@@ -302,17 +298,17 @@ export const signInManually = async (_backendName, token) => {
  * Sign out from the current backend.
  */
 export const signOut = async () => {
-  await get(backend)?.signOut();
+  await backend.current?.signOut();
   await clearUserCache();
 
-  backendName.set(undefined);
-  dataLoaded.set(false);
-  unpublishedEntries.set([]);
-  unpublishedEntriesLoaded.set(false);
+  selectBackend(undefined);
+  dataLoaded.current = false;
+  unpublishedEntries.current = [];
+  unpublishedEntriesLoaded.current = false;
   resetDeployments();
   resetPageLiveness();
 
-  const redirectURL = get(cmsConfig)?.logout_redirect_url;
+  const redirectURL = cmsConfig.current?.logout_redirect_url;
 
   if (redirectURL) {
     window.location.href = redirectURL;

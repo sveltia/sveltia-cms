@@ -28,8 +28,8 @@
 
   let showPrefsDialog = $state(false);
 
-  const isLocalRepo = $derived($backendName === 'local');
-  const isTestRepo = $derived($backendName === 'test-repo');
+  const isLocalRepo = $derived(backendName.current === 'local');
+  const isTestRepo = $derived(backendName.current === 'test-repo');
 </script>
 
 <Menu aria-label={_('account')}>
@@ -54,9 +54,9 @@
   {#if prefs.devModeEnabled}
     <MenuItem
       label={_('git_repository')}
-      disabled={!$backend?.repository?.treeBaseURL}
+      disabled={!backend.current?.repository?.treeBaseURL}
       onclick={() => {
-        openNewTab($backend?.repository?.treeBaseURL);
+        openNewTab(backend.current?.repository?.treeBaseURL);
       }}
     />
     <MenuItem
@@ -81,11 +81,11 @@
   {#if !prefs.devModeEnabled}
     <ShortcutsMenuItem {menuButton} />
   {/if}
-  {#if $canShowMobileSignInDialog}
+  {#if canShowMobileSignInDialog.current}
     <MenuItem
       label={_('sign_in_with_mobile')}
       onclick={() => {
-        $showMobileSignInDialog = true;
+        showMobileSignInDialog.current = true;
       }}
     />
   {/if}

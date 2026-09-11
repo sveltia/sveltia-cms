@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { getAssetBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { backend } from '$lib/services/backends';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
@@ -94,7 +92,7 @@ const getMediaMetadataOnce = (asset) => {
  */
 export const getAssetDetails = async (asset) => {
   const { path } = asset;
-  const { blobBaseURL } = get(backend)?.repository ?? {};
+  const { blobBaseURL } = backend.current?.repository ?? {};
   const metaData = await getMediaMetadataOnce(asset);
 
   // The URLs are derived from the asset’s path and the current config rather than its content, so

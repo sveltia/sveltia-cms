@@ -1,5 +1,4 @@
 import { stripSlashes } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
@@ -10,15 +9,10 @@ import gitlabBackend, { init } from '$lib/services/backends/git/gitlab/index';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
+import { cmsConfig } from '$lib/services/config';
 
 // Mock dependencies
 vi.mock('@sveltia/utils/string');
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(() => ({ subscribe: vi.fn(), set: vi.fn(), update: vi.fn() })),
-  derived: vi.fn(() => ({ subscribe: vi.fn() })),
-  readonly: vi.fn(() => ({ subscribe: vi.fn() })),
-}));
 vi.mock('$lib/services/backends/git/gitlab/auth', () => ({
   getTokenPageURL: vi.fn(),
   signIn: vi.fn(),
@@ -45,7 +39,7 @@ vi.mock('$lib/services/backends/git/shared/api', () => ({
   graphqlVars: {},
 }));
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 
 const mockPrefs = vi.hoisted(() => ({ devModeEnabled: false }));
@@ -74,8 +68,8 @@ describe('GitLab backend service', () => {
     Object.keys(apiConfig).forEach((key) => delete (/** @type {any} */ (apiConfig)[key]));
     Object.keys(graphqlVars).forEach((key) => delete (/** @type {any} */ (graphqlVars)[key]));
 
-    vi.mocked(get).mockReset();
-    vi.mocked(get).mockReturnValue({
+    cmsConfig.current = undefined;
+    cmsConfig.current = /** @type {any} */ ({
       devModeEnabled: false,
     });
     mockPrefs.devModeEnabled = false;
@@ -91,7 +85,7 @@ describe('GitLab backend service', () => {
         },
       };
 
-      vi.mocked(get).mockReturnValue(mockConfig);
+      cmsConfig.current = /** @type {any} */ (mockConfig);
 
       const result = init();
 
@@ -142,7 +136,7 @@ describe('GitLab backend service', () => {
         },
       };
 
-      vi.mocked(get).mockReturnValue(mockConfig);
+      cmsConfig.current = /** @type {any} */ (mockConfig);
 
       const result = init();
 
@@ -188,7 +182,7 @@ describe('GitLab backend service', () => {
         },
       };
 
-      vi.mocked(get).mockReturnValue(mockConfig);
+      cmsConfig.current = /** @type {any} */ (mockConfig);
 
       init();
 
@@ -213,7 +207,7 @@ describe('GitLab backend service', () => {
         },
       };
 
-      vi.mocked(get).mockReturnValue(mockConfig);
+      cmsConfig.current = /** @type {any} */ (mockConfig);
 
       const result = init();
 
@@ -221,7 +215,7 @@ describe('GitLab backend service', () => {
     });
 
     test('returns undefined when no site config', () => {
-      vi.mocked(get).mockReturnValue(null);
+      cmsConfig.current = /** @type {any} */ (null);
 
       const result = init();
 
@@ -231,7 +225,7 @@ describe('GitLab backend service', () => {
     test('returns undefined when no backend config', () => {
       const mockConfig = {};
 
-      vi.mocked(get).mockReturnValue(mockConfig);
+      cmsConfig.current = /** @type {any} */ (mockConfig);
 
       const result = init();
 
@@ -248,7 +242,7 @@ describe('GitLab backend service', () => {
       };
 
       mockPrefs.devModeEnabled = true;
-      vi.mocked(get).mockReturnValueOnce(mockConfig); // for cmsConfig
+      cmsConfig.current = /** @type {any} */ (mockConfig); // for cmsConfig
 
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
@@ -266,7 +260,7 @@ describe('GitLab backend service', () => {
         },
       };
 
-      vi.mocked(get).mockReturnValueOnce(mockConfig); // for cmsConfig
+      cmsConfig.current = /** @type {any} */ (mockConfig); // for cmsConfig
 
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
@@ -284,7 +278,7 @@ describe('GitLab backend service', () => {
         },
       };
 
-      vi.mocked(get).mockReturnValue(mockConfig);
+      cmsConfig.current = /** @type {any} */ (mockConfig);
 
       const result = init();
 

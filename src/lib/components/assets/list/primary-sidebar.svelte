@@ -33,7 +33,7 @@
   const folders = $derived([
     // All Assets, Global Assets, then collection-level, file-level folders, sorted by appearance
     // order in the config
-    ...$allAssetFolders
+    ...allAssetFolders.current
       .filter(
         ({ typedKeyPath, isAssetCollection }) =>
           !isAssetCollection &&
@@ -47,7 +47,7 @@
       )
       .sort((a, b) => getCollectionIndex(a.collectionName) - getCollectionIndex(b.collectionName)),
     // All asset collection folders, sorted by appearance order in the config
-    ...$allAssetFolders.filter(({ isAssetCollection }) => isAssetCollection),
+    ...allAssetFolders.current.filter(({ isAssetCollection }) => isAssetCollection),
   ]);
 
   /**
@@ -84,7 +84,7 @@
             collection && fileName ? getCollectionFile(collection, fileName) : undefined}
           <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
           {@const uploadDisabled = entryRelative || hasTemplateTags}
-          {@const selected = equal($selectedAssetFolder, folder)}
+          {@const selected = equal(selectedAssetFolder.current, folder)}
           <Option
             selected={env.isSmallScreen || isSearchPage ? false : selected}
             label={appLocale.current ? getFolderLabelByCollection(folder) : ''}
@@ -145,10 +145,10 @@
               <Icon name={folder.icon || collectionFile?.icon || collection?.icon || 'folder'} />
             {/snippet}
             {#snippet endIcon()}
-              {#key $allAssets}
+              {#key allAssets.current}
                 {#await sleep() then}
                   {@const count = (
-                    internalPath !== undefined ? getAssetsByFolder(folder) : $allAssets
+                    internalPath !== undefined ? getAssetsByFolder(folder) : allAssets.current
                   ).length}
                   <span class="count" aria-label="({_('x_assets', { values: { count } })})">
                     {numberFormatter.format(count)}

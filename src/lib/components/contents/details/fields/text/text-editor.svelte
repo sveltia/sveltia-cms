@@ -82,7 +82,7 @@
 
   $effect(() => {
     if (extraHint) {
-      $extraHint = CharacterCounter;
+      extraHint.current = CharacterCounter;
     }
   });
 </script>

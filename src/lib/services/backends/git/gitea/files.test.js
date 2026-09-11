@@ -60,13 +60,32 @@ vi.mock('$lib/services/backends/git/shared/fetch', () => ({
   fetchAndParseFiles: vi.fn(),
 }));
 
+// Record every value set on the progress state, so the tests can verify the sequence
+const progressValues = vi.hoisted(() => /** @type {(number | undefined)[]} */ ([]));
+
 vi.mock('$lib/services/contents', () => ({
-  dataLoadedProgress: { set: vi.fn() },
+  dataLoadedProgress: {
+    /**
+     * Get the last value.
+     * @returns {number | undefined} Value.
+     */
+    get current() {
+      return progressValues.at(-1);
+    },
+    /**
+     * Record a new value.
+     * @param {number | undefined} value Value.
+     */
+    set current(value) {
+      progressValues.push(value);
+    },
+  },
 }));
 
 describe('Gitea Files Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    progressValues.length = 0;
     // Reset instance to default state
     vi.mocked(instance).isForgejo = false;
   });
@@ -346,9 +365,8 @@ describe('Gitea Files Service', () => {
           body: { files: ['file1.md', 'file2.txt'] },
         },
       );
-      expect(dataLoadedProgress.set).toHaveBeenCalledWith(0);
-      expect(dataLoadedProgress.set).toHaveBeenCalledWith(100);
-      expect(dataLoadedProgress.set).toHaveBeenCalledWith(undefined);
+      expect(progressValues).toEqual([0, 100, undefined]);
+      expect(dataLoadedProgress.current).toBeUndefined();
     });
 
     test('should fetch file contents for Forgejo', async () => {
@@ -510,7 +528,7 @@ describe('Gitea Files Service', () => {
 
       expect(result['content/small.md'].text).toBe('Content of small.md');
       expect(result['content/large.md'].text).toBe('Complete content of large.md');
-      expect(dataLoadedProgress.set).toHaveBeenCalledWith(100);
+      expect(progressValues).toContain(100);
     });
 
     test('should keep a batch within the item limit the instance reports', async () => {

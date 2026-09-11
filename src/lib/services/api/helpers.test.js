@@ -20,7 +20,7 @@ const {
   mockGetCollectionFileEntry,
   mockGetAssetFolder,
   mockIsAssetInFolder,
-  mockGet,
+  mockAllAssets,
 } = vi.hoisted(() => ({
   mockGetField: vi.fn(() => ({ widget: 'text' })),
   mockGetAssetByPath: vi.fn(),
@@ -28,11 +28,11 @@ const {
   mockGetCollectionFileEntry: vi.fn(),
   mockGetAssetFolder: vi.fn(),
   mockIsAssetInFolder: vi.fn(),
-  mockGet: vi.fn((store) => store?.value ?? []),
+  mockAllAssets: { current: /** @type {any[]} */ ([]) },
 }));
 
 vi.mock('$lib/services/assets', () => ({
-  allAssets: { value: [] },
+  allAssets: mockAllAssets,
   getAssetByPath: mockGetAssetByPath,
   isAssetInFolder: mockIsAssetInFolder,
 }));
@@ -66,10 +66,6 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
 
 vi.mock('$lib/services/assets/folders', () => ({
   getAssetFolder: mockGetAssetFolder,
-}));
-
-vi.mock('svelte/store', () => ({
-  get: mockGet,
 }));
 
 describe('entry module', () => {
@@ -824,7 +820,7 @@ describe('React Helpers', () => {
     beforeEach(() => {
       mockGetAssetFolder.mockReset();
       mockIsAssetInFolder.mockReset();
-      mockGet.mockReset();
+      mockAllAssets.current = [];
     });
 
     it('should return empty array when asset folder is not found', () => {
@@ -851,7 +847,7 @@ describe('React Helpers', () => {
       ];
 
       mockGetAssetFolder.mockReturnValueOnce(mockAssetFolder);
-      mockGet.mockReturnValueOnce(mockAssets);
+      mockAllAssets.current = mockAssets;
       mockIsAssetInFolder.mockImplementation(() => true);
 
       const result = getAssociatedPreviewAssets({
@@ -876,7 +872,7 @@ describe('React Helpers', () => {
       ];
 
       mockGetAssetFolder.mockReturnValueOnce(mockAssetFolder);
-      mockGet.mockReturnValueOnce(mockAssets);
+      mockAllAssets.current = mockAssets;
       mockIsAssetInFolder.mockImplementation((asset) => asset.path.includes('/assets/'));
 
       const result = getAssociatedPreviewAssets({
@@ -895,8 +891,7 @@ describe('React Helpers', () => {
       mockGetField.mockReturnValue({ widget: 'text' });
       mockGetAssetFolder.mockReset();
       mockIsAssetInFolder.mockReset();
-      mockGet.mockReset();
-      mockGet.mockReturnValue([]);
+      mockAllAssets.current = [];
     });
 
     it('should not build the field metadata until it’s read', () => {

@@ -1,5 +1,4 @@
 import { stripSlashes } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
 import { commitChanges, fetchFileCommits } from '$lib/services/backends/git/gitlab/commits';
@@ -32,7 +31,7 @@ const REPO_PATH_REGEX = /(?<owner>.+)\/(?<repo>[^/]+)$/;
  * not GitLab.
  */
 export const init = () => {
-  const { backend } = get(cmsConfig) ?? {};
+  const { backend } = cmsConfig.current ?? {};
 
   if (backend?.name !== BACKEND_NAME) {
     return undefined;

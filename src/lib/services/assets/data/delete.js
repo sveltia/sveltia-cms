@@ -14,15 +14,15 @@ import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/da
  */
 export const updateStores = ({ assets }) => {
   // Clear asset info in the sidebar
-  focusedAsset.update((_focusedAsset) =>
-    assets.some(({ path }) => _focusedAsset?.path === path) ? undefined : _focusedAsset,
-  );
+  if (assets.some(({ path }) => focusedAsset.current?.path === path)) {
+    focusedAsset.current = undefined;
+  }
 
-  assetUpdatesToast.set({
+  assetUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
     deleted: true,
     count: assets.length,
-  });
+  };
 };
 
 /**

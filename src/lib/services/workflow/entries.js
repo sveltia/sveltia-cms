@@ -1,5 +1,4 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { get } from 'svelte/store';
 
 import { parseAssetFileInfo } from '$lib/services/backends/git/shared/fetch';
 import { createFileList } from '$lib/services/backends/process';
@@ -35,7 +34,7 @@ const completeEntry = (entry, previousPaths) => {
   ]);
 
   // `allEntries` holds the version currently on the configured branch
-  const publishedEntry = get(allEntries).find((published) =>
+  const publishedEntry = allEntries.current.find((published) =>
     Object.values(published.locales).some(({ path }) => paths.has(path)),
   );
 
@@ -143,7 +142,7 @@ export const convertPullRequest = async (pullRequest) => {
     const removedPaths = new Set(previousPaths);
 
     const removedEntries = previousPaths.length
-      ? get(allEntries).filter((entry) =>
+      ? allEntries.current.filter((entry) =>
           Object.values(entry.locales).some(({ path }) => removedPaths.has(path)),
         )
       : [];

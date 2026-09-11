@@ -6,7 +6,7 @@ vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
 }));
 
 vi.mock('$lib/services/contents/editor', () => ({
-  showDuplicateToast: { set: vi.fn(), subscribe: vi.fn() },
+  showDuplicateToast: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
@@ -45,7 +45,7 @@ describe('contents/draft/create/duplicate', () => {
   /** @type {any} */
   let entryDraft;
   /** @type {any} */
-  let mockShowDuplicateToastSet;
+  let mockShowDuplicateToast;
   /** @type {any} */
   let mockGetField;
   /** @type {any} */
@@ -65,7 +65,8 @@ describe('contents/draft/create/duplicate', () => {
     const { getInitialValue } = await import('$lib/services/contents/fields/uuid/helpers.js');
     const { getSlugEditorProp } = await import('$lib/services/contents/draft/create');
 
-    mockShowDuplicateToastSet = showDuplicateToast.set;
+    mockShowDuplicateToast = showDuplicateToast;
+    showDuplicateToast.current = false;
     mockGetField = getField;
     mockGetHiddenFieldDefaultValueMap = getDefaultValueMap;
     mockGetInitialUuidValue = getInitialValue;
@@ -504,7 +505,7 @@ describe('contents/draft/create/duplicate', () => {
 
       duplicateDraft(entryDraft);
 
-      expect(mockShowDuplicateToastSet).toHaveBeenCalledWith(true);
+      expect(mockShowDuplicateToast.current).toBe(true);
     });
 
     it('should use collectionFile i18n when available', async () => {

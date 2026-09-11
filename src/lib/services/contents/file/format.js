@@ -1,5 +1,4 @@
 import { stringify as stringifyTOML } from 'smol-toml';
-import { get } from 'svelte/store';
 import { stringify as stringifyYAML } from 'yaml';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
@@ -18,7 +17,7 @@ import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
  * @returns {string} Formatted document.
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  */
-export const formatJSON = (obj, options = get(cmsConfig)?.output?.json ?? {}) => {
+export const formatJSON = (obj, options = cmsConfig.current?.output?.json ?? {}) => {
   const {
     indent_style: indentStyle = 'space',
     indent_size: indentSize = indentStyle === 'tab' ? 1 : 2,
@@ -51,7 +50,7 @@ export const formatTOML = (obj) => stringifyTOML(obj).trim();
  */
 export const formatYAML = (
   obj,
-  options = get(cmsConfig)?.output?.yaml ?? {},
+  options = cmsConfig.current?.output?.yaml ?? {},
   legacyOptions = {},
 ) => {
   const { indent_size: indent = 2, indent_sequences: indentSeq = true, quote = 'none' } = options;

@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { cmsConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders } from '$lib/services/contents';
 import { getCollection, getValidCollections } from '$lib/services/contents/collection';
@@ -89,7 +87,7 @@ export const getCollectionFileEntry = (collectionName, fileName) => {
   // Pre-find the valid file paths from `allEntryFolders` to avoid calling
   // `getAssociatedCollections()` per entry, which iterates `allEntryFolders` internally for each
   // entry.
-  const folderInfo = get(allEntryFolders).find(
+  const folderInfo = allEntryFolders.current.find(
     ({ collectionName: cn, fileName: fn }) => cn === collectionName && fn === fileName,
   );
 
@@ -99,7 +97,7 @@ export const getCollectionFileEntry = (collectionName, fileName) => {
 
   const validPaths = new Set(Object.values(folderInfo.filePathMap));
 
-  return get(allEntries).find((entry) =>
+  return allEntries.current.find((entry) =>
     Object.values(entry.locales).some(({ path }) => validPaths.has(path)),
   );
 };
@@ -112,7 +110,7 @@ export const getCollectionFileEntry = (collectionName, fileName) => {
  */
 export const getCollectionFileIndex = (collectionName, fileName) => {
   if (collectionName && fileName) {
-    const { collections, singletons } = /** @type {InternalCmsConfig} */ (get(cmsConfig));
+    const { collections, singletons } = /** @type {InternalCmsConfig} */ (cmsConfig.current);
 
     if (collectionName === '_singletons') {
       if (Array.isArray(singletons)) {

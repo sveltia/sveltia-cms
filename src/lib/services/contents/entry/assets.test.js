@@ -24,7 +24,7 @@ const {
   mockGetAssetByPath: vi.fn(),
   mockGetAssetFoldersByPath: vi.fn(),
   mockGetAssetFolder: vi.fn(),
-  mockAllAssets: { set: vi.fn(), subscribe: vi.fn() },
+  mockAllAssets: { current: /** @type {any} */ (undefined) },
   mockGetPathInfo: vi.fn(),
   mockGetEntriesByCollection: vi.fn(() => /** @type {any[]} */ ([])),
 }));
@@ -235,7 +235,7 @@ describe('getAssociatedAssets', () => {
 
     // Reset to default implementations
     mockGetAssetFolder.mockReturnValue(undefined);
-    mockAllAssets.subscribe.mockReturnValue(vi.fn());
+    mockAllAssets.current = [];
     mockGetPathInfo.mockImplementation((path) => ({
       dirname: path.split('/').slice(0, -1).join('/'),
       basename: path.split('/').pop(),
@@ -658,10 +658,7 @@ describe('getAssociatedAssets', () => {
         extension: '.md',
       };
     });
-    mockAllAssets.subscribe.mockImplementation((callback) => {
-      callback([mockAsset]);
-      return vi.fn();
-    });
+    mockAllAssets.current = /** @type {any} */ ([mockAsset]);
 
     const result = getAssociatedAssets({
       entry: entryWithContent,
@@ -735,11 +732,7 @@ describe('getAssociatedAssets', () => {
         extension: '.md',
       };
     });
-    mockAllAssets.subscribe.mockImplementation((callback) => {
-      // Same asset appears in allAssets (as orphaned)
-      callback([sharedAsset]);
-      return vi.fn();
-    });
+    mockAllAssets.current = /** @type {any} */ ([sharedAsset]);
 
     const result = getAssociatedAssets({
       entry: entryWithContent,
@@ -804,10 +797,7 @@ describe('getAssociatedAssets', () => {
         extension: '.md',
       };
     });
-    mockAllAssets.subscribe.mockImplementation((callback) => {
-      callback([mockAsset]);
-      return vi.fn();
-    });
+    mockAllAssets.current = /** @type {any} */ ([mockAsset]);
 
     const result = getAssociatedAssets({
       entry: entryWithContent,
@@ -979,10 +969,7 @@ describe('getAssociatedAssets', () => {
         extension: '.md',
       };
     });
-    mockAllAssets.subscribe.mockImplementation((callback) => {
-      callback([mockAsset]);
-      return vi.fn();
-    });
+    mockAllAssets.current = /** @type {any} */ ([mockAsset]);
 
     const result = getAssociatedAssets({
       entry: entryWithContent,
@@ -1013,11 +1000,7 @@ describe('getAssociatedAssets', () => {
         filename: path.slice(path.lastIndexOf('/') + 1),
         extension: '',
       }));
-      mockAllAssets.subscribe.mockImplementation((/** @type {any} */ callback) => {
-        callback(assets);
-
-        return vi.fn();
-      });
+      mockAllAssets.current = assets;
     };
 
     const parentEntry = /** @type {any} */ ({
@@ -1173,10 +1156,7 @@ describe('getAssociatedAssets', () => {
         extension: '.md',
       };
     });
-    mockAllAssets.subscribe.mockImplementation((callback) => {
-      callback([mockAsset]);
-      return vi.fn();
-    });
+    mockAllAssets.current = /** @type {any} */ ([mockAsset]);
 
     const result = getAssociatedAssets({
       entry: entryWithContent,
@@ -1241,10 +1221,7 @@ describe('getAssociatedAssets', () => {
         extension: '.md',
       };
     });
-    mockAllAssets.subscribe.mockImplementation((callback) => {
-      callback([mockAsset]);
-      return vi.fn();
-    });
+    mockAllAssets.current = /** @type {any} */ ([mockAsset]);
 
     const result = getAssociatedAssets({
       entry: entryWithContent,

@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { IndexedDB } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets';
@@ -23,21 +22,17 @@ import {
 
 // Mock dependencies
 vi.mock('@sveltia/utils/storage');
-vi.mock('$lib/services/assets');
-vi.mock('$lib/services/backends/git/shared/config');
+vi.mock('$lib/services/assets', () => ({ allAssets: { current: [] } }));
+vi.mock('$lib/services/backends/git/shared/config', () => ({ gitConfigFiles: { current: [] } }));
 vi.mock('$lib/services/backends/process');
-vi.mock('$lib/services/config');
-vi.mock('$lib/services/contents');
+vi.mock('$lib/services/config', () => ({ cmsConfigVersion: { current: undefined } }));
+vi.mock('$lib/services/contents', () => ({
+  allEntries: { current: [] },
+  dataLoaded: { current: false },
+  entryParseErrors: { current: [] },
+}));
 vi.mock('$lib/services/contents/file/process');
 vi.mock('$lib/services/deployments/publish');
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(),
-  };
-});
 
 const lastConfigHash = 'config-hash-1';
 
@@ -46,9 +41,7 @@ describe('git/shared/fetch', () => {
   let mockCacheDB;
 
   beforeEach(() => {
-    vi.mocked(get).mockImplementation((store) =>
-      store === cmsConfigVersion ? lastConfigHash : undefined,
-    );
+    cmsConfigVersion.current = lastConfigHash;
 
     mockMetaDB = {
       entries: vi.fn(),
@@ -412,22 +405,6 @@ describe('git/shared/fetch', () => {
   });
 
   describe('updateStores', () => {
-    const mockStores = {
-      allEntries: { set: vi.fn() },
-      allAssets: { set: vi.fn() },
-      gitConfigFiles: { set: vi.fn() },
-      entryParseErrors: { set: vi.fn() },
-      dataLoaded: { set: vi.fn() },
-    };
-
-    beforeEach(() => {
-      vi.mocked(allEntries).set = mockStores.allEntries.set;
-      vi.mocked(allAssets).set = mockStores.allAssets.set;
-      vi.mocked(gitConfigFiles).set = mockStores.gitConfigFiles.set;
-      vi.mocked(entryParseErrors).set = mockStores.entryParseErrors.set;
-      vi.mocked(dataLoaded).set = mockStores.dataLoaded.set;
-    });
-
     it('should update all stores with provided data', () => {
       const entries = [{ path: 'entry1.md' }];
       const assets = [{ path: 'asset1.jpg' }];
@@ -436,11 +413,11 @@ describe('git/shared/fetch', () => {
 
       updateStores({ entries, assets, configFiles, errors });
 
-      expect(allEntries.set).toHaveBeenCalledWith(entries);
-      expect(allAssets.set).toHaveBeenCalledWith(assets);
-      expect(gitConfigFiles.set).toHaveBeenCalledWith(configFiles);
-      expect(entryParseErrors.set).toHaveBeenCalledWith(errors);
-      expect(dataLoaded.set).toHaveBeenCalledWith(true);
+      expect(allEntries.current).toEqual(entries);
+      expect(allAssets.current).toEqual(assets);
+      expect(gitConfigFiles.current).toEqual(configFiles);
+      expect(entryParseErrors.current).toEqual(errors);
+      expect(dataLoaded.current).toEqual(true);
     });
 
     it('should update stores with empty errors array by default', () => {
@@ -450,8 +427,8 @@ describe('git/shared/fetch', () => {
 
       updateStores({ entries, assets, configFiles });
 
-      expect(entryParseErrors.set).toHaveBeenCalledWith([]);
-      expect(dataLoaded.set).toHaveBeenCalledWith(true);
+      expect(entryParseErrors.current).toEqual([]);
+      expect(dataLoaded.current).toEqual(true);
     });
   });
 
@@ -607,10 +584,10 @@ describe('git/shared/fetch', () => {
         fetchFileContents: mockFetchFileContents,
       });
 
-      expect(allEntries.set).toHaveBeenCalledWith([]);
-      expect(allAssets.set).toHaveBeenCalledWith([]);
-      expect(gitConfigFiles.set).toHaveBeenCalledWith([]);
-      expect(dataLoaded.set).toHaveBeenCalledWith(true);
+      expect(allEntries.current).toEqual([]);
+      expect(allAssets.current).toEqual([]);
+      expect(gitConfigFiles.current).toEqual([]);
+      expect(dataLoaded.current).toEqual(true);
     });
 
     it('should fetch and process entries, assets, and config files', async () => {
@@ -688,7 +665,7 @@ describe('git/shared/fetch', () => {
         fetchFileContents: mockFetchFileContents,
       });
 
-      expect(entryParseErrors.set).toHaveBeenCalledWith([parseError]);
+      expect(entryParseErrors.current).toEqual([parseError]);
     });
 
     it('should skip fetching file contents when all files are cached', async () => {

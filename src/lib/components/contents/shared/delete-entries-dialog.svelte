@@ -32,10 +32,12 @@
   // Deleting an unpublished entry discards the draft instead of committing a deletion, so the two
   // kinds of entries have to be handled separately
   const draftEntries = $derived(
-    /** @type {UnpublishedEntry[]} */ ($selectedEntries.filter((entry) => 'workflow' in entry)),
+    /** @type {UnpublishedEntry[]} */ (
+      selectedEntries.current.filter((entry) => 'workflow' in entry)
+    ),
   );
   const publishedEntries = $derived(
-    /** @type {Entry[]} */ ($selectedEntries.filter((entry) => !('workflow' in entry))),
+    /** @type {Entry[]} */ (selectedEntries.current.filter((entry) => !('workflow' in entry))),
   );
 
   /**
@@ -44,7 +46,7 @@
    * @returns {Asset[]} Assets, or an empty list unless the collection stores them with the entry.
    */
   const getEntryAssets = (entry) => {
-    const collectionName = $selectedCollection?.name;
+    const collectionName = selectedCollection.current?.name;
 
     return collectionName && getAssetFolder({ collectionName })?.entryRelative
       ? getAssociatedAssets({ entry, collectionName, relative: true })
@@ -52,7 +54,7 @@
   };
 
   const associatedAssets = $derived.by(() => {
-    const collectionName = $selectedCollection?.name;
+    const collectionName = selectedCollection.current?.name;
 
     // Assets committed alongside an unpublished entry don’t exist on the configured branch yet, so
     // only look at the published entries here
@@ -80,24 +82,24 @@
       }
 
       if (publishedEntries.length) {
-        if ($workflowEnabled && $selectedCollection) {
+        if (workflowEnabled.current && selectedCollection.current) {
           // Committing the removals straight to the configured branch would bypass review and be
           // rejected outright when the branch is protected
           // @see https://github.com/decaporg/decap-cms/issues/6610
           await deleteWorkflowEntries(
             publishedEntries.map((entry) => ({
               entry,
-              collection: /** @type {any} */ ($selectedCollection),
+              collection: /** @type {any} */ (selectedCollection.current),
               assets: getEntryAssets(entry),
             })),
           );
 
-          contentUpdatesToast.set({
+          contentUpdatesToast.current = {
             ...UPDATE_TOAST_DEFAULT_STATE,
             deleted: true,
             deletionPending: true,
             count: publishedEntries.length,
-          });
+          };
         } else {
           await deleteEntries(publishedEntries, associatedAssets);
         }
@@ -112,21 +114,22 @@
 
     // Discarding a draft doesn’t change `listedEntries`, which is what normally resets the
     // selection, so clear it here to avoid a stale selection
-    $selectedEntries = [];
+    selectedEntries.current = [];
   };
 </script>
 
 <ConfirmationDialog
   bind:open
-  title={_('delete_entries', { values: { count: $selectedEntries.length } })}
+  title={_('delete_entries', { values: { count: selectedEntries.current.length } })}
   okLabel={_('delete')}
   onOk={async () => {
     await deleteSelectedEntries();
   }}
 >
   {@const all =
-    $selectedEntries.length > 1 &&
-    $selectedEntries.length === $listedEntries.length + $listedUnpublishedEntries.length}
+    selectedEntries.current.length > 1 &&
+    selectedEntries.current.length ===
+      listedEntries.current.length + listedUnpublishedEntries.current.length}
   {_(
     associatedAssets.length
       ? all
@@ -135,7 +138,7 @@
       : all
         ? 'confirm_deleting_all_entries'
         : 'confirm_deleting_selected_entries',
-    { values: { count: $selectedEntries.length } },
+    { values: { count: selectedEntries.current.length } },
   )}
   {#if draftEntries.length}
     {_(

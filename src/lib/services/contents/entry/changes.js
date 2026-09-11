@@ -1,5 +1,4 @@
 import { IndexedDB } from '@sveltia/utils/storage';
-import { get } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
@@ -48,7 +47,7 @@ export const resolveCacheDB = (provided) => {
     return provided;
   }
 
-  const databaseName = get(backend)?.repository?.databaseName;
+  const databaseName = backend.current?.repository?.databaseName;
 
   return databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
 };

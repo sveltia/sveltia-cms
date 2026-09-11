@@ -2,7 +2,8 @@
 /* eslint-disable jsdoc/require-param-description */
 /* eslint-disable jsdoc/require-description */
 
-import { get } from 'svelte/store';
+// @vitest-environment jsdom
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -41,7 +42,22 @@ vi.mock('@sveltia/utils/string', async () => {
   };
 });
 vi.mock('flat');
-vi.mock('$lib/services/integrations/media-libraries/default');
+vi.mock('$lib/services/integrations/media-libraries/default', () => ({
+  getDefaultMediaLibraryOptions: vi.fn(() => ({
+    enabled: true,
+    config: { max_file_size: Infinity, multiple: false, transformations: undefined },
+  })),
+  transformFile: vi.fn(),
+}));
+// Some modules above read the preferences, whose effect needs `matchMedia()`, which jsdom lacks
+// The backend services imported below pull in the environment detection, which isn’t needed here
+vi.mock('$lib/services/user/env.svelte', () => ({
+  env: { isLocalHost: false },
+}));
+
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: { devModeEnabled: false },
+}));
 vi.mock('$lib/services/utils/media/image/validate', () => ({
   isValidImage: vi.fn().mockResolvedValue(true),
 }));
@@ -55,13 +71,13 @@ vi.mock('$lib/services/utils/file');
 
 // Mock folders module with real stores for testing side effects
 vi.mock('$lib/services/assets/folders', async () => {
-  const { writable } = await import('svelte/store');
+  const { createRawState } = await import('$lib/services/utils/state.svelte');
 
   return {
-    allAssetFolders: writable([]),
-    globalAssetFolder: writable({}),
-    selectedAssetFolder: writable(),
-    targetAssetFolder: writable({}),
+    allAssetFolders: createRawState([]),
+    globalAssetFolder: createRawState({}),
+    selectedAssetFolder: createRawState(undefined),
+    targetAssetFolder: createRawState({}),
     getAssetFolder: vi.fn(),
   };
 });
@@ -70,13 +86,13 @@ describe('assets/index', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset all stores
-    allAssets.set([]);
-    selectedAssets.set([]);
-    focusedAsset.set(undefined);
-    overlaidAsset.set(undefined);
-    uploadingAssets.set({ folder: undefined, files: [] });
-    editingAsset.set(undefined);
-    renamingAsset.set(undefined);
+    allAssets.current = [];
+    selectedAssets.current = [];
+    focusedAsset.current = undefined;
+    overlaidAsset.current = undefined;
+    uploadingAssets.current = { folder: undefined, files: [] };
+    editingAsset.current = undefined;
+    renamingAsset.current = undefined;
   });
 
   afterEach(() => {
@@ -85,44 +101,44 @@ describe('assets/index', () => {
 
   describe('stores initialization', () => {
     it('should initialize allAssets as empty array', () => {
-      expect(get(allAssets)).toEqual([]);
+      expect(allAssets.current).toEqual([]);
     });
 
     it('should initialize selectedAssets as empty array', () => {
-      expect(get(selectedAssets)).toEqual([]);
+      expect(selectedAssets.current).toEqual([]);
     });
 
     it('should derive selectedAssetPathSet from selectedAssets', () => {
-      selectedAssets.set([
+      selectedAssets.current = [
         /** @type {any} */ ({ path: 'a.jpg' }),
         /** @type {any} */ ({ path: 'b.jpg' }),
-      ]);
-      expect(get(selectedAssetPathSet)).toEqual(new Set(['a.jpg', 'b.jpg']));
-      selectedAssets.set([]);
-      expect(get(selectedAssetPathSet)).toEqual(new Set());
+      ];
+      expect(selectedAssetPathSet.current).toEqual(new Set(['a.jpg', 'b.jpg']));
+      selectedAssets.current = [];
+      expect(selectedAssetPathSet.current).toEqual(new Set());
     });
 
     it('should initialize focusedAsset as undefined', () => {
-      expect(get(focusedAsset)).toBeUndefined();
+      expect(focusedAsset.current).toBeUndefined();
     });
 
     it('should initialize overlaidAsset as undefined', () => {
-      expect(get(overlaidAsset)).toBeUndefined();
+      expect(overlaidAsset.current).toBeUndefined();
     });
 
     it('should initialize uploadingAssets with correct structure', () => {
-      expect(get(uploadingAssets)).toEqual({
+      expect(uploadingAssets.current).toEqual({
         folder: undefined,
         files: [],
       });
     });
 
     it('should initialize editingAsset as undefined', () => {
-      expect(get(editingAsset)).toBeUndefined();
+      expect(editingAsset.current).toBeUndefined();
     });
 
     it('should initialize renamingAsset as undefined', () => {
-      expect(get(renamingAsset)).toBeUndefined();
+      expect(renamingAsset.current).toBeUndefined();
     });
   });
 
@@ -158,7 +174,7 @@ describe('assets/index', () => {
     });
 
     it('should initialize with correct default state', () => {
-      const result = get(processedAssets);
+      const result = processedAssets.current;
 
       expect(result).toEqual({
         processing: false,
@@ -180,27 +196,19 @@ describe('assets/index', () => {
       Object.defineProperty(smallFile, 'size', { value: 500000 });
       Object.defineProperty(largeFile, 'size', { value: 1500000 });
 
-      let latestState = /** @type {any} */ (null);
-
-      const unsubscribe = processedAssets.subscribe((state) => {
-        latestState = state;
-      });
-
-      uploadingAssets.set({
+      uploadingAssets.current = {
         folder: undefined,
         files: [smallFile, largeFile],
-      });
+      };
 
       // Wait for async processing
       await new Promise((resolve) => {
         setTimeout(resolve, 50);
       });
 
-      unsubscribe();
-
-      expect(latestState.processing).toBe(false);
-      expect(latestState.validFiles).toEqual([smallFile]);
-      expect(latestState.oversizedFiles).toEqual([largeFile]);
+      expect(processedAssets.current.processing).toBe(false);
+      expect(processedAssets.current.validFiles).toEqual([smallFile]);
+      expect(processedAssets.current.oversizedFiles).toEqual([largeFile]);
     });
 
     it('should separate files the browser cannot decode', async () => {
@@ -214,26 +222,19 @@ describe('assets/index', () => {
 
       vi.mocked(isValidImage).mockImplementation(async (file) => file !== badFile);
 
-      let latestState = /** @type {any} */ (null);
-
-      const unsubscribe = processedAssets.subscribe((state) => {
-        latestState = state;
-      });
-
-      uploadingAssets.set({ folder: undefined, files: [goodFile, badFile] });
+      uploadingAssets.current = { folder: undefined, files: [goodFile, badFile] };
 
       // Wait for async processing
       await new Promise((resolve) => {
         setTimeout(resolve, 50);
       });
 
-      unsubscribe();
       vi.mocked(isValidImage).mockResolvedValue(true);
 
       // The invalid file is excluded from the uploadable list, not just flagged
-      expect(latestState.validFiles).toEqual([goodFile]);
-      expect(latestState.oversizedFiles).toEqual([]);
-      expect(latestState.invalidFiles).toEqual([badFile]);
+      expect(processedAssets.current.validFiles).toEqual([goodFile]);
+      expect(processedAssets.current.oversizedFiles).toEqual([]);
+      expect(processedAssets.current.invalidFiles).toEqual([badFile]);
     });
 
     it('should handle file transformations', async () => {
@@ -254,27 +255,19 @@ describe('assets/index', () => {
 
       transformFileMock.mockResolvedValue(transformedFile);
 
-      let latestState = /** @type {any} */ (null);
-
-      const unsubscribe = processedAssets.subscribe((state) => {
-        latestState = state;
-      });
-
-      uploadingAssets.set({
+      uploadingAssets.current = {
         folder: undefined,
         files: [originalFile],
-      });
+      };
 
       // Wait for async processing to complete
       await new Promise((resolve) => {
         setTimeout(resolve, 50);
       });
 
-      unsubscribe();
-
-      expect(latestState.processing).toBe(false);
+      expect(processedAssets.current.processing).toBe(false);
       // original file since no transformations
-      expect(latestState.validFiles).toEqual([originalFile]);
+      expect(processedAssets.current.validFiles).toEqual([originalFile]);
       expect(transformFileMock).not.toHaveBeenCalled();
     });
 
@@ -298,30 +291,21 @@ describe('assets/index', () => {
         },
       });
 
-      let latestState = /** @type {any} */ (null);
-
-      // Subscribe persistently so async updates are captured
-      const unsubscribe = processedAssets.subscribe((state) => {
-        latestState = state;
-      });
-
       transformFileMock.mockResolvedValue(transformedFile);
 
-      uploadingAssets.set({
+      uploadingAssets.current = {
         folder: undefined,
         files: [originalFile],
-      });
+      };
 
       // Wait for the async IIFE, Promise.all, and store updates to settle
       await new Promise((resolve) => {
         setTimeout(resolve, 100);
       });
 
-      unsubscribe();
-
-      expect(latestState.processing).toBe(false);
+      expect(processedAssets.current.processing).toBe(false);
       expect(transformFileMock).toHaveBeenCalledWith(originalFile, transformations);
-      expect(latestState.validFiles).toEqual([transformedFile]);
+      expect(processedAssets.current.validFiles).toEqual([transformedFile]);
     });
 
     it('should populate transformedFileMap when file is transformed', async () => {
@@ -342,29 +326,21 @@ describe('assets/index', () => {
         },
       });
 
-      let latestState = /** @type {any} */ (null);
-
-      const unsubscribe = processedAssets.subscribe((state) => {
-        latestState = state;
-      });
-
       // Return a different file instance (transformed)
       transformFileMock.mockResolvedValue(transformedFile);
 
-      uploadingAssets.set({
+      uploadingAssets.current = {
         folder: undefined,
         files: [originalFile],
-      });
+      };
 
       // Wait for async processing to complete
       await new Promise((resolve) => {
         setTimeout(resolve, 100);
       });
 
-      unsubscribe();
-
       // The transformedFileMap should map transformedFile -> originalFile
-      expect(latestState.transformedFileMap.get(transformedFile)).toBe(originalFile);
+      expect(processedAssets.current.transformedFileMap.get(transformedFile)).toBe(originalFile);
     });
 
     it('should not populate transformedFileMap when file is not transformed', async () => {
@@ -383,29 +359,21 @@ describe('assets/index', () => {
         },
       });
 
-      let latestState = /** @type {any} */ (null);
-
-      const unsubscribe = processedAssets.subscribe((state) => {
-        latestState = state;
-      });
-
       // Return the same file instance (no actual transformation)
       transformFileMock.mockResolvedValue(originalFile);
 
-      uploadingAssets.set({
+      uploadingAssets.current = {
         folder: undefined,
         files: [originalFile],
-      });
+      };
 
       // Wait for async processing to complete
       await new Promise((resolve) => {
         setTimeout(resolve, 100);
       });
 
-      unsubscribe();
-
       // transformedFileMap should not have the original file mapped (file not transformed)
-      expect(latestState.transformedFileMap.get(originalFile)).toBeUndefined();
+      expect(processedAssets.current.transformedFileMap.get(originalFile)).toBeUndefined();
     });
 
     it('should discard the results of a superseded run', async () => {
@@ -427,15 +395,19 @@ describe('assets/index', () => {
           }),
       );
 
-      let latestState = /** @type {any} */ (null);
+      // A slow selection, superseded by another one before it settles
+      uploadingAssets.current = { folder: undefined, files: [firstFile] };
 
-      const unsubscribe = processedAssets.subscribe((state) => {
-        latestState = state;
+      // Let the effect start the first run
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
       });
 
-      // A slow selection, superseded by another one before it settles
-      uploadingAssets.set({ folder: undefined, files: [firstFile] });
-      uploadingAssets.set({ folder: undefined, files: [secondFile] });
+      uploadingAssets.current = { folder: undefined, files: [secondFile] };
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
 
       resolvers['second.jpg'](true);
 
@@ -443,7 +415,7 @@ describe('assets/index', () => {
         setTimeout(resolve, 10);
       });
 
-      expect(latestState.validFiles).toEqual([secondFile]);
+      expect(processedAssets.current.validFiles).toEqual([secondFile]);
 
       // The superseded run settles last, and must not overwrite the current results
       resolvers['first.jpg'](true);
@@ -452,10 +424,9 @@ describe('assets/index', () => {
         setTimeout(resolve, 10);
       });
 
-      unsubscribe();
       vi.mocked(isValidImage).mockResolvedValue(true);
 
-      expect(latestState.validFiles).toEqual([secondFile]);
+      expect(processedAssets.current.validFiles).toEqual([secondFile]);
     });
 
     it('should set processing state during transformations', async () => {
@@ -472,15 +443,15 @@ describe('assets/index', () => {
 
       transformFileMock.mockResolvedValue(file);
 
-      uploadingAssets.set({
+      uploadingAssets.current = {
         folder: undefined,
         files: [file],
-      });
+      };
 
       // Since transformations is undefined, processing should remain false
       await new Promise((resolve) => {
         setTimeout(() => {
-          const result = get(processedAssets);
+          const result = processedAssets.current;
 
           expect(result.processing).toBe(false);
           resolve(undefined);
@@ -492,7 +463,7 @@ describe('assets/index', () => {
         setTimeout(resolve, 20);
       });
 
-      const finalResult = get(processedAssets);
+      const finalResult = processedAssets.current;
 
       expect(finalResult.processing).toBe(false);
     });
@@ -507,17 +478,17 @@ describe('assets/index', () => {
         },
       });
 
-      uploadingAssets.set({
+      uploadingAssets.current = {
         folder: undefined,
         files: [],
-      });
+      };
 
       // Wait for async processing
       await new Promise((resolve) => {
         setTimeout(resolve, 0);
       });
 
-      const result = get(processedAssets);
+      const result = processedAssets.current;
 
       expect(result.processing).toBe(false);
       expect(result.validFiles).toEqual([]);
@@ -534,25 +505,17 @@ describe('assets/index', () => {
       Object.defineProperty(file2, 'size', { value: 1000001 }); // Just over max size
       Object.defineProperty(file3, 'size', { value: 999999 }); // Just under max size
 
-      let latestState = /** @type {any} */ (null);
-
-      const unsubscribe = processedAssets.subscribe((state) => {
-        latestState = state;
-      });
-
-      uploadingAssets.set({
+      uploadingAssets.current = {
         folder: undefined,
         files: [file1, file2, file3],
-      });
+      };
 
       await new Promise((resolve) => {
         setTimeout(resolve, 50);
       });
 
-      unsubscribe();
-
-      expect(latestState.validFiles).toEqual([file1, file3]);
-      expect(latestState.oversizedFiles).toEqual([file2]);
+      expect(processedAssets.current.validFiles).toEqual([file1, file3]);
+      expect(processedAssets.current.oversizedFiles).toEqual([file2]);
     });
   });
 
@@ -560,7 +523,7 @@ describe('assets/index', () => {
     it('should return an asset by internal path', () => {
       const asset = /** @type {any} */ ({ path: 'assets/photo.jpg', name: 'photo.jpg' });
 
-      allAssets.set([asset]);
+      allAssets.current = [asset];
 
       expect(getAssetByInternalPath('assets/photo.jpg')).toBe(asset);
     });
@@ -569,10 +532,10 @@ describe('assets/index', () => {
       const oldAsset = /** @type {any} */ ({ path: 'assets/old.jpg', name: 'old.jpg' });
       const newAsset = /** @type {any} */ ({ path: 'assets/new.jpg', name: 'new.jpg' });
 
-      allAssets.set([oldAsset]);
+      allAssets.current = [oldAsset];
       expect(getAssetByInternalPath('assets/old.jpg')).toBe(oldAsset);
 
-      allAssets.set([newAsset]);
+      allAssets.current = [newAsset];
 
       expect(getAssetByInternalPath('assets/old.jpg')).toBeUndefined();
       expect(getAssetByInternalPath('assets/new.jpg')).toBe(newAsset);
@@ -667,7 +630,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByPath({
         value: '/assets/image.jpg',
@@ -718,7 +681,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
       resolvePathMock.mockReturnValue('content/posts/image.jpg');
       getAssociatedCollectionsMock.mockReturnValue([mockCollection]);
       getCollectionFilesByEntryMock.mockReturnValue([]);
@@ -762,7 +725,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByPath({
         value: '/assets/image.jpg#fragment',
@@ -795,7 +758,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByPath({
         value: '/assets/image.jpg#section:subsection',
@@ -846,7 +809,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
       resolvePathMock.mockReturnValue('content/posts/image.jpg');
       getAssociatedCollectionsMock.mockReturnValue([mockCollection]);
       getCollectionFilesByEntryMock.mockReturnValue([]);
@@ -882,7 +845,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByPath({
         value: '@assets/image.jpg',
@@ -927,7 +890,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([matchingAsset, nonMatchingAsset]);
+      allAssets.current = [matchingAsset, nonMatchingAsset];
 
       const result = getAssetsByFolder(folder);
 
@@ -952,7 +915,7 @@ describe('assets/index', () => {
         folder: { ...folder },
       };
 
-      allAssets.set([matchingAsset]);
+      allAssets.current = [matchingAsset];
 
       expect(isAssetInFolder(/** @type {any} */ (matchingAsset), folder)).toBe(true);
       expect(getAssetsByFolder(folder)).toEqual([matchingAsset]);
@@ -982,7 +945,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([asset]);
+      allAssets.current = [asset];
 
       const result = getAssetsByFolder(folder);
 
@@ -1046,7 +1009,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([asset1, asset2, asset3]);
+      allAssets.current = [asset1, asset2, asset3];
 
       getPathInfoMock.mockImplementation((/** @type {string} */ path) => {
         if (path === 'assets/images/photo.jpg') return { dirname: 'assets/images' };
@@ -1076,7 +1039,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([asset]);
+      allAssets.current = [asset];
 
       getPathInfoMock.mockReturnValue({ dirname: 'assets/images' });
 
@@ -1106,19 +1069,21 @@ describe('assets/index', () => {
       };
 
       // Set focusedAsset to a value
-      focusedAsset.set(mockAsset);
-      expect(get(focusedAsset)).toBe(mockAsset);
+      focusedAsset.current = mockAsset;
+      expect(focusedAsset.current).toBe(mockAsset);
 
-      // Change selectedAssetFolder to trigger the subscription callback
-      selectedAssetFolder.set(
-        /** @type {any} */ ({
-          internalPath: 'different',
-          publicPath: '/different',
-        }),
-      );
+      // Change selectedAssetFolder to trigger the effect
+      selectedAssetFolder.current = /** @type {any} */ ({
+        internalPath: 'different',
+        publicPath: '/different',
+      });
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
 
       // focusedAsset should be reset to undefined
-      expect(get(focusedAsset)).toBe(undefined);
+      expect(focusedAsset.current).toBe(undefined);
     });
   });
 
@@ -1163,7 +1128,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1203,7 +1168,7 @@ describe('assets/index', () => {
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
       vi.mocked(getAssetFolder).mockReturnValue(undefined);
-      allAssets.set([]);
+      allAssets.current = [];
 
       getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1267,7 +1232,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/posts/assets/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/assets/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1307,7 +1272,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
-      allAssets.set([]);
+      allAssets.current = [];
 
       getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1461,7 +1426,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
-      allAssets.set([]);
+      allAssets.current = [];
 
       getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1499,7 +1464,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
-      allAssets.set([]);
+      allAssets.current = [];
 
       getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1635,7 +1600,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/test1/my-slug/images/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/test1/my-slug/images/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: storedPath,
@@ -1689,7 +1654,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/test1/my-slug/images/sub/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/test1/my-slug/images/sub/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: 'images/sub/photo.jpg',
@@ -1744,7 +1709,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('src/content/entries/images/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('src/content/entries/images/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: './images/photo.jpg',
@@ -1782,7 +1747,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
-      allAssets.set([]);
+      allAssets.current = [];
 
       getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1818,7 +1783,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/posts/images/other/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/images/other/photo.jpg');
-      allAssets.set([]);
+      allAssets.current = [];
 
       getAssetByRelativePathAndCollection({
         path: 'other/photo.jpg',
@@ -1885,7 +1850,7 @@ describe('assets/index', () => {
       vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
       vi.mocked(createPath).mockReturnValue('content/posts/my-slug/images1/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/my-slug/images1/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1940,7 +1905,7 @@ describe('assets/index', () => {
       vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
-      allAssets.set([]);
+      allAssets.current = [];
 
       getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1990,7 +1955,7 @@ describe('assets/index', () => {
       vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
       vi.mocked(createPath).mockReturnValue('content/posts/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/posts/photo.jpg');
-      allAssets.set([]);
+      allAssets.current = [];
 
       getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -2050,7 +2015,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('src/assets/blog/cover.jpg');
       vi.mocked(resolvePath).mockReturnValue('src/assets/blog/cover.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: storedPath,
@@ -2108,7 +2073,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('src/assets/blog/photo.jpg');
       vi.mocked(resolvePath).mockReturnValue('src/assets/blog/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: storedPath,
@@ -2170,7 +2135,7 @@ describe('assets/index', () => {
       vi.mocked(fillTemplate).mockReturnValueOnce('abc');
       vi.mocked(createPath).mockReturnValue('source/_posts/abc/img0.jpg');
       vi.mocked(resolvePath).mockReturnValue('source/_posts/abc/img0.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: 'img0.jpg',
@@ -2231,7 +2196,7 @@ describe('assets/index', () => {
 
       vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
       vi.mocked(createPath).mockReturnValue('uploads/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePath({
         path: 'photo.jpg',
@@ -2272,7 +2237,7 @@ describe('assets/index', () => {
 
       vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
       vi.mocked(createPath).mockReturnValue('uploads/custom/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePath({
         path: 'photo.jpg',
@@ -2320,7 +2285,7 @@ describe('assets/index', () => {
 
       vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
       vi.mocked(createPath).mockReturnValue('uploads/hero.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePath({
         path: 'hero.jpg',
@@ -2366,7 +2331,7 @@ describe('assets/index', () => {
 
       vi.mocked(getAssetFolder).mockReturnValue(mockFolder);
       vi.mocked(createPath).mockReturnValue('uploads/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       // path with publicPath prefix already included (e.g. public_folder: "uploads")
       const result = getAssetByRelativePath({
@@ -2412,8 +2377,8 @@ describe('assets/index', () => {
 
       vi.mocked(getAssetFolder).mockReturnValue(entryRelativeFolder);
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
-      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set(undefined);
-      allAssets.set([mockAsset]);
+      /** @type {any} */ (globalAssetFolder).current = undefined;
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePath({
         path: 'photo.jpg',
@@ -2425,7 +2390,7 @@ describe('assets/index', () => {
       expect(result).toEqual(mockAsset);
       expect(createPath).toHaveBeenCalledWith(['content/posts', 'images', 'photo.jpg']);
 
-      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set({});
+      /** @type {any} */ (globalAssetFolder).current = {};
     });
 
     it('should skip template-tag folders when no entry provided', async () => {
@@ -2441,8 +2406,8 @@ describe('assets/index', () => {
       };
 
       vi.mocked(getAssetFolder).mockReturnValue(templateTagFolder);
-      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set(undefined);
-      allAssets.set([]);
+      /** @type {any} */ (globalAssetFolder).current = undefined;
+      allAssets.current = [];
 
       const result = getAssetByRelativePath({
         path: 'photo.jpg',
@@ -2454,7 +2419,7 @@ describe('assets/index', () => {
       expect(result).toBeUndefined();
       expect(createPath).not.toHaveBeenCalled();
 
-      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set({});
+      /** @type {any} */ (globalAssetFolder).current = {};
     });
 
     it('should fall back to exact path match when no entry and folder scan fails', async () => {
@@ -2476,7 +2441,7 @@ describe('assets/index', () => {
       };
 
       vi.mocked(getAssetFolder).mockReturnValue(undefined);
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       // If the asset's own path is stored as the value (exact match), it should be found
       const result = getAssetByRelativePath({
@@ -2524,7 +2489,7 @@ describe('assets/index', () => {
 
       vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      allAssets.set([]); // Simulate no exact match found
+      allAssets.current = []; // Simulate no exact match found
 
       const result = getAssetByRelativePath({
         path: 'images/photo.jpg',
@@ -2588,7 +2553,7 @@ describe('assets/index', () => {
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
 
       // Set up assets so that fallback exact match finds the asset
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePath({
         path: 'photo.jpg',
@@ -2645,7 +2610,7 @@ describe('assets/index', () => {
       // THIS returns a non-empty array to trigger the if branch at line 174
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([mockCollectionFile]);
 
-      allAssets.set([]);
+      allAssets.current = [];
 
       getAssetByRelativePath({
         path: 'photo.jpg',
@@ -2678,7 +2643,7 @@ describe('assets/index', () => {
       };
 
       vi.mocked(stripSlashes).mockReturnValue('/assets/images/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/assets/images/photo.jpg',
@@ -2732,7 +2697,7 @@ describe('assets/index', () => {
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
 
       // Set up assets so the asset can be found
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/posts/images/photo.jpg',
@@ -2754,7 +2719,7 @@ describe('assets/index', () => {
       const { getAssetFolder } = await import('$lib/services/assets/folders');
 
       vi.mocked(stripSlashes).mockReturnValue('/nonexistent/photo.jpg');
-      allAssets.set([]);
+      allAssets.current = [];
       vi.mocked(getPathInfo).mockReturnValue({
         dirname: '/nonexistent',
         basename: 'photo.jpg',
@@ -2817,7 +2782,7 @@ describe('assets/index', () => {
       // Mock createPath to return the expected internal path with subfolder
       vi.mocked(createPath).mockReturnValue('content/posts/images/subfolder/photo.jpg');
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/posts/images/subfolder/photo.jpg',
@@ -2873,7 +2838,7 @@ describe('assets/index', () => {
       // Mock createPath to use original internal path
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/other/directory/photo.jpg',
@@ -2922,7 +2887,7 @@ describe('assets/index', () => {
         folder: mockFolder,
       };
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       getAssetByAbsolutePath({
         path: '/photo.jpg',
@@ -3037,7 +3002,7 @@ describe('assets/index', () => {
       // Mock createPath to use original internal path (not modified)
       vi.mocked(createPath).mockReturnValue('content/posts/images/photo.jpg');
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/posts/images/photo.jpg',
@@ -3097,7 +3062,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([differentMockAsset]);
+      allAssets.current = [differentMockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/posts/images-backup/photo.jpg',
@@ -3156,7 +3121,7 @@ describe('assets/index', () => {
       // Mock createPath to return the expected internal path with subfolder
       vi.mocked(createPath).mockReturnValue('content/posts/images/subfolder/deep/photo.jpg');
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/posts/images/subfolder/deep/photo.jpg',
@@ -3197,7 +3162,7 @@ describe('assets/index', () => {
         .mockReturnValueOnce(mockFolderWithTemplate)
         .mockReturnValueOnce(mockFolderWithTemplate);
 
-      allAssets.set([]);
+      allAssets.current = [];
 
       const result = getAssetByAbsolutePath({
         path: '/media/photo.jpg',
@@ -3269,7 +3234,7 @@ describe('assets/index', () => {
       vi.mocked(getAssetFolder).mockReturnValue(mockFolderWithTemplate);
 
       // Make globalAssetFolder falsy so it's filtered out
-      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set(undefined);
+      /** @type {any} */ (globalAssetFolder).current = undefined;
 
       // Setup mocks for template resolution
       vi.mocked(getAssociatedCollections).mockReturnValue([mockCollection]);
@@ -3277,7 +3242,7 @@ describe('assets/index', () => {
       vi.mocked(flatten).mockReturnValue({ slug: 'my-post' });
       vi.mocked(createPath).mockReturnValue('content/posts/my-post/media/photo.jpg');
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/media/photo.jpg',
@@ -3287,7 +3252,7 @@ describe('assets/index', () => {
       });
 
       // Restore globalAssetFolder to its default
-      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set({});
+      /** @type {any} */ (globalAssetFolder).current = {};
 
       expect(result).toEqual(mockAsset);
       expect(fillTemplate).toHaveBeenCalledWith(
@@ -3337,10 +3302,10 @@ describe('assets/index', () => {
         .mockReturnValueOnce(undefined)
         .mockReturnValueOnce(undefined);
 
-      allAssetFolders.set([mockFolderWithTemplate]);
+      allAssetFolders.current = [mockFolderWithTemplate];
       vi.mocked(getAssociatedCollections).mockReturnValue([]);
 
-      allAssets.set([]);
+      allAssets.current = [];
 
       const result = getAssetByAbsolutePath({
         path: '/media/photo.jpg',
@@ -3397,7 +3362,7 @@ describe('assets/index', () => {
       // 'assets/subfolder'
       vi.mocked(createPath).mockReturnValue('assets/subfolder/photo.jpg');
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/subfolder/photo.jpg',
@@ -3458,7 +3423,7 @@ describe('assets/index', () => {
       // Result should be content/posts/media/album/2024
       vi.mocked(createPath).mockReturnValueOnce('content/posts/media/album/2024/photo.jpg');
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/media/album/2024/photo.jpg',
@@ -3517,7 +3482,7 @@ describe('assets/index', () => {
         'static/images/gallery/albums/2024/march/photo.jpg',
       );
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/images/gallery/albums/2024/march/photo.jpg',
@@ -3568,7 +3533,7 @@ describe('assets/index', () => {
       });
       vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
       vi.mocked(createPath).mockReturnValue('content/posts/custom/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/custom/photo.jpg',
@@ -3625,7 +3590,7 @@ describe('assets/index', () => {
       });
       vi.mocked(getAssetFolder).mockReturnValue(mockFieldFolder);
       vi.mocked(createPath).mockReturnValue('content/posts/custom/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/custom/photo.jpg',
@@ -3686,7 +3651,7 @@ describe('assets/index', () => {
         .mockReturnValueOnce(undefined) // call 2: without typedKeyPath, with fileName
         .mockReturnValueOnce(undefined); // call 3: without typedKeyPath, without fileName
       vi.mocked(createPath).mockReturnValue('content/posts/my-slug/images1/photo.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/images1/photo.jpg',
@@ -3750,7 +3715,7 @@ describe('assets/index', () => {
         folder: folder1,
       };
 
-      allAssets.set([asset1, asset2, asset3]);
+      allAssets.current = [asset1, asset2, asset3];
 
       const result = getAssetsByFolder(folder1);
 
@@ -3792,7 +3757,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([asset1, asset2]);
+      allAssets.current = [asset1, asset2];
 
       getPathInfoMock.mockImplementation((/** @type {string} */ path) => {
         if (path === 'assets/nested/deep/folder/image.jpg') {
@@ -3861,7 +3826,7 @@ describe('assets/index', () => {
 
       vi.mocked(createPath).mockReturnValue('content/blog/2024/01/post/media/banner.jpg');
       vi.mocked(resolvePath).mockReturnValue('content/blog/2024/01/post/media/banner.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByRelativePathAndCollection({
         path: 'banner.jpg',
@@ -3913,7 +3878,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
       resolvePathMock.mockReturnValue('content/posts/2024/complex-entry/images/nested/deep.jpg');
       getAssociatedCollectionsMock.mockReturnValue([mockCollection]);
       getCollectionFilesByEntryMock.mockReturnValue([]);
@@ -3951,27 +3916,19 @@ describe('assets/index', () => {
         },
       });
 
-      let latestState = /** @type {any} */ (null);
-
-      const unsubscribe = processedAssets.subscribe((state) => {
-        latestState = state;
-      });
-
-      uploadingAssets.set({
+      uploadingAssets.current = {
         folder: undefined,
         files: [smallFile1, smallFile2, largeFile1, largeFile2],
-      });
+      };
 
       await new Promise((resolve) => {
         setTimeout(resolve, 50);
       });
 
-      unsubscribe();
-
-      expect(latestState.validFiles).toEqual([smallFile1, smallFile2]);
-      expect(latestState.oversizedFiles).toEqual([largeFile1, largeFile2]);
-      expect(latestState.validFiles.length).toBe(2);
-      expect(latestState.oversizedFiles.length).toBe(2);
+      expect(processedAssets.current.validFiles).toEqual([smallFile1, smallFile2]);
+      expect(processedAssets.current.oversizedFiles).toEqual([largeFile1, largeFile2]);
+      expect(processedAssets.current.validFiles.length).toBe(2);
+      expect(processedAssets.current.oversizedFiles.length).toBe(2);
     });
 
     it('should handle getAssetByAbsolutePath with global asset folder fallback', async () => {
@@ -4006,7 +3963,7 @@ describe('assets/index', () => {
       vi.mocked(getAssetFolder).mockReturnValue(undefined); // Collection folders not found
       vi.mocked(createPath).mockReturnValue('assets/global/photo.jpg');
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/assets/photo.jpg',
@@ -4037,7 +3994,7 @@ describe('assets/index', () => {
 
       vi.mocked(getAssociatedCollections).mockReturnValue([]);
       vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
-      allAssets.set([]);
+      allAssets.current = [];
 
       const result = getAssetByRelativePath({
         path: 'image.jpg',
@@ -4067,7 +4024,7 @@ describe('assets/index', () => {
       };
 
       stripSlashesMock.mockReturnValue('@assets/image.jpg');
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByPath({
         value: '@assets/image.jpg',
@@ -4118,7 +4075,7 @@ describe('assets/index', () => {
         },
       };
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
       resolvePathMock.mockReturnValue('content/image.jpg');
       getAssociatedCollectionsMock.mockReturnValue([mockCollection]);
       getCollectionFilesByEntryMock.mockReturnValue([]);
@@ -4165,7 +4122,7 @@ describe('assets/index', () => {
       vi.mocked(getAssetFolder).mockReturnValue(undefined);
       vi.mocked(createPath).mockReturnValue('dynamic/media/photo.jpg');
 
-      allAssets.set([mockAsset]);
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/media/photo.jpg',
@@ -4198,25 +4155,23 @@ describe('assets/index', () => {
       // evaluating the non-matching folder's predicate.
       // The folder without publicPath (undefined) also covers line 242 idx 1:
       // `folder.publicPath ?? ''` — the nullish coalescing fallback to ''.
-      allAssetFolders.set(
-        /** @type {any} */ ([
-          {
-            internalPath: 'content/posts/images',
-            publicPath: '/posts/images',
-            collectionName: 'posts',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
-          {
-            internalPath: 'content/other',
-            publicPath: undefined,
-            collectionName: 'other',
-            entryRelative: false,
-            hasTemplateTags: false,
-          },
-        ]),
-      );
-      allAssets.set([]);
+      allAssetFolders.current = /** @type {any} */ ([
+        {
+          internalPath: 'content/posts/images',
+          publicPath: '/posts/images',
+          collectionName: 'posts',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        {
+          internalPath: 'content/other',
+          publicPath: undefined,
+          collectionName: 'other',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ]);
+      allAssets.current = [];
 
       const result = getAssetByAbsolutePath({
         path: '/posts/images/photo.jpg',
@@ -4229,7 +4184,7 @@ describe('assets/index', () => {
       expect(result).toBeUndefined();
 
       // Restore allAssetFolders
-      allAssetFolders.set([]);
+      allAssetFolders.current = [];
     });
 
     it('should treat regex metacharacters in publicPath as literals', async () => {
@@ -4264,8 +4219,8 @@ describe('assets/index', () => {
       };
 
       // Set up folder with regex metacharacters in publicPath
-      allAssetFolders.set([mockAsset.folder]);
-      allAssets.set([mockAsset]);
+      allAssetFolders.current = [mockAsset.folder];
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/(a+)+/image.jpg',
@@ -4299,7 +4254,7 @@ describe('assets/index', () => {
       expect(nonMatchResult).toBeUndefined();
 
       // Restore allAssetFolders
-      allAssetFolders.set([]);
+      allAssetFolders.current = [];
     });
 
     it('resolves template-tagged internalPath via entry associated collection', async () => {
@@ -4366,7 +4321,7 @@ describe('assets/index', () => {
         .mockReturnValueOnce('content/posts/my-post/media/photo.jpg');
 
       // Folder has no collectionName but has template tags in internalPath
-      allAssetFolders.set([
+      allAssetFolders.current = [
         {
           internalPath: 'content/posts/{{slug}}/media',
           publicPath: '/media',
@@ -4374,8 +4329,8 @@ describe('assets/index', () => {
           entryRelative: false,
           hasTemplateTags: true,
         },
-      ]);
-      allAssets.set([mockAsset]);
+      ];
+      allAssets.current = [mockAsset];
 
       const result = getAssetByAbsolutePath({
         path: '/media/photo.jpg',
@@ -4388,7 +4343,7 @@ describe('assets/index', () => {
       expect(getAssociatedCollections).toHaveBeenCalledWith(mockEntry);
 
       // Restore store
-      allAssetFolders.set([]);
+      allAssetFolders.current = [];
     });
 
     it('returns undefined when template folder has no collectionName and no entry', async () => {
@@ -4415,8 +4370,8 @@ describe('assets/index', () => {
           hasTemplateTags: true,
         }),
       );
-      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set(undefined);
-      allAssets.set([]);
+      /** @type {any} */ (globalAssetFolder).current = undefined;
+      allAssets.current = [];
 
       const result = getAssetByAbsolutePath({
         path: '/media/photo.jpg',
@@ -4428,7 +4383,7 @@ describe('assets/index', () => {
       // collection = undefined → template cannot be resolved → asset not found
       expect(result).toBeUndefined();
 
-      /** @type {import('svelte/store').Writable<any>} */ (globalAssetFolder).set({});
+      /** @type {any} */ (globalAssetFolder).current = {};
     });
   });
 
@@ -4661,24 +4616,22 @@ describe('assets/index', () => {
 
 describe('publishedAssets', () => {
   beforeEach(() => {
-    allAssets.set([]);
+    allAssets.current = [];
   });
 
   it('should keep the same array when nothing is unpublished', () => {
     const assets = /** @type {any} */ ([{ path: 'a.png' }, { path: 'b.png' }]);
 
-    allAssets.set(assets);
-    expect(get(publishedAssets)).toBe(assets);
+    allAssets.current = assets;
+    expect(publishedAssets.current).toBe(assets);
   });
 
   it('should exclude the assets committed to a workflow branch', () => {
-    allAssets.set(
-      /** @type {any} */ ([
-        { path: 'a.png' },
-        { path: 'b.png', workflow: { branch: 'cms/posts/hello' } },
-      ]),
-    );
+    allAssets.current = /** @type {any} */ ([
+      { path: 'a.png' },
+      { path: 'b.png', workflow: { branch: 'cms/posts/hello' } },
+    ]);
 
-    expect(get(publishedAssets).map(({ path }) => path)).toEqual(['a.png']);
+    expect(publishedAssets.current.map(({ path }) => path)).toEqual(['a.png']);
   });
 });

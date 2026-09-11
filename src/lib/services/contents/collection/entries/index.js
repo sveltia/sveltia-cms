@@ -2,8 +2,6 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
 
-import { derived, get, writable } from 'svelte/store';
-
 import { getMediaFieldURL } from '$lib/services/assets/info';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders } from '$lib/services/contents';
@@ -17,9 +15,9 @@ import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getRegex } from '$lib/services/utils/regex';
+import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import {
  * Entry,
  * EntryFolderInfo,
@@ -36,17 +34,16 @@ import { getRegex } from '$lib/services/utils/regex';
 export const MARKDOWN_IMAGE_REGEX = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
 
 /**
- * @type {Writable<Entry[]>}
+ * Currently selected entries.
+ * @type {{ current: Entry[] }}
  */
-export const selectedEntries = writable([]);
+export const selectedEntries = createRawState([]);
 
 /**
  * Set of selected entry IDs, for O(1) membership checks in list items.
- * @type {import('svelte/store').Readable<Set<string>>}
  */
-export const selectedEntryIdSet = derived(
-  selectedEntries,
-  ($selectedEntries) => new Set($selectedEntries.map((entry) => entry.id)),
+export const selectedEntryIdSet = createDerivedState(
+  () => new Set(selectedEntries.current.map((entry) => entry.id)),
 );
 
 /**
@@ -161,7 +158,7 @@ const queryEntriesByCollection = (collectionName) => {
   }
 
   // Pre-compute membership check to avoid calling getAssociatedCollections() per entry, which
-  // internally does get(allEntryFolders).filter().sort() for each entry.
+  // internally does allEntryFolders.current.filter().sort() for each entry.
   let isMember;
 
   if (collection._type === 'entry') {
@@ -174,7 +171,7 @@ const queryEntriesByCollection = (collectionName) => {
           getAssociatedCollections(entry).some(({ name }) => name === collectionName);
   } else {
     const validPaths = new Set(
-      get(allEntryFolders)
+      allEntryFolders.current
         .filter(({ collectionName: name }) => name === collectionName)
         .flatMap(({ filePathMap }) => (filePathMap ? Object.values(filePathMap) : [])),
     );
@@ -187,7 +184,7 @@ const queryEntriesByCollection = (collectionName) => {
     };
   }
 
-  return get(allEntries).filter(
+  return allEntries.current.filter(
     (entry) => isMember(entry) && matchesCollectionFilter(collection, entry),
   );
 };
@@ -233,8 +230,8 @@ export const _resetEntriesByCollectionCache = () => {
  * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
  */
 export const getEntriesByCollection = (collectionName) => {
-  const entrySource = get(allEntries);
-  const folderSource = get(allEntryFolders);
+  const entrySource = allEntries.current;
+  const folderSource = allEntryFolders.current;
 
   if (
     entrySource !== entriesByCollectionCache.entrySource ||
@@ -344,9 +341,9 @@ export const hasAsset = async ({
  */
 export const getEntriesByAssetURL = async (
   url,
-  { entries = get(allEntries), newURL = '' } = {},
+  { entries = allEntries.current, newURL = '' } = {},
 ) => {
-  const baseURL = get(cmsConfig)?._baseURL;
+  const baseURL = cmsConfig.current?._baseURL;
   const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
   const isBlobURL = assetURL.startsWith('blob:');
   const isReplacing = !!newURL;

@@ -34,11 +34,6 @@ vi.mock('@sveltia/i18n', () => ({
 }));
 
 const mockGetStore = vi.fn();
-
-vi.mock('svelte/store', () => ({
-  get: mockGetStore,
-}));
-
 const mockAddMessage = vi.fn();
 
 vi.mock('$lib/services/config/parser/utils/validator', () => ({

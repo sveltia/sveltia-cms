@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { cmsConfig } from '$lib/services/config';
 import {
   copyProperty,
   isValueEmpty,
@@ -8,19 +9,11 @@ import {
 
 vi.mock('$lib/services/assets');
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn((callback) => callback({})) },
+  cmsConfig: { current: {} },
 }));
 vi.mock('$lib/services/contents/draft/save/key-path', () => ({
   createKeyPathList: vi.fn((fields) => fields.map((/** @type {any} */ f) => f.name)),
 }));
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return {
-    ...actual,
-    get: vi.fn(() => ({})),
-  };
-});
 
 const { isFieldRequired, getField } = vi.hoisted(() => ({
   isFieldRequired: vi.fn(),
@@ -1813,9 +1806,7 @@ describe('Test serializeContent()', () => {
   });
 
   test('omits empty optional object fields inside typed list items', async () => {
-    const { get } = await import('svelte/store');
-
-    vi.mocked(get).mockReturnValueOnce({
+    cmsConfig.current = /** @type {any} */ ({
       output: { omit_empty_optional_fields: true },
     });
 

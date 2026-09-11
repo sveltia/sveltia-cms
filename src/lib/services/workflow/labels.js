@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { cmsConfig } from '$lib/services/config';
 import {
   DEFAULT_CMS_LABEL_PREFIX,
@@ -17,7 +15,7 @@ import {
  * @returns {string} Label prefix, e.g. `sveltia-cms/`.
  */
 export const getLabelPrefix = () => {
-  const { backend } = get(cmsConfig) ?? {};
+  const { backend } = cmsConfig.current ?? {};
   const prefix = backend && 'cms_label_prefix' in backend ? backend.cms_label_prefix : undefined;
 
   return prefix || DEFAULT_CMS_LABEL_PREFIX;

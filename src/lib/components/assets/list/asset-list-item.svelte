@@ -33,45 +33,42 @@
    * @param {boolean} selected Whether the current asset item is selected.
    */
   const updateSelection = (selected) => {
-    selectedAssets.update((assets) => {
-      const index = assets.indexOf(asset);
+    const assets = selectedAssets.current;
+    const index = assets.indexOf(asset);
 
-      if (selected && index === -1) {
-        assets.push(asset);
-      }
+    if (selected && index === -1) {
+      selectedAssets.current = [...assets, asset];
+    }
 
-      if (!selected && index > -1) {
-        assets.splice(index, 1);
-      }
-
-      return assets;
-    });
+    if (!selected && index > -1) {
+      selectedAssets.current = assets.filter((a) => a !== asset);
+    }
   };
 </script>
 
 <!-- @todo Add support for drag to move. -->
 
 <GridRow
-  aria-rowindex={$listedAssetIndexMap.get(asset.path) ?? -1}
+  aria-rowindex={listedAssetIndexMap.current.get(asset.path) ?? -1}
   aria-label={name}
   onChange={(event) => {
     updateSelection(event.detail.selected);
   }}
   onfocus={() => {
-    $focusedAsset = asset;
+    focusedAsset.current = asset;
   }}
   onclick={() => {
     if (
       (env.isSmallScreen || env.isMediumScreen) &&
-      $focusedAsset &&
-      canPreviewAsset($focusedAsset)
+      focusedAsset.current &&
+      canPreviewAsset(focusedAsset.current)
     ) {
-      goto(`/assets/${$focusedAsset.path}`, { transitionType: 'forwards' });
+      goto(`/assets/${focusedAsset.current.path}`, { transitionType: 'forwards' });
     }
   }}
   ondblclick={() => {
-    if ($focusedAsset && canPreviewAsset($focusedAsset)) {
-      goto(`/assets/${$focusedAsset.path}`, { transitionType: 'forwards' });
+    if (focusedAsset.current && canPreviewAsset(focusedAsset.current)) {
+      goto(`/assets/${focusedAsset.current.path}`, { transitionType: 'forwards' });
     }
   }}
 >
@@ -80,7 +77,7 @@
       <Checkbox
         role="none"
         tabindex="-1"
-        checked={$selectedAssetPathSet.has(asset.path)}
+        checked={selectedAssetPathSet.current.has(asset.path)}
         onChange={({ detail: { checked } }) => {
           updateSelection(checked);
         }}

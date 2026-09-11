@@ -12,7 +12,7 @@
   import { selectedAssetFolder } from '$lib/services/assets/folders';
   import { env } from '$lib/services/user/env.svelte';
 
-  const assets = $derived($overlaidAsset ? [$overlaidAsset] : []);
+  const assets = $derived(overlaidAsset.current ? [overlaidAsset.current] : []);
   const useButton = $derived(!env.isSmallScreen);
 </script>
 
@@ -24,7 +24,7 @@
     buttonDescription={_('delete_assets', { values: { count: 1 } })}
     dialogDescription={_('confirm_deleting_this_asset')}
     onDelete={() => {
-      goBack(`/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`);
+      goBack(`/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`);
     }}
     {useButton}
   />
@@ -35,18 +35,18 @@
     aria-label={_('cancel_editing')}
     useShortcut={true}
     onclick={() => {
-      goBack(`/assets/${$selectedAssetFolder?.internalPath ?? '-/all'}`);
+      goBack(`/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`);
     }}
   />
   <h2 role="none">
     <TruncatedText>
-      <bdi>{$overlaidAsset?.name}</bdi>
+      <bdi>{overlaidAsset.current?.name}</bdi>
     </TruncatedText>
   </h2>
   {#if !env.isSmallScreen}
     {@render overflowButtons()}
   {/if}
-  <EditOptionsButton asset={$overlaidAsset}>
+  <EditOptionsButton asset={overlaidAsset.current}>
     {#snippet extraItems()}
       {#if env.isSmallScreen}
         {@render overflowButtons()}

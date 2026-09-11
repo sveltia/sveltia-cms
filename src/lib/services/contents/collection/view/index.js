@@ -1,6 +1,6 @@
-import { derived, get, writable } from 'svelte/store';
+import equal from 'fast-deep-equal';
+import { untrack } from 'svelte';
 
-import { appLocaleStore } from '$lib/services/app/i18n';
 import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
@@ -11,19 +11,25 @@ import {
   isNestedCollection,
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
-import { filterEntries } from '$lib/services/contents/collection/view/filter';
+import { filterEntries, parseFilterConfig } from '$lib/services/contents/collection/view/filter';
 import {
   getReorderGroupingConditions,
   groupEntries,
+  parseGroupConfig,
 } from '$lib/services/contents/collection/view/group';
 import { entryListSettings, initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
+import { getSortConfig } from '$lib/services/contents/collection/view/sort-keys';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import {
+  createDerivedState,
+  createRawState,
+  createRootEffect,
+} from '$lib/services/utils/state.svelte';
 import { swapUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import { Entry, EntryListView, InternalEntryCollection } from '$lib/types/private';
  */
 
@@ -44,33 +50,31 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * View settings for the selected entry collection.
- * @type {Writable<EntryListView>}
+ * @type {{ current: EntryListView }}
  */
-export const currentView = writable({ type: 'list' });
+export const currentView = createRawState({ type: 'list' });
 
 /**
  * Whether the entry collection is in reorder mode, which allows users to reorder entries with a
  * drag-and-drop UI. This is used to control the UI state and behavior when reordering entries in a
- * collection.
- * @type {Writable<boolean>}
+ * collection. Use {@link setReorderMode} to change it, so the view is adjusted at the same time.
  */
-export const reordering = writable(false);
+export const reordering = createRawState(false);
 
 /**
  * Pending reorder result while the entry collection is in reorder mode. The list contains the
  * collection’s entries in the order the user has arranged them in the UI. It is consumed when the
  * user confirms the reorder, then reset.
- * @type {Writable<Entry[]>}
+ * @type {{ current: Entry[] }}
  */
-export const reorderedEntries = writable([]);
+export const reorderedEntries = createRawState([]);
 
 /**
  * Whether the user has actually moved an entry while in reorder mode. The toolbar Save button uses
  * this to stay disabled until at least one move has happened, so a simple Enter → Save round-trip
  * doesn’t cause a no-op commit.
- * @type {Writable<boolean>}
  */
-export const reorderDirty = writable(false);
+export const reorderDirty = createRawState(false);
 
 /**
  * View snapshot taken when entering reorder mode, restored on exit so the user’s prior sort/filter/
@@ -83,119 +87,96 @@ let viewBeforeReorder;
  * List of the entries shown in the entry list for the selected entry collection. For a nested
  * collection, only the entries in the folder the user is currently browsing are included; the
  * deeper ones are reachable through the collection tree in the primary sidebar.
- * @type {Readable<Entry[]>}
+ * @type {{ readonly current: Entry[] }}
  */
-export const listedEntries = derived(
-  [allEntries, selectedCollection, unpublishedEntries, reordering, nestedFilterPath],
-  ([_allEntries, _collection, _unpublishedEntries, _reordering, _nestedFilterPath], set) => {
-    if (!_allEntries || !_collection) {
-      set([]);
+export const listedEntries = createDerivedState(() => {
+  const { current: _allEntries } = allEntries;
+  const { current: _collection } = selectedCollection;
+  const { current: _nestedFilterPath } = nestedFilterPath;
 
-      return;
-    }
+  if (!_allEntries || !_collection) {
+    return [];
+  }
 
-    /**
-     * Limit the entries to the folder currently browsed in a nested collection.
-     * @param {Entry[]} entries Entries to be filtered.
-     * @returns {Entry[]} Filtered entries.
-     */
-    const filterNested = (entries) =>
-      filterNestedEntries({ collection: _collection, entries, dirPath: _nestedFilterPath });
+  /**
+   * Limit the entries to the folder currently browsed in a nested collection.
+   * @param {Entry[]} entries Entries to be filtered.
+   * @returns {Entry[]} Filtered entries.
+   */
+  const filterNested = (entries) =>
+    filterNestedEntries({ collection: _collection, entries, dirPath: _nestedFilterPath });
 
-    const entries = getEntriesByCollection(_collection.name);
+  const entries = getEntriesByCollection(_collection.name);
 
-    // Don’t swap while reordering, because the reorder UI persists an order field on the published
-    // entries, and the draft version must not leak into that commit
-    if (_reordering) {
-      set(filterNested(entries));
+  // Don’t swap while reordering, because the reorder UI persists an order field on the published
+  // entries, and the draft version must not leak into that commit
+  if (reordering.current) {
+    return filterNested(entries);
+  }
 
-      return;
-    }
-
-    // Show the pending changes rather than what’s live, so the list sorts, filters and groups by
-    // them
-    set(
-      filterNested(
-        swapUnpublishedEntries(
-          entries,
-          _unpublishedEntries.filter(
-            ({ workflow }) => workflow.collectionName === _collection.name,
-          ),
-        ),
+  // Show the pending changes rather than what’s live, so the list sorts, filters and groups by
+  // them
+  return filterNested(
+    swapUnpublishedEntries(
+      entries,
+      unpublishedEntries.current.filter(
+        ({ workflow }) => workflow.collectionName === _collection.name,
       ),
-    );
-  },
-);
+    ),
+  );
+});
 
 /**
  * List of unpublished entries for the selected entry collection that have never been published,
  * sorted and filtered with the same view settings as {@link entryGroups}. Unlike an update to an
  * existing entry, which replaces the published version in {@link listedEntries}, these are listed
  * in a separate group above the published entries.
- * @type {Readable<Entry[]>}
+ * @type {{ readonly current: Entry[] }}
  */
-export const listedUnpublishedEntries = derived(
-  // Include `appLocale.current` as a dependency because `sortEntries()` may return localized labels
-  [
-    unpublishedEntries,
-    listedEntries,
-    selectedCollection,
-    currentView,
-    reordering,
-    nestedFilterPath,
-    appLocaleStore,
-  ],
-  ([
-    _unpublishedEntries,
-    _listedEntries,
-    _collection,
-    _currentView,
-    _reordering,
-    _nestedFilterPath,
-  ]) => {
-    if (_collection?._type !== 'entry' || _reordering) {
-      return [];
-    }
+export const listedUnpublishedEntries = createDerivedState(() => {
+  const { current: _collection } = selectedCollection;
+  const { current: _currentView } = currentView;
 
-    // A draft that replaced a published entry is already in `listedEntries`, so match by identity
-    // rather than by path, which a rename would break
-    const swappedIn = new Set(_listedEntries);
+  if (_collection?._type !== 'entry' || reordering.current) {
+    return [];
+  }
 
-    /** @type {Entry[]} */
-    let entries = filterNestedEntries({
-      collection: _collection,
-      entries: _unpublishedEntries.filter(
-        (entry) => entry.workflow.collectionName === _collection.name && !swappedIn.has(entry),
-      ),
-      dirPath: _nestedFilterPath,
-    });
+  // A draft that replaced a published entry is already in `listedEntries`, so match by identity
+  // rather than by path, which a rename would break
+  const swappedIn = new Set(listedEntries.current);
 
-    if (!entries.length) {
-      return [];
-    }
+  /** @type {Entry[]} */
+  let entries = filterNestedEntries({
+    collection: _collection,
+    entries: unpublishedEntries.current.filter(
+      (entry) => entry.workflow.collectionName === _collection.name && !swappedIn.has(entry),
+    ),
+    dirPath: nestedFilterPath.current,
+  });
 
-    if (_currentView.sort) {
-      entries = sortEntries(entries, _collection, _currentView.sort);
-    }
+  if (!entries.length) {
+    return [];
+  }
 
-    if (_currentView.filters) {
-      entries = filterEntries(entries, _collection, _currentView.filters);
-    }
+  if (_currentView.sort) {
+    entries = sortEntries(entries, _collection, _currentView.sort);
+  }
 
-    return entries;
-  },
-);
+  if (_currentView.filters) {
+    entries = filterEntries(entries, _collection, _currentView.filters);
+  }
+
+  return entries;
+});
 
 /**
  * Map from entry ID to the entry’s index in {@link listedEntries}, used by list rows to resolve
  * their `aria-rowindex` in O(1). Rows are appended by an infinite scroller and never unmounted, so
  * once a large collection has been scrolled through, an `indexOf()` per row would make every
  * subsequent list update O(n²).
- * @type {Readable<Map<string, number>>}
  */
-export const listedEntryIndexMap = derived(
-  [listedEntries],
-  ([_listedEntries]) => new Map(_listedEntries.map((entry, index) => [entry.id, index])),
+export const listedEntryIndexMap = createDerivedState(
+  () => new Map(listedEntries.current.map((entry, index) => [entry.id, index])),
 );
 
 /**
@@ -209,109 +190,135 @@ const QUOTA_WARNING_THRESHOLD = 5;
 /**
  * State of the selected collection, including permissions and quota information, used for
  * controlling the UI and providing feedback to users.
- * @type {Readable<CollectionState>}
+ * @type {{ readonly current: CollectionState }}
  */
-export const collectionState = derived(
-  [listedEntries, selectedCollection, openAuthoring],
-  ([_listedEntries, _selectedCollection, _openAuthoring]) => {
-    if (_selectedCollection?._type === 'entry') {
-      const canCreate = _selectedCollection.create ?? true;
-      const canDelete = _selectedCollection.delete ?? true;
-      // Reordering writes the new order straight to the configured branch rather than going through
-      // review, so it’s not something an Open Authoring contributor can do
-      const canReorder = !!_selectedCollection.reorder && !_openAuthoring;
-      const quota = _selectedCollection?.limit ?? Infinity;
+export const collectionState = createDerivedState(() => {
+  const { current: _selectedCollection } = selectedCollection;
 
-      // In a nested collection, `listedEntries` only holds the folder being browsed, while the
-      // quota applies to the whole collection
-      const entryCount = isNestedCollection(_selectedCollection)
-        ? getEntriesByCollection(_selectedCollection.name).length
-        : _listedEntries.length;
+  if (_selectedCollection?._type === 'entry') {
+    const canCreate = _selectedCollection.create ?? true;
+    const canDelete = _selectedCollection.delete ?? true;
+    // Reordering writes the new order straight to the configured branch rather than going through
+    // review, so it’s not something an Open Authoring contributor can do
+    const canReorder = !!_selectedCollection.reorder && !openAuthoring.current;
+    const quota = _selectedCollection?.limit ?? Infinity;
 
-      const remaining = quota < Infinity ? quota - entryCount : Infinity;
+    // In a nested collection, `listedEntries` only holds the folder being browsed, while the
+    // quota applies to the whole collection
+    const entryCount = isNestedCollection(_selectedCollection)
+      ? getEntriesByCollection(_selectedCollection.name).length
+      : listedEntries.current.length;
 
-      return {
-        isEntryCollection: true,
-        canCreate,
-        canDelete,
-        canReorder,
-        quota,
-        remaining,
-        nearingQuota: remaining > 0 && remaining <= QUOTA_WARNING_THRESHOLD,
-        creationDisabled: !canCreate || remaining <= 0,
-      };
-    }
+    const remaining = quota < Infinity ? quota - entryCount : Infinity;
 
     return {
-      isEntryCollection: false,
-      canCreate: false,
-      canDelete: false,
-      canReorder: false,
-      quota: Infinity,
-      remaining: Infinity,
-      nearingQuota: false,
-      creationDisabled: false,
+      isEntryCollection: true,
+      canCreate,
+      canDelete,
+      canReorder,
+      quota,
+      remaining,
+      nearingQuota: remaining > 0 && remaining <= QUOTA_WARNING_THRESHOLD,
+      creationDisabled: !canCreate || remaining <= 0,
     };
-  },
-);
+  }
+
+  return {
+    isEntryCollection: false,
+    canCreate: false,
+    canDelete: false,
+    canReorder: false,
+    quota: Infinity,
+    remaining: Infinity,
+    nearingQuota: false,
+    creationDisabled: false,
+  };
+});
 
 /**
- * Cache to avoid unnecessary re-processing in `entryGroups` derived store when only
- * `appLocale.current` changes (which is a dependency for localized sort/group labels).
+ * Sorted, filtered and grouped entries for the selected entry collection. `sortEntries()` and
+ * `groupEntries()` may return localized labels, and they read the current app locale, so the
+ * groups are also recomputed when the locale changes.
+ * @type {{ readonly current: { name: string, entries: Entry[] }[] }}
  */
-let lastListedEntries = /** @type {Entry[] | undefined} */ (undefined);
-let lastCurrentView = /** @type {EntryListView | undefined} */ (undefined);
+export const entryGroups = createDerivedState(() => {
+  const { current: _currentView } = currentView;
+  const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
+  /** @type {Entry[]} */
+  let entries = [...listedEntries.current];
+
+  // Reset the groups if the current collection is empty or a file/singleton collection
+  if (!entries.length || !!getCollectionFilesByEntry(collection, entries[0]).length) {
+    return [];
+  }
+
+  if (_currentView.sort) {
+    entries = sortEntries(entries, collection, _currentView.sort);
+  }
+
+  if (_currentView.filters) {
+    entries = filterEntries(entries, collection, _currentView.filters);
+  }
+
+  return groupEntries(entries, collection, _currentView.group);
+});
 
 /**
- * Sorted, filtered and grouped entries for the selected entry collection.
- * @type {Readable<{ name: string, entries: Entry[] }[]>}
+ * Restore the view settings of the given entry collection from {@link entryListSettings}, falling
+ * back to the collection’s default sort, filter and grouping options where the saved view has none.
+ * @param {InternalEntryCollection} collection Collection.
+ * @param {Entry[]} _allEntries All the entries.
  */
-export const entryGroups = derived(
-  // Include `appLocale.current` as a dependency because `sortEntries()` and `groupEntries()` may
-  // return localized labels
-  [listedEntries, currentView, appLocaleStore],
-  ([_listedEntries, _currentView], set) => {
-    // Use reference equality: when only `appLocale.current` changes, `listedEntries` and
-    // `currentView` retain the same references, so we can skip expensive re-computation.
-    if (_listedEntries === lastListedEntries && _currentView === lastCurrentView) {
-      return;
-    }
+const restoreView = (collection, _allEntries) => {
+  const { view_filters: viewFilters, view_groups: viewGroups } = collection;
+  /** @type {EntryListView} */
+  const view = { ...(entryListSettings.current?.[collection.name] ?? { type: 'list' }) };
 
-    lastListedEntries = _listedEntries;
-    lastCurrentView = _currentView;
+  const { default: defaultSort } = getSortConfig({
+    collection,
+    isCommitAuthorAvailable: _allEntries.some((entry) => !!entry.commitAuthor),
+    isCommitDateAvailable: _allEntries.some((entry) => !!entry.commitDate),
+  });
 
-    const collection = /** @type {InternalEntryCollection} */ (get(selectedCollection));
-    /** @type {Entry[]} */
-    let entries = [..._listedEntries];
+  const { default: defaultFilter } = parseFilterConfig(viewFilters);
+  const { default: defaultGroup } = parseGroupConfig(viewGroups);
 
-    // Reset the groups if the current collection is empty or a file/singleton collection
-    if (!entries.length || !!getCollectionFilesByEntry(collection, entries[0]).length) {
-      set([]);
-      return;
-    }
+  if (view.sort === undefined && defaultSort) {
+    view.sort = defaultSort;
+  }
 
-    if (_currentView.sort) {
-      entries = sortEntries(entries, collection, _currentView.sort);
-    }
+  if (view.filters === undefined && defaultFilter) {
+    view.filters = [defaultFilter];
+  }
 
-    if (_currentView.filters) {
-      entries = filterEntries(entries, collection, _currentView.filters);
-    }
+  if (view.group === undefined && defaultGroup) {
+    view.group = defaultGroup;
+  }
 
-    set(groupEntries(entries, collection, _currentView.group));
-  },
-);
+  if (!equal(view, currentView.current)) {
+    currentView.current = view;
+  }
+};
 
-reordering.subscribe((value) => {
+/**
+ * Enter or exit reorder mode, updating the view accordingly. The view is updated synchronously,
+ * before `reordering` is flipped, so that the components reacting to `reordering` — such as the
+ * entry reorder list, which snapshots `entryGroups` on mount — always see the adjusted view rather
+ * than depending on the order in which effects happen to run.
+ * @param {boolean} value Whether to enter reorder mode.
+ */
+export const setReorderMode = (value) => {
   if (!value) {
-    reorderedEntries.set([]);
-    reorderDirty.set(false);
+    reorderedEntries.current = [];
+    reorderDirty.current = false;
 
     // Restore the snapshot taken when entering reorder mode, if any.
     if (viewBeforeReorder) {
-      currentView.set(viewBeforeReorder);
+      currentView.current = viewBeforeReorder;
       viewBeforeReorder = undefined;
     }
+
+    reordering.current = false;
 
     return;
   }
@@ -327,8 +334,8 @@ reordering.subscribe((value) => {
   // with `reorder: { group: '…' }`. That group replaces whatever grouping the user has active, so
   // the buckets — and therefore the numbering, which runs group by group — are always the same.
   // Nothing is hidden either way, so what the user sees is still exactly what gets persisted.
-  const view = get(currentView);
-  const reorderGroup = getReorderGroupingConditions(get(selectedCollection));
+  const view = currentView.current;
+  const reorderGroup = getReorderGroupingConditions(selectedCollection.current);
 
   // Snapshot so we can restore on exit.
   viewBeforeReorder = view;
@@ -353,34 +360,60 @@ reordering.subscribe((value) => {
   }
 
   if (Object.keys(overrides).length) {
-    currentView.set({ ...view, ...overrides });
+    currentView.current = { ...view, ...overrides };
+  }
+
+  reordering.current = true;
+};
+
+// Restore the view settings when a different entry collection is selected. The entries are also
+// tracked, because the available sort keys depend on them
+createRootEffect(() => {
+  const collection = selectedCollection.current;
+  const { current: _allEntries } = allEntries;
+
+  if (collection?._type === 'entry') {
+    untrack(() => {
+      restoreView(collection, _allEntries);
+    });
   }
 });
 
-backend.subscribe((_backend) => {
-  if (_backend && !get(entryListSettings)) {
+createRootEffect(() => {
+  const { current: _backend } = backend;
+
+  if (_backend && !untrack(() => entryListSettings.current)) {
     initSettings(_backend);
   }
 });
 
-listedEntries.subscribe((entries) => {
-  selectedEntries.set([]);
+createRootEffect(() => {
+  const entries = listedEntries.current;
 
-  if (prefs.devModeEnabled) {
+  selectedEntries.current = [];
+
+  if (untrack(() => prefs.devModeEnabled)) {
     // eslint-disable-next-line no-console
     console.info('listedEntries', entries);
   }
 });
 
-selectedCollection.subscribe((collection) => {
+createRootEffect(() => {
+  const collection = selectedCollection.current;
+
   // Reset the reorder state when switching collections, to avoid accidentally reordering entries in
   // the wrong collection or leaving the UI in a broken state if the new collection doesn’t support
   // reordering. Discard any view snapshot first so it isn’t restored against the wrong collection,
   // which would otherwise corrupt the new collection’s persisted view via `entryListSettings`.
-  viewBeforeReorder = undefined;
-  reordering.set(false);
+  untrack(() => {
+    viewBeforeReorder = undefined;
 
-  if (collection && prefs.devModeEnabled) {
+    if (reordering.current) {
+      setReorderMode(false);
+    }
+  });
+
+  if (collection && untrack(() => prefs.devModeEnabled)) {
     // eslint-disable-next-line no-console
     console.info('selectedCollection', collection);
   }

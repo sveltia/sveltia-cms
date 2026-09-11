@@ -1,4 +1,3 @@
-import { writable } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -11,7 +10,7 @@ import {
 } from './reorder';
 
 vi.mock('$lib/services/backends', () => ({
-  backend: writable(null),
+  backend: { current: null },
 }));
 
 vi.mock('$lib/services/backends/save', () => ({
@@ -19,7 +18,7 @@ vi.mock('$lib/services/backends/save', () => ({
 }));
 
 vi.mock('$lib/services/contents/collection/data', () => ({
-  contentUpdatesToast: writable(null),
+  contentUpdatesToast: { current: null },
   UPDATE_TOAST_DEFAULT_STATE: { count: 0, saved: false, deleted: false },
 }));
 
@@ -352,7 +351,7 @@ describe('reorderEntries()', () => {
   test('does not update the toast when called with silent option', async () => {
     const { contentUpdatesToast } = await import('$lib/services/contents/collection/data');
 
-    contentUpdatesToast.set(/** @type {any} */ ({ marker: 'untouched' }));
+    contentUpdatesToast.current = /** @type {any} */ ({ marker: 'untouched' });
 
     const collection = makeCollection();
 
@@ -363,14 +362,8 @@ describe('reorderEntries()', () => {
 
     await reorderEntries(collection, entries, { silent: true });
 
-    // Toast store should not have been updated.
-    let value;
-
-    contentUpdatesToast.subscribe((v) => {
-      value = v;
-    })();
-
-    expect(value).toEqual({ marker: 'untouched' });
+    // Toast state should not have been updated.
+    expect(contentUpdatesToast.current).toEqual({ marker: 'untouched' });
   });
 
   test('handles a missing default locale in i18nSingleFileDefaultRoot mode', async () => {
@@ -412,7 +405,7 @@ describe('reorderEntries()', () => {
     const { backend } = /** @type {any} */ (await import('$lib/services/backends'));
     const { IndexedDB } = await import('@sveltia/utils/storage');
 
-    backend.set({ repository: { databaseName: 'sveltia-cms-test' } });
+    backend.current = { repository: { databaseName: 'sveltia-cms-test' } };
 
     const collection = makeCollection();
     const entries = [makeEntry('a', { title: 'A' })];
@@ -421,7 +414,7 @@ describe('reorderEntries()', () => {
 
     expect(IndexedDB).toHaveBeenCalledWith('sveltia-cms-test', 'file-cache');
 
-    backend.set(null);
+    backend.current = null;
   });
 });
 

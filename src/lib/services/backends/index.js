@@ -1,13 +1,11 @@
-import { derived, writable } from 'svelte/store';
-
 import local from '$lib/services/backends/fs/local';
 import test from '$lib/services/backends/fs/test';
 import gitea from '$lib/services/backends/git/gitea';
 import github from '$lib/services/backends/git/github';
 import gitlab from '$lib/services/backends/git/gitlab';
+import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import { BackendService } from '$lib/types/private';
  * @import { BackendName } from '$lib/types/public';
  */
@@ -57,23 +55,32 @@ export const gitBackendServices = Object.fromEntries(
 );
 
 /**
- * Currently selected backend service name.
- * @type {Writable<string | undefined>}
+ * Currently selected backend service name. Use {@link selectBackend} to change it, so that the new
+ * service is initialized.
+ * @type {{ current: string | undefined }}
  */
-export const backendName = writable();
+export const backendName = createRawState();
 
 /**
  * Currently selected backend service.
- * @type {Readable<BackendService | undefined>}
  */
-export const backend = derived([backendName], ([name], _set, update) => {
-  update((currentService) => {
-    const newService = name ? allBackendServices[name] : undefined;
+export const backend = createDerivedState(() =>
+  backendName.current ? allBackendServices[backendName.current] : undefined,
+);
 
-    if (newService && newService !== currentService) {
-      newService.init();
-    }
+/**
+ * Select the backend service with the given name, initializing it if it’s not the current one.
+ * @param {string | undefined} name Backend name, or `undefined` to deselect the current backend.
+ * @returns {BackendService | undefined} Selected backend service, if any.
+ */
+export const selectBackend = (name) => {
+  const service = name ? allBackendServices[name] : undefined;
 
-    return newService;
-  });
-});
+  if (service && service !== backend.current) {
+    service.init();
+  }
+
+  backendName.current = name;
+
+  return service;
+};

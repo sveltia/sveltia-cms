@@ -1,9 +1,9 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { backend } from '$lib/services/backends';
 import {
   unpublishedEntries,
+  unpublishedEntriesLoaded,
   unpublishedEntriesLoading,
   workflowEnabled,
 } from '$lib/services/workflow';
@@ -11,74 +11,79 @@ import { mergeWorkflowAssets } from '$lib/services/workflow/assets';
 import { convertPullRequests } from '$lib/services/workflow/entries';
 import { loadUnpublishedEntries } from '$lib/services/workflow/load';
 
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
-vi.mock('$lib/services/backends', () => ({ backend: { subscribe: vi.fn() } }));
+vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
 vi.mock('$lib/services/workflow/assets');
 vi.mock('$lib/services/workflow', () => ({
-  unpublishedEntries: { set: vi.fn() },
-  unpublishedEntriesLoading: { set: vi.fn() },
-  unpublishedEntriesLoaded: { set: vi.fn() },
-  workflowEnabled: { subscribe: vi.fn() },
+  unpublishedEntries: { current: [] },
+  unpublishedEntriesLoading: { current: false },
+  unpublishedEntriesLoaded: { current: false },
+  workflowEnabled: { current: undefined },
 }));
 vi.mock('$lib/services/workflow/entries');
 
 describe('workflow/load', () => {
   const fetchPullRequests = vi.fn();
+  /** The loading state as of each pull request fetch. */
+  const loadingStates = /** @type {boolean[]} */ ([]);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    loadingStates.length = 0;
+    fetchPullRequests.mockImplementation(async () => {
+      loadingStates.push(unpublishedEntriesLoading.current);
 
-    vi.mocked(get).mockImplementation((store) => {
-      if (store === workflowEnabled) {
-        return true;
-      }
-
-      if (store === backend) {
-        return { workflow: { fetchPullRequests } };
-      }
-
-      return undefined;
+      return [];
     });
+
+    /** @type {any} */ (workflowEnabled).current = true;
+    /** @type {any} */ (backend).current = { workflow: { fetchPullRequests } };
+    unpublishedEntries.current = [];
+    unpublishedEntriesLoading.current = false;
+    unpublishedEntriesLoaded.current = false;
   });
 
   test('does nothing when the feature is disabled', async () => {
-    vi.mocked(get).mockImplementation((store) => (store === backend ? {} : false));
+    /** @type {any} */ (workflowEnabled).current = false;
     await loadUnpublishedEntries();
 
-    expect(unpublishedEntries.set).not.toHaveBeenCalled();
-    expect(unpublishedEntriesLoading.set).not.toHaveBeenCalled();
+    expect(fetchPullRequests).not.toHaveBeenCalled();
+    expect(unpublishedEntriesLoading.current).toBe(false);
+    expect(unpublishedEntriesLoaded.current).toBe(false);
   });
 
   test('does nothing when the backend doesn’t implement the feature', async () => {
-    vi.mocked(get).mockImplementation((store) => (store === backend ? {} : true));
+    /** @type {any} */ (backend).current = {};
     await loadUnpublishedEntries();
 
-    expect(unpublishedEntries.set).not.toHaveBeenCalled();
+    expect(fetchPullRequests).not.toHaveBeenCalled();
+    expect(unpublishedEntriesLoaded.current).toBe(false);
   });
 
   test('stores the converted entries', async () => {
     const pullRequests = [{ branch: 'cms/posts/hello' }];
     const entries = [{ id: 'x' }];
 
-    fetchPullRequests.mockResolvedValue(pullRequests);
+    fetchPullRequests.mockImplementation(async () => {
+      loadingStates.push(unpublishedEntriesLoading.current);
+
+      return pullRequests;
+    });
     vi.mocked(convertPullRequests).mockResolvedValue(/** @type {any} */ ({ entries, assets: [] }));
 
     await loadUnpublishedEntries();
 
     expect(convertPullRequests).toHaveBeenCalledWith(pullRequests);
-    expect(unpublishedEntries.set).toHaveBeenCalledWith(entries);
-    expect(unpublishedEntriesLoading.set).toHaveBeenNthCalledWith(1, true);
-    expect(unpublishedEntriesLoading.set).toHaveBeenNthCalledWith(2, false);
+    expect(unpublishedEntries.current).toEqual(entries);
+    // The loading state is on while fetching, and off once done
+    expect(loadingStates).toEqual([true]);
+    expect(unpublishedEntriesLoading.current).toBe(false);
+    expect(unpublishedEntriesLoaded.current).toBe(true);
     expect(mergeWorkflowAssets).toHaveBeenCalledWith([]);
   });
 
-  test('merges the draft assets into the asset store', async () => {
+  test('merges the draft assets into the asset state', async () => {
     const assets = [{ path: 'static/img.png', sha: 'new' }];
 
-    fetchPullRequests.mockResolvedValue([]);
     vi.mocked(convertPullRequests).mockResolvedValue(/** @type {any} */ ({ entries: [], assets }));
 
     await loadUnpublishedEntries();
@@ -93,8 +98,10 @@ describe('workflow/load', () => {
 
     await expect(loadUnpublishedEntries()).resolves.toBeUndefined();
 
-    expect(unpublishedEntries.set).not.toHaveBeenCalled();
-    expect(unpublishedEntriesLoading.set).toHaveBeenNthCalledWith(2, false);
+    expect(unpublishedEntries.current).toEqual([]);
+    expect(unpublishedEntriesLoading.current).toBe(false);
+    // Marked as loaded even on failure, so a deep link isn’t stuck on the loading state forever
+    expect(unpublishedEntriesLoaded.current).toBe(true);
     expect(consoleError).toHaveBeenCalled();
 
     consoleError.mockRestore();

@@ -1,6 +1,5 @@
-import { toStore } from 'svelte/store';
-
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 import anthropic from './anthropic';
 import deepseek from './deepseek';
@@ -10,7 +9,6 @@ import mistral from './mistral';
 import openai from './openai';
 
 /**
- * @import { Readable } from 'svelte/store';
  * @import { TranslationService } from '$lib/types/private';
  */
 
@@ -28,9 +26,10 @@ export const allTranslationServices = {
 };
 
 /**
- * @type {Readable<TranslationService>}
+ * Translation service selected in the user preferences.
+ * @type {{ readonly current: TranslationService }}
  */
-export const translator = toStore(() => {
+export const translator = createDerivedState(() => {
   const { defaultTranslationService = 'google' } = prefs;
 
   return allTranslationServices[defaultTranslationService] ?? google;

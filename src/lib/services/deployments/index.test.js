@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import {
@@ -17,42 +16,42 @@ describe('Deployment stores', () => {
 
   describe('forgetDeployments', () => {
     test('drops only the given commits', () => {
-      deployments.set({
+      deployments.current = {
         a: { state: 'ready', checkedTime: 0 },
         b: { state: 'ready', checkedTime: 0 },
-      });
+      };
 
       forgetDeployments(['a']);
 
-      expect(get(deployments)).toEqual({ b: { state: 'ready', checkedTime: 0 } });
+      expect(deployments.current).toEqual({ b: { state: 'ready', checkedTime: 0 } });
     });
 
     test('does nothing without a commit', () => {
-      deployments.set({ a: { state: 'ready', checkedTime: 0 } });
+      deployments.current = { a: { state: 'ready', checkedTime: 0 } };
 
-      const before = get(deployments);
+      const before = deployments.current;
 
       forgetDeployments([]);
       // A pull request opened in an older session has no head commit recorded
       forgetDeployments([undefined]);
 
-      expect(get(deployments)).toBe(before);
+      expect(deployments.current).toBe(before);
     });
   });
 
   describe('resetDeployments', () => {
     test('clears every store', () => {
-      deployments.set({ a: { state: 'ready', checkedTime: 0 } });
-      productionSHA.set('abc');
-      deployPollTimedOut.set(true);
-      lastCommitPublishHint.set({ published: false, time: 1000 });
+      deployments.current = { a: { state: 'ready', checkedTime: 0 } };
+      productionSHA.current = 'abc';
+      deployPollTimedOut.current = true;
+      lastCommitPublishHint.current = { published: false, time: 1000 };
 
       resetDeployments();
 
-      expect(get(deployments)).toEqual({});
-      expect(get(productionSHA)).toBe('');
-      expect(get(deployPollTimedOut)).toBe(false);
-      expect(get(lastCommitPublishHint)).toEqual({ published: true, time: 0 });
+      expect(deployments.current).toEqual({});
+      expect(productionSHA.current).toBe('');
+      expect(deployPollTimedOut.current).toBe(false);
+      expect(lastCommitPublishHint.current).toEqual({ published: true, time: 0 });
     });
   });
 });

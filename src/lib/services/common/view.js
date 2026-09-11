@@ -3,10 +3,7 @@ import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
 import { getRegex } from '$lib/services/utils/regex';
-
-/**
- * @import { Writable } from 'svelte/store';
- */
+import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
  * Build a sorted group map from a list of items.
@@ -86,23 +83,26 @@ export const sortItemsByKey = (items, getKey, isStringType, order) => {
 };
 
 /**
- * Initialize a view settings store backed by IndexedDB and subscribe to persist changes.
+ * Initialize a view settings state backed by IndexedDB and persist any changes to it.
  * @param {{ databaseName?: string } | undefined} repository Repository info.
  * @param {string} storageKey Key used to store/retrieve settings in the database.
- * @param {Writable<Record<string, any> | undefined>} settingsStore Store to initialize and persist.
+ * @param {{ current: Record<string, any> | undefined }} settingsState State to initialize and
+ * persist.
  */
-export const initViewSettingsStorage = async (repository, storageKey, settingsStore) => {
+export const initViewSettingsStorage = async (repository, storageKey, settingsState) => {
   const { databaseName } = repository ?? {};
   const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
   const initial = (await settingsDB?.get(storageKey)) ?? {};
 
-  settingsStore.set(initial);
+  settingsState.current = initial;
 
   // Track the last persisted value in memory so we can skip redundant IndexedDB reads and writes
-  // every time the store changes (list views update this store frequently as users sort/filter).
+  // every time the state changes (list views update this state frequently as users sort/filter).
   let lastSaved = initial;
 
-  settingsStore.subscribe((_settings) => {
+  createRootEffect(() => {
+    const { current: _settings } = settingsState;
+
     if (equal(_settings, lastSaved)) {
       return;
     }

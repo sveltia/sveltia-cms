@@ -37,7 +37,7 @@
   // Editing, renaming or replacing a file in the media library commits straight to the configured
   // branch rather than going through review, so none of it is available to an Open Authoring
   // contributor
-  const readOnly = $derived($openAuthoring);
+  const readOnly = $derived(openAuthoring.current);
 
   /**
    * Update the properties above.
@@ -62,7 +62,7 @@
         aria-label={_('edit_asset')}
         disabled={readOnly || !asset || !canEditAsset(asset)}
         onclick={() => {
-          $editingAsset = asset;
+          editingAsset.current = asset;
         }}
       />
       <MenuItem
@@ -71,7 +71,7 @@
         aria-label={_('rename_asset')}
         disabled={readOnly || !asset}
         onclick={() => {
-          $renamingAsset = asset;
+          renamingAsset.current = asset;
         }}
       />
       <MenuItem
@@ -80,12 +80,12 @@
         aria-label={_('replace_asset')}
         disabled={readOnly || !asset}
         onclick={() => {
-          $uploadingAssets = {
+          uploadingAssets.current = {
             folder: undefined,
             files: [],
             originalAssets: asset ? [asset] : [],
           };
-          $showUploadAssetsDialog = true;
+          showUploadAssetsDialog.current = true;
         }}
       />
       <Divider />
@@ -98,9 +98,9 @@
       />
       {#if prefs.devModeEnabled}
         <MenuItem
-          disabled={!$backend?.repository || !repoBlobURL}
+          disabled={!backend.current?.repository || !repoBlobURL}
           label={_('view_on_x', {
-            values: { service: $backend?.repository?.label },
+            values: { service: backend.current?.repository?.label },
             default: _('view_in_repository'),
           })}
           onclick={() => {

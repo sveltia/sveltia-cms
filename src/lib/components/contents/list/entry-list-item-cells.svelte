@@ -57,7 +57,7 @@
     <Checkbox
       role="none"
       tabindex="-1"
-      checked={$selectedEntryIdSet.has(entry.id)}
+      checked={selectedEntryIdSet.current.has(entry.id)}
       onChange={({ detail: { checked } }) => {
         onSelect?.(checked);
       }}

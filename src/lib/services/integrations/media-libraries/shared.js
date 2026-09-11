@@ -1,5 +1,3 @@
-import { get } from 'svelte/store';
-
 import { cmsConfig } from '$lib/services/config';
 
 /**
@@ -58,7 +56,7 @@ export const hasMultipleInMediaLibrary = (mediaLibrary) => {
  * @returns {boolean} `true` if the field allows multiple files, `false` otherwise.
  */
 export const isMultiple = (fieldConfig) => {
-  const _cmsConfig = get(cmsConfig);
+  const _cmsConfig = cmsConfig.current;
 
   return (
     fieldConfig.multiple ??

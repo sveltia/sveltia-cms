@@ -10,7 +10,7 @@
 
   import { forkPermissionRequest } from '$lib/services/workflow/open-authoring';
 
-  const request = $derived($forkPermissionRequest);
+  const request = $derived(forkPermissionRequest.current);
   // Writable, because the dialog sets it back to `false` when it’s dismissed
   let open = $derived(!!request);
 </script>

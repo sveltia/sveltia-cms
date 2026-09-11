@@ -1,52 +1,49 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
-import { derived, get, writable } from 'svelte/store';
 
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
+import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import { AssetFolderInfo, TypedFieldKeyPath } from '$lib/types/private';
  */
 
 /**
  * List of all asset folders.
- * @type {Writable<AssetFolderInfo[]>}
+ * @type {{ current: AssetFolderInfo[] }}
  */
-export const allAssetFolders = writable([]);
+export const allAssetFolders = createRawState([]);
 
 /**
  * Global asset folder.
- * @type {Readable<AssetFolderInfo>}
  */
-
-export const globalAssetFolder = derived([allAssetFolders], ([_allAssetFolders], set) => {
-  set(
+export const globalAssetFolder = createDerivedState(
+  () =>
     /** @type {AssetFolderInfo} */ (
-      _allAssetFolders.find(
+      allAssetFolders.current.find(
         ({ collectionName, internalPath }) =>
           collectionName === undefined && internalPath !== undefined,
       )
     ),
-  );
-});
+);
 
 /**
  * Selected asset folder.
- * @type {Writable<AssetFolderInfo | undefined>}
+ * @type {{ current: AssetFolderInfo | undefined }}
  */
-export const selectedAssetFolder = writable();
+export const selectedAssetFolder = createRawState();
 
 /**
  * Upload target asset folder.
- * @type {Readable<AssetFolderInfo>}
  */
-export const targetAssetFolder = derived(
-  [selectedAssetFolder, globalAssetFolder],
-  ([_selectedAssetFolder, _globalAssetFolder]) =>
-    // When selecting All Assets folder, the `internalPath` will be `undefined`
-    _selectedAssetFolder?.internalPath !== undefined ? _selectedAssetFolder : _globalAssetFolder,
-);
+export const targetAssetFolder = createDerivedState(() => {
+  const { current: _selectedAssetFolder } = selectedAssetFolder;
+
+  // When selecting All Assets folder, the `internalPath` will be `undefined`
+  return _selectedAssetFolder?.internalPath !== undefined
+    ? _selectedAssetFolder
+    : globalAssetFolder.current;
+});
 
 /**
  * Get an asset folder that matches the given conditions.
@@ -67,7 +64,7 @@ export const getAssetFolder = (cond) => {
         cond.typedKeyPath?.match(/[^:]+$/)?.[0]
       : cond.typedKeyPath;
 
-  return get(allAssetFolders).find((folder) => {
+  return allAssetFolders.current.find((folder) => {
     if (!('typedKeyPath' in cond ? folder.typedKeyPath === typedKeyPath : !folder.typedKeyPath)) {
       return false;
     }
@@ -121,7 +118,7 @@ const assetFoldersByPathCache = {
  * @returns {typeof assetFoldersByPathCache} Cache object.
  */
 const getAssetFolderPathCache = () => {
-  const _allAssetFolders = get(allAssetFolders);
+  const _allAssetFolders = allAssetFolders.current;
 
   if (_allAssetFolders === assetFoldersByPathCache.source) {
     return assetFoldersByPathCache;

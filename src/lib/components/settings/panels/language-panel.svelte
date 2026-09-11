@@ -51,14 +51,14 @@
   const selectedLocale = $derived(prefs.locale ?? AUTO_PREF_VALUE);
 
   /**
-   * Locale being switched to. Unlike `$appLocaleLoading`, this keeps the last value, so the message
-   * doesn’t disappear while the toast is fading out.
+   * Locale being switched to. Unlike `appLocaleLoading.current`, this keeps the last value, so the
+   * message doesn’t disappear while the toast is fading out.
    */
   let switchingLocale = $state('');
 
   $effect(() => {
-    if ($appLocaleLoading) {
-      switchingLocale = $appLocaleLoading;
+    if (appLocaleLoading.current) {
+      switchingLocale = appLocaleLoading.current;
     }
   });
 </script>
@@ -92,7 +92,7 @@
 </section>
 
 <!-- Hidden automatically once the strings are loaded, hence `duration={0}` -->
-<Toast show={!!$appLocaleLoading} duration={0}>
+<Toast show={!!appLocaleLoading.current} duration={0}>
   <Alert status="info">
     {#if switchingLocale}
       {_('switching_language', {

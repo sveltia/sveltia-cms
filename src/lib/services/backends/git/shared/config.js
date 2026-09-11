@@ -1,7 +1,6 @@
-import { derived, writable } from 'svelte/store';
+import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Readable, Writable } from 'svelte/store';
  * @import { BaseConfigListItem } from '$lib/types/private';
  */
 
@@ -15,19 +14,17 @@ export const GIT_CONFIG_FILE_REGEX = /^(?:.+\/)?(\.git(?:attributes|ignore|keep)
  * List of Git configuration files in the repository that we need, such as `.gitattributes`,
  * `.gitkeep`, etc. `.gitkeep` is not technically a config file, but it’s used to keep an empty
  * directory in the repository, which is needed to create a new asset folder in the CMS.
- * @type {Writable<BaseConfigListItem[]>}
+ * @type {{ current: BaseConfigListItem[] }}
  */
-export const gitConfigFiles = writable([]);
+export const gitConfigFiles = createRawState([]);
 
 /**
  * File extensions that are tracked by Git LFS. This is derived from the `.gitattributes` file in
  * the repository, if it exists.
- * @type {Readable<string[]>}
  */
-export const lfsFileExtensions = derived(
-  gitConfigFiles,
-  (files) =>
-    files
+export const lfsFileExtensions = createDerivedState(
+  () =>
+    gitConfigFiles.current
       .find(({ path }) => path === '.gitattributes')
       ?.text?.replace(/\r\n?/g, '\n')
       .split('\n')

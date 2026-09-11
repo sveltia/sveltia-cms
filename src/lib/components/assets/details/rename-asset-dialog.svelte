@@ -31,7 +31,7 @@
   /** @type {Entry[]} */
   let usedEntries = $state([]);
 
-  const asset = $derived($renamingAsset);
+  const asset = $derived(renamingAsset.current);
   const { dirname, basename, extension: oldExtension } = $derived(pathInfo);
   const trimmedName = $derived(newName.trim());
   const newExtension = $derived(getPathInfo(trimmedName).extension);
@@ -106,10 +106,10 @@
   });
 
   $effect(() => {
-    if (!$showAssetOverlay) {
+    if (!showAssetOverlay.current) {
       open = false;
       confirmationOpen = false;
-      $renamingAsset = undefined;
+      renamingAsset.current = undefined;
     }
   });
 </script>
@@ -129,7 +129,7 @@
   }}
   onClose={() => {
     if (!confirmationOpen) {
-      $renamingAsset = undefined;
+      renamingAsset.current = undefined;
     }
   }}
 >
@@ -163,7 +163,7 @@
   okLabel={_('rename')}
   onOk={() => {
     renameAsset();
-    $renamingAsset = undefined;
+    renamingAsset.current = undefined;
   }}
   onCancel={() => {
     // Go back to the rename dialog, keeping the entered name

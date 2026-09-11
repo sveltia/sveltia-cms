@@ -1,8 +1,8 @@
 // @ts-nocheck
 
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { cmsConfig } from '$lib/services/config';
 import {
   getCollection,
   getCollectionIndex,
@@ -20,15 +20,11 @@ import {
 } from '$lib/services/contents/collection';
 
 // Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(),
-}));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key) => key),
 }));
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { subscribe: vi.fn() },
+  cmsConfig: { current: undefined },
 }));
 vi.mock('$lib/services/contents/collection/files', () => ({
   getValidCollectionFiles: vi.fn(),
@@ -268,7 +264,7 @@ describe('getValidCollections()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const validCollections = getValidCollections();
 
@@ -292,7 +288,7 @@ describe('getValidCollections()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const validCollections = getValidCollections({ visible: true });
 
@@ -313,7 +309,7 @@ describe('getValidCollections()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const entryCollections = getValidCollections({ type: 'entry' });
     const fileCollections = getValidCollections({ type: 'file' });
@@ -338,7 +334,6 @@ describe('getValidCollections()', () => {
 
     expect(validCollections).toHaveLength(1);
     expect(validCollections[0].name).toBe('custom');
-    expect(get).not.toHaveBeenCalled();
   });
 });
 
@@ -367,7 +362,7 @@ describe('getFirstCollection()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const firstCollection = getFirstCollection();
 
@@ -384,7 +379,7 @@ describe('getFirstCollection()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const firstCollection = getFirstCollection();
 
@@ -410,7 +405,7 @@ describe('getCollectionIndex()', () => {
       { name: 'third', folder: 'content/third', fields: [] },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     expect(getCollectionIndex('first')).toBe(0);
     expect(getCollectionIndex('second')).toBe(1);
@@ -420,7 +415,7 @@ describe('getCollectionIndex()', () => {
   test('returns -1 for non-existent collection', () => {
     const collections = [{ name: 'first', folder: 'content/first', fields: [] }];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const index = getCollectionIndex('non-existent');
 
@@ -434,7 +429,7 @@ describe('getCollectionIndex()', () => {
   });
 
   test('returns -1 when cmsConfig is undefined', () => {
-    vi.mocked(get).mockReturnValue(undefined);
+    cmsConfig.current = undefined;
 
     const index = getCollectionIndex('some-collection');
 
@@ -630,7 +625,7 @@ describe('parseFileCollection()', () => {
     vi.mocked(isValidCollectionFile).mockReturnValue(true);
 
     // Mock cmsConfig to include i18n property for normalizeI18nConfig
-    vi.mocked(get).mockReturnValue({
+    cmsConfig.current = /** @type {any} */ ({
       name: 'Test Site',
       i18n: { locales: ['en'], defaultLocale: 'en' },
     });
@@ -764,7 +759,7 @@ describe('getCollection()', () => {
     vi.mocked(getValidCollectionFiles).mockReturnValue([
       { name: 'config', file: 'config.yml', fields: [] },
     ]);
-    vi.mocked(get).mockReturnValue({
+    cmsConfig.current = /** @type {any} */ ({
       name: 'Test Site',
       i18n: { locales: ['en'], defaultLocale: 'en' },
       singletons: [{ name: 'config', file: 'config.yml', fields: [] }],
@@ -777,7 +772,7 @@ describe('getCollection()', () => {
   });
 
   test('returns undefined for non-existent collection', () => {
-    vi.mocked(get).mockReturnValue({ collections: [] });
+    cmsConfig.current = /** @type {any} */ ({ collections: [] });
 
     const result = getCollection('non-existent');
 
@@ -793,7 +788,7 @@ describe('getCollection()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const result = getCollection('posts');
 
@@ -809,7 +804,7 @@ describe('getCollection()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const result = getCollection('pages');
 
@@ -826,7 +821,7 @@ describe('getCollection()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const result = getCollection('posts');
 
@@ -844,7 +839,7 @@ describe('getCollection()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     const result = getCollection('pages');
 
@@ -862,7 +857,7 @@ describe('getCollection()', () => {
       },
     ];
 
-    vi.mocked(get).mockReturnValue({ collections });
+    cmsConfig.current = /** @type {any} */ ({ collections });
 
     // Should not throw; the file item without `file` is silently skipped
     const result = getCollection('pages-no-file');
@@ -881,7 +876,7 @@ describe('getSingletonCollection()', () => {
   });
 
   test('returns undefined when no singletons defined', () => {
-    vi.mocked(get).mockReturnValue({});
+    cmsConfig.current = /** @type {any} */ ({});
 
     const result = getSingletonCollection();
 
@@ -889,7 +884,7 @@ describe('getSingletonCollection()', () => {
   });
 
   test('returns undefined when singletons is not an array', () => {
-    vi.mocked(get).mockReturnValue({ singletons: 'invalid' });
+    cmsConfig.current = /** @type {any} */ ({ singletons: 'invalid' });
 
     const result = getSingletonCollection();
 
@@ -900,7 +895,7 @@ describe('getSingletonCollection()', () => {
     const { getValidCollectionFiles } = await import('$lib/services/contents/collection/files');
 
     vi.mocked(getValidCollectionFiles).mockReturnValue([]);
-    vi.mocked(get).mockReturnValue({
+    cmsConfig.current = /** @type {any} */ ({
       singletons: [{ name: 'invalid' }],
     });
 
@@ -910,7 +905,7 @@ describe('getSingletonCollection()', () => {
   });
 
   test('creates singleton collection with valid files', () => {
-    vi.mocked(get).mockReturnValue({
+    cmsConfig.current = /** @type {any} */ ({
       singletons: [{ name: 'config', file: '/config.yml', fields: [] }],
     });
 

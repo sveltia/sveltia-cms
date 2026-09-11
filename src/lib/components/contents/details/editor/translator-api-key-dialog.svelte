@@ -9,7 +9,9 @@
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
-  const { serviceId, apiLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived($translator);
+  const { serviceId, apiLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived(
+    translator.current,
+  );
 
   // eslint-disable-next-line svelte/prefer-writable-derived
   let inputValue = $state('');
@@ -20,10 +22,10 @@
   });
 
   $effect(() => {
-    if (!$showContentOverlay && $translatorApiKeyDialogState.show) {
+    if (!showContentOverlay.current && translatorApiKeyDialogState.current.show) {
       // Close the dialog when the Content Editor is closed
-      $translatorApiKeyDialogState.show = false;
-      $translatorApiKeyDialogState.resolve?.();
+      translatorApiKeyDialogState.current.show = false;
+      translatorApiKeyDialogState.current.resolve?.();
     }
   });
 
@@ -36,17 +38,17 @@
     if (apiKeyPattern?.test(apiKey)) {
       prefs.apiKeys ??= {};
       prefs.apiKeys[serviceId] = apiKey;
-      $translatorApiKeyDialogState.show = false;
-      $translatorApiKeyDialogState.resolve?.(apiKey);
+      translatorApiKeyDialogState.current.show = false;
+      translatorApiKeyDialogState.current.resolve?.(apiKey);
     }
   };
 </script>
 
 <PromptDialog
-  bind:open={$translatorApiKeyDialogState.show}
+  bind:open={translatorApiKeyDialogState.current.show}
   bind:value={inputValue}
   title={_('translate_fields', {
-    values: { count: $translatorApiKeyDialogState.multiple ? 2 : 1 },
+    values: { count: translatorApiKeyDialogState.current.multiple ? 2 : 1 },
   })}
   textboxAttrs={{
     spellcheck: false,
@@ -56,7 +58,7 @@
   oninput={() => saveKey()}
   onOk={() => saveKey()}
   onCancel={() => {
-    $translatorApiKeyDialogState.resolve?.();
+    translatorApiKeyDialogState.current.resolve?.();
   }}
 >
   <TranslatorSelector />

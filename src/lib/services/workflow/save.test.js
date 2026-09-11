@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { callEventHooks } from '$lib/services/api/events';
@@ -23,12 +22,8 @@ import {
   upsertUnpublishedEntry,
 } from '$lib/services/workflow/save';
 
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
 vi.mock('$lib/services/api/events');
-vi.mock('$lib/services/backends', () => ({ backend: { subscribe: vi.fn() } }));
+vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(() => ({ name: 'posts', _type: 'entry' })),
 }));
@@ -63,31 +58,14 @@ const createEntry = (branch, status = 'draft') => ({
   },
 });
 
-/**
- * Read the current value of a real Svelte store, bypassing the mocked `get`.
- * @param {any} store Store.
- * @returns {any} Value.
- */
-const getStoreValue = (store) => {
-  let value;
-
-  store.subscribe((/** @type {any} */ v) => {
-    value = v;
-  })();
-
-  return value;
-};
-
 describe('workflow/save', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    unpublishedEntries.set([]);
-    allEntries.set([]);
-    forkedRepository.set(undefined);
+    unpublishedEntries.current = [];
+    allEntries.current = [];
+    forkedRepository.current = undefined;
 
-    vi.mocked(get).mockImplementation((store) =>
-      store === backend ? { workflow: workflowService } : getStoreValue(store),
-    );
+    /** @type {any} */ (backend).current = { workflow: workflowService };
   });
 
   describe('store helpers', () => {
@@ -100,7 +78,7 @@ describe('workflow/save', () => {
       const updated = createEntry('cms/posts/hello', 'pending_review');
 
       upsertUnpublishedEntry(updated);
-      expect(getStoreValue(unpublishedEntries)).toHaveLength(1);
+      expect(unpublishedEntries.current).toHaveLength(1);
       expect(getUnpublishedEntryByBranch('cms/posts/hello')).toBe(updated);
     });
 
@@ -109,7 +87,7 @@ describe('workflow/save', () => {
       upsertUnpublishedEntry(createEntry('cms/posts/world'));
       removeUnpublishedEntry('cms/posts/hello');
 
-      expect(getStoreValue(unpublishedEntries)).toHaveLength(1);
+      expect(unpublishedEntries.current).toHaveLength(1);
       expect(getUnpublishedEntryByBranch('cms/posts/hello')).toBeUndefined();
     });
   });
@@ -146,10 +124,10 @@ describe('workflow/save', () => {
         pullRequest: { branch: 'cms/posts/hello', number: 1, status: 'draft' },
       });
 
-      allAssets.set([
+      allAssets.current = [
         /** @type {any} */ ({ path: 'static/img.png', sha: 'stale' }),
         /** @type {any} */ ({ path: 'static/other.png' }),
-      ]);
+      ];
 
       const results = await saveWorkflowChanges({
         ...args,
@@ -163,13 +141,13 @@ describe('workflow/save', () => {
 
       // The map keeps the existing order, and the shadowed published asset is kept aside
       expect(
-        getStoreValue(allAssets).map((/** @type {any} */ a) => [a.path, a.sha, a.workflow?.branch]),
+        allAssets.current.map((/** @type {any} */ a) => [a.path, a.sha, a.workflow?.branch]),
       ).toEqual([
         ['static/img.png', 'blob-sha', 'cms/posts/hello'],
         ['static/other.png', undefined, undefined],
       ]);
 
-      expect(getStoreValue(allAssets)[0].workflow.replacedAsset).toEqual({
+      expect(allAssets.current[0].workflow?.replacedAsset).toEqual({
         path: 'static/img.png',
         sha: 'stale',
       });
@@ -247,7 +225,7 @@ describe('workflow/save', () => {
       );
 
       // Still a single entry, keyed by the original branch
-      expect(getStoreValue(unpublishedEntries)).toHaveLength(1);
+      expect(unpublishedEntries.current).toHaveLength(1);
       expect(getUnpublishedEntryByBranch('cms/posts/hello')?.subPath).toBe('hello-2');
     });
 
@@ -278,7 +256,7 @@ describe('workflow/save', () => {
         2,
         expect.objectContaining({ branch: 'cms/pages/about%2Fethos', pullRequest: undefined }),
       );
-      expect(getStoreValue(unpublishedEntries)).toHaveLength(2);
+      expect(unpublishedEntries.current).toHaveLength(2);
     });
 
     test('reuses a pull request whose branch keeps the slashes of the slug', async () => {
@@ -307,7 +285,7 @@ describe('workflow/save', () => {
         }),
       );
 
-      expect(getStoreValue(unpublishedEntries)).toHaveLength(1);
+      expect(unpublishedEntries.current).toHaveLength(1);
     });
 
     test('captures the paths when a draft loaded without a rename is then renamed', async () => {
@@ -395,7 +373,7 @@ describe('workflow/save', () => {
     });
 
     test('throws when the backend doesn’t support the feature', async () => {
-      vi.mocked(get).mockImplementation((store) => (store === backend ? {} : undefined));
+      /** @type {any} */ (backend).current = {};
 
       await expect(saveWorkflowChanges(args)).rejects.toThrow(
         'Editorial Workflow is not supported',
@@ -475,7 +453,7 @@ describe('workflow/save', () => {
 
       await updateWorkflowStatus(first, 'pending_review');
 
-      expect(getStoreValue(unpublishedEntries).map((/** @type {any} */ e) => e.id)).toEqual([
+      expect(unpublishedEntries.current.map((/** @type {any} */ e) => e.id)).toEqual([
         'cms/posts/a',
         'cms/posts/b',
       ]);
@@ -488,7 +466,7 @@ describe('workflow/save', () => {
 
       upsertUnpublishedEntry(entry);
 
-      allEntries.set([
+      allEntries.current = [
         /** @type {any} */ ({
           id: 'old',
           slug: 'hello',
@@ -501,12 +479,12 @@ describe('workflow/save', () => {
           subPath: 'other',
           locales: { _default: { slug: 'other', path: 'content/posts/other.md', content: {} } },
         }),
-      ]);
+      ];
 
       await publishWorkflowEntry(entry);
 
       expect(workflowService.publish).toHaveBeenCalledWith(entry.workflow.pullRequest);
-      expect(getStoreValue(unpublishedEntries)).toEqual([]);
+      expect(unpublishedEntries.current).toEqual([]);
 
       // The hooks bracket the merge
       expect(vi.mocked(callEventHooks).mock.calls.map(([{ type }]) => type)).toEqual([
@@ -514,11 +492,11 @@ describe('workflow/save', () => {
         'postPublish',
       ]);
 
-      const published = getStoreValue(allEntries);
+      const published = allEntries.current;
 
       // The stale published version is replaced, and the unrelated entry is kept
       expect(published.map((/** @type {any} */ e) => e.id)).toEqual(['other', entry.id]);
-      expect(published.at(-1).workflow).toBeUndefined();
+      expect(/** @type {any} */ (published.at(-1)).workflow).toBeUndefined();
     });
   });
 
@@ -528,7 +506,7 @@ describe('workflow/save', () => {
     test('refuses to take a published entry off the site for a contributor', async () => {
       // Discarding their own draft leaves the published version alone and stays available; removing
       // something already live is a maintainer’s call
-      forkedRepository.set({ owner: 'contributor', repo: 'repo' });
+      forkedRepository.current = { owner: 'contributor', repo: 'repo' };
 
       await expect(
         deleteWorkflowEntry(
@@ -595,7 +573,7 @@ describe('workflow/save', () => {
         previousPaths: ['content/posts/hello.md', 'content/posts/ja/hello.md'],
       });
 
-      expect(getStoreValue(unpublishedEntries)).toEqual([unpublishedEntry]);
+      expect(unpublishedEntries.current).toEqual([unpublishedEntry]);
 
       // The entry is still on the configured branch, so the unpublish hooks wait for the merge
       expect(callEventHooks).not.toHaveBeenCalled();
@@ -722,7 +700,7 @@ describe('workflow/save', () => {
         }),
       );
 
-      expect(getStoreValue(unpublishedEntries)).toHaveLength(1);
+      expect(unpublishedEntries.current).toHaveLength(1);
     });
 
     test('fires the unpublish hooks when the removal is merged, not when it’s queued', async () => {
@@ -743,7 +721,7 @@ describe('workflow/save', () => {
     test('takes the entry off the site once the removal is published', async () => {
       const entry = createPublishedEntry();
 
-      allEntries.set([
+      allEntries.current = [
         entry,
         /** @type {any} */ ({
           id: 'other',
@@ -751,14 +729,14 @@ describe('workflow/save', () => {
           subPath: 'other',
           locales: { _default: { slug: 'other', path: 'content/posts/other.md', content: {} } },
         }),
-      ]);
+      ];
 
       const unpublishedEntry = await deleteWorkflowEntry(entry, collection, undefined);
 
       await publishWorkflowEntry(unpublishedEntry);
 
-      expect(getStoreValue(allEntries).map((/** @type {any} */ e) => e.id)).toEqual(['other']);
-      expect(getStoreValue(unpublishedEntries)).toEqual([]);
+      expect(allEntries.current.map((/** @type {any} */ e) => e.id)).toEqual(['other']);
+      expect(unpublishedEntries.current).toEqual([]);
     });
   });
 
@@ -811,7 +789,7 @@ describe('workflow/save', () => {
       await discardWorkflowEntry(entry);
 
       expect(workflowService.discard).toHaveBeenCalledWith(entry.workflow.pullRequest);
-      expect(getStoreValue(unpublishedEntries)).toEqual([]);
+      expect(unpublishedEntries.current).toEqual([]);
     });
   });
 
@@ -827,7 +805,7 @@ describe('workflow/save', () => {
       expect(workflowService.discard).toHaveBeenCalledTimes(2);
 
       // The unrelated entry is kept
-      expect(getStoreValue(unpublishedEntries).map((/** @type {any} */ e) => e.id)).toEqual([
+      expect(unpublishedEntries.current.map((/** @type {any} */ e) => e.id)).toEqual([
         'cms/posts/c',
       ]);
     });

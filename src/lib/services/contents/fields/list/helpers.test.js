@@ -1,4 +1,3 @@
-import { writable } from 'svelte/store';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { formatSummary, getListFieldInfo } from './helpers';
@@ -12,32 +11,34 @@ describe('Test formatSummary() — comprehensive tests', () => {
     beforeAll(async () => {
       const configModule = await import('$lib/services/config');
 
-      cmsConfig = writable({
-        backend: { name: 'github' },
-        media_folder: 'static/uploads',
-        collections: [
-          {
-            name: 'posts',
-            folder: 'content/posts',
-            fields: [
-              {
-                name: 'images',
-                widget: 'list',
-                fields: [
-                  { name: 'title', widget: 'string' },
-                  { name: 'name', widget: 'string' },
-                  { name: 'src', widget: 'image' },
-                  { name: 'alt', widget: 'string' },
-                  { name: 'featured', widget: 'boolean' },
-                  { name: 'date', widget: 'date', picker_utc: true, time_format: false },
-                  { name: 'hidden_field', widget: 'hidden' },
-                  { name: 'number_value', widget: 'number' },
-                ],
-              },
-            ],
-          },
-        ],
-      });
+      cmsConfig = {
+        current: {
+          backend: { name: 'github' },
+          media_folder: 'static/uploads',
+          collections: [
+            {
+              name: 'posts',
+              folder: 'content/posts',
+              fields: [
+                {
+                  name: 'images',
+                  widget: 'list',
+                  fields: [
+                    { name: 'title', widget: 'string' },
+                    { name: 'name', widget: 'string' },
+                    { name: 'src', widget: 'image' },
+                    { name: 'alt', widget: 'string' },
+                    { name: 'featured', widget: 'boolean' },
+                    { name: 'date', widget: 'date', picker_utc: true, time_format: false },
+                    { name: 'hidden_field', widget: 'hidden' },
+                    { name: 'number_value', widget: 'number' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      };
       // @ts-ignore
       configModule.cmsConfig = cmsConfig;
     });
@@ -386,28 +387,30 @@ describe('Test formatSummary() — comprehensive tests', () => {
       collectionCacheMap.clear();
 
       // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        backend: { name: 'github' },
-        media_folder: 'static/uploads',
-        collections: [
-          {
-            name: 'posts',
-            folder: 'content/posts',
-            fields: [
-              {
-                name: 'images',
-                widget: 'list',
-                field: { name: 'src', widget: 'image' },
-              },
-              {
-                name: 'tags',
-                widget: 'list',
-                field: { name: 'tag', widget: 'string' },
-              },
-            ],
-          },
-        ],
-      });
+      (await import('$lib/services/config')).cmsConfig = {
+        current: {
+          backend: { name: 'github' },
+          media_folder: 'static/uploads',
+          collections: [
+            {
+              name: 'posts',
+              folder: 'content/posts',
+              fields: [
+                {
+                  name: 'images',
+                  widget: 'list',
+                  field: { name: 'src', widget: 'image' },
+                },
+                {
+                  name: 'tags',
+                  widget: 'list',
+                  field: { name: 'tag', widget: 'string' },
+                },
+              ],
+            },
+          ],
+        },
+      };
     });
 
     const baseArgs = {

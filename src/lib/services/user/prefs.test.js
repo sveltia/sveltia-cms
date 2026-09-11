@@ -117,7 +117,7 @@ describe('prefs service', () => {
 
     await wait();
 
-    expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
+    expect(mockAppLocale.current).toEqual('ja');
   });
 
   it('should load the locale strings before setting the app locale', async () => {
@@ -160,7 +160,7 @@ describe('prefs service', () => {
 
     await wait();
 
-    expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
+    expect(mockAppLocale.current).toEqual('ja');
 
     // The strings for the newly selected locale can’t be loaded
     delete mockDictionary.fr;
@@ -210,7 +210,7 @@ describe('prefs service', () => {
     await wait();
 
     expect(prefs.locale).toBe('auto');
-    expect(mockAppLocale.set).toHaveBeenCalledWith('en-GB');
+    expect(mockAppLocale.current).toEqual('en-GB');
   });
 
   it('should follow the browser language when the preference is automatic', async () => {
@@ -223,7 +223,7 @@ describe('prefs service', () => {
     await wait();
 
     expect(mockWaitLocale).toHaveBeenCalledWith('ja');
-    expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
+    expect(mockAppLocale.current).toEqual('ja');
   });
 
   it('should wait for the browser language to be resolved', async () => {
@@ -247,13 +247,13 @@ describe('prefs service', () => {
 
     await wait();
 
-    expect(mockAppLocale.set).toHaveBeenCalledWith('ja');
+    expect(mockAppLocale.current).toEqual('ja');
 
     navigatorLocale.current = 'fr';
 
     await wait();
 
-    expect(mockAppLocale.set).toHaveBeenCalledWith('fr');
+    expect(mockAppLocale.current).toEqual('fr');
     // The preference itself is untouched, so the UI keeps following the browser
     expect(prefs.locale).toBe('auto');
   });
@@ -291,7 +291,7 @@ describe('prefs service', () => {
 
     await wait();
 
-    expect(mockAppLocale.set).toHaveBeenCalledWith('fr');
+    expect(mockAppLocale.current).toEqual('fr');
   });
 
   it('should use dark theme when system prefers dark mode', async () => {

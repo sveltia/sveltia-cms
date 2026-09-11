@@ -1,4 +1,3 @@
-import { writable } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 
 import { getListedCollections } from '$lib/services/contents/collection/entries';
@@ -61,11 +60,11 @@ vi.mock('@sveltia/i18n', () => ({
 }));
 
 vi.mock('$lib/services/contents', () => ({
-  allEntries: writable([]),
+  allEntries: { current: [] },
 }));
 
 vi.mock('$lib/services/search', () => ({
-  searchTerms: writable(''),
+  searchTerms: { current: '' },
 }));
 
 describe('searchEntries basic functionality', () => {
@@ -494,20 +493,14 @@ describe('searchEntries basic functionality', () => {
   });
 });
 
-describe('entrySearchResults derived store', () => {
-  it('should execute the derived store callback', async () => {
+describe('entrySearchResults derived state', () => {
+  it('should compute the results from the entries and search terms', async () => {
     // Import after mocks are set up
     const { entrySearchResults } = await import('./entries');
     const { allEntries } = await import('$lib/services/contents');
     const { searchTerms } = await import('$lib/services/search');
-    let callbackExecuted = false;
 
-    const unsubscribe = entrySearchResults.subscribe(() => {
-      callbackExecuted = true;
-    });
-
-    // Trigger store updates to force the derived callback (line 91 execution)
-    allEntries.set([
+    allEntries.current = [
       /** @type {any} */ ({
         id: 'test',
         slug: 'test',
@@ -526,11 +519,11 @@ describe('entrySearchResults derived store', () => {
         defaultLocaleKey: 'en',
         currentLocaleKey: 'en',
       }),
-    ]);
-    searchTerms.set('test');
+    ];
+    searchTerms.current = 'test';
 
-    // The callback should have executed
-    expect(callbackExecuted).toBe(true);
-    unsubscribe();
+    expect(entrySearchResults.current).toEqual([
+      expect.objectContaining({ entry: expect.anything() }),
+    ]);
   });
 });

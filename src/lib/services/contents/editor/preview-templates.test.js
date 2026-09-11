@@ -28,7 +28,6 @@ const {
   mockConvertEntryToMap,
   mockCreateElement,
   mockBuildPreviewData,
-  mockGet,
 } = vi.hoisted(() => ({
   mockGetCollection: vi.fn(() => ({
     _i18n: { defaultLocale: 'en' },
@@ -44,7 +43,6 @@ const {
     fieldsMetaData: {},
     getAsset: vi.fn(),
   })),
-  mockGet: vi.fn((store) => store?.value),
 }));
 
 vi.mock('flat', () => ({
@@ -52,6 +50,7 @@ vi.mock('flat', () => ({
 }));
 
 vi.mock('react', () => ({
+  createContext: vi.fn(() => ({})),
   createElement: mockCreateElement,
 }));
 
@@ -63,33 +62,6 @@ vi.mock('svelte', () => {
     unmount: unmountFn,
   };
 });
-
-vi.mock('svelte/store', () => ({
-  get: mockGet,
-  writable: vi.fn((initial) => ({
-    value: initial,
-    subscribe: vi.fn(),
-    set: vi.fn(),
-    update: vi.fn(),
-  })),
-  derived: vi.fn((stores, fn) => {
-    const store = {
-      value: undefined,
-      subscribe: vi.fn(),
-    };
-
-    // Call the function with update callback if it's the 3-argument form
-    if (fn.length === 3) {
-      fn(stores?.value ?? stores, vi.fn(), (updater) => {
-        store.value = updater(store.value);
-      });
-    } else {
-      store.value = fn?.(stores?.value ?? stores);
-    }
-
-    return store;
-  }),
-}));
 
 vi.mock('$lib/components/contents/details/preview/field-preview.svelte', () => ({
   default: {},

@@ -5,7 +5,6 @@
 import { unique } from '@sveltia/utils/array';
 import { getPathInfo, readAsText } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import { allAssets } from '$lib/services/assets';
 import { allAssetFolders } from '$lib/services/assets/folders';
@@ -179,11 +178,11 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
  * @returns {string[]} Unique list of normalized scanning paths.
  */
 export const collectScanningPaths = () => {
-  const entryPaths = get(allEntryFolders).flatMap(({ filePathMap, folderPathMap }) =>
+  const entryPaths = allEntryFolders.current.flatMap(({ filePathMap, folderPathMap }) =>
     filePathMap ? Object.values(filePathMap) : Object.values(folderPathMap ?? {}),
   );
 
-  const assetPaths = get(allAssetFolders)
+  const assetPaths = allAssetFolders.current
     .filter(({ internalPath }) => internalPath !== undefined)
     .map(({ internalPath }) => internalPath);
 
@@ -315,11 +314,11 @@ export const loadFiles = async (rootDirHandle) => {
     assets.push(...results);
   }
 
-  allEntries.set(entries);
-  allAssets.set(assets);
-  gitConfigFiles.set(configFileItems);
-  entryParseErrors.set(errors);
-  dataLoaded.set(true);
+  allEntries.current = entries;
+  allAssets.current = assets;
+  gitConfigFiles.current = configFileItems;
+  entryParseErrors.current = errors;
+  dataLoaded.current = true;
 };
 
 /**

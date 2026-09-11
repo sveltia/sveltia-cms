@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets';
@@ -28,25 +27,16 @@ vi.mock('@sveltia/utils/storage', () => ({
   })),
 }));
 
-vi.mock('svelte/store', async (importOriginal) => ({
-  .../** @type {object} */ (await importOriginal()),
-  get: vi.fn(),
-}));
-
 vi.mock('$lib/services/assets', () => ({
-  allAssets: {
-    update: vi.fn(),
-  },
+  allAssets: { current: [] },
 }));
 
 vi.mock('$lib/services/backends', () => ({
-  backend: {},
+  backend: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents', () => ({
-  allEntries: {
-    update: vi.fn(),
-  },
+  allEntries: { current: [] },
 }));
 
 const mockUserState = vi.hoisted(() => ({
@@ -87,21 +77,10 @@ describe('save', () => {
       login: 'testuser',
     };
 
-    // Setup default mock behavior - return different objects for different stores
-    vi.mocked(get).mockImplementation((store) => {
-      // Check if this is the backend store
-      if (store === backend) {
-        return {
-          commitChanges: mockCommitChanges,
-          repository: { databaseName: 'test-db' },
-        };
-      }
-
-      // Default for other stores (like prefs)
-      return {
-        devModeEnabled: false,
-      };
-    });
+    /** @type {any} */ (backend).current = {
+      commitChanges: mockCommitChanges,
+      repository: { databaseName: 'test-db' },
+    };
 
     mockCommitChanges.mockResolvedValue({
       sha: 'commit123',
@@ -187,9 +166,9 @@ describe('save', () => {
         set: vi.fn(),
       };
 
-      vi.mocked(get).mockReturnValue({
+      /** @type {any} */ (backend).current = {
         repository: { databaseName: 'test-db' },
-      });
+      };
 
       // Get the mocked IndexedDB constructor
       const { IndexedDB } = await import('@sveltia/utils/storage');
@@ -208,9 +187,9 @@ describe('save', () => {
     });
 
     test('should return early when no database name is available', async () => {
-      vi.mocked(get).mockReturnValue({
+      /** @type {any} */ (backend).current = {
         repository: {},
-      });
+      };
 
       await updateCache({
         changes: [],
@@ -221,7 +200,7 @@ describe('save', () => {
     });
 
     test('should return early when backend is null', async () => {
-      vi.mocked(get).mockReturnValue(null);
+      /** @type {any} */ (backend).current = null;
 
       await updateCache({
         changes: [],
@@ -430,18 +409,13 @@ describe('save', () => {
       const changes = [];
       /** @type {Asset[]} */
       const savedAssets = [];
-      // Mock the update callback to capture and test the result
-      let actualResult;
 
-      vi.mocked(allEntries.update).mockImplementation((callback) => {
-        actualResult = callback(existingEntries);
-        return actualResult;
-      });
+      allEntries.current = existingEntries;
 
       updateStores({ changes, savedEntries, savedAssets });
 
       // The function should filter out entries that match saved entry IDs, then add saved entries
-      expect(actualResult).toEqual([
+      expect(allEntries.current).toEqual([
         // @ts-ignore - Minimal test objects
         { id: 'entry1', slug: 'post-1', subPath: 'post-1', locales: {} }, // Not in savedEntries, so kept
         // @ts-ignore - Minimal test objects
@@ -451,7 +425,6 @@ describe('save', () => {
         // @ts-ignore - Minimal test objects
         { id: 'entry4', slug: 'new-post-4', subPath: 'new-post-4', locales: {} }, // New saved entry
       ]);
-      expect(allEntries.update).toHaveBeenCalledTimes(1);
     });
 
     test('should update allAssets store by filtering out moved, deleted, and saved assets', () => {
@@ -538,13 +511,8 @@ describe('save', () => {
 
       /** @type {Entry[]} */
       const savedEntries = [];
-      // Mock the update callback to capture and test the result
-      let actualResult;
 
-      vi.mocked(allAssets.update).mockImplementation((callback) => {
-        actualResult = callback(existingAssets);
-        return actualResult;
-      });
+      allAssets.current = existingAssets;
 
       updateStores({ changes, savedEntries, savedAssets });
 
@@ -553,7 +521,7 @@ describe('save', () => {
       // - images/old-photo.jpg (in movedAssetPaths)
       // - images/to-delete.jpg (in deletedAssetPaths)
       // - images/new-photo4.jpg (in savedAssets paths, but wasn't in existing anyway)
-      expect(actualResult).toEqual([
+      expect(allAssets.current).toEqual([
         // @ts-ignore - Minimal test objects
         {
           path: 'images/photo1.jpg',
@@ -592,7 +560,6 @@ describe('save', () => {
           folder: {},
         },
       ]);
-      expect(allAssets.update).toHaveBeenCalledTimes(1);
     });
 
     test('should handle empty arrays', () => {
@@ -615,19 +582,8 @@ describe('save', () => {
         },
       ];
 
-      // Mock the update callbacks to capture results
-      let entriesResult;
-      let assetsResult;
-
-      vi.mocked(allEntries.update).mockImplementation((callback) => {
-        entriesResult = callback(existingEntries);
-        return entriesResult;
-      });
-
-      vi.mocked(allAssets.update).mockImplementation((callback) => {
-        assetsResult = callback(existingAssets);
-        return assetsResult;
-      });
+      allEntries.current = existingEntries;
+      allAssets.current = existingAssets;
 
       updateStores({
         changes: [],
@@ -635,10 +591,9 @@ describe('save', () => {
         savedAssets: [],
       });
 
-      expect(entriesResult).toEqual(existingEntries); // No changes because no saved entries
-      expect(assetsResult).toEqual(existingAssets); // No changes because no saved assets or changes
-      expect(allEntries.update).toHaveBeenCalledTimes(1);
-      expect(allAssets.update).toHaveBeenCalledTimes(1);
+      expect(allEntries.current).toEqual(existingEntries); // No changes because no saved entries
+      // No changes because no saved assets or changes
+      expect(allAssets.current).toEqual(existingAssets);
     });
   });
 
@@ -884,21 +839,10 @@ describe('save', () => {
         login: 'testuser',
       };
 
-      // Setup mock for backend store
-      vi.mocked(get).mockImplementation((store) => {
-        // Check if this is the backend store
-        if (store === backend) {
-          return {
-            commitChanges: mockCommitChanges,
-            repository: { databaseName: 'test-db' },
-          };
-        }
-
-        // Default for other stores (like prefs)
-        return {
-          devModeEnabled: false,
-        };
-      });
+      /** @type {any} */ (backend).current = {
+        commitChanges: mockCommitChanges,
+        repository: { databaseName: 'test-db' },
+      };
 
       /** @type {FileChange[]} */
       const changes = [
@@ -953,6 +897,9 @@ describe('save', () => {
         commitType: /** @type {CommitType} */ ('create'),
       };
 
+      const entries = allEntries.current;
+      const assets = allAssets.current;
+
       // @ts-ignore - Type issues in test
       await saveChanges({
         changes,
@@ -961,8 +908,9 @@ describe('save', () => {
         options,
       });
 
-      expect(vi.mocked(allEntries.update)).toHaveBeenCalled();
-      expect(vi.mocked(allAssets.update)).toHaveBeenCalled();
+      // The state is replaced with new arrays
+      expect(allEntries.current).not.toBe(entries);
+      expect(allAssets.current).not.toBe(assets);
     });
 
     test('should log debug information when devMode is enabled', async () => {

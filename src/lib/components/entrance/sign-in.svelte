@@ -16,7 +16,7 @@
   let showTokenDialog = $state(false);
   let token = $state('');
 
-  const configuredBackend = $derived(/** @type {Backend} */ ($cmsConfig?.backend));
+  const configuredBackend = $derived(/** @type {Backend} */ (cmsConfig.current?.backend));
   const backendName = $derived(/** @type {string} */ (configuredBackend.name));
   const backend = $derived(backendName ? allBackendServices[backendName] : null);
   const isTestRepo = $derived(backendName === 'test-repo');

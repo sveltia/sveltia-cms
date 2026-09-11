@@ -1,4 +1,3 @@
-import { get } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Simplified locale data used by the locale module mocks
@@ -38,6 +37,20 @@ vi.mock('@sveltia/i18n', () => ({
 vi.mock('$lib/services/app', () => ({
   version: '1.2.3',
   UNPKG_BASE_URL: 'https://unpkg.com/@sveltia/cms',
+}));
+
+// The tests run outside a browser, where effects don’t run, so the effect is run right away and its
+// function is kept, so that a test can run it again as if the locale had changed
+const mockEffects = vi.hoisted(() => /** @type {(() => void)[]} */ ([]));
+
+vi.mock('$lib/services/utils/state.svelte', () => ({
+  createRawState: vi.fn((initialValue) => ({ current: initialValue })),
+  createRootEffect: vi.fn((fn) => {
+    mockEffects.push(fn);
+    fn();
+
+    return vi.fn();
+  }),
 }));
 
 vi.mock('@sveltia/ui', () => ({
@@ -345,7 +358,7 @@ describe('i18n', () => {
 
       const { appLocaleLoadError } = await import('./i18n.js');
 
-      appLocaleLoadError.set(undefined);
+      appLocaleLoadError.current = undefined;
     });
 
     afterEach(() => {
@@ -426,7 +439,7 @@ describe('i18n', () => {
       expect(mockFetch).not.toHaveBeenCalled();
       expect(mockLocalStorage.set).not.toHaveBeenCalled();
       // A cache hit is instant, so no loading notification is shown
-      expect(get(appLocaleLoading)).toBeUndefined();
+      expect(appLocaleLoading.current).toBeUndefined();
     });
 
     it('should ignore the cache for another locale or app version', async () => {
@@ -482,7 +495,7 @@ describe('i18n', () => {
       );
 
       await expect(loader()).resolves.toEqual(strings);
-      expect(get(appLocaleLoadError)).toBeUndefined();
+      expect(appLocaleLoadError.current).toBeUndefined();
     });
 
     it('should give up on the CDN request after a timeout', async () => {
@@ -538,14 +551,14 @@ describe('i18n', () => {
 
       // The loading state is set once the cache is found to be empty
       await vi.waitFor(() => {
-        expect(get(appLocaleLoading)).toBe('ja');
+        expect(appLocaleLoading.current).toBe('ja');
       });
 
       // eslint-disable-next-line jsdoc/require-jsdoc
       resolveFetch({ ok: true, json: () => Promise.resolve({}) });
       await promise;
 
-      expect(get(appLocaleLoading)).toBeUndefined();
+      expect(appLocaleLoading.current).toBeUndefined();
     });
 
     it('should reset the loading state when the CDN request fails', async () => {
@@ -563,7 +576,7 @@ describe('i18n', () => {
       );
 
       await expect(loader()).rejects.toThrow();
-      expect(get(appLocaleLoading)).toBeUndefined();
+      expect(appLocaleLoading.current).toBeUndefined();
     });
 
     it('should report the failure when the CDN request fails', async () => {
@@ -581,7 +594,7 @@ describe('i18n', () => {
       );
 
       await expect(loader()).rejects.toThrow('Failed to load the ja locale strings');
-      expect(get(appLocaleLoadError)).toEqual({ locale: 'ja' });
+      expect(appLocaleLoadError.current).toEqual({ locale: 'ja' });
     });
 
     it('should report the failure when the CDN request times out', async () => {
@@ -599,7 +612,7 @@ describe('i18n', () => {
       );
 
       await expect(loader()).rejects.toThrow('The operation timed out');
-      expect(get(appLocaleLoadError)).toEqual({ locale: 'ja' });
+      expect(appLocaleLoadError.current).toEqual({ locale: 'ja' });
     });
 
     it('should not wait for the strings for the initial locale', async () => {
@@ -712,6 +725,35 @@ describe('i18n', () => {
       });
       // The strings are reused from memory, so the CDN is not hit again
       expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should keep the cache in sync with the active locale', async () => {
+      const { locale } = await import('@sveltia/i18n');
+      const { initAppLocale } = await import('./i18n.js');
+
+      mockEffects.length = 0;
+      initAppLocale();
+
+      // The effect runs when the app locale changes
+      expect(mockEffects).toHaveLength(1);
+
+      await getLoader('ja')();
+
+      mockLocalStorage.get.mockResolvedValue(undefined);
+      mockLocalStorage.set.mockClear();
+
+      // Simulate the user switching to Japanese
+      /** @type {any} */ (locale).current = 'ja';
+      mockEffects[0]();
+      await vi.waitFor(() => {
+        expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.locale', {
+          _locale: 'ja',
+          _version: '1.2.3',
+          ...remoteStrings.ja,
+        });
+      });
+
+      /** @type {any} */ (locale).current = 'en';
     });
 
     it('should keep the cache intact when the strings are not loaded', async () => {

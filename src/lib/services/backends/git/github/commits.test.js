@@ -43,7 +43,7 @@ describe('GitHub commits service', () => {
       repo: 'test-repo',
       branch: 'main',
     });
-    forkedRepository.set(undefined);
+    forkedRepository.current = undefined;
     vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
   });
 
@@ -735,7 +735,7 @@ describe('GitHub commits service', () => {
   });
   describe('Open Authoring', () => {
     beforeEach(() => {
-      forkedRepository.set({ owner: 'contributor', repo: 'test-repo' });
+      forkedRepository.current = { owner: 'contributor', repo: 'test-repo' };
       vi.mocked(getWorkflowRepository).mockReturnValue({
         owner: 'contributor',
         repo: 'test-repo',

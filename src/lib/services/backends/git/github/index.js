@@ -1,5 +1,4 @@
 import { stripSlashes } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import {
   normalizeGraphQLBaseURL,
@@ -40,7 +39,7 @@ import { prefs } from '$lib/services/user/prefs.svelte';
  * not GitHub.
  */
 export const init = () => {
-  const { backend } = get(cmsConfig) ?? {};
+  const { backend } = cmsConfig.current ?? {};
 
   if (backend?.name !== BACKEND_NAME) {
     return undefined;

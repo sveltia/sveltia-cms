@@ -1,5 +1,4 @@
 import { stripTags } from '@sveltia/utils/string';
-import { writable } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getDefaultValueMap } from './defaults';
@@ -15,7 +14,7 @@ vi.mock('$lib/services/config');
 
 beforeEach(async () => {
   // @ts-ignore
-  (await import('$lib/services/config')).cmsConfig = writable(null);
+  (await import('$lib/services/config')).cmsConfig = { current: null };
 });
 
 /**
@@ -281,9 +280,11 @@ describe('Test getDefaultValueMap()', () => {
   describe('with field_defaults fallback', () => {
     test('should use field_defaults when field has no default', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        field_defaults: { richtext: { default: '# Default from config' } },
-      });
+      (await import('$lib/services/config')).cmsConfig = {
+        current: {
+          field_defaults: { richtext: { default: '# Default from config' } },
+        },
+      };
 
       /** @type {RichTextField} */
       const fieldConfig = { ...baseFieldConfig };
@@ -300,9 +301,11 @@ describe('Test getDefaultValueMap()', () => {
 
     test('should prefer field-level default over field_defaults', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        field_defaults: { richtext: { default: '# Default from config' } },
-      });
+      (await import('$lib/services/config')).cmsConfig = {
+        current: {
+          field_defaults: { richtext: { default: '# Default from config' } },
+        },
+      };
 
       /** @type {RichTextField} */
       const fieldConfig = { ...baseFieldConfig, default: '# Field default' };
@@ -319,9 +322,11 @@ describe('Test getDefaultValueMap()', () => {
 
     test('should return empty string when field_defaults has no default', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        field_defaults: { richtext: {} },
-      });
+      (await import('$lib/services/config')).cmsConfig = {
+        current: {
+          field_defaults: { richtext: {} },
+        },
+      };
 
       /** @type {RichTextField} */
       const fieldConfig = { ...baseFieldConfig };
@@ -338,9 +343,11 @@ describe('Test getDefaultValueMap()', () => {
 
     test('dynamicValue takes precedence over field_defaults', async () => {
       // @ts-ignore
-      (await import('$lib/services/config')).cmsConfig = writable({
-        field_defaults: { richtext: { default: '# Default from config' } },
-      });
+      (await import('$lib/services/config')).cmsConfig = {
+        current: {
+          field_defaults: { richtext: { default: '# Default from config' } },
+        },
+      };
 
       /** @type {RichTextField} */
       const fieldConfig = { ...baseFieldConfig };

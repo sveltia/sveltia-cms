@@ -11,12 +11,6 @@ import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getGitHash } from '$lib/services/utils/file';
 
 // Mock dependencies
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
-  writable: vi.fn(() => ({ subscribe: vi.fn(), set: vi.fn(), update: vi.fn() })),
-  derived: vi.fn(() => ({ subscribe: vi.fn() })),
-  readonly: vi.fn(() => ({ subscribe: vi.fn() })),
-}));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key) => key),
   locale: { current: 'en', set: vi.fn() },

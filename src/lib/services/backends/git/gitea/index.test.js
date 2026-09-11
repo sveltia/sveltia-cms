@@ -1,12 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-// Mock dependencies with vi.hoisted to ensure proper hoisting
-const getMock = vi.hoisted(() => vi.fn());
-const stripSlashesMock = vi.hoisted(() => vi.fn());
+import { cmsConfig } from '$lib/services/config';
 
-vi.mock('svelte/store', () => ({
-  get: getMock,
-}));
+// Mock dependencies with vi.hoisted to ensure proper hoisting
+const stripSlashesMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@sveltia/utils/string', () => ({
   stripSlashes: stripSlashesMock,
@@ -46,7 +43,7 @@ vi.mock('$lib/services/backends/git/shared/api', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: { mockStore: 'cmsConfig' },
+  cmsConfig: { current: undefined },
 }));
 
 const mockPrefs = { devModeEnabled: false };
@@ -76,22 +73,16 @@ describe('Gitea Index Service', () => {
     });
 
     // Default mock setup for stores
-    getMock.mockImplementation((/** @type {any} */ store) => {
-      if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
-        return {
-          backend: {
-            name: 'gitea',
-            repo: 'owner/repo-name',
-            branch: 'main',
-            base_url: 'https://gitea.com',
-            auth_endpoint: 'login/oauth/authorize',
-            app_id: 'test-client-id',
-            api_root: 'https://gitea.com/api/v1',
-          },
-        };
-      }
-
-      return {};
+    cmsConfig.current = /** @type {any} */ ({
+      backend: {
+        name: 'gitea',
+        repo: 'owner/repo-name',
+        branch: 'main',
+        base_url: 'https://gitea.com',
+        auth_endpoint: 'login/oauth/authorize',
+        app_id: 'test-client-id',
+        api_root: 'https://gitea.com/api/v1',
+      },
     });
     mockPrefs.devModeEnabled = false;
   });
@@ -129,16 +120,10 @@ describe('Gitea Index Service', () => {
     });
 
     test('should return undefined when backend is not Gitea', () => {
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
-          return {
-            backend: {
-              name: 'github', // Different backend
-            },
-          };
-        }
-
-        return {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'github', // Different backend
+        },
       });
 
       const result = init();
@@ -147,13 +132,7 @@ describe('Gitea Index Service', () => {
     });
 
     test('should return undefined when no backend is configured', () => {
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
-          return {}; // No backend configured
-        }
-
-        return {};
-      });
+      cmsConfig.current = /** @type {any} */ ({}); // No backend configured
 
       const result = init();
 
@@ -161,7 +140,7 @@ describe('Gitea Index Service', () => {
     });
 
     test('should return undefined when cmsConfig is null', () => {
-      getMock.mockImplementation(() => null);
+      cmsConfig.current = /** @type {any} */ (null);
 
       const result = init();
 
@@ -169,22 +148,16 @@ describe('Gitea Index Service', () => {
     });
 
     test('should handle custom configuration values', () => {
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
-          return {
-            backend: {
-              name: 'gitea',
-              repo: 'custom-owner/custom-repo',
-              branch: 'develop',
-              base_url: 'https://custom-gitea.com',
-              auth_endpoint: 'custom/oauth/authorize',
-              app_id: 'custom-client-id',
-              api_root: 'https://custom-api.gitea.com',
-            },
-          };
-        }
-
-        return {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitea',
+          repo: 'custom-owner/custom-repo',
+          branch: 'develop',
+          base_url: 'https://custom-gitea.com',
+          auth_endpoint: 'custom/oauth/authorize',
+          app_id: 'custom-client-id',
+          api_root: 'https://custom-api.gitea.com',
+        },
       });
 
       const result = init();
@@ -197,22 +170,16 @@ describe('Gitea Index Service', () => {
     });
 
     test('should set tokenPageURL correctly for custom Gitea instances', () => {
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
-          return {
-            backend: {
-              name: 'gitea',
-              repo: 'custom-owner/custom-repo',
-              branch: 'develop',
-              base_url: 'https://custom-gitea.com',
-              auth_endpoint: 'custom/oauth/authorize',
-              app_id: 'custom-client-id',
-              api_root: 'https://custom-api.gitea.com',
-            },
-          };
-        }
-
-        return {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitea',
+          repo: 'custom-owner/custom-repo',
+          branch: 'develop',
+          base_url: 'https://custom-gitea.com',
+          auth_endpoint: 'custom/oauth/authorize',
+          app_id: 'custom-client-id',
+          api_root: 'https://custom-api.gitea.com',
+        },
       });
 
       const result = init();
@@ -235,19 +202,13 @@ describe('Gitea Index Service', () => {
     });
 
     test('should use default values for missing optional configuration', () => {
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
-          return {
-            backend: {
-              name: 'gitea',
-              repo: 'test-org/test-repository',
-              branch: 'main',
-              // Missing base_url, auth_endpoint, app_id, api_root - should use defaults
-            },
-          };
-        }
-
-        return {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitea',
+          repo: 'test-org/test-repository',
+          branch: 'main',
+          // Missing base_url, auth_endpoint, app_id, api_root - should use defaults
+        },
       });
 
       const result = init();
@@ -258,18 +219,12 @@ describe('Gitea Index Service', () => {
     });
 
     test('should detect self-hosted instances correctly', () => {
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
-          return {
-            backend: {
-              name: 'gitea',
-              repo: 'self-hosted/project',
-              api_root: 'https://my-gitea.company.com',
-            },
-          };
-        }
-
-        return {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitea',
+          repo: 'self-hosted/project',
+          api_root: 'https://my-gitea.company.com',
+        },
       });
 
       const result = init();
@@ -283,17 +238,11 @@ describe('Gitea Index Service', () => {
 
       mockPrefs.devModeEnabled = true;
 
-      getMock.mockImplementation((/** @type {any} */ store) => {
-        if (store && typeof store === 'object' && store.mockStore === 'cmsConfig') {
-          return {
-            backend: {
-              name: 'gitea',
-              repo: 'test/repo',
-            },
-          };
-        }
-
-        return {};
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitea',
+          repo: 'test/repo',
+        },
       });
 
       const result = init();

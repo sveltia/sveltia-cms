@@ -48,7 +48,7 @@
   const isButtonDisabled = async ({ sourceLanguage, targetLanguage }) =>
     sourceDisabled ||
     !entryDraft.current?.currentLocales[sourceLanguage] ||
-    !(await $translator?.availability({ sourceLanguage, targetLanguage }));
+    !(await translator.current?.availability({ sourceLanguage, targetLanguage }));
 </script>
 
 {#if otherLocales.length === 1}

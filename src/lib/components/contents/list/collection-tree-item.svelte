@@ -5,7 +5,6 @@
 
   import NestedTreeItem from '$lib/components/contents/list/nested-tree-item.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { allEntries } from '$lib/services/contents';
   import { getCollection, selectedCollection } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { nestedFilterPath } from '$lib/services/contents/collection/nested';
@@ -33,10 +32,10 @@
 
   const numberFormatter = $derived(Intl.NumberFormat(appLocale.current));
   const { name, label, icon } = $derived(collection);
-  const isCurrentCollection = $derived($selectedCollection?.name === name);
+  const isCurrentCollection = $derived(selectedCollection.current?.name === name);
 
   const selected = $derived(
-    env.isSmallScreen || isSearchPage ? false : isCurrentCollection && !$nestedFilterPath,
+    env.isSmallScreen || isSearchPage ? false : isCurrentCollection && !nestedFilterPath.current,
   );
 
   /**
@@ -45,19 +44,16 @@
    * and the folder tree reflect what the entry list shows. A folder that only exists in a pull
    * request — a section started under Editorial Workflow, or a page moved there — can then be
    * browsed before it’s published. Without it, a draft filed below another draft is nowhere to be
-   * found. `$allEntries` is a key, because `getEntriesByCollection()` reads it indirectly, while
-   * `$unpublishedEntries` is tracked as a normal dependency.
+   * found.
    */
-  const entries = $derived.by(() => {
-    void $allEntries;
-
-    return 'files' in collection
+  const entries = $derived.by(() =>
+    'files' in collection
       ? []
       : mergeUnpublishedEntries(
           getEntriesByCollection(name),
-          $unpublishedEntries.filter(({ workflow }) => workflow.collectionName === name),
-        );
-  });
+          unpublishedEntries.current.filter(({ workflow }) => workflow.collectionName === name),
+        ),
+  );
 
   const entryCount = $derived('files' in collection ? collection.files.length : entries.length);
 

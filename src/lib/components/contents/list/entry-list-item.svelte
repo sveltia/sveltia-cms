@@ -33,26 +33,23 @@
 
   // `undefined` for an entry that has never been published, as those are listed in a separate group
   // above `listedEntries`. The attribute is then omitted rather than set to an invalid index.
-  const rowIndex = $derived($listedEntryIndexMap.get(entry.id));
+  const rowIndex = $derived(listedEntryIndexMap.current.get(entry.id));
 
   /**
    * Update the entry selection.
    * @param {boolean} selected Whether the current entry item is selected.
    */
   const updateSelection = (selected) => {
-    selectedEntries.update((entries) => {
-      const index = entries.indexOf(entry);
+    const entries = selectedEntries.current;
+    const index = entries.indexOf(entry);
 
-      if (selected && index === -1) {
-        entries.push(entry);
-      }
+    if (selected && index === -1) {
+      selectedEntries.current = [...entries, entry];
+    }
 
-      if (!selected && index > -1) {
-        entries.splice(index, 1);
-      }
-
-      return entries;
-    });
+    if (!selected && index > -1) {
+      selectedEntries.current = entries.filter((e) => e !== entry);
+    }
   };
 </script>
 
@@ -73,7 +70,7 @@
     {collection}
     {entry}
     {viewType}
-    showCheckbox={!$openAuthoring}
+    showCheckbox={!openAuthoring.current}
     onSelect={updateSelection}
   />
 </GridRow>

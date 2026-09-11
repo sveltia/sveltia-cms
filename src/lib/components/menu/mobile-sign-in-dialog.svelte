@@ -11,7 +11,7 @@
   let canvas = $state();
 
   $effect(() => {
-    if (canvas && $showMobileSignInDialog) {
+    if (canvas && showMobileSignInDialog.current) {
       const { origin, pathname } = window.location;
       const snapshot = $state.snapshot(prefs);
       const encodedData = btoa(JSON.stringify({ token: user.account?.token, prefs: snapshot }));
@@ -28,7 +28,7 @@
 </script>
 
 <Dialog
-  bind:open={$showMobileSignInDialog}
+  bind:open={showMobileSignInDialog.current}
   title={_('sign_in_with_mobile')}
   size="small"
   showOk={false}

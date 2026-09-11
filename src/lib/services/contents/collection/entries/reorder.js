@@ -197,11 +197,11 @@ export const reorderEntries = async (collection, orderedEntries, { silent = fals
   });
 
   if (!silent) {
-    contentUpdatesToast.set({
+    contentUpdatesToast.current = {
       ...UPDATE_TOAST_DEFAULT_STATE,
       saved: true,
       count: savingEntries.length,
-    });
+    };
   }
 
   return savingEntries.length;

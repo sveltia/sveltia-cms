@@ -49,7 +49,7 @@
   <AssetsPanel
     {multiple}
     {assets}
-    viewType={$selectAssetsView?.type}
+    viewType={selectAssetsView.current?.type}
     {searchTerms}
     {basePath}
     gridId="select-assets-grid"

@@ -7,17 +7,11 @@ import { getAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob } from '$lib/services/assets/info';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 
-vi.mock('$lib/services/assets', () => ({ allAssets: { subscribe: vi.fn() } }));
+vi.mock('$lib/services/assets', () => ({ allAssets: { current: undefined } }));
 
 vi.mock('$lib/services/assets/folders', () => ({ getAssetFolder: vi.fn() }));
 
 vi.mock('$lib/services/assets/info', () => ({ getAssetBlob: vi.fn() }));
-
-vi.mock('svelte/store', async () => {
-  const actual = await vi.importActual('svelte/store');
-
-  return { ...actual, get: vi.fn() };
-});
 
 /** Page bundle collection: each entry owns the folder holding its index file. */
 const collection = {
@@ -51,22 +45,20 @@ const createAsset = (path) => ({
  * Make the builder see the given assets.
  * @param {any[]} assets Assets.
  */
-const setAssets = async (assets) => {
-  const { get } = await import('svelte/store');
-
-  vi.mocked(get).mockImplementation((store) => (store === allAssets ? assets : undefined));
+const setAssets = (assets) => {
+  allAssets.current = assets;
 };
 
 beforeEach(async () => {
   vi.clearAllMocks();
   vi.mocked(getAssetFolder).mockReturnValue({ entryRelative: true });
   vi.mocked(getAssetBlob).mockImplementation(async ({ path }) => new Blob([path]));
-  await setAssets([]);
+  setAssets([]);
 });
 
 describe('buildEntryAssetMoveChanges()', () => {
   test('moves the assets stored in the entry’s folder', async () => {
-    await setAssets([
+    setAssets([
       createAsset('content/pages/about/our-history/photo.jpg'),
       createAsset('content/pages/about/our-history/images/logo.svg'),
       createAsset('content/pages/about/sibling.jpg'),
@@ -103,7 +95,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   });
 
   test('takes the assets of a descendant entry along', async () => {
-    await setAssets([createAsset('content/pages/about/team/portrait.jpg')]);
+    setAssets([createAsset('content/pages/about/team/portrait.jpg')]);
 
     const { changes } = await buildEntryAssetMoveChanges({
       collection,
@@ -120,7 +112,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   test('reuses the blob already attached to the asset', async () => {
     const asset = { ...createAsset('content/pages/about/photo.jpg'), file: new File([], 'x') };
 
-    await setAssets([asset]);
+    setAssets([asset]);
 
     await buildEntryAssetMoveChanges({
       collection,
@@ -133,7 +125,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   });
 
   test('drops an asset the save is already writing to the destination', async () => {
-    await setAssets([createAsset('content/pages/about/photo.jpg')]);
+    setAssets([createAsset('content/pages/about/photo.jpg')]);
 
     const { changes, savingAssets } = await buildEntryAssetMoveChanges({
       collection,
@@ -154,7 +146,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   });
 
   test('moves each locale’s folder with a multi-folder i18n structure', async () => {
-    await setAssets([
+    setAssets([
       createAsset('content/pages/en/about/photo.jpg'),
       createAsset('content/pages/fr/about/photo.jpg'),
     ]);
@@ -179,7 +171,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   });
 
   test('ignores a locale that the entry didn’t have before', async () => {
-    await setAssets([createAsset('content/pages/en/about/photo.jpg')]);
+    setAssets([createAsset('content/pages/en/about/photo.jpg')]);
 
     const { changes } = await buildEntryAssetMoveChanges({
       collection: { ...collection, _i18n: { structure: 'multiple_folders' } },
@@ -195,7 +187,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   });
 
   test('moves the assets of a nested entry that has no `path` option', async () => {
-    await setAssets([createAsset('content/pages/about/photo.jpg')]);
+    setAssets([createAsset('content/pages/about/photo.jpg')]);
 
     const { changes } = await buildEntryAssetMoveChanges({
       collection: {
@@ -214,7 +206,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   });
 
   test('skips a new entry', async () => {
-    await setAssets([createAsset('content/pages/about/photo.jpg')]);
+    setAssets([createAsset('content/pages/about/photo.jpg')]);
 
     expect(
       await buildEntryAssetMoveChanges({
@@ -228,7 +220,7 @@ describe('buildEntryAssetMoveChanges()', () => {
 
   test('skips a collection whose assets aren’t stored at a relative path', async () => {
     vi.mocked(getAssetFolder).mockReturnValue({ entryRelative: false });
-    await setAssets([createAsset('content/pages/about/photo.jpg')]);
+    setAssets([createAsset('content/pages/about/photo.jpg')]);
 
     expect(
       (
@@ -243,7 +235,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   });
 
   test('skips a collection where each entry is a plain file', async () => {
-    await setAssets([createAsset('content/pages/about/photo.jpg')]);
+    setAssets([createAsset('content/pages/about/photo.jpg')]);
 
     expect(
       (
@@ -258,7 +250,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   });
 
   test('skips a file collection', async () => {
-    await setAssets([createAsset('content/pages/about/photo.jpg')]);
+    setAssets([createAsset('content/pages/about/photo.jpg')]);
 
     expect(
       (
@@ -274,7 +266,7 @@ describe('buildEntryAssetMoveChanges()', () => {
   });
 
   test('skips an entry that stayed where it was', async () => {
-    await setAssets([createAsset('content/pages/about/photo.jpg')]);
+    setAssets([createAsset('content/pages/about/photo.jpg')]);
 
     expect(
       (

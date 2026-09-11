@@ -1,7 +1,6 @@
 import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
-import { get, writable } from 'svelte/store';
 
 import { backend } from '$lib/services/backends';
 import { cmsConfigVersion } from '$lib/services/config';
@@ -9,9 +8,9 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { isDraftModified, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { createDeepState, createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Writable } from 'svelte/store';
  * @import {
  * AssetFolderInfo,
  * EntryDraft,
@@ -41,14 +40,14 @@ const BACKUP_TOAST_DEFAULT_STATE = {
 };
 
 /**
- * @type {Writable<{ show: boolean, timestamp?: Date, resolve?: (value?: boolean) => void }>}
+ * @type {{ current: { show: boolean, timestamp?: Date, resolve?: (value?: boolean) => void } }}
  */
-export const restoreDialogState = writable({ show: false });
+export const restoreDialogState = createDeepState({ show: false });
 
 /**
- * @type {Writable<{ saved: boolean, restored: boolean, deleted: boolean }>}
+ * @type {{ current: { saved: boolean, restored: boolean, deleted: boolean } }}
  */
-export const backupToastState = writable({ ...BACKUP_TOAST_DEFAULT_STATE });
+export const backupToastState = createDeepState({ ...BACKUP_TOAST_DEFAULT_STATE });
 
 /**
  * Delete a draft stored in IndexedDB.
@@ -74,7 +73,7 @@ export const getBackup = async (collectionName, slug = '') => {
     return null;
   }
 
-  if (backup.cmsConfigVersion === get(cmsConfigVersion)) {
+  if (backup.cmsConfigVersion === cmsConfigVersion.current) {
     return backup;
   }
 
@@ -119,7 +118,7 @@ export const saveBackup = async (draft) => {
     /** @type {EntryDraftBackup} */
     const backup = {
       timestamp: new Date(),
-      cmsConfigVersion: /** @type {string} */ (get(cmsConfigVersion)),
+      cmsConfigVersion: /** @type {string} */ (cmsConfigVersion.current),
       collectionName,
       slug,
       currentLocales: /** @type {LocaleStateMap} */ (toRaw(currentLocales)),
@@ -259,7 +258,7 @@ export const restoreBackupIfNeeded = async ({ draft }) => {
   const { timestamp } = backup;
   const { promise, resolve } = Promise.withResolvers();
 
-  restoreDialogState.set({ show: true, timestamp, resolve });
+  restoreDialogState.current = { show: true, timestamp, resolve };
 
   // The promise will be resolved once the Restore or Discard button is clicked on the dialog
   /** @type {boolean | undefined} */
@@ -276,7 +275,7 @@ export const restoreBackupIfNeeded = async ({ draft }) => {
     await deleteBackup(collectionName, slug);
   }
 
-  backupToastState.set({ restored: doRestore, deleted: !doRestore, saved: false });
+  backupToastState.current = { restored: doRestore, deleted: !doRestore, saved: false };
 };
 
 /**
@@ -288,7 +287,7 @@ export const showBackupToastIfNeeded = async (draft) => {
     return;
   }
 
-  if (!draft || get(backupToastState).saved) {
+  if (!draft || backupToastState.current.saved) {
     return;
   }
 
@@ -296,7 +295,7 @@ export const showBackupToastIfNeeded = async (draft) => {
   const backup = await getBackup(collectionName, originalEntry?.slug);
 
   if (backup) {
-    backupToastState.set({ restored: false, deleted: false, saved: true });
+    backupToastState.current = { restored: false, deleted: false, saved: true };
   }
 };
 
@@ -304,10 +303,12 @@ export const showBackupToastIfNeeded = async (draft) => {
  * Reset {@link backupToastState}.
  */
 export const resetBackupToastState = () => {
-  backupToastState.set({ ...BACKUP_TOAST_DEFAULT_STATE });
+  backupToastState.current = { ...BACKUP_TOAST_DEFAULT_STATE };
 };
 
-backend.subscribe((_backend) => {
+createRootEffect(() => {
+  const { current: _backend } = backend;
+
   if (_backend && !backupDB) {
     const { databaseName } = _backend.repository ?? {};
 

@@ -1,6 +1,26 @@
+// @vitest-environment jsdom
+
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { buildGroupMap, matchesFilter, sortItemsByKey } from './view';
+import { createRawState } from '$lib/services/utils/state.svelte';
+
+import { buildGroupMap, initViewSettingsStorage, matchesFilter, sortItemsByKey } from './view';
+
+const { mockDB, mockIndexedDB } = vi.hoisted(() => {
+  const db = { get: vi.fn(), set: vi.fn() };
+
+  return {
+    mockDB: db,
+    // eslint-disable-next-line prefer-arrow-callback, func-names
+    mockIndexedDB: vi.fn(function () {
+      return db;
+    }),
+  };
+});
+
+vi.mock('@sveltia/utils/storage', () => ({
+  IndexedDB: mockIndexedDB,
+}));
 
 vi.mock('@sveltia/utils/string', () => ({
   compare: vi.fn((a, b) => {
@@ -228,5 +248,83 @@ describe('Test sortItemsByKey()', () => {
 
     expect(getKey).toHaveBeenCalledTimes(items.length);
     expect(items.map((i) => i.v)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('Test initViewSettingsStorage()', () => {
+  /**
+   * Wait for the effects to run.
+   * @returns {Promise<void>} Promise that resolves after a short delay.
+   */
+  const wait = () =>
+    new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDB.get.mockResolvedValue(undefined);
+    mockDB.set.mockResolvedValue(undefined);
+  });
+
+  test('loads the settings from the database', async () => {
+    /** @type {{ current: Record<string, any> | undefined }} */
+    const settings = createRawState();
+
+    mockDB.get.mockResolvedValue({ posts: { type: 'grid' } });
+
+    await initViewSettingsStorage({ databaseName: 'test-db' }, 'contents-view', settings);
+
+    expect(mockIndexedDB).toHaveBeenCalledWith('test-db', 'ui-settings');
+    expect(mockDB.get).toHaveBeenCalledWith('contents-view');
+    expect(settings.current).toEqual({ posts: { type: 'grid' } });
+  });
+
+  test('starts with empty settings without a database', async () => {
+    /** @type {{ current: Record<string, any> | undefined }} */
+    const settings = createRawState();
+
+    await initViewSettingsStorage(undefined, 'contents-view', settings);
+
+    expect(mockIndexedDB).not.toHaveBeenCalled();
+    expect(settings.current).toEqual({});
+  });
+
+  test('persists a change to the settings', async () => {
+    /** @type {{ current: Record<string, any> | undefined }} */
+    const settings = createRawState();
+
+    await initViewSettingsStorage({ databaseName: 'test-db' }, 'contents-view', settings);
+    await wait();
+
+    // The initial value is not written back
+    expect(mockDB.set).not.toHaveBeenCalled();
+
+    settings.current = { posts: { type: 'grid' } };
+    await wait();
+
+    expect(mockDB.set).toHaveBeenCalledWith('contents-view', { posts: { type: 'grid' } });
+
+    // An equal value is not written again
+    mockDB.set.mockClear();
+    settings.current = { posts: { type: 'grid' } };
+    await wait();
+
+    expect(mockDB.set).not.toHaveBeenCalled();
+  });
+
+  test('ignores a database error', async () => {
+    /** @type {{ current: Record<string, any> | undefined }} */
+    const settings = createRawState();
+
+    await initViewSettingsStorage({ databaseName: 'test-db' }, 'contents-view', settings);
+    await wait();
+
+    mockDB.set.mockRejectedValue(new Error('Storage error'));
+    settings.current = { posts: { type: 'grid' } };
+    await wait();
+
+    expect(mockDB.set).toHaveBeenCalled();
+    expect(settings.current).toEqual({ posts: { type: 'grid' } });
   });
 });

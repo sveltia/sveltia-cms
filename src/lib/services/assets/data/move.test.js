@@ -1,6 +1,8 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { cmsConfig } from '$lib/services/config';
+
 import {
   addSavingEntryData,
   collectEntryChanges,
@@ -12,27 +14,18 @@ import {
 
 // Mock dependencies
 vi.mock('$lib/services/contents/collection', () => ({
-  allCollections: { subscribe: vi.fn() },
+  allCollections: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents/collection/files', () => ({
-  allCollectionFiles: { subscribe: vi.fn() },
+  allCollectionFiles: { current: undefined },
   getCollectionFilesByEntry: vi.fn(),
 }));
 
 vi.mock('$lib/services/assets', () => ({
-  allAssets: {
-    subscribe: vi.fn(),
-    set: vi.fn(),
-  },
-  focusedAsset: {
-    subscribe: vi.fn(),
-    set: vi.fn(),
-  },
-  overlaidAsset: {
-    subscribe: vi.fn(),
-    set: vi.fn(),
-  },
+  allAssets: { current: undefined },
+  focusedAsset: { current: undefined },
+  overlaidAsset: { current: undefined },
   getAssetByInternalPath: vi.fn(),
 }));
 
@@ -44,9 +37,7 @@ vi.mock('$lib/services/assets/data', () => ({
 
 vi.mock('$lib/services/assets/folders', () => ({
   getAssetFoldersByPath: vi.fn(),
-  globalAssetFolder: {
-    subscribe: vi.fn(),
-  },
+  globalAssetFolder: { current: undefined },
 }));
 
 vi.mock('$lib/services/assets/info', () => ({
@@ -59,9 +50,7 @@ vi.mock('$lib/services/backends/save', () => ({
 }));
 
 vi.mock('$lib/services/config', () => ({
-  cmsConfig: {
-    subscribe: vi.fn(),
-  },
+  cmsConfig: { current: undefined },
 }));
 
 vi.mock('$lib/services/contents/collection/data', () => ({
@@ -98,10 +87,6 @@ vi.mock('$lib/services/contents/entry', () => ({
 
 vi.mock('@sveltia/utils/file', () => ({
   getPathInfo: vi.fn(),
-}));
-
-vi.mock('svelte/store', () => ({
-  get: vi.fn(),
 }));
 
 describe('assets/data/move', () => {
@@ -1027,8 +1012,6 @@ describe('assets/data/move', () => {
     });
 
     it('should update stores after moving assets', async () => {
-      const { get } = await import('svelte/store');
-
       const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
         await import('$lib/services/assets');
 
@@ -1043,11 +1026,8 @@ describe('assets/data/move', () => {
         { asset: mockAsset2, path: 'new2.jpg' },
       ];
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === focusedAsset) return mockAsset1;
-        if (store === overlaidAsset) return mockAsset2;
-        return undefined;
-      });
+      focusedAsset.current = mockAsset1;
+      overlaidAsset.current = mockAsset2;
       vi.mocked(getAssetByInternalPath).mockImplementation((path) =>
         path === 'new1.jpg' ? mockNewAsset1 : mockNewAsset2,
       );
@@ -1056,9 +1036,9 @@ describe('assets/data/move', () => {
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('new1.jpg');
       expect(getAssetByInternalPath).toHaveBeenCalledWith('new2.jpg');
-      expect(focusedAsset.set).toHaveBeenCalledWith(mockNewAsset1);
-      expect(overlaidAsset.set).toHaveBeenCalledWith(mockNewAsset2);
-      expect(assetUpdatesToast.set).toHaveBeenCalledWith({
+      expect(focusedAsset.current).toEqual(mockNewAsset1);
+      expect(overlaidAsset.current).toEqual(mockNewAsset2);
+      expect(assetUpdatesToast.current).toEqual({
         saved: false,
         published: false,
         deleted: false,
@@ -1069,16 +1049,12 @@ describe('assets/data/move', () => {
     });
 
     it('should update stores after renaming assets', async () => {
-      const { get } = await import('svelte/store');
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
-
-      vi.mocked(get).mockReturnValue(undefined);
-
       const movedAssets = [{ asset: { path: 'old.jpg' }, path: 'new.jpg' }];
 
       updateStores({ action: 'rename', movedAssets });
 
-      expect(assetUpdatesToast.set).toHaveBeenCalledWith({
+      expect(assetUpdatesToast.current).toEqual({
         saved: false,
         published: false,
         deleted: false,
@@ -1089,27 +1065,21 @@ describe('assets/data/move', () => {
     });
 
     it('should handle focused asset not in movedAssets', async () => {
-      const { get } = await import('svelte/store');
       const { focusedAsset, overlaidAsset } = await import('$lib/services/assets');
       const mockAsset = { path: 'different.jpg' };
       const mockMovedAsset = { path: 'moved.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === focusedAsset) return mockAsset;
-        if (store === overlaidAsset) return undefined;
-        return undefined;
-      });
+      focusedAsset.current = mockAsset;
+      overlaidAsset.current = undefined;
 
       updateStores({ action: 'move', movedAssets });
 
-      // focusedAsset should not be set since it's not in movedAssets
-      expect(focusedAsset.set).not.toHaveBeenCalled();
+      // focusedAsset should not be changed since it's not in movedAssets
+      expect(focusedAsset.current).toBe(mockAsset);
     });
 
     it('should handle focused asset found in allAssets', async () => {
-      const { get } = await import('svelte/store');
-
       const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
         await import('$lib/services/assets');
 
@@ -1117,45 +1087,35 @@ describe('assets/data/move', () => {
       const mockNewAsset = { path: 'new.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === focusedAsset) return mockMovedAsset;
-        if (store === overlaidAsset) return undefined;
-        return undefined;
-      });
+      focusedAsset.current = mockMovedAsset;
+      overlaidAsset.current = undefined;
       vi.mocked(getAssetByInternalPath).mockReturnValue(mockNewAsset);
 
       updateStores({ action: 'move', movedAssets });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('new.jpg');
       // focusedAsset should be set to the matching asset from allAssets
-      expect(focusedAsset.set).toHaveBeenCalledWith(mockNewAsset);
+      expect(focusedAsset.current).toEqual(mockNewAsset);
     });
 
     it('should handle focused asset not found in allAssets', async () => {
-      const { get } = await import('svelte/store');
-
       const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
         await import('$lib/services/assets');
 
       const mockMovedAsset = { path: 'old.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === focusedAsset) return mockMovedAsset;
-        if (store === overlaidAsset) return undefined;
-        return undefined;
-      });
+      focusedAsset.current = mockMovedAsset;
+      overlaidAsset.current = undefined;
       vi.mocked(getAssetByInternalPath).mockReturnValue(undefined);
 
       updateStores({ action: 'move', movedAssets });
 
       // focusedAsset should be set to undefined
-      expect(focusedAsset.set).toHaveBeenCalledWith(undefined);
+      expect(focusedAsset.current).toEqual(undefined);
     });
 
     it('should handle overlaid asset not found in allAssets', async () => {
-      const { get } = await import('svelte/store');
-
       const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
         await import('$lib/services/assets');
 
@@ -1163,22 +1123,17 @@ describe('assets/data/move', () => {
       const mockFocusedAsset = { path: 'focused.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === focusedAsset) return mockFocusedAsset;
-        if (store === overlaidAsset) return mockMovedAsset;
-        return undefined;
-      });
+      focusedAsset.current = mockFocusedAsset;
+      overlaidAsset.current = mockMovedAsset;
       vi.mocked(getAssetByInternalPath).mockReturnValue(undefined);
 
       updateStores({ action: 'rename', movedAssets });
 
       // overlaidAsset should be set to undefined
-      expect(overlaidAsset.set).toHaveBeenCalledWith(undefined);
+      expect(overlaidAsset.current).toEqual(undefined);
     });
 
     it('should handle overlaid asset found in allAssets', async () => {
-      const { get } = await import('svelte/store');
-
       const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
         await import('$lib/services/assets');
 
@@ -1186,18 +1141,15 @@ describe('assets/data/move', () => {
       const mockNewAsset = { path: 'new.jpg' };
       const movedAssets = [{ asset: mockMovedAsset, path: 'new.jpg' }];
 
-      vi.mocked(get).mockImplementation((store) => {
-        if (store === focusedAsset) return undefined;
-        if (store === overlaidAsset) return mockMovedAsset;
-        return undefined;
-      });
+      focusedAsset.current = undefined;
+      overlaidAsset.current = mockMovedAsset;
       vi.mocked(getAssetByInternalPath).mockReturnValue(mockNewAsset);
 
       updateStores({ action: 'move', movedAssets });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('new.jpg');
       // overlaidAsset should be set to the matching asset from allAssets
-      expect(overlaidAsset.set).toHaveBeenCalledWith(mockNewAsset);
+      expect(overlaidAsset.current).toEqual(mockNewAsset);
     });
   });
 
@@ -1207,7 +1159,6 @@ describe('assets/data/move', () => {
     });
 
     it('should move assets and update entries', async () => {
-      const { get } = await import('svelte/store');
       const { getPathInfo } = await import('@sveltia/utils/file');
       const { getAssetBlob } = await import('$lib/services/assets/info');
       const { saveChanges } = await import('$lib/services/backends/save');
@@ -1220,7 +1171,7 @@ describe('assets/data/move', () => {
 
       const movingAssets = [{ asset: mockAsset, path: 'new/image.jpg' }];
 
-      vi.mocked(get).mockReturnValue({ editor: { preview: true } });
+      cmsConfig.current = /** @type {any} */ ({ editor: { preview: true } });
       vi.mocked(getPathInfo).mockReturnValue({ basename: 'image.jpg' });
       vi.mocked(getAssetBlob).mockResolvedValue(new Blob(['content']));
       vi.mocked(saveChanges).mockResolvedValue({});
@@ -1233,7 +1184,6 @@ describe('assets/data/move', () => {
     });
 
     it('should handle asset with existing file', async () => {
-      const { get } = await import('svelte/store');
       const { getPathInfo } = await import('@sveltia/utils/file');
       const { saveChanges } = await import('$lib/services/backends/save');
       const mockFile = new File(['content'], 'image.jpg');
@@ -1246,7 +1196,7 @@ describe('assets/data/move', () => {
 
       const movingAssets = [{ asset: mockAsset, path: 'new/image.jpg' }];
 
-      vi.mocked(get).mockReturnValue({});
+      cmsConfig.current = /** @type {any} */ ({});
       vi.mocked(getPathInfo).mockReturnValue({ basename: 'image.jpg' });
       vi.mocked(saveChanges).mockResolvedValue({});
 

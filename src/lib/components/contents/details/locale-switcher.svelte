@@ -1,24 +1,23 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Divider, Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
-  import { writable } from 'svelte/store';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
+  import { createRawState } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { Writable } from 'svelte/store';
    * @import { EntryEditorPane } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {string} id The wrapper element’s `id` attribute.
-   * @property {Writable<?EntryEditorPane>} thisPane This pane’s mode and locale.
-   * @property {Writable<?EntryEditorPane>} [thatPane] Another pane’s mode and locale.
+   * @property {{ current: ?EntryEditorPane }} thisPane This pane’s mode and locale.
+   * @property {{ current: ?EntryEditorPane }} [thatPane] Another pane’s mode and locale.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -28,7 +27,7 @@
     /* eslint-disable prefer-const */
     id,
     thisPane,
-    thatPane = writable(null),
+    thatPane = createRawState(null),
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -38,7 +37,9 @@
   const listedLocales = $derived(
     env.isSmallScreen || env.isMediumScreen
       ? [...allLocales]
-      : allLocales.filter((locale) => !($thatPane?.mode === 'edit' && $thatPane.locale === locale)),
+      : allLocales.filter(
+          (locale) => !(thatPane.current?.mode === 'edit' && thatPane.current.locale === locale),
+        ),
   );
   const hasAnyError = $derived(
     Object.entries(entryDraft.current?.validities ?? {}).some(
@@ -54,9 +55,9 @@
   const variant = $derived(useDropDown ? undefined : 'tertiary');
   const size = $derived(useDropDown ? undefined : 'small');
   const currentValue = $derived(
-    $thisPane?.mode === 'edit'
-      ? $thisPane.locale
-      : $thisPane?.mode === 'preview'
+    thisPane.current?.mode === 'edit'
+      ? thisPane.current.locale
+      : thisPane.current?.mode === 'preview'
         ? 'preview'
         : undefined,
   );
@@ -87,14 +88,14 @@
             : hasError
               ? _('locale_content_error_short')
               : ''}"
-          selected={$thisPane?.mode === 'edit' && $thisPane.locale === locale}
+          selected={thisPane.current?.mode === 'edit' && thisPane.current.locale === locale}
           class={hasError ? 'error' : ''}
           data-mode="edit"
           onSelect={() => {
-            $thisPane = { mode: 'edit', locale };
+            thisPane.current = { mode: 'edit', locale };
 
-            if ($thatPane?.mode === 'preview') {
-              $thatPane = { mode: 'preview', locale };
+            if (thatPane.current?.mode === 'preview') {
+              thatPane.current = { mode: 'preview', locale };
             }
           }}
         >
@@ -107,7 +108,7 @@
           {/snippet}
         </OptionComponent>
       {/each}
-      {#if $thatPane?.mode === 'edit' && canPreview && $entryEditorSettings?.showPreview}
+      {#if thatPane.current?.mode === 'edit' && canPreview && entryEditorSettings.current?.showPreview}
         {#if useDropDown}
           <Divider />
         {/if}
@@ -116,10 +117,10 @@
           {size}
           label={_('preview')}
           value="preview"
-          selected={$thisPane?.mode === 'preview'}
+          selected={thisPane.current?.mode === 'preview'}
           data-mode="preview"
           onSelect={() => {
-            $thisPane = { mode: 'preview', locale: $thatPane?.locale ?? '' };
+            thisPane.current = { mode: 'preview', locale: thatPane.current?.locale ?? '' };
           }}
         />
       {/if}

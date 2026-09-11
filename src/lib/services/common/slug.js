@@ -1,7 +1,6 @@
 import transliterate from '@sindresorhus/transliterate';
 import { generateUUID } from '@sveltia/utils/crypto';
 import { truncate } from '@sveltia/utils/string';
-import { get } from 'svelte/store';
 
 import { cmsConfig } from '$lib/services/config';
 import { getOrCreate } from '$lib/services/utils/cache';
@@ -47,7 +46,7 @@ export const slugify = (
       trim: trimReplacement = true,
       lowercase = true,
     } = {},
-  } = /** @type {InternalCmsConfig} */ (get(cmsConfig)) ?? {};
+  } = /** @type {InternalCmsConfig} */ (cmsConfig.current) ?? {};
 
   const maxLength = maxLengthParam ?? maxLengthOption;
   let slug = string;

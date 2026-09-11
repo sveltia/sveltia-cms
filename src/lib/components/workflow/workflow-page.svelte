@@ -93,9 +93,9 @@
    */
   let busyBranches = $state.raw([]);
 
-  // `$allEntries` is a dependency, because the entry can be published from another view
+  // `allEntries.current` is a dependency, because the entry can be published from another view
   const publishedVersionExists = $derived(
-    !!targetEntry && !!$allEntries && hasPublishedVersion(targetEntry),
+    !!targetEntry && !!allEntries.current && hasPublishedVersion(targetEntry),
   );
   // For an entry awaiting deletion the two actions are reversed: the first one calls the removal
   // off, and the second one carries it out
@@ -104,13 +104,13 @@
   // A pending deletion has a status of its own, so it never lands in a stage column. It’s listed
   // below the board instead, and its cards don’t drag: there are no stages to move it through
   const columns = $derived(
-    $workflowStages.map((status) => ({
+    workflowStages.current.map((status) => ({
       status,
-      entries: $unpublishedEntries.filter((entry) => entry.workflow.status === status),
+      entries: unpublishedEntries.current.filter((entry) => entry.workflow.status === status),
     })),
   );
   const pendingDeletions = $derived(
-    $unpublishedEntries.filter(({ workflow }) => workflow.status === 'pending_deletion'),
+    unpublishedEntries.current.filter(({ workflow }) => workflow.status === 'pending_deletion'),
   );
 
   // Keep the deploy state fresh while the board is open, so a preview link turns live as soon as
@@ -195,7 +195,7 @@
   // Announce the page once the pull requests have been fetched, so the counts are accurate. It’s a
   // one-shot announcement like the other pages; a status change is reported with a toast instead.
   $effect(() => {
-    if (announced || !$workflowDataReady) {
+    if (announced || !workflowDataReady.current) {
       return;
     }
 
@@ -206,7 +206,7 @@
 
     // The board has no Ready column for an Open Authoring contributor, so its count is left out of
     // the announcement rather than reported as zero
-    $announcedPageStatus = $openAuthoring
+    announcedPageStatus.current = openAuthoring.current
       ? _('viewing_open_authoring_workflow', { values: { draft, review, deletion } })
       : _('viewing_editorial_workflow', { values: { draft, review, ready, deletion } });
   });
@@ -214,7 +214,7 @@
 
 <PageContainer aria-label={_('editorial_workflow')}>
   {#snippet main()}
-    {#if !$workflowDataReady}
+    {#if !workflowDataReady.current}
       <EmptyState>
         <span role="none">{_('loading_entries', { values: { count: 2 } })}</span>
       </EmptyState>

@@ -16,11 +16,11 @@
     const { path } = parseLocation();
     const { terms } = path.match(ROUTE_REGEX)?.groups ?? {};
 
-    if (terms && terms !== $searchTerms) {
-      $searchTerms = terms;
+    if (terms && terms !== searchTerms.current) {
+      searchTerms.current = terms;
     }
 
-    $searchMode ??= 'contents';
+    searchMode.current ??= 'contents';
   };
 
   onMount(() => {
@@ -36,7 +36,7 @@
   }}
 />
 
-<PageContainer aria-label={_('search_results_for_x', { values: { terms: $searchTerms } })}>
+<PageContainer aria-label={_('search_results_for_x', { values: { terms: searchTerms.current } })}>
   {#snippet main()}
     <SearchMainArea />
   {/snippet}
