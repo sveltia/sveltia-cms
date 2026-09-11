@@ -449,6 +449,36 @@ describe('draft/backup', () => {
       });
     });
 
+    it('should keep a file without a folder as is', async () => {
+      mockPrefs.useDraftBackup = true;
+      vi.mocked(isDraftModified).mockReturnValue(true);
+      interacted = true;
+
+      const file = new File(['x'], 'doc.pdf', { type: 'application/pdf' });
+
+      const draft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        originalEntry: { slug: 'my-post' },
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { title: 'My Post' } },
+        // A file added by a custom field, which is not tied to a folder
+        files: { 'blob:http://localhost/def': { file, folder: undefined, replace: true } },
+        interacted: true,
+      };
+
+      await saveBackup(draft);
+
+      const [backup] = mockBackupDB.put.mock.calls[0];
+
+      expect(backup.files['blob:http://localhost/def']).toEqual({
+        file,
+        folder: undefined,
+        replace: true,
+      });
+    });
+
     it('should not save backup when user has not interacted with the editor', async () => {
       mockPrefs.useDraftBackup = true;
       vi.mocked(isDraftModified).mockReturnValue(true);

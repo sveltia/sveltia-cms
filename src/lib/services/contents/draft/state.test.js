@@ -114,6 +114,23 @@ describe('contents/draft/state', () => {
       expect(getEntryDraftByElement(root)).toBe(state);
     });
 
+    it('should tell the editors apart when more than one is open', () => {
+      const stateA = new EntryDraftState();
+      const stateB = new EntryDraftState();
+      const rootA = document.createElement('div');
+      const rootB = document.createElement('div');
+      const childA = document.createElement('span');
+      const childB = document.createElement('span');
+
+      rootA.appendChild(childA);
+      rootB.appendChild(childB);
+      setEntryDraftRoot(rootA, stateA);
+      setEntryDraftRoot(rootB, stateB);
+
+      expect(getEntryDraftByElement(childA)).toBe(stateA);
+      expect(getEntryDraftByElement(childB)).toBe(stateB);
+    });
+
     it('should return `undefined` outside a registered editor root', () => {
       expect(getEntryDraftByElement(document.createElement('div'))).toBeUndefined();
       expect(getEntryDraftByElement(null)).toBeUndefined();
