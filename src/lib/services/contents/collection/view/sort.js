@@ -125,9 +125,8 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
     isMarkdownField,
   });
 
-  const sortKeyMap = Object.fromEntries(_entries.map((entry) => [entry.slug, getSortKey(entry)]));
-
-  sortItemsByKey(_entries, (e) => sortKeyMap[e.slug], !dateFieldConfig && type === String, order);
+  // `sortItemsByKey()` computes the key once per entry, so there’s no need for a lookup table here
+  sortItemsByKey(_entries, getSortKey, !dateFieldConfig && type === String, order);
 
   const indexFileName = getIndexFile(collection)?.name;
 

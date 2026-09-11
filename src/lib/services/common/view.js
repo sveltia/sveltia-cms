@@ -77,7 +77,11 @@ export const sortItemsByKey = (items, getKey, isStringType, order) => {
     keyedItems.reverse();
   }
 
-  items.splice(0, items.length, ...keyedItems.map(({ item }) => item));
+  // Write the order back in place. Spreading the list into `splice()` would pass every item as an
+  // argument, which throws a `RangeError` once the list is large enough
+  keyedItems.forEach(({ item }, index) => {
+    items[index] = item;
+  });
 
   return items;
 };

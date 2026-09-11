@@ -232,6 +232,25 @@ describe('Test sortItemsByKey()', () => {
     expect(result).toBe(items);
   });
 
+  test('computes the key once per item', () => {
+    const items = [{ v: 3 }, { v: 1 }, { v: 2 }];
+    const getKey = vi.fn((/** @type {{ v: number }} */ i) => i.v);
+
+    sortItemsByKey(items, getKey, false, 'ascending');
+
+    expect(getKey).toHaveBeenCalledTimes(3);
+  });
+
+  test('handles a list too large to spread into arguments', () => {
+    // Spreading this many items into a function call exceeds the engine’s argument limit
+    const items = Array.from({ length: 300000 }, (_, index) => ({ v: 300000 - index }));
+
+    expect(() => sortItemsByKey(items, (i) => i.v, false, 'ascending')).not.toThrow();
+    expect(items.length).toBe(300000);
+    expect(items[0].v).toBe(1);
+    expect(items.at(-1)?.v).toBe(300000);
+  });
+
   test('leaves order unchanged when no order specified', () => {
     const items = [{ v: 'b' }, { v: 'a' }];
 

@@ -153,6 +153,29 @@ describe('sortEntries', () => {
     expect(result.map((e) => e.slug)).toEqual(['entry-1', 'entry-2', 'entry-3']); // Original order since compare logic isn't mocked
   });
 
+  test('should sort entries sharing a slug by their own values', () => {
+    const conditions = { key: 'order', order: 'ascending' };
+
+    vi.mocked(getField).mockReturnValue({ name: 'order', widget: 'number', label: 'Order' });
+    vi.mocked(getSortKeyType).mockReturnValue(Number);
+
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) =>
+      key === 'order' ? entry.locales.en.content.order : undefined,
+    );
+
+    // A published entry and its unpublished revision, or two nested entries in different
+    // folders, can carry the same slug; the sort must not conflate their keys
+    const entries = /** @type {any[]} */ ([
+      { id: 'a', slug: 'same', locales: { en: { content: { order: 3 } } } },
+      { id: 'b', slug: 'same', locales: { en: { content: { order: 1 } } } },
+      { id: 'c', slug: 'other', locales: { en: { content: { order: 2 } } } },
+    ]);
+
+    const result = sortEntries(entries, mockCollection, conditions);
+
+    expect(result.map((e) => e.id)).toEqual(['b', 'c', 'a']);
+  });
+
   test('should sort by string field in descending order', () => {
     const conditions = { key: 'title', order: 'descending' };
 
