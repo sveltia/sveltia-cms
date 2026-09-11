@@ -185,10 +185,29 @@ export const updateCache = async ({
 };
 
 /**
+ * Keep a promise that is awaited later from being reported as an unhandled rejection in the
+ * meantime. The rejection is still delivered to whoever awaits the promise.
+ * @template T
+ * @param {Promise<T>} promise Promise.
+ * @returns {Promise<T>} The same promise.
+ */
+const deferRejection = (promise) => {
+  promise.catch(() => {
+    // Handled where the promise is awaited
+  });
+
+  return promise;
+};
+
+/**
  * Fetch file list from a backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
  * @param {object} args Arguments.
  * @param {RepositoryInfo} args.repository Repository info.
+ * @param {() => Promise<void>} [args.checkAccess] Function to check that the user can read the
+ * repository, throwing if not. It only needs the signed-in user, so it runs at the same time as the
+ * branch and commit requests below rather than before them, saving a round trip on every start.
+ * Its error takes precedence over theirs, as a missing branch is usually a symptom of no access.
  * @param {() => Promise<string>} args.fetchDefaultBranchName Function to fetch the repository’s
  * default branch name.
  * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit Function to fetch
@@ -201,6 +220,7 @@ export const updateCache = async ({
  */
 export const fetchAndParseFiles = async ({
   repository,
+  checkAccess,
   fetchDefaultBranchName,
   fetchLastCommit,
   fetchFileList,
@@ -209,11 +229,22 @@ export const fetchAndParseFiles = async ({
   const { databaseName, branch: branchName } = repository;
   const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
   const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
+  const accessPromise = checkAccess ? deferRejection(checkAccess()) : undefined;
+
   // Start reading the databases right away, but only wait for them once the last commit is known,
   // so the reads — the file cache holds the text of every entry — overlap the network round trips
-  // below instead of delaying them
-  const metaEntriesPromise = metaDB.entries();
-  const cachedFileEntriesPromise = cacheDB.entries();
+  // below instead of delaying them. The two stores are opened one after the other, though: both
+  // live in the same database, and on a brand-new one two instances opening it at the same time
+  // race to create their stores, which leaves one of them with a connection missing its store
+  const databaseEntriesPromise = deferRejection(
+    (async () => {
+      const cachedFileEntries = await cacheDB.entries();
+      const metaEntries = await metaDB.entries();
+
+      return { metaEntries, cachedFileEntries };
+    })(),
+  );
+
   let branch = branchName;
 
   if (!branch) {
@@ -221,13 +252,14 @@ export const fetchAndParseFiles = async ({
     repository.branch = branch;
   }
 
-  // This has to be done after the branch is determined
-  const { hash: lastCommitHash, message } = await fetchLastCommit();
+  // This has to be done after the branch is determined. Only the request is started here; the
+  // access check is settled first, so that its error is the one reported if both fail
+  const lastCommitPromise = deferRejection(fetchLastCommit());
 
-  const [metaEntries, cachedFileEntries] = await Promise.all([
-    metaEntriesPromise,
-    cachedFileEntriesPromise,
-  ]);
+  await accessPromise;
+
+  const { hash: lastCommitHash, message } = await lastCommitPromise;
+  const { metaEntries, cachedFileEntries } = await databaseEntriesPromise;
 
   const fileList = await getFileList({
     metaDB,

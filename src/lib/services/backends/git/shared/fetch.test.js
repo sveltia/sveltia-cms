@@ -554,10 +554,105 @@ describe('git/shared/fetch', () => {
         fetchFileContents: mockFetchFileContents,
       });
 
-      // The reads are issued up front rather than after the network round trips
-      expect(mockMetaDB.entries).toHaveBeenCalledBefore(mockFetchDefaultBranchName);
+      // The reads are issued up front rather than after the network round trips…
       expect(mockCacheDB.entries).toHaveBeenCalledBefore(mockFetchDefaultBranchName);
       expect(mockCacheDB.entries).toHaveBeenCalledBefore(mockFetchLastCommit);
+      // …but one store at a time, as two instances opening a brand-new database together race to
+      // create their stores
+      expect(mockCacheDB.entries).toHaveBeenCalledBefore(mockMetaDB.entries);
+      expect(mockMetaDB.entries).toHaveBeenCalledOnce();
+    });
+
+    it('should not open the meta store until the file cache has been read', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+
+      mockCacheDB.entries.mockReturnValue(promise);
+
+      const run = fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      await vi.waitFor(() => {
+        expect(mockFetchLastCommit).toHaveBeenCalled();
+      });
+      expect(mockMetaDB.entries).not.toHaveBeenCalled();
+
+      resolve([]);
+      await run;
+
+      expect(mockMetaDB.entries).toHaveBeenCalledOnce();
+    });
+
+    it('should run the access check alongside the branch and commit requests', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+      const checkAccess = vi.fn(() => promise);
+
+      const run = fetchAndParseFiles({
+        repository: { ...mockRepository, branch: '' },
+        checkAccess,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      // The check is started first, and the other requests aren’t held back by it
+      await vi.waitFor(() => {
+        expect(mockFetchLastCommit).toHaveBeenCalled();
+      });
+      expect(checkAccess).toHaveBeenCalledBefore(mockFetchDefaultBranchName);
+      expect(mockFetchFileList).not.toHaveBeenCalled();
+
+      resolve(undefined);
+      await run;
+
+      expect(mockFetchFileList).toHaveBeenCalled();
+    });
+
+    it('should report the access error when the commit request fails as well', async () => {
+      const unhandled = vi.fn();
+
+      process.on('unhandledRejection', unhandled);
+      mockFetchLastCommit.mockRejectedValueOnce(new Error('Branch not found'));
+
+      await expect(
+        fetchAndParseFiles({
+          repository: mockRepository,
+          checkAccess: vi.fn().mockRejectedValue(new Error('Not a collaborator')),
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+        }),
+      ).rejects.toThrow('Not a collaborator');
+
+      // A missing branch is usually a symptom of no access, so that error is the one to show, and
+      // the other rejection must not leak
+      await new Promise((r) => {
+        setTimeout(r, 0);
+      });
+      process.off('unhandledRejection', unhandled);
+      expect(unhandled).not.toHaveBeenCalled();
+      expect(mockFetchFileList).not.toHaveBeenCalled();
+    });
+
+    it('should report a commit error once the access check has passed', async () => {
+      mockFetchLastCommit.mockRejectedValueOnce(new Error('Branch not found'));
+
+      await expect(
+        fetchAndParseFiles({
+          repository: mockRepository,
+          checkAccess: vi.fn().mockResolvedValue(undefined),
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+        }),
+      ).rejects.toThrow('Branch not found');
     });
 
     it('should record the publish hint based on the commit message', async () => {

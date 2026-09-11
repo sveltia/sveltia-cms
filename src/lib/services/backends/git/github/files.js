@@ -232,15 +232,17 @@ export const fetchFileContents = async (fetchingFiles) => {
  */
 export const fetchFiles = async () => {
   // With Open Authoring, a user without write access is a contributor rather than a stranger, so
-  // they’re given a fork to work in instead of being turned away
-  if (isOpenAuthoringConfigured()) {
+  // they’re given a fork to work in instead of being turned away. Setting the fork up may involve
+  // the user, so it has to finish before the data is fetched, unlike a plain access check
+  const openAuthoring = isOpenAuthoringConfigured();
+
+  if (openAuthoring) {
     await initOpenAuthoring();
-  } else {
-    await checkRepositoryAccess();
   }
 
   await fetchAndParseFiles({
     repository,
+    checkAccess: openAuthoring ? undefined : checkRepositoryAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
     fetchFileList,

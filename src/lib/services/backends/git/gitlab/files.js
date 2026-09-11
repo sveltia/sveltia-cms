@@ -387,10 +387,9 @@ export const fetchFileContents = async (fetchingFiles) => {
  * the {@link allEntries} and {@link allAssets} stores.
  */
 export const fetchFiles = async () => {
-  await checkRepositoryAccess();
-
   await fetchAndParseFiles({
     repository,
+    checkAccess: checkRepositoryAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
     fetchFileList,

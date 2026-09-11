@@ -280,15 +280,23 @@ export const fetchFileContents = async (fetchingFiles) => {
 };
 
 /**
+ * Check that the instance is supported and that the user can read the repository. Neither check is
+ * needed until the file contents are requested, so they run alongside the branch and commit
+ * requests rather than ahead of them.
+ */
+const checkAccess = async () => {
+  await checkInstanceVersion();
+  await checkRepositoryAccess();
+};
+
+/**
  * Fetch file list from the backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
  */
 export const fetchFiles = async () => {
-  await checkInstanceVersion();
-  await checkRepositoryAccess();
-
   await fetchAndParseFiles({
     repository,
+    checkAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
     fetchFileList,

@@ -12,7 +12,7 @@ import { initDeployments } from '$lib/services/deployments/resolve';
 import { user } from '$lib/services/user/account.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { unpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
-import { loadUnpublishedEntries } from '$lib/services/workflow/load';
+import { loadUnpublishedEntries, startLoadingPullRequests } from '$lib/services/workflow/load';
 
 /**
  * @import { BackendService, InternalCmsConfig, User } from '$lib/types/private';
@@ -219,8 +219,11 @@ export const signInAutomatically = async () => {
   }
 
   try {
+    // The pull requests don’t depend on the files, so they’re requested at the same time
+    const pullRequests = startLoadingPullRequests();
+
     await _backend.fetchFiles();
-    await loadUnpublishedEntries();
+    await loadUnpublishedEntries(pullRequests);
     // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI
     initDeployments();
   } catch (/** @type {any} */ ex) {
@@ -284,8 +287,11 @@ export const signInManually = async (_backendName, token) => {
   user.account = _user;
 
   try {
+    // The pull requests don’t depend on the files, so they’re requested at the same time
+    const pullRequests = startLoadingPullRequests();
+
     await _backend.fetchFiles();
-    await loadUnpublishedEntries();
+    await loadUnpublishedEntries(pullRequests);
     // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI
     initDeployments();
   } catch (/** @type {any} */ ex) {

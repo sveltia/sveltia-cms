@@ -627,15 +627,15 @@ describe('GitHub files service', () => {
 
   describe('fetchFiles', () => {
     test('fetches files through shared fetch function', async () => {
-      vi.mocked(checkRepositoryAccess).mockResolvedValue();
       vi.mocked(fetchAndParseFiles).mockResolvedValue();
 
       await fetchFiles();
 
-      expect(checkRepositoryAccess).toHaveBeenCalled();
       expect(initOpenAuthoring).not.toHaveBeenCalled();
+      // The access check is handed over so it can run alongside the branch and commit requests
       expect(fetchAndParseFiles).toHaveBeenCalledWith({
         repository,
+        checkAccess: checkRepositoryAccess,
         fetchDefaultBranchName,
         fetchLastCommit,
         fetchFileList,
@@ -653,6 +653,9 @@ describe('GitHub files service', () => {
       expect(initOpenAuthoring).toHaveBeenCalled();
       // A contributor without write access is expected here, so the plain access check is skipped
       expect(checkRepositoryAccess).not.toHaveBeenCalled();
+      expect(fetchAndParseFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ checkAccess: undefined }),
+      );
     });
   });
 

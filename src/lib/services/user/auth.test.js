@@ -27,6 +27,7 @@ const mockGetLocaleText = vi.fn();
 const mockBackendName = { current: /** @type {string | undefined} */ (undefined) };
 const mockCmsConfig = { backend: { name: 'github' } };
 const mockLoadUnpublishedEntries = vi.fn();
+const mockStartLoadingPullRequests = vi.fn();
 const mockUnpublishedEntries = { current: /** @type {any[]} */ ([]) };
 const mockUnpublishedEntriesLoaded = { current: false };
 
@@ -80,6 +81,7 @@ vi.mock('$lib/services/workflow', () => ({
 
 vi.mock('$lib/services/workflow/load', () => ({
   loadUnpublishedEntries: mockLoadUnpublishedEntries,
+  startLoadingPullRequests: mockStartLoadingPullRequests,
 }));
 
 describe('auth service', () => {
@@ -655,6 +657,26 @@ describe('auth service', () => {
       expect(auth.unauthenticated).toBe(false);
       expect(mockUser.account).toEqual(cachedUser);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
+    });
+
+    it('should request the pull requests while the files are being fetched', async () => {
+      const cachedUser = { backendName: 'github', token: 'cached-token', login: 'user' };
+      const pullRequests = Promise.resolve([]);
+
+      mockLocalStorage.get.mockImplementation((key) =>
+        Promise.resolve(key === 'sveltia-cms.user' ? cachedUser : null),
+      );
+      mockBackendStore.current = mockBackend;
+      mockCmsConfigStore.current = mockCmsConfig;
+      mockBackend.signIn.mockResolvedValue(cachedUser);
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+      mockStartLoadingPullRequests.mockReturnValue(pullRequests);
+
+      await authModule.signInAutomatically();
+
+      // Started before the files, so the two requests overlap, and handed over afterwards
+      expect(mockStartLoadingPullRequests).toHaveBeenCalledBefore(mockBackend.fetchFiles);
+      expect(mockLoadUnpublishedEntries).toHaveBeenCalledWith(pullRequests);
     });
 
     it('should handle QR code authentication', async () => {

@@ -836,14 +836,14 @@ describe('GitLab files service', () => {
 
   describe('fetchFiles', () => {
     test('orchestrates full file fetching process', async () => {
-      vi.mocked(checkRepositoryAccess).mockResolvedValue();
       vi.mocked(fetchAndParseFiles).mockResolvedValue();
 
       await fetchFiles();
 
-      expect(checkRepositoryAccess).toHaveBeenCalled();
+      // The access check is handed over so it can run alongside the branch and commit requests
       expect(fetchAndParseFiles).toHaveBeenCalledWith({
         repository,
+        checkAccess: checkRepositoryAccess,
         fetchDefaultBranchName,
         fetchLastCommit,
         fetchFileList,
@@ -851,13 +851,12 @@ describe('GitLab files service', () => {
       });
     });
 
-    test('throws error when repository access fails', async () => {
+    test('throws error when the shared fetch fails', async () => {
       const error = new Error('Access denied');
 
-      vi.mocked(checkRepositoryAccess).mockRejectedValue(error);
+      vi.mocked(fetchAndParseFiles).mockRejectedValue(error);
 
       await expect(fetchFiles()).rejects.toThrow('Access denied');
-      expect(fetchAndParseFiles).not.toHaveBeenCalled();
     });
   });
 

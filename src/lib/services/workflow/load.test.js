@@ -9,7 +9,7 @@ import {
 } from '$lib/services/workflow';
 import { mergeWorkflowAssets } from '$lib/services/workflow/assets';
 import { convertPullRequests } from '$lib/services/workflow/entries';
-import { loadUnpublishedEntries } from '$lib/services/workflow/load';
+import { loadUnpublishedEntries, startLoadingPullRequests } from '$lib/services/workflow/load';
 
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
 vi.mock('$lib/services/workflow/assets');
@@ -105,5 +105,63 @@ describe('workflow/load', () => {
     expect(consoleError).toHaveBeenCalled();
 
     consoleError.mockRestore();
+  });
+
+  describe('startLoadingPullRequests()', () => {
+    test('returns nothing when the feature is disabled', () => {
+      /** @type {any} */ (workflowEnabled).current = false;
+
+      expect(startLoadingPullRequests()).toBeUndefined();
+      expect(fetchPullRequests).not.toHaveBeenCalled();
+      expect(unpublishedEntriesLoading.current).toBe(false);
+    });
+
+    test('starts the request and marks the entries as loading', async () => {
+      const promise = startLoadingPullRequests();
+
+      expect(fetchPullRequests).toHaveBeenCalledOnce();
+      expect(unpublishedEntriesLoading.current).toBe(true);
+      await expect(promise).resolves.toEqual([]);
+    });
+
+    test('hands a request started earlier over to the loader', async () => {
+      vi.mocked(convertPullRequests).mockResolvedValue({
+        entries: /** @type {any} */ ([{ id: 'x' }]),
+        assets: [],
+      });
+
+      const promise = startLoadingPullRequests();
+
+      await loadUnpublishedEntries(promise);
+
+      // Not requested a second time
+      expect(fetchPullRequests).toHaveBeenCalledOnce();
+      expect(unpublishedEntries.current).toEqual([{ id: 'x' }]);
+      expect(unpublishedEntriesLoading.current).toBe(false);
+      expect(unpublishedEntriesLoaded.current).toBe(true);
+    });
+
+    test('leaves a failure for the loader to report rather than rejecting on its own', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const unhandled = vi.fn();
+
+      process.on('unhandledRejection', unhandled);
+      fetchPullRequests.mockRejectedValue(new Error('API error'));
+
+      const promise = startLoadingPullRequests();
+
+      // Give a stray rejection a chance to surface before the loader picks the promise up
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      await loadUnpublishedEntries(promise);
+      process.off('unhandledRejection', unhandled);
+
+      expect(unhandled).not.toHaveBeenCalled();
+      expect(consoleError).toHaveBeenCalled();
+      expect(unpublishedEntriesLoading.current).toBe(false);
+
+      consoleError.mockRestore();
+    });
   });
 });

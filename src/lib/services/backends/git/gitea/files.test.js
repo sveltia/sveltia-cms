@@ -622,17 +622,24 @@ describe('Gitea Files Service', () => {
   });
 
   describe('fetchFiles', () => {
+    /**
+     * Get the access check handed to the shared fetch function by the last `fetchFiles()` call.
+     * @returns {() => Promise<void>} Access check.
+     */
+    const getCheckAccess = () =>
+      /** @type {() => Promise<void>} */ (
+        vi.mocked(fetchAndParseFiles).mock.calls[0][0].checkAccess
+      );
+
     test('should orchestrate the complete file fetching process', async () => {
-      vi.mocked(checkInstanceVersion).mockResolvedValue();
-      vi.mocked(checkRepositoryAccess).mockResolvedValue();
       vi.mocked(fetchAndParseFiles).mockResolvedValue();
 
       await fetchFiles();
 
-      expect(checkInstanceVersion).toHaveBeenCalled();
-      expect(checkRepositoryAccess).toHaveBeenCalled();
+      // The checks are handed over so they can run alongside the branch and commit requests
       expect(fetchAndParseFiles).toHaveBeenCalledWith({
         repository,
+        checkAccess: expect.any(Function),
         fetchDefaultBranchName,
         fetchLastCommit,
         fetchFileList,
@@ -640,12 +647,26 @@ describe('Gitea Files Service', () => {
       });
     });
 
+    test('should check the instance version, then the repository access', async () => {
+      vi.mocked(checkInstanceVersion).mockResolvedValue();
+      vi.mocked(checkRepositoryAccess).mockResolvedValue();
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+
+      await fetchFiles();
+      await getCheckAccess()();
+
+      expect(checkInstanceVersion).toHaveBeenCalledBefore(vi.mocked(checkRepositoryAccess));
+    });
+
     test('should handle errors from instance version check', async () => {
       const error = new Error('Version check failed');
 
       vi.mocked(checkInstanceVersion).mockRejectedValue(error);
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
 
-      await expect(fetchFiles()).rejects.toThrow('Version check failed');
+      await fetchFiles();
+
+      await expect(getCheckAccess()()).rejects.toThrow('Version check failed');
       expect(checkRepositoryAccess).not.toHaveBeenCalled();
     });
 
@@ -655,9 +676,11 @@ describe('Gitea Files Service', () => {
       const error = new Error('Access denied');
 
       vi.mocked(checkRepositoryAccess).mockRejectedValue(error);
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
 
-      await expect(fetchFiles()).rejects.toThrow('Access denied');
-      expect(fetchAndParseFiles).not.toHaveBeenCalled();
+      await fetchFiles();
+
+      await expect(getCheckAccess()()).rejects.toThrow('Access denied');
     });
   });
 
