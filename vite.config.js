@@ -6,12 +6,14 @@ import { fileURLToPath } from 'url';
 
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { isObject } from '@sveltia/utils/object';
+import React from 'react';
 import Sonda from 'sonda/vite';
 import { createGenerator } from 'ts-json-schema-generator';
-import { defineConfig } from 'vite';
+import { build, defineConfig } from 'vite';
 import { defaultExclude } from 'vitest/config';
 import { parse as parseYAML } from 'yaml';
 
+import { SHARED_REACT_KEY } from './src/lib/chunks/constants.js';
 // eslint-disable-next-line import-x/no-useless-path-segments
 import { BUILTIN_FIELD_TYPES } from './src/lib/services/contents/fields/index.js';
 import svelteConfig from './svelte.config.js';
@@ -304,6 +306,89 @@ const generateSchema = async () => {
 };
 
 /**
+ * Parts of the app that are built as separate ES module chunks, keyed by chunk name. A chunk is
+ * only loaded when needed, with `loadChunk()`, so the main bundle stays smaller. See the entry
+ * files for what each chunk is for.
+ */
+const CHUNKS = {
+  'react-dom': 'src/lib/chunks/react-dom.js',
+};
+
+/**
+ * Output directory of the chunks, next to the main bundle.
+ */
+const CHUNKS_DIR = 'package/dist/chunks';
+/**
+ * Module specifier of the shim the `react` package resolves to in a chunk build.
+ */
+const REACT_SHIM_MODULE_ID = 'virtual:react-shim';
+const RESOLVED_REACT_SHIM_MODULE_ID = `\0${REACT_SHIM_MODULE_ID}`;
+
+/**
+ * In a chunk build, resolve the `react` package to the React instance the main bundle shares on
+ * `globalThis`, rather than bundling a second copy: React elements created by one copy can’t be
+ * rendered by another. Every export of the package is re-exported from the shim, so the chunk’s
+ * dependencies can import whichever they use.
+ * @returns {import('vite').Plugin} Vite plugin.
+ */
+const shimReact = () => ({
+  name: 'shim-react',
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  resolveId: (id) => (id === 'react' ? RESOLVED_REACT_SHIM_MODULE_ID : null),
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  load: (id) => {
+    if (id !== RESOLVED_REACT_SHIM_MODULE_ID) {
+      return null;
+    }
+
+    return [
+      `const React = globalThis[${JSON.stringify(SHARED_REACT_KEY)}];`,
+      'export default React;',
+      ...Object.keys(React).map((key) => `export const ${key} = React[${JSON.stringify(key)}];`),
+    ].join('\n');
+  },
+});
+
+/**
+ * Build the chunks once the main bundle has been written. They’re built separately because the
+ * main bundle is an IIFE, which can’t be split, and a chunk shares nothing with it but React.
+ * @returns {import('vite').Plugin} Vite plugin.
+ */
+const buildChunks = () => ({
+  name: 'build-chunks',
+  apply: 'build',
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  closeBundle: async () => {
+    await build({
+      configFile: false,
+      logLevel: 'warn',
+      define: {
+        // `react-dom` picks its production build by this
+        'process.env.NODE_ENV': JSON.stringify('production'),
+      },
+      plugins: [shimReact()],
+      build: {
+        outDir: CHUNKS_DIR,
+        emptyOutDir: true,
+        reportCompressedSize: false,
+        sourcemap: true,
+        rolldownOptions: {
+          input: CHUNKS,
+          output: {
+            format: 'es',
+            entryFileNames: '[name].js',
+            comments: {
+              legal: true,
+            },
+          },
+          preserveEntrySignatures: 'strict',
+        },
+      },
+    });
+  },
+});
+
+/**
  * Module specifier the app imports the bundled configuration schema from.
  */
 const SCHEMA_MODULE_ID = 'virtual:config-schema';
@@ -469,6 +554,7 @@ export default defineConfig({
     copyPackageFiles(),
     generateExtraFiles(),
     bundleSchema(),
+    buildChunks(),
     // https://sonda.dev/configuration.html
     Sonda({
       enabled: false,

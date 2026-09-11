@@ -9,10 +9,10 @@
   import { parse, use } from 'marked';
   import markedBidi from 'marked-bidi';
   import { isValidElement } from 'react';
-  import { createRoot } from 'react-dom/client';
   import { onMount } from 'svelte';
   import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
+  import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { customComponentRegistry } from '$lib/services/api/registries';
   import { getMediaFieldURL } from '$lib/services/assets/info';
   import { cmsConfig } from '$lib/services/config';
@@ -29,6 +29,7 @@
   } from '$lib/services/contents/fields/rich-text/helpers';
 
   /**
+   * @import { ReactElement } from 'react';
    * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { MarkdownField, RichTextField } from '$lib/types/public';
    * @import { ComponentPreview } from '$lib/services/contents/fields/rich-text/helpers';
@@ -188,6 +189,18 @@
   const isOwnElement = (element) => element.closest(CONTAINER_QUERY_SELECTOR) === container;
 
   /**
+   * Mount a React element preview on the given placeholder element.
+   * @param {HTMLElement} element Placeholder element.
+   * @param {ReactElement} preview React element to be rendered.
+   */
+  const mountReactPreview = (element, preview) => {
+    const root = getReactDom().createRoot(element);
+
+    reactRoots.set(element, root);
+    root.render(preview);
+  };
+
+  /**
    * Render a component preview into the specified placeholder element based on its
    * `data-component-key` attribute.
    * @param {HTMLElement} element The placeholder element to render the component preview into.
@@ -207,11 +220,23 @@
       element.replaceChildren(preview);
       previewNodes.add(preview);
     } else if (isValidElement(preview)) {
-      // Mount the React component
-      const root = createRoot(element);
-
-      reactRoots.set(element, root);
-      root.render(preview);
+      // Mount the React component. `react-dom` is only loaded once a preview actually needs it, as
+      // nothing else in the rich text editor does
+      if (reactDomLoaded.current) {
+        mountReactPreview(element, preview);
+      } else {
+        loadReactDom()
+          .then(() => {
+            // The placeholder may be gone, or mounted by a later mutation, by the time it’s loaded
+            if (element.isConnected && !reactRoots.has(element)) {
+              mountReactPreview(element, preview);
+            }
+          })
+          .catch((/** @type {Error} */ error) => {
+            // eslint-disable-next-line no-console
+            console.error(error);
+          });
+      }
     } else {
       // Remove the placeholder if there’s no valid preview to render
       element.remove();

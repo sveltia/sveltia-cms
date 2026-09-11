@@ -8,9 +8,9 @@
   import { _ } from '@sveltia/i18n';
   import { Placeholder } from '@sveltia/ui';
   import { createElement } from 'react';
-  import { createRoot } from 'react-dom/client';
   import { mount } from 'svelte';
 
+  import { loadReactDom } from '$lib/services/api/react-dom';
   import {
     createEntryDraftMountContext,
     getEntryDraftContext,
@@ -120,10 +120,17 @@
   /**
    * Mount the React component into the iframe’s body.
    */
-  const mountReactComponent = () => {
+  const mountReactComponent = async () => {
+    if (!reactComponent) {
+      return;
+    }
+
+    // Loaded on demand, as only a custom preview template renders React here. It’s normally on
+    // its way already, as `CMS.registerPreviewTemplate()` starts loading it
+    const { createRoot } = await loadReactDom();
     const target = iframe?.contentDocument?.body;
 
-    if (target && reactComponent) {
+    if (target) {
       // Create React root in the iframe; the update $effect will handle the first render
       reactRoot = createRoot(target);
     }
@@ -145,8 +152,14 @@
      * React component or the Svelte placeholder, depending on which is provided. It also revokes
      * the iframe’s blob URL, which is no longer needed after the iframe has loaded.
      */
-    const listener = () => {
-      mountComponent();
+    const listener = async () => {
+      try {
+        await mountComponent();
+      } catch (/** @type {any} */ error) {
+        // eslint-disable-next-line no-console
+        console.error(error);
+      }
+
       URL.revokeObjectURL(blobURL);
       initialized = true;
     };

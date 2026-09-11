@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getUnpkgURL, loadModule } from './dependencies';
+import { getChunkURLs, getUnpkgURL, loadChunk, loadModule } from './dependencies';
 
 // Mock the dependencies import
 vi.mock('$lib/services/app', () => ({
+  UNPKG_BASE_URL: 'https://unpkg.com/@sveltia/cms',
+  version: '9.9.9',
   dependencies: {
     'test-library': '^1.2.3',
     'another-lib': '~2.0.0',
@@ -89,6 +91,50 @@ describe('dependencies', () => {
       const fullURL = `${expectedURL}/${testPath}`;
 
       expect(fullURL).toBe('https://unpkg.com/unknown-library/lib/main.js');
+    });
+  });
+
+  describe('getChunkURLs', () => {
+    it('should prefer the chunk next to the CMS script, then fall back to UNPKG', () => {
+      expect(getChunkURLs('react-dom', 'https://example.com/admin/sveltia-cms.js')).toEqual([
+        'https://example.com/admin/chunks/react-dom.js',
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
+    });
+
+    it('should list UNPKG once when the CMS was loaded from there', () => {
+      expect(
+        getChunkURLs('react-dom', 'https://unpkg.com/@sveltia/cms@9.9.9/dist/sveltia-cms.js'),
+      ).toEqual(['https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js']);
+    });
+
+    it('should only have UNPKG when the script’s URL is unknown', () => {
+      // An empty base, as the IIFE build has when given `type="module"`
+      expect(getChunkURLs('react-dom', '')).toEqual([
+        'https://unpkg.com/@sveltia/cms@9.9.9/dist/chunks/react-dom.js',
+      ]);
+    });
+
+    it('should resolve against the running script by default', () => {
+      // In the test environment there’s no `document.currentScript`, so the module’s own URL is
+      // the base, which is a file URL here
+      const [sibling] = getChunkURLs('react-dom');
+
+      expect(sibling).toMatch(/^file:\/\/.+\/chunks\/react-dom\.js$/);
+    });
+  });
+
+  describe('loadChunk', () => {
+    it('should import the source entry of a known chunk in development', async () => {
+      // Vitest runs in development mode, so the entry is imported rather than a built chunk
+      const module = await loadChunk('react-dom');
+
+      expect(module.createRoot).toBeTypeOf('function');
+    });
+
+    it('should reject with the last error once every location has failed', async () => {
+      // A `file:` URL can’t be imported here, and neither can the CDN
+      await expect(loadChunk('unknown')).rejects.toThrow('Failed to load the unknown chunk.');
     });
   });
 });

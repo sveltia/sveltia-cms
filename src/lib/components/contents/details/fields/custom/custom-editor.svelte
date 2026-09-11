@@ -6,7 +6,7 @@
 -->
 <script module>
   import { TextInput } from '@sveltia/ui';
-  import { flushSync, mount } from 'svelte';
+  import { mount } from 'svelte';
 
   /** @type {string | undefined} */
   let cachedFieldClassName = undefined;
@@ -15,6 +15,11 @@
    * Get the CSS class name of a built-in text input, so that a custom control can be styled
    * consistently with built-in field types. The probe component is mounted once for the lifetime of
    * the app and intentionally never unmounted, to keep its scoped CSS available.
+   *
+   * `mount()` creates the DOM synchronously, so the class is readable right away. Don’t
+   * `flushSync()` here: this is called from an effect, and a nested flush leaves Svelte without a
+   * current batch once the effect returns, which throws when the effect has written to state it
+   * also reads.
    * @returns {string} Class name, or an empty string if it could not be determined.
    */
   const getInputClassName = () => {
@@ -22,8 +27,6 @@
       const target = document.createElement('div');
 
       mount(TextInput, { target });
-      // Wait for the component to be mounted
-      flushSync();
       cachedFieldClassName = target.querySelector('input')?.className ?? '';
     }
 
@@ -34,11 +37,11 @@
 <script>
   import { isObject } from '@sveltia/utils/object';
   import { createElement } from 'react';
-  import { createRoot } from 'react-dom/client';
   import { getContext, onMount } from 'svelte';
 
   import { fieldStateContext } from '$lib/services/api/field-state';
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
+  import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import {
@@ -161,11 +164,11 @@
    * Render the React component with the current props.
    */
   const renderComponent = () => {
-    if (!container || !resolvedControl || !immutableLoaded.current) {
+    if (!container || !resolvedControl || !immutableLoaded.current || !reactDomLoaded.current) {
       return;
     }
 
-    reactRoot ??= createRoot(container);
+    reactRoot ??= getReactDom().createRoot(container);
 
     const props = buildControlProps({
       fieldId,
@@ -192,10 +195,10 @@
   };
 
   onMount(() => {
-    // The control receives Immutable Maps. The library is normally loaded by the time the editor
-    // opens, as `CMS.registerFieldType()` starts loading it, but wait for it in any case; the
-    // effect below renders the control once it’s there
-    loadImmutable().catch((/** @type {Error} */ error) => {
+    // The control is a React component receiving Immutable Maps. Both libraries are normally loaded
+    // by the time the editor opens, as `CMS.registerFieldType()` starts loading them, but wait for
+    // them in any case; the effect below renders the control once they’re there
+    Promise.all([loadImmutable(), loadReactDom()]).catch((/** @type {Error} */ error) => {
       // eslint-disable-next-line no-console
       console.error(error);
     });
@@ -216,7 +219,7 @@
 
     // Render the component once the container and the library are ready, and update it when
     // currentValue changes externally (e.g., via revert or copy)
-    if (immutableLoaded.current && container && resolvedControl) {
+    if (immutableLoaded.current && reactDomLoaded.current && container && resolvedControl) {
       renderComponent();
     }
 

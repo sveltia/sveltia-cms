@@ -5,6 +5,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { preloadImmutable } from '$lib/services/api/immutable';
+import { preloadReactDom } from '$lib/services/api/react-dom';
 
 // Set up window and document objects BEFORE any imports
 // @ts-ignore
@@ -40,6 +41,9 @@ global.document = {
 // Mock dependencies BEFORE import
 vi.mock('$lib/services/api/immutable', () => ({
   preloadImmutable: vi.fn(),
+}));
+vi.mock('$lib/services/api/react-dom', () => ({
+  preloadReactDom: vi.fn(),
 }));
 vi.mock('$lib/services/config/loader', () => ({
   prefetchCmsConfig: vi.fn(),
@@ -731,6 +735,7 @@ describe('CMS.registerPreviewTemplate()', () => {
     expect(() => CMS.registerPreviewTemplate('posts', component)).not.toThrow();
     // The template will receive Immutable Maps, so the library is loaded ahead of time
     expect(preloadImmutable).toHaveBeenCalled();
+    expect(preloadReactDom).toHaveBeenCalled();
   });
 
   test('throws TypeError when name is not a non-empty string', () => {
@@ -787,6 +792,7 @@ describe('CMS.registerFieldType()', () => {
     expect(() => CMS.registerFieldType('test', control)).not.toThrow();
     // The components will receive Immutable Maps, so the library is loaded ahead of time
     expect(preloadImmutable).toHaveBeenCalled();
+    expect(preloadReactDom).toHaveBeenCalled();
   });
 
   test('registers field type with string control', () => {

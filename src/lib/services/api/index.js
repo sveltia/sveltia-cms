@@ -6,6 +6,7 @@ import { COMPATIBILITY_URL, UNSUPPORTED_FUNC_NAMES } from '$lib/services/api/com
 import { SUPPORTED_EVENT_TYPES } from '$lib/services/api/events';
 import { getFieldTypeDefinition } from '$lib/services/api/field-types';
 import { preloadImmutable } from '$lib/services/api/immutable';
+import { preloadReactDom } from '$lib/services/api/react-dom';
 import {
   customComponentRegistry,
   customFieldTypeRegistry,
@@ -280,9 +281,10 @@ const registerPreviewTemplate = (name, component) => {
   }
 
   customPreviewTemplateRegistry.set(name, component);
-  // The template receives Immutable Maps, so start loading the library now rather than when the
-  // preview opens
+  // The template is a React component receiving Immutable Maps, so start loading the libraries
+  // now rather than when the preview opens
   preloadImmutable();
+  preloadReactDom();
 };
 
 /**
@@ -327,9 +329,10 @@ const registerFieldType = (name, control, preview, schema) => {
   }
 
   customFieldTypeRegistry.set(name, { control, preview, schema });
-  // The components receive Immutable Maps, so start loading the library now rather than when the
-  // editor opens
+  // The components are React components receiving Immutable Maps, so start loading the libraries
+  // now rather than when the editor opens
   preloadImmutable();
+  preloadReactDom();
 };
 
 /**

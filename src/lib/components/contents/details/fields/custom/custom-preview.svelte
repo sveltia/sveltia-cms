@@ -6,11 +6,11 @@
 -->
 <script>
   import { createElement } from 'react';
-  import { createRoot } from 'react-dom/client';
   import { onMount } from 'svelte';
 
   import { fieldStateContext } from '$lib/services/api/field-state';
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
+  import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { buildPreviewProps } from '$lib/services/contents/fields/custom/preview';
@@ -50,7 +50,7 @@
    * Render the React component with the current props.
    */
   const renderComponent = () => {
-    if (!container || !immutableLoaded.current) {
+    if (!container || !immutableLoaded.current || !reactDomLoaded.current) {
       return;
     }
 
@@ -63,7 +63,7 @@
     });
 
     if (props) {
-      reactRoot ??= createRoot(container);
+      reactRoot ??= getReactDom().createRoot(container);
 
       // Provide the state of this field to any built-in field preview reused within the custom
       // preview, which is typically given an ad hoc field configuration that doesn’t describe it
@@ -78,10 +78,10 @@
   };
 
   onMount(() => {
-    // The preview receives Immutable Maps. The library is normally loaded by the time the editor
-    // opens, as `CMS.registerFieldType()` starts loading it, but wait for it in any case; the
-    // effect below renders the preview once it’s there
-    loadImmutable().catch((/** @type {Error} */ error) => {
+    // The preview is a React component receiving Immutable Maps. Both libraries are normally loaded
+    // by the time the editor opens, as `CMS.registerFieldType()` starts loading them, but wait for
+    // them in any case; the effect below renders the preview once they’re there
+    Promise.all([loadImmutable(), loadReactDom()]).catch((/** @type {Error} */ error) => {
       // eslint-disable-next-line no-console
       console.error(error);
     });
@@ -99,7 +99,7 @@
     void getValueMapSnapshot(entryDraft.current, locale);
 
     // Render the preview once the container and the library are ready, then keep it up to date
-    if (immutableLoaded.current && container) {
+    if (immutableLoaded.current && reactDomLoaded.current && container) {
       renderComponent();
     }
   });

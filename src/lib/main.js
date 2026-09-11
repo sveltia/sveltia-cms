@@ -3,8 +3,9 @@
 import createClass from 'create-react-class';
 import DOMPurify from 'isomorphic-dompurify';
 import { marked } from 'marked';
-import { createElement, Fragment } from 'react';
+import React, { createElement, Fragment } from 'react';
 
+import { SHARED_REACT_KEY } from './chunks/constants';
 import CMS, { init } from './services/api';
 
 export default CMS;
@@ -23,6 +24,11 @@ window.createClass = createClass;
 window.createElement = createElement;
 window.h = createElement;
 window.rf = Fragment;
+
+// Share the React instance with the `react-dom` chunk, which is loaded on demand and has to render
+// the elements created with the React above rather than bring a copy of its own
+// @ts-ignore
+globalThis[SHARED_REACT_KEY] = React;
 
 // Expose the Markdown parser and HTML sanitizer used by the CMS, so custom editor component
 // previews can render the value of a nested RichText or Markdown field, which is passed as is.
