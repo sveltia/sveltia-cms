@@ -19,6 +19,21 @@ vi.mock('$lib/services/contents/collection', () => ({
   ),
 }));
 
+vi.mock('$lib/services/contents/collection/entries', () => ({
+  getEntriesByCollection: vi.fn(() => []),
+}));
+
+vi.mock('$lib/services/workflow', () => ({
+  mergeUnpublishedEntries: vi.fn((entries) => entries),
+  unpublishedEntries: { subscribe: vi.fn() },
+}));
+
+vi.mock('svelte/store', async () => {
+  const actual = await vi.importActual('svelte/store');
+
+  return { ...actual, get: vi.fn(() => []) };
+});
+
 describe('contents/draft/save/entry-path', () => {
   let mockFillTemplate;
   let mockGetIndexFile;
@@ -686,13 +701,17 @@ describe('contents/draft/save/entry-path', () => {
     });
   });
   describe('buildCustomEntryPath', () => {
+    /** Collection whose slugs aren’t localized. */
+    const collection = { _type: 'entry', _i18n: { defaultLocale: 'en', structureMap: {} } };
+
     it('should use the configured index file name', async () => {
       const { buildCustomEntryPath } = await import('./entry-path.js');
 
       const result = buildCustomEntryPath({
-        draft: { originalEntry: undefined, currentPath: '/docs/guides/' },
+        draft: { collection, originalEntry: undefined, currentPath: '/docs/guides/' },
         slug: 'my-post',
         indexFileName: '_index',
+        locale: 'en',
       });
 
       expect(result).toBe('docs/guides/_index');
@@ -702,9 +721,14 @@ describe('contents/draft/save/entry-path', () => {
       const { buildCustomEntryPath } = await import('./entry-path.js');
 
       const result = buildCustomEntryPath({
-        draft: { originalEntry: { subPath: 'docs/my-post' }, currentPath: 'guides' },
+        draft: {
+          collection,
+          originalEntry: { subPath: 'docs/my-post', locales: {} },
+          currentPath: 'guides',
+        },
         slug: 'renamed',
         indexFileName: undefined,
+        locale: 'en',
       });
 
       expect(result).toBe('guides/my-post');
@@ -714,9 +738,10 @@ describe('contents/draft/save/entry-path', () => {
       const { buildCustomEntryPath } = await import('./entry-path.js');
 
       const result = buildCustomEntryPath({
-        draft: { originalEntry: undefined, currentPath: 'guides' },
+        draft: { collection, originalEntry: undefined, currentPath: 'guides' },
         slug: 'my-post',
         indexFileName: undefined,
+        locale: 'en',
       });
 
       expect(result).toBe('guides/my-post');
@@ -726,9 +751,10 @@ describe('contents/draft/save/entry-path', () => {
       const { buildCustomEntryPath } = await import('./entry-path.js');
 
       const result = buildCustomEntryPath({
-        draft: { originalEntry: undefined, currentPath: undefined },
+        draft: { collection, originalEntry: undefined, currentPath: undefined },
         slug: 'my-post',
         indexFileName: undefined,
+        locale: 'en',
       });
 
       expect(result).toBe('my-post');
@@ -749,6 +775,7 @@ describe('contents/draft/save/entry-path', () => {
       _i18n: {
         defaultLocale: 'en',
         structure: 'single_file',
+        structureMap: { i18nSingleFile: true },
         omitDefaultLocaleFromFilePath: false,
         omitDefaultLocaleFromPreviewPath: false,
       },
@@ -928,6 +955,202 @@ describe('contents/draft/save/entry-path', () => {
 
       expect(createEntryPath({ draft, locale: 'en', slug: 'docs/_index' })).toBe(
         'content/pages/guides/_index.md',
+      );
+    });
+  });
+
+  describe('createEntryPath with localized folders', () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/962
+
+    /**
+     * Create a nested collection with localized slugs and the path editor enabled.
+     * @param {object} [overrides] Property overrides.
+     * @returns {any} Collection.
+     */
+    const createCollection = (overrides = {}) => ({
+      _type: 'entry',
+      name: 'pages',
+      folder: 'content/pages',
+      slug: '{{title | localize}}',
+      nested: {},
+      meta: { path: { index_file: '_index' } },
+      _i18n: {
+        defaultLocale: 'en',
+        structure: 'multiple_folders',
+        structureMap: {},
+        omitDefaultLocaleFromFilePath: false,
+        omitDefaultLocaleFromPreviewPath: false,
+      },
+      _file: { basePath: 'content/pages', subPath: undefined, extension: 'md' },
+      ...overrides,
+    });
+
+    /**
+     * Create an entry stored at the given sub path in each locale.
+     * @param {string} id Entry ID.
+     * @param {Record<string, string>} subPaths Sub path per locale.
+     * @returns {any} Entry.
+     */
+    const entry = (id, subPaths) => ({
+      id,
+      slug: subPaths.en,
+      subPath: subPaths.en,
+      locales: Object.fromEntries(
+        Object.entries(subPaths).map(([locale, subPath]) => [
+          locale,
+          { slug: subPath, path: `content/pages/${locale}/${subPath}.md`, content: {} },
+        ]),
+      ),
+    });
+
+    beforeEach(async () => {
+      const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
+
+      getEntriesByCollection.mockReturnValue([
+        entry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        entry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' }),
+      ]);
+    });
+
+    it('should file a new entry below the localized folder chain', async () => {
+      const { createEntryPath } = await import('./entry-path.js');
+
+      const draft = {
+        collection: createCollection(),
+        isNew: true,
+        currentValues: { en: {}, fr: {} },
+        originalPath: 'about/team',
+        currentPath: 'about/team',
+        isIndexFile: false,
+      };
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'history' })).toBe(
+        'content/pages/en/about/team/history/_index.md',
+      );
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'histoire' })).toBe(
+        'content/pages/fr/a-propos/equipe/histoire/_index.md',
+      );
+    });
+
+    it('should leave an untouched entry where it is in every locale', async () => {
+      const { createEntryPath } = await import('./entry-path.js');
+
+      const draft = {
+        collection: createCollection(),
+        isNew: false,
+        originalEntry: entry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' }),
+        currentValues: { en: {}, fr: {} },
+        originalPath: 'about/team',
+        currentPath: 'about/team',
+        isIndexFile: false,
+      };
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'about/team/_index' })).toBe(
+        'content/pages/en/about/team/_index.md',
+      );
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'a-propos/equipe/_index' })).toBe(
+        'content/pages/fr/a-propos/equipe/_index.md',
+      );
+    });
+
+    it('should move an existing entry along with its localized folder', async () => {
+      const { createEntryPath } = await import('./entry-path.js');
+
+      const draft = {
+        collection: createCollection(),
+        isNew: false,
+        originalEntry: entry('3', { en: 'products/team/_index', fr: 'produits/equipe/_index' }),
+        currentValues: { en: {}, fr: {} },
+        originalPath: 'products/team',
+        currentPath: 'about/team',
+        isIndexFile: false,
+      };
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'products/team/_index' })).toBe(
+        'content/pages/en/about/team/_index.md',
+      );
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'produits/equipe/_index' })).toBe(
+        'content/pages/fr/a-propos/equipe/_index.md',
+      );
+    });
+
+    it('should rename the folder in one locale only', async () => {
+      const { createEntryPath } = await import('./entry-path.js');
+
+      const draft = {
+        collection: createCollection(),
+        isNew: false,
+        originalEntry: entry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' }),
+        currentValues: { en: {}, fr: {} },
+        originalPath: 'about/team',
+        currentPath: 'about/team',
+        isIndexFile: false,
+      };
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'about/team/_index' })).toBe(
+        'content/pages/en/about/team/_index.md',
+      );
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'a-propos/notre-equipe/_index' })).toBe(
+        'content/pages/fr/a-propos/notre-equipe/_index.md',
+      );
+    });
+
+    it('should name the folder after a bare slug for a locale that has just been enabled', async () => {
+      const { createEntryPath } = await import('./entry-path.js');
+
+      const draft = {
+        collection: createCollection(),
+        isNew: false,
+        originalEntry: entry('2', { en: 'about/team/_index' }),
+        currentValues: { en: {}, fr: {} },
+        originalPath: 'about/team',
+        currentPath: 'about/team',
+        isIndexFile: false,
+      };
+
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'equipe' })).toBe(
+        'content/pages/fr/a-propos/equipe/_index.md',
+      );
+    });
+
+    it('should keep the localized file name without the subfolders mode', async () => {
+      const { createEntryPath } = await import('./entry-path.js');
+      const collection = createCollection({ nested: { subfolders: false } });
+
+      const draft = {
+        collection,
+        isNew: false,
+        originalEntry: entry('4', { en: 'about/history', fr: 'a-propos/histoire' }),
+        currentValues: { en: {}, fr: {} },
+        originalPath: 'about',
+        currentPath: 'about/team',
+        isIndexFile: false,
+      };
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'about/history' })).toBe(
+        'content/pages/en/about/team/history.md',
+      );
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'a-propos/histoire' })).toBe(
+        'content/pages/fr/a-propos/equipe/histoire.md',
+      );
+    });
+
+    it('should use the localized slug for a new locale without the subfolders mode', async () => {
+      const { createEntryPath } = await import('./entry-path.js');
+      const collection = createCollection({ nested: { subfolders: false } });
+
+      const draft = {
+        collection,
+        isNew: false,
+        originalEntry: entry('4', { en: 'about/history' }),
+        currentValues: { en: {}, fr: {} },
+        originalPath: 'about',
+        currentPath: 'about/team',
+        isIndexFile: false,
+      };
+
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'histoire' })).toBe(
+        'content/pages/fr/a-propos/equipe/histoire.md',
       );
     });
   });

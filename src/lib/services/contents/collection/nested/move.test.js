@@ -260,4 +260,192 @@ describe('buildNestedMoveChanges()', () => {
       },
     ]);
   });
+
+  describe('with localized folders', () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/962
+
+    /** @type {any} */
+    const i18nCollection = {
+      ...collection,
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
+      },
+    };
+
+    /**
+     * Create an entry stored at the given sub path in each locale.
+     * @param {string} id Entry ID.
+     * @param {Record<string, string>} subPaths Sub path per locale.
+     * @returns {any} Entry.
+     */
+    const i18nEntry = (id, subPaths) => ({
+      id,
+      slug: subPaths.en,
+      subPath: subPaths.en,
+      locales: Object.fromEntries(
+        Object.entries(subPaths).map(([locale, subPath]) => [
+          locale,
+          { slug: subPath, path: `content/pages/${locale}/${subPath}.md`, content: { title: id } },
+        ]),
+      ),
+    });
+
+    test('moves each locale’s file from and to the localized folder', async () => {
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' }),
+      ]);
+
+      const { changes, savingEntries } = await buildNestedMoveChanges({
+        collection: i18nCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(changes).toEqual([
+        expect.objectContaining({
+          action: 'move',
+          slug: 'company/team/_index',
+          path: 'content/pages/en/company/team/_index.md',
+          previousPath: 'content/pages/en/about/team/_index.md',
+        }),
+        expect.objectContaining({
+          action: 'move',
+          slug: 'entreprise/equipe/_index',
+          path: 'content/pages/fr/entreprise/equipe/_index.md',
+          previousPath: 'content/pages/fr/a-propos/equipe/_index.md',
+        }),
+      ]);
+      expect(savingEntries[0]).toMatchObject({
+        slug: 'company/team/_index',
+        subPath: 'company/team/_index',
+        locales: {
+          en: { slug: 'company/team/_index' },
+          fr: { slug: 'entreprise/equipe/_index' },
+        },
+      });
+    });
+
+    test('moves the descendants when the folder is renamed in one locale only', async () => {
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' }),
+      ]);
+
+      const { changes, savingEntries } = await buildNestedMoveChanges({
+        collection: i18nCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry: i18nEntry('1', { en: 'about/_index', fr: 'qui-sommes-nous/_index' }),
+      });
+
+      // The English file stays where it is
+      expect(changes).toEqual([
+        expect.objectContaining({
+          action: 'move',
+          path: 'content/pages/fr/qui-sommes-nous/equipe/_index.md',
+          previousPath: 'content/pages/fr/a-propos/equipe/_index.md',
+        }),
+      ]);
+      expect(savingEntries[0]).toMatchObject({
+        subPath: 'about/team/_index',
+        locales: {
+          en: { slug: 'about/team/_index', path: 'content/pages/en/about/team/_index.md' },
+          fr: { slug: 'qui-sommes-nous/equipe/_index' },
+        },
+      });
+    });
+
+    test('leaves a file that is not below the localized folder', async () => {
+      // The French file was never localized, so it doesn’t follow the French folder
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        i18nEntry('2', { en: 'about/team/_index', fr: 'about/team/_index' }),
+      ]);
+
+      const { changes } = await buildNestedMoveChanges({
+        collection: i18nCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(changes).toEqual([
+        expect.objectContaining({
+          path: 'content/pages/en/company/team/_index.md',
+          previousPath: 'content/pages/en/about/team/_index.md',
+        }),
+      ]);
+    });
+
+    test('falls back to the default locale’s folder for a locale the ancestor lacks', async () => {
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index' }),
+        i18nEntry('2', { en: 'about/team/_index', fr: 'about/equipe/_index' }),
+      ]);
+
+      const { changes } = await buildNestedMoveChanges({
+        collection: i18nCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index' }),
+        // The ancestor gets the locale now, with a localized folder
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(changes).toEqual([
+        expect.objectContaining({
+          path: 'content/pages/en/company/team/_index.md',
+          previousPath: 'content/pages/en/about/team/_index.md',
+        }),
+        expect.objectContaining({
+          path: 'content/pages/fr/entreprise/equipe/_index.md',
+          previousPath: 'content/pages/fr/about/equipe/_index.md',
+        }),
+      ]);
+    });
+
+    test('falls back to the default locale’s folder for a locale the ancestor loses', async () => {
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' }),
+      ]);
+
+      const savingEntry = i18nEntry('1', { en: 'company/_index' });
+
+      // The locale is being disabled, so only the file path is known
+      savingEntry.locales.fr = { path: 'content/pages/fr/entreprise/_index.md' };
+
+      const { changes } = await buildNestedMoveChanges({
+        collection: i18nCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry,
+      });
+
+      expect(changes).toEqual([
+        expect.objectContaining({
+          path: 'content/pages/en/company/team/_index.md',
+          previousPath: 'content/pages/en/about/team/_index.md',
+        }),
+        expect.objectContaining({
+          path: 'content/pages/fr/company/equipe/_index.md',
+          previousPath: 'content/pages/fr/a-propos/equipe/_index.md',
+        }),
+      ]);
+    });
+
+    test('returns nothing when no file moves', async () => {
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        i18nEntry('2', { en: 'about/team/_index', fr: 'about/equipe/_index' }),
+      ]);
+
+      expect(
+        await buildNestedMoveChanges({
+          collection: i18nCollection,
+          originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+          savingEntry: i18nEntry('1', { en: 'about/_index', fr: 'qui-sommes-nous/_index' }),
+        }),
+      ).toEqual({ changes: [], savingEntries: [] });
+    });
+  });
 });

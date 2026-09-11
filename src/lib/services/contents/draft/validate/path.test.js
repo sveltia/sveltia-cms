@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { entryDraft } from '$lib/services/contents/draft';
+import { getSlugs, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { validatePath } from '$lib/services/contents/draft/validate/path';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
@@ -18,10 +19,13 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
 
 vi.mock('$lib/services/workflow', () => ({
   getUnpublishedEntriesByCollection: vi.fn(() => []),
+  mergeUnpublishedEntries: vi.fn((entries) => entries),
+  unpublishedEntries: { subscribe: vi.fn() },
 }));
 
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getSlugs: vi.fn(() => ({ defaultLocaleSlug: 'new-page' })),
+  hasLocalizedSlugs: vi.fn(() => false),
 }));
 
 vi.mock('$lib/services/contents/draft');
@@ -45,6 +49,7 @@ const createCollection = ({ subfolders = true, metaPath = true, indexFile } = {}
   folder: 'content/pages',
   nested: { subfolders },
   meta: metaPath ? { path: { widget: 'string', index_file: indexFile } } : undefined,
+  _i18n: { defaultLocale: 'en', structureMap: {} },
 });
 
 /**
@@ -54,7 +59,7 @@ const createCollection = ({ subfolders = true, metaPath = true, indexFile } = {}
 const setDraft = async (draft) => {
   const { get } = await import('svelte/store');
 
-  vi.mocked(get).mockImplementation((store) => (store === entryDraft ? draft : undefined));
+  vi.mocked(get).mockImplementation((store) => (store === entryDraft ? draft : []));
 };
 
 beforeEach(() => {
@@ -305,6 +310,41 @@ describe('validatePath()', () => {
       });
 
       expect(validatePath().valid).toBe(true);
+    });
+
+    test('checks every locale’s destination when the folders are localized', async () => {
+      // @see https://github.com/sveltia/sveltia-cms/issues/962
+      vi.mocked(hasLocalizedSlugs).mockReturnValue(true);
+      vi.mocked(getSlugs).mockReturnValue({
+        defaultLocaleSlug: 'history',
+        localizedSlugs: { en: 'history', fr: 'equipe' },
+      });
+      vi.mocked(getEntriesByCollection).mockReturnValue(
+        /** @type {any} */ ([
+          {
+            id: 'parent',
+            subPath: 'about/_index',
+            locales: { en: { slug: 'about/_index' }, fr: { slug: 'a-propos/_index' } },
+          },
+          {
+            id: 'other',
+            subPath: 'about/team/_index',
+            locales: { en: { slug: 'about/team/_index' }, fr: { slug: 'a-propos/equipe/_index' } },
+          },
+        ]),
+      );
+
+      await setDraft({
+        collection: createCollection({ indexFile: '_index' }),
+        currentLocales: { en: true, fr: true },
+        isNew: true,
+        originalEntry: undefined,
+        originalPath: 'about',
+        currentPath: 'about',
+      });
+
+      // `about/history` is free, but `a-propos/equipe` is taken
+      expect(validatePath().validities.fr._path.duplicateError).toBe(true);
     });
 
     test('skips the check when each entry has a file name of its own', async () => {

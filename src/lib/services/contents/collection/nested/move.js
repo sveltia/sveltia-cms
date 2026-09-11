@@ -20,44 +20,90 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
  * FileChange,
  * InternalCollection,
  * InternalEntryCollection,
+ * InternalLocaleCode,
  * } from '$lib/types/private';
  */
 
 /**
- * Rewrite an entry’s file paths and slugs for its new location.
+ * Folder an entry is being moved out of and into, in one locale.
+ * @typedef {object} DirMove
+ * @property {string} oldDir Folder the entry has been stored in.
+ * @property {string} newDir Folder the entry is going to.
+ */
+
+/**
+ * Swap the old folder path for the new one within a sub path.
+ * @param {string} subPath Sub path below the old folder.
+ * @param {DirMove} move Folder move.
+ * @returns {string} Sub path below the new folder.
+ */
+const moveSubPath = (subPath, { oldDir, newDir }) => {
+  const restPath = subPath.slice(oldDir.length + 1);
+
+  return newDir ? `${newDir}/${restPath}` : restPath;
+};
+
+/**
+ * Rewrite an entry’s file paths and slugs for its new location. The folders can go by a different
+ * name in each locale, so each locale’s file is moved on its own, from and to the folder the moved
+ * ancestor has in that locale. A file that isn’t stored below the ancestor’s folder in its locale
+ * is left where it is.
  * @param {object} args Arguments.
  * @param {Entry} args.entry Entry to be moved.
- * @param {string} args.newSubPath Entry’s new sub path.
- * @returns {Entry} Moved entry. The original is left untouched.
+ * @param {DirMove} args.dirMove Folder move in the default locale.
+ * @param {Record<InternalLocaleCode, DirMove>} args.localeDirMoves Folder move in each locale.
+ * @returns {Entry | undefined} Moved entry, or `undefined` if none of its files moves. The original
+ * is left untouched.
+ * @see https://github.com/sveltia/sveltia-cms/issues/962
  */
-const moveEntry = ({ entry, newSubPath }) => {
+const moveEntry = ({ entry, dirMove, localeDirMoves }) => {
   const { subPath } = entry;
+  const newSubPath = moveSubPath(subPath, dirMove);
+  let moved = false;
 
-  /**
-   * Swap the old sub path for the new one within a full file path, leaving the collection folder,
-   * any locale folder and the file extension in place.
-   * @param {string} path File path.
-   * @returns {string} New file path.
-   */
-  const movePath = (path) => {
-    const index = path.lastIndexOf(subPath);
+  const locales = Object.fromEntries(
+    Object.entries(entry.locales).map(([locale, localizedEntry]) => {
+      const { slug, path } = localizedEntry;
+      const localeDirMove = localeDirMoves[locale];
 
-    return index === -1
-      ? /* v8 ignore next */ path
-      : `${path.slice(0, index)}${newSubPath}${path.slice(index + subPath.length)}`;
-  };
+      if (!isDescendantPath(localeDirMove.oldDir, slug)) {
+        return [locale, localizedEntry];
+      }
 
-  return {
-    ...entry,
-    slug: newSubPath,
-    subPath: newSubPath,
-    locales: Object.fromEntries(
-      Object.entries(entry.locales).map(([locale, localizedEntry]) => [
+      const newLocaleSubPath = moveSubPath(slug, localeDirMove);
+
+      // The folder may keep its name in this locale while it’s renamed in another
+      if (newLocaleSubPath === slug) {
+        return [locale, localizedEntry];
+      }
+
+      // Swap the old sub path for the new one within the full file path, leaving the collection
+      // folder, any locale folder and the file extension in place
+      const index = path.lastIndexOf(slug);
+
+      /* v8 ignore next */
+      if (index === -1) {
+        return [locale, localizedEntry];
+      }
+
+      moved = true;
+
+      return [
         locale,
-        { ...localizedEntry, slug: newSubPath, path: movePath(localizedEntry.path) },
-      ]),
-    ),
-  };
+        {
+          ...localizedEntry,
+          slug: newLocaleSubPath,
+          path: `${path.slice(0, index)}${newLocaleSubPath}${path.slice(index + slug.length)}`,
+        },
+      ];
+    }),
+  );
+
+  if (!moved) {
+    return undefined;
+  }
+
+  return { ...entry, slug: newSubPath, subPath: newSubPath, locales };
 };
 
 /**
@@ -107,6 +153,11 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
       }
 
       const previousPath = originalEntry.locales[locale].path;
+
+      // The file stays where it is when the folder isn’t localized the same way in this locale
+      if (previousPath === localizedEntry.path) {
+        return undefined;
+      }
 
       const [previousSha, data] = await Promise.all([
         getPreviousSha({ cacheDB, previousPath }),
@@ -162,7 +213,7 @@ export const buildNestedMoveChanges = async ({
   const newDirPath = getEntryDirPath(savingEntry.subPath);
 
   // A folder can’t be moved into itself; the path editor rejects that before the save
-  if (!oldDirPath || oldDirPath === newDirPath || isDescendantPath(oldDirPath, newDirPath)) {
+  if (!oldDirPath || isDescendantPath(oldDirPath, newDirPath)) {
     return noChanges;
   }
 
@@ -174,20 +225,39 @@ export const buildNestedMoveChanges = async ({
     return noChanges;
   }
 
+  const {
+    _i18n: { allLocales },
+  } = /** @type {InternalEntryCollection} */ (collection);
+
+  /** @type {DirMove} */
+  const dirMove = { oldDir: oldDirPath, newDir: newDirPath };
+
+  // With localized slugs, the ancestor’s folder goes by a different name in each locale, and so
+  // does its destination. A locale the ancestor doesn’t have, or is only getting now, falls back to
+  // the default locale’s folder on that side
+  const localeDirMoves = Object.fromEntries(
+    allLocales.map((locale) => [
+      locale,
+      {
+        oldDir: getEntryDirPath(originalEntry.locales[locale]?.slug ?? '') || oldDirPath,
+        newDir: getEntryDirPath(savingEntry.locales[locale]?.slug ?? '') || newDirPath,
+      },
+    ]),
+  );
+
+  const movedEntries = descendants.flatMap((entry) => {
+    const movedEntry = moveEntry({ entry, dirMove, localeDirMoves });
+
+    return movedEntry ? [{ originalEntry: entry, movedEntry }] : [];
+  });
+
+  // Nothing moves when the folder keeps its name in every locale
+  if (!movedEntries.length) {
+    return noChanges;
+  }
+
   const db = resolveCacheDB(cacheDB);
   const draft = createSyntheticDraft({ collection });
-
-  const movedEntries = descendants.map((entry) => {
-    const restPath = entry.subPath.slice(oldDirPath.length + 1);
-
-    return {
-      originalEntry: entry,
-      movedEntry: moveEntry({
-        entry,
-        newSubPath: newDirPath ? `${newDirPath}/${restPath}` : restPath,
-      }),
-    };
-  });
 
   const perEntryChanges = await Promise.all(
     movedEntries.map(({ originalEntry: source, movedEntry }) =>

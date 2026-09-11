@@ -12,6 +12,7 @@ import { addAlias } from '$lib/services/contents/draft/save/aliases';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
 import { getField } from '$lib/services/contents/entry/fields';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 
@@ -31,6 +32,52 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
  */
 
 /**
+ * Get the sub path of a file within the collection folder.
+ * @param {object} args Arguments.
+ * @param {InternalEntryCollection} args.collection Entry collection.
+ * @param {string} args.path File path.
+ * @param {string} args.fallback Sub path to fall back to if the path can’t be parsed.
+ * @returns {string} Sub path.
+ */
+const getSubPath = ({ collection: { _file }, path, fallback }) =>
+  _file.fullPathRegEx ? (path.match(_file.fullPathRegEx)?.groups?.subPath ?? fallback) : fallback;
+
+/**
+ * Get the canonical slug for an entry in a nested collection, where an entry is identified by its
+ * path within the collection folder rather than by a bare slug. Linking the localized files by the
+ * slug alone would take two entries with the same slug in different folders for one entry once
+ * they’re read back from the repository, so it’s the default locale’s sub path that links them.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {EntrySlugVariants} args.slugs Entry slugs.
+ * @returns {string | undefined} Canonical slug, or `undefined` if the collection is not nested or
+ * the slugs aren’t localized, in which case the regular canonical slug applies.
+ * @see https://github.com/sveltia/sveltia-cms/issues/962
+ */
+const getNestedCanonicalSlug = ({ draft, slugs: { defaultLocaleSlug, localizedSlugs } }) => {
+  const { collection, defaultLocale } = draft;
+
+  if (!localizedSlugs || !isNestedCollection(collection)) {
+    return undefined;
+  }
+
+  const path = createEntryPath({ draft, locale: defaultLocale, slug: defaultLocaleSlug });
+
+  const subPath = getSubPath({
+    collection: /** @type {InternalEntryCollection} */ (collection),
+    path,
+    fallback: defaultLocaleSlug,
+  });
+
+  return getCanonicalSlug({
+    draft,
+    defaultLocaleSlug: subPath,
+    localizedSlugs,
+    fillSlugOptions: getFillSlugOptions({ draft }),
+  });
+};
+
+/**
  * Create base saving entry data.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -38,10 +85,8 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
  * @returns {Promise<{ localizedEntryMap: LocalizedEntryMap, changes: FileChange[], savingAssets:
  * Asset[] }>} Localized entry map, file changeset and asset list.
  */
-export const createBaseSavingEntryData = async ({
-  draft,
-  slugs: { defaultLocaleSlug, canonicalSlug, localizedSlugs },
-}) => {
+export const createBaseSavingEntryData = async ({ draft, slugs }) => {
+  const { defaultLocaleSlug, localizedSlugs } = slugs;
   const _globalAssetFolder = get(globalAssetFolder);
 
   const {
@@ -69,6 +114,7 @@ export const createBaseSavingEntryData = async ({
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap: {}, isIndexFile };
   const replaceBlobBaseArgs = { draft, defaultLocaleSlug, changes, savingAssets };
+  const canonicalSlug = getNestedCanonicalSlug({ draft, slugs }) ?? slugs.canonicalSlug;
 
   const localizedEntryMap = Object.fromEntries(
     await Promise.all(
@@ -297,7 +343,6 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
   const { defaultLocaleSlug } = slugs;
 
   const {
-    _file,
     _i18n: {
       i18nEnabled,
       allLocales,
@@ -311,17 +356,14 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     slugs,
   });
 
-  /**
-   * Get the sub path of a file within the collection folder.
-   * @param {string} path File path.
-   * @returns {string} Sub path, falling back to the slug if the path can’t be parsed.
-   */
-  const getSubPath = (path) =>
-    _file.fullPathRegEx
-      ? (path.match(_file.fullPathRegEx)?.groups?.subPath ?? defaultLocaleSlug)
-      : defaultLocaleSlug;
+  const entryCollection = /** @type {InternalEntryCollection} */ (collection);
 
-  const subPath = getSubPath(localizedEntryMap[defaultLocale].path);
+  const subPath = getSubPath({
+    collection: entryCollection,
+    path: localizedEntryMap[defaultLocale].path,
+    fallback: defaultLocaleSlug,
+  });
+
   // In a nested collection, an entry is identified by its path within the collection folder rather
   // than by a file name, so that’s also the slug the entry gets when it’s read back from the
   // repository. Use it here as well, or the entry saved in this session would differ from the same
@@ -336,7 +378,16 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     locales: Object.fromEntries(
       Object.entries(localizedEntryMap).map(([locale, localizedEntry]) => [
         locale,
-        nested ? { ...localizedEntry, slug: getSubPath(localizedEntry.path) } : localizedEntry,
+        nested
+          ? {
+              ...localizedEntry,
+              slug: getSubPath({
+                collection: entryCollection,
+                path: localizedEntry.path,
+                fallback: defaultLocaleSlug,
+              }),
+            }
+          : localizedEntry,
       ]),
     ),
   };

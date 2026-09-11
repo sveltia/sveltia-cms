@@ -8,6 +8,7 @@ import { getIndexFile } from '$lib/services/contents/collection/entries/index-fi
  * EntrySlugVariants,
  * FillTemplateOptions,
  * FlattenedEntryContent,
+ * InternalCollection,
  * InternalEntryCollection,
  * LocaleSlugMap,
  * } from '$lib/types/private';
@@ -118,6 +119,58 @@ export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
 };
 
 /**
+ * Get the slug template of the given collection. Only an entry collection has one; the slug of a
+ * file/singleton collection’s entry is the file name.
+ * @param {InternalCollection} collection Collection.
+ * @returns {string} Slug template, e.g. `{{title}}`. An empty string for a non-entry collection.
+ */
+const getSlugTemplate = (collection) => {
+  if (collection._type !== 'entry') {
+    return '';
+  }
+
+  const {
+    identifier_field: identifierField = 'title',
+    slug: slugTemplate = `{{${identifierField}}}`,
+  } = /** @type {InternalEntryCollection} */ (collection);
+
+  return slugTemplate;
+};
+
+/**
+ * Get the key paths of the fields whose values are localized in the slug, which are the tags in the
+ * slug template carrying the `localize` flag, e.g. `{{title | localize}}`.
+ * @param {string} slugTemplate Slug template.
+ * @returns {string[]} Key paths. An empty array if the slug isn’t localized.
+ */
+const getLocalizingKeyPaths = (slugTemplate) =>
+  [...slugTemplate.matchAll(/{{((?:fields\.)?.+?)( \| localize)?}}/g)]
+    .filter(([, , localize]) => !!localize)
+    .map(([, keyPath]) => keyPath.replace(/^fields\./, ''));
+
+/**
+ * Check whether the entries in the given collection get a slug of their own for each locale, which
+ * is the case when the i18n structure is multiple files or folders, and the slug template contains
+ * the `localize` flag, e.g. `{{title | localize}}`.
+ * @param {InternalCollection} collection Collection.
+ * @returns {boolean} Result.
+ * @see https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs
+ */
+export const hasLocalizedSlugs = (collection) => {
+  const {
+    _i18n: {
+      structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot },
+    },
+  } = collection;
+
+  return (
+    !i18nSingleFile &&
+    !i18nSingleFileDefaultRoot &&
+    !!getLocalizingKeyPaths(getSlugTemplate(collection)).length
+  );
+};
+
+/**
  * Get the localized slug map. This only applies when the i18n structure is multiple files or
  * folders, and the slug template contains the `localize` flag, e.g. `{{title | localize}}`.
  * @param {object} args Arguments.
@@ -127,30 +180,20 @@ export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
  */
 export const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
   const { collection, collectionFile, currentLocales } = draft;
-  const { _type } = collection;
 
   const {
-    identifier_field: identifierField = 'title',
-    slug: slugTemplate = `{{${identifierField}}}`,
-  } = _type === 'entry' ? collection : {};
-
-  const {
-    _i18n: {
-      defaultLocale,
-      structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot },
-    },
+    _i18n: { defaultLocale },
   } = collectionFile ?? collection;
+
+  // A file/singleton collection has no slug template, so there is nothing to localize
+  if (collectionFile || !hasLocalizedSlugs(collection)) {
+    return undefined;
+  }
 
   /**
    * List of key paths that the value will be localized.
    */
-  const localizingKeyPaths = [...slugTemplate.matchAll(/{{((?:fields\.)?.+?)( \| localize)?}}/g)]
-    .filter(([, , localize]) => !!localize)
-    .map(([, keyPath]) => keyPath.replace(/^fields\./, ''));
-
-  if (i18nSingleFile || i18nSingleFileDefaultRoot || !localizingKeyPaths.length) {
-    return undefined;
-  }
+  const localizingKeyPaths = getLocalizingKeyPaths(getSlugTemplate(collection));
 
   return Object.fromEntries(
     Object.entries(currentLocales).map(([locale]) => {

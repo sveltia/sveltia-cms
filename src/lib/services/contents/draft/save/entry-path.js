@@ -4,9 +4,16 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { fillTemplate } from '$lib/services/common/template';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
+  getEntryDirPath,
   getSharedEntryFileName,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
+import {
+  getFolderName,
+  getOwnFolderName,
+  localizeDirPath,
+} from '$lib/services/contents/collection/nested/i18n';
+import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import { createPath } from '$lib/services/utils/file';
 
@@ -60,32 +67,49 @@ export const buildPathByStructure = ({
  * existing file name for an entry that’s only being moved. With a shared file name, the chosen
  * folder is where a new entry is created rather than the entry’s own folder, which is named after
  * the slug.
+ *
+ * The folder is chosen once, in the default locale. When the slugs are localized, so are the
+ * folders named after them, and each locale’s file goes below the localized folder chain, in a
+ * folder named after the localized slug.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
- * @param {string} args.slug Entry slug.
+ * @param {string} args.slug Entry slug in the locale. For an existing entry in a nested collection,
+ * that’s the entry’s sub path in the locale.
  * @param {string | undefined} args.indexFileName File name shared by every entry in the collection,
  * if any.
+ * @param {InternalLocaleCode} args.locale Locale code.
  * @returns {string} Sub path without a file extension.
+ * @see https://github.com/sveltia/sveltia-cms/issues/962
  */
-export const buildCustomEntryPath = ({ draft, slug, indexFileName }) => {
-  const { isNew, originalEntry, currentPath } = draft;
+export const buildCustomEntryPath = ({ draft, slug, indexFileName, locale }) => {
+  const { collection, isNew, originalEntry, currentPath } = draft;
   const dirPath = stripSlashes(currentPath ?? '');
+  const localized = locale !== collection._i18n.defaultLocale && hasLocalizedSlugs(collection);
 
   if (indexFileName) {
     // Every entry shares one file name, so a folder is what makes an entry. A new entry therefore
-    // gets a folder of its own, named after the slug, within the folder the editor points at; an
-    // existing entry already has such a folder, and the editor points at it.
-    return isNew
-      ? createPath([dirPath, slug, indexFileName])
-      : createPath([dirPath, indexFileName]);
+    // gets a folder of its own, named after the slug, within the folder the editor points at
+    if (isNew) {
+      return createPath([localizeDirPath({ collection, dirPath, locale }), slug, indexFileName]);
+    }
+
+    // An existing entry already has such a folder, and the editor points at it. In another locale,
+    // the folder goes by the name in the localized slug; a locale that has just been enabled has a
+    // bare slug, which becomes the folder name as it would for a new entry
+    const parentPath = localizeDirPath({ collection, dirPath: getEntryDirPath(dirPath), locale });
+    const ownFolderName = localized ? getOwnFolderName(slug) || slug : getFolderName(dirPath);
+
+    return createPath([parentPath, ownFolderName, indexFileName]);
   }
 
-  // The sub path already has the locale and the file extension stripped off
-  const originalFileName = originalEntry?.subPath
-    ? getPathInfo(originalEntry.subPath).basename
-    : undefined;
+  // The sub path already has the locale and the file extension stripped off. A locale that has just
+  // been enabled keeps its localized slug, or it would be saved under the default locale’s name
+  const originalSubPath =
+    originalEntry?.locales[locale]?.slug ?? (localized ? undefined : originalEntry?.subPath);
 
-  return createPath([dirPath, originalFileName ?? slug]);
+  const fileName = originalSubPath ? getPathInfo(originalSubPath).basename : slug;
+
+  return createPath([localizeDirPath({ collection, dirPath, locale }), fileName]);
 };
 
 /**
@@ -100,7 +124,15 @@ export const buildCustomEntryPath = ({ draft, slug, indexFileName }) => {
  * @see https://sveltiacms.app/en/docs/i18n
  */
 export const createEntryPath = ({ draft, locale, slug }) => {
-  const { collection, collectionFile, originalEntry, currentValues, isIndexFile } = draft;
+  const {
+    collection,
+    collectionFile,
+    originalEntry,
+    originalPath,
+    currentPath,
+    currentValues,
+    isIndexFile,
+  } = draft;
 
   const {
     _i18n: { defaultLocale, structure, omitDefaultLocaleFromFilePath },
@@ -119,10 +151,13 @@ export const createEntryPath = ({ draft, locale, slug }) => {
   // index file in the collection folder
   // @see https://github.com/decaporg/decap-cms/issues/7094
   const useCustomPath = usesCustomEntryPath(draft);
-
   // The path editor decides where the entry goes, so the slug alone can’t tell whether the file has
-  // moved. Skip the shortcut below and rebuild the path from the folder the user has chosen.
-  if (!useCustomPath && originalEntry?.locales[locale]?.slug === slug) {
+  // moved. Skip the shortcut below and rebuild the path from the folder the user has chosen, unless
+  // the folder is left as it was: the file then stays where it is, even if that’s not where a
+  // rebuild would put it, e.g. a locale stored under folders that weren’t localized at the time
+  const pathUnchanged = stripSlashes(originalPath ?? '') === stripSlashes(currentPath ?? '');
+
+  if ((!useCustomPath || pathUnchanged) && originalEntry?.locales[locale]?.slug === slug) {
     return originalEntry.locales[locale].path;
   }
 
@@ -139,7 +174,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
   let path = isIndexFile
     ? /** @type {string} */ (getIndexFile(entryCollection)?.name)
     : useCustomPath
-      ? buildCustomEntryPath({ draft, slug, indexFileName })
+      ? buildCustomEntryPath({ draft, slug, indexFileName, locale })
       : subPath
         ? fillTemplate(subPath, {
             collection: entryCollection,

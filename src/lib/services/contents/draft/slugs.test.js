@@ -9,6 +9,7 @@ import {
   getLocalizedSlug,
   getLocalizedSlugs,
   getSlugs,
+  hasLocalizedSlugs,
   resolveBlobURLs,
 } from './slugs';
 
@@ -104,6 +105,47 @@ describe('draft/slugs', () => {
       resolveBlobURLs(valueMap, files);
 
       expect(valueMap.image).toBe(blobURL);
+    });
+  });
+
+  describe('hasLocalizedSlugs', () => {
+    /**
+     * Create an entry collection.
+     * @param {object} [overrides] Property overrides.
+     * @returns {any} Collection.
+     */
+    const createCollection = (overrides = {}) => ({
+      _type: 'entry',
+      slug: '{{title | localize}}',
+      _i18n: { structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false } },
+      ...overrides,
+    });
+
+    it('should be true with the localize flag and a multi-file structure', () => {
+      expect(hasLocalizedSlugs(createCollection())).toBe(true);
+      expect(hasLocalizedSlugs(createCollection({ slug: '{{fields.title | localize}}' }))).toBe(
+        true,
+      );
+    });
+
+    it('should be false without the localize flag', () => {
+      expect(hasLocalizedSlugs(createCollection({ slug: '{{title}}' }))).toBe(false);
+      expect(hasLocalizedSlugs(createCollection({ slug: undefined }))).toBe(false);
+    });
+
+    it('should be false with a single-file structure', () => {
+      expect(
+        hasLocalizedSlugs(createCollection({ _i18n: { structureMap: { i18nSingleFile: true } } })),
+      ).toBe(false);
+      expect(
+        hasLocalizedSlugs(
+          createCollection({ _i18n: { structureMap: { i18nSingleFileDefaultRoot: true } } }),
+        ),
+      ).toBe(false);
+    });
+
+    it('should be false for a file collection', () => {
+      expect(hasLocalizedSlugs(createCollection({ _type: 'file' }))).toBe(false);
     });
   });
 

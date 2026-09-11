@@ -1,6 +1,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Dialog, TextInput } from '@sveltia/ui';
+  import { getPathInfo } from '@sveltia/utils/file';
   import { stripSlashes } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
 
@@ -10,7 +11,9 @@
     getEntryDirPath,
     getSharedEntryFileName,
   } from '$lib/services/contents/collection/nested';
+  import { getFolderName, getOwnFolderName } from '$lib/services/contents/collection/nested/i18n';
   import { entryDraft } from '$lib/services/contents/draft';
+  import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { createPath } from '$lib/services/utils/file';
   import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
@@ -40,8 +43,7 @@
   /**
    * Folder the entry occupies, in a collection where every entry is an index file within one. The
    * folder name is what identifies the entry, so renaming it is what the slug editor does there,
-   * and the entry keeps its place in the tree. The folder is shared by every locale, so there’s a
-   * single field rather than one per locale.
+   * and the entry keeps its place in the tree.
    */
   const ownFolderPath = $derived.by(() => {
     const collection = $entryDraft?.collection;
@@ -54,14 +56,59 @@
   });
 
   const renamesFolder = $derived(ownFolderPath !== undefined);
-  const parentPath = $derived(ownFolderPath ? getEntryDirPath(ownFolderPath) : '');
-  const folderName = $derived(ownFolderPath?.slice(ownFolderPath.lastIndexOf('/') + 1) ?? '');
+  const defaultLocale = $derived($entryDraft?.defaultLocale ?? '_default');
+  /**
+   * Whether the folder goes by a different name in each locale. That’s the case when the slugs are
+   * localized, as the folder is named after the slug; otherwise the folder is shared by every
+   * locale, so there’s a single field rather than one per locale.
+   * @see https://github.com/sveltia/sveltia-cms/issues/962
+   */
+  const localizesFolder = $derived(
+    renamesFolder && !!$entryDraft && hasLocalizedSlugs($entryDraft.collection),
+  );
+
+  /**
+   * Folder the entry occupies in each locale. The default locale’s folder is the one the path
+   * editor points at; the other locales are only there when the folder is localized, and their
+   * folder is the one in the localized slug, which is the entry’s sub path in that locale.
+   * @type {Record<InternalLocaleCode, string>}
+   */
+  const ownFolderPaths = $derived.by(() => {
+    if (ownFolderPath === undefined) {
+      return {};
+    }
+
+    if (!localizesFolder) {
+      return { [defaultLocale]: ownFolderPath };
+    }
+
+    return {
+      [defaultLocale]: ownFolderPath,
+      ...Object.fromEntries(
+        Object.entries($entryDraft?.currentSlugs ?? {})
+          .filter(
+            ([locale, slug]) =>
+              locale !== defaultLocale &&
+              !!$entryDraft?.currentLocales[locale] &&
+              !!getOwnFolderName(slug ?? ''),
+          )
+          .map(([locale, slug]) => [locale, getEntryDirPath(/** @type {string} */ (slug))]),
+      ),
+    };
+  });
 
   /** @type {string[]} */
   let otherSlugs = $state([]);
-  let updatedFolderName = $state('');
-  /** @type {SlugValidationResult} */
-  let folderValidation = $state(false);
+  /** @type {Record<InternalLocaleCode, string>} */
+  let updatedFolderNames = $state({});
+  /** @type {Record<InternalLocaleCode, SlugValidationResult>} */
+  let folderValidations = $state({});
+  /**
+   * Names of the folders sharing a parent with the entry’s own folder in each locale, which are the
+   * only ones that can be in the way.
+   * @type {Record<InternalLocaleCode, string[]>}
+   */
+  let takenFolderNames = $state({});
   /** @type {Record<InternalLocaleCode, string>} */
   const updatedSlugs = $state({});
   /** @type {Record<InternalLocaleCode, SlugValidationResult>} */
@@ -86,10 +133,12 @@
     // Check the unpublished entries too, or the slug of a draft could be taken twice. They’re
     // concatenated rather than swapped over their published versions, because a draft that renamed
     // an entry leaves the published file behind, so both slugs are still in use
-    otherSlugs = [
+    const otherEntries = [
       ...getEntriesByCollection(collectionName),
       ...getUnpublishedEntriesByCollection(collectionName),
-    ]
+    ];
+
+    otherSlugs = otherEntries
       .filter((entry) => !Object.values(entry.locales).some(({ path }) => ownPaths.has(path)))
       .flatMap((entry) => Object.values(entry.locales).map(({ slug }) => slug))
       .filter((slug) => !currentSlugSet.has(slug));
@@ -100,20 +149,74 @@
     );
 
     if (renamesFolder) {
-      updatedFolderName = folderName;
-      folderValidation = false;
+      updatedFolderNames = Object.fromEntries(
+        Object.entries(ownFolderPaths).map(([locale, dirPath]) => [locale, getFolderName(dirPath)]),
+      );
+      folderValidations = Object.fromEntries(
+        Object.keys(ownFolderPaths).map((locale) => [locale, false]),
+      );
 
       // Only the folders sharing a parent with this one can be in the way. The unpublished entries
-      // count too, the same way they do for the slug above
-      otherSlugs = [
-        ...getEntriesByCollection(collectionName),
-        ...getUnpublishedEntriesByCollection(collectionName),
-      ]
-        .filter((entry) => entry.id !== originalEntry?.id)
-        .map(({ subPath }) => getEntryDirPath(subPath))
-        .filter((dirPath) => getEntryDirPath(dirPath) === parentPath)
-        .map((dirPath) => dirPath.slice(dirPath.lastIndexOf('/') + 1));
+      // count too, the same way they do for the slug above. In another locale, the siblings are
+      // the folders next to the entry’s localized folder
+      takenFolderNames = Object.fromEntries(
+        Object.entries(ownFolderPaths).map(([locale, dirPath]) => {
+          const parentPath = getEntryDirPath(dirPath);
+
+          return [
+            locale,
+            otherEntries
+              .filter((entry) => entry.id !== originalEntry?.id)
+              .map((entry) =>
+                locale === defaultLocale ? entry.subPath : entry.locales[locale]?.slug,
+              )
+              .filter((otherSubPath) => typeof otherSubPath === 'string')
+              .map((otherSubPath) => getEntryDirPath(otherSubPath))
+              .filter((otherDirPath) => getEntryDirPath(otherDirPath) === parentPath)
+              .map((otherDirPath) => getFolderName(otherDirPath)),
+          ];
+        }),
+      );
     }
+  };
+
+  /**
+   * Whether any folder name has been changed to something usable.
+   */
+  const folderNamesChanged = $derived(
+    Object.entries(updatedFolderNames).some(
+      ([locale, name]) => name !== getFolderName(ownFolderPaths[locale] ?? ''),
+    ) && Object.values(folderValidations).every((invalid) => invalid === false),
+  );
+
+  /**
+   * Rename the entry’s folder in each locale. Renaming the folder is what moves the entry, so the
+   * rest of the save takes care of the entries and assets stored below it.
+   */
+  const renameFolders = () => {
+    const draft = /** @type {EntryDraft} */ ($entryDraft);
+    let { currentPath, currentSlugs: slugs } = draft;
+
+    Object.entries(updatedFolderNames).forEach(([locale, name]) => {
+      const dirPath = createPath([getEntryDirPath(ownFolderPaths[locale]), getNewFolderName(name)]);
+
+      if (locale === defaultLocale) {
+        currentPath = dirPath;
+      } else {
+        // The localized slug of an existing entry is its sub path in the locale, so the folder is
+        // renamed within it, leaving the file name in place
+        slugs = {
+          ...slugs,
+          [locale]: createPath([
+            dirPath,
+            getPathInfo(/** @type {string} */ (slugs[locale])).basename,
+          ]),
+        };
+      }
+    });
+
+    // Assign through the store so that the editor picks up the change
+    $entryDraft = { ...draft, currentPath, currentSlugs: slugs };
   };
 
   /**
@@ -156,17 +259,12 @@
   title={_('edit_slug')}
   okLabel={_('update')}
   okDisabled={renamesFolder
-    ? updatedFolderName === folderName || folderValidation !== false
+    ? !folderNamesChanged
     : equal(currentSlugs, updatedSlugs) ||
       Object.values(validations).some((invalid) => invalid !== false)}
   onOk={() => {
     if (renamesFolder) {
-      // Renaming the folder is what moves the entry, so the rest of the save takes care of the
-      // entries and assets stored below it
-      /** @type {EntryDraft} */ ($entryDraft).currentPath = createPath([
-        parentPath,
-        getNewFolderName(updatedFolderName),
-      ]);
+      renameFolders();
 
       return;
     }
@@ -178,29 +276,39 @@
 >
   {#if renamesFolder}
     <div role="none" class="locales">
-      <section>
-        <div role="none">
-          <TextInput
-            dir="auto"
-            flex
-            bind:value={updatedFolderName}
-            oninput={() => {
-              // A folder name goes by different rules than a slug: it’s slugified on the way out,
-              // so what matters is that something usable survives and the folder doesn’t end up
-              // hidden behind a leading dot
-              folderValidation =
-                validateNewFolderName({ takenNames: otherSlugs, name: updatedFolderName }) ?? false;
-            }}
-            invalid={folderValidation !== false}
-            aria-errormessage="{componentId}-folder-error"
-          />
-          <p id="{componentId}-folder-error" class="error">
-            {#if folderValidation}
-              {_(`new_parent_folder_error.${folderValidation}`)}
-            {/if}
-          </p>
-        </div>
-      </section>
+      {#each Object.keys(updatedFolderNames) as locale (locale)}
+        <section>
+          {#if localizesFolder}
+            <div role="none">
+              <h3>{getLocaleLabel(locale) ?? locale}</h3>
+            </div>
+          {/if}
+          <div role="none">
+            <TextInput
+              dir="auto"
+              flex
+              bind:value={updatedFolderNames[locale]}
+              oninput={() => {
+                // A folder name goes by different rules than a slug: it’s slugified on the way out,
+                // so what matters is that something usable survives and the folder doesn’t end up
+                // hidden behind a leading dot
+                folderValidations[locale] =
+                  validateNewFolderName({
+                    takenNames: takenFolderNames[locale] ?? [],
+                    name: updatedFolderNames[locale],
+                  }) ?? false;
+              }}
+              invalid={folderValidations[locale] !== false}
+              aria-errormessage="{componentId}-{locale}-folder-error"
+            />
+            <p id="{componentId}-{locale}-folder-error" class="error">
+              {#if folderValidations[locale]}
+                {_(`new_parent_folder_error.${folderValidations[locale]}`)}
+              {/if}
+            </p>
+          </div>
+        </section>
+      {/each}
     </div>
   {:else}
     <div role="none" class="locales">

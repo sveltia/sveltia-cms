@@ -1509,6 +1509,112 @@ describe('draft/save/changes', () => {
       expect(savingEntry.locales.en.slug).toBe('docs/guides/_index');
       expect(savingEntry.locales.fr.slug).toBe('docs/guides/_index');
     });
+
+    it('should link the localized files by the default locale’s sub path', async () => {
+      // @see https://github.com/sveltia/sveltia-cms/issues/962
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(createEntryPath).mockImplementation(({ locale }) =>
+        locale === 'en'
+          ? 'content/pages/en/about/team/_index.md'
+          : 'content/pages/fr/a-propos/equipe/_index.md',
+      );
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        id: 'test-uuid',
+        isNew: true,
+        defaultLocale: 'en',
+        collection: {
+          _type: 'entry',
+          name: 'pages',
+          folder: 'content/pages',
+          slug: '{{title | localize}}',
+          nested: {},
+          _file: {
+            fullPathRegEx:
+              /^content\/pages\/(?<locale>en|fr)\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.md$/,
+          },
+          _i18n: {
+            i18nEnabled: true,
+            allLocales: ['en', 'fr'],
+            defaultLocale: 'en',
+            structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
+            canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+          },
+        },
+        collectionName: 'pages',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true, fr: true },
+        originalLocales: { en: false, fr: false },
+        currentValues: { en: { title: 'Team' }, fr: { title: 'Équipe' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'team',
+        // What the slug template alone would give, which another entry in a different folder
+        // could share
+        canonicalSlug: 'team',
+        localizedSlugs: { en: 'team', fr: 'equipe' },
+      };
+
+      const { savingEntry } = await createSavingEntryData({ draft, slugs });
+
+      expect(savingEntry.locales.en.content.translationKey).toBe('about/team/_index');
+      expect(savingEntry.locales.fr.content.translationKey).toBe('about/team/_index');
+      expect(savingEntry.locales.fr.slug).toBe('a-propos/equipe/_index');
+    });
+
+    it('should keep the regular canonical slug when the slugs are not localized', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(createEntryPath).mockReturnValue('content/pages/about/team/_index.md');
+      vi.mocked(serializeContent).mockReturnValue({ title: 'Test' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const draft = {
+        id: 'test-uuid',
+        isNew: true,
+        defaultLocale: 'en',
+        collection: {
+          _type: 'entry',
+          name: 'pages',
+          folder: 'content/pages',
+          nested: {},
+          _file: {},
+          _i18n: {
+            i18nEnabled: false,
+            allLocales: ['en'],
+            defaultLocale: 'en',
+            structureMap: {},
+            canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+          },
+        },
+        collectionName: 'pages',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        originalLocales: { en: false },
+        currentValues: { en: { title: 'Team' } },
+        files: {},
+      };
+
+      const { savingEntry } = await createSavingEntryData({
+        draft,
+        slugs: { defaultLocaleSlug: 'team', canonicalSlug: undefined, localizedSlugs: undefined },
+      });
+
+      expect(savingEntry.locales.en.content.translationKey).toBeUndefined();
+    });
   });
 
   describe('createSavingEntryData with database and caching', () => {
