@@ -307,4 +307,29 @@ describe('getBacklinks()', () => {
       ['pages', 'Topic'],
     ]);
   });
+
+  test('lists an entry once even if several of its Relation fields reference the target', () => {
+    collectors.relationFields = new Set([
+      {
+        fieldConfig: { widget: 'relation', name: 'tag', label: 'Tag', collection: 'tags' },
+        context: { collection: { name: 'posts' }, typedKeyPath: 'tag' },
+      },
+      {
+        fieldConfig: { widget: 'relation', name: 'topic', label: 'Topic', collection: 'tags' },
+        context: { collection: { name: 'posts' }, typedKeyPath: 'topic' },
+      },
+    ]);
+
+    getEntriesByCollection.mockReturnValue([
+      createPost('both', { tag: 'travel', topic: 'travel' }),
+      createPost('topic-only', { tag: 'food', topic: 'travel' }),
+    ]);
+
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
+
+    expect(result.map(({ entry: { id }, fieldLabel }) => [id, fieldLabel])).toEqual([
+      ['both', 'Tag'],
+      ['topic-only', 'Topic'],
+    ]);
+  });
 });

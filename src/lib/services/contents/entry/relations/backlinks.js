@@ -16,10 +16,14 @@ import { getEntrySummary } from '$lib/services/contents/entry/summary';
  * @param {string} args.collectionName Target collection name.
  * @param {string} [args.fileName] Target file name, for file/singleton collections.
  * @param {Entry} args.entry Target entry.
- * @returns {EntryBacklink[]} Backlinks referencing the target entry.
+ * @returns {EntryBacklink[]} Backlinks referencing the target entry. Each referencing entry appears
+ * once, even if several of its Relation fields point at the target.
  */
-export const getBacklinks = ({ collectionName, fileName, entry }) =>
-  getReferencingRelationFields({ collectionName, fileName }).flatMap(
+export const getBacklinks = ({ collectionName, fileName, entry }) => {
+  /** @type {Set<string>} */
+  const seenEntryIds = new Set();
+
+  return getReferencingRelationFields({ collectionName, fileName }).flatMap(
     ({ fieldConfig, sourceCollection, sourceCollectionFile, keyPath, valuePattern, multiple }) => {
       // Relation values can vary by the locale of the entry holding the field, e.g. when the
       // `value_field` template contains `{{locale}}`. Only the default locale is inspected here:
@@ -39,6 +43,8 @@ export const getBacklinks = ({ collectionName, fileName, entry }) =>
           (sourceEntry) =>
             // An entry never counts as a backlink to itself
             sourceEntry.id !== entry.id &&
+            // An entry already found through another Relation field is not listed again
+            !seenEntryIds.has(sourceEntry.id) &&
             // In a file/singleton collection, only the file holding the field can reference it
             (!sourceFileName || sourceEntry.slug === sourceFileName),
         )
@@ -55,6 +61,8 @@ export const getBacklinks = ({ collectionName, fileName, entry }) =>
             return undefined;
           }
 
+          seenEntryIds.add(sourceEntry.id);
+
           return /** @type {EntryBacklink} */ ({
             collectionName: sourceCollectionName,
             collectionLabel: sourceCollection.label || sourceCollectionName,
@@ -66,3 +74,4 @@ export const getBacklinks = ({ collectionName, fileName, entry }) =>
         .filter((backlink) => !!backlink);
     },
   );
+};
