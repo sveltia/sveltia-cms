@@ -52,6 +52,37 @@ describe('backends/git/shared/concurrency', () => {
     expect(peak).toBe(MAX_CONCURRENT_REQUESTS);
   });
 
+  test('honours a lower limit', async () => {
+    /** @type {(() => void)[]} */
+    const resolvers = [];
+    let inFlight = 0;
+    let peak = 0;
+
+    const promise = runConcurrently(
+      Array(12).fill(undefined),
+      () =>
+        new Promise((resolve) => {
+          inFlight += 1;
+          peak = Math.max(peak, inFlight);
+
+          resolvers.push(() => {
+            inFlight -= 1;
+            resolve();
+          });
+        }),
+      { concurrency: 3 },
+    );
+
+    while (resolvers.length) {
+      /** @type {any} */ (resolvers.shift())();
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.resolve();
+    }
+
+    await promise;
+    expect(peak).toBe(3);
+  });
+
   test('does nothing for an empty list', async () => {
     let called = false;
 

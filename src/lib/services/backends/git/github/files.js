@@ -1,5 +1,4 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { sleep } from '@sveltia/utils/misc';
 import mime from 'mime';
 
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
@@ -234,18 +233,19 @@ const fetchInChunks = async (fetchingFiles, getQuery) => {
     chunks.push(fetchingFiles.slice(i, i + CHUNK_SIZE));
   }
 
-  // Split the file list into chunks and repeat requests to avoid API timeout
-  await Promise.all(
-    chunks.map(async (chunk, index) => {
-      // Add a short delay to avoid Too Many Requests error
-      await sleep(index * 500);
-
+  // Split the file list into chunks and repeat requests to avoid API timeout, with a limited number
+  // in flight at once to avoid a Too Many Requests error. This replaces a fixed delay between the
+  // queries, which cost a large repository half a second per chunk no matter how quickly the API
+  // answered
+  await runConcurrently(
+    chunks.map((chunk, index) => ({ chunk, index })),
+    async ({ chunk, index }) => {
       const result = /** @type {{ repository: Record<string, any> }} */ (
         await fetchGraphQL(getQuery(chunk, index * CHUNK_SIZE))
       );
 
       Object.assign(results, result.repository);
-    }),
+    },
   );
 
   return results;

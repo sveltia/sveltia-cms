@@ -24,6 +24,7 @@ import {
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { MAX_CONCURRENT_REQUESTS } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 
@@ -40,7 +41,6 @@ const stopProgress = vi.hoisted(() => vi.fn());
 vi.mock('$lib/services/backends/git/shared/progress', () => ({
   startSimulatedProgress: vi.fn(() => stopProgress),
 }));
-vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 vi.mock('mime', () => ({ default: { getType: vi.fn() } }));
 
 describe('GitHub files service', () => {
@@ -311,9 +311,7 @@ describe('GitHub files service', () => {
       });
     });
 
-    test('splits a large file list into delayed chunks', async () => {
-      const { sleep: mockSleep } = await import('@sveltia/utils/misc');
-
+    test('splits a large file list into chunks', async () => {
       const fetchingFiles = /** @type {any[]} */ (
         Array.from({ length: 300 }, (_, i) => ({ path: `file${i}.txt`, sha: `sha${i}`, size: 100 }))
       );
@@ -333,10 +331,8 @@ describe('GitHub files service', () => {
 
       const result = await fetchFileContents(fetchingFiles);
 
-      // 300 files / 250 per chunk = 2 requests; the second is delayed to avoid rate limiting
+      // 300 files / 250 per chunk = 2 requests
       expect(fetchGraphQL).toHaveBeenCalledTimes(2);
-      expect(mockSleep).toHaveBeenCalledWith(0);
-      expect(mockSleep).toHaveBeenCalledWith(500);
       expect(Object.keys(result)).toHaveLength(300);
       expect(result['file299.txt'].text).toBe('Content of file299.txt');
     });
@@ -351,6 +347,65 @@ describe('GitHub files service', () => {
       await fetchFileContents(fetchingFiles);
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+    });
+
+    test('keeps only a few queries in flight, without a fixed delay between them', async () => {
+      const fetchingFiles = /** @type {any[]} */ (
+        Array.from({ length: 3000 }, (_, i) => ({
+          path: `file${i}.txt`,
+          sha: `sha${i}`,
+          size: 100,
+        }))
+      );
+
+      /** @type {(() => void)[]} */
+      const resolvers = [];
+      let inFlight = 0;
+      let peak = 0;
+
+      vi.mocked(fetchGraphQL).mockImplementation(
+        (query) =>
+          new Promise((resolve) => {
+            inFlight += 1;
+            peak = Math.max(peak, inFlight);
+
+            resolvers.push(() => {
+              inFlight -= 1;
+
+              const aliases = [.../** @type {string} */ (query).matchAll(/content_(\d+):/g)].map(
+                ([, i]) => Number(i),
+              );
+
+              resolve({
+                repository: Object.fromEntries(
+                  aliases.map((i) => [`content_${i}`, { text: `Content of file${i}.txt` }]),
+                ),
+              });
+            });
+          }),
+      );
+
+      const promise = fetchFileContents(fetchingFiles);
+
+      // 3000 files / 250 per chunk = 12 queries, but no more than the general limit at once
+      await vi.waitFor(() => {
+        expect(fetchGraphQL).toHaveBeenCalledTimes(MAX_CONCURRENT_REQUESTS);
+      });
+
+      // Release the pending queries one by one; a worker picks up the next chunk each time
+      while (resolvers.length) {
+        /** @type {any} */ (resolvers.shift())();
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => {
+          setTimeout(resolve, 0);
+        });
+      }
+
+      const result = await promise;
+
+      expect(fetchGraphQL).toHaveBeenCalledTimes(12);
+      expect(peak).toBe(MAX_CONCURRENT_REQUESTS);
+      expect(Object.keys(result)).toHaveLength(3000);
     });
 
     test('handles empty file list', async () => {

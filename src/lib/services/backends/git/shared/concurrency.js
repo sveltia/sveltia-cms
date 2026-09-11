@@ -7,14 +7,21 @@
 export const MAX_CONCURRENT_REQUESTS = 10;
 
 /**
- * Run the given task for each item, keeping at most {@link MAX_CONCURRENT_REQUESTS} of them in
- * flight, so a long list doesn’t trigger a Too Many Requests error. Unlike a chunked loop, a worker
- * picks up the next item as soon as it’s free, so one slow task doesn’t stall the others.
+ * Run the given task for each item, keeping at most a certain number of them in flight, so a long
+ * list doesn’t trigger a Too Many Requests error. Unlike a chunked loop, a worker picks up the next
+ * item as soon as it’s free, so one slow task doesn’t stall the others.
  * @template T
  * @param {T[]} items Items to process.
  * @param {(item: T) => Promise<void>} task Task to be performed for each item.
+ * @param {object} [options] Options.
+ * @param {number} [options.concurrency] Maximum number of tasks in flight. Defaults to
+ * {@link MAX_CONCURRENT_REQUESTS}; a lower number suits requests that are heavy on the server.
  */
-export const runConcurrently = async (items, task) => {
+export const runConcurrently = async (
+  items,
+  task,
+  { concurrency = MAX_CONCURRENT_REQUESTS } = {},
+) => {
   let cursor = 0;
 
   /**
@@ -31,7 +38,7 @@ export const runConcurrently = async (items, task) => {
   };
 
   await Promise.all(
-    Array(Math.min(MAX_CONCURRENT_REQUESTS, items.length))
+    Array(Math.min(concurrency, items.length))
       .fill(undefined)
       .map(() => work()),
   );
