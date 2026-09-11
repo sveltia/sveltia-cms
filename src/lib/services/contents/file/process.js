@@ -10,6 +10,7 @@ import { getNestedIndexFileName } from '$lib/services/contents/collection/nested
 import { hasRootField } from '$lib/services/contents/entry/fields';
 import { parseEntryFile } from '$lib/services/contents/file/parse';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { runInChunks } from '$lib/services/utils/scheduling';
 
 /**
  * @import {
@@ -556,7 +557,9 @@ export const prepareEntries = async (entryFiles) => {
   /** @type {Error[]} */
   const errors = [];
 
-  await Promise.all(entryFiles.map((file) => prepareEntry({ file, entries, entryMap, errors })));
+  // Parsing is synchronous, so a large repository would freeze the tab for the whole batch while
+  // the progress indicator stalls. Yield between chunks instead
+  await runInChunks(entryFiles, (file) => prepareEntry({ file, entries, entryMap, errors }));
 
   return {
     entries: entries.filter((entry) => {

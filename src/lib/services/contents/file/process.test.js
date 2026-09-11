@@ -2378,6 +2378,69 @@ describe('Test prepareEntries()', () => {
     expect(result.errors).toHaveLength(0);
   });
 
+  test('keeps the file order across chunks while yielding between them', async () => {
+    let uuidCounter = 0;
+
+    generateUUID.mockImplementation(() => {
+      uuidCounter += 1;
+      return `test-uuid-${uuidCounter}`;
+    });
+
+    parseEntryFile.mockImplementation(async (/** @type {{ path: string }} */ { path }) => ({
+      title: path,
+    }));
+
+    getCollection.mockReturnValue({
+      name: 'posts',
+      fields: [],
+      _file: {
+        fullPathRegEx: /^\/posts\/(?<subPath>[^/]+?)\.md$/,
+        subPath: undefined,
+        extension: 'md',
+      },
+      _i18n: {
+        i18nEnabled: false,
+        allLocales: ['en'],
+        defaultLocale: 'en',
+        structureMap: {
+          i18nSingleFile: false,
+          i18nSingleFileDefaultRoot: false,
+          i18nMultiFile: false,
+          i18nMultiFolder: false,
+          i18nMultiRootFolder: false,
+        },
+        canonicalSlug: { key: undefined },
+      },
+    });
+
+    const yieldFn = vi.fn(async () => undefined);
+
+    vi.stubGlobal('scheduler', { yield: yieldFn });
+
+    // More files than fit in one chunk, so the parser has to yield at least once
+    const files = Array.from(
+      { length: 450 },
+      (_, index) =>
+        /** @type {BaseEntryListItem} */ ({
+          name: `post${index}.md`,
+          path: `/posts/post${index}.md`,
+          text: '',
+          sha: `sha${index}`,
+          size: 100,
+          type: 'entry',
+          folder: { collectionName: 'posts' },
+        }),
+    );
+
+    const result = await prepareEntries(files);
+
+    vi.unstubAllGlobals();
+
+    expect(yieldFn).toHaveBeenCalled();
+    expect(result.entries.map(({ slug }) => slug)).toEqual(files.map((_, i) => `post${i}`));
+    expect(result.errors).toHaveLength(0);
+  });
+
   test('returns empty arrays when no files provided', async () => {
     const result = await prepareEntries([]);
 
