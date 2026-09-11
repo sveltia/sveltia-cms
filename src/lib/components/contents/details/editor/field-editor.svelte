@@ -180,8 +180,14 @@
   const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
+  // KeyValue field only: the keys are mirrored from the default locale, the values are editable
+  const canDuplicateKeys = $derived(i18nEnabled && i18n === 'duplicate_keys');
   const canEdit = $derived(
-    inEditorComponent || locale === defaultLocale || canTranslate || canDuplicate,
+    inEditorComponent ||
+      locale === defaultLocale ||
+      canTranslate ||
+      canDuplicate ||
+      canDuplicateKeys,
   );
   const canCopy = $derived(!inEditorComponent && canTranslate && otherLocales.length);
   const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));

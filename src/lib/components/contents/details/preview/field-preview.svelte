@@ -43,7 +43,7 @@
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
-  const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
+  const canDuplicate = $derived(i18nEnabled && (i18n === 'duplicate' || i18n === 'duplicate_keys'));
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({ valueMap, keyPath, isList, isCustomFieldType: !!customFieldType }),

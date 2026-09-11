@@ -8,6 +8,7 @@ import {
 } from '$lib/services/contents/entry/content-index';
 import { getFieldKind, isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
 
@@ -353,6 +354,24 @@ const getVariableTypeFields = ({ field, content, keyPath }) => {
 const normalizeField = (args) => {
   const { field, keyPath, content, index, locale, defaultLocale, defaultLocaleContent } = args;
   const { fillDefaults = true } = args;
+
+  // A `duplicate_keys` KeyValue field mirrors the default locale’s keys, so line its pairs up with
+  // them whether or not the locale holds any, keeping the values it does have
+  if (
+    locale !== defaultLocale &&
+    field.widget === 'keyvalue' &&
+    field.i18n === 'duplicate_keys' &&
+    defaultLocaleContent
+  ) {
+    syncDuplicateKeys({
+      valueStore: { [defaultLocale]: defaultLocaleContent, [locale]: content },
+      defaultLocale,
+      keyPath,
+    });
+
+    return;
+  }
+
   const occupied = keyPath in content || hasChildKeys(index, keyPath);
 
   if (!occupied || !reconcileValue(args)) {

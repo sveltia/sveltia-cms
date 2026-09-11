@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { describe, expect, test, vi } from 'vitest';
 
 import { getPairs, savePairs, validatePairs } from './helpers';
@@ -297,6 +297,67 @@ describe('Test savePairs()', () => {
         });
       })();
     }
+  });
+
+  describe('with the `duplicate_keys` i18n strategy', () => {
+    /** @type {KeyValueField} */
+    const fieldConfig = { ...baseFieldConfig, i18n: 'duplicate_keys' };
+    /**
+     * Create a draft store holding the given locale contents.
+     * @param {Record<string, Record<string, any>>} currentValues Locale contents.
+     * @returns {any} Draft store.
+     */
+    const createDraft = (currentValues) => writable({ defaultLocale: 'en', currentValues });
+
+    test('should mirror the keys to the other locales when editing the default locale', () => {
+      const entryDraft = createDraft({
+        en: { 'metadata.a': '1', 'metadata.b': '2', title: 'Hello' },
+        fr: { 'metadata.a': 'un', 'metadata.b': 'deux', title: 'Bonjour' },
+        de: { metadata: null, title: 'Hallo' },
+      });
+
+      savePairs({
+        entryDraft,
+        fieldConfig,
+        keyPath: 'metadata',
+        locale: 'en',
+        pairs: [
+          ['a', '1'],
+          ['bee', '2'],
+          ['c', '3'],
+        ],
+      });
+
+      expect(get(entryDraft).currentValues).toEqual({
+        en: { title: 'Hello', 'metadata.a': '1', 'metadata.bee': '2', 'metadata.c': '3' },
+        // `b` was renamed to `bee` and keeps its value, `c` is new
+        fr: { title: 'Bonjour', 'metadata.a': 'un', 'metadata.bee': 'deux', 'metadata.c': '' },
+        de: { title: 'Hallo', 'metadata.a': '', 'metadata.bee': '', 'metadata.c': '' },
+      });
+    });
+
+    test('should only save the values when editing another locale', () => {
+      const entryDraft = createDraft({
+        en: { 'metadata.a': '1', 'metadata.b': '2' },
+        fr: { 'metadata.a': 'un', 'metadata.b': 'deux' },
+      });
+
+      savePairs({
+        entryDraft,
+        fieldConfig,
+        keyPath: 'metadata',
+        locale: 'fr',
+        pairs: [
+          ['a', 'UN'],
+          ['b', 'DEUX'],
+        ],
+      });
+
+      expect(get(entryDraft).currentValues).toEqual({
+        en: { 'metadata.a': '1', 'metadata.b': '2' },
+        fr: { 'metadata.a': 'UN', 'metadata.b': 'DEUX' },
+      });
+    });
   });
 
   describe('validatePairs - duplicate detection (lines 39-40)', () => {

@@ -284,17 +284,42 @@
  */
 
 /**
- * Common field properties that are shared among all field types.
- * @typedef {object} CommonFieldProps
+ * Common field properties that are shared among all field types, except for the `i18n` option,
+ * whose accepted values depend on the field type.
+ * @typedef {object} BaseFieldProps
  * @property {string} name Unique identifier for the field. It cannot include periods and spaces.
  * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
  * field value.
+ */
+
+/**
+ * Field-level i18n option shared among most field types.
+ * @typedef {object} FieldI18nProps
  * @property {boolean | 'duplicate' | 'translate' | 'none'} [i18n] Whether to enable the editor UI
  * in locales other than the default locale. Default: `false`. `duplicate` disables the UI in
  * non-default like `false` but automatically copies the default locale’s value to other locales.
  * `translate` and `none` are aliases of `true` and `false`, respectively. This option only works
  * when i18n is set up with the global and collection-level `i18n` option. See the
  * [documentation](https://sveltiacms.app/en/docs/i18n#field-level-configuration) for details.
+ */
+
+/**
+ * Field-level i18n option for the KeyValue field, which supports the `duplicate_keys` strategy in
+ * addition to the common ones.
+ * @typedef {object} KeyValueFieldI18nProps
+ * @property {boolean | 'duplicate' | 'duplicate_keys' | 'translate' | 'none'} [i18n] Whether to
+ * enable the editor UI in locales other than the default locale. Default: `false`. `duplicate`
+ * disables the UI in non-default like `false` but automatically copies the default locale’s
+ * key-value pairs to other locales. `duplicate_keys` copies the keys only: the keys are read-only
+ * in non-default locales and kept in sync with the default locale, while the values can be edited
+ * in each locale. `translate` and `none` are aliases of `true` and `false`, respectively. This
+ * option only works when i18n is set up with the global and collection-level `i18n` option. See
+ * the [documentation](https://sveltiacms.app/en/docs/i18n#field-level-configuration) for details.
+ */
+
+/**
+ * Common field properties that are shared among all field types.
+ * @typedef {BaseFieldProps & FieldI18nProps} CommonFieldProps
  */
 
 /**
@@ -624,7 +649,7 @@
 
 /**
  * KeyValue field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & KeyValueFieldProps &
+ * @typedef {BaseFieldProps & KeyValueFieldI18nProps & VisibleFieldProps & KeyValueFieldProps &
  * MultiValueFieldProps} KeyValueField
  */
 

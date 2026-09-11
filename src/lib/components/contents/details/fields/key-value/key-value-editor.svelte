@@ -56,6 +56,12 @@
   } = $derived(fieldConfig);
   const keyLabel = $derived(_keyLabel || _('key_value.key'));
   const valueLabel = $derived(_valueLabel || _('key_value.value'));
+  const defaultLocale = $derived($entryDraft?.defaultLocale);
+  // With the `duplicate_keys` i18n strategy, the keys are mirrored from the default locale, so they
+  // can only be edited — and pairs added or removed — there; the values are editable in any locale
+  const keysReadonly = $derived(
+    readonly || (i18n === 'duplicate_keys' && locale !== defaultLocale),
+  );
 
   /** @type {[string, string][]} */
   let pairs = $state([]);
@@ -174,7 +180,7 @@
       <tr>
         <th scope="col" class="key">{keyLabel}</th>
         <th scope="col" class="value">{valueLabel}</th>
-        {#if !readonly}
+        {#if !keysReadonly}
           <th scope="col" class="action" aria-label={_('key_value.action')}></th>
         {/if}
       </tr>
@@ -185,7 +191,7 @@
           <td class="key">
             <TextInput
               dir="ltr"
-              {readonly}
+              readonly={keysReadonly}
               flex
               bind:value={pair[0]}
               invalid={!!validations[index]}
@@ -218,14 +224,14 @@
                     /** @type {HTMLInputElement} */ (
                       rowElements[index + 1].querySelector('input')
                     ).focus();
-                  } else if (pairs.length < max) {
+                  } else if (!keysReadonly && pairs.length < max) {
                     addPair();
                   }
                 }
               }}
             />
           </td>
-          {#if !readonly}
+          {#if !keysReadonly}
             <td class="action">
               <Button
                 variant="ghost"
@@ -263,7 +269,7 @@
   <Button
     label={_('add')}
     variant="tertiary"
-    disabled={readonly || pairs.length >= max}
+    disabled={keysReadonly || pairs.length >= max}
     onclick={() => {
       addPair();
     }}

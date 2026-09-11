@@ -716,6 +716,60 @@ describe('contents/draft/create/normalize', () => {
 
       expect(content).toEqual({ draft: true });
     });
+
+    it('should line up a `duplicate_keys` KeyValue field with the default locale', () => {
+      const fields = [{ name: 'metadata', widget: 'keyvalue', i18n: 'duplicate_keys' }];
+      const defaultLocaleContent = { 'metadata.a': '1', 'metadata.b': '2' };
+
+      // A missing key is added, a stale key is dropped, an existing key keeps its value
+      expect(
+        normalizeContent({
+          fields,
+          content: { 'metadata.b': 'ni', 'metadata.c': 'san' },
+          locale: 'ja',
+          defaultLocale: 'en',
+          defaultLocaleContent,
+        }),
+      ).toEqual({ 'metadata.a': '', 'metadata.b': 'ni' });
+
+      // A field absent from the locale gets the keys with empty values rather than the default
+      expect(
+        normalizeContent({
+          fields: [{ ...fields[0], default: { x: 'y' } }],
+          content: {},
+          locale: 'ja',
+          defaultLocale: 'en',
+          defaultLocaleContent,
+        }),
+      ).toEqual({ 'metadata.a': '', 'metadata.b': '' });
+    });
+
+    it('should leave a `duplicate_keys` KeyValue field alone in the default locale', () => {
+      const fields = [{ name: 'metadata', widget: 'keyvalue', i18n: 'duplicate_keys' }];
+
+      expect(normalize(fields, { 'metadata.c': '3' })).toEqual({ 'metadata.c': '3' });
+    });
+
+    it('should reach a `duplicate_keys` KeyValue field nested in a list item', () => {
+      const fields = [
+        {
+          name: 'sections',
+          widget: 'list',
+          i18n: true,
+          fields: [{ name: 'attrs', widget: 'keyvalue', i18n: 'duplicate_keys' }],
+        },
+      ];
+
+      expect(
+        normalizeContent({
+          fields,
+          content: { 'sections.0.attrs.old': 'x' },
+          locale: 'ja',
+          defaultLocale: 'en',
+          defaultLocaleContent: { 'sections.0.attrs.new': 'y' },
+        }),
+      ).toEqual({ 'sections.0.attrs.new': 'x' });
+    });
   });
 
   describe('normalizeContentMap', () => {

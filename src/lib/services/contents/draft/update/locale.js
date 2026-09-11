@@ -5,6 +5,8 @@ import { entryDraft, suspendAutoDuplication } from '$lib/services/contents/draft
 import { createProxy } from '$lib/services/contents/draft/create/proxy';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getDuplicateKeysFieldKeyPaths } from '$lib/services/contents/fields/key-value/duplicate-keys';
+import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -111,6 +113,23 @@ export const copyDefaultLocaleValues = (content, targetLanguage, { keyPathPrefix
       delete newContent[keyPath];
       noI18nFieldKeys.push(keyPath);
     }
+  });
+
+  // A KeyValue field with the `duplicate_keys` strategy takes its keys from the default locale but
+  // not its values, which are left for the user to fill in like a translatable text field. The
+  // merged content holds the pairs of every such field that is still enabled in this locale
+  getDuplicateKeysFieldKeyPaths({
+    valueStore: { [targetLanguage]: newContent },
+    getFieldArgs,
+  }).forEach((keyPath) => {
+    setPairs(
+      newContent,
+      keyPath,
+      getPairsFromContent(defaultLocaleContent, keyPath).map(([key]) => [
+        key,
+        content[`${keyPath}.${key}`] ?? '',
+      ]),
+    );
   });
 
   if (keyPathPrefix !== undefined) {

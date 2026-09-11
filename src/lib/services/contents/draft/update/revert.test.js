@@ -206,6 +206,78 @@ describe('draft/update/revert', () => {
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockEntryDraft.currentValues.en['metadata.author']).toBe('Original Author');
     });
+
+    describe('with KeyValue fields', () => {
+      beforeEach(() => {
+        vi.mocked(getField).mockImplementation(({ keyPath }) => {
+          if (keyPath === 'labels') {
+            return { name: 'labels', widget: 'keyvalue', i18n: true };
+          }
+
+          if (keyPath === 'metadata') {
+            return { name: 'metadata', widget: 'keyvalue', i18n: 'duplicate_keys' };
+          }
+
+          return undefined;
+        });
+
+        mockEntryDraft.currentValues = {
+          en: { 'labels.x': 'X2', 'metadata.a': '1', 'metadata.bee': '2', 'metadata.c': '3' },
+          ja: { 'labels.y': 'Y2', 'metadata.a': 'いち', 'metadata.bee': 'に', 'metadata.c': '' },
+        };
+
+        mockEntryDraft.originalValues = {
+          en: { 'labels.x': 'X', 'metadata.a': '1', 'metadata.b': '2' },
+          ja: { 'labels.y': 'Y', 'metadata.a': 'イチ', 'metadata.b': 'ニ' },
+        };
+      });
+
+      it('should revert the pairs of a translatable field in any locale', () => {
+        revertChanges({ keyPath: 'labels' });
+
+        expect(mockEntryDraft.currentValues.en['labels.x']).toBe('X');
+        expect(mockEntryDraft.currentValues.ja['labels.y']).toBe('Y');
+      });
+
+      it('should mirror the keys reverted in the default locale to the other locales', () => {
+        revertChanges({ locale: 'en', keyPath: 'metadata' });
+
+        expect(mockEntryDraft.currentValues.en).toEqual({
+          'labels.x': 'X2',
+          'metadata.a': '1',
+          'metadata.b': '2',
+        });
+        // The values are kept: `bee` is renamed back to `b`, and the added `c` is dropped
+        expect(mockEntryDraft.currentValues.ja).toEqual({
+          'labels.y': 'Y2',
+          'metadata.a': 'いち',
+          'metadata.b': 'に',
+        });
+      });
+
+      it('should line up the pairs reverted in another locale with the default locale', () => {
+        revertChanges({ locale: 'ja', keyPath: 'metadata' });
+
+        expect(mockEntryDraft.currentValues.en).toEqual({
+          'labels.x': 'X2',
+          'metadata.a': '1',
+          'metadata.bee': '2',
+          'metadata.c': '3',
+        });
+        expect(mockEntryDraft.currentValues.ja).toEqual({
+          'labels.y': 'Y2',
+          'metadata.a': 'イチ',
+          'metadata.bee': 'ニ',
+          'metadata.c': '',
+        });
+      });
+
+      it('should revert everything consistently', () => {
+        revertChanges();
+
+        expect(mockEntryDraft.currentValues).toEqual(mockEntryDraft.originalValues);
+      });
+    });
   });
 
   describe('revertFields (internal)', () => {

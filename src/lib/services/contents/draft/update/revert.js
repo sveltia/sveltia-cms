@@ -2,6 +2,8 @@ import { get } from 'svelte/store';
 
 import { entryDraft } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
+import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
+import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -72,9 +74,15 @@ export const revertFields = ({
 
   Object.entries(valueMap).forEach(([_keyPath, value]) => {
     if (!keyPath || _keyPath.startsWith(keyPath)) {
-      const fieldConfig = getField({ ...getFieldArgs, keyPath: _keyPath });
+      const fieldConfig =
+        getField({ ...getFieldArgs, keyPath: _keyPath }) ??
+        // A KeyValue pair is governed by its field
+        getKeyValueField({ ...getFieldArgs, keyPath: _keyPath });
 
-      if (isDefaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
+      if (
+        isDefaultLocale ||
+        [true, 'translate', 'duplicate_keys'].includes(fieldConfig?.i18n ?? false)
+      ) {
         if (reset) {
           delete currentValues[locale][_keyPath];
         } else {
@@ -152,8 +160,18 @@ export const revertLocale = ({ draft, keyPath, locale }) => {
  */
 export const revertChanges = ({ locale: targetLanguage = '', keyPath = '' } = {}) => {
   const draft = /** @type {EntryDraft} */ (get(entryDraft));
-  const { collection, collectionFile, currentValues, originalPath } = draft;
-  const { allLocales } = (collectionFile ?? collection)._i18n;
+
+  const {
+    collection,
+    collectionName,
+    collectionFile,
+    fileName,
+    isIndexFile,
+    currentValues,
+    originalPath,
+  } = draft;
+
+  const { allLocales, defaultLocale } = (collectionFile ?? collection)._i18n;
   const locales = targetLanguage ? [targetLanguage] : allLocales;
   // Reverting one field or one locale only touches values. Reverting everything restores where the
   // entry goes as well, or a move made with the path editor would survive the revert and still be
@@ -162,6 +180,14 @@ export const revertChanges = ({ locale: targetLanguage = '', keyPath = '' } = {}
 
   locales.forEach((locale) => {
     revertLocale({ draft, keyPath, locale });
+  });
+
+  // Keys reverted in the default locale have to reach the other locales, and pairs reverted in
+  // another locale have to line up with the default locale again
+  syncAllDuplicateKeys({
+    valueStore: currentValues,
+    defaultLocale,
+    getFieldArgs: { collectionName, fileName, isIndexFile },
   });
 
   entryDraft.update(() => ({

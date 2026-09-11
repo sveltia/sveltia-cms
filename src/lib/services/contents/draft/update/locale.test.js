@@ -670,6 +670,57 @@ describe('draft/update/locale', () => {
         );
       });
     });
+
+    describe('with a `duplicate_keys` KeyValue field', () => {
+      beforeEach(() => {
+        vi.mocked(getField).mockImplementation(({ keyPath }) => {
+          if (keyPath === 'title') {
+            return { name: 'title', widget: 'string', i18n: 'translate' };
+          }
+
+          if (keyPath === 'metadata') {
+            return { name: 'metadata', widget: 'keyvalue', i18n: 'duplicate_keys' };
+          }
+
+          if (keyPath === 'labels') {
+            return { name: 'labels', widget: 'keyvalue', i18n: true };
+          }
+
+          return undefined;
+        });
+
+        mockEntryDraft.currentValues.en = {
+          title: 'English Title',
+          'metadata.a': '1',
+          'metadata.b': '2',
+          'labels.x': 'X',
+        };
+      });
+
+      it('should copy the keys but not the values from the default locale', () => {
+        const result = copyDefaultLocaleValues({}, 'fr');
+
+        expect(result).toEqual({
+          title: '',
+          'metadata.a': '',
+          'metadata.b': '',
+          // A translatable KeyValue field is copied as-is
+          'labels.x': 'X',
+        });
+      });
+
+      it('should keep the locale’s own default values under the default locale’s keys', () => {
+        const content = { 'metadata.b': 'deux', 'metadata.c': 'trois' };
+        const result = copyDefaultLocaleValues(content, 'fr');
+
+        expect(result).toEqual({
+          title: '',
+          'metadata.a': '',
+          'metadata.b': 'deux',
+          'labels.x': 'X',
+        });
+      });
+    });
   });
 
   describe('toggleLocale', () => {

@@ -1,7 +1,8 @@
 import { get } from 'svelte/store';
 
 import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
-import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
+import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
 
 /**
  * @import { Writable } from 'svelte/store';
@@ -18,19 +19,8 @@ import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
  * @param {InternalLocaleCode} args.locale Current pane’s locale.
  * @returns {[string, string][]} Key-value pairs.
  */
-export const getPairs = ({ entryDraft, valueStoreKey = 'currentValues', keyPath, locale }) => {
-  const valueMap = get(entryDraft)[valueStoreKey][locale] ?? {};
-  const prefix = `${keyPath}.`;
-
-  return /** @type {[string, string][]} */ (
-    // The value map is the draft’s live map, which {@link savePairs} mutates in place, so its key
-    // paths have to be read as they are right now
-    getKeysByPrefix(valueMap, prefix, { live: true }).map((key) => [
-      key.slice(prefix.length),
-      valueMap[key],
-    ])
-  );
-};
+export const getPairs = ({ entryDraft, valueStoreKey = 'currentValues', keyPath, locale }) =>
+  getPairsFromContent(get(entryDraft)[valueStoreKey][locale] ?? {}, keyPath);
 
 /**
  * Validate the given key-value pairs.
@@ -74,21 +64,16 @@ export const savePairs = ({
 
   entryDraft.update((draft) => {
     if (draft) {
-      forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (content) => {
-        // Clear the existing pairs first. Unlike other non-primitive fields, a KeyValue field
-        // stores no placeholder at its own key path: its keys are arbitrary strings, and
-        // `unflatten()` would turn numeric ones into an array. `finalizeContent()` rebuilds the
-        // object from the children instead
-        // The content is the draft’s live map, which is mutated right below, so its key paths
-        // have to be read as they are right now
-        getKeysByPrefix(content, `${keyPath}.`, { live: true }).forEach((_keyPath) => {
-          delete content[_keyPath];
-        });
+      const valueStore = draft[valueStoreKey];
 
-        pairs.forEach(([key, value]) => {
-          content[`${keyPath}.${key}`] = value;
-        });
+      forEachTargetLocale({ valueStore, locale, i18n }, (content) => {
+        setPairs(content, keyPath, pairs);
       });
+
+      // Keys edited in the default locale have to reach the other locales
+      if (i18n === 'duplicate_keys' && locale === draft.defaultLocale) {
+        syncDuplicateKeys({ valueStore, defaultLocale: locale, keyPath });
+      }
     }
 
     return draft;
