@@ -34,7 +34,7 @@ const INVALID_SEGMENT_REGEX = /(?:^|\/)(?:\.{1,2})(?:\/|$)/;
  * @see https://github.com/decaporg/decap-cms/issues/7094
  */
 const isPathTaken = (draft) => {
-  const { collection, originalEntry } = draft;
+  const { id, collection } = draft;
   const indexFileName = getSharedEntryFileName(collection);
 
   // A blank folder hands the destination back to the collection’s own `path` option and slug, which
@@ -51,11 +51,15 @@ const isPathTaken = (draft) => {
   });
 
   // The unpublished entries count too, or a folder already claimed by a draft awaiting review
-  // would be handed out twice and the two would collide when the branches are merged
+  // would be handed out twice and the two would collide when the branches are merged. The entry
+  // being edited doesn’t count, and it’s told apart by the draft’s ID rather than the original
+  // entry’s: a new entry has no original, yet it’s saved under the draft’s ID, and once it is,
+  // the draft is validated again — to see whether the entry can be sent for review — while the
+  // saved entry already sits at the destination
   return [
     ...getEntriesByCollection(collection.name),
     ...getUnpublishedEntriesByCollection(collection.name),
-  ].some((entry) => entry.subPath === subPath && entry.id !== originalEntry?.id);
+  ].some((entry) => entry.subPath === subPath && entry.id !== id);
 };
 
 /**

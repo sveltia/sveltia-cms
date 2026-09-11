@@ -408,12 +408,13 @@ export const deleteWorkflowEntry = async (entry, collection, collectionFile, ass
 
 /**
  * Discard the given unpublished entries. Used when multiple entries are deleted at once from the
- * entry list.
+ * entry list. Each entry takes a couple of requests — closing the pull request and deleting the
+ * branch — so the batch is throttled like any other, rather than firing them all at once.
  * @param {UnpublishedEntry[]} entries Unpublished entries.
  * @returns {Promise<void>}
  */
 export const discardWorkflowEntries = async (entries) => {
-  await Promise.all(entries.map(discardWorkflowEntry));
+  await runConcurrently(entries, discardWorkflowEntry);
 };
 
 /**

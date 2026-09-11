@@ -449,22 +449,70 @@ describe('GitHub Editorial Workflow service', () => {
       });
     });
 
-    test('ignores an existing reference', async () => {
-      mockBase();
+    // A GraphQL error comes back as a rejection carrying the message, not as a resolved response
+    // with an `errors` key
+    const alreadyExists = new Error('Server responded with an error', {
+      cause: {
+        status: 200,
+        message: 'A ref named "refs/heads/cms/posts/hello" already exists in the repository.',
+      },
+    });
 
-      // A GraphQL error comes back as a rejection carrying the message, not as a resolved response
-      // with an `errors` key. The branch is left behind by an earlier pull request for the same
-      // entry — one merged without deleting the branch, or discarded — and is fine to commit onto
-      vi.mocked(fetchAPI).mockRejectedValue(
-        new Error('Server responded with an error', {
-          cause: {
-            status: 200,
-            message: 'A ref named "refs/heads/cms/posts/hello" already exists in the repository.',
-          },
-        }),
+    /**
+     * Mock the base query, then the open pull request count for an existing branch.
+     * @param {number} totalCount Number of open pull requests from the branch.
+     */
+    const mockExisting = (totalCount) => {
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
+        .mockResolvedValueOnce({ repository: { pullRequests: { totalCount } } });
+    };
+
+    test('resets an existing reference that has no open pull request', async () => {
+      mockExisting(0);
+      vi.mocked(fetchAPI).mockRejectedValueOnce(alreadyExists).mockResolvedValueOnce({});
+
+      // The branch is left behind by an earlier pull request for the same entry — one merged
+      // without deleting the branch, or closed on GitHub rather than discarded in the CMS. Starting
+      // from it as it stands would carry that work into the new pull request, so it starts over
+      // from the configured branch instead, and the head is known like a fresh branch’s
+      await expect(createBranch('cms/posts/hello')).resolves.toBe('abc');
+
+      expect(fetchGraphQL).toHaveBeenLastCalledWith(expect.stringContaining('pullRequests'), {
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'cms/posts/hello',
+      });
+      expect(fetchAPI).toHaveBeenLastCalledWith(
+        '/repos/owner/repo/git/refs/heads/cms/posts/hello',
+        {
+          method: 'PATCH',
+          body: { sha: 'abc', force: true },
+        },
       );
+    });
 
+    test('keeps an existing reference that has an open pull request', async () => {
+      mockExisting(1);
+      vi.mocked(fetchAPI).mockRejectedValueOnce(alreadyExists);
+
+      // The load didn’t pick the pull request up — its label is gone, or it’s beyond the number
+      // fetched — but it’s someone’s work in progress, which is committed onto rather than wiped
       await expect(createBranch('cms/posts/hello')).resolves.toBeUndefined();
+
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+    });
+
+    test('keeps an existing reference with Open Authoring', async () => {
+      mockStores({ fork: { owner: 'contributor', repo: 'repo' } });
+      mockBase();
+      vi.mocked(fetchAPI).mockRejectedValueOnce(alreadyExists);
+
+      // A draft is a branch without a pull request, so a leftover can’t be told from a live one
+      await expect(createBranch('cms/posts/hello')).resolves.toBeUndefined();
+
+      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
     });
 
     test('rethrows any other mutation error', async () => {
@@ -663,11 +711,28 @@ describe('GitHub Editorial Workflow service', () => {
       expect(result.pullRequest.number).toBe(5);
     });
 
-    test('looks the head up when the branch was left over by an interrupted save', async () => {
-      vi.mocked(fetchGraphQL).mockResolvedValue({
-        fork: { id: 'R_1' },
-        base: { ref: { target: { oid: 'abc' } } },
-      });
+    test('starts over from the base head when the branch was left over', async () => {
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
+        .mockResolvedValueOnce({ repository: { pullRequests: { totalCount: 0 } } });
+      vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+      vi.mocked(fetchAPI).mockRejectedValueOnce(
+        new Error('Server responded with an error', {
+          cause: { status: 200, message: 'already exists' },
+        }),
+      );
+
+      await savePullRequest(args).catch(() => undefined);
+
+      // A branch left by an interrupted save, or by a pull request closed outside the CMS, is
+      // reset to the base head, so the commit knows where it goes without looking the head up
+      expect(commitChanges).toHaveBeenCalledWith([], expect.objectContaining({ headOid: 'abc' }));
+    });
+
+    test('looks the head up when the branch has an open pull request the load missed', async () => {
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
+        .mockResolvedValueOnce({ repository: { pullRequests: { totalCount: 1 } } });
       vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
       vi.mocked(fetchAPI).mockRejectedValueOnce(
         new Error('Server responded with an error', {

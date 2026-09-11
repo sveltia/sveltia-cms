@@ -23,6 +23,7 @@
   } from '$lib/services/contents/collection/nested/tree';
   import { entryDraft } from '$lib/services/contents/draft';
   import { createPath } from '$lib/services/utils/file';
+  import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
   /**
    * @import { NestedTreeNode } from '$lib/services/contents/collection/nested/tree';
@@ -104,8 +105,20 @@
       return undefined;
     }
 
-    // `$allEntries` is a key, because `getEntriesByCollection()` reads it indirectly
+    // `$allEntries` is a key, because `getEntriesByCollection()` reads it indirectly, while
+    // `$unpublishedEntries` is tracked as a normal dependency
     void $allEntries;
+
+    const { name } = collection;
+
+    // With Editorial Workflow a section can be started and filled in one sitting: a page that only
+    // exists as a draft has to be offered as a parent too, or its sub-pages couldn’t be filed under
+    // it until it’s published. A pending move is reflected the same way, so the tree shows the
+    // folders as they’ll be once the drafts land
+    const entries = mergeUnpublishedEntries(
+      getEntriesByCollection(name),
+      $unpublishedEntries.filter(({ workflow }) => workflow.collectionName === name),
+    );
 
     return /** @type {NestedTreeNode} */ ({
       path: '',
@@ -114,7 +127,7 @@
         (nodes, path) => addFolderToTree({ nodes, path }),
         getParentFolderTree({
           collection,
-          entries: getEntriesByCollection(collection.name),
+          entries,
           // An entry can’t be filed within itself
           excludePath: ownFolderName
             ? getEntryDirPath($entryDraft?.originalEntry?.subPath ?? '')

@@ -137,43 +137,17 @@ describe('GitLab commits service', () => {
       expect(result.sha).toBe('c1');
     });
 
-    test('commits onto the branch when it already exists', async () => {
+    test('rethrows a rejected start branch, which is the caller’s to sort out', async () => {
       const [changes, options] = createStartBranchArgs();
 
       vi.mocked(createCommitMessage).mockReturnValue('Create new post');
-      vi.mocked(getGitHash).mockResolvedValue('file123');
-      // GitLab rejects `start_branch` outright once the branch is there, which happens when an
-      // earlier save was interrupted after creating it
-      vi.mocked(fetchAPI)
-        .mockRejectedValueOnce(
-          new Error('A branch called “cms/posts/hello” already exists', {
-            cause: { status: 400 },
-          }),
-        )
-        .mockResolvedValueOnce({ id: 'c2', committed_date: '2023-01-01T12:00:00Z' });
-
-      const result = await commitChanges(changes, options);
-
-      expect(fetchAPI).toHaveBeenCalledTimes(2);
-
-      // The retry drops `start_branch` rather than the whole commit
-      expect(fetchAPI).toHaveBeenLastCalledWith(
-        '/projects/test-owner%2Ftest-repo/repository/commits',
-        expect.objectContaining({
-          body: expect.not.objectContaining({ start_branch: expect.anything() }),
-        }),
+      // GitLab rejects `start_branch` outright once the branch is there. Only the Editorial
+      // Workflow service can tell whether the branch is a leftover or someone’s work in progress
+      vi.mocked(fetchAPI).mockRejectedValue(
+        new Error('A branch called “cms/posts/hello” already exists', { cause: { status: 400 } }),
       );
 
-      expect(result.sha).toBe('c2');
-    });
-
-    test('rethrows an error that isn’t about the branch already existing', async () => {
-      const [changes, options] = createStartBranchArgs();
-
-      vi.mocked(createCommitMessage).mockReturnValue('Create new post');
-      vi.mocked(fetchAPI).mockRejectedValue(new Error('Forbidden', { cause: { status: 403 } }));
-
-      await expect(commitChanges(changes, options)).rejects.toThrow('Forbidden');
+      await expect(commitChanges(changes, options)).rejects.toThrow('already exists');
       expect(fetchAPI).toHaveBeenCalledTimes(1);
     });
 

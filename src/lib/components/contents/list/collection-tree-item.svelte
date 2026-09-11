@@ -39,29 +39,32 @@
     env.isSmallScreen || isSearchPage ? false : isCurrentCollection && !$nestedFilterPath,
   );
 
-  // `$allEntries` is a key, because `getEntriesByCollection()` reads it indirectly, while
-  // `$unpublishedEntries` is tracked as a normal dependency
-  const entryCount = $derived.by(() => {
+  /**
+   * Entries in the collection, with the pending changes merged in: an entry updated in a pull
+   * request is swapped for its draft, and one that’s never been published is added, so the count
+   * and the folder tree reflect what the entry list shows. A folder that only exists in a pull
+   * request — a section started under Editorial Workflow, or a page moved there — can then be
+   * browsed before it’s published. Without it, a draft filed below another draft is nowhere to be
+   * found. `$allEntries` is a key, because `getEntriesByCollection()` reads it indirectly, while
+   * `$unpublishedEntries` is tracked as a normal dependency.
+   */
+  const entries = $derived.by(() => {
     void $allEntries;
 
-    return (
-      'files' in collection
-        ? collection.files
-        : mergeUnpublishedEntries(
-            getEntriesByCollection(name),
-            $unpublishedEntries.filter(({ workflow }) => workflow.collectionName === name),
-          )
-    ).length;
+    return 'files' in collection
+      ? []
+      : mergeUnpublishedEntries(
+          getEntriesByCollection(name),
+          $unpublishedEntries.filter(({ workflow }) => workflow.collectionName === name),
+        );
   });
 
-  const treeNodes = $derived.by(() => {
-    void $allEntries;
+  const entryCount = $derived('files' in collection ? collection.files.length : entries.length);
 
+  const treeNodes = $derived.by(() => {
     const internalCollection = getCollection(name);
 
-    return internalCollection
-      ? getNestedTree({ collection: internalCollection, entries: getEntriesByCollection(name) })
-      : [];
+    return internalCollection ? getNestedTree({ collection: internalCollection, entries }) : [];
   });
 
   let expanded = $state(false);

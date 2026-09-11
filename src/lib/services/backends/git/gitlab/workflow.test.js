@@ -428,12 +428,92 @@ describe('GitLab Editorial Workflow service', () => {
       const result = await savePullRequest({ ...args, pullRequest });
 
       expect(fetchAPI).not.toHaveBeenCalled();
-      expect(commitChanges).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ startBranch: undefined }),
-      );
+      expect(commitChanges).toHaveBeenCalledWith([], {
+        commitType: 'create',
+        branch: 'cms/posts/hello',
+      });
 
       expect(result.pullRequest).toBe(pullRequest);
+    });
+
+    /** GitLab’s response to `start_branch` when the branch already exists. */
+    const branchExists = new Error('A branch called “cms/posts/hello” already exists', {
+      cause: { status: 400 },
+    });
+
+    /** Merge request as returned by the REST API on creation. */
+    const createdMergeRequest = {
+      id: 900,
+      iid: 5,
+      web_url: 'u',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    };
+
+    test('starts over from the configured branch when the branch was left over', async () => {
+      vi.mocked(commitChanges)
+        .mockRejectedValueOnce(branchExists)
+        .mockResolvedValueOnce({ sha: 'def', files: {} });
+      vi.mocked(fetchAPI)
+        // No open merge request from the branch
+        .mockResolvedValueOnce([])
+        // Branch deletion
+        .mockResolvedValueOnce(new Response())
+        .mockResolvedValueOnce(createdMergeRequest);
+
+      const result = await savePullRequest(args);
+
+      // The branch is left over from a merge request closed on GitLab rather than discarded in
+      // the CMS. Starting from it as it stands would carry that work into the new merge request,
+      // so it’s deleted and created afresh from the configured branch by the retried commit
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        1,
+        `/projects/${PROJECT_ID}/merge_requests` +
+          '?state=opened&source_branch=cms%2Fposts%2Fhello&per_page=1',
+      );
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
+        { method: 'DELETE', responseType: 'raw' },
+      );
+      expect(commitChanges).toHaveBeenCalledTimes(2);
+      expect(commitChanges).toHaveBeenLastCalledWith([], {
+        commitType: 'create',
+        branch: 'cms/posts/hello',
+        startBranch: 'main',
+      });
+      expect(result.pullRequest.number).toBe(5);
+    });
+
+    test('commits onto the branch when it has an open merge request the load missed', async () => {
+      vi.mocked(commitChanges)
+        .mockRejectedValueOnce(branchExists)
+        .mockResolvedValueOnce({ sha: 'def', files: {} });
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce([{ iid: 7 }])
+        .mockResolvedValueOnce(createdMergeRequest);
+
+      await savePullRequest(args);
+
+      // The merge request has lost its label, or sits beyond the number fetched, but it’s
+      // someone’s work in progress, which is committed onto rather than wiped
+      expect(fetchAPI).not.toHaveBeenCalledWith(expect.anything(), {
+        method: 'DELETE',
+        responseType: 'raw',
+      });
+      expect(commitChanges).toHaveBeenLastCalledWith([], {
+        commitType: 'create',
+        branch: 'cms/posts/hello',
+      });
+    });
+
+    test('rethrows a commit failure that isn’t about the branch existing', async () => {
+      vi.mocked(commitChanges).mockRejectedValue(
+        new Error('Forbidden', { cause: { status: 403 } }),
+      );
+
+      await expect(savePullRequest(args)).rejects.toThrow('Forbidden');
+      expect(fetchAPI).not.toHaveBeenCalled();
     });
   });
 

@@ -274,11 +274,33 @@ describe('validatePath()', () => {
       );
 
       await setDraft({
+        id: 'self',
         collection: createCollection({ indexFile: '_index' }),
         currentLocales: { en: true },
         isNew: false,
         originalEntry: { id: 'self', subPath: 'docs/_index' },
         originalPath: 'docs',
+        currentPath: 'docs',
+      });
+
+      expect(validatePath().valid).toBe(true);
+    });
+
+    test('ignores a new entry that has just been saved as a draft', async () => {
+      // With Editorial Workflow the entry lands in the unpublished list under the draft’s ID as
+      // soon as it’s saved, and the draft — still marked new, with no original entry — is validated
+      // once more to decide whether to offer sending it for review
+      vi.mocked(getUnpublishedEntriesByCollection).mockReturnValue(
+        /** @type {any} */ ([{ id: 'self', subPath: 'docs/new-page/_index' }]),
+      );
+
+      await setDraft({
+        id: 'self',
+        collection: createCollection({ indexFile: '_index' }),
+        currentLocales: { en: true },
+        isNew: true,
+        originalEntry: undefined,
+        originalPath: '',
         currentPath: 'docs',
       });
 

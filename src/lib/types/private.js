@@ -191,8 +191,8 @@
  * a round trip to look the head up itself, which the caller can provide when it has just created
  * the branch. Used only for Git backends with Editorial Workflow enabled.
  * @property {string} [startBranch] Branch to create the `branch` from as part of the commit, which
- * saves the round trip of creating it beforehand. Ignored if the branch already exists. Used only
- * for Git backends with Editorial Workflow enabled.
+ * saves the round trip of creating it beforehand. The commit is rejected if the branch already
+ * exists. Used only for Git backends with Editorial Workflow enabled.
  */
 
 /**

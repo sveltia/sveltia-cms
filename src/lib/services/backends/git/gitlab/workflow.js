@@ -14,7 +14,9 @@ import {
 
 /**
  * @import {
+ * CommitOptions,
  * CommitResults,
+ * FileChange,
  * WorkflowPullRequest,
  * WorkflowSaveOptions,
  * WorkflowStatus,
@@ -288,6 +290,62 @@ export const createPullRequest = async ({ branch, title, status }) => {
 };
 
 /**
+ * Check whether the given branch has an open merge request. This is asked about a branch the CMS
+ * doesn’t know a merge request for, so a positive answer means the merge request is one the load
+ * skipped: it has lost its status label, or it sits beyond the number of merge requests fetched.
+ * @param {string} branch Branch name.
+ * @returns {Promise<boolean>} `true` if a merge request is open from the branch.
+ * @see https://docs.gitlab.com/api/merge_requests/#list-project-merge-requests
+ */
+const hasOpenMergeRequest = async (branch) => {
+  const items = /** @type {Record<string, any>[]} */ (
+    await fetchAPI(
+      `/projects/${getProjectId()}/merge_requests` +
+        `?state=opened&source_branch=${encodeURIComponent(branch)}&per_page=1`,
+    )
+  );
+
+  return !!items.length;
+};
+
+/**
+ * Commit the given changes on a workflow branch that no merge request is known for. The branch is
+ * usually created along with the commit, but it can already exist: it’s left over from an earlier
+ * merge request for the same entry, which the CMS knows nothing about — one merged without deleting
+ * the branch, or one that was closed on GitLab rather than discarded here, which leaves the branch
+ * behind. Starting the new merge request from the branch as it stands would carry that earlier
+ * work into it — a merged one adds nothing, but a closed one brings back what was thrown away — so
+ * the branch is deleted and created afresh from the configured branch. That only holds when no
+ * merge request is open from it: one the load skipped is someone’s work in progress, and it’s
+ * committed onto rather than wiped.
+ * @param {FileChange[]} changes Changes to be committed.
+ * @param {CommitOptions} options Commit options, with the workflow branch.
+ * @returns {Promise<CommitResults>} Commit results.
+ */
+const commitToNewBranch = async (changes, options) => {
+  const { branch = '' } = options;
+  const startBranch = repository.branch;
+
+  try {
+    return await commitChanges(changes, { ...options, startBranch });
+  } catch (/** @type {any} */ ex) {
+    // GitLab rejects `start_branch` outright once the branch exists. Anything else is a real
+    // failure
+    if (ex.cause?.status !== 400) {
+      throw ex;
+    }
+  }
+
+  if (await hasOpenMergeRequest(branch)) {
+    return commitChanges(changes, options);
+  }
+
+  await deleteBranch(branch);
+
+  return commitChanges(changes, { ...options, startBranch });
+};
+
+/**
  * Commit the given changes on the workflow branch, creating the branch and the merge request if
  * they don’t exist yet.
  * @param {WorkflowSaveOptions} args Arguments.
@@ -297,8 +355,9 @@ export const createPullRequest = async ({ branch, title, status }) => {
 export const savePullRequest = async ({ changes, options, branch, title, status, pullRequest }) => {
   // The commit itself creates the workflow branch on the first save, so it doesn’t need a request
   // of its own
-  const startBranch = pullRequest ? undefined : repository.branch;
-  const commit = await commitChanges(changes, { ...options, branch, startBranch });
+  const commit = pullRequest
+    ? await commitChanges(changes, { ...options, branch })
+    : await commitToNewBranch(changes, { ...options, branch });
 
   return {
     commit,

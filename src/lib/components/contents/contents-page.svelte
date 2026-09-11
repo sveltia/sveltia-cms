@@ -46,7 +46,12 @@
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { isSearchRoute } from '$lib/services/search/navigation';
   import { env } from '$lib/services/user/env.svelte';
-  import { getUnpublishedEntry, workflowDataReady } from '$lib/services/workflow';
+  import {
+    getUnpublishedEntriesByCollection,
+    getUnpublishedEntry,
+    mergeUnpublishedEntries,
+    workflowDataReady,
+  } from '$lib/services/workflow';
 
   /**
    * @import { InternalCollection } from '$lib/types/private';
@@ -59,7 +64,12 @@
   let isSearchPage = $state(false);
   /** Message key shown on the Not Found view, or an empty string when the route resolved. */
   let notFoundKey = $state('');
-  let loadingEntry = $state(false);
+  /**
+   * Whether the route can’t be resolved until the Editorial Workflow drafts are in, which happens
+   * after the initial data load. The route is tried again once they are; the effect below re-runs
+   * {@link navigate}.
+   */
+  let awaitingDrafts = $state(false);
   let editorLocale = $state();
 
   const MainContent = $derived('files' in ($selectedCollection ?? {}) ? FileList : EntryList);
@@ -74,7 +84,7 @@
     isIndexPage = false;
     isSearchPage = false;
     notFoundKey = '';
-    loadingEntry = false;
+    awaitingDrafts = false;
 
     // Set the editor locale if specified in the URL params, e.g., `?_locale=fr`
     editorLocale = params._locale;
@@ -150,12 +160,28 @@
       routeType === 'filter' &&
       !isNestedFolder({
         collection,
-        entries: getEntriesByCollection(collectionName),
+        // A folder that only exists in a pull request is listed in the sidebar tree, so it has to
+        // open from there as well
+        entries: mergeUnpublishedEntries(
+          getEntriesByCollection(collectionName),
+          getUnpublishedEntriesByCollection(collectionName),
+        ),
         dirPath: subPath ?? '',
       })
     ) {
-      // The URL names a folder that no entry lives in, or a collection with no folders at all
       $showContentOverlay = false;
+
+      // The folder may live in a draft that hasn’t been fetched yet, as when the page is reloaded
+      // while browsing it. Only an absent folder has to wait: one the published entries hold is
+      // resolved right away
+      if (!$workflowDataReady) {
+        awaitingDrafts = true;
+        $announcedPageStatus = _('loading');
+
+        return;
+      }
+
+      // The URL names a folder that no entry lives in, or a collection with no folders at all
       $announcedPageStatus = _('page_not_found');
       notFoundKey = 'page_not_found';
 
@@ -183,11 +209,10 @@
 
     $showContentOverlay = true;
 
-    // An entry opened with a deep link can’t be resolved until the Editorial Workflow drafts have
-    // been fetched, which happens after the initial data load. Show a loading state and try again
-    // once they’re in; the effect below re-runs this function.
+    // An entry opened with a deep link can’t be resolved until the drafts are in either. Show a
+    // loading state in the meantime
     if (routeType === 'entries' && subPath && !$workflowDataReady) {
-      loadingEntry = true;
+      awaitingDrafts = true;
       $announcedPageStatus = _('loading_entries', { values: { count: 1 } });
 
       return;
@@ -304,7 +329,7 @@
   });
 
   $effect(() => {
-    if (loadingEntry && $workflowDataReady) {
+    if (awaitingDrafts && $workflowDataReady) {
       navigate();
     }
   });
@@ -365,7 +390,7 @@
 </PageContainer>
 
 {#if $showContentOverlay}
-  <ContentDetailsOverlay {editorLocale} loading={loadingEntry} />
+  <ContentDetailsOverlay {editorLocale} loading={awaitingDrafts} />
 {/if}
 
 <Toast bind:show={$contentUpdatesToast.saved}>

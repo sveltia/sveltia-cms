@@ -640,6 +640,48 @@ const CREATE_REF_MUTATION = `
   }
 `;
 
+const FETCH_OPEN_PULL_REQUEST_COUNT_QUERY = `
+  query($owner: String!, $repo: String!, $branch: String!) {
+    repository(owner: $owner, name: $repo) {
+      pullRequests(headRefName: $branch, states: OPEN, first: 1) {
+        totalCount
+      }
+    }
+  }
+`;
+
+/**
+ * Check whether the given branch has an open pull request. This is asked about a branch the CMS
+ * doesn’t know a pull request for, so a positive answer means the pull request is one the load
+ * skipped: it has lost its status label, or it sits beyond the number of pull requests fetched.
+ * @param {string} branch Branch name.
+ * @returns {Promise<boolean>} `true` if a pull request is open from the branch.
+ */
+const hasOpenPullRequest = async (branch) => {
+  const { owner, repo } = repository;
+
+  const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
+    await fetchGraphQL(FETCH_OPEN_PULL_REQUEST_COUNT_QUERY, { owner, repo, branch })
+  );
+
+  return !!result?.pullRequests?.totalCount;
+};
+
+/**
+ * Point the given branch at the given commit, dropping whatever it held.
+ * @param {string} branch Branch name.
+ * @param {string} sha Git object ID.
+ * @see https://docs.github.com/en/rest/git/refs#update-a-reference
+ */
+const resetBranch = async (branch, sha) => {
+  const { owner, repo } = repository;
+
+  await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodeURI(branch)}`, {
+    method: 'PATCH',
+    body: { sha, force: true },
+  });
+};
+
 /**
  * Create a new branch pointing at the head of the configured branch. If the branch already exists,
  * which happens when an earlier pull request for the same entry left it behind, the error is
@@ -647,8 +689,9 @@ const CREATE_REF_MUTATION = `
  * responds with HTTP 200, so the expected “already exists” case doesn’t show up in the browser
  * console as a failed request.
  * @param {string} branch Branch name.
- * @returns {Promise<string | undefined>} Git object ID the new branch points at, or `undefined` if
- * the branch already existed, in which case its head is unknown and has to be looked up.
+ * @returns {Promise<string | undefined>} Git object ID the branch points at, or `undefined` if the
+ * branch already existed and was kept as it was, in which case its head is unknown and has to be
+ * looked up.
  * @see https://docs.github.com/en/graphql/reference/mutations#createref
  */
 export const createBranch = async (branch) => {
@@ -696,12 +739,25 @@ export const createBranch = async (branch) => {
   } catch (/** @type {any} */ ex) {
     const message = ex.cause?.message ?? '';
 
-    // “A ref named ... already exists in the repository.” The branch is left over from an earlier
-    // pull request for the same entry — one the maintainer merged without deleting the branch, or
-    // one that was discarded — and committing onto it is exactly what’s wanted. Anything else is a
-    // real failure
+    // “A ref named ... already exists in the repository.” Anything else is a real failure
     if (!message.includes('already exists')) {
       throw new Error('Failed to create the branch.', { cause: new Error(message || ex.message) });
+    }
+
+    // The branch is left over from an earlier pull request for the same entry, which the CMS knows
+    // nothing about: one the maintainer merged without deleting the branch, or one that was closed
+    // on GitHub rather than discarded here, which leaves the branch behind. Starting the new pull
+    // request from the branch as it stands would carry that earlier work into it — a merged one
+    // adds nothing, but a closed one brings back what was thrown away — so the branch is reset to
+    // the head of the configured branch, the same as a freshly created one. That only holds when
+    // no pull request is open from it: one the load skipped is someone’s work in progress, and it’s
+    // committed onto rather than wiped, the way it was before. With Open Authoring a draft is a
+    // branch without a pull request, so there’s no telling a leftover from a live one; the branch
+    // is kept, and it shows up as a draft the next time the fork is listed
+    if (!get(openAuthoring) && !(await hasOpenPullRequest(branch))) {
+      await resetBranch(branch, sha);
+
+      return sha;
     }
 
     return undefined;

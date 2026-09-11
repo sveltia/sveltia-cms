@@ -100,36 +100,17 @@ export const commitChanges = async (changes, options) => {
 
   const endpoint = `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`;
   const body = { branch, commit_message: createCommitMessage(changes, options), actions };
+  const { startBranch } = options;
 
-  /**
-   * Commit the changes, optionally creating the branch on the way.
-   * @param {string} [startBranch] Branch to create the target branch from.
-   * @returns {Promise<CommitResponse>} Commit response.
-   */
-  const commit = async (startBranch) =>
-    /** @type {CommitResponse} */ (
-      await fetchAPI(endpoint, {
-        method: 'POST',
-        body: startBranch ? { ...body, start_branch: startBranch } : body,
-      })
-    );
-
-  /** @type {CommitResponse} */
-  let response;
-
-  try {
-    response = await commit(options.startBranch);
-  } catch (/** @type {any} */ ex) {
-    // GitLab rejects `start_branch` outright once the branch exists, which happens when an earlier
-    // save was interrupted after creating it. Commit onto the existing branch instead
-    if (!options.startBranch || ex.cause?.status !== 400) {
-      throw ex;
-    }
-
-    response = await commit(undefined);
-  }
-
-  const { id: sha, committed_date: committedDate } = response;
+  // GitLab rejects `start_branch` outright once the branch exists. That’s left to the caller to
+  // sort out, because only the Editorial Workflow service can tell whether the branch is a
+  // leftover to start over from or someone’s work in progress to commit onto
+  const { id: sha, committed_date: committedDate } = /** @type {CommitResponse} */ (
+    await fetchAPI(endpoint, {
+      method: 'POST',
+      body: startBranch ? { ...body, start_branch: startBranch } : body,
+    })
+  );
 
   // Calculate the SHA-1 hash for each file because the GitLab REST API does not return file SHAs
   const entries = await Promise.all(
