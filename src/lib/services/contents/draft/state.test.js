@@ -1,7 +1,16 @@
+// @vitest-environment jsdom
+
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 
-import { EntryDraftState, getEntryDraftContext, setEntryDraftContext } from './state.svelte.js';
+import {
+  createEntryDraftMountContext,
+  EntryDraftState,
+  getEntryDraftByElement,
+  getEntryDraftContext,
+  setEntryDraftContext,
+  setEntryDraftRoot,
+} from './state.svelte.js';
 
 /**
  * @import { EntryDraft } from '$lib/types/private';
@@ -77,6 +86,38 @@ describe('contents/draft/state', () => {
       getContext.mockReturnValue(state);
       expect(getEntryDraftContext()).toBe(state);
       expect(getContext).toHaveBeenCalledWith('entry-draft');
+    });
+  });
+
+  describe('createEntryDraftMountContext()', () => {
+    it('should create a `mount()` context holding the state under the same key', () => {
+      const state = new EntryDraftState();
+      const context = createEntryDraftMountContext(state);
+
+      expect(context).toBeInstanceOf(Map);
+      expect(context.size).toBe(1);
+      expect(context.get('entry-draft')).toBe(state);
+    });
+  });
+
+  describe('setEntryDraftRoot() and getEntryDraftByElement()', () => {
+    it('should find the state through the DOM from within a registered editor root', () => {
+      const state = new EntryDraftState();
+      const root = document.createElement('div');
+      const child = document.createElement('span');
+
+      root.appendChild(child);
+      setEntryDraftRoot(root, state);
+
+      expect(root.hasAttribute('data-entry-draft-root')).toBe(true);
+      expect(getEntryDraftByElement(child)).toBe(state);
+      expect(getEntryDraftByElement(root)).toBe(state);
+    });
+
+    it('should return `undefined` outside a registered editor root', () => {
+      expect(getEntryDraftByElement(document.createElement('div'))).toBeUndefined();
+      expect(getEntryDraftByElement(null)).toBeUndefined();
+      expect(getEntryDraftByElement(undefined)).toBeUndefined();
     });
   });
 });

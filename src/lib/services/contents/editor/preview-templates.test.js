@@ -20,6 +20,12 @@ import {
   preparePreviewTemplateProps,
 } from './preview-templates';
 
+/**
+ * Entry draft state of the editor, normally provided through the Svelte context.
+ * @type {any}
+ */
+const mockEntryDraft = { current: { collectionName: 'posts', currentValues: { en: {} } } };
+
 // Mock dependencies using vi.hoisted()
 const {
   mockGetCollection,
@@ -129,6 +135,7 @@ describe('Preview Templates', () => {
   describe('createFieldPreviewMounter', () => {
     it('should return a mounter function', () => {
       const mounter = createFieldPreviewMounter({
+        entryDraft: mockEntryDraft,
         locale: 'en',
         getFieldArgs: {
           collectionName: 'posts',
@@ -143,6 +150,7 @@ describe('Preview Templates', () => {
 
     it('should mount a Svelte component with correct props', () => {
       const mounter = createFieldPreviewMounter({
+        entryDraft: mockEntryDraft,
         locale: 'en',
         getFieldArgs: {
           collectionName: 'posts',
@@ -158,6 +166,43 @@ describe('Preview Templates', () => {
       mounter(mockTarget, 'title');
 
       expect(vi.mocked(svelte.mount)).toHaveBeenCalled();
+    });
+
+    it('should provide the entry draft state to the mounted component as a context', () => {
+      const entryDraft = { current: { collectionName: 'posts' } };
+
+      const mounter = createFieldPreviewMounter({
+        entryDraft,
+        locale: 'en',
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          valueMap: {},
+          isIndexFile: false,
+        },
+      });
+
+      /** @type {any} */
+      const mockTarget = {};
+
+      mounter(mockTarget, 'title');
+
+      expect(vi.mocked(svelte.mount)).toHaveBeenCalledTimes(1);
+
+      const [, options] = vi.mocked(svelte.mount).mock.calls[0];
+
+      // The component is mounted outside the Svelte component tree, so `getEntryDraftContext()` in
+      // the component only works if the state is passed as a mount context
+      expect(options.target).toBe(mockTarget);
+      expect(options.context).toBeInstanceOf(Map);
+      expect(options.context.get('entry-draft')).toBe(entryDraft);
+      expect(options.props).toEqual({
+        keyPath: 'title',
+        typedKeyPath: '',
+        locale: 'en',
+        fieldConfig: { widget: 'text' },
+        showLabel: false,
+      });
     });
   });
 
@@ -544,6 +589,7 @@ describe('Preview Templates', () => {
       };
 
       const result = preparePreviewTemplateProps({
+        entryDraft: mockEntryDraft,
         draft: mockDraft,
         locale: 'en',
       });
@@ -558,6 +604,50 @@ describe('Preview Templates', () => {
       expect(result).toHaveProperty('getAsset');
       expect(result).toHaveProperty('getCollection');
       expect(result).toHaveProperty('fieldsMetaData');
+    });
+
+    it('should mount field previews for `widgetFor()` with the entry draft state', () => {
+      const entryDraft = { current: { collectionName: 'posts' } };
+      /** @type {((element: HTMLElement | null) => void) | undefined} */
+      let capturedRefCallback;
+
+      mockCreateElement.mockImplementationOnce((tag, props) => {
+        capturedRefCallback = props.ref;
+        return { type: tag, ref: props.ref };
+      });
+
+      const { widgetFor } = preparePreviewTemplateProps({
+        entryDraft,
+        draft: {
+          collectionName: 'posts',
+          fileName: undefined,
+          isIndexFile: false,
+          originalEntry: { slug: 'test-post', locales: {} },
+          currentValues: { en: { title: 'Test' } },
+        },
+        locale: 'en',
+      });
+
+      widgetFor('title');
+
+      /** @type {any} */
+      const div = {};
+
+      capturedRefCallback?.(div);
+
+      expect(vi.mocked(svelte.mount)).toHaveBeenCalledTimes(1);
+
+      const [, options] = vi.mocked(svelte.mount).mock.calls[0];
+
+      expect(options.target).toBe(div);
+      expect(options.context.get('entry-draft')).toBe(entryDraft);
+      expect(mockGetField).toHaveBeenCalledWith({
+        collectionName: 'posts',
+        fileName: undefined,
+        valueMap: { title: 'Test' },
+        isIndexFile: false,
+        keyPath: 'title',
+      });
     });
 
     it('should handle multiple locales', () => {
@@ -580,6 +670,7 @@ describe('Preview Templates', () => {
       };
 
       const result = preparePreviewTemplateProps({
+        entryDraft: mockEntryDraft,
         draft: mockDraft,
         locale: 'en',
       });
@@ -609,6 +700,7 @@ describe('Preview Templates', () => {
       };
 
       const result = preparePreviewTemplateProps({
+        entryDraft: mockEntryDraft,
         draft: mockDraft,
         locale: 'en',
       });
@@ -645,6 +737,7 @@ describe('Preview Templates', () => {
       };
 
       const result = preparePreviewTemplateProps({
+        entryDraft: mockEntryDraft,
         draft: mockDraft,
         locale: 'en',
       });
@@ -674,6 +767,7 @@ describe('Preview Templates', () => {
       };
 
       const result = preparePreviewTemplateProps({
+        entryDraft: mockEntryDraft,
         draft: mockDraft,
         locale: 'en',
       });
@@ -702,6 +796,7 @@ describe('Preview Templates', () => {
       };
 
       const result = preparePreviewTemplateProps({
+        entryDraft: mockEntryDraft,
         draft: mockDraft,
         locale: 'en',
       });
@@ -741,6 +836,7 @@ describe('Preview Templates', () => {
       };
 
       const result = preparePreviewTemplateProps({
+        entryDraft: mockEntryDraft,
         draft: mockDraft,
         locale: 'en',
       });
@@ -774,6 +870,7 @@ describe('Preview Templates', () => {
       };
 
       const result = preparePreviewTemplateProps({
+        entryDraft: mockEntryDraft,
         draft: mockDraft,
         locale: 'en',
       });

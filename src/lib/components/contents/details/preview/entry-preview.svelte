@@ -38,7 +38,11 @@
   const reactComponent = $derived(customPreviewTemplateRegistry.get(fileName ?? collectionName));
   const reactProps = $derived(
     entryDraft.current && reactComponent
-      ? preparePreviewTemplateProps({ draft: $state.snapshot(entryDraft.current), locale })
+      ? preparePreviewTemplateProps({
+          entryDraft,
+          draft: $state.snapshot(entryDraft.current),
+          locale,
+        })
       : undefined,
   );
 </script>

@@ -10,12 +10,14 @@ import {
 } from '$lib/services/api/helpers';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { createEntryDraftMountContext } from '$lib/services/contents/draft/state.svelte';
 import { getField } from '$lib/services/contents/entry/fields';
 import { unflattenMap } from '$lib/services/utils/object';
 
 /**
  * @import { MapOf } from 'immutable';
  * @import { ReactElement } from 'react';
+ * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
  * @import { Entry, EntryDraft, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
  * @import {
  * ApiEntry,
@@ -29,13 +31,15 @@ import { unflattenMap } from '$lib/services/utils/object';
 /**
  * Create a field preview mounting function.
  * @param {object} args Arguments.
+ * @param {EntryDraftState} args.entryDraft Entry draft state of the editor. The mounted component
+ * is outside the Svelte component tree, so the state has to be passed to it as a mount context.
  * @param {InternalLocaleCode} args.locale Current locale.
  * @param {Omit<GetFieldArgs, 'keyPath'>} args.getFieldArgs Arguments for getField function.
  * @returns {(target: HTMLElement, keyPath: FieldKeyPath) => Record<string, any>} Function that
  * mounts a field preview component.
  */
 export const createFieldPreviewMounter =
-  ({ locale, getFieldArgs }) =>
+  ({ entryDraft, locale, getFieldArgs }) =>
   /**
    * Mount a Svelte component for field preview.
    * @param {HTMLElement} target The DOM element to mount the Svelte component into.
@@ -45,6 +49,7 @@ export const createFieldPreviewMounter =
   (target, keyPath) =>
     mount(FieldPreview, {
       target,
+      context: createEntryDraftMountContext(entryDraft),
       props: {
         keyPath,
         typedKeyPath: '',
@@ -187,21 +192,23 @@ export const getCollectionByName = async (name, slug) => {
  * Prepare props for a custom preview template React component. The `document` and `window` props
  * should be provided by the iframe wrapper.
  * @param {object} options Options.
- * @param {EntryDraft} options.draft Entry draft being previewed.
+ * @param {EntryDraftState} options.entryDraft Entry draft state of the editor, used by the field
+ * previews mounted by `widgetFor()`.
+ * @param {EntryDraft} options.draft Snapshot of the entry draft being previewed.
  * @param {InternalLocaleCode} options.locale Current locale.
  * @returns {Omit<CustomPreviewTemplateProps, 'document' | 'window'>} Props for the React component
  * without `document` and `window`.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
-export const preparePreviewTemplateProps = ({ draft, locale }) => {
+export const preparePreviewTemplateProps = ({ entryDraft, draft, locale }) => {
   const { entryMap, valueMap, getFieldArgs, fieldsMetaData, getAsset } = buildPreviewData({
     draft,
     locale,
   });
 
   // Create factory functions with bound dependencies
-  const mountFieldPreview = createFieldPreviewMounter({ locale, getFieldArgs });
+  const mountFieldPreview = createFieldPreviewMounter({ entryDraft, locale, getFieldArgs });
   const widgetFor = createWidgetFor(mountFieldPreview);
 
   return {

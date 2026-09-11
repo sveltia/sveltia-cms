@@ -11,6 +11,10 @@
   import { createRoot } from 'react-dom/client';
   import { mount } from 'svelte';
 
+  import {
+    createEntryDraftMountContext,
+    getEntryDraftContext,
+  } from '$lib/services/contents/draft/state.svelte';
   import { escapeAttr } from '$lib/services/utils/string';
 
   /**
@@ -32,6 +36,8 @@
    * React component, except for the `document` and `window` props, which will be automatically
    * provided by the iframe.
    */
+
+  const entryDraft = getEntryDraftContext();
 
   /** @type {Props} */
   let {
@@ -78,13 +84,19 @@
 
   /**
    * Mount the Svelte placeholder component into the iframe’s body. This way, the iframe content
-   * becomes reactive and can be updated when the fields change.
+   * becomes reactive and can be updated when the fields change. The mounted component is outside
+   * the Svelte component tree, so the entry draft state is passed to it as a mount context; the
+   * field previews rendered by `children` read it from there.
    */
   const mountPlaceholder = () => {
     const target = iframe?.contentDocument?.body;
 
     if (target) {
-      mount(Placeholder, { target, props: { children } });
+      mount(Placeholder, {
+        target,
+        context: createEntryDraftMountContext(entryDraft),
+        props: { children },
+      });
     }
   };
 

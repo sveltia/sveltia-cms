@@ -57,6 +57,18 @@ export const setEntryDraftContext = (entryDraft) => setContext(CONTEXT_KEY, entr
 export const getEntryDraftContext = () => getContext(CONTEXT_KEY);
 
 /**
+ * Create the `context` option for Svelte’s `mount()`, so that a component mounted outside the
+ * Svelte component tree — the entry preview rendered in an iframe, or a field preview rendered by a
+ * React preview template — can still find the given entry draft state with
+ * {@link getEntryDraftContext}, which would otherwise be `undefined` there.
+ * @param {EntryDraftState} entryDraft Entry draft state.
+ * @returns {Map<string, EntryDraftState>} Context map.
+ */
+export const createEntryDraftMountContext = (entryDraft) =>
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  new Map([[CONTEXT_KEY, entryDraft]]);
+
+/**
  * Register the given element as the root of an editor holding the given entry draft state, so that
  * a component rendered somewhere below it but mounted outside the Svelte component tree — a rich
  * text editor component, which Lexical mounts on its own — can still find the state through the
