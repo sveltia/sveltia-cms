@@ -28,9 +28,13 @@ vi.mock('$lib/services/api/helpers', () => ({
 
 // The library is loaded from the CDN at runtime; hand the real module to the code under test
 vi.mock('$lib/services/api/immutable', async () => {
-  const immutable = await vi.importActual('immutable');
+  const immutable = /** @type {typeof import('immutable')} */ (await vi.importActual('immutable'));
 
   return {
+    /**
+     * Get the preloaded Immutable module.
+     * @returns {typeof import('immutable')} Immutable module.
+     */
     getImmutable: () => immutable,
     loadImmutable: vi.fn(async () => immutable),
     preloadImmutable: vi.fn(),

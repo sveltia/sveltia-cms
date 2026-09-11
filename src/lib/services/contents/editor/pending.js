@@ -29,6 +29,6 @@ export const awaitPendingFieldUpdates = async () => {
   // An update landing may trigger another one, so drain until no promises remain
   while (pendingFieldUpdates.size) {
     // eslint-disable-next-line no-await-in-loop
-    await Promise.allSettled([...pendingFieldUpdates]);
+    await Promise.allSettled(pendingFieldUpdates);
   }
 };
