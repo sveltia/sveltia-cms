@@ -18,7 +18,11 @@ import { fetchDefaultBranchName, repository } from '$lib/services/backends/git/g
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
-import { forkedRepository, requestForkPermission } from '$lib/services/workflow/open-authoring';
+import {
+  forkedRepository,
+  openAuthoringInitialized,
+  requestForkPermission,
+} from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends/git/github/repository', () => ({
   repository: { owner: 'owner', repo: 'repo', branch: 'main' },
@@ -486,6 +490,20 @@ describe('GitHub fork service', () => {
 
       expect(forkedRepository.current).toBeUndefined();
       expect(requestForkPermission).not.toHaveBeenCalled();
+      // Known to be a maintainer now, which is what the pull request listing waits for
+      expect(openAuthoringInitialized.current).toBe(true);
+    });
+
+    test('flags the set-up as complete only once it has succeeded', async () => {
+      openAuthoringInitialized.current = true;
+      vi.mocked(fetchAPI).mockResolvedValue(
+        createResponse(true, { permissions: { push: false }, allow_forking: false }),
+      );
+
+      await expect(initOpenAuthoring()).rejects.toThrow('The repository does not allow forking');
+
+      // Reset at the start, and not set on failure, so nothing acts on a stale outcome
+      expect(openAuthoringInitialized.current).toBe(false);
     });
 
     test('reuses and syncs an existing fork', async () => {
@@ -508,6 +526,7 @@ describe('GitHub fork service', () => {
       await initOpenAuthoring();
 
       expect(forkedRepository.current).toEqual({ owner: 'contributor', repo: 'repo' });
+      expect(openAuthoringInitialized.current).toBe(true);
       expect(requestForkPermission).not.toHaveBeenCalled();
       expect(fetchAPI).toHaveBeenNthCalledWith(
         3,
@@ -567,6 +586,7 @@ describe('GitHub fork service', () => {
 
       expect(requestForkPermission).toHaveBeenCalledWith('owner/repo');
       expect(forkedRepository.current).toEqual({ owner: 'contributor', repo: 'repo' });
+      expect(openAuthoringInitialized.current).toBe(true);
     });
 
     test('stops when the repository doesn’t allow forking', async () => {

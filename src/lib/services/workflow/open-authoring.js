@@ -20,6 +20,15 @@ export const forkedRepository = createRawState();
 export const openAuthoring = createDerivedState(() => !!forkedRepository.current);
 
 /**
+ * Whether the Open Authoring set-up has completed for the current session, so that it’s known
+ * whether the user works on a fork or, having write access, on the configured repository itself.
+ * Anything that depends on that — such as where to look for the user’s pull requests — has to wait
+ * for this rather than for a fork, which a maintainer never gets.
+ * @type {{ current: boolean }}
+ */
+export const openAuthoringInitialized = createRawState(false);
+
+/**
  * The review stages an unpublished entry can move through, which are the board columns and the
  * options in the editor’s status menu. An Open Authoring contributor can’t merge a pull request, so
  * the stage that says an entry is ready to be published is left out.

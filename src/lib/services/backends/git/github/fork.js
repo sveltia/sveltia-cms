@@ -5,7 +5,11 @@ import { fetchDefaultBranchName, repository } from '$lib/services/backends/git/g
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
-import { forkedRepository, requestForkPermission } from '$lib/services/workflow/open-authoring';
+import {
+  forkedRepository,
+  openAuthoringInitialized,
+  requestForkPermission,
+} from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { RepositoryPath } from '$lib/types/private';
@@ -375,9 +379,7 @@ export const syncFork = async ({ owner, repo }) => {
  * @throws {Error} When the fork could not be set up.
  * @see https://sveltiacms.app/en/docs/workflows/open
  */
-export const initOpenAuthoring = async () => {
-  forkedRepository.current = undefined;
-
+const setUpOpenAuthoring = async () => {
   const { canWrite, allowForking } = await fetchRepositoryAccess();
 
   // A maintainer keeps working on the configured repository, as if Open Authoring was off
@@ -417,4 +419,19 @@ export const initOpenAuthoring = async () => {
   }
 
   forkedRepository.current = await createFork();
+};
+
+/**
+ * Set up Open Authoring for the signed-in user: see {@link setUpOpenAuthoring}. Whether they end up
+ * on a fork or, as a maintainer, on the configured repository, the outcome is flagged as known once
+ * the set-up has completed, for what depends on it.
+ * @throws {Error} When the fork could not be set up.
+ */
+export const initOpenAuthoring = async () => {
+  forkedRepository.current = undefined;
+  openAuthoringInitialized.current = false;
+
+  await setUpOpenAuthoring();
+
+  openAuthoringInitialized.current = true;
 };

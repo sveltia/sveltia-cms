@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { backend } from '$lib/services/backends';
+import { cmsConfig } from '$lib/services/config';
 import {
   unpublishedEntries,
   unpublishedEntriesLoaded,
@@ -10,8 +11,13 @@ import {
 import { mergeWorkflowAssets } from '$lib/services/workflow/assets';
 import { convertPullRequests } from '$lib/services/workflow/entries';
 import { loadUnpublishedEntries, startLoadingPullRequests } from '$lib/services/workflow/load';
+import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
+vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
+vi.mock('$lib/services/workflow/open-authoring', () => ({
+  openAuthoringInitialized: { current: false },
+}));
 vi.mock('$lib/services/workflow/assets');
 vi.mock('$lib/services/workflow', () => ({
   unpublishedEntries: { current: [] },
@@ -37,6 +43,8 @@ describe('workflow/load', () => {
 
     /** @type {any} */ (workflowEnabled).current = true;
     /** @type {any} */ (backend).current = { workflow: { fetchPullRequests } };
+    /** @type {any} */ (cmsConfig).current = { backend: { name: 'github' } };
+    /** @type {any} */ (openAuthoringInitialized).current = false;
     unpublishedEntries.current = [];
     unpublishedEntriesLoading.current = false;
     unpublishedEntriesLoaded.current = false;
@@ -114,6 +122,50 @@ describe('workflow/load', () => {
       expect(startLoadingPullRequests()).toBeUndefined();
       expect(fetchPullRequests).not.toHaveBeenCalled();
       expect(unpublishedEntriesLoading.current).toBe(false);
+    });
+
+    test('waits for the Open Authoring set-up, whichever way it turns out', async () => {
+      /** @type {any} */ (cmsConfig).current = {
+        backend: { name: 'github', open_authoring: true },
+      };
+
+      // Whether the pull requests live in the user’s fork or in the configured repository is only
+      // found out while the files are fetched; listing them before that would look in the wrong
+      // place
+      expect(startLoadingPullRequests()).toBeUndefined();
+      expect(fetchPullRequests).not.toHaveBeenCalled();
+      expect(unpublishedEntriesLoading.current).toBe(false);
+
+      // Completed — for a maintainer without a fork just as for a contributor with one
+      /** @type {any} */ (openAuthoringInitialized).current = true;
+
+      await expect(startLoadingPullRequests()).resolves.toEqual([]);
+      expect(fetchPullRequests).toHaveBeenCalledOnce();
+    });
+
+    test('loads the entries after the files with Open Authoring, if not started before', async () => {
+      /** @type {any} */ (cmsConfig).current = {
+        backend: { name: 'github', open_authoring: true },
+      };
+      vi.mocked(convertPullRequests).mockResolvedValue({ entries: [], assets: [] });
+
+      // What the sign-in flow does: nothing could be started early…
+      const early = startLoadingPullRequests();
+
+      expect(early).toBeUndefined();
+
+      // …so once the files are fetched and the set-up has completed, the loader requests them
+      /** @type {any} */ (openAuthoringInitialized).current = true;
+      await loadUnpublishedEntries(early);
+
+      expect(fetchPullRequests).toHaveBeenCalledOnce();
+      expect(unpublishedEntriesLoaded.current).toBe(true);
+    });
+
+    test('starts the request even without a configuration, e.g. in a unit test', async () => {
+      /** @type {any} */ (cmsConfig).current = undefined;
+
+      await expect(startLoadingPullRequests()).resolves.toEqual([]);
     });
 
     test('starts the request and marks the entries as loading', async () => {

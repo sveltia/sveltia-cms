@@ -681,7 +681,33 @@ describe('git/shared/fetch', () => {
       expect(mockMetaDB.entries).toHaveBeenCalledOnce();
     });
 
-    it('should run the access check alongside the branch and commit requests', async () => {
+    it('should run the access check alongside the commit request', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+      const checkAccess = vi.fn(() => promise);
+
+      const run = fetchAndParseFiles({
+        repository: mockRepository,
+        checkAccess,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      // The check is started first, and the commit request isn’t held back by it
+      await vi.waitFor(() => {
+        expect(mockFetchLastCommit).toHaveBeenCalled();
+      });
+      expect(checkAccess).toHaveBeenCalledBefore(mockFetchLastCommit);
+      expect(mockFetchFileList).not.toHaveBeenCalled();
+
+      resolve(undefined);
+      await run;
+
+      expect(mockFetchFileList).toHaveBeenCalled();
+    });
+
+    it('should run the access check alongside the branch request', async () => {
       const { promise, resolve } = Promise.withResolvers();
       const checkAccess = vi.fn(() => promise);
 
@@ -694,17 +720,37 @@ describe('git/shared/fetch', () => {
         fetchFileContents: mockFetchFileContents,
       });
 
-      // The check is started first, and the other requests aren’t held back by it
+      // The branch request isn’t held back by the check, but the commit request needs the branch,
+      // which is only used once the check has passed
       await vi.waitFor(() => {
-        expect(mockFetchLastCommit).toHaveBeenCalled();
+        expect(mockFetchDefaultBranchName).toHaveBeenCalled();
       });
       expect(checkAccess).toHaveBeenCalledBefore(mockFetchDefaultBranchName);
-      expect(mockFetchFileList).not.toHaveBeenCalled();
+      expect(mockFetchLastCommit).not.toHaveBeenCalled();
 
       resolve(undefined);
       await run;
 
+      expect(mockFetchLastCommit).toHaveBeenCalled();
       expect(mockFetchFileList).toHaveBeenCalled();
+    });
+
+    it('should report the access error when the branch request fails as well', async () => {
+      mockFetchDefaultBranchName.mockRejectedValueOnce(new Error('Repository not found'));
+
+      // A repository that can’t be read has no branches to list, so the access error is the cause
+      await expect(
+        fetchAndParseFiles({
+          repository: { ...mockRepository, branch: '' },
+          checkAccess: vi.fn().mockRejectedValue(new Error('Not a collaborator')),
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+        }),
+      ).rejects.toThrow('Not a collaborator');
+
+      expect(mockFetchLastCommit).not.toHaveBeenCalled();
     });
 
     it('should report the access error when the commit request fails as well', async () => {

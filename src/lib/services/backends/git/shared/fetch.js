@@ -320,12 +320,18 @@ export const fetchAndParseFiles = async ({
   let branch = branchName;
 
   if (!branch) {
-    branch = await fetchDefaultBranchName();
+    // Only the request is started here; the access check is settled first, so that its error is
+    // the one reported if both fail, as a repository that can’t be read has no branches to list
+    const branchPromise = deferRejection(fetchDefaultBranchName());
+
+    await accessPromise;
+
+    branch = await branchPromise;
     repository.branch = branch;
   }
 
-  // This has to be done after the branch is determined. Only the request is started here; the
-  // access check is settled first, so that its error is the one reported if both fail
+  // This has to be done after the branch is determined. Again, only the request is started here,
+  // and the access check is settled first
   const lastCommitPromise = deferRejection(fetchLastCommit());
 
   await accessPromise;
