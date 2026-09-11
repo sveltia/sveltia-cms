@@ -86,7 +86,7 @@ export const transformFile = async (file, transformations) => {
         blob.type === `image/${format}`
           ? RASTER_IMAGE_EXTENSION_REGEX.test(file.name)
             ? file.name.replace(RASTER_IMAGE_EXTENSION_REGEX, format)
-            : file.name.concat(format)
+            : `${file.name}.${format}`
           : // Failed to transform
             file.name;
 

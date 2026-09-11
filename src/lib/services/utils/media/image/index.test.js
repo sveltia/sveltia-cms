@@ -31,6 +31,9 @@ describe('Image Constants', () => {
     expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.png')).toBe(true);
     expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.jpg')).toBe(true);
     expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.jpeg')).toBe(true);
+    expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.jpe')).toBe(true);
+    expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.jfif')).toBe(true);
+    expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.JFIF')).toBe(true);
     expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.gif')).toBe(true);
     expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.webp')).toBe(true);
     expect(RASTER_IMAGE_EXTENSION_REGEX.test('test.avif')).toBe(true);

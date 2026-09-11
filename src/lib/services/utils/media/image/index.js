@@ -9,7 +9,11 @@
 /** @type {RasterImageFormat[]} */
 export const RASTER_IMAGE_FORMATS = ['avif', 'gif', 'jpeg', 'png', 'webp'];
 export const RASTER_IMAGE_TYPES = RASTER_IMAGE_FORMATS.map((format) => `image/${format}`);
-export const RASTER_IMAGE_EXTENSION_REGEX = /\b(?:avif|gif|jpe?g|png|webp)$/i;
+/**
+ * Regex matching a raster image file extension at the end of a file name. JPEG files can also have
+ * a `.jpe` or `.jfif` extension, so those aliases are included.
+ */
+export const RASTER_IMAGE_EXTENSION_REGEX = /\b(?:avif|gif|jfif|jpe?g|jpe|png|webp)$/i;
 
 /** @type {VectorImageFormat[]} */
 export const VECTOR_IMAGE_FORMATS = ['svg'];

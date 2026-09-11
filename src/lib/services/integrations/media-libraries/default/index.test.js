@@ -9,7 +9,7 @@ vi.mock('$lib/services/integrations/media-libraries', () => ({
 }));
 vi.mock('$lib/services/utils/media/image', () => ({
   RASTER_IMAGE_CONVERSION_FORMATS: ['webp', 'jpeg', 'png'],
-  RASTER_IMAGE_EXTENSION_REGEX: /\b(?:avif|gif|jpe?g|png|webp)$/i,
+  RASTER_IMAGE_EXTENSION_REGEX: /\b(?:avif|gif|jfif|jpe?g|jpe|png|webp)$/i,
   RASTER_IMAGE_FORMATS: ['jpeg', 'jpg', 'png', 'webp'],
 }));
 vi.mock('$lib/services/utils/media/image/transform');
@@ -563,7 +563,24 @@ describe('integrations/media-libraries/default', () => {
 
       const result = await transformFile(noExtFile, transformations);
 
-      expect(result.name).toBe('imagewebp'); // extension concatenated
+      expect(result.name).toBe('image.webp'); // extension appended with a dot
+    });
+
+    it('should replace a JPEG alias extension when converting to WebP', async () => {
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+      const mockBlob = new Blob(['transformed'], { type: 'image/webp' });
+      const transformations = /** @type {any} */ ({ raster_image: { format: 'webp' } });
+
+      vi.mocked(transformImage).mockResolvedValue(mockBlob);
+
+      // Chrome on Windows often saves JPEG files with the `.jfif` extension
+      const jfifFile = new File(['content'], 'photo.jfif', { type: 'image/jpeg' });
+
+      expect((await transformFile(jfifFile, transformations)).name).toBe('photo.webp');
+
+      const jpeFile = new File(['content'], 'photo.JPE', { type: 'image/jpeg' });
+
+      expect((await transformFile(jpeFile, transformations)).name).toBe('photo.webp');
     });
 
     it('should optimize SVG when svg.optimize is true', async () => {
