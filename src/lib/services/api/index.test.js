@@ -41,6 +41,9 @@ global.document = {
 vi.mock('$lib/services/api/immutable', () => ({
   preloadImmutable: vi.fn(),
 }));
+vi.mock('$lib/services/config/loader', () => ({
+  prefetchCmsConfig: vi.fn(),
+}));
 vi.mock('svelte', () => ({
   mount: vi.fn(),
 }));
@@ -94,6 +97,31 @@ describe('CMS.init()', () => {
 
   test('initializes with no options', async () => {
     await expect(CMS.init()).resolves.toBeUndefined();
+  });
+
+  test('requests the config file ahead of mounting the app', async () => {
+    vi.resetModules();
+
+    const { prefetchCmsConfig } = await import('$lib/services/config/loader');
+    const { mount } = await import('svelte');
+    const { default: FreshCMS } = await import('.');
+
+    await FreshCMS.init();
+
+    expect(prefetchCmsConfig).toHaveBeenCalledOnce();
+    expect(prefetchCmsConfig).toHaveBeenCalledBefore(vi.mocked(mount));
+  });
+
+  test('does not request the config file when a manual config opts out of it', async () => {
+    vi.resetModules();
+
+    const { prefetchCmsConfig } = await import('$lib/services/config/loader');
+    const { default: FreshCMS } = await import('.');
+
+    // @ts-ignore
+    await FreshCMS.init({ config: { backend: { name: 'github' }, load_config_file: false } });
+
+    expect(prefetchCmsConfig).not.toHaveBeenCalled();
   });
 
   test('initializes with valid config object', async () => {

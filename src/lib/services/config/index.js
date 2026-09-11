@@ -6,6 +6,7 @@ import merge from 'deepmerge';
 import { stringify } from 'yaml';
 
 import { allAssetFolders } from '$lib/services/assets/folders';
+import { DEV_SITE_URL } from '$lib/services/config/constants';
 import { getAllAssetFolders } from '$lib/services/config/folders/assets';
 import { getAllEntryFolders } from '$lib/services/config/folders/entries';
 import { fetchCmsConfig } from '$lib/services/config/loader';
@@ -20,19 +21,9 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
  * @import { CmsConfig } from '$lib/types/public';
  */
 
-const { DEV, VITE_SITE_URL } = import.meta.env;
+const { DEV } = import.meta.env;
 
-/**
- * The local live site URL. Local development can be done by loading a CMS config file from a
- * separate dev server. By default, this assumes a local SvelteKit site is running on port 5174
- * along with Sveltia CMS on port 5173. The site URL can be specified with the `VITE_SITE_URL`
- * environment variable. For example, run `VITE_SITE_URL=http://localhost:3000 pnpm dev` for
- * Next.js. You probably need to define the `Access-Control-Allow-Origin: *` HTTP response header
- * with the dev server’s middleware, or loading the CMS config file may fail due to a CORS error.
- */
-export const DEV_SITE_URL = DEV
-  ? VITE_SITE_URL || 'http://localhost:5174'
-  : /* v8 ignore next */ undefined;
+export { DEV_SITE_URL };
 
 /**
  * @type {Partial<CmsConfig>}

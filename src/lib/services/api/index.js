@@ -14,6 +14,7 @@ import {
   customPreviewTemplateRegistry,
   eventHookRegistry,
 } from '$lib/services/api/registries';
+import { prefetchCmsConfig } from '$lib/services/config/loader';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
@@ -66,6 +67,12 @@ const init = async ({ config } = {}) => {
     await new Promise((resolve) => {
       window.addEventListener('DOMContentLoaded', () => resolve(undefined), { once: true });
     });
+  }
+
+  // Request the config file now rather than once the app has mounted and asks for it, so the
+  // network round trip overlaps the mount. A manual configuration can opt out of the file
+  if (config?.load_config_file !== false) {
+    prefetchCmsConfig();
   }
 
   mount(App, {
