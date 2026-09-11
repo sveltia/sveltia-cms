@@ -32,6 +32,12 @@ import { EXTENSION_FORMAT_MAP, MARKDOWN_EXTENSIONS } from '$lib/services/content
  */
 
 /**
+ * File names conventionally given to a folder’s own entry when the collection doesn’t configure one
+ * with the `meta.path.index_file` option.
+ */
+export const DEFAULT_INDEX_FILE_NAMES = ['index', '_index'];
+
+/**
  * File extensions that can be written by the CMS. Used to spot an `index_file` option that has been
  * given with an extension.
  */

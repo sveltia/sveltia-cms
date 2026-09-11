@@ -1,6 +1,7 @@
 import { compare } from '@sveltia/utils/string';
 
 import {
+  DEFAULT_INDEX_FILE_NAMES,
   getEntryDirPath,
   getNestedConfig,
   getSharedEntryFileName,
@@ -20,11 +21,6 @@ import { getEntrySummary } from '$lib/services/contents/entry/summary';
  * @property {NestedTreeNode[]} children Child folders, sorted by label.
  */
 
-/**
- * File names conventionally given to a folder’s own entry when the collection doesn’t configure one
- * with the `meta.path.index_file` option.
- */
-const DEFAULT_INDEX_FILE_NAMES = ['index', '_index'];
 /**
  * Get the path of the parent folder.
  * @param {string} path Folder path relative to the collection folder.

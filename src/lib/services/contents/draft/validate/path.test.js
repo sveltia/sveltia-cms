@@ -347,6 +347,51 @@ describe('validatePath()', () => {
       expect(validatePath().validities.fr._path.duplicateError).toBe(true);
     });
 
+    test('ignores a locale whose file stays where it is', async () => {
+      // Legacy content: the parent’s French folder is localized, but this entry’s French file was
+      // created before folder localization existed, so it sits under the English parent name.
+      // Another entry created since already occupies the French folder a rebuild would target —
+      // which is no conflict, because an untouched file isn’t rebuilt
+      vi.mocked(hasLocalizedSlugs).mockReturnValue(true);
+      vi.mocked(getSlugs).mockReturnValue({
+        defaultLocaleSlug: 'about/team/_index',
+        localizedSlugs: { en: 'about/team/_index', fr: 'about/equipe/_index' },
+      });
+
+      const self = {
+        id: 'self',
+        subPath: 'about/team/_index',
+        locales: { en: { slug: 'about/team/_index' }, fr: { slug: 'about/equipe/_index' } },
+      };
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(
+        /** @type {any} */ ([
+          {
+            id: 'parent',
+            subPath: 'about/_index',
+            locales: { en: { slug: 'about/_index' }, fr: { slug: 'a-propos/_index' } },
+          },
+          self,
+          {
+            id: 'other',
+            subPath: 'about/staff/_index',
+            locales: { en: { slug: 'about/staff/_index' }, fr: { slug: 'a-propos/equipe/_index' } },
+          },
+        ]),
+      );
+
+      await setDraft({
+        collection: createCollection({ indexFile: '_index' }),
+        currentLocales: { en: true, fr: true },
+        isNew: false,
+        originalEntry: self,
+        originalPath: 'about/team',
+        currentPath: 'about/team',
+      });
+
+      expect(validatePath().validities.fr._path.duplicateError).toBe(false);
+    });
+
     test('skips the check when each entry has a file name of its own', async () => {
       vi.mocked(getEntriesByCollection).mockReturnValue(
         /** @type {any} */ ([{ id: 'other', subPath: 'docs/_index' }]),

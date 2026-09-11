@@ -18,7 +18,12 @@ import { getLocalePath } from '$lib/services/contents/i18n';
 import { createPath } from '$lib/services/utils/file';
 
 /**
- * @import { EntryDraft, InternalEntryCollection, InternalLocaleCode } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * EntryDraft,
+ * InternalEntryCollection,
+ * InternalLocaleCode,
+ * } from '$lib/types/private';
  * @import { I18nFileStructure } from '$lib/types/public';
  */
 
@@ -113,6 +118,35 @@ export const buildCustomEntryPath = ({ draft, slug, indexFileName, locale }) => 
 };
 
 /**
+ * Check whether an existing entry’s file in the given locale stays where it is. The path editor
+ * decides where the entry goes, so the slug alone can’t tell whether the file has moved; but as
+ * long as the folder is left as it was and the slug is unchanged, the file stays put, even if not
+ * where a rebuild would put it, e.g. a locale stored under folders that weren’t localized at the
+ * time. Without the path editor, an unchanged slug is enough.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @param {string} args.slug Entry slug in the locale.
+ * @returns {boolean} Result. Always `false` for a new entry, which has no file yet.
+ */
+export const keepsOriginalPath = ({ draft, locale, slug }) => {
+  const { originalEntry, originalPath, currentPath } = draft;
+
+  // A partial entry, without the locales, can stand in for the original when a draft is only built
+  // to be checked
+  if (originalEntry?.locales?.[locale]?.slug !== slug) {
+    return false;
+  }
+
+  if (!usesCustomEntryPath(draft)) {
+    return true;
+  }
+
+  // The path editor is in use, so the folder is set
+  return stripSlashes(originalPath ?? '') === stripSlashes(/** @type {string} */ (currentPath));
+};
+
+/**
  * Determine the file path for the given entry draft depending on the collection type, i18n config
  * and entry collection’s subpath.
  * @param {object} args Arguments.
@@ -124,15 +158,7 @@ export const buildCustomEntryPath = ({ draft, slug, indexFileName, locale }) => 
  * @see https://sveltiacms.app/en/docs/i18n
  */
 export const createEntryPath = ({ draft, locale, slug }) => {
-  const {
-    collection,
-    collectionFile,
-    originalEntry,
-    originalPath,
-    currentPath,
-    currentValues,
-    isIndexFile,
-  } = draft;
+  const { collection, collectionFile, originalEntry, currentValues, isIndexFile } = draft;
 
   const {
     _i18n: { defaultLocale, structure, omitDefaultLocaleFromFilePath },
@@ -151,14 +177,9 @@ export const createEntryPath = ({ draft, locale, slug }) => {
   // index file in the collection folder
   // @see https://github.com/decaporg/decap-cms/issues/7094
   const useCustomPath = usesCustomEntryPath(draft);
-  // The path editor decides where the entry goes, so the slug alone can’t tell whether the file has
-  // moved. Skip the shortcut below and rebuild the path from the folder the user has chosen, unless
-  // the folder is left as it was: the file then stays where it is, even if that’s not where a
-  // rebuild would put it, e.g. a locale stored under folders that weren’t localized at the time
-  const pathUnchanged = stripSlashes(originalPath ?? '') === stripSlashes(currentPath ?? '');
 
-  if ((!useCustomPath || pathUnchanged) && originalEntry?.locales[locale]?.slug === slug) {
-    return originalEntry.locales[locale].path;
+  if (keepsOriginalPath({ draft, locale, slug })) {
+    return /** @type {Entry} */ (originalEntry).locales[locale].path;
   }
 
   const {

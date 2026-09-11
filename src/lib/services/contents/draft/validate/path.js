@@ -10,7 +10,10 @@ import {
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
 import { entryDraft } from '$lib/services/contents/draft';
-import { buildCustomEntryPath } from '$lib/services/contents/draft/save/entry-path';
+import {
+  buildCustomEntryPath,
+  keepsOriginalPath,
+} from '$lib/services/contents/draft/save/entry-path';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
@@ -61,13 +64,17 @@ const isPathTaken = (draft) => {
   return Object.entries(currentLocales)
     .filter(([, enabled]) => enabled)
     .some(([locale]) => {
+      const slug = localizedSlugs?.[locale] ?? defaultLocaleSlug;
+
+      // A file that stays where it is can’t collide with anything, and rebuilding its path could
+      // point somewhere it will never go, e.g. a locale stored under folders that weren’t
+      // localized at the time
+      if (keepsOriginalPath({ draft, locale, slug })) {
+        return false;
+      }
+
       // Ask for the same sub path the save will build, so the two can’t disagree
-      const subPath = buildCustomEntryPath({
-        draft,
-        slug: localizedSlugs?.[locale] ?? defaultLocaleSlug,
-        indexFileName,
-        locale,
-      });
+      const subPath = buildCustomEntryPath({ draft, slug, indexFileName, locale });
 
       return otherEntries.some((entry) =>
         locale === defaultLocale

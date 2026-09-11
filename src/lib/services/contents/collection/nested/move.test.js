@@ -590,6 +590,23 @@ describe('buildNestedMoveChanges()', () => {
       expect(savingEntries[0].locales.en.content).toEqual({ title: '2' });
     });
 
+    test('leaves a locale that has only a path', async () => {
+      const descendant = i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' });
+
+      descendant.locales.fr = { path: 'content/pages/fr/a-propos/equipe/_index.md' };
+      vi.mocked(getEntriesByCollection).mockReturnValue([descendant]);
+
+      const { savingEntries } = await buildNestedMoveChanges({
+        collection: i18nCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(savingEntries[0].locales.fr).toEqual({
+        path: 'content/pages/fr/a-propos/equipe/_index.md',
+      });
+    });
+
     test('returns nothing when no file moves', async () => {
       vi.mocked(getEntriesByCollection).mockReturnValue([
         i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),

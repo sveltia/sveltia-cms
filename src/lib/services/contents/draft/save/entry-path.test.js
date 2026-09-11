@@ -959,6 +959,94 @@ describe('contents/draft/save/entry-path', () => {
     });
   });
 
+  describe('keepsOriginalPath', () => {
+    const collection = {
+      _type: 'entry',
+      name: 'pages',
+      folder: 'content/pages',
+      nested: {},
+      meta: { path: { index_file: '_index' } },
+      _i18n: { defaultLocale: 'en', structureMap: {} },
+    };
+
+    const originalEntry = {
+      subPath: 'docs/_index',
+      locales: { en: { slug: 'docs/_index', path: 'content/pages/docs/_index.md' } },
+    };
+
+    it('should be false for a new entry', async () => {
+      const { keepsOriginalPath } = await import('./entry-path.js');
+
+      expect(
+        keepsOriginalPath({
+          draft: { collection, isNew: true, originalEntry: undefined, currentPath: 'docs' },
+          locale: 'en',
+          slug: 'docs/_index',
+        }),
+      ).toBe(false);
+    });
+
+    it('should be false when the slug has changed', async () => {
+      const { keepsOriginalPath } = await import('./entry-path.js');
+
+      expect(
+        keepsOriginalPath({
+          draft: { collection, originalEntry, originalPath: 'docs', currentPath: 'docs' },
+          locale: 'en',
+          slug: 'guides/_index',
+        }),
+      ).toBe(false);
+    });
+
+    it('should be false when the folder has changed', async () => {
+      const { keepsOriginalPath } = await import('./entry-path.js');
+
+      expect(
+        keepsOriginalPath({
+          draft: { collection, originalEntry, originalPath: 'docs', currentPath: 'guides' },
+          locale: 'en',
+          slug: 'docs/_index',
+        }),
+      ).toBe(false);
+    });
+
+    it('should be true when neither the slug nor the folder has changed', async () => {
+      const { keepsOriginalPath } = await import('./entry-path.js');
+
+      expect(
+        keepsOriginalPath({
+          draft: { collection, originalEntry, originalPath: 'docs', currentPath: '/docs/' },
+          locale: 'en',
+          slug: 'docs/_index',
+        }),
+      ).toBe(true);
+    });
+
+    it('should be false when a folder is chosen where none was recorded', async () => {
+      const { keepsOriginalPath } = await import('./entry-path.js');
+
+      expect(
+        keepsOriginalPath({
+          draft: { collection, originalEntry, originalPath: undefined, currentPath: 'docs' },
+          locale: 'en',
+          slug: 'docs/_index',
+        }),
+      ).toBe(false);
+    });
+
+    it('should be true for an unchanged slug without the path editor', async () => {
+      const { keepsOriginalPath } = await import('./entry-path.js');
+
+      expect(
+        keepsOriginalPath({
+          draft: { collection, originalEntry, originalPath: undefined, currentPath: undefined },
+          locale: 'en',
+          slug: 'docs/_index',
+        }),
+      ).toBe(true);
+    });
+  });
+
   describe('createEntryPath with localized folders', () => {
     // @see https://github.com/sveltia/sveltia-cms/issues/962
 

@@ -115,9 +115,10 @@ describe('hasLocalizedFolders()', () => {
     expect(hasLocalizedFolders(createCollection({ nested: undefined }))).toBe(false);
   });
 
-  test('is false without an index file name', () => {
-    expect(hasLocalizedFolders(createCollection({ meta: { path: {} } }))).toBe(false);
-    expect(hasLocalizedFolders(createCollection({ meta: undefined }))).toBe(false);
+  test('does not need an index file name', () => {
+    // A folder can be named after a file stored beside it
+    expect(hasLocalizedFolders(createCollection({ meta: { path: {} } }))).toBe(true);
+    expect(hasLocalizedFolders(createCollection({ meta: undefined }))).toBe(true);
   });
 
   test('is false when the slugs are not localized', () => {
@@ -204,6 +205,66 @@ describe('localizeDirPath()', () => {
     expect(localizeDirPath({ collection: createCollection(), dirPath: 'docs', locale: 'fr' })).toBe(
       'documentation',
     );
+  });
+
+  test('uses a conventional index file when none is configured', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', { en: 'about/index', fr: 'a-propos/index' }),
+      entry('2', { en: 'docs/_index', fr: 'documentation/_index' }),
+    ]);
+
+    const collection = createCollection({ meta: { path: {} } });
+
+    expect(localizeDirPath({ collection, dirPath: 'about', locale: 'fr' })).toBe('a-propos');
+    expect(localizeDirPath({ collection, dirPath: 'docs', locale: 'fr' })).toBe('documentation');
+  });
+
+  test('ignores a conventional index file when another name is configured', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', { en: 'about/index', fr: 'a-propos/index' }),
+    ]);
+
+    expect(
+      localizeDirPath({ collection: createCollection(), dirPath: 'about', locale: 'fr' }),
+    ).toBe('about');
+  });
+
+  test('names a folder after the file of the same name stored beside it', () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/962 (Eleventy-style layout)
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', { en: 'about', fr: 'a-propos' }),
+      entry('2', { en: 'about/team', fr: 'a-propos/equipe' }),
+    ]);
+
+    const collection = createCollection({ nested: { subfolders: false }, meta: { path: {} } });
+
+    expect(localizeDirPath({ collection, dirPath: 'about', locale: 'fr' })).toBe('a-propos');
+    expect(localizeDirPath({ collection, dirPath: 'about/team', locale: 'fr' })).toBe(
+      'a-propos/equipe',
+    );
+    // The sibling lacks the locale
+    expect(localizeDirPath({ collection, dirPath: 'about', locale: 'de' })).toBe('about');
+  });
+
+  test('prefers the index file over a sibling of the same name', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', { en: 'about', fr: 'sibling' }),
+      entry('2', { en: 'about/_index', fr: 'a-propos/_index' }),
+    ]);
+
+    expect(
+      localizeDirPath({ collection: createCollection(), dirPath: 'about', locale: 'fr' }),
+    ).toBe('a-propos');
+  });
+
+  test('keeps the name when the index entry’s localized file is at the collection root', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      entry('1', { en: 'about/_index', fr: '_index' }),
+    ]);
+
+    expect(
+      localizeDirPath({ collection: createCollection(), dirPath: 'about', locale: 'fr' }),
+    ).toBe('about');
   });
 
   test('uses the index file in a collection without the subfolders mode', () => {

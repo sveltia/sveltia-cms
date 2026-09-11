@@ -68,7 +68,8 @@ const moveEntry = ({ entry, dirMove, localeDirMoves }) => {
       const { slug, path } = localizedEntry;
       const localeDirMove = localeDirMoves[locale];
 
-      if (!isDescendantPath(localeDirMove.oldDir, slug)) {
+      // A locale that was disabled leaves the entry with a path but no slug to move
+      if (!slug || !isDescendantPath(localeDirMove.oldDir, slug)) {
         return [locale, localizedEntry];
       }
 

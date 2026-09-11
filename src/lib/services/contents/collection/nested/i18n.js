@@ -1,8 +1,10 @@
+import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 import { get } from 'svelte/store';
 
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
+  DEFAULT_INDEX_FILE_NAMES,
   getEntryDirPath,
   getNestedIndexFileName,
   isNestedCollection,
@@ -33,16 +35,47 @@ export const getOwnFolderName = (subPath) => getFolderName(getEntryDirPath(subPa
 
 /**
  * Check whether the folders of a nested collection go by a different name in each locale. That’s
- * the case when the entry slugs are localized: in the `subfolders` mode, a folder is an entry named
- * after its slug, so the folder chain above an entry is localized along with the entry itself.
+ * the case when the entry slugs are localized: a folder is named after the entry it belongs to,
+ * which is stored either in it or beside it, so the folder chain above an entry is localized along
+ * with the entry itself.
  * @param {InternalCollection} collection Collection.
  * @returns {boolean} Result.
  * @see https://github.com/sveltia/sveltia-cms/issues/962
  */
 export const hasLocalizedFolders = (collection) =>
-  isNestedCollection(collection) &&
-  !!getNestedIndexFileName(collection) &&
-  hasLocalizedSlugs(collection);
+  isNestedCollection(collection) && hasLocalizedSlugs(collection);
+
+/**
+ * Find the entry a folder is named after, along with the folder name it has in the given locale.
+ * In the `subfolders` mode that’s the folder’s own index file; otherwise it’s the folder’s index
+ * file if it has one, as named with the `meta.path.index_file` option or by convention, or else a
+ * file of the same name as the folder stored beside it, which is how Eleventy, Jekyll and other
+ * frameworks give a folder its page.
+ * @param {object} args Arguments.
+ * @param {Entry[]} args.entries Entries in the collection.
+ * @param {string} args.dirPath Folder path in the default locale, relative to the collection
+ * folder.
+ * @param {string[]} args.indexFileNames File names, without an extension, an index file can have.
+ * @param {InternalLocaleCode} args.locale Locale.
+ * @returns {string | undefined} Localized folder name, or `undefined` if the folder has no entry or
+ * its entry lacks the locale.
+ */
+const getLocalizedFolderName = ({ entries, dirPath, indexFileNames, locale }) => {
+  const indexEntry = entries.find(({ subPath }) =>
+    indexFileNames.some((name) => subPath === `${dirPath}/${name}`),
+  );
+
+  if (indexEntry) {
+    const localizedSubPath = indexEntry.locales[locale]?.slug;
+
+    return localizedSubPath ? getOwnFolderName(localizedSubPath) || undefined : undefined;
+  }
+
+  const siblingEntry = entries.find(({ subPath }) => subPath === dirPath);
+  const localizedSubPath = siblingEntry?.locales[locale]?.slug;
+
+  return localizedSubPath ? getPathInfo(localizedSubPath).basename : undefined;
+};
 
 /**
  * Get every entry in the collection, including the unpublished ones. With Editorial Workflow, a
@@ -65,9 +98,8 @@ const getAllEntries = (collection) => {
  * Get the given locale’s counterpart of a folder path within a nested collection. The path editor
  * chooses a folder once, in the default locale, and the folders go by localized names in the other
  * locales, so each locale’s file has to be stored below the localized chain instead. Each folder
- * takes its name from the entry stored in it: in the `subfolders` mode that’s the folder’s own
- * entry, and otherwise the entry named with the `meta.path.index_file` option, if the folder has
- * one. A folder without such an entry, or whose entry lacks the locale, keeps its name.
+ * takes its name from the entry it belongs to, as described in {@link getLocalizedFolderName}. A
+ * folder without such an entry, or whose entry lacks the locale, keeps its name.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection.
  * @param {string} args.dirPath Folder path in the default locale, relative to the collection
@@ -87,7 +119,12 @@ export const localizeDirPath = ({ collection, dirPath, locale, entries }) => {
     return path;
   }
 
-  const indexFileName = getNestedIndexFileName(collection);
+  const configuredIndexFileName = getNestedIndexFileName(collection);
+
+  const indexFileNames = configuredIndexFileName
+    ? [configuredIndexFileName]
+    : DEFAULT_INDEX_FILE_NAMES;
+
   const allEntries = entries ?? getAllEntries(collection);
   let prefix = '';
 
@@ -96,10 +133,10 @@ export const localizeDirPath = ({ collection, dirPath, locale, entries }) => {
     .map((segment) => {
       prefix = prefix ? `${prefix}/${segment}` : segment;
 
-      const entry = allEntries.find(({ subPath }) => subPath === `${prefix}/${indexFileName}`);
-      const localizedSubPath = entry?.locales[locale]?.slug;
-
-      return (localizedSubPath ? getOwnFolderName(localizedSubPath) : '') || segment;
+      return (
+        getLocalizedFolderName({ entries: allEntries, dirPath: prefix, indexFileNames, locale }) ??
+        segment
+      );
     })
     .join('/');
 };
