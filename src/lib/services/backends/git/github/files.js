@@ -16,7 +16,7 @@ import {
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
-import { dataLoadedProgress } from '$lib/services/contents';
+import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 
 /**
  * @import {
@@ -192,22 +192,16 @@ export const parseFileContents = async (fetchingFiles, results) => {
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
 export const fetchFileContents = async (fetchingFiles) => {
-  const fetchingFileList = structuredClone(fetchingFiles);
   /** @type {any[][]} */
   const chunks = [];
   const chunkSize = 250;
   /** @type {Record<string, any>} */
   const results = {};
+  // Show a simulated progress bar because the request waiting time is long
+  const stopProgress = startSimulatedProgress(fetchingFiles.length);
 
-  dataLoadedProgress.current = 0;
-
-  // Show a fake progressbar because the request waiting time is long
-  const dataLoadedProgressInterval = window.setInterval(() => {
-    dataLoadedProgress.current = (dataLoadedProgress.current ?? 0) + 1;
-  }, fetchingFileList.length / 10);
-
-  for (let i = 0; i < fetchingFileList.length; i += chunkSize) {
-    chunks.push(fetchingFileList.slice(i, i + chunkSize));
+  for (let i = 0; i < fetchingFiles.length; i += chunkSize) {
+    chunks.push(fetchingFiles.slice(i, i + chunkSize));
   }
 
   // Split the file list into chunks and repeat requests to avoid API timeout
@@ -224,10 +218,9 @@ export const fetchFileContents = async (fetchingFiles) => {
     }),
   );
 
-  window.clearInterval(dataLoadedProgressInterval);
-  dataLoadedProgress.current = undefined;
+  stopProgress();
 
-  return parseFileContents(fetchingFileList, results);
+  return parseFileContents(fetchingFiles, results);
 };
 
 /**

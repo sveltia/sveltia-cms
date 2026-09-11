@@ -10,7 +10,7 @@ import {
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
-import { dataLoadedProgress } from '$lib/services/contents';
+import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 
 /**
  * @import {
@@ -365,20 +365,13 @@ export const parseFileContents = async ({ fetchingFiles, blobs, sizes = {}, comm
  * @returns {Promise<RepositoryContentsMap>} Fetched contents map.
  */
 export const fetchFileContents = async (fetchingFiles) => {
-  dataLoadedProgress.current = 0;
-
-  // Show a fake progressbar because the request waiting time is long
-  const dataLoadedProgressInterval = window.setInterval(() => {
-    /* v8 ignore next */
-    dataLoadedProgress.current = (dataLoadedProgress.current ?? 0) + 1;
-  }, fetchingFiles.length / 10);
-
+  // Show a simulated progress bar because the request waiting time is long
+  const stopProgress = startSimulatedProgress(fetchingFiles.length);
   // Fetch blobs for entry/config files only
   const textPaths = fetchingFiles.filter(({ type }) => type !== 'asset').map(({ path }) => path);
   const blobs = await fetchBlobs(textPaths, FETCH_BLOBS_QUERY);
 
-  window.clearInterval(dataLoadedProgressInterval);
-  dataLoadedProgress.current = undefined;
+  stopProgress();
 
   return parseFileContents({ fetchingFiles, blobs });
 };

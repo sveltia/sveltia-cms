@@ -22,6 +22,7 @@ import {
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
+import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/commits');
@@ -30,37 +31,14 @@ vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/fetch');
 
-// Record every value set on the progress state, so the tests can verify the sequence
-const progressValues = vi.hoisted(() => /** @type {(number | undefined)[]} */ ([]));
+// The function returned by `startSimulatedProgress()`, so the tests can verify it’s called
+const stopProgress = vi.hoisted(() => vi.fn());
 
-vi.mock('$lib/services/contents', () => ({
-  dataLoadedProgress: {
-    /**
-     * Get the last value.
-     * @returns {number | undefined} Value.
-     */
-    get current() {
-      return progressValues.at(-1);
-    },
-    /**
-     * Record a new value.
-     * @param {number | undefined} value Value.
-     */
-    set current(value) {
-      progressValues.push(value);
-    },
-  },
+vi.mock('$lib/services/backends/git/shared/progress', () => ({
+  startSimulatedProgress: vi.fn(() => stopProgress),
 }));
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 vi.mock('mime', () => ({ default: { getType: vi.fn() } }));
-
-// Mock global window
-Object.defineProperty(global, 'window', {
-  value: {
-    setInterval: vi.fn(),
-    clearInterval: vi.fn(),
-  },
-});
 
 describe('GitHub files service', () => {
   beforeEach(() => {
@@ -494,10 +472,8 @@ describe('GitHub files service', () => {
 
       const result = await fetchFileContents(fetchingFiles);
 
-      expect(progressValues[0]).toBe(0);
-      expect(progressValues.at(-1)).toBeUndefined();
-      expect(window.setInterval).toHaveBeenCalled();
-      expect(window.clearInterval).toHaveBeenCalled();
+      expect(startSimulatedProgress).toHaveBeenCalledWith(fetchingFiles.length);
+      expect(stopProgress).toHaveBeenCalledOnce();
       expect(result).toBeDefined();
     });
 
@@ -593,8 +569,8 @@ describe('GitHub files service', () => {
       const result = await fetchFileContents(fetchingFiles);
 
       expect(result).toEqual({});
-      expect(progressValues[0]).toBe(0);
-      expect(progressValues.at(-1)).toBeUndefined();
+      expect(startSimulatedProgress).toHaveBeenCalledWith(0);
+      expect(stopProgress).toHaveBeenCalledOnce();
     });
 
     test('handles exactly chunk size boundary', async () => {
@@ -636,99 +612,6 @@ describe('GitHub files service', () => {
 
       // Should make exactly 1 GraphQL request
       expect(fetchGraphQL).toHaveBeenCalledTimes(1);
-    });
-
-    test('progress interval callback is executed', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([{ path: 'file.txt', sha: 'sha1', size: 100 }]);
-
-      const mockResults = {
-        repository: {
-          content_0: { text: 'Content' },
-          commit_0: {
-            target: {
-              history: {
-                nodes: [
-                  {
-                    author: {
-                      name: 'Author',
-                      email: 'author@example.com',
-                      user: { id: 'user1', login: 'author' },
-                    },
-                    committedDate: '2023-01-01T00:00:00Z',
-                  },
-                ],
-              },
-            },
-          },
-        },
-      };
-
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
-
-      /** @type {any} */
-      let intervalCallback = null;
-
-      // Capture the callback function passed to setInterval
-      vi.mocked(window.setInterval).mockImplementation((callback) => {
-        intervalCallback = callback;
-        return /** @type {any} */ (1);
-      });
-
-      await fetchFileContents(fetchingFiles);
-
-      // Verify interval callback was captured and can be executed
-      expect(intervalCallback).toBeDefined();
-
-      if (intervalCallback) {
-        progressValues.length = 0;
-        intervalCallback();
-        expect(progressValues).toEqual([1]);
-      }
-    });
-
-    test('progress update receives correct initial value in callback', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([{ path: 'file.txt', sha: 'sha1', size: 100 }]);
-
-      const mockResults = {
-        repository: {
-          content_0: { text: 'Content' },
-          commit_0: {
-            target: {
-              history: {
-                nodes: [
-                  {
-                    author: {
-                      name: 'Author',
-                      email: 'author@example.com',
-                      user: { id: 'user1', login: 'author' },
-                    },
-                    committedDate: '2023-01-01T00:00:00Z',
-                  },
-                ],
-              },
-            },
-          },
-        },
-      };
-
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockResults);
-
-      /** @type {any} */
-      let intervalCallback = null;
-
-      vi.mocked(window.setInterval).mockImplementation((callback) => {
-        intervalCallback = callback;
-        return /** @type {any} */ (1);
-      });
-
-      await fetchFileContents(fetchingFiles);
-
-      if (intervalCallback) {
-        progressValues.push(5);
-        intervalCallback();
-
-        expect(progressValues.at(-1)).toBe(6);
-      }
     });
   });
 

@@ -1105,7 +1105,7 @@ describe('Test processI18nMultiFileEntry()', () => {
     });
 
     const rawContent = { title: 'My Post', body: 'Content' };
-    const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
 
     const wasMerged = processI18nMultiFileEntry(
       entry,
@@ -1118,12 +1118,14 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en',
       'posts',
       undefined,
-      entries,
+      entryMap,
     );
 
     expect(wasMerged).toBe(false);
     expect(entry.id).toBe('posts/my-post');
     expect(entry.slug).toBe('my-post');
+    // Registered so that the other locales of the entry can be merged into it
+    expect(entryMap.get('posts/my-post')).toBe(entry);
     expect(entry.locales.en).toEqual({
       slug: 'my-post',
       path: '/posts/my-post.en.md',
@@ -1153,7 +1155,7 @@ describe('Test processI18nMultiFileEntry()', () => {
     });
 
     const rawContent = { title: 'Mon Article', body: 'Contenu' };
-    const entries = [existingEntry];
+    const entryMap = new Map([[existingEntry.id, existingEntry]]);
 
     const wasMerged = processI18nMultiFileEntry(
       entry,
@@ -1166,7 +1168,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en',
       'posts',
       undefined,
-      entries,
+      entryMap,
     );
 
     expect(wasMerged).toBe(true);
@@ -1191,7 +1193,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       translationKey: 'canonical-slug',
     };
 
-    const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
 
     processI18nMultiFileEntry(
       entry,
@@ -1204,7 +1206,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en',
       'posts',
       'translationKey',
-      entries,
+      entryMap,
     );
 
     expect(entry.id).toBe('posts/canonical-slug');
@@ -1232,7 +1234,7 @@ describe('Test processI18nMultiFileEntry()', () => {
     });
 
     const rawContent = { title: 'My Post', body: 'Content' };
-    const entries = [existingEntry];
+    const entryMap = new Map([[existingEntry.id, existingEntry]]);
 
     processI18nMultiFileEntry(
       entry,
@@ -1245,7 +1247,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en',
       'posts',
       undefined,
-      entries,
+      entryMap,
     );
 
     expect(existingEntry.slug).toBe('my-post');
@@ -1274,7 +1276,7 @@ describe('Test processI18nMultiFileEntry()', () => {
     });
 
     const rawContent = { title: 'Mon Article' };
-    const entries = [existingEntry];
+    const entryMap = new Map([[existingEntry.id, existingEntry]]);
 
     processI18nMultiFileEntry(
       entry,
@@ -1287,7 +1289,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en', // Default locale
       'posts',
       undefined,
-      entries,
+      entryMap,
     );
 
     // slug and subPath should NOT be updated when merging non-default locale
@@ -1310,7 +1312,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       translationKey: 123, // Not a string
     };
 
-    const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
 
     processI18nMultiFileEntry(
       entry,
@@ -1323,7 +1325,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en',
       'posts',
       'translationKey', // Key exists but value is not a string
-      entries,
+      entryMap,
     );
 
     // Should use slug instead of canonicalSlug since value is not a string
@@ -1344,7 +1346,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       canonicalId: 'some-value',
     };
 
-    const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
 
     processI18nMultiFileEntry(
       entry,
@@ -1357,7 +1359,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en',
       'posts',
       undefined, // canonicalSlugKey is undefined
-      entries,
+      entryMap,
     );
 
     // Should use slug directly, no canonical slug
@@ -1377,7 +1379,7 @@ describe('Test processI18nMultiFileEntry()', () => {
     });
 
     const rawContent = { title: 'Mon Article' };
-    const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
 
     const wasMerged = processI18nMultiFileEntry(
       entry,
@@ -1390,7 +1392,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en', // default locale
       'posts',
       undefined,
-      entries,
+      entryMap,
     );
 
     expect(wasMerged).toBe(false);
@@ -1400,7 +1402,7 @@ describe('Test processI18nMultiFileEntry()', () => {
 
   test('lets the default locale override a slug set by another locale', () => {
     const entry = /** @type {Entry} */ ({ id: '', slug: '', subPath: '', locales: {} });
-    const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
 
     processI18nMultiFileEntry(
       entry,
@@ -1413,10 +1415,8 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en',
       'posts',
       'translation_key',
-      entries,
+      entryMap,
     );
-
-    entries.push(entry);
 
     const wasMerged = processI18nMultiFileEntry(
       /** @type {Entry} */ ({ id: '', slug: '', subPath: '', locales: {} }),
@@ -1429,7 +1429,7 @@ describe('Test processI18nMultiFileEntry()', () => {
       'en',
       'posts',
       undefined,
-      entries,
+      entryMap,
     );
 
     expect(wasMerged).toBe(false);
@@ -1472,10 +1472,11 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(0);
     expect(errors).toHaveLength(1);
@@ -1498,9 +1499,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(0);
   });
@@ -1542,9 +1544,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(0);
   });
@@ -1585,9 +1588,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(0);
   });
@@ -1628,9 +1632,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(0);
   });
@@ -1671,9 +1676,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(0);
   });
@@ -1746,9 +1752,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     // Should skip because locale is falsy (empty string from filePathMap)
     expect(entries).toHaveLength(0);
@@ -1791,9 +1798,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(0);
   });
@@ -1834,9 +1842,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(1);
     expect(entries[0].slug).toBe('my-post');
@@ -1882,9 +1891,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(1);
     expect(entries[0].slug).toBe('my-post');
@@ -1931,9 +1941,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(1);
     expect(entries[0].slug).toBe('my-post');
@@ -1977,9 +1988,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(0);
   });
@@ -2025,9 +2037,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(1);
     expect(entries[0].slug).toBe('members');
@@ -2069,9 +2082,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     expect(entries).toHaveLength(1);
     expect(entries[0].slug).toBe('my-post');
@@ -2127,9 +2141,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([existingEntry]);
+    const entryMap = new Map([[existingEntry.id, existingEntry]]);
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     // Should still have 1 entry, not 2
     expect(entries).toHaveLength(1);
@@ -2153,9 +2168,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     // Should skip because collection is null
     expect(entries).toHaveLength(0);
@@ -2211,10 +2227,11 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([existingEntry]);
+    const entryMap = new Map([[existingEntry.id, existingEntry]]);
     const errors = /** @type {Error[]} */ ([]);
     const initialLength = entries.length;
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     // When wasMerged is true, the function returns early and does NOT push
     // So entries.length should remain the same (still 1, not 2)
@@ -2260,9 +2277,10 @@ describe('Test prepareEntry()', () => {
     });
 
     const entries = /** @type {Entry[]} */ ([]);
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
     const errors = /** @type {Error[]} */ ([]);
 
-    await prepareEntry({ file, entries, errors });
+    await prepareEntry({ file, entries, entryMap, errors });
 
     // When wasMerged is false (new entry), push should be called
     // So entries.length should be 1

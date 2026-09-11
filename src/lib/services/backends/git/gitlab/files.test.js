@@ -19,6 +19,10 @@ import {
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
+import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+
+// The function returned by `startSimulatedProgress()`, so the tests can verify it’s called
+const stopProgress = vi.hoisted(() => vi.fn());
 
 // Mock dependencies
 vi.mock('@sveltia/utils/file');
@@ -26,7 +30,9 @@ vi.mock('$lib/services/backends/git/gitlab/commits');
 vi.mock('$lib/services/backends/git/gitlab/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/fetch');
-vi.mock('$lib/services/contents');
+vi.mock('$lib/services/backends/git/shared/progress', () => ({
+  startSimulatedProgress: vi.fn(() => stopProgress),
+}));
 
 describe('GitLab files service', () => {
   beforeEach(() => {
@@ -36,12 +42,6 @@ describe('GitLab files service', () => {
     vi.mocked(repository).repo = 'test-repo';
     vi.mocked(repository).branch = 'main';
     vi.mocked(repository).owner = 'test-owner';
-
-    // Create window object with mocked setInterval and clearInterval
-    vi.stubGlobal('window', {
-      setInterval: vi.fn(() => /** @type {any} */ (1)),
-      clearInterval: vi.fn(),
-    });
   });
 
   describe('fetchFileList', () => {
@@ -706,23 +706,13 @@ describe('GitLab files service', () => {
         },
       };
 
-      // Capture the setInterval callback to invoke it and cover the progress update code (line 313)
-      /** @type {(() => void) | undefined} */
-      let intervalCallback;
-
-      vi.mocked(window.setInterval).mockImplementationOnce((fn) => {
-        intervalCallback = /** @type {() => void} */ (fn);
-        return /** @type {any} */ (1);
-      });
-
       vi.mocked(fetchGraphQL).mockResolvedValueOnce(mockBlobResponse);
 
-      const resultPromise = fetchFileContents(files);
+      const result = await fetchFileContents(files);
 
-      // Invoke the interval callback to cover the dataLoadedProgress.update call
-      intervalCallback?.();
-
-      const result = await resultPromise;
+      // The simulated progress bar is shown while the request is in flight
+      expect(startSimulatedProgress).toHaveBeenCalledWith(files.length);
+      expect(stopProgress).toHaveBeenCalledOnce();
 
       expect(fetchGraphQL).toHaveBeenCalledWith(
         expect.stringContaining('query($fullPath: ID!, $branch: String!, $paths: [String!]!)'),

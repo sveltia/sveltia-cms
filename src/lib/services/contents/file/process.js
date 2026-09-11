@@ -354,7 +354,8 @@ export const processI18nSingleFileEntry = (
  * @param {InternalLocaleCode} defaultLocale Default locale.
  * @param {string} collectionName Collection name.
  * @param {string | undefined} canonicalSlugKey Canonical slug key.
- * @param {Entry[]} entries Existing entries array.
+ * @param {Map<string, Entry>} entryMap Entries prepared so far, keyed by their temporary ID. A new
+ * entry is registered here so that its other locales can find it.
  * @returns {boolean} True if entry was added to existing entry, false if new entry should be added.
  */
 export const processI18nMultiFileEntry = (
@@ -368,7 +369,7 @@ export const processI18nMultiFileEntry = (
   defaultLocale,
   collectionName,
   canonicalSlugKey,
-  entries,
+  entryMap,
 ) => {
   // Support a canonical slug to link localized files
   const canonicalSlug =
@@ -380,8 +381,9 @@ export const processI18nMultiFileEntry = (
   const localizedEntry = { slug, path, content: flatten(rawContent) };
   // Use a temporary ID to locate all the localized files for the entry
   const tempId = `${collectionName}/${canonicalSlug ?? slug}`;
-  // Check if the entry has already been added for another locale
-  const existingEntry = entries.find((e) => e.id === tempId);
+  // Check if the entry has already been added for another locale. A lookup in the map rather than
+  // a scan of the entry list keeps this linear over a repository with thousands of localized files
+  const existingEntry = entryMap.get(tempId);
 
   // If found, add a new locale to the existing entry; don’t add another entry
   if (existingEntry) {
@@ -402,6 +404,7 @@ export const processI18nMultiFileEntry = (
   entry.locales[locale] = localizedEntry;
   // The default locale file overrides this when it’s processed, in the branch above
   entry.slug = slug;
+  entryMap.set(tempId, entry);
 
   return false; // New entry should be added
 };
@@ -411,9 +414,11 @@ export const processI18nMultiFileEntry = (
  * @param {object} args Arguments.
  * @param {BaseEntryListItem} args.file Entry file list item.
  * @param {Entry[]} args.entries List of prepared entries.
+ * @param {Map<string, Entry>} args.entryMap Prepared entries keyed by their temporary ID, used to
+ * merge the localized files of a multi-file i18n entry.
  * @param {Error[]} args.errors List of parse errors.
  */
-export const prepareEntry = async ({ file, entries, errors }) => {
+export const prepareEntry = async ({ file, entries, entryMap, errors }) => {
   const rawContent = await parseFileContent(file, errors);
 
   if (!rawContent) {
@@ -527,7 +532,7 @@ export const prepareEntry = async ({ file, entries, errors }) => {
       defaultLocale,
       collectionName,
       canonicalSlugKey,
-      entries,
+      entryMap,
     );
 
     if (wasMerged) {
@@ -546,10 +551,12 @@ export const prepareEntry = async ({ file, entries, errors }) => {
 export const prepareEntries = async (entryFiles) => {
   /** @type {Entry[]} */
   const entries = [];
+  /** @type {Map<string, Entry>} */
+  const entryMap = new Map();
   /** @type {Error[]} */
   const errors = [];
 
-  await Promise.all(entryFiles.map((file) => prepareEntry({ file, entries, errors })));
+  await Promise.all(entryFiles.map((file) => prepareEntry({ file, entries, entryMap, errors })));
 
   return {
     entries: entries.filter((entry) => {

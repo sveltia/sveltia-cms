@@ -240,10 +240,10 @@ export const fetchFileContents = async (fetchingFiles) => {
     dataLoadedProgress.current = Math.ceil((fetchedCount / textFiles.length) * 100);
   };
 
-  // Use the new bulk API endpoint to fetch multiple files at once
-  for (let index = 0; index < batches.length; index += 1) {
-    const batch = batches[index];
-
+  // Use the new bulk API endpoint to fetch multiple files at once. The batches are independent, so
+  // several of them are requested in parallel rather than one after another; a large repository
+  // needs dozens of them, and each is a full round trip to the instance
+  await runConcurrently(batches, async (batch) => {
     const result = /** @type {PartialContentsListItem[]} */ (
       await (isForgejo
         ? fetchAPI(`${requestPath}?shas=${batch.map(({ sha }) => sha).join(',')}`)
@@ -264,7 +264,7 @@ export const fetchFileContents = async (fetchingFiles) => {
     });
 
     advanceProgress(batch.length);
-  }
+  });
 
   const fileMap = await parseFileContents(fetchingFiles, results);
 

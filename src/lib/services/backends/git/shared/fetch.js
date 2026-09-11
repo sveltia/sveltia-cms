@@ -34,20 +34,27 @@ import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
  * Get the file list from the meta database or fetch it if not cached.
  * @param {object} args Arguments.
  * @param {IndexedDB} args.metaDB The meta database instance.
+ * @param {[string, any][]} args.metaEntries Entries read from the meta database.
  * @param {string} args.lastCommitHash The latest commit hash.
  * @param {[string, any][]} args.cachedFileEntries Cached file entries.
  * @param {FetchFileListFunction} args.fetchFileList Function to fetch the repository’s complete
  * file list.
  * @returns {Promise<BaseFileList>} The file list.
  */
-export const getFileList = async ({ metaDB, lastCommitHash, cachedFileEntries, fetchFileList }) => {
+export const getFileList = async ({
+  metaDB,
+  metaEntries,
+  lastCommitHash,
+  cachedFileEntries,
+  fetchFileList,
+}) => {
   const lastConfigHash = cmsConfigVersion.current;
 
   const {
     last_config_hash: cachedConfigHash,
     last_commit_hash: cachedCommitHash,
     git_config_fetched: gitConfigFetched,
-  } = Object.fromEntries(await metaDB.entries());
+  } = Object.fromEntries(metaEntries);
 
   // We need to compare the CMS config hash to support cases where multiple CMS instances with
   // different configurations are connected to the same repository, or where the config has been
@@ -202,7 +209,11 @@ export const fetchAndParseFiles = async ({
   const { databaseName, branch: branchName } = repository;
   const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
   const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
-  const cachedFileEntries = await cacheDB.entries();
+  // Start reading the databases right away, but only wait for them once the last commit is known,
+  // so the reads — the file cache holds the text of every entry — overlap the network round trips
+  // below instead of delaying them
+  const metaEntriesPromise = metaDB.entries();
+  const cachedFileEntriesPromise = cacheDB.entries();
   let branch = branchName;
 
   if (!branch) {
@@ -212,7 +223,19 @@ export const fetchAndParseFiles = async ({
 
   // This has to be done after the branch is determined
   const { hash: lastCommitHash, message } = await fetchLastCommit();
-  const fileList = await getFileList({ metaDB, lastCommitHash, cachedFileEntries, fetchFileList });
+
+  const [metaEntries, cachedFileEntries] = await Promise.all([
+    metaEntriesPromise,
+    cachedFileEntriesPromise,
+  ]);
+
+  const fileList = await getFileList({
+    metaDB,
+    metaEntries,
+    lastCommitHash,
+    cachedFileEntries,
+    fetchFileList,
+  });
 
   // What the message says is only what the author asked for. It’s the answer until the CI/CD
   // provider is asked about the commit, which `isLastCommitPublished` prefers once it has one

@@ -110,7 +110,7 @@ describe('git/shared/fetch', () => {
     });
 
     it('should use cached file list when hashes match and cache exists', async () => {
-      mockMetaDB.entries.mockResolvedValue([
+      const metaEntries = /** @type {[string, any][]} */ ([
         ['last_config_hash', lastConfigHash],
         ['last_commit_hash', lastCommitHash],
         ['git_config_fetched', true],
@@ -118,6 +118,7 @@ describe('git/shared/fetch', () => {
 
       const result = await getFileList({
         metaDB: mockMetaDB,
+        metaEntries,
         lastCommitHash,
         cachedFileEntries,
         fetchFileList: mockFetchFileList,
@@ -132,7 +133,7 @@ describe('git/shared/fetch', () => {
     });
 
     it('should fetch new file list when commit hash does not match', async () => {
-      mockMetaDB.entries.mockResolvedValue([
+      const metaEntries = /** @type {[string, any][]} */ ([
         ['last_config_hash', lastConfigHash],
         ['last_commit_hash', 'old-hash'],
         ['git_config_fetched', true],
@@ -140,6 +141,7 @@ describe('git/shared/fetch', () => {
 
       await getFileList({
         metaDB: mockMetaDB,
+        metaEntries,
         lastCommitHash,
         cachedFileEntries,
         fetchFileList: mockFetchFileList,
@@ -156,7 +158,7 @@ describe('git/shared/fetch', () => {
     });
 
     it('should fetch new file list when config hash does not match', async () => {
-      mockMetaDB.entries.mockResolvedValue([
+      const metaEntries = /** @type {[string, any][]} */ ([
         ['last_config_hash', 'old-config-hash'],
         ['last_commit_hash', lastCommitHash],
         ['git_config_fetched', true],
@@ -164,6 +166,7 @@ describe('git/shared/fetch', () => {
 
       await getFileList({
         metaDB: mockMetaDB,
+        metaEntries,
         lastCommitHash,
         cachedFileEntries,
         fetchFileList: mockFetchFileList,
@@ -176,7 +179,7 @@ describe('git/shared/fetch', () => {
     });
 
     it('should fetch new file list when cache is empty', async () => {
-      mockMetaDB.entries.mockResolvedValue([
+      const metaEntries = /** @type {[string, any][]} */ ([
         ['last_config_hash', lastConfigHash],
         ['last_commit_hash', lastCommitHash],
         ['git_config_fetched', true],
@@ -184,6 +187,7 @@ describe('git/shared/fetch', () => {
 
       await getFileList({
         metaDB: mockMetaDB,
+        metaEntries,
         lastCommitHash,
         cachedFileEntries: [], // Empty cache
         fetchFileList: mockFetchFileList,
@@ -539,6 +543,21 @@ describe('git/shared/fetch', () => {
 
       expect(mockFetchDefaultBranchName).toHaveBeenCalled();
       expect(repository.branch).toBe('main');
+    });
+
+    it('should read the databases while the branch and commit are being fetched', async () => {
+      await fetchAndParseFiles({
+        repository: { ...mockRepository, branch: '' },
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      // The reads are issued up front rather than after the network round trips
+      expect(mockMetaDB.entries).toHaveBeenCalledBefore(mockFetchDefaultBranchName);
+      expect(mockCacheDB.entries).toHaveBeenCalledBefore(mockFetchDefaultBranchName);
+      expect(mockCacheDB.entries).toHaveBeenCalledBefore(mockFetchLastCommit);
     });
 
     it('should record the publish hint based on the commit message', async () => {
