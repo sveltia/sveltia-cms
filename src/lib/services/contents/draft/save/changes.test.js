@@ -118,6 +118,63 @@ describe('draft/save/changes', () => {
       expect(result.changes[0].action).toBe('create');
     });
 
+    it('should read the file configuration from the collection file for a singleton', async () => {
+      // A file/singleton collection has no `_file` of its own; it’s on the collection file
+      // @see https://github.com/sveltia/sveltia-cms/issues/964
+      const { createEntryPath } = await import('./entry-path');
+      const { serializeContent } = await import('./serialize');
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+
+      vi.mocked(createEntryPath).mockReturnValue('src/data/home.mdx');
+      vi.mocked(serializeContent).mockReturnValue({ body: 'Hello' });
+      vi.mocked(formatEntryFile).mockResolvedValue('formatted content');
+
+      const _i18n = {
+        i18nEnabled: false,
+        allLocales: ['_default'],
+        defaultLocale: '_default',
+        structureMap: { i18nSingleFile: false },
+        canonicalSlug: { key: 'translationKey' },
+      };
+
+      const draft = {
+        id: 'test-uuid',
+        isNew: false,
+        collection: {
+          name: '_singletons',
+          _type: 'file',
+          files: [{ name: 'home', file: 'src/data/home.mdx' }],
+          _i18n,
+        },
+        collectionName: '_singletons',
+        collectionFile: {
+          name: 'home',
+          file: 'src/data/home.mdx',
+          _file: { fullPathRegEx: /^src\/data\/(?<subPath>home)\.mdx$/ },
+          _i18n,
+        },
+        fileName: 'home',
+        isIndexFile: false,
+        originalEntry: { locales: { _default: { path: 'src/data/home.mdx' } } },
+        currentLocales: { _default: true },
+        currentValues: { _default: { body: 'Hello' } },
+        files: {},
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'home',
+        canonicalSlug: undefined,
+        localizedSlugs: undefined,
+      };
+
+      const result = await createSavingEntryData({ draft, slugs });
+
+      expect(result.savingEntry.slug).toBe('home');
+      expect(result.savingEntry.subPath).toBe('home');
+      expect(result.changes).toHaveLength(1);
+      expect(result.changes[0]).toMatchObject({ action: 'update', path: 'src/data/home.mdx' });
+    });
+
     it('should handle i18n single file', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { serializeContent } = await import('./serialize');

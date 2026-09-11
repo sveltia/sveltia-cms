@@ -24,6 +24,7 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
  * EntrySlugVariants,
  * FileChange,
  * GetFieldArgs,
+ * InternalCollectionFile,
  * InternalEntryCollection,
  * InternalLocaleCode,
  * LocalizedEntryMap,
@@ -34,7 +35,9 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
 /**
  * Get the sub path of a file within the collection folder.
  * @param {object} args Arguments.
- * @param {InternalEntryCollection} args.collection Entry collection.
+ * @param {InternalEntryCollection | InternalCollectionFile} args.collection Entry collection, or
+ * the collection file for a file/singleton collection, which is what holds the file configuration
+ * in that case.
  * @param {string} args.path File path.
  * @param {string} args.fallback Sub path to fall back to if the path can’t be parsed.
  * @returns {string} Sub path.
@@ -356,7 +359,8 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     slugs,
   });
 
-  const entryCollection = /** @type {InternalEntryCollection} */ (collection);
+  // A file/singleton collection keeps its file configuration on the collection file
+  const entryCollection = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const subPath = getSubPath({
     collection: entryCollection,
