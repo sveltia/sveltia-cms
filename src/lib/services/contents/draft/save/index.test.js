@@ -15,6 +15,7 @@ import { createSavingEntryData } from '$lib/services/contents/draft/save/changes
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
+import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 import { unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
@@ -50,6 +51,7 @@ vi.mock('$lib/services/contents/draft/save/changes');
 vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/fields');
+vi.mock('$lib/services/contents/editor/pending');
 vi.mock('$lib/services/contents/entry/history');
 vi.mock('$lib/services/deployments/publish');
 vi.mock('$lib/services/workflow', () => ({
@@ -223,6 +225,24 @@ describe('draft/save/index', () => {
 
         expect(validateEntry).toHaveBeenCalledWith({ draft: mockDraft, enforceRequired: true });
       });
+    });
+
+    it('should wait for pending field updates before validating', async () => {
+      /** @type {string[]} */
+      const order = [];
+
+      vi.mocked(awaitPendingFieldUpdates).mockImplementation(async () => {
+        order.push('await');
+      });
+      vi.mocked(validateEntry).mockImplementation(() => {
+        order.push('validate');
+
+        return true;
+      });
+
+      await saveEntry();
+
+      expect(order).toEqual(['await', 'validate']);
     });
 
     it('should throw validation error when entry is invalid', async () => {

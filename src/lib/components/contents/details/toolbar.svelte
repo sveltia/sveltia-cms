@@ -88,6 +88,10 @@
   } = $props();
 
   let showValidationToast = $state(false);
+  // Number of invalid fields when the last save failed validation. A snapshot rather than a live
+  // count: the fields are revalidated as they’re corrected, and a toast counting down to “0 fields
+  // have errors” while it’s still on screen would be confusing
+  let errorCount = $state(0);
   let showEditSlugDialog = $state(false);
   let showDeleteDialog = $state(false);
   let showReviewDialog = $state(false);
@@ -145,11 +149,6 @@
   const busy = $derived(saving || deleting);
   const controlsDisabled = $derived(disabled || busy);
   const modified = $derived(isNew || entryDraft.modified);
-  const errorCount = $derived(
-    Object.values(entryDraft.current?.validities ?? {})
-      .flatMap((validity) => Object.values(validity).map(({ valid }) => !valid))
-      .filter(Boolean).length,
-  );
   const associatedAssets = $derived(
     collectionName && originalEntry && getAssetFolder({ collectionName, fileName })?.entryRelative
       ? getAssociatedAssets({ entry: originalEntry, collectionName, fileName, relative: true })
@@ -390,6 +389,9 @@
       }
     } catch (/** @type {any} */ ex) {
       if (ex.message === 'validation_failed') {
+        errorCount = Object.values(draft.validities)
+          .flatMap((validity) => Object.values(validity).map(({ valid }) => !valid))
+          .filter(Boolean).length;
         showValidationToast = true;
       } else if (ex.message === 'saving_failed') {
         showErrorDialog = true;

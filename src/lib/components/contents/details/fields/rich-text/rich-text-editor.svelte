@@ -13,12 +13,13 @@
     getNearestEditorFromDOMNode,
     $insertNodes as insertNodes,
   } from 'lexical';
-  import { getContext, untrack } from 'svelte';
+  import { getContext, tick, untrack } from 'svelte';
 
   import { customComponentRegistry } from '$lib/services/api/registries';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
   import { getField } from '$lib/services/contents/entry/fields';
   import {
     getAssetLibraryFolderMap,
@@ -93,6 +94,12 @@
   let inputValue = $state('');
 
   let cleanupTimeout = 0;
+  /**
+   * Function to settle the update registered with {@link trackPendingFieldUpdate}, while the user
+   * has changed the content but the editor hasn’t written the new value back yet.
+   * @type {(() => void) | undefined}
+   */
+  let settlePendingUpdate;
 
   const {
     // Field type-specific options
@@ -438,6 +445,63 @@
   // effect, causing a `derived_inert` warning.
   $effect(() => () => {
     window.clearTimeout(cleanupTimeout);
+  });
+
+  /**
+   * Register a pending update when the user is about to change the content. The editor converts
+   * the content to Markdown with a short delay, so a save right after typing would otherwise
+   * validate the previous value.
+   */
+  const onBeforeInput = () => {
+    if (settlePendingUpdate) {
+      return;
+    }
+
+    trackPendingFieldUpdate(
+      new Promise((resolve) => {
+        // The editor doesn’t write the value back when the Markdown is unchanged, e.g. when a
+        // trailing space is typed, so give up after a while rather than blocking a save forever
+        const timeout = window.setTimeout(() => settlePendingUpdate?.(), 1000);
+
+        /**
+         * Settle the update and forget it, so the next change registers a new one.
+         */
+        settlePendingUpdate = () => {
+          window.clearTimeout(timeout);
+          settlePendingUpdate = undefined;
+          resolve();
+        };
+      }),
+    );
+  };
+
+  /**
+   * Settle the pending update once the editor has written the new value back. The value reaches
+   * {@link currentValue} through a few bindings and effects, so wait for them to be flushed first.
+   */
+  const onUpdate = async () => {
+    await tick();
+    settlePendingUpdate?.();
+  };
+
+  $effect(() => {
+    if (!wrapper) {
+      return undefined;
+    }
+
+    const target = wrapper;
+
+    // The `Update` event is dispatched on the editor’s root element without bubbling, so it can
+    // only be caught in the capture phase
+    target.addEventListener('beforeinput', onBeforeInput, true);
+    target.addEventListener('Update', onUpdate, true);
+
+    return () => {
+      target.removeEventListener('beforeinput', onBeforeInput, true);
+      target.removeEventListener('Update', onUpdate, true);
+      // Don’t hold up a save when the editor goes away
+      settlePendingUpdate?.();
+    };
   });
 </script>
 

@@ -16,6 +16,7 @@ import { validateEntry } from '$lib/services/contents/draft/validate';
 import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
+import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
@@ -90,6 +91,10 @@ const assignManualSortOrder = (draft) => {
 export const saveEntry = async ({ draft, skipCI = undefined }) => {
   const { isNew, collection, collectionName, fileName, originalEntry } = draft;
 
+  // A rich text editor writes what was just typed to the draft with a short delay, so wait for such
+  // updates first. Otherwise a save right after typing would validate the field’s previous value,
+  // e.g. an empty required field, and the error would clear itself moments later
+  await awaitPendingFieldUpdates();
   // Custom field validators can be async, so wait for any in-flight results before validating.
   // Otherwise a field made invalid moments ago would be validated against a stale verdict.
   await awaitCustomFieldValidations();
