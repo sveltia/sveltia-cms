@@ -1,7 +1,19 @@
 // @ts-nocheck
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getRepoURL, REPOSITORY_INFO_PLACEHOLDER } from './repository';
+import {
+  applyDefaultBranch,
+  getRepoURL,
+  initRepositoryInfo,
+  REPOSITORY_INFO_PLACEHOLDER,
+} from './repository';
+
+const mockPrefs = vi.hoisted(() => ({ devModeEnabled: false }));
+
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key, { values } = {}) => `${key}:${JSON.stringify(values)}`),
+}));
+vi.mock('$lib/services/user/prefs.svelte', () => ({ prefs: mockPrefs }));
 
 describe('git/shared/repository', () => {
   describe('REPOSITORY_INFO_PLACEHOLDER', () => {
@@ -154,6 +166,154 @@ describe('git/shared/repository', () => {
       const expected = 'https://github.example.com/owner/repo';
 
       expect(getRepoURL(restApiRoot, defaultRepoPath)).toBe(expected);
+    });
+  });
+
+  describe('initRepositoryInfo', () => {
+    const getTokenPageURL = vi.fn((repoURL) => `${repoURL}/tokens`);
+
+    const getBaseURLs = vi.fn((repoURL, branch) => ({
+      treeBaseURL: `${repoURL}/tree/${branch}`,
+      blobBaseURL: `${repoURL}/blob/${branch}`,
+      commitBaseURL: `${repoURL}/commit`,
+    }));
+
+    const args = {
+      service: 'github',
+      label: 'GitHub',
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'main',
+      restApiRoot: 'https://api.github.com',
+      defaultApiRoot: 'https://api.github.com',
+      getTokenPageURL,
+      getBaseURLs,
+    };
+
+    beforeEach(() => {
+      mockPrefs.devModeEnabled = false;
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('should fill in the repository info in place and return it', () => {
+      const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
+      const result = initRepositoryInfo(repository, args);
+
+      expect(result).toBe(repository);
+      expect(repository).toEqual({
+        service: 'github',
+        label: 'GitHub',
+        owner: 'owner',
+        repo: 'repo',
+        branch: 'main',
+        repoURL: 'https://github.com/owner/repo',
+        tokenPageURL: 'https://github.com/owner/repo/tokens',
+        databaseName: 'github:owner/repo',
+        isSelfHosted: false,
+        treeBaseURL: 'https://github.com/owner/repo/tree/main',
+        blobBaseURL: 'https://github.com/owner/repo/blob/main',
+        commitBaseURL: 'https://github.com/owner/repo/commit',
+      });
+      expect(getTokenPageURL).toHaveBeenCalledWith('https://github.com/owner/repo');
+      expect(getBaseURLs).toHaveBeenCalledWith('https://github.com/owner/repo', 'main');
+    });
+
+    it('should mark a non-default API root as self-hosted', () => {
+      const repository = initRepositoryInfo(
+        { ...REPOSITORY_INFO_PLACEHOLDER },
+        { ...args, restApiRoot: 'https://github.example.com/api/v3', branch: undefined },
+      );
+
+      expect(repository.isSelfHosted).toBe(true);
+      expect(repository.repoURL).toBe('https://github.example.com/owner/repo');
+      expect(getBaseURLs).toHaveBeenCalledWith('https://github.example.com/owner/repo', undefined);
+    });
+
+    it('should log the repository info in dev mode', () => {
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+      mockPrefs.devModeEnabled = true;
+
+      const repository = initRepositoryInfo({ ...REPOSITORY_INFO_PLACEHOLDER }, args);
+
+      expect(consoleInfoSpy).toHaveBeenCalledWith('repositoryInfo', repository);
+    });
+
+    it('should not log the repository info when dev mode is off', () => {
+      const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+      initRepositoryInfo({ ...REPOSITORY_INFO_PLACEHOLDER }, args);
+
+      expect(consoleInfoSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('applyDefaultBranch', () => {
+    const getBaseURLs = vi.fn((repoURL, branch) => ({
+      treeBaseURL: `${repoURL}/tree/${branch}`,
+      blobBaseURL: `${repoURL}/blob/${branch}`,
+    }));
+
+    /**
+     * Create a repository info object to be updated.
+     * @returns {object} Repository info.
+     */
+    const createRepository = () => ({
+      ...REPOSITORY_INFO_PLACEHOLDER,
+      repo: 'repo',
+      repoURL: 'https://github.com/owner/repo',
+    });
+
+    it('should apply the branch and base URLs to the repository info', () => {
+      const repository = createRepository();
+      const result = applyDefaultBranch(repository, { found: true, branch: 'main', getBaseURLs });
+
+      expect(result).toBe('main');
+      expect(repository).toMatchObject({
+        branch: 'main',
+        treeBaseURL: 'https://github.com/owner/repo/tree/main',
+        blobBaseURL: 'https://github.com/owner/repo/blob/main',
+      });
+      expect(getBaseURLs).toHaveBeenCalledWith('https://github.com/owner/repo', 'main');
+    });
+
+    it('should throw when the repository was not found', () => {
+      const repository = createRepository();
+
+      expect(() =>
+        applyDefaultBranch(repository, { found: false, branch: undefined, getBaseURLs }),
+      ).toThrow(
+        expect.objectContaining({
+          message: 'Failed to retrieve the default branch name.',
+          cause: expect.objectContaining({ message: 'repository_not_found:{"repo":"repo"}' }),
+        }),
+      );
+      expect(repository.branch).toBe('');
+    });
+
+    it('should throw when the repository is empty', () => {
+      const repository = createRepository();
+
+      expect(() =>
+        applyDefaultBranch(repository, { found: true, branch: undefined, getBaseURLs }),
+      ).toThrow(
+        expect.objectContaining({
+          message: 'Failed to retrieve the default branch name.',
+          cause: expect.objectContaining({ message: 'repository_empty:{"repo":"repo"}' }),
+        }),
+      );
+      expect(repository.branch).toBe('');
+    });
+
+    it('should tolerate a missing `repoURL`', () => {
+      const repository = { ...createRepository(), repoURL: undefined };
+
+      applyDefaultBranch(repository, { found: true, branch: 'main', getBaseURLs });
+
+      expect(getBaseURLs).toHaveBeenCalledWith('', 'main');
     });
   });
 });

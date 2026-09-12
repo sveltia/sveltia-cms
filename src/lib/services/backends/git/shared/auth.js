@@ -3,6 +3,7 @@ import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 
+import { apiConfig as sharedApiConfig } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
 import { isSecureURL } from '$lib/services/utils/networking';
 import { createRawState } from '$lib/services/utils/state.svelte';
@@ -13,6 +14,7 @@ import { createRawState } from '$lib/services/utils/state.svelte';
  * AuthTokens,
  * InternalCmsConfig,
  * SignInOptions,
+ * User,
  * } from '$lib/types/private';
  * @import { GitBackend } from '$lib/types/public';
  */
@@ -467,3 +469,30 @@ export const getTokens = async ({ options: { token, refreshToken, auto = false }
 
   return { token, refreshToken };
 };
+
+/**
+ * Sign in with a backend’s REST API: the tokens are obtained by running the authentication flow if
+ * necessary, then the user profile is fetched with the backend-specific function.
+ * @param {object} args Arguments.
+ * @param {SignInOptions} args.options Options.
+ * @param {(tokens: AuthTokens) => Promise<User>} args.getUserProfile Function to retrieve the
+ * authenticated user’s profile information from the backend’s REST API.
+ * @returns {Promise<User | void>} User info, or nothing when finishing PKCE auth flow in a popup or
+ * the sign-in flow cannot be started.
+ * @throws {Error} When there was an authentication error.
+ */
+export const signInToBackend = async ({ options, getUserProfile }) => {
+  const { token, refreshToken } = (await getTokens({ options, apiConfig: sharedApiConfig })) ?? {};
+
+  if (!token) {
+    return undefined;
+  }
+
+  return getUserProfile({ token, refreshToken });
+};
+
+/**
+ * Sign out from the backend. Nothing to do here.
+ * @returns {Promise<void>}
+ */
+export const signOut = async () => undefined;

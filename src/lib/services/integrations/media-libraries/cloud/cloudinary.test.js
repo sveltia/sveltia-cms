@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { cmsConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config/state';
 
 import cloudinaryService, {
   fetchResources,
@@ -20,7 +20,7 @@ import cloudinaryService, {
 } from './cloudinary';
 
 // Mock dependencies while preserving the real writable implementation used by the module.
-vi.mock('$lib/services/config', () => ({
+vi.mock('$lib/services/config/state', () => ({
   cmsConfig: { current: undefined },
 }));
 
@@ -216,6 +216,22 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       expect(options).toBeDefined();
       expect(/** @type {any} */ (options)?.config?.cloud_name).toBe('field-cloud');
+    });
+
+    it('should not accept media_library config without name when site config uses another library', () => {
+      cmsConfig.current = /** @type {any} */ ({ media_library: { name: 'uploadcare' } });
+
+      const fieldConfig = /** @type {any} */ ({
+        media_library: { config: { cloud_name: 'field-cloud' } },
+      });
+
+      expect(getLibraryOptions(fieldConfig)).toBeUndefined();
+    });
+
+    it('should return undefined when no config is available at all', () => {
+      cmsConfig.current = undefined;
+
+      expect(getLibraryOptions()).toBeUndefined();
     });
   });
 
@@ -609,7 +625,7 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       expect(signature).toBeDefined();
       expect(typeof signature).toBe('string');
       expect(signature.length).toBeGreaterThan(0);
-      expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(Uint8Array));
+      expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(ArrayBuffer));
     });
 
     it('should sort parameters alphabetically', async () => {
@@ -1470,7 +1486,7 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       await upload([mockFile], { apiKey: mockApiSecret });
 
-      expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(Uint8Array));
+      expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(ArrayBuffer));
 
       const fetchCall = vi.mocked(fetch).mock.calls[0];
 

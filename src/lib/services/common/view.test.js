@@ -346,4 +346,36 @@ describe('Test initViewSettingsStorage()', () => {
     expect(mockDB.set).toHaveBeenCalled();
     expect(settings.current).toEqual({ posts: { type: 'grid' } });
   });
+
+  test('merges the saved settings into the defaults', async () => {
+    /** @type {{ current: Record<string, any> | undefined }} */
+    const settings = createRawState();
+
+    mockDB.get.mockResolvedValue({ showPreview: false });
+
+    await initViewSettingsStorage({ databaseName: 'test-db' }, 'entry-view', settings, {
+      defaults: { showPreview: true, syncScrolling: true },
+    });
+
+    expect(settings.current).toEqual({ showPreview: false, syncScrolling: true });
+  });
+
+  test('stops persisting the settings with the returned function', async () => {
+    /** @type {{ current: Record<string, any> | undefined }} */
+    const settings = createRawState();
+
+    const stop = await initViewSettingsStorage(
+      { databaseName: 'test-db' },
+      'contents-view',
+      settings,
+    );
+
+    await wait();
+    stop();
+
+    settings.current = { posts: { type: 'grid' } };
+    await wait();
+
+    expect(mockDB.set).not.toHaveBeenCalled();
+  });
 });

@@ -15,9 +15,8 @@ import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repos
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
 import workflow from '$lib/services/backends/git/gitlab/workflow';
 import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
-import { getRepoURL } from '$lib/services/backends/git/shared/repository';
+import { initRepositoryInfo } from '$lib/services/backends/git/shared/repository';
 import { cmsConfig } from '$lib/services/config';
-import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { ApiEndpointConfig, BackendService, RepositoryInfo } from '$lib/types/private';
@@ -60,23 +59,18 @@ export const init = () => {
   const { owner, repo } = /** @type {string} */ (projectPath).match(REPO_PATH_REGEX)?.groups ?? {};
   const repoPath = `${owner}/${repo}`;
   const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
-  const repoURL = getRepoURL(restApiRoot, repoPath);
 
-  Object.assign(
-    repository,
-    /** @type {RepositoryInfo} */ ({
-      service: BACKEND_NAME,
-      label: BACKEND_LABEL,
-      owner,
-      repo,
-      branch,
-      repoURL,
-      tokenPageURL: getTokenPageURL(repoURL),
-      databaseName: `${BACKEND_NAME}:${repoPath}`,
-      isSelfHosted: restApiRoot !== DEFAULT_API_ROOT,
-    }),
-    getBaseURLs(repoURL, branch),
-  );
+  initRepositoryInfo(repository, {
+    service: BACKEND_NAME,
+    label: BACKEND_LABEL,
+    owner,
+    repo,
+    branch,
+    restApiRoot,
+    defaultApiRoot: DEFAULT_API_ROOT,
+    getTokenPageURL,
+    getBaseURLs,
+  });
 
   Object.assign(
     apiConfig,
@@ -96,11 +90,6 @@ export const init = () => {
     fullPath: repoPath,
     branch,
   });
-
-  if (prefs.devModeEnabled) {
-    // eslint-disable-next-line no-console
-    console.info('repositoryInfo', repository);
-  }
 
   return repository;
 };

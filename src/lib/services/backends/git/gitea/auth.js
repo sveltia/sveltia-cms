@@ -1,6 +1,5 @@
 import { getUserProfile } from '$lib/services/backends/git/gitea/user';
-import { apiConfig } from '$lib/services/backends/git/shared/api';
-import { getTokens } from '$lib/services/backends/git/shared/auth';
+import { signInToBackend } from '$lib/services/backends/git/shared/auth';
 
 /**
  * @import { SignInOptions, User } from '$lib/types/private';
@@ -24,18 +23,6 @@ export const getTokenPageURL = (repoURL) => {
  * the sign-in flow cannot be started.
  * @throws {Error} When there was an authentication error.
  */
-export const signIn = async (options) => {
-  const { token, refreshToken } = (await getTokens({ options, apiConfig })) ?? {};
+export const signIn = (options) => signInToBackend({ options, getUserProfile });
 
-  if (!token) {
-    return undefined;
-  }
-
-  return getUserProfile({ token, refreshToken });
-};
-
-/**
- * Sign out from the backend. Nothing to do here.
- * @returns {Promise<void>}
- */
-export const signOut = async () => undefined;
+export { signOut } from '$lib/services/backends/git/shared/auth';

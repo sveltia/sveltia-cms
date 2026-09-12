@@ -2,11 +2,14 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
 import { getUserProfile } from '$lib/services/backends/git/github/user';
-import { getTokens } from '$lib/services/backends/git/shared/auth';
+import { signInToBackend } from '$lib/services/backends/git/shared/auth';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/user');
-vi.mock('$lib/services/backends/git/shared/auth');
+vi.mock('$lib/services/backends/git/shared/auth', () => ({
+  signInToBackend: vi.fn(),
+  signOut: vi.fn(async () => undefined),
+}));
 vi.mock('$lib/services/backends/git/shared/api', () => ({
   apiConfig: { authURL: undefined },
 }));
@@ -46,16 +49,7 @@ describe('GitHub auth service', () => {
   });
 
   describe('signIn', () => {
-    test('returns undefined when getTokens returns undefined', async () => {
-      vi.mocked(getTokens).mockResolvedValue(undefined);
-
-      const result = await signIn({ auto: true });
-
-      expect(result).toBeUndefined();
-      expect(getUserProfile).not.toHaveBeenCalled();
-    });
-
-    test('signs in with token from getTokens', async () => {
+    test('delegates to the shared sign-in with the backend’s user profile fetcher', async () => {
       const mockUser = /** @type {any} */ ({
         id: '123',
         login: 'testuser',
@@ -63,50 +57,27 @@ describe('GitHub auth service', () => {
         backendName: 'github',
       });
 
-      vi.mocked(getTokens).mockResolvedValue({
-        token: 'auth-token',
-        refreshToken: 'refresh-token',
-      });
-      vi.mocked(getUserProfile).mockResolvedValue(mockUser);
+      vi.mocked(signInToBackend).mockResolvedValue(mockUser);
 
-      const result = await signIn({ auto: false });
+      const options = { token: 'existing-token', auto: false };
+      const result = await signIn(options);
 
-      expect(getTokens).toHaveBeenCalledWith({
-        options: { auto: false },
-        apiConfig: expect.any(Object),
-      });
-      expect(getUserProfile).toHaveBeenCalledWith({
-        token: 'auth-token',
-        refreshToken: 'refresh-token',
-      });
+      expect(signInToBackend).toHaveBeenCalledWith({ options, getUserProfile });
       expect(result).toEqual(mockUser);
     });
 
-    test('passes options to getTokens', async () => {
-      vi.mocked(getTokens).mockResolvedValue(undefined);
+    test('returns undefined when the shared sign-in returns undefined', async () => {
+      vi.mocked(signInToBackend).mockResolvedValue(undefined);
 
-      await signIn({ token: 'existing-token', auto: false });
-
-      expect(getTokens).toHaveBeenCalledWith({
-        options: { token: 'existing-token', auto: false },
-        apiConfig: expect.any(Object),
-      });
-    });
-
-    test('returns undefined when getTokens returns no token', async () => {
-      vi.mocked(getTokens).mockResolvedValue(undefined);
-
-      const result = await signIn({ auto: false });
+      const result = await signIn({ auto: true });
 
       expect(result).toBeUndefined();
     });
   });
 
   describe('signOut', () => {
-    test('returns undefined', async () => {
-      const result = await signOut();
-
-      expect(result).toBeUndefined();
+    test('re-exports the shared sign-out', async () => {
+      await expect(signOut()).resolves.toBeUndefined();
     });
   });
 });

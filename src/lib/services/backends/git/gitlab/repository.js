@@ -1,7 +1,10 @@
 import { _ } from '@sveltia/i18n';
 
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
-import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
+import {
+  applyDefaultBranch,
+  REPOSITORY_INFO_PLACEHOLDER,
+} from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -70,27 +73,16 @@ const FETCH_DEFAULT_BRANCH_NAME_QUERY = `
  * @see https://docs.gitlab.com/api/graphql/reference/#repository
  */
 export const fetchDefaultBranchName = async () => {
-  const { repo, repoURL = '' } = repository;
-
   const result = /** @type {{ project: { repository?: { rootRef: string } } }} */ (
     await fetchGraphQL(FETCH_DEFAULT_BRANCH_NAME_QUERY)
   );
 
-  if (!result.project) {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(_('repository_not_found', { values: { repo } })),
-    });
-  }
+  const branch = applyDefaultBranch(repository, {
+    found: !!result.project,
+    branch: result.project?.repository?.rootRef,
+    getBaseURLs,
+  });
 
-  const { rootRef: branch } = result.project.repository ?? {};
-
-  if (!branch) {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(_('repository_empty', { values: { repo } })),
-    });
-  }
-
-  Object.assign(repository, { branch }, getBaseURLs(repoURL, branch));
   Object.assign(graphqlVars, { branch });
 
   return branch;

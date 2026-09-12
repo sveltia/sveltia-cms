@@ -2,7 +2,12 @@
 
 import { sleep } from '@sveltia/utils/misc';
 
-import { cmsConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config/state';
+import {
+  findLibraryOptions,
+  resolveLibraryOptions,
+} from '$lib/services/integrations/media-libraries/options';
+import { hmacSha256, toHex } from '$lib/services/utils/crypto';
 import { formatFileName } from '$lib/services/utils/file';
 
 /**
@@ -43,10 +48,7 @@ import { formatFileName } from '$lib/services/utils/file';
  * explicitly disabled.
  */
 export const getLibraryOptions = (config = cmsConfig.current) =>
-  config?.media_libraries?.uploadcare ??
-  (config?.media_library?.name === 'uploadcare'
-    ? /** @type {UploadcareMediaLibrary} */ (config?.media_library)
-    : undefined);
+  findLibraryOptions('uploadcare', config);
 
 /**
  * Get Uploadcare public key from library options.
@@ -54,7 +56,7 @@ export const getLibraryOptions = (config = cmsConfig.current) =>
  * @returns {string | undefined} Public key.
  */
 export const getPublicKey = (fieldConfig) => {
-  const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
+  const options = resolveLibraryOptions('uploadcare', fieldConfig);
 
   return options ? options.config?.publicKey : undefined;
 };
@@ -75,7 +77,7 @@ export const isEnabled = (fieldConfig) => !!getPublicKey(fieldConfig);
  * @see https://sveltiacms.app/en/docs/media/uploadcare
  */
 export const parseResults = (results, { fieldConfig } = {}) => {
-  const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
+  const libOptions = resolveLibraryOptions('uploadcare', fieldConfig);
 
   const {
     settings: { autoFilename = false, defaultOperations = undefined } = {},
@@ -212,24 +214,8 @@ export const search = async (query, options) => {
  * @returns {Promise<string>} Signature.
  * @see https://uploadcare.com/docs/security/secure-uploads/
  */
-export const generateSignature = async (secretKey, expire) => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(String(expire));
-  const key = encoder.encode(secretKey);
-
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    key,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
-  const hashArray = Array.from(new Uint8Array(signature));
-
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-};
+export const generateSignature = async (secretKey, expire) =>
+  toHex(await hmacSha256(secretKey, String(expire)));
 
 /**
  * Upload files to Uploadcare.

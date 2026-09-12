@@ -6,13 +6,10 @@ import {
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
+import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
-import {
-  buildSingleFileContent,
-  createSyntheticDraft,
-  resolveCacheDB,
-} from '$lib/services/contents/entry/changes';
+import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 
 /**

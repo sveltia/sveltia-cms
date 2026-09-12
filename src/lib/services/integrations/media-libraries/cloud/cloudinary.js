@@ -1,9 +1,11 @@
 /* eslint-disable no-await-in-loop */
 
+import { getHash } from '@sveltia/utils/crypto';
 import { sleep } from '@sveltia/utils/misc';
 import { isObject } from '@sveltia/utils/object';
 
-import { cmsConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config/state';
+import { findLibraryOptions } from '$lib/services/integrations/media-libraries/options';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -101,31 +103,21 @@ export const CONFIG_PROPS = [
  * @returns {CloudinaryMediaLibrary | false | undefined} Configuration object, or `false` if
  * explicitly disabled.
  */
-export const getLibraryOptions = (config) => {
-  const _cmsConfig = cmsConfig.current;
+export const getLibraryOptions = (config = cmsConfig.current) => {
+  const options = findLibraryOptions('cloudinary', config);
 
-  config ??= _cmsConfig;
-
-  // Check for explicit media_libraries.cloudinary config (preferred)
-  if (config?.media_libraries && 'cloudinary' in config.media_libraries) {
-    return config.media_libraries.cloudinary;
+  if (options !== undefined) {
+    return options;
   }
 
-  // Fall back to legacy media_library config
-  if (!config?.media_library) {
-    return undefined;
-  }
+  // A field-level legacy `media_library` without a name inherits the site-level library
+  const { media_library: fieldOptions } = config ?? {};
 
-  const isExplicitlyCloudinary = config.media_library.name === 'cloudinary';
-
-  const isImplicitlyCloudinary =
-    !config.media_library.name && _cmsConfig?.media_library?.name === 'cloudinary';
-
-  if (isExplicitlyCloudinary || isImplicitlyCloudinary) {
-    return /** @type {CloudinaryMediaLibrary} */ (config.media_library);
-  }
-
-  return undefined;
+  return fieldOptions &&
+    !fieldOptions.name &&
+    cmsConfig.current?.media_library?.name === 'cloudinary'
+    ? /** @type {CloudinaryMediaLibrary} */ (fieldOptions)
+    : undefined;
 };
 
 /**
@@ -444,13 +436,7 @@ export const generateSignature = async (params, apiSecret) => {
     .map((key) => `${key}=${params[key]}`)
     .join('&');
 
-  const stringToSign = `${sortedParams}${apiSecret}`;
-  const encoder = new TextEncoder();
-  const data = encoder.encode(stringToSign);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return getHash(`${sortedParams}${apiSecret}`, { algorithm: 'SHA-256' });
 };
 
 /**

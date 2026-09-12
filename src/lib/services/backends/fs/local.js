@@ -1,10 +1,10 @@
-import { IndexedDB } from '@sveltia/utils/storage';
-
 import { allBackendServices } from '$lib/services/backends';
 import { loadFiles, saveChanges } from '$lib/services/backends/fs/shared/files';
 import { cmsConfig } from '$lib/services/config';
+import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
+ * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import {
  * BackendService,
  * CommitResults,
@@ -122,9 +122,7 @@ const init = () => {
 
   remoteRepository = allBackendServices[service]?.init?.();
 
-  const { databaseName } = remoteRepository ?? {};
-
-  rootDirHandleDB = databaseName ? new IndexedDB(databaseName, 'file-system-handles') : null;
+  rootDirHandleDB = getRepositoryDatabase(remoteRepository, 'file-system-handles') ?? null;
 
   return repository;
 };

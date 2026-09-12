@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { backend } from '$lib/services/backends';
 import {
   buildEntryUpdateChanges,
-  buildSingleFileContent,
   createSyntheticDraft,
   resolveCacheDB,
 } from '$lib/services/contents/entry/changes';
@@ -79,66 +78,6 @@ describe('resolveCacheDB()', () => {
 
   test('returns undefined when no backend is configured', () => {
     expect(resolveCacheDB()).toBeUndefined();
-  });
-});
-
-describe('buildSingleFileContent()', () => {
-  const entry = {
-    slug: 'a',
-    locales: {
-      en: { slug: 'a', path: 'a.md', content: { title: 'Hello' } },
-      fr: { slug: 'a', path: 'a.md', content: { title: 'Bonjour' } },
-      de: { slug: 'a', path: 'a.md' },
-    },
-  };
-
-  test('serializes the default locale only when i18n is disabled', () => {
-    const config = { _i18n: { i18nEnabled: false, defaultLocale: 'en' } };
-
-    expect(buildSingleFileContent({ config, entry, draft: {} })).toEqual({ title: 'Hello' });
-  });
-
-  test('nests the locales for single-file i18n', () => {
-    const config = { _i18n: { i18nEnabled: true, defaultLocale: 'en' } };
-
-    expect(buildSingleFileContent({ config, entry, draft: {} })).toEqual({
-      en: { title: 'Hello' },
-      fr: { title: 'Bonjour' },
-    });
-  });
-
-  test('puts the default locale at the root for `single_file_default_root`', () => {
-    const config = {
-      _i18n: {
-        i18nEnabled: true,
-        defaultLocale: 'en',
-        structureMap: { i18nSingleFileDefaultRoot: true },
-      },
-    };
-
-    expect(buildSingleFileContent({ config, entry, draft: {} })).toEqual({
-      lang: ['en', 'fr'],
-      title: 'Hello',
-      fr: { title: 'Bonjour' },
-    });
-  });
-
-  test('drops a stale root-level `lang` property', () => {
-    const config = {
-      _i18n: {
-        i18nEnabled: true,
-        defaultLocale: 'en',
-        structureMap: { i18nSingleFileDefaultRoot: true },
-      },
-    };
-
-    const result = buildSingleFileContent({
-      config,
-      entry: { locales: { en: { content: { lang: ['xx'], title: 'Hello' } } } },
-      draft: {},
-    });
-
-    expect(result).toEqual({ lang: ['en'], title: 'Hello' });
   });
 });
 

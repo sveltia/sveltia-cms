@@ -59,6 +59,8 @@ const backendService = { repository: { databaseName: 'test-db' } };
 
 describe('editor/settings', () => {
   beforeEach(async () => {
+    // Stop the effects created by the previous test, so they don’t persist the state reset below
+    await initSettings(/** @type {any} */ ({}));
     vi.clearAllMocks();
     mockDB.get.mockResolvedValue(undefined);
     mockDB.set.mockResolvedValue(undefined);

@@ -7,12 +7,9 @@ import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
+import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
-import {
-  buildSingleFileContent,
-  createSyntheticDraft,
-  resolveCacheDB,
-} from '$lib/services/contents/entry/changes';
+import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 
 vi.mock('$lib/services/common/template', () => ({
@@ -31,12 +28,15 @@ vi.mock('$lib/services/contents/draft/save/changes', () => ({
   getPreviousSha: vi.fn(async () => 'sha'),
 }));
 
+vi.mock('$lib/services/contents/draft/save/content', () => ({
+  buildSingleFileContent: vi.fn(() => ({ title: 'Single' })),
+}));
+
 vi.mock('$lib/services/contents/draft/save/serialize', () => ({
   serializeContent: vi.fn(() => ({ title: 'Serialized' })),
 }));
 
 vi.mock('$lib/services/contents/entry/changes', () => ({
-  buildSingleFileContent: vi.fn(() => ({ title: 'Single' })),
   createSyntheticDraft: vi.fn(() => ({ synthetic: true })),
   resolveCacheDB: vi.fn(() => undefined),
 }));

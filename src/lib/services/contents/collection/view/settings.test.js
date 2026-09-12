@@ -89,6 +89,8 @@ describe('Test entryListSettings', () => {
   test('does not save the view when it is equal to the saved view', async () => {
     vi.mocked(initViewSettingsStorage).mockImplementationOnce(async (_repo, _key, state) => {
       state.current = { posts: { type: 'grid' } };
+
+      return () => {};
     });
 
     await initSettings(backendService);

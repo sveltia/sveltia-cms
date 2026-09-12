@@ -1,8 +1,11 @@
 /* eslint-disable no-await-in-loop */
 
+import { getHash } from '@sveltia/utils/crypto';
 import { sleep } from '@sveltia/utils/misc';
 
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { filterAssetsByQuery } from '$lib/services/integrations/media-libraries/cloud/search';
+import { hmacSha256, toHex } from '$lib/services/utils/crypto';
 import { parseXml } from '$lib/services/utils/xml';
 
 /**
@@ -24,41 +27,6 @@ import { parseXml } from '$lib/services/utils/xml';
  * @property {boolean} IsTruncated Whether more results are available.
  * @property {string} [NextContinuationToken] Token for next page.
  */
-
-/**
- * Create HMAC signature.
- * @param {string | Uint8Array} key Key.
- * @param {string} data Data to sign.
- * @returns {Promise<Uint8Array>} Signature.
- */
-const hmac = async (key, data) => {
-  const encoder = new TextEncoder();
-
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    /** @type {BufferSource} */ (typeof key === 'string' ? encoder.encode(key) : key),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(data));
-
-  return new Uint8Array(signature);
-};
-
-/**
- * Create SHA-256 hash.
- * @param {string | ArrayBuffer} data Data to hash.
- * @returns {Promise<string>} Hash.
- */
-const sha256 = async (data) => {
-  const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-};
 
 /**
  * Generate AWS Signature Version 4.
@@ -119,18 +87,14 @@ export const generateAwsSignature = async ({
   // Create string to sign
   const algorithm = 'AWS4-HMAC-SHA256';
   const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
-  const canonicalRequestHash = await sha256(canonicalRequest);
+  const canonicalRequestHash = await getHash(canonicalRequest, { algorithm: 'SHA-256' });
   const stringToSign = [algorithm, amzDate, credentialScope, canonicalRequestHash].join('\n');
   // Calculate signature
-  const kDate = await hmac(`AWS4${secretAccessKey}`, dateStamp);
-  const kRegion = await hmac(kDate, region);
-  const kService = await hmac(kRegion, service);
-  const kSigning = await hmac(kService, 'aws4_request');
-  const signature = await hmac(kSigning, stringToSign);
-
-  const signatureHex = Array.from(signature)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  const kDate = await hmacSha256(`AWS4${secretAccessKey}`, dateStamp);
+  const kRegion = await hmacSha256(kDate, region);
+  const kService = await hmacSha256(kRegion, service);
+  const kSigning = await hmacSha256(kService, 'aws4_request');
+  const signatureHex = toHex(await hmacSha256(kSigning, stringToSign));
 
   return [
     `${algorithm} Credential=${accessKeyId}/${credentialScope},`,
@@ -160,7 +124,7 @@ export const signedRequest = async ({
   const { access_key_id: accessKeyId, region = 'us-east-1' } = config;
   const date = new Date();
   const urlObj = new URL(url);
-  const payloadHash = await sha256(body);
+  const payloadHash = await getHash(body, { algorithm: 'SHA-256' });
 
   const headers = {
     Host: urlObj.host,
@@ -403,13 +367,8 @@ export const listS3Objects = async (config, options, { maxPages = 10 } = {}) => 
 export const searchS3Objects = async (query, config, options) => {
   // S3 doesn’t have native search, so we list all objects and filter client-side
   const allAssets = await listS3Objects(config, options, { maxPages: 5 });
-  const lowerQuery = query.toLowerCase();
 
-  return allAssets.filter(
-    (asset) =>
-      asset.fileName.toLowerCase().includes(lowerQuery) ||
-      asset.description.toLowerCase().includes(lowerQuery),
-  );
+  return filterAssetsByQuery(allAssets, query);
 };
 
 /**

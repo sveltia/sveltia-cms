@@ -1,7 +1,8 @@
-/* eslint-disable no-await-in-loop */
-
-import { locale as appLocale } from '@sveltia/i18n';
-import { sleep } from '@sveltia/utils/misc';
+import {
+  fetchJSON,
+  fetchPagedResults,
+  getSupportedLocale,
+} from '$lib/services/integrations/media-libraries/stock/utils';
 
 /**
  * @import {
@@ -44,16 +45,7 @@ const SEARCH_PARAMS = {
  * Get the best matching locale supported by Unsplash API.
  * @returns {string} Locale code.
  */
-export const getLocale = () => {
-  const locale = appLocale.current.toLowerCase();
-  const [lang] = locale.split('-');
-
-  return (
-    SUPPORTED_LOCALES.find((code) => code.toLowerCase() === locale) ??
-    SUPPORTED_LOCALES.find((code) => code.split('-')[0] === lang) ??
-    'en'
-  );
-};
+export const getLocale = () => getSupportedLocale(SUPPORTED_LOCALES, 'en');
 
 /**
  * Parse API results into ExternalAsset format.
@@ -91,14 +83,8 @@ export const parseResults = (results) =>
 export const list = async ({ apiKey }) => {
   const headers = { Authorization: `Client-ID ${apiKey}` };
   const params = new URLSearchParams(SEARCH_PARAMS);
-  const response = await fetch(`${ENDPOINT}/photos?${params}`, { headers });
-
-  if (!response.ok) {
-    return Promise.reject();
-  }
-
   /** @type {FetchResult[]} */
-  const results = await response.json();
+  const results = await fetchJSON(`${ENDPOINT}/photos?${params}`, { headers });
 
   return parseResults(results);
 };
@@ -114,29 +100,31 @@ export const list = async ({ apiKey }) => {
 export const search = async (query, { apiKey }) => {
   const headers = { Authorization: `Client-ID ${apiKey}` };
   const params = new URLSearchParams({ ...SEARCH_PARAMS, query, lang: getLocale() });
-  /** @type {FetchResult[]} */
-  const results = [];
 
-  for (let page = 1; page <= 5; page += 1) {
+  /**
+   * Fetch a page of search results.
+   * @param {number} page Page number.
+   * @returns {Promise<{ results: FetchResult[], total_pages: number }>} Response.
+   */
+  const fetchPage = (page) => {
     params.set('page', String(page));
 
-    const response = await fetch(`${ENDPOINT}/search/photos?${params}`, { headers });
+    return fetchJSON(`${ENDPOINT}/search/photos?${params}`, { headers });
+  };
 
-    if (!response.ok) {
-      return Promise.reject();
-    }
+  /**
+   * Extract the results from a page.
+   * @param {{ results: FetchResult[], total_pages: number }} response Response.
+   * @param {number} page Page number.
+   * @returns {{ results: FetchResult[], hasMore: boolean }} Results and whether another page
+   * follows.
+   */
+  const parsePage = ({ results, total_pages: totalPages }, page) => ({
+    results,
+    hasMore: totalPages !== page,
+  });
 
-    const { results: pagedResults, total_pages: totalPages } = await response.json();
-
-    results.push(...pagedResults);
-
-    if (totalPages === page) {
-      break;
-    }
-
-    // Wait for a bit before requesting the next page
-    await sleep(50);
-  }
+  const results = await fetchPagedResults({ maxPages: 5, fetchPage, parsePage });
 
   return parseResults(results);
 };

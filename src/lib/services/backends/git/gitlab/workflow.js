@@ -3,7 +3,7 @@ import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { cmsConfig } from '$lib/services/config';
+import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
 import {
   getAllStatusLabels,
   getStatusFromLabels,
@@ -399,8 +399,7 @@ export const updateStatus = async (pullRequest, status) => {
  * @see https://docs.gitlab.com/api/merge_requests/#merge-a-merge-request
  */
 export const publish = async (pullRequest) => {
-  const { backend } = cmsConfig.current ?? {};
-  const squash = backend && 'squash_merges' in backend ? !!backend.squash_merges : false;
+  const squash = isSquashMergeEnabled();
 
   await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}/merge`, {
     method: 'PUT',

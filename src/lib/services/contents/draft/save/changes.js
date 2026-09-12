@@ -1,6 +1,5 @@
 import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
-import { IndexedDB } from '@sveltia/utils/storage';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { globalAssetFolder } from '$lib/services/assets/folders';
@@ -9,13 +8,16 @@ import { cmsConfig } from '$lib/services/config';
 import { isNestedCollection } from '$lib/services/contents/collection/nested';
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
+import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
 import { getField } from '$lib/services/contents/entry/fields';
 import { formatEntryFile } from '$lib/services/contents/file/format';
+import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
+ * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import {
  * Asset,
  * Entry,
@@ -224,54 +226,18 @@ export const getPreviousSha = async ({ previousPath, cacheDB }) => {
  */
 export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
   const { collection, isNew, originalEntry, collectionFile } = draft;
+  const config = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const {
     _file,
-    _i18n: { i18nEnabled, defaultLocale, structureMap: { i18nSingleFileDefaultRoot } = {} },
-  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+    _i18n: { defaultLocale },
+  } = config;
 
-  const { slug, path, content } = savingEntry.locales[defaultLocale];
+  const { slug, path } = savingEntry.locales[defaultLocale];
   const previousPath = originalEntry?.locales[defaultLocale]?.path;
   // Comparing the paths rather than the slugs also catches an entry moved with the path editor,
   // which leaves the slug alone
   const renamed = !isNew && !!previousPath && previousPath !== path;
-
-  /**
-   * Build the serialized content for the file. For `single_file_default_root`, the default locale’s
-   * fields are written at the root level and non-default locales are nested under their locale key.
-   * @returns {object} Serialized content object.
-   */
-  const buildFileContent = () => {
-    if (!i18nEnabled) {
-      return serializeContent({ draft, locale: '_default', valueMap: content });
-    }
-
-    const localeContents = Object.fromEntries(
-      Object.entries(savingEntry.locales)
-        .filter(([, le]) => !!le.content)
-        .map(([locale, le]) => [locale, serializeContent({ draft, locale, valueMap: le.content })]),
-    );
-
-    if (i18nSingleFileDefaultRoot) {
-      // Remove `lang` from default content to avoid stale/duplicate values; it’s always
-      // auto-generated from the configured locales.
-      const { lang: _lang, ...defaultContent } = localeContents[defaultLocale] ?? {};
-
-      const nonDefaultContent = Object.fromEntries(
-        Object.entries(localeContents).filter(([locale]) => locale !== defaultLocale),
-      );
-
-      return {
-        // Add `lang` field at the root level as per Lume’s convention for single-file i18n
-        // @see https://lume.land/plugins/multilanguage/#multilanguage-pages-from-a-single-file
-        lang: [defaultLocale, ...Object.keys(nonDefaultContent)],
-        ...defaultContent,
-        ...nonDefaultContent,
-      };
-    }
-
-    return localeContents;
-  };
 
   return {
     action: isNew ? 'create' : renamed ? 'move' : 'update',
@@ -280,7 +246,7 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
     previousPath: renamed ? previousPath : undefined,
     previousSha: await getPreviousSha({ cacheDB, previousPath }),
     data: await formatEntryFile({
-      content: buildFileContent(),
+      content: buildSingleFileContent({ config, entry: savingEntry, draft }),
       _file,
     }),
   };
@@ -403,8 +369,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
     isNew: draft.isNew,
   });
 
-  const databaseName = backend.current?.repository?.databaseName;
-  const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
+  const cacheDB = getRepositoryDatabase(backend.current?.repository, 'file-cache');
   const getFileChangeArgs = { draft, savingEntry, cacheDB };
 
   if (!i18nEnabled || i18nSingleFile || i18nSingleFileDefaultRoot) {

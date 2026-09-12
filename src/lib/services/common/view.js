@@ -1,7 +1,7 @@
-import { IndexedDB } from '@sveltia/utils/storage';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
+import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { getRegex } from '$lib/services/utils/regex';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
 
@@ -92,11 +92,19 @@ export const sortItemsByKey = (items, getKey, isStringType, order) => {
  * @param {string} storageKey Key used to store/retrieve settings in the database.
  * @param {{ current: Record<string, any> | undefined }} settingsState State to initialize and
  * persist.
+ * @param {object} [options] Options.
+ * @param {Record<string, any>} [options.defaults] Default settings, overridden by the saved ones.
+ * @returns {Promise<() => void>} Function to stop persisting the settings, so that the effect
+ * doesn’t pile up when the settings are initialized again.
  */
-export const initViewSettingsStorage = async (repository, storageKey, settingsState) => {
-  const { databaseName } = repository ?? {};
-  const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
-  const initial = (await settingsDB?.get(storageKey)) ?? {};
+export const initViewSettingsStorage = async (
+  repository,
+  storageKey,
+  settingsState,
+  { defaults = {} } = {},
+) => {
+  const settingsDB = getRepositoryDatabase(repository, 'ui-settings');
+  const initial = { ...defaults, ...(await settingsDB?.get(storageKey)) };
 
   settingsState.current = initial;
 
@@ -104,7 +112,7 @@ export const initViewSettingsStorage = async (repository, storageKey, settingsSt
   // every time the state changes (list views update this state frequently as users sort/filter).
   let lastSaved = initial;
 
-  createRootEffect(() => {
+  return createRootEffect(() => {
     const { current: _settings } = settingsState;
 
     if (equal(_settings, lastSaved)) {

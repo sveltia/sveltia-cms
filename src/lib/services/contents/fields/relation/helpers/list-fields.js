@@ -80,6 +80,55 @@ export const analyzeListFields = (allFieldNames, getFieldArgs) => {
 };
 
 /**
+ * Build the relation option for one list item: the given list wildcards in the templates are
+ * replaced with the item’s values, then the remaining non-list fields are resolved.
+ * @param {object} params Parameters.
+ * @param {TemplateStrings} params.templates Template strings.
+ * @param {[string, any][]} params.replacements Pairs of wildcard field name and item value.
+ * @param {string[]} params.staticFieldNames Field names without a list wildcard.
+ * @param {ReplacementContext} params.context Replacement context.
+ * @param {FallbackContext} params.fallbackContext Fallback context.
+ * @returns {RelationOption} Option.
+ */
+const buildListItemOption = ({
+  templates,
+  replacements,
+  staticFieldNames,
+  context,
+  fallbackContext,
+}) => {
+  const { _displayField, _valueField, _searchField } = templates;
+
+  /**
+   * Replace all the list wildcards in a template with the item values.
+   * @param {string} template Template string.
+   * @returns {string} Processed template.
+   */
+  const replaceWildcards = (template) =>
+    replacements.reduce(
+      (result, [fieldName, itemValue]) => result.replaceAll(`{{${fieldName}}}`, itemValue),
+      template,
+    );
+
+  const { label, value, searchValue } = replaceTemplateFields(
+    {
+      label: replaceWildcards(_displayField),
+      value: replaceWildcards(_valueField),
+      searchValue: replaceWildcards(_searchField),
+    },
+    staticFieldNames,
+    context,
+    fallbackContext,
+  );
+
+  return {
+    label: label || '',
+    value: value || context.slug,
+    searchValue: searchValue || label || '',
+  };
+};
+
+/**
  * Cache of pre-compiled regexes for {@link processSingleSubfieldList}, keyed by base field name.
  * @type {Map<string, RegExp>}
  */
@@ -106,8 +155,6 @@ export const processSingleSubfieldList = ({
   context,
   fallbackContext,
 }) => {
-  const { _displayField, _valueField, _searchField } = templates;
-
   const regex = getOrCreate(
     singleSubfieldRegexCache,
     baseFieldName,
@@ -124,36 +171,18 @@ export const processSingleSubfieldList = ({
     })
     .sort((a, b) => a.index - b.index);
 
-  return items.map(({ value: itemValue }) => {
-    // Replace all wildcards for this base field with the current item value
-    const processedTemplates = {
-      label: _displayField,
-      value: _valueField,
-      searchValue: _searchField,
-    };
+  const staticFieldNames = allFieldNames.filter((name) => !name.includes('*'));
 
-    groupEntries.forEach(([fieldName]) => {
-      processedTemplates.label = processedTemplates.label.replaceAll(`{{${fieldName}}}`, itemValue);
-      processedTemplates.value = processedTemplates.value.replaceAll(`{{${fieldName}}}`, itemValue);
-      processedTemplates.searchValue = processedTemplates.searchValue.replaceAll(
-        `{{${fieldName}}}`,
-        itemValue,
-      );
-    });
-
-    const { label, value, searchValue } = replaceTemplateFields(
-      processedTemplates,
-      allFieldNames.filter((name) => !name.includes('*')),
+  return items.map(({ value: itemValue }) =>
+    buildListItemOption({
+      templates,
+      // Replace all wildcards for this base field with the current item value
+      replacements: groupEntries.map(([fieldName]) => [fieldName, itemValue]),
+      staticFieldNames,
       context,
       fallbackContext,
-    );
-
-    return {
-      label: label || '',
-      value: value || context.slug,
-      searchValue: searchValue || label || '',
-    };
-  });
+    }),
+  );
 };
 
 /**
@@ -233,51 +262,25 @@ export const processComplexListField = ({
     })
     .sort((a, b) => a.index - b.index);
 
-  const { _displayField, _valueField, _searchField } = templates;
+  const staticFieldNames = allFieldNames.filter((name) => !name.includes('*'));
 
-  return listValues.map(({ index }) => {
-    // Replace all wildcards for this base field with the current list item
-    const processedTemplates = {
-      label: _displayField,
-      value: _valueField,
-      searchValue: _searchField,
-    };
+  return listValues.map(({ index }) =>
+    buildListItemOption({
+      templates,
+      // Replace all wildcards for this base field with the current list item’s subfield values
+      replacements: groupEntries.flatMap(([wildcardFieldName]) => {
+        const [, baseFieldName, subFieldKey] =
+          wildcardFieldName.match(COMPLEX_LIST_FIELD_REGEX) ?? [];
 
-    groupEntries.forEach(([wildcardFieldName]) => {
-      const wildcardMatch = wildcardFieldName.match(COMPLEX_LIST_FIELD_REGEX);
-
-      if (wildcardMatch) {
-        const [, baseFieldName, subFieldKey] = wildcardMatch;
-        const currentItemValue = content[`${baseFieldName}.${index}.${subFieldKey}`] || '';
-
-        processedTemplates.label = processedTemplates.label.replaceAll(
-          `{{${wildcardFieldName}}}`,
-          currentItemValue,
-        );
-        processedTemplates.value = processedTemplates.value.replaceAll(
-          `{{${wildcardFieldName}}}`,
-          currentItemValue,
-        );
-        processedTemplates.searchValue = processedTemplates.searchValue.replaceAll(
-          `{{${wildcardFieldName}}}`,
-          currentItemValue,
-        );
-      }
-    });
-
-    const { label, value, searchValue } = replaceTemplateFields(
-      processedTemplates,
-      allFieldNames.filter((name) => !name.includes('*')),
+        return baseFieldName
+          ? [[wildcardFieldName, content[`${baseFieldName}.${index}.${subFieldKey}`] || '']]
+          : [];
+      }),
+      staticFieldNames,
       context,
       fallbackContext,
-    );
-
-    return {
-      label: label || '',
-      value: value || context.slug,
-      searchValue: searchValue || label || '',
-    };
-  });
+    }),
+  );
 };
 
 /**

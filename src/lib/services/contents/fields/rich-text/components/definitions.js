@@ -13,7 +13,7 @@ import { escapeAttr } from '$lib/services/utils/string';
  */
 
 /**
- * Built-in image component definition. The labels are localized in `getComponentDef()`.
+ * Built-in image component definition. The labels are localized in `getBuiltInComponentDefs()`.
  * @type {EditorComponentDefinition}
  * @see https://decapcms.org/docs/widgets/#Markdown
  * @see https://sveltiacms.app/en/docs/fields/richtext
@@ -43,7 +43,8 @@ export const IMAGE_COMPONENT = {
 };
 
 /**
- * Built-in linked image component definition. The labels are localized in `getComponentDef()`.
+ * Built-in linked image component definition. The labels are localized in
+ * `getBuiltInComponentDefs()`.
  * @type {EditorComponentDefinition}
  */
 export const LINKED_IMAGE_COMPONENT = {
@@ -80,7 +81,8 @@ export const LINKED_IMAGE_COMPONENT = {
 };
 
 /**
- * Get all built-in component definitions with localized labels.
+ * Get all built-in component definitions with localized labels. This has to be a function due to
+ * localized labels.
  * @returns {EditorComponentDefinition[]} Array of built-in component definitions.
  */
 export const getBuiltInComponentDefs = () => {
@@ -93,6 +95,7 @@ export const getBuiltInComponentDefs = () => {
       { name: 'alt', label: _('editor_components.alt'), required: false },
       { name: 'title', label: _('editor_components.title'), required: false },
     ],
+    trigger: /** @type {'button'} */ ('button'),
   };
 
   return [
@@ -114,7 +117,7 @@ export const getBuiltInComponentDefs = () => {
 };
 
 /**
- * Get a component definition. This has to be a function due to localized labels.
+ * Get a component definition.
  * @param {string} name Component name.
  * @returns {EditorComponentDefinition | undefined} Definition.
  */
@@ -127,35 +130,5 @@ export const getComponentDef = (name) => {
     return { ...customComponentDef, id: `x-${name}` };
   }
 
-  // Common props with localized labels
-  const commonImageProps = {
-    icon: 'image',
-    label: _('editor_components.image'),
-    fields: [
-      { name: 'src', label: _('editor_components.src'), widget: 'image' },
-      { name: 'alt', label: _('editor_components.alt'), required: false },
-      { name: 'title', label: _('editor_components.title'), required: false },
-    ],
-    trigger: /** @type {'button'} */ ('button'),
-  };
-
-  /** @type {Record<string, EditorComponentDefinition>} */
-  const definitions = {
-    image: {
-      ...IMAGE_COMPONENT,
-      // Override with localized labels
-      ...commonImageProps,
-    },
-    'linked-image': {
-      ...LINKED_IMAGE_COMPONENT,
-      // Override with localized labels
-      ...commonImageProps,
-      fields: [
-        ...commonImageProps.fields,
-        { name: 'link', label: _('editor_components.link'), required: false },
-      ],
-    },
-  };
-
-  return definitions[name];
+  return getBuiltInComponentDefs().find(({ id }) => id === name);
 };

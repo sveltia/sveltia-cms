@@ -3,7 +3,12 @@
 import { sleep } from '@sveltia/utils/misc';
 
 import { getAssetKind } from '$lib/services/assets/kinds';
-import { cmsConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config/state';
+import { filterAssetsByQuery } from '$lib/services/integrations/media-libraries/cloud/search';
+import {
+  findLibraryOptions,
+  resolveLibraryOptions,
+} from '$lib/services/integrations/media-libraries/options';
 import { parseXml } from '$lib/services/utils/xml';
 
 /**
@@ -39,12 +44,7 @@ const MAX_RESULTS = 1000;
  * disabled.
  */
 export const getLibraryOptions = (config = cmsConfig.current) =>
-  /** @type {AzureMediaLibrary | false | undefined} */ (
-    config?.media_libraries?.azure_blob_storage
-  ) ??
-  (config?.media_library?.name === 'azure_blob_storage'
-    ? /** @type {AzureMediaLibrary} */ (config?.media_library)
-    : undefined);
+  findLibraryOptions('azure_blob_storage', config);
 
 /**
  * Check if Azure Blob Storage integration is enabled.
@@ -52,7 +52,7 @@ export const getLibraryOptions = (config = cmsConfig.current) =>
  * @returns {boolean} True if enabled, false otherwise.
  */
 export const isEnabled = (fieldConfig) => {
-  const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
+  const options = resolveLibraryOptions('azure_blob_storage', fieldConfig);
 
   return !!(options && options.container && (options.account_name || options.endpoint));
 };
@@ -64,7 +64,7 @@ export const isEnabled = (fieldConfig) => {
  * @throws {Error} If the Azure Blob Storage configuration is not available.
  */
 const getConfig = ({ fieldConfig }) => {
-  const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
+  const libOptions = resolveLibraryOptions('azure_blob_storage', fieldConfig);
 
   if (!libOptions) {
     throw new Error('Azure Blob Storage configuration is not available');
@@ -235,13 +235,8 @@ export const listBlobs = async (config, options, { maxPages = 10 } = {}) => {
 export const searchBlobs = async (query, config, options) => {
   // The Blob service doesn’t have a native search, so we list blobs and filter them client-side
   const allAssets = await listBlobs(config, options, { maxPages: 5 });
-  const lowerQuery = query.toLowerCase();
 
-  return allAssets.filter(
-    (asset) =>
-      asset.fileName.toLowerCase().includes(lowerQuery) ||
-      asset.description.toLowerCase().includes(lowerQuery),
-  );
+  return filterAssetsByQuery(allAssets, query);
 };
 
 /**

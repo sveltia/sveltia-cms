@@ -1,7 +1,10 @@
 import { _ } from '@sveltia/i18n';
 
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
-import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
+import {
+  applyDefaultBranch,
+  REPOSITORY_INFO_PLACEHOLDER,
+} from '$lib/services/backends/git/shared/repository';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -67,27 +70,16 @@ const FETCH_DEFAULT_BRANCH_NAME_QUERY = `
  * @throws {Error} When the repository could not be found, or when the repository is empty.
  */
 export const fetchDefaultBranchName = async () => {
-  const { repo, repoURL = '' } = repository;
-
   const result = /** @type {{ repository: { defaultBranchRef?: { name: string } } }} */ (
     await fetchGraphQL(FETCH_DEFAULT_BRANCH_NAME_QUERY)
   );
 
-  if (!result.repository) {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(_('repository_not_found', { values: { repo } })),
-    });
-  }
+  const branch = applyDefaultBranch(repository, {
+    found: !!result.repository,
+    branch: result.repository?.defaultBranchRef?.name,
+    getBaseURLs,
+  });
 
-  const { name: branch } = result.repository.defaultBranchRef ?? {};
-
-  if (!branch) {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(_('repository_empty', { values: { repo } })),
-    });
-  }
-
-  Object.assign(repository, { branch }, getBaseURLs(repoURL, branch));
   Object.assign(graphqlVars, { branch });
 
   return branch;

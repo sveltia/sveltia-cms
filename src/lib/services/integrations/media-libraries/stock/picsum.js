@@ -1,3 +1,5 @@
+import { fetchJSON } from '$lib/services/integrations/media-libraries/stock/utils';
+
 /**
  * @import {
  * ExternalAsset,
@@ -55,16 +57,10 @@ export const list = async () => {
     .sort(() => Math.random() - 0.5)
     .slice(0, FETCH_PAGES);
 
-  const responses = await Promise.all(
-    pages.map((page) => fetch(`${ENDPOINT}?page=${page}&limit=${LIMIT}`)),
-  );
-
-  if (responses.some((r) => !r.ok)) {
-    return Promise.reject();
-  }
-
   /** @type {FetchResult[][]} */
-  const pageResults = await Promise.all(responses.map((r) => r.json()));
+  const pageResults = await Promise.all(
+    pages.map((page) => fetchJSON(`${ENDPOINT}?page=${page}&limit=${LIMIT}`)),
+  );
 
   // Randomize the results for variety, as the API returns them in the same order for the same page.
   return parseResults(pageResults.flat().sort(() => Math.random() - 0.5));

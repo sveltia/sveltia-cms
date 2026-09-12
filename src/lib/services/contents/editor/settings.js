@@ -1,8 +1,8 @@
-import { IndexedDB } from '@sveltia/utils/storage';
 import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
 import { backend } from '$lib/services/backends';
+import { initViewSettingsStorage } from '$lib/services/common/view';
 import { selectAssetsView } from '$lib/services/contents/editor';
 import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
@@ -28,38 +28,25 @@ const effectStoppers = {};
  * @param {BackendService} _backend Backend service.
  */
 export const initSettings = async ({ repository }) => {
-  const { databaseName } = repository ?? {};
-  const settingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
-  const storageKey = 'entry-view';
-
-  const settings = {
-    showSecondPane: true,
-    showPreview: true,
-    syncScrolling: true,
-    selectAssetsView: { type: 'grid' },
-    ...(await settingsDB?.get(storageKey)),
-  };
-
-  entryEditorSettings.current = settings;
-  selectAssetsView.current = settings.selectAssetsView;
-
   // Stop the previous effects to prevent memory leaks
   effectStoppers.entryEditorSettings?.();
   effectStoppers.selectAssetsView?.();
 
-  effectStoppers.entryEditorSettings = createRootEffect(() => {
-    const { current: _settings } = entryEditorSettings;
+  effectStoppers.entryEditorSettings = await initViewSettingsStorage(
+    repository,
+    'entry-view',
+    entryEditorSettings,
+    {
+      defaults: {
+        showSecondPane: true,
+        showPreview: true,
+        syncScrolling: true,
+        selectAssetsView: { type: 'grid' },
+      },
+    },
+  );
 
-    (async () => {
-      try {
-        if (!equal(_settings, await settingsDB?.get(storageKey))) {
-          await settingsDB?.set(storageKey, _settings);
-        }
-      } catch {
-        //
-      }
-    })();
-  });
+  selectAssetsView.current = entryEditorSettings.current?.selectAssetsView;
 
   effectStoppers.selectAssetsView = createRootEffect(() => {
     const view = selectAssetsView.current;

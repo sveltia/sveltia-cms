@@ -1,5 +1,4 @@
 import { getPathInfo } from '@sveltia/utils/file';
-import { IndexedDB } from '@sveltia/utils/storage';
 import { escapeRegExp } from '@sveltia/utils/string';
 import mime from 'mime';
 
@@ -13,6 +12,7 @@ import {
 import { cmsConfig } from '$lib/services/config';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { getMergedLibraryOptions } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
+import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { createPath, createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
 import {
   THUMBNAIL_TRANSFORM_OPTIONS,
@@ -21,6 +21,7 @@ import {
 import { renderPDF } from '$lib/services/utils/media/pdf';
 
 /**
+ * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import { Asset, Entry, InternalCmsConfig, TypedFieldKeyPath } from '$lib/types/private';
  * @import { MediaField } from '$lib/types/public';
  */
@@ -199,9 +200,7 @@ export const _resetThumbnailDB = () => {
  */
 const initThumbnailDB = () => {
   if (thumbnailDB === undefined) {
-    const { databaseName } = backend.current?.repository ?? {};
-
-    thumbnailDB = databaseName ? new IndexedDB(databaseName, 'asset-thumbnails') : null;
+    thumbnailDB = getRepositoryDatabase(backend.current?.repository, 'asset-thumbnails') ?? null;
   }
 };
 

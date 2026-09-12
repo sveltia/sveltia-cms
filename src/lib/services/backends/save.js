@@ -1,11 +1,10 @@
-import { IndexedDB } from '@sveltia/utils/storage';
-
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
 import { allEntries } from '$lib/services/contents';
 import { productionSHA } from '$lib/services/deployments';
 import { user } from '$lib/services/user/account.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { getBlob } from '$lib/services/utils/file';
 
 /**
@@ -52,13 +51,12 @@ export const getCommitAuthor = () => {
  * @param {CommitResults} args.commit Commit results.
  */
 export const updateCache = async ({ changes, commit }) => {
-  const { databaseName } = backend.current?.repository ?? {};
+  const cacheDB = getRepositoryDatabase(backend.current?.repository, 'file-cache');
 
-  if (!databaseName) {
+  if (!cacheDB) {
     return;
   }
 
-  const cacheDB = new IndexedDB(databaseName, 'file-cache');
   const { files, author: commitAuthor, date: commitDate } = commit;
   const meta = { commitAuthor, commitDate };
 

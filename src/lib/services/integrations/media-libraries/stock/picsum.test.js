@@ -158,7 +158,7 @@ describe('integrations/media-libraries/stock/picsum', () => {
     it('should reject when the API response is not ok', async () => {
       vi.mocked(global.fetch).mockResolvedValue(/** @type {any} */ ({ ok: false }));
 
-      await expect(list()).rejects.toBeUndefined();
+      await expect(list()).rejects.toThrow();
     });
   });
 });

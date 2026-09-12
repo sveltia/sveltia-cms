@@ -1,11 +1,12 @@
-import { IndexedDB } from '@sveltia/utils/storage';
-
 import { backend } from '$lib/services/backends';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
+import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { formatEntryFile } from '$lib/services/contents/file/format';
+import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
+ * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import {
  * Entry,
  * FileChange,
@@ -47,55 +48,7 @@ export const resolveCacheDB = (provided) => {
     return provided;
   }
 
-  const databaseName = backend.current?.repository?.databaseName;
-
-  return databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
-};
-
-/**
- * Build the file content for a single-file entry, taking i18n single-file structures into account.
- * @param {object} args Arguments.
- * @param {InternalCollection | InternalCollectionFile} args.config Collection or collection file
- * holding the i18n configuration.
- * @param {Entry} args.entry Entry whose locales have already been updated.
- * @param {any} args.draft Synthetic draft.
- * @returns {Record<string, any>} Serializable content object passed to {@link formatEntryFile}.
- */
-export const buildSingleFileContent = ({ config, entry, draft }) => {
-  const {
-    _i18n: { i18nEnabled, defaultLocale, structureMap: { i18nSingleFileDefaultRoot } = {} },
-  } = config;
-
-  if (!i18nEnabled) {
-    return serializeContent({
-      draft,
-      locale: '_default',
-      valueMap: entry.locales[defaultLocale].content,
-    });
-  }
-
-  const localeContents = Object.fromEntries(
-    Object.entries(entry.locales)
-      .filter(([, le]) => !!le.content)
-      .map(([locale, le]) => [locale, serializeContent({ draft, locale, valueMap: le.content })]),
-  );
-
-  if (i18nSingleFileDefaultRoot) {
-    const { lang: _lang, ...defaultContent } = localeContents[defaultLocale] ?? {};
-
-    const nonDefaultContent = Object.fromEntries(
-      Object.entries(localeContents).filter(([locale]) => locale !== defaultLocale),
-    );
-
-    return {
-      lang: [defaultLocale, ...Object.keys(nonDefaultContent)],
-      ...defaultContent,
-      ...nonDefaultContent,
-    };
-  }
-
-  // `i18nSingleFile`: nested locale keys
-  return localeContents;
+  return getRepositoryDatabase(backend.current?.repository, 'file-cache');
 };
 
 /**

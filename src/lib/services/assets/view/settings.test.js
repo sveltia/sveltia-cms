@@ -101,6 +101,8 @@ describe('assets/view/settings', () => {
     it('should restore the saved view when a different folder is selected', async () => {
       vi.mocked(initViewSettingsStorage).mockImplementationOnce(async (_repo, _key, state) => {
         state.current = { uploads: { type: 'list', showInfo: false } };
+
+        return () => {};
       });
 
       await initSettings(backendService);
@@ -146,6 +148,8 @@ describe('assets/view/settings', () => {
     it('should restore and save the view per cloud storage service', async () => {
       vi.mocked(initViewSettingsStorage).mockImplementationOnce(async (_repo, _key, state) => {
         state.current = { '-/uploadcare': { type: 'list', showInfo: false } };
+
+        return () => {};
       });
 
       await initSettings(backendService);
@@ -178,6 +182,8 @@ describe('assets/view/settings', () => {
     it('should not save the view when it is equal to the saved view', async () => {
       vi.mocked(initViewSettingsStorage).mockImplementationOnce(async (_repo, _key, state) => {
         state.current = { '*': { type: 'grid', showInfo: true } };
+
+        return () => {};
       });
 
       await initSettings(backendService);

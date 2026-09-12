@@ -1,5 +1,4 @@
 import { unique } from '@sveltia/utils/array';
-import { IndexedDB } from '@sveltia/utils/storage';
 
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
@@ -12,6 +11,7 @@ import {
 } from '$lib/services/contents/collection/data';
 import { buildRenumberChanges } from '$lib/services/contents/collection/entries/reorder';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
+import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
  * @import { Asset, Entry, FileChange, InternalEntryCollection } from '$lib/types/private';
@@ -48,8 +48,7 @@ export const updateStores = ({ ids, assetPaths }) => {
  * @param {Asset[]} [assets] List of associated assets to be deleted.
  */
 export const deleteEntries = async (entries, assets = []) => {
-  const databaseName = backend.current?.repository?.databaseName;
-  const cacheDB = databaseName ? new IndexedDB(databaseName, 'file-cache') : undefined;
+  const cacheDB = getRepositoryDatabase(backend.current?.repository, 'file-cache');
   const changes = /** @type {FileChange[]} */ ([]);
   const action = 'delete';
 

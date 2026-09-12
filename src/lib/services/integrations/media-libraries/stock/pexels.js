@@ -1,7 +1,8 @@
-/* eslint-disable no-await-in-loop */
-
-import { locale as appLocale } from '@sveltia/i18n';
-import { sleep } from '@sveltia/utils/misc';
+import {
+  fetchJSON,
+  fetchPagedResults,
+  getSupportedLocale,
+} from '$lib/services/integrations/media-libraries/stock/utils';
 
 /**
  * @import {
@@ -43,16 +44,7 @@ const DESCRIPTION_REGEX = /\/photo\/(?<alt>.+?)-\d+\/$/;
  * Get the best matching locale supported by Pexels API.
  * @returns {string} Locale code.
  */
-export const getLocale = () => {
-  const locale = appLocale.current.toLowerCase();
-  const [lang] = locale.split('-');
-
-  return (
-    SUPPORTED_LOCALES.find((code) => code.toLowerCase() === locale) ??
-    SUPPORTED_LOCALES.find((code) => code.split('-')[0] === lang) ??
-    'en-US'
-  );
-};
+export const getLocale = () => getSupportedLocale(SUPPORTED_LOCALES, 'en-US');
 
 /**
  * Parse API results into ExternalAsset format.
@@ -80,14 +72,8 @@ export const parseResults = (results) =>
 export const list = async ({ apiKey }) => {
   const headers = { Authorization: apiKey };
   const params = new URLSearchParams(SEARCH_PARAMS);
-  const response = await fetch(`${ENDPOINT}/curated?${params}`, { headers });
-
-  if (!response.ok) {
-    return Promise.reject();
-  }
-
   /** @type {FetchResult[]} */
-  const results = (await response.json()).photos;
+  const results = (await fetchJSON(`${ENDPOINT}/curated?${params}`, { headers })).photos;
 
   return parseResults(results);
 };
@@ -109,29 +95,25 @@ export const search = async (query, { apiKey }) => {
     locale: getLocale(),
   });
 
-  /** @type {FetchResult[]} */
-  const results = [];
-
-  for (let page = 1; page <= 2; page += 1) {
+  /**
+   * Fetch a page of search results.
+   * @param {number} page Page number.
+   * @returns {Promise<{ photos: FetchResult[], next_page?: string }>} Response.
+   */
+  const fetchPage = (page) => {
     params.set('page', String(page));
 
-    const response = await fetch(`${ENDPOINT}/search?${params}`, { headers });
+    return fetchJSON(`${ENDPOINT}/search?${params}`, { headers });
+  };
 
-    if (!response.ok) {
-      return Promise.reject();
-    }
-
-    const { photos: pagedResults, next_page: nextPage } = await response.json();
-
-    results.push(...pagedResults);
-
-    if (!nextPage) {
-      break;
-    }
-
-    // Wait for a bit before requesting the next page
-    await sleep(50);
-  }
+  /**
+   * Extract the results from a page.
+   * @param {{ photos: FetchResult[], next_page?: string }} response Response.
+   * @returns {{ results: FetchResult[], hasMore: boolean }} Results and whether another page
+   * follows.
+   */
+  const parsePage = ({ photos, next_page: nextPage }) => ({ results: photos, hasMore: !!nextPage });
+  const results = await fetchPagedResults({ maxPages: 2, fetchPage, parsePage });
 
   return parseResults(results);
 };

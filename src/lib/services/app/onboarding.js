@@ -1,9 +1,12 @@
-import { IndexedDB } from '@sveltia/utils/storage';
-
 import { backend } from '$lib/services/backends';
 import { user } from '$lib/services/user/account.svelte';
 import { env } from '$lib/services/user/env.svelte';
+import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
+
+/**
+ * @import { IndexedDB } from '@sveltia/utils/storage';
+ */
 
 /**
  * The IndexedDB instance for storing UI settings.
@@ -37,13 +40,7 @@ const getDatabase = () => {
     return uiSettingsDB;
   }
 
-  const { databaseName } = backend.current?.repository ?? {};
-
-  if (!databaseName) {
-    return undefined;
-  }
-
-  uiSettingsDB = new IndexedDB(databaseName, 'ui-settings');
+  uiSettingsDB = getRepositoryDatabase(backend.current?.repository, 'ui-settings');
 
   return uiSettingsDB;
 };

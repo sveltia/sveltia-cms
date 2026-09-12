@@ -247,7 +247,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      await expect(list({ apiKey: mockApiKey })).rejects.toBeUndefined();
+      await expect(list({ apiKey: mockApiKey })).rejects.toThrow();
     });
 
     it('should use supported locale in list parameters', async () => {
@@ -388,7 +388,7 @@ describe('integrations/media-libraries/stock/pixabay', () => {
         }),
       );
 
-      await expect(search('test', { apiKey: mockApiKey })).rejects.toBeUndefined();
+      await expect(search('test', { apiKey: mockApiKey })).rejects.toThrow();
     });
 
     it('should use supported locale in search parameters', async () => {

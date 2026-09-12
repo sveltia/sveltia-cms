@@ -16,6 +16,8 @@ import {
   initServerSideAuth,
   openPopup,
   sendMessage,
+  signInToBackend,
+  signOut,
 } from './auth';
 
 vi.mock('@sveltia/utils/crypto', () => ({
@@ -1463,6 +1465,46 @@ describe('git/shared/auth', () => {
         token: 'existing-token',
         refreshToken: 'existing-refresh-token',
       });
+    });
+  });
+
+  describe('signInToBackend', () => {
+    it('should fetch the user profile with existing tokens', async () => {
+      const user = { id: 1, login: 'user', backendName: 'github' };
+      const getUserProfile = vi.fn().mockResolvedValue(user);
+
+      const result = await signInToBackend({
+        options: { token: 'existing-token', refreshToken: 'existing-refresh-token', auto: false },
+        getUserProfile,
+      });
+
+      expect(getUserProfile).toHaveBeenCalledWith({
+        token: 'existing-token',
+        refreshToken: 'existing-refresh-token',
+      });
+      expect(result).toEqual(user);
+    });
+
+    it('should return undefined without fetching the profile when no token is obtained', async () => {
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'github', site_domain: 'example.com' },
+      });
+
+      const getUserProfile = vi.fn();
+
+      const result = await signInToBackend({
+        options: { token: undefined, refreshToken: undefined, auto: true },
+        getUserProfile,
+      });
+
+      expect(result).toBeUndefined();
+      expect(getUserProfile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('signOut', () => {
+    it('should resolve to undefined', async () => {
+      await expect(signOut()).resolves.toBeUndefined();
     });
   });
 

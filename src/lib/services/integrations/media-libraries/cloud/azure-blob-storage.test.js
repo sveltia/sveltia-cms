@@ -2,7 +2,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { cmsConfig } from '$lib/services/config';
+import { cmsConfig } from '$lib/services/config/state';
 
 import azureBlobStorageService, {
   buildContainerUrl,
@@ -26,7 +26,7 @@ import azureBlobStorageService, {
 } from './azure-blob-storage';
 
 // Mock dependencies
-vi.mock('$lib/services/config', () => ({
+vi.mock('$lib/services/config/state', () => ({
   cmsConfig: { current: undefined },
 }));
 
