@@ -5,31 +5,22 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import {
-    Alert,
-    Button,
-    EmptyState,
-    InfiniteScroll,
-    SecretInput,
-    TextInput,
-    Toast,
-  } from '@sveltia/ui';
+  import { Alert, EmptyState, InfiniteScroll, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { sanitize } from 'isomorphic-dompurify';
   import { onMount, untrack } from 'svelte';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import CloudServiceAuth from '$lib/components/assets/shared/cloud-service-auth.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
+  import { getFetchOptions } from '$lib/services/assets/external';
   import { processFile } from '$lib/services/assets/process';
   import { cmsConfig } from '$lib/services/config';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { env } from '$lib/services/user/env.svelte';
-  import { prefs } from '$lib/services/user/prefs.svelte';
-  import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
   /**
    * @import {
@@ -69,14 +60,9 @@
   const {
     serviceType = 'stock_assets',
     serviceId = '',
-    serviceLabel = '',
     hotlinking = false,
     authType = 'api_key',
-    developerURL = '',
-    apiKeyURL = '',
-    apiKeyPattern,
     init,
-    signIn,
     list,
     search,
     upload,
@@ -93,14 +79,11 @@
     /** @type {number} */ (allMediaLibraryOptions.max_file_size ?? Infinity),
   );
 
-  const input = $state({ userName: '', password: '' });
   let hasConfig = $state(true);
   let hasAuthInfo = $state(false);
   let apiKey = $state('');
   let userName = $state('');
   let password = $state('');
-  /** @type {'initial' | 'requested' | 'success' | 'error'} */
-  let authState = $state('initial');
   /** @type {ExternalAsset[] | null} */
   let listedAssets = $state(null);
   /** @type {string | undefined} */
@@ -237,6 +220,19 @@
     }
   };
 
+  /**
+   * Load the stored credentials. Fetching the assets is left to the effect below, which reacts to
+   * `hasAuthInfo` being set.
+   */
+  const loadAuthInfo = () => {
+    const options = getFetchOptions(serviceProps);
+
+    apiKey = options.apiKey;
+    userName = options.userName ?? '';
+    password = options.password ?? '';
+    hasAuthInfo = authType === 'none' || !!apiKey || !!password;
+  };
+
   onMount(() => {
     (async () => {
       if (typeof init === 'function') {
@@ -248,9 +244,7 @@
         return;
       }
 
-      apiKey = prefs.apiKeys?.[serviceId] ?? '';
-      [userName, password] = (prefs.logins?.[serviceId] ?? '').split(' ');
-      hasAuthInfo = authType === 'none' || !!apiKey || !!password;
+      loadAuthInfo();
       listedAssets = null;
     })();
   });
@@ -326,106 +320,7 @@
     {@render content()}
   {/if}
 {:else if hasConfig}
-  <EmptyState>
-    <p role="alert">
-      {#if isStockAssets}
-        {@html sanitize(
-          _('prefs.media.stock_photos.description', {
-            values: {
-              service: serviceLabel,
-              homeHref: `href="${developerURL}"`,
-              apiKeyHref: `href="${apiKeyURL}"`,
-            },
-          })
-            // Remove invisible characters used for link detection in the locale string
-            .replace(/[\u2068\u2069]/g, ''),
-          LINK_SANITIZE_OPTIONS,
-        )}
-      {/if}
-      {#if serviceType === 'cloud_storage'}
-        {@html sanitize(
-          _(`cloud_storage.${serviceId}.auth.${authState}`, {
-            default: _(`cloud_storage.auth.${authType}.${authState}`, {
-              values: {
-                service: serviceLabel,
-                key: _(`cloud_storage.${serviceId}.auth_key_label`, {
-                  default: _(`cloud_storage.auth.${authType}.key_label`),
-                }),
-              },
-            }),
-          }),
-          LINK_SANITIZE_OPTIONS,
-        )}
-      {/if}
-    </p>
-    {#if authType === 'api_key'}
-      <div role="none" class="input-outer">
-        <TextInput
-          dir="ltr"
-          flex
-          monospace
-          spellcheck="false"
-          aria-label={_('prefs.media.stock_photos.field_label', {
-            values: { service: serviceLabel },
-          })}
-          oninput={(event) => {
-            const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
-
-            if (apiKeyPattern?.test(_value)) {
-              apiKey = _value;
-              hasAuthInfo = true;
-              prefs.apiKeys ??= {};
-              prefs.apiKeys[serviceId] = apiKey;
-              getAssets();
-            }
-          }}
-        />
-      </div>
-    {/if}
-    {#if authType === 'password'}
-      <div role="none" class="input-outer">
-        <TextInput
-          dir="ltr"
-          flex
-          spellcheck="false"
-          aria-label={_('username')}
-          disabled={authState === 'requested'}
-          bind:value={input.userName}
-        />
-      </div>
-      <div role="none" class="input-outer">
-        <SecretInput
-          aria-label={_('password')}
-          disabled={authState === 'requested'}
-          bind:value={input.password}
-        />
-      </div>
-      <div role="none" class="input-outer">
-        <Button
-          variant="secondary"
-          label={_('sign_in')}
-          disabled={!input.userName || !input.password || authState === 'requested'}
-          onclick={async () => {
-            authState = 'requested';
-            input.userName = input.userName.trim();
-            input.password = input.password.trim();
-
-            if (await signIn?.(input.userName, input.password)) {
-              authState = 'success';
-              userName = input.userName;
-              password = input.password;
-              hasAuthInfo = true;
-              prefs.logins ??= {};
-              prefs.logins[serviceId] = [userName, password].join(' ');
-              getAssets();
-            } else {
-              authState = 'error';
-            }
-          }}
-        />
-      </div>
-    {/if}
-  </EmptyState>
+  <CloudServiceAuth {serviceProps} onAuth={loadAuthInfo} />
 {:else}
   <EmptyState>
     <span role="alert">{_('cloud_storage.invalid')}</span>
@@ -454,15 +349,5 @@
   .grid-wrapper {
     overflow-y: auto;
     height: 100%;
-  }
-
-  p {
-    margin: 0 0 8px;
-  }
-
-  .input-outer {
-    width: 400px;
-    max-width: 100%;
-    text-align: center;
   }
 </style>

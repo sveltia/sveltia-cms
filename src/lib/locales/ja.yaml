@@ -363,6 +363,9 @@ viewing_x_asset_folder: |
     0   {{ 「{$folder}」アセットフォルダーを表示しています。ここにはまだアセットがありません。 }}
     1   {{ 「{$folder}」アセットフォルダーを表示しています。ここにはひとつのアセットがあります。 }}
     *   {{ 「{$folder}」アセットフォルダーを表示しています。ここには {$count} 個のアセットがあります。 }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: '{$service} 上のアセットを表示しています。'
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -404,6 +407,10 @@ sort_keys:
   commit_author: 更新者
   # Sort by the last commit date
   commit_date: 更新日時
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: 変更日時
+  # Sort by file size
+  size: サイズ
   # Sort by the entry’s computed summary text
   _summary: サマリー
   # Manual order defined by the user via drag-and-drop
@@ -415,6 +422,8 @@ ascending: '{$label} (A–Z)'
 ascending_date: '{$label} (古い順)'
 descending: '{$label} (Z–A)'
 descending_date: '{$label} (新しい順)'
+ascending_number: '{$label} (小さい順)'
+descending_number: '{$label} (大きい順)'
 
 # Filter menu: button labels and options
 filter: 絞り込み
@@ -521,6 +530,8 @@ upload_assets: 新しいアセットをアップロード
 # Edit options menu: button and item labels
 edit_options: 編集オプション
 show_edit_options: 編集オプションを表示
+# Copy menu aria-label
+copy_options: コピーオプション
 # Edit menu items with specific asset names
 edit_asset: アセットを編集
 # {$name} is the selected asset name
@@ -744,6 +755,9 @@ keep_both: 両方とも残す
 # Upload progress and error messages
 uploading_files_progress: アップロード中…
 uploading_files_failed: アップロードに失敗しました。
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: 削除に失敗しました。
+renaming_asset_failed: 名前の変更に失敗しました。
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -827,6 +841,11 @@ asset_paths_copied: |
   .match $count
     1   {{ ファイルパスがクリップボードにコピーされました。 }}
     *   {{ {$count} 個のファイルパスがクリップボードにコピーされました。 }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    1   {{ ファイル ID がクリップボードにコピーされました。 }}
+    *   {{ {$count} 個のファイル ID がクリップボードにコピーされました。 }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -1164,6 +1183,10 @@ public_urls: |
 # {$count} is the number of selected assets
 file_paths: |
   ファイルパス
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  ファイル ID
 file_data: ファイルデータ
 
 # ==============================================================================

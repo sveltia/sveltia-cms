@@ -6,7 +6,7 @@
   import { getField } from '$lib/services/contents/entry/fields';
 
   /**
-   * @import { AssetListView, EntryListView } from '$lib/types/private';
+   * @import { AssetListView, EntryListView, SortKey } from '$lib/types/private';
    */
 
   /**
@@ -15,7 +15,7 @@
    * @property {string} aria-controls The `aria-controls` attribute for the menu.
    * @property {string} [label] Menu button label.
    * @property {boolean} [disabled] Whether to disable the button.
-   * @property {{ label: string, key: string }[]} [sortKeys] Sort keys to display in the menu.
+   * @property {SortKey[]} [sortKeys] Sort keys to display in the menu.
    * @property {string | undefined} [collectionName] Current collection name.
    */
 
@@ -30,22 +30,33 @@
     collectionName = undefined,
     /* eslint-enable prefer-const */
   } = $props();
+
+  /**
+   * Get the localized label for a sort order, worded for the type of the sorted value.
+   * @param {SortKey} sortKey Sort key.
+   * @param {string} order Sort order.
+   * @returns {string} Label.
+   */
+  const getOrderLabel = ({ key, label: _label, type }, order) => {
+    const isDate =
+      type === 'date' ||
+      DATE_FIELDS.includes(key) ||
+      (!!collectionName && getField({ collectionName, keyPath: key })?.widget === 'datetime');
+
+    const suffix = isDate ? '_date' : type === 'number' ? '_number' : '';
+
+    return _(`${order}${suffix}`, { values: { label: _label } });
+  };
 </script>
 
 <MenuButton variant="ghost" label={label || _('sort')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
     <Menu aria-label={_('sorting_options')} aria-controls={ariaControls}>
-      {#each sortKeys as { key, label: _label } (key)}
+      {#each sortKeys as sortKey (sortKey.key)}
+        {@const { key } = sortKey}
         {#each SORT_ORDERS as order (order)}
           <MenuItemRadio
-            label={_(
-              DATE_FIELDS.includes(key) ||
-                (!!collectionName &&
-                  getField({ collectionName, keyPath: key })?.widget === 'datetime')
-                ? `${order}_date`
-                : order,
-              { values: { label: _label } },
-            )}
+            label={getOrderLabel(sortKey, order)}
             checked={currentView.current.sort?.key === key &&
               currentView.current.sort.order === order}
             onSelect={() => {

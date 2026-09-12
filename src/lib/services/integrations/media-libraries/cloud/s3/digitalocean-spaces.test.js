@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { cmsConfig } from '$lib/services/config';
 
 import digitalOceanSpacesService, {
+  deleteFiles,
   getLibraryOptions,
   isEnabled,
   list,
+  rename,
+  replace,
   search,
   upload,
 } from './digitalocean-spaces';
@@ -29,6 +32,9 @@ vi.mock('./core', async (importOriginal) => {
     listS3Objects: vi.fn(),
     searchS3Objects: vi.fn(),
     uploadToS3: vi.fn(),
+    deleteS3Objects: vi.fn(),
+    renameS3Object: vi.fn(),
+    replaceS3Object: vi.fn(),
   };
 });
 
@@ -288,6 +294,71 @@ describe('integrations/media-libraries/cloud/s3/digitalocean-spaces', () => {
       cmsConfig.current = /** @type {any} */ ({});
 
       await expect(upload([], { apiKey: 'secret', fieldConfig: undefined })).rejects.toThrow(
+        'DigitalOcean Spaces configuration is not available',
+      );
+    });
+  });
+
+  describe('delete, rename and replace', () => {
+    /** @type {any} */
+    const asset = { id: 'photo.jpg', fileName: 'photo.jpg' };
+    const options = { apiKey: 'secret', fieldConfig: undefined };
+
+    it('should expose the management functions on the service', () => {
+      expect(digitalOceanSpacesService).toMatchObject({ delete: deleteFiles, rename, replace });
+    });
+
+    it('should call deleteS3Objects with the resolved config', async () => {
+      const core = await import('./core');
+
+      await deleteFiles([asset], options);
+
+      expect(core.deleteS3Objects).toHaveBeenCalledWith(
+        [asset],
+        expect.objectContaining({ bucket: mockBucket }),
+        options,
+      );
+    });
+
+    it('should call renameS3Object with the resolved config', async () => {
+      const core = await import('./core');
+
+      await rename(asset, 'renamed.jpg', options);
+
+      expect(core.renameS3Object).toHaveBeenCalledWith(
+        asset,
+        'renamed.jpg',
+        expect.objectContaining({ bucket: mockBucket }),
+        options,
+      );
+    });
+
+    it('should call replaceS3Object with the resolved config', async () => {
+      const core = await import('./core');
+      const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+      await replace(asset, file, options);
+
+      expect(core.replaceS3Object).toHaveBeenCalledWith(
+        asset,
+        file,
+        expect.objectContaining({ bucket: mockBucket }),
+        options,
+      );
+    });
+
+    it('should reject when config is not available', async () => {
+      cmsConfig.current = /** @type {any} */ ({});
+
+      const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+      await expect(deleteFiles([asset], options)).rejects.toThrow(
+        'DigitalOcean Spaces configuration is not available',
+      );
+      await expect(rename(asset, 'renamed.jpg', options)).rejects.toThrow(
+        'DigitalOcean Spaces configuration is not available',
+      );
+      await expect(replace(asset, file, options)).rejects.toThrow(
         'DigitalOcean Spaces configuration is not available',
       );
     });

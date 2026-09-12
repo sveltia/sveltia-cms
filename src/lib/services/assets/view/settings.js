@@ -1,6 +1,7 @@
 import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
+import { selectedCloudService } from '$lib/services/assets/external';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { currentView, defaultView } from '$lib/services/assets/view';
 import { initViewSettingsStorage } from '$lib/services/common/view';
@@ -17,19 +18,33 @@ import { createRawState, createRootEffect } from '$lib/services/utils/state.svel
 export const assetListSettings = createRawState();
 
 /**
+ * Get the key under which the view settings for the selected location are saved: the internal
+ * path of a repository folder, `-/{serviceId}` for a cloud storage service, or `*` for All Assets.
+ * @returns {string} Key.
+ */
+export const getSettingsKey = () => {
+  const service = selectedCloudService.current;
+
+  if (service) {
+    return `-/${service.serviceId}`;
+  }
+
+  return selectedAssetFolder.current?.internalPath ?? '*';
+};
+
+/**
  * Initialize {@link assetListSettings} and relevant effects.
  * @param {BackendService} _backend Backend service.
  */
 export const initSettings = async ({ repository }) => {
   await initViewSettingsStorage(repository, 'assets-view', assetListSettings);
 
-  // Restore the view settings when a different folder is selected
+  // Restore the view settings when a different folder or service is selected
   createRootEffect(() => {
-    const folder = selectedAssetFolder.current;
+    void [selectedAssetFolder.current, selectedCloudService.current];
 
     untrack(() => {
-      const view =
-        assetListSettings.current?.[folder?.internalPath ?? '*'] ?? structuredClone(defaultView);
+      const view = assetListSettings.current?.[getSettingsKey()] ?? structuredClone(defaultView);
 
       if (!equal(view, currentView.current)) {
         currentView.current = view;
@@ -42,11 +57,11 @@ export const initSettings = async ({ repository }) => {
     const view = currentView.current;
 
     untrack(() => {
-      const path = selectedAssetFolder.current?.internalPath ?? '*';
-      const savedView = assetListSettings.current?.[path] ?? {};
+      const key = getSettingsKey();
+      const savedView = assetListSettings.current?.[key] ?? {};
 
       if (!equal(view, savedView)) {
-        assetListSettings.current = { ...assetListSettings.current, [path]: view };
+        assetListSettings.current = { ...assetListSettings.current, [key]: view };
       }
     });
   });

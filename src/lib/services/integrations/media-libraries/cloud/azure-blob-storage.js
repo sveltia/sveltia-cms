@@ -245,12 +245,53 @@ export const searchBlobs = async (query, config, options) => {
 };
 
 /**
+ * Upload a single file to the configured container as a block blob under the given name,
+ * overwriting any existing blob with the same name.
+ * @param {object} params Parameters.
+ * @param {string} params.key Blob name.
+ * @param {File} params.file File to upload.
+ * @param {AzureMediaLibrary} params.config Azure Blob Storage configuration.
+ * @param {string} params.token SAS token.
+ * @returns {Promise<AzureBlob>} Uploaded blob.
+ * @see https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob
+ */
+export const putBlob = async ({ key, file, config, token }) => {
+  const url = `${buildContainerUrl(config)}/${encodeKey(key)}`;
+  const fileContent = await file.arrayBuffer();
+
+  const response = await fetch(buildRequestUrl({ url, token }), {
+    method: 'PUT',
+    headers: {
+      // The `x-ms-version` header is omitted on purpose: with a SAS, the token’s `sv` parameter
+      // determines the service version, and each extra header must be allowed by a CORS rule
+      'x-ms-blob-type': 'BlockBlob',
+      'Content-Type': file.type || 'application/octet-stream',
+    },
+    body: fileContent,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    throw new Error(`Failed to upload file ${file.name}: ${errorText}`);
+  }
+
+  return {
+    Name: key,
+    Properties: {
+      'Last-Modified': new Date().toUTCString(),
+      'Content-Length': String(file.size),
+      'Content-Type': file.type,
+    },
+  };
+};
+
+/**
  * Upload files to the configured container as block blobs.
  * @param {File[]} files Files to upload.
  * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
  * @returns {Promise<ExternalAsset[]>} Uploaded assets.
- * @see https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob
  */
 export const uploadBlobs = async (files, config, options) => {
   if (files.length === 0) {
@@ -264,7 +305,6 @@ export const uploadBlobs = async (files, config, options) => {
     return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
   }
 
-  const containerUrl = buildContainerUrl(config);
   /** @type {AzureBlob[]} */
   const uploadedBlobs = [];
 
@@ -274,34 +314,8 @@ export const uploadBlobs = async (files, config, options) => {
     // Extract only the filename to prevent path traversal via crafted File objects
     const sanitizedName = file.name.split(/[/\\]/).filter(Boolean).at(-1) ?? file.name;
     const key = prefix ? `${prefix}${sanitizedName}` : sanitizedName;
-    const url = `${containerUrl}/${encodeKey(key)}`;
-    const fileContent = await file.arrayBuffer();
 
-    const response = await fetch(buildRequestUrl({ url, token }), {
-      method: 'PUT',
-      headers: {
-        // The `x-ms-version` header is omitted on purpose: with a SAS, the token’s `sv` parameter
-        // determines the service version, and each extra header must be allowed by a CORS rule
-        'x-ms-blob-type': 'BlockBlob',
-        'Content-Type': file.type || 'application/octet-stream',
-      },
-      body: fileContent,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      throw new Error(`Failed to upload file ${file.name}: ${errorText}`);
-    }
-
-    uploadedBlobs.push({
-      Name: key,
-      Properties: {
-        'Last-Modified': new Date().toUTCString(),
-        'Content-Length': String(file.size),
-        'Content-Type': file.type,
-      },
-    });
+    uploadedBlobs.push(await putBlob({ key, file, config, token }));
 
     // Wait a bit between uploads
     if (files.length > 1) {
@@ -310,6 +324,132 @@ export const uploadBlobs = async (files, config, options) => {
   }
 
   return parseBlobResults(uploadedBlobs, config, token);
+};
+
+/**
+ * Delete blobs from the configured container. The account’s CORS rules must allow the `DELETE`
+ * method, in addition to the `GET` and `PUT` methods needed for listing and uploading; otherwise
+ * the browser blocks the request at the preflight stage.
+ * @param {ExternalAsset[]} assets Assets to delete. The `id` of each asset is the blob name.
+ * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
+ * @returns {Promise<void>}
+ * @see https://learn.microsoft.com/en-us/rest/api/storageservices/delete-blob
+ */
+export const deleteBlobs = async (assets, config, options) => {
+  const { apiKey: token } = options;
+
+  if (!token) {
+    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
+  }
+
+  const containerUrl = buildContainerUrl(config);
+
+  // Delete blobs one by one
+  // eslint-disable-next-line no-restricted-syntax
+  for (const { id: key } of assets) {
+    const url = `${containerUrl}/${encodeKey(key)}`;
+    const response = await fetch(buildRequestUrl({ url, token }), { method: 'DELETE' });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      throw new Error(`Failed to delete blob ${key}: ${errorText}`);
+    }
+
+    // Wait a bit between requests
+    if (assets.length > 1) {
+      await sleep(50);
+    }
+  }
+
+  return undefined;
+};
+
+/**
+ * Rename a blob in the configured container. The Blob service has no rename operation, so the blob
+ * is copied to the new name with the synchronous `Put Blob From URL` operation, and then the
+ * original is deleted. The account’s CORS rules must allow the `PUT` and `DELETE` methods as well
+ * as the `x-ms-copy-source` header, in addition to `x-ms-blob-type`; otherwise the browser blocks
+ * the request at the preflight stage.
+ * @param {ExternalAsset} asset Asset to rename. Its `id` is the blob name.
+ * @param {string} newName New file name, without a directory.
+ * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
+ * @returns {Promise<ExternalAsset>} Renamed asset.
+ * @see https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob-from-url
+ */
+export const renameBlob = async (asset, newName, config, options) => {
+  const { apiKey: token } = options;
+
+  if (!token) {
+    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
+  }
+
+  const { id: key, size, lastModified } = asset;
+  const containerUrl = buildContainerUrl(config);
+  const dirName = key.split('/').slice(0, -1).join('/');
+  const newKey = dirName ? `${dirName}/${newName}` : newName;
+  const url = `${containerUrl}/${encodeKey(newKey)}`;
+
+  const response = await fetch(buildRequestUrl({ url, token }), {
+    method: 'PUT',
+    headers: {
+      'x-ms-blob-type': 'BlockBlob',
+      // The source must be readable by the service, so the SAS token is appended
+      'x-ms-copy-source': buildRequestUrl({ url: `${containerUrl}/${encodeKey(key)}`, token }),
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    throw new Error(`Failed to copy blob ${key}: ${errorText}`);
+  }
+
+  // With a SAS token issued for a service version older than 2020-04-08, the request is handled as
+  // an asynchronous `Copy Blob` operation instead. Never remove the source while the copy is still
+  // pending, otherwise the copy fails and the file is lost
+  if (response.headers.get('x-ms-copy-status') === 'pending') {
+    throw new Error(`Failed to copy blob ${key}: the copy operation is still pending`);
+  }
+
+  await deleteBlobs([asset], config, options);
+
+  return parseBlobResults(
+    [
+      {
+        Name: newKey,
+        Properties: {
+          ...(lastModified && { 'Last-Modified': lastModified.toUTCString() }),
+          ...(size && { 'Content-Length': String(size) }),
+        },
+      },
+    ],
+    config,
+    token,
+  )[0];
+};
+
+/**
+ * Replace a blob in the configured container with a new file, keeping the blob name so that the
+ * URL stays the same.
+ * @param {ExternalAsset} asset Asset to replace. Its `id` is the blob name.
+ * @param {File} file New file.
+ * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
+ * @returns {Promise<ExternalAsset>} Replaced asset.
+ */
+export const replaceBlob = async (asset, file, config, options) => {
+  const { apiKey: token } = options;
+
+  if (!token) {
+    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
+  }
+
+  const blob = await putBlob({ key: asset.id, file, config, token });
+
+  return parseBlobResults([blob], config, token)[0];
 };
 
 /**
@@ -336,6 +476,35 @@ export const search = async (query, options) => searchBlobs(query, getConfig(opt
 export const upload = async (files, options) => uploadBlobs(files, getConfig(options), options);
 
 /**
+ * Delete files from Azure Blob Storage.
+ * @param {ExternalAsset[]} assets Assets to delete.
+ * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+ * @returns {Promise<void>}
+ */
+export const deleteFiles = async (assets, options) =>
+  deleteBlobs(assets, getConfig(options), options);
+
+/**
+ * Rename a file on Azure Blob Storage.
+ * @param {ExternalAsset} asset Asset to rename.
+ * @param {string} newName New file name.
+ * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+ * @returns {Promise<ExternalAsset>} Renamed asset.
+ */
+export const rename = async (asset, newName, options) =>
+  renameBlob(asset, newName, getConfig(options), options);
+
+/**
+ * Replace a file on Azure Blob Storage with a new file.
+ * @param {ExternalAsset} asset Asset to replace.
+ * @param {File} file New file.
+ * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+ * @returns {Promise<ExternalAsset>} Replaced asset.
+ */
+export const replace = async (asset, file, options) =>
+  replaceBlob(asset, file, getConfig(options), options);
+
+/**
  * Azure Blob Storage media library service integration.
  * @type {MediaLibraryService}
  */
@@ -354,4 +523,7 @@ export default {
   list,
   search,
   upload,
+  delete: deleteFiles,
+  rename,
+  replace,
 };

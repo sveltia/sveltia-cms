@@ -1,6 +1,9 @@
 import {
+  deleteS3Objects,
   getLibraryOptions as getS3LibraryOptions,
   listS3Objects,
+  renameS3Object,
+  replaceS3Object,
   searchS3Objects,
   uploadToS3,
 } from './core';
@@ -73,6 +76,35 @@ export const search = async (query, options) => searchS3Objects(query, getConfig
 export const upload = async (files, options) => uploadToS3(files, getConfig(options), options);
 
 /**
+ * Delete files from Amazon S3.
+ * @param {ExternalAsset[]} assets Assets to delete.
+ * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+ * @returns {Promise<void>}
+ */
+export const deleteFiles = async (assets, options) =>
+  deleteS3Objects(assets, getConfig(options), options);
+
+/**
+ * Rename a file on Amazon S3.
+ * @param {ExternalAsset} asset Asset to rename.
+ * @param {string} newName New file name.
+ * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+ * @returns {Promise<ExternalAsset>} Renamed asset.
+ */
+export const rename = async (asset, newName, options) =>
+  renameS3Object(asset, newName, getConfig(options), options);
+
+/**
+ * Replace a file on Amazon S3 with a new file.
+ * @param {ExternalAsset} asset Asset to replace.
+ * @param {File} file New file.
+ * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+ * @returns {Promise<ExternalAsset>} Replaced asset.
+ */
+export const replace = async (asset, file, options) =>
+  replaceS3Object(asset, file, getConfig(options), options);
+
+/**
  * Amazon S3 media library service integration.
  * @type {MediaLibraryService}
  */
@@ -91,4 +123,7 @@ export default {
   list,
   search,
   upload,
+  delete: deleteFiles,
+  rename,
+  replace,
 };

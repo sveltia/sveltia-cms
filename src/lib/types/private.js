@@ -493,6 +493,15 @@
  * list files. For stock asset services, it should return popular or curated images.
  * @property {(files: File[], options: MediaLibraryFetchOptions) =>
  * Promise<ExternalAsset[]>} [upload] Function to upload files to the cloud storage service.
+ * @property {(assets: ExternalAsset[], options: MediaLibraryFetchOptions) =>
+ * Promise<void>} [delete] Function to delete files from the cloud storage service.
+ * @property {(asset: ExternalAsset, newName: string, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalAsset>} [rename] Function to rename a file on the cloud storage service. Omitted
+ * when the service’s API can’t rename a file.
+ * @property {(asset: ExternalAsset, file: File, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalAsset>} [replace] Function to replace a file on the cloud storage service with a
+ * new file, keeping the file name and URL. Omitted when the service assigns a new URL to every
+ * uploaded file.
  */
 
 /**
@@ -1158,6 +1167,16 @@
 /**
  * Sorting order condition.
  * @typedef {'ascending' | 'descending'} SortOrder
+ */
+
+/**
+ * Sort key shown in the Sort menu.
+ * @typedef {object} SortKey
+ * @property {string} key Key, such as a field name or a special key like `commit_date`.
+ * @property {string} label Localized label.
+ * @property {'date' | 'number'} [type] Value type that determines the wording of the sort order
+ * labels, e.g. “new to old” for a date. A key that is a well-known date field, or a DateTime field
+ * of the collection, is treated as a date even if this is omitted.
  */
 
 /**

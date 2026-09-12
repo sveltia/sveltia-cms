@@ -309,6 +309,57 @@ export const upload = async (files, options) => {
 };
 
 /**
+ * Delete files from Uploadcare. The files are removed from storage in batches, as the REST API
+ * accepts up to 100 UUIDs per request.
+ * @param {ExternalAsset[]} assets Assets to delete. The `id` of each asset is the file UUID.
+ * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey).
+ * @returns {Promise<void>}
+ * @see https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File/operation/filesDelete
+ */
+export const deleteFiles = async (assets, options) => {
+  const { fieldConfig, apiKey: secretKey } = options;
+  const publicKey = getPublicKey(fieldConfig);
+
+  if (!publicKey) {
+    return Promise.reject(new Error('Uploadcare public key is not configured'));
+  }
+
+  if (!secretKey) {
+    return Promise.reject(new Error('Uploadcare secret key is not provided'));
+  }
+
+  const headers = {
+    Accept: 'application/vnd.uploadcare-v0.7+json',
+    Authorization: `Uploadcare.Simple ${publicKey}:${secretKey}`,
+    'Content-Type': 'application/json',
+  };
+
+  const uuids = assets.map(({ id }) => id);
+
+  for (let index = 0; index < uuids.length; index += 100) {
+    const response = await fetch('https://api.uploadcare.com/files/storage/', {
+      method: 'DELETE',
+      headers,
+      body: JSON.stringify(uuids.slice(index, index + 100)),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete files: ${response.statusText}`);
+    }
+
+    // Wait for a bit before sending the next batch
+    if (index + 100 < uuids.length) {
+      await sleep(50);
+    }
+  }
+
+  return undefined;
+};
+
+/**
+ * Uploadcare media library service integration. Files can’t be renamed through the REST API, and a
+ * re-uploaded file gets a new UUID (and therefore a new URL), so neither `rename` nor `replace` is
+ * provided.
  * @type {MediaLibraryService}
  */
 export default {
@@ -326,4 +377,5 @@ export default {
   list,
   search,
   upload,
+  delete: deleteFiles,
 };

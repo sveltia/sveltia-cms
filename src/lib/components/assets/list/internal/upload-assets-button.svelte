@@ -1,7 +1,8 @@
+<!--
+  @component Upload button for a repository folder, which opens the Upload Assets dialog.
+-->
 <script>
-  import { _ } from '@sveltia/i18n';
-  import { Button, Icon } from '@sveltia/ui';
-
+  import UploadButton from '$lib/components/assets/list/upload-button.svelte';
   import { canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -24,17 +25,10 @@
   const disabled = $derived(openAuthoring.current || !canCreateAsset(targetAssetFolder.current));
 </script>
 
-<Button
-  variant="primary"
-  iconic={!label}
-  {disabled}
+<UploadButton
   {label}
-  aria-label={_('upload_assets')}
+  {disabled}
   onclick={() => {
     showUploadAssetsDialog.current = true;
   }}
->
-  {#snippet startIcon()}
-    <Icon name="cloud_upload" />
-  {/snippet}
-</Button>
+/>

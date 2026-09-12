@@ -1,25 +1,18 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Button } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import mime from 'mime';
 
+  import InfoPanelLayout from '$lib/components/assets/list/info-panel-layout.svelte';
+  import UsedEntries from '$lib/components/assets/list/used-entries.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
-  import { goto } from '$lib/services/app/navigation';
   import {
     defaultAssetDetails,
     getAssetDetails,
     getAssetUsedEntries,
   } from '$lib/services/assets/details';
   import { isMediaKind } from '$lib/services/assets/kinds';
-  import { getCollectionLabel } from '$lib/services/contents/collection';
-  import {
-    getCollectionFileLabel,
-    getCollectionFilesByEntry,
-  } from '$lib/services/contents/collection/files';
-  import { getAssociatedCollections } from '$lib/services/contents/entry';
-  import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { formatDate } from '$lib/services/utils/date';
   import { formatSize } from '$lib/services/utils/file';
   import { formatDuration } from '$lib/services/utils/media/video';
@@ -66,28 +59,17 @@
   });
 </script>
 
-{#snippet usedEntryLink(
-  /** @type {Record<string, string>} */ { link, collectionLabel, entryLabel },
-)}
-  <p>
-    <Button role="link" variant="link" onclick={() => goto(link, { transitionType: 'forwards' })}>
-      <span role="none">{collectionLabel} › {entryLabel}</span>
-    </Button>
-  </p>
+{#snippet preview()}
+  <AssetPreview
+    {kind}
+    {asset}
+    variant="tile"
+    checkerboard={kind === 'image'}
+    controls={['audio', 'video'].includes(kind)}
+  />
 {/snippet}
 
-<div role="none" class="detail">
-  {#if showPreview && canPreview}
-    <div role="none" class="preview">
-      <AssetPreview
-        {kind}
-        {asset}
-        variant="tile"
-        checkerboard={kind === 'image'}
-        controls={['audio', 'video'].includes(kind)}
-      />
-    </div>
-  {/if}
+<InfoPanelLayout preview={showPreview && canPreview ? preview : undefined}>
   <section>
     <h4>{_('kind')}</h4>
     <p>
@@ -138,35 +120,7 @@
       {/if}
     </p>
   </section>
-  <section>
-    <h4>{_('used_in')}</h4>
-    {#if !usedEntries}
-      <p>{_('loading')}</p>
-    {:else}
-      {#each usedEntries as entry (entry.id)}
-        {#each getAssociatedCollections(entry) as collection (collection.name)}
-          {#key appLocale.current}
-            {@const collectionLabel = getCollectionLabel(collection)}
-            {#each getCollectionFilesByEntry(collection, entry) as file (file.name)}
-              {@render usedEntryLink({
-                link: `/collections/${collection.name}/entries/${file.name}`,
-                collectionLabel,
-                entryLabel: getCollectionFileLabel(file),
-              })}
-            {:else}
-              {@render usedEntryLink({
-                link: `/collections/${collection.name}/entries/${entry.subPath}`,
-                collectionLabel,
-                entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
-              })}
-            {/each}
-          {/key}
-        {/each}
-      {:else}
-        <p>{_('sort_keys.none')}</p>
-      {/each}
-    {/if}
-  </section>
+  <UsedEntries entries={usedEntries} />
   {#if commitAuthor}
     <section>
       <h4>{_('sort_keys.commit_author')}</h4>
@@ -191,39 +145,4 @@
       <LeafletMap {coordinates} />
     </section>
   {/if}
-</div>
-
-<style>
-  .detail {
-    flex: none;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding: 16px;
-    width: 320px;
-
-    .preview {
-      overflow: hidden;
-      margin: 0 0 16px;
-      border-radius: var(--sui-control-large-border-radius);
-      background-color: var(--sui-content-background-color);
-      aspect-ratio: 1 / 1;
-    }
-
-    section {
-      &:not(:last-child) {
-        margin: 0 0 16px;
-      }
-
-      & > :global(*) {
-        margin: 0 0 4px;
-        word-break: break-all;
-      }
-    }
-
-    h4 {
-      font-size: var(--sui-font-size-small);
-      font-weight: var(--sui-font-weight-bold);
-      color: var(--sui-secondary-foreground-color);
-    }
-  }
-</style>
+</InfoPanelLayout>

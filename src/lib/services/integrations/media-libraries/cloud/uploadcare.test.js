@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cmsConfig } from '$lib/services/config';
 
 import uploadcareService, {
+  deleteFiles,
   generateSignature,
   getLibraryOptions,
   getPublicKey,
@@ -1601,6 +1602,82 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
         { name: 'HMAC', hash: 'SHA-256' },
         false,
         ['sign'],
+      );
+    });
+  });
+
+  describe('deleteFiles', () => {
+    /** @type {any[]} */
+    const assets = [
+      { id: 'uuid-1', fileName: 'one.jpg' },
+      { id: 'uuid-2', fileName: 'two.jpg' },
+    ];
+
+    it('should be exposed on the service, without rename or replace', () => {
+      expect(uploadcareService.delete).toBe(deleteFiles);
+      expect(uploadcareService.rename).toBeUndefined();
+      expect(uploadcareService.replace).toBeUndefined();
+    });
+
+    it('should delete files in a single batch request', async () => {
+      vi.mocked(fetch).mockResolvedValue(/** @type {any} */ ({ ok: true }));
+
+      await deleteFiles(assets, { apiKey: mockSecretKey });
+
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledWith('https://api.uploadcare.com/files/storage/', {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/vnd.uploadcare-v0.7+json',
+          Authorization: `Uploadcare.Simple ${mockPublicKey}:${mockSecretKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(['uuid-1', 'uuid-2']),
+      });
+    });
+
+    it('should split more than 100 files into batches', async () => {
+      const { sleep } = await import('@sveltia/utils/misc');
+
+      const manyAssets = Array.from(
+        { length: 150 },
+        (_, index) => /** @type {any} */ ({ id: `uuid-${index}`, fileName: `${index}.jpg` }),
+      );
+
+      vi.mocked(fetch).mockResolvedValue(/** @type {any} */ ({ ok: true }));
+
+      await deleteFiles(manyAssets, { apiKey: mockSecretKey });
+
+      expect(fetch).toHaveBeenCalledTimes(2);
+
+      const bodies = vi.mocked(fetch).mock.calls.map(([, init]) => String(init?.body));
+
+      expect(JSON.parse(bodies[0])).toHaveLength(100);
+      expect(JSON.parse(bodies[1])).toHaveLength(50);
+      expect(sleep).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reject when the public key is not configured', async () => {
+      cmsConfig.current = /** @type {any} */ ({});
+
+      await expect(deleteFiles(assets, { apiKey: mockSecretKey })).rejects.toThrow(
+        'Uploadcare public key is not configured',
+      );
+    });
+
+    it('should reject when the secret key is not provided', async () => {
+      await expect(deleteFiles(assets, { apiKey: '' })).rejects.toThrow(
+        'Uploadcare secret key is not provided',
+      );
+    });
+
+    it('should throw when the request fails', async () => {
+      vi.mocked(fetch).mockResolvedValue(
+        /** @type {any} */ ({ ok: false, statusText: 'Forbidden' }),
+      );
+
+      await expect(deleteFiles(assets, { apiKey: mockSecretKey })).rejects.toThrow(
+        'Failed to delete files: Forbidden',
       );
     });
   });

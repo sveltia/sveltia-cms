@@ -2,14 +2,21 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { selectedCloudService } from '$lib/services/assets/external';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { currentView, defaultView } from '$lib/services/assets/view';
 import { initViewSettingsStorage } from '$lib/services/common/view';
 
-import { assetListSettings, initSettings } from './settings.js';
+import { assetListSettings, getSettingsKey, initSettings } from './settings.js';
 
 // Real reactive boxes are used for the mocked state, so that the effects created by `initSettings`
 // react to changes made by the tests
+vi.mock('$lib/services/assets/external', async () => {
+  const { createRawState } = await import('$lib/services/utils/state.svelte');
+
+  return { selectedCloudService: createRawState(undefined) };
+});
+
 vi.mock('$lib/services/assets/folders', async () => {
   const { createRawState } = await import('$lib/services/utils/state.svelte');
 
@@ -46,14 +53,33 @@ const backendService = { repository: { databaseName: 'test-db' } };
 const uploadsFolder = { internalPath: 'uploads', publicPath: '/uploads' };
 /** @type {any} */
 const imagesFolder = { internalPath: 'images', publicPath: '/images' };
+/** @type {any} */
+const uploadcareService = { serviceId: 'uploadcare' };
 
 describe('assets/view/settings', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     selectedAssetFolder.current = undefined;
+    selectedCloudService.current = undefined;
     currentView.current = { type: 'grid', showInfo: true };
     assetListSettings.current = undefined;
     await wait();
+  });
+
+  describe('getSettingsKey', () => {
+    it('should return `*` when nothing is selected', () => {
+      expect(getSettingsKey()).toBe('*');
+    });
+
+    it('should return the internal path of the selected folder', () => {
+      selectedAssetFolder.current = uploadsFolder;
+      expect(getSettingsKey()).toBe('uploads');
+    });
+
+    it('should return the prefixed service ID of the selected cloud storage service', () => {
+      selectedCloudService.current = uploadcareService;
+      expect(getSettingsKey()).toBe('-/uploadcare');
+    });
   });
 
   describe('initSettings', () => {
@@ -114,6 +140,28 @@ describe('assets/view/settings', () => {
       expect(assetListSettings.current).toEqual({
         '*': { type: 'grid', showInfo: true },
         uploads: { type: 'list', showInfo: true },
+      });
+    });
+
+    it('should restore and save the view per cloud storage service', async () => {
+      vi.mocked(initViewSettingsStorage).mockImplementationOnce(async (_repo, _key, state) => {
+        state.current = { '-/uploadcare': { type: 'list', showInfo: false } };
+      });
+
+      await initSettings(backendService);
+      await wait();
+
+      selectedCloudService.current = uploadcareService;
+      await wait();
+
+      expect(currentView.current).toEqual({ type: 'list', showInfo: false });
+
+      currentView.current = { type: 'grid', showInfo: false };
+      await wait();
+
+      expect(assetListSettings.current).toEqual({
+        '*': { type: 'grid', showInfo: true },
+        '-/uploadcare': { type: 'grid', showInfo: false },
       });
     });
 

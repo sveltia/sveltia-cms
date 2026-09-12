@@ -4,12 +4,15 @@
   import equal from 'fast-deep-equal';
   import { onMount } from 'svelte';
 
-  import AssetDetailsOverlay from '$lib/components/assets/details/asset-details-overlay.svelte';
-  import EditAssetDialog from '$lib/components/assets/details/edit-asset-dialog.svelte';
-  import RenameAssetDialog from '$lib/components/assets/details/rename-asset-dialog.svelte';
-  import AssetList from '$lib/components/assets/list/asset-list.svelte';
+  import ExternalDetailsOverlay from '$lib/components/assets/list/external/details-overlay.svelte';
+  import ExternalMainArea from '$lib/components/assets/list/external/main-area.svelte';
+  import AssetList from '$lib/components/assets/list/internal/asset-list.svelte';
+  import AssetDetailsOverlay from '$lib/components/assets/list/internal/details-overlay.svelte';
+  import EditAssetDialog from '$lib/components/assets/list/internal/edit-asset-dialog.svelte';
+  import InfoPanel from '$lib/components/assets/list/internal/info-panel.svelte';
+  import PrimaryToolbar from '$lib/components/assets/list/internal/primary-toolbar.svelte';
+  import RenameAssetDialog from '$lib/components/assets/list/internal/rename-dialog.svelte';
   import PrimarySidebar from '$lib/components/assets/list/primary-sidebar.svelte';
-  import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
   import SecondarySidebar from '$lib/components/assets/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
@@ -22,15 +25,30 @@
     parseLocation,
     updateContentFromHashChange,
   } from '$lib/services/app/navigation';
-  import { allAssets, overlaidAsset } from '$lib/services/assets';
+  import { allAssets, focusedAsset, overlaidAsset, selectedAssets } from '$lib/services/assets';
+  import {
+    enabledCloudServices,
+    EXTERNAL_LOCATION_PATH_PREFIX,
+    getCloudService,
+    getCloudServicePath,
+    overlaidExternalAssetId,
+    resetExternalAssets,
+    selectedCloudService,
+  } from '$lib/services/assets/external';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import {
+    assetGroups,
     getFolderLabelByCollection,
     listedAssets,
     showAssetOverlay,
   } from '$lib/services/assets/view';
+  import { sortKeys } from '$lib/services/assets/view/sort-keys';
   import { isSearchRoute } from '$lib/services/search/navigation';
   import { env } from '$lib/services/user/env.svelte';
+
+  /**
+   * @import { Asset } from '$lib/types/private';
+   */
 
   const ROUTE_REGEX = /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
 
@@ -38,13 +56,57 @@
   let isSearchPage = $state(false);
   let notFound = $state(false);
 
-  const selectedAssetFolderLabel = $derived(
+  const selectedAssetFolderLabel = $derived.by(() => {
+    if (selectedCloudService.current) {
+      return selectedCloudService.current.serviceLabel;
+    }
+
     // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized
     // label
-    appLocale.current && selectedAssetFolder.current
+    return appLocale.current && selectedAssetFolder.current
       ? getFolderLabelByCollection(selectedAssetFolder.current)
-      : '',
-  );
+      : '';
+  });
+
+  /**
+   * Select a cloud storage service listed under External Locations, whose assets are shown in
+   * place of a repository folder, and optionally show the details of an asset on the service.
+   * @param {string} serviceId Service ID.
+   * @param {string} [assetId] ID of the asset to be shown in the details overlay.
+   */
+  const selectCloudService = (serviceId, assetId = '') => {
+    const service = getCloudService(serviceId);
+
+    selectedAssetFolder.current = undefined;
+
+    if (!service) {
+      selectedCloudService.current = undefined;
+      showAssetOverlay.current = false;
+      announcedPageStatus.current = _('asset_folder_not_found');
+      notFound = true;
+
+      return;
+    }
+
+    if (selectedCloudService.current !== service) {
+      resetExternalAssets();
+      selectedCloudService.current = service;
+    }
+
+    if (assetId) {
+      overlaidExternalAssetId.current = assetId;
+      showAssetOverlay.current = true;
+      announcedPageStatus.current = _('viewing_x_asset_details', {
+        values: { name: assetId.split('/').pop() },
+      });
+    } else {
+      overlaidExternalAssetId.current = undefined;
+      showAssetOverlay.current = false;
+      announcedPageStatus.current = _('viewing_x_external_location', {
+        values: { service: service.serviceLabel },
+      });
+    }
+  };
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.
@@ -67,6 +129,24 @@
 
     const { folderPath, fileName } = match.groups;
 
+    if (
+      folderPath?.startsWith(EXTERNAL_LOCATION_PATH_PREFIX) &&
+      folderPath !== `${EXTERNAL_LOCATION_PATH_PREFIX}all`
+    ) {
+      // The path is `-/{serviceId}` for the asset list, or `-/{serviceId}/{assetId}` for the asset
+      // details. An asset ID can contain slashes, and it doesn’t have to end with a file extension,
+      // so the ID is everything after the service ID, whether the regex has split it or not
+      const [serviceId, ...rest] = folderPath
+        .slice(EXTERNAL_LOCATION_PATH_PREFIX.length)
+        .split('/');
+
+      selectCloudService(serviceId, [...rest, fileName].filter(Boolean).join('/'));
+
+      return;
+    }
+
+    selectedCloudService.current = undefined;
+
     if (!folderPath) {
       if (env.isSmallScreen) {
         // Show the asset folder list only
@@ -74,9 +154,15 @@
         showAssetOverlay.current = false;
         announcedPageStatus.current = _('viewing_asset_folder_list');
         isIndexPage = true;
-      } else {
+      } else if (allAssetFolders.current.length) {
         // Redirect to All Assets
         goto('/assets/-/all');
+      } else if (enabledCloudServices.current.length) {
+        // No asset folder is configured, so redirect to the first external location
+        goto(getCloudServicePath(enabledCloudServices.current[0]));
+      } else {
+        announcedPageStatus.current = _('asset_folder_not_found');
+        notFound = true;
       }
 
       return;
@@ -162,6 +248,8 @@
           <NotFound message={_('asset_folder_not_found')} backPath="/assets" />
         {/snippet}
       </PageContainerMainArea>
+    {:else if selectedCloudService.current}
+      <ExternalMainArea />
     {:else if !env.isSmallScreen || !isIndexPage}
       <PageContainerMainArea
         id="assets-container"
@@ -172,14 +260,23 @@
         {/snippet}
         {#snippet secondaryToolbar()}
           {#if listedAssets.current.length}
-            <SecondaryToolbar />
+            <SecondaryToolbar
+              allItems={Object.values(assetGroups.current).flat(1)}
+              selectedItems={selectedAssets}
+              totalCount={listedAssets.current.length}
+              sortKeys={sortKeys.current}
+            />
           {/if}
         {/snippet}
         {#snippet mainContent()}
           <AssetList />
         {/snippet}
         {#snippet secondarySidebar()}
-          <SecondarySidebar />
+          <SecondarySidebar asset={focusedAsset.current}>
+            {#snippet children(/** @type {Asset} */ asset)}
+              <InfoPanel {asset} showPreview={true} />
+            {/snippet}
+          </SecondarySidebar>
         {/snippet}
       </PageContainerMainArea>
     {/if}
@@ -187,7 +284,11 @@
 </PageContainer>
 
 {#if showAssetOverlay.current}
-  <AssetDetailsOverlay />
+  {#if selectedCloudService.current}
+    <ExternalDetailsOverlay />
+  {:else}
+    <AssetDetailsOverlay />
+  {/if}
 {/if}
 
 <EditAssetDialog />

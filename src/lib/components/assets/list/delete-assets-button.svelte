@@ -1,20 +1,28 @@
+<!--
+  @component
+  Delete button with a confirmation dialog, shared by repository assets and assets on external
+  locations. The caller provides the function that performs the deletion.
+-->
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, ConfirmationDialog, MenuItem } from '@sveltia/ui';
 
-  import { deleteAssets } from '$lib/services/assets/data/delete';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
-
   /**
-   * @import { Asset } from '$lib/types/private';
+   * @import { Asset, ExternalAsset } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
-   * @property {Asset[]} [assets] Selected assets.
+   * @property {(Asset | ExternalAsset)[]} [assets] Selected assets.
+   * @property {boolean} [disabled] Whether deleting is not possible for the location, regardless
+   * of the selection.
+   * @property {(assets: any[]) => Promise<boolean | void> | void} deleteAssets Function that
+   * deletes the assets. `onDelete` is called once it returns, unless it resolves with `false`, so
+   * a function that starts the deletion without returning its promise lets the caller move on
+   * right away.
    * @property {string} [buttonDescription] The `aria-label` attribute on the button.
    * @property {string} [dialogDescription] Description to be displayed on the dialog.
-   * @property {(() => void) | undefined} [onDelete] Custom `delete` event handler.
+   * @property {(() => void) | undefined} [onDelete] Called once the assets have been deleted.
    * @property {boolean} [useButton] Whether to use the Button component.
    */
 
@@ -22,6 +30,8 @@
   let {
     /* eslint-disable prefer-const */
     assets = [],
+    disabled = false,
+    deleteAssets,
     buttonDescription = '',
     dialogDescription = '',
     onDelete = undefined,
@@ -32,14 +42,11 @@
   let showDialog = $state(false);
 
   const Component = $derived(useButton ? Button : MenuItem);
-  // Deleting a file from the media library commits straight to the configured branch rather than
-  // going through review, so it’s not something an Open Authoring contributor can do
-  const disabled = $derived(!assets.length || openAuthoring.current);
 </script>
 
 <Component
   variant="ghost"
-  {disabled}
+  disabled={disabled || !assets.length}
   label={_('delete')}
   aria-label={buttonDescription}
   onclick={() => {
@@ -51,9 +58,10 @@
   bind:open={showDialog}
   title={_('delete_assets', { values: { count: assets.length } })}
   okLabel={_('delete')}
-  onOk={() => {
-    deleteAssets(assets);
-    onDelete?.();
+  onOk={async () => {
+    if ((await deleteAssets(assets)) !== false) {
+      onDelete?.();
+    }
   }}
 >
   {dialogDescription}

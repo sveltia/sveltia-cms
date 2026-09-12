@@ -232,6 +232,49 @@ export const buildObjectUrl = ({ bucket, key, endpoint, region, forcePathStyle, 
 };
 
 /**
+ * Percent-encode an object key for use in a request URL or the `x-amz-copy-source` header, keeping
+ * the path separators intact. Unlike `encodeURIComponent()`, the characters `!'()*` are encoded as
+ * well, because Signature Version 4 requires every character other than the unreserved ones to be
+ * encoded in the canonical URI.
+ * @param {string} key Object key.
+ * @returns {string} Encoded key.
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+ */
+export const encodeKey = (key) =>
+  key
+    .split('/')
+    .map((part) =>
+      encodeURIComponent(part).replace(
+        /[!'()*]/g,
+        (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+      ),
+    )
+    .join('/');
+
+/**
+ * Build the API endpoint URL of an object, which is where the object is read, written and deleted.
+ * Unlike {@link buildObjectUrl}, this never uses `public_url`, because a CDN or custom domain in
+ * front of the bucket doesn’t accept signed API requests. The key is percent-encoded, so a key
+ * containing `#` or `?` is not cut short by the URL parser, and the signed path matches the
+ * request.
+ * @param {S3Config} config S3 configuration.
+ * @param {string} key Object key.
+ * @returns {string} Object URL.
+ */
+export const buildObjectApiUrl = (config, key) => {
+  const { bucket, region, endpoint, force_path_style: forcePathStyle } = config;
+
+  return buildObjectUrl({ bucket, key: encodeKey(key), endpoint, region, forcePathStyle });
+};
+
+/**
+ * Get the ACL header for a new object, unless the service doesn’t support per-object ACLs.
+ * @param {S3Config} config S3 configuration.
+ * @returns {Record<string, string>} Header, or an empty object.
+ */
+const getAclHeader = ({ acl }) => (acl !== false ? { 'x-amz-acl': acl ?? 'public-read' } : {});
+
+/**
  * Parse S3 list response into ExternalAsset format.
  * @param {S3Object[]} objects S3 objects.
  * @param {S3Config} config S3 configuration.
@@ -363,6 +406,46 @@ export const searchS3Objects = async (query, config, options) => {
 };
 
 /**
+ * Upload a single file to S3-compatible storage under the given key, overwriting any existing
+ * object with the same key.
+ * @param {object} params Parameters.
+ * @param {string} params.key Object key.
+ * @param {File} params.file File to upload.
+ * @param {S3Config} params.config S3 configuration.
+ * @param {string} params.secretAccessKey AWS secret access key.
+ * @returns {Promise<S3Object>} Uploaded object.
+ */
+export const putS3Object = async ({ key, file, config, secretAccessKey }) => {
+  const fileContent = await file.arrayBuffer();
+
+  const response = await signedRequest({
+    method: 'PUT',
+    url: buildObjectApiUrl(config, key),
+    config,
+    secretAccessKey,
+    body: fileContent,
+    extraHeaders: {
+      'Content-Type': file.type || 'application/octet-stream',
+      ...getAclHeader(config),
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    throw new Error(`Failed to upload file ${file.name}: ${errorText}`);
+  }
+
+  return {
+    Key: key,
+    LastModified: new Date().toISOString(),
+    ETag: '',
+    Size: file.size,
+    ContentType: file.type,
+  };
+};
+
+/**
  * Upload files to S3-compatible storage.
  * @param {File[]} files Files to upload.
  * @param {S3Config} config S3 configuration.
@@ -374,7 +457,7 @@ export const uploadToS3 = async (files, config, options) => {
     return [];
   }
 
-  const { bucket, region, endpoint, force_path_style: forcePathStyle, prefix = '' } = config;
+  const { prefix = '' } = config;
   const { apiKey: secretAccessKey } = options;
 
   if (!secretAccessKey) {
@@ -391,39 +474,7 @@ export const uploadToS3 = async (files, config, options) => {
     const sanitizedName = file.name.split(/[/\\]/).filter(Boolean).at(-1) ?? file.name;
     const key = prefix ? `${prefix}${sanitizedName}` : sanitizedName;
 
-    const url = endpoint
-      ? `${endpoint}/${bucket}/${key}`
-      : forcePathStyle
-        ? `https://s3.${region}.amazonaws.com/${bucket}/${key}`
-        : `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
-
-    const fileContent = await file.arrayBuffer();
-
-    const response = await signedRequest({
-      method: 'PUT',
-      url,
-      config,
-      secretAccessKey,
-      body: fileContent,
-      extraHeaders: {
-        'Content-Type': file.type || 'application/octet-stream',
-        ...(config.acl !== false && { 'x-amz-acl': config.acl ?? 'public-read' }),
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      throw new Error(`Failed to upload file ${file.name}: ${errorText}`);
-    }
-
-    uploadedObjects.push({
-      Key: key,
-      LastModified: new Date().toISOString(),
-      ETag: '',
-      Size: file.size,
-      ContentType: file.type,
-    });
+    uploadedObjects.push(await putS3Object({ key, file, config, secretAccessKey }));
 
     // Wait a bit between uploads
     if (files.length > 1) {
@@ -432,4 +483,119 @@ export const uploadToS3 = async (files, config, options) => {
   }
 
   return parseS3Results(uploadedObjects, config);
+};
+
+/**
+ * Delete objects from S3-compatible storage. The bucket’s CORS policy must allow the `DELETE`
+ * method, in addition to the `GET` and `PUT` methods needed for listing and uploading; otherwise
+ * the browser blocks the request at the preflight stage.
+ * @param {ExternalAsset[]} assets Assets to delete. The `id` of each asset is the object key.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @returns {Promise<void>}
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
+ */
+export const deleteS3Objects = async (assets, config, options) => {
+  const { apiKey: secretAccessKey } = options;
+
+  if (!secretAccessKey) {
+    return Promise.reject(new Error('S3 secret access key is required'));
+  }
+
+  // Delete objects one by one, as the multi-object delete API requires a `Content-MD5` header,
+  // which some S3-compatible services don’t support
+  // eslint-disable-next-line no-restricted-syntax
+  for (const { id: key } of assets) {
+    const response = await signedRequest({
+      method: 'DELETE',
+      url: buildObjectApiUrl(config, key),
+      config,
+      secretAccessKey,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      throw new Error(`Failed to delete object ${key}: ${errorText}`);
+    }
+
+    // Wait a bit between requests
+    if (assets.length > 1) {
+      await sleep(50);
+    }
+  }
+
+  return undefined;
+};
+
+/**
+ * Rename an object on S3-compatible storage. S3 has no rename operation, so the object is copied
+ * to the new key and then the original is deleted. The bucket’s CORS policy must allow the `PUT`
+ * and `DELETE` methods as well as the `x-amz-copy-source` and `x-amz-metadata-directive` headers
+ * (an `AllowedHeaders` of `*` is the simplest); otherwise the browser blocks the request at the
+ * preflight stage.
+ * @param {ExternalAsset} asset Asset to rename. Its `id` is the object key.
+ * @param {string} newName New file name, without a directory.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @returns {Promise<ExternalAsset>} Renamed asset.
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html
+ */
+export const renameS3Object = async (asset, newName, config, options) => {
+  const { bucket } = config;
+  const { apiKey: secretAccessKey } = options;
+
+  if (!secretAccessKey) {
+    return Promise.reject(new Error('S3 secret access key is required'));
+  }
+
+  const { id: key, size = 0 } = asset;
+  const dirName = key.split('/').slice(0, -1).join('/');
+  const newKey = dirName ? `${dirName}/${newName}` : newName;
+
+  const response = await signedRequest({
+    method: 'PUT',
+    url: buildObjectApiUrl(config, newKey),
+    config,
+    secretAccessKey,
+    extraHeaders: {
+      'x-amz-copy-source': `/${bucket}/${encodeKey(key)}`,
+      'x-amz-metadata-directive': 'COPY',
+      ...getAclHeader(config),
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    throw new Error(`Failed to copy object ${key}: ${errorText}`);
+  }
+
+  await deleteS3Objects([asset], config, options);
+
+  return parseS3Results(
+    [{ Key: newKey, LastModified: new Date().toISOString(), ETag: '', Size: size }],
+    config,
+  )[0];
+};
+
+/**
+ * Replace an object on S3-compatible storage with a new file, keeping the object key so that the
+ * URL stays the same.
+ * @param {ExternalAsset} asset Asset to replace. Its `id` is the object key.
+ * @param {File} file New file.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @returns {Promise<ExternalAsset>} Replaced asset.
+ */
+export const replaceS3Object = async (asset, file, config, options) => {
+  const { apiKey: secretAccessKey } = options;
+
+  if (!secretAccessKey) {
+    return Promise.reject(new Error('S3 secret access key is required'));
+  }
+
+  const object = await putS3Object({ key: asset.id, file, config, secretAccessKey });
+
+  return parseS3Results([object], config)[0];
 };

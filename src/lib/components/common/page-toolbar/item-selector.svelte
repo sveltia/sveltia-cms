@@ -3,13 +3,17 @@
   import { Checkbox } from '@sveltia/ui';
 
   /**
-   * @import { Asset, Entry } from '$lib/types/private';
+   * @import { Asset, Entry, ExternalAsset } from '$lib/types/private';
+   */
+
+  /**
+   * @typedef {Entry | Asset | ExternalAsset} Item
    */
 
   /**
    * @typedef {object} Props
-   * @property {(Entry | Asset)[]} allItems All available items.
-   * @property {{ current: (Entry | Asset)[] }} selectedItems Selected items.
+   * @property {Item[]} allItems All available items.
+   * @property {{ current: Item[] }} selectedItems Selected items.
    */
 
   /** @type {Props} */

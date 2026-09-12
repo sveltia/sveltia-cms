@@ -7,11 +7,17 @@ import { cmsConfig } from '$lib/services/config';
 import azureBlobStorageService, {
   buildContainerUrl,
   buildRequestUrl,
+  deleteBlobs,
+  deleteFiles,
   getLibraryOptions,
   isEnabled,
   list,
   listBlobs,
   parseBlobResults,
+  rename,
+  renameBlob,
+  replace,
+  replaceBlob,
   search,
   searchBlobs,
   upload,
@@ -612,6 +618,185 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
       await expect(list({ apiKey: token })).rejects.toThrow(message);
       await expect(search('photo', { apiKey: token })).rejects.toThrow(message);
       await expect(upload([], { apiKey: token })).rejects.toThrow(message);
+    });
+  });
+
+  describe('deleteBlobs', () => {
+    /** @type {any} */
+    const asset = { id: 'images/my photo.jpg', fileName: 'my photo.jpg' };
+
+    it('should send a DELETE request for each blob', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 202 }));
+
+      await deleteBlobs([asset, { ...asset, id: 'other.jpg' }], config, { apiKey: token });
+
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenNthCalledWith(1, `${containerURL}/images/my%20photo.jpg?${token}`, {
+        method: 'DELETE',
+      });
+      expect(fetch).toHaveBeenNthCalledWith(2, `${containerURL}/other.jpg?${token}`, {
+        method: 'DELETE',
+      });
+    });
+
+    it('should reject when the token is missing', async () => {
+      await expect(deleteBlobs([asset], config, { apiKey: '' })).rejects.toThrow(
+        'Azure Blob Storage SAS token is required',
+      );
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should throw when the request fails', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response('Forbidden', { status: 403 }));
+
+      await expect(deleteBlobs([asset], config, { apiKey: token })).rejects.toThrow(
+        'Failed to delete blob images/my photo.jpg: Forbidden',
+      );
+    });
+  });
+
+  describe('renameBlob', () => {
+    /** @type {any} */
+    const asset = {
+      id: 'images/my photo.jpg',
+      fileName: 'my photo.jpg',
+      size: 1234,
+      lastModified: new Date('2024-01-01T00:00:00Z'),
+    };
+
+    it('should copy the blob to the new name and delete the original', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+
+      const result = await renameBlob(asset, 'renamed.jpg', config, { apiKey: token });
+
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenNthCalledWith(1, `${containerURL}/images/renamed.jpg?${token}`, {
+        method: 'PUT',
+        headers: {
+          'x-ms-blob-type': 'BlockBlob',
+          'x-ms-copy-source': `${containerURL}/images/my%20photo.jpg?${token}`,
+        },
+      });
+      expect(fetch).toHaveBeenNthCalledWith(2, `${containerURL}/images/my%20photo.jpg?${token}`, {
+        method: 'DELETE',
+      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: 'images/renamed.jpg',
+          fileName: 'renamed.jpg',
+          size: 1234,
+          lastModified: asset.lastModified,
+          kind: 'image',
+        }),
+      );
+    });
+
+    it('should rename a blob at the container root without metadata', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+
+      const result = await renameBlob(
+        { ...asset, id: 'photo.jpg', size: undefined, lastModified: undefined },
+        'renamed.jpg',
+        config,
+        { apiKey: token },
+      );
+
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        `${containerURL}/renamed.jpg?${token}`,
+        expect.anything(),
+      );
+      expect(result.id).toBe('renamed.jpg');
+      expect(result.size).toBeUndefined();
+      expect(result.lastModified).toBeUndefined();
+    });
+
+    it('should reject when the token is missing', async () => {
+      await expect(renameBlob(asset, 'renamed.jpg', config, { apiKey: '' })).rejects.toThrow(
+        'Azure Blob Storage SAS token is required',
+      );
+    });
+
+    it('should throw and keep the original while an asynchronous copy is pending', async () => {
+      vi.mocked(fetch).mockResolvedValue(
+        new Response(null, { status: 202, headers: { 'x-ms-copy-status': 'pending' } }),
+      );
+
+      await expect(renameBlob(asset, 'renamed.jpg', config, { apiKey: token })).rejects.toThrow(
+        'Failed to copy blob images/my photo.jpg: the copy operation is still pending',
+      );
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw and keep the original when the copy fails', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response('Forbidden', { status: 403 }));
+
+      await expect(renameBlob(asset, 'renamed.jpg', config, { apiKey: token })).rejects.toThrow(
+        'Failed to copy blob images/my photo.jpg: Forbidden',
+      );
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('replaceBlob', () => {
+    /** @type {any} */
+    const asset = { id: 'images/photo.jpg', fileName: 'photo.jpg', size: 10 };
+
+    it('should overwrite the blob under the same name', async () => {
+      const file = new File(['new content'], 'whatever.jpg', { type: 'image/jpeg' });
+
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+
+      const result = await replaceBlob(asset, file, config, { apiKey: token });
+
+      expect(fetch).toHaveBeenCalledWith(
+        `${containerURL}/images/photo.jpg?${token}`,
+        expect.objectContaining({
+          method: 'PUT',
+          headers: expect.objectContaining({ 'Content-Type': 'image/jpeg' }),
+        }),
+      );
+      expect(result).toEqual(
+        expect.objectContaining({ id: 'images/photo.jpg', fileName: 'photo.jpg', size: 11 }),
+      );
+    });
+
+    it('should reject when the token is missing', async () => {
+      const file = new File(['new content'], 'photo.jpg', { type: 'image/jpeg' });
+
+      await expect(replaceBlob(asset, file, config, { apiKey: '' })).rejects.toThrow(
+        'Azure Blob Storage SAS token is required',
+      );
+    });
+  });
+
+  describe('delete, rename and replace', () => {
+    /** @type {any} */
+    const asset = { id: 'photo.jpg', fileName: 'photo.jpg' };
+
+    it('should expose the management functions on the service', () => {
+      expect(azureBlobStorageService).toMatchObject({ delete: deleteFiles, rename, replace });
+    });
+
+    it('should use the configured library options', async () => {
+      const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 202 }));
+
+      await expect(deleteFiles([asset], { apiKey: token })).resolves.toBeUndefined();
+      expect((await rename(asset, 'renamed.jpg', { apiKey: token })).id).toBe('renamed.jpg');
+      expect((await replace(asset, file, { apiKey: token })).id).toBe('photo.jpg');
+    });
+
+    it('should reject when the library is not configured', async () => {
+      cmsConfig.current = /** @type {any} */ ({});
+
+      const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+      const message = 'Azure Blob Storage configuration is not available';
+
+      await expect(deleteFiles([asset], { apiKey: token })).rejects.toThrow(message);
+      await expect(rename(asset, 'renamed.jpg', { apiKey: token })).rejects.toThrow(message);
+      await expect(replace(asset, file, { apiKey: token })).rejects.toThrow(message);
     });
   });
 });

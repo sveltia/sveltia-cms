@@ -3,11 +3,37 @@
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
   import { goto, selectedPageName } from '$lib/services/app/navigation';
+  import {
+    enabledCloudServices,
+    getCloudServicePath,
+    selectedCloudService,
+  } from '$lib/services/assets/external';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import { backendName } from '$lib/services/backends';
   import { searchMode } from '$lib/services/search';
   import { env } from '$lib/services/user/env.svelte';
   import { workflowEnabled } from '$lib/services/workflow';
+
+  /**
+   * Link to the Asset Library: the folder list on small screens, otherwise the location shown
+   * last, falling back to All Assets or, when no asset folder is configured, the first external
+   * location.
+   */
+  const assetsLink = $derived.by(() => {
+    if (env.isSmallScreen) {
+      return '/assets';
+    }
+
+    if (selectedCloudService.current) {
+      return getCloudServicePath(selectedCloudService.current);
+    }
+
+    if (allAssetFolders.current.length) {
+      return `/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`;
+    }
+
+    return getCloudServicePath(enabledCloudServices.current[0]);
+  });
 
   const pages = $derived.by(() => {
     const _pages = [
@@ -21,16 +47,13 @@
       },
     ];
 
-    // Hide Assets page if there is no asset folder configured
-    // @todo Remove this condition when the Asset Library supports external storage providers
-    if (allAssetFolders.current.length) {
+    // Hide the Assets page if there is nothing to show: no asset folder and no external location
+    if (allAssetFolders.current.length || enabledCloudServices.current.length) {
       _pages.push({
         key: 'assets',
         label: _('assets'),
         icon: 'photo',
-        link: env.isSmallScreen
-          ? '/assets'
-          : `/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`,
+        link: assetsLink,
         searchMode: 'assets',
       });
     }

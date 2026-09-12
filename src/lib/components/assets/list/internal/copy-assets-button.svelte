@@ -1,8 +1,11 @@
+<!--
+  @component Copy menu for repository assets: public URLs, file paths and file data.
+-->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Menu, MenuButton, MenuItem, Toast } from '@sveltia/ui';
   import { isTextFileType } from '@sveltia/utils/file';
 
+  import CopyMenu from '$lib/components/assets/list/copy-menu.svelte';
   import { getAssetDetails } from '$lib/services/assets/details';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
@@ -29,8 +32,6 @@
   /** @type {AssetDetails[]} */
   let assetsDetailList = $state([]);
   let canCopyFileData = $state(false);
-  /** @type {{ show: boolean, text: string, status: 'success' | 'error' }} */
-  const toast = $state({ show: false, text: '', status: 'success' });
 
   const publicURLs = $derived(
     assetsDetailList.filter(({ publicURL }) => !!publicURL).map(({ publicURL }) => publicURL),
@@ -69,20 +70,6 @@
   };
 
   /**
-   * Copy the asset public URL(s) to clipboard.
-   */
-  const copyPublicURLs = async () => {
-    await navigator.clipboard.writeText(publicURLs.join('\n'));
-  };
-
-  /**
-   * Copy the asset file path(s) to clipboard.
-   */
-  const copyFilePaths = async () => {
-    await navigator.clipboard.writeText(assets.map(({ path }) => `/${path}`).join('\n'));
-  };
-
-  /**
    * Copy the file data to clipboard. Given that browsers typically support only plaintext and PNG
    * image, convert the file if necessary.
    */
@@ -107,23 +94,35 @@
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
   };
 
-  /**
-   * Execute a copy action.
-   * @param {() => Promise<void>} func Copy function.
-   * @param {string} toastKey Toast label.
-   */
-  const doCopyAction = async (func, toastKey) => {
-    try {
-      await func();
-      toast.status = 'success';
-      toast.text = _(toastKey, { values: { count: assets.length } });
-    } catch {
-      toast.status = 'error';
-      toast.text = _('clipboard_error');
-    } finally {
-      toast.show = true;
-    }
-  };
+  const items = $derived([
+    {
+      label: _('public_urls', { values: { count: assets.length } }),
+      disabled: !publicURLs.length,
+      /**
+       * Copy the asset public URL(s) to clipboard.
+       */
+      copy: async () => {
+        await navigator.clipboard.writeText(publicURLs.join('\n'));
+      },
+      toastKey: 'asset_urls_copied',
+    },
+    {
+      label: _('file_paths', { values: { count: assets.length } }),
+      /**
+       * Copy the asset file path(s) to clipboard.
+       */
+      copy: async () => {
+        await navigator.clipboard.writeText(assets.map(({ path }) => `/${path}`).join('\n'));
+      },
+      toastKey: 'asset_paths_copied',
+    },
+    {
+      label: _('file_data'),
+      disabled: !canCopyFileData,
+      copy: copyFileData,
+      toastKey: 'asset_data_copied',
+    },
+  ]);
 
   $effect(() => {
     (async () => {
@@ -133,50 +132,4 @@
   });
 </script>
 
-{#snippet menuItems()}
-  <MenuItem
-    label={_('public_urls', { values: { count: assets.length } })}
-    disabled={!publicURLs.length}
-    onclick={() => {
-      doCopyAction(copyPublicURLs, 'asset_urls_copied');
-    }}
-  />
-  <MenuItem
-    label={_('file_paths', { values: { count: assets.length } })}
-    onclick={() => {
-      doCopyAction(copyFilePaths, 'asset_paths_copied');
-    }}
-  />
-  <MenuItem
-    label={_('file_data')}
-    disabled={!canCopyFileData}
-    onclick={() => {
-      doCopyAction(copyFileData, 'asset_data_copied');
-    }}
-  />
-{/snippet}
-
-{#if useButton}
-  <MenuButton
-    variant="ghost"
-    disabled={!assets.length}
-    label={_('copy')}
-    popupPosition="bottom-right"
-  >
-    {#snippet popup()}
-      <Menu aria-label={_('copy_options')}>
-        {@render menuItems()}
-      </Menu>
-    {/snippet}
-  </MenuButton>
-{:else}
-  <MenuItem disabled={!assets.length} label={_('copy')} popupPosition="left-top">
-    {#snippet items()}
-      {@render menuItems()}
-    {/snippet}
-  </MenuItem>
-{/if}
-
-<Toast bind:show={toast.show}>
-  <Alert status={toast.status}>{toast.text}</Alert>
-</Toast>
+<CopyMenu {items} count={assets.length} {useButton} />

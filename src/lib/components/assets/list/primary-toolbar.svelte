@@ -1,37 +1,38 @@
+<!--
+  @component
+  Primary toolbar of the Asset Library, shared by repository folders and external locations: back
+  button on small screens, location title, action buttons on larger screens and the floating Upload
+  button.
+-->
 <script>
-  import { _, locale as appLocale } from '@sveltia/i18n';
+  import { _ } from '@sveltia/i18n';
   import { FloatingActionButtonWrapper, Toolbar } from '@sveltia/ui';
 
-  import CopyAssetsButton from '$lib/components/assets/toolbar/copy-assets-button.svelte';
-  import DeleteAssetsButton from '$lib/components/assets/toolbar/delete-assets-button.svelte';
-  import DownloadAssetsButton from '$lib/components/assets/toolbar/download-assets-button.svelte';
-  import EditOptionsButton from '$lib/components/assets/toolbar/edit-options-button.svelte';
-  import PreviewAssetButton from '$lib/components/assets/toolbar/preview-asset-button.svelte';
-  import UploadAssetsButton from '$lib/components/assets/toolbar/upload-assets-button.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
-  import { focusedAsset, selectedAssets } from '$lib/services/assets';
-  import {
-    canCreateAsset,
-    selectedAssetFolder,
-    targetAssetFolder,
-  } from '$lib/services/assets/folders';
-  import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
-  const assets = $derived.by(() => {
-    if (selectedAssets.current.length) return [...selectedAssets.current];
-    if (focusedAsset.current) return [focusedAsset.current];
-    return [];
-  });
+  /**
+   * @import { Snippet } from 'svelte';
+   */
 
-  // Uploading to the media library commits straight to the configured branch rather than going
-  // through review, so it’s not something an Open Authoring contributor can do. An asset attached
-  // to an entry is committed with that entry, so it’s unaffected
-  const uploadDisabled = $derived(
-    openAuthoring.current || !canCreateAsset(targetAssetFolder.current),
-  );
+  /**
+   * @typedef {object} Props
+   * @property {string} title Location label.
+   * @property {string} [path] Folder path shown next to the title on larger screens.
+   * @property {Snippet} [actions] Action buttons, shown on large screens only.
+   * @property {Snippet} [fab] Upload button placed in the floating action button wrapper.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    title,
+    path = undefined,
+    actions = undefined,
+    fab = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 </script>
 
 <Toolbar variant="primary" aria-label={_('folder')}>
@@ -44,36 +45,15 @@
     />
   {/if}
   <h2 role="none">
-    {#key appLocale.current}
-      <bdi
-        >{selectedAssetFolder.current
-          ? getFolderLabelByCollection(selectedAssetFolder.current)
-          : ''}</bdi
-      >
-    {/key}
-    {#if !env.isSmallScreen && selectedAssetFolder.current?.internalPath !== undefined}
-      <span role="none" dir="ltr">/{selectedAssetFolder.current.internalPath}</span>
+    <bdi>{title}</bdi>
+    {#if !env.isSmallScreen && path !== undefined}
+      <span role="none" dir="ltr">/{path}</span>
     {/if}
   </h2>
   {#if !(env.isSmallScreen || env.isMediumScreen)}
-    <PreviewAssetButton asset={focusedAsset.current} />
-    <CopyAssetsButton assets={focusedAsset.current ? [focusedAsset.current] : []} />
-    <DownloadAssetsButton {assets} />
-    <DeleteAssetsButton
-      {assets}
-      buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
-      dialogDescription={_(
-        assets.length > 1 && assets.length === listedAssets.current.length
-          ? 'confirm_deleting_all_assets'
-          : 'confirm_deleting_selected_assets',
-        { values: { count: assets.length } },
-      )}
-    />
-    <EditOptionsButton asset={focusedAsset.current} />
+    {@render actions?.()}
   {/if}
   <FloatingActionButtonWrapper>
-    {#if !env.isSmallScreen || (listedAssets.current.length && !uploadDisabled)}
-      <UploadAssetsButton label={env.isSmallScreen ? undefined : _('upload')} />
-    {/if}
+    {@render fab?.()}
   </FloatingActionButtonWrapper>
 </Toolbar>

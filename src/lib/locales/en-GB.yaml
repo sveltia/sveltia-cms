@@ -366,6 +366,9 @@ viewing_x_asset_folder: |
     0   {{ You’re now viewing the “{$folder}” asset folder, which has no assets yet. }}
     one {{ You’re now viewing the “{$folder}” asset folder, which has one asset. }}
     *   {{ You’re now viewing the “{$folder}” asset folder, which has {$count} assets. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: You’re now viewing the assets on {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -407,6 +410,10 @@ sort_keys:
   commit_author: Updated by
   # Sort by the last commit date
   commit_date: Updated on
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Modified on
+  # Sort by file size
+  size: Size
   # Sort by the entry’s computed summary text
   _summary: Summary
   # Manual order defined by the user via drag-and-drop
@@ -418,6 +425,8 @@ ascending: '{$label}, A to Z'
 ascending_date: '{$label}, old to new'
 descending: '{$label}, Z to A'
 descending_date: '{$label}, new to old'
+ascending_number: '{$label}, small to large'
+descending_number: '{$label}, large to small'
 
 # Filter menu: button labels and options
 filter: Filter
@@ -541,6 +550,8 @@ upload_assets: Upload New Assets
 # Edit options menu: button and item labels
 edit_options: Edit Options
 show_edit_options: Show Edit Options
+# Copy menu aria-label
+copy_options: Copy Options
 # Edit menu items with specific asset names
 edit_asset: Edit Asset
 # {$name} is the selected asset name
@@ -794,6 +805,9 @@ keep_both: Keep Both
 # Upload progress and error messages
 uploading_files_progress: Uploading…
 uploading_files_failed: Upload failed.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Delete failed.
+renaming_asset_failed: Rename failed.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -877,6 +891,11 @@ asset_paths_copied: |
   .match $count
     one {{ File path copied to clipboard. }}
     *   {{ {$count} file paths copied to clipboard. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ File ID copied to clipboard. }}
+    *   {{ {$count} file IDs copied to clipboard. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -1241,6 +1260,13 @@ file_paths: |
   .match $count
     one {{ File Path }}
     *   {{ File Paths }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ File ID }}
+    *   {{ File IDs }}
 file_data: File Data
 
 # ==============================================================================

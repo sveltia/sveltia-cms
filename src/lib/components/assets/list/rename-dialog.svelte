@@ -1,38 +1,54 @@
+<!--
+  @component
+  Rename Asset dialog, shared by repository assets and assets on external locations. It validates
+  the new name against the sibling names, narrows the initial selection to the name without the
+  extension, and asks for confirmation when the extension changes. The caller performs the actual
+  rename.
+-->
 <script>
   import { _ } from '@sveltia/i18n';
   import { Dialog, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
 
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
-  import { goto, parseLocation } from '$lib/services/app/navigation';
-  import { getAssetsByDirName, renamingAsset } from '$lib/services/assets';
-  import { moveAssets } from '$lib/services/assets/data/move';
-  import { getAssetUsedEntries } from '$lib/services/assets/details';
   import { showAssetOverlay } from '$lib/services/assets/view';
   import { isEquivalentFileExtension } from '$lib/services/utils/file';
 
   /**
-   * @import { Entry } from '$lib/types/private';
+   * @typedef {object} Props
+   * @property {boolean} open Whether the dialog is open.
+   * @property {string} name Current file name.
+   * @property {string[]} otherNames Names of the other files in the same folder, which the new name
+   * must not duplicate.
+   * @property {number} [usedEntryCount] Number of entries using the asset, mentioned in the dialog
+   * body because they will be updated as well.
+   * @property {(newName: string) => void} onRename Called with the new name once confirmed.
+   * @property {() => void} [onClose] Called when the dialog is closed for good, as opposed to
+   * while the extension change confirmation is shown.
    */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    open = $bindable(false),
+    name,
+    otherNames,
+    usedEntryCount = 0,
+    onRename,
+    onClose = undefined,
+    /* eslint-enable prefer-const */
+  } = $props();
 
   const componentId = $props.id();
 
-  let open = $state(false);
   let confirmationOpen = $state(false);
   /** @type {HTMLInputElement | undefined} */
   let inputElement = $state();
   /** Whether the file name has been auto-selected in the input field. */
   let nameSelected = false;
-  /** @type {{ dirname?: string, basename: string, extension?: string }} */
-  let pathInfo = $state({ basename: '' });
   let newName = $state('');
-  /** @type {string[]} */
-  let otherNames = $state([]);
-  /** @type {Entry[]} */
-  let usedEntries = $state([]);
 
-  const asset = $derived(renamingAsset.current);
-  const { dirname, basename, extension: oldExtension } = $derived(pathInfo);
+  const { extension: oldExtension } = $derived(getPathInfo(name));
   const trimmedName = $derived(newName.trim());
   const newExtension = $derived(getPathInfo(trimmedName).extension);
   /** Whether the file extension is being changed in a way that requires confirmation. */
@@ -46,22 +62,6 @@
   });
 
   const invalid = $derived(!!error);
-
-  /**
-   * Initialize the state.
-   */
-  const initState = async () => {
-    if (asset) {
-      pathInfo = getPathInfo(asset.path);
-      newName = basename;
-      nameSelected = false;
-      otherNames = getAssetsByDirName(/** @type {string} */ (dirname))
-        .map((a) => a.name)
-        .filter((n) => n !== asset.name);
-      usedEntries = await getAssetUsedEntries(asset);
-      open = true;
-    }
-  };
 
   /**
    * Narrow down the selection in the input field to the file name, excluding the extension, just
@@ -80,61 +80,45 @@
     inputElement.setSelectionRange(0, filename.length);
   };
 
-  /**
-   * Rename the asset by moving it to a new path. Also, update the URL hash silently to reflect the
-   * new asset name if the rename dialog was opened in the asset details view.
-   */
-  const renameAsset = async () => {
-    if (!asset) {
-      return;
-    }
-
-    const oldPath = asset.path;
-    const newPath = `${dirname}/${trimmedName}`;
-
-    await moveAssets('rename', [{ asset, path: newPath }]);
-
-    if (parseLocation().path === `/assets/${oldPath}`) {
-      await goto(`/assets/${newPath}`, { replaceState: true, notifyChange: false });
-    }
-  };
-
+  // Reset the input whenever the dialog is opened
   $effect(() => {
-    if (asset) {
-      initState();
+    if (open) {
+      newName = name;
+      nameSelected = false;
     }
   });
 
+  // Close the dialog along with the asset details overlay
   $effect(() => {
     if (!showAssetOverlay.current) {
       open = false;
       confirmationOpen = false;
-      renamingAsset.current = undefined;
+      onClose?.();
     }
   });
 </script>
 
 <Dialog
-  title={_('rename_x', { values: { name: asset?.name ?? '' } })}
+  title={_('rename_x', { values: { name } })}
   bind:open
   okLabel={_('rename')}
-  okDisabled={trimmedName === basename || invalid}
+  okDisabled={trimmedName === name || invalid}
   onOk={() => {
     if (extensionChanged) {
       // Ask for confirmation before renaming
       confirmationOpen = true;
     } else {
-      renameAsset();
+      onRename(trimmedName);
     }
   }}
   onClose={() => {
     if (!confirmationOpen) {
-      renamingAsset.current = undefined;
+      onClose?.();
     }
   }}
 >
   <p>
-    {_('enter_new_name_for_asset', { values: { count: usedEntries.length } })}
+    {_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
   </p>
   <div role="none">
     <TextInput
@@ -162,8 +146,8 @@
   {newExtension}
   okLabel={_('rename')}
   onOk={() => {
-    renameAsset();
-    renamingAsset.current = undefined;
+    onRename(trimmedName);
+    onClose?.();
   }}
   onCancel={() => {
     // Go back to the rename dialog, keeping the entered name

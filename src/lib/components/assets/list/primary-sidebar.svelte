@@ -7,6 +7,12 @@
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { allAssets, getAssetsByFolder } from '$lib/services/assets';
+  import {
+    enabledCloudServices,
+    externalAssetCounts,
+    getCloudServicePath,
+    selectedCloudService,
+  } from '$lib/services/assets/external';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';
@@ -74,95 +80,125 @@
     />
   {/if}
   <Listbox aria-label={_('asset_folder_list')} aria-controls="assets-container">
-    <OptionGroup label={_('asset_location.repository')}>
-      {#each folders as folder, index ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
-        {#await sleep() then}
-          {@const { collectionName, fileName, internalPath, entryRelative, hasTemplateTags } =
-            folder}
-          {@const collection = collectionName ? getCollection(collectionName) : undefined}
-          {@const collectionFile =
-            collection && fileName ? getCollectionFile(collection, fileName) : undefined}
-          <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
-          {@const uploadDisabled = entryRelative || hasTemplateTags}
-          {@const selected = equal(selectedAssetFolder.current, folder)}
+    {#if folders.length}
+      <OptionGroup label={_('asset_location.repository')}>
+        {#each folders as folder, index ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
+          {#await sleep() then}
+            {@const { collectionName, fileName, internalPath, entryRelative, hasTemplateTags } =
+              folder}
+            {@const collection = collectionName ? getCollection(collectionName) : undefined}
+            {@const collectionFile =
+              collection && fileName ? getCollectionFile(collection, fileName) : undefined}
+            <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
+            {@const uploadDisabled = entryRelative || hasTemplateTags}
+            {@const selected = equal(selectedAssetFolder.current, folder)}
+            <Option
+              selected={env.isSmallScreen || isSearchPage ? false : selected}
+              label={appLocale.current ? getFolderLabelByCollection(folder) : ''}
+              onSelect={() => {
+                goto(`/assets/${internalPath ?? '-/all'}`, {
+                  transitionType: 'forwards',
+                  // An internal path can be shared by multiple collections, files and fields. Pass
+                  // the folder info as history state so we can distinguish these different asset
+                  // folders while keeping the URL clean.
+                  state: { folder },
+                });
+              }}
+              ondragover={(event) => {
+                event.preventDefault();
+
+                if (uploadDisabled) {
+                  return;
+                }
+
+                if (internalPath === undefined || selected) {
+                  /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'none';
+                } else {
+                  /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'move';
+                  /** @type {HTMLElement} */ (event.target).classList.add('dragover');
+                }
+              }}
+              ondragleave={(event) => {
+                event.preventDefault();
+
+                if (uploadDisabled) {
+                  return;
+                }
+
+                /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
+              }}
+              ondragend={(event) => {
+                event.preventDefault();
+
+                if (uploadDisabled) {
+                  return;
+                }
+
+                /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
+              }}
+              ondrop={(event) => {
+                event.preventDefault();
+
+                if (uploadDisabled) {
+                  return;
+                }
+
+                /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
+                // @todo Move the assets while updating entries using the files, after showing a
+                // confirmation dialog.
+              }}
+            >
+              {#snippet startIcon()}
+                <Icon name={folder.icon || collectionFile?.icon || collection?.icon || 'folder'} />
+              {/snippet}
+              {#snippet endIcon()}
+                {#key allAssets.current}
+                  {#await sleep() then}
+                    {@const count = (
+                      internalPath !== undefined ? getAssetsByFolder(folder) : allAssets.current
+                    ).length}
+                    <span class="count" aria-label="({_('x_assets', { values: { count } })})">
+                      {numberFormatter.format(count)}
+                    </span>
+                  {/await}
+                {/key}
+              {/snippet}
+            </Option>
+          {/await}
+          {#if shouldShowDivider(index)}
+            <Divider />
+          {/if}
+        {/each}
+      </OptionGroup>
+    {/if}
+    {#if enabledCloudServices.current.length}
+      <OptionGroup label={_('asset_location.external')}>
+        {#each enabledCloudServices.current as service (service.serviceId)}
+          {@const { serviceId, serviceLabel } = service}
+          <!-- The count is known once the service has been listed; Cloudinary is never listed -->
+          {@const count = externalAssetCounts.current[serviceId]}
           <Option
-            selected={env.isSmallScreen || isSearchPage ? false : selected}
-            label={appLocale.current ? getFolderLabelByCollection(folder) : ''}
+            selected={env.isSmallScreen || isSearchPage
+              ? false
+              : selectedCloudService.current?.serviceId === serviceId}
+            label={serviceLabel}
             onSelect={() => {
-              goto(`/assets/${internalPath ?? '-/all'}`, {
-                transitionType: 'forwards',
-                // An internal path can be shared by multiple collections, files and fields. Pass
-                // the folder info as history state so we can distinguish these different asset
-                // folders while keeping the URL clean.
-                state: { folder },
-              });
-            }}
-            ondragover={(event) => {
-              event.preventDefault();
-
-              if (uploadDisabled) {
-                return;
-              }
-
-              if (internalPath === undefined || selected) {
-                /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'none';
-              } else {
-                /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'move';
-                /** @type {HTMLElement} */ (event.target).classList.add('dragover');
-              }
-            }}
-            ondragleave={(event) => {
-              event.preventDefault();
-
-              if (uploadDisabled) {
-                return;
-              }
-
-              /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-            }}
-            ondragend={(event) => {
-              event.preventDefault();
-
-              if (uploadDisabled) {
-                return;
-              }
-
-              /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-            }}
-            ondrop={(event) => {
-              event.preventDefault();
-
-              if (uploadDisabled) {
-                return;
-              }
-
-              /** @type {HTMLElement} */ (event.target).classList.remove('dragover');
-              // @todo Move the assets while updating entries using the files, after showing a
-              // confirmation dialog.
+              goto(getCloudServicePath(service), { transitionType: 'forwards' });
             }}
           >
             {#snippet startIcon()}
-              <Icon name={folder.icon || collectionFile?.icon || collection?.icon || 'folder'} />
+              <Icon name="cloud" />
             {/snippet}
             {#snippet endIcon()}
-              {#key allAssets.current}
-                {#await sleep() then}
-                  {@const count = (
-                    internalPath !== undefined ? getAssetsByFolder(folder) : allAssets.current
-                  ).length}
-                  <span class="count" aria-label="({_('x_assets', { values: { count } })})">
-                    {numberFormatter.format(count)}
-                  </span>
-                {/await}
-              {/key}
+              {#if count !== undefined}
+                <span class="count" aria-label="({_('x_assets', { values: { count } })})">
+                  {numberFormatter.format(count)}
+                </span>
+              {/if}
             {/snippet}
           </Option>
-        {/await}
-        {#if shouldShowDivider(index)}
-          <Divider />
-        {/if}
-      {/each}
-    </OptionGroup>
-    <!-- @todo Add external locations, including Cloudinary and Uploadcare -->
+        {/each}
+      </OptionGroup>
+    {/if}
   </Listbox>
 </div>

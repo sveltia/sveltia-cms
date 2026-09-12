@@ -1,0 +1,122 @@
+<!--
+  @component
+  Details overlay for an asset on a cloud storage service. The file is previewed straight from the
+  service’s URL, so a text file can only be shown when the service allows cross-origin requests.
+-->
+<script>
+  import { _ } from '@sveltia/i18n';
+  import { EmptyState } from '@sveltia/ui';
+  import { isTextFileType } from '@sveltia/utils/file';
+  import mime from 'mime';
+
+  import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
+  import DetailsOverlay from '$lib/components/assets/list/details-overlay.svelte';
+  import DownloadAssetsButton from '$lib/components/assets/list/download-assets-button.svelte';
+  import CopyAssetsButton from '$lib/components/assets/list/external/copy-assets-button.svelte';
+  import EditOptionsButton from '$lib/components/assets/list/external/edit-options-button.svelte';
+  import InfoPanel from '$lib/components/assets/list/external/info-panel.svelte';
+  import TextPreview from '$lib/components/assets/list/text-preview.svelte';
+  import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import NotFound from '$lib/components/global/not-found.svelte';
+  import { goBack } from '$lib/services/app/navigation';
+  import {
+    externalAssets,
+    getCloudServicePath,
+    overlaidExternalAssetId,
+    selectedCloudService,
+  } from '$lib/services/assets/external';
+  import { deleteExternalAssets, fetchExternalAssetBlob } from '$lib/services/assets/external/data';
+  import { isMediaKind } from '$lib/services/assets/kinds';
+
+  /**
+   * @import { MediaLibraryService } from '$lib/types/private';
+   */
+
+  /** The component is only rendered while a service is selected. */
+  const service = $derived(/** @type {MediaLibraryService} */ (selectedCloudService.current));
+  /** Whether the asset list has been loaded, so the asset can be looked up. */
+  const loaded = $derived(!!externalAssets.current);
+  const asset = $derived(
+    externalAssets.current?.find(({ id }) => id === overlaidExternalAssetId.current),
+  );
+  const kind = $derived(asset?.kind);
+  const fileName = $derived(asset?.fileName ?? '');
+  const downloadURL = $derived(asset?.downloadURL ?? '');
+  const type = $derived(mime.getType(fileName));
+  const assets = $derived(asset ? [asset] : []);
+  const backPath = $derived(getCloudServicePath(service));
+</script>
+
+<DetailsOverlay
+  title={fileName}
+  contentKey={asset?.id}
+  onBack={() => {
+    goBack(backPath);
+  }}
+>
+  {#snippet actions(useButton)}
+    <CopyAssetsButton {assets} {useButton} />
+    <DownloadAssetsButton
+      {assets}
+      getName={(a) => a.fileName}
+      getBlob={fetchExternalAssetBlob}
+      {useButton}
+    />
+    <DeleteAssetsButton
+      {assets}
+      disabled={!service.delete}
+      deleteAssets={deleteExternalAssets}
+      buttonDescription={_('delete_assets', { values: { count: 1 } })}
+      dialogDescription={_('confirm_deleting_this_asset')}
+      onDelete={() => {
+        goBack(backPath);
+      }}
+      {useButton}
+    />
+  {/snippet}
+  {#snippet editOptions(extraItems)}
+    <EditOptionsButton {asset} {extraItems} />
+  {/snippet}
+  {#snippet preview()}
+    {#if !loaded}
+      <EmptyState>
+        <span role="alert">{_('loading')}</span>
+      </EmptyState>
+    {:else if !asset || !kind}
+      <NotFound message={_('file_not_found')} {backPath} />
+    {:else if isMediaKind(kind)}
+      <AssetPreview
+        {kind}
+        src={downloadURL}
+        blurBackground={['image', 'video'].includes(kind)}
+        checkerboard={kind === 'image'}
+        alt={kind === 'image' ? fileName : undefined}
+        controls={['audio', 'video'].includes(kind)}
+        crossorigin="anonymous"
+      />
+    {:else if type === 'application/pdf'}
+      <iframe src={downloadURL} title={fileName} sandbox="allow-scripts"></iframe>
+    {:else if type && isTextFileType(type)}
+      {#await fetchExternalAssetBlob(asset).then((blob) => blob.text())}
+        <EmptyState>
+          <span role="alert">{_('loading')}</span>
+        </EmptyState>
+      {:then text}
+        <TextPreview {text} name={fileName} />
+      {:catch}
+        <EmptyState>
+          <span role="alert">{_('preview_unavailable')}</span>
+        </EmptyState>
+      {/await}
+    {:else}
+      <EmptyState>
+        <span role="alert">{_('preview_unavailable')}</span>
+      </EmptyState>
+    {/if}
+  {/snippet}
+  {#snippet info()}
+    {#if asset}
+      <InfoPanel {asset} />
+    {/if}
+  {/snippet}
+</DetailsOverlay>
