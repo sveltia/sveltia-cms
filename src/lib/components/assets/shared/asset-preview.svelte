@@ -212,6 +212,14 @@
   });
 
   $effect(() => {
+    // An asset on an external location comes as a plain URL rather than an `Asset`, and has no
+    // cached thumbnail, so the image itself doubles as the blurred backdrop
+    if (blurBackground && !asset && kind === 'image' && src) {
+      blurImageURL = src;
+    }
+  });
+
+  $effect(() => {
     if (mediaElement && asset) {
       updateSrc();
     }
