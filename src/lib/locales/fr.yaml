@@ -1812,7 +1812,7 @@ workflow:
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
   # Used when the entry has never been published, so nothing of it is left afterwards
-  confirm_deleting_unpublished_entry: 'Cette entrée n’a pas encore été publiée : la supprimer l’abandonnera complètement.'
+  confirm_deleting_unpublished_entry: 'Cette entrée n’a pas encore été publiée ; la supprimer revient à l’abandonner complètement.'
   # Used when the entry updates one that is already live, which stays untouched. The dialog is
   # titled “Discard Changes”, so the wording is about discarding, not deleting
   confirm_discarding_entry_changes: Cette entrée contient des modifications non publiées. Les abandonner restaurera la version publiée. L’entrée elle-même ne sera pas supprimée.

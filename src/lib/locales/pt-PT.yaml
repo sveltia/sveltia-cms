@@ -1059,7 +1059,7 @@ deploy_preview:
   # moments
   short:
     building: A criar…
-    failed: Falha na compilação
+    failed: Falha ao criar
 
 # Content copying from other locales
 copy_from: Copiar de…
@@ -1767,8 +1767,8 @@ workflow:
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      one {{ Alterações rejeitadas. }}
-      *   {{ Alterações em {$count} entradas rejeitadas. }}
+      one {{ Alterações descartadas. }}
+      *   {{ Alterações em {$count} entradas descartadas. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: A cancelar a eliminação…
   deletion_cancelled: Eliminação cancelada.
@@ -1803,7 +1803,7 @@ workflow:
   publish_entry: Publicar entrada
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
   # entry has a published version, because only the pending changes are thrown away
-  discard_changes: Rejeitar alterações
+  discard_changes: Descartar alterações
   # Confirmation message shown before deleting a published entry, replacing the direct
   # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
   # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
@@ -1812,24 +1812,24 @@ workflow:
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
   # Used when the entry has never been published, so nothing of it is left afterwards
-  confirm_deleting_unpublished_entry: Esta entrada ainda não foi publicada, pelo que eliminá-la irá rejeitá-la por completo.
+  confirm_deleting_unpublished_entry: Esta entrada ainda não foi publicada, pelo que eliminá-la irá descartá-la por completo.
   # Used when the entry updates one that is already live, which stays untouched. The dialog is
   # titled “Discard Changes”, so the wording is about discarding, not deleting
-  confirm_discarding_entry_changes: Esta entrada tem alterações não publicadas. Rejeitá-las irá restaurar a versão publicada. A entrada em si não será eliminada.
+  confirm_discarding_entry_changes: Esta entrada tem alterações não publicadas. Descartá-las irá restaurar a versão publicada. A entrada em si não será eliminada.
   # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
   # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
   deleting_unpublished_note_all: |
     .input {$count :integer}
     .match $count
-      one {{ Ainda não foi publicada, pelo que as suas alterações não publicadas serão rejeitadas. Qualquer versão publicada continuará publicada. }}
-      *   {{ Ainda não foram publicadas, pelo que as suas alterações não publicadas serão rejeitadas. Quaisquer versões publicadas continuarão publicadas. }}
+      one {{ Ainda não foi publicada, pelo que as suas alterações não publicadas serão descartadas. Qualquer versão publicada continuará publicada. }}
+      *   {{ Ainda não foram publicadas, pelo que as suas alterações não publicadas serão descartadas. Quaisquer versões publicadas continuarão publicadas. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      one {{ Uma delas ainda não foi publicada, pelo que as suas alterações não publicadas serão rejeitadas. Qualquer versão publicada continuará publicada. }}
-      *   {{ {$count} delas ainda não foram publicadas, pelo que as suas alterações não publicadas serão rejeitadas. Quaisquer versões publicadas continuarão publicadas. }}
+      one {{ Uma delas ainda não foi publicada, pelo que as suas alterações não publicadas serão descartadas. Qualquer versão publicada continuará publicada. }}
+      *   {{ {$count} delas ainda não foram publicadas, pelo que as suas alterações não publicadas serão descartadas. Quaisquer versões publicadas continuarão publicadas. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry: Tem a certeza de que pretende publicar esta entrada? As suas alterações entrarão em vigor de imediato.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
@@ -1839,7 +1839,7 @@ workflow:
   # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
   # the deletion has completed
   deleting_entry: A eliminar a entrada…
-  discarding_changes: A rejeitar as alterações…
+  discarding_changes: A descartar as alterações…
   entry_deleted: Entrada eliminada.
   # Error notification when publishing fails
   publishing_entry_failed: Não foi possível publicar a entrada. Tente novamente.
