@@ -1,6 +1,7 @@
 import { isTextFileType } from '@sveltia/utils/file';
 import mime from 'mime';
 
+import { LINKED_FILES_SERVICE_ID, linkedFilesService } from '$lib/services/assets/external/linked';
 import { isMediaKind } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
@@ -36,13 +37,16 @@ export const enabledCloudServices = createDerivedState(() => {
 });
 
 /**
- * Get an enabled cloud storage service by its ID.
- * @param {string} serviceId Service ID, e.g. `uploadcare`.
+ * Get an enabled cloud storage service by its ID, or the virtual service listing the files linked
+ * from entries.
+ * @param {string} serviceId Service ID, e.g. `uploadcare` or `linked`.
  * @returns {MediaLibraryService | undefined} Service, or `undefined` if the service is unknown or
  * not enabled.
  */
 export const getCloudService = (serviceId) =>
-  enabledCloudServices.current.find((service) => service.serviceId === serviceId);
+  serviceId === LINKED_FILES_SERVICE_ID
+    ? linkedFilesService
+    : enabledCloudServices.current.find((service) => service.serviceId === serviceId);
 
 /**
  * Get the Asset Library path for the given cloud storage service.

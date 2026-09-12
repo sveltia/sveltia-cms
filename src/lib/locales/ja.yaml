@@ -452,6 +452,8 @@ hide_info: 情報を隠す
 # Folder display labels when no specific path is configured
 all_assets: すべてのアセット
 global_assets: グローバルアセット
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: リンクされたファイル
 
 # ==============================================================================
 # Entry and Collection Actions

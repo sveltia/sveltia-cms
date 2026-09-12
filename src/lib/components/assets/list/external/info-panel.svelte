@@ -75,7 +75,6 @@
     variant="tile"
     checkerboard={kind === 'image'}
     controls={['audio', 'video'].includes(kind)}
-    crossorigin="anonymous"
   />
 {/snippet}
 
@@ -83,8 +82,9 @@
   <section>
     <h4>{_('kind')}</h4>
     <p>
+      <!-- A linked file may have no extension, e.g. an avatar URL, so fall back to the kind -->
       {_(`file_type_labels.${extension}`, {
-        default: mime.getType(fileName) ?? extension.toUpperCase(),
+        default: mime.getType(fileName) ?? (extension ? extension.toUpperCase() : _(kind)),
       })}
     </p>
   </section>
@@ -116,7 +116,8 @@
       <a href={downloadURL} dir="ltr" target="_blank" rel="noopener noreferrer">{downloadURL}</a>
     </p>
   </section>
-  {#if description && description !== fileName}
+  <!-- A file linked from an entry has nothing but its URL, so the path is left out -->
+  {#if description && description !== fileName && description !== downloadURL}
     <section>
       <h4>{_('file_paths', { values: { count: 1 } })}</h4>
       <p><bdi dir="ltr">{description}</bdi></p>

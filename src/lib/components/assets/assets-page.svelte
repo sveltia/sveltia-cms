@@ -2,7 +2,7 @@
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { sleep } from '@sveltia/utils/misc';
   import equal from 'fast-deep-equal';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   import ExternalDetailsOverlay from '$lib/components/assets/list/external/details-overlay.svelte';
   import ExternalMainArea from '$lib/components/assets/list/external/main-area.svelte';
@@ -31,10 +31,17 @@
     EXTERNAL_LOCATION_PATH_PREFIX,
     getCloudService,
     getCloudServicePath,
+    hasAuthInfo,
     overlaidExternalAssetId,
     resetExternalAssets,
     selectedCloudService,
   } from '$lib/services/assets/external';
+  import { loadExternalAssets } from '$lib/services/assets/external/data';
+  import {
+    LINKED_FILES_SERVICE_ID,
+    linkedAssets,
+    linkedFilesService,
+  } from '$lib/services/assets/external/linked';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import {
     assetGroups,
@@ -140,7 +147,8 @@
         .slice(EXTERNAL_LOCATION_PATH_PREFIX.length)
         .split('/');
 
-      selectCloudService(serviceId, [...rest, fileName].filter(Boolean).join('/'));
+      // Only drop a missing file name: an empty segment is significant, as in `https://`
+      selectCloudService(serviceId, [...rest, ...(fileName ? [fileName] : [])].join('/'));
 
       return;
     }
@@ -157,12 +165,10 @@
       } else if (allAssetFolders.current.length) {
         // Redirect to All Assets
         goto('/assets/-/all');
-      } else if (enabledCloudServices.current.length) {
-        // No asset folder is configured, so redirect to the first external location
-        goto(getCloudServicePath(enabledCloudServices.current[0]));
       } else {
-        announcedPageStatus.current = _('asset_folder_not_found');
-        notFound = true;
+        // No asset folder is configured, so redirect to the first external location, or to the
+        // files linked from entries if there is none either
+        goto(getCloudServicePath(enabledCloudServices.current[0] ?? linkedFilesService));
       }
 
       return;
@@ -217,6 +223,25 @@
       : _('file_not_found');
     showAssetOverlay.current = true;
   };
+
+  // Fetch the assets on the selected cloud storage service once the user has provided the
+  // credentials. This lives on the page rather than in the main area, because the main area isn’t
+  // rendered while the details overlay is shown, and a direct link to an asset’s details needs the
+  // list as well. The Cloudinary widget handles authentication and listing on its own
+  $effect(() => {
+    const service = selectedCloudService.current;
+
+    if (service && service.authType !== 'widget' && hasAuthInfo(service)) {
+      // The linked files come from the entries, so reload the list whenever these change
+      if (service.serviceId === LINKED_FILES_SERVICE_ID) {
+        void linkedAssets.current;
+      }
+
+      untrack(() => {
+        loadExternalAssets(service);
+      });
+    }
+  });
 
   onMount(() => {
     navigate();

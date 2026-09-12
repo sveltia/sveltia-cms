@@ -527,6 +527,17 @@ export const upload = async (files, options) => {
 };
 
 /**
+ * Whether the given URL points to a file in the configured Cloudinary product environment.
+ * @param {string} url URL.
+ * @returns {boolean} Result.
+ */
+export const isAssetURL = (url) => {
+  const { cloudName } = getCloudConfig();
+
+  return !!cloudName && url.startsWith(`https://res.cloudinary.com/${cloudName}/`);
+};
+
+/**
  * Cloudinary media library service integration. The `list`, `search`, and `upload` methods are not
  * used at this time because Cloudinary has a CORS restriction that prevents direct API access from
  * the browser. Instead, the Cloudinary Media Library widget is used for authentication and file
@@ -545,4 +556,5 @@ export default {
   apiKeyURL: 'https://console.cloudinary.com/settings/api-keys',
   apiKeyPattern: /^[A-Za-z0-9_-]{15,}$/,
   isEnabled,
+  isAssetURL,
 };

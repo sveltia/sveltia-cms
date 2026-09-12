@@ -13,6 +13,7 @@
     getCloudServicePath,
     selectedCloudService,
   } from '$lib/services/assets/external';
+  import { linkedAssets, linkedFilesService } from '$lib/services/assets/external/linked';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';
@@ -171,34 +172,52 @@
         {/each}
       </OptionGroup>
     {/if}
-    {#if enabledCloudServices.current.length}
-      <OptionGroup label={_('asset_location.external')}>
-        {#each enabledCloudServices.current as service (service.serviceId)}
-          {@const { serviceId, serviceLabel } = service}
-          <!-- The count is known once the service has been listed; Cloudinary is never listed -->
-          {@const count = externalAssetCounts.current[serviceId]}
-          <Option
-            selected={env.isSmallScreen || isSearchPage
-              ? false
-              : selectedCloudService.current?.serviceId === serviceId}
-            label={serviceLabel}
-            onSelect={() => {
-              goto(getCloudServicePath(service), { transitionType: 'forwards' });
-            }}
-          >
-            {#snippet startIcon()}
-              <Icon name="cloud" />
-            {/snippet}
-            {#snippet endIcon()}
-              {#if count !== undefined}
-                <span class="count" aria-label="({_('x_assets', { values: { count } })})">
-                  {numberFormatter.format(count)}
-                </span>
-              {/if}
-            {/snippet}
-          </Option>
-        {/each}
-      </OptionGroup>
-    {/if}
+    <OptionGroup label={_('asset_location.external')}>
+      {#each enabledCloudServices.current as service (service.serviceId)}
+        {@const { serviceId, serviceLabel } = service}
+        <!-- The count is known once the service has been listed; Cloudinary is never listed -->
+        {@const count = externalAssetCounts.current[serviceId]}
+        <Option
+          selected={env.isSmallScreen || isSearchPage
+            ? false
+            : selectedCloudService.current?.serviceId === serviceId}
+          label={serviceLabel}
+          onSelect={() => {
+            goto(getCloudServicePath(service), { transitionType: 'forwards' });
+          }}
+        >
+          {#snippet startIcon()}
+            <Icon name="cloud" />
+          {/snippet}
+          {#snippet endIcon()}
+            {#if count !== undefined}
+              <span class="count" aria-label="({_('x_assets', { values: { count } })})">
+                {numberFormatter.format(count)}
+              </span>
+            {/if}
+          {/snippet}
+        </Option>
+      {/each}
+      <!-- Files linked from entries by URL, which can be browsed but not managed -->
+      {@const linkedCount = linkedAssets.current.length}
+      <Option
+        selected={env.isSmallScreen || isSearchPage
+          ? false
+          : selectedCloudService.current?.serviceId === linkedFilesService.serviceId}
+        label={linkedFilesService.serviceLabel}
+        onSelect={() => {
+          goto(getCloudServicePath(linkedFilesService), { transitionType: 'forwards' });
+        }}
+      >
+        {#snippet startIcon()}
+          <Icon name="link" />
+        {/snippet}
+        {#snippet endIcon()}
+          <span class="count" aria-label="({_('x_assets', { values: { count: linkedCount } })})">
+            {numberFormatter.format(linkedCount)}
+          </span>
+        {/snippet}
+      </Option>
+    </OptionGroup>
   </Listbox>
 </div>

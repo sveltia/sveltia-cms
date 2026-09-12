@@ -455,6 +455,8 @@ hide_info: Hide Info
 # Folder display labels when no specific path is configured
 all_assets: All Assets
 global_assets: Global Assets
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Linked Files
 
 # ==============================================================================
 # Entry and Collection Actions

@@ -232,6 +232,28 @@ export const buildObjectUrl = ({ bucket, key, endpoint, region, forcePathStyle, 
 };
 
 /**
+ * Whether the given URL points to an object in the configured bucket, through either the public
+ * URL or the API endpoint.
+ * @param {S3Config} config S3 configuration.
+ * @param {string} url URL.
+ * @returns {boolean} Result.
+ */
+export const isS3ObjectUrl = (config, url) => {
+  const {
+    bucket,
+    region,
+    endpoint,
+    force_path_style: forcePathStyle,
+    public_url: publicUrl,
+  } = config;
+
+  return [
+    buildObjectUrl({ bucket, key: '', endpoint, region, forcePathStyle, publicUrl }),
+    buildObjectUrl({ bucket, key: '', endpoint, region, forcePathStyle }),
+  ].some((base) => url.startsWith(base));
+};
+
+/**
  * Percent-encode an object key for use in a request URL or the `x-amz-copy-source` header, keeping
  * the path separators intact. Unlike `encodeURIComponent()`, the characters `!'()*` are encoded as
  * well, because Signature Version 4 requires every character other than the unreserved ones to be

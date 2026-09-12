@@ -1,6 +1,7 @@
 import {
   deleteS3Objects,
   getLibraryOptions as getS3LibraryOptions,
+  isS3ObjectUrl,
   listS3Objects,
   renameS3Object,
   replaceS3Object,
@@ -112,6 +113,20 @@ export const replace = async (asset, file, options) =>
   replaceS3Object(asset, file, getConfig(options), options);
 
 /**
+ * Whether the given URL points to a file on Scaleway Object Storage.
+ * @param {string} url URL.
+ * @returns {boolean} Result.
+ */
+export const isAssetURL = (url) => {
+  try {
+    return isS3ObjectUrl(getConfig(/** @type {any} */ ({})), url);
+  } catch {
+    // The service is not configured
+    return false;
+  }
+};
+
+/**
  * Scaleway Object Storage media library service integration.
  * @type {MediaLibraryService}
  */
@@ -127,6 +142,7 @@ export default {
   apiKeyURL: 'https://console.scaleway.com/iam/api-keys',
   apiKeyPattern: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
   isEnabled,
+  isAssetURL,
   list,
   search,
   upload,

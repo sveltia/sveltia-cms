@@ -6,6 +6,7 @@ import {
   deleteS3Objects,
   encodeKey,
   generateAwsSignature,
+  isS3ObjectUrl,
   listS3Objects,
   parseS3Results,
   renameS3Object,
@@ -950,6 +951,26 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
 
       expect(url).toBe('https://my-bucket.s3.us-east-1.amazonaws.com/photo.jpg');
+    });
+  });
+
+  describe('isS3ObjectUrl', () => {
+    it('should match the public URL and the API endpoint of the bucket', () => {
+      const config = {
+        access_key_id: 'AKIA',
+        bucket: 'my-bucket',
+        region: 'us-east-1',
+        public_url: 'https://cdn.example.com',
+      };
+
+      expect(isS3ObjectUrl(config, 'https://cdn.example.com/images/a.jpg')).toBe(true);
+      expect(isS3ObjectUrl(config, 'https://my-bucket.s3.us-east-1.amazonaws.com/a.jpg')).toBe(
+        true,
+      );
+      expect(isS3ObjectUrl(config, 'https://other-bucket.s3.us-east-1.amazonaws.com/a.jpg')).toBe(
+        false,
+      );
+      expect(isS3ObjectUrl(config, 'https://example.com/a.jpg')).toBe(false);
     });
   });
 

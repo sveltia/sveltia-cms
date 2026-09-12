@@ -7,6 +7,7 @@ import uploadcareService, {
   generateSignature,
   getLibraryOptions,
   getPublicKey,
+  isAssetURL,
   isEnabled,
   list,
   parseResults,
@@ -1603,6 +1604,35 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
         false,
         ['sign'],
       );
+    });
+  });
+
+  describe('isAssetURL', () => {
+    it('should match the default CDN or the configured one', () => {
+      expect(uploadcareService).toMatchObject({ isAssetURL });
+      expect(isAssetURL('https://ucarecdn.com/uuid/a.jpg')).toBe(true);
+      expect(isAssetURL('https://example.com/a.jpg')).toBe(false);
+
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: {
+          uploadcare: { config: { publicKey: mockPublicKey, cdnBase: 'https://cdn.example.com' } },
+        },
+      });
+
+      expect(isAssetURL('https://cdn.example.com/uuid/')).toBe(true);
+      expect(isAssetURL('https://ucarecdn.com/uuid/a.jpg')).toBe(false);
+    });
+
+    it('should be false when the service is not configured', () => {
+      cmsConfig.current = /** @type {any} */ ({});
+      expect(isAssetURL('https://ucarecdn.com/uuid/a.jpg')).toBe(false);
+    });
+
+    it('should be false when the configured CDN base is not a valid URL', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: { uploadcare: { config: { publicKey: mockPublicKey, cdnBase: 'cdn' } } },
+      });
+      expect(isAssetURL('https://ucarecdn.com/uuid/a.jpg')).toBe(false);
     });
   });
 

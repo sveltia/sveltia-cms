@@ -484,6 +484,9 @@
  * @property {RegExp} [apiKeyPattern] API key pattern.
  * @property {(fieldConfig?: MediaField) => boolean} [isEnabled] Whether the service is enabled.
  * It’s determined by whether the service is defined in the CMS or field configuration.
+ * @property {(url: string) => boolean} [isAssetURL] Whether the given URL points to a file on the
+ * service, given the site configuration, so that such a file can be told apart from one linked
+ * from elsewhere.
  * @property {() => Promise<boolean>} [init] Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
  * to the service.

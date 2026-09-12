@@ -42,22 +42,26 @@
     />
     <CopyAssetsButton assets={asset ? [asset] : []} />
     <DownloadAssetsButton {assets} getName={(a) => a.fileName} getBlob={fetchExternalAssetBlob} />
-    <DeleteAssetsButton
-      {assets}
-      disabled={!service.delete}
-      deleteAssets={deleteExternalAssets}
-      buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
-      dialogDescription={_(
-        assets.length > 1 && assets.length === externalAssets.current?.length
-          ? 'confirm_deleting_all_assets'
-          : 'confirm_deleting_selected_assets',
-        { values: { count: assets.length } },
-      )}
-    />
-    <EditOptionsButton {asset} />
+    <!-- The controls for operations the service doesn’t support are hidden rather than disabled -->
+    {#if service.delete}
+      <DeleteAssetsButton
+        {assets}
+        deleteAssets={deleteExternalAssets}
+        buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
+        dialogDescription={_(
+          assets.length > 1 && assets.length === externalAssets.current?.length
+            ? 'confirm_deleting_all_assets'
+            : 'confirm_deleting_selected_assets',
+          { values: { count: assets.length } },
+        )}
+      />
+    {/if}
+    {#if service.rename || service.replace}
+      <EditOptionsButton {asset} />
+    {/if}
   {/snippet}
   {#snippet fab()}
-    {#if !env.isSmallScreen || (externalAssets.current?.length && service.upload)}
+    {#if service.upload && (!env.isSmallScreen || externalAssets.current?.length)}
       <UploadAssetsButton label={env.isSmallScreen ? undefined : _('upload')} />
     {/if}
   {/snippet}

@@ -357,6 +357,28 @@ export const deleteFiles = async (assets, options) => {
 };
 
 /**
+ * Whether the given URL points to a file on the configured Uploadcare CDN.
+ * @param {string} url URL.
+ * @returns {boolean} Result.
+ */
+export const isAssetURL = (url) => {
+  const options = getLibraryOptions();
+
+  if (!options) {
+    return false;
+  }
+
+  try {
+    const { origin } = new URL(options.config?.cdnBase ?? 'https://ucarecdn.com/');
+
+    return url.startsWith(`${origin}/`);
+  } catch {
+    // A malformed `cdnBase` can’t be matched
+    return false;
+  }
+};
+
+/**
  * Uploadcare media library service integration. Files can’t be renamed through the REST API, and a
  * re-uploaded file gets a new UUID (and therefore a new URL), so neither `rename` nor `replace` is
  * provided.
@@ -374,6 +396,7 @@ export default {
   apiKeyURL: 'https://app.uploadcare.com/projects/-/api-keys/',
   apiKeyPattern: /^[a-f0-9]{20}$/,
   isEnabled,
+  isAssetURL,
   list,
   search,
   upload,

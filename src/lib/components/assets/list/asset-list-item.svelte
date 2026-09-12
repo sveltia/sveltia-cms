@@ -93,7 +93,6 @@
       variant={viewType === 'list' ? 'icon' : 'tile'}
       cover={env.isSmallScreen}
       checkerboard={kind === 'image'}
-      crossorigin={src ? 'anonymous' : undefined}
     />
   </GridCell>
   {#if !env.isSmallScreen || viewType === 'list'}

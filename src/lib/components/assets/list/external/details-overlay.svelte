@@ -27,6 +27,7 @@
   } from '$lib/services/assets/external';
   import { deleteExternalAssets, fetchExternalAssetBlob } from '$lib/services/assets/external/data';
   import { isMediaKind } from '$lib/services/assets/kinds';
+  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { MediaLibraryService } from '$lib/types/private';
@@ -62,20 +63,24 @@
       getBlob={fetchExternalAssetBlob}
       {useButton}
     />
-    <DeleteAssetsButton
-      {assets}
-      disabled={!service.delete}
-      deleteAssets={deleteExternalAssets}
-      buttonDescription={_('delete_assets', { values: { count: 1 } })}
-      dialogDescription={_('confirm_deleting_this_asset')}
-      onDelete={() => {
-        goBack(backPath);
-      }}
-      {useButton}
-    />
+    {#if service.delete}
+      <DeleteAssetsButton
+        {assets}
+        deleteAssets={deleteExternalAssets}
+        buttonDescription={_('delete_assets', { values: { count: 1 } })}
+        dialogDescription={_('confirm_deleting_this_asset')}
+        onDelete={() => {
+          goBack(backPath);
+        }}
+        {useButton}
+      />
+    {/if}
   {/snippet}
   {#snippet editOptions(extraItems)}
-    <EditOptionsButton {asset} {extraItems} />
+    <!-- On small screens, the menu also holds the other actions, so it’s always needed there -->
+    {#if service.rename || service.replace || env.isSmallScreen}
+      <EditOptionsButton {asset} {extraItems} />
+    {/if}
   {/snippet}
   {#snippet preview()}
     {#if !loaded}
@@ -92,7 +97,6 @@
         checkerboard={kind === 'image'}
         alt={kind === 'image' ? fileName : undefined}
         controls={['audio', 'video'].includes(kind)}
-        crossorigin="anonymous"
       />
     {:else if type === 'application/pdf'}
       <iframe src={downloadURL} title={fileName} sandbox="allow-scripts"></iframe>

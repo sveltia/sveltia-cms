@@ -73,44 +73,56 @@
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
   };
 
-  const items = $derived([
-    {
-      label: _('public_urls', { values: { count: assets.length } }),
-      /**
-       * Copy the asset public URL(s) to clipboard.
-       */
-      copy: async () => {
-        await navigator.clipboard.writeText(assets.map((a) => a.downloadURL).join('\n'));
+  /**
+   * Copy the asset public URL(s) to clipboard.
+   */
+  const copyPublicURLs = async () => {
+    await navigator.clipboard.writeText(assets.map((a) => a.downloadURL).join('\n'));
+  };
+
+  /**
+   * Copy the asset file path(s) on the service to clipboard.
+   */
+  const copyFilePaths = async () => {
+    await navigator.clipboard.writeText(assets.map((a) => a.description).join('\n'));
+  };
+
+  /**
+   * Copy the asset ID(s) to clipboard.
+   */
+  const copyFileIDs = async () => {
+    await navigator.clipboard.writeText(assets.map((a) => a.id).join('\n'));
+  };
+
+  // A file linked from an entry has nothing but its URL, so the path and ID items are left out
+  const hasPath = $derived(assets.some((a) => a.description !== a.downloadURL));
+  const hasId = $derived(assets.some((a) => a.id !== a.downloadURL));
+
+  const items = $derived(
+    [
+      {
+        label: _('public_urls', { values: { count: assets.length } }),
+        copy: copyPublicURLs,
+        toastKey: 'asset_urls_copied',
       },
-      toastKey: 'asset_urls_copied',
-    },
-    {
-      label: _('file_paths', { values: { count: assets.length } }),
-      /**
-       * Copy the asset file path(s) on the service to clipboard.
-       */
-      copy: async () => {
-        await navigator.clipboard.writeText(assets.map((a) => a.description).join('\n'));
+      hasPath && {
+        label: _('file_paths', { values: { count: assets.length } }),
+        copy: copyFilePaths,
+        toastKey: 'asset_paths_copied',
       },
-      toastKey: 'asset_paths_copied',
-    },
-    {
-      label: _('file_ids', { values: { count: assets.length } }),
-      /**
-       * Copy the asset ID(s) to clipboard.
-       */
-      copy: async () => {
-        await navigator.clipboard.writeText(assets.map((a) => a.id).join('\n'));
+      hasId && {
+        label: _('file_ids', { values: { count: assets.length } }),
+        copy: copyFileIDs,
+        toastKey: 'asset_ids_copied',
       },
-      toastKey: 'asset_ids_copied',
-    },
-    {
-      label: _('file_data'),
-      disabled: !canCopyFileData,
-      copy: copyFileData,
-      toastKey: 'asset_data_copied',
-    },
-  ]);
+      {
+        label: _('file_data'),
+        disabled: !canCopyFileData,
+        copy: copyFileData,
+        toastKey: 'asset_data_copied',
+      },
+    ].filter((item) => !!item),
+  );
 </script>
 
 <CopyMenu {items} count={assets.length} {useButton} />

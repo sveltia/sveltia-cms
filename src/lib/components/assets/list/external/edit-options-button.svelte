@@ -33,15 +33,20 @@
   const service = $derived(selectedCloudService.current);
 </script>
 
+<!-- The items for operations the service doesn’t support are omitted rather than disabled -->
 <EditOptionsMenu
-  canRename={!!asset && !!service?.rename}
-  canReplace={!!asset && !!service?.replace}
-  onRename={() => {
-    renamingExternalAsset.current = asset;
-  }}
-  onReplace={() => {
-    replaceFilePicker?.open();
-  }}
+  canRename={!!asset}
+  canReplace={!!asset}
+  onRename={service?.rename
+    ? () => {
+        renamingExternalAsset.current = asset;
+      }
+    : undefined}
+  onReplace={service?.replace
+    ? () => {
+        replaceFilePicker?.open();
+      }
+    : undefined}
   {extraItems}
 />
 

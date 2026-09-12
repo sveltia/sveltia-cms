@@ -21,14 +21,12 @@
     externalAssets,
     externalAssetSearchTerms,
     focusedExternalAsset,
-    hasAuthInfo,
     selectedCloudService,
     selectedExternalAssets,
   } from '$lib/services/assets/external';
   import {
     externalAssetsToast,
     getSharedMediaLibraryOptions,
-    loadExternalAssets,
     uploadExternalAssets,
     uploadingExternalAssets,
   } from '$lib/services/assets/external/data';
@@ -47,16 +45,6 @@
   /** @type {string[]} */
   let invalidFileNames = $state([]);
   let showRejectedFilesAlert = $state(false);
-
-  // Fetch the assets once the service is selected and the user has provided the credentials. The
-  // Cloudinary widget handles authentication and listing on its own
-  $effect(() => {
-    if (service.authType !== 'widget' && hasAuthInfo(service)) {
-      untrack(() => {
-        loadExternalAssets(service);
-      });
-    }
-  });
 
   // Upload the files dropped on the list, picked with the Upload button or chosen to replace an
   // existing asset

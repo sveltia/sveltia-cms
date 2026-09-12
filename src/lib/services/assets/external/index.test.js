@@ -42,6 +42,11 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: {},
 }));
 
+vi.mock('$lib/services/assets/external/linked', () => ({
+  LINKED_FILES_SERVICE_ID: 'linked',
+  linkedFilesService: { serviceId: 'linked', authType: 'none' },
+}));
+
 describe('assets/external', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -69,6 +74,14 @@ describe('assets/external', () => {
     it('should return `undefined` for a disabled or unknown service', () => {
       expect(getCloudService('aws_s3')).toBeUndefined();
       expect(getCloudService('all')).toBeUndefined();
+    });
+
+    it('should return the virtual service for the linked files', () => {
+      expect(getCloudService('linked')).toEqual({ serviceId: 'linked', authType: 'none' });
+      // It’s not a configured service, so it’s not listed as one
+      expect(enabledCloudServices.current.map(({ serviceId }) => serviceId)).not.toContain(
+        'linked',
+      );
     });
   });
 

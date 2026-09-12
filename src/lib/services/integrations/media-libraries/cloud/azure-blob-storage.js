@@ -505,6 +505,27 @@ export const replace = async (asset, file, options) =>
   replaceBlob(asset, file, getConfig(options), options);
 
 /**
+ * Whether the given URL points to a blob in the configured container, through either the public
+ * URL or the Blob service.
+ * @param {string} url URL.
+ * @returns {boolean} Result.
+ */
+export const isAssetURL = (url) => {
+  const config = getLibraryOptions();
+
+  if (!config) {
+    return false;
+  }
+
+  const { public_url: publicUrl } = config;
+
+  return [
+    `${buildContainerUrl(config)}/`,
+    ...(publicUrl ? [`${trimSlashes(publicUrl)}/`] : []),
+  ].some((base) => url.startsWith(base));
+};
+
+/**
  * Azure Blob Storage media library service integration.
  * @type {MediaLibraryService}
  */
@@ -520,6 +541,7 @@ export default {
   apiKeyURL: 'https://portal.azure.com/#browse/Microsoft.Storage%2FStorageAccounts',
   apiKeyPattern: /^\??(?:[\w-]+=[^&]*&)*sig=[^&]+(?:&[\w-]+=[^&]*)*$/,
   isEnabled,
+  isAssetURL,
   list,
   search,
   upload,

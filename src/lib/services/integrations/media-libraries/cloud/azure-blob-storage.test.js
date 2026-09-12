@@ -10,6 +10,7 @@ import azureBlobStorageService, {
   deleteBlobs,
   deleteFiles,
   getLibraryOptions,
+  isAssetURL,
   isEnabled,
   list,
   listBlobs,
@@ -618,6 +619,28 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
       await expect(list({ apiKey: token })).rejects.toThrow(message);
       await expect(search('photo', { apiKey: token })).rejects.toThrow(message);
       await expect(upload([], { apiKey: token })).rejects.toThrow(message);
+    });
+  });
+
+  describe('isAssetURL', () => {
+    it('should match the container URL and the public URL', () => {
+      expect(azureBlobStorageService).toMatchObject({ isAssetURL });
+      expect(isAssetURL(`${containerURL}/images/a.jpg`)).toBe(true);
+      expect(isAssetURL('https://cdn.example.com/a.jpg')).toBe(false);
+
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: {
+          azure_blob_storage: { ...config, public_url: 'https://cdn.example.com/' },
+        },
+      });
+
+      expect(isAssetURL('https://cdn.example.com/a.jpg')).toBe(true);
+      expect(isAssetURL('https://example.com/a.jpg')).toBe(false);
+    });
+
+    it('should be false when the service is not configured', () => {
+      cmsConfig.current = /** @type {any} */ ({});
+      expect(isAssetURL(`${containerURL}/a.jpg`)).toBe(false);
     });
   });
 

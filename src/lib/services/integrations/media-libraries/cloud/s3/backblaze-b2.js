@@ -1,6 +1,7 @@
 import {
   deleteS3Objects,
   getLibraryOptions as getS3LibraryOptions,
+  isS3ObjectUrl,
   listS3Objects,
   renameS3Object,
   replaceS3Object,
@@ -116,6 +117,20 @@ export const replace = async (asset, file, options) =>
   replaceS3Object(asset, file, getConfig(options), options);
 
 /**
+ * Whether the given URL points to a file on Backblaze B2.
+ * @param {string} url URL.
+ * @returns {boolean} Result.
+ */
+export const isAssetURL = (url) => {
+  try {
+    return isS3ObjectUrl(getConfig(/** @type {any} */ ({})), url);
+  } catch {
+    // The service is not configured
+    return false;
+  }
+};
+
+/**
  * Backblaze B2 media library service integration.
  * @type {MediaLibraryService}
  */
@@ -131,6 +146,7 @@ export default {
   apiKeyURL: 'https://secure.backblaze.com/app_keys.htm',
   apiKeyPattern: /^[A-Za-z0-9/+=]{30,}$/,
   isEnabled,
+  isAssetURL,
   list,
   search,
   upload,

@@ -1,6 +1,7 @@
 import {
   deleteS3Objects,
   getLibraryOptions as getS3LibraryOptions,
+  isS3ObjectUrl,
   listS3Objects,
   renameS3Object,
   replaceS3Object,
@@ -105,6 +106,20 @@ export const replace = async (asset, file, options) =>
   replaceS3Object(asset, file, getConfig(options), options);
 
 /**
+ * Whether the given URL points to a file on Amazon S3.
+ * @param {string} url URL.
+ * @returns {boolean} Result.
+ */
+export const isAssetURL = (url) => {
+  try {
+    return isS3ObjectUrl(getConfig(/** @type {any} */ ({})), url);
+  } catch {
+    // The service is not configured
+    return false;
+  }
+};
+
+/**
  * Amazon S3 media library service integration.
  * @type {MediaLibraryService}
  */
@@ -120,6 +135,7 @@ export default {
   apiKeyURL: 'https://console.aws.amazon.com/iam/home#/security_credentials',
   apiKeyPattern: /^[A-Za-z0-9/+=]{40}$/,
   isEnabled,
+  isAssetURL,
   list,
   search,
   upload,

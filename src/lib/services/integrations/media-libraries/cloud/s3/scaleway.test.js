@@ -5,6 +5,7 @@ import { cmsConfig } from '$lib/services/config';
 import scalewayObjectStorageService, {
   deleteFiles,
   getLibraryOptions,
+  isAssetURL,
   isEnabled,
   list,
   rename,
@@ -35,6 +36,7 @@ vi.mock('./core', async (importOriginal) => {
     deleteS3Objects: vi.fn(),
     renameS3Object: vi.fn(),
     replaceS3Object: vi.fn(),
+    isS3ObjectUrl: vi.fn(() => true),
   };
 });
 
@@ -363,6 +365,24 @@ describe('integrations/media-libraries/cloud/s3/scaleway-object-storage', () => 
       await expect(replace(asset, file, options)).rejects.toThrow(
         'Scaleway Object Storage configuration is not available',
       );
+    });
+  });
+
+  describe('isAssetURL', () => {
+    it('should check the URL against the resolved config', async () => {
+      const core = await import('./core');
+
+      expect(scalewayObjectStorageService).toMatchObject({ isAssetURL });
+      expect(isAssetURL('https://example.com/a.jpg')).toBe(true);
+      expect(core.isS3ObjectUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ bucket: mockBucket }),
+        'https://example.com/a.jpg',
+      );
+    });
+
+    it('should be false when the service is not configured', () => {
+      cmsConfig.current = /** @type {any} */ ({});
+      expect(isAssetURL('https://example.com/a.jpg')).toBe(false);
     });
   });
 });

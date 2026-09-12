@@ -9,6 +9,7 @@ import cloudinaryService, {
   getCloudConfig,
   getLibraryOptions,
   getMergedLibraryOptions,
+  isAssetURL,
   isEnabled,
   list,
   optionCacheMap,
@@ -426,6 +427,21 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       // Should use same cache entry
       expect(result1).toBe(result2);
+    });
+  });
+
+  describe('isAssetURL', () => {
+    it('should match the product environment on the Cloudinary CDN', () => {
+      const { cloudName } = getCloudConfig();
+
+      expect(cloudinaryService).toMatchObject({ isAssetURL });
+      expect(isAssetURL(`https://res.cloudinary.com/${cloudName}/image/upload/a.jpg`)).toBe(true);
+      expect(isAssetURL('https://res.cloudinary.com/other/image/upload/a.jpg')).toBe(false);
+    });
+
+    it('should be false when the service is not configured', () => {
+      cmsConfig.current = /** @type {any} */ ({});
+      expect(isAssetURL('https://res.cloudinary.com/demo/image/upload/a.jpg')).toBe(false);
     });
   });
 

@@ -15,13 +15,13 @@
    * @typedef {object} Props
    * @property {boolean} [readOnly] Whether every edit operation is unavailable, e.g. for an Open
    * Authoring contributor.
-   * @property {boolean} [canEdit] Whether the asset can be edited. The Edit item is omitted when
-   * `onEdit` is not given.
+   * @property {boolean} [canEdit] Whether the asset can be edited.
    * @property {boolean} [canRename] Whether the asset can be renamed.
    * @property {boolean} [canReplace] Whether the asset can be replaced.
-   * @property {() => void} [onEdit] Called when the Edit item is selected.
-   * @property {() => void} onRename Called when the Rename item is selected.
-   * @property {() => void} onReplace Called when the Replace item is selected.
+   * @property {() => void} [onEdit] Called when the Edit item is selected. The item is omitted
+   * when this is not given, which means the location doesn’t support the operation at all.
+   * @property {() => void} [onRename] Called when the Rename item is selected. Same as above.
+   * @property {() => void} [onReplace] Called when the Replace item is selected. Same as above.
    * @property {Snippet} [extraItems] Items placed at the top of the menu.
    * @property {Snippet} [moreItems] Items placed at the bottom of the menu, after a divider.
    */
@@ -34,8 +34,8 @@
     canRename = false,
     canReplace = false,
     onEdit = undefined,
-    onRename,
-    onReplace,
+    onRename = undefined,
+    onReplace = undefined,
     extraItems = undefined,
     moreItems = undefined,
     /* eslint-enable prefer-const */
@@ -55,20 +55,24 @@
           onclick={onEdit}
         />
       {/if}
-      <MenuItem
-        variant="ghost"
-        label={_('rename')}
-        aria-label={_('rename_asset')}
-        disabled={readOnly || !canRename}
-        onclick={onRename}
-      />
-      <MenuItem
-        variant="ghost"
-        label={_('replace')}
-        aria-label={_('replace_asset')}
-        disabled={readOnly || !canReplace}
-        onclick={onReplace}
-      />
+      {#if onRename}
+        <MenuItem
+          variant="ghost"
+          label={_('rename')}
+          aria-label={_('rename_asset')}
+          disabled={readOnly || !canRename}
+          onclick={onRename}
+        />
+      {/if}
+      {#if onReplace}
+        <MenuItem
+          variant="ghost"
+          label={_('replace')}
+          aria-label={_('replace_asset')}
+          disabled={readOnly || !canReplace}
+          onclick={onReplace}
+        />
+      {/if}
       {#if moreItems}
         <Divider />
         {@render moreItems()}
