@@ -9,16 +9,22 @@
  * only show up at render time are hard to catch by review. This script parses every message with
  * the same MF2 implementation the app uses and reports what would go wrong on screen.
  *
- * Three problems fail the check. An MF2 syntax error means the message can’t be parsed at all. A
+ * Four problems fail the check. An MF2 syntax error means the message can’t be parsed at all. A
  * plural variant that can never be selected, because the locale doesn’t have that category, is
  * silently dead: a variant keyed `one` in Japanese never matches, so every count falls through to
- * the catch-all. A placeholder that doesn’t line up with the source locale drops a name or a link
- * from the output, or leaves a raw placeholder on screen.
+ * the catch-all. The reverse also goes wrong: in Russian, Ukrainian or Croatian the `one` category
+ * covers 21, 31 and so on as well, so a `one` variant that doesn’t print the number, such as
+ * “Delete the selected entry”, shows the singular for 21 entries; the count-less wording belongs
+ * under the literal `1`. A placeholder that doesn’t line up with the source locale drops a name or
+ * a link from the output, or leaves a raw placeholder on screen.
  *
  * Two more are reported as warnings, because fixing them takes a translator. A key that no longer
  * exists in the source locale is usually left behind by a rename, so the file carries a stale
- * string while the live one falls back to English. A message that doesn’t spell out every plural
- * category its language requires gives some numbers a grammatically wrong form.
+ * string while the live one falls back to English. A message that prints the number but doesn’t
+ * spell out every plural category its language requires gives some numbers a grammatically wrong
+ * form. A literal key counts as covering a category when the two match exactly, like `0` and
+ * `zero` in Arabic, and a message whose only keyed variants are literals is taken to use one
+ * generic form on purpose, as Turkish does since its nouns don’t inflect after a numeral.
  *
  * Usage: node scripts/check-locales.js [--verbose].
  *
@@ -79,21 +85,36 @@ const flattenMessages = (object, prefix = '') =>
   );
 
 /**
- * Get the plural categories a locale actually uses.
+ * Get the plural categories a locale actually uses, with the numbers each one matches.
  * @param {string} locale Locale code.
- * @returns {Set<string>} Category names, always including `other`.
+ * @returns {Map<string, number[]>} Matching numbers keyed by category name, always including
+ * `other`.
  */
 const getPluralCategories = (locale) => {
   const rules = new Intl.PluralRules(locale);
-  /** @type {Set<string>} */
-  const categories = new Set();
+  /** @type {Map<string, number[]>} */
+  const categories = new Map();
 
   for (let number = 0; number <= MAX_SAMPLE; number += 1) {
-    categories.add(rules.select(number));
+    const category = rules.select(number);
+
+    categories.set(category, [...(categories.get(category) ?? []), number]);
   }
 
   return categories;
 };
+
+/**
+ * Get the variables a parsed pattern puts on screen.
+ * @param {any[]} pattern Parsed MF2 pattern.
+ * @returns {Set<string>} Variable names.
+ */
+const getPatternVariables = (pattern) =>
+  new Set(
+    pattern
+      .filter((part) => part?.type === 'expression' && part.arg?.type === 'variable')
+      .map((part) => part.arg.name),
+  );
 
 /**
  * Get the variables a message puts on screen. A `.input` declaration doesn’t render anything, and
@@ -110,14 +131,15 @@ const getRenderedVariables = (message) => {
 };
 
 /**
- * Get the variant keys a message selects on, ignoring the `*` catch-all.
+ * Get the variants of a message keyed by their selector value, with the variables each one prints.
  * @param {any} message Parsed MF2 message.
- * @returns {Set<string>} Variant keys.
+ * @returns {Map<string, Set<string>>} Rendered variables keyed by variant key; the `*` catch-all is
+ * keyed by `*`.
  */
-const getVariantKeys = (message) =>
-  new Set(
-    message.variants.flatMap(({ keys }) =>
-      keys.filter((key) => !isCatchallKey(key)).map(({ value }) => value),
+const getVariants = (message) =>
+  new Map(
+    message.variants.flatMap(({ keys, value }) =>
+      keys.map((key) => [isCatchallKey(key) ? '*' : key.value, getPatternVariables(value)]),
     ),
   );
 
@@ -186,10 +208,16 @@ const main = () => {
         return;
       }
 
-      const variantKeys = getVariantKeys(parsed);
+      const variants = getVariants(parsed);
+      const selector = parsed.selectors[0]?.name ?? parsed.selectors[0]?.arg?.name;
+      const variantKeys = [...variants.keys()].filter((variantKey) => variantKey !== '*');
 
-      variantKeys.forEach((variantKey) => {
-        if (PLURAL_CATEGORIES.includes(variantKey) && !categories.has(variantKey)) {
+      const categoryKeys = variantKeys.filter((variantKey) =>
+        PLURAL_CATEGORIES.includes(variantKey),
+      );
+
+      categoryKeys.forEach((variantKey) => {
+        if (!categories.has(variantKey)) {
           errors.push({
             locale,
             key,
@@ -197,15 +225,44 @@ const main = () => {
               `\`${variantKey}\` is not a plural category in ${locale}, so the variant is ` +
               'never selected; use the literal value instead, e.g. `1`',
           });
+
+          return;
+        }
+
+        // A category matching numbers beyond 1 needs the number in the wording to read right
+        const numbers = categories.get(variantKey) ?? [];
+
+        if (
+          variantKey === 'one' &&
+          numbers.some((number) => number > 1) &&
+          !variants.get(variantKey)?.has(selector)
+        ) {
+          errors.push({
+            locale,
+            key,
+            detail:
+              `\`one\` also matches ${numbers.slice(1, 3).join(', ')} and so on in ${locale}, ` +
+              'so the count-less wording shows the singular for those; use the literal `1` for ' +
+              'it, and print the number in a `one` variant',
+          });
         }
       });
 
-      const unhandled = [...categories].filter(
-        (category) => category !== 'other' && !variantKeys.has(category),
-      );
+      // A message that spells out no category at all uses one form on purpose, which is fine, and
+      // so is one whose catch-all doesn’t print the number, since a generic plural fits every count
+      if (!categoryKeys.length || !variants.get('*')?.has(selector)) {
+        return;
+      }
 
-      // A message that spells out no category at all uses one form on purpose, which is fine
-      if (variantKeys.size && unhandled.length) {
+      const unhandled = [...categories]
+        .filter(([category]) => category !== 'other' && !variantKeys.includes(category))
+        // A literal key that matches exactly the numbers of a category stands in for it
+        .filter(
+          ([, numbers]) => !(numbers.length === 1 && variantKeys.includes(String(numbers[0]))),
+        )
+        .map(([category]) => category);
+
+      if (unhandled.length) {
         warnings.push({ locale, key, detail: `no variant for ${unhandled.join(', ')}` });
       }
     });
