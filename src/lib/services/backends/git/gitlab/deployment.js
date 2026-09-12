@@ -76,11 +76,15 @@ export const fetchBranchHeadSHA = async () => {
 /**
  * Collect deploy candidates from the project’s recent deployments, which is how GitLab’s own Review
  * Apps and environments report a site URL. One request covers every target, because the API can
- * only be narrowed by time, not by commit or ref.
- * @param {DeployTarget[]} targets Commits to look up.
- * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate, keyed by commit SHA.
+ * only be narrowed by time, not by commit or ref. Each deployment is matched to a target by commit
+ * rather than by branch: a branch with any history has a finished deployment on it, and matching by
+ * branch would let that one — `ready`, with a URL — outrank the new commit’s own deployment, still
+ * `pending`, so a fresh save would read as built the moment it was pushed and never be checked
+ * again.
+ * @param {Record<string, DeployCandidate[]>} candidateMap Map to populate, keyed by the commit SHAs
+ * to look up.
  */
-const collectDeploymentCandidates = async (targets, candidateMap) => {
+const collectDeploymentCandidates = async (candidateMap) => {
   const updatedAfter = new Date(Date.now() - DEPLOYMENT_WINDOW).toISOString();
 
   const deployments = /** @type {Record<string, any>[]} */ (
@@ -92,24 +96,21 @@ const collectDeploymentCandidates = async (targets, candidateMap) => {
   );
 
   // The response is newest first, while {@link pickDeployment} expects the newest last
-  [...(deployments ?? [])].reverse().forEach(({ ref, status, environment }) => {
+  [...(deployments ?? [])].reverse().forEach(({ sha, status, environment }) => {
     const state = DEPLOYMENT_STATUS_MAP[status];
     // An older self-hosted GitLab omits `external_url` from the list response
     const url = environment?.external_url ?? undefined;
 
-    if (!state) {
+    if (!state || !sha) {
       return;
     }
 
-    targets.forEach(({ sha, branch }) => {
-      if (ref === branch) {
-        candidateMap[sha].push({
-          name: environment?.name ?? '',
-          url,
-          state,
-          source: 'deployment',
-        });
-      }
+    // Anything else within the window is some other commit’s deployment
+    candidateMap[sha]?.push({
+      name: environment?.name ?? '',
+      url,
+      state,
+      source: 'deployment',
     });
   });
 };
@@ -176,7 +177,7 @@ export const fetchDeployments = async (targets) => {
   };
 
   await Promise.all([
-    collect(() => collectDeploymentCandidates(validTargets, candidateMap)),
+    collect(() => collectDeploymentCandidates(candidateMap)),
     // Two merge requests can share a head commit, so look each one up only once
     runConcurrently([...new Set(validTargets.map(({ sha }) => sha))], async (sha) =>
       collect(() => collectStatusCandidates({ sha, branch: '', kind: 'preview' }, candidateMap)),

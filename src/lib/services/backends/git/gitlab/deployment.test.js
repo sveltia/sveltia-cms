@@ -106,7 +106,7 @@ describe('GitLab deployment service', () => {
       mockAPI({
         deployments: [
           {
-            ref: 'cms/posts/hello',
+            sha: 'abc123',
             status: 'success',
             environment: { name: 'review/hello', external_url: 'https://review.example.com' },
           },
@@ -123,11 +123,16 @@ describe('GitLab deployment service', () => {
       });
     });
 
-    test('ignores a deployment for another branch', async () => {
+    test('ignores a deployment for another commit', async () => {
       mockAPI({
         deployments: [
           {
-            ref: 'other-branch',
+            sha: 'def456',
+            ref: 'cms/posts/hello',
+            status: 'success',
+            environment: { name: 'review/hello', external_url: 'https://review.example.com' },
+          },
+          {
             status: 'success',
             environment: { name: 'review/other', external_url: 'https://other.example.com' },
           },
@@ -139,11 +144,69 @@ describe('GitLab deployment service', () => {
       expect(result.abc123).toEqual({ state: 'unknown', checkedTime: expect.any(Number) });
     });
 
+    test('reports a fresh commit as pending despite a finished deployment on the branch', async () => {
+      // @see https://github.com/sveltia/sveltia-cms/issues/967
+      mockAPI({
+        deployments: [
+          {
+            sha: 'abc123',
+            ref: 'main',
+            status: 'running',
+            environment: { name: 'production', external_url: 'https://www.example.com' },
+          },
+          {
+            sha: 'def456',
+            ref: 'main',
+            status: 'success',
+            environment: { name: 'production', external_url: 'https://www.example.com' },
+          },
+        ],
+        statuses: [{ name: 'pages', status: 'running', target_url: 'https://gitlab.com/job/1' }],
+      });
+
+      const result = await fetchDeployments([createTarget({ branch: 'main', kind: 'production' })]);
+
+      expect(result.abc123).toEqual(
+        expect.objectContaining({ state: 'pending', url: undefined, context: 'production' }),
+      );
+    });
+
+    test('reports a fresh commit as pending when `preview_context` names the environment', async () => {
+      // @see https://github.com/sveltia/sveltia-cms/issues/967
+      cmsConfig.current = /** @type {any} */ ({
+        backend: { name: 'gitlab', preview_context: 'production' },
+      });
+
+      mockAPI({
+        deployments: [
+          {
+            sha: 'abc123',
+            ref: 'main',
+            status: 'created',
+            environment: { name: 'production', external_url: 'https://www.example.com' },
+          },
+          {
+            sha: 'def456',
+            ref: 'main',
+            status: 'success',
+            environment: { name: 'production', external_url: 'https://www.example.com' },
+          },
+        ],
+        statuses: [{ name: 'pages', status: 'running', target_url: 'https://gitlab.com/job/1' }],
+      });
+
+      const result = await fetchDeployments([createTarget({ branch: 'main', kind: 'production' })]);
+
+      expect(result.abc123).toEqual(
+        expect.objectContaining({ state: 'pending', url: undefined, context: 'production' }),
+      );
+    });
+
     test('ignores a deployment with an unmapped status', async () => {
       mockAPI({
         deployments: [
           {
-            ref: 'cms/posts/hello',
+            sha: 'abc123',
             status: 'skipped',
             environment: { name: 'review', external_url: 'https://review.example.com' },
           },
@@ -157,7 +220,7 @@ describe('GitLab deployment service', () => {
 
     test('tolerates a deployment without environment details', async () => {
       mockAPI({
-        deployments: [{ ref: 'cms/posts/hello', status: 'running', environment: null }],
+        deployments: [{ sha: 'abc123', status: 'running', environment: null }],
       });
 
       const result = await fetchDeployments([createTarget()]);
@@ -234,12 +297,12 @@ describe('GitLab deployment service', () => {
       mockAPI({
         deployments: [
           {
-            ref: 'cms/posts/hello',
+            sha: 'abc123',
             status: 'success',
             environment: { name: 'review', external_url: 'https://new.example.com' },
           },
           {
-            ref: 'cms/posts/hello',
+            sha: 'abc123',
             status: 'success',
             environment: { name: 'review', external_url: 'https://old.example.com' },
           },
@@ -281,7 +344,7 @@ describe('GitLab deployment service', () => {
 
         return [
           {
-            ref: 'cms/posts/hello',
+            sha: 'abc123',
             status: 'success',
             environment: { name: 'review', external_url: 'https://review.example.com' },
           },
