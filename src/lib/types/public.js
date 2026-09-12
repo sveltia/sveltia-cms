@@ -2056,6 +2056,35 @@
  */
 
 /**
+ * Options for the `pickFile` prop of a custom field control.
+ * @typedef {object} CustomFieldPickFileOptions
+ * @property {'image' | 'file'} [kind] Kind of asset to pick. `image` limits the dialog to images,
+ * the way a built-in Image field does. If omitted, the dialog is limited to images when `accept`
+ * only lists image types, and offers any file otherwise.
+ * @property {string} [accept] Comma-separated list of accepted file types, such as `image/*` or
+ * `.pdf,.docx`, applied to files uploaded through the dialog. Same as the `accept` option of a
+ * built-in File/Image field.
+ * @property {boolean} [multiple] Whether to let the user pick several files at once. Default:
+ * `false`.
+ * @property {boolean} [allowURL] Whether to let the user enter a URL instead of picking a file.
+ * Same as the `choose_url` option of a built-in File/Image field. Default: `true`.
+ */
+
+/**
+ * A file picked with the `pickFile` prop of a custom field control.
+ * @typedef {object} CustomFieldPickedFile
+ * @property {string} value Value to be stored in the field, exactly what a built-in File/Image
+ * field would store for the same pick: the public path of an existing asset, a temporary blob URL
+ * for a file to be uploaded along with the entry, which is replaced with the public path of the
+ * file when the entry is saved, or an external URL entered by the user or given by a stock photo
+ * service.
+ * @property {Blob | undefined} file Contents of the file, for a control that needs the bytes, such
+ * as one deriving a thumbnail. It’s `undefined` for an external URL.
+ * @property {string | undefined} credit Attribution HTML for a stock photo, including the
+ * photographer and service links, if the pick comes from a stock photo service.
+ */
+
+/**
  * Props for custom field control React components.
  * @typedef {object} CustomFieldControlProps
  * @property {any} value Current field value. The widget should display this value and call
@@ -2084,6 +2113,18 @@
  * the field’s or the global `media_library` options, such as `max_file_size` and
  * `transformations`, are applied. It rejects with an error if the file cannot be used. Files that
  * are added but no longer referenced in the value when the entry is saved are discarded.
+ * @property {(options?: CustomFieldPickFileOptions) => Promise<CustomFieldPickedFile |
+ * CustomFieldPickedFile[] | null>} pickFile Function to open the same Select Assets dialog as a
+ * built-in File/Image field, so that the user can pick an existing asset, upload a new file, enter
+ * a URL or choose a stock photo. It resolves to the picked file, or to an array of files when the
+ * `multiple` option is enabled, once the dialog is closed with the Insert button, and to `null`
+ * when the dialog is dismissed or none of the picked files can be used. The `value` of a picked
+ * file is what should be stored in the field value with `onChange`, either as the value itself or
+ * anywhere within an object or array value. The dialog lists the asset folders a File/Image field
+ * in the same place would offer, and files uploaded through it are handled exactly like files
+ * given to `addFile`, including the `media_library` options. Files that are oversized or cannot be
+ * decoded are reported to the user in a dialog. It rejects with an error if the contents of a
+ * picked asset cannot be retrieved.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */

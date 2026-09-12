@@ -9,6 +9,8 @@ import { getFieldConfigMap, getPreviewData } from '$lib/services/contents/fields
  * CustomFieldAddFileOptions,
  * CustomFieldControl,
  * CustomFieldControlProps,
+ * CustomFieldPickFileOptions,
+ * CustomFieldPickedFile,
  * } from '$lib/types/public';
  */
 
@@ -54,6 +56,8 @@ export const resolveControl = (ctrl) => {
  * options derived from them. It’s rebuilt whenever the draft is updated, so the control is always
  * given the latest content. The `addFile` prop lets a control hand a file to the CMS, so that it’s
  * uploaded along with the entry; the blob URL it resolves to is meant to be stored in the value.
+ * The `pickFile` prop opens the Select Assets dialog, so that a control can let the user pick an
+ * existing asset the way a built-in File/Image field does.
  * @param {object} args Arguments.
  * @param {string | null | undefined} args.fieldId Field ID.
  * @param {string | null | undefined} args.fieldClassName Class name for the wrapper element.
@@ -64,6 +68,9 @@ export const resolveControl = (ctrl) => {
  * @param {(value: any) => void} args.onChange Change handler.
  * @param {(file: File | Blob, options?: CustomFieldAddFileOptions) => Promise<string>}
  * args.addFile Handler to add a file to the entry draft.
+ * @param {(options?: CustomFieldPickFileOptions) => Promise<CustomFieldPickedFile |
+ * CustomFieldPickedFile[] | null>} args.pickFile Handler to pick a file in the Select Assets
+ * dialog.
  * @param {(instance: any) => void} args.handleRef Ref callback.
  * @returns {CustomFieldControlProps & { ref?: (instance: any) => void }} Props for React rendering.
  */
@@ -76,6 +83,7 @@ export const buildControlProps = ({
   locale,
   onChange,
   addFile,
+  pickFile,
   handleRef,
 }) => ({
   value: currentValue,
@@ -85,5 +93,6 @@ export const buildControlProps = ({
   entry: draft ? getPreviewData({ draft, locale }).entryMap : undefined,
   onChange,
   addFile,
+  pickFile,
   ref: handleRef,
 });

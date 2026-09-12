@@ -76,6 +76,8 @@
    * available.
    * @property {(resources: SelectedResource[]) => void} [onSelect] Custom `Select` event handler
    * that will be called when the dialog is closed with the Insert button.
+   * @property {() => void} [onClose] Custom `Close` event handler that will be called whenever the
+   * dialog is closed, after `onSelect` if the Insert button was clicked.
    */
 
   /** @type {Props} */
@@ -92,6 +94,7 @@
     assetLibraryFolderMap,
     enabledCloudServiceEntries,
     onSelect = undefined,
+    onClose = undefined,
     pendingFiles = $bindable([]),
     /* eslint-enable prefer-const */
   } = $props();
@@ -342,6 +345,7 @@
   {onOk}
   onClose={() => {
     resetValues();
+    onClose?.();
   }}
 >
   {#snippet headerExtra()}

@@ -39,6 +39,7 @@
   import { createElement } from 'react';
   import { getContext, onMount } from 'svelte';
 
+  import AssetPicker from '$lib/components/contents/details/fields/custom/asset-picker.svelte';
   import { fieldStateContext } from '$lib/services/api/field-state';
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
   import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
@@ -60,6 +61,8 @@
    * CustomField,
    * CustomFieldAddFileOptions,
    * CustomFieldControl,
+   * CustomFieldPickFileOptions,
+   * CustomFieldPickedFile,
    * } from '$lib/types/public';
    */
 
@@ -98,6 +101,8 @@
   let reactRoot = $state();
   /** @type {any | undefined} */
   let componentInstance = $state();
+  /** @type {AssetPicker | undefined} */
+  let assetPicker = $state();
 
   const { i18n = false } = $derived(fieldConfig);
   const resolvedControl = $derived(resolveControl(control));
@@ -146,6 +151,23 @@
   };
 
   /**
+   * Open the Select Assets dialog on behalf of the React component, so that the user can pick an
+   * existing asset, upload a file, enter a URL or choose a stock photo, the way a built-in
+   * File/Image field lets them.
+   * @param {CustomFieldPickFileOptions} [options] Options.
+   * @returns {Promise<CustomFieldPickedFile | CustomFieldPickedFile[] | null>} Picked file(s), or
+   * `null` if the dialog is dismissed.
+   * @throws {Error} When no entry is being edited.
+   */
+  const handlePickFile = async (options) => {
+    if (!assetPicker) {
+      throw new Error('pickFile() can only be called while an entry is being edited');
+    }
+
+    return assetPicker.pick(options);
+  };
+
+  /**
    * React ref callback to capture the component instance. React calls this with `null` on detach.
    * @param {any} instance The React component instance.
    */
@@ -179,6 +201,7 @@
       locale,
       onChange: handleChange,
       addFile: handleAddFile,
+      pickFile: handlePickFile,
       handleRef,
     });
 
@@ -232,3 +255,5 @@
 </script>
 
 <div role="none" bind:this={container}></div>
+
+<AssetPicker bind:this={assetPicker} {fieldConfig} {typedKeyPath} {componentName} />
