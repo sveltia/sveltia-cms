@@ -238,6 +238,11 @@ mobile_promo_button: Спробувати
 new_language_available: Sveltia CMS тепер доступна мовою {$locale}!
 change_language: Змінити мову
 
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Перемикання на {$locale}…
+locale_load_failed: Не вдалося завантажити переклад для {$locale}. Спробуйте пізніше.
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: Перейти на робочий сайт
@@ -365,13 +370,18 @@ viewing_x_asset_folder: |
     few  {{ Ви переглядаєте теку ресурсів «{$folder}», у якій {$count} ресурси. }}
     many {{ Ви переглядаєте теку ресурсів «{$folder}», у якій {$count} ресурсів. }}
     *    {{ Ви переглядаєте теку ресурсів «{$folder}», у якій {$count} ресурсів. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Ви переглядаєте ресурси в сервісі {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Натисніть Enter, щоб редагувати файл «{$file}».
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Сторінку не знайдено.
 collection_not_found: Колекцію не знайдено.
+asset_folder_not_found: Теку ресурсів не знайдено.
 file_not_found: Файл не знайдено.
 
 # Selection count indicator
@@ -404,6 +414,10 @@ sort_keys:
   commit_author: Ким оновлено
   # Sort by the last commit date
   commit_date: Дата оновлення
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Дата зміни
+  # Sort by file size
+  size: Розмір
   # Sort by the entry’s computed summary text
   _summary: Зведення
   # Manual order defined by the user via drag-and-drop
@@ -415,6 +429,8 @@ ascending: '{$label}, від А до Я'
 ascending_date: '{$label}, від старих до нових'
 descending: '{$label}, від Я до А'
 descending_date: '{$label}, від нових до старих'
+ascending_number: '{$label}, за зростанням'
+descending_number: '{$label}, за спаданням'
 
 # Filter menu: button labels and options
 filter: Фільтрувати
@@ -443,6 +459,22 @@ hide_info: Сховати інформацію
 # Folder display labels when no specific path is configured
 all_assets: Усі ресурси
 global_assets: Глобальні ресурси
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Пов’язані файли
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Завантаження запису… }}
+    *   {{ Завантаження записів… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -540,6 +572,8 @@ upload_assets: Завантажити нові ресурси
 # Edit options menu: button and item labels
 edit_options: Параметри редагування
 show_edit_options: Показати параметри редагування
+# Copy menu aria-label
+copy_options: Параметри копіювання
 # Edit menu items with specific asset names
 edit_asset: Редагувати ресурс
 # {$name} is the selected asset name
@@ -567,6 +601,14 @@ enter_new_name_for_asset_error:
   empty: Назва файлу не може бути порожньою.
   character: Назва файлу не може містити спеціальних символів.
   duplicate: Ця назва файлу використовується для іншого ресурсу.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Змінити розширення файлу
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Ви впевнені, що хочете змінити розширення з «.{$oldExtension}» на «.{$newExtension}»?
+  add: Ви впевнені, що хочете додати розширення «.{$newExtension}»?
+  remove: Ви впевнені, що хочете видалити розширення «.{$oldExtension}»?
+file_extension_change_warning: Файл може відображатися або оброблятися неправильно, якщо розширення не відповідає фактичному формату файлу.
 
 # Replace asset: menu item and dialog title
 replace_asset: Замінити ресурс
@@ -679,6 +721,8 @@ delete_selected_entries: |
     *   {{ Видалити вибрані записи }}
 confirm_deleting_this_entry: Ви впевнені, що хочете видалити цей запис?
 confirm_deleting_this_entry_with_assets: Ви впевнені, що хочете видалити цей запис і пов’язані ресурси?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Не вдалося видалити запис. Спробуйте ще раз.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -752,6 +796,26 @@ warning_oversized_files: |
     one {{ Цей файл не можна завантажити, оскільки він перевищує максимальний розмір {$size}. Зменшіть розмір або виберіть інший файл. }}
     *   {{ Ці файли не можна завантажити, оскільки вони перевищують максимальний розмір {$size}. Зменшіть розміри або виберіть інші файли. }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Недійсні файли
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Цей файл не можна завантажити, оскільки він пошкоджений або його вміст не відповідає розширенню файлу. Це часто трапляється, коли фотографію перейменовують замість того, щоб конвертувати, наприклад зображення HEIC зберігають як файл JPEG. Конвертуйте файл і спробуйте ще раз. }}
+    *   {{ Ці файли не можна завантажити, оскільки вони пошкоджені або їхній вміст не відповідає розширенням файлів. Це часто трапляється, коли фотографії перейменовують замість того, щоб конвертувати, наприклад зображення HEIC зберігають як файли JPEG. Конвертуйте файли і спробуйте ще раз. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Файли іншого формату
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Цей файл не може замінити «{$name}», оскільки він в іншому форматі. Конвертуйте файл у той самий формат і спробуйте ще раз. }}
+    *   {{ Ці файли не можуть замінити «{$name}», оскільки вони в іншому форматі. Конвертуйте файли в той самий формат і спробуйте ще раз. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -778,6 +842,9 @@ keep_both: Зберегти обидва
 # Upload progress and error messages
 uploading_files_progress: Завантаження…
 uploading_files_failed: Не вдалося завантажити.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Не вдалося видалити.
+renaming_asset_failed: Не вдалося перейменувати.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -877,6 +944,13 @@ asset_paths_copied: |
     few  {{ {$count} шляхи до файлів скопійовано до буфера обміну. }}
     many {{ {$count} шляхів до файлів скопійовано до буфера обміну. }}
     *    {{ {$count} шляхів до файлів скопійовано до буфера обміну. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Ідентифікатор файлу скопійовано в буфер обміну. }}
+    few  {{ {$count} ідентифікатори файлів скопійовано в буфер обміну. }}
+    many {{ {$count} ідентифікаторів файлів скопійовано в буфер обміну. }}
+    *    {{ {$count} ідентифікаторів файлів скопійовано в буфер обміну. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -958,6 +1032,7 @@ show_editor_options: Показати параметри редактора
 editor_options: Параметри редактора
 
 # Preview controls
+show_second_pane: Показати другу панель
 show_preview: Показати попередній перегляд
 
 # Editor settings
@@ -1018,6 +1093,31 @@ view_in_repository: Переглянути в репозиторії
 view_on_x: Переглянути на {$service}
 view_on_live_site: Переглянути на робочому сайті
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Відкрити попередній перегляд
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Попередній перегляд ще збирається.
+  # Shown when the build failed, so no preview is available
+  failed: Не вдалося зібрати попередній перегляд.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Перевірка наявності попереднього перегляду…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Перевірити попередній перегляд
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Перевірка попереднього перегляду
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Збирання…
+    failed: Помилка збирання
+
 # Content copying from other locales
 copy_from: Копіювати з…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -1046,6 +1146,23 @@ edit_slug_error:
   empty: Слаг не може бути порожнім.
   invalid: Слаг не може містити спеціальних символів, зокрема косих рисок і пробілів.
   duplicate: Цей слаг використовується для іншого запису.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Батьківська тека
+new_parent_folder: Нова тека
+new_parent_folder_create: Створити
+new_parent_folder_name: Назва теки
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: Нову теку буде створено в «{$folder}».
+new_parent_folder_error:
+  empty: Назва теки не може бути порожньою.
+  invalid: Назва теки не може містити косих рисок або починатися з крапки й повинна містити літери або цифри.
+  duplicate: Тека з такою назвою тут уже існує.
+edit_path_error:
+  invalid: Шлях не може містити відносних сегментів, як-от «..».
+  recursive: Запис не можна перемістити в одну з його власних підтек.
+  duplicate: Цей шлях використовується для іншого запису.
 
 # Required field indicator
 required: Обов’язкове
@@ -1158,6 +1275,10 @@ validation:
     email: Введіть дійсну електронну адресу.
     url: Введіть дійсний URL.
 
+  # Custom field validation error
+  invalid_value: Недійсне значення.
+  unexpected_error: Сталася неочікувана помилка.
+
 # ==============================================================================
 # Entry Sidebar
 # ==============================================================================
@@ -1172,6 +1293,8 @@ entry_sidebar:
     title: Перевірка
     placeholder: Тут відображатимуться результати перевірки.
     no_errors_found: Помилок не знайдено.
+    # Button in the panel header that validates the entry on demand
+    validate: Перевірити
 
   # History panel: shows entry commit history
   history:
@@ -1202,6 +1325,10 @@ viewing_x_asset_details: Ви переглядаєте подробиці рес
 # Asset editor container aria-label
 asset_editor: Редактор ресурсів
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Попередній ресурс
+next_asset: Наступний ресурс
+
 # Preview unavailable message
 preview_unavailable: Попередній перегляд недоступний.
 
@@ -1218,6 +1345,13 @@ file_paths: |
   .match $count
     one {{ Шлях до файлу }}
     *   {{ Шляхи до файлів }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ідентифікатор файлу }}
+    *   {{ Ідентифікатори файлів }}
 file_data: Дані файлу
 
 # ==============================================================================
@@ -1251,6 +1385,12 @@ map_lat_lng: Карта з широтою {$latitude}, довготою {$longit
 remove_this_item: Вилучити цей елемент
 move_up: Перемістити вгору
 move_down: Перемістити вниз
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Змінити порядок елемента
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Значення елемента
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1263,6 +1403,9 @@ add_item_below: Додати елемент нижче
 
 # Variable-type list selector
 select_list_type: Виберіть тип списку
+
+# Variable-type mismatch
+unknown_variable_type: Цей елемент неможливо відобразити через невідомий тип. Подробиці див. у консолі браузера.
 
 # ==============================================================================
 # Field Widgets
@@ -1314,6 +1457,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: Великий файл
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Недійсний файл
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Файли неможливо завантажити
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1477,6 +1628,8 @@ config:
     parse_failed_invalid_object: Файл конфігурації не є дійсним об’єктом JavaScript.
     parse_failed_unsupported_type: Файл конфігурації має непідтримуваний тип. Підтримуються лише YAML, TOML і JSON.
     no_collection: Колекції не визначено.
+    # Don’t localize `hide`
+    no_visible_collection: Принаймні одна колекція має бути видимою. Перевірте параметр `hide`.
     missing_backend: Бекенд не визначено.
     missing_backend_name: Назву бекенду не визначено.
     # {$name} is the backend name from the CMS configuration
@@ -1490,11 +1643,19 @@ config:
     oauth_implicit_flow: Налаштований метод автентифікації (implicit flow) не підтримується в Sveltia CMS. Використовуйте інший <a>метод автентифікації</a>.
     github_pkce_unsupported: Авторизація PKCE поки не підтримується через обмеження GitHub. Використовуйте інший <a>метод автентифікації</a>.
     oauth_no_app_id: Ідентифікатор OAuth-застосунку не визначено.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: Параметр `open_authoring` вимагає режиму публікації `editorial_workflow`. Подробиці див. у <a>документації</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Параметр `auth_methods` має містити щонайменше один метод.
     missing_media_folder: Теку медіа не визначено.
     public_folder_relative_path: Налаштована публічна тека недійсна. Вона має бути абсолютним шляхом, що починається з «/».
     public_folder_absolute_url: Абсолютний URL для параметра публічної теки не підтримується в Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: Параметр `transformations` містить непідтримуваний ключ `{$key}`. Це має бути `raster_image`, `svg` або підтримуваний формат растрового зображення.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: Параметр `quality` для перетворення `{$key}` недійсний. Це має бути ціле число від 0 до 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: Параметр `{$prop}` для перетворення `{$key}` недійсний. Це має бути додатне ціле число.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Колекція ресурсів {$count} повинна мати параметр `name`, визначений як непорожній рядок.
     # {$name} is the invalid or duplicate asset collection name
@@ -1509,6 +1670,24 @@ config:
     file_format_mismatch: Розширення `{$extension}` не відповідає формату `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Шаблон слага `{$slug}` недійсний, оскільки не може містити косих рисок `/`. Щоб організувати записи в підтеках, використовуйте параметр `path` замість `slug`.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: Параметр `reorder` посилається на групу подання з назвою `{$name}`, але такої групи не визначено в параметрі `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: Параметр `sortable_fields` посилається на поле з назвою `{$name}`, але такого поля не визначено в колекції.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: Параметр `view_groups` посилається на поле з назвою `{$name}`, але такого поля не визначено в колекції.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: Параметр `view_filters` посилається на поле з назвою `{$name}`, але такого поля не визначено в колекції.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Група подання {$count} повинна мати параметр `name`, визначений як непорожній рядок.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: Назва групи подання `{$name}` недійсна. Вона не повинна містити спеціальних символів.
+    duplicate_view_group_name: Назви груп подання мають бути унікальними, але `{$name}` використовується більше ніж один раз.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Фільтр подання {$count} повинен мати параметр `name`, визначений як непорожній рядок.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: Назва фільтра подання `{$name}` недійсна. Вона не повинна містити спеціальних символів.
+    duplicate_view_filter_name: Назви фільтрів подання мають бути унікальними, але `{$name}` використовується більше ніж один раз.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Колекція {$count} повинна мати параметр `name`, визначений як непорожній рядок.
     # {$name} is the invalid or duplicate collection name
@@ -1556,14 +1735,50 @@ config:
     relation_field_invalid_value_field: Поле значення `{$field}`, на яке є посилання, недійсне або не визначене.
     unexpected: Неочікувана помилка
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: Параметр `{$option}` має бути {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'Параметр `{$option}` має мати одне з таких значень: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: Параметр `{$option}` має мати значення `{$value}`.
+    schema_invalid_empty_value: Параметр `{$option}` має бути порожнім рядком.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: Параметр `{$option}` має бути масивом із {$count} елементів.
+    schema_invalid_value: Параметр `{$option}` має недійсне значення.
+    schema_missing_option: Параметр `{$option}` обов’язковий.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Потрібен один із таких параметрів: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: рядком
+      number: числом
+      integer: цілим числом
+      boolean: логічним значенням
+      array: масивом
+      object: об’єктом
+      'null': порожнім
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: Ідентифікатор OAuth-застосунку не визначено. Користувачі повинні надати токен доступу для входу.
     editorial_workflow_unsupported: Редакційний процес поки не підтримується в Sveltia CMS.
+    open_authoring_unsupported_backend: Open Authoring наразі підтримується лише з бекендом GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Параметр `{$prop}` не підтримується в Sveltia CMS. Його буде проігноровано.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Встановлено як `picker_utc`, так і новіші параметри часового поясу (`input_timezone` або `output_utc`). Новіші параметри мають пріоритет. Розгляньте можливість видалення `picker_utc` з вашої конфігурації.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: Параметр `preview_path` використовує теги дати й часу, але в колекції немає поля DateTime, з якого їх можна прочитати, тому посилання на попередній перегляд не буде показано.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: Параметр `preview_path_date_field` посилається на поле з назвою `{$name}`, але поля DateTime з такою назвою не визначено, тому посилання на попередній перегляд не буде показано.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: Параметр `preview_path` посилається на `{$name}`, але такого поля не визначено в колекції, тому посилання на попередній перегляд не буде показано.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: Параметр `{$option}` не визначено в схемі конфігурації Sveltia CMS. Його буде проігноровано. Перевірте, чи немає одруку або синтаксичної помилки.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Докладніше дивиться у примітках щодо сумісності: {$link}'
@@ -1586,12 +1801,170 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Ви переглядаєте дошку редакційного процесу. Чернетки: {$draft}. На розгляді: {$review}. Готово: {$ready}. Очікують видалення: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Ви переглядаєте дошку редакційного процесу. Чернетки: {$draft}. На розгляді: {$review}. Очікують видалення: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: Чернетка
   drafts: Чернетки
   in_review: На розгляді
   ready: Готово
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Очікує видалення
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Скасувати видалення
+  confirm_cancelling_deletion: Ви впевнені, що хочете скасувати це видалення? Запис залишиться опублікованим.
+  confirm_completing_deletion: Ви впевнені, що хочете видалити цей запис? Його буде видалено негайно.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one  {{ Запис позначено на видалення. }}
+      few  {{ {$count} записи позначено на видалення. }}
+      many {{ {$count} записів позначено на видалення. }}
+      *    {{ {$count} записів позначено на видалення. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one  {{ Зміни відхилено. }}
+      few  {{ Зміни в {$count} записах відхилено. }}
+      many {{ Зміни в {$count} записах відхилено. }}
+      *    {{ Зміни в {$count} записах відхилено. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Скасування видалення…
+  deletion_cancelled: Видалення скасовано.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Не вдалося скасувати видалення. Спробуйте ще раз.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Неопубліковані записи
+  published_entries: Опубліковані записи
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Статус: {$status}'
+  change_entry_status: Змінити статус запису
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Зміна статусу…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Оновлення статусу…
+  status_updated: Статус оновлено.
+  # Error notification when the status could not be changed
+  status_change_failed: Не вдалося змінити статус. Спробуйте ще раз.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: У записі є помилки. Виправте їх, перш ніж змінювати статус.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: У записі є помилки. Виправте їх, перш ніж публікувати.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Надіслати на розгляд
+  confirm_sending_for_review: Ваші зміни збережено як чернетку. Надіслати запис на розгляд, щоб хтось переглянув і опублікував його?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Опублікувати запис
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Відхилити зміни
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Ви впевнені, що хочете видалити цей запис? Його не буде видалено, доки видалення не буде опубліковано. До того часу він залишиться в списку записів із позначкою «Очікує видалення».
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Цей запис ще не опубліковано, тому після видалення його буде повністю відхилено.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: У цьому записі є неопубліковані зміни. Якщо їх відхилити, буде відновлено опубліковану версію. Сам запис не буде видалено.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Його ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опублікована версія, якщо вона є, залишиться опублікованою. }}
+      *   {{ Їх ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one  {{ Один із них ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опублікована версія, якщо вона є, залишиться опублікованою. }}
+      few  {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
+      many {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
+      *    {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Ви впевнені, що хочете опублікувати цей запис? Ваші зміни набудуть чинності негайно.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Публікація запису…
+  entry_published: Запис опубліковано.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Видалення запису…
+  discarding_changes: Відхилення змін…
+  entry_deleted: Запис видалено.
+  # Error notification when publishing fails
+  publishing_entry_failed: Не вдалося опублікувати запис. Спробуйте ще раз.
+  # Workflow page: empty column message
+  no_entries: Немає записів.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Перетягніть, щоб змінити статус
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Створити форк репозиторію
+  fork: Створити форк
+  confirm_forking_repository: Щоб запропонувати зміни до «{$repo}», у вашому обліковому записі потрібно створити форк репозиторію. Ваші зміни зберігаються в цьому форку, і супровідник перевіряє їх перед публікацією.
+  # Error shown when the user declined the dialog above
+  fork_declined: Щоб пропонувати зміни, вам потрібен форк репозиторію у вашому обліковому записі.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Не вдалося створити форк репозиторію «{$repo}» у вашому обліковому записі.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Не вдалося перевірити ваш доступ до репозиторію «{$repo}». Спробуйте ще раз за мить.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: Репозиторій «{$repo}» не дозволяє створювати форки. Попросіть супровідника дозволити форки для нього.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: У вас є запрошення до репозиторію «{$repo}», що очікує на розгляд. Прийміть його на GitHub, а потім увійдіть знову.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Ваш вхід не включає доступ до приватних репозиторіїв, тому репозиторій «{$repo}» неможливо прочитати. Попросіть супровідника перевірити налаштування автентифікації CMS.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Публікувати зміни на цьому сайті може лише супровідник. Натомість позначте запис як «На розгляді», і хтось його перегляне.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Цю зміну не можна внести напряму. На розгляд можна пропонувати лише правки записів.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Ваші зміни зберігаються у вашому форку цього репозиторію «{$repo}» і перевіряються перед публікацією.
+  view_fork: Відкрити форк
 
 # ==============================================================================
 # Settings Dialog
@@ -1721,6 +2094,18 @@ prefs:
         field_label: Заголовок авторизації (напр., Bearer <token>) (необов'язково)
         saved: Заголовок авторизації збережено.
         removed: Заголовок авторизації видалено.
+    clear_data:
+      title: Очистити дані
+      # Clear File Cache button
+      file_cache:
+        description: Видалити локально кешований вміст файлів і мініатюри зображень, щоб звільнити місце або усунути проблеми, спричинені застарілими даними.
+        button_label: Очистити кеш файлів
+        confirmation: Локально кешований вміст файлів і мініатюри зображень буде видалено. Ваші незбережені чернетки та налаштування буде збережено, а видалені дані за потреби буде завантажено або створено знову. Після завершення CMS буде перезавантажено.
+      # Erase All Data button
+      all_data:
+        description: Видалити все, що CMS зберігає в цьому браузері, зокрема кешовані файли, незбережені чернетки та налаштування. Усе, що вже збережено у вашому репозиторії, не буде змінено.
+        button_label: Видалити всі дані
+        confirmation: Усі дані, збережені в цьому браузері, буде видалено, зокрема кешований вміст файлів, мініатюри зображень, незбережені чернетки, налаштування та стан входу. Ваш репозиторій не буде змінено, але всі незбережені зміни буде втрачено, і вам доведеться увійти знову. Після завершення CMS буде перезавантажено.
 
 # ==============================================================================
 # Keyboard Shortcuts

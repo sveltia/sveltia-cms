@@ -366,13 +366,18 @@ viewing_x_asset_folder: |
     0   {{ Está agora a ver a pasta de recursos «{$folder}», que ainda não tem recursos. }}
     one {{ Está agora a ver a pasta de recursos «{$folder}», que tem um recurso. }}
     *   {{ Está agora a ver a pasta de recursos «{$folder}», que tem {$count} recursos. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Está agora a ver os recursos em {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Prima Enter para editar o ficheiro «{$file}».
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Página não encontrada.
 collection_not_found: Coleção não encontrada.
+asset_folder_not_found: Pasta de recursos não encontrada.
 file_not_found: Ficheiro não encontrado.
 
 # Selection count indicator
@@ -405,6 +410,10 @@ sort_keys:
   commit_author: Atualizado por
   # Sort by the last commit date
   commit_date: Atualizado em
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Modificado em
+  # Sort by file size
+  size: Tamanho
   # Sort by the entry’s computed summary text
   _summary: Resumo
   # Manual order defined by the user via drag-and-drop
@@ -416,6 +425,8 @@ ascending: '{$label}, de A a Z'
 ascending_date: '{$label}, do mais antigo para o mais recente'
 descending: '{$label}, de Z a A'
 descending_date: '{$label}, do mais recente para o mais antigo'
+ascending_number: '{$label}, do menor para o maior'
+descending_number: '{$label}, do maior para o menor'
 
 # Filter menu: button labels and options
 filter: Filtrar
@@ -444,6 +455,22 @@ hide_info: Ocultar informações
 # Folder display labels when no specific path is configured
 all_assets: Todos os recursos
 global_assets: Recursos globais
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Ficheiros ligados
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ A carregar a entrada… }}
+    *   {{ A carregar as entradas… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -531,6 +558,8 @@ upload_assets: Carregar novos recursos
 # Edit options menu: button and item labels
 edit_options: Opções de edição
 show_edit_options: Mostrar opções de edição
+# Copy menu aria-label
+copy_options: Opções de cópia
 # Edit menu items with specific asset names
 edit_asset: Editar recurso
 # {$name} is the selected asset name
@@ -674,6 +703,8 @@ delete_selected_entries: |
     *   {{ Eliminar entradas selecionadas }}
 confirm_deleting_this_entry: Tem a certeza de que pretende eliminar esta entrada?
 confirm_deleting_this_entry_with_assets: Tem a certeza de que pretende eliminar esta entrada e os recursos associados?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Não foi possível eliminar a entrada. Tente novamente.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -751,6 +782,16 @@ warning_invalid_files: |
     one {{ Este ficheiro não pode ser carregado porque está danificado ou o seu conteúdo não corresponde à extensão do ficheiro. Isto acontece frequentemente quando uma fotografia é renomeada em vez de ser convertida, por exemplo uma imagem HEIC guardada como ficheiro JPEG. Converta o ficheiro e tente novamente. }}
     *   {{ Estes ficheiros não podem ser carregados porque estão danificados ou o seu conteúdo não corresponde à extensão dos ficheiros. Isto acontece frequentemente quando as fotografias são renomeadas em vez de serem convertidas, por exemplo imagens HEIC guardadas como ficheiros JPEG. Converta os ficheiros e tente novamente. }}
 
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Ficheiros de formato diferente
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Este ficheiro não pode substituir «{$name}» porque está num formato diferente. Converta o ficheiro para o mesmo formato e tente novamente. }}
+    *   {{ Estes ficheiros não podem substituir «{$name}» porque estão num formato diferente. Converta os ficheiros para o mesmo formato e tente novamente. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -772,6 +813,9 @@ keep_both: Manter ambos
 # Upload progress and error messages
 uploading_files_progress: A carregar…
 uploading_files_failed: O carregamento falhou.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Falha ao eliminar.
+renaming_asset_failed: Falha ao mudar o nome.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -855,6 +899,11 @@ asset_paths_copied: |
   .match $count
     one {{ Caminho do ficheiro copiado para a área de transferência. }}
     *   {{ {$count} caminhos de ficheiros copiados para a área de transferência. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ ID do ficheiro copiado para a área de transferência. }}
+    *   {{ {$count} IDs de ficheiros copiados para a área de transferência. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -926,6 +975,7 @@ show_editor_options: Mostrar opções do editor
 editor_options: Opções do editor
 
 # Preview controls
+show_second_pane: Mostrar segundo painel
 show_preview: Mostrar pré-visualização
 
 # Editor settings
@@ -986,6 +1036,31 @@ view_in_repository: Ver no repositório
 view_on_x: 'Ver no {$service}'
 view_on_live_site: Ver no site publicado
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Ver pré-visualização
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: A pré-visualização ainda está a ser criada.
+  # Shown when the build failed, so no preview is available
+  failed: Não foi possível criar a pré-visualização.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: A verificar se existe uma pré-visualização…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Verificar pré-visualização
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: A verificar pré-visualização
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: A criar…
+    failed: Falha na compilação
+
 # Content copying from other locales
 copy_from: Copiar de…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -1014,6 +1089,23 @@ edit_slug_error:
   empty: O slug não pode estar vazio.
   invalid: O slug não pode conter caracteres especiais, incluindo barras e espaços.
   duplicate: Este slug já é utilizado por outra entrada.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Pasta principal
+new_parent_folder: Nova pasta
+new_parent_folder_create: Criar
+new_parent_folder_name: Nome da pasta
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: A nova pasta será criada em «{$folder}».
+new_parent_folder_error:
+  empty: O nome da pasta não pode estar vazio.
+  invalid: O nome da pasta não pode conter barras nem começar por um ponto, e tem de incluir letras ou números.
+  duplicate: Já existe aqui uma pasta com este nome.
+edit_path_error:
+  invalid: O caminho não pode conter segmentos relativos como «..».
+  recursive: A entrada não pode ser movida para uma das suas próprias subpastas.
+  duplicate: Este caminho já é utilizado por outra entrada.
 
 # Required field indicator
 required: Obrigatório
@@ -1128,6 +1220,8 @@ entry_sidebar:
     title: Validação
     placeholder: Os resultados da validação serão apresentados aqui.
     no_errors_found: Nenhum erro encontrado.
+    # Button in the panel header that validates the entry on demand
+    validate: Validar
 
   # History panel: shows entry commit history
   history:
@@ -1158,6 +1252,10 @@ viewing_x_asset_details: Está a ver os detalhes do recurso «{$name}».
 # Asset editor container aria-label
 asset_editor: Editor de recursos
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Recurso anterior
+next_asset: Recurso seguinte
+
 # Preview unavailable message
 preview_unavailable: Pré-visualização indisponível.
 
@@ -1174,6 +1272,13 @@ file_paths: |
   .match $count
     one {{ Caminho do ficheiro }}
     *   {{ Caminhos dos ficheiros }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ ID do ficheiro }}
+    *   {{ IDs dos ficheiros }}
 file_data: Dados do ficheiro
 
 # ==============================================================================
@@ -1207,6 +1312,12 @@ map_lat_lng: Mapa que mostra a latitude {$latitude}, longitude {$longitude}
 remove_this_item: Remover este item
 move_up: Mover para cima
 move_down: Mover para baixo
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Reordenar item
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Valor do item
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1438,6 +1549,8 @@ config:
     parse_failed_invalid_object: O ficheiro de configuração não é um objeto JavaScript válido.
     parse_failed_unsupported_type: O ficheiro de configuração não é de um tipo de ficheiro válido. Apenas são suportados YAML, TOML e JSON.
     no_collection: As coleções não estão definidas.
+    # Don’t localize `hide`
+    no_visible_collection: Pelo menos uma coleção tem de estar visível. Verifique a opção `hide`.
     missing_backend: O backend não está definido.
     missing_backend_name: O nome do backend não está definido.
     # {$name} is the backend name from the CMS configuration
@@ -1451,11 +1564,19 @@ config:
     oauth_implicit_flow: O método de autenticação configurado (fluxo implícito) não é suportado no Sveltia CMS. Utilize antes um <a>método de autenticação</a> diferente.
     github_pkce_unsupported: A autorização PKCE ainda não é suportada devido às limitações do GitHub. Utilize antes um <a>método de autenticação</a> diferente.
     oauth_no_app_id: O ID da aplicação OAuth não está definido.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: A opção `open_authoring` requer o modo de publicação `editorial_workflow`. Consulte a <a>documentação</a> para mais detalhes.
     # Don’t localize `auth_methods`
     no_auth_methods: A opção `auth_methods` tem de conter pelo menos um método.
     missing_media_folder: A pasta de multimédia não está definida.
     public_folder_relative_path: A pasta pública configurada é inválida. Tem de ser um caminho absoluto que comece por «/».
     public_folder_absolute_url: Um URL absoluto para a opção da pasta pública não é suportado no Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: A opção `transformations` contém uma chave `{$key}` não suportada. Tem de ser `raster_image`, `svg` ou um formato de imagem raster suportado.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: A opção `quality` da transformação `{$key}` é inválida. Tem de ser um número inteiro entre 0 e 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: A opção `{$prop}` da transformação `{$key}` é inválida. Tem de ser um número inteiro positivo.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: A coleção de recursos {$count} tem de ter a opção `name` definida como uma cadeia de caracteres não vazia.
     # {$name} is the invalid or duplicate asset collection name
@@ -1535,14 +1656,50 @@ config:
     relation_field_invalid_value_field: O campo de valor `{$field}` referenciado é inválido ou não está definido.
     unexpected: Erro inesperado
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: A opção `{$option}` tem de ser {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'A opção `{$option}` tem de ser um destes valores: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: A opção `{$option}` tem de ser `{$value}`.
+    schema_invalid_empty_value: A opção `{$option}` tem de ser uma cadeia de caracteres vazia.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: A opção `{$option}` tem de ser uma matriz com {$count} itens.
+    schema_invalid_value: A opção `{$option}` tem um valor inválido.
+    schema_missing_option: A opção `{$option}` é obrigatória.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'É obrigatória uma destas opções: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: uma cadeia de caracteres
+      number: um número
+      integer: um número inteiro
+      boolean: um valor booleano
+      array: uma matriz
+      object: um objeto
+      'null': vazia
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: O ID da aplicação OAuth não está definido. Os utilizadores têm de fornecer um token de acesso para iniciar sessão.
     editorial_workflow_unsupported: O fluxo de trabalho editorial ainda não é suportado no Sveltia CMS.
+    open_authoring_unsupported_backend: De momento, o Open Authoring só é suportado com o backend do GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: A opção `{$prop}` não é suportada no Sveltia CMS. Será ignorada.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Estão definidas tanto a opção `picker_utc` como as opções de fuso horário mais recentes (`input_timezone` ou `output_utc`). As novas opções têm precedência. Considere remover `picker_utc` da sua configuração.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: A opção `preview_path` utiliza etiquetas de data e hora, mas a coleção não tem nenhum campo DateTime de onde as ler, pelo que a ligação de pré-visualização não será mostrada.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: A opção `preview_path_date_field` refere-se a um campo chamado `{$name}`, mas não está definido nenhum campo DateTime com esse nome, pelo que a ligação de pré-visualização não será mostrada.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: A opção `preview_path` refere-se a `{$name}`, mas não está definido nenhum campo com esse nome na coleção, pelo que a ligação de pré-visualização não será mostrada.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: A opção `{$option}` não está definida no esquema de configuração do Sveltia CMS. Será ignorada. Verifique se há um erro de escrita ou de sintaxe.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Consulte as notas de compatibilidade para mais detalhes: {$link}'
@@ -1565,12 +1722,164 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Está agora a ver o quadro do fluxo de trabalho editorial. Rascunhos: {$draft}. Em revisão: {$review}. Prontos: {$ready}. Eliminação pendente: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Está agora a ver o quadro do fluxo de trabalho editorial. Rascunhos: {$draft}. Em revisão: {$review}. Eliminação pendente: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: Rascunho
   drafts: Rascunhos
   in_review: Em revisão
   ready: Pronto
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Eliminação pendente
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Cancelar eliminação
+  confirm_cancelling_deletion: Tem a certeza de que pretende cancelar esta eliminação? A entrada continuará publicada.
+  confirm_completing_deletion: Tem a certeza de que pretende eliminar esta entrada? Será removida de imediato.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Entrada marcada para eliminação. }}
+      *   {{ {$count} entradas marcadas para eliminação. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Alterações rejeitadas. }}
+      *   {{ Alterações em {$count} entradas rejeitadas. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: A cancelar a eliminação…
+  deletion_cancelled: Eliminação cancelada.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Não foi possível cancelar a eliminação. Tente novamente.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Entradas não publicadas
+  published_entries: Entradas publicadas
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Estado: {$status}'
+  change_entry_status: Alterar estado da entrada
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: A alterar o estado…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: A atualizar o estado…
+  status_updated: Estado atualizado.
+  # Error notification when the status could not be changed
+  status_change_failed: Não foi possível alterar o estado. Tente novamente.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: A entrada contém erros. Corrija-os antes de alterar o estado.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: A entrada contém erros. Corrija-os antes de a publicar.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Enviar para revisão
+  confirm_sending_for_review: As suas alterações foram guardadas como rascunho. Pretende enviar a entrada para revisão para que alguém a possa analisar e publicar?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Publicar entrada
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Rejeitar alterações
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Tem a certeza de que pretende eliminar esta entrada? Só será removida quando a eliminação for publicada. Até lá, continuará a encontrá-la na lista de entradas, marcada como «Eliminação pendente».
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Esta entrada ainda não foi publicada, pelo que eliminá-la irá rejeitá-la por completo.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Esta entrada tem alterações não publicadas. Rejeitá-las irá restaurar a versão publicada. A entrada em si não será eliminada.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Ainda não foi publicada, pelo que as suas alterações não publicadas serão rejeitadas. Qualquer versão publicada continuará publicada. }}
+      *   {{ Ainda não foram publicadas, pelo que as suas alterações não publicadas serão rejeitadas. Quaisquer versões publicadas continuarão publicadas. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Uma delas ainda não foi publicada, pelo que as suas alterações não publicadas serão rejeitadas. Qualquer versão publicada continuará publicada. }}
+      *   {{ {$count} delas ainda não foram publicadas, pelo que as suas alterações não publicadas serão rejeitadas. Quaisquer versões publicadas continuarão publicadas. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Tem a certeza de que pretende publicar esta entrada? As suas alterações entrarão em vigor de imediato.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: A publicar a entrada…
+  entry_published: Entrada publicada.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: A eliminar a entrada…
+  discarding_changes: A rejeitar as alterações…
+  entry_deleted: Entrada eliminada.
+  # Error notification when publishing fails
+  publishing_entry_failed: Não foi possível publicar a entrada. Tente novamente.
+  # Workflow page: empty column message
+  no_entries: Sem entradas.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Arraste para alterar o estado
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Criar fork do repositório
+  fork: Criar fork
+  confirm_forking_repository: Para sugerir alterações a «{$repo}», é necessário criar um fork do repositório na sua conta. As suas alterações são guardadas nesse fork e um responsável revê-as antes de serem publicadas.
+  # Error shown when the user declined the dialog above
+  fork_declined: Precisa de um fork do repositório na sua conta para sugerir alterações.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Não foi possível criar um fork do repositório «{$repo}» na sua conta.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Não foi possível verificar o seu acesso ao repositório «{$repo}». Tente novamente dentro de instantes.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: O repositório «{$repo}» não permite forks. Peça a um responsável que ative os forks para o repositório.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Tem um convite pendente para o repositório «{$repo}». Aceite-o no GitHub e volte a iniciar sessão.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: O seu início de sessão não inclui acesso a repositórios privados, pelo que o repositório «{$repo}» não pode ser lido. Peça a um responsável que verifique as definições de autenticação do CMS.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Só um responsável pode publicar alterações neste site. Em vez disso, marque a sua entrada como «Em revisão» e alguém irá analisá-la.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Esta alteração não pode ser feita diretamente. Só as edições de entradas podem ser sugeridas para revisão.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: As suas alterações são guardadas no seu fork deste repositório, em «{$repo}», e revistas antes de serem publicadas.
+  view_fork: Ver fork
 
 # ==============================================================================
 # Settings Dialog
@@ -1700,6 +2009,18 @@ prefs:
         field_label: Cabeçalho de autorização (por exemplo, Bearer <token>) (opcional)
         saved: Cabeçalho de autorização guardado.
         removed: Cabeçalho de autorização removido.
+    clear_data:
+      title: Limpar dados
+      # Clear File Cache button
+      file_cache:
+        description: Eliminar o conteúdo dos ficheiros e as miniaturas de imagens guardados em cache localmente para libertar espaço de armazenamento ou resolver problemas causados por dados desatualizados.
+        button_label: Limpar cache de ficheiros
+        confirmation: O conteúdo dos ficheiros e as miniaturas de imagens guardados em cache localmente serão eliminados. Os seus rascunhos não guardados e as suas definições serão mantidos, e os dados eliminados serão transferidos ou gerados novamente conforme necessário. O CMS será recarregado quando terminar.
+      # Erase All Data button
+      all_data:
+        description: Eliminar tudo o que o CMS guarda neste navegador, incluindo os ficheiros em cache, os rascunhos não guardados e as definições. O que já estiver guardado no seu repositório não será afetado.
+        button_label: Apagar todos os dados
+        confirmation: Todos os dados guardados neste navegador serão eliminados, incluindo o conteúdo dos ficheiros em cache, as miniaturas de imagens, os rascunhos não guardados, as definições e o estado de início de sessão. O seu repositório não será afetado, mas qualquer alteração que não tenha guardado será perdida e terá de iniciar sessão novamente. O CMS será recarregado quando terminar.
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -366,13 +366,18 @@ viewing_x_asset_folder: |
     0   {{ Je bekijkt nu de mediamap “{$folder}”, die nog geen mediabestanden bevat. }}
     one {{ Je bekijkt nu de mediamap “{$folder}”, die één mediabestand bevat. }}
     *   {{ Je bekijkt nu de mediamap “{$folder}”, die {$count} mediabestanden bevat. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Je bekijkt nu de mediabestanden op {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Druk op Enter om het bestand “{$file}” te bewerken.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Pagina niet gevonden.
 collection_not_found: Collectie niet gevonden.
+asset_folder_not_found: Mediamap niet gevonden.
 file_not_found: Bestand niet gevonden.
 
 # Selection count indicator
@@ -405,6 +410,10 @@ sort_keys:
   commit_author: Bijgewerkt door
   # Sort by the last commit date
   commit_date: Bijgewerkt op
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Gewijzigd op
+  # Sort by file size
+  size: Grootte
   # Sort by the entry’s computed summary text
   _summary: Samenvatting
   # Manual order defined by the user via drag-and-drop
@@ -416,6 +425,8 @@ ascending: '{$label}, A tot Z'
 ascending_date: '{$label}, oud naar nieuw'
 descending: '{$label}, Z tot A'
 descending_date: '{$label}, nieuw naar oud'
+ascending_number: '{$label}, klein naar groot'
+descending_number: '{$label}, groot naar klein'
 
 # Filter menu: button labels and options
 filter: Filteren
@@ -444,6 +455,22 @@ hide_info: Info verbergen
 # Folder display labels when no specific path is configured
 all_assets: Alle media
 global_assets: Globale media
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Gekoppelde bestanden
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Item wordt geladen… }}
+    *   {{ Items worden geladen… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -531,6 +558,8 @@ upload_assets: Nieuwe mediabestanden uploaden
 # Edit options menu: button and item labels
 edit_options: Bewerkopties
 show_edit_options: Bewerkopties tonen
+# Copy menu aria-label
+copy_options: Kopieeropties
 # Edit menu items with specific asset names
 edit_asset: Mediabestand bewerken
 # {$name} is the selected asset name
@@ -556,6 +585,14 @@ enter_new_name_for_asset_error:
   empty: De bestandsnaam mag niet leeg zijn.
   character: De bestandsnaam mag geen speciale tekens bevatten.
   duplicate: Deze bestandsnaam is al in gebruik voor een ander mediabestand.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Bestandsextensie wijzigen
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Weet je zeker dat je de extensie wilt wijzigen van “.{$oldExtension}” naar “.{$newExtension}”?
+  add: Weet je zeker dat je de extensie “.{$newExtension}” wilt toevoegen?
+  remove: Weet je zeker dat je de extensie “.{$oldExtension}” wilt verwijderen?
+file_extension_change_warning: Het bestand wordt mogelijk niet correct weergegeven of verwerkt als de extensie niet overeenkomt met het werkelijke bestandsformaat.
 
 # Replace asset: menu item and dialog title
 replace_asset: Mediabestand vervangen
@@ -666,6 +703,8 @@ delete_selected_entries: |
     *   {{ Geselecteerde items verwijderen }}
 confirm_deleting_this_entry: Weet je zeker dat je dit item wilt verwijderen?
 confirm_deleting_this_entry_with_assets: Weet je zeker dat je dit item en de bijbehorende mediabestanden wilt verwijderen?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Het item kon niet worden verwijderd. Probeer het opnieuw.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -733,6 +772,26 @@ warning_oversized_files: |
     one {{ Dit bestand kan niet worden geüpload omdat het groter is dan de maximale grootte van {$size}. Verklein het of kies een ander bestand. }}
     *   {{ Deze bestanden kunnen niet worden geüpload omdat ze groter zijn dan de maximale grootte van {$size}. Verklein ze of kies andere bestanden. }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Ongeldige bestanden
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dit bestand kan niet worden geüpload omdat het beschadigd is of omdat de inhoud niet overeenkomt met de bestandsextensie. Dit gebeurt vaak wanneer een foto is hernoemd in plaats van geconverteerd, zoals een HEIC-afbeelding die als JPEG-bestand is opgeslagen. Converteer het bestand en probeer het opnieuw. }}
+    *   {{ Deze bestanden kunnen niet worden geüpload omdat ze beschadigd zijn of omdat de inhoud niet overeenkomt met de bestandsextensies. Dit gebeurt vaak wanneer foto’s zijn hernoemd in plaats van geconverteerd, zoals HEIC-afbeeldingen die als JPEG-bestanden zijn opgeslagen. Converteer de bestanden en probeer het opnieuw. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Niet-overeenkomende bestanden
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dit bestand kan “{$name}” niet vervangen omdat het een ander formaat heeft. Converteer het bestand naar hetzelfde formaat en probeer het opnieuw. }}
+    *   {{ Deze bestanden kunnen “{$name}” niet vervangen omdat ze een ander formaat hebben. Converteer de bestanden naar hetzelfde formaat en probeer het opnieuw. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -754,6 +813,9 @@ keep_both: Beide behouden
 # Upload progress and error messages
 uploading_files_progress: Bezig met uploaden…
 uploading_files_failed: Uploaden mislukt.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Verwijderen mislukt.
+renaming_asset_failed: Hernoemen mislukt.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -837,6 +899,11 @@ asset_paths_copied: |
   .match $count
     one {{ Bestandspad gekopieerd naar het klembord. }}
     *   {{ {$count} bestandspaden gekopieerd naar het klembord. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bestands-ID gekopieerd naar het klembord. }}
+    *   {{ {$count} bestands-ID’s gekopieerd naar het klembord. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -908,6 +975,7 @@ show_editor_options: Editoropties tonen
 editor_options: Editoropties
 
 # Preview controls
+show_second_pane: Tweede deelvenster tonen
 show_preview: Voorbeeld tonen
 
 # Editor settings
@@ -968,6 +1036,31 @@ view_in_repository: Bekijken in de repository
 view_on_x: 'Bekijken op {$service}'
 view_on_live_site: Bekijken op de live site
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Voorbeeld bekijken
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Het voorbeeld wordt nog gebouwd.
+  # Shown when the build failed, so no preview is available
+  failed: Het voorbeeld kon niet worden gebouwd.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Controleren op een voorbeeld…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Controleren op voorbeeld
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Controleren op voorbeeld
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Bezig met bouwen…
+    failed: Build mislukt
+
 # Content copying from other locales
 copy_from: Kopiëren uit…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -996,6 +1089,23 @@ edit_slug_error:
   empty: De slug mag niet leeg zijn.
   invalid: De slug mag geen speciale tekens bevatten, waaronder schuine strepen en spaties.
   duplicate: Deze slug is al in gebruik voor een ander item.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Bovenliggende map
+new_parent_folder: Nieuwe map
+new_parent_folder_create: Aanmaken
+new_parent_folder_name: Mapnaam
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: De nieuwe map wordt aangemaakt in “{$folder}”.
+new_parent_folder_error:
+  empty: De mapnaam mag niet leeg zijn.
+  invalid: De mapnaam mag geen schuine strepen bevatten of met een punt beginnen, en moet letters of cijfers bevatten.
+  duplicate: Er bestaat hier al een map met deze naam.
+edit_path_error:
+  invalid: Het pad mag geen relatieve segmenten zoals “..” bevatten.
+  recursive: Het item kan niet naar een van zijn eigen submappen worden verplaatst.
+  duplicate: Dit pad is al in gebruik voor een ander item.
 
 # Required field indicator
 required: Verplicht
@@ -1110,6 +1220,8 @@ entry_sidebar:
     title: Validatie
     placeholder: De validatieresultaten verschijnen hier.
     no_errors_found: Geen fouten gevonden.
+    # Button in the panel header that validates the entry on demand
+    validate: Valideren
 
   # History panel: shows entry commit history
   history:
@@ -1140,6 +1252,10 @@ viewing_x_asset_details: Je bekijkt de details van het mediabestand “{$name}�
 # Asset editor container aria-label
 asset_editor: Media-editor
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Vorig mediabestand
+next_asset: Volgend mediabestand
+
 # Preview unavailable message
 preview_unavailable: Geen voorbeeld beschikbaar.
 
@@ -1156,6 +1272,13 @@ file_paths: |
   .match $count
     one {{ Bestandspad }}
     *   {{ Bestandspaden }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bestands-ID }}
+    *   {{ Bestands-ID’s }}
 file_data: Bestandsgegevens
 
 # ==============================================================================
@@ -1189,6 +1312,12 @@ map_lat_lng: Kaart met breedtegraad {$latitude}, lengtegraad {$longitude}
 remove_this_item: Dit item verwijderen
 move_up: Omhoog verplaatsen
 move_down: Omlaag verplaatsen
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Item verplaatsen
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Itemwaarde
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1201,6 +1330,9 @@ add_item_below: Item hieronder toevoegen
 
 # Variable-type list selector
 select_list_type: Lijsttype selecteren
+
+# Variable-type mismatch
+unknown_variable_type: Dit item kan niet worden weergegeven vanwege een onbekend type. Bekijk de browserconsole voor details.
 
 # ==============================================================================
 # Field Widgets
@@ -1252,6 +1384,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: Groot bestand
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Ongeldig bestand
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Bestanden kunnen niet worden geüpload
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1409,6 +1549,8 @@ config:
     parse_failed_invalid_object: Het configuratiebestand is geen geldig JavaScript-object.
     parse_failed_unsupported_type: Het configuratiebestand heeft geen geldig bestandstype. Alleen YAML, TOML en JSON worden ondersteund.
     no_collection: Er zijn geen collecties gedefinieerd.
+    # Don’t localize `hide`
+    no_visible_collection: Ten minste één collectie moet zichtbaar zijn. Controleer de optie `hide`.
     missing_backend: De backend is niet gedefinieerd.
     missing_backend_name: De naam van de backend is niet gedefinieerd.
     # {$name} is the backend name from the CMS configuration
@@ -1422,11 +1564,19 @@ config:
     oauth_implicit_flow: De geconfigureerde authenticatiemethode (implicit flow) wordt niet ondersteund in Sveltia CMS. Gebruik in plaats daarvan een andere <a>authenticatiemethode</a>.
     github_pkce_unsupported: PKCE-autorisatie wordt nog niet ondersteund vanwege beperkingen van GitHub. Gebruik in plaats daarvan een andere <a>authenticatiemethode</a>.
     oauth_no_app_id: De OAuth-applicatie-ID is niet gedefinieerd.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: De optie `open_authoring` vereist de publicatiemodus `editorial_workflow`. Zie de <a>documentatie</a> voor details.
     # Don’t localize `auth_methods`
     no_auth_methods: De optie `auth_methods` moet minstens één methode bevatten.
     missing_media_folder: De mediamap is niet gedefinieerd.
     public_folder_relative_path: De geconfigureerde publieke map is ongeldig. Deze moet een absoluut pad zijn dat begint met “/”.
     public_folder_absolute_url: Een absolute URL voor de optie voor de publieke map wordt niet ondersteund in Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: De optie `transformations` bevat een niet-ondersteunde sleutel `{$key}`. Dit moet `raster_image`, `svg` of een ondersteund rasterafbeeldingsformaat zijn.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: De optie `quality` voor de transformatie `{$key}` is ongeldig. Dit moet een geheel getal tussen 0 en 100 zijn.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: De optie `{$prop}` voor de transformatie `{$key}` is ongeldig. Dit moet een positief geheel getal zijn.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Voor mediacollectie {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
     # {$name} is the invalid or duplicate asset collection name
@@ -1441,6 +1591,24 @@ config:
     file_format_mismatch: De extensie `{$extension}` komt niet overeen met het formaat `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: De slugsjabloon `{$slug}` is ongeldig, omdat deze geen schuine strepen mag bevatten. Gebruik de optie `path` in plaats van `slug` om items in submappen te ordenen.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: De optie `reorder` verwijst naar een weergavegroep met de naam `{$name}`, maar er is geen groep met die naam gedefinieerd in de optie `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: De optie `sortable_fields` verwijst naar een veld met de naam `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: De optie `view_groups` verwijst naar een veld met de naam `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: De optie `view_filters` verwijst naar een veld met de naam `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Voor weergavegroep {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: De weergavegroepnaam `{$name}` is ongeldig. Deze mag geen speciale tekens bevatten.
+    duplicate_view_group_name: Weergavegroepnamen moeten uniek zijn, maar `{$name}` wordt meer dan één keer gebruikt.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Voor weergavefilter {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: De weergavefilternaam `{$name}` is ongeldig. Deze mag geen speciale tekens bevatten.
+    duplicate_view_filter_name: Weergavefilternamen moeten uniek zijn, maar `{$name}` wordt meer dan één keer gebruikt.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Voor collectie {$count} moet de optie `name` als niet-lege string zijn gedefinieerd.
     # {$name} is the invalid or duplicate collection name
@@ -1488,14 +1656,50 @@ config:
     relation_field_invalid_value_field: Het waardeveld `{$field}` waarnaar wordt verwezen is ongeldig of niet gedefinieerd.
     unexpected: Onverwachte fout
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: De optie `{$option}` moet {$type} zijn.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'De optie `{$option}` moet een van deze waarden zijn: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: De optie `{$option}` moet `{$value}` zijn.
+    schema_invalid_empty_value: De optie `{$option}` moet een lege string zijn.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: De optie `{$option}` moet een array van {$count} items zijn.
+    schema_invalid_value: De optie `{$option}` heeft een ongeldige waarde.
+    schema_missing_option: De optie `{$option}` is verplicht.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Een van deze opties is verplicht: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: een string
+      number: een getal
+      integer: een geheel getal
+      boolean: een booleaanse waarde
+      array: een array
+      object: een object
+      'null': leeg
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: De OAuth-applicatie-ID is niet gedefinieerd. Gebruikers moeten een toegangstoken opgeven om in te loggen.
     editorial_workflow_unsupported: De redactionele workflow wordt nog niet ondersteund in Sveltia CMS.
+    open_authoring_unsupported_backend: Open Authoring wordt momenteel alleen ondersteund met de GitHub-backend.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: De optie `{$prop}` wordt niet ondersteund in Sveltia CMS. Deze wordt genegeerd.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Zowel `picker_utc` als de nieuwere tijdzone-opties (`input_timezone` of `output_utc`) zijn ingesteld. De nieuwe opties hebben voorrang. Overweeg om `picker_utc` uit je configuratie te verwijderen.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: De optie `preview_path` gebruikt datum- en tijdtags, maar de collectie heeft geen DateTime-veld om ze uit te lezen, dus de voorbeeldlink wordt niet getoond.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: De optie `preview_path_date_field` verwijst naar een veld met de naam `{$name}`, maar er is geen DateTime-veld met die naam gedefinieerd, dus de voorbeeldlink wordt niet getoond.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: De optie `preview_path` verwijst naar `{$name}`, maar er is geen veld met die naam gedefinieerd in de collectie, dus de voorbeeldlink wordt niet getoond.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: De optie `{$option}` is niet gedefinieerd in het configuratieschema van Sveltia CMS. Deze wordt genegeerd. Controleer op een typefout of een syntaxisfout.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Zie de compatibiliteitsnotities voor details: {$link}'
@@ -1518,12 +1722,164 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Je bekijkt nu het bord van de redactionele workflow. Concepten: {$draft}. In review: {$review}. Klaar: {$ready}. Verwijdering in behandeling: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Je bekijkt nu het bord van de redactionele workflow. Concepten: {$draft}. In review: {$review}. Verwijdering in behandeling: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: Concept
   drafts: Concepten
   in_review: In review
   ready: Klaar
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Verwijdering in behandeling
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Verwijdering annuleren
+  confirm_cancelling_deletion: Weet je zeker dat je deze verwijdering wilt annuleren? Het item blijft gepubliceerd.
+  confirm_completing_deletion: Weet je zeker dat je dit item wilt verwijderen? Het wordt direct verwijderd.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Item gemarkeerd voor verwijdering. }}
+      *   {{ {$count} items gemarkeerd voor verwijdering. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Wijzigingen verworpen. }}
+      *   {{ Wijzigingen in {$count} items verworpen. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Verwijdering wordt geannuleerd…
+  deletion_cancelled: Verwijdering geannuleerd.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: De verwijdering kon niet worden geannuleerd. Probeer het opnieuw.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Niet-gepubliceerde items
+  published_entries: Gepubliceerde items
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Status: {$status}'
+  change_entry_status: Itemstatus wijzigen
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Status wordt gewijzigd…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Status wordt bijgewerkt…
+  status_updated: Status bijgewerkt.
+  # Error notification when the status could not be changed
+  status_change_failed: De status kon niet worden gewijzigd. Probeer het opnieuw.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: Het item bevat fouten. Corrigeer deze voordat je de status wijzigt.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: Het item bevat fouten. Corrigeer deze voordat je het publiceert.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Ter review indienen
+  confirm_sending_for_review: Je wijzigingen zijn opgeslagen als concept. Wil je het item ter review indienen, zodat iemand het kan bekijken en publiceren?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Item publiceren
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Wijzigingen verwerpen
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Weet je zeker dat je dit item wilt verwijderen? Het wordt pas verwijderd zodra de verwijdering is gepubliceerd. Tot die tijd vind je het nog in de itemlijst, gemarkeerd als “Verwijdering in behandeling”.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Dit item is nog niet gepubliceerd, dus als je het verwijdert, wordt het volledig verworpen.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Dit item heeft niet-gepubliceerde wijzigingen. Als je deze verwerpt, wordt de gepubliceerde versie hersteld. Het item zelf wordt niet verwijderd.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Het is nog niet gepubliceerd, dus je niet-gepubliceerde wijzigingen worden verworpen. Een eventueel gepubliceerde versie blijft gepubliceerd. }}
+      *   {{ Ze zijn nog niet gepubliceerd, dus je niet-gepubliceerde wijzigingen worden verworpen. Eventueel gepubliceerde versies blijven gepubliceerd. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Een ervan is nog niet gepubliceerd, dus je niet-gepubliceerde wijzigingen worden verworpen. Een eventueel gepubliceerde versie blijft gepubliceerd. }}
+      *   {{ {$count} ervan zijn nog niet gepubliceerd, dus je niet-gepubliceerde wijzigingen worden verworpen. Eventueel gepubliceerde versies blijven gepubliceerd. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Weet je zeker dat je dit item wilt publiceren? Je wijzigingen worden direct van kracht.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Item wordt gepubliceerd…
+  entry_published: Item gepubliceerd.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Item wordt verwijderd…
+  discarding_changes: Wijzigingen worden verworpen…
+  entry_deleted: Item verwijderd.
+  # Error notification when publishing fails
+  publishing_entry_failed: Het item kon niet worden gepubliceerd. Probeer het opnieuw.
+  # Workflow page: empty column message
+  no_entries: Geen items.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Sleep om de status te wijzigen
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Repository forken
+  fork: Forken
+  confirm_forking_repository: Om wijzigingen voor te stellen aan “{$repo}” moet er een fork van de repository worden aangemaakt in je account. Je wijzigingen worden in die fork opgeslagen en door een beheerder beoordeeld voordat ze live gaan.
+  # Error shown when the user declined the dialog above
+  fork_declined: Je hebt een fork van de repository in je account nodig om wijzigingen voor te stellen.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Er kon geen fork van de repository “{$repo}” worden aangemaakt in je account.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Je toegang tot de repository “{$repo}” kon niet worden gecontroleerd. Probeer het zo meteen opnieuw.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: De repository “{$repo}” staat geen forks toe. Vraag een beheerder om forken in te schakelen.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Je hebt een openstaande uitnodiging voor de repository “{$repo}”. Accepteer deze op GitHub en log daarna opnieuw in.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Je login geeft geen toegang tot privérepository’s, dus de repository “{$repo}” kan niet worden gelezen. Vraag een beheerder om de authenticatie-instellingen van het CMS te controleren.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Alleen een beheerder kan wijzigingen op deze site publiceren. Markeer je item in plaats daarvan als “In review”, dan kijkt iemand ernaar.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Deze wijziging kan niet direct worden doorgevoerd. Alleen bewerkingen van items kunnen ter review worden voorgesteld.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Je wijzigingen worden opgeslagen in je fork van deze repository op “{$repo}” en beoordeeld voordat ze live gaan.
+  view_fork: Fork bekijken
 
 # ==============================================================================
 # Settings Dialog
@@ -1653,6 +2009,18 @@ prefs:
         field_label: Authorization-header (bijv. Bearer <token>) (optioneel)
         saved: Authorization-header opgeslagen.
         removed: Authorization-header verwijderd.
+    clear_data:
+      title: Gegevens wissen
+      # Clear File Cache button
+      file_cache:
+        description: Verwijder de lokaal gecachte bestandsinhoud en afbeeldingsminiaturen om opslagruimte vrij te maken of problemen door verouderde gegevens op te lossen.
+        button_label: Bestandscache wissen
+        confirmation: De lokaal gecachte bestandsinhoud en afbeeldingsminiaturen worden verwijderd. Je niet-opgeslagen concepten en instellingen blijven behouden, en verwijderde gegevens worden waar nodig opnieuw gedownload of gegenereerd. Het CMS wordt daarna opnieuw geladen.
+      # Erase All Data button
+      all_data:
+        description: Verwijder alles wat het CMS in deze browser bewaart, inclusief gecachte bestanden, niet-opgeslagen concepten en instellingen. Alles wat al in je repository is opgeslagen, blijft ongewijzigd.
+        button_label: Alle gegevens wissen
+        confirmation: Alle gegevens die in deze browser zijn opgeslagen, worden verwijderd, inclusief gecachte bestandsinhoud, afbeeldingsminiaturen, niet-opgeslagen concepten, instellingen en de inlogstatus. Je repository blijft ongewijzigd, maar wijzigingen die je niet hebt opgeslagen gaan verloren en je moet opnieuw inloggen. Het CMS wordt daarna opnieuw geladen.
 
 # ==============================================================================
 # Keyboard Shortcuts

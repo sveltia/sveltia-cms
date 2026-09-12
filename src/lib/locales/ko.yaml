@@ -361,13 +361,18 @@ viewing_x_asset_folder: |
   .match $count
     0   {{ “{$folder}” 에셋 폴더를 표시하고 있습니다. 아직 에셋이 없습니다. }}
     *   {{ “{$folder}” 에셋 폴더를 표시하고 있습니다. 에셋이 {$count}개 있습니다. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: '{$service}의 에셋을 표시하고 있습니다.'
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: “{$file}” 파일을 편집하시려면 Enter 키를 누르십시오.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: 페이지를 찾을 수 없습니다.
 collection_not_found: 컬렉션을 찾을 수 없습니다.
+asset_folder_not_found: 에셋 폴더를 찾을 수 없습니다.
 file_not_found: 파일을 찾을 수 없습니다.
 
 # Selection count indicator
@@ -400,6 +405,10 @@ sort_keys:
   commit_author: 업데이트한 사람
   # Sort by the last commit date
   commit_date: 업데이트 날짜
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: 수정 날짜
+  # Sort by file size
+  size: 크기
   # Sort by the entry’s computed summary text
   _summary: 요약
   # Manual order defined by the user via drag-and-drop
@@ -411,6 +420,8 @@ ascending: '{$label} (A–Z)'
 ascending_date: '{$label} (오래된 순)'
 descending: '{$label} (Z–A)'
 descending_date: '{$label} (최신 순)'
+ascending_number: '{$label} (작은 순)'
+descending_number: '{$label} (큰 순)'
 
 # Filter menu: button labels and options
 filter: 필터
@@ -439,6 +450,21 @@ hide_info: 정보 숨기기
 # Folder display labels when no specific path is configured
 all_assets: 전체 에셋
 global_assets: 전역 에셋
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: 링크된 파일
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 엔트리를 불러오는 중… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -521,6 +547,8 @@ upload_assets: 새 에셋 업로드
 # Edit options menu: button and item labels
 edit_options: 편집 옵션
 show_edit_options: 편집 옵션 표시
+# Copy menu aria-label
+copy_options: 복사 옵션
 # Edit menu items with specific asset names
 edit_asset: 에셋 편집
 # {$name} is the selected asset name
@@ -545,6 +573,14 @@ enter_new_name_for_asset_error:
   empty: 파일 이름은 비워 둘 수 없습니다.
   character: 파일 이름에는 특수 문자를 사용할 수 없습니다.
   duplicate: 이 파일 이름은 다른 에셋에서 사용 중입니다.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: 파일 확장자 변경
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: 확장자를 “.{$oldExtension}”에서 “.{$newExtension}”(으)로 변경하시겠습니까?
+  add: “.{$newExtension}” 확장자를 추가하시겠습니까?
+  remove: “.{$oldExtension}” 확장자를 제거하시겠습니까?
+file_extension_change_warning: 확장자가 실제 파일 형식과 일치하지 않으면 파일이 올바르게 표시되거나 처리되지 않을 수 있습니다.
 
 # Replace asset: menu item and dialog title
 replace_asset: 에셋 교체
@@ -627,6 +663,8 @@ delete_selected_entries: |
   선택한 엔트리 삭제
 confirm_deleting_this_entry: 이 엔트리를 삭제하시겠습니까?
 confirm_deleting_this_entry_with_assets: 이 엔트리와 관련 에셋을 삭제하시겠습니까?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: 엔트리를 삭제하지 못했습니다. 다시 시도하십시오.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -691,6 +729,16 @@ invalid_files: 잘못된 파일
 warning_invalid_files: |
   해당 파일은 손상되었거나 내용이 파일 확장자와 일치하지 않아 업로드할 수 없습니다. HEIC 이미지를 JPEG 파일로 저장한 경우처럼 사진을 변환하지 않고 이름만 바꿨을 때 자주 발생합니다. 파일을 변환한 후 다시 시도하십시오.
 
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: 형식이 다른 파일
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ 이 파일은 형식이 달라 “{$name}”을(를) 교체할 수 없습니다. 파일을 같은 형식으로 변환한 후 다시 시도하십시오. }}
+    *   {{ 이 파일들은 형식이 달라 “{$name}”을(를) 교체할 수 없습니다. 파일을 같은 형식으로 변환한 후 다시 시도하십시오. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -711,6 +759,9 @@ keep_both: 둘 다 유지
 # Upload progress and error messages
 uploading_files_progress: 업로드하는 중…
 uploading_files_failed: 업로드에 실패했습니다.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: 삭제하지 못했습니다.
+renaming_asset_failed: 이름을 변경하지 못했습니다.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -786,6 +837,11 @@ asset_paths_copied: |
   .input {$count :integer}
   .match $count
     *   {{ 파일 경로 {$count}개를 클립보드에 복사했습니다. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    1   {{ 파일 ID가 클립보드에 복사되었습니다. }}
+    *   {{ 파일 ID {$count}개가 클립보드에 복사되었습니다. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -852,6 +908,7 @@ show_editor_options: 에디터 옵션 표시
 editor_options: 에디터 옵션
 
 # Preview controls
+show_second_pane: 두 번째 창 표시
 show_preview: 미리 보기 표시
 
 # Editor settings
@@ -912,6 +969,31 @@ view_in_repository: 저장소에서 보기
 view_on_x: '{$service}에서 보기'
 view_on_live_site: 라이브 사이트에서 보기
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: 미리 보기 열기
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: 미리 보기를 아직 빌드하고 있습니다.
+  # Shown when the build failed, so no preview is available
+  failed: 미리 보기를 빌드하지 못했습니다.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: 미리 보기 확인 중…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: 미리 보기 확인
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: 미리 보기 확인 중
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: 빌드 중…
+    failed: 빌드 실패
+
 # Content copying from other locales
 copy_from: 다른 로케일에서 복사…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -937,6 +1019,23 @@ edit_slug_error:
   empty: 슬러그는 비워 둘 수 없습니다.
   invalid: 슬러그에는 슬래시와 공백을 포함한 특수 문자를 사용할 수 없습니다.
   duplicate: 이 슬러그는 다른 엔트리에서 사용 중입니다.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: 상위 폴더
+new_parent_folder: 새 폴더
+new_parent_folder_create: 만들기
+new_parent_folder_name: 폴더 이름
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: 새 폴더는 “{$folder}” 안에 만들어집니다.
+new_parent_folder_error:
+  empty: 폴더 이름은 비워 둘 수 없습니다.
+  invalid: 폴더 이름에는 슬래시를 사용할 수 없고 점으로 시작할 수 없으며, 문자나 숫자를 포함해야 합니다.
+  duplicate: 이 이름의 폴더가 이미 여기에 있습니다.
+edit_path_error:
+  invalid: 경로에는 “..”과 같은 상대 세그먼트를 사용할 수 없습니다.
+  recursive: 엔트리를 자신의 하위 폴더로 이동할 수 없습니다.
+  duplicate: 이 경로는 다른 엔트리에서 사용 중입니다.
 
 # Required field indicator
 required: 필수
@@ -1043,6 +1142,8 @@ entry_sidebar:
     title: 검증
     placeholder: 검증 결과가 여기에 표시됩니다.
     no_errors_found: 오류가 없습니다.
+    # Button in the panel header that validates the entry on demand
+    validate: 검증
 
   # History panel: shows entry commit history
   history:
@@ -1073,6 +1174,10 @@ viewing_x_asset_details: “{$name}” 에셋의 세부 정보를 표시하고 �
 # Asset editor container aria-label
 asset_editor: 에셋 에디터
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: 이전 에셋
+next_asset: 다음 에셋
+
 # Preview unavailable message
 preview_unavailable: 미리 보기를 사용할 수 없습니다.
 
@@ -1083,6 +1188,12 @@ public_urls: |
 # {$count} is the number of selected assets
 file_paths: |
   파일 경로
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    *   {{ 파일 ID }}
 file_data: 파일 데이터
 
 # ==============================================================================
@@ -1116,6 +1227,12 @@ map_lat_lng: 위도 {$latitude}, 경도 {$longitude}을(를) 표시하는 지도
 remove_this_item: 이 항목 제거
 move_up: 위로 이동
 move_down: 아래로 이동
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: 항목 순서 변경
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: 항목 값
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1338,6 +1455,8 @@ config:
     parse_failed_invalid_object: 설정 파일이 유효한 JavaScript 객체가 아닙니다.
     parse_failed_unsupported_type: 설정 파일이 유효한 파일 형식이 아닙니다. YAML, TOML, JSON만 지원됩니다.
     no_collection: 컬렉션이 정의되지 않았습니다.
+    # Don’t localize `hide`
+    no_visible_collection: 컬렉션이 하나 이상 표시되어야 합니다. `hide` 옵션을 확인하십시오.
     missing_backend: 백엔드가 정의되지 않았습니다.
     missing_backend_name: 백엔드 이름이 정의되지 않았습니다.
     # {$name} is the backend name from the CMS configuration
@@ -1351,11 +1470,19 @@ config:
     oauth_implicit_flow: 설정된 인증 방식(implicit flow)은 Sveltia CMS에서 지원되지 않습니다. 다른 <a>인증 방식</a>을 사용하십시오.
     github_pkce_unsupported: GitHub의 제약으로 인해 PKCE 인증은 아직 지원되지 않습니다. 다른 <a>인증 방식</a>을 사용하십시오.
     oauth_no_app_id: OAuth 애플리케이션 ID가 정의되지 않았습니다.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: '`open_authoring` 옵션을 사용하려면 `editorial_workflow` 게시 모드가 필요합니다. 자세한 내용은 <a>문서</a>를 참조하십시오.'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` 옵션에는 최소 한 가지 방식이 포함되어야 합니다.'
     missing_media_folder: 미디어 폴더가 정의되지 않았습니다.
     public_folder_relative_path: 설정된 공개 폴더가 올바르지 않습니다. “/”로 시작하는 절대 경로여야 합니다.
     public_folder_absolute_url: 공개 폴더 옵션에 절대 URL을 사용하는 것은 Sveltia CMS에서 지원되지 않습니다.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: '`transformations` 옵션에 지원되지 않는 `{$key}` 키가 있습니다. `raster_image`, `svg` 또는 지원되는 래스터 이미지 형식이어야 합니다.'
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: '`{$key}` 변환의 `quality` 옵션이 올바르지 않습니다. 0에서 100 사이의 정수여야 합니다.'
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: '`{$key}` 변환의 `{$prop}` 옵션이 올바르지 않습니다. 양의 정수여야 합니다.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 에셋 컬렉션 {$count}에는 `name` 옵션이 비어 있지 않은 문자열로 정의되어야 합니다.
     # {$name} is the invalid or duplicate asset collection name
@@ -1370,6 +1497,24 @@ config:
     file_format_mismatch: '`{$extension}` 확장자가 `{$format}` 형식과 일치하지 않습니다.'
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: 슬러그 템플릿 `{$slug}`은(는) 슬래시를 포함할 수 없으므로 올바르지 않습니다. 엔트리를 하위 폴더로 정리하시려면 `slug` 대신 `path` 옵션을 사용하십시오.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: '`reorder` 옵션이 `{$name}`(이)라는 뷰 그룹을 참조하지만, `view_groups` 옵션에 해당 그룹이 정의되어 있지 않습니다.'
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: '`sortable_fields` 옵션이 `{$name}`(이)라는 필드를 참조하지만, 컬렉션에 해당 필드가 정의되어 있지 않습니다.'
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: '`view_groups` 옵션이 `{$name}`(이)라는 필드를 참조하지만, 컬렉션에 해당 필드가 정의되어 있지 않습니다.'
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: '`view_filters` 옵션이 `{$name}`(이)라는 필드를 참조하지만, 컬렉션에 해당 필드가 정의되어 있지 않습니다.'
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: 뷰 그룹 {$count}에는 `name` 옵션이 비어 있지 않은 문자열로 정의되어야 합니다.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: 뷰 그룹 이름 `{$name}`은(는) 올바르지 않습니다. 특수 문자를 포함할 수 없습니다.
+    duplicate_view_group_name: 뷰 그룹 이름은 고유해야 하지만 `{$name}`이(가) 두 번 이상 사용되었습니다.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: 뷰 필터 {$count}에는 `name` 옵션이 비어 있지 않은 문자열로 정의되어야 합니다.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: 뷰 필터 이름 `{$name}`은(는) 올바르지 않습니다. 특수 문자를 포함할 수 없습니다.
+    duplicate_view_filter_name: 뷰 필터 이름은 고유해야 하지만 `{$name}`이(가) 두 번 이상 사용되었습니다.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: 컬렉션 {$count}에는 `name` 옵션이 비어 있지 않은 문자열로 정의되어야 합니다.
     # {$name} is the invalid or duplicate collection name
@@ -1417,14 +1562,50 @@ config:
     relation_field_invalid_value_field: 참조된 값 필드 `{$field}`이(가) 올바르지 않거나 정의되지 않았습니다.
     unexpected: 예기치 않은 오류
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: '`{$option}` 옵션은 {$type}이어야 합니다.'
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: '`{$option}` 옵션은 다음 값 중 하나여야 합니다: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: '`{$option}` 옵션은 `{$value}`이어야 합니다.'
+    schema_invalid_empty_value: '`{$option}` 옵션은 빈 문자열이어야 합니다.'
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: '`{$option}` 옵션은 항목 {$count}개로 이루어진 배열이어야 합니다.'
+    schema_invalid_value: '`{$option}` 옵션의 값이 올바르지 않습니다.'
+    schema_missing_option: '`{$option}` 옵션은 필수입니다.'
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: '다음 옵션 중 하나가 필요합니다: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: 문자열
+      number: 숫자
+      integer: 정수
+      boolean: 불리언
+      array: 배열
+      object: 객체
+      'null': 빈 값
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth 애플리케이션 ID가 정의되지 않았습니다. 사용자는 로그인하려면 액세스 토큰을 제공해야 합니다.
     editorial_workflow_unsupported: 에디토리얼 워크플로우는 Sveltia CMS에서 아직 지원되지 않습니다.
+    open_authoring_unsupported_backend: 오픈 오서링은 현재 GitHub 백엔드에서만 지원됩니다.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` 옵션은 Sveltia CMS에서 지원되지 않습니다. 이 옵션은 무시됩니다.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: '`picker_utc`와 최신 시간대 옵션(`input_timezone` 또는 `output_utc`)이 모두 설정되어 있습니다. 최신 옵션이 우선 적용됩니다. 설정에서 `picker_utc`를 제거하시는 것을 고려해 보십시오.'
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: '`preview_path` 옵션이 날짜와 시간 태그를 사용하지만, 컬렉션에 이를 읽어 올 DateTime 필드가 없으므로 미리 보기 링크가 표시되지 않습니다.'
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: '`preview_path_date_field` 옵션이 `{$name}`(이)라는 필드를 참조하지만, 해당 이름의 DateTime 필드가 정의되어 있지 않으므로 미리 보기 링크가 표시되지 않습니다.'
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: '`preview_path` 옵션이 `{$name}`을(를) 참조하지만, 컬렉션에 해당 필드가 정의되어 있지 않으므로 미리 보기 링크가 표시되지 않습니다.'
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: '`{$option}` 옵션은 Sveltia CMS 구성 스키마에 정의되어 있지 않습니다. 이 옵션은 무시됩니다. 오타나 문법 오류가 없는지 확인하십시오.'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: '자세한 내용은 호환성 참고 사항을 확인하십시오: {$link}'
@@ -1447,12 +1628,164 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: '에디토리얼 워크플로우 보드를 표시하고 있습니다. 초안: {$draft}. 검토 중: {$review}. 준비됨: {$ready}. 삭제 대기 중: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: '에디토리얼 워크플로우 보드를 표시하고 있습니다. 초안: {$draft}. 검토 중: {$review}. 삭제 대기 중: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: 초안
   drafts: 초안
   in_review: 검토 중
   ready: 준비됨
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: 삭제 대기 중
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: 삭제 취소
+  confirm_cancelling_deletion: 이 삭제를 취소하시겠습니까? 엔트리는 게시된 상태로 유지됩니다.
+  confirm_completing_deletion: 이 엔트리를 삭제하시겠습니까? 즉시 제거됩니다.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      1   {{ 엔트리가 삭제 대상으로 표시되었습니다. }}
+      *   {{ 엔트리 {$count}개가 삭제 대상으로 표시되었습니다. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      1   {{ 변경 사항이 취소되었습니다. }}
+      *   {{ 엔트리 {$count}개의 변경 사항이 취소되었습니다. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: 삭제 취소 중…
+  deletion_cancelled: 삭제가 취소되었습니다.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: 삭제를 취소하지 못했습니다. 다시 시도하십시오.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: 게시되지 않은 엔트리
+  published_entries: 게시된 엔트리
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: '상태: {$status}'
+  change_entry_status: 엔트리 상태 변경
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: 상태 변경 중…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: 상태 업데이트 중…
+  status_updated: 상태가 업데이트되었습니다.
+  # Error notification when the status could not be changed
+  status_change_failed: 상태를 변경하지 못했습니다. 다시 시도하십시오.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: 엔트리에 오류가 있습니다. 상태를 변경하기 전에 오류를 수정하십시오.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: 엔트리에 오류가 있습니다. 게시하기 전에 오류를 수정하십시오.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: 검토 요청
+  confirm_sending_for_review: 변경 사항이 초안으로 저장되었습니다. 다른 사람이 확인하고 게시할 수 있도록 엔트리의 검토를 요청하시겠습니까?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: 엔트리 게시
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: 변경 사항 취소
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: 이 엔트리를 삭제하시겠습니까? 삭제가 게시될 때까지 제거되지 않습니다. 그때까지는 엔트리 목록에 “삭제 대기 중”으로 표시된 채 남아 있습니다.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: 이 엔트리는 아직 게시되지 않았으므로 삭제하면 완전히 사라집니다.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: 이 엔트리에는 게시되지 않은 변경 사항이 있습니다. 변경 사항을 취소하면 게시된 버전으로 복원됩니다. 엔트리 자체는 삭제되지 않습니다.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      1   {{ 아직 게시되지 않았으므로 게시되지 않은 변경 사항은 취소됩니다. 이미 게시된 버전은 그대로 유지됩니다. }}
+      *   {{ 아직 게시되지 않았으므로 게시되지 않은 변경 사항은 취소됩니다. 이미 게시된 버전은 그대로 유지됩니다. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      1   {{ 그중 1개는 아직 게시되지 않았으므로 게시되지 않은 변경 사항은 취소됩니다. 이미 게시된 버전은 그대로 유지됩니다. }}
+      *   {{ 그중 {$count}개는 아직 게시되지 않았으므로 게시되지 않은 변경 사항은 취소됩니다. 이미 게시된 버전은 그대로 유지됩니다. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: 이 엔트리를 게시하시겠습니까? 변경 사항이 즉시 적용됩니다.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: 엔트리 게시 중…
+  entry_published: 엔트리가 게시되었습니다.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: 엔트리 삭제 중…
+  discarding_changes: 변경 사항 취소 중…
+  entry_deleted: 엔트리가 삭제되었습니다.
+  # Error notification when publishing fails
+  publishing_entry_failed: 엔트리를 게시하지 못했습니다. 다시 시도하십시오.
+  # Workflow page: empty column message
+  no_entries: 엔트리가 없습니다.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: 드래그하여 상태 변경
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: 저장소 포크
+  fork: 포크
+  confirm_forking_repository: “{$repo}”에 변경 사항을 제안하려면 계정에 저장소의 포크를 만들어야 합니다. 변경 사항은 해당 포크에 저장되며, 관리자가 검토한 후 사이트에 반영됩니다.
+  # Error shown when the user declined the dialog above
+  fork_declined: 변경 사항을 제안하려면 계정에 저장소의 포크가 필요합니다.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: 계정에 “{$repo}” 저장소의 포크를 만들지 못했습니다.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: “{$repo}” 저장소에 대한 접근 권한을 확인하지 못했습니다. 잠시 후 다시 시도하십시오.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: “{$repo}” 저장소는 포크를 허용하지 않습니다. 관리자에게 포크를 허용하도록 요청하십시오.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: “{$repo}” 저장소에 대한 초대가 수락 대기 중입니다. GitHub에서 초대를 수락한 후 다시 로그인하십시오.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: 현재 로그인에는 비공개 저장소에 대한 접근 권한이 포함되어 있지 않아 “{$repo}” 저장소를 읽을 수 없습니다. 관리자에게 CMS 인증 설정을 확인하도록 요청하십시오.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: 이 사이트의 변경 사항은 관리자만 게시할 수 있습니다. 대신 엔트리를 “검토 중”으로 표시하면 다른 사람이 확인합니다.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: 이 변경은 직접 수행할 수 없습니다. 엔트리 편집만 검토를 위해 제안할 수 있습니다.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: 변경 사항은 이 저장소의 포크인 “{$repo}”에 저장되며, 검토를 거친 후 사이트에 반영됩니다.
+  view_fork: 포크 보기
 
 # ==============================================================================
 # Settings Dialog
@@ -1582,6 +1915,18 @@ prefs:
         field_label: 'Authorization 헤더(예: Bearer <token>)(선택 사항)'
         saved: Authorization 헤더가 저장되었습니다.
         removed: Authorization 헤더가 제거되었습니다.
+    clear_data:
+      title: 데이터 지우기
+      # Clear File Cache button
+      file_cache:
+        description: 로컬에 캐시된 파일 내용과 이미지 썸네일을 삭제하여 저장 공간을 확보하거나 오래된 데이터로 인한 문제를 해결합니다.
+        button_label: 파일 캐시 지우기
+        confirmation: 로컬에 캐시된 파일 내용과 이미지 썸네일이 삭제됩니다. 저장하지 않은 초안과 설정은 유지되며, 삭제된 데이터는 필요할 때 다시 다운로드하거나 생성합니다. 완료되면 CMS가 다시 로드됩니다.
+      # Erase All Data button
+      all_data:
+        description: 캐시된 파일, 저장하지 않은 초안, 설정 등 CMS가 이 브라우저에 보관하는 모든 데이터를 삭제합니다. 저장소에 이미 저장된 내용은 영향을 받지 않습니다.
+        button_label: 모든 데이터 삭제
+        confirmation: 캐시된 파일 내용, 이미지 썸네일, 저장하지 않은 초안, 설정, 로그인 상태 등 이 브라우저에 저장된 모든 데이터가 삭제됩니다. 저장소는 영향을 받지 않지만, 저장하지 않은 변경 사항은 사라지며 다시 로그인해야 합니다. 완료되면 CMS가 다시 로드됩니다.
 
 # ==============================================================================
 # Keyboard Shortcuts

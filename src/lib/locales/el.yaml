@@ -233,6 +233,16 @@ menu: Μενού
 mobile_promo_title: Το Sveltia CMS είναι πλέον διαθέσιμο σε κινητά!
 mobile_promo_button: Δοκιμάστε το
 
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Το Sveltia CMS είναι πλέον διαθέσιμο στα {$locale}!
+change_language: Αλλαγή γλώσσας
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Αλλαγή σε {$locale}…
+locale_load_failed: Δεν ήταν δυνατή η φόρτωση της μετάφρασης στα {$locale}. Παρακαλούμε δοκιμάστε ξανά αργότερα.
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: Άνοιγμα ενεργού ιστοτόπου
@@ -356,13 +366,18 @@ viewing_x_asset_folder: |
     0   {{ Τώρα βλέπετε τον φάκελο πόρων “{$folder}”, ο οποίος δεν έχει ακόμα πόρους. }}
     one {{ Τώρα βλέπετε τον φάκελο πόρων “{$folder}”, ο οποίος έχει έναν πόρο. }}
     *   {{ Τώρα βλέπετε τον φάκελο πόρων “{$folder}”, ο οποίος έχει {$count} πόρους. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Τώρα βλέπετε τους πόρους στο {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Πατήστε Enter για επεξεργασία του αρχείου “{$file}”.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Η σελίδα δεν βρέθηκε.
 collection_not_found: Η συλλογή δεν βρέθηκε.
+asset_folder_not_found: Ο φάκελος πόρων δεν βρέθηκε.
 file_not_found: Το αρχείο δεν βρέθηκε.
 
 # Selection count indicator
@@ -395,6 +410,10 @@ sort_keys:
   commit_author: Ενημερώθηκε από
   # Sort by the last commit date
   commit_date: Ενημερώθηκε στις
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Τροποποιήθηκε στις
+  # Sort by file size
+  size: Μέγεθος
   # Sort by the entry’s computed summary text
   _summary: Σύνοψη
   # Manual order defined by the user via drag-and-drop
@@ -406,6 +425,8 @@ ascending: '{$label}, Α έως Ω'
 ascending_date: '{$label}, παλιότερα προς νεότερα'
 descending: '{$label}, Ω έως Α'
 descending_date: '{$label}, νεότερα προς παλιότερα'
+ascending_number: '{$label}, από μικρό σε μεγάλο'
+descending_number: '{$label}, από μεγάλο σε μικρό'
 
 # Filter menu: button labels and options
 filter: Φίλτρο
@@ -434,6 +455,22 @@ hide_info: Απόκρυψη πληροφοριών
 # Folder display labels when no specific path is configured
 all_assets: Όλοι οι πόροι
 global_assets: Γενικοί πόροι
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Συνδεδεμένα αρχεία
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Φόρτωση καταχώρισης… }}
+    *   {{ Φόρτωση καταχωρίσεων… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -521,6 +558,8 @@ upload_assets: Μεταφόρτωση νέων πόρων
 # Edit options menu: button and item labels
 edit_options: Επιλογές επεξεργασίας
 show_edit_options: Εμφάνιση επιλογών επεξεργασίας
+# Copy menu aria-label
+copy_options: Επιλογές αντιγραφής
 # Edit menu items with specific asset names
 edit_asset: Επεξεργασία πόρου
 # {$name} is the selected asset name
@@ -546,6 +585,14 @@ enter_new_name_for_asset_error:
   empty: Το όνομα του αρχείου δεν μπορεί να είναι κενό.
   character: Το όνομα του αρχείου δεν μπορεί να περιέχει ειδικούς χαρακτήρες.
   duplicate: Αυτό το όνομα αρχείου χρησιμοποιείται ήδη για άλλον πόρο.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Αλλαγή επέκτασης αρχείου
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Είστε βέβαιοι ότι θέλετε να αλλάξετε την επέκταση από “.{$oldExtension}” σε “.{$newExtension}”;
+  add: Είστε βέβαιοι ότι θέλετε να προσθέσετε την επέκταση “.{$newExtension}”;
+  remove: Είστε βέβαιοι ότι θέλετε να αφαιρέσετε την επέκταση “.{$oldExtension}”;
+file_extension_change_warning: Το αρχείο ενδέχεται να μην εμφανίζεται ή να μην επεξεργάζεται σωστά εάν η επέκταση δεν αντιστοιχεί στην πραγματική μορφή του αρχείου.
 
 # Replace asset: menu item and dialog title
 replace_asset: Αντικατάσταση πόρου
@@ -656,6 +703,8 @@ delete_selected_entries: |
     *   {{ Διαγραφή επιλεγμένων καταχωρίσεων }}
 confirm_deleting_this_entry: Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώριση;
 confirm_deleting_this_entry_with_assets: Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώριση και τους σχετικούς πόρους;
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Δεν ήταν δυνατή η διαγραφή της καταχώρισης. Παρακαλούμε δοκιμάστε ξανά.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -723,6 +772,26 @@ warning_oversized_files: |
     one {{ Αυτό το αρχείο δεν μπορεί να μεταφορτωθεί επειδή υπερβαίνει το μέγιστο όριο των {$size}. Παρακαλούμε μειώστε το μέγεθος ή επιλέξτε άλλο αρχείο. }}
     *   {{ Αυτά τα αρχεία δεν μπορούν να μεταφορτωθούν επειδή υπερβαίνουν το μέγιστο όριο των {$size}. Παρακαλούμε μειώστε τα μεγέθη ή επιλέξτε διαφορετικά αρχεία. }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Μη έγκυρα αρχεία
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Αυτό το αρχείο δεν μπορεί να μεταφορτωθεί επειδή είναι κατεστραμμένο ή το περιεχόμενό του δεν αντιστοιχεί στην επέκταση του αρχείου. Αυτό συμβαίνει συχνά όταν μια φωτογραφία μετονομάζεται αντί να μετατραπεί, όπως μια εικόνα HEIC που αποθηκεύτηκε ως αρχείο JPEG. Παρακαλούμε μετατρέψτε το αρχείο και δοκιμάστε ξανά. }}
+    *   {{ Αυτά τα αρχεία δεν μπορούν να μεταφορτωθούν επειδή είναι κατεστραμμένα ή το περιεχόμενό τους δεν αντιστοιχεί στις επεκτάσεις των αρχείων. Αυτό συμβαίνει συχνά όταν φωτογραφίες μετονομάζονται αντί να μετατραπούν, όπως εικόνες HEIC που αποθηκεύτηκαν ως αρχεία JPEG. Παρακαλούμε μετατρέψτε τα αρχεία και δοκιμάστε ξανά. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Αρχεία διαφορετικής μορφής
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Αυτό το αρχείο δεν μπορεί να αντικαταστήσει το “{$name}” επειδή είναι σε διαφορετική μορφή. Παρακαλούμε μετατρέψτε το αρχείο στην ίδια μορφή και δοκιμάστε ξανά. }}
+    *   {{ Αυτά τα αρχεία δεν μπορούν να αντικαταστήσουν το “{$name}” επειδή είναι σε διαφορετική μορφή. Παρακαλούμε μετατρέψτε τα αρχεία στην ίδια μορφή και δοκιμάστε ξανά. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -744,6 +813,9 @@ keep_both: Διατήρηση και των δύο
 # Upload progress and error messages
 uploading_files_progress: Μεταφόρτωση…
 uploading_files_failed: Η μεταφόρτωση απέτυχε.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Η διαγραφή απέτυχε.
+renaming_asset_failed: Η μετονομασία απέτυχε.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -827,6 +899,11 @@ asset_paths_copied: |
   .match $count
     one {{ Η διαδρομή αρχείου αντιγράφηκε στο πρόχειρο. }}
     *   {{ {$count} διαδρομές αρχείων αντιγράφηκαν στο πρόχειρο. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Το αναγνωριστικό αρχείου αντιγράφηκε στο πρόχειρο. }}
+    *   {{ {$count} αναγνωριστικά αρχείων αντιγράφηκαν στο πρόχειρο. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -898,6 +975,7 @@ show_editor_options: Εμφάνιση επιλογών επεξεργαστή
 editor_options: Επιλογές επεξεργαστή
 
 # Preview controls
+show_second_pane: Εμφάνιση δεύτερου παραθύρου
 show_preview: Εμφάνιση προεπισκόπησης
 
 # Editor settings
@@ -958,6 +1036,31 @@ view_in_repository: Προβολή στο repository
 view_on_x: 'Προβολή στο {$service}'
 view_on_live_site: Προβολή στον ενεργό ιστότοπο
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Προβολή προεπισκόπησης
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Η προεπισκόπηση δημιουργείται ακόμη.
+  # Shown when the build failed, so no preview is available
+  failed: Δεν ήταν δυνατή η δημιουργία της προεπισκόπησης.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Έλεγχος για προεπισκόπηση…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Έλεγχος για προεπισκόπηση
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Έλεγχος για προεπισκόπηση
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Δημιουργία…
+    failed: Η δημιουργία απέτυχε
+
 # Content copying from other locales
 copy_from: Αντιγραφή από…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -986,6 +1089,23 @@ edit_slug_error:
   empty: Το slug δεν μπορεί να είναι κενό.
   invalid: Το slug δεν μπορεί να περιέχει ειδικούς χαρακτήρες, συμπεριλαμβανομένων κενών και καθέτων (/).
   duplicate: Αυτό το slug χρησιμοποιείται για άλλη καταχώριση.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Γονικός φάκελος
+new_parent_folder: Νέος φάκελος
+new_parent_folder_create: Δημιουργία
+new_parent_folder_name: Όνομα φακέλου
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: Ο νέος φάκελος θα δημιουργηθεί στον φάκελο “{$folder}”.
+new_parent_folder_error:
+  empty: Το όνομα του φακέλου δεν μπορεί να είναι κενό.
+  invalid: Το όνομα του φακέλου δεν μπορεί να περιέχει καθέτους ή να ξεκινά με τελεία και πρέπει να περιλαμβάνει γράμματα ή αριθμούς.
+  duplicate: Υπάρχει ήδη φάκελος με αυτό το όνομα εδώ.
+edit_path_error:
+  invalid: Η διαδρομή δεν μπορεί να περιέχει σχετικά τμήματα όπως “..”.
+  recursive: Η καταχώριση δεν μπορεί να μετακινηθεί σε έναν από τους δικούς της υποφακέλους.
+  duplicate: Αυτή η διαδρομή χρησιμοποιείται για άλλη καταχώριση.
 
 # Required field indicator
 required: Απαιτείται
@@ -1082,6 +1202,10 @@ validation:
     email: Παρακαλούμε εισαγάγετε μια έγκυρη διεύθυνση email.
     url: Παρακαλούμε εισαγάγετε ένα έγκυρο URL.
 
+  # Custom field validation error
+  invalid_value: Μη έγκυρη τιμή.
+  unexpected_error: Παρουσιάστηκε μη αναμενόμενο σφάλμα.
+
 # ==============================================================================
 # Entry Sidebar
 # ==============================================================================
@@ -1096,6 +1220,8 @@ entry_sidebar:
     title: Επικύρωση
     placeholder: Τα αποτελέσματα επικύρωσης θα εμφανίζονται εδώ.
     no_errors_found: Δεν βρέθηκαν σφάλματα.
+    # Button in the panel header that validates the entry on demand
+    validate: Επικύρωση
 
   # History panel: shows entry commit history
   history:
@@ -1126,6 +1252,10 @@ viewing_x_asset_details: Τώρα βλέπετε τις λεπτομέρειες
 # Asset editor container aria-label
 asset_editor: Επεξεργαστής πόρων
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Προηγούμενος πόρος
+next_asset: Επόμενος πόρος
+
 # Preview unavailable message
 preview_unavailable: Η προεπισκόπηση δεν είναι διαθέσιμη.
 
@@ -1142,6 +1272,13 @@ file_paths: |
   .match $count
     one {{ Διαδρομή αρχείου }}
     *   {{ Διαδρομές αρχείων }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ Αναγνωριστικό αρχείου }}
+    *   {{ Αναγνωριστικά αρχείων }}
 file_data: Δεδομένα αρχείου
 
 # ==============================================================================
@@ -1175,6 +1312,12 @@ map_lat_lng: Χάρτης που δείχνει γεωγραφικό πλάτο�
 remove_this_item: Κατάργηση αυτού του αντικειμένου
 move_up: Μετακίνηση πάνω
 move_down: Μετακίνηση κάτω
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Αναδιάταξη στοιχείου
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Τιμή στοιχείου
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1187,6 +1330,9 @@ add_item_below: Προσθήκη στοιχείου από κάτω
 
 # Variable-type list selector
 select_list_type: Επιλογή τύπου λίστας
+
+# Variable-type mismatch
+unknown_variable_type: Αυτό το στοιχείο δεν μπορεί να εμφανιστεί λόγω άγνωστου τύπου. Ελέγξτε την κονσόλα του προγράμματος περιήγησης για λεπτομέρειες.
 
 # ==============================================================================
 # Field Widgets
@@ -1238,6 +1384,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: Αρχείο μεγάλου μεγέθους
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Μη έγκυρο αρχείο
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Τα αρχεία δεν μπορούν να μεταφορτωθούν
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1395,6 +1549,8 @@ config:
     parse_failed_invalid_object: Το αρχείο ρυθμίσεων δεν είναι έγκυρο αντικείμενο JavaScript.
     parse_failed_unsupported_type: Το αρχείο ρυθμίσεων δεν είναι υποστηριζόμενος τύπος αρχείου. Υποστηρίζονται μόνο YAML, TOML και JSON.
     no_collection: Δεν έχουν οριστεί συλλογές.
+    # Don’t localize `hide`
+    no_visible_collection: Τουλάχιστον μία συλλογή πρέπει να είναι ορατή. Ελέγξτε την επιλογή `hide`.
     missing_backend: Το backend δεν έχει οριστεί.
     missing_backend_name: Το όνομα του backend δεν έχει οριστεί.
     # {$name} is the backend name from the CMS configuration
@@ -1408,11 +1564,19 @@ config:
     oauth_implicit_flow: Η ρυθμισμένη μέθοδος ταυτοποίησης (implicit flow) δεν υποστηρίζεται στο Sveltia CMS. Χρησιμοποιήστε μια διαφορετική <a>μέθοδο ταυτοποίησης</a>.
     github_pkce_unsupported: Η εξουσιοδότηση PKCE δεν υποστηρίζεται ακόμη λόγω των περιορισμών του GitHub. Χρησιμοποιήστε μια διαφορετική <a>μέθοδο ταυτοποίησης</a>.
     oauth_no_app_id: Το OAuth application ID δεν έχει οριστεί.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: Η επιλογή `open_authoring` απαιτεί τη λειτουργία δημοσίευσης `editorial_workflow`. Δείτε την <a>τεκμηρίωση</a> για λεπτομέρειες.
     # Don’t localize `auth_methods`
     no_auth_methods: Η επιλογή `auth_methods` πρέπει να περιέχει τουλάχιστον μία μέθοδο.
     missing_media_folder: Ο φάκελος μέσων δεν έχει οριστεί.
     public_folder_relative_path: Ο ρυθμισμένος δημόσιος φάκελος είναι άκυρος. Πρέπει να είναι μια απόλυτη διαδρομή που ξεκινά με «/».
     public_folder_absolute_url: Δεν υποστηρίζεται absolute URL για την επιλογή του δημόσιου φακέλου στο Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: Η επιλογή `transformations` περιέχει ένα μη υποστηριζόμενο κλειδί `{$key}`. Πρέπει να είναι `raster_image`, `svg` ή μια υποστηριζόμενη μορφή εικόνας raster.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: Η επιλογή `quality` για τον μετασχηματισμό `{$key}` δεν είναι έγκυρη. Πρέπει να είναι ακέραιος αριθμός μεταξύ 0 και 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: Η επιλογή `{$prop}` για τον μετασχηματισμό `{$key}` δεν είναι έγκυρη. Πρέπει να είναι θετικός ακέραιος αριθμός.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Η συλλογή πόρων {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
     # {$name} is the invalid or duplicate asset collection name
@@ -1427,6 +1591,24 @@ config:
     file_format_mismatch: Η επέκταση `{$extension}` δεν ταιριάζει με τη μορφή `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Το πρότυπο slug `{$slug}` είναι άκυρο καθώς δεν μπορεί να περιέχει καθέτους (/). Για την οργάνωση καταχωρίσεων σε υποφακέλους, χρησιμοποιήστε την επιλογή `path` αντί για το `slug`.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: Η επιλογή `reorder` αναφέρεται σε μια ομάδα προβολής με όνομα `{$name}`, αλλά δεν έχει οριστεί τέτοια ομάδα στην επιλογή `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: Η επιλογή `sortable_fields` αναφέρεται σε ένα πεδίο με όνομα `{$name}`, αλλά δεν έχει οριστεί τέτοιο πεδίο στη συλλογή.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: Η επιλογή `view_groups` αναφέρεται σε ένα πεδίο με όνομα `{$name}`, αλλά δεν έχει οριστεί τέτοιο πεδίο στη συλλογή.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: Η επιλογή `view_filters` αναφέρεται σε ένα πεδίο με όνομα `{$name}`, αλλά δεν έχει οριστεί τέτοιο πεδίο στη συλλογή.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Η ομάδα προβολής {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: Το όνομα ομάδας προβολής `{$name}` δεν είναι έγκυρο. Δεν πρέπει να περιέχει ειδικούς χαρακτήρες.
+    duplicate_view_group_name: Τα ονόματα των ομάδων προβολής πρέπει να είναι μοναδικά, αλλά το `{$name}` χρησιμοποιείται περισσότερες από μία φορές.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Το φίλτρο προβολής {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: Το όνομα φίλτρου προβολής `{$name}` δεν είναι έγκυρο. Δεν πρέπει να περιέχει ειδικούς χαρακτήρες.
+    duplicate_view_filter_name: Τα ονόματα των φίλτρων προβολής πρέπει να είναι μοναδικά, αλλά το `{$name}` χρησιμοποιείται περισσότερες από μία φορές.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Η συλλογή {$count} πρέπει να έχει την επιλογή `name` ορισμένη ως μη κενό string.
     # {$name} is the invalid or duplicate collection name
@@ -1474,14 +1656,50 @@ config:
     relation_field_invalid_value_field: Το πεδίο τιμής αναφοράς `{$field}` είναι άκυρο ή δεν έχει οριστεί.
     unexpected: Μη αναμενόμενο σφάλμα
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: Η επιλογή `{$option}` πρέπει να είναι {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'Η επιλογή `{$option}` πρέπει να είναι μία από τις εξής τιμές: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: Η επιλογή `{$option}` πρέπει να είναι `{$value}`.
+    schema_invalid_empty_value: Η επιλογή `{$option}` πρέπει να είναι κενό string.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: Η επιλογή `{$option}` πρέπει να είναι πίνακας με {$count} στοιχεία.
+    schema_invalid_value: Η επιλογή `{$option}` έχει μη έγκυρη τιμή.
+    schema_missing_option: Η επιλογή `{$option}` είναι υποχρεωτική.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Απαιτείται μία από τις εξής επιλογές: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: string
+      number: αριθμός
+      integer: ακέραιος αριθμός
+      boolean: λογική τιμή
+      array: πίνακας
+      object: αντικείμενο
+      'null': κενή
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: Το OAuth application ID δεν έχει οριστεί. Οι χρήστες πρέπει να παρέχουν διακριτικό πρόσβασης για να συνδεθούν.
     editorial_workflow_unsupported: Η ροή εργασίας σύνταξης δεν υποστηρίζεται ακόμη στο Sveltia CMS.
+    open_authoring_unsupported_backend: Το Open Authoring υποστηρίζεται προς το παρόν μόνο με το backend του GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Η επιλογή `{$prop}` δεν υποστηρίζεται στο Sveltia CMS και θα αγνοηθεί.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Είναι ορισμένες ταυτόχρονα η επιλογή `picker_utc` και οι νεότερες επιλογές ζώνης ώρας (`input_timezone` ή `output_utc`). Οι νέες επιλογές έχουν προτεραιότητα. Σκεφτείτε να αφαιρέσετε το `picker_utc` από τις ρυθμίσεις σας.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: Η επιλογή `preview_path` χρησιμοποιεί ετικέτες ημερομηνίας και ώρας, αλλά η συλλογή δεν έχει πεδίο DateTime από το οποίο να τις διαβάσει, επομένως ο σύνδεσμος προεπισκόπησης δεν θα εμφανιστεί.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: Η επιλογή `preview_path_date_field` αναφέρεται σε ένα πεδίο με όνομα `{$name}`, αλλά δεν έχει οριστεί πεδίο DateTime με αυτό το όνομα, επομένως ο σύνδεσμος προεπισκόπησης δεν θα εμφανιστεί.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: Η επιλογή `preview_path` αναφέρεται στο `{$name}`, αλλά δεν έχει οριστεί τέτοιο πεδίο στη συλλογή, επομένως ο σύνδεσμος προεπισκόπησης δεν θα εμφανιστεί.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: Η επιλογή `{$option}` δεν ορίζεται στο σχήμα ρυθμίσεων του Sveltia CMS και θα αγνοηθεί. Ελέγξτε για τυπογραφικό ή συντακτικό λάθος.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Δείτε τις σημειώσεις συμβατότητας για λεπτομέρειες: {$link}'
@@ -1504,12 +1722,164 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Τώρα βλέπετε τον πίνακα της ροής εργασίας σύνταξης. Προσχέδια: {$draft}. Σε αξιολόγηση: {$review}. Έτοιμα: {$ready}. Σε αναμονή διαγραφής: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Τώρα βλέπετε τον πίνακα της ροής εργασίας σύνταξης. Προσχέδια: {$draft}. Σε αξιολόγηση: {$review}. Σε αναμονή διαγραφής: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: Προσχέδιο
   drafts: Προσχέδια
   in_review: Σε αξιολόγηση
   ready: Έτοιμο
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Σε αναμονή διαγραφής
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Ακύρωση διαγραφής
+  confirm_cancelling_deletion: Είστε βέβαιοι ότι θέλετε να ακυρώσετε αυτή τη διαγραφή; Η καταχώριση θα παραμείνει δημοσιευμένη.
+  confirm_completing_deletion: Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώριση; Θα αφαιρεθεί αμέσως.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Η καταχώριση επισημάνθηκε για διαγραφή. }}
+      *   {{ {$count} καταχωρίσεις επισημάνθηκαν για διαγραφή. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Οι αλλαγές απορρίφθηκαν. }}
+      *   {{ Οι αλλαγές σε {$count} καταχωρίσεις απορρίφθηκαν. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Ακύρωση διαγραφής…
+  deletion_cancelled: Η διαγραφή ακυρώθηκε.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Δεν ήταν δυνατή η ακύρωση της διαγραφής. Παρακαλούμε δοκιμάστε ξανά.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Μη δημοσιευμένες καταχωρίσεις
+  published_entries: Δημοσιευμένες καταχωρίσεις
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Κατάσταση: {$status}'
+  change_entry_status: Αλλαγή κατάστασης καταχώρισης
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Αλλαγή κατάστασης…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Ενημέρωση κατάστασης…
+  status_updated: Η κατάσταση ενημερώθηκε.
+  # Error notification when the status could not be changed
+  status_change_failed: Δεν ήταν δυνατή η αλλαγή της κατάστασης. Παρακαλούμε δοκιμάστε ξανά.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: Η καταχώριση περιέχει σφάλματα. Παρακαλούμε διορθώστε τα πριν αλλάξετε την κατάσταση.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: Η καταχώριση περιέχει σφάλματα. Παρακαλούμε διορθώστε τα πριν τη δημοσιεύσετε.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Αποστολή για αξιολόγηση
+  confirm_sending_for_review: Οι αλλαγές σας αποθηκεύτηκαν ως προσχέδιο. Θέλετε να στείλετε την καταχώριση για αξιολόγηση, ώστε κάποιος να τη δει και να τη δημοσιεύσει;
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Δημοσίευση καταχώρισης
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Απόρριψη αλλαγών
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την καταχώριση; Δεν θα αφαιρεθεί μέχρι να δημοσιευτεί η διαγραφή. Μέχρι τότε θα τη βρίσκετε στη λίστα καταχωρίσεων, επισημασμένη ως “Σε αναμονή διαγραφής”.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Αυτή η καταχώριση δεν έχει δημοσιευτεί ακόμη, επομένως η διαγραφή της θα την απορρίψει εντελώς.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Αυτή η καταχώριση έχει μη δημοσιευμένες αλλαγές. Η απόρριψή τους θα επαναφέρει τη δημοσιευμένη έκδοση. Η ίδια η καταχώριση δεν θα διαγραφεί.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Δεν έχει δημοσιευτεί ακόμη, επομένως οι μη δημοσιευμένες αλλαγές σας θα απορριφθούν. Τυχόν δημοσιευμένη έκδοση θα παραμείνει δημοσιευμένη. }}
+      *   {{ Δεν έχουν δημοσιευτεί ακόμη, επομένως οι μη δημοσιευμένες αλλαγές σας θα απορριφθούν. Τυχόν δημοσιευμένες εκδόσεις θα παραμείνουν δημοσιευμένες. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Μία από αυτές δεν έχει δημοσιευτεί ακόμη, επομένως οι μη δημοσιευμένες αλλαγές σας θα απορριφθούν. Τυχόν δημοσιευμένη έκδοση θα παραμείνει δημοσιευμένη. }}
+      *   {{ {$count} από αυτές δεν έχουν δημοσιευτεί ακόμη, επομένως οι μη δημοσιευμένες αλλαγές σας θα απορριφθούν. Τυχόν δημοσιευμένες εκδόσεις θα παραμείνουν δημοσιευμένες. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Είστε βέβαιοι ότι θέλετε να δημοσιεύσετε αυτή την καταχώριση; Οι αλλαγές σας θα τεθούν σε ισχύ αμέσως.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Δημοσίευση καταχώρισης…
+  entry_published: Η καταχώριση δημοσιεύτηκε.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Διαγραφή καταχώρισης…
+  discarding_changes: Απόρριψη αλλαγών…
+  entry_deleted: Η καταχώριση διαγράφηκε.
+  # Error notification when publishing fails
+  publishing_entry_failed: Δεν ήταν δυνατή η δημοσίευση της καταχώρισης. Παρακαλούμε δοκιμάστε ξανά.
+  # Workflow page: empty column message
+  no_entries: Δεν υπάρχουν καταχωρίσεις.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Σύρετε για να αλλάξετε την κατάσταση
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Fork του repository
+  fork: Fork
+  confirm_forking_repository: Για να προτείνετε αλλαγές στο “{$repo}”, πρέπει να δημιουργηθεί ένα fork του repository στον λογαριασμό σας. Οι αλλαγές σας αποθηκεύονται σε αυτό το fork και ένας συντηρητής τις ελέγχει πριν δημοσιευτούν.
+  # Error shown when the user declined the dialog above
+  fork_declined: Χρειάζεστε ένα fork του repository στον λογαριασμό σας για να προτείνετε αλλαγές.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Δεν ήταν δυνατή η δημιουργία fork του repository “{$repo}” στον λογαριασμό σας.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Δεν ήταν δυνατός ο έλεγχος της πρόσβασής σας στο repository “{$repo}”. Παρακαλούμε δοκιμάστε ξανά σε λίγο.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: Το repository “{$repo}” δεν επιτρέπει fork. Ζητήστε από έναν συντηρητή να ενεργοποιήσει τη δυνατότητα fork για αυτό.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Έχετε μια εκκρεμή πρόσκληση για το repository “{$repo}”. Αποδεχτείτε την στο GitHub και μετά συνδεθείτε ξανά.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Η σύνδεσή σας δεν περιλαμβάνει πρόσβαση σε ιδιωτικά repository, επομένως το repository “{$repo}” δεν μπορεί να διαβαστεί. Ζητήστε από έναν συντηρητή να ελέγξει τις ρυθμίσεις ταυτοποίησης του CMS.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Μόνο ένας συντηρητής μπορεί να δημοσιεύσει αλλαγές σε αυτόν τον ιστότοπο. Αντ’ αυτού, επισημάνετε την καταχώρισή σας ως “Σε αξιολόγηση” και κάποιος θα τη δει.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Αυτή η αλλαγή δεν μπορεί να γίνει απευθείας. Μόνο επεξεργασίες καταχωρίσεων μπορούν να προταθούν για αξιολόγηση.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Οι αλλαγές σας αποθηκεύονται στο fork αυτού του repository στο “{$repo}” και ελέγχονται πριν δημοσιευτούν.
+  view_fork: Προβολή fork
 
 # ==============================================================================
 # Settings Dialog
@@ -1639,6 +2009,18 @@ prefs:
         field_label: Κεφαλίδα εξουσιοδότησης (π.χ. Bearer <token>) (προαιρετικό)
         saved: Η κεφαλίδα εξουσιοδότησης αποθηκεύτηκε.
         removed: Η κεφαλίδα εξουσιοδότησης αφαιρέθηκε.
+    clear_data:
+      title: Εκκαθάριση δεδομένων
+      # Clear File Cache button
+      file_cache:
+        description: Διαγραφή του τοπικά αποθηκευμένου στην cache περιεχομένου αρχείων και των μικρογραφιών εικόνων, για να ελευθερωθεί χώρος αποθήκευσης ή να επιλυθούν προβλήματα που προκαλούνται από παλιά δεδομένα.
+        button_label: Εκκαθάριση cache αρχείων
+        confirmation: Το τοπικά αποθηκευμένο στην cache περιεχόμενο αρχείων και οι μικρογραφίες εικόνων θα διαγραφούν. Τα μη αποθηκευμένα προσχέδια και οι ρυθμίσεις σας θα διατηρηθούν, και τα διαγραμμένα δεδομένα θα ληφθούν ή θα δημιουργηθούν ξανά όταν χρειαστεί. Το CMS θα επαναφορτωθεί μόλις ολοκληρωθεί η διαδικασία.
+      # Erase All Data button
+      all_data:
+        description: Διαγραφή όλων όσων διατηρεί το CMS σε αυτό το πρόγραμμα περιήγησης, συμπεριλαμβανομένων των αρχείων στην cache, των μη αποθηκευμένων προσχεδίων και των ρυθμίσεων. Ό,τι έχει ήδη αποθηκευτεί στο repository σας δεν θα επηρεαστεί.
+        button_label: Διαγραφή όλων των δεδομένων
+        confirmation: Όλα τα δεδομένα που είναι αποθηκευμένα σε αυτό το πρόγραμμα περιήγησης θα διαγραφούν, συμπεριλαμβανομένου του περιεχομένου αρχείων στην cache, των μικρογραφιών εικόνων, των μη αποθηκευμένων προσχεδίων, των ρυθμίσεων και της κατάστασης σύνδεσης. Το repository σας δεν θα επηρεαστεί, αλλά κάθε αλλαγή που δεν έχετε αποθηκεύσει θα χαθεί και θα χρειαστεί να συνδεθείτε ξανά. Το CMS θα επαναφορτωθεί μόλις ολοκληρωθεί η διαδικασία.
 
 # ==============================================================================
 # Keyboard Shortcuts

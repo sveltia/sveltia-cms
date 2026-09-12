@@ -363,6 +363,9 @@ viewing_x_asset_folder: |
   .match $count
     0   {{ 您正在瀏覽「{$folder}」媒體資料夾，目前沒有媒體檔案。 }}
     *   {{ 您正在瀏覽「{$folder}」媒體資料夾，有 {$count} 個媒體檔案。 }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: 您正在瀏覽 {$service} 上的媒體檔案。
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -404,6 +407,10 @@ sort_keys:
   commit_author: 更新者
   # Sort by the last commit date
   commit_date: 更新時間
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: 修改時間
+  # Sort by file size
+  size: 大小
   # Sort by the entry’s computed summary text
   _summary: 摘要
   # Manual order defined by the user via drag-and-drop
@@ -415,6 +422,8 @@ ascending: '{$label} (A–Z)'
 ascending_date: '{$label}（舊到新）'
 descending: '{$label} (Z–A)'
 descending_date: '{$label}（新到舊）'
+ascending_number: '{$label}（由小到大）'
+descending_number: '{$label}（由大到小）'
 
 # Filter menu: button labels and options
 filter: 篩選
@@ -443,6 +452,8 @@ hide_info: 隱藏資訊
 # Folder display labels when no specific path is configured
 all_assets: 全部媒體
 global_assets: 全域媒體
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: 連結的檔案
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -532,6 +543,8 @@ upload_assets: 上傳新的媒體檔案
 # Edit options menu: button and item labels
 edit_options: 編輯選項
 show_edit_options: 顯示編輯選項
+# Copy menu aria-label
+copy_options: 複製選項
 # Edit menu items with specific asset names
 edit_asset: 編輯媒體檔案
 # {$name} is the selected asset name
@@ -765,6 +778,9 @@ keep_both: 兩個都保留
 # Upload progress and error messages
 uploading_files_progress: 上傳中……
 uploading_files_failed: 上傳失敗。
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: 刪除失敗。
+renaming_asset_failed: 重新命名失敗。
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -840,6 +856,11 @@ asset_paths_copied: |
   .input {$count :integer}
   .match $count
     * {{ 檔案路徑已複製到剪貼簿。 }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    1 {{ 檔案 ID 已複製到剪貼簿。 }}
+    * {{ 已將 {$count} 個檔案 ID 複製到剪貼簿。 }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -1020,6 +1041,23 @@ edit_slug_error:
   invalid: 網址代號不能包含特殊字元（包括斜槓和空格）。
   duplicate: 此網址代號已用於其他項目。
 
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: 上層資料夾
+new_parent_folder: 新增資料夾
+new_parent_folder_create: 建立
+new_parent_folder_name: 資料夾名稱
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: 新資料夾將建立在「{$folder}」中。
+new_parent_folder_error:
+  empty: 資料夾名稱不能為空。
+  invalid: 資料夾名稱不能包含斜槓或以點開頭，且必須包含字母或數字。
+  duplicate: 此處已有同名的資料夾。
+edit_path_error:
+  invalid: 路徑不能包含「..」等相對路徑片段。
+  recursive: 項目不能移動到其自身的子資料夾中。
+  duplicate: 此路徑已用於其他項目。
+
 # Required field indicator
 required: 必填
 
@@ -1157,6 +1195,10 @@ viewing_x_asset_details: 您正在檢視「{$name}」媒體檔案的詳細資訊
 # Asset editor container aria-label
 asset_editor: 媒體檔案編輯器
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: 上一個媒體檔案
+next_asset: 下一個媒體檔案
+
 # Preview unavailable message
 preview_unavailable: 預覽無法使用。
 
@@ -1171,6 +1213,12 @@ file_paths: |
   .input {$count :integer}
   .match $count
     * {{ 檔案路徑 }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    * {{ 檔案 ID }}
 file_data: 檔案資料
 
 # ==============================================================================
@@ -1585,6 +1633,8 @@ config:
     preview_path_date_field_not_found: '`preview_path_date_field` 選項指向名為 `{$name}` 的欄位，但沒有定義該名稱的 DateTime 欄位，因此不會顯示預覽連結。'
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: '`preview_path` 選項指向 `{$name}`，但集合中未定義該欄位，因此不會顯示預覽連結。'
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: Sveltia CMS 設定結構描述中未定義 `{$option}` 選項。該選項將會被忽略。請檢查是否有拼字或語法錯誤。
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: '詳見相容性說明：{$link}'
@@ -1887,6 +1937,18 @@ prefs:
         field_label: Authorization 標頭（例如 Bearer <token>）（選填）
         saved: Authorization 標頭已儲存。
         removed: Authorization 標頭已移除。
+    clear_data:
+      title: 清除資料
+      # Clear File Cache button
+      file_cache:
+        description: 刪除本機快取的檔案內容和圖片縮圖，以釋放儲存空間或解決過期資料造成的問題。
+        button_label: 清除檔案快取
+        confirmation: 本機快取的檔案內容和圖片縮圖將被刪除。您未儲存的草稿和設定會保留，刪除的資料會在需要時重新下載或產生。完成後 CMS 將重新載入。
+      # Erase All Data button
+      all_data:
+        description: 刪除 CMS 在此瀏覽器中保存的所有內容，包括快取檔案、未儲存的草稿和設定。已儲存到倉庫的內容不受影響。
+        button_label: 清除所有資料
+        confirmation: 此瀏覽器中儲存的所有資料將被刪除，包括快取的檔案內容、圖片縮圖、未儲存的草稿、設定和登入狀態。您的倉庫不受影響，但任何未儲存的變更都將遺失，並且您需要重新登入。完成後 CMS 將重新載入。
 
 # ==============================================================================
 # Keyboard Shortcuts

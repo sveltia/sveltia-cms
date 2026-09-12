@@ -238,6 +238,11 @@ mobile_promo_button: Prova
 new_language_available: Sveltia CMS är nu tillgängligt på {$locale}!
 change_language: Ändra språk
 
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Byter till {$locale}…
+locale_load_failed: Det gick inte att läsa in översättningen för {$locale}. Försök igen senare.
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: Besök webbplatsen
@@ -361,13 +366,18 @@ viewing_x_asset_folder: |
     0 {{ Du visar nu resursmappen “{$folder}”, som ännu inte har några resurser. }}
     one {{ Du visar nu resursmappen “{$folder}”, som har en resurs. }}
     * {{ Du visar nu resursmappen “{$folder}”, som har {$count} resurser. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Du visar nu resurserna på {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Tryck Enter för att redigera filen “{$file}”.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Sidan hittades inte.
 collection_not_found: Samlingen hittades inte.
+asset_folder_not_found: Resursmappen hittades inte.
 file_not_found: Filen hittades inte.
 
 # Selection count indicator
@@ -400,6 +410,10 @@ sort_keys:
   commit_author: Uppdaterad av
   # Sort by the last commit date
   commit_date: Uppdaterad den
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Ändrad den
+  # Sort by file size
+  size: Storlek
   # Sort by the entry’s computed summary text
   _summary: Sammanfattning
   # Manual order defined by the user via drag-and-drop
@@ -411,6 +425,8 @@ ascending: '{$label}, A till Ö'
 ascending_date: '{$label}, gammalt till nytt'
 descending: '{$label}, Ö till A'
 descending_date: '{$label}, nytt till gammalt'
+ascending_number: '{$label}, minst till störst'
+descending_number: '{$label}, störst till minst'
 
 # Filter menu: button labels and options
 filter: Filter
@@ -439,6 +455,22 @@ hide_info: Dölj information
 # Folder display labels when no specific path is configured
 all_assets: Alla resurser
 global_assets: Globala resurser
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Länkade filer
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Laddar post… }}
+    *   {{ Laddar poster… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -526,6 +558,8 @@ upload_assets: Ladda upp resurser
 # Edit options menu: button and item labels
 edit_options: Redigera alternativ
 show_edit_options: Visa redigeringsalternativ
+# Copy menu aria-label
+copy_options: Kopieringsalternativ
 # Edit menu items with specific asset names
 edit_asset: Redigera resurs
 # {$name} is the selected asset name
@@ -551,6 +585,14 @@ enter_new_name_for_asset_error:
   empty: Filnamnet får inte vara tomt.
   character: Filnamnet får inte innehålla specialtecken.
   duplicate: Detta filnamn används för en annan resurs.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Ändra filändelse
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Är du säker på att du vill ändra filändelsen från “.{$oldExtension}” till “.{$newExtension}”?
+  add: Är du säker på att du vill lägga till filändelsen “.{$newExtension}”?
+  remove: Är du säker på att du vill ta bort filändelsen “.{$oldExtension}”?
+file_extension_change_warning: Filen kanske inte visas eller hanteras korrekt om filändelsen inte matchar det faktiska filformatet.
 
 # Replace asset: menu item and dialog title
 replace_asset: Byt ut resurs
@@ -661,6 +703,8 @@ delete_selected_entries: |
     *   {{ Radera markerade poster }}
 confirm_deleting_this_entry: Är du säker på att du vill radera denna post?
 confirm_deleting_this_entry_with_assets: Är du säker på att du vill radera denna post och tillhörande resurser?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Det gick inte att radera posten. Försök igen.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -728,6 +772,26 @@ warning_oversized_files: |
     one {{ Denna fil kan inte laddas upp eftersom den överskrider den maximala storleken på {$size}. Minska storleken eller välj en annan fil. }}
     *   {{ Dessa filer kan inte laddas upp eftersom de överskrider den maximala storleken på {$size}. Minska storlekarna eller välj andra filer. }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Ogiltiga filer
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denna fil kan inte laddas upp eftersom den är skadad eller eftersom innehållet inte matchar filändelsen. Detta händer ofta när ett foto har döpts om i stället för att konverteras, till exempel en HEIC-bild som sparats som en JPEG-fil. Konvertera filen och försök igen. }}
+    *   {{ Dessa filer kan inte laddas upp eftersom de är skadade eller eftersom innehållet inte matchar filändelserna. Detta händer ofta när foton har döpts om i stället för att konverteras, till exempel HEIC-bilder som sparats som JPEG-filer. Konvertera filerna och försök igen. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Filer med fel format
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denna fil kan inte ersätta “{$name}” eftersom den har ett annat format. Konvertera filen till samma format och försök igen. }}
+    *   {{ Dessa filer kan inte ersätta “{$name}” eftersom de har ett annat format. Konvertera filerna till samma format och försök igen. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -749,6 +813,9 @@ keep_both: Behåll båda
 # Upload progress and error messages
 uploading_files_progress: Laddar upp…
 uploading_files_failed: Uppladdning misslyckades.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Det gick inte att radera.
+renaming_asset_failed: Det gick inte att byta namn.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -832,6 +899,11 @@ asset_paths_copied: |
   .match $count
     one {{ Filsökväg kopierad till urklipp. }}
     *   {{ {$count} filsökvägar kopierade till urklipp. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fil-ID kopierat till urklipp. }}
+    *   {{ {$count} fil-ID:n kopierade till urklipp. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -903,6 +975,7 @@ show_editor_options: Visa redigeringsalternativ
 editor_options: Redigeringsalternativ
 
 # Preview controls
+show_second_pane: Visa andra panelen
 show_preview: Visa förhandsgranskning
 
 # Editor settings
@@ -963,6 +1036,31 @@ view_in_repository: Visa i arkivet
 view_on_x: 'Visa på {$service}'
 view_on_live_site: Visa på live-sidan
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Visa förhandsgranskning
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Förhandsgranskningen byggs fortfarande.
+  # Shown when the build failed, so no preview is available
+  failed: Förhandsgranskningen kunde inte byggas.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Söker efter förhandsgranskning…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Sök efter förhandsgranskning
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Söker efter förhandsgranskning
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Bygger…
+    failed: Bygget misslyckades
+
 # Content copying from other locales
 copy_from: Kopiera från…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -991,6 +1089,23 @@ edit_slug_error:
   empty: Sluggen får inte vara tom.
   invalid: Sluggen får inte innehålla specialtecken, inklusive snedstreck och mellanslag.
   duplicate: Denna slugg används för en annan post.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Överordnad mapp
+new_parent_folder: Ny mapp
+new_parent_folder_create: Skapa
+new_parent_folder_name: Mappnamn
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: Den nya mappen skapas i “{$folder}”.
+new_parent_folder_error:
+  empty: Mappnamnet får inte vara tomt.
+  invalid: Mappnamnet får inte innehålla snedstreck eller börja med en punkt, och måste innehålla bokstäver eller siffror.
+  duplicate: Det finns redan en mapp med detta namn här.
+edit_path_error:
+  invalid: Sökvägen får inte innehålla relativa segment som “..”.
+  recursive: Posten kan inte flyttas till en av sina egna undermappar.
+  duplicate: Denna sökväg används för en annan post.
 
 # Required field indicator
 required: Obligatoriskt
@@ -1087,6 +1202,10 @@ validation:
     email: Ange en giltig e-postadress.
     url: Ange en giltig URL.
 
+  # Custom field validation error
+  invalid_value: Ogiltigt värde.
+  unexpected_error: Ett oväntat fel uppstod.
+
 # ==============================================================================
 # Entry Sidebar
 # ==============================================================================
@@ -1101,6 +1220,8 @@ entry_sidebar:
     title: Validering
     placeholder: Valideringsresultat kommer att visas här.
     no_errors_found: Inga fel hittades.
+    # Button in the panel header that validates the entry on demand
+    validate: Validera
 
   # History panel: shows entry commit history
   history:
@@ -1131,6 +1252,10 @@ viewing_x_asset_details: Du tittar nu på detaljerna för resursen “{$name}”
 # Asset editor container aria-label
 asset_editor: Resursredigerare
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Föregående resurs
+next_asset: Nästa resurs
+
 # Preview unavailable message
 preview_unavailable: Förhandsvisning ej tillgänglig.
 
@@ -1147,6 +1272,13 @@ file_paths: |
   .match $count
     one {{ Filsökväg }}
     *   {{ Filsökvägar }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fil-ID }}
+    *   {{ Fil-ID:n }}
 file_data: Filinformation
 
 # ==============================================================================
@@ -1180,6 +1312,12 @@ map_lat_lng: Karta som visar latitud {$latitude}, longitud {$longitude}
 remove_this_item: Ta bort detta objekt
 move_up: Flytta upp
 move_down: Flytta ner
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Ändra ordning på objekt
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Objektvärde
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1192,6 +1330,9 @@ add_item_below: Lägg till objekt nedanför
 
 # Variable-type list selector
 select_list_type: Välj listtyp
+
+# Variable-type mismatch
+unknown_variable_type: Detta objekt kan inte visas på grund av en okänd typ. Se webbläsarens konsol för mer information.
 
 # ==============================================================================
 # Field Widgets
@@ -1243,6 +1384,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: Stor fil
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Ogiltig fil
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Filerna kan inte laddas upp
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1400,6 +1549,8 @@ config:
     parse_failed_invalid_object: Konfigurationsfilen är inte ett giltigt JavaScript-objekt.
     parse_failed_unsupported_type: Konfigurationsfilen är inte en giltig filtyp. Endast YAML, TOML och JSON stöds.
     no_collection: Samlingar är inte definierade.
+    # Don’t localize `hide`
+    no_visible_collection: Minst en samling måste vara synlig. Kontrollera `hide`-alternativet.
     missing_backend: Backend är inte definierad.
     missing_backend_name: Backend-namnet är inte definierat.
     # {$name} is the backend name from the CMS configuration
@@ -1413,11 +1564,19 @@ config:
     oauth_implicit_flow: Den konfigurerade autentiseringsmetoden (implicit flow) stöds inte i Sveltia CMS. Använd en annan <a>autentiseringsmetod</a> istället.
     github_pkce_unsupported: PKCE-auktorisering stöds ännu inte på grund av GitHubs begränsningar. Använd en annan <a>autentiseringsmetod</a> istället.
     oauth_no_app_id: OAuth-applikations-ID är inte definierat.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: '`open_authoring`-alternativet kräver publiceringsläget `editorial_workflow`. Se <a>dokumentationen</a> för mer information.'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods`-alternativet måste innehålla minst en metod.'
     missing_media_folder: Mediamappen är inte definierad.
     public_folder_relative_path: Den konfigurerade publika mappen är ogiltig. Den måste vara en absolut sökväg som börjar med “/”.
     public_folder_absolute_url: En absolut URL för det publika mapp-alternativet stöds inte i Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: '`transformations`-alternativet innehåller en nyckel `{$key}` som inte stöds. Den måste vara `raster_image`, `svg` eller ett rasterbildformat som stöds.'
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: '`quality`-alternativet för transformationen `{$key}` är ogiltigt. Det måste vara ett heltal mellan 0 och 100.'
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: '`{$prop}`-alternativet för transformationen `{$key}` är ogiltigt. Det måste vara ett positivt heltal.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 'Resurs-samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
     # {$name} is the invalid or duplicate asset collection name
@@ -1432,6 +1591,24 @@ config:
     file_format_mismatch: 'Filändelsen `{$extension}` matchar inte formatet `{$format}`.'
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: 'Slugg-mallen `{$slug}` är ogiltig eftersom den inte kan innehålla snedstreck. För att organisera poster i undermappar, använd `path`-alternativet istället för `slug`.'
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: '`reorder`-alternativet hänvisar till en vygrupp med namnet `{$name}`, men ingen sådan grupp är definierad i `view_groups`-alternativet.'
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: '`sortable_fields`-alternativet hänvisar till ett fält med namnet `{$name}`, men inget sådant fält är definierat i samlingen.'
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: '`view_groups`-alternativet hänvisar till ett fält med namnet `{$name}`, men inget sådant fält är definierat i samlingen.'
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: '`view_filters`-alternativet hänvisar till ett fält med namnet `{$name}`, men inget sådant fält är definierat i samlingen.'
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Vygruppen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: Vygruppsnamnet `{$name}` är ogiltigt. Det får inte innehålla specialtecken.
+    duplicate_view_group_name: Vygruppsnamn måste vara unika, men `{$name}` används mer än en gång.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Vyfiltret {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: Vyfilternamnet `{$name}` är ogiltigt. Det får inte innehålla specialtecken.
+    duplicate_view_filter_name: Vyfilternamn måste vara unika, men `{$name}` används mer än en gång.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: 'Samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
     # {$name} is the invalid or duplicate collection name
@@ -1479,14 +1656,50 @@ config:
     relation_field_invalid_value_field: 'Den refererade värdefältet `{$field}` är ogiltig eller inte definierad.'
     unexpected: 'Oväntat fel'
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: '`{$option}`-alternativet måste vara {$type}.'
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: '`{$option}`-alternativet måste vara ett av dessa värden: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: '`{$option}`-alternativet måste vara `{$value}`.'
+    schema_invalid_empty_value: '`{$option}`-alternativet måste vara en tom sträng.'
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: '`{$option}`-alternativet måste vara en array med {$count} element.'
+    schema_invalid_value: '`{$option}`-alternativet har ett ogiltigt värde.'
+    schema_missing_option: '`{$option}`-alternativet är obligatoriskt.'
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Ett av dessa alternativ är obligatoriskt: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: en sträng
+      number: ett tal
+      integer: ett heltal
+      boolean: ett booleskt värde
+      array: en array
+      object: ett objekt
+      'null': tomt
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: 'OAuth-applikations-ID är inte definierad. Användare måste tillhandahålla en åtkomsttoken för att logga in.'
     editorial_workflow_unsupported: 'Redaktionellt arbetsflöde stöds ännu inte i Sveltia CMS.'
+    open_authoring_unsupported_backend: Open Authoring stöds för närvarande endast med GitHub-backend.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}`-alternativet stöds inte i Sveltia CMS. Det kommer att ignoreras.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: 'Både `picker_utc` och nyare tidszonsalternativ (`input_timezone` eller `output_utc`) är inställda. De nya alternativen har företräde. Överväg att ta bort `picker_utc` från din konfiguration.'
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: '`preview_path`-alternativet använder datum- och tidstaggar, men samlingen har inget DateTime-fält att läsa dem från, så förhandsgranskningslänken visas inte.'
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: '`preview_path_date_field`-alternativet hänvisar till ett fält med namnet `{$name}`, men inget DateTime-fält med det namnet är definierat, så förhandsgranskningslänken visas inte.'
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: '`preview_path`-alternativet hänvisar till `{$name}`, men inget sådant fält är definierat i samlingen, så förhandsgranskningslänken visas inte.'
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: '`{$option}`-alternativet är inte definierat i konfigurationsschemat för Sveltia CMS. Det kommer att ignoreras. Kontrollera om det finns ett stavfel eller syntaxfel.'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Se kompatibilitetsanteckningarna för detaljer: {$link}'
@@ -1509,12 +1722,164 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Du visar nu tavlan för det redaktionella arbetsflödet. Utkast: {$draft}. Granskas: {$review}. Klara: {$ready}. Väntar på radering: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Du visar nu tavlan för det redaktionella arbetsflödet. Utkast: {$draft}. Granskas: {$review}. Väntar på radering: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: Utkast
   drafts: Utkast
   in_review: Granskas
   ready: Klar
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Väntar på radering
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Avbryt radering
+  confirm_cancelling_deletion: Är du säker på att du vill avbryta denna radering? Posten förblir publicerad.
+  confirm_completing_deletion: Är du säker på att du vill radera denna post? Den tas bort omedelbart.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Post markerad för radering. }}
+      *   {{ {$count} poster markerade för radering. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Ändringar förkastade. }}
+      *   {{ Ändringar i {$count} poster förkastade. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Avbryter radering…
+  deletion_cancelled: Radering avbruten.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Det gick inte att avbryta raderingen. Försök igen.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Opublicerade poster
+  published_entries: Publicerade poster
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Status: {$status}'
+  change_entry_status: Ändra poststatus
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Ändrar status…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Uppdaterar status…
+  status_updated: Status uppdaterad.
+  # Error notification when the status could not be changed
+  status_change_failed: Det gick inte att ändra statusen. Försök igen.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: Posten innehåller fel. Rätta till dem innan du ändrar statusen.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: Posten innehåller fel. Rätta till dem innan du publicerar den.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Skicka för granskning
+  confirm_sending_for_review: Dina ändringar har sparats som ett utkast. Vill du skicka posten för granskning så att någon kan titta på den och publicera den?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Publicera post
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Förkasta ändringar
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Är du säker på att du vill radera denna post? Den tas inte bort förrän raderingen har publicerats. Fram till dess finns den kvar i postlistan, markerad som “Väntar på radering”.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Denna post har inte publicerats än, så om du raderar den förkastas den helt.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Denna post har opublicerade ändringar. Om du förkastar dem återställs den publicerade versionen. Själva posten raderas inte.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Den har inte publicerats än, så dina opublicerade ändringar förkastas. En eventuell publicerad version förblir publicerad. }}
+      *   {{ De har inte publicerats än, så dina opublicerade ändringar förkastas. Eventuella publicerade versioner förblir publicerade. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ En av dem har inte publicerats än, så dina opublicerade ändringar förkastas. En eventuell publicerad version förblir publicerad. }}
+      *   {{ {$count} av dem har inte publicerats än, så dina opublicerade ändringar förkastas. Eventuella publicerade versioner förblir publicerade. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Är du säker på att du vill publicera denna post? Dina ändringar träder i kraft omedelbart.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Publicerar post…
+  entry_published: Post publicerad.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Raderar post…
+  discarding_changes: Förkastar ändringar…
+  entry_deleted: Post raderad.
+  # Error notification when publishing fails
+  publishing_entry_failed: Det gick inte att publicera posten. Försök igen.
+  # Workflow page: empty column message
+  no_entries: Inga poster.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Dra för att ändra status
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Forka repot
+  fork: Forka
+  confirm_forking_repository: För att föreslå ändringar i “{$repo}” måste en fork av repot skapas på ditt konto. Dina ändringar sparas i den forken och granskas av en underhållare innan de publiceras.
+  # Error shown when the user declined the dialog above
+  fork_declined: Du behöver en fork av repot på ditt konto för att kunna föreslå ändringar.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Det gick inte att skapa en fork av repot “{$repo}” på ditt konto.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Det gick inte att kontrollera din åtkomst till repot “{$repo}”. Försök igen om en stund.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: Repot “{$repo}” tillåter inte forkar. Be en underhållare att aktivera forkning för det.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Du har en väntande inbjudan till repot “{$repo}”. Acceptera den på GitHub och logga sedan in igen.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Din inloggning ger inte åtkomst till privata repon, så repot “{$repo}” kan inte läsas. Be en underhållare att kontrollera autentiseringsinställningarna för CMS:et.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Endast en underhållare kan publicera ändringar på denna webbplats. Markera i stället din post som “Granskas”, så tittar någon på den.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Denna ändring kan inte göras direkt. Endast redigeringar av poster kan föreslås för granskning.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Dina ändringar sparas i din fork av detta repo på “{$repo}” och granskas innan de publiceras.
+  view_fork: Visa fork
 
 # ==============================================================================
 # Settings Dialog
@@ -1644,6 +2009,18 @@ prefs:
         field_label: Auktoriseringshuvud (t.ex. Bearer <token>) (valfritt)
         saved: Auktoriseringshuvud sparat.
         removed: Auktoriseringshuvud borttaget.
+    clear_data:
+      title: Rensa data
+      # Clear File Cache button
+      file_cache:
+        description: Radera lokalt cachelagrat filinnehåll och miniatyrbilder för att frigöra lagringsutrymme eller lösa problem som orsakas av inaktuella data.
+        button_label: Rensa filcache
+        confirmation: Lokalt cachelagrat filinnehåll och miniatyrbilder raderas. Dina osparade utkast och inställningar behålls, och raderade data laddas ned eller genereras igen vid behov. CMS:et laddas om när det är klart.
+      # Erase All Data button
+      all_data:
+        description: Radera allt som CMS:et lagrar i den här webbläsaren, inklusive cachelagrade filer, osparade utkast och inställningar. Det som redan sparats i ditt repo påverkas inte.
+        button_label: Radera alla data
+        confirmation: Alla data som lagras i den här webbläsaren raderas, inklusive cachelagrat filinnehåll, miniatyrbilder, osparade utkast, inställningar och inloggningsstatus. Ditt repo påverkas inte, men alla ändringar som du inte har sparat går förlorade, och du måste logga in igen. CMS:et laddas om när det är klart.
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -237,6 +237,11 @@ mobile_promo_button: Deneyin
 new_language_available: Sveltia CMS artık {$locale} dilinde mevcut!
 change_language: Dili Değiştir
 
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: '{$locale} diline geçiliyor…'
+locale_load_failed: '{$locale} çevirisi yüklenemedi. Lütfen daha sonra tekrar deneyin.'
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: Canlı Siteyi Ziyaret Et
@@ -358,13 +363,18 @@ viewing_x_asset_folder: |
   .match $count
     0   {{ Şu anda henüz medya dosyası olmayan “{$folder}” medya klasörünü görüntülüyorsunuz. }}
     *   {{ Şu anda {$count} medya dosyasına sahip “{$folder}” medya klasörünü görüntülüyorsunuz. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Şu anda {$service} üzerindeki medya dosyalarını görüntülüyorsunuz.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: “{$file}” dosyasını düzenlemek için Enter tuşuna basın.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Sayfa bulunamadı.
 collection_not_found: Koleksiyon bulunamadı.
+asset_folder_not_found: Medya klasörü bulunamadı.
 file_not_found: Dosya bulunamadı.
 
 # Selection count indicator
@@ -397,6 +407,10 @@ sort_keys:
   commit_author: Güncelleyen
   # Sort by the last commit date
   commit_date: Güncelleme tarihi
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Değiştirilme tarihi
+  # Sort by file size
+  size: Boyut
   # Sort by the entry’s computed summary text
   _summary: Özet
   # Manual order defined by the user via drag-and-drop
@@ -408,6 +422,8 @@ ascending: '{$label}, A’dan Z’ye'
 ascending_date: '{$label}, eskiden yeniye'
 descending: '{$label}, Z’den A’ya'
 descending_date: '{$label}, yeniden eskiye'
+ascending_number: '{$label}, küçükten büyüğe'
+descending_number: '{$label}, büyükten küçüğe'
 
 # Filter menu: button labels and options
 filter: Filtrele
@@ -436,6 +452,22 @@ hide_info: Bilgileri Gizle
 # Folder display labels when no specific path is configured
 all_assets: Tüm Medya Dosyaları
 global_assets: Genel Medya Dosyaları
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Bağlantılı Dosyalar
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ İçerik yükleniyor… }}
+    *   {{ İçerikler yükleniyor… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -518,6 +550,8 @@ upload_assets: Yeni Medya Dosyaları Yükle
 # Edit options menu: button and item labels
 edit_options: Düzenleme Seçenekleri
 show_edit_options: Düzenleme Seçeneklerini Göster
+# Copy menu aria-label
+copy_options: Kopyalama Seçenekleri
 # Edit menu items with specific asset names
 edit_asset: Medya Dosyasını Düzenle
 # {$name} is the selected asset name
@@ -542,6 +576,14 @@ enter_new_name_for_asset_error:
   empty: Dosya adı boş olamaz.
   character: Dosya adı özel karakterler içeremez.
   duplicate: Bu dosya adı başka bir medya dosyası için kullanılıyor.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Dosya Uzantısını Değiştir
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Uzantıyı “.{$oldExtension}” yerine “.{$newExtension}” olarak değiştirmek istediğinizden emin misiniz?
+  add: “.{$newExtension}” uzantısını eklemek istediğinizden emin misiniz?
+  remove: “.{$oldExtension}” uzantısını kaldırmak istediğinizden emin misiniz?
+file_extension_change_warning: Uzantı dosyanın gerçek biçimiyle eşleşmiyorsa dosya doğru şekilde görüntülenmeyebilir veya işlenmeyebilir.
 
 # Replace asset: menu item and dialog title
 replace_asset: Medya Dosyasını Değiştir
@@ -652,6 +694,8 @@ delete_selected_entries: |
     *   {{ Seçili İçerikleri Sil }}
 confirm_deleting_this_entry: Bu içeriği silmek istediğinizden emin misiniz?
 confirm_deleting_this_entry_with_assets: Bu içeriği ve ilişkili medya dosyalarını silmek istediğinizden emin misiniz?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: İçerik silinemedi. Lütfen tekrar deneyin.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -719,6 +763,26 @@ warning_oversized_files: |
     one {{ Bu dosya yüklenemiyor çünkü izin verilen maksimum {$size} boyutunu aşıyor. Lütfen boyutu küçültün veya farklı bir dosya seçin. }}
     *   {{ Bu dosyalar yüklenemiyor çünkü izin verilen maksimum {$size} boyutunu aşıyor. Lütfen boyutları küçültün veya farklı dosyalar seçin. }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Geçersiz Dosyalar
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bu dosya yüklenemiyor çünkü bozuk ya da içeriği dosya uzantısıyla eşleşmiyor. Bu durum genellikle bir fotoğrafın dönüştürülmek yerine yeniden adlandırılmasıyla, örneğin bir HEIC görselinin JPEG dosyası olarak kaydedilmesiyle oluşur. Lütfen dosyayı dönüştürüp tekrar deneyin. }}
+    *   {{ Bu dosyalar yüklenemiyor çünkü bozuk ya da içerikleri dosya uzantılarıyla eşleşmiyor. Bu durum genellikle fotoğrafların dönüştürülmek yerine yeniden adlandırılmasıyla, örneğin HEIC görsellerinin JPEG dosyası olarak kaydedilmesiyle oluşur. Lütfen dosyaları dönüştürüp tekrar deneyin. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Biçimi Uyuşmayan Dosyalar
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Bu dosya farklı bir biçimde olduğu için “{$name}” dosyasının yerine geçemez. Lütfen dosyayı aynı biçime dönüştürüp tekrar deneyin. }}
+    *   {{ Bu dosyalar farklı bir biçimde olduğu için “{$name}” dosyasının yerine geçemez. Lütfen dosyaları aynı biçime dönüştürüp tekrar deneyin. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -740,6 +804,9 @@ keep_both: İkisini de Tut
 # Upload progress and error messages
 uploading_files_progress: Yükleniyor…
 uploading_files_failed: Yükleme başarısız oldu.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Silme başarısız oldu.
+renaming_asset_failed: Yeniden adlandırma başarısız oldu.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -816,6 +883,11 @@ asset_paths_copied: |
   .input {$count :integer}
   .match $count
     *   {{ {$count} dosya yolu panoya kopyalandı. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dosya kimliği panoya kopyalandı. }}
+    *   {{ {$count} dosya kimliği panoya kopyalandı. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -882,6 +954,7 @@ show_editor_options: Düzenleyici Seçeneklerini Göster
 editor_options: Düzenleyici Seçenekleri
 
 # Preview controls
+show_second_pane: İkinci Bölmeyi Göster
 show_preview: Önizlemeyi Göster
 
 # Editor settings
@@ -942,6 +1015,31 @@ view_in_repository: Repoda Görüntüle
 view_on_x: '{$service} Üzerinde Görüntüle'
 view_on_live_site: Canlı Sitede Görüntüle
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Önizlemeyi Görüntüle
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Önizleme hâlâ oluşturuluyor.
+  # Shown when the build failed, so no preview is available
+  failed: Önizleme oluşturulamadı.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Önizleme kontrol ediliyor…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Önizlemeyi Kontrol Et
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Önizleme Kontrol Ediliyor
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Oluşturuluyor…
+    failed: Derleme Başarısız
+
 # Content copying from other locales
 copy_from: Şuradan kopyala…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -970,6 +1068,23 @@ edit_slug_error:
   empty: Slug boş olamaz.
   invalid: Slug bölü çizgisi ve boşluk dahil özel karakterler içeremez.
   duplicate: Bu slug başka bir içerik için kullanılıyor.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Üst Klasör
+new_parent_folder: Yeni Klasör
+new_parent_folder_create: Oluştur
+new_parent_folder_name: Klasör Adı
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: Yeni klasör “{$folder}” içinde oluşturulacak.
+new_parent_folder_error:
+  empty: Klasör adı boş olamaz.
+  invalid: Klasör adı bölü çizgisi içeremez veya nokta ile başlayamaz ve harf ya da rakam içermelidir.
+  duplicate: Burada bu ada sahip bir klasör zaten var.
+edit_path_error:
+  invalid: Yol, “..” gibi göreli bölümler içeremez.
+  recursive: İçerik kendi alt klasörlerinden birine taşınamaz.
+  duplicate: Bu yol başka bir içerik için kullanılıyor.
 
 # Required field indicator
 required: Zorunlu
@@ -1076,6 +1191,8 @@ entry_sidebar:
     title: Doğrulama
     placeholder: Doğrulama sonuçları burada gösterilecektir.
     no_errors_found: Hata bulunamadı.
+    # Button in the panel header that validates the entry on demand
+    validate: Doğrula
 
   # History panel: shows entry commit history
   history:
@@ -1106,6 +1223,10 @@ viewing_x_asset_details: Şu anda “{$name}” medya dosyasının ayrıntılar�
 # Asset editor container aria-label
 asset_editor: Medya Dosyası Düzenleyici
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Önceki Medya Dosyası
+next_asset: Sonraki Medya Dosyası
+
 # Preview unavailable message
 preview_unavailable: Önizleme Kullanılamıyor.
 
@@ -1122,6 +1243,13 @@ file_paths: |
   .match $count
     one {{ Dosya Yolu }}
     *   {{ Dosya Yolları }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ Dosya Kimliği }}
+    *   {{ Dosya Kimlikleri }}
 file_data: Dosya Verisi
 
 # ==============================================================================
@@ -1155,6 +1283,12 @@ map_lat_lng: Enlem {$latitude}, boylam {$longitude} gösteren harita
 remove_this_item: Bu Öğeyi Kaldır
 move_up: Yukarı Taşı
 move_down: Aşağı Taşı
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Öğeyi Yeniden Sırala
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Öğe Değeri
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1167,6 +1301,9 @@ add_item_below: Alta Öğe Ekle
 
 # Variable-type list selector
 select_list_type: Liste Türünü Seç
+
+# Variable-type mismatch
+unknown_variable_type: Bu öğe bilinmeyen bir tür nedeniyle görüntülenemiyor. Ayrıntılar için tarayıcı konsolunu kontrol edin.
 
 # ==============================================================================
 # Field Widgets
@@ -1218,6 +1355,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: Büyük Dosya
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Geçersiz Dosya
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Dosyalar Yüklenemiyor
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1372,6 +1517,8 @@ config:
     parse_failed_invalid_object: Yapılandırma dosyası geçerli bir JavaScript nesnesi değil.
     parse_failed_unsupported_type: Yapılandırma dosyası geçerli bir dosya türü değil. Sadece YAML, TOML ve JSON desteklenir.
     no_collection: Koleksiyonlar tanımlanmamış.
+    # Don’t localize `hide`
+    no_visible_collection: En az bir koleksiyon görünür olmalıdır. `hide` seçeneğini kontrol edin.
     missing_backend: Backend tanımlanmamış.
     missing_backend_name: Backend adı tanımlanmamış.
     # {$name} is the backend name from the CMS configuration
@@ -1385,11 +1532,19 @@ config:
     oauth_implicit_flow: 'Yapılandırılan kimlik doğrulama yöntemi (implicit flow) Sveltia CMS’te desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.'
     github_pkce_unsupported: 'GitHub kısıtlamaları nedeniyle PKCE yetkilendirmesi henüz desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.'
     oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: '`open_authoring` seçeneği `editorial_workflow` yayın modunu gerektirir. Ayrıntılar için <a>belgelere</a> bakın.'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` seçeneği en az bir yöntem içermelidir.'
     missing_media_folder: Medya klasörü tanımlanmamış.
     public_folder_relative_path: Yapılandırılan genel klasör geçersiz. “/” ile başlayan mutlak bir yol olmalıdır.
     public_folder_absolute_url: Genel klasör seçeneği için mutlak bir URL Sveltia CMS’te desteklenmiyor.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: '`transformations` seçeneği desteklenmeyen bir `{$key}` anahtarı içeriyor. Bu anahtar `raster_image`, `svg` veya desteklenen bir raster görsel biçimi olmalıdır.'
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: '`{$key}` dönüşümü için `quality` seçeneği geçersiz. 0 ile 100 arasında bir tam sayı olmalıdır.'
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: '`{$key}` dönüşümü için `{$prop}` seçeneği geçersiz. Pozitif bir tam sayı olmalıdır.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 'Medya koleksiyonu {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
     # {$name} is the invalid or duplicate asset collection name
@@ -1404,6 +1559,24 @@ config:
     file_format_mismatch: '`{$extension}` uzantısı `{$format}` biçimi ile eşleşmiyor.'
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: '`{$slug}` slug şablonu bölü işareti içeremeyeceği için geçersizdir. İçerikleri alt klasörlerde düzenlemek için `slug` yerine `path` seçeneğini kullanın.'
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: '`reorder` seçeneği `{$name}` adlı bir görünüm grubuna başvuruyor, ancak `view_groups` seçeneğinde böyle bir grup tanımlanmamış.'
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: '`sortable_fields` seçeneği `{$name}` adlı bir alana başvuruyor, ancak koleksiyonda böyle bir alan tanımlanmamış.'
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: '`view_groups` seçeneği `{$name}` adlı bir alana başvuruyor, ancak koleksiyonda böyle bir alan tanımlanmamış.'
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: '`view_filters` seçeneği `{$name}` adlı bir alana başvuruyor, ancak koleksiyonda böyle bir alan tanımlanmamış.'
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Görünüm grubu {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: '`{$name}` görünüm grubu adı geçersiz. Özel karakterler içermemelidir.'
+    duplicate_view_group_name: Görünüm grubu adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Görünüm filtresi {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: '`{$name}` görünüm filtresi adı geçersiz. Özel karakterler içermemelidir.'
+    duplicate_view_filter_name: Görünüm filtresi adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: 'Koleksiyon {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
     # {$name} is the invalid or duplicate collection name
@@ -1451,14 +1624,50 @@ config:
     relation_field_invalid_value_field: 'Referans verilen değer alanı `{$field}` geçersiz veya tanımlanmamış.'
     unexpected: Beklenmeyen hata
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: '`{$option}` seçeneği {$type} olmalıdır.'
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: '`{$option}` seçeneği şu değerlerden biri olmalıdır: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: '`{$option}` seçeneği `{$value}` olmalıdır.'
+    schema_invalid_empty_value: '`{$option}` seçeneği boş bir metin olmalıdır.'
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: '`{$option}` seçeneği {$count} öğeli bir dizi olmalıdır.'
+    schema_invalid_value: '`{$option}` seçeneğinin değeri geçersiz.'
+    schema_missing_option: '`{$option}` seçeneği zorunludur.'
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Şu seçeneklerden biri zorunludur: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: bir metin
+      number: bir sayı
+      integer: bir tam sayı
+      boolean: bir mantıksal değer
+      array: bir dizi
+      object: bir nesne
+      'null': boş
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış. Kullanıcıların giriş yapabilmesi için bir erişim token’ı sağlaması gerekir.
     editorial_workflow_unsupported: Editöryal akış henüz Sveltia CMS’te desteklenmiyor.
+    open_authoring_unsupported_backend: Open Authoring şu anda yalnızca GitHub arka ucuyla destekleniyor.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}` seçeneği Sveltia CMS’te desteklenmiyor. Yoksayılacaktır.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Hem `picker_utc` hem de daha yeni saat dilimi seçenekleri (`input_timezone` veya `output_utc`) ayarlanmış. Yeni seçenekler önceliklidir. Yapılandırmanızdan `picker_utc` seçeneğini kaldırmayı düşünün.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: '`preview_path` seçeneği tarih ve saat etiketleri kullanıyor, ancak koleksiyonda bunların okunacağı bir DateTime alanı yok; bu nedenle önizleme bağlantısı gösterilmeyecek.'
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: '`preview_path_date_field` seçeneği `{$name}` adlı bir alana başvuruyor, ancak bu ada sahip bir DateTime alanı tanımlanmamış; bu nedenle önizleme bağlantısı gösterilmeyecek.'
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: '`preview_path` seçeneği `{$name}` alanına başvuruyor, ancak koleksiyonda böyle bir alan tanımlanmamış; bu nedenle önizleme bağlantısı gösterilmeyecek.'
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: '`{$option}` seçeneği Sveltia CMS yapılandırma şemasında tanımlı değil. Yoksayılacaktır. Yazım veya söz dizimi hatası olup olmadığını kontrol edin.'
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Ayrıntılar için uyumluluk notlarına bakın: {$link}'
@@ -1481,12 +1690,164 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Şu anda editöryal akış panosunu görüntülüyorsunuz. Taslaklar: {$draft}. İncelemede: {$review}. Hazır: {$ready}. Silinmeyi Bekleyen: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Şu anda editöryal akış panosunu görüntülüyorsunuz. Taslaklar: {$draft}. İncelemede: {$review}. Silinmeyi Bekleyen: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: Taslak
   drafts: Taslaklar
   in_review: İncelemede
   ready: Hazır
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Silinmeyi Bekliyor
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Silmeyi İptal Et
+  confirm_cancelling_deletion: Bu silme işlemini iptal etmek istediğinizden emin misiniz? İçerik yayında kalacak.
+  confirm_completing_deletion: Bu içeriği silmek istediğinizden emin misiniz? Hemen kaldırılacak.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ İçerik silinmek üzere işaretlendi. }}
+      *   {{ {$count} içerik silinmek üzere işaretlendi. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Değişiklikler iptal edildi. }}
+      *   {{ {$count} içerikteki değişiklikler iptal edildi. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Silme İptal Ediliyor…
+  deletion_cancelled: Silme iptal edildi.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Silme iptal edilemedi. Lütfen tekrar deneyin.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Yayınlanmamış İçerikler
+  published_entries: Yayınlanmış İçerikler
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Durum: {$status}'
+  change_entry_status: İçerik Durumunu Değiştir
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Durum Değiştiriliyor…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Durum Güncelleniyor…
+  status_updated: Durum güncellendi.
+  # Error notification when the status could not be changed
+  status_change_failed: Durum değiştirilemedi. Lütfen tekrar deneyin.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: İçerikte hatalar var. Lütfen durumu değiştirmeden önce bunları düzeltin.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: İçerikte hatalar var. Lütfen yayınlamadan önce bunları düzeltin.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: İncelemeye Gönder
+  confirm_sending_for_review: Değişiklikleriniz taslak olarak kaydedildi. Birinin göz atıp yayınlayabilmesi için içerik incelemeye gönderilsin mi?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: İçeriği Yayınla
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Değişiklikleri İptal Et
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Bu içeriği silmek istediğinizden emin misiniz? Silme işlemi yayınlanana kadar kaldırılmayacak. O zamana kadar içerik listesinde “Silinmeyi Bekliyor” olarak işaretli şekilde görmeye devam edeceksiniz.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Bu içerik henüz yayınlanmadı, bu nedenle silindiğinde tamamen iptal edilecek.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Bu içerikte yayınlanmamış değişiklikler var. Bunlar iptal edildiğinde yayınlanmış sürüm geri yüklenecek. İçeriğin kendisi silinmeyecek.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Henüz yayınlanmadığı için yayınlanmamış değişiklikleriniz iptal edilecek. Yayınlanmış bir sürüm varsa yayında kalacak. }}
+      *   {{ Henüz yayınlanmadıkları için yayınlanmamış değişiklikleriniz iptal edilecek. Yayınlanmış sürümler varsa yayında kalacak. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Bunlardan biri henüz yayınlanmadığı için yayınlanmamış değişiklikleriniz iptal edilecek. Yayınlanmış bir sürüm varsa yayında kalacak. }}
+      *   {{ Bunlardan {$count} tanesi henüz yayınlanmadığı için yayınlanmamış değişiklikleriniz iptal edilecek. Yayınlanmış sürümler varsa yayında kalacak. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Bu içeriği yayınlamak istediğinizden emin misiniz? Değişiklikleriniz hemen geçerli olacak.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: İçerik Yayınlanıyor…
+  entry_published: İçerik yayınlandı.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: İçerik Siliniyor…
+  discarding_changes: Değişiklikler İptal Ediliyor…
+  entry_deleted: İçerik silindi.
+  # Error notification when publishing fails
+  publishing_entry_failed: İçerik yayınlanamadı. Lütfen tekrar deneyin.
+  # Workflow page: empty column message
+  no_entries: İçerik yok.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Durumu değiştirmek için sürükleyin
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Repoyu Çatalla
+  fork: Çatalla
+  confirm_forking_repository: “{$repo}” için değişiklik önermek üzere hesabınızda reponun bir çatalı oluşturulmalıdır. Değişiklikleriniz bu çatala kaydedilir ve yayınlanmadan önce bir bakımcı tarafından incelenir.
+  # Error shown when the user declined the dialog above
+  fork_declined: Değişiklik önermek için hesabınızda reponun bir çatalı olması gerekir.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: “{$repo}” reposunun çatalı hesabınızda oluşturulamadı.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: “{$repo}” reposuna erişiminiz kontrol edilemedi. Lütfen biraz sonra tekrar deneyin.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: “{$repo}” reposu çatallamaya izin vermiyor. Bir bakımcıdan çatallamayı etkinleştirmesini isteyin.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: “{$repo}” reposu için bekleyen bir davetiniz var. GitHub’da daveti kabul edip tekrar giriş yapın.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Girişiniz özel repolara erişimi kapsamıyor, bu nedenle “{$repo}” reposu okunamıyor. Bir bakımcıdan CMS kimlik doğrulama ayarlarını kontrol etmesini isteyin.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Bu sitede değişiklikleri yalnızca bir bakımcı yayınlayabilir. Bunun yerine içeriğinizi “İncelemede” olarak işaretleyin; biri göz atacaktır.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Bu değişiklik doğrudan yapılamaz. Yalnızca içerik düzenlemeleri inceleme için önerilebilir.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Değişiklikleriniz bu reponun “{$repo}” adresindeki çatalınıza kaydedilir ve yayınlanmadan önce incelenir.
+  view_fork: Çatalı Görüntüle
 
 # ==============================================================================
 # Settings Dialog
@@ -1616,6 +1977,18 @@ prefs:
         field_label: Yetkilendirme Başlığı (ör. Bearer <token>) (isteğe bağlı)
         saved: Yetkilendirme başlığı kaydedildi.
         removed: Yetkilendirme başlığı kaldırıldı.
+    clear_data:
+      title: Verileri Temizle
+      # Clear File Cache button
+      file_cache:
+        description: Depolama alanı boşaltmak veya eski verilerin neden olduğu sorunları çözmek için yerel olarak önbelleğe alınan dosya içeriklerini ve görsel küçük resimlerini silin.
+        button_label: Dosya Önbelleğini Temizle
+        confirmation: Yerel olarak önbelleğe alınan dosya içerikleri ve görsel küçük resimleri silinecek. Kaydedilmemiş taslaklarınız ve ayarlarınız korunacak, silinen veriler ise gerektiğinde yeniden indirilecek veya oluşturulacak. İşlem tamamlandığında CMS yeniden yüklenecek.
+      # Erase All Data button
+      all_data:
+        description: Önbelleğe alınan dosyalar, kaydedilmemiş taslaklar ve ayarlar dahil CMS’in bu tarayıcıda tuttuğu her şeyi silin. Reponuza zaten kaydedilmiş olanlar etkilenmez.
+        button_label: Tüm Verileri Sil
+        confirmation: Önbelleğe alınan dosya içerikleri, görsel küçük resimleri, kaydedilmemiş taslaklar, ayarlar ve giriş durumu dahil bu tarayıcıda depolanan tüm veriler silinecek. Reponuz etkilenmeyecek, ancak kaydetmediğiniz tüm değişiklikler kaybolacak ve yeniden giriş yapmanız gerekecek. İşlem tamamlandığında CMS yeniden yüklenecek.
 
 # ==============================================================================
 # Keyboard Shortcuts

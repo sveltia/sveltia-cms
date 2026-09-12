@@ -237,6 +237,11 @@ mobile_promo_button: 立即体验
 new_language_available: Sveltia CMS 现已支持 {$locale}！
 change_language: 切换语言
 
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: 正在切换到{$locale}……
+locale_load_failed: 无法加载{$locale}翻译。请稍后重试。
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: 访问在线站点
@@ -358,13 +363,18 @@ viewing_x_asset_folder: |
   .match $count
     0   {{ 您正在浏览「{$folder}」资源文件夹，目前没有资源。 }}
     *   {{ 您正在浏览「{$folder}」资源文件夹，有 {$count} 个资源。 }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: 您正在浏览 {$service} 上的资源。
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: 按回车键编辑「{$file}」文件。
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: 未找到页面。
 collection_not_found: 未找到集合。
+asset_folder_not_found: 未找到资源文件夹。
 file_not_found: 未找到文件。
 
 # Selection count indicator
@@ -397,6 +407,10 @@ sort_keys:
   commit_author: 更新者
   # Sort by the last commit date
   commit_date: 更新时间
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: 修改时间
+  # Sort by file size
+  size: 大小
   # Sort by the entry’s computed summary text
   _summary: 摘要
   # Manual order defined by the user via drag-and-drop
@@ -408,6 +422,8 @@ ascending: '{$label} (A–Z)'
 ascending_date: '{$label}（旧到新）'
 descending: '{$label} (Z–A)'
 descending_date: '{$label}（新到旧）'
+ascending_number: '{$label}（从小到大）'
+descending_number: '{$label}（从大到小）'
 
 # Filter menu: button labels and options
 filter: 筛选
@@ -436,6 +452,21 @@ hide_info: 隐藏信息
 # Folder display labels when no specific path is configured
 all_assets: 全部资源
 global_assets: 全局资源
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: 链接的文件
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    * {{ 正在加载条目…… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -518,6 +549,8 @@ upload_assets: 上传新资源
 # Edit options menu: button and item labels
 edit_options: 编辑选项
 show_edit_options: 显示编辑选项
+# Copy menu aria-label
+copy_options: 复制选项
 # Edit menu items with specific asset names
 edit_asset: 编辑资源
 # {$name} is the selected asset name
@@ -541,6 +574,14 @@ enter_new_name_for_asset_error:
   empty: 文件名不能为空。
   character: 文件名不能包含特殊字符。
   duplicate: 该文件名已用于其他资源。
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: 更改文件扩展名
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: 您确定要将扩展名从「.{$oldExtension}」更改为「.{$newExtension}」吗？
+  add: 您确定要添加扩展名「.{$newExtension}」吗？
+  remove: 您确定要移除扩展名「.{$oldExtension}」吗？
+file_extension_change_warning: 如果扩展名与实际文件格式不符，文件可能无法正常显示或处理。
 
 # Replace asset: menu item and dialog title
 replace_asset: 替换资源
@@ -641,6 +682,8 @@ delete_selected_entries: |
     * {{ 删除选中的条目 }}
 confirm_deleting_this_entry: 您确定要删除此条目吗？
 confirm_deleting_this_entry_with_assets: 您确定要删除此条目及其关联资源吗？
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: 无法删除条目。请重试。
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -703,6 +746,24 @@ warning_oversized_files: |
   .match $count
     * {{ 这些文件无法上传，已超过大小限制 {$size}。请压缩文件或选择其他文件。 }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: 无效文件
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 这些文件无法上传，因为文件已损坏或内容与扩展名不符。这通常是因为照片被重命名而非转换，例如 HEIC 图片被直接保存为 JPEG 文件。请转换文件后重试。 }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: 格式不符的文件
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 这些文件的格式与「{$name}」不同，无法替换。请将文件转换为相同格式后重试。 }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -722,6 +783,9 @@ keep_both: 两者都保留
 # Upload progress and error messages
 uploading_files_progress: 上传中……
 uploading_files_failed: 上传失败。
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: 删除失败。
+renaming_asset_failed: 重命名失败。
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -797,6 +861,11 @@ asset_paths_copied: |
   .input {$count :integer}
   .match $count
     * {{ 文件路径已复制到剪贴板。 }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    1 {{ 文件 ID 已复制到剪贴板。 }}
+    * {{ 已将 {$count} 个文件 ID 复制到剪贴板。 }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -863,6 +932,7 @@ show_editor_options: 显示编辑器选项
 editor_options: 编辑器选项
 
 # Preview controls
+show_second_pane: 显示第二窗格
 show_preview: 显示预览
 
 # Editor settings
@@ -923,6 +993,31 @@ view_in_repository: 在仓库中查看
 view_on_x: '在 {$service} 上查看'
 view_on_live_site: 在在线站点查看
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: 查看预览
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: 预览仍在构建中。
+  # Shown when the build failed, so no preview is available
+  failed: 预览构建失败。
+  # Shown briefly while the CI/CD provider is being queried
+  checking: 正在检查预览……
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: 检查预览
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: 正在检查预览
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: 构建中……
+    failed: 构建失败
+
 # Content copying from other locales
 copy_from: 从其他语言复制……
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -950,6 +1045,23 @@ edit_slug_error:
   empty: 别名不能为空。
   invalid: 别名不能包含特殊字符（包括斜杠和空格）。
   duplicate: 此别名已用于其他条目。
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: 父文件夹
+new_parent_folder: 新建文件夹
+new_parent_folder_create: 创建
+new_parent_folder_name: 文件夹名称
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: 新文件夹将创建在「{$folder}」中。
+new_parent_folder_error:
+  empty: 文件夹名称不能为空。
+  invalid: 文件夹名称不能包含斜杠或以点开头，且必须包含字母或数字。
+  duplicate: 此处已存在同名文件夹。
+edit_path_error:
+  invalid: 路径不能包含「..」等相对路径片段。
+  recursive: 条目不能移动到其自身的子文件夹中。
+  duplicate: 此路径已用于其他条目。
 
 # Required field indicator
 required: 必填
@@ -1054,6 +1166,8 @@ entry_sidebar:
     title: 验证
     placeholder: 验证结果将显示在此处。
     no_errors_found: 未发现错误。
+    # Button in the panel header that validates the entry on demand
+    validate: 验证
 
   # History panel: shows entry commit history
   history:
@@ -1084,6 +1198,10 @@ viewing_x_asset_details: 您正在查看「{$name}」资源的详细信息。
 # Asset editor container aria-label
 asset_editor: 资源编辑器
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: 上一个资源
+next_asset: 下一个资源
+
 # Preview unavailable message
 preview_unavailable: 预览不可用。
 
@@ -1098,6 +1216,12 @@ file_paths: |
   .input {$count :integer}
   .match $count
     * {{ 文件路径 }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    * {{ 文件 ID }}
 file_data: 文件数据
 
 # ==============================================================================
@@ -1131,6 +1255,12 @@ map_lat_lng: 显示纬度 {$latitude}、经度 {$longitude} 的地图
 remove_this_item: 移除此项
 move_up: 上移
 move_down: 下移
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: 重新排序项目
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: 项目值
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1143,6 +1273,9 @@ add_item_below: 在下方添加项目
 
 # Variable-type list selector
 select_list_type: 选择列表类型
+
+# Variable-type mismatch
+unknown_variable_type: 此项目的类型未知，无法显示。详情请查看浏览器控制台。
 
 # ==============================================================================
 # Field Widgets
@@ -1194,6 +1327,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: 大文件
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: 无效文件
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: 文件无法上传
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1343,6 +1484,8 @@ config:
     parse_failed_invalid_object: 配置文件不是有效的 JavaScript 对象。
     parse_failed_unsupported_type: 配置文件不是有效的文件类型。仅支持 YAML、TOML 和 JSON。
     no_collection: 未定义集合。
+    # Don’t localize `hide`
+    no_visible_collection: 至少要有一个集合可见。请检查 `hide` 选项。
     missing_backend: 未定义后端。
     missing_backend_name: 未定义后端名称。
     # {$name} is the backend name from the CMS configuration
@@ -1356,11 +1499,19 @@ config:
     oauth_implicit_flow: Sveltia CMS 不支持配置的认证方法（隐式授权）。请改用其他<a>认证方法</a>。
     github_pkce_unsupported: 由于 GitHub 的限制，暂不支持 PKCE 授权。请改用其他<a>认证方法</a>。
     oauth_no_app_id: 未定义 OAuth 应用程序 ID。
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: '`open_authoring` 选项需要 `editorial_workflow` 发布模式。详情请参阅<a>文档</a>。'
     # Don’t localize `auth_methods`
     no_auth_methods: '`auth_methods` 选项必须至少包含一种方法。'
     missing_media_folder: 未定义媒体文件夹。
     public_folder_relative_path: 配置的公共文件夹无效。必须是以「/」开头的绝对路径。
     public_folder_absolute_url: Sveltia CMS 不支持为公共文件夹选项设置绝对 URL。
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: '`transformations` 选项包含不支持的键 `{$key}`。它必须是 `raster_image`、`svg` 或受支持的位图格式。'
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: '`{$key}` 转换的 `quality` 选项无效。它必须是 0 到 100 之间的整数。'
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: '`{$key}` 转换的 `{$prop}` 选项无效。它必须是正整数。'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: 资源集合 {$count} 必须将 `name` 选项定义为非空字符串。
     # {$name} is the invalid or duplicate asset collection name
@@ -1375,6 +1526,24 @@ config:
     file_format_mismatch: '`{$extension}` 扩展名与 `{$format}` 格式不匹配。'
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: 别名模板「{$slug}」无效，因为它不能包含斜杠。要按子文件夹组织条目，请使用 `path` 选项而非 `slug`。
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: '`reorder` 选项引用了名为 `{$name}` 的视图分组，但 `view_groups` 选项中未定义该分组。'
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: '`sortable_fields` 选项引用了名为 `{$name}` 的字段，但集合中未定义该字段。'
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: '`view_groups` 选项引用了名为 `{$name}` 的字段，但集合中未定义该字段。'
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: '`view_filters` 选项引用了名为 `{$name}` 的字段，但集合中未定义该字段。'
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: 视图分组 {$count} 必须将 `name` 选项定义为非空字符串。
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: 视图分组名称 `{$name}` 无效。名称不能包含特殊字符。
+    duplicate_view_group_name: 视图分组名称必须唯一，但 `{$name}` 被多次使用。
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: 视图筛选器 {$count} 必须将 `name` 选项定义为非空字符串。
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: 视图筛选器名称 `{$name}` 无效。名称不能包含特殊字符。
+    duplicate_view_filter_name: 视图筛选器名称必须唯一，但 `{$name}` 被多次使用。
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: 集合 {$count} 必须将 `name` 选项定义为非空字符串。
     # {$name} is the invalid or duplicate collection name
@@ -1422,14 +1591,50 @@ config:
     relation_field_invalid_value_field: 引用的值字段「{$field}」无效或未定义。
     unexpected: 意外错误
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: '`{$option}` 选项必须是{$type}。'
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: '`{$option}` 选项必须是以下值之一：{$values}。'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: '`{$option}` 选项必须是 `{$value}`。'
+    schema_invalid_empty_value: '`{$option}` 选项必须是空字符串。'
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: '`{$option}` 选项必须是包含 {$count} 个元素的数组。'
+    schema_invalid_value: '`{$option}` 选项的值无效。'
+    schema_missing_option: '`{$option}` 选项为必填项。'
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 必须定义以下选项之一：{$options}。
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: 字符串
+      number: 数字
+      integer: 整数
+      boolean: 布尔值
+      array: 数组
+      object: 对象
+      'null': 空值
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: 未定义 OAuth 应用程序 ID。用户需要提供访问令牌才能登录。
     editorial_workflow_unsupported: Sveltia CMS 暂不支持编辑工作流。
+    open_authoring_unsupported_backend: Open Authoring 目前仅支持 GitHub 后端。
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: 'Sveltia CMS 不支持 `{$prop}` 选项。该选项将会被忽略。'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: 同时设置了 `picker_utc` 和较新的时区选项（`input_timezone` 或 `output_utc`）。新选项将优先生效。请考虑从配置中移除 `picker_utc`。
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: '`preview_path` 选项使用了日期和时间标签，但集合中没有可供读取的 DateTime 字段，因此不会显示预览链接。'
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: '`preview_path_date_field` 选项引用了名为 `{$name}` 的字段，但未定义该名称的 DateTime 字段，因此不会显示预览链接。'
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: '`preview_path` 选项引用了 `{$name}`，但集合中未定义该字段，因此不会显示预览链接。'
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: Sveltia CMS 配置架构中未定义 `{$option}` 选项。该选项将会被忽略。请检查是否有拼写或语法错误。
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: '详见兼容性说明：{$link}'
@@ -1452,12 +1657,162 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 您正在浏览编辑工作流看板。草稿：{$draft}。审核中：{$review}。就绪：{$ready}。待删除：{$deletion}。
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 您正在浏览编辑工作流看板。草稿：{$draft}。审核中：{$review}。待删除：{$deletion}。
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: 草稿
   drafts: 草稿
   in_review: 审核中
   ready: 就绪
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: 待删除
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: 取消删除
+  confirm_cancelling_deletion: 您确定要取消此删除吗？条目将保持已发布状态。
+  confirm_completing_deletion: 您确定要删除此条目吗？它将被立即移除。
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      1 {{ 条目已标记为待删除。 }}
+      * {{ 已将 {$count} 个条目标记为待删除。 }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      1 {{ 更改已放弃。 }}
+      * {{ 已放弃 {$count} 个条目的更改。 }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: 正在取消删除……
+  deletion_cancelled: 删除已取消。
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: 无法取消删除。请重试。
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: 未发布的条目
+  published_entries: 已发布的条目
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 状态：{$status}
+  change_entry_status: 更改条目状态
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: 正在更改状态……
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: 正在更新状态……
+  status_updated: 状态已更新。
+  # Error notification when the status could not be changed
+  status_change_failed: 无法更改状态。请重试。
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: 条目存在错误。请先更正错误，再更改状态。
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: 条目存在错误。请先更正错误，再发布。
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: 提交审核
+  confirm_sending_for_review: 您的更改已保存为草稿。是否将条目提交审核，以便他人查看并发布？
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: 发布条目
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: 放弃更改
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: 您确定要删除此条目吗？在删除操作发布之前，它不会被移除。在此之前，您仍可在条目列表中找到它，并标记为「待删除」。
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: 此条目尚未发布，删除后将被完全放弃。
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: 此条目有未发布的更改。放弃这些更改将恢复已发布的版本。条目本身不会被删除。
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      * {{ 这些条目尚未发布，因此您未发布的更改将被放弃。已发布的版本将保持发布状态。 }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      * {{ 其中 {$count} 个条目尚未发布，因此您未发布的更改将被放弃。已发布的版本将保持发布状态。 }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: 您确定要发布此条目吗？您的更改将立即生效。
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: 正在发布条目……
+  entry_published: 条目已发布。
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: 正在删除条目……
+  discarding_changes: 正在放弃更改……
+  entry_deleted: 条目已删除。
+  # Error notification when publishing fails
+  publishing_entry_failed: 无法发布条目。请重试。
+  # Workflow page: empty column message
+  no_entries: 没有条目。
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: 拖动以更改状态
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: 复刻仓库
+  fork: 复刻
+  confirm_forking_repository: 要为「{$repo}」提出更改建议，需要在您的账户中创建该仓库的复刻。您的更改将保存到该复刻中，并由维护者审核后再上线。
+  # Error shown when the user declined the dialog above
+  fork_declined: 您需要在账户中拥有该仓库的复刻才能提出更改建议。
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: 无法在您的账户中创建「{$repo}」仓库的复刻。
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: 无法检查您对「{$repo}」仓库的访问权限。请稍后重试。
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: 「{$repo}」仓库不允许复刻。请联系维护者为其启用复刻功能。
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: 您有一个「{$repo}」仓库的待处理邀请。请在 GitHub 上接受邀请，然后重新登录。
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: 您的登录未包含私有仓库的访问权限，因此无法读取「{$repo}」仓库。请联系维护者检查 CMS 的身份验证设置。
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: 只有维护者才能发布此站点的更改。请将您的条目标记为「审核中」，之后会有人进行查看。
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: 此更改无法直接进行。只有对条目的编辑可以提交审核。
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: 您的更改将保存到此仓库的复刻「{$repo}」中，并在审核后上线。
+  view_fork: 查看复刻
 
 # ==============================================================================
 # Settings Dialog
@@ -1587,6 +1942,18 @@ prefs:
         field_label: Authorization 标头（例如 Bearer &lt;token&gt;）（可选）
         saved: Authorization 标头已保存。
         removed: Authorization 标头已移除。
+    clear_data:
+      title: 清除数据
+      # Clear File Cache button
+      file_cache:
+        description: 删除本地缓存的文件内容和图片缩略图，以释放存储空间或解决过期数据导致的问题。
+        button_label: 清除文件缓存
+        confirmation: 本地缓存的文件内容和图片缩略图将被删除。您未保存的草稿和设置将保留，删除的数据会在需要时重新下载或生成。完成后 CMS 将重新加载。
+      # Erase All Data button
+      all_data:
+        description: 删除 CMS 在此浏览器中保存的所有内容，包括缓存文件、未保存的草稿和设置。已保存到仓库的内容不受影响。
+        button_label: 清除所有数据
+        confirmation: 此浏览器中存储的所有数据将被删除，包括缓存的文件内容、图片缩略图、未保存的草稿、设置和登录状态。您的仓库不受影响，但任何未保存的更改都将丢失，并且您需要重新登录。完成后 CMS 将重新加载。
 
 # ==============================================================================
 # Keyboard Shortcuts

@@ -242,6 +242,11 @@ mobile_promo_button: جربه الآن
 new_language_available: Sveltia CMS متاح الآن باللغة {$locale}!
 change_language: تغيير اللغة
 
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: جارٍ التبديل إلى {$locale}…
+locale_load_failed: تعذر تحميل ترجمة {$locale}. يرجى المحاولة مرة أخرى لاحقاً.
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: زيارة الموقع المباشر
@@ -371,13 +376,18 @@ viewing_x_asset_folder: |
     few  {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} عناصر وسائط. }}
     many {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} عنصر وسائط. }}
     *    {{ أنت تعرض الآن مجلد الأصول "{$folder}"، والذي يحتوي على {$count} عنصر وسائط. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: أنت تعرض الآن الوسائط على {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: اضغط على Enter لتعديل الملف "{$file}".
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: لم يتم العثور على الصفحة.
 collection_not_found: لم يتم العثور على المجموعة.
+asset_folder_not_found: لم يتم العثور على مجلد الوسائط.
 file_not_found: لم يتم العثور على الملف.
 
 # Selection count indicator
@@ -410,6 +420,10 @@ sort_keys:
   commit_author: تم التحديث بواسطة
   # Sort by the last commit date
   commit_date: تم التحديث في
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: تم التعديل في
+  # Sort by file size
+  size: الحجم
   # Sort by the entry’s computed summary text
   _summary: الملخص
   # Manual order defined by the user via drag-and-drop
@@ -421,6 +435,8 @@ ascending: '{$label}، من أ إلى ي'
 ascending_date: '{$label}، من القديم إلى الحديث'
 descending: '{$label}، من ي إلى أ'
 descending_date: '{$label}، من الحديث إلى القديم'
+ascending_number: '{$label}، من الأصغر إلى الأكبر'
+descending_number: '{$label}، من الأكبر إلى الأصغر'
 
 # Filter menu: button labels and options
 filter: تصفية
@@ -449,6 +465,22 @@ hide_info: إخفاء المعلومات
 # Folder display labels when no specific path is configured
 all_assets: كل الوسائط
 global_assets: الوسائط العامة
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: الملفات المرتبطة
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ جاري تحميل العنصر… }}
+    *   {{ جاري تحميل العناصر… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -552,6 +584,8 @@ upload_assets: رفع وسائط جديدة
 # Edit options menu: button and item labels
 edit_options: خيارات التعديل
 show_edit_options: إظهار خيارات التعديل
+# Copy menu aria-label
+copy_options: خيارات النسخ
 # Edit menu items with specific asset names
 edit_asset: تعديل الوسيط
 # {$name} is the selected asset name
@@ -580,6 +614,14 @@ enter_new_name_for_asset_error:
   empty: لا يمكن أن يكون اسم الملف فارغاً.
   character: لا يمكن أن يحتوي اسم الملف على رموز خاصة.
   duplicate: اسم الملف هذا مستخدم بالفعل لوسيط آخر.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: تغيير امتداد الملف
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: هل أنت متأكد من أنك تريد تغيير الامتداد من ".{$oldExtension}" إلى ".{$newExtension}"؟
+  add: هل أنت متأكد من أنك تريد إضافة الامتداد ".{$newExtension}"؟
+  remove: هل أنت متأكد من أنك تريد إزالة الامتداد ".{$oldExtension}"؟
+file_extension_change_warning: قد لا يتم عرض الملف أو معالجته بشكل صحيح إذا كان الامتداد لا يطابق تنسيق الملف الفعلي.
 
 # Replace asset: menu item and dialog title
 replace_asset: استبدال الوسيط
@@ -730,6 +772,8 @@ delete_selected_entries: |
     *    {{ حذف {$count} عنصر محدد }}
 confirm_deleting_this_entry: هل أنت متأكد من أنك تريد حذف هذا العنصر؟
 confirm_deleting_this_entry_with_assets: هل أنت متأكد من أنك تريد حذف هذا العنصر والوسائط المرتبطة به؟
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: تعذر حذف العنصر. يرجى المحاولة مرة أخرى.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -817,6 +861,26 @@ warning_oversized_files: |
     many {{ لا يمكن رفع هذه الـ {$count} ملفاً لأنها تتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الأحجام أو اختيار ملفات أخرى. }}
     *    {{ لا يمكن رفع هذه الـ {$count} ملف لأنها تتجاوز الحد الأقصى للحجم البالغ {$size}. يرجى تقليل الأحجام أو اختيار ملفات أخرى. }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: ملفات غير صالحة
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ لا يمكن رفع هذا الملف لأنه تالف أو لأن محتواه لا يطابق امتداده. يحدث هذا غالباً عند إعادة تسمية صورة بدلاً من تحويلها، مثل صورة HEIC محفوظة كملف JPEG. يرجى تحويل الملف والمحاولة مرة أخرى. }}
+    *   {{ لا يمكن رفع هذه الملفات لأنها تالفة أو لأن محتواها لا يطابق امتداداتها. يحدث هذا غالباً عند إعادة تسمية الصور بدلاً من تحويلها، مثل صور HEIC محفوظة كملفات JPEG. يرجى تحويل الملفات والمحاولة مرة أخرى. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: ملفات غير متطابقة
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ لا يمكن لهذا الملف أن يحل محل "{$name}" لأنه بتنسيق مختلف. يرجى تحويل الملف إلى التنسيق نفسه والمحاولة مرة أخرى. }}
+    *   {{ لا يمكن لهذه الملفات أن تحل محل "{$name}" لأنها بتنسيق مختلف. يرجى تحويل الملفات إلى التنسيق نفسه والمحاولة مرة أخرى. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -846,6 +910,9 @@ keep_both: الاحتفاظ بكليهما
 # Upload progress and error messages
 uploading_files_progress: جارٍ الرفع…
 uploading_files_failed: فشل الرفع.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: فشل الحذف.
+renaming_asset_failed: فشلت إعادة التسمية.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -961,6 +1028,14 @@ asset_paths_copied: |
     few  {{ تم نسخ {$count} مسارات ملفات إلى الحافظة. }}
     many {{ تم نسخ {$count} مسار ملف إلى الحافظة. }}
     *    {{ تم نسخ {$count} مسار ملف إلى الحافظة. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one  {{ تم نسخ معرّف الملف إلى الحافظة. }}
+    two  {{ تم نسخ معرّفي الملفين إلى الحافظة. }}
+    few  {{ تم نسخ {$count} معرّفات ملفات إلى الحافظة. }}
+    many {{ تم نسخ {$count} معرّف ملف إلى الحافظة. }}
+    *    {{ تم نسخ {$count} معرّف ملف إلى الحافظة. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -1052,6 +1127,7 @@ show_editor_options: إظهار خيارات المحرر
 editor_options: خيارات المحرر
 
 # Preview controls
+show_second_pane: إظهار اللوحة الثانية
 show_preview: إظهار المعاينة
 
 # Editor settings
@@ -1112,6 +1188,31 @@ view_in_repository: العرض في المستودع
 view_on_x: 'العرض على {$service}'
 view_on_live_site: العرض على الموقع المباشر
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: عرض المعاينة
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: ما زالت المعاينة قيد الإنشاء.
+  # Shown when the build failed, so no preview is available
+  failed: تعذر إنشاء المعاينة.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: جارٍ التحقق من وجود معاينة…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: التحقق من وجود معاينة
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: جارٍ التحقق من المعاينة
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: قيد الإنشاء…
+    failed: فشل الإنشاء
+
 # Content copying from other locales
 copy_from: نسخ من…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -1140,6 +1241,23 @@ edit_slug_error:
   empty: لا يمكن أن يكون المعرف الفريد (Slug) فارغاً.
   invalid: لا يمكن أن يحتوي المعرف الفريد (Slug) على رموز خاصة، بما في ذلك الشرطات المائلة والمسافات.
   duplicate: هذا المعرف الفريد (Slug) مستخدم بالفعل لعنصر آخر.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: المجلد الأصلي
+new_parent_folder: مجلد جديد
+new_parent_folder_create: إنشاء
+new_parent_folder_name: اسم المجلد
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: سيتم إنشاء المجلد الجديد داخل "{$folder}".
+new_parent_folder_error:
+  empty: لا يمكن أن يكون اسم المجلد فارغاً.
+  invalid: لا يمكن أن يحتوي اسم المجلد على شرطات مائلة أو أن يبدأ بنقطة، ويجب أن يتضمن أحرفاً أو أرقاماً.
+  duplicate: يوجد مجلد بهذا الاسم هنا بالفعل.
+edit_path_error:
+  invalid: لا يمكن أن يحتوي المسار على أجزاء نسبية مثل "..".
+  recursive: لا يمكن نقل العنصر إلى أحد مجلداته الفرعية.
+  duplicate: هذا المسار مستخدم بالفعل لعنصر آخر.
 
 # Required field indicator
 required: مطلوب
@@ -1284,6 +1402,8 @@ entry_sidebar:
     title: التحقق من الصحة
     placeholder: ستظهر نتائج التحقق من الصحة هنا.
     no_errors_found: لم يتم العثور على أخطاء.
+    # Button in the panel header that validates the entry on demand
+    validate: تحقق
 
   # History panel: shows entry commit history
   history:
@@ -1314,6 +1434,10 @@ viewing_x_asset_details: أنت تعرض الآن تفاصيل الوسيط “{
 # Asset editor container aria-label
 asset_editor: محرر الوسائط
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: الوسيط السابق
+next_asset: الوسيط التالي
+
 # Preview unavailable message
 preview_unavailable: المعاينة غير متاحة.
 
@@ -1338,6 +1462,13 @@ file_paths: |
     few  {{ {$count} مسارات ملفات }}
     many {{ {$count} مسار ملف }}
     *    {{ {$count} مسار ملف }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ معرّف الملف }}
+    *   {{ معرّفات الملفات }}
 file_data: بيانات الملف
 
 # ==============================================================================
@@ -1371,6 +1502,12 @@ map_lat_lng: خريطة توضح خط العرض {$latitude}، وخط الطول
 remove_this_item: إزالة هذا العنصر
 move_up: تحريك لأعلى
 move_down: تحريك لأسفل
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: إعادة ترتيب العنصر
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: قيمة العنصر
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1383,6 +1520,9 @@ add_item_below: إضافة عنصر أدناه
 
 # Variable-type list selector
 select_list_type: حدد نوع القائمة
+
+# Variable-type mismatch
+unknown_variable_type: لا يمكن عرض هذا العنصر بسبب نوع غير معروف. تحقق من الـ Console الخاص بالمتصفح للحصول على التفاصيل.
 
 # ==============================================================================
 # Field Widgets
@@ -1434,6 +1574,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: ملف كبير
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: ملف غير صالح
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: لا يمكن رفع الملفات
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1607,6 +1755,8 @@ config:
     parse_failed_invalid_object: ملف الأعدادات ليس كائن JavaScript صالباً.
     parse_failed_unsupported_type: ملف الأعدادات ليس نوع ملف مدعوم. يتم دعم YAML و TOML و JSON فقط.
     no_collection: لم يتم تعريف المجموعات.
+    # Don’t localize `hide`
+    no_visible_collection: يجب أن تكون مجموعة واحدة على الأقل مرئية. تحقق من الخيار `hide`.
     missing_backend: لم يتم تعريف الخادم الخلفي (Backend).
     missing_backend_name: لم يتم تعريف اسم الخادم الخلفي (Backend).
     # {$name} is the backend name from the CMS configuration
@@ -1620,11 +1770,19 @@ config:
     oauth_implicit_flow: طريقة المصادقة المُعدة (الانسياب الضمني) غير مدعومة في Sveltia CMS. استخدم <a>طريقة مصادقة</a> مختلفة بدلاً من ذلك.
     github_pkce_unsupported: تفويض PKCE غير مدعوم بعد بسبب قيود GitHub. استخدم <a>طريقة مصادقة</a> مختلفة بدلاً من ذلك.
     oauth_no_app_id: معرف تطبيق OAuth غير محدد.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: يتطلب الخيار `open_authoring` وضع النشر `editorial_workflow`. راجع <a>الوثائق</a> للحصول على التفاصيل.
     # Don’t localize `auth_methods`
     no_auth_methods: يجب أن يحتوي الخيار `auth_methods` على طريقة واحدة على الأقل.
     missing_media_folder: مجلد الوسائط غير محدد.
     public_folder_relative_path: المجلد العام المعد غير صالح. يجب أن يكون مساراً مطلقاً يبدأ بـ “/”.
     public_folder_absolute_url: استخدام رابط URL مطلق لخيار المجلد العام غير مدعوم في Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: يحتوي الخيار `transformations` على مفتاح `{$key}` غير مدعوم. يجب أن يكون `raster_image` أو `svg` أو تنسيق صور نقطية مدعوم.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: الخيار `quality` للتحويل `{$key}` غير صالح. يجب أن يكون عدداً صحيحاً بين 0 و100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: الخيار `{$prop}` للتحويل `{$key}` غير صالح. يجب أن يكون عدداً صحيحاً موجباً.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: يجب أن تكون مجموعة الوسائط {$count} تمتلك خيار `name` معرفاً كسلسلة نصية غير فارغة.
     # {$name} is the invalid or duplicate asset collection name
@@ -1639,6 +1797,24 @@ config:
     file_format_mismatch: الامتداد `{$extension}` لا يتطابق مع التنسيق `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: قالب المعرف الفريد (Slug) `{$slug}` غير صالح لأنه لا يمكن أن يحتوي على شرطات مائلة. لتنظيم العناصر في مجلدات فرعية، استخدم الخيار `path` بدلاً من `slug`.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: يشير الخيار `reorder` إلى مجموعة عرض باسم `{$name}`، لكن لم يتم تعريف مجموعة بهذا الاسم في الخيار `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: يشير الخيار `sortable_fields` إلى حقل باسم `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: يشير الخيار `view_groups` إلى حقل باسم `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: يشير الخيار `view_filters` إلى حقل باسم `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: يجب أن تتضمن مجموعة العرض {$count} الخيار `name` محددًا كسلسلة نصية غير فارغة.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: اسم مجموعة العرض `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
+    duplicate_view_group_name: يجب أن تكون أسماء مجموعات العرض فريدة، لكن `{$name}` مستخدم أكثر من مرة.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: يجب أن يتضمن مرشح العرض {$count} الخيار `name` محددًا كسلسلة نصية غير فارغة.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: اسم مرشح العرض `{$name}` غير صالح. يجب ألا يحتوي على رموز خاصة.
+    duplicate_view_filter_name: يجب أن تكون أسماء مرشحات العرض فريدة، لكن `{$name}` مستخدم أكثر من مرة.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: يجب أن تتضمن المجموعة {$count} الخيار `name` محددًا كسلسلة نصية غير فارغة.
     # {$name} is the invalid or duplicate collection name
@@ -1686,14 +1862,50 @@ config:
     relation_field_invalid_value_field: حقل القيمة المشار إليه `{$field}` غير صالح أو غير معرف.
     unexpected: خطأ غير متوقع
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: يجب أن يكون الخيار `{$option}` {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'يجب أن يكون الخيار `{$option}` إحدى هذه القيم: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: يجب أن يكون الخيار `{$option}` هو `{$value}`.
+    schema_invalid_empty_value: يجب أن يكون الخيار `{$option}` سلسلة نصية فارغة.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: يجب أن يكون الخيار `{$option}` مصفوفة من {$count} عناصر.
+    schema_invalid_value: قيمة الخيار `{$option}` غير صالحة.
+    schema_missing_option: الخيار `{$option}` مطلوب.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'أحد هذه الخيارات مطلوب: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: سلسلة نصية
+      number: رقماً
+      integer: عدداً صحيحاً
+      boolean: قيمة منطقية
+      array: مصفوفة
+      object: كائناً
+      'null': فارغاً
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: معرف تطبيق OAuth غير محدد. يلزم المستخدمون بتوفير رمز وصول لتسجيل الدخول.
     editorial_workflow_unsupported: سير عمل التحرير غير مدعوم بعد في Sveltia CMS.
+    open_authoring_unsupported_backend: التأليف المفتوح (Open Authoring) مدعوم حالياً فقط مع الواجهة الخلفية GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: الخيار `{$prop}` غير مدعوم في Sveltia CMS. سيتم تجاهله.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: تم ضبط كل من `picker_utc` وخيارات المنطقة الزمنية الأحدث (`input_timezone` أو `output_utc`). الخيارات الجديدة لها الأسبقية. يرجى النظر في إزالة `picker_utc` من الأعدادات الخاص بك.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: يستخدم الخيار `preview_path` وسوم التاريخ والوقت، لكن المجموعة لا تحتوي على حقل DateTime لقراءتها منه، لذلك لن يتم عرض رابط المعاينة.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: يشير الخيار `preview_path_date_field` إلى حقل باسم `{$name}`، لكن لم يتم تعريف حقل DateTime بهذا الاسم، لذلك لن يتم عرض رابط المعاينة.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: يشير الخيار `preview_path` إلى `{$name}`، لكن لم يتم تعريف حقل بهذا الاسم في المجموعة، لذلك لن يتم عرض رابط المعاينة.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: الخيار `{$option}` غير معرّف في مخطط إعدادات Sveltia CMS. سيتم تجاهله. تحقق من وجود خطأ إملائي أو خطأ في الصياغة.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'راجع ملاحظات التوافق لمعرفة التفاصيل: {$link}'
@@ -1716,12 +1928,173 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'أنت تعرض الآن لوحة سير عمل التحرير. المسودات: {$draft}. قيد المراجعة: {$review}. جاهز: {$ready}. بانتظار الحذف: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'أنت تعرض الآن لوحة سير عمل التحرير. المسودات: {$draft}. قيد المراجعة: {$review}. بانتظار الحذف: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: مسودة
   drafts: المسودات
   in_review: قيد المراجعة
   ready: جاهز
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: بانتظار الحذف
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: إلغاء الحذف
+  confirm_cancelling_deletion: هل أنت متأكد من أنك تريد إلغاء هذا الحذف؟ سيبقى العنصر منشوراً.
+  confirm_completing_deletion: هل أنت متأكد من أنك تريد حذف هذا العنصر؟ ستتم إزالته على الفور.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one  {{ تم تحديد العنصر للحذف. }}
+      two  {{ تم تحديد العنصرين للحذف. }}
+      few  {{ تم تحديد {$count} عناصر للحذف. }}
+      many {{ تم تحديد {$count} عنصراً للحذف. }}
+      *    {{ تم تحديد {$count} عنصر للحذف. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one  {{ تم تجاهل التغييرات. }}
+      two  {{ تم تجاهل التغييرات في العنصرين. }}
+      few  {{ تم تجاهل التغييرات في {$count} عناصر. }}
+      many {{ تم تجاهل التغييرات في {$count} عنصراً. }}
+      *    {{ تم تجاهل التغييرات في {$count} عنصر. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: جارٍ إلغاء الحذف…
+  deletion_cancelled: تم إلغاء الحذف.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: تعذر إلغاء الحذف. يرجى المحاولة مرة أخرى.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: العناصر غير المنشورة
+  published_entries: العناصر المنشورة
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'الحالة: {$status}'
+  change_entry_status: تغيير حالة العنصر
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: جارٍ تغيير الحالة…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: جارٍ تحديث الحالة…
+  status_updated: تم تحديث الحالة.
+  # Error notification when the status could not be changed
+  status_change_failed: تعذر تغيير الحالة. يرجى المحاولة مرة أخرى.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: يحتوي العنصر على أخطاء. يرجى تصحيحها قبل تغيير الحالة.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: يحتوي العنصر على أخطاء. يرجى تصحيحها قبل نشره.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: إرسال للمراجعة
+  confirm_sending_for_review: تم حفظ تغييراتك كمسودة. هل تريد إرسال العنصر للمراجعة ليتمكن شخص ما من الاطلاع عليه ونشره؟
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: نشر العنصر
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: تجاهل التغييرات
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: هل أنت متأكد من أنك تريد حذف هذا العنصر؟ لن تتم إزالته حتى يتم نشر الحذف. حتى ذلك الحين، ستظل تجده في قائمة العناصر مع علامة "بانتظار الحذف".
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: لم يتم نشر هذا العنصر بعد، لذلك سيؤدي حذفه إلى تجاهله بالكامل.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: يحتوي هذا العنصر على تغييرات غير منشورة. سيؤدي تجاهلها إلى استعادة النسخة المنشورة. لن يتم حذف العنصر نفسه.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ لم يتم نشره بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخة منشورة كما هي. }}
+      *   {{ لم يتم نشرها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one  {{ لم يتم نشر أحدها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخة منشورة كما هي. }}
+      two  {{ لم يتم نشر اثنين منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
+      few  {{ لم يتم نشر {$count} منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
+      many {{ لم يتم نشر {$count} منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
+      *    {{ لم يتم نشر {$count} منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: هل أنت متأكد من أنك تريد نشر هذا العنصر؟ ستصبح تغييراتك سارية على الفور.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: جارٍ نشر العنصر…
+  entry_published: تم نشر العنصر.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: جارٍ حذف العنصر…
+  discarding_changes: جارٍ تجاهل التغييرات…
+  entry_deleted: تم حذف العنصر.
+  # Error notification when publishing fails
+  publishing_entry_failed: تعذر نشر العنصر. يرجى المحاولة مرة أخرى.
+  # Workflow page: empty column message
+  no_entries: لا توجد عناصر.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: اسحب لتغيير الحالة
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: تفريع المستودع
+  fork: تفريع
+  confirm_forking_repository: لاقتراح تغييرات على "{$repo}"، يجب إنشاء نسخة متفرعة (Fork) من المستودع في حسابك. سيتم حفظ تغييراتك في تلك النسخة المتفرعة، وسيراجعها أحد المشرفين قبل نشرها.
+  # Error shown when the user declined the dialog above
+  fork_declined: تحتاج إلى نسخة متفرعة (Fork) من المستودع في حسابك لاقتراح التغييرات.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: تعذر إنشاء نسخة متفرعة من مستودع "{$repo}" في حسابك.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: تعذر التحقق من صلاحية وصولك إلى مستودع "{$repo}". يرجى المحاولة مرة أخرى بعد قليل.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: لا يسمح مستودع "{$repo}" بالتفريع. اطلب من أحد المشرفين تمكين التفريع له.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: لديك دعوة معلقة إلى مستودع "{$repo}". اقبلها على GitHub، ثم سجّل الدخول مرة أخرى.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: لا يتضمن تسجيل دخولك صلاحية الوصول إلى المستودعات الخاصة، لذلك لا يمكن قراءة مستودع "{$repo}". اطلب من أحد المشرفين التحقق من إعدادات المصادقة في نظام إدارة المحتوى.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: يمكن للمشرف فقط نشر التغييرات على هذا الموقع. بدلاً من ذلك، ضع علامة "قيد المراجعة" على عنصرك وسيطّلع عليه شخص ما.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: لا يمكن إجراء هذا التغيير مباشرةً. يمكن اقتراح تعديلات العناصر فقط للمراجعة.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: يتم حفظ تغييراتك في نسختك المتفرعة من هذا المستودع في "{$repo}" ومراجعتها قبل نشرها.
+  view_fork: عرض النسخة المتفرعة
 
 # ==============================================================================
 # Settings Dialog
@@ -1851,6 +2224,18 @@ prefs:
         field_label: ترويسة التفويض (Authorization header) (مثل Bearer <token>) (اختياري)
         saved: تم حفظ ترويسة التفويض.
         removed: تم إزالة ترويسة التفويض.
+    clear_data:
+      title: مسح البيانات
+      # Clear File Cache button
+      file_cache:
+        description: حذف محتويات الملفات والصور المصغرة المخزنة مؤقتاً محلياً لتحرير مساحة التخزين أو حل المشكلات الناتجة عن البيانات القديمة.
+        button_label: مسح ذاكرة الملفات المؤقتة
+        confirmation: سيتم حذف محتويات الملفات والصور المصغرة المخزنة مؤقتاً محلياً. سيتم الاحتفاظ بمسوداتك غير المحفوظة وإعداداتك، وسيتم تنزيل أي بيانات محذوفة أو إنشاؤها مرة أخرى عند الحاجة. سيتم إعادة تحميل نظام إدارة المحتوى بعد الانتهاء.
+      # Erase All Data button
+      all_data:
+        description: حذف كل ما يحتفظ به نظام إدارة المحتوى في هذا المتصفح، بما في ذلك الملفات المخزنة مؤقتاً والمسودات غير المحفوظة والإعدادات. لن يتأثر أي شيء محفوظ بالفعل في مستودعك.
+        button_label: مسح جميع البيانات
+        confirmation: سيتم حذف جميع البيانات المخزنة في هذا المتصفح، بما في ذلك محتويات الملفات المخزنة مؤقتاً والصور المصغرة والمسودات غير المحفوظة والإعدادات وحالة تسجيل الدخول. لن يتأثر مستودعك، لكن أي تغيير لم تحفظه سيُفقد، وستحتاج إلى تسجيل الدخول مرة أخرى. سيتم إعادة تحميل نظام إدارة المحتوى بعد الانتهاء.
 
 # ==============================================================================
 # Keyboard Shortcuts

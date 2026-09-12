@@ -366,13 +366,18 @@ viewing_x_asset_folder: |
     0   {{ Du ser nu mediemappen ”{$folder}” som endnu ikke har nogen mediefiler. }}
     one {{ Du ser nu mediemappen ”{$folder}” som har én mediefil. }}
     *   {{ Du ser nu mediemappen ”{$folder}” som har {$count} mediefiler. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Du ser nu mediefilerne på {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Tryk på Enter for at redigere filen ”{$file}”.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Siden blev ikke fundet.
 collection_not_found: Samlingen blev ikke fundet.
+asset_folder_not_found: Mediemappen blev ikke fundet.
 file_not_found: Filen blev ikke fundet.
 
 # Selection count indicator
@@ -405,6 +410,10 @@ sort_keys:
   commit_author: Opdateret af
   # Sort by the last commit date
   commit_date: Opdateret
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Ændret
+  # Sort by file size
+  size: Størrelse
   # Sort by the entry’s computed summary text
   _summary: Resumé
   # Manual order defined by the user via drag-and-drop
@@ -416,6 +425,8 @@ ascending: '{$label}, A til Å'
 ascending_date: '{$label}, ældste til nyeste'
 descending: '{$label}, Å til A'
 descending_date: '{$label}, nyeste til ældste'
+ascending_number: '{$label}, mindst til størst'
+descending_number: '{$label}, størst til mindst'
 
 # Filter menu: button labels and options
 filter: Filtrér
@@ -444,6 +455,22 @@ hide_info: Skjul info
 # Folder display labels when no specific path is configured
 all_assets: Alle medier
 global_assets: Globale medier
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Linkede filer
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Indlæser dokument… }}
+    *   {{ Indlæser dokumenter… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -531,6 +558,8 @@ upload_assets: Upload nye mediefiler
 # Edit options menu: button and item labels
 edit_options: Redigeringsmuligheder
 show_edit_options: Vis redigeringsmuligheder
+# Copy menu aria-label
+copy_options: Kopieringsindstillinger
 # Edit menu items with specific asset names
 edit_asset: Rediger mediefil
 # {$name} is the selected asset name
@@ -674,6 +703,8 @@ delete_selected_entries: |
     *   {{ Slet valgte dokumenter }}
 confirm_deleting_this_entry: Er du sikker på at du vil slette dette dokument?
 confirm_deleting_this_entry_with_assets: Er du sikker på at du vil slette dette dokument og de tilknyttede mediefiler?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Dokumentet kunne ikke slettes. Prøv igen.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -751,6 +782,16 @@ warning_invalid_files: |
     one {{ Denne fil kan ikke uploades fordi den er beskadiget eller fordi indholdet ikke svarer til filendelsen. Det sker ofte når et foto er blevet omdøbt i stedet for konverteret, fx et HEIC-billede gemt som en JPEG-fil. Konvertér filen, og prøv igen. }}
     *   {{ Disse filer kan ikke uploades fordi de er beskadigede eller fordi indholdet ikke svarer til filendelserne. Det sker ofte når fotos er blevet omdøbt i stedet for konverteret, fx HEIC-billeder gemt som JPEG-filer. Konvertér filerne, og prøv igen. }}
 
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Filer med forkert format
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Denne fil kan ikke erstatte ”{$name}” fordi den har et andet format. Konverter filen til samme format, og prøv igen. }}
+    *   {{ Disse filer kan ikke erstatte ”{$name}” fordi de har et andet format. Konverter filerne til samme format, og prøv igen. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -772,6 +813,9 @@ keep_both: Behold begge
 # Upload progress and error messages
 uploading_files_progress: Uploader…
 uploading_files_failed: Upload mislykkedes.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Sletning mislykkedes.
+renaming_asset_failed: Omdøbning mislykkedes.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -855,6 +899,11 @@ asset_paths_copied: |
   .match $count
     one {{ Filstien er kopieret til udklipsholderen. }}
     *   {{ {$count} filstier er kopieret til udklipsholderen. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fil-id er kopieret til udklipsholderen. }}
+    *   {{ {$count} fil-id’er er kopieret til udklipsholderen. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -926,6 +975,7 @@ show_editor_options: Vis editorindstillinger
 editor_options: Editorindstillinger
 
 # Preview controls
+show_second_pane: Vis andet panel
 show_preview: Vis forhåndsvisning
 
 # Editor settings
@@ -986,6 +1036,31 @@ view_in_repository: Vis i repositoriet
 view_on_x: 'Vis på {$service}'
 view_on_live_site: Vis på webstedet
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Vis forhåndsvisning
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Forhåndsvisningen bygges stadig.
+  # Shown when the build failed, so no preview is available
+  failed: Forhåndsvisningen kunne ikke bygges.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Søger efter forhåndsvisning…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Søg efter forhåndsvisning
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Søger efter forhåndsvisning
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Bygger…
+    failed: Build mislykkedes
+
 # Content copying from other locales
 copy_from: Kopiér fra…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -1014,6 +1089,23 @@ edit_slug_error:
   empty: Slug må ikke være tomt.
   invalid: Slug må ikke indeholde specialtegn, herunder skråstreger og mellemrum.
   duplicate: Dette slug bruges allerede til et andet dokument.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Overordnet mappe
+new_parent_folder: Ny mappe
+new_parent_folder_create: Opret
+new_parent_folder_name: Mappenavn
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: Den nye mappe oprettes i ”{$folder}”.
+new_parent_folder_error:
+  empty: Mappenavnet må ikke være tomt.
+  invalid: Mappenavnet må ikke indeholde skråstreger eller begynde med et punktum, og det skal indeholde bogstaver eller tal.
+  duplicate: Der findes allerede en mappe med dette navn her.
+edit_path_error:
+  invalid: Stien må ikke indeholde relative segmenter som ”..”.
+  recursive: Dokumentet kan ikke flyttes til en af sine egne undermapper.
+  duplicate: Denne sti bruges allerede til et andet dokument.
 
 # Required field indicator
 required: Obligatorisk
@@ -1128,6 +1220,8 @@ entry_sidebar:
     title: Validering
     placeholder: Valideringsresultater vises her.
     no_errors_found: Ingen fejl fundet.
+    # Button in the panel header that validates the entry on demand
+    validate: Valider
 
   # History panel: shows entry commit history
   history:
@@ -1158,6 +1252,10 @@ viewing_x_asset_details: Du ser detaljerne for mediefilen ”{$name}”.
 # Asset editor container aria-label
 asset_editor: Mediefileditor
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Forrige mediefil
+next_asset: Næste mediefil
+
 # Preview unavailable message
 preview_unavailable: Forhåndsvisning er ikke tilgængelig.
 
@@ -1174,6 +1272,13 @@ file_paths: |
   .match $count
     one {{ Filsti }}
     *   {{ Filstier }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ Fil-id }}
+    *   {{ Fil-id’er }}
 file_data: Fildata
 
 # ==============================================================================
@@ -1207,6 +1312,12 @@ map_lat_lng: Kort der viser breddegrad {$latitude}, længdegrad {$longitude}
 remove_this_item: Fjern dette element
 move_up: Flyt op
 move_down: Flyt ned
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Flyt element
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Elementværdi
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1453,11 +1564,19 @@ config:
     oauth_implicit_flow: Den konfigurerede autentificeringsmetode (implicit flow) understøttes ikke i Sveltia CMS. Brug en anden <a>autentificeringsmetode</a> i stedet.
     github_pkce_unsupported: PKCE-autorisation understøttes endnu ikke på grund af begrænsninger hos GitHub. Brug en anden <a>autentificeringsmetode</a> i stedet.
     oauth_no_app_id: OAuth-applikationens id er ikke defineret.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: Indstillingen `open_authoring` kræver udgivelsestilstanden `editorial_workflow`. Se <a>dokumentationen</a> for detaljer.
     # Don’t localize `auth_methods`
     no_auth_methods: Indstillingen `auth_methods` skal indeholde mindst én metode.
     missing_media_folder: Mediemappen er ikke defineret.
     public_folder_relative_path: Den konfigurerede offentlige mappe er ugyldig. Den skal være en absolut sti der begynder med ”/”.
     public_folder_absolute_url: En absolut URL i indstillingen for den offentlige mappe understøttes ikke i Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: Indstillingen `transformations` indeholder en ikke-understøttet nøgle `{$key}`. Den skal være `raster_image`, `svg` eller et understøttet rasterbilledformat.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: Indstillingen `quality` for transformationen `{$key}` er ugyldig. Den skal være et heltal mellem 0 og 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: Indstillingen `{$prop}` for transformationen `{$key}` er ugyldig. Den skal være et positivt heltal.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Mediesamling {$count} skal have indstillingen `name` defineret som en ikke-tom streng.
     # {$name} is the invalid or duplicate asset collection name
@@ -1537,14 +1656,50 @@ config:
     relation_field_invalid_value_field: Det refererede værdifelt `{$field}` er ugyldigt eller ikke defineret.
     unexpected: Uventet fejl
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: Indstillingen `{$option}` skal være {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'Indstillingen `{$option}` skal være en af disse værdier: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: Indstillingen `{$option}` skal være `{$value}`.
+    schema_invalid_empty_value: Indstillingen `{$option}` skal være en tom streng.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: Indstillingen `{$option}` skal være et array med {$count} elementer.
+    schema_invalid_value: Indstillingen `{$option}` har en ugyldig værdi.
+    schema_missing_option: Indstillingen `{$option}` er påkrævet.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'En af disse indstillinger er påkrævet: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: en streng
+      number: et tal
+      integer: et heltal
+      boolean: en boolesk værdi
+      array: et array
+      object: et objekt
+      'null': tom
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: OAuth-applikationens id er ikke defineret. Brugere skal angive et adgangstoken for at logge ind.
     editorial_workflow_unsupported: Redaktionel arbejdsgang understøttes endnu ikke i Sveltia CMS.
+    open_authoring_unsupported_backend: Open Authoring understøttes i øjeblikket kun med GitHub-backend.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Indstillingen `{$prop}` understøttes ikke i Sveltia CMS. Den bliver ignoreret.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Både `picker_utc` og de nyere tidszoneindstillinger (`input_timezone` eller `output_utc`) er sat. De nye indstillinger har forrang. Overvej at fjerne `picker_utc` fra din konfiguration.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: Indstillingen `preview_path` bruger dato- og tidstags, men samlingen har ikke noget DateTime-felt at læse dem fra, så linket til forhåndsvisningen bliver ikke vist.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: Indstillingen `preview_path_date_field` henviser til et felt med navnet `{$name}`, men der er ikke defineret noget DateTime-felt med det navn, så linket til forhåndsvisningen bliver ikke vist.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: Indstillingen `preview_path` henviser til `{$name}`, men der er ikke defineret noget felt med det navn i samlingen, så linket til forhåndsvisningen bliver ikke vist.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: Indstillingen `{$option}` er ikke defineret i konfigurationsskemaet for Sveltia CMS. Den bliver ignoreret. Tjek for slåfejl eller syntaksfejl.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Se kompatibilitetsnoterne for detaljer: {$link}'
@@ -1567,12 +1722,164 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Du ser nu tavlen for den redaktionelle arbejdsgang. Kladder: {$draft}. Til gennemsyn: {$review}. Klar: {$ready}. Afventer sletning: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Du ser nu tavlen for den redaktionelle arbejdsgang. Kladder: {$draft}. Til gennemsyn: {$review}. Afventer sletning: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: Kladde
   drafts: Kladder
   in_review: Til gennemsyn
   ready: Klar
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Afventer sletning
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Annuller sletning
+  confirm_cancelling_deletion: Er du sikker på at du vil annullere denne sletning? Dokumentet forbliver udgivet.
+  confirm_completing_deletion: Er du sikker på at du vil slette dette dokument? Det bliver fjernet med det samme.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Dokumentet er markeret til sletning. }}
+      *   {{ {$count} dokumenter er markeret til sletning. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Ændringerne er kasseret. }}
+      *   {{ Ændringerne i {$count} dokumenter er kasseret. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Annullerer sletning…
+  deletion_cancelled: Sletningen er annulleret.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Sletningen kunne ikke annulleres. Prøv igen.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Ikke-udgivne dokumenter
+  published_entries: Udgivne dokumenter
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Status: {$status}'
+  change_entry_status: Skift dokumentets status
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Skifter status…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Opdaterer status…
+  status_updated: Status er opdateret.
+  # Error notification when the status could not be changed
+  status_change_failed: Status kunne ikke ændres. Prøv igen.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: Dokumentet indeholder fejl. Ret dem før du ændrer status.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: Dokumentet indeholder fejl. Ret dem før du udgiver det.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Send til gennemsyn
+  confirm_sending_for_review: Dine ændringer er gemt som en kladde. Vil du sende dokumentet til gennemsyn så nogen kan se på det og udgive det?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Udgiv dokument
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Kassér ændringer
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Er du sikker på at du vil slette dette dokument? Det bliver først fjernet når sletningen udgives. Indtil da kan du stadig finde det på listen over dokumenter, markeret som ”Afventer sletning”.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Dette dokument er endnu ikke udgivet, så hvis du sletter det, bliver det kasseret helt.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Dette dokument har ikke-udgivne ændringer. Hvis du kasserer dem, gendannes den udgivne version. Selve dokumentet bliver ikke slettet.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Det er endnu ikke udgivet, så dine ikke-udgivne ændringer bliver kasseret. En eventuel udgivet version forbliver udgivet. }}
+      *   {{ De er endnu ikke udgivet, så dine ikke-udgivne ændringer bliver kasseret. Eventuelle udgivne versioner forbliver udgivet. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Et af dem er endnu ikke udgivet, så dine ikke-udgivne ændringer bliver kasseret. En eventuel udgivet version forbliver udgivet. }}
+      *   {{ {$count} af dem er endnu ikke udgivet, så dine ikke-udgivne ændringer bliver kasseret. Eventuelle udgivne versioner forbliver udgivet. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Er du sikker på at du vil udgive dette dokument? Dine ændringer træder i kraft med det samme.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Udgiver dokument…
+  entry_published: Dokumentet er udgivet.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Sletter dokument…
+  discarding_changes: Kasserer ændringer…
+  entry_deleted: Dokumentet er slettet.
+  # Error notification when publishing fails
+  publishing_entry_failed: Dokumentet kunne ikke udgives. Prøv igen.
+  # Workflow page: empty column message
+  no_entries: Ingen dokumenter.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Træk for at ændre status
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Fork repositoriet
+  fork: Fork
+  confirm_forking_repository: For at foreslå ændringer til ”{$repo}” skal der oprettes en fork af repositoriet på din konto. Dine ændringer gemmes i den fork, og en vedligeholder gennemser dem før de bliver offentliggjort.
+  # Error shown when the user declined the dialog above
+  fork_declined: Du skal have en fork af repositoriet på din konto for at kunne foreslå ændringer.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Der kunne ikke oprettes en fork af repositoriet ”{$repo}” på din konto.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Din adgang til repositoriet ”{$repo}” kunne ikke kontrolleres. Prøv igen om et øjeblik.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: Repositoriet ”{$repo}” tillader ikke forks. Bed en vedligeholder om at slå forks til for det.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Du har en ventende invitation til repositoriet ”{$repo}”. Accepter den på GitHub, og log derefter ind igen.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Dit login giver ikke adgang til private repositorier, så repositoriet ”{$repo}” kan ikke læses. Bed en vedligeholder om at tjekke CMS’ets godkendelsesindstillinger.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Kun en vedligeholder kan udgive ændringer på dette websted. Marker i stedet dit dokument som ”Til gennemsyn”, så kigger nogen på det.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Denne ændring kan ikke foretages direkte. Kun redigeringer af dokumenter kan foreslås til gennemsyn.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Dine ændringer gemmes i din fork af dette repositorium på ”{$repo}” og gennemses før de bliver offentliggjort.
+  view_fork: Vis fork
 
 # ==============================================================================
 # Settings Dialog
@@ -1702,6 +2009,18 @@ prefs:
         field_label: Authorization-header (fx Bearer <token>) (valgfri)
         saved: Authorization-headeren er gemt.
         removed: Authorization-headeren er fjernet.
+    clear_data:
+      title: Ryd data
+      # Clear File Cache button
+      file_cache:
+        description: Slet lokalt cachelagret filindhold og miniaturebilleder for at frigøre lagerplads eller løse problemer forårsaget af forældede data.
+        button_label: Ryd filcache
+        confirmation: Lokalt cachelagret filindhold og miniaturebilleder bliver slettet. Dine ikke-gemte kladder og indstillinger bevares, og slettede data bliver downloadet eller genereret igen efter behov. CMS’et genindlæses når det er færdigt.
+      # Erase All Data button
+      all_data:
+        description: Slet alt hvad CMS’et gemmer i denne browser, herunder cachelagrede filer, ikke-gemte kladder og indstillinger. Det der allerede er gemt i dit repositorium, bliver ikke påvirket.
+        button_label: Slet alle data
+        confirmation: Alle data der er gemt i denne browser, bliver slettet, herunder cachelagret filindhold, miniaturebilleder, ikke-gemte kladder, indstillinger og loginstatus. Dit repositorium bliver ikke påvirket, men alle ændringer du ikke har gemt, går tabt, og du skal logge ind igen. CMS’et genindlæses når det er færdigt.
 
 # ==============================================================================
 # Keyboard Shortcuts

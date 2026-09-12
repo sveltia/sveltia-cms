@@ -368,13 +368,18 @@ viewing_x_asset_folder: |
     one {{ Nyní si prohlížíte složku médií „{$folder}“, která obsahuje jeden soubor. }}
     few {{ Nyní si prohlížíte složku médií „{$folder}“, která obsahuje {$count} soubory. }}
     *   {{ Nyní si prohlížíte složku médií „{$folder}“, která obsahuje {$count} souborů. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Nyní si prohlížíte média ve službě {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Stisknutím klávesy Enter upravíte soubor „{$file}“.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Stránka nebyla nalezena.
 collection_not_found: Kolekce nebyla nalezena.
+asset_folder_not_found: Složka médií nebyla nalezena.
 file_not_found: Soubor nebyl nalezen.
 
 # Selection count indicator
@@ -407,6 +412,10 @@ sort_keys:
   commit_author: Naposledy upravil(a)
   # Sort by the last commit date
   commit_date: Datum úpravy
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Datum změny
+  # Sort by file size
+  size: Velikost
   # Sort by the entry’s computed summary text
   _summary: Souhrn
   # Manual order defined by the user via drag-and-drop
@@ -418,6 +427,8 @@ ascending: '{$label}, od A do Z'
 ascending_date: '{$label}, od nejstarších'
 descending: '{$label}, od Z do A'
 descending_date: '{$label}, od nejnovějších'
+ascending_number: '{$label}, od nejmenšího po největší'
+descending_number: '{$label}, od největšího po nejmenší'
 
 # Filter menu: button labels and options
 filter: Filtrovat
@@ -446,6 +457,22 @@ hide_info: Skrýt informace
 # Folder display labels when no specific path is configured
 all_assets: Všechna média
 global_assets: Globální média
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Propojené soubory
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Načítání položky… }}
+    *   {{ Načítání položek… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -538,6 +565,8 @@ upload_assets: Nahrát nová média
 # Edit options menu: button and item labels
 edit_options: Možnosti úprav
 show_edit_options: Zobrazit možnosti úprav
+# Copy menu aria-label
+copy_options: Možnosti kopírování
 # Edit menu items with specific asset names
 edit_asset: Upravit médium
 # {$name} is the selected asset name
@@ -683,6 +712,8 @@ delete_selected_entries: |
     *   {{ Smazat vybrané položky }}
 confirm_deleting_this_entry: Opravdu chcete tuto položku smazat?
 confirm_deleting_this_entry_with_assets: Opravdu chcete smazat tuto položku a k ní připojená média?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Položku se nepodařilo smazat. Zkuste to prosím znovu.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -763,6 +794,16 @@ warning_invalid_files: |
     one  {{ Tento soubor nelze nahrát, protože je poškozený, nebo jeho obsah neodpovídá příponě. K tomu často dochází, když je fotografie pouze přejmenována namísto konverze (např. HEIC obrázek uložen jako JPEG). Převeďte soubor a zkuste to znovu. }}
     *    {{ Tyto soubory nelze nahrát, protože jsou poškozené, nebo jejich obsah neodpovídá příponě. K tomu často dochází, když jsou fotografie pouze přejmenovány namísto konverze (např. HEIC obrázky uloženy jako JPEG). Převeďte soubory a zkuste to znovu. }}
 
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Soubory s odlišným formátem
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tento soubor nemůže nahradit „{$name}“, protože má jiný formát. Převeďte soubor do stejného formátu a zkuste to znovu. }}
+    *   {{ Tyto soubory nemohou nahradit „{$name}“, protože mají jiný formát. Převeďte soubory do stejného formátu a zkuste to znovu. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -786,6 +827,9 @@ keep_both: Ponechat oba
 # Upload progress and error messages
 uploading_files_progress: Nahrávání…
 uploading_files_failed: Nahrávání selhalo.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Smazání se nezdařilo.
+renaming_asset_failed: Přejmenování se nezdařilo.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -877,6 +921,12 @@ asset_paths_copied: |
     one {{ Cesta k souboru byla zkopírována do schránky. }}
     few {{ {$count} cesty k souborům byly zkopírovány do schránky. }}
     *   {{ {$count} cest k souborům bylo zkopírováno do schránky. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ ID souboru bylo zkopírováno do schránky. }}
+    few {{ {$count} ID souborů byla zkopírována do schránky. }}
+    *   {{ {$count} ID souborů bylo zkopírováno do schránky. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -952,6 +1002,7 @@ show_editor_options: Zobrazit možnosti editoru
 editor_options: Možnosti editoru
 
 # Preview controls
+show_second_pane: Zobrazit druhý panel
 show_preview: Zobrazit náhled
 
 # Editor settings
@@ -1012,6 +1063,31 @@ view_in_repository: Zobrazit v repozitáři
 view_on_x: 'Zobrazit na {$service}'
 view_on_live_site: Zobrazit na webu
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Zobrazit náhled
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Náhled se stále sestavuje.
+  # Shown when the build failed, so no preview is available
+  failed: Náhled se nepodařilo sestavit.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Kontrola náhledu…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Zkontrolovat náhled
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Kontrola náhledu
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Sestavuje se…
+    failed: Sestavení se nezdařilo
+
 # Content copying from other locales
 copy_from: Kopírovat z…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -1040,6 +1116,23 @@ edit_slug_error:
   empty: Slug nemůže být prázdný.
   invalid: Slug nesmí obsahovat speciální znaky, včetně lomítek a mezer.
   duplicate: Tento slug je již použit u jiné položky.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Nadřazená složka
+new_parent_folder: Nová složka
+new_parent_folder_create: Vytvořit
+new_parent_folder_name: Název složky
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: Nová složka bude vytvořena ve složce „{$folder}“.
+new_parent_folder_error:
+  empty: Název složky nesmí být prázdný.
+  invalid: Název složky nesmí obsahovat lomítka ani začínat tečkou a musí obsahovat písmena nebo číslice.
+  duplicate: Složka s tímto názvem zde již existuje.
+edit_path_error:
+  invalid: Cesta nesmí obsahovat relativní části, jako je „..“.
+  recursive: Položku nelze přesunout do jedné z jejích vlastních podsložek.
+  duplicate: Tato cesta je již použita u jiné položky.
 
 # Required field indicator
 required: Povinné
@@ -1162,6 +1255,8 @@ entry_sidebar:
     title: Validace
     placeholder: Výsledky validace se zobrazí zde.
     no_errors_found: Nebyly nalezeny žádné chyby.
+    # Button in the panel header that validates the entry on demand
+    validate: Zkontrolovat
 
   # History panel: shows entry commit history
   history:
@@ -1192,6 +1287,10 @@ viewing_x_asset_details: Prohlížíte si podrobnosti média „{$name}“.
 # Asset editor container aria-label
 asset_editor: Editor médií
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Předchozí médium
+next_asset: Další médium
+
 # Preview unavailable message
 preview_unavailable: Náhled není k dispozici.
 
@@ -1208,6 +1307,13 @@ file_paths: |
   .match $count
     one {{ Cesta k souboru }}
     *   {{ Cesty k souborům }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ ID souboru }}
+    *   {{ ID souborů }}
 file_data: Data souboru
 
 # ==============================================================================
@@ -1241,6 +1347,12 @@ map_lat_lng: Mapa zobrazující zeměpisnou šířku {$latitude}, zeměpisnou d�
 remove_this_item: Odebrat tuto položku
 move_up: Posunout nahoru
 move_down: Posunout dolů
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Změnit pořadí položky
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Hodnota položky
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1475,6 +1587,8 @@ config:
     parse_failed_invalid_object: Konfigurační soubor není platným objektem JavaScriptu.
     parse_failed_unsupported_type: Konfigurační soubor není podporovaným typem souboru. Podporovány jsou pouze formáty YAML, TOML a JSON.
     no_collection: Kolekce nejsou definovány.
+    # Don’t localize `hide`
+    no_visible_collection: Alespoň jedna kolekce musí být viditelná. Zkontrolujte možnost `hide`.
     missing_backend: Backend není definován.
     missing_backend_name: Název backendu není definován.
     # {$name} is the backend name from the CMS configuration
@@ -1488,11 +1602,19 @@ config:
     oauth_implicit_flow: Nakonfigurovaná metoda ověření (implicit flow) není ve Sveltia CMS podporována. Použijte jinou <a>metodu ověření</a>.
     github_pkce_unsupported: Autorizace PKCE zatím není podporována kvůli omezením služby GitHub. Použijte jinou <a>metodu ověření</a>.
     oauth_no_app_id: ID aplikace OAuth není definováno.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: Možnost `open_authoring` vyžaduje režim publikování `editorial_workflow`. Podrobnosti najdete v <a>dokumentaci</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Možnost `auth_methods` musí obsahovat alespoň jednu metodu.
     missing_media_folder: Složka médií není definována.
     public_folder_relative_path: Nakonfigurovaná veřejná složka je neplatná. Musí se jednat o absolutní cestu začínající znakem „/“.
     public_folder_absolute_url: Absolutní URL adresa pro možnost veřejné složky není ve Sveltia CMS podporována.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: Možnost `transformations` obsahuje nepodporovaný klíč `{$key}`. Musí to být `raster_image`, `svg` nebo podporovaný formát rastrového obrázku.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: Možnost `quality` u transformace `{$key}` je neplatná. Musí to být celé číslo od 0 do 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: Možnost `{$prop}` u transformace `{$key}` je neplatná. Musí to být kladné celé číslo.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Kolekce médií {$count} musí mít možnost `name` definovánu jako neprázdný řetězec.
     # {$name} is the invalid or duplicate asset collection name
@@ -1572,14 +1694,50 @@ config:
     relation_field_invalid_value_field: Odkazované pole hodnoty `{$field}` je neplatné nebo není definováno.
     unexpected: Neočekávaná chyba
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: Možnost `{$option}` musí být {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'Možnost `{$option}` musí mít jednu z těchto hodnot: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: Možnost `{$option}` musí mít hodnotu `{$value}`.
+    schema_invalid_empty_value: Možnost `{$option}` musí být prázdný řetězec.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: Možnost `{$option}` musí být pole o {$count} prvcích.
+    schema_invalid_value: Možnost `{$option}` má neplatnou hodnotu.
+    schema_missing_option: Možnost `{$option}` je povinná.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Je vyžadována jedna z těchto možností: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: řetězec
+      number: číslo
+      integer: celé číslo
+      boolean: logická hodnota
+      array: pole
+      object: objekt
+      'null': prázdná
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: ID aplikace OAuth není definováno. Uživatelé se musí přihlásit pomocí přístupového tokenu.
     editorial_workflow_unsupported: Redakční workflow zatím není ve Sveltia CMS podporováno.
+    open_authoring_unsupported_backend: Open Authoring je v současné době podporován pouze s backendem GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Možnost `{$prop}` není ve Sveltia CMS podporována a bude ignorována.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Jsou nastaveny jak možnost `picker_utc`, tak novější možnosti časového pásma (`input_timezone` nebo `output_utc`). Novější možnosti mají přednost. Zvažte odebrání `picker_utc` z vaší konfigurace.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: Možnost `preview_path` používá značky data a času, ale kolekce nemá žádné pole DateTime, ze kterého by je bylo možné načíst, takže odkaz na náhled nebude zobrazen.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: Možnost `preview_path_date_field` odkazuje na pole s názvem `{$name}`, ale žádné pole DateTime s tímto názvem není definováno, takže odkaz na náhled nebude zobrazen.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: Možnost `preview_path` odkazuje na `{$name}`, ale žádné takové pole není v kolekci definováno, takže odkaz na náhled nebude zobrazen.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: Možnost `{$option}` není definována ve schématu konfigurace Sveltia CMS a bude ignorována. Zkontrolujte, zda se nejedná o překlep nebo chybu syntaxe.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Podrobnosti naleznete v poznámkách o kompatibilitě: {$link}'
@@ -1602,12 +1760,167 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Nyní si prohlížíte nástěnku redakčního workflow. Koncepty: {$draft}. Ke kontrole: {$review}. Připraveno: {$ready}. Čeká na smazání: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Nyní si prohlížíte nástěnku redakčního workflow. Koncepty: {$draft}. Ke kontrole: {$review}. Čeká na smazání: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: Koncept
   drafts: Koncepty
   in_review: Ke kontrole
   ready: Připraveno
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Čeká na smazání
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Zrušit smazání
+  confirm_cancelling_deletion: Opravdu chcete toto smazání zrušit? Položka zůstane publikována.
+  confirm_completing_deletion: Opravdu chcete tuto položku smazat? Bude okamžitě odstraněna.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Položka byla označena ke smazání. }}
+      few {{ {$count} položky byly označeny ke smazání. }}
+      *   {{ {$count} položek bylo označeno ke smazání. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Změny byly zahozeny. }}
+      few {{ Změny u {$count} položek byly zahozeny. }}
+      *   {{ Změny u {$count} položek byly zahozeny. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Rušení smazání…
+  deletion_cancelled: Smazání bylo zrušeno.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Smazání se nepodařilo zrušit. Zkuste to prosím znovu.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Nepublikované položky
+  published_entries: Publikované položky
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Stav: {$status}'
+  change_entry_status: Změnit stav položky
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Změna stavu…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Aktualizace stavu…
+  status_updated: Stav byl aktualizován.
+  # Error notification when the status could not be changed
+  status_change_failed: Stav se nepodařilo změnit. Zkuste to prosím znovu.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: Položka obsahuje chyby. Před změnou stavu je prosím opravte.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: Položka obsahuje chyby. Před publikováním je prosím opravte.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Odeslat ke kontrole
+  confirm_sending_for_review: Vaše změny byly uloženy jako koncept. Chcete položku odeslat ke kontrole, aby si ji někdo mohl prohlédnout a publikovat?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Publikovat položku
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Zahodit změny
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Opravdu chcete tuto položku smazat? Nebude odstraněna, dokud nebude smazání publikováno. Do té doby ji stále najdete v seznamu položek s označením „Čeká na smazání“.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Tato položka ještě nebyla publikována, takže jejím smazáním bude zcela zahozena.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Tato položka má nepublikované změny. Jejich zahozením se obnoví publikovaná verze. Samotná položka nebude smazána.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Ještě nebyla publikována, takže vaše nepublikované změny budou zahozeny. Případná publikovaná verze zůstane publikována. }}
+      *   {{ Ještě nebyly publikovány, takže vaše nepublikované změny budou zahozeny. Případné publikované verze zůstanou publikovány. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Jedna z nich ještě nebyla publikována, takže vaše nepublikované změny budou zahozeny. Případná publikovaná verze zůstane publikována. }}
+      few {{ {$count} z nich ještě nebyly publikovány, takže vaše nepublikované změny budou zahozeny. Případné publikované verze zůstanou publikovány. }}
+      *   {{ {$count} z nich ještě nebylo publikováno, takže vaše nepublikované změny budou zahozeny. Případné publikované verze zůstanou publikovány. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Opravdu chcete tuto položku publikovat? Vaše změny se projeví okamžitě.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Publikování položky…
+  entry_published: Položka byla publikována.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Mazání položky…
+  discarding_changes: Zahazování změn…
+  entry_deleted: Položka byla smazána.
+  # Error notification when publishing fails
+  publishing_entry_failed: Položku se nepodařilo publikovat. Zkuste to prosím znovu.
+  # Workflow page: empty column message
+  no_entries: Žádné položky.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Přetažením změníte stav
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Vytvořit fork repozitáře
+  fork: Vytvořit fork
+  confirm_forking_repository: Chcete-li navrhnout změny v repozitáři „{$repo}“, musí být na vašem účtu vytvořen jeho fork. Vaše změny se uloží do tohoto forku a správce je před zveřejněním zkontroluje.
+  # Error shown when the user declined the dialog above
+  fork_declined: K navrhování změn potřebujete fork repozitáře na svém účtu.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Fork repozitáře „{$repo}“ se na vašem účtu nepodařilo vytvořit.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Nepodařilo se ověřit váš přístup k repozitáři „{$repo}“. Zkuste to prosím za chvíli znovu.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: Repozitář „{$repo}“ nepovoluje forky. Požádejte správce, aby pro něj forkování povolil.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Máte čekající pozvánku do repozitáře „{$repo}“. Přijměte ji na GitHubu a poté se znovu přihlaste.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Vaše přihlášení nezahrnuje přístup k soukromým repozitářům, takže repozitář „{$repo}“ nelze načíst. Požádejte správce, aby zkontroloval nastavení ověřování CMS.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Změny na tomto webu může publikovat pouze správce. Označte místo toho svou položku jako „Ke kontrole“ a někdo se na ni podívá.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Tuto změnu nelze provést přímo. Ke kontrole lze navrhovat pouze úpravy položek.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Vaše změny se ukládají do vašeho forku tohoto repozitáře „{$repo}“ a před zveřejněním se kontrolují.
+  view_fork: Zobrazit fork
 
 # ==============================================================================
 # Settings Dialog
@@ -1737,6 +2050,18 @@ prefs:
         field_label: Autorizační hlavička (např. Bearer <token>) (volitelné)
         saved: Autorizační hlavička byla uložena.
         removed: Autorizační hlavička byla odebrána.
+    clear_data:
+      title: Vymazat data
+      # Clear File Cache button
+      file_cache:
+        description: Smazat lokálně uložený obsah souborů a miniatury obrázků z mezipaměti, aby se uvolnilo místo v úložišti nebo vyřešily problémy způsobené zastaralými daty.
+        button_label: Vymazat mezipaměť souborů
+        confirmation: Lokálně uložený obsah souborů a miniatury obrázků z mezipaměti budou smazány. Vaše neuložené koncepty a nastavení zůstanou zachovány a smazaná data se podle potřeby znovu stáhnou nebo vygenerují. Po dokončení bude CMS znovu načteno.
+      # Erase All Data button
+      all_data:
+        description: Smazat vše, co CMS uchovává v tomto prohlížeči, včetně souborů v mezipaměti, neuložených konceptů a nastavení. Nic, co je již uloženo ve vašem repozitáři, nebude ovlivněno.
+        button_label: Vymazat všechna data
+        confirmation: Všechna data uložená v tomto prohlížeči budou smazána, včetně obsahu souborů v mezipaměti, miniatur obrázků, neuložených konceptů, nastavení a stavu přihlášení. Váš repozitář nebude ovlivněn, ale všechny neuložené změny budou ztraceny a budete se muset znovu přihlásit. Po dokončení bude CMS znovu načteno.
 
 # ==============================================================================
 # Keyboard Shortcuts

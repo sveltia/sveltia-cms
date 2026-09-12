@@ -366,13 +366,18 @@ viewing_x_asset_folder: |
     0   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, thư mục này chưa có tệp nào. }}
     1   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, có một tệp. }}
     *   {{ Bạn hiện đang xem thư mục tệp “{$folder}”, có {$count} tệp. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Bạn hiện đang xem các tệp trên {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Nhấn Enter để chỉnh sửa trang đơn “{$file}”.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Không tìm thấy trang.
 collection_not_found: Không tìm thấy chuyên mục.
+asset_folder_not_found: Không tìm thấy thư mục tệp.
 file_not_found: Không tìm thấy tệp.
 
 # Selection count indicator
@@ -405,6 +410,10 @@ sort_keys:
   commit_author: Người cập nhật
   # Sort by the last commit date
   commit_date: Ngày cập nhật
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Ngày sửa đổi
+  # Sort by file size
+  size: Dung lượng
   # Sort by the entry’s computed summary text
   _summary: Tóm tắt
   # Manual order defined by the user via drag-and-drop
@@ -416,6 +425,8 @@ ascending: '{$label}, từ A đến Z'
 ascending_date: '{$label}, cũ đến mới'
 descending: '{$label}, từ Z đến A'
 descending_date: '{$label}, mới đến cũ'
+ascending_number: '{$label}, từ nhỏ đến lớn'
+descending_number: '{$label}, từ lớn đến nhỏ'
 
 # Filter menu: button labels and options
 filter: Lọc
@@ -444,6 +455,8 @@ hide_info: Ẩn thông tin
 # Folder display labels when no specific path is configured
 all_assets: Tất cả các tệp
 global_assets: Tệp dùng chung
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Tệp được liên kết
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -534,6 +547,8 @@ upload_assets: Tải tệp lên
 # Edit options menu: button and item labels
 edit_options: Chỉnh sửa tùy chọn
 show_edit_options: Hiển thị tùy chọn chỉnh sửa
+# Copy menu aria-label
+copy_options: Tùy chọn sao chép
 # Edit menu items with specific asset names
 edit_asset: Chỉnh sửa tệp
 # {$name} is the selected asset name
@@ -751,6 +766,16 @@ warning_invalid_files: |
     1   {{ Không thể tải tệp lên vì tệp bị hỏng hoặc nội dung không khớp với định dạng tệp. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
     *   {{ Không thể tải lên {$count} tệp vì tệp bị hỏng hoặc nội dung không khớp với định dạng tệp. Điều này thường xảy ra khi ảnh chỉ được đổi tên thay vì chuyển đổi, chẳng hạn như đổi ảnh HEIC thành tệp JPEG. Vui lòng chuyển đổi tệp và thử lại. }}
 
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Tệp không đúng định dạng
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Tệp này không thể thay thế “{$name}” vì có định dạng khác. Vui lòng chuyển đổi tệp sang cùng định dạng rồi thử lại. }}
+    *   {{ Các tệp này không thể thay thế “{$name}” vì có định dạng khác. Vui lòng chuyển đổi các tệp sang cùng định dạng rồi thử lại. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -772,6 +797,9 @@ keep_both: Giữ cả hai
 # Upload progress and error messages
 uploading_files_progress: Đang tải lên…
 uploading_files_failed: Tải lên không thành công.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Xóa không thành công.
+renaming_asset_failed: Đổi tên không thành công.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -854,6 +882,11 @@ asset_paths_copied: |
   .match $count
     1   {{ Đã sao chép đường dẫn tệp. }}
     *   {{ Đã sao chép đường dẫn của {$count} tệp. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    1   {{ Đã sao chép ID tệp vào bộ nhớ tạm. }}
+    *   {{ Đã sao chép {$count} ID tệp vào bộ nhớ tạm. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -925,6 +958,7 @@ show_editor_options: Hiển thị tùy chọn trình chỉnh sửa
 editor_options: Tùy chọn trình chỉnh sửa
 
 # Preview controls
+show_second_pane: Hiển thị ngăn thứ hai
 show_preview: Hiển thị bản xem trước
 
 # Editor settings
@@ -985,6 +1019,31 @@ view_in_repository: Xem trong kho mã nguồn
 view_on_x: 'Xem trên {$service}'
 view_on_live_site: Xem trên trang web
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Xem bản xem trước
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Bản xem trước vẫn đang được dựng.
+  # Shown when the build failed, so no preview is available
+  failed: Không thể dựng bản xem trước.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Đang kiểm tra bản xem trước…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Kiểm tra bản xem trước
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Đang kiểm tra bản xem trước
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Đang dựng…
+    failed: Dựng thất bại
+
 # Content copying from other locales
 copy_from: Sao chép từ…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -1012,6 +1071,23 @@ edit_slug_error:
   empty: Đường dẫn tĩnh không được để trống.
   invalid: Đường dẫn tĩnh không được chứa ký tự đặc biệt, kể cả dấu gạch chéo và dấu cách.
   duplicate: Đường dẫn tĩnh này đang được một bài viết khác sử dụng.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Thư mục cha
+new_parent_folder: Thư mục mới
+new_parent_folder_create: Tạo
+new_parent_folder_name: Tên thư mục
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: Thư mục mới sẽ được tạo trong “{$folder}”.
+new_parent_folder_error:
+  empty: Tên thư mục không được để trống.
+  invalid: Tên thư mục không được chứa dấu gạch chéo hoặc bắt đầu bằng dấu chấm, và phải có chữ cái hoặc chữ số.
+  duplicate: Đã có một thư mục cùng tên ở đây.
+edit_path_error:
+  invalid: Đường dẫn không được chứa các phần tương đối như “..”.
+  recursive: Không thể di chuyển bài viết vào một trong các thư mục con của chính nó.
+  duplicate: Đường dẫn này đang được một bài viết khác sử dụng.
 
 # Required field indicator
 required: Bắt buộc
@@ -1118,6 +1194,8 @@ entry_sidebar:
     title: Kiểm tra lỗi
     placeholder: Kết quả kiểm tra sẽ được hiển thị tại đây.
     no_errors_found: Không tìm thấy lỗi.
+    # Button in the panel header that validates the entry on demand
+    validate: Kiểm tra
 
   # History panel: shows entry commit history
   history:
@@ -1148,6 +1226,10 @@ viewing_x_asset_details: Bạn đang xem thông tin chi tiết về tệp “{$n
 # Asset editor container aria-label
 asset_editor: Trình chỉnh sửa tệp
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Tệp trước
+next_asset: Tệp sau
+
 # Preview unavailable message
 preview_unavailable: Xem trước không có sẵn.
 
@@ -1162,6 +1244,12 @@ file_paths: |
   .input {$count :integer}
   .match $count
     *   {{ Đường dẫn tệp }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    *   {{ ID tệp }}
 file_data: Nội dung tệp
 
 # ==============================================================================
@@ -1195,6 +1283,12 @@ map_lat_lng: Bản đồ hiển thị vĩ độ {$latitude}, kinh độ {$longit
 remove_this_item: Xóa mục này
 move_up: Di chuyển lên
 move_down: Di chuyển xuống
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Sắp xếp lại mục
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Giá trị của mục
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1437,11 +1531,19 @@ config:
     oauth_implicit_flow: Sveltia CMS không hỗ trợ phương thức xác thực đã cấu hình (Implicit Flow). Hãy sử dụng <a>phương thức xác thực khác</a>.
     github_pkce_unsupported: Xác thực PKCE chưa được hỗ trợ do các hạn chế của GitHub. Thay vào đó, hãy sử dụng <a>phương thức xác thực khác</a>.
     oauth_no_app_id: ID ứng dụng OAuth không được xác định.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: Tùy chọn `open_authoring` yêu cầu chế độ xuất bản `editorial_workflow`. Xem <a>tài liệu</a> để biết chi tiết.
     # Don’t localize `auth_methods`
     no_auth_methods: Tùy chọn `auth_methods` phải chứa ít nhất một phương thức.
     missing_media_folder: Thư mục phương tiện không được xác định.
     public_folder_relative_path: Thư mục chung được cấu hình không hợp lệ. Giá trị phải là đường dẫn tuyệt đối bắt đầu bằng “/”.
     public_folder_absolute_url: URL tuyệt đối cho tùy chọn thư mục chung không được hỗ trợ trong Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: Tùy chọn `transformations` chứa khóa `{$key}` không được hỗ trợ. Khóa phải là `raster_image`, `svg` hoặc một định dạng ảnh raster được hỗ trợ.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: Tùy chọn `quality` của phép biến đổi `{$key}` không hợp lệ. Giá trị phải là số nguyên từ 0 đến 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: Tùy chọn `{$prop}` của phép biến đổi `{$key}` không hợp lệ. Giá trị phải là số nguyên dương.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Nhóm tệp {$count} phải có tùy chọn `name` là một chuỗi không trống.
     # {$name} is the invalid or duplicate asset collection name
@@ -1521,14 +1623,50 @@ config:
     relation_field_invalid_value_field: Trường giá trị tham chiếu `{$field}` không hợp lệ hoặc không được xác định.
     unexpected: Đã xảy ra lỗi
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: Tùy chọn `{$option}` phải là {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'Tùy chọn `{$option}` phải là một trong các giá trị sau: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: Tùy chọn `{$option}` phải là `{$value}`.
+    schema_invalid_empty_value: Tùy chọn `{$option}` phải là một chuỗi trống.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: Tùy chọn `{$option}` phải là một mảng gồm {$count} phần tử.
+    schema_invalid_value: Tùy chọn `{$option}` có giá trị không hợp lệ.
+    schema_missing_option: Tùy chọn `{$option}` là bắt buộc.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Cần có một trong các tùy chọn sau: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: một chuỗi
+      number: một số
+      integer: một số nguyên
+      boolean: một giá trị boolean
+      array: một mảng
+      object: một đối tượng
+      'null': trống
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: ID ứng dụng OAuth không được xác định. Người dùng được yêu cầu cung cấp mã truy cập để đăng nhập.
     editorial_workflow_unsupported: Quy trình biên tập hiện chỉ hỗ trợ dịch vụ GitHub và GitLab.
+    open_authoring_unsupported_backend: Open Authoring hiện chỉ được hỗ trợ với dịch vụ GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Tùy chọn `{$prop}` không được hỗ trợ trong Sveltia CMS. Nó sẽ bị bỏ qua.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Cả hai tùy chọn `picker_utc` và múi giờ mới hơn (`input_timezone` hoặc `output_utc`) đều được đặt. Các tùy chọn mới được ưu tiên. Hãy cân nhắc xóa `picker_utc` khỏi cấu hình của bạn.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: Tùy chọn `preview_path` sử dụng các thẻ ngày và giờ, nhưng chuyên mục không có trường DateTime nào để đọc chúng, vì vậy liên kết xem trước sẽ không được hiển thị.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: Tùy chọn `preview_path_date_field` tham chiếu đến trường có tên `{$name}`, nhưng không có trường DateTime nào với tên đó được xác định, vì vậy liên kết xem trước sẽ không được hiển thị.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: Tùy chọn `preview_path` tham chiếu đến `{$name}`, nhưng không có trường nào như vậy được xác định trong chuyên mục, vì vậy liên kết xem trước sẽ không được hiển thị.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: Tùy chọn `{$option}` không được xác định trong lược đồ cấu hình của Sveltia CMS. Nó sẽ bị bỏ qua. Hãy kiểm tra xem có lỗi chính tả hoặc lỗi cú pháp không.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Xem ghi chú tương thích để biết chi tiết: {$link}'
@@ -1558,6 +1696,9 @@ local_workflow:
 # {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
 # because selecting a plural form on three numbers at once would need a variant per combination
 viewing_editorial_workflow: 'Bạn hiện đang xem bảng Quy trình biên tập. Bản nháp: {$draft}. Đang duyệt: {$review}. Sẵn sàng: {$ready}. Đang chờ xóa: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Bạn hiện đang xem bảng quy trình biên tập. Bản nháp: {$draft}. Đang duyệt: {$review}. Chờ xóa: {$deletion}.'
 
 # Workflow status names. `drafts` is the plural form used as a column heading,
 # while `draft` is the singular form used in the editor’s status button.
@@ -1612,6 +1753,16 @@ workflow:
   status_updated: Đã cập nhật trạng thái.
   # Error notification when the status could not be changed
   status_change_failed: Không thể thay đổi trạng thái. Vui lòng thử lại.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: Bài viết có lỗi. Vui lòng sửa lỗi trước khi thay đổi trạng thái.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: Bài viết có lỗi. Vui lòng sửa lỗi trước khi xuất bản.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Gửi duyệt
+  confirm_sending_for_review: Các thay đổi của bạn đã được lưu thành bản nháp. Bạn có muốn gửi bài viết đi duyệt để người khác xem xét và xuất bản không?
   # Editor toolbar: button shown when the entry is ready to be published
   publish_entry: Xuất bản bài viết
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
@@ -1660,6 +1811,39 @@ workflow:
   no_entries: Không có bài viết nào.
   # Workflow page: aria-label for a draggable entry card
   drag_entry: Kéo để thay đổi trạng thái
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Fork kho mã nguồn
+  fork: Fork
+  confirm_forking_repository: Để đề xuất thay đổi cho “{$repo}”, cần tạo một bản fork của kho mã nguồn trên tài khoản của bạn. Các thay đổi của bạn sẽ được lưu vào bản fork đó và được người quản trị xem xét trước khi xuất bản.
+  # Error shown when the user declined the dialog above
+  fork_declined: Bạn cần có một bản fork của kho mã nguồn trên tài khoản của mình để đề xuất thay đổi.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Không thể tạo bản fork của kho mã nguồn “{$repo}” trên tài khoản của bạn.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Không thể kiểm tra quyền truy cập của bạn vào kho mã nguồn “{$repo}”. Vui lòng thử lại sau giây lát.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: Kho mã nguồn “{$repo}” không cho phép fork. Hãy đề nghị người quản trị bật tính năng fork cho kho này.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Bạn có một lời mời đang chờ vào kho mã nguồn “{$repo}”. Hãy chấp nhận lời mời trên GitHub rồi đăng nhập lại.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Phiên đăng nhập của bạn không bao gồm quyền truy cập các kho mã nguồn riêng tư, vì vậy không thể đọc kho mã nguồn “{$repo}”. Hãy đề nghị người quản trị kiểm tra cài đặt xác thực của CMS.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Chỉ người quản trị mới có thể xuất bản thay đổi lên trang web này. Thay vào đó, hãy đánh dấu bài viết là “Đang duyệt” và sẽ có người xem xét.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Không thể thực hiện thay đổi này trực tiếp. Chỉ có thể đề xuất các chỉnh sửa bài viết để duyệt.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Các thay đổi của bạn được lưu vào bản fork của kho mã nguồn này tại “{$repo}” và được xem xét trước khi xuất bản.
+  view_fork: Xem bản fork
 
 # ==============================================================================
 # Settings Dialog
@@ -1789,6 +1973,18 @@ prefs:
         field_label: 'Header xác thực (ví dụ: Bearer <token>) (không bắt buộc)'
         saved: Đã lưu header xác thực.
         removed: Đã xóa header xác thực.
+    clear_data:
+      title: Xóa dữ liệu
+      # Clear File Cache button
+      file_cache:
+        description: Xóa nội dung tệp và hình thu nhỏ được lưu trong bộ nhớ đệm cục bộ để giải phóng dung lượng lưu trữ hoặc khắc phục sự cố do dữ liệu cũ gây ra.
+        button_label: Xóa bộ nhớ đệm tệp
+        confirmation: Nội dung tệp và hình thu nhỏ được lưu trong bộ nhớ đệm cục bộ sẽ bị xóa. Các bản nháp chưa lưu và cài đặt của bạn sẽ được giữ lại, và dữ liệu đã xóa sẽ được tải xuống hoặc tạo lại khi cần. CMS sẽ được tải lại sau khi hoàn tất.
+      # Erase All Data button
+      all_data:
+        description: Xóa mọi thứ mà CMS lưu trong trình duyệt này, bao gồm các tệp trong bộ nhớ đệm, bản nháp chưa lưu và cài đặt. Những gì đã lưu vào kho mã nguồn của bạn sẽ không bị ảnh hưởng.
+        button_label: Xóa toàn bộ dữ liệu
+        confirmation: Toàn bộ dữ liệu lưu trong trình duyệt này sẽ bị xóa, bao gồm nội dung tệp trong bộ nhớ đệm, hình thu nhỏ, bản nháp chưa lưu, cài đặt và trạng thái đăng nhập. Kho mã nguồn của bạn sẽ không bị ảnh hưởng, nhưng mọi thay đổi chưa lưu sẽ bị mất và bạn sẽ phải đăng nhập lại. CMS sẽ được tải lại sau khi hoàn tất.
 
 # ==============================================================================
 # Keyboard Shortcuts

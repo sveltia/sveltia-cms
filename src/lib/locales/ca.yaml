@@ -238,6 +238,11 @@ mobile_promo_button: Proveu-lo
 new_language_available: Sveltia CMS ja és disponible en {$locale}!
 change_language: Canvia la llengua
 
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: S’està canviant a {$locale}…
+locale_load_failed: No s’ha pogut carregar la traducció al {$locale}. Torneu-ho a provar més tard.
+
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
 visit_live_site: Visita el lloc en línia
@@ -361,13 +366,18 @@ viewing_x_asset_folder: |
     0   {{ Ara esteu veient la carpeta de recursos «{$folder}», que encara no té cap recurs. }}
     one {{ Ara esteu veient la carpeta de recursos «{$folder}», que té un recurs. }}
     *   {{ Ara esteu veient la carpeta de recursos «{$folder}», que té {$count} recursos. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Ara esteu veient els recursos a {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Premeu Retorn per editar el fitxer «{$file}».
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: No s’ha trobat la pàgina.
 collection_not_found: No s’ha trobat la col·lecció.
+asset_folder_not_found: No s’ha trobat la carpeta de recursos.
 file_not_found: No s’ha trobat el fitxer.
 
 # Selection count indicator
@@ -400,6 +410,10 @@ sort_keys:
   commit_author: Actualitzat per
   # Sort by the last commit date
   commit_date: Actualitzat el
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Modificat el
+  # Sort by file size
+  size: Mida
   # Sort by the entry’s computed summary text
   _summary: Resum
   # Manual order defined by the user via drag-and-drop
@@ -411,6 +425,8 @@ ascending: '{$label}, A–Z'
 ascending_date: '{$label}, antic al nou'
 descending: '{$label}, Z–A'
 descending_date: '{$label}, nou a l’antic'
+ascending_number: '{$label}, de petit a gran'
+descending_number: '{$label}, de gran a petit'
 
 # Filter menu: button labels and options
 filter: Filtra
@@ -439,6 +455,22 @@ hide_info: Amaga la informació
 # Folder display labels when no specific path is configured
 all_assets: Tots els recursos
 global_assets: Recursos globals
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Fitxers enllaçats
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ S’està carregant l’entrada… }}
+    *   {{ S’estan carregant les entrades… }}
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -526,6 +558,8 @@ upload_assets: Puja recursos nous
 # Edit options menu: button and item labels
 edit_options: Opcions d’edició
 show_edit_options: Mostra les opcions d’edició
+# Copy menu aria-label
+copy_options: Opcions de còpia
 # Edit menu items with specific asset names
 edit_asset: Edita el recurs
 # {$name} is the selected asset name
@@ -551,6 +585,14 @@ enter_new_name_for_asset_error:
   empty: El nom del fitxer no pot ser buit.
   character: El nom del fitxer no pot contenir caràcters especials.
   duplicate: Aquest nom de fitxer ja s’usa per a un altre recurs.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Canvia l’extensió del fitxer
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Segur que voleu canviar l’extensió de «.{$oldExtension}» a «.{$newExtension}»?
+  add: Segur que voleu afegir l’extensió «.{$newExtension}»?
+  remove: Segur que voleu suprimir l’extensió «.{$oldExtension}»?
+file_extension_change_warning: És possible que el fitxer no es mostri o no es processi correctament si l’extensió no coincideix amb el format real del fitxer.
 
 # Replace asset: menu item and dialog title
 replace_asset: Reemplaça el recurs
@@ -661,6 +703,8 @@ delete_selected_entries: |
     *   {{ Suprimeix les entrades seleccionades }}
 confirm_deleting_this_entry: Segur que voleu suprimir aquesta entrada?
 confirm_deleting_this_entry_with_assets: Segur que voleu suprimir aquesta entrada i els recursos associats?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: No s’ha pogut suprimir l’entrada. Torneu-ho a provar.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
@@ -728,6 +772,26 @@ warning_oversized_files: |
     one {{ Aquest fitxer no es pot pujar perquè supera la mida màxima de {$size}. Reduïu-ne la mida o seleccioneu un fitxer diferent. }}
     *   {{ Aquests fitxers no es poden pujar perquè superen la mida màxima de {$size}. Reduïu-ne les mides o seleccioneu fitxers diferents. }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Fitxers no vàlids
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Aquest fitxer no es pot pujar perquè està malmès o el seu contingut no coincideix amb l’extensió del fitxer. Això sol passar quan es canvia el nom d’una foto en lloc de convertir-la, com ara una imatge HEIC desada com a fitxer JPEG. Convertiu el fitxer i torneu-ho a provar. }}
+    *   {{ Aquests fitxers no es poden pujar perquè estan malmesos o el seu contingut no coincideix amb les extensions dels fitxers. Això sol passar quan es canvia el nom de les fotos en lloc de convertir-les, com ara imatges HEIC desades com a fitxers JPEG. Convertiu els fitxers i torneu-ho a provar. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Fitxers de format diferent
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Aquest fitxer no pot substituir «{$name}» perquè té un format diferent. Convertiu el fitxer al mateix format i torneu-ho a provar. }}
+    *   {{ Aquests fitxers no poden substituir «{$name}» perquè tenen un format diferent. Convertiu els fitxers al mateix format i torneu-ho a provar. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -749,6 +813,9 @@ keep_both: Mantén tots dos
 # Upload progress and error messages
 uploading_files_progress: S’està pujant…
 uploading_files_failed: No s’ha pogut pujar.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: No s’ha pogut suprimir.
+renaming_asset_failed: No s’ha pogut canviar el nom.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -832,6 +899,11 @@ asset_paths_copied: |
   .match $count
     one {{ Camí del fitxer copiat al porta-retalls. }}
     *   {{ {$count} camins de fitxer copiats al porta-retalls. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ S’ha copiat l’ID del fitxer al porta-retalls. }}
+    *   {{ S’han copiat {$count} ID de fitxers al porta-retalls. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -903,6 +975,7 @@ show_editor_options: Mostra les opcions de l’editor
 editor_options: Opcions de l’editor
 
 # Preview controls
+show_second_pane: Mostra el segon panell
 show_preview: Mostra la previsualització
 
 # Editor settings
@@ -963,6 +1036,31 @@ view_in_repository: Mostra al repositori
 view_on_x: 'Mostra al {$service}'
 view_on_live_site: Mostra al lloc en línia
 
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Mostra la previsualització
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: La previsualització encara s’està generant.
+  # Shown when the build failed, so no preview is available
+  failed: No s’ha pogut generar la previsualització.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: S’està cercant una previsualització…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Cerca una previsualització
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: S’està cercant una previsualització
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: S’està generant…
+    failed: Ha fallat la generació
+
 # Content copying from other locales
 copy_from: Copia de…
 # {$locale} is the localized language name of the source content being copied, e.g., English
@@ -991,6 +1089,23 @@ edit_slug_error:
   empty: El slug no pot ser buit.
   invalid: El slug no pot contenir caràcters especials, incloses les barres i els espais.
   duplicate: Aquest slug ja s’usa per a una altra entrada.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Carpeta superior
+new_parent_folder: Carpeta nova
+new_parent_folder_create: Crea
+new_parent_folder_name: Nom de la carpeta
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: La carpeta nova es crearà a «{$folder}».
+new_parent_folder_error:
+  empty: El nom de la carpeta no pot ser buit.
+  invalid: El nom de la carpeta no pot contenir barres ni començar amb un punt, i ha d’incloure lletres o números.
+  duplicate: Ja hi ha una carpeta amb aquest nom aquí.
+edit_path_error:
+  invalid: El camí no pot contenir segments relatius com ara «..».
+  recursive: L’entrada no es pot moure a una de les seves pròpies subcarpetes.
+  duplicate: Aquest camí ja s’usa per a una altra entrada.
 
 # Required field indicator
 required: Obligatori
@@ -1105,6 +1220,8 @@ entry_sidebar:
     title: Validació
     placeholder: Aquí es mostraran els resultats de la validació.
     no_errors_found: No s’ha trobat cap error.
+    # Button in the panel header that validates the entry on demand
+    validate: Valida
 
   # History panel: shows entry commit history
   history:
@@ -1135,6 +1252,10 @@ viewing_x_asset_details: Esteu veient els detalls del recurs «{$name}».
 # Asset editor container aria-label
 asset_editor: Editor de recursos
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Recurs anterior
+next_asset: Recurs següent
+
 # Preview unavailable message
 preview_unavailable: Previsualització no disponible.
 
@@ -1151,6 +1272,13 @@ file_paths: |
   .match $count
     one {{ Camí del fitxer }}
     *   {{ Camins del fitxer }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ ID del fitxer }}
+    *   {{ ID dels fitxers }}
 file_data: Dades del fitxer
 
 # ==============================================================================
@@ -1184,6 +1312,12 @@ map_lat_lng: Mapa que mostra la latitud {$latitude}, longitud {$longitude}
 remove_this_item: Suprimeix aquest element
 move_up: Mou amunt
 move_down: Mou avall
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Reordena l’element
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Valor de l’element
 
 # Add item button label
 # Example: “Add Image”, “Add Author”
@@ -1196,6 +1330,9 @@ add_item_below: Afegeix un element a baix
 
 # Variable-type list selector
 select_list_type: Selecciona el tipus de llista
+
+# Variable-type mismatch
+unknown_variable_type: Aquest element no es pot mostrar perquè el tipus és desconegut. Consulteu la consola del navegador per a més detalls.
 
 # ==============================================================================
 # Field Widgets
@@ -1247,6 +1384,14 @@ assets_dialog:
   # Large file warning dialog
   large_file:
     title: Fitxer gran
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Fitxer no vàlid
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: No es poden pujar els fitxers
 
   # Photo credit dialog (stock photos)
   photo_credit:
@@ -1404,6 +1549,8 @@ config:
     parse_failed_invalid_object: El fitxer de configuració no és un objecte JavaScript vàlid.
     parse_failed_unsupported_type: El fitxer de configuració no és un tipus de fitxer vàlid. Només s’admeten YAML, TOML i JSON.
     no_collection: No s’han definit col·leccions.
+    # Don’t localize `hide`
+    no_visible_collection: Almenys una col·lecció ha de ser visible. Comproveu l’opció `hide`.
     missing_backend: No s’ha definit el rerefons.
     missing_backend_name: No s’ha definit el nom del rerefons.
     # {$name} is the backend name from the CMS configuration
@@ -1417,11 +1564,19 @@ config:
     oauth_implicit_flow: El mètode d’autenticació configurat (flux implícit) no és compatible amb Sveltia CMS. Useu un <a>mètode d’autenticació</a> diferent.
     github_pkce_unsupported: L’autorització PKCE encara no és compatible a causa de les limitacions de GitHub. Useu un <a>mètode d’autenticació</a> diferent.
     oauth_no_app_id: No s’ha definit l’ID de l’aplicació OAuth.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: L’opció `open_authoring` requereix el mode de publicació `editorial_workflow`. Consulteu la <a>documentació</a> per a més detalls.
     # Don’t localize `auth_methods`
     no_auth_methods: L’opció `auth_methods` ha de contenir almenys un mètode.
     missing_media_folder: No s’ha definit la carpeta multimèdia.
     public_folder_relative_path: La carpeta pública configurada no és vàlida. Ha de ser un camí absolut que comenci per «/».
     public_folder_absolute_url: No s’admet un URL absolut per a l’opció de carpeta pública a Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: L’opció `transformations` conté una clau `{$key}` no compatible. Ha de ser `raster_image`, `svg` o un format d’imatge ràster compatible.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: L’opció `quality` de la transformació `{$key}` no és vàlida. Ha de ser un nombre enter entre 0 i 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: L’opció `{$prop}` de la transformació `{$key}` no és vàlida. Ha de ser un nombre enter positiu.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: La col·lecció de recursos {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate asset collection name
@@ -1436,6 +1591,24 @@ config:
     file_format_mismatch: L’extensió `{$extension}` no coincideix amb el format `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: La plantilla de slug `{$slug}` no és vàlida perquè no pot contenir barres. Per organitzar les entrades en subcarpetes, useu l’opció `path` en lloc de `slug`.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: L’opció `reorder` fa referència a un grup de visualització anomenat `{$name}`, però no hi ha cap grup amb aquest nom definit a l’opció `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: L’opció `sortable_fields` fa referència a un camp anomenat `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: L’opció `view_groups` fa referència a un camp anomenat `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: L’opció `view_filters` fa referència a un camp anomenat `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: El grup de visualització {$count} ha de tenir l’opció `name` definida com a cadena no buida.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: El nom del grup de visualització `{$name}` no és vàlid. No pot contenir caràcters especials.
+    duplicate_view_group_name: Els noms dels grups de visualització han de ser únics, però `{$name}` s’usa més d’una vegada.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: El filtre de visualització {$count} ha de tenir l’opció `name` definida com a cadena no buida.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: El nom del filtre de visualització `{$name}` no és vàlid. No pot contenir caràcters especials.
+    duplicate_view_filter_name: Els noms dels filtres de visualització han de ser únics, però `{$name}` s’usa més d’una vegada.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: La col·lecció {$count} ha de tenir l’opció `name` definida com a cadena no buida.
     # {$name} is the invalid or duplicate collection name
@@ -1483,14 +1656,50 @@ config:
     relation_field_invalid_value_field: El camp de valor referenciat `{$field}` no és vàlid o no està definit.
     unexpected: Error inesperat
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: L’opció `{$option}` ha de ser {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'L’opció `{$option}` ha de ser un d’aquests valors: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: L’opció `{$option}` ha de ser `{$value}`.
+    schema_invalid_empty_value: L’opció `{$option}` ha de ser una cadena buida.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: L’opció `{$option}` ha de ser una matriu de {$count} elements.
+    schema_invalid_value: L’opció `{$option}` té un valor no vàlid.
+    schema_missing_option: L’opció `{$option}` és obligatòria.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Cal una d’aquestes opcions: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: una cadena
+      number: un nombre
+      integer: un nombre enter
+      boolean: un valor booleà
+      array: una matriu
+      object: un objecte
+      'null': buida
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: No s’ha definit l’ID de l’aplicació OAuth. Es demanarà als usuaris que proporcioneu un testimoni d’accés per iniciar la sessió.
     editorial_workflow_unsupported: El flux editorial encara no és compatible amb Sveltia CMS.
+    open_authoring_unsupported_backend: Actualment, l’Open Authoring només és compatible amb el backend de GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: L’opció `{$prop}` no és compatible amb Sveltia CMS. S’ignorarà.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Tant `picker_utc` com les opcions més noves de zona horària (`input_timezone` o `output_utc`) estan definides. Les opcions noves tenen precedència. Considereu eliminar `picker_utc` de la vostra configuració.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: L’opció `preview_path` usa etiquetes de data i hora, però la col·lecció no té cap camp DateTime d’on llegir-les, de manera que no es mostrarà l’enllaç de previsualització.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: L’opció `preview_path_date_field` fa referència a un camp anomenat `{$name}`, però no hi ha cap camp DateTime definit amb aquest nom, de manera que no es mostrarà l’enllaç de previsualització.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: L’opció `preview_path` fa referència a `{$name}`, però no hi ha cap camp amb aquest nom definit a la col·lecció, de manera que no es mostrarà l’enllaç de previsualització.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: L’opció `{$option}` no està definida a l’esquema de configuració de Sveltia CMS. S’ignorarà. Comproveu si hi ha un error tipogràfic o de sintaxi.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Vegeu les notes de compatibilitat per a més detalls: {$link}'
@@ -1513,12 +1722,164 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Ara esteu veient el tauler del flux editorial. Esborranys: {$draft}. En revisió: {$review}. Llestes: {$ready}. Pendents de supressió: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Ara esteu veient el tauler del flux editorial. Esborranys: {$draft}. En revisió: {$review}. Pendents de supressió: {$deletion}.'
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
 # Column headings for the Editorial Workflow feature (content review process).
 
 status:
+  draft: Esborrany
   drafts: Esborranys
   in_review: En revisió
   ready: Llest
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Pendent de supressió
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Cancel·la la supressió
+  confirm_cancelling_deletion: Segur que voleu cancel·lar aquesta supressió? L’entrada continuarà publicada.
+  confirm_completing_deletion: Segur que voleu suprimir aquesta entrada? S’eliminarà immediatament.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Entrada marcada per a la supressió. }}
+      *   {{ {$count} entrades marcades per a la supressió. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Canvis descartats. }}
+      *   {{ S’han descartat els canvis de {$count} entrades. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: S’està cancel·lant la supressió…
+  deletion_cancelled: Supressió cancel·lada.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: No s’ha pogut cancel·lar la supressió. Torneu-ho a provar.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Entrades no publicades
+  published_entries: Entrades publicades
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Estat: {$status}'
+  change_entry_status: Canvia l’estat de l’entrada
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: S’està canviant l’estat…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: S’està actualitzant l’estat…
+  status_updated: Estat actualitzat.
+  # Error notification when the status could not be changed
+  status_change_failed: No s’ha pogut canviar l’estat. Torneu-ho a provar.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: L’entrada té errors. Corregiu-los abans de canviar l’estat.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: L’entrada té errors. Corregiu-los abans de publicar-la.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Envia a revisió
+  confirm_sending_for_review: Els canvis s’han desat com a esborrany. Voleu enviar l’entrada a revisió perquè algú la pugui revisar i publicar?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Publica l’entrada
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Descarta els canvis
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Segur que voleu suprimir aquesta entrada? No s’eliminarà fins que es publiqui la supressió. Mentrestant, la continuareu trobant a la llista d’entrades, marcada com a «Pendent de supressió».
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Aquesta entrada encara no s’ha publicat, de manera que suprimir-la la descartarà completament.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Aquesta entrada té canvis no publicats. Descartar-los restaurarà la versió publicada. L’entrada en si no se suprimirà.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Encara no s’ha publicat, de manera que els canvis no publicats es descartaran. Qualsevol versió publicada continuarà publicada. }}
+      *   {{ Encara no s’han publicat, de manera que els canvis no publicats es descartaran. Qualsevol versió publicada continuarà publicada. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Una d’elles encara no s’ha publicat, de manera que els canvis no publicats es descartaran. Qualsevol versió publicada continuarà publicada. }}
+      *   {{ {$count} d’elles encara no s’han publicat, de manera que els canvis no publicats es descartaran. Qualsevol versió publicada continuarà publicada. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Segur que voleu publicar aquesta entrada? Els canvis tindran efecte immediatament.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: S’està publicant l’entrada…
+  entry_published: Entrada publicada.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: S’està suprimint l’entrada…
+  discarding_changes: S’estan descartant els canvis…
+  entry_deleted: Entrada suprimida.
+  # Error notification when publishing fails
+  publishing_entry_failed: No s’ha pogut publicar l’entrada. Torneu-ho a provar.
+  # Workflow page: empty column message
+  no_entries: No hi ha cap entrada.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Arrossegueu per canviar l’estat
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Bifurca el repositori
+  fork: Bifurca
+  confirm_forking_repository: Per suggerir canvis a «{$repo}», cal crear una bifurcació del repositori al vostre compte. Els canvis es desen en aquesta bifurcació i un mantenidor els revisa abans que es publiquin.
+  # Error shown when the user declined the dialog above
+  fork_declined: Necessiteu una bifurcació del repositori al vostre compte per suggerir canvis.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: No s’ha pogut crear una bifurcació del repositori «{$repo}» al vostre compte.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: No s’ha pogut comprovar el vostre accés al repositori «{$repo}». Torneu-ho a provar d’aquí a un moment.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: El repositori «{$repo}» no permet bifurcacions. Demaneu a un mantenidor que les habiliti.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Teniu una invitació pendent al repositori «{$repo}». Accepteu-la a GitHub i torneu a iniciar la sessió.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: El vostre inici de sessió no inclou accés als repositoris privats, de manera que no es pot llegir el repositori «{$repo}». Demaneu a un mantenidor que comprovi la configuració d’autenticació del CMS.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Només un mantenidor pot publicar canvis en aquest lloc. En lloc d’això, marqueu l’entrada com a «En revisió» i algú se la mirarà.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Aquest canvi no es pot fer directament. Només es poden suggerir per a revisió les edicions d’entrades.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Els canvis es desen a la vostra bifurcació d’aquest repositori a «{$repo}» i es revisen abans que es publiquin.
+  view_fork: Mostra la bifurcació
 
 # ==============================================================================
 # Settings Dialog
@@ -1648,6 +2009,18 @@ prefs:
         field_label: Capçalera d’autorització (p. ex., Bearer <testimoni>) (opcional)
         saved: Capçalera d’autorització desada.
         removed: Capçalera d’autorització suprimida.
+    clear_data:
+      title: Esborra les dades
+      # Clear File Cache button
+      file_cache:
+        description: Suprimeix el contingut dels fitxers i les miniatures d’imatges desats a la memòria cau local per alliberar espai d’emmagatzematge o resoldre problemes causats per dades obsoletes.
+        button_label: Esborra la memòria cau de fitxers
+        confirmation: Se suprimiran el contingut dels fitxers i les miniatures d’imatges desats a la memòria cau local. Els esborranys no desats i la configuració es conservaran, i les dades suprimides es tornaran a baixar o generar quan calgui. El CMS es tornarà a carregar quan acabi.
+      # Erase All Data button
+      all_data:
+        description: Suprimeix tot el que el CMS guarda en aquest navegador, inclosos els fitxers a la memòria cau, els esborranys no desats i la configuració. El que ja estigui desat al repositori no es veurà afectat.
+        button_label: Esborra totes les dades
+        confirmation: Se suprimiran totes les dades emmagatzemades en aquest navegador, inclosos el contingut dels fitxers a la memòria cau, les miniatures d’imatges, els esborranys no desats, la configuració i l’estat de la sessió. El repositori no es veurà afectat, però es perdrà qualsevol canvi que no hàgiu desat i haureu de tornar a iniciar la sessió. El CMS es tornarà a carregar quan acabi.
 
 # ==============================================================================
 # Keyboard Shortcuts

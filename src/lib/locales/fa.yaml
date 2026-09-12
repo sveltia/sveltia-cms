@@ -366,6 +366,9 @@ viewing_x_asset_folder: |
     0   {{ شما اکنون در حال مشاهده پوشه دارایی «{$folder}» هستید که هنوز هیچ دارایی ندارد. }}
     one {{ شما اکنون در حال مشاهده پوشه دارایی «{$folder}» هستید که یک دارایی دارد. }}
     *   {{ شما اکنون در حال مشاهده پوشه دارایی «{$folder}» هستید که {$count} دارایی دارد. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: شما اکنون در حال مشاهده دارایی‌های موجود در {$service} هستید.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
@@ -407,6 +410,10 @@ sort_keys:
   commit_author: به‌روزرسانی توسط
   # Sort by the last commit date
   commit_date: تاریخ به‌روزرسانی
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: تاریخ تغییر
+  # Sort by file size
+  size: حجم
   # Sort by the entry’s computed summary text
   _summary: خلاصه
   # Manual order defined by the user via drag-and-drop
@@ -418,6 +425,8 @@ ascending: '{$label}، الف تا ی'
 ascending_date: '{$label}، قدیمی به جدید'
 descending: '{$label}، ی تا الف'
 descending_date: '{$label}، جدید به قدیمی'
+ascending_number: '{$label}، از کوچک به بزرگ'
+descending_number: '{$label}، از بزرگ به کوچک'
 
 # Filter menu: button labels and options
 filter: فیلتر
@@ -446,6 +455,8 @@ hide_info: پنهان کردن اطلاعات
 # Folder display labels when no specific path is configured
 all_assets: همه دارایی‌ها
 global_assets: دارایی‌های عمومی
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: فایل‌های پیوندشده
 
 # ==============================================================================
 # Entry and Collection Actions
@@ -541,6 +552,8 @@ upload_assets: بارگذاری دارایی‌های جدید
 # Edit options menu: button and item labels
 edit_options: گزینه‌های ویرایش
 show_edit_options: نمایش گزینه‌های ویرایش
+# Copy menu aria-label
+copy_options: گزینه‌های کپی
 # Edit menu items with specific asset names
 edit_asset: ویرایش دارایی
 # {$name} is the selected asset name
@@ -794,6 +807,9 @@ keep_both: نگه داشتن هر دو
 # Upload progress and error messages
 uploading_files_progress: در حال بارگذاری…
 uploading_files_failed: بارگذاری ناموفق بود.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: حذف انجام نشد.
+renaming_asset_failed: تغییر نام انجام نشد.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -877,6 +893,11 @@ asset_paths_copied: |
   .match $count
     one {{ مسیر فایل در حافظه موقت کپی شد. }}
     *   {{ {$count} مسیر فایل در حافظه موقت کپی شدند. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ شناسه فایل در کلیپ‌بورد کپی شد. }}
+    *   {{ {$count} شناسه فایل در کلیپ‌بورد کپی شدند. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
@@ -1063,6 +1084,23 @@ edit_slug_error:
   invalid: اسلاگ نمی‌تواند شامل کاراکترهای خاص، از جمله اسلش و فاصله باشد.
   duplicate: این اسلاگ برای ورودی دیگری استفاده شده است.
 
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: پوشه والد
+new_parent_folder: پوشه جدید
+new_parent_folder_create: ایجاد
+new_parent_folder_name: نام پوشه
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: پوشه جدید در «{$folder}» ایجاد خواهد شد.
+new_parent_folder_error:
+  empty: نام پوشه نمی‌تواند خالی باشد.
+  invalid: نام پوشه نمی‌تواند شامل اسلش باشد یا با نقطه شروع شود و باید شامل حروف یا اعداد باشد.
+  duplicate: پوشه‌ای با این نام از قبل در اینجا وجود دارد.
+edit_path_error:
+  invalid: مسیر نمی‌تواند شامل بخش‌های نسبی مانند «..» باشد.
+  recursive: ورودی را نمی‌توان به یکی از زیرپوشه‌های خودش منتقل کرد.
+  duplicate: این مسیر برای ورودی دیگری استفاده شده است.
+
 # Required field indicator
 required: الزامی
 
@@ -1176,6 +1214,8 @@ entry_sidebar:
     title: اعتبارسنجی
     placeholder: نتایج اعتبارسنجی اینجا نمایش داده می‌شوند.
     no_errors_found: هیچ خطایی یافت نشد.
+    # Button in the panel header that validates the entry on demand
+    validate: اعتبارسنجی
 
   # History panel: shows entry commit history
   history:
@@ -1206,6 +1246,10 @@ viewing_x_asset_details: شما در حال مشاهده جزئیات دارای
 # Asset editor container aria-label
 asset_editor: ویرایشگر دارایی
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: دارایی قبلی
+next_asset: دارایی بعدی
+
 # Preview unavailable message
 preview_unavailable: پیش‌نمایش در دسترس نیست.
 
@@ -1222,6 +1266,13 @@ file_paths: |
   .match $count
     one {{ مسیر فایل }}
     *   {{ مسیرهای فایل }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ شناسه فایل }}
+    *   {{ شناسه‌های فایل }}
 file_data: داده‌های فایل
 
 # ==============================================================================
@@ -1639,6 +1690,10 @@ config:
     preview_path_no_date_field: 'گزینه `preview_path` از برچسب‌های تاریخ و زمان استفاده می‌کند، اما مجموعه هیچ فیلد DateTime برای خواندن آن‌ها ندارد، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.'
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
     preview_path_date_field_not_found: 'گزینه `preview_path_date_field` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما هیچ فیلد DateTime با این نام تعریف نشده است، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.'
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: گزینه `preview_path` به `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: گزینه `{$option}` در طرحواره پیکربندی Sveltia CMS تعریف نشده است. این گزینه نادیده گرفته خواهد شد. وجود اشتباه تایپی یا خطای نحوی را بررسی کنید.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'برای جزئیات یادداشت‌های سازگاری را ببینید: {$link}'
@@ -1725,6 +1780,12 @@ workflow:
   status_updated: وضعیت به‌روزرسانی شد.
   # Error notification when the status could not be changed
   status_change_failed: تغییر وضعیت امکان‌پذیر نبود. لطفاً دوباره تلاش کنید.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: ورودی دارای خطا است. لطفاً پیش از تغییر وضعیت، آن‌ها را اصلاح کنید.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: ورودی دارای خطا است. لطفاً پیش از انتشار، آن‌ها را اصلاح کنید.
   # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
   # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
   send_for_review: ارسال برای بررسی
@@ -1939,6 +2000,18 @@ prefs:
         field_label: هدر احراز هویت (مثلاً Bearer <token>) (اختیاری)
         saved: هدر احراز هویت ذخیره شد.
         removed: هدر احراز هویت حذف شد.
+    clear_data:
+      title: پاک‌سازی داده‌ها
+      # Clear File Cache button
+      file_cache:
+        description: حذف محتوای فایل‌ها و تصاویر بندانگشتی ذخیره‌شده در حافظه نهان محلی برای آزاد کردن فضای ذخیره‌سازی یا رفع مشکلات ناشی از داده‌های قدیمی.
+        button_label: پاک‌سازی حافظه نهان فایل‌ها
+        confirmation: محتوای فایل‌ها و تصاویر بندانگشتی ذخیره‌شده در حافظه نهان محلی حذف خواهند شد. پیش‌نویس‌های ذخیره‌نشده و تنظیمات شما حفظ می‌شوند و داده‌های حذف‌شده در صورت نیاز دوباره دانلود یا تولید خواهند شد. پس از اتمام، CMS دوباره بارگذاری می‌شود.
+      # Erase All Data button
+      all_data:
+        description: حذف همه چیزهایی که CMS در این مرورگر نگه می‌دارد، از جمله فایل‌های ذخیره‌شده در حافظه نهان، پیش‌نویس‌های ذخیره‌نشده و تنظیمات. هر چیزی که قبلاً در مخزن شما ذخیره شده باشد تحت تأثیر قرار نمی‌گیرد.
+        button_label: پاک کردن همه داده‌ها
+        confirmation: همه داده‌های ذخیره‌شده در این مرورگر حذف خواهند شد، از جمله محتوای فایل‌های ذخیره‌شده در حافظه نهان، تصاویر بندانگشتی، پیش‌نویس‌های ذخیره‌نشده، تنظیمات و وضعیت ورود. مخزن شما تحت تأثیر قرار نمی‌گیرد، اما هر تغییری که ذخیره نکرده‌اید از دست می‌رود و باید دوباره وارد شوید. پس از اتمام، CMS دوباره بارگذاری می‌شود.
 
 # ==============================================================================
 # Keyboard Shortcuts
