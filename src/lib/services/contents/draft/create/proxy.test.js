@@ -1,4 +1,5 @@
 // @ts-nocheck
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { copyDefaultLocaleValue, createProxy, getValueMapVersion } from './proxy.svelte.js';
@@ -236,6 +237,31 @@ describe('contents/draft/create/proxy.svelte', () => {
 
       expect(proxy.title).toBe('Updated');
       expect(Object.keys(proxy)).toEqual(['title']);
+    });
+
+    it('should list the keys in insertion order, even after a key is deleted and re-added', () => {
+      // Svelte’s `$state` proxy keeps a deleted key in its target, so the key would otherwise come
+      // back in its old position, which reorders KeyValue pairs when one is renamed
+      const draft = createDraft({ values: { en: { 'kv.a': '1', 'kv.b': '2', title: 'T' } } });
+      const proxy = draft.currentValues.en;
+
+      delete proxy['kv.a'];
+      delete proxy['kv.b'];
+      proxy['kv.aa'] = '1';
+      proxy['kv.b'] = '2';
+
+      expect(Object.keys(proxy)).toEqual(['title', 'kv.aa', 'kv.b']);
+      expect(Object.entries(proxy)).toEqual([
+        ['title', 'T'],
+        ['kv.aa', '1'],
+        ['kv.b', '2'],
+      ]);
+      expect('kv.a' in proxy).toBe(false);
+      expect('kv.b' in proxy).toBe(true);
+
+      // A key that is deleted is gone from the list right away
+      delete proxy.title;
+      expect(Object.keys(proxy)).toEqual(['kv.aa', 'kv.b']);
     });
 
     it('should count the writes and deletions as the version', () => {

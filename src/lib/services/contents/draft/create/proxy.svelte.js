@@ -136,14 +136,38 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
   /** @type {FlattenedEntryContent} */
   const values = $state(target);
   let version = $state(0);
+  /**
+   * Key paths in insertion order. Svelte’s `$state` proxy keeps a deleted key in its target, so a
+   * key deleted and written again would otherwise be listed in its old position. That reorders the
+   * pairs of a KeyValue field as soon as one of them is renamed, because the editor rewrites all of
+   * them, and the order is what the entry file ends up with.
+   * This is intentionally a plain `Set`, not a `SvelteSet`: a caller enumerating the keys already
+   * depends on the `$state` proxy, which is read in the `ownKeys` trap below.
+   * @type {Set<string | symbol>}
+   */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  const keys = new Set(Object.keys(target));
 
   return new Proxy(/** @type {any} */ (values), {
     // eslint-disable-next-line jsdoc/require-jsdoc
     get: (obj, key) => (key === VERSION_KEY ? version : obj[key]),
     // eslint-disable-next-line jsdoc/require-jsdoc
+    ownKeys: (obj) => {
+      // Read the keys through the `$state` proxy, so that a caller enumerating them depends on
+      // them; only the order comes from our own list
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity
+      const ownKeys = new Set(Reflect.ownKeys(obj));
+
+      return [
+        ...[...keys].filter((key) => ownKeys.has(key)),
+        ...[...ownKeys].filter((key) => !keys.has(key)),
+      ];
+    },
+    // eslint-disable-next-line jsdoc/require-jsdoc
     set: (obj, /** @type {FieldKeyPath} */ keyPath, value) => {
       if (obj[keyPath] !== value) {
         obj[keyPath] = value;
+        keys.add(keyPath);
         version += 1;
       }
 
@@ -173,6 +197,7 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
     deleteProperty: (obj, /** @type {FieldKeyPath} */ keyPath) => {
       if (keyPath in obj) {
         delete obj[keyPath];
+        keys.delete(keyPath);
         version += 1;
       }
 
