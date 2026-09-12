@@ -219,6 +219,7 @@ export const moveAssets = async (action, movingAssets) => {
     movingAssets.map(async ({ asset, path }) => {
       const newPath = path;
       const newName = getPathInfo(newPath).basename;
+      const blob = asset.file ?? (await getAssetBlob(asset));
 
       savingAssets.push({ ...asset, path: newPath, name: newName });
 
@@ -227,7 +228,10 @@ export const moveAssets = async (action, movingAssets) => {
         path: newPath,
         previousPath: asset.path,
         previousSha: asset.sha,
-        data: new File([asset.file ?? (await getAssetBlob(asset))], newName),
+        // Read the bytes up front. A blob backed by the file system points at the file about to be
+        // moved away, and reading it afterwards — to write the copy or to hash it — fails because
+        // there’s nothing at that path anymore
+        data: new File([await blob.arrayBuffer()], newName, { type: blob.type }),
       });
 
       await collectEntryChangesFromAsset({

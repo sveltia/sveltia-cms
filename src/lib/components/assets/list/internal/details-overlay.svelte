@@ -20,10 +20,20 @@
   import { isMediaKind } from '$lib/services/assets/kinds';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
-  /** @type {Blob | undefined} */
-  let blob = $state();
+  /**
+   * @import { Asset } from '$lib/types/private';
+   */
+
+  /**
+   * The blob most recently loaded, along with the asset it was loaded for. Kept together so the
+   * preview never reads a blob that belongs to another asset: once an asset has been renamed or
+   * moved on the file system, the blob read before the move points at a file that no longer exists.
+   * @type {{ asset: Asset, blob: Blob } | undefined}
+   */
+  let loaded = $state.raw();
 
   const asset = $derived(overlaidAsset.current);
+  const blob = $derived(loaded?.asset === asset ? /** @type {Blob} */ (loaded?.blob) : undefined);
   const kind = $derived(asset?.kind);
   const blobURL = $derived(asset?.blobURL);
   const name = $derived(asset?.name);
@@ -33,7 +43,12 @@
   $effect(() => {
     if (asset) {
       (async () => {
-        blob = await getAssetBlob(asset);
+        const _blob = await getAssetBlob(asset);
+
+        // The user may have switched to another asset in the meantime
+        if (overlaidAsset.current === asset) {
+          loaded = { asset, blob: _blob };
+        }
       })();
     }
   });

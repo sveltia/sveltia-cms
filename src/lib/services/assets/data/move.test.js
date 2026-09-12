@@ -1205,5 +1205,50 @@ describe('assets/data/move', () => {
 
       expect(saveChanges).toHaveBeenCalled();
     });
+
+    it('should read the asset bytes before the move so the change does not depend on the old file', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { getAssetBlob } = await import('$lib/services/assets/info');
+      const { saveChanges } = await import('$lib/services/backends/save');
+      // Simulate a blob backed by a file system handle: it can be read now, but any read after the
+      // file has been moved away fails, as with OPFS in Chrome
+      const blob = new Blob(['content'], { type: 'text/markdown' });
+      let moved = false;
+
+      vi.spyOn(blob, 'arrayBuffer').mockImplementation(async () => {
+        if (moved) {
+          throw new DOMException('File not found', 'NotFoundError');
+        }
+
+        return new TextEncoder().encode('content').buffer;
+      });
+
+      const mockAsset = { path: 'static/uploads/notes.md', sha: 'abc123', file: undefined };
+      const movingAssets = [{ asset: mockAsset, path: 'static/uploads/renamed.md' }];
+
+      cmsConfig.current = /** @type {any} */ ({});
+      vi.mocked(getPathInfo).mockReturnValue({ basename: 'renamed.md' });
+      vi.mocked(getAssetBlob).mockResolvedValue(blob);
+      vi.mocked(saveChanges).mockImplementation(async () => {
+        moved = true;
+
+        return /** @type {any} */ ({});
+      });
+
+      await moveAssets('rename', movingAssets);
+
+      const { changes, savingAssets } = vi.mocked(saveChanges).mock.calls[0][0];
+      const { data } = changes[0];
+
+      expect(blob.arrayBuffer).toHaveBeenCalledOnce();
+      expect(data).toBeInstanceOf(File);
+      expect(/** @type {File} */ (data).name).toBe('renamed.md');
+      expect(/** @type {File} */ (data).type).toBe('text/markdown');
+      // The copy can still be read after the original has been moved away
+      await expect(/** @type {File} */ (data).text()).resolves.toBe('content');
+      expect(savingAssets).toEqual([
+        { ...mockAsset, path: 'static/uploads/renamed.md', name: 'renamed.md' },
+      ]);
+    });
   });
 });
