@@ -182,7 +182,7 @@ unexpected_error: Neočekivana pogreška
 entry_parse_errors: |
   .input {$count :integer}
   .match $count
-    one {{ Došlo je do pogreške pri obradi datoteke unosa. Pojedinosti potražite u konzoli preglednika. }}
+    1   {{ Došlo je do pogreške pri obradi datoteke unosa. Pojedinosti potražite u konzoli preglednika. }}
     *   {{ Došlo je do pogrešaka pri obradi datoteka unosa. Pojedinosti potražite u konzoli preglednika. }}
 
 # ==============================================================================
@@ -471,7 +471,7 @@ linked_files: Povezane datoteke
 loading_entries: |
   .input {$count :integer}
   .match $count
-    one {{ Učitavanje unosa… }}
+    1   {{ Učitavanje unosa… }}
     *   {{ Učitavanje unosa… }}
 
 # ==============================================================================
@@ -617,7 +617,7 @@ tap_to_browse: Dodirnite za pregledavanje…
 drop_files_or_click_to_browse: |
   .input {$count :integer}
   .match $count
-    one {{ Ispustite datoteku ovdje ili kliknite za pregledavanje… }}
+    1   {{ Ispustite datoteku ovdje ili kliknite za pregledavanje… }}
     *   {{ Ispustite datoteke ovdje ili kliknite za pregledavanje… }}
 # Partial drop zone text (ends with inline button)
 # {$count} is the number of files expected by the current picker mode
@@ -625,7 +625,7 @@ drop_files_or_click_to_browse: |
 drop_files_or: |
   .input {$count :integer}
   .match $count
-    one {{ Ispustite datoteku ovdje ili }}
+    1   {{ Ispustite datoteku ovdje ili }}
     *   {{ Ispustite datoteke ovdje ili }}
 # Image-specific drop zone text
 # {$count} is the number of image files expected by the current picker mode
@@ -633,7 +633,7 @@ drop_files_or: |
 drop_image_files_or: |
   .input {$count :integer}
   .match $count
-    one {{ Ispustite slikovnu datoteku ovdje ili }}
+    1   {{ Ispustite slikovnu datoteku ovdje ili }}
     *   {{ Ispustite slikovne datoteke ovdje ili }}
 
 # File picker and clipboard actions used by upload controls
@@ -652,7 +652,7 @@ clipboard_access_denied: Pristup međuspremniku je odbijen.
 drop_files_here: |
   .input {$count :integer}
   .match $count
-    one {{ Ispustite datoteku ovdje }}
+    1   {{ Ispustite datoteku ovdje }}
     *   {{ Ispustite datoteke ovdje }}
 
 # File type validation errors
@@ -666,7 +666,7 @@ dropped_image_type_mismatch: 'Ispuštena datoteka nije podržana. Prihvaća se s
 choose_files: |
   .input {$count :integer}
   .match $count
-    one {{ Odaberi datoteku }}
+    1   {{ Odaberi datoteku }}
     *   {{ Odaberi datoteke }}
 
 # ==============================================================================
@@ -679,20 +679,21 @@ choose_files: |
 delete_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Izbriši resurs }}
+    1   {{ Izbriši resurs }}
     *   {{ Izbriši resurse }}
 # {$count} is the number of selected assets
 delete_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Izbriši odabrani resurs }}
+    1   {{ Izbriši odabrani resurs }}
     *   {{ Izbriši odabrane resurse }}
 confirm_deleting_this_asset: Jeste li sigurni da želite izbrisati ovaj resurs?
 # {$count} is the number of selected assets
 confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Jeste li sigurni da želite izbrisati odabrani resurs? }}
+    1   {{ Jeste li sigurni da želite izbrisati odabrani resurs? }}
+    one {{ Jeste li sigurni da želite izbrisati {$count} odabrani resurs? }}
     few {{ Jeste li sigurni da želite izbrisati odabrana {$count} resursa? }}
     *   {{ Jeste li sigurni da želite izbrisati odabranih {$count} resursa? }}
 confirm_deleting_all_assets: Jeste li sigurni da želite izbrisati sve resurse?
@@ -702,13 +703,13 @@ confirm_deleting_all_assets: Jeste li sigurni da želite izbrisati sve resurse?
 delete_entries: |
   .input {$count :integer}
   .match $count
-    one {{ Izbriši unos }}
+    1   {{ Izbriši unos }}
     *   {{ Izbriši unose }}
 # {$count} is the number of selected entries
 delete_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ Izbriši odabrani unos }}
+    1   {{ Izbriši odabrani unos }}
     *   {{ Izbriši odabrane unose }}
 confirm_deleting_this_entry: Jeste li sigurni da želite izbrisati ovaj unos?
 confirm_deleting_this_entry_with_assets: Jeste li sigurni da želite izbrisati ovaj unos i pripadajuće resurse?
@@ -718,14 +719,16 @@ deleting_entry_failed: Brisanje unosa nije uspjelo. Pokušajte ponovno.
 confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ Jeste li sigurni da želite izbrisati odabrani unos? }}
+    1   {{ Jeste li sigurni da želite izbrisati odabrani unos? }}
+    one {{ Jeste li sigurni da želite izbrisati {$count} odabrani unos? }}
     few {{ Jeste li sigurni da želite izbrisati odabrana {$count} unosa? }}
     *   {{ Jeste li sigurni da želite izbrisati odabranih {$count} unosa? }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Jeste li sigurni da želite izbrisati odabrani unos i pripadajuće resurse? }}
+    1   {{ Jeste li sigurni da želite izbrisati odabrani unos i pripadajuće resurse? }}
+    one {{ Jeste li sigurni da želite izbrisati {$count} odabrani unos i pripadajuće resurse? }}
     few {{ Jeste li sigurni da želite izbrisati odabrana {$count} unosa i pripadajuće resurse? }}
     *   {{ Jeste li sigurni da želite izbrisati odabranih {$count} unosa i pripadajuće resurse? }}
 confirm_deleting_all_entries: Jeste li sigurni da želite izbrisati sve unose?
@@ -754,7 +757,7 @@ saving_reorder_failed: Spremanje novog redoslijeda unosa nije uspjelo. Pokušajt
 processing_files: |
   .input {$count :integer}
   .match $count
-    one {{ Obrada datoteke. To može potrajati. }}
+    1   {{ Obrada datoteke. To može potrajati. }}
     *   {{ Obrada datoteka. To može potrajati. }}
 
 # Uploading section aria-label
@@ -770,7 +773,8 @@ confirm_replacing_file: 'Datoteka „{$name}” bit će zamijenjena ovom datotek
 confirm_uploading_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ova datoteka bit će spremljena u mapu „{$folder}”: }}
+    1   {{ Ova datoteka bit će spremljena u mapu „{$folder}”: }}
+    one {{ Ova {$count} datoteka bit će spremljena u mapu „{$folder}”: }}
     few {{ Ove {$count} datoteke bit će spremljene u mapu „{$folder}”: }}
     *   {{ Ovih {$count} datoteka bit će spremljeno u mapu „{$folder}”: }}
 
@@ -781,7 +785,7 @@ oversized_files: Prevelike datoteke
 warning_oversized_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ova datoteka ne može se prenijeti jer premašuje najveću dopuštenu veličinu od {$size}. Smanjite je ili odaberite drugu datoteku. }}
+    1   {{ Ova datoteka ne može se prenijeti jer premašuje najveću dopuštenu veličinu od {$size}. Smanjite je ili odaberite drugu datoteku. }}
     *   {{ Ove datoteke ne mogu se prenijeti jer premašuju najveću dopuštenu veličinu od {$size}. Smanjite ih ili odaberite druge datoteke. }}
 
 # File integrity validation
@@ -791,7 +795,7 @@ invalid_files: Nevaljane datoteke
 warning_invalid_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ova datoteka ne može se prenijeti jer je oštećena ili njezin sadržaj ne odgovara nastavku datoteke. To se često događa kada se fotografija preimenuje umjesto da se pretvori, primjerice HEIC slika spremljena kao JPEG datoteka. Pretvorite datoteku i pokušajte ponovno. }}
+    1   {{ Ova datoteka ne može se prenijeti jer je oštećena ili njezin sadržaj ne odgovara nastavku datoteke. To se često događa kada se fotografija preimenuje umjesto da se pretvori, primjerice HEIC slika spremljena kao JPEG datoteka. Pretvorite datoteku i pokušajte ponovno. }}
     *   {{ Ove datoteke ne mogu se prenijeti jer su oštećene ili njihov sadržaj ne odgovara nastavcima datoteka. To se često događa kada se fotografije preimenuju umjesto da se pretvore, primjerice HEIC slike spremljene kao JPEG datoteke. Pretvorite datoteke i pokušajte ponovno. }}
 
 # File format validation when replacing an asset
@@ -801,7 +805,7 @@ mismatched_files: Datoteke različitog formata
 warning_mismatched_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ova datoteka ne može zamijeniti „{$name}” jer je u drugom formatu. Pretvorite datoteku u isti format i pokušajte ponovno. }}
+    1   {{ Ova datoteka ne može zamijeniti „{$name}” jer je u drugom formatu. Pretvorite datoteku u isti format i pokušajte ponovno. }}
     *   {{ Ove datoteke ne mogu zamijeniti „{$name}” jer su u drugom formatu. Pretvorite datoteke u isti format i pokušajte ponovno. }}
 
 # File name conflict resolution
@@ -809,7 +813,8 @@ warning_mismatched_files: |
 file_name_conflict_confirmation: |
   .input {$count :integer}
   .match $count
-    one {{ U ovoj mapi već postoji datoteka istog naziva. Želite li je zamijeniti? }}
+    1   {{ U ovoj mapi već postoji datoteka istog naziva. Želite li je zamijeniti? }}
+    one {{ U ovoj mapi već postoji {$count} datoteka istog naziva. Želite li je zamijeniti? }}
     few {{ U ovoj mapi već postoje {$count} datoteke istih naziva. Želite li ih zamijeniti? }}
     *   {{ U ovoj mapi već postoji {$count} datoteka istih naziva. Želite li ih zamijeniti? }}
 # {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
@@ -817,7 +822,8 @@ file_name_conflict_confirmation_with_name: |
   .input {$count :integer}
   .input {$name :string}
   .match $count
-    one {{ U ovoj mapi već postoji datoteka naziva „{$name}”. Želite li je zamijeniti? }}
+    1   {{ U ovoj mapi već postoji datoteka naziva „{$name}”. Želite li je zamijeniti? }}
+    one {{ U ovoj mapi već postoji {$count} datoteka istog naziva. Želite li je zamijeniti? }}
     few {{ U ovoj mapi već postoje {$count} datoteke istih naziva. Želite li ih zamijeniti? }}
     *   {{ U ovoj mapi već postoji {$count} datoteka istih naziva. Želite li ih zamijeniti? }}
 file_name_conflict_resolution: Rješavanje sukoba naziva datoteka
@@ -865,7 +871,8 @@ entry_duplicated: Unos je dupliciran kao nova skica.
 entry_validation_errors: |
   .input {$count :integer}
   .match $count
-    one {{ Jedno polje sadrži pogrešku. Ispravite je da biste spremili unos. }}
+    1   {{ Jedno polje sadrži pogrešku. Ispravite je da biste spremili unos. }}
+    one {{ {$count} polje sadrži pogrešku. Ispravite je da biste spremili unos. }}
     few {{ {$count} polja sadrže pogreške. Ispravite ih da biste spremili unos. }}
     *   {{ {$count} polja sadrži pogreške. Ispravite ih da biste spremili unos. }}
 
@@ -879,19 +886,22 @@ entry_validation_errors: |
 entry_saved: |
   .input {$count :integer}
   .match $count
-    one {{ Unos je spremljen. }}
+    1   {{ Unos je spremljen. }}
+    one {{ Spremljen je {$count} unos. }}
     few {{ Spremljena su {$count} unosa. }}
     *   {{ Spremljeno je {$count} unosa. }}
 entry_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ Unos je spremljen i objavljen. }}
+    1   {{ Unos je spremljen i objavljen. }}
+    one {{ Spremljen je i objavljen {$count} unos. }}
     few {{ Spremljena su i objavljena {$count} unosa. }}
     *   {{ Spremljeno je i objavljeno {$count} unosa. }}
 entries_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ Unos je izbrisan. }}
+    1   {{ Unos je izbrisan. }}
+    one {{ Izbrisan je {$count} unos. }}
     few {{ Izbrisana su {$count} unosa. }}
     *   {{ Izbrisano je {$count} unosa. }}
 
@@ -900,61 +910,71 @@ entries_deleted: |
 assets_saved: |
   .input {$count :integer}
   .match $count
-    one {{ Resurs je spremljen. }}
+    1   {{ Resurs je spremljen. }}
+    one {{ Spremljen je {$count} resurs. }}
     few {{ Spremljena su {$count} resursa. }}
     *   {{ Spremljeno je {$count} resursa. }}
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ Resurs je spremljen i objavljen. }}
+    1   {{ Resurs je spremljen i objavljen. }}
+    one {{ Spremljen je i objavljen {$count} resurs. }}
     few {{ Spremljena su i objavljena {$count} resursa. }}
     *   {{ Spremljeno je i objavljeno {$count} resursa. }}
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
-    one {{ URL je kopiran u međuspremnik. }}
+    1   {{ URL je kopiran u međuspremnik. }}
+    one {{ {$count} URL kopiran je u međuspremnik. }}
     few {{ {$count} URL-a kopirana su u međuspremnik. }}
     *   {{ {$count} URL-ova kopirano je u međuspremnik. }}
 asset_paths_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Putanja datoteke kopirana je u međuspremnik. }}
+    1   {{ Putanja datoteke kopirana je u međuspremnik. }}
+    one {{ {$count} putanja datoteke kopirana je u međuspremnik. }}
     few {{ {$count} putanje datoteka kopirane su u međuspremnik. }}
     *   {{ {$count} putanja datoteka kopirano je u međuspremnik. }}
 asset_ids_copied: |
   .input {$count :integer}
   .match $count
-    one {{ ID datoteke kopiran je u međuspremnik. }}
+    1   {{ ID datoteke kopiran je u međuspremnik. }}
+    one {{ Kopiran je {$count} ID datoteke u međuspremnik. }}
     few {{ Kopirana su {$count} ID-a datoteka u međuspremnik. }}
     *   {{ Kopirano je {$count} ID-ova datoteka u međuspremnik. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Podaci datoteke kopirani su u međuspremnik. }}
+    1   {{ Podaci datoteke kopirani su u međuspremnik. }}
+    one {{ Podaci {$count} datoteke kopirani su u međuspremnik. }}
     few {{ Podaci {$count} datoteke kopirani su u međuspremnik. }}
     *   {{ Podaci {$count} datoteka kopirani su u međuspremnik. }}
 assets_downloaded: |
   .input {$count :integer}
   .match $count
-    one {{ Resurs je preuzet. }}
+    1   {{ Resurs je preuzet. }}
+    one {{ Preuzet je {$count} resurs. }}
     few {{ Preuzeta su {$count} resursa. }}
     *   {{ Preuzeto je {$count} resursa. }}
 assets_moved: |
   .input {$count :integer}
   .match $count
-    one {{ Resurs je premješten. }}
+    1   {{ Resurs je premješten. }}
+    one {{ Premješten je {$count} resurs. }}
     few {{ Premještena su {$count} resursa. }}
     *   {{ Premješteno je {$count} resursa. }}
 assets_renamed: |
   .input {$count :integer}
   .match $count
-    one {{ Resurs je preimenovan. }}
+    1   {{ Resurs je preimenovan. }}
+    one {{ Preimenovan je {$count} resurs. }}
     few {{ Preimenovana su {$count} resursa. }}
     *   {{ Preimenovano je {$count} resursa. }}
 assets_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ Resurs je izbrisan. }}
+    1   {{ Resurs je izbrisan. }}
+    one {{ Izbrisan je {$count} resurs. }}
     few {{ Izbrisana su {$count} resursa. }}
     *   {{ Izbrisano je {$count} resursa. }}
 
@@ -1101,7 +1121,7 @@ translate: Prevedi
 translate_fields: |
   .input {$count :integer}
   .match $count
-    one {{ Prevedi polje }}
+    1   {{ Prevedi polje }}
     *   {{ Prevedi polja }}
 translate_from: Prevedi s jezika…
 # {$locale} is the localized language name of the source content being translated, e.g., English
@@ -1150,7 +1170,8 @@ editor:
       .input {$count :integer}
       .match $count
         0   {{ Nijedno polje nije prevedeno s jezika {$source}. }}
-        one {{ Polje je prevedeno s jezika {$source}. }}
+        1   {{ Polje je prevedeno s jezika {$source}. }}
+        one {{ {$count} polje prevedeno je s jezika {$source}. }}
         few {{ {$count} polja prevedena su s jezika {$source}. }}
         *   {{ {$count} polja prevedeno je s jezika {$source}. }}
   copy:
@@ -1160,7 +1181,8 @@ editor:
       .input {$count :integer}
       .match $count
         0   {{ Nijedno polje nije kopirano s jezika {$source}. }}
-        one {{ Polje je kopirano s jezika {$source}. }}
+        1   {{ Polje je kopirano s jezika {$source}. }}
+        one {{ {$count} polje kopirano je s jezika {$source}. }}
         few {{ {$count} polja kopirana su s jezika {$source}. }}
         *   {{ {$count} polja kopirano je s jezika {$source}. }}
 
@@ -1300,20 +1322,20 @@ preview_unavailable: Pretpregled nije dostupan.
 public_urls: |
   .input {$count :integer}
   .match $count
-    one {{ Javni URL }}
+    1   {{ Javni URL }}
     *   {{ Javni URL-ovi }}
 # {$count} is the number of selected assets
 file_paths: |
   .input {$count :integer}
   .match $count
-    one {{ Putanja datoteke }}
+    1   {{ Putanja datoteke }}
     *   {{ Putanje datoteka }}
 # Identifier of a file on a cloud storage service, e.g. an object key or a UUID
 # {$count} is the number of selected assets
 file_ids: |
   .input {$count :integer}
   .match $count
-    one {{ ID datoteke }}
+    1   {{ ID datoteke }}
     *   {{ ID-ovi datoteka }}
 file_data: Podaci datoteke
 
@@ -1558,7 +1580,7 @@ config:
   errors: |
     .input {$count :integer}
     .match $count
-      one {{ U konfiguraciji CMS-a postoji pogreška. Riješite problem i pokušajte ponovno. }}
+      1   {{ U konfiguraciji CMS-a postoji pogreška. Riješite problem i pokušajte ponovno. }}
       *   {{ U konfiguraciji CMS-a postoje pogreške. Riješite probleme i pokušajte ponovno. }}
 
   # Error location prefixes
@@ -1577,7 +1599,7 @@ config:
     insecure_urls: |
       .input {$count :integer}
       .match $count
-        one {{ URL konfiguracijske datoteke mora koristiti HTTPS protokol ili adresu localhost. }}
+        1   {{ URL konfiguracijske datoteke mora koristiti HTTPS protokol ili adresu localhost. }}
         *   {{ URL-ovi konfiguracijskih datoteka moraju koristiti HTTPS protokol ili adrese localhost. }}
     fetch_failed: Konfiguracijsku datoteku nije bilo moguće dohvatiti.
     # {$status} is the HTTP status code returned while fetching the config file
@@ -1800,14 +1822,17 @@ workflow:
   deletion_pending: |
     .input {$count :integer}
     .match $count
-      one {{ Unos je označen za brisanje. }}
+      1   {{ Unos je označen za brisanje. }}
+      one {{ Označen je {$count} unos za brisanje. }}
       few {{ Označena su {$count} unosa za brisanje. }}
       *   {{ Označeno je {$count} unosa za brisanje. }}
   # Toast notification shown after the unpublished changes to an entry have been thrown away
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      one {{ Promjene su odbačene. }}
+      1   {{ Promjene su odbačene. }}
+      one {{ Odbačene su promjene u {$count} unosu. }}
+      few {{ Odbačene su promjene u {$count} unosa. }}
       *   {{ Odbačene su promjene u {$count} unosa. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: Otkazivanje brisanja…
@@ -1861,14 +1886,16 @@ workflow:
   deleting_unpublished_note_all: |
     .input {$count :integer}
     .match $count
-      one {{ Još nije objavljen, pa će vaše neobjavljene promjene biti odbačene. Objavljena verzija, ako postoji, ostat će objavljena. }}
+      1   {{ Još nije objavljen, pa će vaše neobjavljene promjene biti odbačene. Objavljena verzija, ako postoji, ostat će objavljena. }}
       *   {{ Još nisu objavljeni, pa će vaše neobjavljene promjene biti odbačene. Objavljene verzije, ako postoje, ostat će objavljene. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      one {{ Jedan od njih još nije objavljen, pa će vaše neobjavljene promjene biti odbačene. Objavljena verzija, ako postoji, ostat će objavljena. }}
+      1   {{ Jedan od njih još nije objavljen, pa će vaše neobjavljene promjene biti odbačene. Objavljena verzija, ako postoji, ostat će objavljena. }}
+      one {{ {$count} njih još nije objavljen, pa će vaše neobjavljene promjene biti odbačene. Objavljena verzija, ako postoji, ostat će objavljena. }}
+      few {{ {$count} njih još nisu objavljena, pa će vaše neobjavljene promjene biti odbačene. Objavljene verzije, ako postoje, ostat će objavljene. }}
       *   {{ {$count} njih još nije objavljeno, pa će vaše neobjavljene promjene biti odbačene. Objavljene verzije, ako postoje, ostat će objavljene. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry: Jeste li sigurni da želite objaviti ovaj unos? Vaše će promjene odmah stupiti na snagu.

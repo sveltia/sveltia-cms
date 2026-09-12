@@ -931,6 +931,7 @@ asset_data_copied: |
   .input {$count :integer}
   .match $count
     one {{ Data souboru byla zkopírována do schránky. }}
+    few {{ Data {$count} souborů byla zkopírována do schránky. }}
     *   {{ Data {$count} souborů byla zkopírována do schránky. }}
 assets_downloaded: |
   .input {$count :integer}

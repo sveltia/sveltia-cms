@@ -355,17 +355,21 @@ viewing_asset_folder_list: Przeglądasz teraz listę folderów zasobów.
 viewing_x_collection: |
   .input {$count :integer}
   .match $count
-    0   {{ Przeglądasz teraz kolekcję “{$collection}”, która nie ma jeszcze żadnych wpisów. }}
-    one {{ Przeglądasz teraz kolekcję “{$collection}”, która ma jeden wpis. }}
-    *   {{ Przeglądasz teraz kolekcję “{$collection}”, która ma {$count} wpisów. }}
+    0    {{ Przeglądasz teraz kolekcję “{$collection}”, która nie ma jeszcze żadnych wpisów. }}
+    one  {{ Przeglądasz teraz kolekcję “{$collection}”, która ma jeden wpis. }}
+    few  {{ Przeglądasz teraz kolekcję “{$collection}”, która ma {$count} wpisy. }}
+    many {{ Przeglądasz teraz kolekcję “{$collection}”, która ma {$count} wpisów. }}
+    *    {{ Przeglądasz teraz kolekcję “{$collection}”, która ma {$count} wpisów. }}
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
 viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
-    0   {{ Przeglądasz teraz folder zasobów “{$folder}”, który nie ma jeszcze żadnych zasobów. }}
-    one {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma jeden zasób. }}
-    *   {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma {$count} zasobów. }}
+    0    {{ Przeglądasz teraz folder zasobów “{$folder}”, który nie ma jeszcze żadnych zasobów. }}
+    one  {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma jeden zasób. }}
+    few  {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma {$count} zasoby. }}
+    many {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma {$count} zasobów. }}
+    *    {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma {$count} zasobów. }}
 # Cloud storage service view announcement
 # {$service} is the cloud storage service name, e.g. Uploadcare
 viewing_x_external_location: Przeglądasz teraz zasoby w usłudze {$service}.
@@ -488,8 +492,10 @@ creating_entries_disabled_by_quota: Nie możesz dodać nowych wpisów do tej kol
 creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
-    one {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpis. }}
-    *   {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    one  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpis. }}
+    few  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisy. }}
+    many {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    *    {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
 
 # Navigation: back links and list labels
 back_to_collection: Powrót do kolekcji
@@ -514,17 +520,21 @@ search_results_for_x: Wyniki wyszukiwania dla “{$terms}”
 viewing_entry_search_results: |
   .input {$count :integer}
   .match $count
-    0   {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Nie znaleziono żadnych wpisów. }}
-    one {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono jeden wpis. }}
-    *   {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} wpisów. }}
+    0    {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Nie znaleziono żadnych wpisów. }}
+    one  {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono jeden wpis. }}
+    few  {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} wpisy. }}
+    many {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} wpisów. }}
+    *    {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} wpisów. }}
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
 viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
-    0   {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Nie znaleziono żadnych zasobów. }}
-    one {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono jeden zasób. }}
-    *   {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} zasobów. }}
+    0    {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Nie znaleziono żadnych zasobów. }}
+    one  {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono jeden zasób. }}
+    few  {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} zasoby. }}
+    many {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} zasobów. }}
+    *    {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} zasobów. }}
 
 # Result count labels
 # Used in search result headings to show counts
@@ -532,16 +542,20 @@ viewing_asset_search_results: |
 x_entries: |
   .input {$count :integer}
   .match $count
-    0   {{ Brak wpisów }}
-    one {{ {$count} wpis }}
-    *   {{ {$count} wpisów }}
+    0    {{ Brak wpisów }}
+    one  {{ {$count} wpis }}
+    few  {{ {$count} wpisy }}
+    many {{ {$count} wpisów }}
+    *    {{ {$count} wpisów }}
 # {$count} is the number of matching assets
 x_assets: |
   .input {$count :integer}
   .match $count
-    0   {{ Brak zasobów }}
-    one {{ {$count} zasób }}
-    *   {{ {$count} zasobów }}
+    0    {{ Brak zasobów }}
+    one  {{ {$count} zasób }}
+    few  {{ {$count} zasoby }}
+    many {{ {$count} zasobów }}
+    *    {{ {$count} zasobów }}
 
 # Empty state messages
 no_files_found: Nie znaleziono plików.
@@ -577,9 +591,11 @@ rename_x: 'Zmień nazwę {$name}'
 enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
-    0   {{ Wprowadź nową nazwę poniżej. }}
-    one {{ Wprowadź nową nazwę poniżej. Wpis używający tego zasobu zostanie również zaktualizowany. }}
-    *   {{ Wprowadź nową nazwę poniżej. {$count} wpisów używających tego zasobu zostanie również zaktualizowanych. }}
+    0    {{ Wprowadź nową nazwę poniżej. }}
+    one  {{ Wprowadź nową nazwę poniżej. Wpis używający tego zasobu zostanie również zaktualizowany. }}
+    few  {{ Wprowadź nową nazwę poniżej. {$count} wpisy używające tego zasobu zostaną również zaktualizowane. }}
+    many {{ Wprowadź nową nazwę poniżej. {$count} wpisów używających tego zasobu zostanie również zaktualizowanych. }}
+    *    {{ Wprowadź nową nazwę poniżej. {$count} wpisów używających tego zasobu zostanie również zaktualizowanych. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: Nazwa pliku nie może być pusta.
@@ -684,8 +700,10 @@ confirm_deleting_this_asset: Czy na pewno chcesz usunąć ten zasób?
 confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Czy na pewno chcesz usunąć zaznaczony zasób? }}
-    *   {{ Czy na pewno chcesz usunąć zaznaczone {$count} zasoby? }}
+    one  {{ Czy na pewno chcesz usunąć zaznaczony zasób? }}
+    few  {{ Czy na pewno chcesz usunąć zaznaczone {$count} zasoby? }}
+    many {{ Czy na pewno chcesz usunąć zaznaczonych {$count} zasobów? }}
+    *    {{ Czy na pewno chcesz usunąć zaznaczonych {$count} zasobów? }}
 confirm_deleting_all_assets: Czy na pewno chcesz usunąć wszystkie zasoby?
 
 # Delete entries: dialog titles and confirmation messages
@@ -709,14 +727,18 @@ deleting_entry_failed: Nie udało się usunąć wpisu. Spróbuj ponownie.
 confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ Czy na pewno chcesz usunąć zaznaczony wpis? }}
-    *   {{ Czy na pewno chcesz usunąć zaznaczone {$count} wpisy? }}
+    one  {{ Czy na pewno chcesz usunąć zaznaczony wpis? }}
+    few  {{ Czy na pewno chcesz usunąć zaznaczone {$count} wpisy? }}
+    many {{ Czy na pewno chcesz usunąć zaznaczonych {$count} wpisów? }}
+    *    {{ Czy na pewno chcesz usunąć zaznaczonych {$count} wpisów? }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Czy na pewno chcesz usunąć zaznaczony wpis i powiązane zasoby? }}
-    *   {{ Czy na pewno chcesz usunąć zaznaczone {$count} wpisy i powiązane zasoby? }}
+    one  {{ Czy na pewno chcesz usunąć zaznaczony wpis i powiązane zasoby? }}
+    few  {{ Czy na pewno chcesz usunąć zaznaczone {$count} wpisy i powiązane zasoby? }}
+    many {{ Czy na pewno chcesz usunąć zaznaczonych {$count} wpisów i powiązane zasoby? }}
+    *    {{ Czy na pewno chcesz usunąć zaznaczonych {$count} wpisów i powiązane zasoby? }}
 confirm_deleting_all_entries: Czy na pewno chcesz usunąć wszystkie wpisy?
 confirm_deleting_all_entries_with_assets: Czy na pewno chcesz usunąć wszystkie wpisy i powiązane zasoby?
 
@@ -759,8 +781,10 @@ confirm_replacing_file: '“{$name}” zostanie zastąpiony tym plikiem:'
 confirm_uploading_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ten plik zostanie zapisany w folderze “{$folder}”: }}
-    *   {{ Te {$count} pliki zostaną zapisane w folderze “{$folder}”: }}
+    one  {{ Ten plik zostanie zapisany w folderze “{$folder}”: }}
+    few  {{ Te {$count} pliki zostaną zapisane w folderze “{$folder}”: }}
+    many {{ Tych {$count} plików zostanie zapisanych w folderze “{$folder}”: }}
+    *    {{ Tych {$count} plików zostanie zapisanych w folderze “{$folder}”: }}
 
 # File size validation
 # Warning section for files exceeding size limits
@@ -797,15 +821,19 @@ warning_mismatched_files: |
 file_name_conflict_confirmation: |
   .input {$count :integer}
   .match $count
-    one {{ Plik o takiej samej nazwie już istnieje w tym folderze. Czy chcesz go zastąpić? }}
-    *   {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
+    one  {{ Plik o takiej samej nazwie już istnieje w tym folderze. Czy chcesz go zastąpić? }}
+    few  {{ {$count} pliki o takich samych nazwach już istnieją w tym folderze. Czy chcesz je zastąpić? }}
+    many {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
+    *    {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
 # {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
 file_name_conflict_confirmation_with_name: |
   .input {$count :integer}
   .input {$name :string}
   .match $count
-    one {{ Plik o nazwie “{$name}” już istnieje w tym folderze. Czy chcesz go zastąpić? }}
-    *   {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
+    one  {{ Plik o nazwie “{$name}” już istnieje w tym folderze. Czy chcesz go zastąpić? }}
+    few  {{ {$count} pliki o takich samych nazwach już istnieją w tym folderze. Czy chcesz je zastąpić? }}
+    many {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
+    *    {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
 file_name_conflict_resolution: Rozwiązywanie konfliktu nazw plików
 # Option to keep both files (rename the new one)
 keep_both: Zachowaj oba
@@ -851,8 +879,10 @@ entry_duplicated: Wpis zduplikowany jako nowy szkic.
 entry_validation_errors: |
   .input {$count :integer}
   .match $count
-    one {{ Jedno pole zawiera błąd. Popraw go, aby zapisać wpis. }}
-    *   {{ {$count} pól zawiera błędy. Popraw je, aby zapisać wpis. }}
+    one  {{ Jedno pole zawiera błąd. Popraw go, aby zapisać wpis. }}
+    few  {{ {$count} pola zawierają błędy. Popraw je, aby zapisać wpis. }}
+    many {{ {$count} pól zawiera błędy. Popraw je, aby zapisać wpis. }}
+    *    {{ {$count} pól zawiera błędy. Popraw je, aby zapisać wpis. }}
 
 # ==============================================================================
 # Success Notifications
@@ -864,72 +894,97 @@ entry_validation_errors: |
 entry_saved: |
   .input {$count :integer}
   .match $count
-    one {{ Wpis zapisany. }}
-    *   {{ Zapisano {$count} wpisów. }}
+    one  {{ Wpis zapisany. }}
+    few  {{ Zapisano {$count} wpisy. }}
+    many {{ Zapisano {$count} wpisów. }}
+    *    {{ Zapisano {$count} wpisów. }}
 entry_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ Wpis zapisany i opublikowany. }}
-    *   {{ Zapisano i opublikowano {$count} wpisów. }}
+    one  {{ Wpis zapisany i opublikowany. }}
+    few  {{ Zapisano i opublikowano {$count} wpisy. }}
+    many {{ Zapisano i opublikowano {$count} wpisów. }}
+    *    {{ Zapisano i opublikowano {$count} wpisów. }}
 entries_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ Wpis usunięty. }}
-    *   {{ Usunięto {$count} wpisów. }}
+    one  {{ Wpis usunięty. }}
+    few  {{ Usunięto {$count} wpisy. }}
+    many {{ Usunięto {$count} wpisów. }}
+    *    {{ Usunięto {$count} wpisów. }}
 
 # Asset operations
 # {$count} is the number of assets or asset-derived values affected by the operation
 assets_saved: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób zapisany. }}
-    *   {{ Zapisano {$count} zasobów. }}
+    one  {{ Zasób zapisany. }}
+    few  {{ Zapisano {$count} zasoby. }}
+    many {{ Zapisano {$count} zasobów. }}
+    *    {{ Zapisano {$count} zasobów. }}
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób zapisany i opublikowany. }}
-    *   {{ Zapisano i opublikowano {$count} zasobów. }}
+    one  {{ Zasób zapisany i opublikowany. }}
+    few  {{ Zapisano i opublikowano {$count} zasoby. }}
+    many {{ Zapisano i opublikowano {$count} zasobów. }}
+    *    {{ Zapisano i opublikowano {$count} zasobów. }}
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Adres URL skopiowany do schowka. }}
-    *   {{ Skopiowano {$count} adresów URL do schowka. }}
+    one  {{ Adres URL skopiowany do schowka. }}
+    few  {{ Skopiowano {$count} adresy URL do schowka. }}
+    many {{ Skopiowano {$count} adresów URL do schowka. }}
+    *    {{ Skopiowano {$count} adresów URL do schowka. }}
 asset_paths_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Ścieżka pliku skopiowana do schowka. }}
-    *   {{ Skopiowano {$count} ścieżek plików do schowka. }}
+    one  {{ Ścieżka pliku skopiowana do schowka. }}
+    few  {{ Skopiowano {$count} ścieżki plików do schowka. }}
+    many {{ Skopiowano {$count} ścieżek plików do schowka. }}
+    *    {{ Skopiowano {$count} ścieżek plików do schowka. }}
 asset_ids_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Identyfikator pliku skopiowano do schowka. }}
-    few {{ Skopiowano {$count} identyfikatory plików do schowka. }}
-    *   {{ Skopiowano {$count} identyfikatorów plików do schowka. }}
+    one  {{ Identyfikator pliku skopiowano do schowka. }}
+    few  {{ Skopiowano {$count} identyfikatory plików do schowka. }}
+    many {{ Skopiowano {$count} identyfikatorów plików do schowka. }}
+    *    {{ Skopiowano {$count} identyfikatorów plików do schowka. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Dane pliku skopiowane do schowka. }}
-    *   {{ Skopiowano dane {$count} plików do schowka. }}
+    one  {{ Dane pliku skopiowane do schowka. }}
+    few  {{ Skopiowano dane {$count} plików do schowka. }}
+    many {{ Skopiowano dane {$count} plików do schowka. }}
+    *    {{ Skopiowano dane {$count} plików do schowka. }}
 assets_downloaded: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób pobrany. }}
-    *   {{ Pobrano {$count} zasobów. }}
+    one  {{ Zasób pobrany. }}
+    few  {{ Pobrano {$count} zasoby. }}
+    many {{ Pobrano {$count} zasobów. }}
+    *    {{ Pobrano {$count} zasobów. }}
 assets_moved: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób przeniesiony. }}
-    *   {{ Przeniesiono {$count} zasobów. }}
+    one  {{ Zasób przeniesiony. }}
+    few  {{ Przeniesiono {$count} zasoby. }}
+    many {{ Przeniesiono {$count} zasobów. }}
+    *    {{ Przeniesiono {$count} zasobów. }}
 assets_renamed: |
   .input {$count :integer}
   .match $count
-    one {{ Zmieniono nazwę zasobu. }}
-    *   {{ Zmieniono nazwy {$count} zasobów. }}
+    one  {{ Zmieniono nazwę zasobu. }}
+    few  {{ Zmieniono nazwy {$count} zasobów. }}
+    many {{ Zmieniono nazwy {$count} zasobów. }}
+    *    {{ Zmieniono nazwy {$count} zasobów. }}
 assets_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób usunięty. }}
-    *   {{ Usunięto {$count} zasobów. }}
+    one  {{ Zasób usunięty. }}
+    few  {{ Usunięto {$count} zasoby. }}
+    many {{ Usunięto {$count} zasobów. }}
+    *    {{ Usunięto {$count} zasobów. }}
 
 # ==============================================================================
 # Content Editor
@@ -1122,18 +1177,22 @@ editor:
     complete: |
       .input {$count :integer}
       .match $count
-        0   {{ Nie przetłumaczono żadnych pól z {$source}. }}
-        one {{ Przetłumaczono pole z {$source}. }}
-        *   {{ Przetłumaczono {$count} pól z {$source}. }}
+        0    {{ Nie przetłumaczono żadnych pól z {$source}. }}
+        one  {{ Przetłumaczono pole z {$source}. }}
+        few  {{ Przetłumaczono {$count} pola z {$source}. }}
+        many {{ Przetłumaczono {$count} pól z {$source}. }}
+        *    {{ Przetłumaczono {$count} pól z {$source}. }}
   copy:
     none: Brak treści do skopiowania.
     # {$source} is the source language name and {$count} is the number of copied fields
     complete: |
       .input {$count :integer}
       .match $count
-        0   {{ Nie skopiowano żadnych pól z {$source}. }}
-        one {{ Skopiowano pole z {$source}. }}
-        *   {{ Skopiowano {$count} pól z {$source}. }}
+        0    {{ Nie skopiowano żadnych pól z {$source}. }}
+        one  {{ Skopiowano pole z {$source}. }}
+        few  {{ Skopiowano {$count} pola z {$source}. }}
+        many {{ Skopiowano {$count} pól z {$source}. }}
+        *    {{ Skopiowano {$count} pól z {$source}. }}
 
 # ==============================================================================
 # Field Validation
@@ -1155,14 +1214,18 @@ validation:
     select: |
       .input {$min :integer}
       .match $min
-        one {{ Musisz wybrać co najmniej {$min} opcję. }}
-        *   {{ Musisz wybrać co najmniej {$min} opcji. }}
+        one  {{ Musisz wybrać co najmniej {$min} opcję. }}
+        few  {{ Musisz wybrać co najmniej {$min} opcje. }}
+        many {{ Musisz wybrać co najmniej {$min} opcji. }}
+        *    {{ Musisz wybrać co najmniej {$min} opcji. }}
     # {$min} is the minimum number of list items
     add: |
       .input {$min :integer}
       .match $min
-        one {{ Musisz dodać co najmniej {$min} element. }}
-        *   {{ Musisz dodać co najmniej {$min} elementów. }}
+        one  {{ Musisz dodać co najmniej {$min} element. }}
+        few  {{ Musisz dodać co najmniej {$min} elementy. }}
+        many {{ Musisz dodać co najmniej {$min} elementów. }}
+        *    {{ Musisz dodać co najmniej {$min} elementów. }}
 
   # Maximum value/count exceeded
   range_overflow:
@@ -1175,27 +1238,35 @@ validation:
     select: |
       .input {$max :integer}
       .match $max
-        one {{ Nie możesz wybrać więcej niż {$max} opcję. }}
-        *   {{ Nie możesz wybrać więcej niż {$max} opcji. }}
+        one  {{ Nie możesz wybrać więcej niż {$max} opcję. }}
+        few  {{ Nie możesz wybrać więcej niż {$max} opcje. }}
+        many {{ Nie możesz wybrać więcej niż {$max} opcji. }}
+        *    {{ Nie możesz wybrać więcej niż {$max} opcji. }}
     # {$max} is the maximum number of list items
     add: |
       .input {$max :integer}
       .match $max
-        one {{ Nie możesz dodać więcej niż {$max} element. }}
-        *   {{ Nie możesz dodać więcej niż {$max} elementów. }}
+        one  {{ Nie możesz dodać więcej niż {$max} element. }}
+        few  {{ Nie możesz dodać więcej niż {$max} elementy. }}
+        many {{ Nie możesz dodać więcej niż {$max} elementów. }}
+        *    {{ Nie możesz dodać więcej niż {$max} elementów. }}
 
   # String length constraints
   # {$min :integer} and {$max :integer} are character-count limits
   too_short: |
     .input {$min :integer}
     .match $min
-      one {{ Musisz wprowadzić co najmniej {$min} znak. }}
-      *   {{ Musisz wprowadzić co najmniej {$min} znaków. }}
+      one  {{ Musisz wprowadzić co najmniej {$min} znak. }}
+      few  {{ Musisz wprowadzić co najmniej {$min} znaki. }}
+      many {{ Musisz wprowadzić co najmniej {$min} znaków. }}
+      *    {{ Musisz wprowadzić co najmniej {$min} znaków. }}
   too_long: |
     .input {$max :integer}
     .match $max
-      one {{ Nie możesz wprowadzić więcej niż {$max} znak. }}
-      *   {{ Nie możesz wprowadzić więcej niż {$max} znaków. }}
+      one  {{ Nie możesz wprowadzić więcej niż {$max} znak. }}
+      few  {{ Nie możesz wprowadzić więcej niż {$max} znaki. }}
+      many {{ Nie możesz wprowadzić więcej niż {$max} znaków. }}
+      *    {{ Nie możesz wprowadzić więcej niż {$max} znaków. }}
 
   # Type validation errors
   type_mismatch:
@@ -1408,23 +1479,29 @@ character_counter:
   min_max: |
     .input {$count :integer}
     .match $count
-      0   {{ Nie wprowadzono żadnych znaków. Minimum: {$min}. Maksimum: {$max}. }}
-      one {{ Wprowadzono {$count} znak. Minimum: {$min}. Maksimum: {$max}. }}
-      *   {{ Wprowadzono {$count} znaków. Minimum: {$min}. Maksimum: {$max}. }}
+      0    {{ Nie wprowadzono żadnych znaków. Minimum: {$min}. Maksimum: {$max}. }}
+      one  {{ Wprowadzono {$count} znak. Minimum: {$min}. Maksimum: {$max}. }}
+      few  {{ Wprowadzono {$count} znaki. Minimum: {$min}. Maksimum: {$max}. }}
+      many {{ Wprowadzono {$count} znaków. Minimum: {$min}. Maksimum: {$max}. }}
+      *    {{ Wprowadzono {$count} znaków. Minimum: {$min}. Maksimum: {$max}. }}
   # {$count} is the current character count and {$min} is the minimum allowed count
   min: |
     .input {$count :integer}
     .match $count
-      0   {{ Nie wprowadzono żadnych znaków. Minimum: {$min}. }}
-      one {{ Wprowadzono {$count} znak. Minimum: {$min}. }}
-      *   {{ Wprowadzono {$count} znaków. Minimum: {$min}. }}
+      0    {{ Nie wprowadzono żadnych znaków. Minimum: {$min}. }}
+      one  {{ Wprowadzono {$count} znak. Minimum: {$min}. }}
+      few  {{ Wprowadzono {$count} znaki. Minimum: {$min}. }}
+      many {{ Wprowadzono {$count} znaków. Minimum: {$min}. }}
+      *    {{ Wprowadzono {$count} znaków. Minimum: {$min}. }}
   # {$count} is the current character count and {$max} is the maximum allowed count
   max: |
     .input {$count :integer}
     .match $count
-      0   {{ Nie wprowadzono żadnych znaków. Maksimum: {$max}. }}
-      one {{ Wprowadzono {$count} znak. Maksimum: {$max}. }}
-      *   {{ Wprowadzono {$count} znaków. Maksimum: {$max}. }}
+      0    {{ Nie wprowadzono żadnych znaków. Maksimum: {$max}. }}
+      one  {{ Wprowadzono {$count} znak. Maksimum: {$max}. }}
+      few  {{ Wprowadzono {$count} znaki. Maksimum: {$max}. }}
+      many {{ Wprowadzono {$count} znaków. Maksimum: {$max}. }}
+      *    {{ Wprowadzono {$count} znaków. Maksimum: {$max}. }}
 
 # YouTube video player iframe title
 youtube_video_player: Odtwarzacz wideo YouTube
@@ -1762,16 +1839,18 @@ workflow:
   deletion_pending: |
     .input {$count :integer}
     .match $count
-      one {{ Wpis oznaczony do usunięcia. }}
-      few {{ {$count} wpisy oznaczono do usunięcia. }}
-      *   {{ {$count} wpisów oznaczono do usunięcia. }}
+      one  {{ Wpis oznaczony do usunięcia. }}
+      few  {{ {$count} wpisy oznaczono do usunięcia. }}
+      many {{ {$count} wpisów oznaczono do usunięcia. }}
+      *    {{ {$count} wpisów oznaczono do usunięcia. }}
   # Toast notification shown after the unpublished changes to an entry have been thrown away
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      one {{ Zmiany odrzucone. }}
-      few {{ Odrzucono zmiany w {$count} wpisach. }}
-      *   {{ Odrzucono zmiany w {$count} wpisach. }}
+      one  {{ Zmiany odrzucone. }}
+      few  {{ Odrzucono zmiany w {$count} wpisach. }}
+      many {{ Odrzucono zmiany w {$count} wpisach. }}
+      *    {{ Odrzucono zmiany w {$count} wpisach. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: Anulowanie usunięcia…
   deletion_cancelled: Usunięcie anulowane.
@@ -1831,9 +1910,10 @@ workflow:
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      one {{ Jeden z nich nie został jeszcze opublikowany, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowana wersja pozostanie opublikowana. }}
-      few {{ {$count} z nich nie zostały jeszcze opublikowane, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
-      *   {{ {$count} z nich nie zostało jeszcze opublikowanych, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
+      one  {{ Jeden z nich nie został jeszcze opublikowany, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowana wersja pozostanie opublikowana. }}
+      few  {{ {$count} z nich nie zostały jeszcze opublikowane, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
+      many {{ {$count} z nich nie zostało jeszcze opublikowanych, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
+      *    {{ {$count} z nich nie zostało jeszcze opublikowanych, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry: Czy na pewno chcesz opublikować ten wpis? Twoje zmiany zaczną obowiązywać natychmiast.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
