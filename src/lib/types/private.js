@@ -461,7 +461,7 @@
 
 /**
  * Resolved S3 configuration passed to core request helpers. Extends the public `S3MediaLibrary`
- * with internal fields that providers set in their `getConfig` functions.
+ * with internal fields that providers set in their `resolveConfig` functions.
  * @typedef {S3MediaLibrary & { acl?: string | false }} S3Config
  */
 

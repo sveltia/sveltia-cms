@@ -12,6 +12,7 @@ import { getAllEntryFolders } from '$lib/services/config/folders/entries';
 import { fetchCmsConfig } from '$lib/services/config/loader';
 import { parseCmsConfig } from '$lib/services/config/parser';
 import { getConfigSchemas, validateConfigSchema } from '$lib/services/config/schema';
+import { cmsConfig as parsedCmsConfig } from '$lib/services/config/state';
 import { allEntryFolders } from '$lib/services/contents';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
@@ -26,14 +27,18 @@ const { DEV } = import.meta.env;
 export { DEV_SITE_URL };
 
 /**
+ * Parsed CMS configuration. The state box is defined in the `state` module so that modules the
+ * config parser depends on can read it without a circular import. It’s exported here as a constant
+ * rather than a re-export, because tests assign `cmsConfig` through the module namespace, which
+ * type-checks differently for an alias.
+ * @type {{ current: InternalCmsConfig | undefined }}
+ */
+export const cmsConfig = parsedCmsConfig;
+
+/**
  * @type {Partial<CmsConfig>}
  */
 export const rawCmsConfig = {};
-
-/**
- * @type {{ current: InternalCmsConfig | undefined }}
- */
-export const cmsConfig = createRawState();
 
 /**
  * @type {{ current: string | undefined }}

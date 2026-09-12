@@ -1,21 +1,8 @@
-import {
-  deleteS3Objects,
-  getLibraryOptions as getS3LibraryOptions,
-  isS3ObjectUrl,
-  listS3Objects,
-  renameS3Object,
-  replaceS3Object,
-  searchS3Objects,
-  uploadToS3,
-} from './core';
+import { S3CompatibleService } from './service';
 
 /**
- * @import {
- * ExternalAsset,
- * MediaLibraryFetchOptions,
- * MediaLibraryService,
- * } from '$lib/types/private';
- * @import { CmsConfig, MediaField, S3MediaLibrary } from '$lib/types/public';
+ * @import { S3Config } from '$lib/types/private';
+ * @import { S3MediaLibrary } from '$lib/types/public';
  */
 
 /**
@@ -36,131 +23,24 @@ const getPublicUrl = ({ project_id: projectId, bucket }) =>
   `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}`;
 
 /**
- * Get Supabase Storage library options from site config.
- * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
- * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
- * disabled.
- */
-export const getLibraryOptions = (config) => getS3LibraryOptions('supabase_storage', config);
-
-/**
- * Check if Supabase Storage integration is enabled.
- * @param {MediaField} [fieldConfig] Field configuration.
- * @returns {boolean} True if enabled, false otherwise.
- */
-export const isEnabled = (fieldConfig) => {
-  const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-
-  return !!(options && options.access_key_id && options.bucket && options.project_id);
-};
-
-/**
- * Build the resolved S3 config for the given field or global Supabase library options.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {S3MediaLibrary} Resolved config.
- * @throws {Error} If the Supabase Storage configuration is not available.
- */
-const getConfig = ({ fieldConfig }) => {
-  const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-
-  if (!libOptions) {
-    throw new Error('Supabase Storage configuration is not available');
-  }
-
-  return {
-    ...libOptions,
-    endpoint: getEndpoint(libOptions),
-    public_url: libOptions.public_url ?? getPublicUrl(libOptions),
-  };
-};
-
-/**
- * List files from Supabase Storage.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const list = async (options) => listS3Objects(getConfig(options), options);
-
-/**
- * Search files in Supabase Storage.
- * @param {string} query Search query.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const search = async (query, options) => searchS3Objects(query, getConfig(options), options);
-
-/**
- * Upload files to Supabase Storage.
- * @param {File[]} files Files to upload.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset[]>} Uploaded assets.
- */
-export const upload = async (files, options) => uploadToS3(files, getConfig(options), options);
-
-/**
- * Delete files from Supabase Storage.
- * @param {ExternalAsset[]} assets Assets to delete.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<void>}
- */
-export const deleteFiles = async (assets, options) =>
-  deleteS3Objects(assets, getConfig(options), options);
-
-/**
- * Rename a file on Supabase Storage.
- * @param {ExternalAsset} asset Asset to rename.
- * @param {string} newName New file name.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset>} Renamed asset.
- */
-export const rename = async (asset, newName, options) =>
-  renameS3Object(asset, newName, getConfig(options), options);
-
-/**
- * Replace a file on Supabase Storage with a new file.
- * @param {ExternalAsset} asset Asset to replace.
- * @param {File} file New file.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset>} Replaced asset.
- */
-export const replace = async (asset, file, options) =>
-  replaceS3Object(asset, file, getConfig(options), options);
-
-/**
- * Whether the given URL points to a file on Supabase Storage.
- * @param {string} url URL.
- * @returns {boolean} Result.
- */
-export const isAssetURL = (url) => {
-  try {
-    return isS3ObjectUrl(getConfig(/** @type {any} */ ({})), url);
-  } catch {
-    // The service is not configured
-    return false;
-  }
-};
-
-/**
  * Supabase Storage media library service integration.
- * @type {MediaLibraryService}
  */
-export default {
-  serviceType: 'cloud_storage',
+export default new S3CompatibleService({
   serviceId: 'supabase_storage',
   serviceLabel: 'Supabase Storage',
   serviceURL: 'https://supabase.com/storage',
-  showServiceLink: true,
-  hotlinking: true,
-  authType: 'api_key',
   developerURL: 'https://supabase.com/docs/guides/storage',
   apiKeyURL: 'https://supabase.com/dashboard/project/_/storage/settings',
   apiKeyPattern: /^[A-Za-z0-9/+=]{40,}$/,
-  isEnabled,
-  isAssetURL,
-  list,
-  search,
-  upload,
-  delete: deleteFiles,
-  rename,
-  replace,
-};
+  requiredOption: 'project_id',
+  /**
+   * Add the Supabase S3 endpoint and public URL to the library options.
+   * @param {S3MediaLibrary} libOptions Library options.
+   * @returns {S3Config} Resolved configuration.
+   */
+  resolveConfig: (libOptions) => ({
+    ...libOptions,
+    endpoint: getEndpoint(libOptions),
+    public_url: libOptions.public_url ?? getPublicUrl(libOptions),
+  }),
+});

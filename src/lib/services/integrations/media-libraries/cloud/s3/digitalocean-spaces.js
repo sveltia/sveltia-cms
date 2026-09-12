@@ -1,153 +1,32 @@
-import {
-  deleteS3Objects,
-  getLibraryOptions as getS3LibraryOptions,
-  isS3ObjectUrl,
-  listS3Objects,
-  renameS3Object,
-  replaceS3Object,
-  searchS3Objects,
-  uploadToS3,
-} from './core';
+import { S3CompatibleService } from './service';
 
 /**
- * @import {
- * ExternalAsset,
- * MediaLibraryFetchOptions,
- * MediaLibraryService,
- * } from '$lib/types/private';
- * @import { CmsConfig, MediaField, S3MediaLibrary } from '$lib/types/public';
+ * @import { S3Config } from '$lib/types/private';
+ * @import { S3MediaLibrary } from '$lib/types/public';
  */
 
 /**
- * Get DigitalOcean Spaces library options from site config.
- * @param {CmsConfig | MediaField} [config] CMS configuration or field configuration.
- * @returns {S3MediaLibrary | false | undefined} Configuration object, or `false` if explicitly
- * disabled.
+ * DigitalOcean Spaces media library service integration. Spaces uses the region endpoint for API
+ * calls (path-style) and virtual-hosted-style for public asset URLs, unless the user has configured
+ * a custom CDN `public_url`.
  */
-export const getLibraryOptions = (config) => getS3LibraryOptions('digitalocean_spaces', config);
-
-/**
- * Check if DigitalOcean Spaces integration is enabled.
- * @param {MediaField} [fieldConfig] Field configuration.
- * @returns {boolean} True if enabled, false otherwise.
- */
-export const isEnabled = (fieldConfig) => {
-  const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-
-  return !!(options && options.access_key_id && options.bucket && options.region);
-};
-
-/**
- * Build the resolved S3 config for the given field or global Spaces library options.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {S3MediaLibrary} Resolved config, or throws if unavailable.
- * @throws {Error} If the DigitalOcean Spaces configuration is not available.
- */
-const getConfig = ({ fieldConfig }) => {
-  const libOptions = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-
-  if (!libOptions) {
-    throw new Error('DigitalOcean Spaces configuration is not available');
-  }
-
-  // Spaces uses the region endpoint for API calls (path-style) and virtual-hosted-style for
-  // public asset URLs, unless the user has configured a custom CDN public_url.
-  return {
+export default new S3CompatibleService({
+  serviceId: 'digitalocean_spaces',
+  serviceLabel: 'DigitalOcean Spaces',
+  serviceURL: 'https://www.digitalocean.com/products/spaces',
+  developerURL: 'https://docs.digitalocean.com/products/spaces/',
+  apiKeyURL: 'https://cloud.digitalocean.com/account/api/spaces',
+  apiKeyPattern: /^[A-Za-z0-9/+=]{43}$/,
+  /**
+   * Add the Spaces region endpoint and public URL to the library options.
+   * @param {S3MediaLibrary} libOptions Library options.
+   * @returns {S3Config} Resolved configuration.
+   */
+  resolveConfig: (libOptions) => ({
     ...libOptions,
     endpoint: `https://${libOptions.region}.digitaloceanspaces.com`,
     public_url:
       libOptions.public_url ??
       `https://${libOptions.bucket}.${libOptions.region}.digitaloceanspaces.com`,
-  };
-};
-
-/**
- * List files from DigitalOcean Spaces.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const list = async (options) => listS3Objects(getConfig(options), options);
-
-/**
- * Search files in DigitalOcean Spaces.
- * @param {string} query Search query.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const search = async (query, options) => searchS3Objects(query, getConfig(options), options);
-
-/**
- * Upload files to DigitalOcean Spaces.
- * @param {File[]} files Files to upload.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset[]>} Uploaded assets.
- */
-export const upload = async (files, options) => uploadToS3(files, getConfig(options), options);
-
-/**
- * Delete files from DigitalOcean Spaces.
- * @param {ExternalAsset[]} assets Assets to delete.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<void>}
- */
-export const deleteFiles = async (assets, options) =>
-  deleteS3Objects(assets, getConfig(options), options);
-
-/**
- * Rename a file on DigitalOcean Spaces.
- * @param {ExternalAsset} asset Asset to rename.
- * @param {string} newName New file name.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset>} Renamed asset.
- */
-export const rename = async (asset, newName, options) =>
-  renameS3Object(asset, newName, getConfig(options), options);
-
-/**
- * Replace a file on DigitalOcean Spaces with a new file.
- * @param {ExternalAsset} asset Asset to replace.
- * @param {File} file New file.
- * @param {MediaLibraryFetchOptions} options Options containing the configuration.
- * @returns {Promise<ExternalAsset>} Replaced asset.
- */
-export const replace = async (asset, file, options) =>
-  replaceS3Object(asset, file, getConfig(options), options);
-
-/**
- * Whether the given URL points to a file on DigitalOcean Spaces.
- * @param {string} url URL.
- * @returns {boolean} Result.
- */
-export const isAssetURL = (url) => {
-  try {
-    return isS3ObjectUrl(getConfig(/** @type {any} */ ({})), url);
-  } catch {
-    // The service is not configured
-    return false;
-  }
-};
-
-/**
- * DigitalOcean Spaces media library service integration.
- * @type {MediaLibraryService}
- */
-export default {
-  serviceType: 'cloud_storage',
-  serviceId: 'digitalocean_spaces',
-  serviceLabel: 'DigitalOcean Spaces',
-  serviceURL: 'https://www.digitalocean.com/products/spaces',
-  showServiceLink: true,
-  hotlinking: true,
-  authType: 'api_key',
-  developerURL: 'https://docs.digitalocean.com/products/spaces/',
-  apiKeyURL: 'https://cloud.digitalocean.com/account/api/spaces',
-  apiKeyPattern: /^[A-Za-z0-9/+=]{43}$/,
-  isEnabled,
-  isAssetURL,
-  list,
-  search,
-  upload,
-  delete: deleteFiles,
-  rename,
-  replace,
-};
+  }),
+});
