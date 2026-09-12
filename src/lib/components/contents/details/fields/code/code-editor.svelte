@@ -8,10 +8,11 @@
   import { CodeEditor } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { isObject } from '@sveltia/utils/object';
-  import { getContext, untrack } from 'svelte';
+  import { getContext } from 'svelte';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -109,21 +110,19 @@
     }
   };
 
-  $effect(() => {
-    void [valueMap];
-
-    untrack(() => {
+  watch(
+    () => valueMap,
+    () => {
       setInputValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void [code, lang];
-
-    untrack(() => {
+  watch(
+    () => [code, lang],
+    () => {
       setCurrentValue();
-    });
-  });
+    },
+  );
 </script>
 
 {#await sleep() then}

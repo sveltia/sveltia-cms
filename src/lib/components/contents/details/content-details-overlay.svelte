@@ -37,16 +37,24 @@
   import {
     editorFirstPane,
     editorSecondPane,
-    MIN_PANE_SIZE,
     showContentOverlay,
     showDuplicateToast,
   } from '$lib/services/contents/editor';
   import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/fields';
+  import {
+    getDefaultPanes,
+    getPanesEditingLocale,
+    getPaneSizes,
+    getPaneStateKey,
+    getRestoredPanes,
+    savePaneState,
+  } from '$lib/services/contents/editor/panes';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
@@ -104,67 +112,43 @@
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
-  const paneStateKey = $derived(
-    collectionFile?.name ? [collection?.name, collectionFile.name].join('|') : collection?.name,
-  );
+  const paneStateKey = $derived(getPaneStateKey({ collection, collectionFile }));
   const { canCreate, quota, creationDisabled } = $derived(collectionState.current);
-
-  const [firstPaneSize, secondPaneSize, minPaneSize] = $derived.by(() => {
-    if (!editorFirstPane.current && !editorSecondPane.current) {
-      return [0, 0, 0];
-    }
-
-    if (!editorFirstPane.current || !editorSecondPane.current) {
-      return [editorFirstPane.current ? 100 : 0, editorSecondPane.current ? 100 : 0, 0];
-    }
-
-    if (
-      typeof editorFirstPane.current.width === 'number' &&
-      typeof editorSecondPane.current.width === 'number' &&
-      editorFirstPane.current.width >= MIN_PANE_SIZE &&
-      editorSecondPane.current.width >= MIN_PANE_SIZE &&
-      editorFirstPane.current.width + editorSecondPane.current.width === 100
-    ) {
-      return [editorFirstPane.current.width, editorSecondPane.current.width, MIN_PANE_SIZE];
-    }
-
-    return [50, 50, MIN_PANE_SIZE];
-  });
+  const [firstPaneSize, secondPaneSize, minPaneSize] = $derived(
+    getPaneSizes({ firstPane: editorFirstPane.current, secondPane: editorSecondPane.current }),
+  );
 
   /**
    * Restore the pane state from IndexedDB.
    * @returns {Promise<boolean>} Whether the panes are restored.
    */
   const restorePanes = async () => {
-    let [_editorFirstPane, _editorSecondPane] =
-      entryEditorSettings.current?.paneStates?.[paneStateKey ?? ''] ?? [];
-
-    // Override the locale if specified
-    if (editorLocale) {
-      _editorFirstPane = { mode: 'edit', locale: editorLocale };
-      _editorSecondPane = { mode: 'preview', locale: editorLocale };
+    if (restoring) {
+      return false;
     }
 
-    if (
-      restoring ||
-      !_editorFirstPane ||
-      !_editorSecondPane ||
-      (!!_editorFirstPane.locale && !allLocales.includes(_editorFirstPane.locale)) ||
-      (!!_editorSecondPane.locale && !allLocales.includes(_editorSecondPane.locale)) ||
-      !showSecondPane ||
-      ((!showPreview || !canPreview) &&
-        (_editorFirstPane.mode === 'preview' || _editorSecondPane.mode === 'preview')) ||
-      // If there are only 2 locales and the first pane is not in the default locale, don’t restore
-      // the panes so that the default locale is always shown in the first pane
-      (allLocales.length === 2 && _editorFirstPane.locale !== defaultLocale)
-    ) {
+    const panes = getRestoredPanes({
+      savedPanes: entryEditorSettings.current?.paneStates?.[paneStateKey ?? ''],
+      editorLocale,
+      allLocales,
+      defaultLocale,
+      canPreview,
+      showPreview,
+      showSecondPane,
+    });
+
+    if (!panes) {
       return false;
     }
 
     restoring = true;
     await tick();
-    editorFirstPane.current = _editorFirstPane;
-    editorSecondPane.current = env.isSmallScreen || env.isMediumScreen ? null : _editorSecondPane;
+    [editorFirstPane.current, editorSecondPane.current] = panes;
+
+    if (env.isSmallScreen || env.isMediumScreen) {
+      editorSecondPane.current = null;
+    }
+
     await tick();
     restoring = false;
 
@@ -181,29 +165,17 @@
 
     switching = true;
 
-    if (await restorePanes()) {
-      switching = false;
-
-      return;
-    }
-
-    editorFirstPane.current = {
-      mode: 'edit',
-      locale: editorFirstPane.current?.locale ?? defaultLocale,
-    };
-
-    if (env.isSmallScreen || env.isMediumScreen || !showSecondPane) {
-      editorSecondPane.current = null;
-    } else if (!showPreview || !canPreview) {
-      const otherLocales = i18nEnabled
-        ? allLocales.filter((l) => l !== editorFirstPane.current?.locale)
-        : [];
-
-      editorSecondPane.current = otherLocales.length
-        ? { mode: 'edit', locale: otherLocales[0] }
-        : null;
-    } else {
-      editorSecondPane.current = { mode: 'preview', locale: editorFirstPane.current.locale };
+    if (!(await restorePanes())) {
+      [editorFirstPane.current, editorSecondPane.current] = getDefaultPanes({
+        currentLocale: editorFirstPane.current?.locale,
+        defaultLocale,
+        allLocales,
+        i18nEnabled,
+        canPreview,
+        showPreview,
+        showSecondPane,
+        singlePane: env.isSmallScreen || env.isMediumScreen,
+      });
     }
 
     switching = false;
@@ -213,26 +185,12 @@
    * Save the pane state to IndexedDB.
    */
   const savePanes = () => {
-    if (
-      !collection ||
-      restoring ||
-      !editorFirstPane.current ||
-      !editorSecondPane.current ||
-      !paneStateKey
-    ) {
-      return;
+    const firstPane = editorFirstPane.current;
+    const secondPane = editorSecondPane.current;
+
+    if (collection && !restoring && firstPane && secondPane && paneStateKey) {
+      savePaneState(paneStateKey, [firstPane, secondPane]);
     }
-
-    // Don’t track the settings being updated, as this is called from an effect
-    const settings = untrack(() => entryEditorSettings.current);
-
-    entryEditorSettings.current = {
-      ...settings,
-      paneStates: {
-        ...settings?.paneStates,
-        [paneStateKey]: [editorFirstPane.current, editorSecondPane.current],
-      },
-    };
   };
 
   /**
@@ -309,29 +267,18 @@
    * @param {InternalLocaleCode} locale Locale code.
    */
   const ensureEditPaneVisible = async (locale) => {
-    const firstPane = editorFirstPane.current;
-    const secondPane = editorSecondPane.current;
+    const panes = getPanesEditingLocale({
+      firstPane: editorFirstPane.current,
+      secondPane: editorSecondPane.current,
+      locale,
+    });
 
     // Already visible in an edit pane
-    if (
-      (firstPane?.mode === 'edit' && firstPane.locale === locale) ||
-      (secondPane?.mode === 'edit' && secondPane.locale === locale)
-    ) {
+    if (!panes) {
       return;
     }
 
-    // Prefer switching a preview pane to edit mode for the target locale
-    if (secondPane?.mode === 'preview') {
-      editorSecondPane.current = { mode: 'edit', locale };
-    } else if (firstPane?.mode === 'preview') {
-      editorFirstPane.current = { mode: 'edit', locale };
-    } else if (secondPane) {
-      // Both are edit panes for other locales; switch the second one
-      editorSecondPane.current = { mode: 'edit', locale };
-    } else {
-      // Single-pane layout
-      editorFirstPane.current = { mode: 'edit', locale };
-    }
+    [editorFirstPane.current, editorSecondPane.current] = panes;
 
     // Wait for the DOM to update after the pane switch
     await sleep(100);
@@ -497,20 +444,19 @@
     }
   });
 
-  $effect(() => {
-    void [
+  watch(
+    () => [
       collection,
       showSecondPane,
       showPreview,
       canPreview,
       env.isSmallScreen,
       env.isMediumScreen,
-    ];
-
-    untrack(() => {
+    ],
+    () => {
       switchPanes();
-    });
-  });
+    },
+  );
 
   $effect(() => {
     void [editorFirstPane.current, editorSecondPane.current];

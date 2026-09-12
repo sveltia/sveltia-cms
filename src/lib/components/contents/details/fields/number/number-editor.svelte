@@ -6,7 +6,8 @@
 -->
 <script>
   import { NumberInput } from '@sveltia/ui';
-  import { untrack } from 'svelte';
+
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -93,21 +94,19 @@
     }
   };
 
-  $effect(() => {
-    void [currentValue];
-
-    untrack(() => {
+  watch(
+    () => currentValue,
+    () => {
       setInputValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void [inputValue];
-
-    untrack(() => {
+  watch(
+    () => inputValue,
+    () => {
       setCurrentValue();
-    });
-  });
+    },
+  );
 </script>
 
 <NumberInput

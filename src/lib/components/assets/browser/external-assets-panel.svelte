@@ -7,7 +7,7 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, EmptyState, InfiniteScroll, Toast } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
-  import { onMount, untrack } from 'svelte';
+  import { onMount } from 'svelte';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
@@ -17,10 +17,12 @@
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
   import { getFetchOptions } from '$lib/services/assets/external';
+  import { fetchExternalAssetBlob } from '$lib/services/assets/external/data';
   import { processFile } from '$lib/services/assets/process';
   import { cmsConfig } from '$lib/services/config';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { env } from '$lib/services/user/env.svelte';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import {
@@ -132,17 +134,9 @@
     }
 
     try {
-      const response = await fetch(url);
-      const { ok, status } = response;
+      const blob = await fetchExternalAssetBlob(asset);
 
-      if (!ok) {
-        throw new Error(`The response returned with HTTP status ${status}.`);
-      }
-
-      const blob = await response.blob();
-      const file = new File([blob], fileName, { type: blob.type });
-
-      return { url, credit, file };
+      return { url, credit, file: new File([blob], fileName, { type: blob.type }) };
     } catch (ex) {
       error = 'image_fetch_failed';
       // eslint-disable-next-line no-console
@@ -249,15 +243,14 @@
     })();
   });
 
-  $effect(() => {
-    void [searchTerms, hasAuthInfo];
-
-    untrack(() => {
+  watch(
+    () => [searchTerms, hasAuthInfo],
+    () => {
       if (hasAuthInfo) {
         getAssets(searchTerms);
       }
-    });
-  });
+    },
+  );
 </script>
 
 {#snippet content()}

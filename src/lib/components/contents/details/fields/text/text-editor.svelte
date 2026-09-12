@@ -6,10 +6,11 @@
 -->
 <script>
   import { TextArea } from '@sveltia/ui';
-  import { getContext, untrack } from 'svelte';
+  import { getContext } from 'svelte';
 
   import CharacterCounter from '$lib/components/contents/details/fields/string/character-counter.svelte';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -64,21 +65,19 @@
     }
   };
 
-  $effect(() => {
-    void [currentValue];
-
-    untrack(() => {
+  watch(
+    () => currentValue,
+    () => {
       setInputValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void [inputValue];
-
-    untrack(() => {
+  watch(
+    () => inputValue,
+    () => {
       setCurrentValue();
-    });
-  });
+    },
+  );
 
   $effect(() => {
     if (extraHint) {

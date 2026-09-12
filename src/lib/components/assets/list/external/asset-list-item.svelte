@@ -8,6 +8,7 @@
     selectedCloudService,
     selectedExternalAssets,
   } from '$lib/services/assets/external';
+  import { toggleListItem } from '$lib/services/utils/array';
 
   /**
    * @import { ExternalAsset, ViewType } from '$lib/types/private';
@@ -36,15 +37,12 @@
    * @param {boolean} _selected Whether the current asset item is selected.
    */
   const updateSelection = (_selected) => {
-    const assets = selectedExternalAssets.current;
-
-    if (_selected && !selected) {
-      selectedExternalAssets.current = [...assets, asset];
-    }
-
-    if (!_selected && selected) {
-      selectedExternalAssets.current = assets.filter((a) => a.id !== asset.id);
-    }
+    selectedExternalAssets.current = toggleListItem(
+      selectedExternalAssets.current,
+      asset,
+      _selected,
+      (a, b) => a.id === b.id,
+    );
   };
 </script>
 

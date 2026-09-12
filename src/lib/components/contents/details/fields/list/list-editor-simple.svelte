@@ -14,7 +14,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { getContext, tick, untrack } from 'svelte';
+  import { getContext, tick } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
@@ -22,14 +22,9 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import { getDirection } from '$lib/services/contents/i18n';
-  import {
-    getDropIndex,
-    getListItemAt,
-    getMoveTarget,
-    moveListItem,
-    startAutoScroll,
-    stopAutoScroll,
-  } from '$lib/services/utils/drag-sorting';
+  import { moveListItem } from '$lib/services/utils/drag-sorting';
+  import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -77,33 +72,6 @@
    * @type {HTMLElement | undefined}
    */
   let itemList = $state();
-  /**
-   * Index of the item made draggable by a press on its drag handle. Only the handle starts a drag,
-   * so the text in the inputs stays selectable.
-   * @type {number | undefined}
-   */
-  let grabbedIndex = $state();
-  /**
-   * Index of the item currently being dragged.
-   * @type {number | undefined}
-   */
-  let dragIndex = $state();
-  /**
-   * Item indexes in the order they are displayed. While an item is being dragged, this holds the
-   * provisional order, so the other rows slide out of the way and the gap the dragged row would
-   * land in follows the pointer. `undefined` while no drag is in progress.
-   * @type {number[] | undefined}
-   */
-  let previewOrder = $state();
-
-  /**
-   * The order the rows are rendered in. This is the identity order except during a drag. A stale
-   * preview left over from a list that changed length underneath is discarded.
-   * @type {number[]}
-   */
-  const displayOrder = $derived(
-    previewOrder?.length === items.length ? previewOrder : items.map((_item, index) => index),
-  );
 
   const { i18n, max = Infinity } = $derived(fieldConfig);
   const canEdit = $derived(!readonly);
@@ -217,123 +185,50 @@
     )?.focus();
   };
 
-  /**
-   * Handle a `dragover` event fired while a row is being reordered.
-   * @param {DragEvent} event `dragover` event.
-   */
-  const onDragOver = (event) => {
-    if (dragIndex === undefined || !previewOrder) {
-      return;
-    }
+  const sorter = createDragSorter({
+    /**
+     * Get the number of items in the list.
+     * @returns {number} Item count.
+     */
+    getItemCount: () => items.length,
+    /**
+     * Get the list element.
+     * @returns {HTMLElement | undefined} Element.
+     */
+    getListElement: () => itemList,
+    onMove: moveItem,
+  });
 
-    event.stopPropagation();
-    // The browser rejects the drop and never fires the `drop` event unless the default is prevented
-    event.preventDefault();
-
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-
-    const item = getListItemAt({ target: event.target, listElement: itemList });
-
-    // Keep the current order while the pointer is over a gap between two rows
-    if (!item) {
-      return;
-    }
-
-    const from = previewOrder.indexOf(dragIndex);
-
-    const to = getMoveTarget({
-      dragIndex: from,
-      dropIndex: getDropIndex({
-        index: item.index,
-        clientY: event.clientY,
-        rect: item.element.getBoundingClientRect(),
-      }),
-    });
-
-    if (to !== undefined) {
-      previewOrder = moveListItem(previewOrder, from, to);
-    }
-  };
-
-  /**
-   * Handle a `drop` event fired while a row is being reordered.
-   * @param {DragEvent} event `drop` event.
-   */
-  const onDrop = (event) => {
-    if (dragIndex === undefined) {
-      return;
-    }
-
-    event.stopPropagation();
-    event.preventDefault();
-    stopAutoScroll();
-
-    const from = dragIndex;
-    // Where the row ended up in the preview is where it should be committed
-    const to = previewOrder?.indexOf(dragIndex) ?? from;
-
-    grabbedIndex = undefined;
-    dragIndex = undefined;
-    // The committed order matches the preview, so the rows don’t move again on the way out
-    previewOrder = undefined;
-
-    if (to !== from) {
-      moveItem(from, to);
-    }
-  };
-
-  $effect(() => {
-    void [currentValue];
-
-    untrack(() => {
+  watch(
+    () => currentValue,
+    () => {
       syncFromValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void [$state.snapshot(items)];
-
-    untrack(() => {
+  watch(
+    () => $state.snapshot(items),
+    () => {
       updateValue();
-    });
-  });
+    },
+  );
 </script>
 
 <div
   role="none"
   class="item-list"
   bind:this={itemList}
-  ondragovercapture={onDragOver}
-  ondropcapture={onDrop}
+  ondragovercapture={sorter.onDragOver}
+  ondropcapture={sorter.onDrop}
 >
-  {#each displayOrder as index (itemIds[index])}
+  {#each sorter.displayOrder as index (itemIds[index])}
     <div
       role="none"
       class="item"
-      class:dragging={dragIndex === index}
-      draggable={grabbedIndex === index}
-      ondragstart={(/** @type {DragEvent} */ event) => {
-        dragIndex = index;
-        previewOrder = [...displayOrder];
-        // Let the editor pane scroll while the pointer is dragged near its top or bottom edge, so
-        // a long list can be reordered without letting go
-        startAutoScroll(itemList);
-
-        if (event.dataTransfer) {
-          event.dataTransfer.effectAllowed = 'move';
-          // Firefox doesn’t start a drag unless some data is attached to it
-          event.dataTransfer.setData('text/plain', items[index]);
-        }
-      }}
-      ondragend={() => {
-        stopAutoScroll();
-        grabbedIndex = undefined;
-        dragIndex = undefined;
-        // A cancelled drag puts every row back where it started
-        previewOrder = undefined;
-      }}
+      class:dragging={sorter.dragIndex === index}
+      draggable={sorter.grabbedIndex === index}
+      ondragstart={(event) => sorter.onDragStart(index, event, items[index])}
+      ondragend={sorter.onDragEnd}
       animate:flip={{ duration: 200 }}
     >
       {#if canEdit}
@@ -341,12 +236,8 @@
           {index}
           itemCount={items.length}
           disabled={!hasMultipleItems}
-          onGrab={() => {
-            grabbedIndex = index;
-          }}
-          onRelease={() => {
-            grabbedIndex = undefined;
-          }}
+          onGrab={() => sorter.grab(index)}
+          onRelease={sorter.release}
           onMove={(to, action) => moveItem(index, to, action)}
         />
       {/if}

@@ -7,8 +7,6 @@
   @see https://github.com/JamesLMilner/terra-draw
 -->
 <script>
-  // cSpell:ignore Nominatim jsonv2
-
   import { _ } from '@sveltia/i18n';
   import { AlertDialog, Button, Icon, Listbox, Option, SearchBar } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
@@ -16,17 +14,18 @@
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { loadModule } from '$lib/services/app/dependencies';
+  import { searchLocations } from '$lib/services/contents/fields/map/geocoding';
   import {
     getGeometryBounds,
     isValidGeoJSON,
     roundCoordinates,
   } from '$lib/services/contents/fields/map/helpers';
-  import { sendRequest } from '$lib/services/utils/networking';
   import { toFixed } from '$lib/services/utils/number';
 
   /**
    * @import Leaflet from 'leaflet';
    * @import { GeoJSONStoreGeometries, TerraDraw } from 'terra-draw';
+   * @import { LocationSearchResult } from '$lib/services/contents/fields/map/geocoding';
    * @import { FieldEditorProps, GeoCoordinates } from '$lib/types/private';
    * @import { MapField } from '$lib/types/public';
    */
@@ -35,15 +34,6 @@
    * @typedef {object} Props
    * @property {MapField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value. Stringified GeoJSON geometry object.
-   */
-
-  /**
-   * @typedef {object} SearchResult
-   * @property {string} place_id Unique identifier of the search result.
-   * @property {string} display_name Display name of the search result.
-   * @property {string} lat Latitude of the search result.
-   * @property {string} lon Longitude of the search result.
-   * @see https://nominatim.org/release-docs/develop/api/Search/
    */
 
   /** @type {FieldEditorProps & Props} */
@@ -68,7 +58,7 @@
   let inputValue = $state('');
   /** @type {string} */
   let searchQuery = $state('');
-  /** @type {SearchResult[] | undefined} */
+  /** @type {LocationSearchResult[] | undefined} */
   let searchResults = $state(undefined);
   /** @type {boolean} */
   let searching = $state(false);
@@ -243,27 +233,15 @@
   };
 
   /**
-   * Search for locations using the Nominatim API.
-   * @see https://nominatim.org/release-docs/develop/api/Search/
+   * Search for locations matching the query.
    */
   const searchLocation = async () => {
-    const q = searchQuery.trim();
-
-    if (!q) {
+    if (!searchQuery.trim()) {
       return;
     }
 
     searching = true;
-
-    const params = new URLSearchParams({ q, format: 'jsonv2' });
-    const url = `https://nominatim.openstreetmap.org/search?${params}`;
-
-    try {
-      searchResults = /** @type {SearchResult[]} */ (await sendRequest(url));
-    } catch {
-      searchResults = [];
-    }
-
+    searchResults = await searchLocations(searchQuery);
     searching = false;
   };
 
@@ -296,7 +274,7 @@
   /**
    * Handle the selection of a search result. Move the map to the selected location and add a point
    * feature to the map.
-   * @param {SearchResult} result Selected search result.
+   * @param {LocationSearchResult} result Selected search result.
    */
   const onSearchResultSelect = ({ lat, lon }) => {
     setLocation({ latitude: parseFloat(lat), longitude: parseFloat(lon) });

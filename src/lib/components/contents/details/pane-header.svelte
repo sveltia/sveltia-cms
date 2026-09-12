@@ -24,8 +24,11 @@
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { createRawState } from '$lib/services/utils/state.svelte';
   import { openNewTab } from '$lib/services/utils/window';
-  import { isPendingDeletion, unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
-  import { isEntryBranch } from '$lib/services/workflow/branch';
+  import {
+    getUnpublishedEntryBySlug,
+    isPendingDeletion,
+    workflowEnabled,
+  } from '$lib/services/workflow';
 
   /**
    * @import { EntryEditorPane } from '$lib/types/private';
@@ -89,9 +92,7 @@
 
     const slug = entryDraft.current?.fileName ?? originalEntry.slug;
 
-    return unpublishedEntries.current.find(({ workflow }) =>
-      isEntryBranch({ branch: workflow.pullRequest.branch, collectionName, slug }),
-    )?.workflow.pullRequest;
+    return getUnpublishedEntryBySlug({ collectionName, slug })?.workflow.pullRequest;
   });
   // `PreviewLinkButton` renders nothing when there’s no link to offer, so the link is resolved
   // here as well — the divider above the button has to know whether anything will follow it

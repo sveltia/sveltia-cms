@@ -9,6 +9,7 @@ import {
   createRootEffect,
   createState,
   getSnapshot,
+  watch,
 } from './state.svelte.js';
 
 /**
@@ -140,5 +141,41 @@ describe('createDeepState()', () => {
 
     state.current = { show: false };
     expect(derived.current).toBe(false);
+  });
+});
+
+describe('watch()', () => {
+  it('should run on the dependencies only, not on what the function reads', async () => {
+    const dependency = createRawState(1);
+    const other = createRawState('a');
+    /** @type {string[]} */
+    const log = [];
+
+    const stop = createRootEffect(() => {
+      watch(
+        () => dependency.current,
+        () => {
+          log.push(`run ${dependency.current} ${other.current}`);
+
+          return () => {
+            log.push('cleanup');
+          };
+        },
+      );
+    });
+
+    await wait();
+    expect(log).toEqual(['run 1 a']);
+
+    // Read by the function, but not a dependency
+    other.current = 'b';
+    await wait();
+    expect(log).toEqual(['run 1 a']);
+
+    dependency.current = 2;
+    await wait();
+    expect(log).toEqual(['run 1 a', 'cleanup', 'run 2 b']);
+
+    stop();
   });
 });

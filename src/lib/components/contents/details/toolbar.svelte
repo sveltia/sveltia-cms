@@ -56,12 +56,11 @@
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import {
+    getUnpublishedEntryBySlug,
     hasPublishedVersion,
     isPendingDeletion,
-    unpublishedEntries,
     workflowEnabled,
   } from '$lib/services/workflow';
-  import { isEntryBranch } from '$lib/services/workflow/branch';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import {
     deleteWorkflowEntry,
@@ -158,13 +157,7 @@
   // stays in sync when the status is changed elsewhere, e.g. on the Editorial Workflow page
   const unpublishedEntry = $derived(
     workflowEnabled.current && collectionName && originalEntry
-      ? unpublishedEntries.current.find(({ workflow }) =>
-          isEntryBranch({
-            branch: workflow.pullRequest.branch,
-            collectionName,
-            slug: fileName ?? originalEntry.slug,
-          }),
-        )
+      ? getUnpublishedEntryBySlug({ collectionName, slug: fileName ?? originalEntry.slug })
       : undefined,
   );
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
@@ -292,11 +285,6 @@
   };
 
   /**
-   * Save the entry draft.
-   * @param {object} [options] Options.
-   * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
-   */
-  /**
    * Check whether the entry that has just been saved is complete enough to be handed over for
    * review. Required fields aren’t enforced while an entry is a draft, so it may have been saved
    * with some of them empty. The check leaves the editor state alone: nothing is wrong with the
@@ -327,11 +315,11 @@
   const save = async ({ skipCI = undefined } = {}) => {
     const draft = entryDraft.current;
 
-    saving = true;
-
     if (!collection || !draft) {
       return;
     }
+
+    saving = true;
 
     try {
       const savedEntry = await saveEntry({ draft, skipCI });

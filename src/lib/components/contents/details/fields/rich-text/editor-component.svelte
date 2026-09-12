@@ -7,8 +7,6 @@
 
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { replaceTemplateTags } from '$lib/services/common/template';
-  import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
   import { normalizeContent } from '$lib/services/contents/draft/create/normalize';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import {
@@ -18,7 +16,9 @@
   import { validateFields } from '$lib/services/contents/draft/validate/fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+  import { formatComponentSummary } from '$lib/services/contents/fields/rich-text/components/summary';
   import { unflattenMap } from '$lib/services/utils/object';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
@@ -264,52 +264,6 @@
   };
 
   /**
-   * Format a summary template by replacing `{{fieldName}}` placeholders with values (dialog mode
-   * only). Supports nested properties and transformations like the CMS object field summary.
-   * @param {string} template Summary template, e.g. `{{title}} - {{linkType.url | upper}}`.
-   * @param {RawEntryContent} _values Current values (unflattened).
-   * @returns {string | null} Formatted summary, or null if template is empty or result is empty.
-   */
-  const formatSimpleSummary = (template, _values) => {
-    if (!template || !_values) {
-      return null;
-    }
-
-    const flatValues = flatten(_values);
-
-    const result = replaceTemplateTags(template, (__, placeholder) => {
-      const { value: tag, transformations } = parseTransformations(placeholder);
-      const fieldName = tag.replace(/^fields\./, '');
-      let value = flatValues[fieldName];
-
-      if (value === undefined || value === null) {
-        return '';
-      }
-
-      if (transformations.length) {
-        value = applyTransformations({
-          fieldConfig: fields.find((f) => f.name === fieldName),
-          value,
-          transformations,
-          locale,
-        });
-      }
-
-      return String(value);
-    });
-
-    // Return `null` if the result (after stripping all placeholder-based content) is empty. This
-    // handles the case where all field values are empty but literal text (e.g. ' — ') remains.
-    const strippedTemplate = replaceTemplateTags(template, () => '');
-
-    if (result !== strippedTemplate && result.trim()) {
-      return result.trim();
-    }
-
-    return null;
-  };
-
-  /**
    * The text to display in the placeholder (dialog mode only). Priority:
    * 1. Formatted summary template (if provided and produces non-empty result)
    * 2. First string field’s value
@@ -320,13 +274,10 @@
     // render or before the store has been notified with the values.
     const hasFieldValues = fields.some((f) => currentValues?.[f.name] !== undefined);
     const vals = hasFieldValues ? currentValues : values;
+    const formatted = formatComponentSummary({ template: summary, values: vals, fields, locale });
 
-    if (summary && vals) {
-      const formatted = formatSimpleSummary(summary, vals);
-
-      if (formatted) {
-        return formatted;
-      }
+    if (formatted) {
+      return formatted;
     }
 
     if (displayField && vals) {
@@ -384,10 +335,9 @@
     };
   });
 
-  $effect(() => {
-    void [values, locale, keyPath];
-
-    untrack(() => {
+  watch(
+    () => [values, locale, keyPath],
+    () => {
       if (entryDraft?.current && locale && keyPath) {
         const { defaultLocale } = entryDraft.current;
 
@@ -425,8 +375,8 @@
           Object.assign(entryDraft.current[valueStoreKey][locale], newEntries);
         }
       }
-    });
-  });
+    },
+  );
 
   // Block mode: forward onChange whenever currentValues change
   $effect(() => {

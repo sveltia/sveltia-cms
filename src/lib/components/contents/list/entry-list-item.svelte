@@ -9,6 +9,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntryIndexMap } from '$lib/services/contents/collection/view';
+  import { toggleListItem } from '$lib/services/utils/array';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
@@ -40,16 +41,7 @@
    * @param {boolean} selected Whether the current entry item is selected.
    */
   const updateSelection = (selected) => {
-    const entries = selectedEntries.current;
-    const index = entries.indexOf(entry);
-
-    if (selected && index === -1) {
-      selectedEntries.current = [...entries, entry];
-    }
-
-    if (!selected && index > -1) {
-      selectedEntries.current = entries.filter((e) => e !== entry);
-    }
+    selectedEntries.current = toggleListItem(selectedEntries.current, entry, selected);
   };
 </script>
 

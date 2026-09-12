@@ -27,7 +27,6 @@
   } from '$lib/services/contents/editor/fields';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
   import { formatSummary } from '$lib/services/contents/fields/object/helpers';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -76,11 +75,9 @@
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
   const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
-  const collection = $derived(entryDraft.current?.collection);
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
-  const collectionFile = $derived(entryDraft.current?.collectionFile);
   const fileName = $derived(entryDraft.current?.fileName);
-  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
+  const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const getFieldArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
   const hasValues = $derived(
@@ -149,7 +146,9 @@
       }
 
       const newContent = Object.fromEntries(
-        Object.entries(getDefaultValues({ fields: subFields, locale, defaultLocale })) //
+        Object.entries(
+          getDefaultValues({ fields: subFields, locale, defaultLocale: draft.defaultLocale }),
+        ) //
           .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
       );
 

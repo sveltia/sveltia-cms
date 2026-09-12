@@ -1,4 +1,7 @@
+import { backend } from '$lib/services/backends';
 import { deployments, lastCommitPublishHint, productionSHA } from '$lib/services/deployments';
+import { prefs } from '$lib/services/user/prefs.svelte';
+import { isSecureURL } from '$lib/services/utils/networking';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -49,3 +52,45 @@ export const isLastCommitPublished = createDerivedState(() => {
 
   return published;
 });
+
+/**
+ * Whether a deployment can be triggered by hand: there has to be a way to do it — a deploy hook
+ * URL configured by the user, or a backend that can trigger a build itself — and the last commit
+ * has to be out of date.
+ */
+export const canTriggerDeployment = createDerivedState(
+  () =>
+    (!!prefs.deployHookURL || typeof backend.current?.triggerDeployment === 'function') &&
+    !isLastCommitPublished.current,
+);
+
+/**
+ * Trigger a manual deployment on the CI/CD provider, by calling the deploy hook URL configured by
+ * the user if there is one, or the backend’s own API otherwise. Once the request has been accepted,
+ * the last commit is expected to have started a deployment.
+ * @throws {Error} When the deploy hook URL is not secure, or the request has failed.
+ */
+export const triggerDeployment = async () => {
+  const { deployHookURL, deployHookAuthHeader } = prefs;
+
+  if (deployHookURL && !isSecureURL(deployHookURL)) {
+    throw new Error('Deploy hook URL must use HTTPS or localhost');
+  }
+
+  const { ok, status } = deployHookURL
+    ? await fetch(deployHookURL, {
+        method: 'POST',
+        mode: deployHookAuthHeader ? 'cors' : 'no-cors',
+        headers: deployHookAuthHeader ? { Authorization: deployHookAuthHeader } : {},
+      })
+    : ((await backend.current?.triggerDeployment?.()) ?? {});
+
+  // If the `mode` is `no-cors`, the regular response status will be `0`
+  if (!ok && (deployHookAuthHeader || status !== 0)) {
+    throw new Error(`Webhook returned ${status} error`);
+  }
+
+  // The provider hasn’t been asked about the new run yet, so record that one was requested.
+  // Anything it reported about the commit before this point describes the state being replaced
+  setLastCommitPublishHint(true);
+};

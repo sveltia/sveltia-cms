@@ -3,7 +3,7 @@
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { isURL } from '@sveltia/utils/string';
-  import { tick, untrack } from 'svelte';
+  import { tick } from 'svelte';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
@@ -15,6 +15,7 @@
   import { activeInlineEditors } from '$lib/services/contents/editor';
   import { getUnsavedFileDisplayPath } from '$lib/services/contents/fields/file/helpers';
   import { formatFileName, isEquivalentFileExtension } from '$lib/services/utils/file';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { Asset, AssetKind, Entry } from '$lib/types/private';
@@ -245,13 +246,12 @@
     }
   };
 
-  $effect(() => {
-    void [value];
-
-    untrack(() => {
+  watch(
+    () => value,
+    () => {
       updateProps();
-    });
-  });
+    },
+  );
 
   $effect(() => {
     if (!editing) {

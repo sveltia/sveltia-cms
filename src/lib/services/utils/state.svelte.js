@@ -1,3 +1,5 @@
+import { untrack } from 'svelte';
+
 /**
  * Wrap the given plain object in a deeply reactive `$state` proxy. Runes are only available in
  * Svelte-compiled modules, so this lets a plain service module create reactive state, e.g. an
@@ -102,3 +104,21 @@ export const createRootEffect = (fn) =>
   $effect.root(() => {
     $effect(fn);
   });
+
+/**
+ * Run the given function whenever the given dependencies have changed, like `$effect`, but without
+ * tracking the state the function itself reads. Use it in a component for a function that reads
+ * more state than it should react to, e.g. one syncing two values in both directions, where
+ * tracking the target would set off an infinite loop.
+ * @param {() => unknown} getDependencies Function reading the reactive state to be tracked. Its
+ * return value is ignored; wrap several values in an array, e.g. `() => [a, b]`.
+ * @param {() => void | (() => void)} fn Function to run. It can return a cleanup function, which
+ * is called before the next run.
+ */
+export const watch = (getDependencies, fn) => {
+  $effect(() => {
+    getDependencies();
+
+    return untrack(fn);
+  });
+};

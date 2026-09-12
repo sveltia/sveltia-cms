@@ -1,12 +1,11 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { TextInput } from '@sveltia/ui';
-  import { untrack } from 'svelte';
 
   import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   const entryDraft = getEntryDraftContext();
 
@@ -18,9 +17,7 @@
 
   const fieldId = $props.id();
 
-  const collection = $derived(entryDraft.current?.collection);
-  const collectionFile = $derived(entryDraft.current?.collectionFile);
-  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
+  const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   const slugEditor = $derived(entryDraft.current?.slugEditor[locale]);
   const required = $derived(slugEditor === true);
   const readonly = $derived(slugEditor === 'readonly');
@@ -35,10 +32,9 @@
     }
   });
 
-  $effect(() => {
-    void [inputValue];
-
-    untrack(() => {
+  watch(
+    () => inputValue,
+    () => {
       const draft = entryDraft.current;
 
       if (draft) {
@@ -49,8 +45,8 @@
           }
         });
       }
-    });
-  });
+    },
+  );
 </script>
 
 {#if entryDraft.current}

@@ -4,6 +4,7 @@
   import { focusedAsset, selectedAssetPathSet, selectedAssets } from '$lib/services/assets';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
   import { listedAssetIndexMap } from '$lib/services/assets/view';
+  import { toggleListItem } from '$lib/services/utils/array';
 
   /**
    * @import { Asset, ViewType } from '$lib/types/private';
@@ -28,16 +29,7 @@
    * @param {boolean} selected Whether the current asset item is selected.
    */
   const updateSelection = (selected) => {
-    const assets = selectedAssets.current;
-    const index = assets.indexOf(asset);
-
-    if (selected && index === -1) {
-      selectedAssets.current = [...assets, asset];
-    }
-
-    if (!selected && index > -1) {
-      selectedAssets.current = assets.filter((a) => a !== asset);
-    }
+    selectedAssets.current = toggleListItem(selectedAssets.current, asset, selected);
   };
 </script>
 

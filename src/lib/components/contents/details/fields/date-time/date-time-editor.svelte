@@ -8,7 +8,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
-  import { untrack } from 'svelte';
 
   import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
   import {
@@ -21,6 +20,7 @@
     getInitialTimeZone,
     getTimeZoneLabel,
   } from '$lib/services/contents/fields/date-time/timezone';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -104,23 +104,21 @@
     currentValue = _currentValue;
   };
 
-  $effect(() => {
-    // Keep the displayed value in sync with the stored entry value.
-    void [currentValue];
-
-    untrack(() => {
+  // Keep the displayed value in sync with the stored entry value.
+  watch(
+    () => currentValue,
+    () => {
       setInputValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    // Only update currentValue when inputValue changes (not when timezone changes)
-    void [inputValue];
-
-    untrack(() => {
+  // Only update currentValue when inputValue changes (not when timezone changes)
+  watch(
+    () => inputValue,
+    () => {
       setCurrentValue();
-    });
-  });
+    },
+  );
 
   /**
    * Handle input focus event.

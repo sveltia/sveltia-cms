@@ -35,14 +35,7 @@
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
-  import {
-    getDropIndex,
-    getListItemAt,
-    getMoveTarget,
-    moveListItem,
-    startAutoScroll,
-    stopAutoScroll,
-  } from '$lib/services/utils/drag-sorting';
+  import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -106,18 +99,6 @@
   let unsavedAssets = $state([]);
   /** @type {HTMLElement | undefined} */
   let itemList = $state();
-  /**
-   * Index of the item currently being dragged.
-   * @type {number | undefined}
-   */
-  let dragIndex = $state();
-  /**
-   * Item indexes in the order they are displayed. While an item is being dragged, this holds the
-   * provisional order, so the other items slide out of the way and the gap the dragged item would
-   * land in follows the pointer. `undefined` while no drag is in progress.
-   * @type {number[] | undefined}
-   */
-  let previewOrder = $state();
 
   const {
     widget: fieldType,
@@ -158,14 +139,6 @@
   );
   const multiple = $derived(isMultiple(fieldConfig));
   const itemCount = $derived(Array.isArray(currentValue) ? currentValue.length : 0);
-  /**
-   * The order the items are rendered in. This is the identity order except during a drag. A stale
-   * preview left over from a list that changed length underneath is discarded.
-   * @type {number[]}
-   */
-  const displayOrder = $derived(
-    previewOrder?.length === itemCount ? previewOrder : [...Array(itemCount).keys()],
-  );
   const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
   const showRemoveButton = $derived(
     !required &&
@@ -374,75 +347,19 @@
     )?.focus();
   };
 
-  /**
-   * Handle a `dragover` event fired while an item is being reordered.
-   *
-   * The list-level drag handlers run in the capture phase, so that the surrounding drop zone never
-   * sees a reorder drag and doesn’t offer to upload the item as a file. Anything else being
-   * dragged, such as a file from the desktop, is passed through untouched.
-   * @param {DragEvent} event `dragover` event.
-   */
-  const onDragOver = (event) => {
-    if (dragIndex === undefined || !previewOrder) {
-      return;
-    }
-
-    event.stopPropagation();
-    // The browser rejects the drop and never fires the `drop` event unless the default is prevented
-    event.preventDefault();
-
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-
-    const item = getListItemAt({ target: event.target, listElement: itemList });
-
-    // Keep the current order while the pointer is over a gap between two items
-    if (!item) {
-      return;
-    }
-
-    const from = previewOrder.indexOf(dragIndex);
-
-    const to = getMoveTarget({
-      dragIndex: from,
-      dropIndex: getDropIndex({
-        index: item.index,
-        clientY: event.clientY,
-        rect: item.element.getBoundingClientRect(),
-      }),
-    });
-
-    if (to !== undefined) {
-      previewOrder = moveListItem(previewOrder, from, to);
-    }
-  };
-
-  /**
-   * Handle a `drop` event fired while an item is being reordered.
-   * @param {DragEvent} event `drop` event.
-   */
-  const onItemDrop = (event) => {
-    if (dragIndex === undefined) {
-      return;
-    }
-
-    event.stopPropagation();
-    event.preventDefault();
-    stopAutoScroll();
-
-    const from = dragIndex;
-    // Where the item ended up in the preview is where it should be committed
-    const to = previewOrder?.indexOf(dragIndex) ?? from;
-
-    dragIndex = undefined;
-    // The committed order matches the preview, so the items don’t move again on the way out
-    previewOrder = undefined;
-
-    if (to !== from) {
-      moveItem(from, to);
-    }
-  };
+  const sorter = createDragSorter({
+    /**
+     * Get the number of items in the list.
+     * @returns {number} Item count.
+     */
+    getItemCount: () => itemCount,
+    /**
+     * Get the list element.
+     * @returns {HTMLElement | undefined} Element.
+     */
+    getListElement: () => itemList,
+    onMove: moveItem,
+  });
 
   $effect(() => {
     const draft = entryDraft.current;
@@ -482,10 +399,10 @@
           role="none"
           class="item-list"
           bind:this={itemList}
-          ondragovercapture={onDragOver}
-          ondropcapture={onItemDrop}
+          ondragovercapture={sorter.onDragOver}
+          ondropcapture={sorter.onDrop}
         >
-          {#each displayOrder as index (`${currentValue[index]}|${index}`)}
+          {#each sorter.displayOrder as index (`${currentValue[index]}|${index}`)}
             <!--
               The wrapper is what the `flip` animation moves: `animate:` only works on an element at
               the top level of a keyed `each` block, not on a component.
@@ -497,26 +414,15 @@
                 {itemCount}
                 value={currentValue[index]}
                 fieldId="{fieldId}-{index}"
-                dragging={dragIndex === index}
+                dragging={sorter.dragIndex === index}
                 onReplace={() => {
                   replaceMode = true;
                   replaceIndex = index;
                   showSelectAssetsDialog = true;
                 }}
                 onRemove={() => removeItem(index)}
-                onDragStart={() => {
-                  dragIndex = index;
-                  previewOrder = [...displayOrder];
-                  // Let the editor pane scroll while the pointer is dragged near its top or bottom
-                  // edge, so a long list can be reordered without letting go
-                  startAutoScroll(itemList);
-                }}
-                onDragEnd={() => {
-                  stopAutoScroll();
-                  dragIndex = undefined;
-                  // A cancelled drag puts every item back where it started
-                  previewOrder = undefined;
-                }}
+                onDragStart={() => sorter.onDragStart(index)}
+                onDragEnd={sorter.onDragEnd}
                 onMove={(to, action) => moveItem(index, to, action)}
               />
             </div>
@@ -551,7 +457,7 @@
   <DropZone
     bind:this={dropZone}
     {multiple}
-    disabled={readonly || dragIndex !== undefined}
+    disabled={readonly || sorter.dragIndex !== undefined}
     accept={accept ?? (isImageField ? SUPPORTED_IMAGE_TYPES.join(',') : undefined)}
     {onDrop}
   >

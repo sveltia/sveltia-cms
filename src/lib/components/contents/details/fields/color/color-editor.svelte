@@ -8,7 +8,8 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, Slider, TextInput } from '@sveltia/ui';
-  import { untrack } from 'svelte';
+
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -84,21 +85,19 @@
     }
   };
 
-  $effect(() => {
-    void [currentValue];
-
-    untrack(() => {
+  watch(
+    () => currentValue,
+    () => {
       setInputValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void [inputValue, inputAlphaValue];
-
-    untrack(() => {
+  watch(
+    () => [inputValue, inputAlphaValue],
+    () => {
       setCurrentValue();
-    });
-  });
+    },
+  );
 </script>
 
 <div role="none">
