@@ -564,11 +564,26 @@ describe('navigation', () => {
       expect(document.startViewTransition).toHaveBeenCalled();
     });
 
-    it('should replace state when replaceState is true', async () => {
+    it('should replace state when replaceState is true, keeping the previous entry’s URL', async () => {
+      /** @type {any} */ (window.history).state = { from: 'https://example.com/#/' };
+
       await goto('/assets', { replaceState: true });
 
       expect(window.history.replaceState).toHaveBeenCalledWith(
-        { from: 'https://example.com/#/collections' },
+        { from: 'https://example.com/#/' },
+        '',
+        'https://example.com/#/assets',
+      );
+    });
+
+    it('should not record the replaced entry as the previous one', async () => {
+      // A direct link has no previous entry
+      /** @type {any} */ (window.history).state = null;
+
+      await goto('/assets', { replaceState: true });
+
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        { from: undefined },
         '',
         'https://example.com/#/assets',
       );
@@ -639,7 +654,7 @@ describe('navigation', () => {
       await goto('/collections', { replaceState: true });
 
       expect(window.history.replaceState).toHaveBeenCalledWith(
-        { from: 'https://example.com/#/collections' },
+        { from: undefined },
         '',
         'https://example.com/#/collections',
       );
@@ -654,7 +669,7 @@ describe('navigation', () => {
       await goto('/collections', { state: customState, replaceState: true });
 
       expect(window.history.replaceState).toHaveBeenCalledWith(
-        { filter: 'images', from: 'https://example.com/#/collections' },
+        { filter: 'images', from: undefined },
         '',
         'https://example.com/#/collections',
       );
@@ -668,9 +683,10 @@ describe('navigation', () => {
 
       expect(redirectLegacyEntryLink()).toBe(true);
 
-      // The shorthand is replaced rather than pushed, so it doesn’t sit in the history
+      // The shorthand is replaced rather than pushed, so it doesn’t sit in the history, and it
+      // doesn’t become the previous entry either
       expect(window.history.replaceState).toHaveBeenCalledWith(
-        { from: 'https://example.com/#/edit/posts/hello' },
+        { from: undefined },
         '',
         'https://example.com/#/collections/posts/entries/hello',
       );
@@ -874,7 +890,7 @@ describe('navigation', () => {
       goBack('/default', options);
 
       expect(window.history.replaceState).toHaveBeenCalledWith(
-        { test: true, from: 'https://example.com/#/collections' },
+        { test: true, from: undefined },
         '',
         'https://example.com/#/default',
       );

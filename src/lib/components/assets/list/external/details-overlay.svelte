@@ -18,19 +18,23 @@
   import TextPreview from '$lib/components/assets/list/text-preview.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
-  import { goBack } from '$lib/services/app/navigation';
+  import { goBack, goto } from '$lib/services/app/navigation';
   import {
     externalAssets,
     getCloudServicePath,
+    getExternalAssetPath,
     overlaidExternalAssetId,
     selectedCloudService,
   } from '$lib/services/assets/external';
   import { deleteExternalAssets, fetchExternalAssetBlob } from '$lib/services/assets/external/data';
+  import { listedExternalAssets } from '$lib/services/assets/external/view';
   import { isMediaKind } from '$lib/services/assets/kinds';
+  import { getAdjacentAssets } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
-   * @import { MediaLibraryService } from '$lib/types/private';
+   * @import { ViewTransitionType } from '$lib/services/app/navigation';
+   * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
    */
 
   /** The component is only rendered while a service is selected. */
@@ -46,6 +50,20 @@
   const type = $derived(mime.getType(fileName));
   const assets = $derived(asset ? [asset] : []);
   const backPath = $derived(getCloudServicePath(service));
+  /** The assets right before and after the shown one in the list the overlay was opened from. */
+  const { previous, next } = $derived(
+    getAdjacentAssets(listedExternalAssets.current, ({ id }) => id === asset?.id),
+  );
+
+  /**
+   * Show another listed asset in place of the current one. The history entry is replaced, so the
+   * browser’s back button still returns to the list however many assets have been flipped through.
+   * @param {ExternalAsset} target Asset to be shown.
+   * @param {ViewTransitionType} transitionType View transition type.
+   */
+  const showAsset = (target, transitionType) => {
+    goto(getExternalAssetPath(service, target), { replaceState: true, transitionType });
+  };
 </script>
 
 <DetailsOverlay
@@ -54,6 +72,8 @@
   onBack={() => {
     goBack(backPath);
   }}
+  onPrevious={previous ? () => showAsset(previous, 'previous') : undefined}
+  onNext={next ? () => showAsset(next, 'next') : undefined}
 >
   {#snippet actions(useButton)}
     <CopyAssetsButton {assets} {useButton} />

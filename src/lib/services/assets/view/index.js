@@ -118,6 +118,26 @@ export const listedAssetIndexMap = createDerivedState(
 );
 
 /**
+ * Find the assets listed right before and after the given one, for the previous/next navigation in
+ * the details overlay. The list is the one the user sees, so the neighbors follow the current
+ * sorting, filtering and grouping.
+ * @template T
+ * @param {T[]} assets Listed assets.
+ * @param {(asset: T) => boolean} isCurrent Whether an asset is the one shown in the overlay.
+ * @returns {{ previous?: T, next?: T }} Neighbors, each omitted when the current asset is the first
+ * or last one, or when it isn’t listed at all.
+ */
+export const getAdjacentAssets = (assets, isCurrent) => {
+  const index = assets.findIndex(isCurrent);
+
+  if (index === -1) {
+    return {};
+  }
+
+  return { previous: assets[index - 1], next: assets[index + 1] };
+};
+
+/**
  * Last computed value of {@link assetGroups}, reused when the new value is deeply equal, so that
  * the list is not re-rendered needlessly.
  * @type {Record<string, Asset[]>}

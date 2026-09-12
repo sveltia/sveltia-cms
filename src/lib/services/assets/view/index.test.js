@@ -11,6 +11,7 @@ import { sortAssets } from '$lib/services/assets/view/sort';
 import {
   assetGroups,
   currentView,
+  getAdjacentAssets,
   getFolderLabelByCollection,
   listedAssetIndexMap,
   listedAssets,
@@ -514,6 +515,40 @@ describe('assets/view/index', () => {
 
       expect(assetGroups.current).not.toBe(groups);
       expect(assetGroups.current).toEqual({ '*': _publishedAssets.current });
+    });
+  });
+
+  describe('getAdjacentAssets', () => {
+    const assets = [
+      createAsset('images/a.jpg'),
+      createAsset('images/b.jpg'),
+      createAsset('images/c.jpg'),
+    ];
+
+    it('should return the neighbours of an asset in the middle', () => {
+      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/b.jpg')).toEqual({
+        previous: assets[0],
+        next: assets[2],
+      });
+    });
+
+    it('should omit the previous asset for the first one', () => {
+      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/a.jpg')).toEqual({
+        previous: undefined,
+        next: assets[1],
+      });
+    });
+
+    it('should omit the next asset for the last one', () => {
+      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/c.jpg')).toEqual({
+        previous: assets[1],
+        next: undefined,
+      });
+    });
+
+    it('should return nothing when the asset is not listed', () => {
+      expect(getAdjacentAssets(assets, ({ path }) => path === 'images/d.jpg')).toEqual({});
+      expect(getAdjacentAssets([], () => true)).toEqual({});
     });
   });
 

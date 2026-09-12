@@ -12,15 +12,17 @@
   import TextPreview from '$lib/components/assets/list/text-preview.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
-  import { goBack } from '$lib/services/app/navigation';
+  import { goBack, goto } from '$lib/services/app/navigation';
   import { overlaidAsset } from '$lib/services/assets';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import { selectedAssetFolder } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { isMediaKind } from '$lib/services/assets/kinds';
+  import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
+   * @import { ViewTransitionType } from '$lib/services/app/navigation';
    * @import { Asset } from '$lib/types/private';
    */
 
@@ -39,6 +41,20 @@
   const name = $derived(asset?.name);
   const assets = $derived(asset ? [asset] : []);
   const backPath = $derived(`/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`);
+  /** The assets right before and after the shown one in the list the overlay was opened from. */
+  const { previous, next } = $derived(
+    getAdjacentAssets(Object.values(assetGroups.current).flat(1), (a) => a.path === asset?.path),
+  );
+
+  /**
+   * Show another listed asset in place of the current one. The history entry is replaced, so the
+   * browser’s back button still returns to the list however many assets have been flipped through.
+   * @param {Asset} target Asset to be shown.
+   * @param {ViewTransitionType} transitionType View transition type.
+   */
+  const showAsset = ({ path }, transitionType) => {
+    goto(`/assets/${path}`, { replaceState: true, transitionType });
+  };
 
   $effect(() => {
     if (asset) {
@@ -60,6 +76,8 @@
   onBack={() => {
     goBack(backPath);
   }}
+  onPrevious={previous ? () => showAsset(previous, 'previous') : undefined}
+  onNext={next ? () => showAsset(next, 'next') : undefined}
 >
   {#snippet actions(useButton)}
     <CopyAssetsButton {assets} {useButton} />

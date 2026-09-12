@@ -1175,6 +1175,10 @@ viewing_x_asset_details: 「{$name}」アセットの詳細を表示していま
 # Asset editor container aria-label
 asset_editor: アセットエディター
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: 前のアセット
+next_asset: 次のアセット
+
 # Preview unavailable message
 preview_unavailable: プレビューは表示できません
 

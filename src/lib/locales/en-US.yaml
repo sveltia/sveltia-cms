@@ -1246,6 +1246,10 @@ viewing_x_asset_details: You’re viewing the details of the “{$name}” asset
 # Asset editor container aria-label
 asset_editor: Asset Editor
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Previous Asset
+next_asset: Next Asset
+
 # Preview unavailable message
 preview_unavailable: Preview Unavailable.
 

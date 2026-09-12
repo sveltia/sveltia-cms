@@ -12,7 +12,10 @@ import { openNewTab } from '$lib/services/utils/window';
  */
 
 /**
- * @typedef {'forwards' | 'backwards' | 'unknown'} ViewTransitionType
+ * View transition type: `forwards` and `backwards` move between pages, `previous` and `next` move
+ * between the items listed on a page, e.g. the assets in the details overlay, and `unknown` is a
+ * plain fade.
+ * @typedef {'forwards' | 'backwards' | 'previous' | 'next' | 'unknown'} ViewTransitionType
  */
 
 /**
@@ -235,8 +238,13 @@ export const goto = async (
   const { origin, pathname, hash } = window.location;
   const oldURL = `${origin}${pathname}${hash}`;
   const newURL = `${origin}${pathname}#${path}`;
+  // `from` is the URL of the previous history entry, which {@link goBack} relies on. Replacing the
+  // current entry doesn’t change what the previous entry is, so carry the value over; the entry
+  // being replaced is gone and must not become `from`, or a direct link followed by an in-place
+  // URL update would send the user out of the app on Back
+  const from = replaceState ? window.history.state?.from : oldURL;
   /** @type {[any, string, string]} */
-  const args = [{ ...state, from: oldURL }, '', newURL];
+  const args = [{ ...state, from }, '', newURL];
 
   if (replaceState) {
     window.history.replaceState(...args);
