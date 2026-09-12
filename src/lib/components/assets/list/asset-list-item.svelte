@@ -54,6 +54,21 @@
       onPreview();
     }
   };
+
+  /**
+   * Whether a click opens the asset right away, as there is no double-click to wait for: on a
+   * small or medium screen, where the selection checkbox is hidden, and on a touch screen of any
+   * size, e.g. a tablet in landscape, because Safari never fires `dblclick` for a double tap.
+   * `pointerType` tells a tap from a mouse click where the browser dispatches `click` as a
+   * `PointerEvent`; elsewhere, the lack of a fine pointer does.
+   * @param {MouseEvent} event `click` event.
+   * @returns {boolean} Result.
+   */
+  const opensOnClick = (event) =>
+    env.isSmallScreen ||
+    env.isMediumScreen ||
+    /** @type {PointerEvent} */ (event).pointerType === 'touch' ||
+    !env.hasMouse;
 </script>
 
 <!-- @todo Add support for drag to move. -->
@@ -65,8 +80,8 @@
     onSelectionChange(event.detail.selected);
   }}
   onfocus={onFocus}
-  onclick={() => {
-    if (env.isSmallScreen || env.isMediumScreen) {
+  onclick={(/** @type {MouseEvent} */ event) => {
+    if (opensOnClick(event)) {
       preview();
     }
   }}
