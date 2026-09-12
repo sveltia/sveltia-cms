@@ -34,6 +34,8 @@
    * @property {TypedFieldKeyPath} typedKeyPath Typed key path to the field.
    * @property {string} [componentName] Name of the rich text editor component the field is part
    * of, if any.
+   * @property {boolean} [inEditorComponent] Whether the field is rendered in a rich text editor
+   * component.
    */
 
   /** @type {Props} */
@@ -42,6 +44,7 @@
     fieldConfig,
     typedKeyPath,
     componentName = undefined,
+    inEditorComponent = false,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -113,10 +116,19 @@
   const onSelect = async (resources) => {
     const draft = entryDraft.current;
     const { resolve, reject } = pending ?? {};
+    // Read before the await below: another `pick()` call made in the meantime replaces the options
+    const { multiple = false } = options;
 
     pending = undefined;
 
-    if (!draft || !resolve || !reject) {
+    if (!resolve || !reject) {
+      return;
+    }
+
+    // The draft may have gone away while the dialog was closing; nothing can be picked then
+    if (!draft) {
+      resolve(null);
+
       return;
     }
 
@@ -126,6 +138,7 @@
         fieldConfig,
         typedKeyPath,
         componentName,
+        inEditorComponent,
         resources,
       });
 
@@ -137,7 +150,7 @@
 
       if (!files.length) {
         resolve(null);
-      } else if (options.multiple) {
+      } else if (multiple) {
         resolve(files);
       } else {
         resolve(files[0]);

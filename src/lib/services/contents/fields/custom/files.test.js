@@ -380,6 +380,31 @@ describe('contents/fields/custom/files', () => {
       expect(getAssetBlob).not.toHaveBeenCalled();
     });
 
+    it('encodes spaces in the value when the field is in a rich text editor component', async () => {
+      vi.mocked(processResource).mockResolvedValue({
+        value: '/photos/my photo.webp',
+        credit: '',
+        oversizedFileName: undefined,
+        invalidFileName: undefined,
+      });
+      vi.mocked(getAssetBlob).mockResolvedValue(new Blob(['x']));
+
+      const asset = /** @type {any} */ ({ path: 'static/photos/my photo.webp' });
+
+      const { files } = await resolvePickedResources({
+        draft,
+        fieldConfig,
+        typedKeyPath: 'photo',
+        inEditorComponent: true,
+        resources: [{ asset }],
+      });
+
+      expect(files[0].value).toBe('/photos/my%20photo.webp');
+
+      // Left as is elsewhere
+      expect((await resolvePicked([{ asset }])).files[0].value).toBe('/photos/my photo.webp');
+    });
+
     it('resolves a URL as is, without bytes', async () => {
       vi.mocked(processResource).mockResolvedValue({
         value: 'https://example.com/a.png',

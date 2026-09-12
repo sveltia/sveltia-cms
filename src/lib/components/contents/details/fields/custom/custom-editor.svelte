@@ -76,8 +76,12 @@
   const entryDraft = getEntryDraftContext();
 
   /** @type {FieldEditorContext} */
-  const { valueStoreKey = 'currentValues', parentComponentNames = [] } =
-    getContext('field-editor') ?? {};
+  const {
+    valueStoreKey = 'currentValues',
+    fieldContext = undefined,
+    parentComponentNames = [],
+  } = getContext('field-editor') ?? {};
+  const inEditorComponent = fieldContext === 'rich-text-editor-component';
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -256,4 +260,10 @@
 
 <div role="none" bind:this={container}></div>
 
-<AssetPicker bind:this={assetPicker} {fieldConfig} {typedKeyPath} {componentName} />
+<AssetPicker
+  bind:this={assetPicker}
+  {fieldConfig}
+  {typedKeyPath}
+  {componentName}
+  {inEditorComponent}
+/>

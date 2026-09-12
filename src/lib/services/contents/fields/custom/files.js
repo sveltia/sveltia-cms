@@ -199,8 +199,9 @@ const getPickedBlob = async ({ draft, typedKeyPath, componentName, resource, val
  * resolved to its public path, a file to be uploaded is cached in the draft and given a temporary
  * blob URL, and a URL is used as is. Files that are oversized or cannot be decoded are reported
  * separately, so the caller can show them the way a File/Image field does.
- * @param {CustomFieldArgs & { resources: SelectedResource[] }} args Arguments, including the
- * resources picked in the dialog.
+ * @param {CustomFieldArgs & { inEditorComponent?: boolean, resources: SelectedResource[] }} args
+ * Arguments, including the resources picked in the dialog and whether the field is rendered in a
+ * rich text editor component.
  * @returns {Promise<PickedResourcesResult>} Result.
  * @throws {Error} When the bytes of a picked asset cannot be retrieved.
  */
@@ -209,6 +210,7 @@ export const resolvePickedResources = async ({
   fieldConfig,
   typedKeyPath,
   componentName,
+  inEditorComponent = false,
   resources,
 }) => {
   const { folder, libraryConfig } = getCustomFieldAssetOptions({
@@ -241,7 +243,14 @@ export const resolvePickedResources = async ({
 
   results.forEach(({ value, file, credit, oversizedFileName, invalidFileName }) => {
     if (value) {
-      result.files.push({ value, file, credit: credit || undefined });
+      // Encode spaces as `%20` when the field is used in the rich text editor component to avoid
+      // issues with Markdown parsers that do not support unencoded spaces in URLs, the same way as
+      // a built-in File/Image field
+      result.files.push({
+        value: inEditorComponent ? value.replaceAll(' ', '%20') : value,
+        file,
+        credit: credit || undefined,
+      });
     }
 
     if (oversizedFileName) {
