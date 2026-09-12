@@ -4884,6 +4884,82 @@ describe('Test getCurrentValue()', () => {
       // Custom field type returns the value directly (numeric regex so base key doesn't match)
       expect(result).toBe(value);
     });
+
+    // A loaded entry has no placeholder at the field’s own key path, since `flatten()` only writes
+    // the leaves; neither has a list item after the list has been manipulated
+    // @see https://github.com/sveltia/sveltia-cms/issues/969
+    test('should assemble an object value without a placeholder', () => {
+      const result = getCurrentValue({
+        keyPath: 'photo',
+        valueMap: {
+          'photo.original': '/a.webp',
+          'photo.thumbnail': '/a.thumb.webp',
+          'photo.aspectRatio': 1.5,
+        },
+        isList: false,
+        isCustomFieldType: true,
+      });
+
+      expect(result).toEqual({
+        original: '/a.webp',
+        thumbnail: '/a.thumb.webp',
+        aspectRatio: 1.5,
+      });
+    });
+
+    test('should assemble an object value inside a list item without a placeholder', () => {
+      const valueMap = {
+        'featuredOn.0.logo.original': '/a.webp',
+        'featuredOn.0.logo.aspectRatio': 1,
+        'featuredOn.0.url': 'https://example.com',
+        'featuredOn.1.logo.original': '/b.webp',
+        'featuredOn.1.logo.aspectRatio': 2,
+        'featuredOn.1.url': 'https://example.org',
+      };
+
+      expect(
+        getCurrentValue({
+          keyPath: 'featuredOn.0.logo',
+          valueMap,
+          isList: false,
+          isCustomFieldType: true,
+        }),
+      ).toEqual({ original: '/a.webp', aspectRatio: 1 });
+
+      expect(
+        getCurrentValue({
+          keyPath: 'featuredOn.1.logo',
+          valueMap,
+          isList: false,
+          isCustomFieldType: true,
+        }),
+      ).toEqual({ original: '/b.webp', aspectRatio: 2 });
+    });
+
+    test('should assemble an array of objects without a placeholder', () => {
+      const result = getCurrentValue({
+        keyPath: 'photos',
+        valueMap: {
+          'photos.0.original': '/a.webp',
+          'photos.1.original': '/b.webp',
+        },
+        isList: false,
+        isCustomFieldType: true,
+      });
+
+      expect(result).toEqual([{ original: '/a.webp' }, { original: '/b.webp' }]);
+    });
+
+    test('should return a primitive value as-is even if it has children', () => {
+      const result = getCurrentValue({
+        keyPath: 'photo',
+        valueMap: { photo: '/a.webp', 'photo.original': '/b.webp' },
+        isList: false,
+        isCustomFieldType: true,
+      });
+
+      expect(result).toBe('/a.webp');
+    });
   });
 
   describe('Invalid value shapes', () => {

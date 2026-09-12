@@ -607,9 +607,15 @@ export const getCurrentValue = ({ valueMap, keyPath, isList, isCustomFieldType =
     return itemKeys.map((key) => valueMap[key]).filter((val) => val !== undefined);
   }
 
-  // Single value custom field
+  // Single value custom field: an object value is stored under its child key paths, and the
+  // placeholder at the field’s own key path can be missing, since `flatten()` doesn’t write one
+  // when an entry is loaded or a list item is manipulated. Assemble the value from the children
+  // either way rather than handing the control nothing
+  // @see https://github.com/sveltia/sveltia-cms/issues/969
   if (isCustomFieldType) {
-    return isObject(value) ? (getSubtree(valueMap, keyPath) ?? value) : value;
+    return value === undefined || isObject(value)
+      ? (getSubtree(valueMap, keyPath) ?? value)
+      : value;
   }
 
   return [];

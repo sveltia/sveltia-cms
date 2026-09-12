@@ -206,14 +206,21 @@
     }
 
     // For fields inside list items, use the original key path if the item was reordered
-    const currentMap = valueMap;
-    const resolved = resolveOriginalKeyPath(currentMap, keyPath);
+    const originalKeyPath = resolveOriginalKeyPath(valueMap, keyPath)?.originalKeyPath ?? keyPath;
+    const originalMap = originalValues?.[locale] ?? {};
 
-    if (resolved) {
-      return originalValues?.[locale]?.[resolved.originalKeyPath];
+    // A custom field type may hold an object, which is stored under its child key paths, so it has
+    // to be assembled the same way as the current value for the two to compare equal
+    if (customFieldType) {
+      return getCurrentValue({
+        valueMap: originalMap,
+        keyPath: originalKeyPath,
+        isList,
+        isCustomFieldType: true,
+      });
     }
 
-    return originalValues?.[locale]?.[keyPath];
+    return originalMap[originalKeyPath];
   });
   const isRevertDisabled = $derived.by(() => {
     if (fieldType === 'list') {
