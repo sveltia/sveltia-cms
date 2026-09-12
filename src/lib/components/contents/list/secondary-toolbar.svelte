@@ -11,7 +11,6 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
-    currentView,
     entryGroups,
     listedEntries,
     listedUnpublishedEntries,
@@ -19,6 +18,7 @@
   } from '$lib/services/contents/collection/view';
   import { viewFilters } from '$lib/services/contents/collection/view/filter';
   import { viewGroups } from '$lib/services/contents/collection/view/group';
+  import { currentView } from '$lib/services/contents/collection/view/settings';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { env } from '$lib/services/user/env.svelte';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';

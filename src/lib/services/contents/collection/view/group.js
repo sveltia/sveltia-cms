@@ -2,8 +2,8 @@ import { _ } from '@sveltia/i18n';
 
 import { buildGroupMap } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
-import { getReorderGroupName } from '$lib/services/contents/collection/entries/reorder';
-import { currentView } from '$lib/services/contents/collection/view';
+import { getReorderGroupName } from '$lib/services/contents/collection/entries/reorder/config';
+import { currentView } from '$lib/services/contents/collection/view/settings';
 import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
 import { getPropertyValue } from '$lib/services/contents/entry/fields';
 import { createDerivedState } from '$lib/services/utils/state.svelte';

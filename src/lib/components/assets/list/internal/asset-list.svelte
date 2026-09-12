@@ -7,7 +7,8 @@
   import UploadAssetsButton from '$lib/components/assets/list/internal/upload-assets-button.svelte';
   import { uploadingAssets } from '$lib/services/assets';
   import { canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
-  import { assetGroups, currentView, listedAssets } from '$lib/services/assets/view';
+  import { assetGroups, listedAssets } from '$lib/services/assets/view';
+  import { currentView } from '$lib/services/assets/view/settings';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**

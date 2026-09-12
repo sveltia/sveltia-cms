@@ -1,6 +1,6 @@
 import { sortItemsByKey } from '$lib/services/common/view';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';

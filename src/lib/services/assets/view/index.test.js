@@ -5,12 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { filterAssets } from '$lib/services/assets/view/filter';
 import { groupAssets } from '$lib/services/assets/view/group';
-import { initSettings } from '$lib/services/assets/view/settings';
+import { currentView, initSettings } from '$lib/services/assets/view/settings';
 import { sortAssets } from '$lib/services/assets/view/sort';
 
 import {
   assetGroups,
-  currentView,
   getAdjacentAssets,
   getFolderLabelByCollection,
   listedAssetIndexMap,
@@ -28,6 +27,7 @@ const {
   _uploadingAssets,
   _selectedAssetFolder,
   _backend,
+  _currentView,
   _prefs,
 } = await vi.hoisted(async () => {
   const { createRawState } = await import('$lib/services/utils/state.svelte');
@@ -43,6 +43,8 @@ const {
     _selectedAssetFolder: createRawState(undefined),
     /** @type {{ current: any }} */
     _backend: createRawState(null),
+    /** @type {{ current: any }} */
+    _currentView: createRawState({ type: 'grid', showInfo: true }),
     _prefs: { devModeEnabled: false },
   };
 });
@@ -102,6 +104,7 @@ vi.mock('$lib/services/backends', () => ({
 
 vi.mock('$lib/services/assets/view/settings', () => ({
   assetListSettings: { current: undefined },
+  currentView: _currentView,
   initSettings: vi.fn(),
 }));
 
@@ -359,28 +362,6 @@ describe('assets/view/index', () => {
       expect(result).toBe('Custom Folder Label');
       expect(getCollection).not.toHaveBeenCalled();
       expect(getCollectionLabel).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('defaultView', () => {
-    it('should have correct default view settings', async () => {
-      const { defaultView } = await import('.');
-
-      expect(defaultView).toEqual({
-        type: 'grid',
-        showInfo: true,
-        sort: {
-          key: 'name',
-          order: 'ascending',
-        },
-      });
-    });
-  });
-
-  describe('currentView', () => {
-    it('should be defined as reactive state', () => {
-      expect(currentView).toBeDefined();
-      expect('current' in currentView).toBe(true);
     });
   });
 

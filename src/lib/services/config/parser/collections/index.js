@@ -14,6 +14,7 @@ import {
   checkName,
   checkUnsupportedOptions,
 } from '$lib/services/config/parser/utils/validator';
+import { getReorderGroupName } from '$lib/services/contents/collection/entries/reorder/config';
 import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
 
 /**
@@ -88,13 +89,12 @@ export const parseEntryCollection = (context, collectors) => {
   }
 
   // Validate the group named with the `reorder` option: an unknown name would silently fall back to
-  // an ungrouped list in reorder mode, which is hard to tell from a working configuration. The raw
-  // option is read here rather than through `getReorderGroupName()`, which lives in the runtime
-  // module graph (stores, backends) this parser runs before. `parseViewOptions()` is what
-  // `parseGroupConfig()` calls, so group lookup can’t diverge from the runtime.
-  const reorderGroupName = isObject(reorder) ? reorder.group : undefined;
+  // an ungrouped list in reorder mode, which is hard to tell from a working configuration.
+  // `parseViewOptions()` is what `parseGroupConfig()` calls, so group lookup can’t diverge from the
+  // runtime.
+  const reorderGroupName = getReorderGroupName({ reorder });
 
-  if (typeof reorderGroupName === 'string' && reorderGroupName) {
+  if (reorderGroupName) {
     const { options } = parseViewOptions(view_groups, 'groups');
 
     if (!options.some(({ name }) => name === reorderGroupName)) {

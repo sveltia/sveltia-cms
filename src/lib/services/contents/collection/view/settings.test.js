@@ -4,9 +4,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { initViewSettingsStorage } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
-import { currentView } from '$lib/services/contents/collection/view';
 
-import { entryListSettings, initSettings } from './settings';
+import { currentView, entryListSettings, initSettings } from './settings';
 
 // Real reactive boxes are used for the mocked state, so that the effect created by `initSettings`
 // reacts to changes made by the tests
@@ -14,12 +13,6 @@ vi.mock('$lib/services/contents/collection', async () => {
   const { createRawState } = await import('$lib/services/utils/state.svelte');
 
   return { selectedCollection: createRawState(undefined) };
-});
-
-vi.mock('$lib/services/contents/collection/view', async () => {
-  const { createRawState } = await import('$lib/services/utils/state.svelte');
-
-  return { currentView: createRawState({ type: 'list' }) };
 });
 
 vi.mock('$lib/services/common/view', () => ({

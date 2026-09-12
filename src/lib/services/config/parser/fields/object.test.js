@@ -38,7 +38,7 @@ vi.mock('@sveltia/i18n', () => ({
 const mockGetStore = vi.fn();
 const mockParseFields = vi.fn();
 
-vi.mock('$lib/services/config/parser/fields', () => ({
+vi.mock('$lib/services/config/parser/fields/registry', () => ({
   parseFields: mockParseFields,
 }));
 

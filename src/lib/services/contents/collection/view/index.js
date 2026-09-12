@@ -17,7 +17,11 @@ import {
   groupEntries,
   parseGroupConfig,
 } from '$lib/services/contents/collection/view/group';
-import { entryListSettings, initSettings } from '$lib/services/contents/collection/view/settings';
+import {
+  currentView,
+  entryListSettings,
+  initSettings,
+} from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 import { getSortConfig } from '$lib/services/contents/collection/view/sort-keys';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -47,12 +51,6 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  * @property {boolean} creationDisabled Whether creating new entries is currently disabled, either
  * due to permissions or because the quota has been reached.
  */
-
-/**
- * View settings for the selected entry collection.
- * @type {{ current: EntryListView }}
- */
-export const currentView = createRawState({ type: 'list' });
 
 /**
  * Whether the entry collection is in reorder mode, which allows users to reorder entries with a

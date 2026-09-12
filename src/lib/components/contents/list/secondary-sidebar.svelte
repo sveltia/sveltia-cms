@@ -8,7 +8,7 @@
   import { allAssets, isAssetInFolder, uploadingAssets } from '$lib/services/assets';
   import { getAssetFolder } from '$lib/services/assets/folders';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { currentView } from '$lib/services/contents/collection/view';
+  import { currentView } from '$lib/services/contents/collection/view/settings';
   import { env } from '$lib/services/user/env.svelte';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 

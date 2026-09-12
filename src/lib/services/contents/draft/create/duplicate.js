@@ -1,4 +1,4 @@
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getEntryDirPath, getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getSlugEditorProp } from '$lib/services/contents/draft/create';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';

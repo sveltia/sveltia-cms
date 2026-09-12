@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { selectedCollection } from '$lib/services/contents/collection';
-import { currentView } from '$lib/services/contents/collection/view';
+import { currentView } from '$lib/services/contents/collection/view/settings';
 
 import { getReorderGroupingConditions, groupEntries, parseGroupConfig, viewGroups } from './group';
 
@@ -13,7 +13,7 @@ vi.mock('$lib/services/contents/collection', () => ({
   selectedCollection: { current: undefined },
 }));
 
-vi.mock('$lib/services/contents/collection/view', () => ({
+vi.mock('$lib/services/contents/collection/view/settings', () => ({
   currentView: { current: { type: 'list' } },
 }));
 
@@ -29,12 +29,14 @@ vi.mock('$lib/services/utils/regex', () => ({
   getRegex: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
+vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
   getReorderGroupName: vi.fn(),
 }));
 
 const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
-const { getReorderGroupName } = await import('$lib/services/contents/collection/entries/reorder');
+
+const { getReorderGroupName } =
+  await import('$lib/services/contents/collection/entries/reorder/config');
 
 describe('getReorderGroupingConditions', () => {
   const collection = {

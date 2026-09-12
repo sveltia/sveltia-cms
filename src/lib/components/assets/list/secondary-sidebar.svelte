@@ -7,7 +7,7 @@
   import { _ } from '@sveltia/i18n';
   import { EmptyState, Group } from '@sveltia/ui';
 
-  import { currentView } from '$lib/services/assets/view';
+  import { currentView } from '$lib/services/assets/view/settings';
   import { env } from '$lib/services/user/env.svelte';
 
   /**

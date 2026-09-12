@@ -6,7 +6,7 @@ import {
   focusedExternalAsset,
   selectedExternalAssets,
 } from '$lib/services/assets/external';
-import { currentView } from '$lib/services/assets/view';
+import { currentView } from '$lib/services/assets/view/settings';
 
 import {
   EXTERNAL_ASSET_SORT_KEYS,
@@ -30,7 +30,7 @@ vi.mock('$lib/services/assets/external', () => ({
   selectedExternalAssets: { current: [] },
 }));
 
-vi.mock('$lib/services/assets/view', () => ({
+vi.mock('$lib/services/assets/view/settings', () => ({
   currentView: { current: { type: 'grid' } },
 }));
 

@@ -17,7 +17,7 @@
   } from '$lib/services/assets/external';
   import { uploadingExternalAssets } from '$lib/services/assets/external/data';
   import { listedExternalAssets } from '$lib/services/assets/external/view';
-  import { currentView } from '$lib/services/assets/view';
+  import { currentView } from '$lib/services/assets/view/settings';
 
   /**
    * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';

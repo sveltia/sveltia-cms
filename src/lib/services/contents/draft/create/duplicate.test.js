@@ -26,7 +26,7 @@ vi.mock('$lib/services/contents/draft/create', () => ({
   getSlugEditorProp: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
+vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
   getOrderFieldKey: vi.fn(),
 }));
 
@@ -207,7 +207,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should drop the manual sort order field from all locales when reorder is enabled', async () => {
       const { getOrderFieldKey } =
-        await import('$lib/services/contents/collection/entries/reorder');
+        await import('$lib/services/contents/collection/entries/reorder/config');
 
       vi.mocked(getOrderFieldKey).mockReturnValue('order');
 
@@ -224,7 +224,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should drop a custom-keyed sort order field when reorder uses a custom key', async () => {
       const { getOrderFieldKey } =
-        await import('$lib/services/contents/collection/entries/reorder');
+        await import('$lib/services/contents/collection/entries/reorder/config');
 
       vi.mocked(getOrderFieldKey).mockReturnValue('weight');
 
@@ -241,7 +241,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should not touch any field when reorder is disabled', async () => {
       const { getOrderFieldKey } =
-        await import('$lib/services/contents/collection/entries/reorder');
+        await import('$lib/services/contents/collection/entries/reorder/config');
 
       vi.mocked(getOrderFieldKey).mockReturnValue(undefined);
 

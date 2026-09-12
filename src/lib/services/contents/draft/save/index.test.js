@@ -9,7 +9,7 @@ import {
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
@@ -33,7 +33,7 @@ vi.mock('$lib/services/contents/collection/data', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
   contentUpdatesToast: { current: undefined },
 }));
-vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
+vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
   getOrderFieldKey: vi.fn(() => undefined),
 }));
 vi.mock('$lib/services/contents/collection/entries', () => ({

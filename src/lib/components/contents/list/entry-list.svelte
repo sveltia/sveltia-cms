@@ -10,12 +10,12 @@
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { selectedCollection } from '$lib/services/contents/collection';
   import {
-    currentView,
     entryGroups,
     listedEntries,
     listedUnpublishedEntries,
     reordering,
   } from '$lib/services/contents/collection/view';
+  import { currentView } from '$lib/services/contents/collection/view/settings';
 
   /**
    * @import { Entry, InternalEntryCollection } from '$lib/types/private';

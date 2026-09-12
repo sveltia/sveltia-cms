@@ -13,7 +13,7 @@
   import SortMenu from '$lib/components/common/page-toolbar/sort-menu.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { ASSET_KINDS } from '$lib/services/assets/kinds';
-  import { currentView } from '$lib/services/assets/view';
+  import { currentView } from '$lib/services/assets/view/settings';
   import { env } from '$lib/services/user/env.svelte';
 
   /**

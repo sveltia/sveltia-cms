@@ -30,7 +30,7 @@ vi.mock('$lib/services/contents/draft', async () => ({
 vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
   createProxy: vi.fn(({ target }) => target),
 }));
-vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
+vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
   getOrderFieldKey: vi.fn(() => undefined),
 }));
 vi.mock('$lib/services/backends', () => ({
@@ -815,7 +815,7 @@ describe('draft/backup', () => {
 
     it('reconciles a stale order field with the live entry value when originalEntry exists', async () => {
       const { getOrderFieldKey } =
-        await import('$lib/services/contents/collection/entries/reorder');
+        await import('$lib/services/contents/collection/entries/reorder/config');
 
       vi.mocked(getOrderFieldKey).mockReturnValueOnce('order');
 
@@ -844,7 +844,7 @@ describe('draft/backup', () => {
 
     it('removes the order field when originalEntry does not exist (new entry)', async () => {
       const { getOrderFieldKey } =
-        await import('$lib/services/contents/collection/entries/reorder');
+        await import('$lib/services/contents/collection/entries/reorder/config');
 
       vi.mocked(getOrderFieldKey).mockReturnValueOnce('order');
 

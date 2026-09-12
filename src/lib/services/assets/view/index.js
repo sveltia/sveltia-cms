@@ -6,7 +6,7 @@ import { publishedAssets, selectedAssets, uploadingAssets } from '$lib/services/
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { filterAssets } from '$lib/services/assets/view/filter';
 import { groupAssets } from '$lib/services/assets/view/group';
-import { assetListSettings, initSettings } from '$lib/services/assets/view/settings';
+import { assetListSettings, currentView, initSettings } from '$lib/services/assets/view/settings';
 import { sortAssets } from '$lib/services/assets/view/sort';
 import { backend } from '$lib/services/backends';
 import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
@@ -19,7 +19,7 @@ import {
 } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Asset, AssetFolderInfo, AssetListView } from '$lib/types/private';
+ * @import { Asset, AssetFolderInfo } from '$lib/types/private';
  */
 
 /**
@@ -68,25 +68,6 @@ export const getFolderLabelByCollection = ({ label, collectionName, fileName, in
 
   return `${collectionLabel} › ${fileLabel}`;
 };
-
-/**
- * Default view settings for the selected asset collection.
- * @type {AssetListView}
- */
-export const defaultView = {
-  type: 'grid',
-  showInfo: true,
-  sort: {
-    key: 'name',
-    order: 'ascending',
-  },
-};
-
-/**
- * View settings for the selected asset collection.
- * @type {{ current: AssetListView }}
- */
-export const currentView = createRawState({ type: 'grid', showInfo: true });
 
 /**
  * List of all the assets for the selected asset collection.

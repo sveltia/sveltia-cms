@@ -6,7 +6,7 @@ import {
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';

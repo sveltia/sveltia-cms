@@ -44,7 +44,7 @@ vi.mock('$lib/services/config/parser/utils/validator', () => ({
 const mockParseFieldConfig = vi.fn();
 const mockParseFields = vi.fn();
 
-vi.mock('$lib/services/config/parser/fields', () => ({
+vi.mock('$lib/services/config/parser/fields/registry', () => ({
   parseFieldConfig: mockParseFieldConfig,
   parseFields: mockParseFields,
 }));

@@ -7,7 +7,7 @@ import {
   focusedExternalAsset,
   selectedExternalAssets,
 } from '$lib/services/assets/external';
-import { currentView } from '$lib/services/assets/view';
+import { currentView } from '$lib/services/assets/view/settings';
 import { sortItemsByKey } from '$lib/services/common/view';
 import { normalize } from '$lib/services/search/util';
 import { createDerivedState, createRootEffect } from '$lib/services/utils/state.svelte';

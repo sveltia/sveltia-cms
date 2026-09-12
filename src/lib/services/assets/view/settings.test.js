@@ -4,10 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { selectedCloudService } from '$lib/services/assets/external';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
-import { currentView, defaultView } from '$lib/services/assets/view';
 import { initViewSettingsStorage } from '$lib/services/common/view';
 
-import { assetListSettings, getSettingsKey, initSettings } from './settings.js';
+import {
+  assetListSettings,
+  currentView,
+  defaultView,
+  getSettingsKey,
+  initSettings,
+} from './settings.js';
 
 // Real reactive boxes are used for the mocked state, so that the effects created by `initSettings`
 // react to changes made by the tests
@@ -21,15 +26,6 @@ vi.mock('$lib/services/assets/folders', async () => {
   const { createRawState } = await import('$lib/services/utils/state.svelte');
 
   return { selectedAssetFolder: createRawState(undefined) };
-});
-
-vi.mock('$lib/services/assets/view', async () => {
-  const { createRawState } = await import('$lib/services/utils/state.svelte');
-
-  return {
-    currentView: createRawState({ type: 'grid', showInfo: true }),
-    defaultView: { type: 'grid', showInfo: true },
-  };
 });
 
 vi.mock('$lib/services/common/view', () => ({
@@ -55,6 +51,26 @@ const uploadsFolder = { internalPath: 'uploads', publicPath: '/uploads' };
 const imagesFolder = { internalPath: 'images', publicPath: '/images' };
 /** @type {any} */
 const uploadcareService = { serviceId: 'uploadcare' };
+
+describe('defaultView', () => {
+  it('should have correct default view settings', () => {
+    expect(defaultView).toEqual({
+      type: 'grid',
+      showInfo: true,
+      sort: {
+        key: 'name',
+        order: 'ascending',
+      },
+    });
+  });
+});
+
+describe('currentView', () => {
+  it('should be defined as reactive state', () => {
+    expect(currentView).toBeDefined();
+    expect('current' in currentView).toBe(true);
+  });
+});
 
 describe('assets/view/settings', () => {
   beforeEach(async () => {
@@ -94,8 +110,8 @@ describe('assets/view/settings', () => {
 
       await wait();
 
-      // The current view is saved right away
-      expect(assetListSettings.current).toEqual({ '*': { type: 'grid', showInfo: true } });
+      // The current view, restored from the default, is saved right away
+      expect(assetListSettings.current).toEqual({ '*': defaultView });
     });
 
     it('should restore the saved view when a different folder is selected', async () => {
@@ -140,7 +156,7 @@ describe('assets/view/settings', () => {
       await wait();
 
       expect(assetListSettings.current).toEqual({
-        '*': { type: 'grid', showInfo: true },
+        '*': defaultView,
         uploads: { type: 'list', showInfo: true },
       });
     });
@@ -164,7 +180,7 @@ describe('assets/view/settings', () => {
       await wait();
 
       expect(assetListSettings.current).toEqual({
-        '*': { type: 'grid', showInfo: true },
+        '*': defaultView,
         '-/uploadcare': { type: 'grid', showInfo: false },
       });
     });

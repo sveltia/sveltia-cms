@@ -4,7 +4,7 @@ import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 
 import { cmsConfig } from '$lib/services/config';
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getAliasesKey, getAliasKeyPaths } from '$lib/services/contents/entry/aliases';

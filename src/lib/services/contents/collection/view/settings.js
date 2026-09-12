@@ -3,7 +3,6 @@ import { untrack } from 'svelte';
 
 import { initViewSettingsStorage } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
-import { currentView } from '$lib/services/contents/collection/view';
 import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
@@ -15,6 +14,12 @@ import { createRawState, createRootEffect } from '$lib/services/utils/state.svel
  * @type {{ current: Record<string, EntryListView> | undefined }}
  */
 export const entryListSettings = createRawState();
+
+/**
+ * View settings for the selected entry collection.
+ * @type {{ current: EntryListView }}
+ */
+export const currentView = createRawState({ type: 'list' });
 
 /**
  * Initialize {@link entryListSettings} and relevant effects.

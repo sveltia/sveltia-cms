@@ -10,14 +10,13 @@ import {
   groupEntries,
   parseGroupConfig,
 } from '$lib/services/contents/collection/view/group';
-import { initSettings } from '$lib/services/contents/collection/view/settings';
+import { currentView, initSettings } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 import { getSortConfig } from '$lib/services/contents/collection/view/sort-keys';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 import {
   collectionState,
-  currentView,
   entryGroups,
   listedEntries,
   listedEntryIndexMap,
@@ -41,6 +40,7 @@ const {
   _prefs,
   _backend,
   _entryListSettings,
+  _currentView,
   _unpublishedEntries,
 } = await vi.hoisted(async () => {
   const { createRawState } = await import('$lib/services/utils/state.svelte');
@@ -60,6 +60,8 @@ const {
     _backend: createRawState(null),
     /** @type {{ current: any }} */
     _entryListSettings: createRawState(undefined),
+    /** @type {{ current: any }} */
+    _currentView: createRawState({ type: 'list' }),
     /** @type {{ current: any[] }} */
     _unpublishedEntries: createRawState([]),
   };
@@ -125,6 +127,7 @@ vi.mock('$lib/services/backends', () => ({
 }));
 
 vi.mock('$lib/services/contents/collection/view/settings', () => ({
+  currentView: _currentView,
   entryListSettings: _entryListSettings,
   initSettings: vi.fn(),
 }));
@@ -165,25 +168,12 @@ describe('collection/view/index', () => {
     vi.mocked(getReorderGroupingConditions).mockReturnValue(undefined);
   });
 
-  test('exports currentView store', async () => {
-    expect(currentView).toBeDefined();
-    expect(currentView.current).toEqual({ type: 'list' });
-  });
-
   test('exports listedEntries store', async () => {
     expect(listedEntries).toBeDefined();
   });
 
   test('exports entryGroups store', async () => {
     expect(entryGroups).toBeDefined();
-  });
-
-  test('currentView can be updated', async () => {
-    /** @type {any} */
-    const newView = { type: 'grid', sort: { field: 'title', ascending: true } };
-
-    currentView.current = newView;
-    expect(currentView.current).toEqual(newView);
   });
 
   test('listedEntries returns entries when collection is selected', async () => {

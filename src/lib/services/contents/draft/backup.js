@@ -4,7 +4,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 
 import { backend } from '$lib/services/backends';
 import { cmsConfigVersion } from '$lib/services/config';
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder';
+import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { isDraftModified, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';

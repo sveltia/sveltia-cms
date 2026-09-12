@@ -3,7 +3,6 @@ import { untrack } from 'svelte';
 
 import { selectedCloudService } from '$lib/services/assets/external';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
-import { currentView, defaultView } from '$lib/services/assets/view';
 import { initViewSettingsStorage } from '$lib/services/common/view';
 import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
@@ -16,6 +15,25 @@ import { createRawState, createRootEffect } from '$lib/services/utils/state.svel
  * @type {{ current: Record<string, AssetListView> | undefined }}
  */
 export const assetListSettings = createRawState();
+
+/**
+ * Default view settings for the selected asset collection.
+ * @type {AssetListView}
+ */
+export const defaultView = {
+  type: 'grid',
+  showInfo: true,
+  sort: {
+    key: 'name',
+    order: 'ascending',
+  },
+};
+
+/**
+ * View settings for the selected asset collection.
+ * @type {{ current: AssetListView }}
+ */
+export const currentView = createRawState({ type: 'grid', showInfo: true });
 
 /**
  * Get the key under which the view settings for the selected location are saved: the internal
