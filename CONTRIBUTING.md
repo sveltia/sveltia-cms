@@ -4,7 +4,7 @@
 
 Since Sveltia CMS is still its early stages, we expect various problems. Please [report any bugs to us](https://github.com/sveltia/sveltia-cms/issues/new?type=bug) so we can make the product better for everyone.
 
-We usually fix bugs within 24 hours of them being reported, but it can take longer if the issue is complex or we’re really busy. We appreciate your patience and understanding.
+We usually fix bugs within 12 hours of them being reported, but it can take longer if the issue is complex or we’re really busy. We appreciate your patience and understanding.
 
 ## Feature requests
 
@@ -12,7 +12,7 @@ You can also [request new features](https://github.com/sveltia/sveltia-cms/issue
 
 ## Pull requests
 
-Due to limited review resources and ongoing technical upgrades across the codebase, pull requests will not be accepted for the time being, except for trivial changes, such as fixing typos or style issues, and localizations. Please file issues instead. We plan to reevaluate the UI framework, currently Svelte, and create contributor documents after the 2.0 release.
+Due to limited review resources and ongoing technical upgrades across the codebase, pull requests will not be accepted for the time being, except for localization and trivial changes, such as fixing typos or style issues. Please file issues instead. We plan to reevaluate the UI framework, currently Svelte, and create contributor documents after the 2.0 release.
 
 We will block anyone who sends AI-generated poor-quality PRs. Please don’t waste your time or ours by doing so.
 
