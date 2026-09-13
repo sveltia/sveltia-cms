@@ -481,12 +481,6 @@ loading_entries: |
   .match $count
     one {{ جاري تحميل العنصر… }}
     *   {{ جاري تحميل العناصر… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: لم يتم العثور على العنصر.
 
@@ -1940,11 +1934,8 @@ viewing_editorial_workflow: 'أنت تعرض الآن لوحة سير عمل ا�
 # a maintainer can publish
 viewing_open_authoring_workflow: 'أنت تعرض الآن لوحة سير عمل التحرير. المسودات: {$draft}. قيد المراجعة: {$review}. بانتظار الحذف: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: مسودة
   drafts: المسودات

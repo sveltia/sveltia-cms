@@ -471,12 +471,6 @@ loading_entries: |
   .match $count
     one {{ Item wordt geladen… }}
     *   {{ Items worden geladen… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: Item niet gevonden.
 
@@ -1733,11 +1727,8 @@ viewing_editorial_workflow: 'Je bekijkt nu het bord van de redactionele workflow
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Je bekijkt nu het bord van de redactionele workflow. Concepten: {$draft}. In review: {$review}. Verwijdering in behandeling: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Concept
   drafts: Concepten

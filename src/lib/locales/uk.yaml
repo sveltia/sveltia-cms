@@ -475,12 +475,6 @@ loading_entries: |
   .match $count
     1   {{ Завантаження запису… }}
     *   {{ Завантаження записів… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: Запис не знайдено.
 
@@ -1813,11 +1807,8 @@ viewing_editorial_workflow: 'Ви переглядаєте дошку редак
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Ви переглядаєте дошку редакційного процесу. Чернетки: {$draft}. На розгляді: {$review}. Очікують видалення: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Чернетка
   drafts: Чернетки

@@ -471,12 +471,6 @@ loading_entries: |
   .match $count
     one {{ Ladataan merkintää… }}
     *   {{ Ladataan merkintöjä… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: Merkintää ei löytynyt.
 
@@ -1733,11 +1727,8 @@ viewing_editorial_workflow: 'Katselet nyt editoinnin työnkulun taulua. Luonnoks
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Katselet nyt editoinnin työnkulun taulua. Luonnokset: {$draft}. Tarkistuksessa: {$review}. Odottaa poistoa: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Luonnos
   drafts: Luonnokset

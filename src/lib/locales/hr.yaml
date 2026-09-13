@@ -473,12 +473,6 @@ loading_entries: |
   .match $count
     1   {{ Učitavanje unosa… }}
     *   {{ Učitavanje unosa… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: Unos nije pronađen.
 
@@ -1794,11 +1788,8 @@ viewing_editorial_workflow: 'Sada pregledavate ploču uredničkog radnog okruže
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Sada pregledavate ploču uredničkog radnog okruženja. Skice: {$draft}. Na pregledu: {$review}. Čeka brisanje: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Skica
   drafts: Skice

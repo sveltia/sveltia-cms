@@ -471,12 +471,6 @@ loading_entries: |
   .match $count
     one {{ Indlæser dokument… }}
     *   {{ Indlæser dokumenter… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: Dokumentet blev ikke fundet.
 
@@ -1733,11 +1727,8 @@ viewing_editorial_workflow: 'Du ser nu tavlen for den redaktionelle arbejdsgang.
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Du ser nu tavlen for den redaktionelle arbejdsgang. Kladder: {$draft}. Til gennemsyn: {$review}. Afventer sletning: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Kladde
   drafts: Kladder

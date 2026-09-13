@@ -475,12 +475,6 @@ loading_entries: |
   .match $count
     one {{ Ładowanie wpisu… }}
     *   {{ Ładowanie wpisów… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: Nie znaleziono wpisu.
 
@@ -1811,11 +1805,8 @@ viewing_editorial_workflow: 'Przeglądasz teraz tablicę obiegu redakcyjnego. Sz
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Przeglądasz teraz tablicę obiegu redakcyjnego. Szkice: {$draft}. W recenzji: {$review}. Oczekujące na usunięcie: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Szkic
   drafts: Szkice

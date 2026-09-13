@@ -471,12 +471,6 @@ loading_entries: |
   .match $count
     one {{ Chargement de l’entrée… }}
     *   {{ Chargement des entrées… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: Entrée introuvable.
 
@@ -1733,11 +1727,8 @@ viewing_editorial_workflow: 'Vous consultez maintenant le tableau du flux édito
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Vous consultez maintenant le tableau du flux éditorial. Brouillons : {$draft}. En révision : {$review}. Suppression en attente : {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Brouillon
   drafts: Brouillons

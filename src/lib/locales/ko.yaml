@@ -465,12 +465,6 @@ loading_entries: |
   .input {$count :integer}
   .match $count
     *   {{ 엔트리를 불러오는 중… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: 엔트리를 찾을 수 없습니다.
 
@@ -1639,11 +1633,8 @@ viewing_editorial_workflow: '에디토리얼 워크플로우 보드를 표시하
 # a maintainer can publish
 viewing_open_authoring_workflow: '에디토리얼 워크플로우 보드를 표시하고 있습니다. 초안: {$draft}. 검토 중: {$review}. 삭제 대기 중: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: 초안
   drafts: 초안

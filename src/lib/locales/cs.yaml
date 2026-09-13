@@ -473,12 +473,6 @@ loading_entries: |
   .match $count
     one {{ Načítání položky… }}
     *   {{ Načítání položek… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: Položka nebyla nalezena.
 
@@ -1772,11 +1766,8 @@ viewing_editorial_workflow: 'Nyní si prohlížíte nástěnku redakčního work
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Nyní si prohlížíte nástěnku redakčního workflow. Koncepty: {$draft}. Ke kontrole: {$review}. Čeká na smazání: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Koncept
   drafts: Koncepty

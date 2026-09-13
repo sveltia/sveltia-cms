@@ -468,12 +468,6 @@ loading_entries: |
   .match $count
     one {{ İçerik yükleniyor… }}
     *   {{ İçerikler yükleniyor… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: İçerik bulunamadı.
 
@@ -1701,11 +1695,8 @@ viewing_editorial_workflow: 'Şu anda editöryal akış panosunu görüntülüyo
 # a maintainer can publish
 viewing_open_authoring_workflow: 'Şu anda editöryal akış panosunu görüntülüyorsunuz. Taslaklar: {$draft}. İncelemede: {$review}. Silinmeyi Bekleyen: {$deletion}.'
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: Taslak
   drafts: Taslaklar

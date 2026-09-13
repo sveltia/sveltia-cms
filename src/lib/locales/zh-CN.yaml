@@ -467,12 +467,6 @@ loading_entries: |
   .input {$count :integer}
   .match $count
     * {{ 正在加载条目…… }}
-
-# ==============================================================================
-# Entry and Collection Actions
-# ==============================================================================
-# Strings related to creating, editing, and managing entries and collections.
-
 # Error message when entry cannot be found
 entry_not_found: 未找到条目。
 
@@ -1668,11 +1662,8 @@ viewing_editorial_workflow: 您正在浏览编辑工作流看板。草稿：{$dr
 # a maintainer can publish
 viewing_open_authoring_workflow: 您正在浏览编辑工作流看板。草稿：{$draft}。审核中：{$review}。待删除：{$deletion}。
 
-# ==============================================================================
-# Editorial Workflow
-# ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
-
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
   draft: 草稿
   drafts: 草稿
