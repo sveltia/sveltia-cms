@@ -241,7 +241,7 @@ change_language: Canvia la llengua
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: S’està canviant a {$locale}…
-locale_load_failed: No s’ha pogut carregar la traducció al {$locale}. Torneu-ho a provar més tard.
+locale_load_failed: No s’ha pogut carregar la traducció en {$locale}. Torneu-ho a provar més tard.
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
