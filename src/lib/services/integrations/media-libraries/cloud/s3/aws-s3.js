@@ -3,7 +3,7 @@ import { S3CompatibleService } from './service';
 /**
  * Amazon S3 media library service integration.
  */
-export default new S3CompatibleService({
+const awsS3Service = new S3CompatibleService({
   serviceId: 'aws_s3',
   serviceLabel: 'Amazon S3',
   serviceURL: 'https://aws.amazon.com/s3/',
@@ -11,3 +11,5 @@ export default new S3CompatibleService({
   apiKeyURL: 'https://console.aws.amazon.com/iam/home#/security_credentials',
   apiKeyPattern: /^[A-Za-z0-9/+=]{40}$/,
 });
+
+export default awsS3Service;
