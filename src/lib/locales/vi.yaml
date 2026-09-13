@@ -413,7 +413,7 @@ sort_keys:
   # Sort by the date a file on a cloud storage service was last modified
   last_modified: Ngày sửa đổi
   # Sort by file size
-  size: Dung lượng
+  size: Kích cỡ
   # Sort by the entry’s computed summary text
   _summary: Tóm tắt
   # Manual order defined by the user via drag-and-drop
@@ -1082,7 +1082,7 @@ new_parent_folder_name: Tên thư mục
 new_parent_folder_description: Thư mục mới sẽ được tạo trong “{$folder}”.
 new_parent_folder_error:
   empty: Tên thư mục không được để trống.
-  invalid: Tên thư mục không được chứa dấu gạch chéo hoặc bắt đầu bằng dấu chấm, và phải có chữ cái hoặc chữ số.
+  invalid: Tên thư mục không được chứa dấu gạch chéo hoặc bắt đầu bằng dấu chấm và phải chứa ít nhất một chữ cái hoặc chữ số.
   duplicate: Đã có một thư mục cùng tên ở đây.
 edit_path_error:
   invalid: Đường dẫn không được chứa các phần tương đối như “..”.
@@ -1755,7 +1755,7 @@ workflow:
   status_change_failed: Không thể thay đổi trạng thái. Vui lòng thử lại.
   # Error notification when the status can’t be changed because the entry is incomplete. Required
   # fields can be left empty while the entry is a draft, but not once it moves on from there
-  status_change_blocked: Bài viết có lỗi. Vui lòng sửa lỗi trước khi thay đổi trạng thái.
+  status_change_blocked: Bài viết còn lỗi. Vui lòng sửa lỗi trước khi thay đổi trạng thái.
   # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
   # editor and on the Editorial Workflow page
   publish_blocked: Bài viết có lỗi. Vui lòng sửa lỗi trước khi xuất bản.
@@ -1817,7 +1817,7 @@ workflow:
 open_authoring:
   # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
   # label on its OK button. {$repo} is the repository identifier in owner/repo format
-  fork_repository: Fork kho mã nguồn
+  fork_repository: Tạo bản fork của kho mã nguồn
   fork: Fork
   confirm_forking_repository: Để đề xuất thay đổi cho “{$repo}”, cần tạo một bản fork của kho mã nguồn trên tài khoản của bạn. Các thay đổi của bạn sẽ được lưu vào bản fork đó và được người quản trị xem xét trước khi xuất bản.
   # Error shown when the user declined the dialog above
@@ -1979,12 +1979,12 @@ prefs:
       file_cache:
         description: Xóa nội dung tệp và hình thu nhỏ được lưu trong bộ nhớ đệm cục bộ để giải phóng dung lượng lưu trữ hoặc khắc phục sự cố do dữ liệu cũ gây ra.
         button_label: Xóa bộ nhớ đệm tệp
-        confirmation: Nội dung tệp và hình thu nhỏ được lưu trong bộ nhớ đệm cục bộ sẽ bị xóa. Các bản nháp chưa lưu và cài đặt của bạn sẽ được giữ lại, và dữ liệu đã xóa sẽ được tải xuống hoặc tạo lại khi cần. CMS sẽ được tải lại sau khi hoàn tất.
+        confirmation: Nội dung tệp và hình thu nhỏ được lưu trong bộ nhớ đệm cục bộ sẽ bị xóa. Các bản nháp chưa lưu và cài đặt của bạn sẽ được giữ lại. Dữ liệu đã xóa sẽ được tải xuống hoặc tạo lại khi cần. CMS sẽ được tải lại sau khi hoàn tất.
       # Erase All Data button
       all_data:
         description: Xóa mọi thứ mà CMS lưu trong trình duyệt này, bao gồm các tệp trong bộ nhớ đệm, bản nháp chưa lưu và cài đặt. Những gì đã lưu vào kho mã nguồn của bạn sẽ không bị ảnh hưởng.
         button_label: Xóa toàn bộ dữ liệu
-        confirmation: Toàn bộ dữ liệu lưu trong trình duyệt này sẽ bị xóa, bao gồm nội dung tệp trong bộ nhớ đệm, hình thu nhỏ, bản nháp chưa lưu, cài đặt và trạng thái đăng nhập. Kho mã nguồn của bạn sẽ không bị ảnh hưởng, nhưng mọi thay đổi chưa lưu sẽ bị mất và bạn sẽ phải đăng nhập lại. CMS sẽ được tải lại sau khi hoàn tất.
+        confirmation: Thao tác này sẽ xóa bộ nhớ đệm, bản nháp chưa lưu, cài đặt và trạng thái đăng nhập trong trình duyệt. Dữ liệu trong kho mã nguồn vẫn được giữ nguyên. CMS sẽ tải lại và bạn cần đăng nhập lại.
 
 # ==============================================================================
 # Keyboard Shortcuts
