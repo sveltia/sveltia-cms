@@ -75,7 +75,7 @@
     "terra-draw": "^1.33.0",
     "terra-draw-leaflet-adapter": "1.0.3",
     "turndown": "^7.2.4",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.10.0",
