@@ -96,7 +96,7 @@ singletons: تک نسخه‌ها
 
 # Error messages
 # Toast notification when clipboard operations fail
-clipboard_error: کپی در حافظه موقت انجام نشد.
+clipboard_error: کپی در کلیپ‌بورد انجام نشد.
 
 # ==============================================================================
 # Sign-In Page
@@ -630,8 +630,8 @@ paste: جای‌گذاری
 paste_image: جای‌گذاری تصویر
 
 # Clipboard paste errors
-no_image_in_clipboard: هیچ تصویری در حافظه موقت یافت نشد.
-clipboard_access_denied: دسترسی به حافظه موقت رد شد.
+no_image_in_clipboard: هیچ تصویری در کلیپ‌بورد یافت نشد.
+clipboard_access_denied: دسترسی به کلیپ‌بورد رد شد.
 
 # Drag-and-drop overlay text (shown while dragging)
 # {$count} is the number of files expected by the current picker mode
@@ -886,13 +886,13 @@ assets_saved_and_published: |
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
-    one {{ آدرس URL در حافظه موقت کپی شد. }}
-    *   {{ {$count} آدرس URL در حافظه موقت کپی شدند. }}
+    one {{ آدرس URL در کلیپ‌بورد کپی شد. }}
+    *   {{ {$count} آدرس URL در کلیپ‌بورد کپی شدند. }}
 asset_paths_copied: |
   .input {$count :integer}
   .match $count
-    one {{ مسیر فایل در حافظه موقت کپی شد. }}
-    *   {{ {$count} مسیر فایل در حافظه موقت کپی شدند. }}
+    one {{ مسیر فایل در کلیپ‌بورد کپی شد. }}
+    *   {{ {$count} مسیر فایل در کلیپ‌بورد کپی شدند. }}
 asset_ids_copied: |
   .input {$count :integer}
   .match $count
@@ -901,8 +901,8 @@ asset_ids_copied: |
 asset_data_copied: |
   .input {$count :integer}
   .match $count
-    one {{ داده‌های فایل در حافظه موقت کپی شد. }}
-    *   {{ داده‌های {$count} فایل در حافظه موقت کپی شدند. }}
+    one {{ داده‌های فایل در کلیپ‌بورد کپی شد. }}
+    *   {{ داده‌های {$count} فایل در کلیپ‌بورد کپی شدند. }}
 assets_downloaded: |
   .input {$count :integer}
   .match $count
