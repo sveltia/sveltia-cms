@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import awsS3Service from './aws-s3';
+import awsS3 from './aws-s3';
 import { S3CompatibleService } from './service';
 
 describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
@@ -11,8 +11,8 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
   };
 
   it('should have correct service configuration', () => {
-    expect(awsS3Service).toBeInstanceOf(S3CompatibleService);
-    expect(awsS3Service).toMatchObject({
+    expect(awsS3).toBeInstanceOf(S3CompatibleService);
+    expect(awsS3).toMatchObject({
       serviceType: 'cloud_storage',
       serviceId: 'aws_s3',
       serviceLabel: 'Amazon S3',
@@ -27,7 +27,7 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
   });
 
   it('should validate secret access key format', () => {
-    const { apiKeyPattern } = awsS3Service;
+    const { apiKeyPattern } = awsS3;
 
     // Valid secret access keys (40 base64-like chars)
     expect(apiKeyPattern.test('wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY')).toBe(true);
@@ -41,6 +41,6 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
   });
 
   it('should use the library options as the S3 config', () => {
-    expect(awsS3Service.resolveConfig(libOptions)).toEqual(libOptions);
+    expect(awsS3.resolveConfig(libOptions)).toEqual(libOptions);
   });
 });
