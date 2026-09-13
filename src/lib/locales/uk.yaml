@@ -1613,7 +1613,7 @@ config:
       .input {$count :integer}
       .match $count
         1   {{ URL-адреса файлу конфігурації має використовувати протокол HTTPS або адресу localhost. }}
-        *   {{ URL-адреси файлу конфігурації мають використовувати протокол HTTPS або адреси localhost. }}
+        *   {{ URL-адреси файлів конфігурації мають використовувати протокол HTTPS або адреси localhost. }}
     fetch_failed: Не вдалося отримати файл конфігурації.
     # {$status} is the HTTP status code returned while fetching the config file
     fetch_failed_not_ok: HTTP-відповідь повернулася зі статусом {$status}.
@@ -1741,7 +1741,13 @@ config:
     schema_invalid_const: Параметр `{$option}` має мати значення `{$value}`.
     schema_invalid_empty_value: Параметр `{$option}` має бути порожнім рядком.
     # {$count} is the exact number of items the option must have
-    schema_invalid_item_count: Параметр `{$option}` має бути масивом із {$count} елементів.
+    schema_invalid_item_count: |
+      .input {$count :integer}
+      .match $count
+        one  {{ Параметр `{$option}` має бути масивом із {$count} елемента. }}
+        few  {{ Параметр `{$option}` має бути масивом із {$count} елементів. }}
+        many {{ Параметр `{$option}` має бути масивом із {$count} елементів. }}
+        *    {{ Параметр `{$option}` має бути масивом із {$count} елементів. }}
     schema_invalid_value: Параметр `{$option}` має недійсне значення.
     schema_missing_option: Параметр `{$option}` обов’язковий.
     # {$options} is a list of options, one of which must be defined
@@ -1841,11 +1847,11 @@ workflow:
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      1    {{ Зміни відхилено. }}
-      one  {{ Зміни в {$count} записі відхилено. }}
-      few  {{ Зміни в {$count} записах відхилено. }}
-      many {{ Зміни в {$count} записах відхилено. }}
-      *    {{ Зміни в {$count} записах відхилено. }}
+      1    {{ Зміни відкинуто. }}
+      one  {{ Зміни в {$count} записі відкинуто. }}
+      few  {{ Зміни в {$count} записах відкинуто. }}
+      many {{ Зміни в {$count} записах відкинуто. }}
+      *    {{ Зміни в {$count} записах відкинуто. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: Скасування видалення…
   deletion_cancelled: Видалення скасовано.
@@ -1880,7 +1886,7 @@ workflow:
   publish_entry: Опублікувати запис
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
   # entry has a published version, because only the pending changes are thrown away
-  discard_changes: Відхилити зміни
+  discard_changes: Відкинути зміни
   # Confirmation message shown before deleting a published entry, replacing the direct
   # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
   # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
@@ -1889,27 +1895,27 @@ workflow:
   # request instead of committing a deletion to the configured branch. Keep the wording free of
   # Git jargon, as editors are often non-technical.
   # Used when the entry has never been published, so nothing of it is left afterwards
-  confirm_deleting_unpublished_entry: Цей запис ще не опубліковано, тому після видалення його буде повністю відхилено.
+  confirm_deleting_unpublished_entry: Цей запис ще не опубліковано, тому після видалення його буде повністю відкинуто.
   # Used when the entry updates one that is already live, which stays untouched. The dialog is
   # titled “Discard Changes”, so the wording is about discarding, not deleting
-  confirm_discarding_entry_changes: У цьому записі є неопубліковані зміни. Якщо їх відхилити, буде відновлено опубліковану версію. Сам запис не буде видалено.
+  confirm_discarding_entry_changes: У цьому записі є неопубліковані зміни. Якщо їх відкинути, буде відновлено опубліковану версію. Сам запис не буде видалено.
   # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
   # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
   deleting_unpublished_note_all: |
     .input {$count :integer}
     .match $count
-      1   {{ Його ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опублікована версія, якщо вона є, залишиться опублікованою. }}
-      *   {{ Їх ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
+      1   {{ Його ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опублікована версія, якщо вона є, залишиться опублікованою. }}
+      *   {{ Їх ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      1    {{ Один із них ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опублікована версія, якщо вона є, залишиться опублікованою. }}
-      one  {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опублікована версія, якщо вона є, залишиться опублікованою. }}
-      few  {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
-      many {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
-      *    {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відхилено. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
+      1    {{ Один із них ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опублікована версія, якщо вона є, залишиться опублікованою. }}
+      one  {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опублікована версія, якщо вона є, залишиться опублікованою. }}
+      few  {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
+      many {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
+      *    {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry: Ви впевнені, що хочете опублікувати цей запис? Ваші зміни набудуть чинності негайно.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
@@ -1919,7 +1925,7 @@ workflow:
   # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
   # the deletion has completed
   deleting_entry: Видалення запису…
-  discarding_changes: Відхилення змін…
+  discarding_changes: Відкидання змін…
   entry_deleted: Запис видалено.
   # Error notification when publishing fails
   publishing_entry_failed: Не вдалося опублікувати запис. Спробуйте ще раз.
@@ -2095,7 +2101,7 @@ prefs:
       file_cache:
         description: Видалити локально кешований вміст файлів і мініатюри зображень, щоб звільнити місце або усунути проблеми, спричинені застарілими даними.
         button_label: Очистити кеш файлів
-        confirmation: Локально кешований вміст файлів і мініатюри зображень буде видалено. Ваші незбережені чернетки та налаштування буде збережено, а видалені дані за потреби буде завантажено або створено знову. Після завершення CMS буде перезавантажено.
+        confirmation: Локально кешований вміст файлів і мініатюри зображень буде видалено. Ваші незбережені чернетки та налаштування буде збережено, а видалені дані за потреби буде звантажено або створено знову. Після завершення CMS буде перезавантажено.
       # Erase All Data button
       all_data:
         description: Видалити все, що CMS зберігає в цьому браузері, зокрема кешовані файли, незбережені чернетки та налаштування. Усе, що вже збережено у вашому репозиторії, не буде змінено.

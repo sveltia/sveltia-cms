@@ -1741,7 +1741,13 @@ config:
     schema_invalid_const: Параметр `{$option}` должен иметь значение `{$value}`.
     schema_invalid_empty_value: Параметр `{$option}` должен быть пустой строкой.
     # {$count} is the exact number of items the option must have
-    schema_invalid_item_count: Параметр `{$option}` должен быть массивом из {$count} элементов.
+    schema_invalid_item_count: |
+      .input {$count :integer}
+      .match $count
+        one  {{ Параметр `{$option}` должен быть массивом из {$count} элемента. }}
+        few  {{ Параметр `{$option}` должен быть массивом из {$count} элементов. }}
+        many {{ Параметр `{$option}` должен быть массивом из {$count} элементов. }}
+        *    {{ Параметр `{$option}` должен быть массивом из {$count} элементов. }}
     schema_invalid_value: Параметр `{$option}` имеет недопустимое значение.
     schema_missing_option: Параметр `{$option}` обязателен.
     # {$options} is a list of options, one of which must be defined
@@ -1841,11 +1847,11 @@ workflow:
   changes_discarded: |
     .input {$count :integer}
     .match $count
-      1    {{ Изменения отменены. }}
-      one  {{ Изменения в {$count} записи отменены. }}
-      few  {{ Изменения в {$count} записях отменены. }}
-      many {{ Изменения в {$count} записях отменены. }}
-      *    {{ Изменения в {$count} записях отменены. }}
+      1    {{ Изменения отброшены. }}
+      one  {{ Изменения в {$count} записи отброшены. }}
+      few  {{ Изменения в {$count} записях отброшены. }}
+      many {{ Изменения в {$count} записях отброшены. }}
+      *    {{ Изменения в {$count} записях отброшены. }}
   # Toast notifications shown while a deletion is being called off, and once that has completed
   cancelling_deletion: Отмена удаления…
   deletion_cancelled: Удаление отменено.
@@ -1880,7 +1886,7 @@ workflow:
   publish_entry: Опубликовать запись
   # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
   # entry has a published version, because only the pending changes are thrown away
-  discard_changes: Отменить изменения
+  discard_changes: Отбросить изменения
   # Confirmation message shown before deleting a published entry, replacing the direct
   # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
   # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
@@ -1892,24 +1898,24 @@ workflow:
   confirm_deleting_unpublished_entry: Эта запись ещё не опубликована, поэтому при удалении она будет полностью отброшена.
   # Used when the entry updates one that is already live, which stays untouched. The dialog is
   # titled “Discard Changes”, so the wording is about discarding, not deleting
-  confirm_discarding_entry_changes: В этой записи есть неопубликованные изменения. При их отмене будет восстановлена опубликованная версия. Сама запись удалена не будет.
+  confirm_discarding_entry_changes: В этой записи есть неопубликованные изменения. При их отбрасывании будет восстановлена опубликованная версия. Сама запись удалена не будет.
   # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
   # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
   deleting_unpublished_note_all: |
     .input {$count :integer}
     .match $count
-      1   {{ Она ещё не опубликована, поэтому ваши неопубликованные изменения будут отменены. Опубликованная версия, если она есть, останется опубликованной. }}
-      *   {{ Они ещё не опубликованы, поэтому ваши неопубликованные изменения будут отменены. Опубликованные версии, если они есть, останутся опубликованными. }}
+      1   {{ Она ещё не опубликована, поэтому ваши неопубликованные изменения будут отброшены. Опубликованная версия, если она есть, останется опубликованной. }}
+      *   {{ Они ещё не опубликованы, поэтому ваши неопубликованные изменения будут отброшены. Опубликованные версии, если они есть, останутся опубликованными. }}
   # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
   # the number of selected entries that are unpublished.
   deleting_unpublished_note_some: |
     .input {$count :integer}
     .match $count
-      1    {{ Одна из них ещё не опубликована, поэтому ваши неопубликованные изменения будут отменены. Опубликованная версия, если она есть, останется опубликованной. }}
-      one  {{ {$count} из них ещё не опубликована, поэтому ваши неопубликованные изменения будут отменены. Опубликованная версия, если она есть, останется опубликованной. }}
-      few  {{ {$count} из них ещё не опубликованы, поэтому ваши неопубликованные изменения будут отменены. Опубликованные версии, если они есть, останутся опубликованными. }}
-      many {{ {$count} из них ещё не опубликованы, поэтому ваши неопубликованные изменения будут отменены. Опубликованные версии, если они есть, останутся опубликованными. }}
-      *    {{ {$count} из них ещё не опубликованы, поэтому ваши неопубликованные изменения будут отменены. Опубликованные версии, если они есть, останутся опубликованными. }}
+      1    {{ Одна из них ещё не опубликована, поэтому ваши неопубликованные изменения будут отброшены. Опубликованная версия, если она есть, останется опубликованной. }}
+      one  {{ {$count} из них ещё не опубликована, поэтому ваши неопубликованные изменения будут отброшены. Опубликованная версия, если она есть, останется опубликованной. }}
+      few  {{ {$count} из них ещё не опубликованы, поэтому ваши неопубликованные изменения будут отброшены. Опубликованные версии, если они есть, останутся опубликованными. }}
+      many {{ {$count} из них ещё не опубликованы, поэтому ваши неопубликованные изменения будут отброшены. Опубликованные версии, если они есть, останутся опубликованными. }}
+      *    {{ {$count} из них ещё не опубликованы, поэтому ваши неопубликованные изменения будут отброшены. Опубликованные версии, если они есть, останутся опубликованными. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
   confirm_publishing_entry: Вы уверены, что хотите опубликовать эту запись? Ваши изменения вступят в силу немедленно.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
@@ -1919,7 +1925,7 @@ workflow:
   # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
   # the deletion has completed
   deleting_entry: Удаление записи…
-  discarding_changes: Отмена изменений…
+  discarding_changes: Отбрасывание изменений…
   entry_deleted: Запись удалена.
   # Error notification when publishing fails
   publishing_entry_failed: Не удалось опубликовать запись. Попробуйте ещё раз.
