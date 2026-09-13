@@ -26,6 +26,10 @@ vi.mock('$lib/services/contents/draft/create', () => ({
   getSlugEditorProp: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/draft/create/duplicate-assets', () => ({
+  copyEntryRelativeAssets: vi.fn(async () => ({})),
+}));
+
 vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
   getOrderFieldKey: vi.fn(),
 }));
@@ -64,6 +68,11 @@ describe('contents/draft/create/duplicate', () => {
     const { getDefaultValueMap } = await import('$lib/services/contents/fields/hidden/defaults');
     const { getInitialValue } = await import('$lib/services/contents/fields/uuid/helpers.js');
     const { getSlugEditorProp } = await import('$lib/services/contents/draft/create');
+
+    const { copyEntryRelativeAssets } =
+      await import('$lib/services/contents/draft/create/duplicate-assets');
+
+    vi.mocked(copyEntryRelativeAssets).mockImplementation(async () => ({}));
 
     mockShowDuplicateToast = showDuplicateToast;
     showDuplicateToast.current = false;
@@ -113,6 +122,54 @@ describe('contents/draft/create/duplicate', () => {
   });
 
   describe('duplicateDraft', () => {
+    it('copies the original’s own assets into the duplicate', async () => {
+      const { copyEntryRelativeAssets } =
+        await import('$lib/services/contents/draft/create/duplicate-assets');
+
+      const file = new File(['image'], 'photo.jpg', { type: 'image/jpeg' });
+      const folder = /** @type {any} */ ({ collectionName: 'posts', entryRelative: true });
+
+      mockEntryDraft.files = { 'blob:existing': { file, folder, replace: false } };
+
+      vi.mocked(copyEntryRelativeAssets).mockImplementation(async ({ currentValues }) => {
+        // The values are updated in place, the same as the real implementation does
+        currentValues.en.image = 'blob:copy';
+
+        return { 'blob:copy': { file, folder, replace: false } };
+      });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(copyEntryRelativeAssets).toHaveBeenCalledWith({
+        draft: mockEntryDraft,
+        currentValues: expect.objectContaining({ en: expect.any(Object) }),
+      });
+      // The pending uploads of the original are carried over along with the copies
+      expect(Object.keys(newDraft.files)).toEqual(['blob:existing', 'blob:copy']);
+      expect(newDraft.currentValues.en.image).toBe('blob:copy');
+      // The original draft’s values are untouched
+      expect(mockEntryDraft.currentValues.en.image).toBeUndefined();
+    });
+
+    it('gives up if the editor moves on while the assets are being copied', async () => {
+      const { copyEntryRelativeAssets } =
+        await import('$lib/services/contents/draft/create/duplicate-assets');
+
+      vi.mocked(copyEntryRelativeAssets).mockImplementation(async () => {
+        // The editor is closed meanwhile
+        entryDraft.current = undefined;
+
+        return {};
+      });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+
+      await expect(duplicateDraft(entryDraft)).resolves.toBeUndefined();
+      expect(entryDraft.current).toBeUndefined();
+      expect(mockShowDuplicateToast.current).toBe(false);
+    });
+
     it('files the copy alongside the original, not inside it', async () => {
       const { getSharedEntryFileName } = await import('$lib/services/contents/collection/nested');
 
@@ -122,7 +179,7 @@ describe('contents/draft/create/duplicate', () => {
       mockEntryDraft.currentPath = 'company/about';
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentPath).toBe('company');
@@ -137,7 +194,7 @@ describe('contents/draft/create/duplicate', () => {
       mockEntryDraft.currentPath = 'about';
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentPath).toBe('');
@@ -152,7 +209,7 @@ describe('contents/draft/create/duplicate', () => {
       mockEntryDraft.currentPath = 'products';
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentPath).toBe('products');
@@ -164,7 +221,7 @@ describe('contents/draft/create/duplicate', () => {
       vi.mocked(getSharedEntryFileName).mockReturnValue(undefined);
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentPath).toBeUndefined();
@@ -173,7 +230,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should remove canonical slug from all locales', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en.translationKey).toBeUndefined();
@@ -185,7 +242,7 @@ describe('contents/draft/create/duplicate', () => {
       mockEntryDraft.currentValues.ja.aliases = '/posts/old-post';
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en['aliases.0']).toBeUndefined();
@@ -198,7 +255,7 @@ describe('contents/draft/create/duplicate', () => {
       mockEntryDraft.currentValues.ja['redirect_from.0'] = '/posts/old-post';
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en['redirect_from.0']).toBeUndefined();
@@ -215,7 +272,7 @@ describe('contents/draft/create/duplicate', () => {
       mockEntryDraft.currentValues.ja.order = 5;
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en.order).toBeUndefined();
@@ -232,7 +289,7 @@ describe('contents/draft/create/duplicate', () => {
       mockEntryDraft.currentValues.ja.weight = 7;
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en.weight).toBeUndefined();
@@ -248,7 +305,7 @@ describe('contents/draft/create/duplicate', () => {
       mockEntryDraft.currentValues.en.order = 5;
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en.order).toBe(5);
@@ -269,7 +326,7 @@ describe('contents/draft/create/duplicate', () => {
       mockGetInitialUuidValue.mockReturnValue('new-uuid-value');
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en.uuid).toBe('new-uuid-value');
@@ -291,7 +348,7 @@ describe('contents/draft/create/duplicate', () => {
       mockGetInitialUuidValue.mockReturnValue('new-uuid-value');
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en.uuid).toBe('new-uuid-value');
@@ -314,7 +371,7 @@ describe('contents/draft/create/duplicate', () => {
 
       const { duplicateDraft } = await import('./duplicate.js');
 
-      duplicateDraft(entryDraft);
+      await duplicateDraft(entryDraft);
 
       expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledWith({
         fieldConfig: { widget: 'hidden', default: 'new-default-value', i18n: true },
@@ -352,7 +409,7 @@ describe('contents/draft/create/duplicate', () => {
       });
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en['tags.0']).toBeUndefined();
@@ -375,7 +432,7 @@ describe('contents/draft/create/duplicate', () => {
 
       const { duplicateDraft } = await import('./duplicate.js');
 
-      duplicateDraft(entryDraft);
+      await duplicateDraft(entryDraft);
 
       expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledWith({
         fieldConfig: { widget: 'hidden', default: 'new-default-value', i18n: 'duplicate' },
@@ -394,7 +451,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should reset all validities', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.validities).toEqual({
@@ -405,7 +462,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should set isNew to true', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.isNew).toBe(true);
@@ -413,7 +470,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should generate a new id', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.id).toBeDefined();
@@ -423,7 +480,7 @@ describe('contents/draft/create/duplicate', () => {
     it('should update createdAt timestamp', async () => {
       const beforeTime = Date.now();
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const afterTime = Date.now();
       const setCallArg = newDraft;
 
@@ -434,7 +491,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should clear originalEntry', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.originalEntry).toBeUndefined();
@@ -442,7 +499,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should reset slugs', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.originalSlugs).toEqual({});
@@ -451,7 +508,7 @@ describe('contents/draft/create/duplicate', () => {
 
     it('should recompute slugEditor via getSlugEditorProp with no originalEntry id', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
 
       expect(mockGetSlugEditorProp).toHaveBeenCalledWith({
         collection: mockEntryDraft.collection,
@@ -470,7 +527,7 @@ describe('contents/draft/create/duplicate', () => {
       mockGetSlugEditorProp.mockReturnValue({ en: true, ja: false });
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.slugEditor).toEqual({ en: true, ja: false });
@@ -480,7 +537,7 @@ describe('contents/draft/create/duplicate', () => {
     it('should replace the draft in the state with new value proxies and reset validities', async () => {
       const { createProxy } = await import('$lib/services/contents/draft/create/proxy.svelte');
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
 
       expect(entryDraft.current).toBe(newDraft);
       expect(newDraft).not.toBe(mockEntryDraft);
@@ -503,7 +560,7 @@ describe('contents/draft/create/duplicate', () => {
     it('should show duplicate toast', async () => {
       const { duplicateDraft } = await import('./duplicate.js');
 
-      duplicateDraft(entryDraft);
+      await duplicateDraft(entryDraft);
 
       expect(mockShowDuplicateToast.current).toBe(true);
     });
@@ -522,7 +579,7 @@ describe('contents/draft/create/duplicate', () => {
       };
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.fr.customKey).toBeUndefined();
@@ -533,7 +590,7 @@ describe('contents/draft/create/duplicate', () => {
       mockGetField.mockReturnValue(undefined);
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en.title).toBe('Test Post');
@@ -555,7 +612,7 @@ describe('contents/draft/create/duplicate', () => {
       mockGetInitialUuidValue.mockReturnValue('new-uuid-value');
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       expect(setCallArg.currentValues.en.uuid).toBe('new-uuid-value');
@@ -578,7 +635,7 @@ describe('contents/draft/create/duplicate', () => {
 
       const { duplicateDraft } = await import('./duplicate.js');
 
-      duplicateDraft(entryDraft);
+      await duplicateDraft(entryDraft);
 
       // Should be called for both locales
       expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledWith({
@@ -623,7 +680,7 @@ describe('contents/draft/create/duplicate', () => {
       });
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       // The 'tags' key should exist (or be re-assigned), and 'tags.0', 'tags.1' should be deleted
@@ -649,7 +706,7 @@ describe('contents/draft/create/duplicate', () => {
 
       const { duplicateDraft } = await import('./duplicate.js');
 
-      duplicateDraft(entryDraft);
+      await duplicateDraft(entryDraft);
 
       // When i18n is 'duplicate', should only be called for default locale
       const { calls } = mockGetHiddenFieldDefaultValueMap.mock;
@@ -674,7 +731,7 @@ describe('contents/draft/create/duplicate', () => {
       mockGetInitialUuidValue.mockReturnValue('new-uuid-value');
 
       const { duplicateDraft } = await import('./duplicate.js');
-      const newDraft = duplicateDraft(entryDraft);
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
       const setCallArg = newDraft;
 
       // Default locale resets (condition true via locale === defaultLocale)
@@ -701,7 +758,7 @@ describe('contents/draft/create/duplicate', () => {
 
       const { duplicateDraft } = await import('./duplicate.js');
 
-      duplicateDraft(entryDraft);
+      await duplicateDraft(entryDraft);
 
       // Should only call for defaultLocale (en), not for ja
       const { calls } = mockGetHiddenFieldDefaultValueMap.mock;

@@ -105,6 +105,8 @@
   let errorMessage = $state('');
   let saving = $state(false);
   let deleting = $state(false);
+  /** Whether the entry is being duplicated, which takes a moment when it has assets to copy. */
+  let duplicating = $state(false);
   /** I18n key of the message shown while a deletion is in flight. */
   let progressMessage = $state('');
   /** @type {MenuButton | undefined} */
@@ -143,9 +145,9 @@
   // There’s only something to put in the second pane when another locale can be edited alongside
   // the first one, or when the entry has a preview
   const canShowSecondPane = $derived((i18nEnabled && allLocales.length > 1) || canPreview);
-  // Saving or deleting takes a moment and navigates away when it’s done, so the whole control group
-  // is locked meanwhile rather than just the button that started it
-  const busy = $derived(saving || deleting);
+  // Saving, deleting or duplicating takes a moment and navigates away when it’s done, so the whole
+  // control group is locked meanwhile rather than just the button that started it
+  const busy = $derived(saving || deleting || duplicating);
   const controlsDisabled = $derived(disabled || busy);
   const modified = $derived(isNew || entryDraft.modified);
   const associatedAssets = $derived(
@@ -506,24 +508,29 @@
             !collectionFile &&
             !isIndexFile &&
             entryCollection?.duplicate !== false &&
-            !collectionState.current.creationDisabled &&
-            // @todo Enable duplication for Hugo’s page bundles = the `path` option. We need to
-            // duplicate assets along with the entry.
-            // @see https://github.com/sveltia/sveltia-cms/issues/526
-            !entryCollection?.path}
+            !collectionState.current.creationDisabled}
           {#if canDuplicate}
             <MenuItem
               variant="ghost"
               disabled={controlsDisabled}
               label={_('duplicate')}
               aria-label={_('duplicate_entry')}
-              onclick={() => {
-                goto(`/collections/${collectionName}/new`, {
-                  replaceState: true,
-                  notifyChange: false,
-                  transitionType: 'forwards',
-                });
-                duplicateDraft(entryDraft);
+              onclick={async () => {
+                duplicating = true;
+
+                // The original’s own assets are copied along with the entry, so this can take a
+                // moment. The URL is updated only once the duplicate is in place
+                const duplicated = !!(await duplicateDraft(entryDraft));
+
+                duplicating = false;
+
+                if (duplicated) {
+                  goto(`/collections/${collectionName}/new`, {
+                    replaceState: true,
+                    notifyChange: false,
+                    transitionType: 'forwards',
+                  });
+                }
               }}
             />
           {/if}

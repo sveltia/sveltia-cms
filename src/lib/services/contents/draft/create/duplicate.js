@@ -1,6 +1,7 @@
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getEntryDirPath, getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getSlugEditorProp } from '$lib/services/contents/draft/create';
+import { copyEntryRelativeAssets } from '$lib/services/contents/draft/create/duplicate-assets';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { showDuplicateToast } from '$lib/services/contents/editor';
 import { getAliasesKey, removeAliases } from '$lib/services/contents/entry/aliases';
@@ -18,9 +19,10 @@ import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 /**
  * Duplicate the entry draft open in the editor, replacing it with the duplicate.
  * @param {EntryDraftState} entryDraft Entry draft state.
- * @returns {EntryDraft} Duplicated draft.
+ * @returns {Promise<EntryDraft | undefined>} Duplicated draft, or `undefined` if the editor was
+ * closed or given another draft while the original’s assets were being copied.
  */
-export const duplicateDraft = (entryDraft) => {
+export const duplicateDraft = async (entryDraft) => {
   const draft = /** @type {EntryDraft} */ (entryDraft.current);
   const { collectionName, fileName, collection, collectionFile, fields, isIndexFile } = draft;
 
@@ -94,6 +96,15 @@ export const duplicateDraft = (entryDraft) => {
     });
   });
 
+  // The original’s own assets have to be copied along with the entry, or the duplicate would
+  // reference files that only exist next to the original
+  // @see https://github.com/sveltia/sveltia-cms/issues/526
+  const files = { ...draft.files, ...(await copyEntryRelativeAssets({ draft, currentValues })) };
+
+  if (entryDraft.current !== draft) {
+    return undefined;
+  }
+
   const { currentPath } = draft;
 
   const duplicatePath =
@@ -118,6 +129,7 @@ export const duplicateDraft = (entryDraft) => {
     currentPath: duplicatePath,
     // The value proxies are created below, as they need a reference to the new draft
     currentValues: {},
+    files,
     // Reset the validities
     validities: Object.fromEntries(Object.keys(draft.validities).map((locale) => [locale, {}])),
     slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs: {} }),

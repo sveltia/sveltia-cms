@@ -13,6 +13,7 @@ import {
   getFieldDisplayValue,
   getFieldKind,
   getPropertyValue,
+  getTypedKeyPath,
   getVisibleFieldDisplayValue,
   hasRootField,
   isFieldMultiple,
@@ -1061,6 +1062,90 @@ describe('Test getField()', () => {
       });
 
       expect(result).toEqual({ name: 'title', widget: 'string' });
+    });
+  });
+
+  describe('getTypedKeyPath()', () => {
+    const collectionName = 'posts';
+
+    beforeEach(() => {
+      // @ts-expect-error - Simplified mock for testing
+      mockGetCollection.mockReturnValue({
+        ...mockCollection,
+        fields: [
+          ...mockCollection.fields,
+          { name: 'photos', widget: 'list', field: { name: 'src', widget: 'image' } },
+          { name: 'gallery', widget: 'image', multiple: true },
+        ],
+      });
+    });
+
+    test('should return a plain key path as is', () => {
+      expect(getTypedKeyPath({ collectionName, keyPath: 'title' })).toBe('title');
+      expect(getTypedKeyPath({ collectionName, keyPath: 'author.name' })).toBe('author.name');
+    });
+
+    test('should replace a list index with an asterisk', () => {
+      expect(getTypedKeyPath({ collectionName, keyPath: 'images.1.src' })).toBe('images.*.src');
+      expect(getTypedKeyPath({ collectionName, keyPath: 'sections.0.content.items.2' })).toBe(
+        'sections.*.content.items.*.item',
+      );
+    });
+
+    test('should add the subfield name to a single-subfield list item', () => {
+      expect(getTypedKeyPath({ collectionName, keyPath: 'photos.0' })).toBe('photos.*.src');
+      expect(getTypedKeyPath({ collectionName, keyPath: 'objectList.3.title' })).toBe(
+        'objectList.*.item.title',
+      );
+    });
+
+    test('should drop the index of a multi-value field', () => {
+      mockIsMultiple.mockReturnValue(true);
+
+      expect(getTypedKeyPath({ collectionName, keyPath: 'gallery.1' })).toBe('gallery');
+      expect(getTypedKeyPath({ collectionName, keyPath: 'cities.0' })).toBe('cities');
+    });
+
+    test('should spell out the variable type of a list item', () => {
+      const valueMap = { 'blocks.0.type': 'text', 'blocks.1.type': 'image' };
+
+      expect(getTypedKeyPath({ collectionName, keyPath: 'blocks.0.content', valueMap })).toBe(
+        'blocks.*<text>.content',
+      );
+      expect(getTypedKeyPath({ collectionName, keyPath: 'blocks.1.src', valueMap })).toBe(
+        'blocks.*<image>.src',
+      );
+      expect(getTypedKeyPath({ collectionName, keyPath: 'blocks.1', valueMap })).toBe(
+        'blocks.*<image>',
+      );
+    });
+
+    test('should support a custom type key', () => {
+      const valueMap = { 'blocksWithCustomType.0.blockType': 'text' };
+
+      expect(
+        getTypedKeyPath({ collectionName, keyPath: 'blocksWithCustomType.0.content', valueMap }),
+      ).toBe('blocksWithCustomType.*<text>.content');
+    });
+
+    test('should spell out the variable type of an object', () => {
+      const valueMap = { 'widget.type': 'button' };
+
+      expect(getTypedKeyPath({ collectionName, keyPath: 'widget.label', valueMap })).toBe(
+        'widget<button>.label',
+      );
+      expect(getTypedKeyPath({ collectionName, keyPath: 'widget', valueMap })).toBe(
+        'widget<button>',
+      );
+    });
+
+    test('should leave the type out if it cannot be resolved', () => {
+      expect(getTypedKeyPath({ collectionName, keyPath: 'blocks.0.src' })).toBe('blocks.*.src');
+      expect(getTypedKeyPath({ collectionName, keyPath: 'widget.label' })).toBe('widget.label');
+    });
+
+    test('should handle an unknown field', () => {
+      expect(getTypedKeyPath({ collectionName, keyPath: 'unknown.0.name' })).toBe('unknown.*.name');
     });
   });
 
