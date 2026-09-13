@@ -32,7 +32,7 @@
 /**
  * Cloud media storage name.
  * @typedef {'cloudinary' | 'uploadcare' | 'aws_s3' | 'azure_blob_storage' | 'backblaze_b2' |
- * 'cloudflare_r2' | 'digitalocean_spaces' | 'scaleway_object_storage' |
+ * 'bunny_storage' | 'cloudflare_r2' | 'digitalocean_spaces' | 'scaleway_object_storage' |
  * 'supabase_storage'} CloudMediaLibraryName
  */
 
@@ -180,10 +180,13 @@
  * Options for S3-compatible media libraries.
  * @typedef {object} S3MediaLibrary
  * @property {string} [name] Media library name (used when configuring via legacy `media_library`).
- * @property {string} access_key_id AWS access key ID or equivalent (safe to store in config).
- * @property {string} bucket Bucket name.
- * @property {string} [region] AWS region (e.g., 'us-east-1'). Required for Amazon S3, DigitalOcean
- * Spaces, Scaleway Object Storage, and Supabase Storage.
+ * @property {string} [access_key_id] AWS access key ID or equivalent (safe to store in config).
+ * Required for all services except Bunny Storage, where it defaults to `bucket`, as the storage
+ * zone name serves as the access key ID.
+ * @property {string} bucket Bucket name. For Bunny Storage, this is the storage zone name.
+ * @property {string} [region] AWS region (e.g., 'us-east-1'). Required for Amazon S3, Backblaze B2,
+ * Bunny Storage (two-letter storage region code, e.g. 'de'), DigitalOcean Spaces, Scaleway Object
+ * Storage, and Supabase Storage.
  * @property {string} [account_id] Cloudflare account ID. Required for Cloudflare R2.
  * @property {'default' | 'eu' | 'fedramp'} [jurisdiction] Cloudflare R2 jurisdiction. Required for
  * buckets created in the EU or FedRAMP jurisdictions; the global endpoint returns an error for
@@ -195,7 +198,9 @@
  * @property {string} [public_url] Base URL for public asset access. When set, asset preview and
  * download URLs are constructed as `{public_url}/{key}` instead of the S3 API endpoint URL.
  * Required for Cloudflare R2 (S3 API endpoint always requires authentication); set to the `r2.dev`
- * development URL (e.g. `https://pub-abcd1234.r2.dev`) or a custom domain. Optional for Amazon S3
+ * development URL (e.g. `https://pub-abcd1234.r2.dev`) or a custom domain. Also required for Bunny
+ * Storage; set to the hostname of a pull zone connected to the storage zone (e.g.
+ * `https://my-zone.b-cdn.net`) or a custom domain. Optional for Amazon S3
  * and DigitalOcean Spaces — use when serving assets through a CDN or custom domain (e.g. CloudFront
  * or Route 53 for S3, CDN endpoint for Spaces).
  */
@@ -270,6 +275,8 @@
  * media storage. Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [backblaze_b2] Options for the Backblaze B2 media storage. Set
  * to `false` to explicitly disable.
+ * @property {S3MediaLibrary | false} [bunny_storage] Options for the Bunny Storage media storage.
+ * Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [scaleway_object_storage] Options for the Scaleway Object
  * Storage media storage. Set to `false` to explicitly disable.
  * @property {S3MediaLibrary | false} [supabase_storage] Options for the Supabase Storage media

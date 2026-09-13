@@ -163,6 +163,28 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
       expect(custom.isEnabled()).toBe(true);
     });
 
+    it('should check the resolved config, so a resolver can fill in defaults', () => {
+      const custom = new S3CompatibleService({
+        ...definition,
+        /**
+         * Default the access key ID to the bucket name.
+         * @param {S3MediaLibrary} options Library options.
+         * @returns {S3Config} Resolved configuration.
+         */
+        resolveConfig: (options) => ({
+          ...options,
+          access_key_id: options.access_key_id ?? options.bucket,
+        }),
+      });
+
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: { aws_s3: { bucket: mockBucket, region: mockRegion } },
+      });
+
+      expect(service.isEnabled()).toBe(false);
+      expect(custom.isEnabled()).toBe(true);
+    });
+
     it('should prefer field-level config over global config', () => {
       cmsConfig.current = /** @type {any} */ ({});
 

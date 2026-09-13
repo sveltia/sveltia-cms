@@ -429,6 +429,19 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
     });
 
+    it('should throw if the access key ID is missing', async () => {
+      await expect(
+        signedRequest({
+          method: 'GET',
+          url: 'https://test-bucket.s3.us-east-1.amazonaws.com/',
+          config: { bucket: 'test-bucket', region: 'us-east-1' },
+          secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+        }),
+      ).rejects.toThrow('S3 access key ID is required');
+
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
     it('should use default region if not provided', async () => {
       vi.mocked(fetch).mockResolvedValue(new Response('success', { status: 200 }));
 

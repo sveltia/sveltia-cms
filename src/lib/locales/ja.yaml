@@ -1413,6 +1413,9 @@ cloud_storage:
   aws_s3:
     auth_key_label: シークレットアクセスキー
 
+  bunny_storage:
+    auth_key_label: ストレージゾーンパスワード
+
   cloudflare_r2:
     auth_key_label: シークレットアクセスキー
 

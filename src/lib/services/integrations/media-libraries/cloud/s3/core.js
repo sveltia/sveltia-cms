@@ -122,6 +122,11 @@ export const signedRequest = async ({
   extraHeaders = {},
 }) => {
   const { access_key_id: accessKeyId, region = 'us-east-1' } = config;
+
+  if (!accessKeyId) {
+    throw new Error('S3 access key ID is required');
+  }
+
   const date = new Date();
   const urlObj = new URL(url);
   const payloadHash = await getHash(body, { algorithm: 'SHA-256' });
