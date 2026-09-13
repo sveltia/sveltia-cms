@@ -538,6 +538,10 @@ export default defineConfig({
       preserveEntrySignatures: 'strict',
       // Silence some warnings that are not relevant to our use case
       checks: {
+        // `import.meta` becomes `{}` in the IIFE build. The only use of ours, `import.meta.url` in
+        // `dependencies.js`, expects that, and Vite’s preload helper, the other source, is
+        // tree-shaken away because an IIFE has no chunks to preload
+        emptyImportMeta: false,
         missingNameOptionForIifeExport: false,
         mixedExports: false,
         pluginTimings: false,
