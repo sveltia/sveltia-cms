@@ -288,7 +288,7 @@ release_notes: Versiyon Notları
 announcements: Duyurular
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Versiyon {$version}'
+version_x: Versiyon {$version}
 # Additional help menu items
 report_issue: Sorun Bildir
 share_feedback: Geri Bildirim Paylaş
@@ -805,7 +805,7 @@ renaming_asset_failed: Yeniden adlandırma başarısız oldu.
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
 # {$type} is the original file type before conversion
-file_meta_converted_from_x: '({$type} türünden dönüştürüldü)'
+file_meta_converted_from_x: ({$type} türünden dönüştürüldü)
 
 # ==============================================================================
 # Entry Management
@@ -1442,7 +1442,7 @@ cloud_storage:
       initial: '{$service} için {$key} değerinizi girin.'
       requested: Doğrulanıyor…
       # {$key} is the credential label the user entered, e.g., API Key
-      error: 'Sağlanan {$key} geçersiz. Lütfen kontrol edip tekrar deneyin.'
+      error: Sağlanan {$key} geçersiz. Lütfen kontrol edip tekrar deneyin.
     password:
       # {$service} is the cloud service name
       initial: '{$service} için şifrenizi girin.'
@@ -1487,9 +1487,9 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: '“{$collection}” koleksiyonu'
-    file: '“{$file}” dosyası'
-    component: '“{$component}” bileşeni'
+    collection: “{$collection}” koleksiyonu
+    file: “{$file}” dosyası
+    component: “{$component}” bileşeni
     # Don’t localize `{$field}`
     field: '`{$field}` alanı'
 
@@ -1518,13 +1518,13 @@ config:
     # {$name} is the backend name from the CMS configuration
     unsupported_known_backend: '{$name} backend’i Sveltia CMS’te <a>desteklenmiyor</a>.'
     # {$name} is the backend name from the CMS configuration
-    unsupported_deprecated_backend: 'Kullanımdan kaldırılan {$name} backend’i Sveltia CMS’te <a>desteklenmiyor</a>.'
-    unsupported_custom_backend: 'Özel backend’ler Sveltia CMS’te <a>desteklenmiyor</a>.'
-    unsupported_backend_suggestion: 'Bunun yerine <a>desteklenen backend’lerden</a> birini kullanın.'
+    unsupported_deprecated_backend: Kullanımdan kaldırılan {$name} backend’i Sveltia CMS’te <a>desteklenmiyor</a>.
+    unsupported_custom_backend: Özel backend’ler Sveltia CMS’te <a>desteklenmiyor</a>.
+    unsupported_backend_suggestion: Bunun yerine <a>desteklenen backend’lerden</a> birini kullanın.
     missing_repository: Repo tanımlanmamış.
     invalid_repository: Yapılandırılan repo geçersiz. “owner/repo” biçiminde olmalıdır.
-    oauth_implicit_flow: 'Yapılandırılan kimlik doğrulama yöntemi (implicit flow) Sveltia CMS’te desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.'
-    github_pkce_unsupported: 'GitHub kısıtlamaları nedeniyle PKCE yetkilendirmesi henüz desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.'
+    oauth_implicit_flow: Yapılandırılan kimlik doğrulama yöntemi (implicit flow) Sveltia CMS’te desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.
+    github_pkce_unsupported: GitHub kısıtlamaları nedeniyle PKCE yetkilendirmesi henüz desteklenmiyor. Bunun yerine farklı bir <a>kimlik doğrulama yöntemi</a> kullanın.
     oauth_no_app_id: OAuth uygulama kimliği (App ID) tanımlanmamış.
     # Don’t localize `open_authoring` and `editorial_workflow`
     open_authoring_no_workflow: '`open_authoring` seçeneği `editorial_workflow` yayın modunu gerektirir. Ayrıntılar için <a>belgelere</a> bakın.'
@@ -1540,15 +1540,15 @@ config:
     # {$prop} is either `width` or `height`; {$key} is the transformation key
     invalid_transformation_size: '`{$key}` dönüşümü için `{$prop}` seçeneği geçersiz. Pozitif bir tam sayı olmalıdır.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
-    missing_asset_collection_name: 'Medya koleksiyonu {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    missing_asset_collection_name: Medya koleksiyonu {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.
     # {$name} is the invalid or duplicate asset collection name
-    invalid_asset_collection_name: 'Medya koleksiyon adı `{$name}` geçersiz. Özel karakterler içeremez.'
+    invalid_asset_collection_name: Medya koleksiyon adı `{$name}` geçersiz. Özel karakterler içeremez.
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: 'Medya koleksiyon adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    duplicate_asset_collection_name: Medya koleksiyon adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.
     # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: 'Koleksiyonda `folder`, `files` veya `divider` seçeneklerinden biri tanımlanmalıdır.'
+    invalid_collection_no_options: Koleksiyonda `folder`, `files` veya `divider` seçeneklerinden biri tanımlanmalıdır.
     # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: 'Koleksiyon `folder`, `files` ve `divider` seçeneklerini birlikte içeremez.'
+    invalid_collection_multiple_options: Koleksiyon `folder`, `files` ve `divider` seçeneklerini birlikte içeremez.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: '`{$extension}` uzantısı `{$format}` biçimi ile eşleşmiyor.'
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
@@ -1572,50 +1572,50 @@ config:
     invalid_view_filter_name: '`{$name}` görünüm filtresi adı geçersiz. Özel karakterler içermemelidir.'
     duplicate_view_filter_name: Görünüm filtresi adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
-    missing_collection_name: 'Koleksiyon {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    missing_collection_name: Koleksiyon {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.
     # {$name} is the invalid or duplicate collection name
-    invalid_collection_name: 'Koleksiyon adı `{$name}` geçersiz. Özel karakterler içeremez.'
-    duplicate_collection_name: 'Koleksiyon adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    invalid_collection_name: Koleksiyon adı `{$name}` geçersiz. Özel karakterler içeremez.
+    duplicate_collection_name: Koleksiyon adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.
     # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
-    missing_collection_file_name: 'Koleksiyon dosyası {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    missing_collection_file_name: Koleksiyon dosyası {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.
     # {$name} is the invalid or duplicate collection file name
-    invalid_collection_file_name: 'Koleksiyon dosya adı `{$name}` geçersiz. Özel karakterler içeremez.'
-    duplicate_collection_file_name: 'Koleksiyon dosya adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    invalid_collection_file_name: Koleksiyon dosya adı `{$name}` geçersiz. Özel karakterler içeremez.
+    duplicate_collection_file_name: Koleksiyon dosya adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.
     # Don’t localize `fields`
-    collection_no_fields: 'Koleksiyon için `fields` seçeneği en az bir alan içerecek şekilde tanımlanmalıdır.'
+    collection_no_fields: Koleksiyon için `fields` seçeneği en az bir alan içerecek şekilde tanımlanmalıdır.
     # Don’t localize `fields`
-    collection_file_no_fields: 'Koleksiyon dosyası için `fields` seçeneği en az bir alan içerecek şekilde tanımlanmalıdır.'
+    collection_file_no_fields: Koleksiyon dosyası için `fields` seçeneği en az bir alan içerecek şekilde tanımlanmalıdır.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: '`file` yolunda `locale` yer tutucusu kullanılıyorsa koleksiyon dosyası için `i18n` seçeneği tanımlanmalıdır.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
-    missing_field_name: 'Alan {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    missing_field_name: Alan {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.
     # {$name} is the invalid or duplicate field name
-    invalid_field_name: 'Alan adı `{$name}` geçersiz. Özel karakterler içeremez. Alanları iç içe yerleştirmek istiyorsanız <a>nokta notasyonu yerine Object alanlarını kullanın</a>.'
-    duplicate_field_name: 'Alan adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    invalid_field_name: Alan adı `{$name}` geçersiz. Özel karakterler içeremez. Alanları iç içe yerleştirmek istiyorsanız <a>nokta notasyonu yerine Object alanlarını kullanın</a>.
+    duplicate_field_name: Alan adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.
     # {$count} is the 1-based variable type index in the current types array
-    missing_variable_type: 'Değişken türü {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.'
+    missing_variable_type: Değişken türü {$count} için `name` seçeneği boş olmayan bir metin olarak tanımlanmalıdır.
     # {$name} is the invalid or duplicate variable type name
-    invalid_variable_type: 'Değişken tür adı `{$name}` geçersiz. Özel karakterler içeremez.'
-    duplicate_variable_type: 'Değişken tür adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.'
+    invalid_variable_type: Değişken tür adı `{$name}` geçersiz. Özel karakterler içeremez.
+    duplicate_variable_type: Değişken tür adları benzersiz olmalıdır, ancak `{$name}` birden fazla kez kullanılmış.
     date_field_type: 'Kullanımdan kaldırılan Date alan türü Sveltia CMS’te desteklenmiyor. Bunun yerine `type: date` seçeneği ile DateTime alan türünü kullanın.'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Geçersiz saat dilimi: {$timeZone}. `America/New_York` veya `Asia/Tokyo` gibi geçerli bir IANA saat dilimi tanımlayıcısı olmalıdır.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: 'Kullanımdan kaldırılan `{$prop}` seçeneği Sveltia CMS’te desteklenmiyor. Bunun yerine `{$newProp}` seçeneğini kullanın.'
+    unsupported_deprecated_option: Kullanımdan kaldırılan `{$prop}` seçeneği Sveltia CMS’te desteklenmiyor. Bunun yerine `{$newProp}` seçeneğini kullanın.
     # Don’t localize `allow_multiple`, `multiple`, and `false`
     allow_multiple: '`allow_multiple` seçeneği Sveltia CMS’te desteklenmiyor. Varsayılanı `false` olan `multiple` seçeneğini kullanın.'
     # Don’t localize `field`, `fields`, and `types`
-    invalid_list_field: 'List alanı `field`, `fields` ve `types` seçeneklerini birlikte içeremez.'
+    invalid_list_field: List alanı `field`, `fields` ve `types` seçeneklerini birlikte içeremez.
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
-    invalid_list_variable_type: 'List alanının değişken türü geçersiz. `widget` seçeneği `{$widget}` olarak ayarlanmış ancak `object` olmalıdır.'
+    invalid_list_variable_type: List alanının değişken türü geçersiz. `widget` seçeneği `{$widget}` olarak ayarlanmış ancak `object` olmalıdır.
     # Don’t localize `fields`, and `types`
-    invalid_object_field: 'Object alanı `fields` ve `types` seçeneklerini birlikte içeremez.'
+    invalid_object_field: Object alanı `fields` ve `types` seçeneklerini birlikte içeremez.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
-    relation_field_invalid_collection: 'Referans verilen `{$collection}` koleksiyonu geçersiz veya tanımlanmamış.'
-    relation_field_invalid_collection_file: 'Referans verilen `{$file}` dosyası geçersiz veya tanımlanmamış.'
+    relation_field_invalid_collection: Referans verilen `{$collection}` koleksiyonu geçersiz veya tanımlanmamış.
+    relation_field_invalid_collection_file: Referans verilen `{$file}` dosyası geçersiz veya tanımlanmamış.
     # Don’t localize `file`
-    relation_field_missing_file_name: 'Bir dosya koleksiyonuna bağıntı kurulması için `file` seçeneği tanımlanmalıdır.'
-    relation_field_invalid_value_field: 'Referans verilen değer alanı `{$field}` geçersiz veya tanımlanmamış.'
+    relation_field_missing_file_name: Bir dosya koleksiyonuna bağıntı kurulması için `file` seçeneği tanımlanmalıdır.
+    relation_field_invalid_value_field: Referans verilen değer alanı `{$field}` geçersiz veya tanımlanmamış.
     unexpected: Beklenmeyen hata
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON

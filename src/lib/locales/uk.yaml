@@ -1599,11 +1599,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'колекція {$collection}'
-    file: 'файл {$file}'
-    component: 'компонент {$component}'
+    collection: колекція {$collection}
+    file: файл {$file}
+    component: компонент {$component}
     # Don’t localize `{$field}`
-    field: 'поле `{$field}`'
+    field: поле `{$field}`
 
   # Configuration error messages
   error:

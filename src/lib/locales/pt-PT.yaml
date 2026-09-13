@@ -107,10 +107,10 @@ clipboard_error: Não foi possível copiar para a área de transferência.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Bem-vindo ao {$name}'
+welcome_message: Bem-vindo ao {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Desenvolvido por {$name}'
+powered_by: Desenvolvido por {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: A carregar a configuração do CMS…
@@ -120,7 +120,7 @@ loading_site_data_error: Ocorreu um erro ao carregar os dados do site.
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Iniciar sessão com {$service}'
+sign_in_with_x: Iniciar sessão com {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Iniciar sessão com token de acesso
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'O backend {$name} requer o {$name} {$version} ou posterior.'
+backend_unsupported_version: O backend {$name} requer o {$name} {$version} ou posterior.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Não tem acesso ao repositório «{$repo}».
 repository_not_found: O repositório «{$repo}» não existe.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Leia o código QR abaixo com o seu telemóvel o
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Sessão iniciada como {$name}'
+signed_in_as_x: Sessão iniciada como {$name}
 working_with_local_repo: A trabalhar com repositório local
 working_with_test_repo: A trabalhar com repositório de teste
 
@@ -289,7 +289,7 @@ release_notes: Notas de lançamento
 announcements: Anúncios
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Versão {$version}'
+version_x: Versão {$version}
 # Additional help menu items
 report_issue: Comunicar problema
 share_feedback: Enviar comentários
@@ -306,8 +306,8 @@ update_now: Atualizar agora
 # Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
 # {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
 backend_status:
-  minor_incident: 'O {$service} está a registar um incidente menor. O seu trabalho pode ser afetado.'
-  major_incident: 'O {$service} está a registar um incidente grave. Poderá querer aguardar até que a situação melhore.'
+  minor_incident: O {$service} está a registar um incidente menor. O seu trabalho pode ser afetado.
+  major_incident: O {$service} está a registar um incidente grave. Poderá querer aguardar até que a situação melhore.
 
 # ==============================================================================
 # Content and Asset Libraries
@@ -557,7 +557,7 @@ copy_options: Opções de cópia
 # Edit menu items with specific asset names
 edit_asset: Editar recurso
 # {$name} is the selected asset name
-edit_x: 'Editar {$name}'
+edit_x: Editar {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Moldar linhas longas
@@ -565,7 +565,7 @@ wrap_long_lines: Moldar linhas longas
 # Rename asset: dialog and validation
 rename_asset: Mudar o nome do recurso
 # {$name} is the current asset name
-rename_x: 'Mudar o nome de {$name}'
+rename_x: Mudar o nome de {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -591,7 +591,7 @@ file_extension_change_warning: O ficheiro poderá não ser apresentado ou proces
 # Replace asset: menu item and dialog title
 replace_asset: Substituir recurso
 # {$name} is the asset being replaced
-replace_x: 'Substituir {$name}'
+replace_x: Substituir {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -999,7 +999,7 @@ content_preview: Pré-visualização do conteúdo
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Mostrar opções de conteúdo em {$locale}
-content_options_x_locale: 'Opções de conteúdo em {$locale}'
+content_options_x_locale: Opções de conteúdo em {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1015,9 +1015,9 @@ unsupported_field_type_x: 'Tipo de campo não suportado: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Ativar {$locale}'
-reenable_x_locale: 'Reativar {$locale}'
-disable_x_locale: 'Desativar {$locale}'
+enable_x_locale: Ativar {$locale}
+reenable_x_locale: Reativar {$locale}
+disable_x_locale: Desativar {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: O conteúdo em {$locale} está agora desativado. Será el
 # Repository and site links
 view_in_repository: Ver no repositório
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Ver no {$service}'
+view_on_x: Ver no {$service}
 view_on_live_site: Ver no site publicado
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Copiar de…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Copiar de {$locale}'
+copy_from_x: Copiar de {$locale}
 
 # Translation features
 translation_options: Opções de tradução
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ Traduzir campos }}
 translate_from: Traduzir de…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Traduzir de {$locale}'
+translate_from_x: Traduzir de {$locale}
 
 # Revert changes
 revert_changes: Reverter alterações
@@ -1519,11 +1519,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'coleção {$collection}'
-    file: 'ficheiro {$file}'
-    component: 'componente {$component}'
+    collection: coleção {$collection}
+    file: ficheiro {$file}
+    component: componente {$component}
     # Don’t localize `{$field}`
-    field: 'campo `{$field}`'
+    field: campo `{$field}`
 
   # Configuration error messages
   error:
@@ -1937,7 +1937,7 @@ prefs:
         description: Faça a gestão das chaves de API dos <a>serviços de tradução</a>.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
-      field_label: 'Chave {$service}'
+      field_label: Chave {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Registe-se no <a {$homeHref}>{$service}</a> e introduza aqui <a {$apiKeyHref}>a sua chave de API</a> para ativar a tradução rápida dos campos de texto das entradas.
@@ -1951,7 +1951,7 @@ prefs:
         description: Faça a gestão das chaves de API dos <a>serviços de fotografias de stock</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
-      field_label: 'Chave de API {$service}'
+      field_label: Chave de API {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Registe-se na <a {$homeHref}>API do {$service}</a> e introduza aqui <a {$apiKeyHref}>a sua chave de API</a> para inserir fotografias de stock gratuitas nos campos de imagem das entradas.
@@ -1965,7 +1965,7 @@ prefs:
         description: Faça a gestão das chaves de API dos <a>serviços de armazenamento na nuvem</a>.
       # API key input label
       # {$service} is the cloud storage service name
-      field_label: 'Chave de API {$service}'
+      field_label: Chave de API {$service}
       no_services: Não há <a>serviços de armazenamento na nuvem</a> definidos.
 
   # Accessibility panel

@@ -107,10 +107,10 @@ clipboard_error: No s’ha pogut copiar al porta-retalls.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Benvinguts al {$name}'
+welcome_message: Benvinguts al {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Amb la tecnologia del {$name}'
+powered_by: Amb la tecnologia del {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: S’està carregant la configuració del CMS…
@@ -120,7 +120,7 @@ loading_site_data_error: S’ha produït un error en carregar les dades del lloc
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Inicia la sessió amb {$service}'
+sign_in_with_x: Inicia la sessió amb {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Inicia la sessió amb un testimoni d’accés
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'El rerefons {$name} requereix {$name} {$version} o posterior.'
+backend_unsupported_version: El rerefons {$name} requereix {$name} {$version} o posterior.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: No teniu accés al repositori «{$repo}».
 repository_not_found: El repositori «{$repo}» no existeix.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Escanegeu el codi QR següent amb el telèfon o
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Sessió iniciada com a {$name}'
+signed_in_as_x: Sessió iniciada com a {$name}
 working_with_local_repo: S’està treballant amb un repositori local
 working_with_test_repo: S’està treballant amb un repositori de prova
 
@@ -289,7 +289,7 @@ release_notes: Notes de la versió
 announcements: Anuncis
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Versió {$version}'
+version_x: Versió {$version}
 # Additional help menu items
 report_issue: Informa d’un problema
 share_feedback: Comparteix comentaris
@@ -557,7 +557,7 @@ copy_options: Opcions de còpia
 # Edit menu items with specific asset names
 edit_asset: Edita el recurs
 # {$name} is the selected asset name
-edit_x: 'Edita {$name}'
+edit_x: Edita {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Ajusta les línies llargues
@@ -565,7 +565,7 @@ wrap_long_lines: Ajusta les línies llargues
 # Rename asset: dialog and validation
 rename_asset: Reanomena el recurs
 # {$name} is the current asset name
-rename_x: 'Reanomena {$name}'
+rename_x: Reanomena {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -591,7 +591,7 @@ file_extension_change_warning: És possible que el fitxer no es mostri o no es p
 # Replace asset: menu item and dialog title
 replace_asset: Reemplaça el recurs
 # {$name} is the asset being replaced
-replace_x: 'Reemplaça {$name}'
+replace_x: Reemplaça {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -999,7 +999,7 @@ content_preview: Previsualització del contingut
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Mostra les opcions de contingut en {$locale}
-content_options_x_locale: 'Opcions de contingut en {$locale}'
+content_options_x_locale: Opcions de contingut en {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1015,9 +1015,9 @@ unsupported_field_type_x: 'Tipus de camp no compatible: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Habilita el {$locale}'
-reenable_x_locale: 'Torna a habilitar el {$locale}'
-disable_x_locale: 'Desactiva el {$locale}'
+enable_x_locale: Habilita el {$locale}
+reenable_x_locale: Torna a habilitar el {$locale}
+disable_x_locale: Desactiva el {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: El contingut en {$locale} està ara desactivat. Se suprim
 # Repository and site links
 view_in_repository: Mostra al repositori
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Mostra al {$service}'
+view_on_x: Mostra al {$service}
 view_on_live_site: Mostra al lloc en línia
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Copia de…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Copia de {$locale}'
+copy_from_x: Copia de {$locale}
 
 # Translation features
 translation_options: Opcions de traducció
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ Tradueix els camps }}
 translate_from: Tradueix de…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Tradueix de {$locale}'
+translate_from_x: Tradueix de {$locale}
 
 # Revert changes
 revert_changes: Reverteix els canvis
@@ -1519,11 +1519,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'col·lecció {$collection}'
-    file: 'fitxer {$file}'
-    component: 'component {$component}'
+    collection: col·lecció {$collection}
+    file: fitxer {$file}
+    component: component {$component}
     # Don’t localize `{$field}`
-    field: 'camp `{$field}`'
+    field: camp `{$field}`
 
   # Configuration error messages
   error:
@@ -1937,7 +1937,7 @@ prefs:
         description: Gestionar les claus API per als <a>serveis de traducció</a>.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
-      field_label: 'Clau de {$service}'
+      field_label: Clau de {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Registrau-vos a <a {$homeHref}>{$service}</a> i introduïu <a {$apiKeyHref}>la vostra clau API</a> aquí per habilitar la traducció ràpida dels camps de text de les entrades.
@@ -1951,7 +1951,7 @@ prefs:
         description: Gestionar les claus API per als <a>serveis de bancs d’imatges</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
-      field_label: 'Clau API de {$service}'
+      field_label: Clau API de {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Registrau-vos a l’<a {$homeHref}>API de {$service}</a> i introduïu <a {$apiKeyHref}>la vostra clau API</a> aquí per inserir fotos de banc d’imatges gratuïtes als camps d’imatge de les entrades.
@@ -1965,7 +1965,7 @@ prefs:
         description: Gestionar les claus API per als <a>serveis d’emmagatzematge al núvol</a>.
       # API key input label
       # {$service} is the cloud storage service name
-      field_label: 'Clau API de {$service}'
+      field_label: Clau API de {$service}
       no_services: No hi ha cap <a>servei d’emmagatzematge al núvol</a> configurat.
 
   # Accessibility panel

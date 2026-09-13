@@ -107,10 +107,10 @@ clipboard_error: 无法复制到剪贴板。
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: '欢迎使用 {$name}'
+welcome_message: 欢迎使用 {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: '由 {$name} 提供'
+powered_by: 由 {$name} 提供
 
 # Shown during initial configuration and data loading
 loading_cms_config: 加载 CMS 配置……
@@ -120,7 +120,7 @@ loading_site_data_error: 加载站点数据时出错。
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: '使用 {$service} 登录'
+sign_in_with_x: 使用 {$service} 登录
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: 使用访问令牌登录
@@ -206,7 +206,7 @@ sign_in_with_mobile_instruction: 使用手机或平板扫描下方二维码即�
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: '当前以 {$name} 身份登录'
+signed_in_as_x: 当前以 {$name} 身份登录
 working_with_local_repo: 正在使用本地仓库
 working_with_test_repo: 正在使用测试仓库
 
@@ -288,7 +288,7 @@ release_notes: 版本发布说明
 announcements: 公告
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: '版本 {$version}'
+version_x: 版本 {$version}
 # Additional help menu items
 report_issue: 报告问题
 share_feedback: 分享反馈
@@ -341,9 +341,9 @@ asset_list: 资源列表
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: '「{$collection}」集合'
+x_collection: 「{$collection}」集合
 # {$folder} is the current asset folder label
-x_asset_folder: '「{$folder}」资源文件夹'
+x_asset_folder: 「{$folder}」资源文件夹
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
@@ -380,7 +380,7 @@ file_not_found: 未找到文件。
 # Selection count indicator
 # Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
 # {$selected} is the selected item count and {$total} is the total item count
-x_of_x_selected: '已选 {$selected} / {$total} 个'
+x_of_x_selected: 已选 {$selected} / {$total} 个
 
 # View switcher: toggle between list and grid views
 switch_view: 切换视图
@@ -495,7 +495,7 @@ back_to_asset_folder_list: 返回资源文件夹列表
 # Search page: headings and aria-labels
 search_results: 搜索结果
 # {$terms} is the current search query text
-search_results_for_x: '「{$terms}」的搜索结果'
+search_results_for_x: 「{$terms}」的搜索结果
 
 # Search result announcements (ARIA live regions)
 # Entry search results with counts
@@ -548,7 +548,7 @@ copy_options: 复制选项
 # Edit menu items with specific asset names
 edit_asset: 编辑资源
 # {$name} is the selected asset name
-edit_x: '编辑 {$name}'
+edit_x: 编辑 {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: 自动换行
@@ -556,7 +556,7 @@ wrap_long_lines: 自动换行
 # Rename asset: dialog and validation
 rename_asset: 重命名资源
 # {$name} is the current asset name
-rename_x: '重命名 {$name}'
+rename_x: 重命名 {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -580,7 +580,7 @@ file_extension_change_warning: 如果扩展名与实际文件格式不符，文�
 # Replace asset: menu item and dialog title
 replace_asset: 替换资源
 # {$name} is the asset being replaced
-replace_x: '替换 {$name}'
+replace_x: 替换 {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -629,8 +629,8 @@ drop_files_here: |
 # File type validation errors
 unsupported_file_type: 不支持的文件类型
 # {$type} is the expected asset type label, such as image or document
-dropped_file_type_mismatch: '拖放的文件不属于以下类型：{$types}。请重试。'
-dropped_image_type_mismatch: '拖放的文件不受支持。仅接受以下类型的图片：{$types}。请重试。'
+dropped_file_type_mismatch: 拖放的文件不属于以下类型：{$types}。请重试。
+dropped_image_type_mismatch: 拖放的文件不受支持。仅接受以下类型的图片：{$types}。请重试。
 
 # File chooser button label
 # {$count} is the number of files the picker allows the user to choose
@@ -722,7 +722,7 @@ uploading_files: 正在上传文件
 # Replace file confirmation
 # Dialog body when replacing an existing file
 # {$name} is the existing file name that will be replaced
-confirm_replacing_file: '将用此文件替换「{$name}」：'
+confirm_replacing_file: 将用此文件替换「{$name}」：
 
 # Upload confirmation with destination folder
 # {$folder} is the destination folder label and {$count} is the number of files being uploaded
@@ -960,7 +960,7 @@ content_options_x_locale: '{$locale} 内容选项'
 
 # Field container labels
 # {$field} is the field’s display label
-x_field: '「{$field}」字段'
+x_field: 「{$field}」字段
 
 # Field options menu
 show_field_options: 显示字段选项
@@ -968,13 +968,13 @@ field_options: 字段选项
 
 # Unsupported field type error
 # {$name} is the unsupported field widget or type name
-unsupported_field_type_x: '不支持的字段类型：{$name}'
+unsupported_field_type_x: 不支持的字段类型：{$name}
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: '启用 {$locale}'
-reenable_x_locale: '重新启用 {$locale}'
-disable_x_locale: '禁用 {$locale}'
+enable_x_locale: 启用 {$locale}
+reenable_x_locale: 重新启用 {$locale}
+disable_x_locale: 禁用 {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -984,7 +984,7 @@ locale_x_now_disabled: '{$locale} 内容已关闭，保存条目时会被删除�
 # Repository and site links
 view_in_repository: 在仓库中查看
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: '在 {$service} 上查看'
+view_on_x: 在 {$service} 上查看
 view_on_live_site: 在在线站点查看
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1015,7 +1015,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: 从其他语言复制……
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: '从 {$locale} 复制'
+copy_from_x: 从 {$locale} 复制
 
 # Translation features
 translation_options: 翻译选项
@@ -1027,7 +1027,7 @@ translate_fields: |
     * {{ 翻译字段 }}
 translate_from: 从其他语言翻译……
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: '从 {$locale} 翻译'
+translate_from_x: 从 {$locale} 翻译
 
 # Revert changes
 revert_changes: 撤销更改
@@ -1315,8 +1315,8 @@ assets_dialog:
 
   # URL entry option
   enter_url: 输入 URL
-  enter_file_url: '输入文件的 URL：'
-  enter_image_url: '输入图片的 URL：'
+  enter_file_url: 输入文件的 URL：
+  enter_image_url: 输入图片的 URL：
 
   # Large file warning dialog
   large_file:
@@ -1333,7 +1333,7 @@ assets_dialog:
   # Photo credit dialog (stock photos)
   photo_credit:
     title: 图片来源
-    description: '请尽可能使用以下署名：'
+    description: 请尽可能使用以下署名：
 
   # Unsaved asset badge
   unsaved: 未保存
@@ -1566,11 +1566,11 @@ config:
     duplicate_variable_type: 变量类型名称必须唯一，但「{$name}」使用了多次。
     date_field_type: 'Sveltia CMS 不支持已弃用的 Date 字段类型。请改用带有 `type: date` 选项的 DateTime 字段类型。'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
-    invalid_timezone: '无效的时区：{$timeZone}。必须是有效的 IANA 时区标识符，如 `America/New_York` 或 `Asia/Tokyo`。'
+    invalid_timezone: 无效的时区：{$timeZone}。必须是有效的 IANA 时区标识符，如 `America/New_York` 或 `Asia/Tokyo`。
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: 'Sveltia CMS 不支持已弃用的 `{$prop}` 选项。请改用 `{$newProp}` 选项。'
+    unsupported_deprecated_option: Sveltia CMS 不支持已弃用的 `{$prop}` 选项。请改用 `{$newProp}` 选项。
     # Don’t localize `allow_multiple`, `multiple`, and `false`
-    allow_multiple: 'Sveltia CMS 不支持 `allow_multiple` 选项。请改用 `multiple` 选项，其默认值为 `false`。'
+    allow_multiple: Sveltia CMS 不支持 `allow_multiple` 选项。请改用 `multiple` 选项，其默认值为 `false`。
     # Don’t localize `field`, `fields`, and `types`
     invalid_list_field: List 字段不能同时设置 `field`、`fields` 和 `types` 选项。
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
@@ -1618,7 +1618,7 @@ config:
     editorial_workflow_unsupported: Sveltia CMS 暂不支持编辑工作流。
     open_authoring_unsupported_backend: Open Authoring 目前仅支持 GitHub 后端。
     # {$prop} is the unsupported option name that will be ignored
-    unsupported_ignored_option: 'Sveltia CMS 不支持 `{$prop}` 选项。该选项将会被忽略。'
+    unsupported_ignored_option: Sveltia CMS 不支持 `{$prop}` 选项。该选项将会被忽略。
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: 同时设置了 `picker_utc` 和较新的时区选项（`input_timezone` 或 `output_utc`）。新选项将优先生效。请考虑从配置中移除 `picker_utc`。
     # Don’t localize `preview_path`
@@ -1631,7 +1631,7 @@ config:
     schema_unknown_option: Sveltia CMS 配置架构中未定义 `{$option}` 选项。该选项将会被忽略。请检查是否有拼写或语法错误。
 
   # Compatibility link appended to unsupported feature messages
-  compatibility_link: '详见兼容性说明：{$link}'
+  compatibility_link: 详见兼容性说明：{$link}
 
   # Console tip shown after config load
   schema_tip: 要获得更好的开发者体验，可使用 Sveltia CMS 的 JSON schema 验证配置文件。详见 {$link}。

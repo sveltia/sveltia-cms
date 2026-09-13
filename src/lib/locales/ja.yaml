@@ -110,7 +110,7 @@ clipboard_error: クリップボードにコピーできませんでした。
 welcome_message: '{$name} へようこそ'
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Powered by {$name}'
+powered_by: Powered by {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: CMS 設定を読み込んでいます…
@@ -286,7 +286,7 @@ release_notes: リリースノート
 announcements: お知らせ
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'バージョン {$version}'
+version_x: バージョン {$version}
 # Additional help menu items
 report_issue: 問題を報告
 share_feedback: フィードバックを共有

@@ -107,10 +107,10 @@ clipboard_error: Kopiëren naar het klembord is mislukt.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Welkom bij {$name}'
+welcome_message: Welkom bij {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Mogelijk gemaakt door {$name}'
+powered_by: Mogelijk gemaakt door {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: Bezig met laden van de CMS-configuratie…
@@ -120,7 +120,7 @@ loading_site_data_error: Er is een fout opgetreden bij het laden van de sitegege
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Inloggen met {$service}'
+sign_in_with_x: Inloggen met {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Inloggen met een toegangstoken
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'De {$name}-backend vereist {$name} {$version} of nieuwer.'
+backend_unsupported_version: De {$name}-backend vereist {$name} {$version} of nieuwer.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Je hebt geen toegang tot de repository “{$repo}”.
 repository_not_found: De repository “{$repo}” bestaat niet.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Scan de onderstaande QR-code met je telefoon of
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Ingelogd als {$name}'
+signed_in_as_x: Ingelogd als {$name}
 working_with_local_repo: Werken met een lokale repository
 working_with_test_repo: Werken met een testrepository
 
@@ -289,7 +289,7 @@ release_notes: Release notes
 announcements: Aankondigingen
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Versie {$version}'
+version_x: Versie {$version}
 # Additional help menu items
 report_issue: Probleem melden
 share_feedback: Feedback geven
@@ -999,7 +999,7 @@ content_preview: Voorbeeld van de inhoud
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Inhoudsopties voor het {$locale} tonen
-content_options_x_locale: 'Inhoudsopties voor het {$locale}'
+content_options_x_locale: Inhoudsopties voor het {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: De inhoud in het {$locale} is nu uitgeschakeld. Deze word
 # Repository and site links
 view_in_repository: Bekijken in de repository
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Bekijken op {$service}'
+view_on_x: Bekijken op {$service}
 view_on_live_site: Bekijken op de live site
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Kopiëren uit…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Kopiëren uit het {$locale}'
+copy_from_x: Kopiëren uit het {$locale}
 
 # Translation features
 translation_options: Vertaalopties
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ Velden vertalen }}
 translate_from: Vertalen uit…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Vertalen uit het {$locale}'
+translate_from_x: Vertalen uit het {$locale}
 
 # Revert changes
 revert_changes: Wijzigingen terugdraaien
@@ -1519,11 +1519,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'collectie {$collection}'
-    file: 'bestand {$file}'
-    component: 'component {$component}'
+    collection: collectie {$collection}
+    file: bestand {$file}
+    component: component {$component}
     # Don’t localize `{$field}`
-    field: 'veld `{$field}`'
+    field: veld `{$field}`
 
   # Configuration error messages
   error:

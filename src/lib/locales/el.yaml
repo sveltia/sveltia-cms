@@ -107,10 +107,10 @@ clipboard_error: Αδυναμία αντιγραφής στο πρόχειρο.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Καλώς ήρθατε στο {$name}'
+welcome_message: Καλώς ήρθατε στο {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Με την υποστήριξη του {$name}'
+powered_by: Με την υποστήριξη του {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: Φόρτωση ρυθμίσεων CMS…
@@ -120,7 +120,7 @@ loading_site_data_error: Παρουσιάστηκε σφάλμα κατά τη �
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Σύνδεση με {$service}'
+sign_in_with_x: Σύνδεση με {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Σύνδεση με χρήση token πρόσβασης
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'Το backend {$name} απαιτεί την έκδοση {$name} {$version} ή μεταγενέστερη.'
+backend_unsupported_version: Το backend {$name} απαιτεί την έκδοση {$name} {$version} ή μεταγενέστερη.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Δεν έχετε πρόσβαση στο repository “{$repo}”.
 repository_not_found: Το repository “{$repo}” δεν υπάρχει.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Σαρώστε τον παρακάτω QR κω�
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Συνδεδεμένος ως {$name}'
+signed_in_as_x: Συνδεδεμένος ως {$name}
 working_with_local_repo: Εργασία με τοπικό repository
 working_with_test_repo: Εργασία με δοκιμαστικό repository
 
@@ -289,7 +289,7 @@ release_notes: Σημειώσεις έκδοσης
 announcements: Ανακοινώσεις
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Έκδοση {$version}'
+version_x: Έκδοση {$version}
 # Additional help menu items
 report_issue: Αναφορά προβλήματος
 share_feedback: Υποβολή σχολίων
@@ -306,8 +306,8 @@ update_now: Ενημέρωση τώρα
 # Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
 # {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
 backend_status:
-  minor_incident: 'Το {$service} αντιμετωπίζει ένα μικρό πρόβλημα. Η ροή εργασίας σας ενδέχεται να επηρεαστεί.'
-  major_incident: 'Το {$service} αντιμετωπίζει ένα σοβαρό πρόβλημα. Ίσως θέλετε να περιμένετε μέχρι να βελτιωθεί η κατάσταση.'
+  minor_incident: Το {$service} αντιμετωπίζει ένα μικρό πρόβλημα. Η ροή εργασίας σας ενδέχεται να επηρεαστεί.
+  major_incident: Το {$service} αντιμετωπίζει ένα σοβαρό πρόβλημα. Ίσως θέλετε να περιμένετε μέχρι να βελτιωθεί η κατάσταση.
 
 # ==============================================================================
 # Content and Asset Libraries
@@ -557,7 +557,7 @@ copy_options: Επιλογές αντιγραφής
 # Edit menu items with specific asset names
 edit_asset: Επεξεργασία πόρου
 # {$name} is the selected asset name
-edit_x: 'Επεξεργασία {$name}'
+edit_x: Επεξεργασία {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Αναδίπλωση μεγάλων γραμμών
@@ -565,7 +565,7 @@ wrap_long_lines: Αναδίπλωση μεγάλων γραμμών
 # Rename asset: dialog and validation
 rename_asset: Μετονομασία πόρου
 # {$name} is the current asset name
-rename_x: 'Μετονομασία {$name}'
+rename_x: Μετονομασία {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -591,7 +591,7 @@ file_extension_change_warning: Το αρχείο ενδέχεται να μην 
 # Replace asset: menu item and dialog title
 replace_asset: Αντικατάσταση πόρου
 # {$name} is the asset being replaced
-replace_x: 'Αντικατάσταση {$name}'
+replace_x: Αντικατάσταση {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -999,7 +999,7 @@ content_preview: Προεπισκόπηση περιεχομένου
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Εμφάνιση επιλογών περιεχομένου στα {$locale}
-content_options_x_locale: 'Επιλογές περιεχομένου στα {$locale}'
+content_options_x_locale: Επιλογές περιεχομένου στα {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1015,9 +1015,9 @@ unsupported_field_type_x: 'Μη υποστηριζόμενος τύπος πεδ
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Ενεργοποίηση {$locale}'
-reenable_x_locale: 'Επανενεργοποίηση {$locale}'
-disable_x_locale: 'Απενεργοποίηση {$locale}'
+enable_x_locale: Ενεργοποίηση {$locale}
+reenable_x_locale: Επανενεργοποίηση {$locale}
+disable_x_locale: Απενεργοποίηση {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: Το περιεχόμενο στα {$locale} είναι �
 # Repository and site links
 view_in_repository: Προβολή στο repository
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Προβολή στο {$service}'
+view_on_x: Προβολή στο {$service}
 view_on_live_site: Προβολή στον ενεργό ιστότοπο
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Αντιγραφή από…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Αντιγραφή από {$locale}'
+copy_from_x: Αντιγραφή από {$locale}
 
 # Translation features
 translation_options: Επιλογές μετάφρασης
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ Μετάφραση πεδίων }}
 translate_from: Μετάφραση από…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Μετάφραση από {$locale}'
+translate_from_x: Μετάφραση από {$locale}
 
 # Revert changes
 revert_changes: Αναίρεση αλλαγών
@@ -1519,11 +1519,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'Συλλογή {$collection}'
-    file: 'Αρχείο {$file}'
+    collection: Συλλογή {$collection}
+    file: Αρχείο {$file}
     component: '{$component} component'
     # Don’t localize `{$field}`
-    field: 'Πεδίο `{$field}`'
+    field: Πεδίο `{$field}`
 
   # Configuration error messages
   error:
@@ -1937,7 +1937,7 @@ prefs:
         description: Διαχείριση κλειδιών API για <a>υπηρεσίες μετάφρασης</a>.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
-      field_label: 'Κλειδί {$service}'
+      field_label: Κλειδί {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Εγγραφείτε στο <a {$homeHref}>{$service}</a> και εισαγάγετε <a {$apiKeyHref}>το κλειδί API σας</a> εδώ για να ενεργοποιήσετε τη γρήγορη μετάφραση πεδίων κειμένου.
@@ -1951,7 +1951,7 @@ prefs:
         description: Διαχείριση κλειδιών API για <a>υπηρεσίες φωτογραφιών stock</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
-      field_label: 'Κλειδί API {$service}'
+      field_label: Κλειδί API {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Εγγραφείτε στο <a {$homeHref}>{$service} API</a> και εισαγάγετε <a {$apiKeyHref}>το κλειδί API σας</a> εδώ για να εισάγετε δωρεάν φωτογραφίες σε πεδία εικόνων.
@@ -1965,7 +1965,7 @@ prefs:
         description: Διαχείριση κλειδιών API για <a>υπηρεσίες αποθήκευσης στο σύννεφο</a>.
       # API key input label
       # {$service} is the cloud storage service name
-      field_label: 'Κλειδί API {$service}'
+      field_label: Κλειδί API {$service}
       no_services: Δεν έχουν ρυθμιστεί <a>υπηρεσίες αποθήκευσης στο σύννεφο</a>.
 
   # Accessibility panel

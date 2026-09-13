@@ -107,10 +107,10 @@ clipboard_error: Kunne ikke kopiere til udklipsholderen.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Velkommen til {$name}'
+welcome_message: Velkommen til {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Leveret af {$name}'
+powered_by: Leveret af {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: Indlæser CMS-konfiguration…
@@ -120,7 +120,7 @@ loading_site_data_error: Der opstod en fejl under indlæsning af webstedsdata.
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Log ind med {$service}'
+sign_in_with_x: Log ind med {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Log ind med adgangstoken
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'Backenden {$name} kræver {$name} {$version} eller nyere.'
+backend_unsupported_version: Backenden {$name} kræver {$name} {$version} eller nyere.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Du har ikke adgang til repositoriet ”{$repo}”.
 repository_not_found: Repositoriet ”{$repo}” findes ikke.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Scan QR-koden herunder med din telefon eller ta
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Logget ind som {$name}'
+signed_in_as_x: Logget ind som {$name}
 working_with_local_repo: Arbejder med lokalt repository
 working_with_test_repo: Arbejder med testrepository
 
@@ -289,7 +289,7 @@ release_notes: Release notes
 announcements: Meddelelser
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Version {$version}'
+version_x: Version {$version}
 # Additional help menu items
 report_issue: Rapportér et problem
 share_feedback: Giv feedback
@@ -557,7 +557,7 @@ copy_options: Kopieringsindstillinger
 # Edit menu items with specific asset names
 edit_asset: Rediger mediefil
 # {$name} is the selected asset name
-edit_x: 'Rediger {$name}'
+edit_x: Rediger {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Ombryd lange linjer
@@ -565,7 +565,7 @@ wrap_long_lines: Ombryd lange linjer
 # Rename asset: dialog and validation
 rename_asset: Omdøb mediefil
 # {$name} is the current asset name
-rename_x: 'Omdøb {$name}'
+rename_x: Omdøb {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -591,7 +591,7 @@ file_extension_change_warning: Filen vises eller håndteres muligvis ikke korrek
 # Replace asset: menu item and dialog title
 replace_asset: Erstat mediefil
 # {$name} is the asset being replaced
-replace_x: 'Erstat {$name}'
+replace_x: Erstat {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -999,7 +999,7 @@ content_preview: Forhåndsvisning af indhold
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Vis indholdsmuligheder for {$locale}
-content_options_x_locale: 'Indholdsmuligheder for {$locale}'
+content_options_x_locale: Indholdsmuligheder for {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1015,9 +1015,9 @@ unsupported_field_type_x: 'Ikke-understøttet felttype: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Aktivér {$locale}'
-reenable_x_locale: 'Genaktivér {$locale}'
-disable_x_locale: 'Deaktivér {$locale}'
+enable_x_locale: Aktivér {$locale}
+reenable_x_locale: Genaktivér {$locale}
+disable_x_locale: Deaktivér {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: Indholdet på {$locale} er nu deaktiveret. Det bliver sle
 # Repository and site links
 view_in_repository: Vis i repositoriet
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Vis på {$service}'
+view_on_x: Vis på {$service}
 view_on_live_site: Vis på webstedet
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Kopiér fra…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Kopiér fra {$locale}'
+copy_from_x: Kopiér fra {$locale}
 
 # Translation features
 translation_options: Oversættelsesmuligheder
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ Oversæt felter }}
 translate_from: Oversæt fra…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Oversæt fra {$locale}'
+translate_from_x: Oversæt fra {$locale}
 
 # Revert changes
 revert_changes: Fortryd ændringer
@@ -1519,11 +1519,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'samlingen {$collection}'
-    file: 'filen {$file}'
-    component: 'komponenten {$component}'
+    collection: samlingen {$collection}
+    file: filen {$file}
+    component: komponenten {$component}
     # Don’t localize `{$field}`
-    field: 'feltet `{$field}`'
+    field: feltet `{$field}`
 
   # Configuration error messages
   error:

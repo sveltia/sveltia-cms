@@ -107,10 +107,10 @@ clipboard_error: Kopieren in die Zwischenablage nicht möglich.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Willkommen bei {$name}'
+welcome_message: Willkommen bei {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Basiert auf {$name}'
+powered_by: Basiert auf {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: CMS-Konfiguration wird geladen…
@@ -120,7 +120,7 @@ loading_site_data_error: Beim Laden der Website-Daten ist ein Fehler aufgetreten
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Mit {$service} anmelden'
+sign_in_with_x: Mit {$service} anmelden
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Mit Zugriffstoken anmelden
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'Das {$name}-Backend erfordert {$name} {$version} oder neuer.'
+backend_unsupported_version: Das {$name}-Backend erfordert {$name} {$version} oder neuer.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Sie haben keinen Zugriff auf das Repository „{$repo}“.
 repository_not_found: Das Repository „{$repo}“ existiert nicht.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Scannen Sie den QR-Code unten mit Ihrem Smartph
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Angemeldet als {$name}'
+signed_in_as_x: Angemeldet als {$name}
 working_with_local_repo: Arbeitet mit lokalem Repository
 working_with_test_repo: Arbeitet mit Test-Repository
 
@@ -289,7 +289,7 @@ release_notes: Versionshinweise
 announcements: Ankündigungen
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Version {$version}'
+version_x: Version {$version}
 # Additional help menu items
 report_issue: Problem melden
 share_feedback: Feedback geben
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: Der Inhalt für {$locale} ist jetzt deaktiviert. Er wird 
 # Repository and site links
 view_in_repository: Im Repository ansehen
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Auf {$service} ansehen'
+view_on_x: Auf {$service} ansehen
 view_on_live_site: Auf der Live-Website ansehen
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Kopieren aus…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Aus {$locale} kopieren'
+copy_from_x: Aus {$locale} kopieren
 
 # Translation features
 translation_options: Übersetzungsoptionen
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ Felder übersetzen }}
 translate_from: Übersetzen aus…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Aus {$locale} übersetzen'
+translate_from_x: Aus {$locale} übersetzen
 
 # Revert changes
 revert_changes: Änderungen zurücknehmen
@@ -1655,16 +1655,16 @@ config:
     # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
     # `view_filters[0].pattern`, relative to the collection, file or field named before it.
     # {$type} is a value type name from `schema_value_type` below
-    schema_invalid_type: 'Die Option `{$option}` muss {$type} sein.'
+    schema_invalid_type: Die Option `{$option}` muss {$type} sein.
     # {$values} is a list of the values the option accepts
     schema_invalid_enum: 'Die Option `{$option}` muss einen dieser Werte haben: {$values}.'
     # {$value} is the only value the option accepts
-    schema_invalid_const: 'Die Option `{$option}` muss `{$value}` sein.'
-    schema_invalid_empty_value: 'Die Option `{$option}` muss eine leere Zeichenkette sein.'
+    schema_invalid_const: Die Option `{$option}` muss `{$value}` sein.
+    schema_invalid_empty_value: Die Option `{$option}` muss eine leere Zeichenkette sein.
     # {$count} is the exact number of items the option must have
-    schema_invalid_item_count: 'Die Option `{$option}` muss ein Array mit {$count} Elementen sein.'
-    schema_invalid_value: 'Die Option `{$option}` hat einen ungültigen Wert.'
-    schema_missing_option: 'Die Option `{$option}` ist erforderlich.'
+    schema_invalid_item_count: Die Option `{$option}` muss ein Array mit {$count} Elementen sein.
+    schema_invalid_value: Die Option `{$option}` hat einen ungültigen Wert.
+    schema_missing_option: Die Option `{$option}` ist erforderlich.
     # {$options} is a list of options, one of which must be defined
     schema_missing_one_of: 'Eine dieser Optionen ist erforderlich: {$options}.'
     # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
@@ -1694,7 +1694,7 @@ config:
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: Die Option `preview_path` verweist auf `{$name}`, in der Sammlung ist aber kein solches Feld definiert. Der Vorschau-Link wird daher nicht angezeigt.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
-    schema_unknown_option: 'Die Option `{$option}` ist im Konfigurationsschema von Sveltia CMS nicht definiert. Sie wird ignoriert. Prüfen Sie auf einen Tippfehler oder einen Syntaxfehler.'
+    schema_unknown_option: Die Option `{$option}` ist im Konfigurationsschema von Sveltia CMS nicht definiert. Sie wird ignoriert. Prüfen Sie auf einen Tippfehler oder einen Syntaxfehler.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Einzelheiten stehen in den Kompatibilitätshinweisen: {$link}'

@@ -107,10 +107,10 @@ clipboard_error: Kunde inte kopiera till urklipp.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Välkommen till {$name}'
+welcome_message: Välkommen till {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Drivs av {$name}'
+powered_by: Drivs av {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: Laddar CMS-konfiguration…
@@ -120,7 +120,7 @@ loading_site_data_error: Det uppstod ett fel när siddata lästes in.
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Logga in med {$service}'
+sign_in_with_x: Logga in med {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Logga in med en Access Token
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Scanna QR-koden nedan med din telefon eller sur
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Inloggad som {$name}'
+signed_in_as_x: Inloggad som {$name}
 working_with_local_repo: Arbetar med lokalt Git-repo
 working_with_test_repo: Arbetar med test-repo
 
@@ -289,7 +289,7 @@ release_notes: Versionsinformation
 announcements: Nyheter
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Version {$version}'
+version_x: Version {$version}
 # Additional help menu items
 report_issue: Rapportera problem
 share_feedback: Dela feedback
@@ -557,7 +557,7 @@ copy_options: Kopieringsalternativ
 # Edit menu items with specific asset names
 edit_asset: Redigera resurs
 # {$name} is the selected asset name
-edit_x: 'Redigera {$name}'
+edit_x: Redigera {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Radbryt långa rader
@@ -565,7 +565,7 @@ wrap_long_lines: Radbryt långa rader
 # Rename asset: dialog and validation
 rename_asset: Byt namn på resurs
 # {$name} is the current asset name
-rename_x: 'Byt namn på {$name}'
+rename_x: Byt namn på {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -591,7 +591,7 @@ file_extension_change_warning: Filen kanske inte visas eller hanteras korrekt om
 # Replace asset: menu item and dialog title
 replace_asset: Byt ut resurs
 # {$name} is the asset being replaced
-replace_x: 'Byt ut {$name}'
+replace_x: Byt ut {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -1015,9 +1015,9 @@ unsupported_field_type_x: 'Ej stöd för fälttyp: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Aktivera {$locale}'
-reenable_x_locale: 'Återaktivera {$locale}'
-disable_x_locale: 'Inaktivera {$locale}'
+enable_x_locale: Aktivera {$locale}
+reenable_x_locale: Återaktivera {$locale}
+disable_x_locale: Inaktivera {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: '{$locale}-innehållet är nu inaktiverat. Det kommer att
 # Repository and site links
 view_in_repository: Visa i arkivet
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Visa på {$service}'
+view_on_x: Visa på {$service}
 view_on_live_site: Visa på live-sidan
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Kopiera från…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Kopiera från {$locale}'
+copy_from_x: Kopiera från {$locale}
 
 # Translation features
 translation_options: Översättningsalternativ
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ Översätt fält }}
 translate_from: Översätt från…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Översätt från {$locale}'
+translate_from_x: Översätt från {$locale}
 
 # Revert changes
 revert_changes: Återställ ändringar
@@ -1572,19 +1572,19 @@ config:
     # {$prop} is either `width` or `height`; {$key} is the transformation key
     invalid_transformation_size: '`{$prop}`-alternativet för transformationen `{$key}` är ogiltigt. Det måste vara ett positivt heltal.'
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
-    missing_asset_collection_name: 'Resurs-samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    missing_asset_collection_name: Resurs-samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.
     # {$name} is the invalid or duplicate asset collection name
-    invalid_asset_collection_name: 'Namnet på resurs-samlingen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.'
+    invalid_asset_collection_name: Namnet på resurs-samlingen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: 'Namnen på resurs-samlingar måste vara unika, men `{$name}` används mer än en gång.'
+    duplicate_asset_collection_name: Namnen på resurs-samlingar måste vara unika, men `{$name}` används mer än en gång.
     # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: 'Samlingen måste ha antingen `folder`-, `files`- eller `divider`-alternativet definierat.'
+    invalid_collection_no_options: Samlingen måste ha antingen `folder`-, `files`- eller `divider`-alternativet definierat.
     # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: 'Samlingen kan inte ha `folder`-, `files`- och `divider`-alternativen tillsammans.'
+    invalid_collection_multiple_options: Samlingen kan inte ha `folder`-, `files`- och `divider`-alternativen tillsammans.
     # {$extension} is the file extension and {$format} is the configured content format
-    file_format_mismatch: 'Filändelsen `{$extension}` matchar inte formatet `{$format}`.'
+    file_format_mismatch: Filändelsen `{$extension}` matchar inte formatet `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: 'Slugg-mallen `{$slug}` är ogiltig eftersom den inte kan innehålla snedstreck. För att organisera poster i undermappar, använd `path`-alternativet istället för `slug`.'
+    invalid_slug_slash: Slugg-mallen `{$slug}` är ogiltig eftersom den inte kan innehålla snedstreck. För att organisera poster i undermappar, använd `path`-alternativet istället för `slug`.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: '`reorder`-alternativet hänvisar till en vygrupp med namnet `{$name}`, men ingen sådan grupp är definierad i `view_groups`-alternativet.'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
@@ -1604,51 +1604,51 @@ config:
     invalid_view_filter_name: Vyfilternamnet `{$name}` är ogiltigt. Det får inte innehålla specialtecken.
     duplicate_view_filter_name: Vyfilternamn måste vara unika, men `{$name}` används mer än en gång.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
-    missing_collection_name: 'Samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    missing_collection_name: Samlingen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.
     # {$name} is the invalid or duplicate collection name
-    invalid_collection_name: 'Namnet på samlingen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.'
-    duplicate_collection_name: 'Namnen på samlingar måste vara unika, men `{$name}` används mer än en gång.'
+    invalid_collection_name: Namnet på samlingen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.
+    duplicate_collection_name: Namnen på samlingar måste vara unika, men `{$name}` används mer än en gång.
     # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
-    missing_collection_file_name: 'Fil {$count} i samlingen måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    missing_collection_file_name: Fil {$count} i samlingen måste ha `name`-alternativet definierat som en icke-tom sträng.
     # {$name} is the invalid or duplicate collection file name
-    invalid_collection_file_name: 'Filnamnet `{$name}` i samlingen är ogiltigt. Det får inte innehålla specialtecken.'
-    duplicate_collection_file_name: 'Filnamn i samlingen måste vara unika, men `{$name}` används mer än en gång.'
+    invalid_collection_file_name: Filnamnet `{$name}` i samlingen är ogiltigt. Det får inte innehålla specialtecken.
+    duplicate_collection_file_name: Filnamn i samlingen måste vara unika, men `{$name}` används mer än en gång.
     # Don’t localize `fields`
-    collection_no_fields: 'Samlingen måste ha `fields`-alternativet definierat med minst ett fält.'
+    collection_no_fields: Samlingen måste ha `fields`-alternativet definierat med minst ett fält.
     # Don’t localize `fields`
-    collection_file_no_fields: 'Fil i samlingen måste ha `fields`-alternativet definierat med minst ett fält.'
+    collection_file_no_fields: Fil i samlingen måste ha `fields`-alternativet definierat med minst ett fält.
     # Don’t localize `i18n`, `locale` and `file`
-    collection_file_i18n_required: 'Fil i samlingen måste ha `i18n`-alternativet definierat om `locale`-platshållaren används i `file`-sökvägen.'
+    collection_file_i18n_required: Fil i samlingen måste ha `i18n`-alternativet definierat om `locale`-platshållaren används i `file`-sökvägen.
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
-    missing_field_name: 'Fältet {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    missing_field_name: Fältet {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.
     # {$name} is the invalid or duplicate field name
-    invalid_field_name: 'Fältnamnet `{$name}` är ogiltigt. Det får inte innehålla specialtecken. Om du vill nästla fält, <a>använd Objekt-fält istället för punktnotation</a>.'
-    duplicate_field_name: 'Fältnamn måste vara unika, men `{$name}` används mer än en gång.'
+    invalid_field_name: Fältnamnet `{$name}` är ogiltigt. Det får inte innehålla specialtecken. Om du vill nästla fält, <a>använd Objekt-fält istället för punktnotation</a>.
+    duplicate_field_name: Fältnamn måste vara unika, men `{$name}` används mer än en gång.
     # {$count} is the 1-based variable type index in the current types array
-    missing_variable_type: 'Variabeltypen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.'
+    missing_variable_type: Variabeltypen {$count} måste ha `name`-alternativet definierat som en icke-tom sträng.
     # {$name} is the invalid or duplicate variable type name
-    invalid_variable_type: 'Namnet på variabeltypen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.'
-    duplicate_variable_type: 'Namnen på variabeltyper måste vara unika, men `{$name}` används mer än en gång.'
+    invalid_variable_type: Namnet på variabeltypen `{$name}` är ogiltigt. Det får inte innehålla specialtecken.
+    duplicate_variable_type: Namnen på variabeltyper måste vara unika, men `{$name}` används mer än en gång.
     date_field_type: 'Det föråldrade Datum-fälttypen stöds inte i Sveltia CMS. Använd DatumTid-fälttypen med `type: date`-alternativet istället.'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Ogiltig tidszon: {$timeZone}. Det måste vara en giltig IANA-tidszonsidentifierare som `America/New_York` eller `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: 'Det föråldrade `{$prop}`-alternativet stöds inte i Sveltia CMS. Använd `{$newProp}`-alternativet istället.'
+    unsupported_deprecated_option: Det föråldrade `{$prop}`-alternativet stöds inte i Sveltia CMS. Använd `{$newProp}`-alternativet istället.
     # Don’t localize `allow_multiple`, `multiple`, and `false`
     allow_multiple: '`allow_multiple`-alternativet stöds inte i Sveltia CMS. Använd `multiple`-alternativet istället, som har standard-värdet `false`.'
     # Don’t localize `field`, `fields`, and `types`
-    invalid_list_field: 'List-fältet kan inte ha `field`-, `fields`- och `types`-alternativen tillsammans.'
+    invalid_list_field: List-fältet kan inte ha `field`-, `fields`- och `types`-alternativen tillsammans.
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
-    invalid_list_variable_type: 'List-fältets variabeltyp är ogiltig. `widget`-alternativet är inställt på `{$widget}` men det måste vara `object`.'
+    invalid_list_variable_type: List-fältets variabeltyp är ogiltig. `widget`-alternativet är inställt på `{$widget}` men det måste vara `object`.
     # Don’t localize `fields`, and `types`
-    invalid_object_field: 'Objekt-fältet kan inte ha `fields`- och `types`-alternativen tillsammans.'
+    invalid_object_field: Objekt-fältet kan inte ha `fields`- och `types`-alternativen tillsammans.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
-    relation_field_invalid_collection: 'Den refererade `{$collection}`-samlingen är ogiltig eller inte definierad.'
-    relation_field_invalid_collection_file: 'Den refererade `{$file}`-filen är ogiltig eller inte definierad.'
+    relation_field_invalid_collection: Den refererade `{$collection}`-samlingen är ogiltig eller inte definierad.
+    relation_field_invalid_collection_file: Den refererade `{$file}`-filen är ogiltig eller inte definierad.
     # Don’t localize `file`
     relation_field_missing_file_name: '`file`-alternativet måste definieras för en relation till en filsamlings.'
-    relation_field_invalid_value_field: 'Den refererade värdefältet `{$field}` är ogiltig eller inte definierad.'
-    unexpected: 'Oväntat fel'
+    relation_field_invalid_value_field: Den refererade värdefältet `{$field}` är ogiltig eller inte definierad.
+    unexpected: Oväntat fel
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
     # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
@@ -1679,13 +1679,13 @@ config:
 
   # Warning messages (logged to console)
   warning:
-    oauth_no_app_id: 'OAuth-applikations-ID är inte definierad. Användare måste tillhandahålla en åtkomsttoken för att logga in.'
-    editorial_workflow_unsupported: 'Redaktionellt arbetsflöde stöds ännu inte i Sveltia CMS.'
+    oauth_no_app_id: OAuth-applikations-ID är inte definierad. Användare måste tillhandahålla en åtkomsttoken för att logga in.
+    editorial_workflow_unsupported: Redaktionellt arbetsflöde stöds ännu inte i Sveltia CMS.
     open_authoring_unsupported_backend: Open Authoring stöds för närvarande endast med GitHub-backend.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: '`{$prop}`-alternativet stöds inte i Sveltia CMS. Det kommer att ignoreras.'
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
-    conflicting_timezone_options: 'Både `picker_utc` och nyare tidszonsalternativ (`input_timezone` eller `output_utc`) är inställda. De nya alternativen har företräde. Överväg att ta bort `picker_utc` från din konfiguration.'
+    conflicting_timezone_options: Både `picker_utc` och nyare tidszonsalternativ (`input_timezone` eller `output_utc`) är inställda. De nya alternativen har företräde. Överväg att ta bort `picker_utc` från din konfiguration.
     # Don’t localize `preview_path`
     preview_path_no_date_field: '`preview_path`-alternativet använder datum- och tidstaggar, men samlingen har inget DateTime-fält att läsa dem från, så förhandsgranskningslänken visas inte.'
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
@@ -1699,7 +1699,7 @@ config:
   compatibility_link: 'Se kompatibilitetsanteckningarna för detaljer: {$link}'
 
   # Console tip shown after config load
-  schema_tip: 'För en bättre utvecklarupplevelse kan du validera din konfigurationsfil mot JSON-schemat för Sveltia CMS. Se {$link} för detaljer.'
+  schema_tip: För en bättre utvecklarupplevelse kan du validera din konfigurationsfil mot JSON-schemat för Sveltia CMS. Se {$link} för detaljer.
 
 # ==============================================================================
 # Local Workflow
@@ -1710,8 +1710,8 @@ local_workflow:
   # Badge text in account button
   indicator: Lokal
   # Browser compatibility warnings
-  unsupported_browser: 'Lokalt arbetsflöde stöds inte i din webbläsare. Använd Chrome eller Edge istället.'
-  disabled: 'Lokalt arbetsflöde är inaktiverat i din webbläsare. <a>Så här aktiverar du det</a>.'
+  unsupported_browser: Lokalt arbetsflöde stöds inte i din webbläsare. Använd Chrome eller Edge istället.
+  disabled: Lokalt arbetsflöde är inaktiverat i din webbläsare. <a>Så här aktiverar du det</a>.
 
 # ==============================================================================
 # Editorial Workflow
@@ -1887,13 +1887,13 @@ site_configuration_editor: Hemsideskonfigurationsredigerare
 prefs:
   # API key management feedback messages
   changes:
-    api_key_saved: 'API-nyckel sparad.'
-    api_key_removed: 'API-nyckel borttagen.'
-    api_key_invalid: 'Den angivna API-nyckeln är ogiltig. Kontrollera och försök igen.'
+    api_key_saved: API-nyckel sparad.
+    api_key_removed: API-nyckel borttagen.
+    api_key_invalid: Den angivna API-nyckeln är ogiltig. Kontrollera och försök igen.
 
   # Preferences operation errors
   error:
-    permission_denied: 'Åtkomst till cookie-lagring har nekats. Kontrollera dina webbläsarbehörigheter och försök igen.'
+    permission_denied: Åtkomst till cookie-lagring har nekats. Kontrollera dina webbläsarbehörigheter och försök igen.
 
   # Appearance panel
   appearance:

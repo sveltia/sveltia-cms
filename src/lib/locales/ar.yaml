@@ -107,10 +107,10 @@ clipboard_error: تعذر النسخ إلى الحافظة.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'مرحباً بك في {$name}'
+welcome_message: مرحباً بك في {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'مدعوم بواسطة {$name}'
+powered_by: مدعوم بواسطة {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: تحميل إعدادات نظام إدارة المحتوى…
@@ -120,7 +120,7 @@ loading_site_data_error: حدث خطأ أثناء تحميل بيانات الم
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'تسجيل الدخول باستخدام {$service}'
+sign_in_with_x: تسجيل الدخول باستخدام {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: تسجيل الدخول باستخدام رمز الوصول (Access Token)
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'يتطلب خادم {$name} الإصدار {$version} من {$name} أو أحدث.'
+backend_unsupported_version: يتطلب خادم {$name} الإصدار {$version} من {$name} أو أحدث.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: ليس لديك صلاحية الوصول إلى مستودع "{$repo}".
 repository_not_found: المستودع "{$repo}" غير موجود.
@@ -211,7 +211,7 @@ sign_in_with_mobile_instruction: امسح رمز QR أدناه باستخدام 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'تم تسجيل الدخول باسم {$name}'
+signed_in_as_x: تم تسجيل الدخول باسم {$name}
 working_with_local_repo: العمل مع مستودع محلي
 working_with_test_repo: العمل مع مستودع تجريبي
 
@@ -293,7 +293,7 @@ release_notes: ملاحظات الإصدار
 announcements: الإعلانات
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'الإصدار {$version}'
+version_x: الإصدار {$version}
 # Additional help menu items
 report_issue: الإبلاغ عن مشكلة
 share_feedback: مشاركة الملاحظات
@@ -310,8 +310,8 @@ update_now: التحديث الآن
 # Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
 # {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
 backend_status:
-  minor_incident: 'يشهد {$service} عطلاً طفيفاً. قد يتأثر سير عملك.'
-  major_incident: 'يشهد {$service} عطلاً كبيراً. قد ترغب في الانتظار حتى يتحسن الوضع.'
+  minor_incident: يشهد {$service} عطلاً طفيفاً. قد يتأثر سير عملك.
+  major_incident: يشهد {$service} عطلاً كبيراً. قد ترغب في الانتظار حتى يتحسن الوضع.
 
 # ==============================================================================
 # Content and Asset Libraries
@@ -393,7 +393,7 @@ file_not_found: لم يتم العثور على الملف.
 # Selection count indicator
 # Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
 # {$selected} is the selected item count and {$total} is the total item count
-x_of_x_selected: 'تم تحديد {$selected} من أصل {$total}'
+x_of_x_selected: تم تحديد {$selected} من أصل {$total}
 
 # View switcher: toggle between list and grid views
 switch_view: تبديل العرض
@@ -583,7 +583,7 @@ copy_options: خيارات النسخ
 # Edit menu items with specific asset names
 edit_asset: تعديل الوسيط
 # {$name} is the selected asset name
-edit_x: 'تعديل {$name}'
+edit_x: تعديل {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: التفاف الأسطر الطويلة
@@ -591,7 +591,7 @@ wrap_long_lines: التفاف الأسطر الطويلة
 # Rename asset: dialog and validation
 rename_asset: إعادة تسمية الوسيط
 # {$name} is the current asset name
-rename_x: 'إعادة تسمية {$name}'
+rename_x: إعادة تسمية {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -620,7 +620,7 @@ file_extension_change_warning: قد لا يتم عرض الملف أو معال�
 # Replace asset: menu item and dialog title
 replace_asset: استبدال الوسيط
 # {$name} is the asset being replaced
-replace_x: 'استبدال {$name}'
+replace_x: استبدال {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -1152,7 +1152,7 @@ content_preview: معاينة المحتوى
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: إظهار خيارات محتوى {$locale}
-content_options_x_locale: 'خيارات محتوى {$locale}'
+content_options_x_locale: خيارات محتوى {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1168,9 +1168,9 @@ unsupported_field_type_x: 'نوع الحقل غير مدعوم: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'تفعيل {$locale}'
-reenable_x_locale: 'إعادة تفعيل {$locale}'
-disable_x_locale: 'تعطيل {$locale}'
+enable_x_locale: تفعيل {$locale}
+reenable_x_locale: إعادة تفعيل {$locale}
+disable_x_locale: تعطيل {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1180,7 +1180,7 @@ locale_x_now_disabled: محتوى {$locale} معطل الآن. سيتم حذفه
 # Repository and site links
 view_in_repository: العرض في المستودع
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'العرض على {$service}'
+view_on_x: العرض على {$service}
 view_on_live_site: العرض على الموقع المباشر
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1211,7 +1211,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: نسخ من…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'نسخ من {$locale}'
+copy_from_x: نسخ من {$locale}
 
 # Translation features
 translation_options: خيارات الترجمة
@@ -1224,7 +1224,7 @@ translate_fields: |
     *   {{ ترجمة الحقول }}
 translate_from: ترجمة من…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'ترجمة من {$locale}'
+translate_from_x: ترجمة من {$locale}
 
 # Revert changes
 revert_changes: التراجع عن التغييرات
@@ -1722,11 +1722,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'مجموعة {$collection}'
-    file: 'ملف {$file}'
-    component: 'مكون {$component}'
+    collection: مجموعة {$collection}
+    file: ملف {$file}
+    component: مكون {$component}
     # Don’t localize `{$field}`
-    field: 'حقل `{$field}`'
+    field: حقل `{$field}`
 
   # Configuration error messages
   error:
@@ -2156,7 +2156,7 @@ prefs:
         description: إدارة مفاتيح API لـ <a>خدمات الترجمة</a>.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
-      field_label: 'مفتاح {$service}'
+      field_label: مفتاح {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: اشترك في <a {$homeHref}>{$service}</a> وأدخل <a {$apiKeyHref}>مفتاح API الخاص بك</a> هنا لتمكين الترجمة السريعة لحقول العناصر النصية.
@@ -2170,7 +2170,7 @@ prefs:
         description: إدارة مفاتيح API لـ <a>خدمات الصور الجاهزة</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
-      field_label: 'مفتاح API لـ {$service}'
+      field_label: مفتاح API لـ {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: اشترك في <a {$homeHref}>{$service} API</a> وأدخل <a {$apiKeyHref}>مفتاح API الخاص بك</a> هنا لإدراج صور جاهزة مجانية في حقول إدخال الصور.
@@ -2184,7 +2184,7 @@ prefs:
         description: إدارة مفاتيح API لـ <a>خدمات التخزين السحابي</a>.
       # API key input label
       # {$service} is the cloud storage service name
-      field_label: 'مفتاح API لـ {$service}'
+      field_label: مفتاح API لـ {$service}
       no_services: لم يتم إعداد أي <a>خدمات تخزين سحابي</a>.
 
   # Accessibility panel

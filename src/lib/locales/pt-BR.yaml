@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'O backend {$name} requer {$name} {$version} ou posterior.'
+backend_unsupported_version: O backend {$name} requer {$name} {$version} ou posterior.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Você não tem acesso ao repositório “{$repo}”.
 repository_not_found: O repositório “{$repo}” não existe.
@@ -306,8 +306,8 @@ update_now: Atualizar Agora
 # Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
 # {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
 backend_status:
-  minor_incident: 'O {$service} está passando por um incidente leve. Seu fluxo de trabalho pode ser afetado.'
-  major_incident: 'O {$service} está passando por um incidente grave. Talvez seja melhor aguardar até que a situação melhore.'
+  minor_incident: O {$service} está passando por um incidente leve. Seu fluxo de trabalho pode ser afetado.
+  major_incident: O {$service} está passando por um incidente grave. Talvez seja melhor aguardar até que a situação melhore.
 
 # ==============================================================================
 # Content and Asset Libraries
@@ -1519,11 +1519,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'coleção {$collection}'
-    file: 'arquivo {$file}'
-    component: 'componente {$component}'
+    collection: coleção {$collection}
+    file: arquivo {$file}
+    component: componente {$component}
     # Don’t localize `{$field}`
-    field: 'campo `{$field}`'
+    field: campo `{$field}`
 
   # Configuration error messages
   error:

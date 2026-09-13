@@ -107,10 +107,10 @@ clipboard_error: Impossibile copiare negli appunti.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Benvenuto su {$name}'
+welcome_message: Benvenuto su {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Realizzato con {$name}'
+powered_by: Realizzato con {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: Caricamento Configurazione CMS…
@@ -120,7 +120,7 @@ loading_site_data_error: Si è verificato un errore durante il caricamento dei d
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Accedi con {$service}'
+sign_in_with_x: Accedi con {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Accedi con Token di Accesso
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'Il backend {$name} richiede {$name} {$version} o successivo.'
+backend_unsupported_version: Il backend {$name} richiede {$name} {$version} o successivo.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Non hai accesso al repository “{$repo}”.
 repository_not_found: Il repository “{$repo}” non esiste.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Scansiona il codice QR qui sotto con il tuo tel
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Accesso effettuato come {$name}'
+signed_in_as_x: Accesso effettuato come {$name}
 working_with_local_repo: Stai lavorando con il Repository Locale
 working_with_test_repo: Stai lavorando con il Repository di Test
 
@@ -289,7 +289,7 @@ release_notes: Note di Rilascio
 announcements: Annunci
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Versione {$version}'
+version_x: Versione {$version}
 # Additional help menu items
 report_issue: Segnala un Problema
 share_feedback: Invia un Feedback
@@ -557,7 +557,7 @@ copy_options: Opzioni di Copia
 # Edit menu items with specific asset names
 edit_asset: Modifica File Multimediale
 # {$name} is the selected asset name
-edit_x: 'Modifica {$name}'
+edit_x: Modifica {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Manda a capo le righe lunghe
@@ -565,7 +565,7 @@ wrap_long_lines: Manda a capo le righe lunghe
 # Rename asset: dialog and validation
 rename_asset: Rinomina File Multimediale
 # {$name} is the current asset name
-rename_x: 'Rinomina {$name}'
+rename_x: Rinomina {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -591,7 +591,7 @@ file_extension_change_warning: Il file potrebbe non essere visualizzato o gestit
 # Replace asset: menu item and dialog title
 replace_asset: Sostituisci File Multimediale
 # {$name} is the asset being replaced
-replace_x: 'Sostituisci {$name}'
+replace_x: Sostituisci {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -999,7 +999,7 @@ content_preview: Anteprima Contenuto
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Mostra Opzioni Contenuto per {$locale}
-content_options_x_locale: 'Opzioni Contenuto per {$locale}'
+content_options_x_locale: Opzioni Contenuto per {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1015,9 +1015,9 @@ unsupported_field_type_x: 'Tipo di campo non supportato: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Abilita {$locale}'
-reenable_x_locale: 'Riabilita {$locale}'
-disable_x_locale: 'Disabilita {$locale}'
+enable_x_locale: Abilita {$locale}
+reenable_x_locale: Riabilita {$locale}
+disable_x_locale: Disabilita {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: Il contenuto in {$locale} è ora disabilitato. Verrà eli
 # Repository and site links
 view_in_repository: Visualizza nel Repository
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Visualizza su {$service}'
+view_on_x: Visualizza su {$service}
 view_on_live_site: Visualizza sul Sito Live
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Copia da…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Copia da {$locale}'
+copy_from_x: Copia da {$locale}
 
 # Translation features
 translation_options: Opzioni di Traduzione
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ Traduci Campi }}
 translate_from: Traduci da…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Traduci da {$locale}'
+translate_from_x: Traduci da {$locale}
 
 # Revert changes
 revert_changes: Annulla Modifiche
@@ -1519,11 +1519,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'Collezione {$collection}'
-    file: 'File {$file}'
-    component: 'Componente {$component}'
+    collection: Collezione {$collection}
+    file: File {$file}
+    component: Componente {$component}
     # Don’t localize `{$field}`
-    field: 'Campo `{$field}`'
+    field: Campo `{$field}`
 
   # Configuration error messages
   error:
@@ -1654,16 +1654,16 @@ config:
     # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
     # `view_filters[0].pattern`, relative to the collection, file or field named before it.
     # {$type} is a value type name from `schema_value_type` below
-    schema_invalid_type: 'L’opzione `{$option}` deve essere {$type}.'
+    schema_invalid_type: L’opzione `{$option}` deve essere {$type}.
     # {$values} is a list of the values the option accepts
     schema_invalid_enum: 'L’opzione `{$option}` deve essere uno di questi valori: {$values}.'
     # {$value} is the only value the option accepts
-    schema_invalid_const: 'L’opzione `{$option}` deve essere `{$value}`.'
-    schema_invalid_empty_value: 'L’opzione `{$option}` deve essere una stringa vuota.'
+    schema_invalid_const: L’opzione `{$option}` deve essere `{$value}`.
+    schema_invalid_empty_value: L’opzione `{$option}` deve essere una stringa vuota.
     # {$count} is the exact number of items the option must have
-    schema_invalid_item_count: 'L’opzione `{$option}` deve essere un array di {$count} elementi.'
-    schema_invalid_value: 'L’opzione `{$option}` ha un valore non valido.'
-    schema_missing_option: 'L’opzione `{$option}` è obbligatoria.'
+    schema_invalid_item_count: L’opzione `{$option}` deve essere un array di {$count} elementi.
+    schema_invalid_value: L’opzione `{$option}` ha un valore non valido.
+    schema_missing_option: L’opzione `{$option}` è obbligatoria.
     # {$options} is a list of options, one of which must be defined
     schema_missing_one_of: 'È obbligatoria una di queste opzioni: {$options}.'
     # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
@@ -1937,7 +1937,7 @@ prefs:
         description: Gestisci le chiavi API per i <a>servizi di traduzione</a>.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
-      field_label: 'Chiave {$service}'
+      field_label: Chiave {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Iscriviti a <a {$homeHref}>{$service}</a> e inserisci <a {$apiKeyHref}>la tua Chiave API</a> qui per abilitare la traduzione rapida dei campi di testo.
@@ -1951,7 +1951,7 @@ prefs:
         description: Gestisci le chiavi API per i <a>servizi di foto stock</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
-      field_label: 'Chiave API {$service}'
+      field_label: Chiave API {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Iscriviti a <a {$homeHref}>API di {$service}</a> e inserisci <a {$apiKeyHref}>la tua Chiave API</a> qui per inserire foto stock gratuite nei campi immagine.
@@ -1965,7 +1965,7 @@ prefs:
         description: Gestisci le chiavi API per i <a>servizi di cloud storage</a>.
       # API key input label
       # {$service} is the cloud storage service name
-      field_label: 'Chiave API {$service}'
+      field_label: Chiave API {$service}
       no_services: Nessun <a>servizio di cloud storage</a> è configurato.
 
   # Accessibility panel

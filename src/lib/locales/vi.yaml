@@ -107,10 +107,10 @@ clipboard_error: Không thể sao chép vào bộ nhớ tạm.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Chào mừng đến với {$name}'
+welcome_message: Chào mừng đến với {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Được cung cấp bởi {$name}'
+powered_by: Được cung cấp bởi {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: Đang tải cấu hình CMS…
@@ -120,7 +120,7 @@ loading_site_data_error: Đã xảy ra lỗi khi tải dữ liệu trang web.
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Đăng nhập bằng {$service}'
+sign_in_with_x: Đăng nhập bằng {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Đăng nhập bằng mã truy cập
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'Dịch vụ {$name} yêu cầu {$name} phiên bản {$version} trở lên.'
+backend_unsupported_version: Dịch vụ {$name} yêu cầu {$name} phiên bản {$version} trở lên.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Bạn không có quyền truy cập vào kho mã nguồn “{$repo}”.
 repository_not_found: Kho mã nguồn “{$repo}” không tồn tại.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Quét mã QR bên dưới bằng thiết bị d
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Đã đăng nhập với tư cách {$name}'
+signed_in_as_x: Đã đăng nhập với tư cách {$name}
 working_with_local_repo: Đang làm việc với kho mã nguồn trên máy
 working_with_test_repo: Đang làm việc với kho mã nguồn thử nghiệm
 
@@ -289,7 +289,7 @@ release_notes: Ghi chú phát hành
 announcements: Thông báo
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Phiên bản {$version}'
+version_x: Phiên bản {$version}
 # Additional help menu items
 report_issue: Báo cáo vấn đề
 share_feedback: Chia sẻ phản hồi
@@ -383,7 +383,7 @@ file_not_found: Không tìm thấy tệp.
 # Selection count indicator
 # Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
 # {$selected} is the selected item count and {$total} is the total item count
-x_of_x_selected: 'Đã chọn {$selected} trên {$total} mục'
+x_of_x_selected: Đã chọn {$selected} trên {$total} mục
 
 # View switcher: toggle between list and grid views
 switch_view: Chuyển đổi chế độ xem
@@ -552,7 +552,7 @@ copy_options: Tùy chọn sao chép
 # Edit menu items with specific asset names
 edit_asset: Chỉnh sửa tệp
 # {$name} is the selected asset name
-edit_x: 'Chỉnh sửa {$name}'
+edit_x: Chỉnh sửa {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Ngắt dòng
@@ -560,7 +560,7 @@ wrap_long_lines: Ngắt dòng
 # Rename asset: dialog and validation
 rename_asset: Đổi tên tệp
 # {$name} is the current asset name
-rename_x: 'Đổi tên {$name}'
+rename_x: Đổi tên {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -586,7 +586,7 @@ file_extension_change_warning: Tệp có thể không được hiển thị ho�
 # Replace asset: menu item and dialog title
 replace_asset: Thay thế tệp
 # {$name} is the asset being replaced
-replace_x: 'Thay thế {$name}'
+replace_x: Thay thế {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -988,7 +988,7 @@ content_preview: Xem trước nội dung
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Hiển thị tùy chọn nội dung {$locale}
-content_options_x_locale: 'Tùy chọn nội dung {$locale}'
+content_options_x_locale: Tùy chọn nội dung {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1004,9 +1004,9 @@ unsupported_field_type_x: 'Loại trường không được hỗ trợ: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Bật {$locale}'
-reenable_x_locale: 'Bật lại {$locale}'
-disable_x_locale: 'Tắt {$locale}'
+enable_x_locale: Bật {$locale}
+reenable_x_locale: Bật lại {$locale}
+disable_x_locale: Tắt {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1016,7 +1016,7 @@ locale_x_now_disabled: Nội dung {$locale} hiện đã bị tắt. Nội dung n
 # Repository and site links
 view_in_repository: Xem trong kho mã nguồn
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Xem trên {$service}'
+view_on_x: Xem trên {$service}
 view_on_live_site: Xem trên trang web
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1047,7 +1047,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Sao chép từ…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Sao chép từ {$locale}'
+copy_from_x: Sao chép từ {$locale}
 
 # Translation features
 translation_options: Tùy chọn dịch
@@ -1059,7 +1059,7 @@ translate_fields: |
     *   {{ Dịch trường }}
 translate_from: Dịch từ…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Dịch từ {$locale}'
+translate_from_x: Dịch từ {$locale}
 
 # Revert changes
 revert_changes: Hoàn tác thay đổi
@@ -1493,11 +1493,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'Chuyên mục {$collection}'
-    file: 'Tệp {$file}'
-    component: 'Thành phần {$component}'
+    collection: Chuyên mục {$collection}
+    file: Tệp {$file}
+    component: Thành phần {$component}
     # Don’t localize `{$field}`
-    field: 'Trường `{$field}`'
+    field: Trường `{$field}`
 
   # Configuration error messages
   error:
@@ -1910,7 +1910,7 @@ prefs:
         description: Quản lý khóa API cho các <a>công cụ dịch</a>.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
-      field_label: 'Khóa {$service}'
+      field_label: Khóa {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Đăng ký <a {$homeHref}>{$service}</a> và nhập <a {$apiKeyHref}>khóa API</a> tại đây để dịch nhanh các trường văn bản.
@@ -1924,7 +1924,7 @@ prefs:
         description: Quản lý khóa API cho các <a>dịch vụ ảnh stock</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
-      field_label: 'Khóa API {$service}'
+      field_label: Khóa API {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Đăng ký sử dụng <a {$homeHref}>API của {$service}</a>, sau đó nhập <a {$apiKeyHref}>khóa API</a> tại đây để tìm và chèn ảnh miễn phí.
@@ -1938,7 +1938,7 @@ prefs:
         description: Quản lý khóa API cho các <a>dịch vụ lưu trữ đám mây</a>.
       # API key input label
       # {$service} is the cloud storage service name
-      field_label: 'Khóa API {$service}'
+      field_label: Khóa API {$service}
       no_services: Chưa cấu hình <a>dịch vụ lưu trữ đám mây</a>.
 
   # Accessibility panel

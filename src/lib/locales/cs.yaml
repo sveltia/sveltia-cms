@@ -107,10 +107,10 @@ clipboard_error: Nepodařilo se zkopírovat do schránky.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Vítejte ve {$name}'
+welcome_message: Vítejte ve {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Běží na {$name}'
+powered_by: Běží na {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: Načítání konfigurace CMS…
@@ -120,7 +120,7 @@ loading_site_data_error: Při načítání dat webu došlo k chybě.
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Přihlásit se přes {$service}'
+sign_in_with_x: Přihlásit se přes {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Přihlásit se pomocí přístupového tokenu
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'Backend {$name} vyžaduje {$name} ve verzi {$version} nebo novější.'
+backend_unsupported_version: Backend {$name} vyžaduje {$name} ve verzi {$version} nebo novější.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Nemáte přístup k repozitáři „{$repo}“.
 repository_not_found: Repozitář „{$repo}“ neexistuje.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Pro přihlášení bez hesla naskenujte QR kód
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Přihlášen(a) jako {$name}'
+signed_in_as_x: Přihlášen(a) jako {$name}
 working_with_local_repo: Práce s lokálním repozitářem
 working_with_test_repo: Práce s testovacím repozitářem
 
@@ -289,7 +289,7 @@ release_notes: Poznámky k vydání
 announcements: Oznámení
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Verze {$version}'
+version_x: Verze {$version}
 # Additional help menu items
 report_issue: Nahlásit problém
 share_feedback: Sdílet zpětnou vazbu
@@ -306,8 +306,8 @@ update_now: Aktualizovat nyní
 # Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
 # {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
 backend_status:
-  minor_incident: 'Služba {$service} hlásí drobný výpadek. Váš pracovní postup může být ovlivněn.'
-  major_incident: 'Služba {$service} hlásí závažný výpadek. Doporučujeme počkat, než se situace zlepší.'
+  minor_incident: Služba {$service} hlásí drobný výpadek. Váš pracovní postup může být ovlivněn.
+  major_incident: Služba {$service} hlásí závažný výpadek. Doporučujeme počkat, než se situace zlepší.
 
 # ==============================================================================
 # Content and Asset Libraries
@@ -385,7 +385,7 @@ file_not_found: Soubor nebyl nalezen.
 # Selection count indicator
 # Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
 # {$selected} is the selected item count and {$total} is the total item count
-x_of_x_selected: 'Vybráno {$selected} z {$total}'
+x_of_x_selected: Vybráno {$selected} z {$total}
 
 # View switcher: toggle between list and grid views
 switch_view: Přepnout zobrazení
@@ -564,7 +564,7 @@ copy_options: Možnosti kopírování
 # Edit menu items with specific asset names
 edit_asset: Upravit médium
 # {$name} is the selected asset name
-edit_x: 'Upravit {$name}'
+edit_x: Upravit {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Zalomit dlouhé řádky
@@ -572,7 +572,7 @@ wrap_long_lines: Zalomit dlouhé řádky
 # Rename asset: dialog and validation
 rename_asset: Přejmenovat médium
 # {$name} is the current asset name
-rename_x: 'Přejmenovat {$name}'
+rename_x: Přejmenovat {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -599,7 +599,7 @@ file_extension_change_warning: Soubor se nemusí správně zobrazit nebo zpracov
 # Replace asset: menu item and dialog title
 replace_asset: Nahradit médium
 # {$name} is the asset being replaced
-replace_x: 'Nahradit {$name}'
+replace_x: Nahradit {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -1027,7 +1027,7 @@ content_preview: Náhled obsahu
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Zobrazit možnosti obsahu pro jazyk {$locale}
-content_options_x_locale: 'Možnosti obsahu pro jazyk {$locale}'
+content_options_x_locale: Možnosti obsahu pro jazyk {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1043,9 +1043,9 @@ unsupported_field_type_x: 'Nepodporovaný typ pole: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Povolit jazyk {$locale}'
-reenable_x_locale: 'Znovu povolit jazyk {$locale}'
-disable_x_locale: 'Zakázat jazyk {$locale}'
+enable_x_locale: Povolit jazyk {$locale}
+reenable_x_locale: Znovu povolit jazyk {$locale}
+disable_x_locale: Zakázat jazyk {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1055,7 +1055,7 @@ locale_x_now_disabled: Obsah v jazyce {$locale} je nyní zakázán. Při uložen
 # Repository and site links
 view_in_repository: Zobrazit v repozitáři
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Zobrazit na {$service}'
+view_on_x: Zobrazit na {$service}
 view_on_live_site: Zobrazit na webu
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1086,7 +1086,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Kopírovat z…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Kopírovat z jazyka {$locale}'
+copy_from_x: Kopírovat z jazyka {$locale}
 
 # Translation features
 translation_options: Možnosti překladu
@@ -1099,7 +1099,7 @@ translate_fields: |
     *   {{ Přeložit pole }}
 translate_from: Přeložit z…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Přeložit z jazyka {$locale}'
+translate_from_x: Přeložit z jazyka {$locale}
 
 # Revert changes
 revert_changes: Vrátit změny
@@ -1352,7 +1352,7 @@ list_item_value: Hodnota položky
 # Add item button label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
-add_x: 'Přidat {$name}'
+add_x: Přidat {$name}
 
 # List item context menu
 add_item_above: Přidat položku nad
@@ -1558,11 +1558,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'kolekce {$collection}'
-    file: 'soubor {$file}'
-    component: 'komponenta {$component}'
+    collection: kolekce {$collection}
+    file: soubor {$file}
+    component: komponenta {$component}
     # Don’t localize `{$field}`
-    field: 'pole `{$field}`'
+    field: pole `{$field}`
 
   # Configuration error messages
   error:
@@ -1979,7 +1979,7 @@ prefs:
         description: Spravujte klíče API pro <a>překladatelské služby</a>.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
-      field_label: 'Klíč pro {$service}'
+      field_label: Klíč pro {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Zaregistrujte se do <a {$homeHref}>služby {$service}</a> a zadejte zde <a {$apiKeyHref}>váš klíč API</a>, abyste umožnili rychlý překlad textových polí.
@@ -1993,7 +1993,7 @@ prefs:
         description: Spravujte klíče API pro <a>fotobanky</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
-      field_label: 'Klíč API pro {$service}'
+      field_label: Klíč API pro {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Zaregistrujte se k <a {$homeHref}>API {$service}</a> a zadejte zde <a {$apiKeyHref}>váš klíč API</a> pro vkládání bezplatných fotografií z fotobanky do obrázkových polí.
@@ -2007,7 +2007,7 @@ prefs:
         description: Spravujte klíče API pro <a>cloudová úložiště</a>.
       # API key input label
       # {$service} is the cloud storage service name
-      field_label: 'Klíč API pro {$service}'
+      field_label: Klíč API pro {$service}
       no_services: Nejsou nakonfigurována žádná <a>cloudová úložiště</a>.
 
   # Accessibility panel

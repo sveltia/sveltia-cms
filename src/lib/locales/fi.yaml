@@ -107,10 +107,10 @@ clipboard_error: Leikepöydälle kopiointi epäonnistui.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Tervetuloa käyttämään {$name} -palvelua'
+welcome_message: Tervetuloa käyttämään {$name} -palvelua
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Palvelun tarjoaa {$name}'
+powered_by: Palvelun tarjoaa {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: Ladataan CMS-asetuksia…
@@ -120,7 +120,7 @@ loading_site_data_error: Sivuston tietojen lataamisessa tapahtui virhe.
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Kirjaudu sisään palvelulla {$service}'
+sign_in_with_x: Kirjaudu sisään palvelulla {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Kirjaudu sisään access tokenilla
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'Taustajärjestelmä {$name} vaatii version {$name} {$version} tai uudemman.'
+backend_unsupported_version: Taustajärjestelmä {$name} vaatii version {$name} {$version} tai uudemman.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Sinulla ei ole pääsyä repositorioon ”{$repo}”.
 repository_not_found: Repositoriota ”{$repo}” ei ole olemassa.
@@ -289,7 +289,7 @@ release_notes: Julkaisutiedot
 announcements: Tiedotteet
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Versio {$version}'
+version_x: Versio {$version}
 # Additional help menu items
 report_issue: Ilmoita ongelmasta
 share_feedback: Anna palautetta
@@ -306,8 +306,8 @@ update_now: Päivitä nyt
 # Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
 # {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
 backend_status:
-  minor_incident: 'Palvelussa {$service} on häiriö. Tämä saattaa vaikuttaa työskentelyysi.'
-  major_incident: 'Palvelussa {$service} on vakava häiriö. Suosittelemme odottamaan, että tilanne paranee.'
+  minor_incident: Palvelussa {$service} on häiriö. Tämä saattaa vaikuttaa työskentelyysi.
+  major_incident: Palvelussa {$service} on vakava häiriö. Suosittelemme odottamaan, että tilanne paranee.
 
 # ==============================================================================
 # Content and Asset Libraries
@@ -999,7 +999,7 @@ content_preview: Sisällön esikatselu
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Näytä kielen {$locale} sisältöasetukset
-content_options_x_locale: 'Kielen {$locale} sisältöasetukset'
+content_options_x_locale: Kielen {$locale} sisältöasetukset
 
 # Field container labels
 # {$field} is the field’s display label
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: Kielen {$locale} sisältö on nyt pois käytöstä. Se po
 # Repository and site links
 view_in_repository: Näytä repositoriossa
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Näytä palvelussa {$service}'
+view_on_x: Näytä palvelussa {$service}
 view_on_live_site: Näytä julkaistulla sivustolla
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: Kopioi kielestä…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Kopioi kielestä {$locale}'
+copy_from_x: Kopioi kielestä {$locale}
 
 # Translation features
 translation_options: Käännösasetukset
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ Käännä kentät }}
 translate_from: Käännä kielestä…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Käännä kielestä {$locale}'
+translate_from_x: Käännä kielestä {$locale}
 
 # Revert changes
 revert_changes: Kumoa muutokset
@@ -1316,7 +1316,7 @@ list_item_value: Kohteen arvo
 # Add item button label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
-add_x: 'Lisää {$name}'
+add_x: Lisää {$name}
 
 # List item context menu
 add_item_above: Lisää kohde yläpuolelle
@@ -1685,7 +1685,7 @@ config:
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Asetusta `{$prop}` ei tueta Sveltia CMS:ssä. Se jätetään huomiotta.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
-    conflicting_timezone_options: 'Sekä `picker_utc` että uudemmat aikavyöhykeasetukset (`input_timezone` tai `output_utc`) on asetettu. Uudet asetukset ovat ensisijaisia. Harkitse asetuksen `picker_utc` poistamista määrityksistäsi.'
+    conflicting_timezone_options: Sekä `picker_utc` että uudemmat aikavyöhykeasetukset (`input_timezone` tai `output_utc`) on asetettu. Uudet asetukset ovat ensisijaisia. Harkitse asetuksen `picker_utc` poistamista määrityksistäsi.
     # Don’t localize `preview_path`
     preview_path_no_date_field: Asetus `preview_path` käyttää päivämäärä- ja aikatageja, mutta kokoelmassa ei ole DateTime-kenttää, josta ne voitaisiin lukea, joten esikatselulinkkiä ei näytetä.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`

@@ -107,10 +107,10 @@ clipboard_error: کپی در حافظه موقت انجام نشد.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'به {$name} خوش آمدید'
+welcome_message: به {$name} خوش آمدید
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'قدرت‌گرفته از {$name}'
+powered_by: قدرت‌گرفته از {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: در حال بارگذاری پیکربندی CMS…
@@ -120,7 +120,7 @@ loading_site_data_error: خطایی هنگام بارگذاری داده‌ها�
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'ورود با {$service}'
+sign_in_with_x: ورود با {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: ورود با استفاده از توکن دسترسی
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'بک‌اند {$name} نیازمند {$name} نسخه {$version} یا بالاتر است.'
+backend_unsupported_version: بک‌اند {$name} نیازمند {$name} نسخه {$version} یا بالاتر است.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: شما به مخزن «{$repo}» دسترسی ندارید.
 repository_not_found: مخزن «{$repo}» وجود ندارد.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: کد QR زیر را با گوشی یا تبلت
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'واردشده به عنوان {$name}'
+signed_in_as_x: واردشده به عنوان {$name}
 working_with_local_repo: در حال کار با مخزن محلی
 working_with_test_repo: در حال کار با مخزن آزمایشی
 
@@ -289,7 +289,7 @@ release_notes: یادداشت‌های انتشار
 announcements: اطلاعیه‌ها
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'نسخه {$version}'
+version_x: نسخه {$version}
 # Additional help menu items
 report_issue: گزارش مشکل
 share_feedback: اشتراک‌گذاری بازخورد
@@ -342,9 +342,9 @@ asset_list: فهرست دارایی‌ها
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: 'مجموعه «{$collection}»'
+x_collection: مجموعه «{$collection}»
 # {$folder} is the current asset folder label
-x_asset_folder: 'پوشه دارایی «{$folder}»'
+x_asset_folder: پوشه دارایی «{$folder}»
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
@@ -557,7 +557,7 @@ copy_options: گزینه‌های کپی
 # Edit menu items with specific asset names
 edit_asset: ویرایش دارایی
 # {$name} is the selected asset name
-edit_x: 'ویرایش {$name}'
+edit_x: ویرایش {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: شکستن خطوط طولانی
@@ -565,7 +565,7 @@ wrap_long_lines: شکستن خطوط طولانی
 # Rename asset: dialog and validation
 rename_asset: تغییر نام دارایی
 # {$name} is the current asset name
-rename_x: 'تغییر نام {$name}'
+rename_x: تغییر نام {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
@@ -591,7 +591,7 @@ file_extension_change_warning: اگر پسوند فایل با فرمت واقع
 # Replace asset: menu item and dialog title
 replace_asset: جایگزینی دارایی
 # {$name} is the asset being replaced
-replace_x: 'جایگزینی {$name}'
+replace_x: جایگزینی {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -948,7 +948,7 @@ cancel_editing: لغو ویرایش
 # Editor page titles and announcements
 # Creating a new entry
 # {$name} is the singular label of the collection being created in
-create_entry_title: 'ایجاد {$name}'
+create_entry_title: ایجاد {$name}
 # {$collection} is the collection label
 create_entry_announcement: شما اکنون در حال ایجاد یک ورودی جدید در مجموعه «{$collection}» هستید.
 # Editing an existing entry
@@ -990,20 +990,20 @@ swap_panes: جابه‌جایی قاب‌ها
 
 # Locale-specific pane labels
 # {$locale} is the localized language name for the current content pane, e.g., English
-edit_x_locale: 'ویرایش محتوای {$locale}'
-preview_x_locale: 'پیش‌نمایش محتوای {$locale}'
+edit_x_locale: ویرایش محتوای {$locale}
+preview_x_locale: پیش‌نمایش محتوای {$locale}
 
 # Preview iframe labels
 content_preview: پیش‌نمایش محتوا
 
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
-show_content_options_x_locale: 'نمایش گزینه‌های محتوای {$locale}'
-content_options_x_locale: 'گزینه‌های محتوای {$locale}'
+show_content_options_x_locale: نمایش گزینه‌های محتوای {$locale}
+content_options_x_locale: گزینه‌های محتوای {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
-x_field: 'فیلد «{$field}»'
+x_field: فیلد «{$field}»
 
 # Field options menu
 show_field_options: نمایش گزینه‌های فیلد
@@ -1015,9 +1015,9 @@ unsupported_field_type_x: 'نوع فیلد پشتیبانی‌نشده: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'فعال‌سازی {$locale}'
-reenable_x_locale: 'فعال‌سازی مجدد {$locale}'
-disable_x_locale: 'غیرفعال‌سازی {$locale}'
+enable_x_locale: فعال‌سازی {$locale}
+reenable_x_locale: فعال‌سازی مجدد {$locale}
+disable_x_locale: غیرفعال‌سازی {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -1027,7 +1027,7 @@ locale_x_now_disabled: محتوای {$locale} اکنون غیرفعال است. 
 # Repository and site links
 view_in_repository: مشاهده در مخزن
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'مشاهده در {$service}'
+view_on_x: مشاهده در {$service}
 view_on_live_site: مشاهده در سایت آنلاین
 
 # Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
@@ -1058,7 +1058,7 @@ deploy_preview:
 # Content copying from other locales
 copy_from: کپی از…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'کپی از {$locale}'
+copy_from_x: کپی از {$locale}
 
 # Translation features
 translation_options: گزینه‌های ترجمه
@@ -1071,7 +1071,7 @@ translate_fields: |
     *   {{ ترجمه فیلدها }}
 translate_from: ترجمه از…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'ترجمه از {$locale}'
+translate_from_x: ترجمه از {$locale}
 
 # Revert changes
 revert_changes: بازگردانی تغییرات
@@ -1140,10 +1140,10 @@ validation:
   # Minimum value/count not met
   range_underflow:
     # {$min} is the minimum allowed value, already formatted for the input type
-    datetime-local: 'تاریخ/زمان باید در یا بعد از {$min} باشد.'
-    date: 'تاریخ باید در یا بعد از {$min} باشد.'
-    time: 'زمان باید در یا بعد از {$min} باشد.'
-    number: 'مقدار باید بزرگ‌تر یا مساوی {$min} باشد.'
+    datetime-local: تاریخ/زمان باید در یا بعد از {$min} باشد.
+    date: تاریخ باید در یا بعد از {$min} باشد.
+    time: زمان باید در یا بعد از {$min} باشد.
+    number: مقدار باید بزرگ‌تر یا مساوی {$min} باشد.
     # {$min} is the minimum number of selected options
     select: |
       .input {$min :integer}
@@ -1160,10 +1160,10 @@ validation:
   # Maximum value/count exceeded
   range_overflow:
     # {$max} is the maximum allowed value, already formatted for the input type
-    datetime-local: 'تاریخ/زمان باید در یا قبل از {$max} باشد.'
-    date: 'تاریخ باید در یا قبل از {$max} باشد.'
-    time: 'زمان باید در یا قبل از {$max} باشد.'
-    number: 'مقدار باید کوچک‌تر یا مساوی {$max} باشد.'
+    datetime-local: تاریخ/زمان باید در یا قبل از {$max} باشد.
+    date: تاریخ باید در یا قبل از {$max} باشد.
+    time: زمان باید در یا قبل از {$max} باشد.
+    number: مقدار باید کوچک‌تر یا مساوی {$max} باشد.
     # {$max} is the maximum number of selected options
     select: |
       .input {$max :integer}
@@ -1295,7 +1295,7 @@ location: مکان
 
 # Map aria-label showing GPS coordinates
 # {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
-map_lat_lng: 'نقشه نشان‌دهنده عرض جغرافیایی {$latitude}، طول جغرافیایی {$longitude}'
+map_lat_lng: نقشه نشان‌دهنده عرض جغرافیایی {$latitude}، طول جغرافیایی {$longitude}
 
 # ==============================================================================
 # List and Object Field Controls
@@ -1316,7 +1316,7 @@ list_item_value: مقدار آیتم
 # Add item button label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
-add_x: 'افزودن {$name}'
+add_x: افزودن {$name}
 
 # List item context menu
 add_item_above: افزودن آیتم در بالا
@@ -1477,7 +1477,7 @@ cloud_storage:
       error: '{$key} ارائه شده نامعتبر است. لطفاً دوباره بررسی کرده و تلاش کنید.'
     password:
       # {$service} is the cloud service name
-      initial: 'رمز عبور خود را برای {$service} وارد کنید.'
+      initial: رمز عبور خود را برای {$service} وارد کنید.
       requested: در حال ورود…
       error: نام کاربری یا رمز عبور اشتباه است. لطفاً دوباره بررسی کرده و تلاش کنید.
 
@@ -1519,11 +1519,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'مجموعه {$collection}'
-    file: 'فایل {$file}'
-    component: 'کامپوننت {$component}'
+    collection: مجموعه {$collection}
+    file: فایل {$file}
+    component: کامپوننت {$component}
     # Don’t localize `{$field}`
-    field: 'فیلد `{$field}`'
+    field: فیلد `{$field}`
 
   # Configuration error messages
   error:
@@ -1536,7 +1536,7 @@ config:
         *   {{ آدرس‌های فایل پیکربندی باید از پروتکل HTTPS یا آدرس‌های localhost استفاده کنند. }}
     fetch_failed: دریافت فایل پیکربندی امکان‌پذیر نبود.
     # {$status} is the HTTP status code returned while fetching the config file
-    fetch_failed_not_ok: 'پاسخ HTTP با وضعیت {$status} بازگشت.'
+    fetch_failed_not_ok: پاسخ HTTP با وضعیت {$status} بازگشت.
     # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
     fetch_failed_with_manual_init: 'دریافت فایل پیکربندی امکان‌پذیر نبود. برای جلوگیری از بارگذاری فایل `config.yml`، مقدار <a>`load_config_file: false`</a> را به شیء پیکربندی پاس داده شده به `CMS.init()` اضافه کنید.'
     parse_failed: تجزیه فایل پیکربندی امکان‌پذیر نبود.
@@ -1544,126 +1544,126 @@ config:
     parse_failed_unsupported_type: فایل پیکربندی نوع فایل معتبری نیست. فقط فرمت‌های YAML، TOML و JSON پشتیبانی می‌شوند.
     no_collection: مجموعه‌ها تعریف نشده‌اند.
     # Don’t localize `hide`
-    no_visible_collection: 'حداقل یک مجموعه باید مرئی باشد. گزینه `hide` را بررسی کنید.'
+    no_visible_collection: حداقل یک مجموعه باید مرئی باشد. گزینه `hide` را بررسی کنید.
     missing_backend: بک‌اند تعریف نشده است.
     missing_backend_name: نام بک‌اند تعریف نشده است.
     # {$name} is the backend name from the CMS configuration
-    unsupported_known_backend: 'بک‌اند {$name} در Sveltia CMS <a>پشتیبانی نمی‌شود</a>.'
+    unsupported_known_backend: بک‌اند {$name} در Sveltia CMS <a>پشتیبانی نمی‌شود</a>.
     # {$name} is the backend name from the CMS configuration
-    unsupported_deprecated_backend: 'بک‌اند منسوخ‌شده {$name} در Sveltia CMS <a>پشتیبانی نمی‌شود</a>.'
-    unsupported_custom_backend: 'بک‌اند‌های سفارشی در Sveltia CMS <a>پشتیبانی نمی‌شوند</a>.'
-    unsupported_backend_suggestion: 'از یکی از <a>بک‌اندهای پشتیبانی‌شده</a> استفاده کنید.'
+    unsupported_deprecated_backend: بک‌اند منسوخ‌شده {$name} در Sveltia CMS <a>پشتیبانی نمی‌شود</a>.
+    unsupported_custom_backend: بک‌اند‌های سفارشی در Sveltia CMS <a>پشتیبانی نمی‌شوند</a>.
+    unsupported_backend_suggestion: از یکی از <a>بک‌اندهای پشتیبانی‌شده</a> استفاده کنید.
     missing_repository: مخزن تعریف نشده است.
-    invalid_repository: 'مخزن پیکربندی‌شده نامعتبر است. باید به فرمت «owner/repo» باشد.'
-    oauth_implicit_flow: 'روش احراز هویت پیکربندی‌شده (implicit flow) در Sveltia CMS پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.'
-    github_pkce_unsupported: 'احراز هویت PKCE به دلیل محدودیت‌های GitHub هنوز پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.'
+    invalid_repository: مخزن پیکربندی‌شده نامعتبر است. باید به فرمت «owner/repo» باشد.
+    oauth_implicit_flow: روش احراز هویت پیکربندی‌شده (implicit flow) در Sveltia CMS پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.
+    github_pkce_unsupported: احراز هویت PKCE به دلیل محدودیت‌های GitHub هنوز پشتیبانی نمی‌شود. از یک <a>روش احراز هویت</a> دیگر استفاده کنید.
     oauth_no_app_id: شناسه برنامه OAuth تعریف نشده است.
     # Don’t localize `open_authoring` and `editorial_workflow`
-    open_authoring_no_workflow: 'گزینه `open_authoring` نیازمند حالت انتشار `editorial_workflow` است. برای جزئیات <a>مستندات</a> را ببینید.'
+    open_authoring_no_workflow: گزینه `open_authoring` نیازمند حالت انتشار `editorial_workflow` است. برای جزئیات <a>مستندات</a> را ببینید.
     # Don’t localize `auth_methods`
-    no_auth_methods: 'گزینه `auth_methods` باید حداقل شامل یک روش باشد.'
+    no_auth_methods: گزینه `auth_methods` باید حداقل شامل یک روش باشد.
     missing_media_folder: پوشه رسانه تعریف نشده است.
-    public_folder_relative_path: 'پوشه عمومی پیکربندی‌شده نامعتبر است. باید یک مسیر مطلق با شروع از «/» باشد.'
+    public_folder_relative_path: پوشه عمومی پیکربندی‌شده نامعتبر است. باید یک مسیر مطلق با شروع از «/» باشد.
     public_folder_absolute_url: آدرس مطلق URL برای گزینه پوشه عمومی در Sveltia CMS پشتیبانی نمی‌شود.
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
-    invalid_transformation_key: 'گزینه `transformations` شامل کلید پشتیبانی‌نشده `{$key}` است. باید `raster_image`، `svg` یا یک فرمت تصویر رستری پشتیبانی‌شده باشد.'
+    invalid_transformation_key: گزینه `transformations` شامل کلید پشتیبانی‌نشده `{$key}` است. باید `raster_image`، `svg` یا یک فرمت تصویر رستری پشتیبانی‌شده باشد.
     # {$key} is the transformation key; Don’t localize `quality`
-    invalid_transformation_quality: 'گزینه `quality` برای تغییر `{$key}` نامعتبر است. باید یک عدد صحیح بین ۰ تا ۱۰۰ باشد.'
+    invalid_transformation_quality: گزینه `quality` برای تغییر `{$key}` نامعتبر است. باید یک عدد صحیح بین ۰ تا ۱۰۰ باشد.
     # {$prop} is either `width` or `height`; {$key} is the transformation key
-    invalid_transformation_size: 'گزینه `{$prop}` برای تغییر `{$key}` نامعتبر است. باید یک عدد صحیح مثبت باشد.'
+    invalid_transformation_size: گزینه `{$prop}` برای تغییر `{$key}` نامعتبر است. باید یک عدد صحیح مثبت باشد.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
-    missing_asset_collection_name: 'مجموعه دارایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    missing_asset_collection_name: مجموعه دارایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
     # {$name} is the invalid or duplicate asset collection name
-    invalid_asset_collection_name: 'نام مجموعه دارایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
+    invalid_asset_collection_name: نام مجموعه دارایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.
     # {$name} is the duplicate asset collection name
-    duplicate_asset_collection_name: 'نام‌های مجموعه دارایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    duplicate_asset_collection_name: نام‌های مجموعه دارایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
     # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: 'مجموعه باید حداقل یکی از گزینه‌های `folder`، `files` یا `divider` را تعریف کرده باشد.'
+    invalid_collection_no_options: مجموعه باید حداقل یکی از گزینه‌های `folder`، `files` یا `divider` را تعریف کرده باشد.
     # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: 'مجموعه نمی‌تواند گزینه‌های `folder`، `files` و `divider` را هم‌زمان داشته باشد.'
+    invalid_collection_multiple_options: مجموعه نمی‌تواند گزینه‌های `folder`، `files` و `divider` را هم‌زمان داشته باشد.
     # {$extension} is the file extension and {$format} is the configured content format
-    file_format_mismatch: 'پسوند `{$extension}` با فرمت `{$format}` مطابقت ندارد.'
+    file_format_mismatch: پسوند `{$extension}` با فرمت `{$format}` مطابقت ندارد.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
-    invalid_slug_slash: 'قالب اسلاگ `{$slug}` نامعتبر است زیرا نمی‌تواند شامل اسلش باشد. برای سازماندهی ورودی‌ها در زیرپوشه‌ها، به جای `slug` از گزینه `path` استفاده کنید.'
+    invalid_slug_slash: قالب اسلاگ `{$slug}` نامعتبر است زیرا نمی‌تواند شامل اسلش باشد. برای سازماندهی ورودی‌ها در زیرپوشه‌ها، به جای `slug` از گزینه `path` استفاده کنید.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
-    invalid_reorder_group: 'گزینه `reorder` به گروه نمایی به نام `{$name}` ارجاع می‌دهد، اما چنین گروهی در گزینه `view_groups` تعریف نشده است.'
+    invalid_reorder_group: گزینه `reorder` به گروه نمایی به نام `{$name}` ارجاع می‌دهد، اما چنین گروهی در گزینه `view_groups` تعریف نشده است.
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
-    invalid_sortable_field: 'گزینه `sortable_fields` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.'
+    invalid_sortable_field: گزینه `sortable_fields` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.
     # {$name} is the field name from the configuration; Don’t localize `view_groups`
-    invalid_view_group_field: 'گزینه `view_groups` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.'
+    invalid_view_group_field: گزینه `view_groups` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.
     # {$name} is the field name from the configuration; Don’t localize `view_filters`
-    invalid_view_filter_field: 'گزینه `view_filters` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.'
+    invalid_view_filter_field: گزینه `view_filters` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است.
     # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
-    missing_view_group_name: 'گروه نمایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    missing_view_group_name: گروه نمایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
     # {$name} is the invalid or duplicate view group name
-    invalid_view_group_name: 'نام گروه نمایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
-    duplicate_view_group_name: 'نام‌های گروه نمایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    invalid_view_group_name: نام گروه نمایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.
+    duplicate_view_group_name: نام‌های گروه نمایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
     # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
-    missing_view_filter_name: 'فیلتر نمایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    missing_view_filter_name: فیلتر نمایی {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
     # {$name} is the invalid or duplicate view filter name
-    invalid_view_filter_name: 'نام فیلتر نمایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
-    duplicate_view_filter_name: 'نام‌های فیلتر نمایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    invalid_view_filter_name: نام فیلتر نمایی `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.
+    duplicate_view_filter_name: نام‌های فیلتر نمایی باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
-    missing_collection_name: 'مجموعه {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    missing_collection_name: مجموعه {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
     # {$name} is the invalid or duplicate collection name
-    invalid_collection_name: 'نام مجموعه `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
-    duplicate_collection_name: 'نام‌های مجموعه باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    invalid_collection_name: نام مجموعه `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.
+    duplicate_collection_name: نام‌های مجموعه باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
     # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
-    missing_collection_file_name: 'فایل مجموعه {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    missing_collection_file_name: فایل مجموعه {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
     # {$name} is the invalid or duplicate collection file name
-    invalid_collection_file_name: 'نام فایل مجموعه `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
-    duplicate_collection_file_name: 'نام‌های فایل مجموعه باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    invalid_collection_file_name: نام فایل مجموعه `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.
+    duplicate_collection_file_name: نام‌های فایل مجموعه باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
     # Don’t localize `fields`
-    collection_no_fields: 'مجموعه باید گزینه `fields` را با حداقل یک فیلد تعریف کرده باشد.'
+    collection_no_fields: مجموعه باید گزینه `fields` را با حداقل یک فیلد تعریف کرده باشد.
     # Don’t localize `fields`
-    collection_file_no_fields: 'فایل مجموعه باید گزینه `fields` را با حداقل یک فیلد تعریف کرده باشد.'
+    collection_file_no_fields: فایل مجموعه باید گزینه `fields` را با حداقل یک فیلد تعریف کرده باشد.
     # Don’t localize `i18n`, `locale` and `file`
-    collection_file_i18n_required: 'در صورت استفاده از جانگهدار `locale` در مسیر `file`، فایل مجموعه باید دارای گزینه `i18n` تعریف‌شده باشد.'
+    collection_file_i18n_required: در صورت استفاده از جانگهدار `locale` در مسیر `file`، فایل مجموعه باید دارای گزینه `i18n` تعریف‌شده باشد.
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
-    missing_field_name: 'فیلد {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    missing_field_name: فیلد {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
     # {$name} is the invalid or duplicate field name
-    invalid_field_name: 'نام فیلد `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد. اگر می‌خواهید فیلدها را تو در تو کنید، <a>به جای نشانه‌گذاری نقطه‌ای از فیلدهای Object استفاده کنید</a>.'
-    duplicate_field_name: 'نام‌های فیلد باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    invalid_field_name: نام فیلد `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد. اگر می‌خواهید فیلدها را تو در تو کنید، <a>به جای نشانه‌گذاری نقطه‌ای از فیلدهای Object استفاده کنید</a>.
+    duplicate_field_name: نام‌های فیلد باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
     # {$count} is the 1-based variable type index in the current types array
-    missing_variable_type: 'نوع متغیر {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.'
+    missing_variable_type: نوع متغیر {$count} باید دارای گزینه `name` تعریف‌شده به عنوان رشته غیرخالی باشد.
     # {$name} is the invalid or duplicate variable type name
-    invalid_variable_type: 'نام نوع متغیر `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.'
-    duplicate_variable_type: 'نام‌های نوع متغیر باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.'
+    invalid_variable_type: نام نوع متغیر `{$name}` نامعتبر است. نباید شامل کاراکترهای خاص باشد.
+    duplicate_variable_type: نام‌های نوع متغیر باید یکتا باشند، اما `{$name}` بیش از یک‌بار استفاده شده است.
     date_field_type: 'نوع فیلد منسوخ‌شده Date در Sveltia CMS پشتیبانی نمی‌شود. از نوع فیلد DateTime با گزینه `type: date` استفاده کنید.'
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'منطقه زمانی نامعتبر: {$timeZone}. باید یک شناسه منطقه زمانی معتبر IANA مانند `America/New_York` یا `Asia/Tokyo` باشد.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
-    unsupported_deprecated_option: 'گزینه منسوخ‌شده `{$prop}` در Sveltia CMS پشتیبانی نمی‌شود. به جای آن از گزینه `{$newProp}` استفاده کنید.'
+    unsupported_deprecated_option: گزینه منسوخ‌شده `{$prop}` در Sveltia CMS پشتیبانی نمی‌شود. به جای آن از گزینه `{$newProp}` استفاده کنید.
     # Don’t localize `allow_multiple`, `multiple`, and `false`
-    allow_multiple: 'گزینه `allow_multiple` در Sveltia CMS پشتیبانی نمی‌شود. به جای آن از گزینه `multiple` استفاده کنید که مقدار پیش‌فرض آن `false` است.'
+    allow_multiple: گزینه `allow_multiple` در Sveltia CMS پشتیبانی نمی‌شود. به جای آن از گزینه `multiple` استفاده کنید که مقدار پیش‌فرض آن `false` است.
     # Don’t localize `field`, `fields`, and `types`
-    invalid_list_field: 'فیلد List نمی‌تواند گزینه‌های `field`، `fields` و `types` را هم‌زمان داشته باشد.'
+    invalid_list_field: فیلد List نمی‌تواند گزینه‌های `field`، `fields` و `types` را هم‌زمان داشته باشد.
     # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
-    invalid_list_variable_type: 'نوع متغیر فیلد List نامعتبر است. گزینه `widget` روی `{$widget}` تنظیم شده است اما باید `object` باشد.'
+    invalid_list_variable_type: نوع متغیر فیلد List نامعتبر است. گزینه `widget` روی `{$widget}` تنظیم شده است اما باید `object` باشد.
     # Don’t localize `fields`, and `types`
-    invalid_object_field: 'فیلد Object نمی‌تواند گزینه‌های `fields` و `types` را هم‌زمان داشته باشد.'
+    invalid_object_field: فیلد Object نمی‌تواند گزینه‌های `fields` و `types` را هم‌زمان داشته باشد.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
-    relation_field_invalid_collection: 'مجموعه ارجاع‌شده `{$collection}` نامعتبر است یا تعریف نشده است.'
-    relation_field_invalid_collection_file: 'فایل ارجاع‌شده `{$file}` نامعتبر است یا تعریف نشده است.'
+    relation_field_invalid_collection: مجموعه ارجاع‌شده `{$collection}` نامعتبر است یا تعریف نشده است.
+    relation_field_invalid_collection_file: فایل ارجاع‌شده `{$file}` نامعتبر است یا تعریف نشده است.
     # Don’t localize `file`
-    relation_field_missing_file_name: 'گزینه `file` باید برای ارتباط با یک مجموعه فایل تعریف شود.'
-    relation_field_invalid_value_field: 'فیلد مقدار ارجاع‌شده `{$field}` نامعتبر است یا تعریف نشده است.'
+    relation_field_missing_file_name: گزینه `file` باید برای ارتباط با یک مجموعه فایل تعریف شود.
+    relation_field_invalid_value_field: فیلد مقدار ارجاع‌شده `{$field}` نامعتبر است یا تعریف نشده است.
     unexpected: خطای غیرمنتظره
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
     # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
     # `view_filters[0].pattern`, relative to the collection, file or field named before it.
     # {$type} is a value type name from `schema_value_type` below
-    schema_invalid_type: 'گزینه `{$option}` باید {$type} باشد.'
+    schema_invalid_type: گزینه `{$option}` باید {$type} باشد.
     # {$values} is a list of the values the option accepts
     schema_invalid_enum: 'گزینه `{$option}` باید یکی از این مقادیر باشد: {$values}.'
     # {$value} is the only value the option accepts
-    schema_invalid_const: 'گزینه `{$option}` باید `{$value}` باشد.'
-    schema_invalid_empty_value: 'گزینه `{$option}` باید یک رشته خالی باشد.'
+    schema_invalid_const: گزینه `{$option}` باید `{$value}` باشد.
+    schema_invalid_empty_value: گزینه `{$option}` باید یک رشته خالی باشد.
     # {$count} is the exact number of items the option must have
-    schema_invalid_item_count: 'گزینه `{$option}` باید آرایه‌ای از {$count} آیتم باشد.'
-    schema_invalid_value: 'گزینه `{$option}` دارای مقدار نامعتبر است.'
-    schema_missing_option: 'گزینه `{$option}` الزامی است.'
+    schema_invalid_item_count: گزینه `{$option}` باید آرایه‌ای از {$count} آیتم باشد.
+    schema_invalid_value: گزینه `{$option}` دارای مقدار نامعتبر است.
+    schema_missing_option: گزینه `{$option}` الزامی است.
     # {$options} is a list of options, one of which must be defined
     schema_missing_one_of: 'یکی از این گزینه‌ها الزامی است: {$options}.'
     # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
@@ -1683,13 +1683,13 @@ config:
     editorial_workflow_unsupported: گردش کار تحریریه در حال حاضر فقط با بک‌آندهای GitHub و GitLab پشتیبانی می‌شود.
     open_authoring_unsupported_backend: قابلیت Open Authoring در حال حاضر فقط با بک‌اند GitHub پشتیبانی می‌شود.
     # {$prop} is the unsupported option name that will be ignored
-    unsupported_ignored_option: 'گزینه `{$prop}` در Sveltia CMS پشتیبانی نمی‌شود. این گزینه نادیده گرفته خواهد شد.'
+    unsupported_ignored_option: گزینه `{$prop}` در Sveltia CMS پشتیبانی نمی‌شود. این گزینه نادیده گرفته خواهد شد.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
-    conflicting_timezone_options: 'هر دو گزینه `picker_utc` و گزینه‌های جدیدتر منطقه زمانی (`input_timezone` یا `output_utc`) تنظیم شده‌اند. گزینه‌های جدید اولویت دارند. حذف `picker_utc` را از پیکربندی خود مد نظر قرار دهید.'
+    conflicting_timezone_options: هر دو گزینه `picker_utc` و گزینه‌های جدیدتر منطقه زمانی (`input_timezone` یا `output_utc`) تنظیم شده‌اند. گزینه‌های جدید اولویت دارند. حذف `picker_utc` را از پیکربندی خود مد نظر قرار دهید.
     # Don’t localize `preview_path`
-    preview_path_no_date_field: 'گزینه `preview_path` از برچسب‌های تاریخ و زمان استفاده می‌کند، اما مجموعه هیچ فیلد DateTime برای خواندن آن‌ها ندارد، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.'
+    preview_path_no_date_field: گزینه `preview_path` از برچسب‌های تاریخ و زمان استفاده می‌کند، اما مجموعه هیچ فیلد DateTime برای خواندن آن‌ها ندارد، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.
     # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
-    preview_path_date_field_not_found: 'گزینه `preview_path_date_field` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما هیچ فیلد DateTime با این نام تعریف نشده است، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.'
+    preview_path_date_field_not_found: گزینه `preview_path_date_field` به فیلدی به نام `{$name}` ارجاع می‌دهد، اما هیچ فیلد DateTime با این نام تعریف نشده است، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: گزینه `preview_path` به `{$name}` ارجاع می‌دهد، اما چنین فیلدی در مجموعه تعریف نشده است، بنابراین لینک پیش‌نمایش نمایش داده نخواهد شد.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
@@ -1711,7 +1711,7 @@ local_workflow:
   indicator: محلی
   # Browser compatibility warnings
   unsupported_browser: گردش کار محلی در مرورگر شما پشتیبانی نمی‌شود. لطفاً به جای آن از Chrome یا Edge استفاده کنید.
-  disabled: 'گردش کار محلی در مرورگر شما غیرفعال شده است. <a>در اینجا نحوه فعال‌سازی آن آمده است</a>.'
+  disabled: گردش کار محلی در مرورگر شما غیرفعال شده است. <a>در اینجا نحوه فعال‌سازی آن آمده است</a>.
 
 # ==============================================================================
 # Editorial Workflow
@@ -1934,13 +1934,13 @@ prefs:
         select_service: انتخاب سرویس
       api_keys:
         title: کلیدهای API سرویس ترجمه
-        description: 'مدیریت کلیدهای API برای <a>سرویس‌های ترجمه</a>.'
+        description: مدیریت کلیدهای API برای <a>سرویس‌های ترجمه</a>.
       # API key input label, e.g., “DeepL Key”
       # {$service} is the translation service name
-      field_label: 'کلید {$service}'
+      field_label: کلید {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: 'در <a {$homeHref}>{$service}</a> ثبت‌نام کرده و <a {$apiKeyHref}>کلید API خود</a> را در اینجا وارد کنید تا ترجمه سریع فیلدهای متنی فعال شود.'
+      description: در <a {$homeHref}>{$service}</a> ثبت‌نام کرده و <a {$apiKeyHref}>کلید API خود</a> را در اینجا وارد کنید تا ترجمه سریع فیلدهای متنی فعال شود.
 
   # Media panel
   media:
@@ -1948,25 +1948,25 @@ prefs:
     stock_photos:
       api_keys:
         title: کلیدهای API سرویس تصویر استوک
-        description: 'مدیریت کلیدهای API برای <a>سرویس‌های تصویر استوک</a>.'
+        description: مدیریت کلیدهای API برای <a>سرویس‌های تصویر استوک</a>.
       # API key input label, e.g., “Unsplash API Key”
       # {$service} is the stock photo service name
-      field_label: 'کلید API سرویس {$service}'
+      field_label: کلید API سرویس {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
-      description: 'در <a {$homeHref}>API سرویس {$service}</a> ثبت‌نام کرده و <a {$apiKeyHref}>کلید API خود</a> را در اینجا وارد کنید تا تصاویر استوک رایگان را درج کنید.'
+      description: در <a {$homeHref}>API سرویس {$service}</a> ثبت‌نام کرده و <a {$apiKeyHref}>کلید API خود</a> را در اینجا وارد کنید تا تصاویر استوک رایگان را درج کنید.
       # Photo credit attribution
       # {$service} is the stock photo service name
-      credit: 'تصاویر ارائه شده توسط {$service}'
-      no_services: 'هیچ <a>سرویس تصویر استوکی</a> پیکربندی نشده است.'
+      credit: تصاویر ارائه شده توسط {$service}
+      no_services: هیچ <a>سرویس تصویر استوکی</a> پیکربندی نشده است.
     cloud_storage:
       api_keys:
         title: کلیدهای API سرویس ذخیره‌سازی ابری
-        description: 'مدیریت کلیدهای API برای <a>سرویس‌های ذخیره‌سازی ابری</a>.'
+        description: مدیریت کلیدهای API برای <a>سرویس‌های ذخیره‌سازی ابری</a>.
       # API key input label
       # {$service} is the cloud storage service name
-      field_label: 'کلید API سرویس {$service}'
-      no_services: 'هیچ <a>سرویس ذخیره‌سازی ابری</a> پیکربندی نشده است.'
+      field_label: کلید API سرویس {$service}
+      no_services: هیچ <a>سرویس ذخیره‌سازی ابری</a> پیکربندی نشده است.
 
   # Accessibility panel
   accessibility:
