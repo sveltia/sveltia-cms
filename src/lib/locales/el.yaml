@@ -241,7 +241,7 @@ change_language: Αλλαγή γλώσσας
 # Toast notification shown while the translation for the selected language is being downloaded
 # {$locale} is the localized language name, e.g., “French”
 switching_language: Αλλαγή σε {$locale}…
-locale_load_failed: Δεν ήταν δυνατή η φόρτωση της μετάφρασης στα {$locale}. Παρακαλούμε δοκιμάστε ξανά αργότερα.
+locale_load_failed: Δεν ήταν δυνατή η αλλαγή στα {$locale}. Παρακαλούμε δοκιμάστε ξανά αργότερα.
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -425,8 +425,8 @@ ascending: '{$label}, Α έως Ω'
 ascending_date: '{$label}, παλιότερα προς νεότερα'
 descending: '{$label}, Ω έως Α'
 descending_date: '{$label}, νεότερα προς παλιότερα'
-ascending_number: '{$label}, από μικρό σε μεγάλο'
-descending_number: '{$label}, από μεγάλο σε μικρό'
+ascending_number: '{$label}, από μικρότερο σε μεγαλύτερο'
+descending_number: '{$label}, από μεγάλύτερο σε μικρότερο'
 
 # Filter menu: button labels and options
 filter: Φίλτρο
@@ -1095,7 +1095,7 @@ new_parent_folder_description: Ο νέος φάκελος θα δημιουργ�
 new_parent_folder_error:
   empty: Το όνομα του φακέλου δεν μπορεί να είναι κενό.
   invalid: Το όνομα του φακέλου δεν μπορεί να περιέχει καθέτους ή να ξεκινά με τελεία και πρέπει να περιλαμβάνει γράμματα ή αριθμούς.
-  duplicate: Υπάρχει ήδη φάκελος με αυτό το όνομα εδώ.
+  duplicate: Υπάρχει ήδη φάκελος με αυτό το όνομα.
 edit_path_error:
   invalid: Η διαδρομή δεν μπορεί να περιέχει σχετικά τμήματα όπως “..”.
   recursive: Η καταχώριση δεν μπορεί να μετακινηθεί σε έναν από τους δικούς της υποφακέλους.
@@ -1670,12 +1670,12 @@ config:
     # be …”
     schema_value_type:
       string: string
-      number: αριθμός
-      integer: ακέραιος αριθμός
-      boolean: λογική τιμή
-      array: πίνακας
-      object: αντικείμενο
-      'null': κενή
+      number: number
+      integer: integer
+      boolean: boolean
+      array: array
+      object: object
+      'null': null
 
   # Warning messages (logged to console)
   warning:
@@ -1867,7 +1867,7 @@ open_authoring:
   publish_unsupported: Μόνο ένας συντηρητής μπορεί να δημοσιεύσει αλλαγές σε αυτόν τον ιστότοπο. Αντ’ αυτού, επισημάνετε την καταχώρισή σας ως “Σε αξιολόγηση” και κάποιος θα τη δει.
   # Error shown when a change would go straight to the site instead of being reviewed, which a
   # contributor can’t do. It covers media library uploads and deletions, and entry reordering
-  direct_commit_unsupported: Αυτή η αλλαγή δεν μπορεί να γίνει απευθείας. Μόνο επεξεργασίες καταχωρίσεων μπορούν να προταθούν για αξιολόγηση.
+  direct_commit_unsupported: Αυτή η αλλαγή δεν μπορεί να γίνει απευθείας. Μόνο επεξεργασμένες καταχωρίσεις μπορούν να προταθούν για αξιολόγηση.
   # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
   contributing_via_fork: Οι αλλαγές σας αποθηκεύονται στο fork αυτού του repository στο “{$repo}” και ελέγχονται πριν δημοσιευτούν.
   view_fork: Προβολή fork
@@ -2009,9 +2009,9 @@ prefs:
         confirmation: Το τοπικά αποθηκευμένο στην cache περιεχόμενο αρχείων και οι μικρογραφίες εικόνων θα διαγραφούν. Τα μη αποθηκευμένα προσχέδια και οι ρυθμίσεις σας θα διατηρηθούν, και τα διαγραμμένα δεδομένα θα ληφθούν ή θα δημιουργηθούν ξανά όταν χρειαστεί. Το CMS θα επαναφορτωθεί μόλις ολοκληρωθεί η διαδικασία.
       # Erase All Data button
       all_data:
-        description: Διαγραφή όλων όσων διατηρεί το CMS σε αυτό το πρόγραμμα περιήγησης, συμπεριλαμβανομένων των αρχείων στην cache, των μη αποθηκευμένων προσχεδίων και των ρυθμίσεων. Ό,τι έχει ήδη αποθηκευτεί στο repository σας δεν θα επηρεαστεί.
+        description: Διαγραφή όλων όσων διατηρεί το CMS σε αυτό το φυλλομετρητή, συμπεριλαμβανομένων των αρχείων στην cache, των μη αποθηκευμένων προσχεδίων και των ρυθμίσεων. Ό,τι έχει ήδη αποθηκευτεί στο repository σας δεν θα επηρεαστεί.
         button_label: Διαγραφή όλων των δεδομένων
-        confirmation: Όλα τα δεδομένα που είναι αποθηκευμένα σε αυτό το πρόγραμμα περιήγησης θα διαγραφούν, συμπεριλαμβανομένου του περιεχομένου αρχείων στην cache, των μικρογραφιών εικόνων, των μη αποθηκευμένων προσχεδίων, των ρυθμίσεων και της κατάστασης σύνδεσης. Το repository σας δεν θα επηρεαστεί, αλλά κάθε αλλαγή που δεν έχετε αποθηκεύσει θα χαθεί και θα χρειαστεί να συνδεθείτε ξανά. Το CMS θα επαναφορτωθεί μόλις ολοκληρωθεί η διαδικασία.
+        confirmation: Όλα τα δεδομένα που είναι αποθηκευμένα σε αυτό το φυλλομετρητή θα διαγραφούν, συμπεριλαμβανομένου του περιεχομένου αρχείων στην cache, των μικρογραφιών εικόνων, των μη αποθηκευμένων προσχεδίων, των ρυθμίσεων και της κατάστασης σύνδεσης. Το repository σας δεν θα επηρεαστεί, αλλά κάθε αλλαγή που δεν έχετε αποθηκεύσει θα χαθεί και θα χρειαστεί να συνδεθείτε ξανά. Το CMS θα επαναφορτωθεί μόλις ολοκληρωθεί η διαδικασία.
 
 # ==============================================================================
 # Keyboard Shortcuts
