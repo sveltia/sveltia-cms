@@ -112,9 +112,7 @@ describe('InfoPanel', () => {
       .element(page.getByRole('link', { name: '/static/uploads/clip.mp4' }))
       .toHaveAttribute('href', 'https://github.com/owner/repo/blob/main/static/uploads/clip.mp4');
     // The map library is loaded on demand
-    await expect
-      .poll(() => container.querySelector('.leaflet-container'), { timeout: 5000 })
-      .not.toBeNull();
+    await expect.poll(() => container.querySelector('.leaflet-container')).not.toBeNull();
 
     Object.assign(repository, { blobBaseURL: '' });
   });

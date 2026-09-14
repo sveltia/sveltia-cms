@@ -55,9 +55,7 @@ describe('App', () => {
     expect(document.title).toBe('Acme CMS');
     expect(document.querySelector('link[rel="icon"]')).not.toBeNull();
     // The touch icon and the manifest are generated from the logo
-    await expect
-      .poll(() => document.querySelector('link[rel="apple-touch-icon"]'), { timeout: 5000 })
-      .not.toBeNull();
+    await expect.poll(() => document.querySelector('link[rel="apple-touch-icon"]')).not.toBeNull();
     expect(document.querySelector('link[rel="manifest"]')).toHaveAttribute(
       'href',
       expect.stringMatching(/^blob:/),

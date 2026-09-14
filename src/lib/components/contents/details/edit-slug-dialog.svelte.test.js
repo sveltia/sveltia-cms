@@ -253,7 +253,7 @@ describe('EditSlugDialog', () => {
 
     // The folder is renamed within the localized slug, leaving the file name in place
     await expect
-      .poll(() => draft.currentSlugs, { timeout: 3000 })
+      .poll(() => draft.currentSlugs)
       .toEqual({ en: 'docs/guides/index', fr: 'docs/manuels/index' });
     expect(draft.currentPath).toBe('docs/guides');
   });

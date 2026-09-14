@@ -79,9 +79,7 @@ describe('PrimaryToolbar', () => {
 
     try {
       await toolbar.getByRole('button', { name: 'Download' }).click();
-      await expect
-        .poll(() => clicks, { timeout: 3000 })
-        .toEqual(assets.map(({ fileName }) => fileName));
+      await expect.poll(() => clicks).toEqual(assets.map(({ fileName }) => fileName));
     } finally {
       click.mockRestore();
     }

@@ -215,9 +215,7 @@ describe('PaneBody', () => {
 
       // Switching to the preview mode replaces the listened element with the iframe’s
       thisPane.current = { mode: 'preview', locale: 'en' };
-      await expect
-        .poll(() => props.thisPaneContentArea?.ownerDocument !== document, { timeout: 3000 })
-        .toBe(true);
+      await expect.poll(() => props.thisPaneContentArea?.ownerDocument !== document).toBe(true);
 
       // The frame loads its content in the meantime, replacing its initial document
       await new Promise((resolve) => {

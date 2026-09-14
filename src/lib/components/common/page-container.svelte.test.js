@@ -139,9 +139,7 @@ describe('PageContainer', () => {
 
       const db = new IndexedDB('sveltia-cms-test-ui', 'ui-settings');
 
-      await expect
-        .poll(async () => (await db.get('contents'))?.sidebarWidth, { timeout: 3000 })
-        .toBeGreaterThan(240);
+      await expect.poll(async () => (await db.get('contents'))?.sidebarWidth).toBeGreaterThan(240);
     } finally {
       backendName.current = undefined;
       Object.assign(repository, { databaseName: '' });

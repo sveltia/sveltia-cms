@@ -12,12 +12,6 @@ import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$li
 
 import EntryList from './entry-list.svelte';
 
-/**
- * The rows are rendered one tick at a time and the thumbnail once its row is in view, which takes
- * longer than the default second on a slow CI runner.
- */
-const THUMBNAIL_WAIT = { timeout: 5000 };
-
 describe('EntryList', () => {
   beforeAll(async () => {
     await initTestConfig({
@@ -84,7 +78,7 @@ describe('EntryList', () => {
 
     // The thumbnail is shown in the view’s size
     await expect
-      .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'), THUMBNAIL_WAIT)
+      .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'))
       .toBe(TEST_IMAGE_URL);
     expect(grid.element().querySelector('.image .preview')).toHaveClass('icon');
 
@@ -124,7 +118,7 @@ describe('EntryList', () => {
       )
       .toEqual(['Unpublished Entries', 'Published Entries']);
     await expect
-      .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'), THUMBNAIL_WAIT)
+      .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'))
       .toBe(TEST_IMAGE_URL);
   });
 
@@ -168,7 +162,7 @@ describe('EntryList', () => {
       await expect.element(grid).not.toHaveClass('grid-view');
       await expect.element(grid.getByRole('button', { name: 'Move Up' })).toBeInTheDocument();
       await expect
-        .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'), THUMBNAIL_WAIT)
+        .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'))
         .toBe(TEST_IMAGE_URL);
     } finally {
       setReorderMode(false);

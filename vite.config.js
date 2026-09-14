@@ -617,6 +617,11 @@ export default defineConfig({
           name: 'browser',
           include: [COMPONENT_TESTS],
           setupFiles: ['./vitest.browser.setup.js'],
+          // `expect.element()` and `expect.poll()` retry for a second by default, which a shared
+          // CI runner can’t always keep up with: a Sveltia UI dialog only reports its result once
+          // its closing transition has finished, a list renders its rows one tick at a time, and a
+          // syntax grammar is loaded on demand. A failure is a real one, so it’s worth the wait
+          expect: { poll: { timeout: 5000 } },
           browser: {
             enabled: true,
             headless: true,
