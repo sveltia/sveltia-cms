@@ -88,7 +88,7 @@
   aria-label={updating ? _('workflow.changing_status') : qualifiedStatusName}
 >
   {#snippet popup()}
-    <Menu aria-label={_('workflow.change_entry_status')}>
+    <Menu ariaLabel={_('workflow.change_entry_status')}>
       {#each workflowStages.current as _status (_status)}
         <MenuItemRadio
           label={_(WORKFLOW_STATUS_LABELS[_status])}

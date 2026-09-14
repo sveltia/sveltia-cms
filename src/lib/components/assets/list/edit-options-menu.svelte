@@ -44,7 +44,7 @@
 
 <MenuButton variant="ghost" iconic popupPosition="bottom-right" aria-label={_('show_edit_options')}>
   {#snippet popup()}
-    <Menu aria-label={_('edit_options')}>
+    <Menu ariaLabel={_('edit_options')}>
       {@render extraItems?.()}
       {#if onEdit}
         <MenuItem

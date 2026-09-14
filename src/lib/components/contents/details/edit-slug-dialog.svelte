@@ -36,8 +36,10 @@
   /** @type {Props} */
   let { open = $bindable(false) } = $props();
 
+  /* v8 ignore start -- the dialog is only rendered while the draft is there */
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
   const currentSlugs = $derived(entryDraft.current?.currentSlugs ?? {});
+  /* v8 ignore stop */
   const originalEntry = $derived(
     /** @type {UnpublishedEntry | undefined} */ (entryDraft.current?.originalEntry),
   );
@@ -54,10 +56,12 @@
       return undefined;
     }
 
+    /* v8 ignore next -- an existing entry always has a path */
     return stripSlashes(entryDraft.current?.currentPath ?? '');
   });
 
   const renamesFolder = $derived(ownFolderPath !== undefined);
+  /* v8 ignore next -- the dialog is only rendered while the draft is there */
   const defaultLocale = $derived(entryDraft.current?.defaultLocale ?? '_default');
   /**
    * Whether the folder goes by a different name in each locale. That’s the case when the slugs are
@@ -76,6 +80,7 @@
    * @type {Record<InternalLocaleCode, string>}
    */
   const ownFolderPaths = $derived.by(() => {
+    /* v8 ignore next 3 -- only read once the folder names are set up, which needs the folder */
     if (ownFolderPath === undefined) {
       return {};
     }
@@ -87,12 +92,12 @@
     return {
       [defaultLocale]: ownFolderPath,
       ...Object.fromEntries(
-        Object.entries(entryDraft.current?.currentSlugs ?? {})
+        Object.entries(currentSlugs)
           .filter(
             ([locale, slug]) =>
               locale !== defaultLocale &&
               !!entryDraft.current?.currentLocales[locale] &&
-              !!getOwnFolderName(slug ?? ''),
+              !!getOwnFolderName(/** @type {string} */ (slug)),
           )
           .map(([locale, slug]) => [locale, getEntryDirPath(/** @type {string} */ (slug))]),
       ),
@@ -187,7 +192,7 @@
    */
   const folderNamesChanged = $derived(
     Object.entries(updatedFolderNames).some(
-      ([locale, name]) => name !== getFolderName(ownFolderPaths[locale] ?? ''),
+      ([locale, name]) => name !== getFolderName(ownFolderPaths[locale]),
     ) && Object.values(folderValidations).every((invalid) => invalid === false),
   );
 
@@ -296,7 +301,7 @@
                 // hidden behind a leading dot
                 folderValidations[locale] =
                   validateNewFolderName({
-                    takenNames: takenFolderNames[locale] ?? [],
+                    takenNames: takenFolderNames[locale],
                     name: updatedFolderNames[locale],
                   }) ?? false;
               }}

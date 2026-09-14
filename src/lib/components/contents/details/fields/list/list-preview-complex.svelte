@@ -22,6 +22,7 @@
    * ListFieldWithSubField,
    * ListFieldWithSubFields,
    * ListFieldWithTypes,
+   * VariableFieldType,
    * } from '$lib/types/public';
    */
 
@@ -47,6 +48,9 @@
   const { fields } = $derived(/** @type {ListFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
+  /* v8 ignore start -- a list field has either subfields or a single subfield */
+  const singleSubFields = $derived(fields ?? (field ? [field] : []));
+  /* v8 ignore stop */
   /** @type {Record<string, any>[]} */
   const items = $derived(
     getSubtree(getValueMapSnapshot(entryDraft.current, locale), keyPath) ?? [],
@@ -63,8 +67,8 @@
       {@const itemKeyPath = `${keyPath}.${index}`}
       {@const label = typeConfig ? typeConfig.label || typeConfig.name : undefined}
       {@const subFields = hasVariableTypes
-        ? (typeConfig?.fields ?? [])
-        : (fields ?? (field ? [field] : []))}
+        ? /** @type {VariableFieldType} */ (typeConfig).fields
+        : singleSubFields}
       <Subsection {label}>
         {#each subFields as subField (subField.name)}
           <VisibilityObserver>

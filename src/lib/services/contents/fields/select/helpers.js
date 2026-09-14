@@ -5,7 +5,7 @@ import { getOrCreateBounded } from '$lib/services/utils/cache';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
- * @import { FieldKeyPath, SelectField } from '$lib/types/public';
+ * @import { FieldKeyPath, SelectField, SelectFieldValue } from '$lib/types/public';
  */
 
 /**
@@ -91,4 +91,38 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
     },
     MAX_LABEL_CACHE_SIZE,
   );
+};
+
+/**
+ * Get the labels to be shown in the preview of a Select field. A value is shown by its label if
+ * the options have labels; otherwise, or if the value is not found in the options, it’s shown as
+ * is.
+ * @param {object} args Arguments.
+ * @param {SelectField} args.fieldConfig Field configuration.
+ * @param {SelectFieldValue | SelectFieldValue[] | undefined} args.currentValue Stored value(s).
+ * @returns {string[]} Labels, sorted if there are multiple values. Empty if there is no value.
+ */
+export const getPreviewLabels = ({ fieldConfig, currentValue }) => {
+  const { options, multiple = false } = fieldConfig;
+  const hasLabels = isObjectArray(options);
+
+  /**
+   * Get the label by value.
+   * @param {SelectFieldValue} value Stored value.
+   * @returns {string} Label.
+   */
+  const getLabel = (value) =>
+    hasLabels
+      ? /** @type {{ label: string, value: SelectFieldValue }[]} */ (options).find(
+          (o) => o.value === value,
+        )?.label || String(value)
+      : String(value);
+
+  if (multiple) {
+    return Array.isArray(currentValue) ? currentValue.map(getLabel).sort() : [];
+  }
+
+  return currentValue === undefined
+    ? []
+    : [getLabel(/** @type {SelectFieldValue} */ (currentValue))];
 };

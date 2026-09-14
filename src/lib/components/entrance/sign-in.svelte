@@ -18,10 +18,11 @@
 
   const configuredBackend = $derived(/** @type {Backend} */ (cmsConfig.current?.backend));
   const backendName = $derived(/** @type {string} */ (configuredBackend.name));
-  const backend = $derived(backendName ? allBackendServices[backendName] : null);
+  const backend = $derived(allBackendServices[backendName]);
   const isTestRepo = $derived(backendName === 'test-repo');
+  // The test repository has no `repo` option, and the name only goes with the local option
   const repositoryName = $derived(
-    isTestRepo ? undefined : /** @type {GitBackend} */ (configuredBackend)?.repo?.split('/').pop(),
+    /** @type {GitBackend} */ (configuredBackend).repo?.split('/').pop(),
   );
   const showLocalBackendOption = $derived(env.isLocalHost && !isTestRepo);
   const trimmedToken = $derived(token.trim());
@@ -145,7 +146,7 @@
   bind:open={showTokenDialog}
   bind:value={token}
   title={_('sign_in_using_access_token')}
-  textboxAttrs={{ spellcheck: false, 'aria-label': _('personal_access_token') }}
+  textboxAttrs={{ spellcheck: false, ariaLabel: _('personal_access_token') }}
   okLabel={_('sign_in')}
   okDisabled={!trimmedToken}
   onOk={() => {

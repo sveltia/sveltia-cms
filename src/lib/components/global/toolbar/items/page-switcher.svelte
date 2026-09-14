@@ -9,7 +9,6 @@
     selectedCloudService,
   } from '$lib/services/assets/external';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
-  import { backendName } from '$lib/services/backends';
   import { searchMode } from '$lib/services/search';
   import { env } from '$lib/services/user/env.svelte';
   import { workflowEnabled } from '$lib/services/workflow';
@@ -68,15 +67,6 @@
       });
     }
 
-    if (backendName.current === 'local') {
-      // _pages.push({
-      //   key: 'config',
-      //   label: _('cms_config'),
-      //   icon: 'settings',
-      //   link: '/config',
-      // });
-    }
-
     if (env.isSmallScreen) {
       _pages.push({
         key: 'menu',
@@ -92,7 +82,7 @@
 </script>
 
 <div role="none" class="wrapper">
-  <SelectButtonGroup aria-label={_('switch_page')} aria-controls="page-container">
+  <SelectButtonGroup ariaLabel={_('switch_page')} aria-controls="page-container">
     {#each pages as { key, label, icon, link, searchMode: sMode }, index (key)}
       <SelectButton
         variant="ghost"

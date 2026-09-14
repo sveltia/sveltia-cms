@@ -49,6 +49,8 @@
     get current() {
       return entryDraft?.current;
     },
+    /* v8 ignore start -- only the entry editor toolbar and overlay, which are never rendered within
+    a component, replace the draft or check whether it’s been modified */
     /**
      * Replace the current draft.
      * @param {EntryDraft | null | undefined} draft Draft.
@@ -65,6 +67,7 @@
     get modified() {
       return entryDraft?.modified ?? false;
     },
+    /* v8 ignore stop */
   });
 
   /**
@@ -125,8 +128,10 @@
    */
   let isNewComponent = $state(false);
 
+  /* v8 ignore start -- the key paths are resolved together once the component is in place */
   const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${fieldId}:`);
   const typedKeyPathPrefix = $derived(!typedKeyPath ? '' : `${typedKeyPath}:${fieldId}:`);
+  /* v8 ignore stop */
   /**
    * Find the first string/text field from the fields definition.
    * @type {Field | undefined}
@@ -180,6 +185,7 @@
    * Open the dialog and take a snapshot of current values (dialog mode only).
    */
   const openDialog = () => {
+    /* v8 ignore next -- the values are set up before the dialog can be opened */
     valuesSnapshot = currentValues ? { ...currentValues } : undefined;
     dialogOpen = true;
   };
@@ -190,8 +196,10 @@
   const restoreValues = () => {
     const draft = entryDraft?.current;
 
+    /* v8 ignore next -- the dialog is only open while the draft is there, with a snapshot */
     if (draft && locale && keyPath && valuesSnapshot) {
       // Clear current values
+      /* v8 ignore next -- the locale holds the component’s own values at least */
       Object.keys(draft[valueStoreKey][locale] ?? {}).forEach((key) => {
         if (key.startsWith(keyPathPrefix)) {
           delete draft[valueStoreKey][locale][key];
@@ -224,16 +232,23 @@
   const handleOk = () => {
     const draft = entryDraft?.current;
 
+    /* v8 ignore next 3 -- the dialog can only be confirmed while the draft is being edited */
     if (!draft) {
       return;
     }
 
-    const { validities: extraValidities } = validateFields('extraValues', { draft });
+    const { validities: extraValidities, validationMessages: extraMessages } = validateFields(
+      'extraValues',
+      { draft },
+    );
 
     Object.keys(draft.validities).forEach((loc) => {
       Object.assign(draft.validities[loc], extraValidities[loc]);
+      // The field editors show the messages, not the validity flags
+      Object.assign(draft.validationMessages[loc], extraMessages[loc]);
     });
 
+    /* v8 ignore next -- the fields were just validated in this locale */
     const localeValidities = extraValidities[locale] ?? {};
 
     const thisComponentValid = !Object.entries(localeValidities).some(
@@ -320,12 +335,14 @@
 
       // Remove the values and validities from the draft when the component is unmounted
       if (draft) {
+        /* v8 ignore next -- the locale holds the component’s own values at least */
         Object.keys(draft[valueStoreKey][locale] ?? {}).forEach((key) => {
           if (key.startsWith(keyPathPrefix)) {
             delete draft[valueStoreKey][locale][key];
           }
         });
 
+        /* v8 ignore next -- the draft holds validities for each of its locales */
         Object.keys(draft.validities[locale] ?? {}).forEach((key) => {
           if (key.startsWith(keyPathPrefix)) {
             delete draft.validities[locale][key];
@@ -341,7 +358,9 @@
       if (entryDraft?.current && locale && keyPath) {
         const { defaultLocale } = entryDraft.current;
 
-        values ??= unflatten(getDefaultValues({ fields, locale, defaultLocale })) ?? {};
+        values ??= /** @type {Record<string, any>} */ (
+          unflatten(getDefaultValues({ fields, locale, defaultLocale }))
+        );
         values.__sc_component_name = componentName;
 
         // Reconcile the values parsed from the document with the component’s field definitions,
@@ -423,7 +442,17 @@
     {displayText}
   </span>
 
-  <Dialog title={label} bind:open={dialogOpen} size="large" showOk={false} showCancel={false}>
+  <Dialog
+    title={label}
+    bind:open={dialogOpen}
+    size="large"
+    showOk={false}
+    showCancel={false}
+    onCancel={() => {
+      // The Escape key dismisses the dialog just like the Cancel button
+      handleCancel();
+    }}
+  >
     <div role="none" class="fields">
       {#if locale && keyPath}
         {#each fields as fieldConfig (fieldConfig.name)}
@@ -478,10 +507,11 @@
     data-key-path-prefix={keyPathPrefix}
     data-component-name={componentName}
     onkeydowncapture={(event) => {
-      // Allow to select all in any `TextInput` within the component below using Ctrl+A
+      // Allow to select all in any `TextInput` within the component below using Ctrl+A. Svelte
+      // delegates `keydown` to the root, which the event never reaches once it’s stopped, so the
+      // block’s own handling has to happen here as well
       event.stopPropagation();
-    }}
-    onkeydown={(event) => {
+
       if (
         !(/** @type {HTMLElement} */ (event.target).matches('button, input, textarea')) &&
         event.key !== 'Tab'

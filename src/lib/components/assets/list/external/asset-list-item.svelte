@@ -33,6 +33,18 @@
   const selected = $derived(selectedExternalAssets.current.some((a) => a.id === asset.id));
 
   /**
+   * Show the details of the asset.
+   */
+  const showDetails = () => {
+    const service = selectedCloudService.current;
+
+    /* v8 ignore next 3 -- the list is only shown while a service is selected */
+    if (service) {
+      goto(getExternalAssetPath(service, asset), { transitionType: 'forwards' });
+    }
+  };
+
+  /**
    * Update the asset selection.
    * @param {boolean} _selected Whether the current asset item is selected.
    */
@@ -59,10 +71,6 @@
     focusedExternalAsset.current = asset;
   }}
   onPreview={() => {
-    const service = selectedCloudService.current;
-
-    if (service) {
-      goto(getExternalAssetPath(service, asset), { transitionType: 'forwards' });
-    }
+    showDetails();
   }}
 />

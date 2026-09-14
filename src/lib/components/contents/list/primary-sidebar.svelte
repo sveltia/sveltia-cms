@@ -46,7 +46,7 @@
   <!-- The chevron is the only way to expand or collapse a folder, so that activating a collection
   or a folder always navigates to it -->
   <Tree
-    aria-label={_('collection_list')}
+    ariaLabel={_('collection_list')}
     aria-controls="collection-container"
     expandOnSelect={false}
   >
@@ -79,7 +79,7 @@
         </OptionGroup>
       {:else}
         <!-- Show the singletons just like a file collection -->
-        {@const count = singletons.length}
+        {@const count = singletons.filter((file) => !('divider' in file)).length}
         <OptionGroup label={_('collections')}>
           <TreeItem
             label={_('files')}

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   getEntryOptions,
   getOptions,
+  getRefEntries,
   getReferencedOptionLabel,
   optionCacheMap,
 } from '$lib/services/contents/fields/relation/helpers';
@@ -26,6 +27,9 @@ vi.mock('$lib/services/contents/collection', () => ({
 }));
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(),
+}));
+vi.mock('$lib/services/contents/collection/files', () => ({
+  getCollectionFileEntry: vi.fn(),
 }));
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   isCollectionIndexFile: vi.fn(),
@@ -1788,5 +1792,35 @@ describe('Test getOptions()', async () => {
       expect(resolvedLabels[0]).toBe(options[0].label);
       expect(resolvedLabels[1]).toBe(options[1].label);
     });
+  });
+});
+
+describe('Test getRefEntries()', async () => {
+  const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
+  const { getCollectionFileEntry } = await import('$lib/services/contents/collection/files');
+  const entry = /** @type {Entry} */ ({ id: 'entry-1', locales: {} });
+
+  test('should return the entries of the referenced collection', () => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([entry]);
+
+    expect(getRefEntries({ ...baseFieldConfig, collection: 'members' })).toEqual([entry]);
+    expect(getEntriesByCollection).toHaveBeenCalledWith('members');
+    expect(getCollectionFileEntry).not.toHaveBeenCalled();
+  });
+
+  test('should return the referenced file of a file collection', () => {
+    vi.mocked(getCollectionFileEntry).mockReturnValue(entry);
+
+    expect(getRefEntries({ ...baseFieldConfig, collection: 'data', file: 'members' })).toEqual([
+      entry,
+    ]);
+    expect(getCollectionFileEntry).toHaveBeenCalledWith('data', 'members');
+    expect(getEntriesByCollection).not.toHaveBeenCalled();
+  });
+
+  test('should return an empty array if the referenced file is not found', () => {
+    vi.mocked(getCollectionFileEntry).mockReturnValue(undefined);
+
+    expect(getRefEntries({ ...baseFieldConfig, collection: 'data', file: 'missing' })).toEqual([]);
   });
 });

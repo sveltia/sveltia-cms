@@ -81,7 +81,7 @@
 <div role="none" class="sidebar">
   <SelectButtonGroup
     class="tabs"
-    aria-label={_('entry_sidebar.sidebar_panels')}
+    ariaLabel={_('entry_sidebar.sidebar_panels')}
     aria-controls="entry-sidebar-content"
   >
     {#each tabs as { key, label, icon, disabled } (key)}

@@ -53,6 +53,20 @@
       getValueMapSnapshot(entryDraft.current, sourceLanguage)[keyPath] ===
         getValueMapSnapshot(entryDraft.current, targetLanguage)[keyPath]) ||
     (translate && !(await translator.current?.availability({ sourceLanguage, targetLanguage })));
+
+  /**
+   * Copy or translate the field from another locale.
+   * @param {LanguagePair} languagePair Language pair.
+   */
+  const copy = (languagePair) => {
+    /* v8 ignore next 6 -- the menu is only offered while the draft is there */
+    if (entryDraft.current) {
+      copyFromLocale({
+        draft: entryDraft.current,
+        options: { ...languagePair, keyPath, translate },
+      });
+    }
+  };
 </script>
 
 {#snippet localeItems()}
@@ -66,12 +80,7 @@
           : _(translate ? 'translate_from_x' : 'copy_from_x', { values: { locale: localeLabel } })}
         {disabled}
         onclick={() => {
-          if (entryDraft.current) {
-            copyFromLocale({
-              draft: entryDraft.current,
-              options: { ...languagePair, keyPath, translate },
-            });
-          }
+          copy(languagePair);
         }}
       />
     {/await}

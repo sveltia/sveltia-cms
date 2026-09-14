@@ -80,16 +80,18 @@
           {:else if notFound}
             <NotFound message={_('page_not_found')} backPath="/settings" />
           {:else}
-            <Menu aria-label={_('settings')}>
-              {#each panels.current as { key, icon } (key)}
-                <MenuItem
-                  label={_(`prefs.${key}.title`)}
-                  onclick={() => goto(`/settings/${key}`, { transitionType: 'forwards' })}
-                >
-                  {#snippet startIcon()}
-                    <Icon name={icon} />
-                  {/snippet}
-                </MenuItem>
+            <Menu ariaLabel={_('settings')}>
+              {#each panels.current as { key, icon, enabled = true } (key)}
+                {#if enabled}
+                  <MenuItem
+                    label={_(`prefs.${key}.title`)}
+                    onclick={() => goto(`/settings/${key}`, { transitionType: 'forwards' })}
+                  >
+                    {#snippet startIcon()}
+                      <Icon name={icon} />
+                    {/snippet}
+                  </MenuItem>
+                {/if}
               {/each}
             </Menu>
           {/if}

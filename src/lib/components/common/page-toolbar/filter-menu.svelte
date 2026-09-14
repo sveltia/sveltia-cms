@@ -34,7 +34,7 @@
 
 <MenuButton variant="ghost" label={label || _('filter')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
-    <Menu aria-label={_('filtering_options')} aria-controls={ariaControls}>
+    <Menu ariaLabel={_('filtering_options')} aria-controls={ariaControls}>
       {#if multiple}
         {#each filters as filter (`${filter.field}|${String(filter.pattern)}`)}
           {@const { label: _label, field, pattern } = filter}

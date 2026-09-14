@@ -9,6 +9,7 @@ import {
   getInputValue,
   getParser,
   isValidDate,
+  shouldUpdateValue,
 } from './helpers';
 
 /**
@@ -2879,5 +2880,73 @@ describe('getParser', () => {
 
     expect(result.isValid()).toBe(true);
     expect(result.format('YYYY-MM-DD')).toBe('2023-12-25');
+  });
+});
+
+describe('shouldUpdateValue', () => {
+  /** @type {DateTimeField} */
+  const fieldConfig = { ...baseFieldConfig };
+
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  test('should not update when there is no new value', () => {
+    expect(
+      shouldUpdateValue({ newValue: undefined, currentValue: '2024-01-15T10:30', fieldConfig }),
+    ).toBe(false);
+  });
+
+  test('should not update when the values are identical', () => {
+    expect(
+      shouldUpdateValue({
+        newValue: '2024-01-15T10:30',
+        currentValue: '2024-01-15T10:30',
+        fieldConfig,
+      }),
+    ).toBe(false);
+  });
+
+  test('should not update when the values resolve to the same instant', () => {
+    expect(
+      shouldUpdateValue({
+        newValue: '2024-01-15T10:30:00.000Z',
+        currentValue: '2024-01-15T19:30:00.000+09:00',
+        fieldConfig,
+      }),
+    ).toBe(false);
+  });
+
+  test('should update when the values resolve to different instants', () => {
+    expect(
+      shouldUpdateValue({
+        newValue: '2024-01-15T10:30:00.000Z',
+        currentValue: '2024-01-15T10:31:00.000Z',
+        fieldConfig,
+      }),
+    ).toBe(true);
+  });
+
+  test('should update when only one of the values resolves to a date', () => {
+    expect(
+      shouldUpdateValue({ newValue: '2024-01-15T10:30', currentValue: undefined, fieldConfig }),
+    ).toBe(true);
+    expect(
+      shouldUpdateValue({ newValue: 'invalid', currentValue: '2024-01-15T10:30', fieldConfig }),
+    ).toBe(true);
+  });
+
+  test('should update when clearing the field', () => {
+    expect(shouldUpdateValue({ newValue: '', currentValue: 'invalid', fieldConfig })).toBe(true);
+    expect(shouldUpdateValue({ newValue: '', currentValue: undefined, fieldConfig })).toBe(true);
+  });
+
+  test('should not update when neither value resolves to a date', () => {
+    expect(shouldUpdateValue({ newValue: 'invalid', currentValue: 'garbage', fieldConfig })).toBe(
+      false,
+    );
+    expect(shouldUpdateValue({ newValue: 'invalid', currentValue: undefined, fieldConfig })).toBe(
+      false,
+    );
   });
 });

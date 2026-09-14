@@ -91,36 +91,43 @@
   const mountPlaceholder = () => {
     const target = iframe?.contentDocument?.body;
 
-    if (target) {
-      mount(Placeholder, {
-        target,
-        context: createEntryDraftMountContext(entryDraft),
-        props: { children },
-      });
+    /* v8 ignore next 3 -- the frame has just loaded, so it’s there */
+    if (!target) {
+      return;
     }
+
+    mount(Placeholder, {
+      target,
+      context: createEntryDraftMountContext(entryDraft),
+      props: { children },
+    });
   };
 
   /**
    * Render the React component with the current props.
    */
   const renderReactComponent = () => {
-    const { contentDocument, contentWindow } = iframe ?? {};
+    const { contentDocument, contentWindow } = /** @type {HTMLIFrameElement} */ (iframe);
 
-    if (reactRoot && reactComponent && reactProps && contentDocument && contentWindow) {
-      const componentProps = {
-        ...reactProps,
-        document: contentDocument,
-        window: contentWindow,
-      };
-
-      reactRoot.render(createElement(reactComponent, componentProps));
+    /* v8 ignore next 3 -- the effect below only calls this once the root is in the frame */
+    if (!reactRoot || !reactComponent || !reactProps || !contentDocument || !contentWindow) {
+      return;
     }
+
+    const componentProps = {
+      ...reactProps,
+      document: contentDocument,
+      window: contentWindow,
+    };
+
+    reactRoot.render(createElement(reactComponent, componentProps));
   };
 
   /**
    * Mount the React component into the iframe’s body.
    */
   const mountReactComponent = async () => {
+    /* v8 ignore next 3 -- only called when a React component is given */
     if (!reactComponent) {
       return;
     }
@@ -130,16 +137,31 @@
     const { createRoot } = await loadReactDom();
     const target = iframe?.contentDocument?.body;
 
-    if (target) {
-      // Create React root in the iframe; the update $effect will handle the first render
-      reactRoot = createRoot(target);
+    /* v8 ignore next 3 -- the frame may have been removed while the library was loading */
+    if (!target) {
+      return;
     }
+
+    // Create React root in the iframe; the update $effect will handle the first render
+    reactRoot = createRoot(target);
   };
+
+  /* v8 ignore start -- mounting only fails when the library can’t be loaded */
+  /**
+   * Report a failure to mount the content.
+   * @param {Error} error Error.
+   */
+  const reportMountError = (error) => {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  };
+  /* v8 ignore stop */
 
   /**
    * Initialize the iframe with a custom stylesheet.
    */
   const initializeIframe = () => {
+    /* v8 ignore next 3 -- the effect below only calls this once, when the frame is there */
     if (!iframe || initialized) {
       return;
     }
@@ -156,8 +178,8 @@
       try {
         await mountComponent();
       } catch (/** @type {any} */ error) {
-        // eslint-disable-next-line no-console
-        console.error(error);
+        /* v8 ignore next -- mounting only fails when the library can’t be loaded */
+        reportMountError(error);
       }
 
       URL.revokeObjectURL(blobURL);

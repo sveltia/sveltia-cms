@@ -38,6 +38,7 @@
   const validate = async () => {
     const draft = entryDraft.current;
 
+    /* v8 ignore next 3 -- the panel is only shown while the draft is there, one check at a time */
     if (!draft || validating) {
       return;
     }
@@ -67,7 +68,7 @@
       }}
     />
   {/snippet}
-  {#if validities && hasResults}
+  {#if hasResults}
     {#each Object.entries(validationMessages) as [locale, messagesByKey] (locale)}
       {@const valueMap = currentValues?.[locale]}
       {@const label = getLocaleLabel(locale)}

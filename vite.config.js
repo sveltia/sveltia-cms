@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { isObject } from '@sveltia/utils/object';
+import { playwright } from '@vitest/browser-playwright';
 import React from 'react';
 import Sonda from 'sonda/vite';
 import { createGenerator } from 'ts-json-schema-generator';
@@ -113,6 +114,14 @@ const yamlToJS = () => ({
     return `export default ${JSON.stringify(parsed)};`;
   },
 });
+
+/**
+ * Glob matching the component tests. A component test is written next to the `.svelte` file it
+ * tests, with a `.svelte.test.js` suffix so it can use runes, and runs in a real browser: the
+ * `@sveltia/ui` components rely on layout, focus and popovers, which a simulated DOM can’t provide.
+ * Everything else runs in Node, or in jsdom with a `@vitest-environment` comment.
+ */
+const COMPONENT_TESTS = 'src/lib/components/**/*.svelte.test.js';
 
 /**
  * Copy essential package files while modifying the `package.json` content.
@@ -506,6 +515,9 @@ export default defineConfig({
     // development. Production is unaffected: the default locale is imported from the YAML file
     // directly, and the other locales are fetched from the CDN
     exclude: ['@sveltia/ui'],
+    // Pre-bundle the packages the component tests only get to late in a run, or Vite discovers
+    // them mid-run and reloads the browser, failing whatever tests are loading at that moment
+    include: ['create-react-class'],
   },
   define: {
     'import.meta.env.VITE_APP_LOCALES': JSON.stringify(getAppLocales().join(',')),
@@ -569,13 +581,52 @@ export default defineConfig({
   ],
   test: {
     exclude: [...defaultExclude, '.claude/**'],
+    // Coverage is collected from the `unit` project only, see `test:unit:coverage` in
+    // `package.json`. The component tests don’t add to it, and a module that both projects load
+    // gets a different branch map from each, as Svelte compiles a `.svelte.js` file differently for
+    // the browser, so merging the two reports would count the same branch twice. The `.svelte`
+    // components are measured separately by `test:components:coverage`, which overrides `include`
+    // and lowers the branch threshold: the Svelte compiler inserts a `?? ''` for every text or
+    // class interpolation mixed with static text, and those branches can neither be reached nor
+    // annotated, so the components are held at the figure they reach with everything else covered
     coverage: {
       include: ['src/lib/{components,services}/**/*.js'],
       reporter: ['text', 'json-summary', 'json'],
+      thresholds: {
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100,
+      },
     },
     env: {
       TZ: 'UTC',
     },
     silent: true,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          exclude: [...defaultExclude, '.claude/**', COMPONENT_TESTS],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'browser',
+          include: [COMPONENT_TESTS],
+          setupFiles: ['./vitest.browser.setup.js'],
+          browser: {
+            enabled: true,
+            headless: true,
+            // Pin the time zone and language like the `env` option above does for Node, so a
+            // date or number is formatted the same wherever the tests run
+            provider: playwright({ contextOptions: { timezoneId: 'UTC', locale: 'en-US' } }),
+            instances: [{ browser: 'chromium' }],
+          },
+        },
+      },
+    ],
   },
 });

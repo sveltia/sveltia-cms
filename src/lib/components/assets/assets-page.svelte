@@ -62,18 +62,17 @@
   let isIndexPage = $state(false);
   let isSearchPage = $state(false);
   let notFound = $state(false);
+  /** Counter to ignore an outdated navigation once a newer one has started. */
+  let navigationCount = 0;
 
-  const selectedAssetFolderLabel = $derived.by(() => {
-    if (selectedCloudService.current) {
-      return selectedCloudService.current.serviceLabel;
-    }
-
-    // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized
-    // label
-    return appLocale.current && selectedAssetFolder.current
+  // The label is only used for a repository folder, as a cloud storage service has an area of its
+  // own. `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized
+  // label
+  const selectedAssetFolderLabel = $derived(
+    appLocale.current && selectedAssetFolder.current
       ? getFolderLabelByCollection(selectedAssetFolder.current)
-      : '';
-  });
+      : '',
+  );
 
   /**
    * Select a cloud storage service listed under External Locations, whose assets are shown in
@@ -125,6 +124,9 @@
     isIndexPage = false;
     isSearchPage = false;
     notFound = false;
+    navigationCount += 1;
+
+    const currentCount = navigationCount;
 
     if (!match?.groups) {
       showAssetOverlay.current = false;
@@ -204,6 +206,11 @@
       // Wait for `selectedAssetFolderLabel` to be updated
       await sleep(100);
 
+      if (currentCount !== navigationCount) {
+        // The user has moved on in the meantime, and the newer navigation has taken over
+        return;
+      }
+
       showAssetOverlay.current = false;
       announcedPageStatus.current = _('viewing_x_asset_folder', {
         values: {
@@ -215,9 +222,9 @@
       return;
     }
 
-    overlaidAsset.current = fileName
-      ? allAssets.current.find((asset) => asset.path === `${folderPath}/${fileName}`)
-      : undefined;
+    overlaidAsset.current = allAssets.current.find(
+      (asset) => asset.path === `${folderPath}/${fileName}`,
+    );
     announcedPageStatus.current = overlaidAsset.current
       ? _('viewing_x_asset_details', { values: { name: overlaidAsset.current.name } })
       : _('file_not_found');
@@ -247,6 +254,8 @@
     navigate();
 
     return () => {
+      // Discard a navigation still in flight
+      navigationCount += 1;
       showAssetOverlay.current = false;
     };
   });

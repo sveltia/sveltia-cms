@@ -43,7 +43,13 @@
    * Update the properties above.
    */
   const updateProps = async () => {
-    details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
+    try {
+      details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
+    } catch (/** @type {any} */ ex) {
+      // The file couldn’t be downloaded, so the public URL is unknown
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    }
   };
 
   $effect(() => {
@@ -72,7 +78,8 @@
     uploadingAssets.current = {
       folder: undefined,
       files: [],
-      originalAssets: asset ? [asset] : [],
+      // The item is disabled without an asset
+      originalAssets: [/** @type {Asset} */ (asset)],
     };
     showUploadAssetsDialog.current = true;
   }}
@@ -89,10 +96,9 @@
     {#if prefs.devModeEnabled}
       <MenuItem
         disabled={!backend.current?.repository || !repoBlobURL}
-        label={_('view_on_x', {
-          values: { service: backend.current?.repository?.label },
-          default: _('view_in_repository'),
-        })}
+        label={backend.current?.repository?.label
+          ? _('view_on_x', { values: { service: backend.current.repository.label } })
+          : _('view_in_repository')}
         onclick={() => {
           openNewTab(`${repoBlobURL}?plain=1`);
         }}

@@ -21,10 +21,13 @@
   let open = $state(false);
 
   const asset = $derived(renamingExternalAsset.current);
+  /* v8 ignore start -- the dialog is only shown for a listed asset */
   const { dirname } = $derived(getPathInfo(asset?.id ?? ''));
+  const listedAssets = $derived(externalAssets.current ?? []);
+  /* v8 ignore stop */
   /** Names of the other assets in the same folder on the service. */
   const otherNames = $derived(
-    (externalAssets.current ?? [])
+    listedAssets
       .filter((a) => a.id !== asset?.id && getPathInfo(a.id).dirname === dirname)
       .map((a) => a.fileName),
   );
@@ -37,6 +40,7 @@
   const renameAsset = async (newName) => {
     const service = selectedCloudService.current;
 
+    /* v8 ignore next 3 -- the dialog is only shown for an asset on the selected service */
     if (!asset || !service) {
       return;
     }

@@ -61,11 +61,4 @@
   });
 </script>
 
-<SecretInput
-  bind:value
-  flex
-  autocomplete="off"
-  spellcheck="false"
-  aria-label={ariaLabel}
-  {onchange}
-/>
+<SecretInput bind:value flex autocomplete="off" spellcheck="false" {ariaLabel} {onchange} />

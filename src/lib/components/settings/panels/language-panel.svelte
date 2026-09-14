@@ -29,8 +29,10 @@
   const locales = $derived(
     appLocales
       .map((code) => {
+        /* v8 ignore start -- every supported locale has a label */
         const localizedLabel = getLocaleLabel(code, { displayLocale: appLocale.current }) ?? code;
         const nativeLabel = getLocaleLabel(code, { displayLocale: code }) ?? code;
+        /* v8 ignore stop */
 
         const label =
           localizedLabel === nativeLabel ? localizedLabel : `${localizedLabel} — ${nativeLabel}`;
@@ -55,6 +57,7 @@
    * message doesn’t disappear while the toast is fading out.
    */
   let switchingLocale = $state('');
+  const switchingLocaleLabel = $derived(getLocaleLabel(switchingLocale) ?? switchingLocale);
 
   $effect(() => {
     if (appLocaleLoading.current) {
@@ -68,7 +71,7 @@
   <div role="none">
     {#key appLocale.current}
       <Select
-        aria-label={_('prefs.language.ui_language.select_language')}
+        ariaLabel={_('prefs.language.ui_language.select_language')}
         value={selectedLocale}
         onChange={(event) => {
           prefs.locale = event.detail.value;
@@ -94,10 +97,8 @@
 <!-- Hidden automatically once the strings are loaded, hence `duration={0}` -->
 <Toast show={!!appLocaleLoading.current} duration={0}>
   <Alert status="info">
-    {#if switchingLocale}
-      {_('switching_language', {
-        values: { locale: getLocaleLabel(switchingLocale) ?? switchingLocale },
-      })}
+    {#if switchingLocaleLabel}
+      {_('switching_language', { values: { locale: switchingLocaleLabel } })}
     {/if}
   </Alert>
 </Toast>

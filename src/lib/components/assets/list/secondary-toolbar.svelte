@@ -46,7 +46,7 @@
   const hasMultipleAssets = $derived(totalCount > 1);
 </script>
 
-<Toolbar variant="secondary" aria-label={_('asset_list')}>
+<Toolbar variant="secondary" ariaLabel={_('asset_list')}>
   {#if !(env.isSmallScreen || env.isMediumScreen)}
     <ItemSelector {allItems} {selectedItems} />
   {/if}
@@ -56,7 +56,7 @@
       dir="auto"
       flex={env.isSmallScreen}
       bind:value={searchTerms.current}
-      aria-label={_('assets_dialog.search_for_file')}
+      ariaLabel={_('assets_dialog.search_for_file')}
       aria-controls="asset-list"
     />
   {/if}

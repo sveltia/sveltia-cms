@@ -32,7 +32,7 @@
 </script>
 
 {#if env.isLargeScreen && currentView.current.showInfo}
-  <Group id="asset-info" class="secondary-sidebar" aria-label={_('asset_info')}>
+  <Group id="asset-info" class="secondary-sidebar" ariaLabel={_('asset_info')}>
     {#if asset}
       {@render children(asset)}
     {:else}

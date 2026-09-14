@@ -32,7 +32,7 @@
 
 <MenuButton variant="ghost" label={label || _('group')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
-    <Menu aria-label={_('grouping_options')} aria-controls={ariaControls}>
+    <Menu ariaLabel={_('grouping_options')} aria-controls={ariaControls}>
       <MenuItemRadio
         label={noneLabel || _('sort_keys.none')}
         checked={!currentView.current.group}

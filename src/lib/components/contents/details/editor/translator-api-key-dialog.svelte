@@ -53,7 +53,7 @@
   textboxAttrs={{
     spellcheck: false,
     monospace: true,
-    'aria-label': _('api_key'),
+    ariaLabel: _('api_key'),
   }}
   oninput={() => saveKey()}
   onOk={() => saveKey()}

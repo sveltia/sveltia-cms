@@ -74,8 +74,10 @@
   } = $derived(fieldConfig);
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
+  /* v8 ignore start -- the editor is only rendered while the draft is there */
   const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
   const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
@@ -94,7 +96,9 @@
   );
   const hasVariableTypes = $derived(Array.isArray(types));
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
+  /* v8 ignore start -- only read for an object with variable types */
   const type = $derived(hasVariableTypes ? valueMap[typeKeyPath] : undefined);
+  /* v8 ignore stop */
   const typeConfig = $derived(type ? types?.find(({ name }) => name === type) : undefined);
   const unknownType = $derived(hasVariableTypes && !typeConfig);
   const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
@@ -132,6 +136,7 @@
     suspendAutoDuplication(async () => {
       const draft = entryDraft.current;
 
+      /* v8 ignore next 3 -- the button is only offered while the draft is there */
       if (!draft) {
         return;
       }

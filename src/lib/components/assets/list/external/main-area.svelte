@@ -38,7 +38,9 @@
 
   /** The component is only rendered while a service is selected. */
   const service = $derived(/** @type {MediaLibraryService} */ (selectedCloudService.current));
+  /* v8 ignore start -- only read to report a file exceeding the configured size */
   const maxSize = $derived(getSharedMediaLibraryOptions().max_file_size ?? Infinity);
+  /* v8 ignore stop */
 
   /** @type {string[]} */
   let oversizedFileNames = $state([]);

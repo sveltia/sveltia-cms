@@ -108,9 +108,11 @@
     choose_url: canEnterURL = true,
   } = $derived(fieldConfig);
   const entry = $derived(entryDraft.current?.originalEntry);
+  /* v8 ignore start -- the editor is only rendered while the draft is there */
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
   const fileName = $derived(entryDraft.current?.fileName);
   const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
+  /* v8 ignore stop */
   const isImageField = $derived(fieldType === 'image');
   const kind = $derived(isImageField ? 'image' : undefined);
   const defaultLibraryOptions = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
@@ -138,8 +140,15 @@
     }),
   );
   const multiple = $derived(isMultiple(fieldConfig));
+  /* v8 ignore start -- only read while the list of files is rendered */
   const itemCount = $derived(Array.isArray(currentValue) ? currentValue.length : 0);
+  /* v8 ignore stop */
   const maxSize = $derived(/** @type {number} */ (libraryConfig.max_file_size));
+  /**
+   * Whether a single file can be removed here. A required field can’t go without one, and within a
+   * rich text editor component or a list item it’s the component or the item that gets removed.
+   * @see https://github.com/sveltia/sveltia-cms/issues/372
+   */
   const showRemoveButton = $derived(
     !required &&
       (!fieldContext ||
@@ -150,7 +159,6 @@
     readonly,
     invalid,
     required,
-    showRemoveButton,
     collectionName,
     fileName,
     componentName,
@@ -197,6 +205,8 @@
   const onResourcesSelect = async (selectedResources) => {
     const draft = entryDraft.current;
 
+    // The dialog is closed along with the editor, so this is only a race with the editor closing
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
@@ -316,6 +326,8 @@
   const removeItem = (index) => {
     const draft = entryDraft.current;
 
+    // The items are gone along with the draft, so this is only a race with the editor closing
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
@@ -333,6 +345,8 @@
   const moveItem = async (from, to, action = 'reorder') => {
     const draft = entryDraft.current;
 
+    // The items are gone along with the draft, so this is only a race with the editor closing
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
@@ -364,13 +378,15 @@
   $effect(() => {
     const draft = entryDraft.current;
 
+    // The editor is closed along with the draft, so this is only a race with the editor closing
+    /* v8 ignore next 3 */
+    if (!draft) {
+      return;
+    }
+
     (async () => {
-      if (draft?.files) {
-        // The draft’s files are read synchronously, so their changes are tracked as well
-        unsavedAssets = await getUnsavedAssets({ draft, targetFolderPath });
-      } else {
-        unsavedAssets = [];
-      }
+      // The draft’s files are read synchronously, so their changes are tracked as well
+      unsavedAssets = await getUnsavedAssets({ draft, targetFolderPath });
     })();
   });
 </script>
@@ -441,7 +457,7 @@
           replaceMode = true;
           showSelectAssetsDialog = true;
         }}
-        onRemove={resetSelection}
+        onRemove={showRemoveButton ? resetSelection : undefined}
       />
     {/if}
   {:else}

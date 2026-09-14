@@ -29,7 +29,7 @@
   />
 {/snippet}
 
-<Menu aria-label={_('help')}>
+<Menu ariaLabel={_('help')}>
   <ShortcutsMenuItem {menuButton} />
   {#if prefs.devModeEnabled}
     {@render link('documentation', 'https://sveltiacms.app/en/docs')}

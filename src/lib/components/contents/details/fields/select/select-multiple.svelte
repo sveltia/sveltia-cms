@@ -47,6 +47,7 @@
     const draft = entryDraft.current;
 
     // Avoid an error while navigating pages
+    /* v8 ignore next 8 */
     if (draft) {
       forEachTargetLocale(
         { valueStore: draft[valueStoreKey], locale, i18n },

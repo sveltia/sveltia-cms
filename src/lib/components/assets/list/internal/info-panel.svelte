@@ -49,8 +49,14 @@
    * Update the properties above.
    */
   const updateProps = async () => {
-    details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
-    details.usedEntries = asset ? await getAssetUsedEntries(asset) : [];
+    try {
+      details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
+      details.usedEntries = asset ? await getAssetUsedEntries(asset) : [];
+    } catch (/** @type {any} */ ex) {
+      // The file couldn’t be downloaded, so only the basic info is shown
+      // eslint-disable-next-line no-console
+      console.error(ex);
+    }
   };
 
   $effect(() => {

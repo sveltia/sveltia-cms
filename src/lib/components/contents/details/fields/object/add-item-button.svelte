@@ -42,7 +42,7 @@
     {/snippet}
     {#snippet endIcon()}{/snippet}
     {#snippet popup()}
-      <Menu aria-label={_('select_list_type')}>
+      <Menu ariaLabel={_('select_list_type')}>
         {#each types as { name, label: itemLabel } (name)}
           <MenuItem label={itemLabel || name} onclick={() => addItem({ type: name })} />
         {/each}

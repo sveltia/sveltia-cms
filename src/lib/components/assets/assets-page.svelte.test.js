@@ -1,0 +1,280 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { announcedPageStatus } from '$lib/services/app/navigation';
+import { allAssets, focusedAsset, overlaidAsset } from '$lib/services/assets';
+import { selectedCloudService } from '$lib/services/assets/external';
+import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import { showAssetOverlay } from '$lib/services/assets/view';
+import { currentView } from '$lib/services/assets/view/settings';
+import { searchMode, searchTerms } from '$lib/services/search';
+import { env } from '$lib/services/user/env.svelte';
+import { prefs } from '$lib/services/user/prefs.svelte';
+import {
+  createMockAsset,
+  createMockEntry,
+  createMockImageFile,
+  initTestConfig,
+  setAssets,
+  setEntries,
+} from '$lib/test/config';
+
+import AssetsPage from './assets-page.svelte';
+
+describe('AssetsPage', () => {
+  beforeEach(async () => {
+    await initTestConfig({
+      site_url: 'https://example.com',
+      media_libraries: { uploadcare: { config: { publicKey: 'abc' } } },
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields: [
+            { name: 'title', widget: 'string' },
+            { name: 'cover', widget: 'image' },
+          ],
+        },
+      ],
+    });
+
+    setAssets([
+      createMockAsset({ name: 'a.png', file: await createMockImageFile({ name: 'a.png' }) }),
+      createMockAsset({ name: 'b.png', file: await createMockImageFile({ name: 'b.png' }) }),
+    ]);
+    setEntries([
+      createMockEntry({
+        slug: 'hello',
+        content: { _default: { title: 'Hello', cover: 'https://cdn.example.net/x.png' } },
+      }),
+    ]);
+
+    env.isSmallScreen = false;
+    env.isLargeScreen = true;
+    prefs.apiKeys = {};
+    prefs.logins = {};
+    currentView.current = { type: 'grid' };
+    selectedAssetFolder.current = undefined;
+    selectedCloudService.current = undefined;
+    showAssetOverlay.current = false;
+    overlaidAsset.current = undefined;
+    // A folder passed as history state by a previous test would be picked up by the router
+    window.history.replaceState(null, '', window.location.href);
+  });
+
+  test('shows all the assets, following the URL', async () => {
+    window.location.hash = '#/assets/-/all';
+
+    const { container } = await render(AssetsPage);
+    const library = page.getByRole('group', { name: 'Asset Library' });
+
+    await expect.element(library.getByRole('listbox', { name: 'Asset Folder List' })).toBeVisible();
+
+    const area = library.getByRole('group', { name: '“\u2068All Assets\u2069” Asset Folder' });
+
+    await expect.element(area.getByRole('grid', { name: 'Assets' })).toBeInTheDocument();
+    await expect.poll(() => area.getByRole('row').elements().length).toBe(2);
+    await expect
+      .poll(() => announcedPageStatus.current)
+      .toBe('You’re now viewing the “\u2068All Assets\u2069” asset folder, which has 2 assets.');
+    expect(container.querySelector('h2')).toHaveTextContent('All Assets');
+
+    // The Global Assets folder is selected from the sidebar
+    window.location.hash = '#/assets/static/uploads';
+    await expect.poll(() => selectedAssetFolder.current?.internalPath).toBe('static/uploads');
+    await expect
+      .element(page.getByRole('group', { name: '“\u2068Global Assets\u2069” Asset Folder' }))
+      .toBeInTheDocument();
+  });
+
+  test('redirects the index to all the assets on a large screen', async () => {
+    window.location.hash = '#/assets';
+
+    await render(AssetsPage);
+    await expect.poll(() => window.location.hash).toBe('#/assets/-/all');
+    await expect
+      .poll(() => announcedPageStatus.current)
+      .toBe('You’re now viewing the “\u2068All Assets\u2069” asset folder, which has 2 assets.');
+  });
+
+  test('shows the folder list alone on a small screen', async () => {
+    env.isSmallScreen = true;
+    window.location.hash = '#/assets';
+
+    await render(AssetsPage);
+
+    await expect.element(page.getByRole('listbox', { name: 'Asset Folder List' })).toBeVisible();
+    await expect
+      .poll(() => announcedPageStatus.current)
+      .toBe('You’re now viewing the asset folder list.');
+    expect(page.getByRole('grid').elements()).toHaveLength(0);
+  });
+
+  test('opens the details of an asset', async () => {
+    window.location.hash = '#/assets/static/uploads/a.png';
+
+    await render(AssetsPage);
+
+    const overlay = page.getByRole('group', { name: 'Asset Editor' });
+
+    await expect.element(overlay).toBeInTheDocument();
+    expect(overlay.element().querySelector('h2')).toHaveTextContent('a.png');
+    expect(announcedPageStatus.current).toBe(
+      'You’re viewing the details of the “\u2068a.png\u2069” asset.',
+    );
+    expect(overlaidAsset.current?.name).toBe('a.png');
+
+    // A missing asset
+    window.location.hash = '#/assets/static/uploads/missing.png';
+    await expect.element(page.getByText('File not found.')).toBeInTheDocument();
+    expect(announcedPageStatus.current).toBe('File not found.');
+
+    // An asset in a subfolder, which isn’t a configured folder
+    window.location.hash = '#/assets/static/uploads/sub/missing.png';
+    await expect.poll(() => selectedAssetFolder.current).toBeUndefined();
+    expect(announcedPageStatus.current).toBe('File not found.');
+  });
+
+  test('shows the info of the focused asset in the sidebar', async () => {
+    window.location.hash = '#/assets/-/all';
+    currentView.current = { type: 'grid', showInfo: true };
+
+    const { container } = await render(AssetsPage);
+    const sidebar = page.getByRole('group', { name: 'Asset Info' });
+
+    await expect.element(sidebar).toHaveTextContent('Select an asset to show its info.');
+
+    const [firstAsset] = allAssets.current;
+
+    focusedAsset.current = firstAsset;
+    await expect
+      .element(sidebar.getByRole('link', { name: 'https://example.com/uploads/a.png' }))
+      .toBeInTheDocument();
+    expect(container.querySelector('#asset-info img')).not.toBeNull();
+  });
+
+  test('redirects to the first external location when no folder is configured', async () => {
+    const folders = allAssetFolders.current;
+
+    allAssetFolders.current = [];
+    window.location.hash = '#/assets';
+
+    try {
+      await render(AssetsPage);
+      await expect.poll(() => window.location.hash).toBe('#/assets/-/uploadcare');
+    } finally {
+      allAssetFolders.current = folders;
+    }
+  });
+
+  test('redirects to the linked files when nothing else is configured', async () => {
+    await initTestConfig({ site_url: 'https://example.com' });
+
+    const folders = allAssetFolders.current;
+
+    allAssetFolders.current = [];
+    window.location.hash = '#/assets';
+
+    try {
+      await render(AssetsPage);
+      await expect.poll(() => window.location.hash).toBe('#/assets/-/linked');
+    } finally {
+      allAssetFolders.current = folders;
+    }
+  });
+
+  test('lists the assets on a cloud storage service once the credentials are there', async () => {
+    vi.spyOn(window, 'fetch').mockRejectedValue(new Error('Offline'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    prefs.apiKeys = { uploadcare: 'key' };
+    window.location.hash = '#/assets/-/uploadcare';
+
+    await render(AssetsPage);
+
+    await expect
+      .element(page.getByRole('alert').nth(0))
+      .toHaveTextContent('There was an error while searching assets. Please try again later.');
+  });
+
+  test('announces the folder the user has settled on', async () => {
+    window.location.hash = '#/assets/-/all';
+
+    await render(AssetsPage);
+    // Move on before the announcement is made
+    window.location.hash = '#/assets/static/uploads';
+
+    await expect
+      .poll(() => announcedPageStatus.current)
+      .toMatch(/^You’re now viewing the “\u2068Global Assets\u2069” asset folder/);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 150);
+    });
+    expect(announcedPageStatus.current).toMatch(
+      /^You’re now viewing the “\u2068Global Assets\u2069” asset folder/,
+    );
+  });
+
+  test('reports a missing folder', async () => {
+    window.location.hash = '#/assets/missing';
+
+    await render(AssetsPage);
+
+    await expect
+      .element(
+        page.getByRole('group', { name: 'Asset Library' }).getByText('Asset folder not found.'),
+      )
+      .toBeInTheDocument();
+    await expect.poll(() => announcedPageStatus.current).toBe('Asset folder not found.');
+  });
+
+  test('shows the files linked from entries', async () => {
+    window.location.hash = '#/assets/-/linked';
+
+    await render(AssetsPage);
+
+    const area = page.getByRole('group', { name: '“\u2068Linked Files\u2069” Asset Folder' });
+
+    await expect.element(area.getByRole('row', { name: 'x.png' })).toBeInTheDocument();
+    expect(selectedCloudService.current?.serviceId).toBe('linked');
+    expect(announcedPageStatus.current).toBe(
+      'You’re now viewing the assets on \u2068Linked Files\u2069.',
+    );
+
+    // The details of a linked file
+    window.location.hash = '#/assets/-/linked/https://cdn.example.net/x.png';
+    await expect.element(page.getByRole('group', { name: 'Asset Editor' })).toBeInTheDocument();
+    expect(announcedPageStatus.current).toBe(
+      'You’re viewing the details of the “\u2068x.png\u2069” asset.',
+    );
+  });
+
+  test('asks for the credentials of a cloud storage service', async () => {
+    window.location.hash = '#/assets/-/uploadcare';
+
+    await render(AssetsPage);
+
+    const area = page.getByRole('group', { name: '“\u2068Uploadcare\u2069” Asset Folder' });
+
+    await expect.element(area.getByRole('textbox')).toBeInTheDocument();
+    expect(selectedCloudService.current?.serviceId).toBe('uploadcare');
+
+    // An unknown service
+    window.location.hash = '#/assets/-/unknown';
+    await expect.element(page.getByText('Asset folder not found.')).toBeInTheDocument();
+  });
+
+  test('shows the search results', async () => {
+    searchMode.current = 'assets';
+    searchTerms.current = 'a';
+    window.location.hash = '#/search/a';
+
+    await render(AssetsPage);
+
+    await expect.element(page.getByRole('toolbar')).toHaveTextContent('Search Results');
+    await expect
+      .element(page.getByRole('grid', { name: 'Assets' }).getByRole('row', { name: /a\.png/ }))
+      .toBeInTheDocument();
+  });
+});

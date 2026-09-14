@@ -82,7 +82,9 @@
   const accept = $derived(
     options.accept ?? (kind === 'image' ? SUPPORTED_IMAGE_TYPES.join(',') : undefined),
   );
+  /* v8 ignore start -- only read to report a file exceeding the configured size */
   const maxSize = $derived(assetOptions?.libraryConfig.max_file_size ?? Infinity);
+  /* v8 ignore stop */
   // The dialog only reads the media library options from the field configuration, which a custom
   // field may define the same way as a File/Image field
   const mediaFieldConfig = $derived(/** @type {MediaField} */ (/** @type {any} */ (fieldConfig)));
@@ -115,6 +117,7 @@
    */
   const onSelect = async (resources) => {
     const draft = entryDraft.current;
+    /* v8 ignore start -- the dialog is only shown while a pick is pending and the draft is there */
     const { resolve, reject } = pending ?? {};
     // Read before the await below: another `pick()` call made in the meantime replaces the options
     const { multiple = false } = options;
@@ -131,6 +134,7 @@
 
       return;
     }
+    /* v8 ignore stop */
 
     try {
       const { files, ...rejected } = await resolvePickedResources({

@@ -13,7 +13,6 @@
   } from '$lib/services/contents/collection/files';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
 
   /**
    * @import {
@@ -43,55 +42,51 @@
   } = $props();
 
   const { entry, locale, keyPath } = $derived(result);
-  const { locales, subPath } = $derived(entry);
+  const { subPath } = $derived(entry);
 </script>
 
 {#snippet resultRow(/** @type {RowArgs} */ { collection, collectionFile })}
-  {@const { defaultLocale } = (collectionFile ?? collection)._i18n ?? DEFAULT_I18N_CONFIG}
-  {@const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {}}
-  {#if content}
-    <GridRow
-      onclick={() => {
-        goto(`/collections/${collection.name}/entries/${collectionFile?.name || subPath}`, {
-          state: { highlight: { locale, keyPath } },
-          transitionType: 'forwards',
-        });
-      }}
-    >
-      <GridCell class="image">
-        {#if collection._type === 'entry'}
-          {#await getEntryThumbnail(collection, entry) then src}
-            {#if src}
-              <Image {src} variant="icon" cover />
+  <GridRow
+    onclick={() => {
+      goto(`/collections/${collection.name}/entries/${collectionFile?.name || subPath}`, {
+        state: { highlight: { locale, keyPath } },
+        transitionType: 'forwards',
+      });
+    }}
+  >
+    <GridCell class="image">
+      {#if collection._type === 'entry'}
+        {#await getEntryThumbnail(collection, entry) then src}
+          {#if src}
+            <Image {src} variant="icon" cover />
+          {/if}
+        {/await}
+      {/if}
+    </GridCell>
+    <GridCell class="collection">
+      {#key appLocale.current}
+        <bdi>{getCollectionLabel(collection)}</bdi>
+      {/key}
+    </GridCell>
+    <GridCell class="title">
+      <div role="none" class="label">
+        <TruncatedText lines={2}>
+          <bdi>
+            {#if collectionFile}
+              {getCollectionFileLabel(collectionFile)}
+            {:else}
+              {#key appLocale.current}
+                {@html getEntrySummary(collection, entry, {
+                  useTemplate: true,
+                  allowMarkdown: true,
+                })}
+              {/key}
             {/if}
-          {/await}
-        {/if}
-      </GridCell>
-      <GridCell class="collection">
-        {#key appLocale.current}
-          <bdi>{getCollectionLabel(collection)}</bdi>
-        {/key}
-      </GridCell>
-      <GridCell class="title">
-        <div role="none" class="label">
-          <TruncatedText lines={2}>
-            <bdi>
-              {#if collectionFile}
-                {getCollectionFileLabel(collectionFile)}
-              {:else}
-                {#key appLocale.current}
-                  {@html getEntrySummary(collection, entry, {
-                    useTemplate: true,
-                    allowMarkdown: true,
-                  })}
-                {/key}
-              {/if}
-            </bdi>
-          </TruncatedText>
-        </div>
-      </GridCell>
-    </GridRow>
-  {/if}
+          </bdi>
+        </TruncatedText>
+      </div>
+    </GridCell>
+  </GridRow>
 {/snippet}
 
 {#each getListedCollections(entry) as collection (collection.name)}

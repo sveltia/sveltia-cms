@@ -26,7 +26,7 @@
 </script>
 
 {#if internalPath !== undefined && env.isLargeScreen && currentView.current.showMedia}
-  <Group id="collection-assets" class="secondary-sidebar" aria-label={_('collection_assets')}>
+  <Group id="collection-assets" class="secondary-sidebar" ariaLabel={_('collection_assets')}>
     <DropZone
       disabled={uploadDisabled}
       multiple={true}

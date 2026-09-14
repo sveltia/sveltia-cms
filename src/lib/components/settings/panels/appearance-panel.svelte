@@ -25,7 +25,7 @@
   <h3>{_('prefs.appearance.theme')}</h3>
   <div role="none">
     <SelectButtonGroup
-      aria-label={_('prefs.appearance.select_theme')}
+      ariaLabel={_('prefs.appearance.select_theme')}
       onChange={(event) => {
         prefs.theme = event.detail.value;
       }}

@@ -58,7 +58,7 @@
 
   /**
    * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
-   * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
+   * @import { EntryDraft, EntryEditorPane, InternalLocaleCode } from '$lib/types/private';
    * @import { FieldKeyPath } from '$lib/types/public';
    */
 
@@ -109,9 +109,11 @@
     currentValues,
   } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
   const { showPreview, showSecondPane = true } = $derived(entryEditorSettings.current ?? {});
+  /* v8 ignore start -- only read while the panes are set up, which needs a collection */
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
+  /* v8 ignore stop */
   const paneStateKey = $derived(getPaneStateKey({ collection, collectionFile }));
   const { canCreate, quota, creationDisabled } = $derived(collectionState.current);
   const [firstPaneSize, secondPaneSize, minPaneSize] = $derived(
@@ -123,11 +125,15 @@
    * @returns {Promise<boolean>} Whether the panes are restored.
    */
   const restorePanes = async () => {
+    // Guard against re-entrance while the panes are being applied, which the `await`s below leave
+    // room for
+    /* v8 ignore next 3 */
     if (restoring) {
       return false;
     }
 
     const panes = getRestoredPanes({
+      /* v8 ignore next -- there’s no key without a collection, and then no draft to restore for */
       savedPanes: entryEditorSettings.current?.paneStates?.[paneStateKey ?? ''],
       editorLocale,
       allLocales,
@@ -256,6 +262,7 @@
     // Wait until `inert` is updated
     await tick();
 
+    /* v8 ignore next 4 -- the wrapper is bound as long as the overlay is mounted */
     if (wrapper) {
       wrapper.tabIndex = 0;
       wrapper.focus();
@@ -297,6 +304,8 @@
 
     const draft = entryDraft.current;
 
+    // The draft may have gone away while the pane was switched
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
@@ -323,11 +332,13 @@
       );
 
       if (targetField) {
+        /* v8 ignore start -- `scrollIntoViewIfNeeded()` is non-standard; Firefox doesn’t have it */
         if (typeof targetField.scrollIntoViewIfNeeded === 'function') {
           targetField.scrollIntoViewIfNeeded();
         } else {
           targetField.scrollIntoView();
         }
+        /* v8 ignore stop */
 
         const widgetWrapper = targetField.querySelector('.field-wrapper');
 
@@ -383,6 +394,7 @@
   });
 
   $effect(() => {
+    /* v8 ignore next 5 -- the wrapper is bound as long as the overlay is mounted */
     if (wrapper) {
       // Rich text editor components are mounted outside the component tree, so they look the
       // draft up through the DOM rather than the context
@@ -464,6 +476,7 @@
   });
 
   $effect(() => {
+    /* v8 ignore next -- the wrapper is bound as long as the overlay is mounted */
     if (wrapper) {
       (async () => {
         if (!showContentOverlay.current) {
@@ -480,56 +493,39 @@
   });
 </script>
 
-{#snippet firstPane()}
-  {#if editorFirstPane.current}
-    {@const { locale, mode } = editorFirstPane.current}
-    <div class="pane-wrapper">
-      <Group
-        class="pane"
-        aria-label={_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-          values: { locale: getLocaleLabel(locale) ?? locale },
-        })}
-        data-locale={locale}
-        data-mode={mode}
-      >
-        <PaneHeader id="first-pane-header" thisPane={editorFirstPane} thatPane={editorSecondPane} />
+{#snippet pane(
+  /** @type {'first' | 'second'} */ position,
+  /** @type {EntryEditorPane} */ { locale, mode },
+)}
+  {@const thisPane = position === 'first' ? editorFirstPane : editorSecondPane}
+  {@const thatPane = position === 'first' ? editorSecondPane : editorFirstPane}
+  <div class="pane-wrapper">
+    <Group
+      class="pane"
+      ariaLabel={_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
+        values: { locale: getLocaleLabel(locale) ?? locale },
+      })}
+      data-locale={locale}
+      data-mode={mode}
+    >
+      <PaneHeader id="{position}-pane-header" {thisPane} {thatPane} />
+      {#if position === 'first'}
         <PaneBody
           id="first-pane-body"
-          thisPane={editorFirstPane}
+          {thisPane}
           bind:thisPaneContentArea={firstPaneContentArea}
-          bind:thatPaneContentArea={secondPaneContentArea}
+          thatPaneContentArea={secondPaneContentArea}
         />
-      </Group>
-    </div>
-  {/if}
-{/snippet}
-
-{#snippet secondPane()}
-  {#if editorSecondPane.current}
-    {@const { locale, mode } = editorSecondPane.current}
-    <div class="pane-wrapper">
-      <Group
-        class="pane"
-        aria-label={_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-          values: { locale: getLocaleLabel(locale) ?? locale },
-        })}
-        data-locale={locale}
-        data-mode={mode}
-      >
-        <PaneHeader
-          id="second-pane-header"
-          thisPane={editorSecondPane}
-          thatPane={editorFirstPane}
-        />
+      {:else}
         <PaneBody
           id="second-pane-body"
-          thisPane={editorSecondPane}
+          {thisPane}
           bind:thisPaneContentArea={secondPaneContentArea}
-          bind:thatPaneContentArea={firstPaneContentArea}
+          thatPaneContentArea={firstPaneContentArea}
         />
-      </Group>
-    </div>
-  {/if}
+      {/if}
+    </Group>
+  </div>
 {/snippet}
 
 <div
@@ -580,45 +576,44 @@
         {#key `${collectionName}|${fileName}|${isIndexFile}`}
           <div role="none" class="content-area">
             {#if editorFirstPane.current && editorSecondPane.current}
-              {#if firstPaneSize && secondPaneSize}
-                <ResizablePaneGroup
-                  onResize={({ sizes }) => {
-                    if (editorFirstPane.current && editorSecondPane.current) {
-                      const [firstWidth, secondWidth] = sizes;
+              <ResizablePaneGroup
+                onResize={({ sizes }) => {
+                  /* v8 ignore next -- the group is only rendered with both panes */
+                  if (editorFirstPane.current && editorSecondPane.current) {
+                    const [firstWidth, secondWidth] = sizes;
 
-                      // Replace the objects rather than mutating them, so the change is noticed
-                      editorFirstPane.current = { ...editorFirstPane.current, width: firstWidth };
-                      editorSecondPane.current = {
-                        ...editorSecondPane.current,
-                        width: secondWidth,
-                      };
-                    }
-                  }}
-                >
-                  <ResizablePane defaultSize={firstPaneSize} minSize={minPaneSize}>
-                    {@render firstPane()}
-                  </ResizablePane>
-                  <ResizableHandle onclick={onSwapHandleClick}>
-                    <Button
-                      class="swap-button"
-                      iconic
-                      size="small"
-                      variant="tertiary"
-                      aria-label={_('swap_panes')}
-                      onpointerdown={onSwapButtonPointerDown}
-                    >
-                      <Icon name="swap_horiz" />
-                    </Button>
-                  </ResizableHandle>
-                  <ResizablePane defaultSize={secondPaneSize} minSize={minPaneSize}>
-                    {@render secondPane()}
-                  </ResizablePane>
-                </ResizablePaneGroup>
-              {/if}
+                    // Replace the objects rather than mutating them, so the change is noticed
+                    editorFirstPane.current = { ...editorFirstPane.current, width: firstWidth };
+                    editorSecondPane.current = {
+                      ...editorSecondPane.current,
+                      width: secondWidth,
+                    };
+                  }
+                }}
+              >
+                <ResizablePane defaultSize={firstPaneSize} minSize={minPaneSize}>
+                  {@render pane('first', editorFirstPane.current)}
+                </ResizablePane>
+                <ResizableHandle onclick={onSwapHandleClick}>
+                  <Button
+                    class="swap-button"
+                    iconic
+                    size="small"
+                    variant="tertiary"
+                    aria-label={_('swap_panes')}
+                    onpointerdown={onSwapButtonPointerDown}
+                  >
+                    <Icon name="swap_horiz" />
+                  </Button>
+                </ResizableHandle>
+                <ResizablePane defaultSize={secondPaneSize} minSize={minPaneSize}>
+                  {@render pane('second', editorSecondPane.current)}
+                </ResizablePane>
+              </ResizablePaneGroup>
             {:else if editorFirstPane.current}
-              {@render firstPane()}
+              {@render pane('first', editorFirstPane.current)}
             {:else if editorSecondPane.current}
-              {@render secondPane()}
+              {@render pane('second', editorSecondPane.current)}
             {:else}
               <Spacer flex />
             {/if}

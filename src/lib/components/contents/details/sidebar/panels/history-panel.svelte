@@ -27,6 +27,7 @@
   const load = async () => {
     const entry = entryDraft.current?.originalEntry;
 
+    /* v8 ignore next 3 -- the panel is only offered for an existing entry */
     if (!entry) {
       return;
     }
@@ -58,9 +59,8 @@
           role="link"
           disabled={!commitURL}
           onclick={() => {
-            if (commitURL) {
-              openNewTab(commitURL);
-            }
+            // The button is disabled without a URL
+            openNewTab(/** @type {string} */ (commitURL));
           }}
         >
           {#if commit.authorAvatarURL}

@@ -51,7 +51,7 @@
 
 <MenuButton variant="ghost" label={label || _('sort')} {disabled} popupPosition="bottom-right">
   {#snippet popup()}
-    <Menu aria-label={_('sorting_options')} aria-controls={ariaControls}>
+    <Menu ariaLabel={_('sorting_options')} aria-controls={ariaControls}>
       {#each sortKeys as sortKey (sortKey.key)}
         {@const { key } = sortKey}
         {#each SORT_ORDERS as order (order)}

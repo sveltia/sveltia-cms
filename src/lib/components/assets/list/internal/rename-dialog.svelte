@@ -31,6 +31,7 @@
    * @param {string} newName New file name.
    */
   const renameAsset = async (newName) => {
+    /* v8 ignore next 3 -- the dialog is only shown for an asset */
     if (!asset) {
       return;
     }

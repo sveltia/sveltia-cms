@@ -14,6 +14,7 @@
     TextInput,
   } from '@sveltia/ui';
   import { getHash } from '@sveltia/utils/crypto';
+  import { untrack } from 'svelte';
 
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
@@ -248,6 +249,7 @@
    * Handle the OK button click.
    */
   const onOk = () => {
+    /* v8 ignore next 3 -- the Insert button is disabled until something is selected */
     if (!selectedResources.length) {
       return;
     }
@@ -269,6 +271,9 @@
     if (firstDefaultLibraryId) {
       // Select the first enabled folder
       libraryName = `default-${firstDefaultLibraryId}`;
+    } else if (untrack(() => pendingFiles.length)) {
+      // Select the first cloud storage service, which can take the files to be uploaded
+      libraryName = enabledCloudServiceEntries[0]?.[0] ?? enabledExternalServiceEntries[0]?.[0];
     } else {
       // Select the first available external service
       libraryName = enabledExternalServiceEntries[0]?.[0];
@@ -296,7 +301,7 @@
 
   // Upload pending files (e.g. dropped on the file editor) to the cloud service panel once mounted
   $effect(() => {
-    if (externalAssetsPanel && pendingFiles.length) {
+    if (externalAssetsPanel && isCloudLibrary && pendingFiles.length) {
       externalAssetsPanel.uploadFiles(pendingFiles);
       pendingFiles = [];
     }
@@ -317,7 +322,7 @@
       bind:value={rawSearchTerms}
       debounce={!isDefaultLibrary}
       disabled={selectedResources.some((r) => r.file)}
-      aria-label={_(`assets_dialog.search_for_${kind ?? 'file'}`)}
+      ariaLabel={_(`assets_dialog.search_for_${kind ?? 'file'}`)}
     />
   {/if}
   {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary')}
@@ -356,7 +361,7 @@
   {#snippet footerExtra()}
     {#if isEnabledMediaService}
       {@const { showServiceLink, serviceLabel, serviceURL } =
-        allStockAssetProviders[/** @type {StockAssetProviderName} */ (libraryName)] ?? {}}
+        allStockAssetProviders[/** @type {StockAssetProviderName} */ (libraryName)]}
       {#if showServiceLink}
         <a href={serviceURL} class="service-link">
           {_('prefs.media.stock_photos.credit', { values: { service: serviceLabel } })}
@@ -368,7 +373,7 @@
     <div role="none" class="nav">
       <Selector
         class="tabs"
-        aria-label={_('assets_dialog.locations')}
+        ariaLabel={_('assets_dialog.locations')}
         aria-controls="{elementIdPrefix}-content-pane"
         filterThreshold={-1}
         onChange={(event) => {

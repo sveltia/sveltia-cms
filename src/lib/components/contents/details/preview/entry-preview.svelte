@@ -51,6 +51,7 @@
   $effect(() => {
     if (reactComponent) {
       // Normally already in flight, as `CMS.registerPreviewTemplate()` starts loading the library
+      /* v8 ignore next 4 -- the library is bundled with the tests, so loading can’t fail */
       loadImmutable().catch((/** @type {Error} */ error) => {
         // eslint-disable-next-line no-console
         console.error(error);

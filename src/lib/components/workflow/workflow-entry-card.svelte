@@ -147,7 +147,7 @@
         <span role="none" class="author"><bdi>{pullRequest.author.name}</bdi></span>
       {/if}
       <span role="none" class="date">
-        {pullRequest.updatedDate.toLocaleDateString(appLocale.current ?? undefined, {
+        {pullRequest.updatedDate.toLocaleDateString(appLocale.current, {
           month: 'short',
           day: 'numeric',
         })}

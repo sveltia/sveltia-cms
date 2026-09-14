@@ -9,6 +9,10 @@
   import { getContext } from 'svelte';
 
   import CharacterCounter from '$lib/components/contents/details/fields/string/character-counter.svelte';
+  import {
+    getStringFieldValue,
+    getStringInputValue,
+  } from '$lib/services/contents/fields/string/helpers';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
   import { watch } from '$lib/services/utils/state.svelte';
 
@@ -43,26 +47,15 @@
 
   const {
     type = 'text',
-    prefix = '',
-    suffix = '',
     // svelte-ignore state_referenced_locally
     use_emoji_autocomplete: useEmojiAutocomplete = type === 'text',
   } = $derived(fieldConfig);
 
   /**
-   * Update {@link inputValue} based on {@link currentValue}. Remove the suffix/prefix if needed.
+   * Update {@link inputValue} based on {@link currentValue}.
    */
   const setInputValue = () => {
-    // Parse the currentValue to string if it’s not a string (e.g., number, boolean, etc.)
-    let newValue = typeof currentValue === 'string' ? currentValue : String(currentValue ?? '');
-
-    if (prefix && newValue.startsWith(prefix)) {
-      newValue = newValue.slice(prefix.length);
-    }
-
-    if (suffix && newValue.endsWith(suffix)) {
-      newValue = newValue.slice(0, -suffix.length);
-    }
+    const newValue = getStringInputValue({ currentValue, fieldConfig });
 
     // Avoid a cycle dependency & infinite loop
     if (inputValue !== newValue) {
@@ -71,15 +64,10 @@
   };
 
   /**
-   * Update {@link currentValue} based on {@link inputValue}. Add the suffix/prefix if needed.
+   * Update {@link currentValue} based on {@link inputValue}.
    */
   const setCurrentValue = () => {
-    let newValue = inputValue;
-
-    // Add affixes only if value is not empty
-    if (newValue.trim() && (prefix || suffix)) {
-      newValue = `${prefix}${newValue}${suffix}`;
-    }
+    const newValue = getStringFieldValue({ inputValue, fieldConfig });
 
     // Avoid a cycle dependency & infinite loop
     if (currentValue !== newValue) {

@@ -31,6 +31,17 @@
   let replaceFilePicker = $state();
 
   const service = $derived(selectedCloudService.current);
+
+  /**
+   * Replace the asset with the given file.
+   * @param {File} file File.
+   */
+  const replaceAsset = (file) => {
+    /* v8 ignore next 3 -- the picker is only opened for an asset */
+    if (asset) {
+      uploadingExternalAssets.current = { files: [file], originalAsset: asset };
+    }
+  };
 </script>
 
 <!-- The items for operations the service doesn’t support are omitted rather than disabled -->
@@ -53,8 +64,6 @@
 <FilePicker
   bind:this={replaceFilePicker}
   onSelect={({ file }) => {
-    if (asset) {
-      uploadingExternalAssets.current = { files: [file], originalAsset: asset };
-    }
+    replaceAsset(file);
   }}
 />

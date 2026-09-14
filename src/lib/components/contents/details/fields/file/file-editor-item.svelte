@@ -3,7 +3,7 @@
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import { isURL } from '@sveltia/utils/string';
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
@@ -18,7 +18,7 @@
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { Asset, AssetKind, Entry } from '$lib/types/private';
+   * @import { Asset, AssetKind, Entry, EntryDraft } from '$lib/types/private';
    * @import { MediaField } from '$lib/types/public';
    */
 
@@ -134,9 +134,11 @@
     if (file) {
       const name = decodeURI(file.name.normalize());
 
-      return entryDraft.current
-        ? getUnsavedFileDisplayPath({ draft: entryDraft.current, blobURL: value, fileName: name })
-        : name;
+      return getUnsavedFileDisplayPath({
+        draft: /** @type {EntryDraft} */ (entryDraft.current),
+        blobURL: value,
+        fileName: name,
+      });
     }
 
     if (!value.startsWith('blob:')) {
@@ -165,6 +167,7 @@
    * excluding the extension, just like the macOS Finder and Windows File Explorer do.
    */
   const startEditing = async () => {
+    /* v8 ignore next 3 -- the Rename button is only offered for an unsaved file */
     if (!file) {
       return;
     }
@@ -181,6 +184,7 @@
    * which is the current field value, remains the same, so no other references have to be updated.
    */
   const renameFile = () => {
+    /* v8 ignore next 3 -- the file is held in the draft as long as it’s shown here */
     if (!file || !entryDraft.current?.files[value]) {
       return;
     }
@@ -258,8 +262,11 @@
       return undefined;
     }
 
-    // Let the Escape key cancel the editing instead of closing the entry editor
-    activeInlineEditors.current += 1;
+    // Let the Escape key cancel the editing instead of closing the entry editor. The count is read
+    // to be updated, which must not make it a dependency, or the effect would loop
+    untrack(() => {
+      activeInlineEditors.current += 1;
+    });
 
     return () => {
       activeInlineEditors.current -= 1;
@@ -313,97 +320,95 @@
     </span>
   {/if}
   <div role="none">
-    {#if typeof value === 'string'}
-      <div role="none" class="path">
-        {#if editing}
-          <TextInput
-            id="{fieldId}-value"
-            dir="auto"
-            flex
-            bind:value={newName}
-            bind:element={inputElement}
-            {invalid}
-            {required}
-            aria-labelledby="{fieldId}-label"
-            aria-errormessage="{fieldId}-error"
-            onkeydown={(/** @type {KeyboardEvent} */ event) => {
-              const { key, isComposing } = event;
+    <div role="none" class="path">
+      {#if editing}
+        <TextInput
+          id="{fieldId}-value"
+          dir="auto"
+          flex
+          bind:value={newName}
+          bind:element={inputElement}
+          {invalid}
+          {required}
+          aria-labelledby="{fieldId}-label"
+          aria-errormessage="{fieldId}-error"
+          onkeydown={(/** @type {KeyboardEvent} */ event) => {
+            const { key, isComposing } = event;
 
-              // Ignore the Enter key while the user is typing with an IME
-              if (isComposing || !(key === 'Enter' || key === 'Escape')) {
-                return;
-              }
+            // Ignore the Enter key while the user is typing with an IME
+            if (isComposing || !(key === 'Enter' || key === 'Escape')) {
+              return;
+            }
 
-              event.preventDefault();
-              event.stopPropagation();
+            event.preventDefault();
+            event.stopPropagation();
 
-              if (key === 'Enter') {
-                applyNewName();
-              } else {
-                editing = false;
-              }
-            }}
-          />
-          <Button
-            size="small"
-            iconic
-            disabled={!finalName}
-            aria-label={_('done')}
-            aria-controls="{fieldId}-value"
-            onclick={() => {
+            if (key === 'Enter') {
               applyNewName();
-            }}
-          >
-            {#snippet startIcon()}
-              <Icon name="check" />
-            {/snippet}
-          </Button>
+            } else {
+              editing = false;
+            }
+          }}
+        />
+        <Button
+          size="small"
+          iconic
+          disabled={!finalName}
+          aria-label={_('done')}
+          aria-controls="{fieldId}-value"
+          onclick={() => {
+            applyNewName();
+          }}
+        >
+          {#snippet startIcon()}
+            <Icon name="check" />
+          {/snippet}
+        </Button>
+        <Button
+          size="small"
+          iconic
+          aria-label={_('cancel')}
+          aria-controls="{fieldId}-value"
+          onclick={() => {
+            editing = false;
+          }}
+        >
+          {#snippet startIcon()}
+            <Icon name="close" />
+          {/snippet}
+        </Button>
+      {:else}
+        <div
+          role="textbox"
+          id="{fieldId}-value"
+          tabindex="0"
+          class="filename"
+          dir="ltr"
+          aria-readonly={readonly}
+          aria-invalid={invalid}
+          aria-required={required}
+          aria-labelledby="{fieldId}-label"
+          aria-errormessage="{fieldId}-error"
+        >
+          {fileDisplayPath}
+        </div>
+        {#if canRename}
           <Button
             size="small"
             iconic
-            aria-label={_('cancel')}
+            aria-label={_('rename')}
             aria-controls="{fieldId}-value"
             onclick={() => {
-              editing = false;
+              startEditing();
             }}
           >
             {#snippet startIcon()}
-              <Icon name="close" />
+              <Icon name="edit" />
             {/snippet}
           </Button>
-        {:else}
-          <div
-            role="textbox"
-            id="{fieldId}-value"
-            tabindex="0"
-            class="filename"
-            dir="ltr"
-            aria-readonly={readonly}
-            aria-invalid={invalid}
-            aria-required={required}
-            aria-labelledby="{fieldId}-label"
-            aria-errormessage="{fieldId}-error"
-          >
-            {fileDisplayPath}
-          </div>
-          {#if canRename}
-            <Button
-              size="small"
-              iconic
-              aria-label={_('rename')}
-              aria-controls="{fieldId}-value"
-              onclick={() => {
-                startEditing();
-              }}
-            >
-              {#snippet startIcon()}
-                <Icon name="edit" />
-              {/snippet}
-            </Button>
-          {/if}
         {/if}
-      </div>
-    {/if}
+      {/if}
+    </div>
     <div role="none">
       {#if onReplace}
         <Button

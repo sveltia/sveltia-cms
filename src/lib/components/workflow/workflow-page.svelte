@@ -332,6 +332,7 @@
   onOk={async () => {
     const entry = targetEntry;
 
+    /* v8 ignore next 7 -- the dialog is only opened for an entry */
     if (entry) {
       await runAction(
         entry,
@@ -359,6 +360,7 @@
   onOk={async () => {
     const entry = targetEntry;
 
+    /* v8 ignore next 3 -- the dialog is only opened for an entry */
     if (!entry) {
       return;
     }

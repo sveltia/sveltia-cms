@@ -41,9 +41,11 @@
   const collection = $derived(entryDraft.current?.collection);
   const collectionFile = $derived(entryDraft.current?.collectionFile);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
+  /* v8 ignore start -- the preview is only rendered while the draft is there */
   const { i18nEnabled, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
+  /* v8 ignore stop */
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
   const canDuplicate = $derived(i18nEnabled && (i18n === 'duplicate' || i18n === 'duplicate_keys'));
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));

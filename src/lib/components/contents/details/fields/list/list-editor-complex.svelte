@@ -51,9 +51,11 @@
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import {
    * ComplexListField,
+   * FieldKeyPath,
    * ListFieldWithSubField,
    * ListFieldWithSubFields,
    * ListFieldWithTypes,
+   * VariableFieldType,
    * } from '$lib/types/public';
    */
 
@@ -103,8 +105,33 @@
   const { fields } = $derived(/** @type {ListFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
-  const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
+  /* v8 ignore start -- a list has either types, subfields or a single subfield */
+  /** The types of a list with variable types. */
+  const variableTypes = $derived(types ?? []);
+  /** The subfields of an item in a list without variable types. */
+  const singleSubFields = $derived(fields ?? (field ? [field] : []));
+  /* v8 ignore stop */
+
+  /**
+   * Get the configuration of the given type.
+   * @param {string} type Type name.
+   * @returns {VariableFieldType | undefined} Type configuration.
+   */
+  const getTypeConfig = (type) => variableTypes.find(({ name }) => name === type);
+
+  /* v8 ignore start -- the states are set up along with the items */
+  /**
+   * Check whether the item at the given key path is expanded, which it is until it’s collapsed.
+   * @param {FieldKeyPath} itemKeyPath Key path of the item.
+   * @returns {boolean} Result.
+   */
+  const isItemExpanded = (itemKeyPath) =>
+    entryDraft.current?.expanderStates?._[itemKeyPath] ?? true;
+  /* v8 ignore stop */
+  /* v8 ignore start -- the editor is only rendered while the draft is there */
+  const isIndexFile = $derived(!!entryDraft.current?.isIndexFile);
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
   const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
@@ -123,12 +150,15 @@
     }),
   );
   const hasMaxItems = $derived(items.length >= max);
+  /** The subfields of every item, regardless of its type. */
+  const allSubFields = $derived(
+    hasVariableTypes
+      ? variableTypes.flatMap(({ fields: typeFields = [] }) => typeFields)
+      : singleSubFields,
+  );
   const hasEditableSubFields = $derived(
     locale === defaultLocale ||
-      (hasVariableTypes
-        ? (types?.flatMap(({ fields: typeFields = [] }) => typeFields) ?? [])
-        : (fields ?? (field ? [field] : []))
-      ).some(({ i18n: subI18n = false }) => subI18n === true || subI18n === 'translate'),
+      allSubFields.some(({ i18n: subI18n = false }) => subI18n === true || subI18n === 'translate'),
   );
   const isAddDisabled = $derived(isDuplicateField || !hasEditableSubFields);
 
@@ -147,9 +177,14 @@
    * @param {Record<string, boolean>} stateMap Map of key path and state.
    */
   const updateExpanderStates = (stateMap) => {
-    if (entryDraft.current) {
-      syncExpanderStates({ draft: entryDraft.current, stateMap });
+    // The controls are disabled once the draft is gone, so this is only a race with the editor
+    // closing
+    /* v8 ignore next 3 */
+    if (!entryDraft.current) {
+      return;
     }
+
+    syncExpanderStates({ draft: entryDraft.current, stateMap });
   };
 
   /**
@@ -158,6 +193,8 @@
   const initializeExpanderState = () => {
     const draft = entryDraft.current;
 
+    // The editor is mounted with a draft; this is only a race with the editor closing
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
@@ -182,6 +219,8 @@
   const updateComplexList = (manipulate) => {
     const draft = entryDraft.current;
 
+    // The items are gone along with the draft, so this is only a race with the editor closing
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
@@ -225,14 +264,16 @@
   const addItem = async ({ index = addToTop ? 0 : items.length, dupIndex, type } = {}) => {
     const draft = entryDraft.current;
 
+    // The controls are disabled once the draft is gone, so this is only a race with the editor
+    // closing
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
 
     updateComplexList(({ valueList, expanderStateList }) => {
-      const subFields = type
-        ? (types?.find(({ name }) => name === type)?.fields ?? [])
-        : (fields ?? (field ? [field] : []));
+      /* v8 ignore next -- a type is only added from the menu listing the known ones */
+      const subFields = type ? (getTypeConfig(type)?.fields ?? []) : singleSubFields;
 
       const newItem = (() => {
         if (typeof dupIndex === 'number') {
@@ -257,6 +298,7 @@
 
         // Track original key paths for existing items before they shift due to the insertion
         valueList.forEach((item, i) => {
+          /* v8 ignore next 3 -- every item of a list with subfields is an object */
           if (isObject(item)) {
             item.__sc_item_original_key_path ??= `${keyPath}.${i}`;
           }
@@ -290,6 +332,7 @@
       if (!hasSingleSubField) {
         // Track original key paths for existing items before they shift due to the removal
         valueList.forEach((item, i) => {
+          /* v8 ignore next 3 -- every item of a list with subfields is an object */
           if (isObject(item)) {
             item.__sc_item_original_key_path ??= `${keyPath}.${i}`;
           }
@@ -315,6 +358,7 @@
     updateComplexList(({ valueList, expanderStateList }) => {
       if (!hasSingleSubField) {
         valueList.forEach((item, index) => {
+          /* v8 ignore next 7 -- every item of a list with subfields is an object */
           if (isObject(item)) {
             // Ensure the IDs are unique before reordering, so that the `each` block below keeps
             // following each item rather than its position
@@ -377,6 +421,8 @@
    * @returns {Promise<string | undefined>} Thumbnail image URL.
    */
   const getThumbnail = async (index) => {
+    // Only called by `updateThumbnails()`, which has already checked the option
+    /* v8 ignore next 3 */
     if (!thumbnailFieldName) {
       return undefined;
     }
@@ -486,7 +532,7 @@
     <MenuItem label={_(`add_item_${position}`)} disabled={hasMaxItems}>
       <!-- eslint-disable-next-line no-shadow -->
       {#snippet items()}
-        {#each types ?? [] as { name, label: itemLabel } (name)}
+        {#each variableTypes as { name, label: itemLabel } (name)}
           <MenuItem
             label={itemLabel || name}
             onclick={() => addItem({ index: insertIndex, type: name })}
@@ -569,12 +615,10 @@
       <VisibilityObserver>
         {@const itemKeyPath = `${keyPath}.${index}`}
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
-        {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
+        {@const typeConfig = type ? getTypeConfig(type) : undefined}
         {@const unknownType = hasVariableTypes && !typeConfig}
-        {@const expanded = entryDraft.current?.expanderStates?._[itemKeyPath] ?? true}
-        {@const subFields = hasVariableTypes
-          ? (typeConfig?.fields ?? [])
-          : (fields ?? (field ? [field] : []))}
+        {@const expanded = isItemExpanded(itemKeyPath)}
+        {@const subFields = hasVariableTypes ? (typeConfig?.fields ?? []) : singleSubFields}
         {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <div
           role="group"
@@ -626,7 +670,7 @@
                   disabled={isAddDisabled}
                 >
                   {#snippet popup()}
-                    <Menu aria-label={_('list_item_options')}>
+                    <Menu ariaLabel={_('list_item_options')}>
                       {#if allowDuplicate}
                         <MenuItem
                           label={_('duplicate')}

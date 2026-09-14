@@ -63,8 +63,10 @@
   const entryDraft = getEntryDraftContext();
 
   const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
+  /* v8 ignore start -- the editor is always rendered within a field editor */
   /** @type {FieldEditorContext} */
   const { fieldContext, parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
+  /* v8 ignore stop */
   const inEditorComponent = fieldContext === 'rich-text-editor-component';
   const componentName = parentComponentNames.at(-1);
 
@@ -109,8 +111,10 @@
     minimal = defaultConfig.minimal ?? false,
   } = $derived(fieldConfig);
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
+  /* v8 ignore start -- the editor is only rendered while the draft is there */
   const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const buttons = $derived(
@@ -277,7 +281,7 @@
     // Remove values that are not present in the editor anymore. Otherwise, they will trigger
     // validation errors when the entry is saved.
     cleanupTimeout = window.setTimeout(() => {
-      Object.keys(draft.extraValues[locale] ?? {}).forEach((key) => {
+      Object.keys(draft.extraValues[locale]).forEach((key) => {
         const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
 
         if (
@@ -360,6 +364,8 @@
   };
 
   $effect(() => {
+    // The wrapper is bound before the effects run, so it’s always there
+    /* v8 ignore next 3 */
     if (!wrapper) {
       return undefined;
     }

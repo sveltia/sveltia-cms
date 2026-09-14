@@ -77,9 +77,11 @@
   const allMediaLibraryOptions = $derived(
     fieldConfig?.media_libraries?.all ?? cmsConfig.current?.media_libraries?.all ?? {},
   );
+  /* v8 ignore start -- only read to report a file exceeding the configured size */
   const maxSize = $derived(
     /** @type {number} */ (allMediaLibraryOptions.max_file_size ?? Infinity),
   );
+  /* v8 ignore stop */
 
   let hasConfig = $state(true);
   let hasAuthInfo = $state(false);
@@ -222,8 +224,8 @@
     const options = getFetchOptions(serviceProps);
 
     apiKey = options.apiKey;
-    userName = options.userName ?? '';
-    password = options.password ?? '';
+    userName = options.userName;
+    password = options.password;
     hasAuthInfo = authType === 'none' || !!apiKey || !!password;
   };
 
@@ -265,7 +267,7 @@
   {:else}
     <div role="none" class="grid-wrapper">
       <SimpleImageGrid {viewType} {gridId} {multiple}>
-        <InfiniteScroll items={listedAssets ?? []} itemKey="id">
+        <InfiniteScroll items={listedAssets} itemKey="id">
           {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
             {#await sleep() then}
               {@const { id, previewURL, description, kind: _kind } = asset}
@@ -287,8 +289,7 @@
                 />
                 {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
                   <AssetPath
-                    path={isStockAssets ? undefined : description}
-                    caption={isStockAssets ? description : undefined}
+                    {...isStockAssets ? { caption: description } : { path: description }}
                   />
                 {/if}
               </SimpleImageGridItem>

@@ -1,5 +1,6 @@
 node_modules
 /package
 /.vite
+/.vitest
 pnpm-lock.yaml
 .claude

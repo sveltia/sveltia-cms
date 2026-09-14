@@ -27,6 +27,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  /* v8 ignore start -- only rendered while a collection is selected, once the locale is loaded */
   const hasOptions = $derived(
     // Use `allEntries.current` as a trigger to update the state when a new entry is created
     allEntries.current && selectedCollection.current
@@ -39,6 +40,7 @@
       ? getIndexFile(selectedCollection.current)?.label
       : '',
   );
+  /* v8 ignore stop */
   const ButtonComponent = $derived(hasOptions ? SplitButton : Button);
 
   /**

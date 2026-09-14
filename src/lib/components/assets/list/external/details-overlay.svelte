@@ -46,7 +46,9 @@
   );
   const kind = $derived(asset?.kind);
   const fileName = $derived(asset?.fileName ?? '');
+  /* v8 ignore start -- only read while the asset is shown */
   const downloadURL = $derived(asset?.downloadURL ?? '');
+  /* v8 ignore stop */
   const type = $derived(mime.getType(fileName));
   const assets = $derived(asset ? [asset] : []);
   const backPath = $derived(getCloudServicePath(service));

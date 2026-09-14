@@ -14,6 +14,7 @@
   /**
    * @typedef {object} Props
    * @property {ViewType} viewType View type.
+   * @property {string} [aria-label] Accessible name of the grid.
    * @property {Snippet} [children] Slot content.
    */
 
@@ -21,6 +22,8 @@
   let {
     /* eslint-disable prefer-const */
     viewType,
+    // The `Grid` component takes its accessible name as a prop; a spread `aria-label` is dropped
+    'aria-label': ariaLabel = undefined,
     children = undefined,
     ...rest
     /* eslint-enable prefer-const */
@@ -29,7 +32,7 @@
 
 <div role="none" class="{viewType}-view">
   {#await sleep() then}
-    <Grid multiple clickToSelect={false} {...rest}>
+    <Grid multiple clickToSelect={false} {ariaLabel} {...rest}>
       {@render children?.()}
     </Grid>
   {/await}

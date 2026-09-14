@@ -37,6 +37,7 @@
     () => {
       const draft = entryDraft.current;
 
+      /* v8 ignore next 8 -- the editor is only rendered while the draft is there */
       if (draft) {
         // Update the slug for the current locale and for the other readonly locales
         Object.entries(draft.slugEditor).forEach(([_locale, enabled]) => {

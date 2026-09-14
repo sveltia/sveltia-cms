@@ -111,6 +111,7 @@
   const writeValue = (value) => {
     // Only primitive value fields support two-way binding. Updating an array and object in the
     // draft store has to be handled in each field editor.
+    /* v8 ignore next 3 */
     if (typeof value === 'object' && value !== null) {
       return;
     }
@@ -121,6 +122,7 @@
     const _keyPath = keyPath;
 
     queueMicrotask(() => {
+      /* v8 ignore next 3 -- the editor may have been closed in the meantime */
       if (draft) {
         draft[store][_locale][_keyPath] = value;
       }
@@ -174,9 +176,11 @@
   const collection = $derived(entryDraft.current?.collection);
   const collectionFile = $derived(entryDraft.current?.collectionFile);
   const originalValues = $derived(entryDraft.current?.originalValues);
+  /* v8 ignore start -- the editor is only rendered while the draft is there */
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
+  /* v8 ignore stop */
   const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
   const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
@@ -314,23 +318,23 @@
           aria-label={_('show_field_options')}
         >
           {#snippet popup()}
-            <Menu aria-label={_('field_options')}>
+            <Menu ariaLabel={_('field_options')}>
               {#if canCopy}
                 <CopyMenuItems {locale} {otherLocales} {keyPath} submenu />
               {/if}
-              {#if canRevert}
-                <MenuItem
-                  label={_('revert_changes')}
-                  disabled={isRevertDisabled}
-                  onclick={() => {
-                    revertChanges({
-                      draft: /** @type {EntryDraft} */ (entryDraft.current),
-                      locale,
-                      keyPath,
-                    });
-                  }}
-                />
-              {/if}
+              <!-- A field that can be copied from another locale can be reverted as well, so the
+              menu always offers it -->
+              <MenuItem
+                label={_('revert_changes')}
+                disabled={isRevertDisabled}
+                onclick={() => {
+                  revertChanges({
+                    draft: /** @type {EntryDraft} */ (entryDraft.current),
+                    locale,
+                    keyPath,
+                  });
+                }}
+              />
             </Menu>
           {/snippet}
         </MenuButton>

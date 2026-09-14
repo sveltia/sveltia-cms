@@ -46,6 +46,8 @@
   let inputElement = $state();
   /** Whether the file name has been auto-selected in the input field. */
   let nameSelected = false;
+  /** Whether to keep the entered name when the dialog is reopened from the confirmation dialog. */
+  let keepName = false;
   let newName = $state('');
 
   const { extension: oldExtension } = $derived(getPathInfo(name));
@@ -80,10 +82,14 @@
     inputElement.setSelectionRange(0, filename.length);
   };
 
-  // Reset the input whenever the dialog is opened
+  // Reset the input whenever the dialog is opened, unless we’re coming back from the confirmation
   $effect(() => {
     if (open) {
-      newName = name;
+      if (!keepName) {
+        newName = name;
+      }
+
+      keepName = false;
       nameSelected = false;
     }
   });
@@ -151,6 +157,7 @@
   }}
   onCancel={() => {
     // Go back to the rename dialog, keeping the entered name
+    keepName = true;
     open = true;
   }}
 />

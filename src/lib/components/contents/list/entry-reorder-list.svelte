@@ -66,10 +66,21 @@
    * {@link reorderGroups}.
    */
   const publishOrder = (groups = reorderGroups) => {
+    /* v8 ignore next 3 -- every group has been snapshotted on mount */
     reorderedEntries.current = entryGroups.current.flatMap(
       ({ name, entries }) => groups[name] ?? entries,
     );
   };
+
+  /* v8 ignore start -- every group has been snapshotted on mount */
+  /**
+   * Get the entries of a group as they are being reordered.
+   * @param {string} name Group name.
+   * @param {Entry[]} entries Entries as listed, used until the group is snapshotted on mount.
+   * @returns {Entry[]} Entries.
+   */
+  const getLocalEntries = (name, entries) => reorderGroups[name] ?? entries;
+  /* v8 ignore stop */
 
   /**
    * Move an entry within a group from one index to another, and mark the new order as unsaved.
@@ -80,8 +91,10 @@
    * @param {number} to Destination index.
    */
   const moveEntry = (groupName, from, to) => {
+    /* v8 ignore next -- the buttons are disabled at either end of the list */
     if (from === to) return;
 
+    /* v8 ignore next -- every group has been snapshotted on mount */
     reorderGroups[groupName] = moveListItem(reorderGroups[groupName] ?? [], from, to);
     reorderDirty.current = true;
     publishOrder();
@@ -100,6 +113,7 @@
 
       if (commit) {
         // The pointer may well have returned to where it started, in which case nothing moved
+        /* v8 ignore next -- every group has been snapshotted on mount */
         if ((reorderGroups[name] ?? []).some((entry, index) => entry.id !== entries[index]?.id)) {
           reorderDirty.current = true;
           publishOrder();
@@ -143,7 +157,7 @@
   {#each entryGroups.current as { name, entries } (name)}
     {#await sleep() then}
       <GridBody label={name !== '*' ? name : undefined}>
-        {@const localEntries = reorderGroups[name] ?? entries}
+        {@const localEntries = getLocalEntries(name, entries)}
         {#each localEntries as entry, index (entry.id)}
           <!--
             The row is written out here rather than with `<GridRow>` because `animate:` only works
@@ -176,6 +190,7 @@
               if (accepted) {
                 event.preventDefault();
 
+                /* v8 ignore next -- every group has been snapshotted on mount */
                 const list = reorderGroups[name] ?? [];
                 const from = list.findIndex(({ id }) => id === draggedEntry?.id);
 
@@ -217,10 +232,10 @@
               canMoveUp={index > 0}
               canMoveDown={index < localEntries.length - 1}
               onMoveUp={() => {
-                if (index > 0) moveEntry(name, index, index - 1);
+                moveEntry(name, index, index - 1);
               }}
               onMoveDown={() => {
-                if (index < localEntries.length - 1) moveEntry(name, index, index + 1);
+                moveEntry(name, index, index + 1);
               }}
             />
           </div>

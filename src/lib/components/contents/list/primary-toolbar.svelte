@@ -45,14 +45,16 @@
   const _sanitize = (str) =>
     sanitize(/** @type {string} */ (marked.parseInline(str)), SANITIZE_OPTIONS);
 
+  /* v8 ignore start -- only read while a collection is selected, once the app locale is loaded */
   const name = $derived(selectedCollection.current?.name ?? '');
-  const description = $derived(selectedCollection.current?.description);
   const collectionLabel = $derived(
     // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
     appLocale.current && selectedCollection.current
       ? getCollectionLabel(selectedCollection.current)
       : name,
   );
+  /* v8 ignore stop */
+  const description = $derived(selectedCollection.current?.description);
   const {
     isEntryCollection,
     canCreate,
@@ -67,7 +69,7 @@
 </script>
 
 {#if selectedCollection.current}
-  <Toolbar variant="primary" aria-label={_('collection')}>
+  <Toolbar variant="primary" ariaLabel={_('collection')}>
     {#if env.isSmallScreen}
       <BackButton
         aria-label={_('back_to_collection_list')}
@@ -136,7 +138,7 @@
         {_('creating_entries_disabled_by_admin')}
       {:else if creationDisabled}
         {_('creating_entries_disabled_by_quota', { values: { quota } })}
-      {:else if nearingQuota}
+      {:else}
         {_('creating_entries_nearing_quota', { values: { quota, remaining } })}
       {/if}
     </Infobar>

@@ -34,7 +34,7 @@
   }}
 >
   <div role="none" class="wrapper">
-    <TabList orientation="vertical" aria-label={_('categories')}>
+    <TabList orientation="vertical" ariaLabel={_('categories')}>
       {#each panels.current as { key, icon, enabled = true } (key)}
         {#if enabled}
           <Tab

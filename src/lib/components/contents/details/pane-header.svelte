@@ -55,6 +55,7 @@
   const collection = $derived(entryDraft.current?.collection);
   const collectionFile = $derived(entryDraft.current?.collectionFile);
   const originalEntry = $derived(entryDraft.current?.originalEntry);
+  /* v8 ignore start -- the header is only rendered for a pane while the draft is there */
   const originalValues = $derived(entryDraft.current?.originalValues ?? {});
   const { i18nEnabled, saveAllLocales, allLocales, defaultLocale } = $derived(
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
@@ -66,6 +67,7 @@
     Object.values(entryDraft.current?.currentLocales ?? {}).filter((enabled) => enabled).length ===
       1,
   );
+  /* v8 ignore stop */
   const otherLocales = $derived(
     i18nEnabled ? allLocales.filter((l) => l !== thisPane.current?.locale) : [],
   );
@@ -80,6 +82,7 @@
         filterRealValues(getValueMapSnapshot(entryDraft.current, thisPane.current.locale)),
       ),
   );
+  /* v8 ignore next -- the header is only rendered for a pane while the draft is there */
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
   // Look the entry up in the store rather than reading the draft, so the preview link follows the
   // head commit as it moves with each save, the same way the entry toolbar does
@@ -96,6 +99,7 @@
   });
   // `PreviewLinkButton` renders nothing when there’s no link to offer, so the link is resolved
   // here as well — the divider above the button has to know whether anything will follow it
+  /* v8 ignore start -- only read for an existing entry, once the pane is set up */
   const previewLink = $derived(
     originalEntry && collection && thisPane.current
       ? getEntryPreviewLink({
@@ -110,10 +114,11 @@
         })
       : undefined,
   );
+  /* v8 ignore stop */
 </script>
 
 <div role="none" {id} class="header">
-  <Toolbar variant="secondary" aria-label={_('secondary')}>
+  <Toolbar variant="secondary" ariaLabel={_('secondary')}>
     {#if i18nEnabled && allLocales.length > 1}
       <LocaleSwitcher {id} {thisPane} {thatPane} />
       {#if (env.isSmallScreen || env.isMediumScreen) && canPreview}
@@ -138,7 +143,7 @@
         aria-label={_('show_content_options_x_locale', { values: { locale: localeLabel } })}
       >
         {#snippet popup()}
-          <Menu aria-label={_('content_options_x_locale', { values: { locale: localeLabel } })}>
+          <Menu ariaLabel={_('content_options_x_locale', { values: { locale: localeLabel } })}>
             {#if canCopy && thisPane.current?.locale}
               <CopyMenuItems locale={thisPane.current.locale} {otherLocales} submenu />
             {/if}
@@ -146,6 +151,7 @@
               label={_('revert_changes')}
               disabled={!canRevert}
               onclick={() => {
+                /* v8 ignore next 3 -- the menu is only offered while the draft is there */
                 if (entryDraft.current) {
                   revertChanges({ draft: entryDraft.current, locale: thisPane.current?.locale });
                 }
@@ -165,6 +171,7 @@
                 disabled={thisPane.current.locale === defaultLocale ||
                   (isLocaleEnabled && isOnlyLocale)}
                 onclick={() => {
+                  /* v8 ignore next 6 -- the menu is only offered for a pane with a locale */
                   if (entryDraft.current) {
                     toggleLocale({
                       draft: entryDraft.current,
@@ -197,11 +204,11 @@
               {#if prefs.devModeEnabled}
                 <MenuItem
                   disabled={!backend.current?.repository?.blobBaseURL}
-                  label={_('view_on_x', {
-                    values: { service: backend.current?.repository?.label },
-                    default: _('view_in_repository'),
-                  })}
+                  label={backend.current?.repository?.label
+                    ? _('view_on_x', { values: { service: backend.current.repository.label } })
+                    : _('view_in_repository')}
                   onclick={() => {
+                    /* v8 ignore next 3 -- the item is only offered for an existing entry */
                     if (originalEntry && thisPane.current) {
                       openNewTab(getEntryRepoBlobURL(originalEntry, thisPane.current.locale));
                     }

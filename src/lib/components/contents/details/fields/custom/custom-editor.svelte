@@ -27,7 +27,8 @@
       const target = document.createElement('div');
 
       mount(TextInput, { target });
-      cachedFieldClassName = target.querySelector('input')?.className ?? '';
+      cachedFieldClassName = /** @type {HTMLInputElement} */ (target.querySelector('input'))
+        .className;
     }
 
     return cachedFieldClassName;
@@ -164,6 +165,7 @@
    * @throws {Error} When no entry is being edited.
    */
   const handlePickFile = async (options) => {
+    /* v8 ignore next 3 -- the picker is mounted along with the control, which can’t call earlier */
     if (!assetPicker) {
       throw new Error('pickFile() can only be called while an entry is being edited');
     }
@@ -190,6 +192,7 @@
    * Render the React component with the current props.
    */
   const renderComponent = () => {
+    /* v8 ignore next 3 -- the effect below only calls this once everything is ready */
     if (!container || !resolvedControl || !immutableLoaded.current || !reactDomLoaded.current) {
       return;
     }
@@ -225,6 +228,7 @@
     // The control is a React component receiving Immutable Maps. Both libraries are normally loaded
     // by the time the editor opens, as `CMS.registerFieldType()` starts loading them, but wait for
     // them in any case; the effect below renders the control once they’re there
+    /* v8 ignore next 4 -- the libraries are bundled with the tests, so loading can’t fail */
     Promise.all([loadImmutable(), loadReactDom()]).catch((/** @type {Error} */ error) => {
       // eslint-disable-next-line no-console
       console.error(error);

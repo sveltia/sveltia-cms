@@ -33,7 +33,11 @@
 
   const collection = $derived(entryDraft.current?.collection);
   const collectionFile = $derived(entryDraft.current?.collectionFile);
+  /* v8 ignore start -- the switcher is only rendered while the draft is there */
   const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
+  const validities = $derived(entryDraft.current?.validities ?? {});
+  const canPreview = $derived(entryDraft.current?.canPreview ?? true);
+  /* v8 ignore stop */
   const listedLocales = $derived(
     env.isSmallScreen || env.isMediumScreen
       ? [...allLocales]
@@ -42,13 +46,11 @@
         ),
   );
   const hasAnyError = $derived(
-    Object.entries(entryDraft.current?.validities ?? {}).some(
+    Object.entries(validities).some(
       ([locale, validityMap]) =>
-        listedLocales.includes(locale) &&
-        Object.values(validityMap ?? {}).some(({ valid }) => !valid),
+        listedLocales.includes(locale) && Object.values(validityMap).some(({ valid }) => !valid),
     ),
   );
-  const canPreview = $derived(entryDraft.current?.canPreview ?? true);
   const useDropDown = $derived(env.isSmallScreen || env.isMediumScreen || allLocales.length >= 5);
   const SelectComponent = $derived(useDropDown ? Select : SelectButtonGroup);
   const OptionComponent = $derived(useDropDown ? Option : SelectButton);
@@ -67,7 +69,7 @@
   <SelectComponent
     value={currentValue}
     class={hasAnyError && useDropDown ? 'error' : undefined}
-    aria-label={_('switch_locale')}
+    ariaLabel={_('switch_locale')}
     aria-controls={id.replace('-header', '-body')}
   >
     <!-- Need an inner to style elements inside the <dialog> -->
@@ -75,9 +77,7 @@
       {#each listedLocales as locale (locale)}
         {@const label = getLocaleLabel(locale) ?? locale}
         {@const disabled = !entryDraft.current?.currentLocales[locale]}
-        {@const hasError = Object.values(entryDraft.current?.validities[locale] ?? {}).some(
-          ({ valid }) => !valid,
-        )}
+        {@const hasError = Object.values(validities[locale]).some(({ valid }) => !valid)}
         <OptionComponent
           {variant}
           {size}
@@ -120,7 +120,10 @@
           selected={thisPane.current?.mode === 'preview'}
           data-mode="preview"
           onSelect={() => {
-            thisPane.current = { mode: 'preview', locale: thatPane.current?.locale ?? '' };
+            thisPane.current = {
+              mode: 'preview',
+              locale: /** @type {EntryEditorPane} */ (thatPane.current).locale,
+            };
           }}
         />
       {/if}

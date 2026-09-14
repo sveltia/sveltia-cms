@@ -49,6 +49,20 @@
     sourceDisabled ||
     !entryDraft.current?.currentLocales[sourceLanguage] ||
     !(await translator.current?.availability({ sourceLanguage, targetLanguage }));
+
+  /**
+   * Translate the field from another locale.
+   * @param {LanguagePair} languagePair Language pair.
+   */
+  const translate = (languagePair) => {
+    /* v8 ignore next 6 -- the button is only offered while the draft is there */
+    if (entryDraft.current) {
+      copyFromLocale({
+        draft: entryDraft.current,
+        options: { ...languagePair, keyPath, translate: true },
+      });
+    }
+  };
 </script>
 
 {#if otherLocales.length === 1}
@@ -68,12 +82,7 @@
       title={label}
       {disabled}
       onclick={() => {
-        if (entryDraft.current) {
-          copyFromLocale({
-            draft: entryDraft.current,
-            options: { ...languagePair, keyPath, translate: true },
-          });
-        }
+        translate(languagePair);
       }}
     >
       {#snippet startIcon()}
@@ -94,7 +103,7 @@
       <Icon name="translate" />
     {/snippet}
     {#snippet popup()}
-      <Menu aria-label={_('translation_options')}>
+      <Menu ariaLabel={_('translation_options')}>
         <CopyMenuItems {locale} {otherLocales} {keyPath} translate={true} />
       </Menu>
     {/snippet}

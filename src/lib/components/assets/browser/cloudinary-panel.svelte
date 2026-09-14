@@ -48,8 +48,12 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {CloudinaryMediaLibrary} */
-  const libOptions = $derived(getMergedLibraryOptions(fieldConfig) ?? {});
+  // The merged options always have the `config` object
+  const libOptions = $derived(
+    /** @type {CloudinaryMediaLibrary & { config: Record<string, any> }} */ (
+      getMergedLibraryOptions(fieldConfig)
+    ),
+  );
 
   /** @type {HTMLIFrameElement | null} */
   let iframe = null;
@@ -60,12 +64,12 @@
   const sendMessage = () => {
     const config = {
       ...Object.fromEntries(
-        Object.entries(libOptions.config ?? {}).filter(([k]) => CONFIG_PROPS.includes(k)),
+        Object.entries(libOptions.config).filter(([k]) => CONFIG_PROPS.includes(k)),
       ),
       multiple,
-      max_files: fieldConfig?.max ?? libOptions.config?.max_files ?? 20,
+      max_files: fieldConfig?.max ?? libOptions.config.max_files ?? 20,
       folder: {
-        path: libOptions.config?.folder?.path ?? '',
+        path: libOptions.config.folder?.path ?? '',
         resource_type: kind ?? 'raw',
       },
     };

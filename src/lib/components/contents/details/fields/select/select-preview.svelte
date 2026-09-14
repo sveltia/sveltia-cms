@@ -5,8 +5,7 @@
   @see https://sveltiacms.app/en/docs/fields/select
 -->
 <script>
-  import { isObjectArray } from '@sveltia/utils/array';
-
+  import { getPreviewLabels } from '$lib/services/contents/fields/select/helpers';
   import { getCanonicalLocale, getDirection, getListFormatter } from '$lib/services/contents/i18n';
 
   /**
@@ -29,26 +28,12 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { options, multiple } = $derived(fieldConfig);
-  const hasLabels = $derived(isObjectArray(options));
   const listFormatter = $derived(getListFormatter(locale));
-
-  /**
-   * Get the display label by value.
-   * @param {SelectFieldValue | SelectFieldValue[]} value Value.
-   * @returns {string} Label.
-   */
-  const getLabel = (value) =>
-    hasLabels
-      ? /** @type {{ label: string, value: string }[]} */ (options).find((o) => o.value === value)
-          ?.label || String(value)
-      : String(value);
+  const labels = $derived(getPreviewLabels({ fieldConfig, currentValue }));
 </script>
 
-{#if multiple && Array.isArray(currentValue) && currentValue.length}
+{#if labels.length}
   <p lang={getCanonicalLocale(locale)} dir={getDirection(locale)}>
-    {listFormatter.format(currentValue.map(getLabel).sort())}
+    {listFormatter.format(labels)}
   </p>
-{:else if currentValue !== undefined}
-  <p lang={getCanonicalLocale(locale)} dir={getDirection(locale)}>{getLabel(currentValue)}</p>
 {/if}

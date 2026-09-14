@@ -5,6 +5,8 @@
   @see https://sveltiacms.app/en/docs/fields/color
 -->
 <script>
+  import { formatHexAsRGB } from '$lib/services/contents/fields/color/helpers';
+
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { ColorField } from '$lib/types/public';
@@ -25,24 +27,7 @@
   } = $props();
 
   const { enableAlpha = false } = $derived(fieldConfig);
-
-  /**
-   * Cast the given hex value to integer.
-   * @param {string} hex Hex value.
-   * @returns {number} Integer value.
-   */
-  const hexToInt = (hex) => Number.parseInt(`0x${hex}`, 16);
-
-  const RGBA_REGEX = /^#(?<r>[0-9a-f]{2})(?<g>[0-9a-f]{2})(?<b>[0-9a-f]{2})(?<a>[0-9a-f]{2})?$/i;
-
-  const rgb = $derived.by(() => {
-    const { r, g, b, a } = currentValue?.match(RGBA_REGEX)?.groups ?? {};
-
-    return r
-      ? `rgb(${hexToInt(r)} ${hexToInt(g)} ${hexToInt(b)}` +
-          `${enableAlpha && a ? ` / ${Math.round((hexToInt(a) / 255) * 100)}%` : ''})`
-      : '';
-  });
+  const rgb = $derived(formatHexAsRGB(currentValue, { enableAlpha }));
 </script>
 
 {#if typeof currentValue === 'string' && currentValue.trim()}

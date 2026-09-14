@@ -592,6 +592,11 @@ file_extension_change_warning: The file may not be displayed or handled correctl
 replace_asset: Replace Asset
 # {$name} is the asset being replaced
 replace_x: Replace {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Replace File
+replace_image: Replace Image
+remove_file: Remove File
+remove_image: Remove Image
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -1319,6 +1324,8 @@ list_item_value: Item Value
 add_x: Add {$name}
 
 # List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: List Item Options
 add_item_above: Add Item Above
 add_item_below: Add Item Below
 

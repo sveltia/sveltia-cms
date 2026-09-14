@@ -42,6 +42,7 @@
    * image from the clipboard and invoke the callback with the pasted file.
    */
   const onPasteButtonClick = async () => {
+    /* v8 ignore next 3 -- the button is disabled, or not offered, in these cases */
     if (disabled || !onFilePaste) {
       return;
     }

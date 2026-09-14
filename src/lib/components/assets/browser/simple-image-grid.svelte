@@ -32,7 +32,7 @@
     id={gridId}
     class={viewType}
     {multiple}
-    aria-label={_('assets_dialog.available_images')}
+    ariaLabel={_('assets_dialog.available_images')}
     onChange={(event) => {
       onChange?.(event.detail);
     }}

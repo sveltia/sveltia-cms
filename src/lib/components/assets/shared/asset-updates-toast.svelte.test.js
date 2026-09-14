@@ -1,0 +1,52 @@
+import { describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+
+import { assetUpdatesToast } from '$lib/services/assets/data';
+import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
+import { waitForToastsToHide } from '$lib/test/toast';
+
+import AssetUpdatesToast from './asset-updates-toast.svelte';
+
+describe('AssetUpdatesToast', () => {
+  test('reports saved assets', async () => {
+    await render(AssetUpdatesToast, {});
+
+    assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, saved: true, count: 2 };
+    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle 2 assets saved.');
+
+    // The toast goes away on its own, resetting the state
+    await waitForToastsToHide();
+    expect(assetUpdatesToast.current.saved).toBe(false);
+
+    // Saving with Editorial Workflow publishes the assets right away
+    assetUpdatesToast.current = {
+      ...UPDATE_TOAST_DEFAULT_STATE,
+      saved: true,
+      published: true,
+      count: 1,
+    };
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('check_circle Asset saved and published.');
+  }, 20000);
+
+  test('reports a moved, renamed or deleted asset', async () => {
+    await render(AssetUpdatesToast, {});
+
+    assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, moved: true, count: 1 };
+    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle Asset moved.');
+    await waitForToastsToHide();
+
+    assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, renamed: true, count: 1 };
+    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle Asset renamed.');
+    await waitForToastsToHide();
+
+    assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, deleted: true, count: 3 };
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('check_circle 3 assets deleted.');
+    await waitForToastsToHide();
+    expect(assetUpdatesToast.current.deleted).toBe(false);
+  }, 30000);
+});

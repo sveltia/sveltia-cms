@@ -46,6 +46,7 @@
    * Save the edited asset.
    */
   const saveAsset = async () => {
+    /* v8 ignore next 10 -- the dialog is only shown once the asset is loaded */
     if (asset && blob && typeof currentValue === 'string') {
       await saveAssets(
         {
@@ -57,6 +58,10 @@
       );
     }
   };
+
+  /* v8 ignore start -- the title is only read while the dialog is open, for an asset */
+  const title = $derived(_('edit_x', { values: { name: asset?.name ?? '' } }));
+  /* v8 ignore stop */
 
   $effect(() => {
     if (asset && blob === undefined) {
@@ -73,7 +78,7 @@
 
 <Dialog
   size="x-large"
-  title={_('edit_x', { values: { name: asset?.name ?? '' } })}
+  {title}
   bind:open
   okLabel={_('save')}
   okDisabled={currentValue === originalValue}

@@ -2,6 +2,7 @@ import { compare } from '@sveltia/utils/string';
 
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import {
   getObjectId,
@@ -96,6 +97,22 @@ const buildOptions = ({ locale, fieldConfig, refEntries, entryFilters = [] }) =>
       defaultLocale,
     }),
   );
+};
+
+/**
+ * Get the entries a Relation field can reference: the entries of the referenced collection, or the
+ * referenced file of a file collection.
+ * @param {RelationField} fieldConfig Field configuration.
+ * @returns {Entry[]} Entries. Empty if the referenced file is not found.
+ */
+export const getRefEntries = ({ collection: collectionName, file: fileName }) => {
+  if (fileName) {
+    const entry = getCollectionFileEntry(collectionName, fileName);
+
+    return entry ? [entry] : [];
+  }
+
+  return getEntriesByCollection(collectionName);
 };
 
 /**

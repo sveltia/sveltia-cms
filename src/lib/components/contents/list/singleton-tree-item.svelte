@@ -20,7 +20,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { name, label, icon } = $derived(file);
+  const { name, icon } = $derived(file);
+  const label = $derived(file.label || name);
 
   /** @type {boolean} */
   let selected = $state(false);
@@ -31,12 +32,12 @@
 <div class="wrapper" bind:this={wrapper}>
   <TreeItem
     bind:selected
-    label={label || name}
+    {label}
     onSelect={() => {
       // Announce the selected singleton file. The Content Editor will not open until
       // the user presses Enter.
       announcedPageStatus.current = _('singleton_selected_announcement', {
-        values: { file: label || name },
+        values: { file: label },
       });
     }}
     onclick={() => {

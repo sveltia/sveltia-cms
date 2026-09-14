@@ -9,6 +9,10 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Slider, TextInput } from '@sveltia/ui';
 
+  import {
+    getColorFieldValue,
+    parseColorFieldValue,
+  } from '$lib/services/contents/fields/color/helpers';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -40,32 +44,24 @@
   const { allowInput = false, enableAlpha = false } = $derived(fieldConfig);
 
   const id = $props.id();
-  const RGB_REGEX = /^#[0-9a-f]{6}$/i;
-  const RGBA_REGEX = /^(?<rgb>#[0-9a-f]{6})(?<a>[0-9a-f]{2})?$/i;
 
   /**
    * Update {@link inputValue} and {@link inputAlphaValue} based on {@link currentValue}.
    */
   const setInputValue = () => {
-    if (typeof currentValue !== 'string') {
+    const parts = parseColorFieldValue(currentValue);
+
+    if (!parts) {
       return;
     }
 
-    const { rgb: newValue, a: newAlphaHexValue = 'ff' } =
-      currentValue.match(RGBA_REGEX)?.groups ?? {};
-
     // Avoid a cycle dependency & infinite loop
-    if (newValue && inputValue !== newValue) {
-      inputValue = newValue;
+    if (inputValue !== parts.rgb) {
+      inputValue = parts.rgb;
     }
 
-    if (newValue && enableAlpha) {
-      const newAlphaIntValue = Number.parseInt(`0x${newAlphaHexValue}`, 16);
-
-      // Avoid a cycle dependency & infinite loop
-      if (inputAlphaValue !== newAlphaIntValue) {
-        inputAlphaValue = newAlphaIntValue;
-      }
+    if (enableAlpha && inputAlphaValue !== parts.alpha) {
+      inputAlphaValue = parts.alpha;
     }
   };
 
@@ -73,11 +69,7 @@
    * Update {@link currentValue} based on {@link inputValue} and {@link inputAlphaValue}.
    */
   const setCurrentValue = () => {
-    let newValue = RGB_REGEX.test(inputValue) ? inputValue : '';
-
-    if (newValue && enableAlpha) {
-      newValue += inputAlphaValue.toString(16).padStart(2, '0');
-    }
+    const newValue = getColorFieldValue({ rgb: inputValue, alpha: inputAlphaValue, enableAlpha });
 
     // Avoid a cycle dependency & infinite loop
     if (currentValue !== newValue) {
@@ -133,7 +125,7 @@
           max={255}
           disabled={!inputValue}
           bind:value={inputAlphaValue}
-          aria-label={_('opacity')}
+          sliderLabel={_('opacity')}
         />
       {/if}
     </span>

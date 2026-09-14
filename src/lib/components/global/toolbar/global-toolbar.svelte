@@ -15,7 +15,7 @@
 </script>
 
 <div role="none" class="toolbar-wrapper" inert={hasOverlay.current}>
-  <Toolbar variant="primary" aria-label={_('global')}>
+  <Toolbar variant="primary" ariaLabel={_('global')}>
     <div role="none" class="buttons">
       <SiteLogo />
       <PageSwitcher />

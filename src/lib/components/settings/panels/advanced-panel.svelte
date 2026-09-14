@@ -25,6 +25,24 @@
 
   let showClearCacheDialog = $state(false);
   let showEraseDataDialog = $state(false);
+
+  /* v8 ignore start -- reloading the page would tear the test down */
+  /**
+   * Clear the file cache, then reload the page to start over.
+   */
+  const clearCache = async () => {
+    await clearFileCache();
+    window.location.reload();
+  };
+
+  /**
+   * Erase all the data stored in the browser, then reload the page to start over.
+   */
+  const eraseData = async () => {
+    await eraseAllData();
+    window.location.reload();
+  };
+  /* v8 ignore stop */
 </script>
 
 <section>
@@ -66,7 +84,7 @@
         dir="ltr"
         bind:value={prefs.deployHookURL}
         flex
-        aria-label={_('prefs.advanced.deploy_hook.url.field_label')}
+        ariaLabel={_('prefs.advanced.deploy_hook.url.field_label')}
         showInlineLabel={true}
         onchange={() => {
           onChange?.({
@@ -84,7 +102,7 @@
         dir="ltr"
         bind:value={prefs.deployHookAuthHeader}
         flex
-        aria-label={_('prefs.advanced.deploy_hook.auth.field_label')}
+        ariaLabel={_('prefs.advanced.deploy_hook.auth.field_label')}
         showInlineLabel={true}
         onchange={() => {
           onChange?.({
@@ -133,10 +151,7 @@
   bind:open={showClearCacheDialog}
   title={_('prefs.advanced.clear_data.file_cache.button_label')}
   okLabel={_('prefs.advanced.clear_data.file_cache.button_label')}
-  onOk={async () => {
-    await clearFileCache();
-    window.location.reload();
-  }}
+  onOk={clearCache}
 >
   {_('prefs.advanced.clear_data.file_cache.confirmation')}
 </ConfirmationDialog>
@@ -145,10 +160,7 @@
   bind:open={showEraseDataDialog}
   title={_('prefs.advanced.clear_data.all_data.button_label')}
   okLabel={_('prefs.advanced.clear_data.all_data.button_label')}
-  onOk={async () => {
-    await eraseAllData();
-    window.location.reload();
-  }}
+  onOk={eraseData}
 >
   {_('prefs.advanced.clear_data.all_data.confirmation')}
 </ConfirmationDialog>

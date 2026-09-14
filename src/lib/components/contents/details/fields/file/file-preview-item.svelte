@@ -37,7 +37,9 @@
   const { widget: fieldType } = $derived(fieldConfig);
   const isImageField = $derived(fieldType === 'image');
   const entry = $derived(entryDraft.current?.originalEntry);
+  /* v8 ignore start -- the preview is only rendered while the draft is there */
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
 
   $effect(() => {

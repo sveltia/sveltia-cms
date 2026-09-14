@@ -1,6 +1,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { SearchBar } from '@sveltia/ui';
+  import { untrack } from 'svelte';
 
   import { goBack, goto, parseLocation } from '$lib/services/app/navigation';
   import { searchMode, searchTerms } from '$lib/services/search';
@@ -35,21 +36,25 @@
     }
   };
 
-  /** @type {any | undefined} */
-  let searchBar = $state();
+  let inputValue = $state('');
 
   $effect(() => {
-    // Restore search terms when the page is reloaded
-    if (searchBar && searchTerms.current !== searchBar?.value) {
-      searchBar.value = searchTerms.current;
-    }
+    const terms = searchTerms.current;
+
+    // Restore the search terms when the page is reloaded, or another page changes them. The input
+    // is left alone while it only differs by surrounding spaces, which the terms don’t keep
+    untrack(() => {
+      if (terms !== inputValue.trim()) {
+        inputValue = terms;
+      }
+    });
   });
 </script>
 
 <div role="none" class="wrapper">
   {#if searchMode.current}
     <SearchBar
-      bind:this={searchBar}
+      bind:value={inputValue}
       debounce
       keyShortcuts="Accel+F"
       placeholder={_(`search_placeholder_${searchMode.current}`)}

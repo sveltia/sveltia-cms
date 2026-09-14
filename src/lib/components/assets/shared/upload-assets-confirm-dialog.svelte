@@ -154,7 +154,7 @@
     <div role="group" class="section">
       {_('file_name_conflict_confirmation', { values: { count: dupFileCount } })}
       <RadioGroup
-        aria-label={_('file_name_conflict_resolution')}
+        ariaLabel={_('file_name_conflict_resolution')}
         onChange={({ detail }) => {
           replaceFiles = detail.value === 'replace';
         }}
@@ -167,7 +167,7 @@
 </ConfirmationDialog>
 
 <!-- `duration={0}` keeps this up until the upload settles, however long the commit takes -->
-<Toast bind:show={uploading} duration={0}>
+<Toast show={uploading} duration={0}>
   <Alert status="info">{_('uploading_files_progress')}</Alert>
 </Toast>
 

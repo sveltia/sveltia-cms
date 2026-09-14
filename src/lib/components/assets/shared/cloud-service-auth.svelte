@@ -95,7 +95,7 @@
         flex
         monospace
         spellcheck="false"
-        aria-label={_('prefs.media.stock_photos.field_label', {
+        ariaLabel={_('prefs.media.stock_photos.field_label', {
           values: { service: serviceLabel },
         })}
         oninput={(event) => {
@@ -116,14 +116,14 @@
         dir="ltr"
         flex
         spellcheck="false"
-        aria-label={_('username')}
+        ariaLabel={_('username')}
         disabled={authState === 'requested'}
         bind:value={input.userName}
       />
     </div>
     <div role="none" class="input-outer">
       <SecretInput
-        aria-label={_('password')}
+        ariaLabel={_('password')}
         disabled={authState === 'requested'}
         bind:value={input.password}
       />

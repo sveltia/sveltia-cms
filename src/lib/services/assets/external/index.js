@@ -11,7 +11,6 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
 /**
  * @import {
  * ExternalAsset,
- * MediaLibraryFetchOptions,
  * MediaLibraryService,
  * } from '$lib/types/private';
  */
@@ -142,7 +141,8 @@ export const externalAssetSearchTerms = createRawState('');
  * Get the credentials needed to call the given service’s API, which the user has entered in the
  * Asset Library, the asset picker or the Settings dialog.
  * @param {MediaLibraryService} service Service.
- * @returns {MediaLibraryFetchOptions} Fetch options.
+ * @returns {{ apiKey: string, userName: string, password: string }} Credentials, each of which is
+ * an empty string if not entered.
  */
 export const getFetchOptions = ({ serviceId }) => {
   const apiKey = prefs.apiKeys?.[serviceId] ?? '';

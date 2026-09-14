@@ -40,7 +40,10 @@
     "prepublishOnly": "vite build",
     "preview": "vite preview",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
-    "test:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage",
+    "test:components": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project browser",
+    "test:components:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage --project browser --coverage.include='src/lib/components/**/*.svelte' --coverage.thresholds.branches=98.5",
+    "test:unit": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project unit",
+    "test:unit:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage --project unit",
     "test:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest"
   },
   "dependencies": {
@@ -85,6 +88,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vitest/browser-playwright": "^5.0.0",
     "@vitest/coverage-v8": "^5.0.0",
     "cspell": "^10.3.0",
     "eslint": "^9.39.5",
@@ -95,8 +99,10 @@
     "eslint-plugin-svelte": "^3.23.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.12.0",
+    "jsdom": "^30.0.1",
     "messageformat": "^4.0.0",
     "oxlint": "^1.82.0",
+    "playwright": "^1.63.0",
     "postcss-html": "^2.0.0",
     "prettier": "^3.9.6",
     "prettier-plugin-svelte": "^4.1.1",
@@ -108,7 +114,8 @@
     "ts-json-schema-generator": "^2.9.0",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "vitest-browser-svelte": "^3.1.0"
   },
   "publishConfig": {
     "directory": "package",

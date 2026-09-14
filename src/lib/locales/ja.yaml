@@ -572,6 +572,10 @@ file_extension_change_warning: 拡張子が実際のファイル形式と一致�
 replace_asset: アセットを差し替え
 # {$name} is the asset being replaced
 replace_x: '{$name} を差し替え'
+replace_file: ファイルを差し替え
+replace_image: 画像を差し替え
+remove_file: ファイルを削除
+remove_image: 画像を削除
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices

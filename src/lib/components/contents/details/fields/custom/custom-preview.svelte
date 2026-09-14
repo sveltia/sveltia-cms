@@ -50,6 +50,7 @@
    * Render the React component with the current props.
    */
   const renderComponent = () => {
+    /* v8 ignore next 3 -- the effect below only calls this once everything is ready */
     if (!container || !immutableLoaded.current || !reactDomLoaded.current) {
       return;
     }
@@ -81,6 +82,7 @@
     // The preview is a React component receiving Immutable Maps. Both libraries are normally loaded
     // by the time the editor opens, as `CMS.registerFieldType()` starts loading them, but wait for
     // them in any case; the effect below renders the preview once they’re there
+    /* v8 ignore next 4 -- the libraries are bundled with the tests, so loading can’t fail */
     Promise.all([loadImmutable(), loadReactDom()]).catch((/** @type {Error} */ error) => {
       // eslint-disable-next-line no-console
       console.error(error);

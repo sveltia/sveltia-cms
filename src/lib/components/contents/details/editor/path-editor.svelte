@@ -82,6 +82,7 @@
     return dirPath ? dirPath.slice(dirPath.lastIndexOf('/') + 1) : undefined;
   });
 
+  /* v8 ignore next -- the editor is only rendered for a nested collection, where the path is set */
   const currentPath = $derived(stripSlashes(entryDraft.current?.currentPath ?? ''));
   /** Folder the entry is filed in, which is the parent of its own folder if it has one. */
   const selectedPath = $derived(ownFolderName ? getEntryDirPath(currentPath) : currentPath);
@@ -110,8 +111,9 @@
   let newFolderPaths = $state([]);
 
   const rootNode = $derived.by(() => {
+    /* v8 ignore next 3 -- only read once the collection’s path configuration is known */
     if (!collection) {
-      return undefined;
+      return /** @type {NestedTreeNode} */ ({ path: '', label: '', children: [] });
     }
 
     const { name } = collection;
@@ -135,7 +137,7 @@
           entries,
           // An entry can’t be filed within itself
           excludePath: ownFolderName
-            ? getEntryDirPath(entryDraft.current?.originalEntry?.subPath ?? '')
+            ? getEntryDirPath(/** @type {string} */ (entryDraft.current?.originalEntry?.subPath))
             : undefined,
           // Each pane names the folders in its own language
           locale,
@@ -157,19 +159,15 @@
     return localizeDirPath({ collection, dirPath: selectedPath, locale });
   });
 
-  const selectedLabel = $derived(
-    (rootNode ? findNestedTreeNode([rootNode], selectedPath)?.label : undefined) ??
-      localizedSelectedPath,
-  );
+  const selectedNode = $derived(findNestedTreeNode([rootNode], selectedPath));
+  const selectedLabel = $derived(selectedNode?.label ?? localizedSelectedPath);
 
   /** @type {HTMLButtonElement | undefined} */
   let buttonElement = $state();
   let popupOpen = $state(false);
   /** Names of the folders already in the folder the new one would be created in. */
   const takenFolderNames = $derived(
-    ((rootNode ? findNestedTreeNode([rootNode], selectedPath)?.children : undefined) ?? []).map(
-      ({ path }) => path.slice(path.lastIndexOf('/') + 1),
-    ),
+    (selectedNode?.children ?? []).map(({ path }) => path.slice(path.lastIndexOf('/') + 1)),
   );
 
   const newFolderError = $derived(
@@ -181,7 +179,7 @@
    * Whether there’s a folder to choose. A collection whose entries all sit at the top level has
    * nothing below the collection folder, leaving the picker with a single item and nothing to do.
    */
-  const hasFolderChoice = $derived(!!rootNode?.children.length);
+  const hasFolderChoice = $derived(!!rootNode.children.length);
 
   /**
    * File the entry in the given folder. An entry that owns a folder keeps its name and takes
@@ -189,6 +187,7 @@
    * @param {string} path Chosen folder path.
    */
   const selectPath = (path) => {
+    /* v8 ignore next 3 -- the picker is only offered while the draft is there */
     if (entryDraft.current) {
       entryDraft.current.currentPath = ownFolderName ? createPath([path, ownFolderName]) : path;
     }
@@ -239,17 +238,15 @@
         <span role="none" class="label">{selectedLabel}</span>
       </Button>
       <Popup bind:open={popupOpen} anchor={buttonElement} position="bottom-left">
-        {#if rootNode}
-          <!-- Choosing a folder closes the popup, so it has to be a deliberate action rather than
-          something that happens while arrowing through the tree -->
-          <Tree
-            ariaLabel={_('entry_parent_folder')}
-            class="parent-folder-tree"
-            selectionFollowsFocus={false}
-          >
-            <ParentFolderTreeItem node={rootNode} {selectedPath} onSelectPath={selectPath} />
-          </Tree>
-        {/if}
+        <!-- Choosing a folder closes the popup, so it has to be a deliberate action rather than
+        something that happens while arrowing through the tree -->
+        <Tree
+          ariaLabel={_('entry_parent_folder')}
+          class="parent-folder-tree"
+          selectionFollowsFocus={false}
+        >
+          <ParentFolderTreeItem node={rootNode} {selectedPath} onSelectPath={selectPath} />
+        </Tree>
       </Popup>
       {#if canCreateFolder}
         <!-- A folder that holds no entry can’t be in the tree, so it has to be created here. It
@@ -290,7 +287,7 @@
         <TextInput
           dir="auto"
           flex
-          aria-label={_('new_parent_folder_name')}
+          ariaLabel={_('new_parent_folder_name')}
           aria-errormessage="{fieldId}-new-folder-error"
           invalid={showNewFolderError}
           bind:value={newFolderName}

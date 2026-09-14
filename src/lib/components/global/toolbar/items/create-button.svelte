@@ -28,7 +28,7 @@
     <Icon name="add" />
   {/snippet}
   {#snippet popup()}
-    <Menu aria-label={_('create_entry_or_assets')}>
+    <Menu ariaLabel={_('create_entry_or_assets')}>
       {#if entryCollections.length}
         {#each entryCollections as collection (collection.name)}
           {@const {

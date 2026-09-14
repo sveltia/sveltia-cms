@@ -35,7 +35,7 @@
   } = $props();
 </script>
 
-<Toolbar variant="primary" aria-label={_('folder')}>
+<Toolbar variant="primary" ariaLabel={_('folder')}>
   {#if env.isSmallScreen}
     <BackButton
       aria-label={_('back_to_asset_folder_list')}

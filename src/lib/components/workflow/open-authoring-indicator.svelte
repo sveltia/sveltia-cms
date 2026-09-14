@@ -20,7 +20,9 @@
   let showInfobar = $state(false);
 
   const fork = $derived(forkedRepository.current);
+  /* v8 ignore start -- only read while contributing via a fork */
   const repoPath = $derived(fork ? `${fork.owner}/${fork.repo}` : '');
+  /* v8 ignore stop */
   // The fork lives on the same service as the configured repository, which can be a GitHub
   // Enterprise Server instance rather than github.com
   const forkURL = $derived.by(() => {

@@ -151,6 +151,42 @@ export const getDate = (currentValue, fieldConfig) => {
 };
 
 /**
+ * Whether the value the editor derived from its input should replace the stored value. It shouldn’t
+ * when both resolve to the same instant: a user editing an existing entry in a different location
+ * than where it was originally written gets an input value shifted to their own time zone, but the
+ * epoch doesn’t change. The dates are compared rather than the epochs, because {@link getDate}
+ * returns `undefined` for a value it can’t parse, and `NaN !== NaN` would report every such value
+ * as a change.
+ * @param {object} args Arguments.
+ * @param {string | undefined} args.newValue Value derived from the input.
+ * @param {string | undefined} args.currentValue Value in the entry draft datastore.
+ * @param {DateTimeField} args.fieldConfig Field configuration.
+ * @returns {boolean} `true` if the stored value should be replaced.
+ */
+export const shouldUpdateValue = ({ newValue, currentValue, fieldConfig }) => {
+  if (newValue === undefined || newValue === currentValue) {
+    return false;
+  }
+
+  const newDate = getDate(newValue, fieldConfig);
+  const oldDate = getDate(currentValue, fieldConfig);
+
+  if (newDate !== undefined && oldDate !== undefined) {
+    return newDate.getTime() !== oldDate.getTime();
+  }
+
+  // Neither value resolves to a date, so there’s no epoch to compare and nothing to tell the two
+  // apart. Writing one unusable string over another would let the editor’s effects syncing the
+  // input and the stored value keep waking each other. Clearing the field is the exception: an
+  // empty value settles on the next run
+  if (newDate === undefined && oldDate === undefined && newValue !== '') {
+    return false;
+  }
+
+  return true;
+};
+
+/**
  * Get the current date/time.
  * @param {DateTimeField} fieldConfig Field configuration.
  * @param {string} [timeZone] IANA timezone name.

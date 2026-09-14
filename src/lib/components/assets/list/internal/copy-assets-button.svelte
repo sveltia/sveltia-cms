@@ -83,6 +83,7 @@
       return;
     }
 
+    /* v8 ignore next 3 -- the menu item is disabled for any other type */
     if (!SUPPORTED_IMAGE_TYPES.includes(type)) {
       throw new Error('Unsupported type');
     }

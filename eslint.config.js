@@ -9,7 +9,7 @@ import globals from 'globals';
 
 export default [
   // Ignore files (migrated from .eslintrc.yaml ignorePatterns + .eslintignore)
-  { ignores: ['**/*.cjs', '**/*.d.ts', 'package/', '.vite/', '.claude/'] },
+  { ignores: ['**/*.cjs', '**/*.d.ts', 'package/', '.vite/', '.vitest/', '.claude/'] },
 
   // Register @stylistic and import-x plugins for all files (including .svelte)
   (({ files: _f, ...c }) => c)(airbnbPlugins.stylistic),
@@ -28,6 +28,19 @@ export default [
   // Svelte recommended + Prettier overrides
   ...sveltePlugin.configs['flat/recommended'],
   ...sveltePlugin.configs['flat/prettier'],
+
+  // A `.svelte.test.js` file can use runes like a `.svelte.js` module, but the Svelte parser only
+  // recognizes the latter by its file name, so declare the runes as globals instead
+  {
+    files: ['**/*.svelte.test.js'],
+    languageOptions: {
+      globals: Object.fromEntries(
+        ['$state', '$derived', '$effect', '$props', '$bindable', '$inspect', '$host'].map(
+          (rune) => [rune, 'readonly'],
+        ),
+      ),
+    },
+  },
 
   // package.json linting
   pkgJsonPlugin.configs['recommended-publishable'],

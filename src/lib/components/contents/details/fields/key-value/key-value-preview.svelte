@@ -52,6 +52,7 @@
   const updatePairs = () => {
     const draft = entryDraft.current;
 
+    /* v8 ignore next 3 -- the preview is only rendered while the draft is there */
     if (!draft) {
       return;
     }

@@ -8,10 +8,8 @@
   import { getContext } from 'svelte';
 
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
-  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-  import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getOptions } from '$lib/services/contents/fields/relation/helpers';
+  import { getOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -45,16 +43,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const {
-    // Field type-specific options
-    collection: collectionName,
-    file: fileName,
-  } = $derived(fieldConfig);
-  const refEntries = $derived(
-    fileName
-      ? [getCollectionFileEntry(collectionName, fileName)].filter((entry) => !!entry)
-      : getEntriesByCollection(collectionName),
-  );
+  const refEntries = $derived(getRefEntries(fieldConfig));
   const currentLocaleValues = $derived(entryDraft.current?.[valueStoreKey]?.[locale]);
   const currentSlug = $derived(
     entryDraft.current?.currentSlugs[locale] ?? entryDraft.current?.currentSlugs._,

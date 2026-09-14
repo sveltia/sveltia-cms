@@ -29,7 +29,7 @@
 
 <div role="none" class="wrapper">
   {#if env.isLargeScreen}
-    <SelectButtonGroup {disabled} aria-label={_('switch_view')} {...rest}>
+    <SelectButtonGroup {disabled} ariaLabel={_('switch_view')} {...rest}>
       <SelectButton
         {disabled}
         selected={!isGridView}

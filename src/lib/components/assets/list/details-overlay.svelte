@@ -76,6 +76,7 @@
     // Wait until `inert` is updated
     await tick();
 
+    /* v8 ignore next 4 -- the overlay may have been closed in the meantime */
     if (wrapper) {
       wrapper.tabIndex = 0;
       wrapper.focus();
@@ -83,10 +84,8 @@
   };
 
   $effect(() => {
-    if (wrapper) {
-      if (showAssetOverlay.current) {
-        moveFocus();
-      }
+    if (showAssetOverlay.current) {
+      moveFocus();
     }
   });
 
@@ -194,7 +193,7 @@
 
 <div role="group" class="wrapper" aria-label={_('asset_editor')} bind:this={wrapper}>
   {#key contentKey}
-    <Toolbar variant="primary" aria-label={_('primary')}>
+    <Toolbar variant="primary" ariaLabel={_('primary')}>
       <BackButton aria-label={_('cancel_editing')} useShortcut={true} onclick={onBack} />
       <h2 role="none">
         <TruncatedText>

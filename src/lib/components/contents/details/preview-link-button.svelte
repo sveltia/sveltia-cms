@@ -76,6 +76,7 @@
     }),
   );
   const url = $derived(link?.url);
+  /* v8 ignore start -- only read while there’s a link, which always has a URL */
   const state = $derived(
     link ? refineState(link.state, url ? pageLiveness.current[url] : undefined) : undefined,
   );
@@ -84,6 +85,7 @@
   // The URL leads to the published version, or nowhere when the entry is new, so the control waits
   // rather than sending anyone there
   const awaitingPreview = $derived(link?.awaitingPreview ?? false);
+  /* v8 ignore stop */
   // A failed build’s URL is its log rather than a preview, so there’s nothing worth opening. A
   // link to the live site is always worth offering, whatever the build did
   const disabled = $derived(awaitingPreview || !url || (isDeployPreview && state === 'error'));
@@ -110,6 +112,7 @@
    * Open the resolved preview page in a new browser tab.
    */
   const open = () => {
+    /* v8 ignore next 3 -- the control is disabled without a URL */
     if (url) {
       openNewTab(url);
     }

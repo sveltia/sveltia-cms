@@ -15,9 +15,14 @@
 
   onMount(() => {
     const options = getLibraryOptions();
-    const { cloud_name: cloudName, api_key: apiKey } = (options ? options.config : undefined) ?? {};
 
-    if (!options || !cloudName || !apiKey) {
+    if (!options) {
+      return;
+    }
+
+    const { cloud_name: cloudName, api_key: apiKey } = options.config ?? {};
+
+    if (!cloudName || !apiKey) {
       return;
     }
 
@@ -25,7 +30,9 @@
 
     const params = new URLSearchParams({
       ...Object.fromEntries(
-        Object.entries(options.config ?? {}).filter(([k]) => FRAME_SRC_PARAMS.includes(k)),
+        Object.entries(/** @type {Record<string, any>} */ (options.config)).filter(([k]) =>
+          FRAME_SRC_PARAMS.includes(k),
+        ),
       ),
       ml_id: mlId,
       pmHost: window.location.origin,

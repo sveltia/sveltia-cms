@@ -43,6 +43,7 @@
    * Maps and Here Maps, may be supported in the future.
    */
   const init = async () => {
+    /* v8 ignore next 3 -- called once mounted, when the element is bound */
     if (!mapElement) {
       return;
     }

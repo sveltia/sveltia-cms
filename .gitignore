@@ -1,6 +1,7 @@
 /coverage
 /package
 /.vite
+/.vitest
 node_modules
 *.log
 *.local

@@ -95,7 +95,9 @@
   let requestedLanguages = '';
 
   const entry = $derived(entryDraft.current?.originalEntry);
+  /* v8 ignore start -- the preview is only rendered while the draft is there */
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
   const {
     sanitize_preview: doSanitize = defaultConfig.sanitize_preview ?? true,
@@ -200,12 +202,25 @@
     root.render(preview);
   };
 
+  /* v8 ignore start -- the library is bundled with the tests, so loading can’t fail */
+  /**
+   * Report a failure to load the React DOM library.
+   * @param {Error} error Error.
+   */
+  const reportLoadError = (error) => {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  };
+  /* v8 ignore stop */
+
   /**
    * Render a component preview into the specified placeholder element based on its
    * `data-component-key` attribute.
    * @param {HTMLElement} element The placeholder element to render the component preview into.
    */
   const renderComponent = (element) => {
+    // A placeholder within a nested field preview belongs to that preview
+    /* v8 ignore next 3 */
     if (!isOwnElement(element)) {
       return;
     }
@@ -232,10 +247,7 @@
               mountReactPreview(element, preview);
             }
           })
-          .catch((/** @type {Error} */ error) => {
-            // eslint-disable-next-line no-console
-            console.error(error);
-          });
+          .catch(reportLoadError);
       }
     } else {
       // Remove the placeholder if there’s no valid preview to render
@@ -282,6 +294,8 @@
    * @param {HTMLImageElement} element The image element to replace the `src` of.
    */
   const replaceImageSrc = async (element) => {
+    // An image within a nested field preview belongs to that preview
+    /* v8 ignore next 3 */
     if (!isOwnElement(element)) {
       return;
     }

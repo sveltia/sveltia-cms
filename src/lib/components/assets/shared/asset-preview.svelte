@@ -113,6 +113,7 @@
    * Update the {@link src} property.
    */
   const updateSrc = async () => {
+    /* v8 ignore next 3 -- the effect below only calls this for a mounted asset, one at a time */
     if (!asset || !mediaElement || updatingSrc) {
       return;
     }
@@ -157,6 +158,7 @@
    * Update the {@link loaded} state when the media is loaded.
    */
   const checkLoaded = async () => {
+    /* v8 ignore next 3 -- the effect below only calls this once the media has a source */
     if (!mediaElement || !mediaSrc) {
       return;
     }
@@ -189,6 +191,12 @@
 
         return;
       }
+    }
+
+    // The preview may have been removed while the media was loading
+    /* v8 ignore next 3 */
+    if (!mediaElement) {
+      return;
     }
 
     // Enable a dissolve transition

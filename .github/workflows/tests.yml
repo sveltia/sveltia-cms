@@ -11,14 +11,25 @@ jobs:
         task:
           - name: Check
             command: pnpm check
-          # The test files are split into shards that run in parallel, as spawning a worker per
-          # file is what takes most of the time on the runner
+          # The unit test files are split into shards that run in parallel, as spawning a worker
+          # per file is what takes most of the time on the runner
           - name: Test (1/3)
-            command: pnpm test --shard=1/3
+            command: pnpm test --project unit --shard=1/3
           - name: Test (2/3)
-            command: pnpm test --shard=2/3
+            command: pnpm test --project unit --shard=2/3
           - name: Test (3/3)
-            command: pnpm test --shard=3/3
+            command: pnpm test --project unit --shard=3/3
+          # The component tests run in Chromium, which only these jobs install. They are split
+          # the same way, as a runner has few cores to run the files in parallel on
+          - name: Test (components 1/3)
+            command: pnpm test --project browser --shard=1/3
+            browser: true
+          - name: Test (components 2/3)
+            command: pnpm test --project browser --shard=2/3
+            browser: true
+          - name: Test (components 3/3)
+            command: pnpm test --project browser --shard=3/3
+            browser: true
           - name: Build
             command: pnpm build
     steps:
@@ -30,5 +41,8 @@ jobs:
           version: latest
           runtime: node@26
           cache: true
+      - name: Install Chromium
+        if: ${{ matrix.task.browser }}
+        run: pnpm exec playwright install chromium --with-deps
       - name: ${{ matrix.task.name }}
         run: ${{ matrix.task.command }}

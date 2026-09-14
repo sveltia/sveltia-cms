@@ -34,11 +34,13 @@
     ).filter(([serviceId, { authType }]) => providers.includes(serviceId) && authType !== 'none');
   });
 
+  /* v8 ignore start -- every built-in service says whether it’s enabled */
   const enabledCloudServiceEntries = $derived(
     Object.entries(allCloudStorageServices).filter(
       ([, { isEnabled, authType }]) => (isEnabled?.() ?? true) && authType !== 'widget',
     ),
   );
+  /* v8 ignore stop */
 </script>
 
 <section>

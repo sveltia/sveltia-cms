@@ -24,6 +24,10 @@
   import { env } from '$lib/services/user/env.svelte';
 
   /**
+   * @import { AssetFolderInfo } from '$lib/types/private';
+   */
+
+  /**
    * @typedef {object} Props
    * @property {boolean} [isSearchPage] Whether the current page is the search results page.
    */
@@ -36,6 +40,15 @@
   } = $props();
 
   const numberFormatter = $derived(Intl.NumberFormat(appLocale.current));
+
+  /* v8 ignore start -- the app locale is loaded before the sidebar is rendered */
+  /**
+   * Get the label of a folder, which follows the app locale.
+   * @param {AssetFolderInfo} folder Folder.
+   * @returns {string} Label.
+   */
+  const getFolderLabel = (folder) => (appLocale.current ? getFolderLabelByCollection(folder) : '');
+  /* v8 ignore stop */
 
   const folders = $derived([
     // All Assets, Global Assets, then collection-level, file-level folders, sorted by appearance
@@ -80,7 +93,7 @@
       }}
     />
   {/if}
-  <Listbox aria-label={_('asset_folder_list')} aria-controls="assets-container">
+  <Listbox ariaLabel={_('asset_folder_list')} aria-controls="assets-container">
     {#if folders.length}
       <OptionGroup label={_('asset_location.repository')}>
         {#each folders as folder, index ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
@@ -95,7 +108,7 @@
             {@const selected = equal(selectedAssetFolder.current, folder)}
             <Option
               selected={env.isSmallScreen || isSearchPage ? false : selected}
-              label={appLocale.current ? getFolderLabelByCollection(folder) : ''}
+              label={getFolderLabel(folder)}
               onSelect={() => {
                 goto(`/assets/${internalPath ?? '-/all'}`, {
                   transitionType: 'forwards',

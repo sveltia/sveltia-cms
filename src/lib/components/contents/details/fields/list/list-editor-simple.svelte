@@ -121,6 +121,7 @@
   const updateValue = () => {
     const draft = entryDraft.current;
 
+    /* v8 ignore next 10 -- the editor is only rendered while the draft is there */
     if (draft) {
       updateNonPrimitiveValue({
         draft,
@@ -248,7 +249,7 @@
         {readonly}
         {invalid}
         required={required && items.length === 1}
-        aria-label={_('list_item_value')}
+        ariaLabel={_('list_item_value')}
         aria-errormessage="{fieldId}-error"
         onkeydown={(/** @type {KeyboardEvent} */ event) => {
           // Ignore the Enter key while the user is typing with an IME
