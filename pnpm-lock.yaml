@@ -27,8 +27,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))
       '@sveltia/ui':
-        specifier: ^0.72.0
-        version: 0.72.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@6.0.3)
+        specifier: ^0.72.1
+        version: 0.72.1(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.1
         version: 0.12.1
@@ -63,11 +63,11 @@ importers:
         specifier: ^0.50.0
         version: 0.50.0(typescript@6.0.3)
       marked:
-        specifier: ^18.0.12
-        version: 18.0.12
+        specifier: ^18.0.13
+        version: 18.0.13
       marked-bidi:
         specifier: ^1.0.15
-        version: 1.0.15(marked@18.0.12)
+        version: 1.0.15(marked@18.0.13)
       mime:
         specifier: ^4.1.0
         version: 4.1.0
@@ -151,8 +151,8 @@ importers:
         specifier: ^64.3.10
         version: 64.3.10(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
       eslint-plugin-package-json:
-        specifier: ^1.8.0
-        version: 1.8.0(eslint@9.39.5(supports-color@10.2.2))
+        specifier: ^1.8.1
+        version: 1.8.1(eslint@9.39.5(supports-color@10.2.2))
       eslint-plugin-svelte:
         specifier: ^3.23.0
         version: 3.23.0(eslint@9.39.5(supports-color@10.2.2))(svelte@5.57.0(@typescript-eslint/types@8.70.0))
@@ -1222,8 +1222,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.72.0':
-    resolution: {integrity: sha512-p3QQJY4nX4NzoVYhrF9Y9FmCu5nAg2lUZ6RBEAn1rBbL8osxJIUgiEZRc92NOpJ1d1okaFj/2Ky61jBuM/baMg==}
+  '@sveltia/ui@0.72.1':
+    resolution: {integrity: sha512-tcTyGLF/Rlw0NwKX/wxKpir9XNGhlE2NEvyOyvKugXTynpOwoAJ7iDVJK28U8y3PV/mKzy3j37mp2FGU1Eo0mA==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2186,8 +2186,8 @@ packages:
       typescript:
         optional: true
 
-  eslint-plugin-package-json@1.8.0:
-    resolution: {integrity: sha512-nfWWrak5t8yPgSVchNOHCjdFW/pl3+1135Bxsq0KZKo6PUdWWqUTqOVBrvzw1S+8BNOhhEx5c/YxeeCSYySFog==}
+  eslint-plugin-package-json@1.8.1:
+    resolution: {integrity: sha512-/Adb7EHfwIM2t13zdBuB6IjIsNSDkbPT+T9ZlIK0N6aAnj9hiekqFlFbUpEIsiQX4Zv7bASBDP2C3hu362e2kw==}
     engines: {node: ^22.22.2 || >=24.15.0}
     peerDependencies:
       '@eslint/json': '>=1.0.0'
@@ -2980,8 +2980,8 @@ packages:
     peerDependencies:
       marked: '>= 4 < 19'
 
-  marked@18.0.12:
-    resolution: {integrity: sha512-LEm4ga2YeI2T3GVHj9b0BaDPPk93LLTHMFeMyQbNIzPxc8vCI0y/scy0ZA6z6lXKyT9j9Nhl/OC6ZYKYGuFScA==}
+  marked@18.0.13:
+    resolution: {integrity: sha512-xTxVzZsBFwunP6HDmtBkabUQEYArnP7/rMDGmPj9SlrKlQ4i8MdYVow+nJL0eOqwpUqhzBoTBRADGN6uYwPyOw==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -4042,8 +4042,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.6.2:
-    resolution: {integrity: sha512-lh5RCAGFa1Cm2hjtNwLQhSs/AsqdWnTQaBER9fEwN/88pSh7KOtJavtBx/0VlkN/uFd61SwYmljLMDAsHlvzBQ==}
+  zod@4.6.4:
+    resolution: {integrity: sha512-AXSD6hvGdvRjajG/l1cC+d6IrhH+sjmPKtYeQdJIK8MFJl3LyClzS+o/YsVC+zQZPupAaeH5skwwm8YqYH7BqA==}
 
 snapshots:
 
@@ -4945,7 +4945,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.57.0(@typescript-eslint/types@8.70.0)
 
-  '@sveltia/ui@0.72.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.72.1(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.50.0(typescript@6.0.3)
       '@lexical/dragon': 0.50.0(typescript@6.0.3)
@@ -6107,7 +6107,7 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  eslint-plugin-package-json@1.8.0(eslint@9.39.5(supports-color@10.2.2)):
+  eslint-plugin-package-json@1.8.1(eslint@9.39.5(supports-color@10.2.2)):
     dependencies:
       '@altano/repository-tools': 2.1.1
       '@types/estree': 1.0.9
@@ -6129,8 +6129,8 @@ snapshots:
       '@babel/parser': 7.29.8
       eslint: 9.39.5(supports-color@10.2.2)
       hermes-parser: 0.25.1
-      zod: 4.6.2
-      zod-validation-error: 4.0.2(zod@4.6.2)
+      zod: 4.6.4
+      zod-validation-error: 4.0.2(zod@4.6.4)
     transitivePeerDependencies:
       - supports-color
 
@@ -6913,11 +6913,11 @@ snapshots:
       '@babel/types': 7.29.8
       source-map-js: 1.2.1
 
-  marked-bidi@1.0.15(marked@18.0.12):
+  marked-bidi@1.0.15(marked@18.0.13):
     dependencies:
-      marked: 18.0.12
+      marked: 18.0.13
 
-  marked@18.0.12: {}
+  marked@18.0.13: {}
 
   math-intrinsics@1.1.0: {}
 
@@ -8055,8 +8055,8 @@ snapshots:
 
   zimmerframe@1.1.5: {}
 
-  zod-validation-error@4.0.2(zod@4.6.2):
+  zod-validation-error@4.0.2(zod@4.6.4):
     dependencies:
-      zod: 4.6.2
+      zod: 4.6.4
 
-  zod@4.6.2: {}
+  zod@4.6.4: {}
