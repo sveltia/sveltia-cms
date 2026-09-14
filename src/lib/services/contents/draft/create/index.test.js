@@ -667,6 +667,43 @@ describe('contents/draft/create/index', () => {
       );
     });
 
+    it('should fall back to the entry slug for an entry without the default locale', () => {
+      // @see https://github.com/sveltia/sveltia-cms/issues/984
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        fields: [],
+        slug: '{{fields._slug | localize}}',
+        _i18n: {
+          allLocales: ['en', 'fr'],
+          initialLocales: ['en', 'fr'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+      };
+
+      // A localized file whose key no longer matches its counterparts is an entry of its own, with
+      // only that locale, so there is no default locale content to look the key up in
+      const originalEntry = {
+        id: 'entry-789',
+        slug: 'ancien/index',
+        locales: {
+          fr: { content: { translationKey: 'old/index' }, slug: 'ancien/index' },
+        },
+      };
+
+      createDraft({ entryDraft, collection, originalEntry });
+
+      expect(entryDraft.current).toEqual(
+        expect.objectContaining({
+          originalLocales: { en: false, fr: true },
+          originalSlugs: { _: 'ancien/index' },
+          currentSlugs: { _: 'ancien/index' },
+          slugEditor: { en: false, fr: false },
+        }),
+      );
+    });
+
     it('should disable slugEditor for file collections', () => {
       const collection = {
         name: 'pages',

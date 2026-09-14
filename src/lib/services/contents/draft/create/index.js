@@ -179,11 +179,15 @@ export const buildDraft = ({
 
   const originalPath = getOriginalPath({ collection, originalEntry, initialPath });
 
+  // An entry can lack the default locale, as with Editorial Workflow when a pull request only
+  // touches another locale, or when a localized file has lost the link to its counterparts. The
+  // entry’s own slug, which another locale stands in for, then applies to every locale
+  // @see https://github.com/sveltia/sveltia-cms/issues/984
   const originalSlugs = isNew
     ? {}
     : canonicalSlugKey in (locales?.[defaultLocale]?.content ?? {})
       ? Object.fromEntries(allLocales.map((locale) => [locale, locales?.[locale]?.slug]))
-      : { _: locales?.[defaultLocale].slug };
+      : { _: locales?.[defaultLocale]?.slug ?? originalEntry.slug };
 
   /** @type {LocaleContentMap} */
   const originalValues = Object.fromEntries(

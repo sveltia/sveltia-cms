@@ -1,3 +1,5 @@
+import equal from 'fast-deep-equal';
+
 import { fillTemplate } from '$lib/services/common/template';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
@@ -164,7 +166,9 @@ const updateCanonicalSlug = ({ collection, entry }) => {
  * @param {Entry} args.movedEntry Same entry with its new paths.
  * @param {any} args.draft Synthetic draft used for serialization.
  * @param {IndexedDB} [args.cacheDB] File cache database, when available.
- * @returns {Promise<FileChange[]>} Move changes, one per file the entry occupies.
+ * @returns {Promise<FileChange[]>} Changes, one per file the entry occupies: a `move` for a file
+ * that goes elsewhere, or an `update` for one that stays put but has its canonical slug refreshed.
+ * @see https://github.com/sveltia/sveltia-cms/issues/984
  */
 const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, cacheDB }) => {
   const {
@@ -202,10 +206,14 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
         return undefined;
       }
 
-      const previousPath = originalEntry.locales[locale].path;
+      const originalLocalizedEntry = originalEntry.locales[locale];
+      const { path: previousPath } = originalLocalizedEntry;
+      const moved = previousPath !== localizedEntry.path;
 
-      // The file stays where it is when the folder isn’t localized the same way in this locale
-      if (previousPath === localizedEntry.path) {
+      // The file stays where it is when the folder isn’t localized the same way in this locale.
+      // It still has to be rewritten if its canonical slug has been refreshed, though, or it would
+      // no longer link to the files that have moved and the entry would fall apart on reload
+      if (!moved && equal(localizedEntry.content, originalLocalizedEntry.content)) {
         return undefined;
       }
 
@@ -218,10 +226,10 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
       ]);
 
       return /** @type {FileChange} */ ({
-        action: 'move',
+        action: moved ? 'move' : 'update',
         slug: localizedEntry.slug,
         path: localizedEntry.path,
-        previousPath,
+        previousPath: moved ? previousPath : undefined,
         previousSha,
         data,
       });

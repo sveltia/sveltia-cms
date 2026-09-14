@@ -483,6 +483,104 @@ describe('buildNestedMoveChanges()', () => {
       );
     });
 
+    test('rewrites a file that stays put when its canonical slug changes', async () => {
+      // @see https://github.com/sveltia/sveltia-cms/issues/984
+      const localizedCollection = {
+        ...i18nCollection,
+        _type: 'entry',
+        slug: '{{title | localize}}',
+        _i18n: {
+          ...i18nCollection._i18n,
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        },
+      };
+
+      const original = i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' });
+
+      original.locales.en.content.translationKey = 'about/team/_index';
+      original.locales.fr.content.translationKey = 'about/team/_index';
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        original,
+      ]);
+
+      const { changes, savingEntries } = await buildNestedMoveChanges({
+        collection: localizedCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        // The folder is renamed in English only
+        savingEntry: i18nEntry('1', { en: 'company/_index', fr: 'a-propos/_index' }),
+      });
+
+      // The French file keeps its place but has to pick up the new key, or it would no longer be
+      // linked to the English file once the entries are loaded again
+      expect(changes).toEqual([
+        expect.objectContaining({
+          action: 'move',
+          slug: 'company/team/_index',
+          path: 'content/pages/en/company/team/_index.md',
+          previousPath: 'content/pages/en/about/team/_index.md',
+        }),
+        {
+          action: 'update',
+          slug: 'a-propos/equipe/_index',
+          path: 'content/pages/fr/a-propos/equipe/_index.md',
+          previousPath: undefined,
+          previousSha: 'sha',
+          data: 'formatted',
+        },
+      ]);
+      expect(vi.mocked(getPreviousSha)).toHaveBeenCalledWith(
+        expect.objectContaining({ previousPath: 'content/pages/fr/a-propos/equipe/_index.md' }),
+      );
+      expect(vi.mocked(serializeContent)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locale: 'fr',
+          valueMap: { title: '2', translationKey: 'company/team/_index' },
+        }),
+      );
+      expect(savingEntries[0].locales.fr).toEqual({
+        slug: 'a-propos/equipe/_index',
+        path: 'content/pages/fr/a-propos/equipe/_index.md',
+        content: { title: '2', translationKey: 'company/team/_index' },
+      });
+    });
+
+    test('leaves a file that stays put when its canonical slug is unchanged', async () => {
+      const localizedCollection = {
+        ...i18nCollection,
+        _type: 'entry',
+        slug: '{{title | localize}}',
+        _i18n: {
+          ...i18nCollection._i18n,
+          canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+        },
+      };
+
+      const original = i18nEntry('2', { en: 'about/team/_index', fr: 'a-propos/equipe/_index' });
+
+      original.locales.en.content.translationKey = 'about/team/_index';
+      original.locales.fr.content.translationKey = 'about/team/_index';
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        original,
+      ]);
+
+      const { changes } = await buildNestedMoveChanges({
+        collection: localizedCollection,
+        originalEntry: i18nEntry('1', { en: 'about/_index', fr: 'a-propos/_index' }),
+        // The folder is renamed in French only, so the key, which is the English sub path, stays
+        savingEntry: i18nEntry('1', { en: 'about/_index', fr: 'entreprise/_index' }),
+      });
+
+      expect(changes).toEqual([
+        expect.objectContaining({
+          action: 'move',
+          path: 'content/pages/fr/entreprise/equipe/_index.md',
+          previousPath: 'content/pages/fr/a-propos/equipe/_index.md',
+        }),
+      ]);
+    });
+
     test('fills a custom canonical slug template', async () => {
       const localizedCollection = {
         ...i18nCollection,
