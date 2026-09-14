@@ -4,6 +4,7 @@ import { page, userEvent } from 'vitest/browser';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { activeInlineEditors } from '$lib/services/contents/editor';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
+import { waitForRenameDialog } from '$lib/test/dialog';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import FileEditorItem from './file-editor-item.svelte';
@@ -121,8 +122,7 @@ describe('FileEditorItem', () => {
 
     const input = page.getByRole('textbox');
 
-    await expect.element(input).toHaveValue('new photo.png');
-    await expect.element(input).toHaveFocus();
+    await waitForRenameDialog(input, 'new photo.png');
     // The Escape key is for the editor
     expect(activeInlineEditors.current).toBe(1);
 
@@ -148,6 +148,7 @@ describe('FileEditorItem', () => {
     );
 
     await page.getByRole('button', { name: 'Rename' }).click();
+    await waitForRenameDialog(page.getByRole('textbox'), 'photo.png');
     await page.getByRole('textbox').fill('photo.webp');
     await page.getByRole('button', { name: 'Done' }).click();
 
@@ -159,6 +160,7 @@ describe('FileEditorItem', () => {
 
     // Editing can be cancelled
     await page.getByRole('button', { name: 'Rename' }).click();
+    await waitForRenameDialog(page.getByRole('textbox'), 'photo.webp');
     await page.getByRole('textbox').fill('other.webp');
     await page.getByRole('button', { name: 'Cancel' }).click();
     await expect.element(page.getByRole('textbox')).toHaveTextContent('/static/uploads/photo.webp');
@@ -204,6 +206,7 @@ describe('FileEditorItem', () => {
     );
 
     await page.getByRole('button', { name: 'Rename' }).click();
+    await waitForRenameDialog(page.getByRole('textbox'), 'photo.png');
     await page.getByRole('textbox').fill('photo.webp');
     await userEvent.keyboard('{Enter}');
 

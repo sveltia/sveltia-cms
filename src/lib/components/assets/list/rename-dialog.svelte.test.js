@@ -86,6 +86,9 @@ describe('RenameDialog', () => {
     const { onRename, onClose } = await renderDialog();
     const dialog = page.getByRole('dialog', { name: 'Rename \u2068photo.png\u2069' });
 
+    // Filling the input before the dialog has narrowed the initial selection to the file name would
+    // replace that part alone, leaving the extension in place
+    await waitForRenameDialog(dialog.getByRole('textbox'), 'photo.png');
     await dialog.getByRole('textbox').fill('photo.webp');
     await dialog.getByRole('button', { name: 'Rename' }).click();
 

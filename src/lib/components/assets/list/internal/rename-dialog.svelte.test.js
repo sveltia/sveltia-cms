@@ -74,6 +74,7 @@ describe('RenameDialog', () => {
 
     const dialog = page.getByRole('dialog');
 
+    await waitForRenameDialog(dialog.getByRole('textbox'), 'b.png');
     await dialog.getByRole('textbox').fill('c.png');
     await dialog.getByRole('button', { name: 'Rename' }).click();
 
