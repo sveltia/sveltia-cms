@@ -663,7 +663,35 @@ describe('buildMarkdownWithPreviews', () => {
       expect(def.toPreview).not.toHaveBeenCalled();
     });
 
-    it('should stop after a bounded number of passes when a preview reproduces its syntax', () => {
+    it('should not substitute a preview that reproduces its own syntax', () => {
+      // A component with HTML syntax, whose preview mirrors `toBlock()` and matches the pattern
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const def = {
+        id: 'note',
+        label: 'Note',
+        fields: [
+          { name: 'summary', widget: 'string' },
+          { name: 'content', widget: 'richtext' },
+        ],
+        pattern:
+          /^<details>\s*<summary>(?<summary>.+?)<\/summary>\s*(?<content>[\s\S]+?)\s*<\/details>/m,
+        toBlock: ({ summary, content }) =>
+          `<details>\n<summary>${summary}</summary>\n${content}\n</details>`,
+        toPreview: vi.fn(
+          ({ summary, content }) =>
+            `<details>\n<summary>${summary}</summary>\n<p>${content}</p>\n</details>`,
+        ),
+      };
+
+      const input = '<details>\n<summary>Sum</summary>\nFirst line\n</details>';
+      const { markdown, previewMap } = buildMarkdownWithPreviews(input, [def]);
+
+      expect(def.toPreview).toHaveBeenCalledTimes(1);
+      expect(previewMap.size).toBe(1);
+      expect(markdown).toBe('<details>\n<summary>Sum</summary>\n<p>First line</p>\n</details>');
+    });
+
+    it('should not substitute a preview that wraps its own syntax in other markup', () => {
       /** @type {import('$lib/types/public').EditorComponentDefinition} */
       const def = {
         id: 'loop',
@@ -671,8 +699,67 @@ describe('buildMarkdownWithPreviews', () => {
         fields: [],
         pattern: /\[loop\]/,
         toBlock: () => '[loop]',
-        // The preview contains the component syntax again, which would otherwise never settle
+        // The preview contains the component syntax again, but it doesn’t come from a field value
         toPreview: vi.fn(() => '<b>[loop]</b>'),
+      };
+
+      const { markdown, previewMap } = buildMarkdownWithPreviews('[loop]', [def]);
+
+      expect(def.toPreview).toHaveBeenCalledTimes(1);
+      expect(previewMap.size).toBe(1);
+      expect(markdown).toBe('<b>[loop]</b>');
+    });
+
+    it('should substitute a component that a preview exposes through a nested value', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const A = {
+        ...elementDef('A'),
+        // The preview mirrors the syntax itself, but the nested component is still substituted
+        toPreview: ({ body }) => `<A>${body}</A>`,
+      };
+
+      const B = elementDef('B');
+      const { markdown, previewMap } = buildMarkdownWithPreviews(nested, [A, B]);
+
+      expect(markdown).toMatch(/^<A>outer\n\n<span data-component-key="[^"]+"><\/span><\/A>$/);
+      expect(previewMap.size).toBe(2);
+      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' });
+    });
+
+    it('should substitute a component that a preview exposes through a list item', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const A = {
+        ...elementDef('A'),
+        fields: [{ name: 'items', widget: 'list', field: { name: 'body', widget: 'richtext' } }],
+        // Values that aren’t strings, like the count and the missing title, are simply skipped
+        fromBlock: ({ groups }) => ({
+          count: 1,
+          title: undefined,
+          items: [{ body: groups?.body }],
+        }),
+        toPreview: ({ items }) =>
+          items.map((/** @type {{ body: string }} */ { body }) => `<li>${body}</li>`).join(''),
+      };
+
+      const B = elementDef('B');
+      const { markdown } = buildMarkdownWithPreviews(nested, [A, B]);
+
+      expect(markdown).toMatch(/^<li>outer\n\n<span data-component-key="[^"]+"><\/span><\/li>$/);
+      expect(B.toPreview).toHaveBeenCalledWith({ body: 'inner' });
+    });
+
+    it('should stop after a bounded number of passes when a value reproduces its syntax', () => {
+      /** @type {import('$lib/types/public').EditorComponentDefinition} */
+      const def = {
+        id: 'loop',
+        label: 'Loop',
+        fields: [{ name: 'body', widget: 'richtext' }],
+        pattern: /\[loop\]/,
+        toBlock: () => '[loop]',
+        // The value carries the component syntax into the preview, which would otherwise never
+        // settle
+        fromBlock: () => ({ body: '[loop]' }),
+        toPreview: vi.fn(({ body }) => `<b>${body}</b>`),
       };
 
       const { markdown, previewMap } = buildMarkdownWithPreviews('[loop]', [def]);

@@ -285,9 +285,34 @@ const globalPatternCache = new Map();
 /**
  * Maximum number of substitution passes in {@link buildMarkdownWithPreviews}. A string preview can
  * expose further component syntax (e.g. a nested component in a `richtext` field), which is picked
- * up by the next pass. The cap guards against a preview that keeps reproducing its own syntax.
+ * up by the next pass. The cap guards against a field value that keeps reproducing its own syntax.
  */
 const MAX_SUBSTITUTION_PASSES = 10;
+
+/**
+ * @typedef {object} PreviewRegion
+ * @property {number} start Start index of the substituted string preview.
+ * @property {number} end End index of the substituted string preview (exclusive).
+ * @property {string[]} values String field values the preview was built from.
+ */
+
+/**
+ * Collect the string values in the given field props, including those nested in objects and
+ * arrays, e.g. the items of a list field.
+ * @param {any} props Field props.
+ * @returns {string[]} String values.
+ */
+const collectStringValues = (props) => {
+  if (typeof props === 'string') {
+    return [props];
+  }
+
+  if (props && typeof props === 'object') {
+    return Object.values(props).flatMap(collectStringValues);
+  }
+
+  return [];
+};
 
 /**
  * Get the global-flag version of a component pattern, so `matchAll()` can be used.
@@ -312,6 +337,25 @@ const getGlobalPattern = (pattern) => {
  */
 
 /**
+ * Check if the given match is legitimate within the string previews substituted on the previous
+ * pass. Component syntax can only come out of a preview through a field value, typically the
+ * verbatim content of a nested `richtext` field, so a match is only accepted when it lies within a
+ * preview and its text occurs in one of the values the preview was built from. This rules out a
+ * preview that reproduces its own syntax, e.g. one that mirrors `toBlock()` with HTML tags, which
+ * would otherwise be substituted again on every pass until the cap is reached.
+ * @param {ComponentMatch} candidate Candidate match.
+ * @param {PreviewRegion[]} regions Regions of the string previews substituted on the previous pass.
+ * @returns {boolean} Result.
+ */
+const isMatchWithinPreviewValues = ({ match, index, end }, regions) =>
+  regions.some(
+    (region) =>
+      index >= region.start &&
+      end <= region.end &&
+      region.values.some((value) => value.includes(match[0])),
+  );
+
+/**
  * Find all the outermost component matches in the given string. When matches overlap, only the
  * one starting first is kept; on a tie, the longest match wins, then the earliest definition. Any
  * match inside another match is dropped, so a component always receives the raw content of a
@@ -319,23 +363,28 @@ const getGlobalPattern = (pattern) => {
  * substituted string. This makes the result independent of the component registration order.
  * @param {string} string String to search.
  * @param {EditorComponentDefinition[]} componentDefs Component definitions.
+ * @param {PreviewRegion[]} [regions] Regions of the string previews substituted on the previous
+ * pass, if any. On a later pass, only a match within one of these regions that comes from a
+ * field value is kept; the rest of the string has already been scanned.
  * @returns {ComponentMatch[]} Non-overlapping matches sorted by position.
  */
-const findOutermostMatches = (string, componentDefs) => {
+const findOutermostMatches = (string, componentDefs, regions) => {
   /** @type {ComponentMatch[]} */
   const candidates = [];
 
   componentDefs.forEach((def, order) => {
     string.matchAll(getGlobalPattern(def.pattern)).forEach((match) => {
+      const candidate = {
+        def,
+        match,
+        index: match.index,
+        end: match.index + match[0].length,
+        order,
+      };
+
       // A zero-length match cannot be a component and would be re-substituted on every pass
-      if (match[0]) {
-        candidates.push({
-          def,
-          match,
-          index: match.index,
-          end: match.index + match[0].length,
-          order,
-        });
+      if (match[0] && (!regions || isMatchWithinPreviewValues(candidate, regions))) {
+        candidates.push(candidate);
       }
     });
   });
@@ -365,14 +414,16 @@ const findOutermostMatches = (string, componentDefs) => {
  * @param {Map<string, ComponentPreview>} args.previewMap Preview map to be populated.
  * @param {Map<string, ComponentPreview>} [args.previousPreviewMap] Preview map from the previous
  * run, if any.
- * @returns {{ string: string, hasStringPreview: boolean }} The processed string, and whether any
- * string preview was substituted, which may expose further component syntax.
+ * @returns {{ string: string, regions: PreviewRegion[] }} The processed string, and the regions of
+ * the substituted string previews, which may expose further component syntax.
  */
 const substituteMatches = ({ string, matches, seenHashes, previewMap, previousPreviewMap }) => {
   /** @type {string[]} */
   const chunks = [];
+  /** @type {PreviewRegion[]} */
+  const regions = [];
   let cursor = 0;
-  let hasStringPreview = false;
+  let length = 0;
 
   matches.forEach(({ def: { fromBlock, toPreview }, match, index, end }) => {
     const baseHash = hashString(match[0]);
@@ -384,18 +435,27 @@ const substituteMatches = ({ string, matches, seenHashes, previewMap, previousPr
     seenHashes.set(baseHash, count + 1);
     previewMap.set(key, preview);
     chunks.push(string.slice(cursor, index));
+    length += index - cursor;
 
     // Replace the component syntax with a direct preview string or placeholder, depending on the
     // type of the preview value. This allows simple text previews to be rendered directly without
     // needing the `MutationObserver` to find and replace a placeholder element, while still
     // supporting complex React element previews.
     if (typeof preview === 'string') {
-      hasStringPreview = true;
+      regions.push({
+        start: length,
+        end: length + preview.length,
+        values: collectStringValues(fieldProps),
+      });
       chunks.push(preview);
+      length += preview.length;
     } else {
       // Return a placeholder element with a unique key that can be used by the `MutationObserver`
       // to find the correct location to render the React element preview.
-      chunks.push(`<span data-component-key="${key}"></span>`);
+      const placeholder = `<span data-component-key="${key}"></span>`;
+
+      chunks.push(placeholder);
+      length += placeholder.length;
     }
 
     cursor = end;
@@ -403,7 +463,7 @@ const substituteMatches = ({ string, matches, seenHashes, previewMap, previousPr
 
   chunks.push(string.slice(cursor));
 
-  return { string: chunks.join(''), hasStringPreview };
+  return { string: chunks.join(''), regions };
 };
 
 /**
@@ -412,9 +472,10 @@ const substituteMatches = ({ string, matches, seenHashes, previewMap, previousPr
  *
  * Components are matched outermost-first, so `toPreview()` always receives the raw block content.
  * Since a string preview may itself contain component syntax (typically the verbatim value of a
- * nested `richtext` field), the substituted string is scanned again until no component is left or
- * {@link MAX_SUBSTITUTION_PASSES} is reached. An element preview, on the other hand, can render its
- * nested content with `CMS.renderRichText()`, which runs this whole process recursively.
+ * nested `richtext` field), the substituted previews are scanned again until no component is left
+ * or {@link MAX_SUBSTITUTION_PASSES} is reached; only syntax that comes from a field value counts,
+ * not any the preview template reproduces by itself. An element preview, on the other hand, can
+ * render its nested content with `CMS.renderRichText()`, which runs this whole process recursively.
  * @param {string | undefined} currentValue The raw Markdown field value.
  * @param {EditorComponentDefinition[]} componentDefs The resolved component definitions.
  * @param {Map<string, ComponentPreview>} [previousPreviewMap] Preview map from the previous run, if
@@ -431,9 +492,11 @@ export const buildMarkdownWithPreviews = (currentValue, componentDefs, previousP
   /** @type {Map<string, number>} */
   const seenHashes = new Map();
   let string = (currentValue ?? '').replace(GLOBAL_IMAGE_REGEX, encodeImageSrc);
+  /** @type {PreviewRegion[] | undefined} */
+  let regions;
 
   for (let pass = 0; pass < MAX_SUBSTITUTION_PASSES && componentDefs.length; pass += 1) {
-    const matches = findOutermostMatches(string, componentDefs);
+    const matches = findOutermostMatches(string, componentDefs, regions);
 
     if (!matches.length) {
       break;
@@ -448,9 +511,10 @@ export const buildMarkdownWithPreviews = (currentValue, componentDefs, previousP
     });
 
     string = result.string;
+    regions = result.regions;
 
     // Only a string preview can expose further component syntax
-    if (!result.hasStringPreview) {
+    if (!regions.length) {
       break;
     }
   }
