@@ -1,6 +1,7 @@
 import { _, locale as appLocale } from '@sveltia/i18n';
 
 import { getListFormatter } from '$lib/services/contents/i18n';
+import { getRegex } from '$lib/services/utils/regex';
 import { makeLink } from '$lib/services/utils/string';
 
 /**
@@ -186,4 +187,22 @@ export const checkName = ({
   nameCounts[name] = (nameCounts[name] ?? 0) + 1;
 
   return true;
+};
+
+/**
+ * Check that a pattern option holds a regular expression that can be compiled. The runtime uses
+ * `getRegex()`, which returns `undefined` for a pattern it can’t compile, so a mistyped expression
+ * doesn’t fail loudly: a validation `pattern` stops validating, and a collection `filter` stops
+ * matching. A `RegExp` object, which the JS API accepts, is valid by construction, and a value of
+ * another type is reported against the JSON schema.
+ * @param {object} args Arguments.
+ * @param {string} args.option Name of the option holding the pattern, for the message.
+ * @param {any} args.pattern Pattern to check.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+export const checkRegex = ({ option, pattern, context, collectors }) => {
+  if (typeof pattern === 'string' && getRegex(pattern) === undefined) {
+    addMessage({ strKey: 'invalid_regex', values: { option, pattern }, context, collectors });
+  }
 };

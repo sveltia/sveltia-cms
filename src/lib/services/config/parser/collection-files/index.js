@@ -3,6 +3,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { checkPreviewPath } from '$lib/services/config/parser/collections/preview';
 import { parseFields } from '$lib/services/config/parser/fields';
+import { checkI18nOverrides } from '$lib/services/config/parser/i18n';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 
 /**
@@ -48,6 +49,9 @@ export const parseCollectionFile = (context, collectors) => {
     // which is likely not the intended behavior.
     addMessage({ strKey: 'collection_file_i18n_required', context, collectors });
   }
+
+  // Validate the `i18n` option against the collection’s configuration it builds on
+  checkI18nOverrides(context, collectors);
 
   parseFields(fields, context, collectors);
 

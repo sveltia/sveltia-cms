@@ -1,8 +1,11 @@
 import { parseFieldConfig, parseFields } from '$lib/services/config/parser/fields/registry';
+import { getSubFields } from '$lib/services/config/parser/utils/fields';
+import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 
 /**
  * @import {
+ * ComplexListFieldBaseProps,
  * ListFieldWithSubField,
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
@@ -45,6 +48,7 @@ export const parseListFieldConfig = (args) => {
   const { field: subfield } = /** @type {ListFieldWithSubField} */ (config);
   const { fields: subfields } = /** @type {ListFieldWithSubFields} */ (config);
   const { types } = /** @type {ListFieldWithTypes} */ (config);
+  const { thumbnail } = /** @type {ComplexListFieldBaseProps} */ (config);
   const { typedKeyPath } = context;
   const checkNameArgs = { nameCounts: {}, strKeyBase: 'variable_type', collectors };
 
@@ -58,6 +62,23 @@ export const parseListFieldConfig = (args) => {
 
     return;
   }
+
+  // An empty list of subfields or variable types makes every item an empty object. A list without
+  // any of the options is a plain list of strings, so only an explicit empty list is a mistake
+  if (subfields?.length === 0 || types?.length === 0) {
+    addMessage({ strKey: 'list_field_no_subfields', context, collectors });
+
+    return;
+  }
+
+  // The `thumbnail` option names a subfield of an item, or the single subfield
+  checkFieldReferences({
+    option: 'thumbnail',
+    keyPaths: thumbnail,
+    fields: getSubFields(config),
+    context,
+    collectors,
+  });
 
   // Handle single subfield
   if (subfield) {

@@ -1486,6 +1486,16 @@ config:
     missing_media_folder: メディアフォルダーが定義されていません。
     public_folder_relative_path: 設定されているパブリックフォルダーが正しくありません。この設定は「/」で始まる絶対パスでなければなりません。
     public_folder_absolute_url: パブリックフォルダーオプションの絶対 URL は Sveltia CMS では非対応です。
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: '`sanitize_replacement` オプションに `{$replacement}` が指定されていますが、スラッグに使用できない文字が含まれているため、置換文字として使用できません。'
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: '`{$option}` オプションに `{$url}` が指定されていますが、`https://` または `http://` で始まる絶対 URL を指定する必要があります。'
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: '`i18n.locales` オプションには少なくとも 1 つのロケールを指定する必要があります。'
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: '`default_locale` オプションに `{$locale}` が指定されていますが、`locales` に含まれていません。'
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: '`initial_locales` オプションに `{$locale}` が含まれていますが、`locales` に含まれていません。'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: '`transformations` オプションにサポートされていない `{$key}` キーが含まれています。`raster_image`、`svg` またはサポートされているラスター画像形式を指定してください。'
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1506,6 +1516,16 @@ config:
     file_format_mismatch: 拡張子 `{$extension}` は `{$format}` 形式と一致しません。
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: スラッグテンプレート `{$slug}` は無効です。スラッシュを含めることはできません。エントリーをサブフォルダーに整理するには、`slug` の代わりに `path` オプションを使用してください。
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: '`identifier_field` オプションで `{$name}` が参照されていますが、そのフィールドはコレクションに定義されていません。'
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: '`filter` オプションで `{$name}` が参照されていますが、そのフィールドはコレクションに定義されていません。'
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: '`filter` オプションには、エントリーを照合するための `value` または `pattern` オプションが必要です。'
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: '`{$option}` オプションで `{$name}` が参照されていますが、そのフィールドは定義されていません。'
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: '`{$option}` オプションに無効な正規表現 `{$pattern}` が含まれているため、無視されます。'
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
     invalid_reorder_group: '`reorder` オプションで指定された `{$name}` グループは、`view_groups` オプションに定義されていません。'
     # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
@@ -1563,12 +1583,29 @@ config:
     invalid_list_variable_type: List フィールドの変数タイプが無効です。`widget` オプションは `{$widget}` に設定されていますが、`object` でなければなりません。
     # Don’t localize `fields`, and `types`
     invalid_object_field: Object フィールドは `fields` と `types` オプションを同時に持つことはできません。
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: '`{$min}` オプションは `{$max}` オプションより大きくすることはできません。'
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: '`step` オプションに `{$step}` が指定されていますが、0 より大きい値を指定する必要があります。'
+    # Don’t localize `options`
+    select_field_no_options: Select フィールドの `options` オプションには少なくとも 1 つの項目が必要です。
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Select フィールドの `options` は一意である必要がありますが、`{$value}` が複数回使用されています。
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Select フィールドの `default` オプションに `{$value}` が指定されていますが、`options` に含まれていません。
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: List フィールドの `fields` または `types` オプションには少なくとも 1 つの項目が必要です。単純な値のリストにする場合は、オプションを省略してください。
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Object フィールドの `fields` または `types` オプションには少なくとも 1 つの項目が必要です。
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
     relation_field_invalid_collection: 参照されている `{$collection}` コレクションは無効であるか定義されていません。
     relation_field_invalid_collection_file: 参照されている `{$file}` ファイルは無効であるか定義されていません。
     # Don’t localize `file`
     relation_field_missing_file_name: ファイルコレクションへの参照には `file` オプションを定義する必要があります。
     relation_field_invalid_value_field: 参照されている値フィールド `{$field}` は無効であるか定義されていません。
+    relation_field_invalid_display_field: 参照されている表示フィールド `{$field}` は無効であるか定義されていません。
+    relation_field_invalid_search_field: 参照されている検索フィールド `{$field}` は無効であるか定義されていません。
+    relation_field_invalid_filter_field: 参照されているフィルターフィールド `{$field}` は無効であるか定義されていません。
     unexpected: 予期せぬ問題
 
     # Schema validation errors, reported when the configuration doesn’t match the published JSON
@@ -1613,6 +1650,10 @@ config:
     preview_path_date_field_not_found: '`preview_path_date_field` オプションで `{$name}` という名前のフィールドが指定されていますが、その名前の DateTime フィールドが定義されていないため、プレビューリンクは表示されません。'
     # {$name} is the template tag from the configuration; Don’t localize `preview_path`
     preview_path_field_not_found: '`preview_path` オプションで `{$name}` が参照されていますが、そのフィールドはコレクションに定義されていないため、プレビューリンクは表示されません。'
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: コレクションに新しいエントリーの名前となる `{$name}` フィールドがないため、新しいエントリーにはランダムなスラッグが付けられます。`{$name}` フィールドを追加するか、`identifier_field` または `slug` オプションを設定してください。
+    # Don’t localize `i18n`
+    i18n_not_configured: '`i18n` オプションが有効になっていますが、設定のトップレベルまたはコレクションで i18n が設定されていないため、このオプションは効果がありません。'
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: '`{$option}` オプションは Sveltia CMS の設定スキーマに定義されていません。このオプションは無視されます。入力ミスや記述ミスがないか確認してください。'
 

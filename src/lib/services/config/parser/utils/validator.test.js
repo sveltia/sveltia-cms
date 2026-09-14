@@ -18,6 +18,7 @@ function mockTranslate(key, options) {
     'config.error.invalid_type': 'Expected {expected}, got {actual}',
     'config.error.unsupported_deprecated_option': 'Unsupported option: {prop} (use {newProp})',
     'config.error.custom_message': 'Custom unsupported option: {prop}',
+    'config.error.invalid_regex': 'Invalid regex in {option}: {pattern}',
     'config.error.duplicate_names': 'Duplicate name found: {name}',
     'config.error.duplicate_duplicate_names': 'Duplicate name found: {name}',
     'config.error.invalid_duplicate_names': 'Invalid name found: {name}',
@@ -59,7 +60,7 @@ vi.mock('$lib/services/contents/i18n', () => ({
 }));
 
 // Must import after mocking
-const { addMessage, checkUnsupportedOptions, isValidName, checkName } =
+const { addMessage, checkUnsupportedOptions, isValidName, checkName, checkRegex } =
   await import('./validator.js');
 
 /**
@@ -1076,6 +1077,44 @@ describe('messages', () => {
       expect(result).toBe(true);
       expect(collectors.errors.size).toBe(0);
       expect(nameCounts['field_name-123']).toBe(1);
+    });
+  });
+
+  describe('checkRegex', () => {
+    it('should accept a pattern that compiles, in either notation', () => {
+      const collectors = createCollectors();
+
+      checkRegex({ option: 'pattern', pattern: '^\\d+$', context: {}, collectors });
+      checkRegex({ option: 'pattern', pattern: '/^.{0,280}$/s', context: {}, collectors });
+      checkRegex({ option: 'pattern', pattern: /^\d+$/, context: {}, collectors });
+
+      expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should leave a pattern of another type to the schema', () => {
+      const collectors = createCollectors();
+
+      checkRegex({ option: 'pattern', pattern: undefined, context: {}, collectors });
+      checkRegex({ option: 'pattern', pattern: true, context: {}, collectors });
+      checkRegex({ option: 'pattern', pattern: ['^a'], context: {}, collectors });
+
+      expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should report a pattern that does not compile', () => {
+      const collectors = createCollectors();
+
+      checkRegex({ option: 'filter', pattern: '^(\\d+$', context: {}, collectors });
+
+      expect([...collectors.errors]).toEqual(['Invalid regex in filter: ^(\\d+$']);
+    });
+
+    it('should report an empty pattern, which cannot be compiled either', () => {
+      const collectors = createCollectors();
+
+      checkRegex({ option: 'pattern', pattern: '', context: {}, collectors });
+
+      expect(collectors.errors.size).toBe(1);
     });
   });
 });

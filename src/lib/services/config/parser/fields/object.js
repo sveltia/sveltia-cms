@@ -28,6 +28,14 @@ export const parseObjectFieldConfig = (args) => {
     return;
   }
 
+  // An empty list of subfields or variable types makes the field an empty object. One of the
+  // options is required by the JSON schema, so only an explicit empty list is checked here
+  if (subfields?.length === 0 || types?.length === 0) {
+    addMessage({ strKey: 'object_field_no_subfields', context, collectors });
+
+    return;
+  }
+
   // Handle subfields
   if (subfields) {
     parseFields(subfields, context, collectors);

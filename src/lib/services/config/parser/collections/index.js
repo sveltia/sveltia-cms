@@ -5,10 +5,14 @@ import { isObject } from '@sveltia/utils/object';
 
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
+import { checkCollectionFilter } from '$lib/services/config/parser/collections/filter';
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
+import { checkIdentifierField } from '$lib/services/config/parser/collections/identifier';
 import { checkPreviewPath } from '$lib/services/config/parser/collections/preview';
+import { checkCollectionTemplates } from '$lib/services/config/parser/collections/templates';
 import { checkViewOptions } from '$lib/services/config/parser/collections/views';
 import { parseFields } from '$lib/services/config/parser/fields';
+import { checkI18nOverrides } from '$lib/services/config/parser/i18n';
 import {
   addMessage,
   checkName,
@@ -79,6 +83,16 @@ export const parseEntryCollection = (context, collectors) => {
   }
 
   parseFields(fields, context, collectors);
+
+  // Validate the `identifier_field` option, and the `title` field it defaults to, against the
+  // fields. An index file has a fixed name, so its own fields don’t count
+  checkIdentifierField({ collection, context, collectors });
+
+  // Validate the `slug`, `path`, `summary` and `thumbnail` options against the fields
+  checkCollectionTemplates({ collection, context, collectors });
+
+  // Validate the `filter` option, including the field it refers to
+  checkCollectionFilter({ collection, context, collectors });
 
   if (index_file) {
     parseFields(
@@ -168,6 +182,10 @@ export const parseCollection = ({ cmsConfig, collection }, collectors) => {
 
     return;
   }
+
+  // Validate the `i18n` option against the site-level configuration it builds on. A divider has
+  // been ruled out above
+  checkI18nOverrides({ cmsConfig, collection: /** @type {Collection} */ (collection) }, collectors);
 
   if (hasFiles) {
     parseCollectionFiles({ cmsConfig, collection }, collectors);

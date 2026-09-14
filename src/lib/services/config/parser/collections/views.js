@@ -1,6 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 
-import { hasField } from '$lib/services/config/parser/utils/fields';
+import { hasField, METADATA_KEYS } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 import {
   parseCustomSortableFields,
@@ -21,13 +21,6 @@ import {
  * } from '$lib/types/public';
  */
 
-/**
- * Entry metadata property keys that can be used in the `sortable_fields`, `view_groups` and
- * `view_filters` options in place of a field key path. These are resolved by `getPropertyValue()`
- * from the entry itself rather than the collection’s `fields`.
- * @type {string[]}
- */
-const METADATA_KEYS = ['slug', 'commit_author', 'commit_date'];
 /**
  * Internal sort keys added by `getSortConfig()` that don’t map to a field: `_summary` for the
  * generated entry summary and `_manual` for the reorder field.

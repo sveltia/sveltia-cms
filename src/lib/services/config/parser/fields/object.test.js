@@ -313,6 +313,33 @@ describe('Object Field Config Parser', () => {
       expect(mockParseFields).not.toHaveBeenCalled();
     });
 
+    it('should error on an empty subfield or type list', async () => {
+      const { parseObjectFieldConfig } = await import('./object.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const context = { cmsConfig: {}, collection: { name: 'posts' }, typedKeyPath: 'meta' };
+
+      parseObjectFieldConfig({
+        config: /** @type {any} */ ({ name: 'meta', widget: 'object', fields: [] }),
+        context,
+        collectors,
+      });
+
+      parseObjectFieldConfig({
+        config: /** @type {any} */ ({ name: 'meta', widget: 'object', types: [] }),
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'object_field_no_subfields',
+        context,
+        collectors,
+      });
+      expect(mockParseFields).not.toHaveBeenCalled();
+    });
+
     it('should skip parsing types without fields', async () => {
       const { parseObjectFieldConfig } = await import('./object.js');
       const collectors = createCollectors();

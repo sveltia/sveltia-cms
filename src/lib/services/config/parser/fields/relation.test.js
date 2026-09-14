@@ -14,6 +14,9 @@ const mockI18nStrings = {
     'File name is required for collection: {collection}',
   'config.error.relation_field_invalid_collection_file': 'File not found: {file}',
   'config.error.relation_field_invalid_value_field': 'Value field not found: {field}',
+  'config.error.relation_field_invalid_display_field': 'Display field not found: {field}',
+  'config.error.relation_field_invalid_search_field': 'Search field not found: {field}',
+  'config.error.relation_field_invalid_filter_field': 'Filter field not found: {field}',
   'config.error_locator.field': 'Field: {field}',
 };
 
@@ -476,6 +479,228 @@ describe('Relation Field Config Parser', () => {
       });
 
       expectMessage();
+    });
+  });
+
+  describe('relation field display and search field validation', () => {
+    /** @type {any} */
+    const authorFields = [
+      { name: 'userId', widget: 'string' },
+      { name: 'name', widget: 'object', fields: [{ name: 'first', widget: 'string' }] },
+      { name: 'cities', widget: 'list', fields: [{ name: 'id', widget: 'string' }] },
+    ];
+
+    /**
+     * Parse a relation field with the given options against an `authors` folder collection.
+     * @param {any} options The field options, e.g. `display_fields` and `search_fields`.
+     * @param {any} [collectionOptions] Extra options for the referenced collection, e.g. its
+     * `fields`.
+     */
+    const checkFields = async (options, collectionOptions = { fields: authorFields }) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+          value_field: 'userId',
+          ...options,
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: {
+            i18n: { locales: ['en', 'fr'] },
+            collections: [{ name: 'authors', folder: 'content/authors', ...collectionOptions }],
+          },
+          collection: { name: 'posts' },
+          typedKeyPath: 'author',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    /**
+     * Assert which invalid field messages were added.
+     * @param {'display' | 'search'} kind Option kind.
+     * @param {string[]} fields Expected field names in the messages, if any.
+     */
+    const expectMessages = (kind, fields) => {
+      const strKey = `relation_field_invalid_${kind}_field`;
+
+      if (fields.length) {
+        fields.forEach((field) => {
+          expect(mockAddMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ strKey, values: { field } }),
+          );
+        });
+      } else {
+        expect(mockAddMessage).not.toHaveBeenCalledWith(expect.objectContaining({ strKey }));
+      }
+    };
+
+    it('should accept display fields defined in the collection', async () => {
+      await checkFields({ display_fields: ['userId', 'name.first', 'cities.*.id'] });
+      expectMessages('display', []);
+    });
+
+    it('should error on a display field not defined in the collection', async () => {
+      await checkFields({ display_fields: ['userId', 'email'] });
+      expectMessages('display', ['email']);
+    });
+
+    it('should report every unknown display field', async () => {
+      await checkFields({ display_fields: ['email', 'twitter'] });
+      expectMessages('display', ['email', 'twitter']);
+    });
+
+    it('should validate the tags in a display field template', async () => {
+      await checkFields({ display_fields: ['{{name.first}} ({{role}})', '{{slug}}: {{locale}}'] });
+      expectMessages('display', ['role']);
+    });
+
+    it('should accept search fields defined in the collection', async () => {
+      await checkFields({ search_fields: ['userId', 'fields.name.first'] });
+      expectMessages('search', []);
+    });
+
+    it('should error on a search field not defined in the collection', async () => {
+      await checkFields({ search_fields: ['email'] });
+      expectMessages('search', ['email']);
+      expectMessages('display', []);
+    });
+
+    it('should report display and search fields separately', async () => {
+      await checkFields({ display_fields: ['email'], search_fields: ['email'] });
+      expectMessages('display', ['email']);
+      expectMessages('search', ['email']);
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+    });
+
+    it('should accept the canonical slug key as a display or search field', async () => {
+      await checkFields(
+        { display_fields: ['translationKey'], search_fields: ['translationKey'] },
+        { fields: authorFields, i18n: { locales: ['en', 'fr'] } },
+      );
+
+      expectMessages('display', []);
+      expectMessages('search', []);
+    });
+
+    it('should skip an option that is not a list, which the schema reports', async () => {
+      await checkFields({ display_fields: 'email', search_fields: '[email]' });
+      expectMessages('display', []);
+      expectMessages('search', []);
+    });
+
+    it('should skip list items that are not field names', async () => {
+      await checkFields({ display_fields: ['', 123, null], search_fields: [undefined] });
+      expectMessages('display', []);
+      expectMessages('search', []);
+    });
+
+    it('should skip the check when the collection has no fields', async () => {
+      await checkFields({ display_fields: ['email'] }, {});
+      expectMessages('display', []);
+    });
+  });
+
+  describe('relation field filter validation', () => {
+    /** @type {any} */
+    const authorFields = [
+      { name: 'userId', widget: 'string' },
+      { name: 'role', widget: 'select', options: ['admin', 'editor'] },
+    ];
+
+    /**
+     * Parse a relation field with the given `filters` against an `authors` folder collection.
+     * @param {any} filters The `filters` option.
+     * @param {any} [collectionOptions] Extra options for the referenced collection.
+     */
+    const checkFilters = async (filters, collectionOptions = { fields: authorFields }) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'author',
+          widget: 'relation',
+          collection: 'authors',
+          value_field: 'userId',
+          filters,
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: {
+            i18n: { locales: ['en', 'fr'] },
+            collections: [{ name: 'authors', folder: 'content/authors', ...collectionOptions }],
+          },
+          collection: { name: 'posts' },
+          typedKeyPath: 'author',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    /**
+     * Assert which invalid filter field messages were added.
+     * @param {string[]} fields Expected field names in the messages, if any.
+     */
+    const expectMessages = (fields) => {
+      const strKey = 'relation_field_invalid_filter_field';
+
+      if (fields.length) {
+        fields.forEach((field) => {
+          expect(mockAddMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ strKey, values: { field } }),
+          );
+        });
+
+        expect(mockAddMessage).toHaveBeenCalledTimes(fields.length);
+      } else {
+        expect(mockAddMessage).not.toHaveBeenCalledWith(expect.objectContaining({ strKey }));
+      }
+    };
+
+    it('should accept filters on fields defined in the collection', async () => {
+      await checkFilters([
+        { field: 'role', values: ['admin'] },
+        { field: 'fields.userId', values: ['{{slug}}'], exclude: true },
+      ]);
+
+      expectMessages([]);
+    });
+
+    it('should accept a filter on the entry slug', async () => {
+      await checkFilters([{ field: 'slug', values: ['alice'] }]);
+      expectMessages([]);
+    });
+
+    it('should accept a filter on the canonical slug key', async () => {
+      await checkFilters([{ field: 'translationKey', values: ['x'] }], {
+        fields: authorFields,
+        i18n: true,
+      });
+
+      expectMessages([]);
+    });
+
+    it('should error on a filter field not defined in the collection', async () => {
+      await checkFilters([
+        { field: 'role', values: ['admin'] },
+        { field: 'team', values: ['a'] },
+        { field: 'fields.slug', values: ['b'] },
+      ]);
+
+      expectMessages(['team', 'fields.slug']);
+    });
+
+    it('should leave filters of the wrong shape to the schema', async () => {
+      await checkFilters('role');
+      await checkFilters(['role', null, { values: ['a'] }, { field: 1, values: ['a'] }]);
+      expectMessages([]);
+    });
+
+    it('should skip the check when the collection has no fields', async () => {
+      await checkFilters([{ field: 'team', values: ['a'] }], {});
+      expectMessages([]);
     });
   });
 

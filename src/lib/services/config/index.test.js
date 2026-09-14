@@ -405,7 +405,7 @@ describe('config/index', () => {
       expect(config?._siteURL).toBeDefined();
     });
 
-    it('should set _baseURL to empty string for invalid URL (line 207)', async () => {
+    it('should reject a site_url that is not a URL', async () => {
       const { initCmsConfig } = await import('.');
 
       const mockConfig = {
@@ -426,11 +426,9 @@ describe('config/index', () => {
 
       await initCmsConfig();
 
-      const config = /** @type {any} */ (cmsConfig.current);
-
-      expect(config?._siteURL).toBe('not-a-valid-url');
-      // When site_url is not a valid URL, _baseURL should be empty string
-      expect(config?._baseURL).toBe('');
+      // The parser rejects the URL, so the configuration is not loaded
+      expect(cmsConfig.current).toBeUndefined();
+      expect(cmsConfigErrors.current).toHaveLength(1);
     });
 
     it('should handle root collection folder variants', async () => {

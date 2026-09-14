@@ -47,6 +47,7 @@ const mockCheckUnsupportedOptions = vi.fn();
 vi.mock('$lib/services/config/parser/utils/validator', () => ({
   addMessage: mockAddMessage,
   checkName: mockCheckName,
+  checkRegex: vi.fn(),
   checkUnsupportedOptions: mockCheckUnsupportedOptions,
 }));
 
@@ -159,6 +160,121 @@ describe('Collections Parser', () => {
 
       expect(mockAddMessage).not.toHaveBeenCalledWith(
         expect.objectContaining({ strKey: 'preview_path_no_date_field' }),
+      );
+    });
+
+    it('should error when identifier_field names a field that is not defined', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          identifier_field: 'headline',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'invalid_identifier_field',
+          values: { name: 'headline' },
+        }),
+      );
+    });
+
+    it('should warn when the collection has no title field to make slugs with', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'authors',
+          folder: 'content/authors',
+          fields: [{ name: 'name', widget: 'string' }],
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'warning', strKey: 'missing_identifier_field' }),
+      );
+    });
+
+    it('should not count an index file field as the identifier field', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'authors',
+          folder: 'content/authors',
+          fields: [{ name: 'name', widget: 'string' }],
+          index_file: { fields: [{ name: 'title', widget: 'string' }] },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'missing_identifier_field' }),
+      );
+    });
+
+    it('should error when the slug template refers to a field that is not defined', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          slug: '{{year}}-{{titel}}',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'option_field_not_found',
+          values: { option: 'slug', name: 'titel' },
+        }),
+      );
+    });
+
+    it('should error when the filter refers to a field that is not defined', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          filter: { field: 'type', value: 'post' },
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_filter_field', values: { name: 'type' } }),
       );
     });
 
@@ -757,6 +873,54 @@ describe('Collections Parser', () => {
 
       expect(mockParseFields).not.toHaveBeenCalled();
       expect(mockParseCollectionFiles).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('parseCollection i18n option', () => {
+    it('should warn when a collection has the i18n option without site-level i18n', async () => {
+      const { parseCollection } = await import('.');
+      const collectors = createCollectors();
+
+      parseCollection(
+        {
+          cmsConfig: /** @type {any} */ ({}),
+          collection: /** @type {any} */ ({
+            name: 'posts',
+            folder: 'content/posts',
+            i18n: true,
+            fields: [{ name: 'title', widget: 'string' }],
+          }),
+        },
+        collectors,
+      );
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'warning', strKey: 'i18n_not_configured' }),
+      );
+    });
+
+    it('should check the i18n option of a file collection too', async () => {
+      const { parseCollection } = await import('.');
+      const collectors = createCollectors();
+
+      parseCollection(
+        {
+          cmsConfig: /** @type {any} */ ({ i18n: { locales: ['en'], default_locale: 'en' } }),
+          collection: /** @type {any} */ ({
+            name: 'settings',
+            files: [],
+            i18n: { default_locale: 'fr' },
+          }),
+        },
+        collectors,
+      );
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'i18n_invalid_default_locale',
+          values: { locale: 'fr' },
+        }),
+      );
     });
   });
 

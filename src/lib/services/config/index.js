@@ -156,6 +156,8 @@ export const initCmsConfig = async (manualConfig) => {
     // Set the site URL for development or production. See also `/src/lib/components/app.svelte`
     config._siteURL =
       config.site_url?.trim() || (DEV ? DEV_SITE_URL : /* v8 ignore next */ window.location.origin);
+    // The parser has rejected a `site_url` that isn’t a URL, but the fallback can still be the
+    // opaque `null` origin of a `file:` page or a sandboxed frame, which leaves no base for links
     config._baseURL = isURL(config._siteURL) ? new URL(config._siteURL).origin : '';
 
     // Handle root collection folder variants, particularly for VitePress

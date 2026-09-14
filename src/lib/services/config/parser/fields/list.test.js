@@ -307,5 +307,111 @@ describe('List Field Parser', () => {
       // Should not parse fields when none exist
       expect(mockParseFields).not.toHaveBeenCalled();
     });
+
+    it('should error on an empty subfield or type list', async () => {
+      const { parseListFieldConfig } = await import('./list.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      parseListFieldConfig({
+        config: { name: 'items', widget: 'list', fields: [] },
+        context,
+        collectors,
+      });
+      parseListFieldConfig({
+        config: { name: 'items', widget: 'list', types: [] },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'list_field_no_subfields',
+        context,
+        collectors,
+      });
+      expect(mockParseFields).not.toHaveBeenCalled();
+    });
+
+    it('should accept a list without subfields, which holds plain values', async () => {
+      const { parseListFieldConfig } = await import('./list.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      parseListFieldConfig({ config: { name: 'tags', widget: 'list' }, context, collectors });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should accept a thumbnail that names a subfield', async () => {
+      const { parseListFieldConfig } = await import('./list.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      const subfields = [
+        { name: 'image', widget: 'image' },
+        { name: 'caption', widget: 'string' },
+      ];
+
+      parseListFieldConfig({
+        config: { name: 'items', widget: 'list', fields: subfields, thumbnail: 'image' },
+        context,
+        collectors,
+      });
+
+      parseListFieldConfig({
+        config: { name: 'items', widget: 'list', fields: subfields, thumbnail: 'fields.image' },
+        context,
+        collectors,
+      });
+
+      parseListFieldConfig({
+        config: {
+          name: 'items',
+          widget: 'list',
+          types: [{ name: 'photo', fields: subfields }],
+          thumbnail: 'image',
+        },
+        context,
+        collectors,
+      });
+
+      parseListFieldConfig({
+        config: {
+          name: 'images',
+          widget: 'list',
+          field: { name: 'image', widget: 'image' },
+          thumbnail: 'image',
+        },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should error on a thumbnail that names no subfield', async () => {
+      const { parseListFieldConfig } = await import('./list.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      parseListFieldConfig({
+        config: {
+          name: 'items',
+          widget: 'list',
+          fields: [{ name: 'image', widget: 'image' }],
+          thumbnail: 'photo',
+        },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'option_field_not_found',
+        values: { option: 'thumbnail', name: 'photo' },
+        context,
+        collectors,
+      });
+    });
   });
 });

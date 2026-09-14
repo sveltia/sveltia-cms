@@ -2,6 +2,10 @@ import transliterate from '@sindresorhus/transliterate';
 import { generateUUID } from '@sveltia/utils/crypto';
 import { truncate } from '@sveltia/utils/string';
 
+import {
+  UNSAFE_ASCII_SLUG_CHARS_REGEX,
+  UNSAFE_UNICODE_SLUG_CHARS_REGEX,
+} from '$lib/services/common/slug/constants';
 import { cmsConfig } from '$lib/services/config';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -14,6 +18,16 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * @see https://github.com/sindresorhus/transliterate/tree/main#locale
  */
 const TRANSLITERATION_LOCALES = ['da', 'de', 'hu', 'nb', 'sr', 'sv', 'tr'];
+
+/**
+ * Global variants of the unsafe character patterns, keyed by the `encoding` option, to replace
+ * every unsafe character in a string at once.
+ */
+const UNSAFE_CHARS_REGEXES = {
+  unicode: new RegExp(UNSAFE_UNICODE_SLUG_CHARS_REGEX, 'gu'),
+  ascii: new RegExp(UNSAFE_ASCII_SLUG_CHARS_REGEX, 'g'),
+};
+
 /**
  * @type {Map<string, { consecutivePattern: RegExp, trimPattern: RegExp }>}
  */
@@ -59,13 +73,8 @@ export const slugify = (
     });
   }
 
-  if (encoding === 'ascii') {
-    slug = slug.replaceAll(/[^\w-~]/g, ' ');
-  } else {
-    // Disallow space, control, delimiter, reserved, unwise characters
-    // @see https://stackoverflow.com/q/1547899
-    slug = slug.replaceAll(/[\p{Z}\p{C}!"#$%&'()*+,/:;<=>?@[\\\]^`{|}]/gu, ' ');
-  }
+  // Turn every unsafe character into a space, which is then replaced below
+  slug = slug.replaceAll(UNSAFE_CHARS_REGEXES[encoding === 'ascii' ? 'ascii' : 'unicode'], ' ');
 
   // Replace all the spaces with replacers (hyphens by default)
   slug = slug.trim().replaceAll(/\s+/g, sanitizeReplacement);

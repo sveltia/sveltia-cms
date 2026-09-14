@@ -17,6 +17,9 @@ const mockI18nStrings = {
   'config.error.invalid_repository': 'Invalid repository format',
   'config.error.no_collection': 'No collection found',
   'config.error.missing_media_folder': 'Missing media_folder',
+  'config.error.invalid_sanitize_replacement': 'Unsafe replacement: {replacement}',
+  'config.error.invalid_url_option': 'Invalid URL in {option}: {url}',
+  'config.error.i18n_invalid_default_locale': 'Unknown default locale: {locale}',
   'config.warning.editorial_workflow_unsupported': 'Editorial workflow is not supported',
   'config.error_locator.collection': 'Collection: {collection}',
   'config.error_locator.file': 'File: {file}',
@@ -151,6 +154,105 @@ describe('Config Parser', () => {
       parseCmsConfig(config, collectors);
 
       expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should collect errors for an unsafe slug replacement', async () => {
+      const { parseCmsConfig } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: '/media',
+        slug: { sanitize_replacement: '/' },
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      parseCmsConfig(config, collectors);
+
+      expect([...collectors.errors]).toEqual(['Unsafe replacement: /']);
+    });
+
+    it('should collect errors for a site URL that is not a URL', async () => {
+      const { parseCmsConfig } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: '/media',
+        site_url: 'example.com',
+        display_url: '/admin',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      parseCmsConfig(config, collectors);
+
+      // A relative `display_url` opens fine in a new tab, so only `site_url` is checked
+      expect([...collectors.errors]).toEqual(['Invalid URL in site_url: example.com']);
+    });
+
+    it('should accept site URLs that are URLs, or empty', async () => {
+      const { parseCmsConfig } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: '/media',
+        site_url: 'https://example.com',
+        display_url: ' ',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      parseCmsConfig(config, collectors);
+
+      expect(collectors.errors.size).toBe(0);
+    });
+
+    it('should collect errors for a default locale that is not listed', async () => {
+      const { parseCmsConfig } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: '/media',
+        i18n: { locales: ['en', 'fr'], default_locale: 'de' },
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      parseCmsConfig(config, collectors);
+
+      expect([...collectors.errors]).toEqual(['Unknown default locale: de']);
     });
 
     it('should parse fields for registered custom editor components', async () => {
