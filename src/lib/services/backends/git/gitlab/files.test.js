@@ -890,6 +890,25 @@ describe('GitLab files service', () => {
       );
     });
 
+    test('reads an asset committed to a workflow branch from that branch', async () => {
+      const asset = /** @type {any} */ ({
+        path: 'content/posts/hello/photo.png',
+        workflow: { branch: 'cms/posts/hello' },
+      });
+
+      const mockBlob = new Blob(['image data'], { type: 'image/png' });
+
+      vi.mocked(fetchAPI).mockResolvedValue(mockBlob);
+
+      const result = await fetchBlob(asset);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/test-owner%2Ftest-repo/repository/files/content%2Fposts%2Fhello%2Fphoto.png/raw?lfs=true&ref=cms%2Fposts%2Fhello',
+        { responseType: 'blob' },
+      );
+      expect(result).toBe(mockBlob);
+    });
+
     test('handles missing branch', async () => {
       // Set repository branch to undefined
       vi.mocked(repository).branch = '';

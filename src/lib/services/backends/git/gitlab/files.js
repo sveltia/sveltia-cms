@@ -406,12 +406,15 @@ export const fetchFiles = async () => {
  */
 export const fetchBlob = async (asset) => {
   const { owner, repo, branch = '' } = repository;
-  const { path } = asset;
+  const { path, workflow } = asset;
+  // An asset attached to an unpublished entry is committed to a workflow branch only, so it has to
+  // be read from there; on the configured branch the path is missing or holds the published version
+  const ref = workflow?.branch ?? branch;
 
   return /** @type {Promise<Blob>} */ (
     fetchAPI(
       `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/files` +
-        `/${encodeURIComponent(path)}/raw?lfs=true&ref=${encodeURIComponent(branch)}`,
+        `/${encodeURIComponent(path)}/raw?lfs=true&ref=${encodeURIComponent(ref)}`,
       { responseType: 'blob' },
     )
   );
