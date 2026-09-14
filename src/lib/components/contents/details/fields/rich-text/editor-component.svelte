@@ -507,13 +507,23 @@
     data-key-path-prefix={keyPathPrefix}
     data-component-name={componentName}
     onkeydowncapture={(event) => {
+      const { target } = event;
+
+      // A nested rich text editor handles its own keys, so leave the event alone when it comes
+      // from one: stopping it here would keep it from ever reaching the nested editor, which is
+      // below in the capture phase, and cancelling it would block typing there. The outer editor
+      // ignores the event once it bubbles up, as Lexical marks it as handled by the nested one
+      if (/** @type {HTMLElement} */ (target).closest('[contenteditable]') !== wrapper) {
+        return;
+      }
+
       // Allow to select all in any `TextInput` within the component below using Ctrl+A. Svelte
       // delegates `keydown` to the root, which the event never reaches once it’s stopped, so the
       // block’s own handling has to happen here as well
       event.stopPropagation();
 
       if (
-        !(/** @type {HTMLElement} */ (event.target).matches('button, input, textarea')) &&
+        !(/** @type {HTMLElement} */ (target).matches('button, input, textarea')) &&
         event.key !== 'Tab'
       ) {
         event.preventDefault();

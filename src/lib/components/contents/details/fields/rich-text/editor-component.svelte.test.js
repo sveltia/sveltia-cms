@@ -183,6 +183,63 @@ describe('EditorComponent', () => {
       expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'remove' }));
     });
 
+    test('leaves the keys pressed within a nested rich text editor alone', async () => {
+      // The nested editor would otherwise build nodes from the stub definitions in the registry
+      const nestedFields = [
+        { name: 'content', label: 'Content', widget: 'richtext', editor_components: [] },
+      ];
+
+      customComponentRegistry.set(
+        'note',
+        /** @type {any} */ ({ id: 'note', label: 'Note', fields: nestedFields }),
+      );
+
+      try {
+        const { wrapper } = await renderComponent({
+          componentName: 'note',
+          label: 'Note',
+          fields: nestedFields,
+          summary: undefined,
+          values: { content: '' },
+        });
+
+        const block = /** @type {HTMLElement} */ (wrapper.querySelector('.component'));
+        const editor = page.getByRole('group', { name: 'Note' }).getByRole('textbox');
+
+        await expect.element(editor).toBeInTheDocument();
+
+        const root = /** @type {HTMLElement} */ (editor.element());
+        const outerListener = vi.fn();
+
+        expect(root.isContentEditable).toBe(true);
+        // The parent editor’s listener, which the nested editor’s keys have to reach as usual
+        wrapper.addEventListener('keydown', outerListener);
+
+        const enter = new KeyboardEvent('keydown', {
+          key: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        });
+
+        root.dispatchEvent(enter);
+        expect(enter.defaultPrevented).toBe(false);
+        expect(outerListener).toHaveBeenCalledWith(enter);
+
+        // The block itself is still handled
+        const blockEnter = new KeyboardEvent('keydown', {
+          key: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        });
+
+        block.dispatchEvent(blockEnter);
+        expect(blockEnter.defaultPrevented).toBe(true);
+        expect(outerListener).not.toHaveBeenCalledWith(blockEnter);
+      } finally {
+        customComponentRegistry.delete('note');
+      }
+    });
+
     test('collapses, and can be removed', async () => {
       const { onChange, wrapper } = await renderComponent({ values: { title: 'Hello' } });
       const group = page.getByRole('group', { name: 'Card' });
