@@ -8,7 +8,7 @@ import { setReorderMode } from '$lib/services/contents/collection/view';
 import { entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { env } from '$lib/services/user/env.svelte';
 import { unpublishedEntries } from '$lib/services/workflow';
-import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
+import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$lib/test/config';
 
 import EntryList from './entry-list.svelte';
 
@@ -61,7 +61,7 @@ describe('EntryList', () => {
     setEntries([
       createMockEntry({
         slug: 'hello',
-        content: { _default: { title: 'Hello', image: 'https://example.com/hello.png' } },
+        content: { _default: { title: 'Hello', image: TEST_IMAGE_URL } },
       }),
       createMockEntry({ slug: 'world', content: { _default: { title: 'World' } } }),
       // An entry stored in another locale only is listed as well
@@ -85,7 +85,7 @@ describe('EntryList', () => {
     // The thumbnail is shown in the view’s size
     await expect
       .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'), THUMBNAIL_WAIT)
-      .toBe('https://example.com/hello.png');
+      .toBe(TEST_IMAGE_URL);
     expect(grid.element().querySelector('.image .preview')).toHaveClass('icon');
 
     await grid.getByRole('row', { name: 'World' }).click();
@@ -98,7 +98,7 @@ describe('EntryList', () => {
       /** @type {any} */ ({
         ...createMockEntry({
           slug: 'draft',
-          content: { _default: { title: 'Draft', image: 'https://example.com/draft.png' } },
+          content: { _default: { title: 'Draft', image: TEST_IMAGE_URL } },
         }),
         workflow: {
           status: 'draft',
@@ -125,7 +125,7 @@ describe('EntryList', () => {
       .toEqual(['Unpublished Entries', 'Published Entries']);
     await expect
       .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'), THUMBNAIL_WAIT)
-      .toBe('https://example.com/draft.png');
+      .toBe(TEST_IMAGE_URL);
   });
 
   test('shows the reorder list while reordering', async () => {
@@ -151,7 +151,7 @@ describe('EntryList', () => {
         createMockEntry({
           slug: 'a',
           folder: 'content/sorted',
-          content: { _default: { title: 'A', order: 1, image: 'https://example.com/a.png' } },
+          content: { _default: { title: 'A', order: 1, image: TEST_IMAGE_URL } },
         }),
       ]);
       entryListSettings.current = { sorted: { type: 'grid' } };
@@ -169,7 +169,7 @@ describe('EntryList', () => {
       await expect.element(grid.getByRole('button', { name: 'Move Up' })).toBeInTheDocument();
       await expect
         .poll(() => grid.element().querySelector('.image img')?.getAttribute('src'), THUMBNAIL_WAIT)
-        .toBe('https://example.com/a.png');
+        .toBe(TEST_IMAGE_URL);
     } finally {
       setReorderMode(false);
       await initTestConfig({

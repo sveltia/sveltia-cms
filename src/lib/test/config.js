@@ -157,6 +157,14 @@ export const createMockImageFile = async ({ name = 'photo.png', width = 4, heigh
 };
 
 /**
+ * URL of an image that loads without any network access: a transparent 1×1 PNG. A thumbnail or
+ * preview test uses this rather than an `https:` URL, which fails to load — or loads something else
+ * — on a runner with network access, upon which the image is replaced by a fallback icon.
+ */
+export const TEST_IMAGE_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
+/**
  * Build a cloud storage service that works without any network access or credentials.
  * @param {Partial<MediaLibraryService>} [service] Any service property to override or add, e.g.
  * `upload`, `delete`, `rename` and `replace` functions. None of the operations is supported by

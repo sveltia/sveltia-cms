@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { deployments } from '$lib/services/deployments';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
-import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
+import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$lib/test/config';
 
 import WorkflowEntryCard from './workflow-entry-card.svelte';
 
@@ -171,14 +171,14 @@ describe('WorkflowEntryCard', () => {
         createMockEntry({
           slug: 'hello',
           folder: 'content/photos',
-          content: { _default: { title: 'Hello', image: 'https://example.com/hello.png' } },
+          content: { _default: { title: 'Hello', image: TEST_IMAGE_URL } },
         }),
       ),
     });
 
     await expect
       .poll(() => container.querySelector('img')?.getAttribute('src'))
-      .toBe('https://example.com/hello.png');
+      .toBe(TEST_IMAGE_URL);
 
     // A draft in a collection that no longer exists is identified by its slug
     const { container: other } = await render(WorkflowEntryCard, {

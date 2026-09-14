@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { createMockEntry, initTestConfig } from '$lib/test/config';
+import { createMockEntry, initTestConfig, TEST_IMAGE_URL } from '$lib/test/config';
 
 import EntryResultItem from './entry-result-item.svelte';
 
@@ -66,7 +66,7 @@ describe('EntryResultItem', () => {
     const entry = createMockEntry({
       slug: 'sunset',
       folder: 'content/photos',
-      content: { _default: { title: 'Sunset', image: 'https://example.com/sunset.png' } },
+      content: { _default: { title: 'Sunset', image: TEST_IMAGE_URL } },
     });
 
     const { container } = await render(EntryResultItem, {
@@ -75,7 +75,7 @@ describe('EntryResultItem', () => {
 
     await expect
       .poll(() => container.querySelector('.image img')?.getAttribute('src'))
-      .toBe('https://example.com/sunset.png');
+      .toBe(TEST_IMAGE_URL);
   });
 
   test('shows a file of a file collection by its label', async () => {

@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-svelte';
 import { getCollection } from '$lib/services/contents/collection';
 import { selectedEntries } from '$lib/services/contents/collection/entries';
 import { env } from '$lib/services/user/env.svelte';
-import { createMockEntry, initTestConfig } from '$lib/test/config';
+import { createMockEntry, initTestConfig, TEST_IMAGE_URL } from '$lib/test/config';
 
 import EntryListItemCells from './entry-list-item-cells.svelte';
 
@@ -92,14 +92,14 @@ describe('EntryListItemCells', () => {
       entry: createMockEntry({
         slug: '_index',
         folder: 'content/pages',
-        content: { _default: { title: 'Home', image: 'https://example.com/home.png' } },
+        content: { _default: { title: 'Home', image: TEST_IMAGE_URL } },
       }),
       viewType: 'grid',
     });
 
     await expect
       .poll(() => container.querySelector('.image img')?.getAttribute('src'))
-      .toBe('https://example.com/home.png');
+      .toBe(TEST_IMAGE_URL);
     expect(container.querySelector('.image .preview')).toHaveClass('tile');
     expect(container.querySelector('.title .icon.home')).not.toBeNull();
 
