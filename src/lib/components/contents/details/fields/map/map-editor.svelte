@@ -346,7 +346,14 @@
 
 <div role="none" class="toolbar">
   <!-- @todo Replace this with `<Combobox>` -->
-  <SearchBar bind:value={searchQuery} debounce {readonly} flex placeholder={_('find_place')} />
+  <SearchBar
+    bind:value={searchQuery}
+    debounce
+    {readonly}
+    flex
+    placeholder={_('find_place')}
+    aria-label={_('find_place')}
+  />
   <!-- @todo Replace `title` with a native tooltip -->
   <Button
     variant="tertiary"

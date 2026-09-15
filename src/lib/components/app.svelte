@@ -17,7 +17,12 @@
     appTitle,
   } from '$lib/services/app/branding';
   import { initAppLocale } from '$lib/services/app/i18n';
-  import { announcedPageStatus, startViewTransition } from '$lib/services/app/navigation';
+  import {
+    announcedPageStatus,
+    mainAreaTitle,
+    overlayTitle,
+    startViewTransition,
+  } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
   import { cmsConfigLoaded, DEV_SITE_URL, initCmsConfig } from '$lib/services/config';
   import { dataLoaded } from '$lib/services/contents';
@@ -78,6 +83,12 @@
 
   let transitioned = $state(false);
 
+  // “Posts › Hello – Acme CMS” while editing, “Posts Collection – Acme CMS” on the list, and just
+  // the app name on the sign-in page, so each view has its own title (WCAG 2.4.2)
+  const documentTitle = $derived(
+    [overlayTitle.current || mainAreaTitle.current, appTitle.current].filter(Boolean).join(' – '),
+  );
+
   $effect(() => {
     if (dataLoaded.current && user.account) {
       startViewTransition('forwards', () => {
@@ -95,7 +106,7 @@
   <meta name="referrer" content="same-origin" />
   <meta name="robots" content="noindex" />
   {#if cmsConfigLoaded.current}
-    <title>{appTitle.current}</title>
+    <title>{documentTitle}</title>
     <link rel="icon" href={appLogoURL.current} type={appLogoType.current} />
     {#if appIconURLs.current}
       <link rel="apple-touch-icon" href={appIconURLs.current.large} />
@@ -359,6 +370,14 @@
 
     #nc-root > .sui.app-shell {
       position: absolute;
+    }
+
+    .sui.app-shell {
+      /* A placeholder is often the only visible label of a search box, so it has to meet the 4.5:1
+        text contrast. Sveltia UI only renders it at full strength in the high-contrast themes; the
+        default themes leave it at 50% opacity, which is 2.6:1 on white. */
+      --sui-textbox-placeholder-foreground-color: var(--sui-tertiary-foreground-color);
+      --sui-textbox-placeholder-opacity: 1;
     }
   }
 

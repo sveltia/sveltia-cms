@@ -69,7 +69,7 @@ describe('MapEditor', () => {
     await waitForMap(container);
 
     await expect
-      .element(page.getByRole('searchbox'))
+      .element(page.getByRole('searchbox', { name: 'Find a Place' }))
       .toHaveAttribute('placeholder', 'Find a Place');
     await expect.element(page.getByRole('button', { name: 'Use Your Location' })).toBeEnabled();
 

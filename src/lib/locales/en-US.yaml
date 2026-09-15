@@ -11,6 +11,8 @@
 create: New
 select: Select
 select_all: Select All
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: Select {$name}
 upload: Upload
 copy: Copy
 download: Download

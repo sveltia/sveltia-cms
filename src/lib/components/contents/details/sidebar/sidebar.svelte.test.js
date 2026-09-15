@@ -53,7 +53,8 @@ describe('Sidebar', () => {
 
     const tabs = page.getByRole('radiogroup', { name: 'Sidebar Panels' });
 
-    await expect.element(tabs).toHaveAttribute('aria-controls', 'entry-sidebar-content');
+    // No panel exists yet, so there is nothing for the tabs to control
+    await expect.element(tabs).not.toHaveAttribute('aria-controls');
     expect(
       tabs
         .getByRole('radio')
@@ -65,6 +66,7 @@ describe('Sidebar', () => {
 
     await tabs.getByRole('radio', { name: 'History' }).click();
     await expect.element(page.getByRole('group', { name: 'History' })).toBeInTheDocument();
+    await expect.element(tabs).toHaveAttribute('aria-controls', 'entry-sidebar-content');
     expect(entryEditorSettings.current?.sidebarPanel).toBe('history');
 
     await tabs.getByRole('radio', { name: 'Backlinks' }).click();

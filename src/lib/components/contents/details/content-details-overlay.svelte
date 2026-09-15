@@ -20,6 +20,7 @@
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import Sidebar from '$lib/components/contents/details/sidebar/sidebar.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
+  import { rememberFocus } from '$lib/services/app/focus';
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
@@ -85,9 +86,13 @@
 
   let restoring = false;
   let switching = false;
-  let swapButtonPressed = false;
-  let swapDragStartX = 0;
-  let swapDragStartY = 0;
+  /**
+   * Width of the first pane in pixels, used to place the pane swap button over the gutter between
+   * the panes. The button sits next to the resize handle rather than inside it: the handle is a
+   * focusable `separator`, and a button nested in it is an interactive control inside another one.
+   * @type {number}
+   */
+  let firstPaneWidth = $state(0);
 
   let hidden = $state(true);
   /** @type {HTMLElement | undefined} */
@@ -200,45 +205,9 @@
   };
 
   /**
-   * Called when the user presses the pointer on the pane swap button. Remember the button and
-   * position, which are used to determine whether the following {@link onSwapHandleClick} call is a
-   * click or a drag to resize the panes.
-   * @param {PointerEvent} event `pointerdown` event.
+   * Swap the panes.
    */
-  const onSwapButtonPointerDown = (event) => {
-    swapButtonPressed = true;
-    swapDragStartX = event.clientX;
-    swapDragStartY = event.clientY;
-  };
-
-  /**
-   * Called when the user clicks on the resizable handle that holds the pane swap button. The handle
-   * captures the pointer to support dragging, so a `click` event triggered with a pointer is
-   * dispatched on the handle instead of the button, meaning a `click` event handler on the button
-   * itself is never called. Swap the panes only if the pointer was pressed on the button and not
-   * dragged. A `click` event triggered with the keyboard is dispatched on the button as usual, and
-   * has no associated pointer position.
-   * @param {MouseEvent} event `click` event.
-   */
-  const onSwapHandleClick = (event) => {
-    const { detail, target, clientX, clientY } = event;
-    const pressed = swapButtonPressed;
-
-    swapButtonPressed = false;
-
-    if (detail === 0) {
-      // Keyboard activation
-      if (!(/** @type {HTMLElement} */ (target).closest('.swap-button'))) {
-        return;
-      }
-    } else if (
-      !pressed ||
-      Math.abs(clientX - swapDragStartX) > 5 ||
-      Math.abs(clientY - swapDragStartY) > 5
-    ) {
-      return;
-    }
-
+  const swapPanes = () => {
     [editorFirstPane.current, editorSecondPane.current] = [
       editorSecondPane.current,
       editorFirstPane.current,
@@ -386,10 +355,14 @@
       entryDraft.current = null;
     }
 
+    // The row or the New button that opened the editor gets the focus back once it closes
+    const restoreFocus = rememberFocus();
+
     window.addEventListener('message', onmessage);
 
     return () => {
       window.removeEventListener('message', onmessage);
+      restoreFocus();
     };
   });
 
@@ -592,24 +565,26 @@
                 }}
               >
                 <ResizablePane defaultSize={firstPaneSize} minSize={minPaneSize}>
-                  {@render pane('first', editorFirstPane.current)}
+                  <div role="none" class="pane-measure" bind:clientWidth={firstPaneWidth}>
+                    {@render pane('first', editorFirstPane.current)}
+                  </div>
                 </ResizablePane>
-                <ResizableHandle onclick={onSwapHandleClick}>
-                  <Button
-                    class="swap-button"
-                    iconic
-                    size="small"
-                    variant="tertiary"
-                    aria-label={_('swap_panes')}
-                    onpointerdown={onSwapButtonPointerDown}
-                  >
-                    <Icon name="swap_horiz" />
-                  </Button>
-                </ResizableHandle>
+                <ResizableHandle />
                 <ResizablePane defaultSize={secondPaneSize} minSize={minPaneSize}>
                   {@render pane('second', editorSecondPane.current)}
                 </ResizablePane>
               </ResizablePaneGroup>
+              <Button
+                class="swap-button"
+                iconic
+                size="small"
+                variant="tertiary"
+                aria-label={_('swap_panes')}
+                style="--gutter-position: {firstPaneWidth}px"
+                onclick={swapPanes}
+              >
+                <Icon name="swap_horiz" />
+              </Button>
             {:else if editorFirstPane.current}
               {@render pane('first', editorFirstPane.current)}
             {:else if editorSecondPane.current}
@@ -667,6 +642,7 @@
   }
 
   .content-area {
+    position: relative;
     flex: auto;
     background-color: var(--sui-primary-background-color);
 
@@ -677,22 +653,37 @@
     :global {
       .sui.resizable-handle {
         background-color: var(--sui-secondary-background-color); /* same as toolbar */
+      }
 
-        .swap-button {
-          position: absolute;
-          top: calc(50% - 12px);
-          /* Above the handle’s hit area, a positioned `::before` pseudo-element at `z-index: 1` */
-          z-index: 2;
-          margin: 0;
-          border-radius: 50%;
-          opacity: 0.5;
+      /* Centred over the gutter, whose position is the first pane’s width */
+      .swap-button {
+        position: absolute;
+        top: calc(50% - 12px);
+        inset-inline-start: calc(
+          var(--gutter-position) + var(--sui-resizable-handle-size, 4px) / 2
+        );
+        /* Above the handle’s hit area, a positioned `::before` pseudo-element at `z-index: 1` */
+        z-index: 2;
+        margin: 0;
+        border-radius: 50%;
+        opacity: 0.5;
+        translate: -50%;
 
-          &:hover,
-          &:focus-visible {
-            opacity: 1;
-          }
+        &:dir(rtl) {
+          translate: 50%;
+        }
+
+        &:hover,
+        &:focus-visible {
+          opacity: 1;
         }
       }
     }
+  }
+
+  .pane-measure {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
 </style>

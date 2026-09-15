@@ -36,7 +36,7 @@
   );
 </script>
 
-<div role="none" class="primary-sidebar">
+<nav class="primary-sidebar" aria-label={_('contents')}>
   {#if env.isSmallScreen}
     <header>
       <h2>{_('contents')}</h2>
@@ -54,7 +54,7 @@
   <Tree
     class={hasNestedCollections ? undefined : 'flat'}
     ariaLabel={_('collection_list')}
-    aria-controls="collection-container"
+    aria-controls={isSearchPage ? undefined : 'collection-container'}
     expandOnSelect={false}
   >
     {#if collections.length}
@@ -108,4 +108,4 @@
       {/if}
     {/if}
   </Tree>
-</div>
+</nav>

@@ -11,6 +11,8 @@
 create: 新規作成
 select: 選択
 select_all: すべて選択
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: '{$name} を選択'
 upload: アップロード
 copy: コピー
 download: ダウンロード

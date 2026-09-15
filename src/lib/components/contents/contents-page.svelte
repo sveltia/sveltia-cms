@@ -85,13 +85,14 @@
     {#if isSearchPage}
       <SearchMainArea />
     {:else if notFoundKey}
-      <PageContainerMainArea aria-label={_('content_library')}>
+      <PageContainerMainArea id="collection-container" aria-label={_('content_library')}>
         {#snippet mainContent()}
           <NotFound message={_(notFoundKey)} />
         {/snippet}
       </PageContainerMainArea>
     {:else if !env.isSmallScreen || !isIndexPage}
       <PageContainerMainArea
+        id="collection-container"
         aria-label={_('x_collection', {
           values: {
             collection:

@@ -27,7 +27,7 @@ describe('SlugEditor', () => {
     const input = group.getByRole('textbox', { name: 'Slug' });
 
     await expect.element(input).toBeRequired();
-    await expect.element(group.getByText('*')).toHaveAttribute('aria-label', 'Required');
+    await expect.element(group.getByText('*')).toHaveAttribute('aria-hidden', 'true');
 
     await input.fill('hello-world');
     await expect.poll(() => draft.currentSlugs).toEqual({ en: 'hello-world', fr: 'hello-world' });

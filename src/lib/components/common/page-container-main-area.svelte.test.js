@@ -1,6 +1,9 @@
-import { createRawSnippet } from 'svelte';
+import { createRawSnippet, flushSync } from 'svelte';
 import { describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
+
+import { mainAreaTitle } from '$lib/services/app/navigation';
 
 import PageContainerMainArea from './page-container-main-area.svelte';
 
@@ -31,6 +34,9 @@ describe('PageContainerMainArea', () => {
     const wrapper = container.querySelector('.wrapper');
 
     expect(wrapper).toHaveAttribute('aria-label', 'Main');
+    // The area is the page’s main landmark, and names the document
+    await expect.element(page.getByRole('main', { name: 'Main' })).toBeInTheDocument();
+    expect(mainAreaTitle.current).toBe('Main');
     expect([...container.querySelectorAll('p')].map((p) => p.textContent)).toEqual([
       'Primary',
       'Secondary',
@@ -41,8 +47,24 @@ describe('PageContainerMainArea', () => {
   });
 
   test('lays out nothing without content', async () => {
-    const { container } = await render(PageContainerMainArea, { 'aria-label': 'Main' });
+    const { container } = await render(PageContainerMainArea, {});
 
     expect(container.querySelectorAll('p')).toHaveLength(0);
+    // An unnamed area leaves the document with the app name alone
+    expect(mainAreaTitle.current).toBe('');
+  });
+
+  test('hands the title over to the next area during a page transition', async () => {
+    const outgoing = await render(PageContainerMainArea, { 'aria-label': 'Outgoing' });
+
+    expect(mainAreaTitle.current).toBe('Outgoing');
+
+    // The next page’s area can be mounted before the previous one is destroyed
+    await render(PageContainerMainArea, { 'aria-label': 'Incoming' });
+    expect(mainAreaTitle.current).toBe('Incoming');
+
+    outgoing.unmount();
+    flushSync();
+    expect(mainAreaTitle.current).toBe('Incoming');
   });
 });

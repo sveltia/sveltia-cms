@@ -302,7 +302,7 @@
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{fieldLabel}</h4>
       {#if !readonly && required}
-        <div class="required" aria-label={_('required')}>*</div>
+        <span class="required" aria-hidden="true">*</span>
       {/if}
       <Spacer flex />
       {#if canCopy && ['richtext', 'markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
@@ -400,7 +400,6 @@
       }
 
       input:is([type='color'], [type='number']) {
-        outline: 0;
         border-width: 1px;
         border-color: var(--sui-primary-border-color);
         border-radius: var(--sui-control-medium-border-radius);
@@ -418,7 +417,6 @@
       }
 
       input:is([type='date'], [type='datetime-local'], [type='time']) {
-        outline: 0;
         margin: var(--sui-focus-ring-width);
         border-width: var(--sui-textbox-border-width, 1px);
         border-color: var(--sui-primary-border-color);

@@ -3,12 +3,14 @@
   Render a read-only entry row. Clicking the row navigates to the entry edit page.
 -->
 <script>
+  import { locale as appLocale } from '@sveltia/i18n';
   import { GridRow } from '@sveltia/ui';
 
   import EntryListItemCells from '$lib/components/contents/list/entry-list-item-cells.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntryIndexMap } from '$lib/services/contents/collection/view';
+  import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { toggleListItem } from '$lib/services/utils/array';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -32,9 +34,18 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  // `undefined` for an entry that has never been published, as those are listed in a separate group
-  // above `listedEntries`. The attribute is then omitted rather than set to an invalid index.
-  const rowIndex = $derived(listedEntryIndexMap.current.get(entry.id));
+  // `aria-rowindex` is 1-based, unlike the index map. `undefined` for an entry that has never been
+  // published, as those are listed in a separate group above `listedEntries`. The attribute is then
+  // omitted rather than set to an invalid index.
+  const rowIndex = $derived.by(() => {
+    const index = listedEntryIndexMap.current.get(entry.id);
+
+    return index === undefined ? undefined : index + 1;
+  });
+
+  // Names the row, so that it’s announced by the entry it holds rather than by the text of every
+  // cell, including the selection checkbox’s own label
+  const summary = $derived(appLocale.current ? getEntrySummary(collection, entry) : '');
 
   /**
    * Update the entry selection.
@@ -47,6 +58,7 @@
 
 <GridRow
   aria-rowindex={rowIndex}
+  aria-label={summary}
   onChange={(event) => {
     updateSelection(event.detail.selected);
   }}

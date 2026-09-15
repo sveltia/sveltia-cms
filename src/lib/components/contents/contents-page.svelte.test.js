@@ -79,7 +79,7 @@ describe('ContentsPage', () => {
 
     await expect.element(library.getByRole('tree', { name: 'Collection List' })).toBeVisible();
 
-    const area = library.getByRole('group', { name: '“\u2068Posts\u2069” Collection' });
+    const area = library.getByRole('main', { name: '“\u2068Posts\u2069” Collection' });
 
     await expect
       .poll(() => area.getByRole('grid', { name: 'Entries' }).getByRole('row').elements().length)
@@ -92,7 +92,7 @@ describe('ContentsPage', () => {
     // Following the URL to a file collection
     window.location.hash = '#/collections/pages';
     await expect
-      .element(page.getByRole('group', { name: '“\u2068Pages\u2069” Collection' }))
+      .element(page.getByRole('main', { name: '“\u2068Pages\u2069” Collection' }))
       .toBeInTheDocument();
     expect(selectedCollection.current?.name).toBe('pages');
   });

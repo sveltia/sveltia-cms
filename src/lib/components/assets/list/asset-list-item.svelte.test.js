@@ -44,7 +44,7 @@ describe('AssetListItem', () => {
     const { onSelectionChange } = await renderItem();
     const row = page.getByRole('row', { name: 'photo.png' });
 
-    await expect.element(row).toHaveAttribute('aria-rowindex', '3');
+    await expect.element(row).toHaveAttribute('aria-rowindex', '4');
     await expect.element(row.getByRole('img', { name: 'photo.png' })).toBeInTheDocument();
     await expect.element(row.getByText('photo.png')).toBeInTheDocument();
 

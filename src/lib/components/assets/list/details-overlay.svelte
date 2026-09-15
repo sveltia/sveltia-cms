@@ -12,9 +12,10 @@
 <script>
   import { _, isRTL } from '@sveltia/i18n';
   import { Button, Icon, Toolbar, TruncatedText } from '@sveltia/ui';
-  import { tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
+  import { rememberFocus } from '$lib/services/app/focus';
   import { showAssetOverlay } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
 
@@ -88,6 +89,9 @@
       moveFocus();
     }
   });
+
+  // The row that opened the overlay gets the focus back once it closes
+  onMount(rememberFocus);
 
   /**
    * Elements that use the arrow keys themselves, e.g. to move the caret or to seek in a video, and

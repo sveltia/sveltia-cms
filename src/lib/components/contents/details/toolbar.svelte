@@ -22,7 +22,7 @@
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
-  import { goBack, goto } from '$lib/services/app/navigation';
+  import { goBack, goto, overlayTitle } from '$lib/services/app/navigation';
   import { getAssetFolder } from '$lib/services/assets/folders';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
   import { allEntries } from '$lib/services/contents';
@@ -142,7 +142,32 @@
     // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
   );
+  /* v8 ignore start -- only read for an existing entry, which has a collection */
+  const entrySummary = $derived(
+    collectionFile
+      ? getCollectionFileLabel(collectionFile)
+      : collection && originalEntry && appLocale.current
+        ? getEntrySummary(collection, originalEntry)
+        : '',
+  );
+  /* v8 ignore stop */
+  // Heading of the toolbar, also used as the document title while the editor is open
+  const title = $derived(
+    notFound
+      ? ''
+      : isNew
+        ? _('create_entry_title', { values: { name: collectionLabelSingular } })
+        : `${collectionLabel} › ${entrySummary}`,
+  );
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
+
+  $effect(() => {
+    overlayTitle.current = title;
+
+    return () => {
+      overlayTitle.current = '';
+    };
+  });
   const showSecondPane = $derived(entryEditorSettings.current?.showSecondPane ?? true);
   // There’s only something to put in the second pane when another locale can be edited alongside
   // the first one, or when the entry has a preview
@@ -436,13 +461,8 @@
       {#if !notFound}
         <TruncatedText>
           {#if isNew}
-            {_('create_entry_title', { values: { name: collectionLabelSingular } })}
+            {title}
           {:else}
-            {@const entrySummary = collectionFile
-              ? getCollectionFileLabel(collectionFile)
-              : collection && originalEntry && appLocale.current
-                ? getEntrySummary(collection, originalEntry)
-                : ''}
             <bdi>{collectionLabel}</bdi> › <bdi>{entrySummary}</bdi>
           {/if}
         </TruncatedText>

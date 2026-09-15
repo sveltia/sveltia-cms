@@ -112,9 +112,7 @@
 
 <Toast bind:show={externalAssetsToast.current.show}>
   <Alert status={externalAssetsToast.current.status}>
-    {#if externalAssetsToast.current.message}
-      {_(externalAssetsToast.current.message)}
-    {/if}
+    {_(externalAssetsToast.current.message)}
   </Alert>
 </Toast>
 

@@ -62,11 +62,14 @@ describe('SecondaryToolbar', () => {
 
     const media = toolbar.getByRole('button', { name: 'Show Assets' });
 
-    // `aria-expanded` is only set once the pane is shown
+    // `aria-expanded` and `aria-controls` are only set once the pane is shown
     await expect.element(media).toHaveAttribute('aria-pressed', 'false');
+    await expect.element(media).not.toHaveAttribute('aria-controls');
     await media.click();
     await expect.poll(() => currentView.current.showMedia).toBe(true);
-    await expect.element(toolbar.getByRole('button', { name: 'Hide Assets' })).toBeVisible();
+    await expect
+      .element(toolbar.getByRole('button', { name: 'Hide Assets' }))
+      .toHaveAttribute('aria-controls', 'collection-assets');
   });
 
   test('leaves out the selector on a small screen', async () => {

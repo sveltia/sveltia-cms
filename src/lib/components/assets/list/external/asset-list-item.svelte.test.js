@@ -32,7 +32,7 @@ describe('AssetListItem', () => {
 
     const row = page.getByRole('row', { name: 'photo.png' });
 
-    await expect.element(row).toHaveAttribute('aria-rowindex', '2');
+    await expect.element(row).toHaveAttribute('aria-rowindex', '3');
     await expect.element(row.getByRole('img', { name: 'photo.png' })).toBeInTheDocument();
 
     await row.getByRole('checkbox').click({ force: true });

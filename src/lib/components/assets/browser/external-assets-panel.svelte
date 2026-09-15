@@ -273,6 +273,7 @@
               {@const { id, previewURL, description, kind: _kind } = asset}
               <SimpleImageGridItem
                 value={id}
+                ariaLabel={description}
                 {viewType}
                 {multiple}
                 selected={isSelected(asset)}

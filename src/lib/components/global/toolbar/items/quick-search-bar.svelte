@@ -58,6 +58,7 @@
       debounce
       keyShortcuts="Accel+F"
       placeholder={_(`search_placeholder_${searchMode.current}`)}
+      aria-label={_(`search_placeholder_${searchMode.current}`)}
       --sui-textbox-placeholder-text-align="center"
       {onclick}
       oninput={({ target }) => {

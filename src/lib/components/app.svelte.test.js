@@ -3,7 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { appIconURLs } from '$lib/services/app/branding';
-import { announcedPageStatus } from '$lib/services/app/navigation';
+import { announcedPageStatus, mainAreaTitle, overlayTitle } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
 import { cmsConfigLoaded } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
@@ -84,10 +84,21 @@ describe('App', () => {
     await expect.element(page.getByRole('toolbar', { name: 'Global' })).toBeVisible();
     await expect.element(page.getByRole('group', { name: 'Content Library' })).toBeInTheDocument();
 
+    // The document is titled after the main area, or after the overlay covering it. On the narrow
+    // test viewport the collection index has no main area, so the titles are set by hand
+    expect(document.title).toBe('Acme CMS');
+    mainAreaTitle.current = 'Posts Collection';
+    await expect.poll(() => document.title).toBe('Posts Collection – Acme CMS');
+    overlayTitle.current = 'Posts › Hello';
+    await expect.poll(() => document.title).toBe('Posts › Hello – Acme CMS');
+    overlayTitle.current = '';
+    mainAreaTitle.current = '';
+
     // Signing out brings the entrance page back
     user.account = undefined;
     dataLoaded.current = false;
     await expect.element(page.getByRole('heading', { name: 'Acme CMS' })).toBeVisible();
+    await expect.poll(() => document.title).toBe('Acme CMS');
   });
 
   test('opens external links in a new tab', async () => {

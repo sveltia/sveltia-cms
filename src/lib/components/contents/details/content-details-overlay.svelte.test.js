@@ -303,53 +303,44 @@ describe('ContentDetailsOverlay', () => {
     expect(showDuplicateToast.current).toBe(false);
   });
 
-  test('swaps the panes with the keyboard, but not after dragging the handle', async () => {
+  test('swaps the panes with a button placed over the gutter, outside the handle', async () => {
     await renderOverlay(createDraft());
 
     const button = page.getByRole('button', { name: 'Swap Panes' });
 
     await expect.element(button).toBeInTheDocument();
 
-    // A keyboard activation has no pointer position
-    button.element().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    const handle = /** @type {HTMLElement} */ (document.querySelector('.sui.resizable-handle'));
+
+    // The handle is a focusable separator, so the button must not be nested in it
+    expect(handle.contains(button.element())).toBe(false);
+    // The button is centred over the handle
+    await expect
+      .poll(() => {
+        const { left, right } = button.element().getBoundingClientRect();
+        const handleRect = handle.getBoundingClientRect();
+
+        return Math.abs((left + right) / 2 - (handleRect.left + handleRect.right) / 2);
+      })
+      .toBeLessThan(2);
+
+    await button.click();
     expect(editorFirstPane.current).toEqual({ mode: 'preview', locale: 'en' });
 
     // Activating the handle itself does nothing
-    const handle = /** @type {HTMLElement} */ (button.element().parentElement);
-
     handle.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
     expect(editorFirstPane.current).toEqual({ mode: 'preview', locale: 'en' });
 
-    // The handle captures the pointer, which a synthetic event doesn’t have
-    handle.setPointerCapture = vi.fn();
-
-    // A drag doesn’t count as a click
-    button
-      .element()
-      .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }));
-    handle.dispatchEvent(
-      new MouseEvent('click', { bubbles: true, detail: 1, clientX: 40, clientY: 10 }),
-    );
-    expect(editorFirstPane.current).toEqual({ mode: 'preview', locale: 'en' });
-
-    // A click without a drag swaps the panes back
-    button
-      .element()
-      .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }));
-    handle.dispatchEvent(
-      new MouseEvent('click', { bubbles: true, detail: 1, clientX: 12, clientY: 11 }),
-    );
+    await button.click();
     expect(editorFirstPane.current).toEqual({ mode: 'edit', locale: 'en' });
   });
 
   test('remembers the pane widths once resized', async () => {
     await renderOverlay(createDraft());
 
-    const button = page.getByRole('button', { name: 'Swap Panes' });
+    await expect.element(page.getByRole('button', { name: 'Swap Panes' })).toBeInTheDocument();
 
-    await expect.element(button).toBeInTheDocument();
-
-    const handle = /** @type {HTMLElement} */ (button.element().parentElement);
+    const handle = /** @type {HTMLElement} */ (document.querySelector('.sui.resizable-handle'));
 
     handle.setPointerCapture = vi.fn();
     handle.releasePointerCapture = vi.fn();

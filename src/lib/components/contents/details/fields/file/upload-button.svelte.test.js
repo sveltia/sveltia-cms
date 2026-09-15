@@ -37,13 +37,13 @@ describe('UploadButton', () => {
 
   test('opens the asset dialog on click', async () => {
     const props = await renderButton();
-    const button = page.getByRole('button', { name: /Drop an image file here or/ });
+    const area = page.getByText(/Drop an image file here or/);
 
-    await expect
-      .element(button)
-      .toHaveTextContent('cloud_upload Drop an image file here or Browse');
+    await expect.element(area).toHaveTextContent('Drop an image file here or Browse');
+    // The area is a click target, not a control: the only button is the one inside it
+    expect(page.getByRole('button').elements()).toHaveLength(1);
 
-    await button.click();
+    await area.click();
     expect(props.showSelectAssetsDialog).toBe(true);
     // Replacing is off when starting afresh
     expect(props.replaceMode).toBe(false);
@@ -54,8 +54,8 @@ describe('UploadButton', () => {
     const props = await renderButton({ onFilePaste, multiple: true, isImageField: false });
 
     await expect
-      .element(page.getByRole('button', { name: /Drop files here or/ }))
-      .toHaveTextContent('cloud_upload Drop files here or Browse Paste');
+      .element(page.getByText(/Drop files here or/))
+      .toHaveTextContent('Drop files here or Browse Paste');
 
     await page.getByRole('button', { name: 'Browse' }).click();
     expect(props.showSelectAssetsDialog).toBe(true);
@@ -87,10 +87,8 @@ describe('UploadButton', () => {
       }),
     ]);
 
-    page
-      .getByRole('button', { name: /Drop an image/ })
-      .element()
-      .focus();
+    // The shortcut works while any of the buttons in the area has focus
+    page.getByRole('button', { name: 'Browse' }).element().focus();
     // The modifier depends on the platform
     await userEvent.keyboard('{Control>}v{/Control}');
     await userEvent.keyboard('{Meta>}v{/Meta}');
@@ -121,22 +119,18 @@ describe('UploadButton', () => {
     await renderButton({ allowDrop: false });
 
     await expect
-      .element(page.getByRole('button', { name: /Click to browse/ }))
-      .toHaveTextContent('cloud_upload Click to browse… Browse');
+      .element(page.getByText(/Click to browse/))
+      .toHaveTextContent('Click to browse… Browse');
   });
 
   test('asks for a single file, or several images', async () => {
     await renderButton({ isImageField: false });
 
-    await expect
-      .element(page.getByRole('button', { name: /Drop a file here or/ }))
-      .toBeInTheDocument();
+    await expect.element(page.getByText(/Drop a file here or/)).toBeInTheDocument();
 
     await renderButton({ multiple: true });
 
-    await expect
-      .element(page.getByRole('button', { name: /Drop image files here or/ }))
-      .toBeInTheDocument();
+    await expect.element(page.getByText(/Drop image files here or/)).toBeInTheDocument();
   });
 
   test('shows the progress while processing', async () => {
@@ -146,7 +140,7 @@ describe('UploadButton', () => {
       .element(page.getByRole('status'))
       .toHaveTextContent('Processing files. This may take a while.');
     expect(page.getByRole('button', { name: 'Browse' }).elements()).toHaveLength(0);
-    await expect.element(page.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
+    expect(document.querySelector('.empty')).toHaveClass('disabled');
 
     await renderButton({ processing: true });
     await expect
@@ -158,12 +152,16 @@ describe('UploadButton', () => {
     env.hasMouse = false;
 
     const props = await renderButton();
-    const button = page.getByRole('button', { name: /Browse/ }).first();
 
-    await expect.element(button).toHaveTextContent('cloud_upload Browse');
+    await expect.element(page.getByRole('button', { name: 'Browse' })).toBeInTheDocument();
+
+    const area = /** @type {HTMLElement} */ (document.querySelector('.empty'));
+
+    // No instructions to drop or click, just the button
+    expect(area).toHaveTextContent('cloud_upload Browse');
 
     // Tapping the area does nothing, as there is no drop
-    await button.click();
+    area.click();
     expect(props.showSelectAssetsDialog).toBe(false);
   });
 
@@ -171,9 +169,9 @@ describe('UploadButton', () => {
     const props = await renderButton({ readonly: true });
 
     await expect
-      .element(page.getByRole('button', { name: /Drop/ }))
+      .element(page.getByRole('button', { name: 'Browse' }))
       .toHaveAttribute('aria-disabled', 'true');
-    await page.getByRole('button', { name: /Drop/ }).click({ force: true });
+    await page.getByText(/Drop/).click({ force: true });
     expect(props.showSelectAssetsDialog).toBe(false);
   });
 });

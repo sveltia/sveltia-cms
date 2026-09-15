@@ -28,6 +28,7 @@ describe('QuickSearchBar', () => {
     const input = page.getByRole('searchbox');
 
     await expect.element(input).toHaveAttribute('placeholder', 'Search for contents…');
+    await expect.element(input).toHaveAccessibleName('Search for contents…');
     await input.fill('hello');
 
     await expect.poll(() => searchTerms.current).toBe('hello');

@@ -9,6 +9,9 @@
   /**
    * @typedef {object} Props
    * @property {string} value The `value` attribute of the option.
+   * @property {string} ariaLabel Accessible name of the option, typically the file name or the
+   * image description. The tile only shows a preview and a caption that isn’t part of the button’s
+   * text, so without this the option would be nameless.
    * @property {boolean} selected Whether the option is selected.
    * @property {ViewType} [viewType] View type.
    * @property {boolean} multiple Whether to allow selecting multiple assets.
@@ -20,6 +23,7 @@
   let {
     /* eslint-disable prefer-const */
     value,
+    ariaLabel,
     selected,
     viewType = 'grid',
     multiple,
@@ -30,7 +34,7 @@
 </script>
 
 <div role="none" class="wrapper {viewType}">
-  <Option label="" {value} {selected} {onChange}>
+  <Option label="" aria-label={ariaLabel} {value} {selected} {onChange}>
     {#snippet startIcon()}
       {#if multiple}
         <span role="none" class="icon check-background">

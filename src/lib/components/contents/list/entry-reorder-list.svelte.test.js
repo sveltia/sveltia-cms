@@ -207,13 +207,13 @@ describe('EntryReorderList', () => {
 
     const rows = page.getByRole('row');
 
-    await expect.element(rows.nth(2)).toHaveAttribute('aria-rowindex', '2');
+    await expect.element(rows.nth(2)).toHaveAttribute('aria-rowindex', '3');
     // The list is snapshotted when entering reorder mode, so a background update doesn’t change it
     setEntries([
       createMockEntry({ slug: 'a', content: { _default: { title: 'A', order: 1 } } }),
       createMockEntry({ slug: 'b', content: { _default: { title: 'B', order: 2 } } }),
     ]);
-    await expect.element(rows.nth(2)).toHaveAttribute('aria-rowindex', '-1');
+    await expect.element(rows.nth(2)).not.toHaveAttribute('aria-rowindex');
     expect(getTitles()).toEqual(['A', 'B', 'C']);
   });
 

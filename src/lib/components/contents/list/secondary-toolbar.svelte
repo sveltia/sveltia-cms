@@ -91,7 +91,7 @@
         iconic
         disabled={!hasListedEntries || !getAssetFolder({ collectionName })}
         pressed={!!currentView.current.showMedia}
-        aria-controls="collection-assets"
+        aria-controls={currentView.current.showMedia ? 'collection-assets' : undefined}
         aria-expanded={currentView.current.showMedia}
         aria-label={_(currentView.current.showMedia ? 'hide_assets' : 'show_assets')}
         onclick={() => {

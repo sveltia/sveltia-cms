@@ -55,7 +55,7 @@
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{_('slug')}</h4>
       {#if required}
-        <div class="required" aria-label={_('required')}>*</div>
+        <span class="required" aria-hidden="true">*</span>
       {/if}
     </header>
     {#if invalid}

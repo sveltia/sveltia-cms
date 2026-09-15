@@ -83,6 +83,18 @@
   /* v8 ignore stop */
 
   /**
+   * Get the 1-based `aria-rowindex` of an entry, or `undefined` for an entry that isn’t in the
+   * listed index, so the attribute is omitted rather than set to an invalid value.
+   * @param {Entry} entry Entry.
+   * @returns {number | undefined} Row index.
+   */
+  const rowIndex = (entry) => {
+    const index = listedEntryIndexMap.current.get(entry.id);
+
+    return index === undefined ? undefined : index + 1;
+  };
+
+  /**
    * Move an entry within a group from one index to another, and mark the new order as unsaved.
    * This is the committed move behind the Move Up / Move Down buttons; a drag previews the move
    * first and only commits it on drop.
@@ -170,7 +182,7 @@
             class="sui grid-row"
             class:drag-source={draggedEntry?.id === entry.id}
             tabindex="0"
-            aria-rowindex={listedEntryIndexMap.current.get(entry.id) ?? -1}
+            aria-rowindex={rowIndex(entry)}
             aria-selected="false"
             draggable="true"
             ondragstart={(/** @type {DragEvent} */ event) => {

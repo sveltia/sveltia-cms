@@ -35,7 +35,7 @@ describe('EntryListItem', () => {
 
     const row = page.getByRole('row');
 
-    await expect.element(row).toHaveAttribute('aria-rowindex', '0');
+    await expect.element(row).toHaveAttribute('aria-rowindex', '1');
     await page.getByRole('checkbox').click();
     await expect.poll(() => selectedEntries.current).toEqual([entry]);
 

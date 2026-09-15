@@ -113,6 +113,7 @@
             {@const { kind, unsaved, key, relPath } = asset}
             <SimpleImageGridItem
               value={key}
+              ariaLabel={relPath}
               {viewType}
               {multiple}
               selected={isSelected(asset)}

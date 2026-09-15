@@ -31,7 +31,7 @@ describe('AssetListItem', () => {
 
     const row = page.getByRole('row', { name: 'b.png' });
 
-    await expect.element(row).toHaveAttribute('aria-rowindex', '1');
+    await expect.element(row).toHaveAttribute('aria-rowindex', '2');
 
     await row.getByRole('checkbox').click({ force: true });
     expect(selectedAssets.current).toEqual([assets[1]]);
@@ -50,7 +50,7 @@ describe('AssetListItem', () => {
 
     await expect
       .element(page.getByRole('row', { name: 'c.png' }))
-      .toHaveAttribute('aria-rowindex', '-1');
+      .not.toHaveAttribute('aria-rowindex');
   });
 
   test('focuses the asset and opens the details on double click', async () => {

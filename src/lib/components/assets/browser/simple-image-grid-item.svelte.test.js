@@ -21,11 +21,18 @@ describe('SimpleImageGridItem', () => {
 
     const { container } = await render(
       SimpleImageGridItem,
-      { value: 'photo', selected: false, multiple: false, children, onChange },
+      {
+        value: 'photo',
+        ariaLabel: 'photo.png',
+        selected: false,
+        multiple: false,
+        children,
+        onChange,
+      },
       { wrapper: SimpleImageGrid },
     );
 
-    const option = page.getByRole('option');
+    const option = page.getByRole('option', { name: 'photo.png' });
 
     await expect.element(option).toHaveAttribute('data-value', 'photo');
     await expect.element(option).toHaveAttribute('aria-selected', 'false');
@@ -44,6 +51,7 @@ describe('SimpleImageGridItem', () => {
       SimpleImageGridItem,
       {
         value: 'photo',
+        ariaLabel: 'photo.png',
         selected: true,
         multiple: true,
         viewType: 'list',

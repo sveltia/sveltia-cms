@@ -72,7 +72,7 @@ describe('AssetsPage', () => {
 
     await expect.element(library.getByRole('listbox', { name: 'Asset Folder List' })).toBeVisible();
 
-    const area = library.getByRole('group', { name: '“\u2068All Assets\u2069” Asset Folder' });
+    const area = library.getByRole('main', { name: '“\u2068All Assets\u2069” Asset Folder' });
 
     await expect.element(area.getByRole('grid', { name: 'Assets' })).toBeInTheDocument();
     await expect.poll(() => area.getByRole('row').elements().length).toBe(2);
@@ -85,7 +85,7 @@ describe('AssetsPage', () => {
     window.location.hash = '#/assets/static/uploads';
     await expect.poll(() => selectedAssetFolder.current?.internalPath).toBe('static/uploads');
     await expect
-      .element(page.getByRole('group', { name: '“\u2068Global Assets\u2069” Asset Folder' }))
+      .element(page.getByRole('main', { name: '“\u2068Global Assets\u2069” Asset Folder' }))
       .toBeInTheDocument();
   });
 
@@ -234,7 +234,7 @@ describe('AssetsPage', () => {
 
     await render(AssetsPage);
 
-    const area = page.getByRole('group', { name: '“\u2068Linked Files\u2069” Asset Folder' });
+    const area = page.getByRole('main', { name: '“\u2068Linked Files\u2069” Asset Folder' });
 
     await expect.element(area.getByRole('row', { name: 'x.png' })).toBeInTheDocument();
     expect(selectedCloudService.current?.serviceId).toBe('linked');
@@ -255,7 +255,7 @@ describe('AssetsPage', () => {
 
     await render(AssetsPage);
 
-    const area = page.getByRole('group', { name: '“\u2068Uploadcare\u2069” Asset Folder' });
+    const area = page.getByRole('main', { name: '“\u2068Uploadcare\u2069” Asset Folder' });
 
     await expect.element(area.getByRole('textbox')).toBeInTheDocument();
     expect(selectedCloudService.current?.serviceId).toBe('uploadcare');

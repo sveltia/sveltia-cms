@@ -81,7 +81,7 @@
     (!folders[index].isAssetCollection && !!folders[index + 1]?.isAssetCollection);
 </script>
 
-<div role="none" class="primary-sidebar">
+<nav class="primary-sidebar" aria-label={_('assets')}>
   {#if env.isSmallScreen}
     <header>
       <h2>{_('assets')}</h2>
@@ -233,4 +233,4 @@
       </Option>
     </OptionGroup>
   </Listbox>
-</div>
+</nav>

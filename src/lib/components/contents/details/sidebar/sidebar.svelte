@@ -82,7 +82,7 @@
   <SelectButtonGroup
     class="tabs"
     ariaLabel={_('entry_sidebar.sidebar_panels')}
-    aria-controls="entry-sidebar-content"
+    aria-controls={EffectiveTab ? 'entry-sidebar-content' : undefined}
   >
     {#each tabs as { key, label, icon, disabled } (key)}
       <SelectButton

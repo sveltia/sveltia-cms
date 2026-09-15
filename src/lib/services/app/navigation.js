@@ -46,6 +46,18 @@ export const selectedPageName = createRawState('');
 export const announcedPageStatus = createRawState('');
 
 /**
+ * Name of the main area on the current page, e.g. the collection or asset folder being viewed,
+ * shown in the document title. Empty when the page has no specific name, e.g. Settings.
+ */
+export const mainAreaTitle = createRawState('');
+
+/**
+ * Title of the overlay covering the page, e.g. the entry being edited, shown in the document title
+ * in preference to {@link mainAreaTitle}. Empty while no overlay is open.
+ */
+export const overlayTitle = createRawState('');
+
+/**
  * Parse the URL and return the decoded result.
  * @param {string} [href] URL. Omit this to use the current URL.
  * @returns {{ path: string, params: Record<string, string> }} Path and search params.

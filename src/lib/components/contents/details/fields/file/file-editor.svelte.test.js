@@ -113,9 +113,7 @@ describe('FileEditor', () => {
   test('offers to upload a file, and takes a dropped one', async () => {
     const { draft, props, container } = await renderEditor({}, '');
 
-    await expect
-      .element(page.getByRole('button', { name: /Drop an image file here/ }))
-      .toBeInTheDocument();
+    await expect.element(page.getByText(/Drop an image file here/)).toBeInTheDocument();
 
     const file = await createMockImageFile({ name: 'new.png' });
 
@@ -140,9 +138,7 @@ describe('FileEditor', () => {
 
     await page.getByRole('button', { name: 'Remove Image' }).click();
     expect(props.currentValue).toBe('');
-    await expect
-      .element(page.getByRole('button', { name: /Drop an image file here/ }))
-      .toBeInTheDocument();
+    await expect.element(page.getByText(/Drop an image file here/)).toBeInTheDocument();
   });
 
   test('doesn’t offer to remove a required file', async () => {
@@ -207,9 +203,7 @@ describe('FileEditor', () => {
         .map((el) => el.textContent?.trim());
 
     await expect.poll(getPaths).toEqual(['/static/uploads/a.png', '/static/uploads/b.png']);
-    await expect
-      .element(page.getByRole('button', { name: /Drop image files here/ }))
-      .toBeInTheDocument();
+    await expect.element(page.getByText(/Drop image files here/)).toBeInTheDocument();
 
     // Add another file
     const file = await createMockImageFile({ name: 'c.png' });
@@ -254,9 +248,7 @@ describe('FileEditor', () => {
       { keyPath: 'file', typedKeyPath: 'file', fieldId: 'file' },
     );
 
-    await expect
-      .element(page.getByRole('button', { name: /Drop a file here/ }))
-      .toBeInTheDocument();
+    await expect.element(page.getByText(/Drop a file here/)).toBeInTheDocument();
 
     const file = new File(['hello'], 'notes.txt', { type: 'text/plain' });
 
@@ -276,9 +268,7 @@ describe('FileEditor', () => {
       { keyPath: 'images', typedKeyPath: 'images', fieldId: 'images' },
     );
 
-    await expect
-      .element(page.getByRole('button', { name: /Drop image files here/ }))
-      .toBeInTheDocument();
+    await expect.element(page.getByText(/Drop image files here/)).toBeInTheDocument();
 
     const file = await createMockImageFile({ name: 'new.png' });
 
@@ -342,7 +332,7 @@ describe('FileEditor', () => {
     );
 
     await expect.element(page.getByRole('textbox')).toHaveTextContent('/static/uploads/a.png');
-    expect(page.getByRole('button', { name: /Drop/ }).elements()).toHaveLength(0);
+    expect(page.getByText(/Drop/).elements()).toHaveLength(0);
   });
 
   test('reports a file that can’t be used', async () => {

@@ -1,4 +1,16 @@
+<script module>
+  /**
+   * The instance that last set {@link mainAreaTitle}. A page transition can mount the next area
+   * before the previous one is destroyed, and the outgoing cleanup must not wipe the incoming
+   * title.
+   * @type {object | undefined}
+   */
+  let titleOwner;
+</script>
+
 <script>
+  import { mainAreaTitle } from '$lib/services/app/navigation';
+
   /**
    * @import { Snippet } from 'svelte';
    */
@@ -21,9 +33,25 @@
     ...rest
     /* eslint-enable prefer-const */
   } = $props();
+
+  const instance = {};
+
+  // The accessible name of the area also names the document, so the browser tab and history
+  // entries say which collection or folder is open rather than just the app name
+  $effect(() => {
+    titleOwner = instance;
+    mainAreaTitle.current = rest['aria-label'] ?? '';
+
+    return () => {
+      if (titleOwner === instance) {
+        mainAreaTitle.current = '';
+      }
+    };
+  });
 </script>
 
-<div role="group" class="wrapper" {...rest}>
+<!-- One `main` per page: the area holding the page’s content, as opposed to the sidebar -->
+<main class="wrapper" {...rest}>
   {@render primaryToolbar?.()}
   <div role="none" class="main-inner">
     <div role="none" class="main-inner-main">
@@ -32,7 +60,7 @@
     </div>
     {@render secondarySidebar?.()}
   </div>
-</div>
+</main>
 
 <style>
   .wrapper {
