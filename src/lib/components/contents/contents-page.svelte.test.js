@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { announcedPageStatus } from '$lib/services/app/navigation';
+import { announcedPageStatus, mainAreaTitle } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
 import { selectedCollection } from '$lib/services/contents/collection';
 import {
@@ -79,7 +79,10 @@ describe('ContentsPage', () => {
 
     await expect.element(library.getByRole('tree', { name: 'Collection List' })).toBeVisible();
 
-    const area = library.getByRole('main', { name: '“\u2068Posts\u2069” Collection' });
+    const area = library.getByRole('main', { name: '\u2068Posts\u2069 Collection' });
+
+    // The landmark name doubles as the document title, so it carries no quotes
+    expect(mainAreaTitle.current).toBe('\u2068Posts\u2069 Collection');
 
     await expect
       .poll(() => area.getByRole('grid', { name: 'Entries' }).getByRole('row').elements().length)
@@ -92,7 +95,7 @@ describe('ContentsPage', () => {
     // Following the URL to a file collection
     window.location.hash = '#/collections/pages';
     await expect
-      .element(page.getByRole('main', { name: '“\u2068Pages\u2069” Collection' }))
+      .element(page.getByRole('main', { name: '\u2068Pages\u2069 Collection' }))
       .toBeInTheDocument();
     expect(selectedCollection.current?.name).toBe('pages');
   });

@@ -342,9 +342,9 @@ asset_list: Список ресурсов
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: Коллекция «{$collection}»
+x_collection: Коллекция {$collection}
 # {$folder} is the current asset folder label
-x_asset_folder: Папка ресурсов «{$folder}»
+x_asset_folder: Папка ресурсов {$folder}
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users

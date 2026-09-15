@@ -342,9 +342,9 @@ asset_list: Danh sách tệp
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: Chuyên mục “{$collection}”
+x_collection: Chuyên mục {$collection}
 # {$folder} is the current asset folder label
-x_asset_folder: Thư mục tệp “{$folder}”
+x_asset_folder: Thư mục tệp {$folder}
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users

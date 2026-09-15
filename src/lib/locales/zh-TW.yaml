@@ -341,9 +341,9 @@ asset_list: 媒體清單
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: 「{$collection}」集合
+x_collection: '{$collection}集合'
 # {$folder} is the current asset folder label
-x_asset_folder: 「{$folder}」媒體資料夾
+x_asset_folder: '{$folder}媒體資料夾'
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users

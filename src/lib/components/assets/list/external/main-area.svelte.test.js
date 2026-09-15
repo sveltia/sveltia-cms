@@ -47,7 +47,7 @@ describe('MainArea', () => {
 
     await render(MainArea);
 
-    const area = page.getByRole('main', { name: '“\u2068Test Cloud\u2069” Asset Folder' });
+    const area = page.getByRole('main', { name: '\u2068Test Cloud\u2069 Asset Folder' });
 
     await expect.element(area).toHaveAttribute('id', 'assets-container');
     await expect.element(area.getByRole('grid', { name: 'Assets' })).toBeInTheDocument();

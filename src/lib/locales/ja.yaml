@@ -341,9 +341,9 @@ asset_list: アセットリスト
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: 「{$collection}」コレクション
+x_collection: '{$collection} コレクション'
 # {$folder} is the current asset folder label
-x_asset_folder: 「{$folder}」アセットフォルダー
+x_asset_folder: '{$folder} アセットフォルダー'
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users

@@ -341,9 +341,9 @@ asset_list: Medya Dosyası Listesi
 # Collection and folder page titles
 # Used as aria-labels on page containers
 # {$collection} is the current collection label
-x_collection: “{$collection}” Koleksiyonu
+x_collection: '{$collection} Koleksiyonu'
 # {$folder} is the current asset folder label
-x_asset_folder: “{$folder}” Medya Klasörü
+x_asset_folder: '{$folder} Medya Klasörü'
 
 # Navigation announcements (ARIA live regions)
 # Announce page changes for screen reader users
