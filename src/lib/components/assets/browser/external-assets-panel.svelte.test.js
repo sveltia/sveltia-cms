@@ -402,7 +402,7 @@ describe('ExternalAssetsPanel', () => {
       .poll(() =>
         document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
       )
-      .toBe('error Upload failed.');
+      .toBe('error Error Upload failed.');
   });
 
   test('shows the captions of stock photos in the list view', async () => {

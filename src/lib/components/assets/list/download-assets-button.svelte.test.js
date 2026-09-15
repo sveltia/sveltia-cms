@@ -31,8 +31,8 @@ describe('DownloadAssetsButton', () => {
       await page.getByRole('button', { name: 'Download' }).click();
 
       await expect
-        .element(page.getByRole('alert'))
-        .toHaveTextContent('check_circle 2 assets downloaded.');
+        .element(page.getByRole('status'))
+        .toHaveTextContent('check_circle Success 2 assets downloaded.');
       expect(getBlob).toHaveBeenCalledTimes(2);
       expect(clicks).toEqual(['a.txt', 'b.txt']);
       await waitForToastsToHide();
@@ -57,7 +57,7 @@ describe('DownloadAssetsButton', () => {
         document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
       )
       .toBe(
-        'error There was an error while downloading the selected asset. Please try again later.',
+        'error Error There was an error while downloading the selected asset. Please try again later.',
       );
   });
 

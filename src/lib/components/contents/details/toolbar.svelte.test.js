@@ -184,7 +184,9 @@ describe('Toolbar', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error 2 fields have errors. Please correct them to save the entry.');
+      .toHaveTextContent(
+        'error Error 2 fields have errors. Please correct them to save the entry.',
+      );
   });
 
   test('reports a failure to save', async () => {
@@ -397,7 +399,7 @@ describe('Toolbar', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error Couldn’t delete the entry. Please try again.');
+      .toHaveTextContent('error Error Couldn’t delete the entry. Please try again.');
   });
 
   test('reports a failure to save without a cause', async () => {
@@ -604,7 +606,7 @@ describe('Toolbar', () => {
       count: 1,
       sourceLanguage: undefined,
     };
-    await expect.poll(getShownToastText).toBe('error Nothing to copy.');
+    await expect.poll(getShownToastText).toBe('error Error Nothing to copy.');
 
     // An unknown language is named by its code
     copyFromLocaleToast.current = {
@@ -615,7 +617,9 @@ describe('Toolbar', () => {
       count: 1,
       sourceLanguage: 'xx',
     };
-    await expect.poll(getShownToastText).toBe('check_circle Field copied from \u2068xx\u2069.');
+    await expect
+      .poll(getShownToastText)
+      .toBe('check_circle Success Field copied from \u2068xx\u2069.');
   });
 
   test('reports an unexpected error', async () => {
@@ -709,8 +713,8 @@ describe('Toolbar', () => {
       sourceLanguage: 'en',
     };
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle 2 fields copied from \u2068English\u2069.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success 2 fields copied from \u2068English\u2069.');
   });
 
   describe('with Editorial Workflow', () => {

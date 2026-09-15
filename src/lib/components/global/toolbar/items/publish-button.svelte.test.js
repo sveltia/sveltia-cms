@@ -43,7 +43,9 @@ describe('PublishButton', () => {
     await page.getByRole('button', { name: 'Publish Changes' }).click();
 
     expect(triggerDeployment).toHaveBeenCalledOnce();
-    await expect.element(page.getByRole('alert')).toHaveTextContent('info Publishing Changes…');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('info Information Publishing Changes…');
   });
 
   test('reports a failure', async () => {
@@ -55,7 +57,7 @@ describe('PublishButton', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error Couldn’t publish changes. Please try again.');
+      .toHaveTextContent('error Error Couldn’t publish changes. Please try again.');
     await waitForToastsToHide();
   });
 

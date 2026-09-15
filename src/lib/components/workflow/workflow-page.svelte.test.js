@@ -146,7 +146,9 @@ describe('WorkflowPage', () => {
         'pending_review',
       ),
     );
-    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle Status updated.');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Status updated.');
     // The toast goes away on its own
     await expect
       .poll(() => document.querySelector('.sui.toast')?.getAttribute('aria-hidden'), {
@@ -208,7 +210,7 @@ describe('WorkflowPage', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent(
-        'error The entry has errors. Please correct them before changing the status.',
+        'error Error The entry has errors. Please correct them before changing the status.',
       );
     expect(updateWorkflowStatus).not.toHaveBeenCalled();
   });
@@ -234,7 +236,9 @@ describe('WorkflowPage', () => {
     await dialog.getByRole('button', { name: 'Publish' }).click();
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error The entry has errors. Please correct them before publishing it.');
+      .toHaveTextContent(
+        'error Error The entry has errors. Please correct them before publishing it.',
+      );
     expect(publishWorkflowEntry).not.toHaveBeenCalled();
 
     await page
@@ -250,8 +254,8 @@ describe('WorkflowPage', () => {
       ),
     );
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle Entry published.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Entry published.');
   });
 
   test('deletes a draft after confirmation, reporting a failure', async () => {
@@ -282,7 +286,7 @@ describe('WorkflowPage', () => {
     );
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error Couldn’t delete the entry. Please try again.');
+      .toHaveTextContent('error Error Couldn’t delete the entry. Please try again.');
   });
 
   test('discards the changes to a published entry after confirmation', async () => {
@@ -328,8 +332,8 @@ describe('WorkflowPage', () => {
       ),
     );
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle Deletion cancelled.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Deletion cancelled.');
 
     await list.getByRole('button', { name: 'Delete Entry' }).click();
 
@@ -346,7 +350,9 @@ describe('WorkflowPage', () => {
         expect.objectContaining({ slug: 'gone-1' }),
       ),
     );
-    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle Entry deleted.');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Entry deleted.');
   });
 
   test('leaves out the Ready stage while contributing via a fork', async () => {

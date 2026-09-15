@@ -24,7 +24,7 @@ describe('LocaleLoadErrorToast', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent(
-        'error Couldn’t load the \u2068Japanese\u2069 translation. Please try again later.',
+        'error Error Couldn’t load the \u2068Japanese\u2069 translation. Please try again later.',
       );
     await waitForToastsToHide();
 
@@ -33,7 +33,7 @@ describe('LocaleLoadErrorToast', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent(
-        'error Couldn’t load the \u2068xx_YY\u2069 translation. Please try again later.',
+        'error Error Couldn’t load the \u2068xx_YY\u2069 translation. Please try again later.',
       );
     await waitForToastsToHide();
   }, 20000);

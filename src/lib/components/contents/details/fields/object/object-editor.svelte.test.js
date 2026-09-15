@@ -349,7 +349,7 @@ describe('ObjectEditor', () => {
       await expect
         .element(page.getByRole('alert'))
         .toHaveTextContent(
-          'warning This item can’t be displayed due to an unknown type. Check the browser console for details.',
+          'warning Warning This item can’t be displayed due to an unknown type. Check the browser console for details.',
         );
       expect(container.querySelector('.wrapper')).toHaveClass('unknown-type');
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('“video” type is not defined'));

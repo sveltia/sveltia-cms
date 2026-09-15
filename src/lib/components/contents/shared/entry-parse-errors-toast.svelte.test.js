@@ -16,7 +16,7 @@ describe('EntryParseErrorsToast', () => {
       await expect
         .element(page.getByRole('alert'))
         .toHaveTextContent(
-          'error There were errors while parsing entry files. Check the browser console for details.',
+          'error Error There were errors while parsing entry files. Check the browser console for details.',
         );
       await waitForToastsToHide();
     } finally {

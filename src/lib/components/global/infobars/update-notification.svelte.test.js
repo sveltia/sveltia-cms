@@ -39,8 +39,10 @@ describe('UpdateNotification', () => {
     // The notification is shown a while after an update is found
     vi.mocked(isUpdateAvailable).mockResolvedValue(true);
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('info The latest version of Sveltia CMS is available. Update Now');
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information The latest version of Sveltia CMS is available. Update Now',
+      );
 
     // The checks stop once the component is gone
     unmount();

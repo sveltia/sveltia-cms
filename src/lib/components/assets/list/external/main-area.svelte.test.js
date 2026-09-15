@@ -121,7 +121,7 @@ describe('MainArea', () => {
       .poll(() =>
         document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
       )
-      .toBe('error Upload failed.');
+      .toBe('error Error Upload failed.');
     // The toast goes away on its own, resetting the state
     await waitForToastsToHide();
     expect(externalAssetsToast.current.show).toBe(false);

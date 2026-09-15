@@ -98,7 +98,7 @@ describe('EntryStatusMenu', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent(
-        'error The entry has errors. Please correct them before changing the status.',
+        'error Error The entry has errors. Please correct them before changing the status.',
       );
     await waitForToastsToHide();
   });
@@ -114,7 +114,7 @@ describe('EntryStatusMenu', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error Couldn’t change the status. Please try again.');
+      .toHaveTextContent('error Error Couldn’t change the status. Please try again.');
     await waitForToastsToHide();
   });
 });

@@ -25,9 +25,9 @@ describe('OpenAuthoringIndicator', () => {
       const { container } = await render(OpenAuthoringIndicator, {});
 
       await expect
-        .element(page.getByRole('alert'))
+        .element(page.getByRole('status'))
         .toHaveTextContent(
-          'info Your changes are saved to your fork of this repository at “\u2068me/site\u2069” and reviewed before they go live.',
+          'info Information Your changes are saved to your fork of this repository at “\u2068me/site\u2069” and reviewed before they go live.',
         );
 
       // Dismissing hides the infobar
@@ -46,7 +46,7 @@ describe('OpenAuthoringIndicator', () => {
     try {
       await render(OpenAuthoringIndicator, {});
 
-      await expect.element(page.getByRole('alert')).toBeVisible();
+      await expect.element(page.getByRole('status')).toBeVisible();
       expect(page.getByRole('button', { name: 'View Fork' }).elements()).toHaveLength(0);
     } finally {
       forkedRepository.current = undefined;

@@ -41,7 +41,7 @@ describe('BackendStatusIndicator', () => {
       await expect
         .element(page.getByRole('alert'))
         .toHaveTextContent(
-          'error \u2068GitHub\u2069 is experiencing a major incident. You may want to wait until the situation has improved. Details',
+          'error Error \u2068GitHub\u2069 is experiencing a major incident. You may want to wait until the situation has improved. Details',
         );
       await page.getByRole('button', { name: 'Details' }).click();
       expect(open).toHaveBeenCalledWith(
@@ -64,7 +64,7 @@ describe('BackendStatusIndicator', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent(
-        'warning \u2068GitHub\u2069 is experiencing a minor incident. Your workflow may be affected. Details',
+        'warning Warning \u2068GitHub\u2069 is experiencing a minor incident. Your workflow may be affected. Details',
       );
   });
 

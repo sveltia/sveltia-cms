@@ -37,9 +37,9 @@ describe('NewLanguageInfobar', () => {
     const { container } = await render(NewLanguageInfobar, {});
 
     await expect
-      .element(page.getByRole('alert'))
+      .element(page.getByRole('status'))
       .toHaveTextContent(
-        'info Sveltia CMS is now available in \u2068日本語\u2069! Change Language Later',
+        'info Information Sveltia CMS is now available in \u2068日本語\u2069! Change Language Later',
       );
 
     await page.getByRole('button', { name: 'Change Language' }).click();

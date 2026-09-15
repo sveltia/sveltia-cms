@@ -141,7 +141,7 @@ describe('DeleteEntriesDialog', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error Couldn’t delete the entry. Please try again.');
+      .toHaveTextContent('error Error Couldn’t delete the entry. Please try again.');
 
     // The toast goes away on its own
     await expect

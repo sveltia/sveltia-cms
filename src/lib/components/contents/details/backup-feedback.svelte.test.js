@@ -76,19 +76,23 @@ describe('BackupFeedback', () => {
     await render(BackupFeedback);
 
     backupToastState.current.saved = true;
-    await expect.element(page.getByRole('alert')).toHaveTextContent('info Draft backup saved.');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('info Information Draft backup saved.');
     // The toast goes away on its own, resetting the state
     await waitForToastsToHide();
     expect(backupToastState.current.saved).toBe(false);
 
     backupToastState.current = { saved: false, restored: true, deleted: false };
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle Draft backup restored.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Draft backup restored.');
     await waitForToastsToHide();
 
     backupToastState.current = { saved: false, restored: false, deleted: true };
-    await expect.element(page.getByRole('alert')).toHaveTextContent('info Draft backup deleted.');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('info Information Draft backup deleted.');
     await waitForToastsToHide();
   }, 30000);
 });

@@ -681,6 +681,8 @@
         .swap-button {
           position: absolute;
           top: calc(50% - 12px);
+          /* Above the handle’s hit area, a positioned `::before` pseudo-element at `z-index: 1` */
+          z-index: 2;
           margin: 0;
           border-radius: 50%;
           opacity: 0.5;

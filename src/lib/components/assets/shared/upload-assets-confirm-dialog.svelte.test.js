@@ -165,7 +165,7 @@ describe('UploadAssetsConfirmDialog', () => {
     await expect
       .element(dialog.getByRole('group', { name: 'Mismatched Files' }))
       .toHaveTextContent(
-        'warning This file cannot replace “\u2068old.jpg\u2069” because it’s in a different format. Please convert the file to the same format and try again. photo.png PNG image · \u206870\u2069 bytes close',
+        'warning Warning This file cannot replace “\u2068old.jpg\u2069” because it’s in a different format. Please convert the file to the same format and try again. photo.png PNG image · \u206870\u2069 bytes close',
       );
     await expect
       .element(dialog.getByRole('button', { name: 'Replace' }))
@@ -188,7 +188,7 @@ describe('UploadAssetsConfirmDialog', () => {
       await expect
         .element(dialog.getByRole('group', { name: 'Oversized Files' }))
         .toHaveTextContent(
-          'warning This file cannot be uploaded because it exceeds the maximum size of \u2068\u206850\u2069 bytes\u2069. Please reduce the size or select a different file. photo.png PNG image · \u206870\u2069 bytes close',
+          'warning Warning This file cannot be uploaded because it exceeds the maximum size of \u2068\u206850\u2069 bytes\u2069. Please reduce the size or select a different file. photo.png PNG image · \u206870\u2069 bytes close',
         );
       expect(
         dialog.getByRole('group', { name: 'Uploading Files' }).getByRole('listitem').elements(),
@@ -212,7 +212,7 @@ describe('UploadAssetsConfirmDialog', () => {
       .poll(() =>
         document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
       )
-      .toBe('error Upload failed.');
+      .toBe('error Error Upload failed.');
     await expect.poll(() => uploadingAssets.current.files).toEqual([]);
     await waitForToastsToHide();
   });

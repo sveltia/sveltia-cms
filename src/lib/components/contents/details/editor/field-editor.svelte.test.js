@@ -242,7 +242,7 @@ describe('FieldEditor', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('warning Unsupported field type: \u2068rating\u2069');
+      .toHaveTextContent('warning Warning Unsupported field type: \u2068rating\u2069');
   });
 
   test('offers to copy a translatable field from the other locales', async () => {

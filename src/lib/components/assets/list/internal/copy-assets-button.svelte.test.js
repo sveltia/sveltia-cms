@@ -48,8 +48,8 @@ describe('CopyAssetsButton', () => {
     await page.getByRole('menuitem', { name: 'Public URL' }).click();
     expect(writeText).toHaveBeenLastCalledWith('https://example.com/uploads/notes.txt');
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle URL copied to clipboard.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success URL copied to clipboard.');
 
     await openMenu();
     await page.getByRole('menuitem', { name: 'File Path' }).click();
@@ -72,8 +72,8 @@ describe('CopyAssetsButton', () => {
       'https://example.com/uploads/notes.txt\nhttps://example.com/uploads/archive.zip',
     );
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle 2 URLs copied to clipboard.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success 2 URLs copied to clipboard.');
   });
 
   test('can’t copy the data of a binary file', async () => {

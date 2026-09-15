@@ -107,13 +107,13 @@ describe('UploadButton', () => {
     await page.getByRole('button', { name: 'Paste Image' }).click();
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error No image found in clipboard.');
+      .toHaveTextContent('error Error No image found in clipboard.');
 
     vi.spyOn(navigator.clipboard, 'read').mockRejectedValue(new Error('Denied'));
     await page.getByRole('button', { name: 'Paste Image' }).click();
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error Clipboard access denied.');
+      .toHaveTextContent('error Error Clipboard access denied.');
     await waitForToastsToHide();
   });
 

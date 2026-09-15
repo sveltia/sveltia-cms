@@ -24,8 +24,8 @@ describe('CopyMenu', () => {
 
     expect(items[0].copy).toHaveBeenCalledOnce();
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle 2 URLs copied to clipboard.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success 2 URLs copied to clipboard.');
     await waitForToastsToHide();
   });
 
@@ -48,7 +48,7 @@ describe('CopyMenu', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error Couldn’t copy to clipboard.');
+      .toHaveTextContent('error Error Couldn’t copy to clipboard.');
   });
 
   test('is disabled without any selected assets', async () => {

@@ -213,8 +213,8 @@ describe('ContentsPage', () => {
       published: true,
     };
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle 2 entries saved and published.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success 2 entries saved and published.');
     // The toast goes away on its own, resetting the state
     await waitForToastsToHide();
     expect(contentUpdatesToast.current.saved).toBe(false);
@@ -226,14 +226,14 @@ describe('ContentsPage', () => {
       deletionPending: true,
     };
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle Entry marked for deletion.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Entry marked for deletion.');
     await waitForToastsToHide();
 
     contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, count: 1, discarded: true };
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle Changes discarded.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Changes discarded.');
     await waitForToastsToHide();
 
     contentUpdatesToast.current = {
@@ -242,8 +242,8 @@ describe('ContentsPage', () => {
       deletionCancelled: true,
     };
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle Deletion cancelled.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Deletion cancelled.');
     await waitForToastsToHide();
   }, 40000);
 });

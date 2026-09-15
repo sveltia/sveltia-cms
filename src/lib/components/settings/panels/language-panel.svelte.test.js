@@ -45,8 +45,8 @@ describe('LanguagePanel', () => {
     try {
       await render(LanguagePanel, {});
       await expect
-        .element(page.getByRole('alert'))
-        .toHaveTextContent('info Switching to \u2068French\u2069…');
+        .element(page.getByRole('status'))
+        .toHaveTextContent('info Information Switching to \u2068French\u2069…');
     } finally {
       appLocaleLoading.current = undefined;
     }

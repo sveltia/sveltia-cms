@@ -29,7 +29,9 @@ describe('PanelContainer', () => {
 
     await input.fill('AIzaSyA1234567890abcdefghijklmnopqrstuvwxyz'.slice(0, 39));
     await input.element().blur();
-    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle API key saved.');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success API key saved.');
     await waitForToastsToHide();
   });
 
@@ -43,7 +45,9 @@ describe('PanelContainer', () => {
 
     await input.fill('https://example.com/hook');
     await input.element().blur();
-    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle Hook URL saved.');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Hook URL saved.');
     await waitForToastsToHide();
   });
 });

@@ -78,7 +78,7 @@ describe('ReorderControls', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error Failed to save new entry order. Please try again.');
+      .toHaveTextContent('error Error Failed to save new entry order. Please try again.');
     expect(reordering.current).toBe(true);
     await waitForToastsToHide();
   });

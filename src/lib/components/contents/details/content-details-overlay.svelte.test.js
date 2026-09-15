@@ -296,8 +296,8 @@ describe('ContentDetailsOverlay', () => {
 
     showDuplicateToast.current = true;
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle Entry duplicated as a new draft.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Entry duplicated as a new draft.');
     // The toast goes away on its own, resetting the state
     await waitForToastsToHide();
     expect(showDuplicateToast.current).toBe(false);

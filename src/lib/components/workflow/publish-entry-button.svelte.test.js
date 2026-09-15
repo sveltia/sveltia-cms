@@ -97,7 +97,7 @@ describe('PublishEntryButton', () => {
 
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error Couldn’t publish the entry. Please try again.');
+      .toHaveTextContent('error Error Couldn’t publish the entry. Please try again.');
     expect(entryDraft.current).not.toBeNull();
     await waitForToastsToHide();
   });
@@ -147,7 +147,9 @@ describe('PublishEntryButton', () => {
     expect(publishWorkflowEntry).not.toHaveBeenCalled();
     await expect
       .element(page.getByRole('alert'))
-      .toHaveTextContent('error The entry has errors. Please correct them before publishing it.');
+      .toHaveTextContent(
+        'error Error The entry has errors. Please correct them before publishing it.',
+      );
     await waitForToastsToHide();
   });
 

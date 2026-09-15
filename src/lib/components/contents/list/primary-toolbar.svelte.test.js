@@ -120,9 +120,9 @@ describe('PrimaryToolbar', () => {
     await render(PrimaryToolbar, {});
 
     await expect
-      .element(page.getByRole('alert'))
+      .element(page.getByRole('status'))
       .toHaveTextContent(
-        'info You cannot add new entries to this collection because it has reached its limit of ' +
+        'info Information You cannot add new entries to this collection because it has reached its limit of ' +
           '1 entries.',
       );
   });
@@ -133,9 +133,9 @@ describe('PrimaryToolbar', () => {
     await render(PrimaryToolbar, {});
 
     await expect
-      .element(page.getByRole('alert'))
+      .element(page.getByRole('status'))
       .toHaveTextContent(
-        'info This collection is nearing its limit of 3 entries. You can only create 1 more entry.',
+        'info Information This collection is nearing its limit of 3 entries. You can only create 1 more entry.',
       );
 
     await page.getByRole('button', { name: 'Reorder Entries' }).click();
@@ -151,9 +151,9 @@ describe('PrimaryToolbar', () => {
     await render(PrimaryToolbar, {});
 
     await expect
-      .element(page.getByRole('alert'))
+      .element(page.getByRole('status'))
       .toHaveTextContent(
-        'info Creating new entries in this collection is disabled by the administrator.',
+        'info Information Creating new entries in this collection is disabled by the administrator.',
       );
   });
 
@@ -182,7 +182,7 @@ describe('PrimaryToolbar', () => {
 
     await render(PrimaryToolbar, {});
 
-    await expect.element(page.getByRole('alert')).toBeVisible();
+    await expect.element(page.getByRole('status')).toBeVisible();
     expect(page.getByRole('button', { name: 'Create' }).elements()).toHaveLength(0);
   });
 

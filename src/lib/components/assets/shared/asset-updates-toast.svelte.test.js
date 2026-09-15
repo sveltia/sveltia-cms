@@ -13,7 +13,9 @@ describe('AssetUpdatesToast', () => {
     await render(AssetUpdatesToast, {});
 
     assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, saved: true, count: 2 };
-    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle 2 assets saved.');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success 2 assets saved.');
 
     // The toast goes away on its own, resetting the state
     await waitForToastsToHide();
@@ -27,25 +29,29 @@ describe('AssetUpdatesToast', () => {
       count: 1,
     };
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle Asset saved and published.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Asset saved and published.');
   }, 20000);
 
   test('reports a moved, renamed or deleted asset', async () => {
     await render(AssetUpdatesToast, {});
 
     assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, moved: true, count: 1 };
-    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle Asset moved.');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Asset moved.');
     await waitForToastsToHide();
 
     assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, renamed: true, count: 1 };
-    await expect.element(page.getByRole('alert')).toHaveTextContent('check_circle Asset renamed.');
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Asset renamed.');
     await waitForToastsToHide();
 
     assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, deleted: true, count: 3 };
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('check_circle 3 assets deleted.');
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success 3 assets deleted.');
     await waitForToastsToHide();
     expect(assetUpdatesToast.current.deleted).toBe(false);
   }, 30000);

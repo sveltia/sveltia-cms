@@ -13,8 +13,10 @@ describe('MobilePromoInfobar', () => {
     const { container } = await render(MobilePromoInfobar, {});
 
     await expect
-      .element(page.getByRole('alert'))
-      .toHaveTextContent('info Sveltia CMS is now available on mobile! Give it a try Later');
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information Sveltia CMS is now available on mobile! Give it a try Later',
+      );
 
     await page.getByRole('button', { name: 'Later' }).click();
     await expect.poll(() => container.querySelector('.infobar')).toBeNull();
