@@ -378,6 +378,11 @@
         default themes leave it at 50% opacity, which is 2.6:1 on white. */
       --sui-textbox-placeholder-foreground-color: var(--sui-tertiary-foreground-color);
       --sui-textbox-placeholder-opacity: 1;
+      /* Border drawn where a primary area (page content, editor panes, asset preview) meets a
+        secondary one (sidebars, toolbars, the gutter between panes). The default themes tell them
+        apart by background alone, so the width is zero; the high-contrast themes, which set
+        `--sui-modal-border-width` to outline dialogs for the same reason, get a visible line. */
+      --area-border: var(--sui-modal-border-width) solid var(--sui-primary-border-color);
     }
   }
 

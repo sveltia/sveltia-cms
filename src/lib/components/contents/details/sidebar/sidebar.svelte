@@ -133,6 +133,8 @@
     flex: none;
     width: 320px;
     margin-inline-start: 8px;
+    border: var(--area-border);
+    border-block-end: 0;
     border-radius: 16px 16px 0 0;
     background-color: var(--sui-primary-background-color);
   }

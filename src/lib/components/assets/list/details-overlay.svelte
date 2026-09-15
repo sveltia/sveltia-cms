@@ -391,7 +391,16 @@
         :global {
           .detail {
             flex: auto;
+            border-block-start: var(--area-border);
             width: auto;
+          }
+        }
+      }
+
+      @media (768px <= width) {
+        :global {
+          .detail {
+            border-inline-start: var(--area-border);
           }
         }
       }

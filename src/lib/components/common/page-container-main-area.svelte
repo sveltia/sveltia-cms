@@ -80,13 +80,17 @@
         justify-content: center;
 
         @media (width < 768px) {
+          border-block-end: var(--area-border);
           background-color: var(--sui-secondary-background-color);
         }
       }
     }
   }
 
+  /* The area sits next to the primary sidebar and below the global toolbar */
   :global(.resizable-pane) > .wrapper {
+    border-block-start: var(--area-border);
+    border-inline-start: var(--area-border);
     border-start-start-radius: 16px;
   }
 
@@ -111,6 +115,8 @@
         background-color: var(--sui-secondary-background-color);
 
         @media (768px <= width) {
+          border-block-start: var(--area-border);
+          border-inline-start: var(--area-border);
           border-start-start-radius: 16px;
         }
 

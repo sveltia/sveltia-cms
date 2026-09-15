@@ -644,14 +644,17 @@
   .content-area {
     position: relative;
     flex: auto;
+    border-block-start: var(--area-border); /* below the toolbar */
     background-color: var(--sui-primary-background-color);
 
     &:not(:only-child) {
-      border-start-end-radius: 16px; /* sidebar is present */
+      border-inline-end: var(--area-border); /* sidebar is present */
+      border-start-end-radius: 16px;
     }
 
     :global {
       .sui.resizable-handle {
+        border-inline: var(--area-border); /* between the panes */
         background-color: var(--sui-secondary-background-color); /* same as toolbar */
       }
 
