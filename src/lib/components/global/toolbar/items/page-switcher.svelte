@@ -8,6 +8,7 @@
     getCloudServicePath,
     selectedCloudService,
   } from '$lib/services/assets/external';
+  import { linkedAssets, linkedFilesService } from '$lib/services/assets/external/linked';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
   import { searchMode } from '$lib/services/search';
   import { env } from '$lib/services/user/env.svelte';
@@ -16,7 +17,7 @@
   /**
    * Link to the Asset Library: the folder list on small screens, otherwise the location shown
    * last, falling back to All Assets or, when no asset folder is configured, the first external
-   * location.
+   * location or Linked Files.
    */
   const assetsLink = $derived.by(() => {
     if (env.isSmallScreen) {
@@ -31,7 +32,7 @@
       return `/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`;
     }
 
-    return getCloudServicePath(enabledCloudServices.current[0]);
+    return getCloudServicePath(enabledCloudServices.current[0] ?? linkedFilesService);
   });
 
   const pages = $derived.by(() => {
@@ -46,8 +47,13 @@
       },
     ];
 
-    // Hide the Assets page if there is nothing to show: no asset folder and no external location
-    if (allAssetFolders.current.length || enabledCloudServices.current.length) {
+    // Hide the Assets page if there is nothing to show: no asset folder, no external location and
+    // no linked file
+    if (
+      allAssetFolders.current.length ||
+      enabledCloudServices.current.length ||
+      linkedAssets.current.length
+    ) {
       _pages.push({
         key: 'assets',
         label: _('assets'),

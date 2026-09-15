@@ -9,6 +9,7 @@ import { backendName } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { searchMode } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
+import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
 import PageSwitcher from './page-switcher.svelte';
 
@@ -36,6 +37,7 @@ describe('PageSwitcher', () => {
     allAssetFolders.current = /** @type {any} */ ([{ internalPath: 'static', publicPath: '/' }]);
     selectedAssetFolder.current = undefined;
     selectedCloudService.current = undefined;
+    setEntries([]);
   });
 
   test('switches between the contents and assets pages', async () => {
@@ -51,7 +53,7 @@ describe('PageSwitcher', () => {
     await expect.poll(() => window.location.hash).toBe('#/assets/-/all');
   });
 
-  test('hides the assets page without any asset folder', async () => {
+  test('hides the assets page without any asset folder, external location or linked file', async () => {
     allAssetFolders.current = [];
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
 
@@ -79,6 +81,27 @@ describe('PageSwitcher', () => {
     window.location.hash = '#/collections';
     await page.getByRole('radio', { name: 'Assets' }).click();
     await expect.poll(() => window.location.hash).toBe('#/assets/-/uploadcare');
+  });
+
+  test('links the assets page to Linked Files when entries link files by URL', async () => {
+    await initTestConfig({
+      collections: [
+        { name: 'posts', folder: 'content/posts', fields: [{ name: 'image', widget: 'image' }] },
+      ],
+    });
+    allAssetFolders.current = [];
+    setEntries([
+      createMockEntry({
+        slug: 'hello',
+        content: { _default: { image: 'https://example.com/photo.jpg' } },
+      }),
+    ]);
+
+    await render(PageSwitcher, {});
+    expect(getPageLabels()).toEqual(['Contents', 'Assets']);
+
+    await page.getByRole('radio', { name: 'Assets' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/-/linked');
   });
 
   test('adds the workflow page when Editorial Workflow is enabled', async () => {
