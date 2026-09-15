@@ -221,6 +221,11 @@
           border-width: 0;
           background-color: transparent;
 
+          /* No item can expand, so the space kept for the chevrons is dropped */
+          &.flat .chevron.placeholder {
+            display: none;
+          }
+
           [role='treeitem'] {
             > .row {
               border-radius: var(--sui-control-medium-border-radius);

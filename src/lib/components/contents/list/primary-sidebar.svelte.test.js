@@ -149,6 +149,40 @@ describe('PrimarySidebar', () => {
     }
   });
 
+  test('drops the chevron space when no collection is nested', async () => {
+    await render(PrimarySidebar, {});
+
+    const tree = page.getByRole('tree', { name: 'Collection List' });
+
+    await expect.element(tree).toHaveClass('flat');
+  });
+
+  test('keeps the chevron space when a collection is nested', async () => {
+    await initTestConfig({
+      collections: [
+        { divider: true },
+        {
+          name: 'pages',
+          label: 'Pages',
+          folder: 'content/pages',
+          nested: { depth: 3 },
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      ],
+    });
+
+    try {
+      await render(PrimarySidebar, {});
+
+      const tree = page.getByRole('tree', { name: 'Collection List' });
+
+      await expect.element(tree).toBeInTheDocument();
+      expect(tree.element()).not.toHaveClass('flat');
+    } finally {
+      await initTestConfig(config);
+    }
+  });
+
   test('groups the singletons on a small screen even without collections', async () => {
     env.isSmallScreen = true;
     await initTestConfig({
