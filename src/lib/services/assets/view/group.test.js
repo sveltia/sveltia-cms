@@ -132,6 +132,11 @@ describe('assets/view/group', () => {
       expect(result).toEqual({});
     });
 
+    it('should return single group when the conditions are null', () => {
+      // The Group menu writes `null` to the view settings to clear the grouping
+      expect(groupAssets(mockAssets, null)).toEqual({ '*': mockAssets });
+    });
+
     it('should return single group when field is empty string', () => {
       const result = groupAssets(mockAssets, { field: '', pattern: undefined });
 

@@ -16,7 +16,7 @@
     selectedCloudService,
   } from '$lib/services/assets/external';
   import { uploadingExternalAssets } from '$lib/services/assets/external/data';
-  import { listedExternalAssets } from '$lib/services/assets/external/view';
+  import { externalAssetGroups, listedExternalAssets } from '$lib/services/assets/external/view';
   import { currentView } from '$lib/services/assets/view/settings';
 
   /**
@@ -27,12 +27,6 @@
   const service = $derived(/** @type {MediaLibraryService} */ (selectedCloudService.current));
   const viewType = $derived(currentView.current.type);
   const uploadDisabled = $derived(!service.upload);
-  /** @type {Record<string, ExternalAsset[]>} */
-  const groups = $derived(
-    listedExternalAssets.current.length
-      ? { '*': listedExternalAssets.current }
-      : /** @type {Record<string, ExternalAsset[]>} */ ({}),
-  );
 </script>
 
 {#if service.authType === 'widget'}
@@ -60,7 +54,7 @@
   </ListContainer>
 {:else}
   <AssetListContainer
-    {groups}
+    groups={externalAssetGroups.current}
     itemKey="id"
     totalCount={listedExternalAssets.current.length}
     {viewType}

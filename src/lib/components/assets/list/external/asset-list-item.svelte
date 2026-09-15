@@ -1,5 +1,6 @@
 <script>
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
+  import UnavailableBadge from '$lib/components/assets/list/external/unavailable-badge.svelte';
   import { goto } from '$lib/services/app/navigation';
   import {
     canPreviewExternalAsset,
@@ -8,6 +9,8 @@
     selectedCloudService,
     selectedExternalAssets,
   } from '$lib/services/assets/external';
+  import { externalAssetAvailability } from '$lib/services/assets/external/availability';
+  import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
   import { toggleListItem } from '$lib/services/utils/array';
 
   /**
@@ -31,6 +34,14 @@
   } = $props();
 
   const selected = $derived(selectedExternalAssets.current.some((a) => a.id === asset.id));
+  /**
+   * Whether the asset is a file linked from an entry, which is checked for availability. The files
+   * on a cloud storage service are listed by the service, so they always exist.
+   */
+  const isLinkedFile = $derived(
+    selectedCloudService.current?.serviceId === LINKED_FILES_SERVICE_ID,
+  );
+  const unavailable = $derived(externalAssetAvailability.current[asset.id] === false);
 
   /**
    * Show the details of the asset.
@@ -58,6 +69,12 @@
   };
 </script>
 
+{#snippet status()}
+  {#if unavailable}
+    <UnavailableBadge />
+  {/if}
+{/snippet}
+
 <AssetListItem
   name={asset.fileName}
   kind={asset.kind}
@@ -73,4 +90,5 @@
   onPreview={() => {
     showDetails();
   }}
+  status={isLinkedFile ? status : undefined}
 />

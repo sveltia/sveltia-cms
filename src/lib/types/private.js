@@ -1264,7 +1264,7 @@
  * @property {SortingConditions} [sort] Sorting conditions.
  * @property {FilteringConditions} [filter] Filtering conditions.
  * @property {FilteringConditions[]} [filters] Unused.
- * @property {GroupingConditions} [group] Grouping conditions.
+ * @property {GroupingConditions | null} [group] Grouping conditions.
  * @property {boolean} [showInfo] Whether to show the Info pane.
  */
 

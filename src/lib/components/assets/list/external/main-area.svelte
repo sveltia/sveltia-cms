@@ -30,7 +30,11 @@
     uploadExternalAssets,
     uploadingExternalAssets,
   } from '$lib/services/assets/external/data';
-  import { externalAssetSortKeys, listedExternalAssets } from '$lib/services/assets/external/view';
+  import {
+    externalAssetSortKeys,
+    externalAssetViewGroups,
+    listedExternalAssets,
+  } from '$lib/services/assets/external/view';
 
   /**
    * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
@@ -87,6 +91,7 @@
         selectedItems={selectedExternalAssets}
         totalCount={externalAssets.current.length}
         sortKeys={externalAssetSortKeys.current}
+        groups={externalAssetViewGroups.current}
         searchTerms={externalAssetSearchTerms}
       />
     {/if}

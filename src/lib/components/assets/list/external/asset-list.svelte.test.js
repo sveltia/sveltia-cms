@@ -85,6 +85,35 @@ describe('AssetList', () => {
     await expect.poll(() => uploadingExternalAssets.current.files).toEqual([file]);
   });
 
+  test('groups the assets as the view settings say', async () => {
+    externalAssets.current = [
+      createMockExternalAsset({
+        fileName: 'a.png',
+        asset: {
+          id: 'https://cdn.example.com/a.png',
+          downloadURL: 'https://cdn.example.com/a.png',
+        },
+      }),
+      createMockExternalAsset({
+        fileName: 'b.pdf',
+        asset: {
+          id: 'https://docs.example.com/b.pdf',
+          downloadURL: 'https://docs.example.com/b.pdf',
+        },
+      }),
+    ];
+    currentView.current = { type: 'list', group: { field: 'domain' } };
+
+    await render(AssetList);
+
+    const cdn = page.getByRole('rowgroup', { name: 'cdn.example.com' });
+    const docs = page.getByRole('rowgroup', { name: 'docs.example.com' });
+
+    await expect.element(cdn.getByRole('row', { name: 'a.png' })).toBeInTheDocument();
+    await expect.element(docs.getByRole('row', { name: 'b.pdf' })).toBeInTheDocument();
+    expect(page.getByRole('rowgroup').elements()).toHaveLength(2);
+  });
+
   test('offers to upload when the service is empty', async () => {
     externalAssets.current = [];
 

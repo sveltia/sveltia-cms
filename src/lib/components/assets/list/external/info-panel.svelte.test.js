@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { externalAssetAvailability } from '$lib/services/assets/external/availability';
 import { getExternalAssetDetails } from '$lib/services/assets/external/details';
 import {
   createMockExternalAsset,
@@ -124,5 +126,33 @@ describe('InfoPanel', () => {
     await expect.poll(() => getSections(other)['Used in']).toBe('None');
     expect(getSections(other).Duration).toBe('–');
     expect(getSections(other).Dimensions).toBe('–');
+  });
+
+  test('tells that a linked file couldn’t be loaded', async () => {
+    const asset = createMockExternalAsset({
+      fileName: 'gone.pdf',
+      asset: {
+        id: 'https://example.com/gone.pdf',
+        description: 'https://example.com/gone.pdf',
+        downloadURL: 'https://example.com/gone.pdf',
+      },
+    });
+
+    externalAssetAvailability.current = { [asset.id]: false };
+
+    const { container } = await render(InfoPanel, { asset });
+
+    // The alert starts with its icon’s ligature text
+    await expect
+      .element(page.getByRole('alert'))
+      .toMatchTextContent('This file couldn’t be loaded. It may have been moved or deleted.');
+
+    // A file that has been checked, or not checked yet, has no such notice
+    externalAssetAvailability.current = { [asset.id]: true };
+    await expect.poll(() => container.querySelector('[role="alert"]')).toBeNull();
+
+    externalAssetAvailability.current = {};
+    await expect.poll(() => getSections(container)['Used in']).toBe('None');
+    expect(container.querySelector('[role="alert"]')).toBeNull();
   });
 });

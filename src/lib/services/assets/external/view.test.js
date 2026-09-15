@@ -4,15 +4,20 @@ import {
   externalAssets,
   externalAssetSearchTerms,
   focusedExternalAsset,
+  selectedCloudService,
   selectedExternalAssets,
 } from '$lib/services/assets/external';
 import { currentView } from '$lib/services/assets/view/settings';
 
 import {
   EXTERNAL_ASSET_SORT_KEYS,
+  externalAssetGroups,
   externalAssetSortKeys,
+  externalAssetViewGroups,
   filterExternalAssets,
+  getGroupValue,
   getSortValue,
+  groupExternalAssets,
   listedExternalAssets,
   pruneHiddenAssets,
   searchExternalAssets,
@@ -27,7 +32,12 @@ vi.mock('$lib/services/assets/external', () => ({
   externalAssets: { current: undefined },
   externalAssetSearchTerms: { current: '' },
   focusedExternalAsset: { current: undefined },
+  selectedCloudService: { current: undefined },
   selectedExternalAssets: { current: [] },
+}));
+
+vi.mock('$lib/services/assets/external/linked', () => ({
+  LINKED_FILES_SERVICE_ID: 'linked',
 }));
 
 vi.mock('$lib/services/assets/view/settings', () => ({
@@ -73,6 +83,7 @@ describe('assets/external/view', () => {
     externalAssets.current = undefined;
     externalAssetSearchTerms.current = '';
     focusedExternalAsset.current = undefined;
+    selectedCloudService.current = undefined;
     selectedExternalAssets.current = [];
     currentView.current = { type: 'grid' };
   });
@@ -165,6 +176,66 @@ describe('assets/external/view', () => {
     });
   });
 
+  describe('getGroupValue', () => {
+    it('should return the host name of the URL', () => {
+      const asset = { ...hero, downloadURL: 'https://cdn.example.com/a/hero.png' };
+
+      expect(getGroupValue(asset, 'domain')).toBe('cdn.example.com');
+    });
+
+    it('should return undefined for an unknown field or an invalid URL', () => {
+      expect(getGroupValue(hero, 'domain')).toBeUndefined();
+      expect(getGroupValue({ ...hero, downloadURL: 'https://x.test/' }, 'kind')).toBeUndefined();
+    });
+  });
+
+  describe('groupExternalAssets', () => {
+    const linked = [
+      { ...hero2, downloadURL: 'https://cdn.example.com/hero-2.png' },
+      { ...guide, downloadURL: 'https://docs.example.com/Guide.pdf' },
+      { ...hero, downloadURL: 'https://cdn.example.com/hero.png' },
+    ];
+
+    it('should put all the assets in one group without conditions', () => {
+      expect(groupExternalAssets(assets)).toEqual({ '*': assets });
+      expect(groupExternalAssets(assets, null)).toEqual({ '*': assets });
+      expect(groupExternalAssets(assets, { field: '' })).toEqual({ '*': assets });
+      expect(groupExternalAssets([])).toEqual({});
+    });
+
+    it('should group by domain, sorted by name', () => {
+      expect(groupExternalAssets(linked, { field: 'domain' })).toEqual({
+        'cdn.example.com': [linked[0], linked[2]],
+        'docs.example.com': [linked[1]],
+      });
+    });
+
+    it('should group by a pattern matched against the domain', () => {
+      expect(groupExternalAssets(linked, { field: 'domain', pattern: '\\w+$' })).toEqual({
+        com: linked,
+      });
+    });
+
+    it('should put the assets without a value in the Other group', () => {
+      expect(groupExternalAssets([linked[1], hero], { field: 'domain' })).toEqual({
+        '[other]': [hero],
+        'docs.example.com': [linked[1]],
+      });
+    });
+  });
+
+  describe('externalAssetViewGroups', () => {
+    it('should offer the domain group for the linked files only', () => {
+      expect(externalAssetViewGroups.current).toEqual([]);
+
+      selectedCloudService.current = /** @type {any} */ ({ serviceId: 'aws_s3' });
+      expect(externalAssetViewGroups.current).toEqual([]);
+
+      selectedCloudService.current = /** @type {any} */ ({ serviceId: 'linked' });
+      expect(externalAssetViewGroups.current).toEqual([{ label: '[domain]', field: 'domain' }]);
+    });
+  });
+
   describe('listedExternalAssets', () => {
     it('should be empty while the assets are not loaded', () => {
       expect(listedExternalAssets.current).toEqual([]);
@@ -180,6 +251,20 @@ describe('assets/external/view', () => {
       externalAssetSearchTerms.current = 'hero';
 
       expect(listedExternalAssets.current).toEqual([hero2, hero]);
+    });
+  });
+
+  describe('externalAssetGroups', () => {
+    it('should group the listed assets as the view settings say', () => {
+      externalAssets.current = assets.map((asset) => ({
+        ...asset,
+        downloadURL: `https://cdn.example.com/${asset.id}`,
+      }));
+
+      expect(externalAssetGroups.current).toEqual({ '*': externalAssets.current });
+
+      currentView.current = { type: 'grid', group: { field: 'domain' } };
+      expect(externalAssetGroups.current).toEqual({ 'cdn.example.com': externalAssets.current });
     });
   });
 

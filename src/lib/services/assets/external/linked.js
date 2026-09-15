@@ -1,5 +1,6 @@
 import { _ } from '@sveltia/i18n';
 
+import { checkExternalAssetsAvailability } from '$lib/services/assets/external/availability';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
@@ -163,8 +164,15 @@ export const linkedFilesService = {
   hotlinking: true,
   authType: 'none',
   /**
-   * List the linked files.
+   * List the linked files. The files live on hosts the CMS knows nothing about, so whether each one
+   * can still be loaded is checked in the background, and the result is reflected in the list.
    * @returns {Promise<ExternalAsset[]>} Assets.
    */
-  list: async () => linkedAssets.current,
+  list: async () => {
+    const assets = linkedAssets.current;
+
+    checkExternalAssetsAvailability(assets);
+
+    return assets;
+  },
 };

@@ -9,11 +9,13 @@ import { buildGroupMap } from '$lib/services/common/view';
 /**
  * Group the given assets.
  * @param {Asset[]} assets Asset list.
- * @param {GroupingConditions} [conditions] Grouping conditions.
+ * @param {GroupingConditions | null} [conditions] Grouping conditions.
  * @returns {Record<string, Asset[]>} Grouped assets, where key is a group label and value is an
  * asset list.
  */
-export const groupAssets = (assets, { field, pattern } = { field: '', pattern: undefined }) => {
+export const groupAssets = (assets, conditions) => {
+  const { field, pattern } = conditions ?? {};
+
   if (!field) {
     return assets.length ? { '*': assets } : {};
   }

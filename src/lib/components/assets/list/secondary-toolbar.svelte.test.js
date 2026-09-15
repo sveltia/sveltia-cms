@@ -33,6 +33,8 @@ describe('SecondaryToolbar', () => {
     await expect.element(toolbar.getByRole('checkbox', { name: 'Select All' })).toBeEnabled();
     await expect.element(toolbar.getByRole('button', { name: 'Sort' })).toBeEnabled();
     await expect.element(toolbar.getByRole('button', { name: 'Type' })).toBeEnabled();
+    // Repository assets have nothing to group by
+    expect(toolbar.getByRole('button', { name: 'Group' }).elements()).toHaveLength(0);
 
     await toolbar.getByRole('searchbox', { name: 'Search for Files' }).fill('logo');
     await expect.poll(() => searchTerms.current).toBe('logo');
@@ -45,6 +47,24 @@ describe('SecondaryToolbar', () => {
     await expect
       .element(toolbar.getByRole('button', { name: 'Hide Info' }))
       .toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('offers the given grouping options', async () => {
+    await render(SecondaryToolbar, {
+      allItems: /** @type {any[]} */ (['a', 'b']),
+      selectedItems: createRawState([]),
+      totalCount: 2,
+      sortKeys,
+      groups: [{ label: 'Domain', field: 'domain' }],
+    });
+
+    await page.getByRole('button', { name: 'Group' }).click();
+
+    const menu = page.getByRole('menu', { name: 'Grouping Options' });
+
+    await expect.element(menu.getByRole('menuitemradio', { name: 'None' })).toBeChecked();
+    await menu.getByRole('menuitemradio', { name: 'Domain' }).click();
+    await expect.poll(() => currentView.current.group).toEqual({ field: 'domain' });
   });
 
   test('disables the controls that need more assets', async () => {

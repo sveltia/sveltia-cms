@@ -436,6 +436,8 @@ grouping_options: グループ化オプション
 # Asset type filter and group labels
 type: 種類
 all: すべて
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: ドメイン
 # Asset type labels
 image: 画像
 video: 動画
@@ -454,6 +456,9 @@ all_assets: すべてのアセット
 global_assets: グローバルアセット
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: リンクされたファイル
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: 利用不可
+file_unavailable_description: このファイルは読み込めませんでした。移動または削除された可能性があります。
 
 # ==============================================================================
 # Entry and Collection Actions

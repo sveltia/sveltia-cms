@@ -1,11 +1,13 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
+  import { Alert } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
   import mime from 'mime';
 
   import InfoPanelLayout from '$lib/components/assets/list/info-panel-layout.svelte';
   import UsedEntries from '$lib/components/assets/list/used-entries.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
+  import { externalAssetAvailability } from '$lib/services/assets/external/availability';
   import {
     getExternalAssetDetails,
     getExternalAssetUsedEntries,
@@ -42,6 +44,8 @@
   const { dimensions, duration } = $derived(details);
   const { extension = '' } = $derived(getPathInfo(fileName));
   const canPreview = $derived(isMediaKind(kind));
+  /** Only a file linked from an entry is checked, so this is never `true` on a cloud service. */
+  const unavailable = $derived(externalAssetAvailability.current[asset.id] === false);
 
   /**
    * Update the properties above.
@@ -79,6 +83,12 @@
 {/snippet}
 
 <InfoPanelLayout preview={canPreview ? preview : undefined}>
+  {#if unavailable}
+    <div role="none" class="unavailable">
+      <!-- Not announced on focus: the badge in the list has already told the user -->
+      <Alert status="error" ariaLive="off">{_('file_unavailable_description')}</Alert>
+    </div>
+  {/if}
   <section>
     <h4>{_('kind')}</h4>
     <p>
@@ -131,3 +141,9 @@
     </section>
   {/if}
 </InfoPanelLayout>
+
+<style>
+  .unavailable {
+    margin: 0 0 16px;
+  }
+</style>

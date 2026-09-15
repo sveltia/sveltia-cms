@@ -10,6 +10,7 @@
   import { env } from '$lib/services/user/env.svelte';
 
   /**
+   * @import { Snippet } from 'svelte';
    * @import { Asset, AssetKind, ViewType } from '$lib/types/private';
    */
 
@@ -27,6 +28,10 @@
    * @property {() => void} onFocus Called when the row gets focus.
    * @property {() => void} onPreview Called when the asset is opened by a click on a small screen
    * or a double-click.
+   * @property {Snippet} [status] Content of the status cell, shown below the title on a tile or at
+   * the end of a row, e.g. a badge. The cell is left out when not given, so that the rows of a
+   * list without statuses keep their layout, and wherever the title is left out, as the cell is
+   * laid out relative to the title.
    */
 
   /** @type {Props} */
@@ -43,6 +48,7 @@
     onSelectionChange,
     onFocus,
     onPreview,
+    status = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -118,6 +124,11 @@
         </TruncatedText>
       </div>
     </GridCell>
+    {#if status}
+      <GridCell class="status">
+        {@render status()}
+      </GridCell>
+    {/if}
   {/if}
 </GridRow>
 

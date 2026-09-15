@@ -439,6 +439,8 @@ grouping_options: Grouping Options
 # Asset type filter and group labels
 type: Type
 all: All
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Domain
 # Asset type labels
 image: Image
 video: Video
@@ -457,6 +459,9 @@ all_assets: All Assets
 global_assets: Global Assets
 # Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
 linked_files: Linked Files
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: Unavailable
+file_unavailable_description: This file couldn’t be loaded. It may have been moved or deleted.
 
 # ==============================================================================
 # Entry and Collection Actions

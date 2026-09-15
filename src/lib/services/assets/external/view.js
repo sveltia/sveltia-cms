@@ -5,10 +5,12 @@ import {
   externalAssets,
   externalAssetSearchTerms,
   focusedExternalAsset,
+  selectedCloudService,
   selectedExternalAssets,
 } from '$lib/services/assets/external';
+import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
 import { currentView } from '$lib/services/assets/view/settings';
-import { sortItemsByKey } from '$lib/services/common/view';
+import { buildGroupMap, sortItemsByKey } from '$lib/services/common/view';
 import { normalize } from '$lib/services/search/util';
 import { createDerivedState, createRootEffect } from '$lib/services/utils/state.svelte';
 
@@ -16,9 +18,11 @@ import { createDerivedState, createRootEffect } from '$lib/services/utils/state.
  * @import {
  * ExternalAsset,
  * FilteringConditions,
+ * GroupingConditions,
  * SortingConditions,
  * SortKey,
  * } from '$lib/types/private';
+ * @import { ViewGroup } from '$lib/types/public';
  */
 
 /**
@@ -100,6 +104,58 @@ export const filterExternalAssets = (assets, { field, pattern } = { field: '', p
 };
 
 /**
+ * Get an asset’s property value for grouping. Only the `domain` of the file’s URL is supported: the
+ * files linked from entries can be hosted anywhere, and a long list is easier to go through host by
+ * host.
+ * @param {ExternalAsset} asset Asset.
+ * @param {string} field Group field.
+ * @returns {string | undefined} Value, or `undefined` if the field is unknown or the URL can’t be
+ * parsed, so that the asset goes to the Other group.
+ */
+export const getGroupValue = (asset, field) => {
+  if (field !== 'domain') {
+    return undefined;
+  }
+
+  try {
+    return new URL(asset.downloadURL).hostname;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Group the given assets.
+ * @param {ExternalAsset[]} assets Asset list.
+ * @param {GroupingConditions | null} [conditions] Grouping conditions.
+ * @returns {Record<string, ExternalAsset[]>} Grouped assets, where key is a group label and value
+ * is an asset list. Without conditions, all the assets are in a single group labelled `*`.
+ */
+export const groupExternalAssets = (assets, conditions) => {
+  const { field, pattern } = conditions ?? {};
+
+  if (!field) {
+    return assets.length ? { '*': assets } : {};
+  }
+
+  return Object.fromEntries(
+    buildGroupMap(assets, pattern, (asset) => getGroupValue(asset, field), _('other')),
+  );
+};
+
+/**
+ * Grouping options offered for the selected location. The files linked from entries can be grouped
+ * by domain; the files on a cloud storage service are all on the same host, so they have none.
+ * `_()` reads the current app locale, so the list is recomputed when the locale changes.
+ * @type {{ readonly current: ViewGroup[] }}
+ */
+export const externalAssetViewGroups = createDerivedState(() =>
+  selectedCloudService.current?.serviceId === LINKED_FILES_SERVICE_ID
+    ? [{ label: _('domain'), field: 'domain' }]
+    : [],
+);
+
+/**
  * Narrow down the given assets by the search terms. The file name and description, which is the
  * path of the file on the service, are matched.
  * @param {ExternalAsset[]} assets Asset list.
@@ -136,6 +192,14 @@ export const listedExternalAssets = createDerivedState(() => {
 
   return assets;
 });
+
+/**
+ * {@link listedExternalAssets} grouped as the list shows them.
+ * @type {{ readonly current: Record<string, ExternalAsset[]> }}
+ */
+export const externalAssetGroups = createDerivedState(() =>
+  groupExternalAssets(listedExternalAssets.current, currentView.current.group),
+);
 
 /**
  * Drop the selected and focused assets that are no longer listed, so that the toolbar actions
