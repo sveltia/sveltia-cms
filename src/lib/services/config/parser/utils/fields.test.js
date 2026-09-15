@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getRootFields, getSubFields, hasField } from './fields';
+import { getCanonicalSlugKey, getRootFields, getSubFields, hasField } from './fields';
 
 /**
  * @import { Field } from '$lib/types/public';
@@ -177,5 +177,52 @@ describe('Test getRootFields()', () => {
     expect(getRootFields({})).toBeUndefined();
     expect(getRootFields({ componentName: 'my-component' })).toBeUndefined();
     expect(getRootFields({ collection: { name: 'settings', files: [] } })).toBeUndefined();
+  });
+});
+
+describe('Test getCanonicalSlugKey()', () => {
+  /** @type {any} */
+  const cmsConfig = { i18n: { locales: ['en', 'fr'] } };
+  /** @type {any} */
+  const collection = { name: 'posts', i18n: true };
+
+  /**
+   * Call the function with loosely typed arguments.
+   * @param {object} args Arguments.
+   * @param {any} args.cmsConfig Site configuration.
+   * @param {any} [args.collection] Collection configuration.
+   * @param {any} [args.file] Collection file configuration.
+   * @returns {string | undefined} The key.
+   */
+  const getKey = ({ cmsConfig: config, collection: col = collection, file }) =>
+    getCanonicalSlugKey({ cmsConfig: config, collection: col, file });
+
+  it('should return the default key when i18n is enabled', () => {
+    expect(getKey({ cmsConfig })).toBe('translationKey');
+  });
+
+  it('should return a custom key defined at the site, collection or file level', () => {
+    expect(
+      getKey({ cmsConfig: { i18n: { ...cmsConfig.i18n, canonical_slug: { key: 'site_key' } } } }),
+    ).toBe('site_key');
+
+    expect(
+      getKey({
+        cmsConfig,
+        collection: { ...collection, i18n: { canonical_slug: { key: 'collection_key' } } },
+      }),
+    ).toBe('collection_key');
+
+    expect(getKey({ cmsConfig, file: { i18n: { canonical_slug: { key: 'file_key' } } } })).toBe(
+      'file_key',
+    );
+  });
+
+  it('should return `undefined` when i18n is not enabled', () => {
+    expect(getKey({ cmsConfig: undefined })).toBeUndefined();
+    expect(getKey({ cmsConfig: {} })).toBeUndefined();
+    expect(getKey({ cmsConfig: { i18n: { locales: [] } } })).toBeUndefined();
+    expect(getKey({ cmsConfig, collection: { name: 'posts' } })).toBeUndefined();
+    expect(getKey({ cmsConfig, file: { i18n: false } })).toBeUndefined();
   });
 });

@@ -31,10 +31,11 @@ const createCollectors = () => ({
 /**
  * Call {@link checkViewOptions} with the given collection options.
  * @param {Record<string, any>} collection Partial collection config.
+ * @param {Record<string, any>} [cmsConfig] Partial site config.
  */
-const check = (collection) => {
+const check = (collection, cmsConfig = {}) => {
   checkViewOptions(
-    /** @type {any} */ ({ cmsConfig: {}, collection: { name: 'posts', ...collection } }),
+    /** @type {any} */ ({ cmsConfig, collection: { name: 'posts', ...collection } }),
     createCollectors(),
   );
 };
@@ -145,6 +146,57 @@ describe('Test checkViewOptions()', () => {
     });
 
     expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should accept the canonical slug key when i18n is enabled', () => {
+    const cmsConfig = { i18n: { locales: ['en', 'fr'] } };
+
+    check(
+      {
+        fields,
+        i18n: true,
+        sortable_fields: ['translationKey'],
+        view_groups: [{ label: 'Key', field: 'translationKey' }],
+        view_filters: [{ label: 'Key', field: 'translationKey', pattern: '^post-' }],
+      },
+      cmsConfig,
+    );
+
+    check(
+      {
+        fields,
+        i18n: { canonical_slug: { key: 'translation_id' } },
+        sortable_fields: ['translation_id'],
+        view_groups: [{ label: 'Key', field: 'translation_id' }],
+        view_filters: [{ label: 'Key', field: 'translation_id', pattern: '^post-' }],
+      },
+      cmsConfig,
+    );
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should report the canonical slug key when i18n is not enabled for the collection', () => {
+    check(
+      {
+        fields,
+        sortable_fields: ['translationKey'],
+        view_groups: [{ label: 'Key', field: 'translationKey' }],
+        view_filters: [{ label: 'Key', field: 'translationKey', pattern: '^post-' }],
+      },
+      { i18n: { locales: ['en', 'fr'] } },
+    );
+
+    expect(mockAddMessage).toHaveBeenCalledTimes(3);
+
+    ['sortable', 'view_group', 'view_filter'].forEach((type) => {
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: `invalid_${type}_field`,
+          values: { name: 'translationKey' },
+        }),
+      );
+    });
   });
 
   it('should ignore an invalid sortable fields configuration', () => {

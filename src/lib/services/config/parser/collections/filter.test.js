@@ -14,15 +14,25 @@ const collectors = { errors: new Set(), warnings: new Set() };
  * Run the check with the given `filter` option.
  * @param {any} filter The option value.
  * @param {any[]} [fields] Collection fields.
+ * @param {object} [options] Options.
+ * @param {any} [options.i18n] Site-level i18n options.
+ * @param {any} [options.collectionI18n] Collection-level i18n options.
  * @returns {void}
  */
 const check = (
   filter,
   fields = [{ name: 'title' }, { name: 'meta', fields: [{ name: 'type' }] }],
+  { i18n = undefined, collectionI18n = undefined } = {},
 ) =>
   checkCollectionFilter({
-    collection: /** @type {any} */ ({ name: 'posts', folder: 'content/posts', fields, filter }),
-    context,
+    collection: /** @type {any} */ ({
+      name: 'posts',
+      folder: 'content/posts',
+      fields,
+      filter,
+      i18n: collectionI18n,
+    }),
+    context: { ...context, cmsConfig: /** @type {any} */ ({ i18n }) },
     collectors,
   });
 
@@ -52,7 +62,7 @@ describe('checkCollectionFilter', () => {
     expect(checkRegex).toHaveBeenCalledExactlyOnceWith({
       option: 'filter',
       pattern: '^Hello',
-      context,
+      context: expect.objectContaining(context),
       collectors,
     });
   });
@@ -64,13 +74,53 @@ describe('checkCollectionFilter', () => {
     expect(addMessage).not.toHaveBeenCalled();
   });
 
+  test('accepts the canonical slug key, which is part of the content without being a field', () => {
+    const i18n = { locales: ['en', 'fr'] };
+
+    check({ field: 'translationKey', value: 'hello' }, undefined, { i18n, collectionI18n: true });
+
+    check({ field: 'translation_id', pattern: '^post-' }, undefined, {
+      i18n: { ...i18n, canonical_slug: { key: 'translation_id' } },
+      collectionI18n: true,
+    });
+
+    check({ field: 'translation_id', pattern: '^post-' }, undefined, {
+      i18n,
+      collectionI18n: { canonical_slug: { key: 'translation_id' } },
+    });
+
+    expect(addMessage).not.toHaveBeenCalled();
+  });
+
+  test('reports the canonical slug key when i18n is not enabled for the collection', () => {
+    const i18n = { locales: ['en', 'fr'] };
+
+    check({ field: 'translationKey', value: 'hello' });
+    check({ field: 'translationKey', value: 'hello' }, undefined, { i18n });
+    check({ field: 'translationKey', value: 'hello' }, undefined, { i18n, collectionI18n: false });
+
+    check({ field: 'translationKey', value: 'hello' }, undefined, {
+      i18n: { ...i18n, canonical_slug: { key: 'translation_id' } },
+      collectionI18n: true,
+    });
+
+    expect(addMessage).toHaveBeenCalledTimes(4);
+
+    expect(addMessage).toHaveBeenLastCalledWith({
+      strKey: 'invalid_filter_field',
+      values: { name: 'translationKey' },
+      context: expect.objectContaining(context),
+      collectors,
+    });
+  });
+
   test('reports a field that is not defined', () => {
     check({ field: 'category', value: 'news' });
 
     expect(addMessage).toHaveBeenCalledExactlyOnceWith({
       strKey: 'invalid_filter_field',
       values: { name: 'category' },
-      context,
+      context: expect.objectContaining(context),
       collectors,
     });
   });
@@ -80,7 +130,7 @@ describe('checkCollectionFilter', () => {
 
     expect(addMessage).toHaveBeenCalledExactlyOnceWith({
       strKey: 'invalid_filter_no_condition',
-      context,
+      context: expect.objectContaining(context),
       collectors,
     });
   });

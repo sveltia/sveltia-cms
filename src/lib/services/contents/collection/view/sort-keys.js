@@ -90,6 +90,7 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     identifier_field: customIdField,
     sortable_fields: customSortableFields,
     summary: summaryTemplate,
+    _i18n: { i18nEnabled, canonicalSlug },
   } = collection;
 
   let { keys, defaultKey, defaultOrder } = customSortableFields
@@ -121,10 +122,13 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     keys = keys.filter((key) => key !== 'commit_date');
   }
 
-  // Make sure the keys are valid field keys or special keys
+  // Make sure the keys are valid field keys or special keys. The canonical slug key,
+  // `translationKey` by default, is part of the content of each localized entry without being a
+  // field, so it can be used as a sort key when i18n is enabled
+  const specialKeys = i18nEnabled ? [...SPECIAL_SORT_KEYS, canonicalSlug.key] : SPECIAL_SORT_KEYS;
+
   keys = unique(keys).filter(
-    (key) =>
-      !!key && (SPECIAL_SORT_KEYS.includes(key) || !!getField({ collectionName, keyPath: key })),
+    (key) => !!key && (specialKeys.includes(key) || !!getField({ collectionName, keyPath: key })),
   );
 
   // If the collection allows reordering, expose a single special `_manual` sort key that maps to

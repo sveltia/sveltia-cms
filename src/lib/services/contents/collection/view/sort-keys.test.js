@@ -205,6 +205,52 @@ describe('Test getSortConfig()', async () => {
     });
   });
 
+  test('handles the canonical slug key', () => {
+    const args = { isCommitAuthorAvailable: false, isCommitDateAvailable: false };
+    const i18n = { ...collectionBase._i18n, i18nEnabled: true, allLocales: ['en', 'fr'] };
+
+    // Part of the content when i18n is enabled, even though it’s not a field
+    expect(
+      getSortConfig({
+        ...args,
+        collection: {
+          ...collectionBase,
+          _i18n: i18n,
+          sortable_fields: ['title', 'translationKey'],
+        },
+      }),
+    ).toEqual({
+      keys: ['title', 'translationKey'],
+      default: { key: 'title', order: 'ascending' },
+    });
+
+    // A custom key
+    expect(
+      getSortConfig({
+        ...args,
+        collection: {
+          ...collectionBase,
+          _i18n: { ...i18n, canonicalSlug: { key: 'translation_id', value: '{{slug}}' } },
+          sortable_fields: ['title', 'translationKey', 'translation_id'],
+        },
+      }),
+    ).toEqual({
+      keys: ['title', 'translation_id'],
+      default: { key: 'title', order: 'ascending' },
+    });
+
+    // Not part of the content when i18n is disabled
+    expect(
+      getSortConfig({
+        ...args,
+        collection: { ...collectionBase, sortable_fields: ['title', 'translationKey'] },
+      }),
+    ).toEqual({
+      keys: ['title'],
+      default: { key: 'title', order: 'ascending' },
+    });
+  });
+
   test('skips adding commit_date when date is already in default sort keys', () => {
     // When isCommitDateAvailable=true but 'date' is in the default keys already,
     // the inner `if (!keys.includes('date') && !hasCommitDateKey)` block is skipped
@@ -1142,6 +1188,7 @@ describe('Test sortKeys state', () => {
       _type: 'entry',
       folder: 'content/posts',
       fields: [{ name: 'title', widget: 'string' }],
+      _i18n: { i18nEnabled: false },
     };
 
     allEntries.current = /** @type {any[]} */ ([

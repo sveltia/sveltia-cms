@@ -1,10 +1,8 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
-import { hasField } from '$lib/services/config/parser/utils/fields';
+import { getCanonicalSlugKey, hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
-import { DEFAULT_CANONICAL_SLUG } from '$lib/services/contents/i18n/config/constants';
-import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 
 /**
  * @import {
@@ -15,9 +13,6 @@ import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
  * UnsupportedOption,
  * } from '$lib/types/private';
  * @import {
- * CmsConfig,
- * Collection,
- * CollectionDivider,
  * CollectionFile,
  * EntryCollection,
  * Field,
@@ -46,31 +41,6 @@ const UNSUPPORTED_OPTIONS = [
   // applicable.
   { type: 'warning', prop: 'options_length', strKey: 'unsupported_ignored_option' },
 ];
-
-/**
- * Get the canonical slug key for the referenced collection or file. When i18n is enabled, the key —
- * `translationKey` by default — is added to the content of each localized entry, allowing entries
- * to be matched across locales. It can therefore be used as the `value_field` of a Relation field
- * even though it’s not defined as a field.
- * @param {object} args Arguments.
- * @param {CmsConfig | undefined} args.cmsConfig The site configuration.
- * @param {Collection | CollectionDivider | InternalSingletonCollection} args.collection Referenced
- * collection.
- * @param {CollectionFile} [args.file] Referenced collection file, if the collection is a file
- * collection.
- * @returns {string | undefined} The key, or `undefined` if i18n is not enabled for the collection
- * or file.
- * @see https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs
- */
-const getCanonicalSlugKey = ({ cmsConfig, collection, file }) => {
-  const config = mergeI18nConfigs({ cmsConfig, collection, file });
-
-  if (!config?.locales?.length) {
-    return undefined;
-  }
-
-  return config.canonical_slug?.key ?? DEFAULT_CANONICAL_SLUG.key;
-};
 
 /**
  * Options of a Relation field that refer to fields defined in the referenced collection or file,

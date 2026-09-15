@@ -1,6 +1,10 @@
 import { isObject } from '@sveltia/utils/object';
 
-import { hasField, METADATA_KEYS } from '$lib/services/config/parser/utils/fields';
+import {
+  getCanonicalSlugKey,
+  hasField,
+  METADATA_KEYS,
+} from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkRegex } from '$lib/services/config/parser/utils/validator';
 
 /**
@@ -29,11 +33,13 @@ export const checkCollectionFilter = ({ collection, context, collectors }) => {
   const { field, value, pattern } = filter;
 
   // A collection without fields is reported separately, and a field of the wrong type against the
-  // JSON schema. A metadata key such as `slug` is read from the entry rather than its content
+  // JSON schema. A metadata key such as `slug` is read from the entry rather than its content, and
+  // the canonical slug key such as `translationKey` is part of the content without being a field
   if (
     typeof field === 'string' &&
     field &&
     !METADATA_KEYS.includes(field) &&
+    field !== getCanonicalSlugKey({ cmsConfig: context.cmsConfig, collection }) &&
     fields?.length &&
     !hasField(fields, field)
   ) {

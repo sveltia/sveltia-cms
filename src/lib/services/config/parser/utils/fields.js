@@ -1,8 +1,14 @@
+import { DEFAULT_CANONICAL_SLUG } from '$lib/services/contents/i18n/config/constants';
+import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
- * @import { ConfigParserContext } from '$lib/types/private';
+ * @import { ConfigParserContext, InternalSingletonCollection } from '$lib/types/private';
  * @import {
+ * CmsConfig,
+ * Collection,
+ * CollectionDivider,
+ * CollectionFile,
  * EntryCollection,
  * Field,
  * FieldKeyPath,
@@ -19,6 +25,30 @@ import { isNumeric } from '$lib/services/utils/number';
  * @type {string[]}
  */
 export const METADATA_KEYS = ['slug', 'commit_author', 'commit_date'];
+
+/**
+ * Get the canonical slug key of the given collection or file. When i18n is enabled, the key —
+ * `translationKey` by default — is added to the content of each localized entry, allowing entries
+ * to be matched across locales. It can therefore be used wherever a field key path is expected,
+ * such as the `value_field` of a Relation field or the `filter` option of a collection, even though
+ * it’s not defined as a field.
+ * @param {object} args Arguments.
+ * @param {CmsConfig | undefined} args.cmsConfig The site configuration.
+ * @param {Collection | CollectionDivider | InternalSingletonCollection} args.collection Collection.
+ * @param {CollectionFile} [args.file] Collection file, if the collection is a file collection.
+ * @returns {string | undefined} The key, or `undefined` if i18n is not enabled for the collection
+ * or file.
+ * @see https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs
+ */
+export const getCanonicalSlugKey = ({ cmsConfig, collection, file }) => {
+  const config = mergeI18nConfigs({ cmsConfig, collection, file });
+
+  if (!config?.locales?.length) {
+    return undefined;
+  }
+
+  return config.canonical_slug?.key ?? DEFAULT_CANONICAL_SLUG.key;
+};
 
 /**
  * Regular expression to match the explicit variable type in a key path segment, e.g. the `<button>`

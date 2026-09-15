@@ -1,6 +1,10 @@
 import { isObject } from '@sveltia/utils/object';
 
-import { hasField, METADATA_KEYS } from '$lib/services/config/parser/utils/fields';
+import {
+  getCanonicalSlugKey,
+  hasField,
+  METADATA_KEYS,
+} from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 import {
   parseCustomSortableFields,
@@ -37,11 +41,20 @@ const INTERNAL_SORT_KEYS = ['_summary', '_manual'];
  * @param {{ name?: string, field?: FieldKeyPath }[]} args.options Parsed view group or filter
  * options.
  * @param {Field[]} args.fields Collection fields.
+ * @param {string[]} args.specialKeys Keys that are resolved without a field definition.
  * @param {'view_group' | 'view_filter'} args.optionType Option type, used for message keys.
  * @param {object} args.context Context.
  * @param {ConfigParserCollectors} args.collectors Collectors.
  */
-const checkNamedViewOptions = ({ config, options, fields, optionType, context, collectors }) => {
+const checkNamedViewOptions = ({
+  config,
+  options,
+  fields,
+  specialKeys,
+  optionType,
+  context,
+  collectors,
+}) => {
   // A `name` is required in the object (Static CMS) format, where an option is referenced by name
   // from the `default` option, as well as the `reorder` option in the case of a group. It’s
   // optional in the array (Netlify/Decap CMS) format, but must still be unique when provided
@@ -63,7 +76,7 @@ const checkNamedViewOptions = ({ config, options, fields, optionType, context, c
     });
 
     // A missing field is not validated here, as it just disables grouping or filtering
-    if (typeof key !== 'string' || !key || METADATA_KEYS.includes(key)) {
+    if (typeof key !== 'string' || !key || specialKeys.includes(key)) {
       return;
     }
 
@@ -106,12 +119,21 @@ export const checkViewOptions = (context, collectors) => {
     return;
   }
 
+  // A metadata key such as `slug` is read from the entry rather than its content, and the canonical
+  // slug key such as `translationKey` is part of the content without being a field
+  const canonicalSlugKey = getCanonicalSlugKey({
+    cmsConfig: context.cmsConfig,
+    collection: context.collection,
+  });
+
+  const specialKeys = [...METADATA_KEYS, ...(canonicalSlugKey ? [canonicalSlugKey] : [])];
+
   if (sortableFields) {
     const { keys, defaultKey } = parseCustomSortableFields(sortableFields);
-    const specialKeys = [...METADATA_KEYS, ...INTERNAL_SORT_KEYS];
+    const sortKeys = [...specialKeys, ...INTERNAL_SORT_KEYS];
 
     [...keys, defaultKey].forEach((key) => {
-      if (key && !specialKeys.includes(key) && !hasField(fields, key)) {
+      if (key && !sortKeys.includes(key) && !hasField(fields, key)) {
         addMessage({
           strKey: 'invalid_sortable_field',
           values: { name: key },
@@ -126,6 +148,7 @@ export const checkViewOptions = (context, collectors) => {
     config: viewGroups,
     options: parseViewOptions(viewGroups, 'groups').options,
     fields,
+    specialKeys,
     optionType: 'view_group',
     context,
     collectors,
@@ -135,6 +158,7 @@ export const checkViewOptions = (context, collectors) => {
     config: viewFilters,
     options: parseViewOptions(viewFilters, 'filters').options,
     fields,
+    specialKeys,
     optionType: 'view_filter',
     context,
     collectors,
