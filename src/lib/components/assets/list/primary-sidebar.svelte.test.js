@@ -5,6 +5,8 @@ import { render } from 'vitest-browser-svelte';
 
 import { externalAssetCounts, selectedCloudService } from '$lib/services/assets/external';
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import { cmsConfig } from '$lib/services/config';
+import { allEntries } from '$lib/services/contents';
 import { searchMode } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
 import {
@@ -143,6 +145,26 @@ describe('PrimarySidebar', () => {
       expect(page.getByRole('group', { name: 'Your Site' }).elements()).toHaveLength(0);
     } finally {
       allAssetFolders.current = folders;
+    }
+  });
+
+  test('hides the external locations without a cloud service or linked file', async () => {
+    const config = cmsConfig.current;
+    const entries = allEntries.current;
+
+    cmsConfig.current = /** @type {any} */ ({ ...config, media_libraries: undefined });
+    setEntries([]);
+
+    try {
+      await render(PrimarySidebar);
+
+      const listbox = page.getByRole('listbox', { name: 'Asset Folder List' });
+
+      await expect.element(listbox.getByRole('option', { name: /^All Assets/ })).toBeVisible();
+      expect(page.getByRole('group', { name: 'External Locations' }).elements()).toHaveLength(0);
+    } finally {
+      cmsConfig.current = config;
+      setEntries(entries);
     }
   });
 
