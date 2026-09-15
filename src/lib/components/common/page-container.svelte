@@ -215,16 +215,15 @@
           }
         }
 
+        /* Styled like the listbox above, so the two sidebars look alike */
         [role='tree'] {
           margin: 8px;
           border-width: 0;
-          padding: 0;
           background-color: transparent;
 
           [role='treeitem'] {
             > .row {
               border-radius: var(--sui-control-medium-border-radius);
-              padding-inline-end: 8px;
 
               @media (pointer: coarse) {
                 min-height: 48px;
