@@ -1,3 +1,5 @@
+import { sleep } from '@sveltia/utils/misc';
+
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { repository } from '$lib/services/backends/git/gitlab/repository';
@@ -41,6 +43,19 @@ const DRAFT_TITLE_REGEX =
  * Prefix added to a merge request title to mark it as a draft.
  */
 const DRAFT_TITLE_PREFIX = 'Draft: ';
+/**
+ * Merge statuses GitLab reports while its mergeability check is queued or running. The check runs
+ * in the background once a merge request is created or pushed to, so one of these is what a merge
+ * request opened or updated a moment ago answers with; the real status follows once the check is
+ * done.
+ * @see https://docs.gitlab.com/api/merge_requests/#merge-status
+ */
+const TRANSIENT_MERGE_STATUSES = ['preparing', 'unchecked', 'checking'];
+/**
+ * How many times, and how often, the merge status is read while it’s transient. The check
+ * usually takes a second or two.
+ */
+const MERGE_STATUS_POLL = { attempts: 10, interval: 1000 };
 
 /**
  * Get the URL-encoded project identifier used in the REST API paths, e.g. the `group/project` path
@@ -394,29 +409,80 @@ export const updateStatus = async (pullRequest, status) => {
 };
 
 /**
- * Merge the merge request and delete the workflow branch.
+ * Fetch the merge request’s detailed merge status, which names the single check that stands in the
+ * way of an immediate merge, e.g. `ci_still_running`. A transient status is polled until it settles
+ * or the attempts run out, in which case the transient status is returned as is.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @param {number} [attemptsLeft] Remaining reads, including this one.
+ * @returns {Promise<string | undefined>} Detailed merge status.
+ * @see https://docs.gitlab.com/api/merge_requests/#merge-status
+ */
+const fetchMergeStatus = async (pullRequest, attemptsLeft = MERGE_STATUS_POLL.attempts) => {
+  const { detailed_merge_status: status } = /** @type {Record<string, any>} */ (
+    await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}`)
+  );
+
+  if (!TRANSIENT_MERGE_STATUSES.includes(status) || attemptsLeft <= 1) {
+    return status;
+  }
+
+  await sleep(MERGE_STATUS_POLL.interval);
+
+  return fetchMergeStatus(pullRequest, attemptsLeft - 1);
+};
+
+/**
+ * Merge the merge request and delete the workflow branch. A project or group can require the merge
+ * request’s pipeline to succeed before it can be merged; the group-level setting is not exposed by
+ * the project API. In that case, GitLab refuses an immediate merge while the pipeline is running,
+ * which is likely right after the merge request is opened — always so for a deletion, which can be
+ * published as soon as it’s created — so the merge request is set to auto-merge instead, and GitLab
+ * merges it once the pipeline has passed.
  * @param {WorkflowPullRequest} pullRequest Merge request.
  * @see https://docs.gitlab.com/api/merge_requests/#merge-a-merge-request
+ * @see https://github.com/sveltia/sveltia-cms/issues/989
  */
 export const publish = async (pullRequest) => {
   const squash = isSquashMergeEnabled();
+  const path = `/projects/${getProjectId()}/merge_requests/${pullRequest.number}/merge`;
 
-  await fetchAPI(`/projects/${getProjectId()}/merge_requests/${pullRequest.number}/merge`, {
-    method: 'PUT',
-    body: {
-      squash,
-      should_remove_source_branch: true,
-      // A group or instance can require the source branch’s current HEAD SHA on this call; without
-      // it, the merge fails with `SHA must be provided when merging` even though the branch is up
-      // to date.
-      // @see https://github.com/decaporg/decap-cms/issues/7963
-      // @see https://docs.gitlab.com/user/group/manage/#require-a-commit-sha-on-the-merge-requests-api
-      ...(pullRequest.headSHA ? { sha: pullRequest.headSHA } : {}),
-      ...(squash
-        ? { squash_commit_message: pullRequest.title }
-        : { merge_commit_message: pullRequest.title }),
-    },
-  });
+  const body = {
+    squash,
+    should_remove_source_branch: true,
+    // A group or instance can require the source branch’s current HEAD SHA on this call; without
+    // it, the merge fails with `SHA must be provided when merging` even though the branch is up
+    // to date.
+    // @see https://github.com/decaporg/decap-cms/issues/7963
+    // @see https://docs.gitlab.com/user/group/manage/#require-a-commit-sha-on-the-merge-requests-api
+    ...(pullRequest.headSHA ? { sha: pullRequest.headSHA } : {}),
+    ...(squash
+      ? { squash_commit_message: pullRequest.title }
+      : { merge_commit_message: pullRequest.title }),
+  };
+
+  try {
+    await fetchAPI(path, { method: 'PUT', body });
+  } catch (/** @type {any} */ ex) {
+    // GitLab answers 405 Method Not Allowed whenever the merge request can’t be merged right away,
+    // whatever the reason, so the detailed status tells a running pipeline from a real blocker,
+    // such as a conflict. Auto-merge would take a blocked merge request as well, but it would sit
+    // there unmerged while the CMS reports the entry as published, so anything else stays an
+    // error
+    if (ex.cause?.status !== 405 || (await fetchMergeStatus(pullRequest)) !== 'ci_still_running') {
+      throw ex;
+    }
+
+    // `merge_when_pipeline_succeeds` is the pre-17.11 name of `auto_merge`, which a self-managed
+    // instance may still be on. GitLab reads either, so both are sent
+    await fetchAPI(path, {
+      method: 'PUT',
+      body: { ...body, auto_merge: true, merge_when_pipeline_succeeds: true },
+    });
+
+    // The merge request stays open until the pipeline passes, and GitLab removes the branch along
+    // with the merge, as requested above. Deleting it here would close the merge request instead
+    return;
+  }
 
   await deleteBranch(pullRequest.branch);
 };

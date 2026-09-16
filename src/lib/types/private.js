@@ -426,7 +426,8 @@
  * Promise<WorkflowPullRequest>} updateStatus Function to update the pull request’s status label and
  * draft state.
  * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} publish Function to merge the
- * pull request and delete the workflow branch.
+ * pull request and delete the workflow branch. The service may leave the merge to the Git service
+ * when a required check is still running, in which case it resolves once the merge is scheduled.
  * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} discard Function to close the
  * pull request and delete the workflow branch.
  */
