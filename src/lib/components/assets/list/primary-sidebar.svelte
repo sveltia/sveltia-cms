@@ -225,7 +225,7 @@
           }}
         >
           {#snippet startIcon()}
-            <Icon name="link" />
+            <Icon name="link_2" />
           {/snippet}
           {#snippet endIcon()}
             <span class="count" aria-label="({_('x_assets', { values: { count: linkedCount } })})">

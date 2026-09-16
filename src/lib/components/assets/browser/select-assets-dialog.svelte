@@ -390,7 +390,11 @@
                   {name}
                   label={folder?.label || _(`assets_dialog.folder.${id}`)}
                   selected={libraryName === name}
-                />
+                >
+                  {#snippet startIcon()}
+                    <Icon name="folder" />
+                  {/snippet}
+                </Option>
               {/if}
             {/each}
           </OptionGroup>
@@ -407,21 +411,33 @@
                     cloudinaryDialogOpen.current = true;
                   }
                 }}
-              />
+              >
+                {#snippet startIcon()}
+                  <Icon name="cloud" />
+                {/snippet}
+              </Option>
             {/each}
             {#if canEnterURL}
               <Option
                 name="enter-url"
                 label={_('assets_dialog.enter_url')}
                 selected={libraryName === 'enter-url'}
-              />
+              >
+                {#snippet startIcon()}
+                  <Icon name="link_2" />
+                {/snippet}
+              </Option>
             {/if}
           </OptionGroup>
         {/if}
         {#if enabledStockAssetProviderEntries.length}
           <OptionGroup label={_('asset_location.stock_photos')}>
             {#each enabledStockAssetProviderEntries as [serviceId, { serviceLabel }] (serviceId)}
-              <Option name={serviceId} label={serviceLabel} selected={libraryName === serviceId} />
+              <Option name={serviceId} label={serviceLabel} selected={libraryName === serviceId}>
+                {#snippet startIcon()}
+                  <Icon name="photo_camera_back" />
+                {/snippet}
+              </Option>
             {/each}
           </OptionGroup>
         {/if}
@@ -533,9 +549,15 @@
       }
     }
 
-    :global(.listbox) {
-      flex: none;
-      background-color: transparent;
+    :global {
+      .listbox {
+        flex: none;
+        background-color: transparent;
+
+        .option button .icon:not(.check) {
+          display: block;
+        }
+      }
     }
 
     .content-pane {
