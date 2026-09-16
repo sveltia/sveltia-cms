@@ -48,7 +48,7 @@ Stay connected and get support through our community channels:
 
 ## Announcements
 
-We regularly post updates and announcements about Sveltia CMS in our [GitHub Discussions](https://github.com/sveltia/sveltia-cms/discussions/categories/announcements). Here are some of the latest highlights:
+Highlights from our latest [announcements](https://github.com/sveltia/sveltia-cms/discussions/categories/announcements):
 
 - [Sveltia CMS is now feature complete — It’s time to switch from Decap CMS!](https://github.com/sveltia/sveltia-cms/discussions/957)
 - [Sveltia CMS Community Insights, June 2026](https://github.com/sveltia/sveltia-cms/discussions/809)
