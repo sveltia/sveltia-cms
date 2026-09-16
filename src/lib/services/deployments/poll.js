@@ -153,7 +153,7 @@ const restart = () => {
  * holder has released, so the entry editor and the Editorial Workflow board can share one loop.
  * @returns {() => void} Function to release this caller’s hold.
  */
-export const retainDeployPolling = () => {
+const retain = () => {
   holders += 1;
 
   if (holders === 1) {
@@ -194,6 +194,18 @@ export const retainDeployPolling = () => {
     }
   };
 };
+
+/**
+ * Start re-checking the deploy state, or join a run that’s already going. Re-checks stop once every
+ * holder has released, so the entry editor and the Editorial Workflow board can share one loop.
+ *
+ * A component calls this from an effect, and nothing the loop reads is tracked by that effect: the
+ * first check reads the deploy state to decide whether anything is still building, and a lookup
+ * writes it, so a tracked read would re-run the effect on every answer — releasing the hold,
+ * cancelling the lookup that was just made, and starting over without ever landing a result.
+ * @returns {() => void} Function to release this caller’s hold.
+ */
+export const retainDeployPolling = () => untrack(retain);
 
 /**
  * Query the backend right away, ignoring the cached results and the current backoff. This backs the

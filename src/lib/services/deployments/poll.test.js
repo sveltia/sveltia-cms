@@ -11,6 +11,7 @@ import {
   markLookupPending,
   resolveDeployments,
 } from '$lib/services/deployments/resolve';
+import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /** Whether the mocked backend can report deployments. */
 let canResolve = true;
@@ -164,6 +165,39 @@ describe('Deployment polling', () => {
     expect(resolveDeployments).toHaveBeenCalledWith({ pendingOnly: true });
 
     release();
+  });
+
+  test('keeps a caller’s hold when the deploy state changes', async () => {
+    // A component takes its hold from an effect, as `$effect(() => retainDeployPolling())`. The
+    // loop reads the deploy state to decide whether to schedule a check, and a lookup writes it —
+    // if that read were tracked, every lookup would re-run the effect, release the hold, cancel the
+    // lookup, and start over, so the answer would never land
+    const unwatch = createRootEffect(() => {
+      const release = retainDeployPolling();
+
+      releases.push(release);
+
+      return release;
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(vi.getTimerCount()).toBe(1);
+
+    // A lookup records the result of the check
+    deployments.current = { a: { state: 'pending', checkedTime: Date.now() } };
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(cancelDeployResolution).not.toHaveBeenCalled();
+    expect(markLookupPending).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+    expect(resolveDeployments).toHaveBeenCalledTimes(1);
+
+    unwatch();
+
+    expect(cancelDeployResolution).toHaveBeenCalledTimes(1);
   });
 
   test('leaves no second loop behind when a save lands mid-check', async () => {

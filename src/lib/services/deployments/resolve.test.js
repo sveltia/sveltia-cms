@@ -276,6 +276,7 @@ describe('Deployment resolution', () => {
       productionSHA.current = 'prod';
       deployments.current = { prod: { state: 'pending', checkedTime: 0 } };
 
+      const before = deployments.current;
       // Settle the pending request by hand, so the test controls when the response lands
       /** @type {any} */
       let release;
@@ -288,7 +289,9 @@ describe('Deployment resolution', () => {
 
       const promise = resolveDeployments();
 
-      expect(deployments.current.prod.state).toBe('pending');
+      // The same object, so an effect that read the state isn’t re-run — and its hold on the poll
+      // loop released — by the very lookup it started
+      expect(deployments.current).toBe(before);
 
       release({});
       await promise;
