@@ -158,8 +158,8 @@ describe('SelectAssetsDialog', () => {
       locations
         .getByRole('option')
         .elements()
-        // The selected option has a check icon
-        .map((el) => el.textContent?.trim().replace(/\s*check$/, '')),
+        // Each option has a start icon, and the selected option also has a check icon
+        .map((el) => el.querySelector('.label')?.textContent?.trim()),
     ).toEqual(['Global Assets', 'Test Cloud', 'Enter URL', 'Lorem Picsum']);
     await expect
       .element(locations.getByRole('option', { name: 'Global Assets' }))

@@ -122,7 +122,7 @@ describe('PrimarySidebar', () => {
         'folder Pages › About Us 0',
         'folder Gallery 0',
         'cloud Uploadcare 5',
-        'link Linked Files 0',
+        'link_2 Linked Files 0',
       ]);
 
     // The groups are separated: the global folders, the collection folders, then asset collections
