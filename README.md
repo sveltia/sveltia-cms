@@ -45,3 +45,11 @@ Stay connected and get support through our community channels:
 - [Discord](https://discord.com/invite/5hwCGqup5b): Join the community and chat with us
 - [GitHub Discussions](https://github.com/sveltia/sveltia-cms/discussions): Ask questions and share ideas
 - [Contribute](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md): Learn how to get involved
+
+## Announcements
+
+We regularly post updates and announcements about Sveltia CMS in our [GitHub Discussions](https://github.com/sveltia/sveltia-cms/discussions/categories/announcements). Here are some of the latest highlights:
+
+- [Sveltia CMS is now feature complete — It’s time to switch from Decap CMS!](https://github.com/sveltia/sveltia-cms/discussions/957)
+- [Sveltia CMS Community Insights, June 2026](https://github.com/sveltia/sveltia-cms/discussions/809)
+- [Sveltia CMS Now Accepts Donations – Support Open Source Development!](https://github.com/sveltia/sveltia-cms/discussions/762)
