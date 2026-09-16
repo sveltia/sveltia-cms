@@ -47,7 +47,6 @@ vi.mock('$lib/services/deployments/poll', () => ({
   recheckDeployments: vi.fn(),
 }));
 vi.mock('$lib/services/workflow/save', () => ({
-  getUnpublishedEntryByBranch: vi.fn(),
   upsertUnpublishedEntry: vi.fn(),
   removeUnpublishedEntry: vi.fn(),
   saveWorkflowChanges: vi.fn(),
@@ -796,6 +795,26 @@ describe('Toolbar', () => {
       ];
 
       await renderExisting();
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      await expect
+        .element(toolbar.getByRole('button', { name: 'Status: \u2068Ready\u2069' }))
+        .toBeInTheDocument();
+      await expect.element(toolbar.getByRole('button', { name: 'Publish Entry' })).toBeEnabled();
+    });
+
+    test('keeps the status after the slug has been edited', async () => {
+      // The slug was edited after the pull request was opened, so the branch still carries the old
+      // slug while the entry has the new one
+      const renamedEntry = {
+        ...createMockEntry({ slug: 'renamed', content: { _default: { title: 'Renamed' } } }),
+        workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },
+      };
+
+      unpublishedEntries.current = [renamedEntry];
+
+      await renderExisting({ originalEntry: renamedEntry });
 
       const toolbar = page.getByRole('toolbar', { name: 'Primary' });
 

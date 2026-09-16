@@ -7,14 +7,13 @@ import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
-import { unpublishedEntries } from '$lib/services/workflow';
+import { getUnpublishedEntryByBranch, unpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
   deleteWorkflowEntries,
   deleteWorkflowEntry,
   discardWorkflowEntries,
   discardWorkflowEntry,
-  getUnpublishedEntryByBranch,
   publishWorkflowEntry,
   removeUnpublishedEntry,
   saveWorkflowChanges,

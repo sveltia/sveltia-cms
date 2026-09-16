@@ -54,7 +54,8 @@ vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/editor/pending');
 vi.mock('$lib/services/contents/entry/history');
 vi.mock('$lib/services/deployments/publish');
-vi.mock('$lib/services/workflow', () => ({
+vi.mock('$lib/services/workflow', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
   workflowEnabled: { current: undefined },
   unpublishedEntries: { current: undefined },
 }));

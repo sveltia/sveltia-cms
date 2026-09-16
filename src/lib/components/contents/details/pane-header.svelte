@@ -25,7 +25,7 @@
   import { createRawState } from '$lib/services/utils/state.svelte';
   import { openNewTab } from '$lib/services/utils/window';
   import {
-    getUnpublishedEntryBySlug,
+    getUnpublishedEntryByDraft,
     isPendingDeletion,
     workflowEnabled,
   } from '$lib/services/workflow';
@@ -86,17 +86,11 @@
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
   // Look the entry up in the store rather than reading the draft, so the preview link follows the
   // head commit as it moves with each save, the same way the entry toolbar does
-  const pullRequest = $derived.by(() => {
-    const collectionName = entryDraft.current?.collectionName;
-
-    if (!workflowEnabled.current || !collectionName || !originalEntry) {
-      return undefined;
-    }
-
-    const slug = entryDraft.current?.fileName ?? originalEntry.slug;
-
-    return getUnpublishedEntryBySlug({ collectionName, slug })?.workflow.pullRequest;
-  });
+  const pullRequest = $derived(
+    workflowEnabled.current && entryDraft.current
+      ? getUnpublishedEntryByDraft(entryDraft.current)?.workflow.pullRequest
+      : undefined,
+  );
   // `PreviewLinkButton` renders nothing when there’s no link to offer, so the link is resolved
   // here as well — the divider above the button has to know whether anything will follow it
   /* v8 ignore start -- only read for an existing entry, once the pane is set up */

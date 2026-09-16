@@ -11,7 +11,6 @@ import { waitForToastsToHide } from '$lib/test/toast';
 import PublishEntryButton from './publish-entry-button.svelte';
 
 vi.mock('$lib/services/workflow/save', () => ({
-  getUnpublishedEntryByBranch: vi.fn(),
   upsertUnpublishedEntry: vi.fn(),
   removeUnpublishedEntry: vi.fn(),
   saveWorkflowChanges: vi.fn(),

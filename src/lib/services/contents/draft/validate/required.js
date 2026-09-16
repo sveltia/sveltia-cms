@@ -1,36 +1,19 @@
-import {
-  getUnpublishedEntryBySlug,
-  unpublishedEntries,
-  workflowEnabled,
-} from '$lib/services/workflow';
+import { getUnpublishedEntryByDraft, workflowEnabled } from '$lib/services/workflow';
 
 /**
  * @import { EntryDraft, UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
  */
 
 /**
- * Get the current Editorial Workflow status of the entry the given draft is editing. The draft
- * holds the entry as it was when the editor opened it, and the status can change while the editor
- * stays open — from the status menu, or on the Editorial Workflow page — so the status is read from
- * the store rather than from that snapshot. The branch the entry is already associated with is
- * preferred over the one derived from the slug, which an edited slug would no longer match.
+ * Get the current Editorial Workflow status of the entry the given draft is editing. The status can
+ * change while the editor stays open — from the status menu, or on the Editorial Workflow page — so
+ * it’s read from the store rather than from the draft’s snapshot of the entry.
  * @param {EntryDraft} draft Draft being edited.
  * @returns {WorkflowStatus | undefined} Status, or `undefined` if the entry has no pull request.
  */
-const getWorkflowStatus = ({ collectionName, fileName, originalEntry }) => {
-  if (!originalEntry) {
-    return undefined;
-  }
-
-  const { workflow } = /** @type {UnpublishedEntry} */ (originalEntry);
-  const branch = workflow?.pullRequest?.branch;
-
-  const unpublishedEntry = branch
-    ? unpublishedEntries.current.find((entry) => entry.workflow.pullRequest.branch === branch)
-    : getUnpublishedEntryBySlug({ collectionName, slug: fileName ?? originalEntry.slug });
-
-  return unpublishedEntry?.workflow.status ?? workflow?.status;
-};
+const getWorkflowStatus = (draft) =>
+  getUnpublishedEntryByDraft(draft)?.workflow.status ??
+  /** @type {UnpublishedEntry | undefined} */ (draft.originalEntry)?.workflow?.status;
 
 /**
  * Check whether the required fields of the given draft have to be filled in for it to be saved.

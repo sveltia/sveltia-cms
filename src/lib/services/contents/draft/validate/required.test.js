@@ -3,20 +3,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
 import { unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
 
-vi.mock('$lib/services/workflow', async () => {
-  const entries = { current: [] };
-
-  return {
-    workflowEnabled: { current: false },
-    unpublishedEntries: entries,
-    getUnpublishedEntryBySlug: vi.fn(({ collectionName, slug }) =>
-      entries.current.find(
-        (/** @type {any} */ entry) =>
-          entry.workflow.pullRequest.branch === `cms/${collectionName}/${slug}`,
-      ),
-    ),
-  };
-});
+vi.mock('$lib/services/workflow', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  workflowEnabled: { current: false },
+}));
 
 /** The mocked state, which is writable unlike the derived state it stands in for. */
 const enabled = /** @type {any} */ (workflowEnabled);
@@ -86,6 +76,22 @@ describe('contents/draft/validate/required', () => {
       {
         id: 'entry-1',
         workflow: { status: 'pending_publish', pullRequest: { branch: 'cms/posts/my-post' } },
+      },
+    ];
+
+    expect(isRequiredEnforced(draft)).toBe(true);
+  });
+
+  test('finds the entry by its branch after the slug has been edited', () => {
+    const draft = draftFor('pending_review');
+
+    // The branch keeps the slug the pull request was opened with
+    draft.originalEntry.slug = 'renamed';
+
+    entries.current = [
+      {
+        id: 'entry-1',
+        workflow: { status: 'pending_review', pullRequest: { branch: 'cms/posts/my-post' } },
       },
     ];
 

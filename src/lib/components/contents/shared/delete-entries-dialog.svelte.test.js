@@ -25,7 +25,6 @@ vi.mock('$lib/services/contents/collection/data/delete', () => ({
   deleteEntries: vi.fn(),
 }));
 vi.mock('$lib/services/workflow/save', () => ({
-  getUnpublishedEntryByBranch: vi.fn(),
   upsertUnpublishedEntry: vi.fn(),
   removeUnpublishedEntry: vi.fn(),
   saveWorkflowChanges: vi.fn(),

@@ -88,6 +88,41 @@ export const getUnpublishedEntryBySlug = ({ collectionName, slug }) =>
   );
 
 /**
+ * Find the unpublished entry that corresponds to the given workflow branch.
+ * @param {string} branch Branch name.
+ * @returns {UnpublishedEntry | undefined} Unpublished entry.
+ */
+export const getUnpublishedEntryByBranch = (branch) =>
+  unpublishedEntries.current.find(({ workflow }) => workflow.pullRequest.branch === branch);
+
+/**
+ * Find the unpublished entry that the given draft is editing. The draft holds the entry as it was
+ * when the editor opened it, and the entry can change while the editor stays open — its status from
+ * the status menu or the Editorial Workflow page, its head commit with each save — so the entry is
+ * read from the store rather than from that snapshot. The branch the entry is already associated
+ * with is preferred over the one derived from the slug: the branch keeps the slug the pull request
+ * was opened with, so an entry whose slug has been edited since no longer matches it by slug.
+ * @param {object} args Arguments. A draft can be passed as is.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name, if the entry is a collection file.
+ * @param {Entry} [args.originalEntry] Entry being edited, before the changes. `undefined` for a new
+ * entry, which has no pull request yet.
+ * @returns {UnpublishedEntry | undefined} Unpublished entry.
+ */
+export const getUnpublishedEntryByDraft = ({ collectionName, fileName, originalEntry }) => {
+  if (!originalEntry) {
+    return undefined;
+  }
+
+  const branch = /** @type {UnpublishedEntry} */ (originalEntry).workflow?.pullRequest?.branch;
+
+  return (
+    (branch ? getUnpublishedEntryByBranch(branch) : undefined) ??
+    getUnpublishedEntryBySlug({ collectionName, slug: fileName ?? originalEntry.slug })
+  );
+};
+
+/**
  * Check whether the given entry is awaiting removal from the site. Such an entry can’t be edited:
  * the only things left to do with it are carrying the deletion out or calling it off.
  * @param {Entry | undefined} entry Entry to check, published or not.

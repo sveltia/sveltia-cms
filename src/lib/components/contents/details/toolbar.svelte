@@ -56,7 +56,7 @@
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import {
-    getUnpublishedEntryBySlug,
+    getUnpublishedEntryByDraft,
     hasPublishedVersion,
     isPendingDeletion,
     workflowEnabled,
@@ -190,8 +190,8 @@
   // Look the entry up in the store rather than using `originalEntry` directly, so the status button
   // stays in sync when the status is changed elsewhere, e.g. on the Editorial Workflow page
   const unpublishedEntry = $derived(
-    workflowEnabled.current && collectionName && originalEntry
-      ? getUnpublishedEntryBySlug({ collectionName, slug: fileName ?? originalEntry.slug })
+    workflowEnabled.current && collectionName
+      ? getUnpublishedEntryByDraft({ collectionName, fileName, originalEntry })
       : undefined,
   );
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves

@@ -11,7 +11,11 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { forgetDeployments } from '$lib/services/deployments';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
-import { getUnpublishedEntryBySlug, unpublishedEntries } from '$lib/services/workflow';
+import {
+  getUnpublishedEntryByBranch,
+  getUnpublishedEntryBySlug,
+  unpublishedEntries,
+} from '$lib/services/workflow';
 import {
   mergeWorkflowAssets,
   publishWorkflowAssets,
@@ -72,14 +76,6 @@ const getEventHookArgs = (entry) => {
     collectionFile: fileName ? getCollectionFile(collection, fileName) : undefined,
   };
 };
-
-/**
- * Find the unpublished entry that corresponds to the given workflow branch.
- * @param {string} branch Branch name.
- * @returns {UnpublishedEntry | undefined} Unpublished entry.
- */
-export const getUnpublishedEntryByBranch = (branch) =>
-  unpublishedEntries.current.find(({ workflow }) => workflow.pullRequest.branch === branch);
 
 /**
  * Replace or append the given unpublished entry in the {@link unpublishedEntries} store, keyed by

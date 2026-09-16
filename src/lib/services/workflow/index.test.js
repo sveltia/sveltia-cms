@@ -6,6 +6,8 @@ import { allEntries } from '$lib/services/contents';
 import {
   getUnpublishedEntriesByCollection,
   getUnpublishedEntry,
+  getUnpublishedEntryByBranch,
+  getUnpublishedEntryByDraft,
   getUnpublishedEntryBySlug,
   hasPublishedVersion,
   mergeUnpublishedEntries,
@@ -159,6 +161,94 @@ describe('workflow/index', () => {
         legacy,
       );
       expect(getUnpublishedEntryBySlug({ collectionName: 'pages', slug: 'about' })).toBeUndefined();
+    });
+  });
+
+  describe('getUnpublishedEntryByBranch', () => {
+    test('finds the entry by its branch name as is', () => {
+      const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+      unpublishedEntries.current = [entry];
+
+      expect(getUnpublishedEntryByBranch('cms/posts/hello')).toBe(entry);
+      expect(getUnpublishedEntryByBranch('cms/posts/hello-2')).toBeUndefined();
+    });
+  });
+
+  describe('getUnpublishedEntryByDraft', () => {
+    test('returns nothing for a new entry', () => {
+      unpublishedEntries.current = [createEntry({ collectionName: 'posts', subPath: 'hello' })];
+
+      expect(getUnpublishedEntryByDraft({ collectionName: 'posts' })).toBeUndefined();
+    });
+
+    test('finds the entry by the branch it is already associated with', () => {
+      const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+      // The slug was edited after the pull request was opened, so the branch still carries the old
+      // slug while the entry has the new one
+      entry.slug = 'renamed';
+      entry.subPath = 'renamed';
+      unpublishedEntries.current = [entry];
+
+      expect(getUnpublishedEntryByDraft({ collectionName: 'posts', originalEntry: entry })).toBe(
+        entry,
+      );
+    });
+
+    test('follows an entry replaced in the store', () => {
+      const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+      const updated = { ...entry, workflow: { ...entry.workflow, status: 'pending_review' } };
+
+      unpublishedEntries.current = [updated];
+
+      expect(getUnpublishedEntryByDraft({ collectionName: 'posts', originalEntry: entry })).toBe(
+        updated,
+      );
+    });
+
+    test('falls back to the branch derived from the slug', () => {
+      const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+      const { workflow, ...publishedEntry } = entry;
+
+      unpublishedEntries.current = [entry];
+
+      expect(workflow).toBeDefined();
+      // The editor opened the published version, e.g. before the pull request was found
+      expect(
+        getUnpublishedEntryByDraft({ collectionName: 'posts', originalEntry: publishedEntry }),
+      ).toBe(entry);
+      expect(
+        getUnpublishedEntryByDraft({ collectionName: 'pages', originalEntry: publishedEntry }),
+      ).toBeUndefined();
+    });
+
+    test('addresses a collection file by its name', () => {
+      const entry = createEntry({ collectionName: 'settings', subPath: 'data/site.yml' });
+      const { workflow, ...publishedEntry } = entry;
+
+      entry.workflow.fileName = 'site';
+      entry.workflow.pullRequest.branch = 'cms/settings/site';
+      unpublishedEntries.current = [entry];
+
+      expect(workflow).toBeDefined();
+      expect(
+        getUnpublishedEntryByDraft({
+          collectionName: 'settings',
+          fileName: 'site',
+          originalEntry: publishedEntry,
+        }),
+      ).toBe(entry);
+    });
+
+    test('returns nothing once the pull request is gone', () => {
+      const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+      unpublishedEntries.current = [];
+
+      expect(
+        getUnpublishedEntryByDraft({ collectionName: 'posts', originalEntry: entry }),
+      ).toBeUndefined();
     });
   });
 });

@@ -266,6 +266,46 @@ describe('PaneHeader', () => {
     await expect.element(menu.getByRole('menuitem', { name: 'View on Live Site' })).toBeVisible();
   });
 
+  test('keeps the pull request after the slug has been edited', async () => {
+    await initTestConfig({
+      backend: { name: 'github', repo: 'me/site' },
+      publish_mode: 'editorial_workflow',
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          preview_path: 'posts/{{slug}}',
+          fields,
+        },
+      ],
+    });
+    backendName.current = 'github';
+
+    // The slug was edited after the pull request was opened, so the branch still carries the old
+    // slug while the entry has the new one
+    const entry = /** @type {any} */ ({
+      ...createMockEntry({ slug: 'renamed' }),
+      workflow: {
+        status: 'draft',
+        collectionName: 'posts',
+        pullRequest: { number: 1, branch: 'cms/posts/hello', url: 'https://github.com/pr/1' },
+      },
+    });
+
+    unpublishedEntries.current = [entry];
+
+    await renderHeader({
+      i18nConfig: { i18nEnabled: false, allLocales: ['_default'], defaultLocale: '_default' },
+      draftProps: { isNew: false, originalEntry: entry },
+      thisPane: createRawState(/** @type {any} */ ({ mode: 'edit', locale: '_default' })),
+    });
+
+    const menu = await openMenu('_default');
+
+    await expect.element(menu.getByRole('menuitem', { name: 'View on Live Site' })).toBeVisible();
+  });
+
   test('shows the mode without i18n on a large screen', async () => {
     const { container } = await renderWithDraft(PaneHeader, {
       draft: createMockDraft({
