@@ -1,7 +1,11 @@
 import { untrack } from 'svelte';
 
 import { deployments, deployPollTimedOut } from '$lib/services/deployments';
-import { POLL_INTERVAL, POLL_MAX_DURATION } from '$lib/services/deployments/constants';
+import {
+  POLL_INTERVAL,
+  POLL_MAX_DURATION,
+  UNKNOWN_GRACE_DURATION,
+} from '$lib/services/deployments/constants';
 import {
   cancelDeployResolution,
   canResolveDeployments,
@@ -13,11 +17,9 @@ import { prefs } from '$lib/services/user/prefs.svelte';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
- * How many checks to keep making while a commit has nothing reported against it. A provider can
- * take a moment to post its first status after a push, so the loop doesn’t conclude from the very
- * first empty answer that there’s no build to wait for.
+ * @import { DeployStatus } from '$lib/types/private';
  */
-const UNKNOWN_GRACE_ATTEMPTS = 3;
+
 /** Handle of the scheduled re-check, or `0` when nothing is scheduled. */
 let timer = /** @type {any} */ (0);
 /** Number of views currently interested in the deploy state. */
@@ -38,7 +40,11 @@ let lastKey = '';
 let generation = 0;
 
 /**
- * Whether every tracked commit has reached a state that won’t change on its own.
+ * Whether every tracked commit has reached a state that won’t change on its own. A commit with
+ * nothing reported against it counts, because {@link keepWaiting} holds one back in the `checking`
+ * state while the provider is still being given time to report — so an `unknown` that has landed in
+ * the store is one the loop has already waited for, or one that was concluded before the run
+ * began.
  * @returns {boolean} Result.
  */
 const isSettled = () => {
@@ -47,17 +53,98 @@ const isSettled = () => {
   return deployTargets.current.every(({ sha }) => {
     const state = map[sha]?.state;
 
-    if (state === 'ready' || state === 'error') {
-      return true;
-    }
-
-    if (state === 'unknown') {
-      return attempts >= UNKNOWN_GRACE_ATTEMPTS;
-    }
-
-    // Nothing recorded yet, or a build still running
-    return false;
+    // Nothing recorded yet, or a build still running, is worth another look
+    return state === 'ready' || state === 'error' || state === 'unknown';
   });
+};
+
+/**
+ * Put the given commits back into the `checking` state, so the preview control keeps saying that a
+ * preview is on its way rather than offering the live site, and the loop keeps looking at them.
+ * @param {string[]} shas Commits to hold back.
+ * @param {string} reason Why, for the dev mode report.
+ */
+const holdBack = (shas, reason) => {
+  if (!shas.length) {
+    return;
+  }
+
+  if (prefs.devModeEnabled) {
+    // eslint-disable-next-line no-console
+    console.info(`deployPreview: ${reason}`, {
+      shas,
+      remaining: UNKNOWN_GRACE_DURATION - (Date.now() - startTime),
+    });
+  }
+
+  const map = deployments.current;
+
+  deployments.current = {
+    ...map,
+    ...Object.fromEntries(
+      shas.map((sha) => [sha, /** @type {DeployStatus} */ ({ ...map[sha], state: 'checking' })]),
+    ),
+  };
+};
+
+/**
+ * Keep waiting for the commits that were being checked and came back with nothing reported, as long
+ * as the run is young enough that the provider may not have posted its first status yet. Once the
+ * grace period is over, an empty answer is final. A commit that was already `unknown` when the run
+ * began is left alone; it was concluded earlier, and nothing has happened to it since.
+ * @param {Record<string, DeployStatus>} before Deploy state as of just before the lookup.
+ * @see https://github.com/sveltia/sveltia-cms/issues/991
+ */
+const keepWaiting = (before) => {
+  if (Date.now() - startTime >= UNKNOWN_GRACE_DURATION) {
+    return;
+  }
+
+  const map = deployments.current;
+
+  const shas = deployTargets.current
+    .map(({ sha }) => sha)
+    .filter((sha) => {
+      if (map[sha]?.state !== 'unknown') {
+        return false;
+      }
+
+      const prior = before[sha];
+
+      // A commit with no record yet was marked as being checked by the lookup itself. One that a
+      // lookup made outside the loop — the initial one at sign-in — concluded while this run was
+      // going hasn’t been waited for either
+      return (
+        !prior ||
+        prior.state === 'checking' ||
+        (prior.state === 'unknown' && prior.checkedTime >= startTime)
+      );
+    });
+
+  holdBack(shas, 'nothing reported yet, still waiting');
+};
+
+/**
+ * Give a commit that was found to be unreported only moments ago the grace period as well, by
+ * putting it back into the `checking` state before the run begins. Such a conclusion comes from the
+ * lookup made at sign-in, which runs outside the loop: the CMS may have been reloaded right after a
+ * save, before the provider posted anything, and that one lookup would otherwise be the last word
+ * for the whole session. A conclusion older than the grace period stands — nothing reports on that
+ * commit, and there’s nothing new to learn.
+ */
+const reopenRecentConclusions = () => {
+  const map = deployments.current;
+  const now = Date.now();
+
+  const shas = deployTargets.current
+    .map(({ sha }) => sha)
+    .filter((sha) => {
+      const status = map[sha];
+
+      return status?.state === 'unknown' && now - status.checkedTime < UNKNOWN_GRACE_DURATION;
+    });
+
+  holdBack(shas, 'concluded only moments ago, waiting a little longer');
 };
 
 /**
@@ -118,8 +205,16 @@ const schedule = () => {
   timer = globalThis.setTimeout(async () => {
     timer = 0;
     attempts += 1;
+
+    const before = deployments.current;
+
     // A finished build is skipped, so one entry still building doesn’t drag the whole board along
     await resolveDeployments({ pendingOnly: true });
+
+    // This comes before the run is checked: a save while the request was out retires the run but
+    // not the request, so its answer still lands, and a commit it found nothing on would otherwise
+    // be concluded without its grace period
+    keepWaiting(before);
 
     // A save or a release while the request was out has already retired this run
     if (run !== generation) {
@@ -143,6 +238,7 @@ const restart = () => {
   if (canResolveDeployments()) {
     // Say a lookup is coming before making it, so nothing shows a stale answer in the meantime
     markLookupPending();
+    reopenRecentConclusions();
   }
 
   schedule();

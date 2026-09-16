@@ -3,7 +3,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { deployments, deployPollTimedOut } from '$lib/services/deployments';
-import { POLL_INTERVAL, POLL_MAX_DURATION } from '$lib/services/deployments/constants';
+import {
+  POLL_INTERVAL,
+  POLL_MAX_DURATION,
+  UNKNOWN_GRACE_DURATION,
+} from '$lib/services/deployments/constants';
 import { recheckDeployments, retainDeployPolling } from '$lib/services/deployments/poll';
 import {
   cancelDeployResolution,
@@ -128,21 +132,244 @@ describe('Deployment polling', () => {
     release();
   });
 
-  test('gives an unreported commit a few checks before stopping', async () => {
-    // A provider can take a moment to post its first status after a push, so an empty answer isn’t
-    // taken as proof that there’s no build coming
+  test('sends no request for a commit that was already found to be unreported', () => {
+    // The lookup made when the CMS loaded concluded that nothing reports on this commit, and no
+    // save has moved it since, so there’s nothing new to learn
     deployments.current = { a: { state: 'unknown', checkedTime: 0 } };
 
     const release = retain();
 
-    expect(vi.getTimerCount()).toBe(1);
-
-    await vi.advanceTimersByTimeAsync(POLL_INTERVAL * 8);
-
-    expect(resolveDeployments).toHaveBeenCalledTimes(3);
     expect(vi.getTimerCount()).toBe(0);
 
     release();
+  });
+
+  describe('grace period for an unreported commit', () => {
+    /**
+     * Have the lookup record that the provider has nothing on the tracked commits, as a CI job
+     * still sitting in a queue looks like.
+     */
+    const reportNothing = () => {
+      vi.mocked(resolveDeployments).mockImplementation(async () => {
+        deployments.current = Object.fromEntries(
+          deployTargets.current.map(({ sha }) => [
+            sha,
+            { state: 'unknown', checkedTime: Date.now() },
+          ]),
+        );
+      });
+    };
+
+    test('keeps a freshly pushed commit in the checking state until the provider reports', async () => {
+      // Saving marks the new commit as being looked up before the first request goes out
+      deployments.current = { a: { state: 'checking', checkedTime: 0 } };
+      reportNothing();
+
+      const release = retain();
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      // An empty answer isn’t taken as proof that there’s no build coming: the control keeps
+      // saying a preview is on its way rather than offering the live site, and the loop goes on
+      // @see https://github.com/sveltia/sveltia-cms/issues/991
+      expect(resolveDeployments).toHaveBeenCalledTimes(1);
+      expect(deployments.current.a).toEqual({ state: 'checking', checkedTime: Date.now() });
+      expect(vi.getTimerCount()).toBe(1);
+
+      // A build queued well after the push is still noticed
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL * 5);
+
+      expect(resolveDeployments).toHaveBeenCalledTimes(6);
+      expect(deployments.current.a.state).toBe('checking');
+
+      vi.mocked(resolveDeployments).mockImplementation(async () => {
+        deployments.current = { a: { state: 'pending', checkedTime: Date.now() } };
+      });
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      expect(deployments.current.a.state).toBe('pending');
+      expect(vi.getTimerCount()).toBe(1);
+
+      release();
+    });
+
+    test('takes an empty answer as final once the grace period is over', async () => {
+      deployments.current = { a: { state: 'checking', checkedTime: 0 } };
+      reportNothing();
+
+      const release = retain();
+
+      await vi.advanceTimersByTimeAsync(UNKNOWN_GRACE_DURATION - POLL_INTERVAL);
+
+      expect(deployments.current.a.state).toBe('checking');
+      expect(vi.getTimerCount()).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      // Nothing is coming, so the control falls back to the live site link and the loop stops
+      expect(deployments.current.a.state).toBe('unknown');
+      expect(vi.getTimerCount()).toBe(0);
+
+      const { length: checks } = vi.mocked(resolveDeployments).mock.calls;
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL * 4);
+
+      expect(resolveDeployments).toHaveBeenCalledTimes(checks);
+
+      release();
+    });
+
+    test('leaves a commit that was already unreported alone', async () => {
+      // The production commit was concluded long ago; only the new pull request head is waited on
+      deployments.current = {
+        a: { state: 'unknown', checkedTime: 0 },
+        b: { state: 'checking', checkedTime: 0 },
+      };
+      await setTargets([
+        { sha: 'a', branch: 'main', kind: 'production' },
+        { sha: 'b', branch: 'cms/post', kind: 'preview' },
+      ]);
+      reportNothing();
+
+      const release = retain();
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      expect(deployments.current.a.state).toBe('unknown');
+      expect(deployments.current.b.state).toBe('checking');
+
+      release();
+    });
+
+    test('gives a commit with no record the same grace', async () => {
+      // The lookup itself marks such a commit as being checked before asking the provider
+      deployments.current = {};
+      reportNothing();
+
+      const release = retain();
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      expect(deployments.current.a.state).toBe('checking');
+
+      release();
+    });
+
+    test('doesn’t hold back a build that was running', async () => {
+      // A provider that stops reporting on a build it was running is answered as it is, and the
+      // loop has nothing left to wait for
+      reportNothing();
+
+      const release = retain();
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      expect(deployments.current.a.state).toBe('unknown');
+      expect(vi.getTimerCount()).toBe(0);
+
+      release();
+    });
+
+    test('holds a commit back even when a save retired the check that answered', async () => {
+      // Settle the request by hand, so the test controls when it comes back
+      /** @type {any} */
+      let finishRequest;
+
+      vi.mocked(resolveDeployments).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishRequest = resolve;
+          }),
+      );
+
+      deployments.current = { a: { state: 'checking', checkedTime: 0 } };
+
+      const release = retain();
+
+      // The scheduled check fires and its request is now out
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      // Saving another entry adds a commit while that request is still in flight, which retires
+      // the run but not the request
+      await setTargets([
+        { sha: 'a', branch: 'cms/post', kind: 'preview' },
+        { sha: 'b', branch: 'cms/page', kind: 'preview' },
+      ]);
+
+      // The older request comes back with nothing on the first commit; its answer still lands
+      deployments.current = {
+        a: { state: 'unknown', checkedTime: Date.now() },
+        b: { state: 'checking', checkedTime: 0 },
+      };
+      finishRequest();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // The commit hasn’t been waited for yet, so it isn’t concluded on the retired chain’s say-so
+      expect(deployments.current.a.state).toBe('checking');
+      expect(vi.getTimerCount()).toBe(1);
+
+      release();
+    });
+
+    test('gives a commit concluded moments ago the grace period as well', async () => {
+      // The CMS was reloaded right after a save, and the lookup made at sign-in found nothing on
+      // the new commit before the provider had a chance to report
+      deployments.current = { a: { state: 'unknown', checkedTime: Date.now() - 1000 } };
+      reportNothing();
+
+      const release = retain();
+
+      expect(deployments.current.a.state).toBe('checking');
+      expect(vi.getTimerCount()).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      expect(resolveDeployments).toHaveBeenCalledTimes(1);
+      expect(deployments.current.a.state).toBe('checking');
+
+      release();
+    });
+
+    test('holds back a commit that a lookup outside the loop concluded during the run', async () => {
+      deployments.current = { a: { state: 'checking', checkedTime: 0 } };
+      reportNothing();
+
+      const release = retain();
+
+      // The lookup made at sign-in lands before the loop’s first check
+      await vi.advanceTimersByTimeAsync(1000);
+      deployments.current = { a: { state: 'unknown', checkedTime: Date.now() } };
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      expect(deployments.current.a.state).toBe('checking');
+      expect(vi.getTimerCount()).toBe(1);
+
+      release();
+    });
+
+    test('says that it’s still waiting while dev mode is on', async () => {
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+      const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+
+      prefs.devModeEnabled = true;
+      deployments.current = { a: { state: 'checking', checkedTime: 0 } };
+      reportNothing();
+
+      const release = retain();
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      expect(info).toHaveBeenCalledWith('deployPreview: nothing reported yet, still waiting', {
+        shas: ['a'],
+        remaining: UNKNOWN_GRACE_DURATION - POLL_INTERVAL,
+      });
+
+      prefs.devModeEnabled = false;
+      info.mockRestore();
+      release();
+    });
   });
 
   test('picks up a new commit after a save, once the previous one settled', async () => {

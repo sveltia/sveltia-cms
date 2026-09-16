@@ -217,7 +217,8 @@
 
 /**
  * State of a deployment created by a CI/CD provider connected to the Git backend.
- * - `checking`: a request to the backend is in flight.
+ * - `checking`: a request to the backend is in flight, or nothing has been reported yet for a
+ * commit made moments ago and the provider is being given time to post its first status.
  * - `pending`: the build is queued or running, or the page is not live yet.
  * - `ready`: the build succeeded and the page is live.
  * - `error`: the build failed.

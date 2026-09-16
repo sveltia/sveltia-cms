@@ -12,6 +12,15 @@ export const POLL_INTERVAL = 5000;
 export const POLL_MAX_DURATION = 10 * 60 * 1000;
 
 /**
+ * How long to keep waiting for a commit that has nothing reported against it, in milliseconds. A
+ * provider can take a moment to post its first status after a push — a CI job often sits in a queue
+ * for a while before it starts — so the loop doesn’t conclude from the first empty answers that
+ * there’s no build to wait for. It’s a duration rather than a number of checks, because a queue
+ * wait is measured in time, not in requests.
+ */
+export const UNKNOWN_GRACE_DURATION = 60 * 1000;
+
+/**
  * How long a resolved deployment stays fresh, in milliseconds. Reopening a view within this window
  * reuses the cached result instead of querying the backend again.
  */
