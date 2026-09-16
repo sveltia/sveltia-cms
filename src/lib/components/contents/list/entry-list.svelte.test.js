@@ -3,9 +3,10 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { OTHER_GROUP_NAME } from '$lib/services/common/view';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import { setReorderMode } from '$lib/services/contents/collection/view';
-import { entryListSettings } from '$lib/services/contents/collection/view/settings';
+import { currentView, entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { env } from '$lib/services/user/env.svelte';
 import { unpublishedEntries } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$lib/test/config';
@@ -194,11 +195,59 @@ describe('EntryList', () => {
 
     await expect.poll(() => container.querySelectorAll('[role="rowgroup"]').length).toBe(2);
     expect(container.querySelector('.grid-view')).not.toBeNull();
+    // Each group has an expander in the caption
     expect(
-      [...container.querySelectorAll('[role="columnheader"]')].map((header) =>
-        header.textContent?.trim(),
+      [...container.querySelectorAll('[role="columnheader"] button[aria-expanded]')].map((button) =>
+        button.querySelector('.label')?.textContent?.trim(),
       ),
     ).toEqual(['blog', 'news']);
+  });
+
+  test('collapses and expands a group, remembering the state in the view', async () => {
+    setEntries([
+      createMockEntry({ slug: 'a', content: { _default: { title: 'A', category: 'news' } } }),
+      createMockEntry({ slug: 'b', content: { _default: { title: 'B', category: 'blog' } } }),
+      createMockEntry({ slug: 'c', content: { _default: { title: 'C' } } }),
+    ]);
+    selectCollection({
+      type: 'list',
+      group: { field: 'category' },
+      collapsedGroups: { '["category"]': ['news'] },
+    });
+
+    await render(EntryList, {});
+
+    const grid = page.getByRole('grid', { name: 'Entries' });
+    const blog = grid.getByRole('button', { name: 'blog' });
+    const news = grid.getByRole('button', { name: 'news' });
+    // The entry without a category is in the Other group, shown with its localized label
+    const other = grid.getByRole('button', { name: 'Other' });
+
+    // The saved state is restored
+    await expect.element(blog).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(news).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(other).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(grid.getByRole('row', { name: 'B' })).toBeInTheDocument();
+    await expect.element(grid.getByRole('row', { name: 'C' })).toBeInTheDocument();
+    expect(grid.getByRole('row', { name: 'A' }).elements()).toHaveLength(0);
+
+    await blog.click();
+    await expect.element(blog).toHaveAttribute('aria-expanded', 'false');
+    expect(grid.getByRole('row', { name: 'B' }).elements()).toHaveLength(0);
+    expect(currentView.current.collapsedGroups).toEqual({ '["category"]': ['news', 'blog'] });
+
+    await news.click();
+    await expect.element(news).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(grid.getByRole('row', { name: 'A' })).toBeInTheDocument();
+    expect(currentView.current.collapsedGroups).toEqual({ '["category"]': ['blog'] });
+
+    // The Other group is saved under its stable name rather than the label
+    await other.click();
+    await expect.element(other).toHaveAttribute('aria-expanded', 'false');
+    expect(grid.getByRole('row', { name: 'C' }).elements()).toHaveLength(0);
+    expect(currentView.current.collapsedGroups).toEqual({
+      '["category"]': ['blog', OTHER_GROUP_NAME],
+    });
   });
 
   test('offers to create an entry when there is none', async () => {

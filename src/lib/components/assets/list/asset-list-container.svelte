@@ -11,6 +11,8 @@
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
+  import { currentView } from '$lib/services/assets/view/settings';
+  import { getGroupLabel, isGroupCollapsed, setGroupCollapsed } from '$lib/services/common/view';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -63,7 +65,14 @@
       <ListingGrid id="asset-list" {viewType} aria-label={_('assets')} aria-rowcount={totalCount}>
         {#each Object.entries(groups) as [name, assets] (name)}
           {#await sleep() then}
-            <GridBody label={name !== '*' ? name : undefined}>
+            <GridBody
+              label={name !== '*' ? getGroupLabel(name) : undefined}
+              collapsible={name !== '*'}
+              expanded={!isGroupCollapsed(currentView.current, name)}
+              onChange={({ detail: { expanded } }) => {
+                currentView.current = setGroupCollapsed(currentView.current, name, !expanded);
+              }}
+            >
               <InfiniteScroll items={assets} {itemKey} {renderItem} />
             </GridBody>
           {/await}

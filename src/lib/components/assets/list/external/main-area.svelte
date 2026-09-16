@@ -31,6 +31,7 @@
     uploadingExternalAssets,
   } from '$lib/services/assets/external/data';
   import {
+    externalAssetGroups,
     externalAssetSortKeys,
     externalAssetViewGroups,
     listedExternalAssets,
@@ -92,6 +93,7 @@
         totalCount={externalAssets.current.length}
         sortKeys={externalAssetSortKeys.current}
         groups={externalAssetViewGroups.current}
+        groupNames={Object.keys(externalAssetGroups.current)}
         searchTerms={externalAssetSearchTerms}
       />
     {/if}

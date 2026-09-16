@@ -128,8 +128,9 @@ export const getGroupValue = (asset, field) => {
  * Group the given assets.
  * @param {ExternalAsset[]} assets Asset list.
  * @param {GroupingConditions | null} [conditions] Grouping conditions.
- * @returns {Record<string, ExternalAsset[]>} Grouped assets, where key is a group label and value
- * is an asset list. Without conditions, all the assets are in a single group labelled `*`.
+ * @returns {Record<string, ExternalAsset[]>} Grouped assets, where key is a group name, displayed
+ * with `getGroupLabel()`, and value is an asset list. Without conditions, all the assets are in a
+ * single group named `*`.
  */
 export const groupExternalAssets = (assets, conditions) => {
   const { field, pattern } = conditions ?? {};
@@ -138,9 +139,7 @@ export const groupExternalAssets = (assets, conditions) => {
     return assets.length ? { '*': assets } : {};
   }
 
-  return Object.fromEntries(
-    buildGroupMap(assets, pattern, (asset) => getGroupValue(asset, field), _('other')),
-  );
+  return Object.fromEntries(buildGroupMap(assets, pattern, (asset) => getGroupValue(asset, field)));
 };
 
 /**

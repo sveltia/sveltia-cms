@@ -31,6 +31,8 @@
    * @property {SortKey[]} sortKeys Sort keys shown in the Sort menu.
    * @property {ViewGroup[]} [groups] Grouping options shown in the Group menu. The menu is omitted
    * when there are none, as repository assets have nothing to group by.
+   * @property {string[]} [groupNames] Names of the groups currently in the list, which the Group
+   * menu’s Expand All and Collapse All items act on.
    * @property {{ current: string }} [searchTerms] Search terms to bind a search box to. The box is
    * omitted when this is not given, as repository assets are searched with the global search.
    */
@@ -43,6 +45,7 @@
     totalCount,
     sortKeys,
     groups = [],
+    groupNames = [],
     searchTerms = undefined,
     /* eslint-enable prefer-const */
   } = $props();
@@ -75,7 +78,13 @@
     aria-controls="asset-list"
   />
   {#if groups.length}
-    <GroupMenu disabled={!hasMultipleAssets} {currentView} {groups} aria-controls="asset-list" />
+    <GroupMenu
+      disabled={!hasMultipleAssets}
+      {currentView}
+      {groups}
+      {groupNames}
+      aria-controls="asset-list"
+    />
   {/if}
   <ViewSwitcher disabled={!hasListedAssets} {currentView} aria-controls="asset-list" />
   {#if !(env.isSmallScreen || env.isMediumScreen)}

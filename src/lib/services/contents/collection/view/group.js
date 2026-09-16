@@ -1,5 +1,3 @@
-import { _ } from '@sveltia/i18n';
-
 import { buildGroupMap } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getReorderGroupName } from '$lib/services/contents/collection/entries/reorder/config';
@@ -59,7 +57,8 @@ export const getReorderGroupingConditions = (collection) => {
  * @param {InternalCollection} collection Collection that the entries belong to.
  * @param {GroupingConditions | null | undefined} conditions Grouping conditions.
  * @returns {{ name: string, entries: Entry[] }[]} Grouped entries, where each group object contains
- * a name and an entry list. When ungrouped, there will still be one group object named `*`.
+ * a name, displayed with `getGroupLabel()`, and an entry list. When ungrouped, there will still be
+ * one group object named `*`.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  * @see https://sveltiacms.app/en/docs/collections/entries#grouping
  */
@@ -76,13 +75,9 @@ export const groupEntries = (entries, collection, conditions) => {
   } = collection;
 
   const sortCondition = currentView.current.sort;
-  const otherKey = _('other');
 
-  const sortedGroups = buildGroupMap(
-    entries,
-    pattern,
-    (entry) => getPropertyValue({ entry, locale, collectionName, key: field }),
-    otherKey,
+  const sortedGroups = buildGroupMap(entries, pattern, (entry) =>
+    getPropertyValue({ entry, locale, collectionName, key: field }),
   ).map(([name, _entries]) => ({ name, entries: _entries }));
 
   // Keep the descending order if already sorted, especially on the date field

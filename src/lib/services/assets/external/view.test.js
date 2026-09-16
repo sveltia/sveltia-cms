@@ -8,6 +8,7 @@ import {
   selectedExternalAssets,
 } from '$lib/services/assets/external';
 import { currentView } from '$lib/services/assets/view/settings';
+import { OTHER_GROUP_NAME } from '$lib/services/common/view';
 
 import {
   EXTERNAL_ASSET_SORT_KEYS,
@@ -218,7 +219,7 @@ describe('assets/external/view', () => {
 
     it('should put the assets without a value in the Other group', () => {
       expect(groupExternalAssets([linked[1], hero], { field: 'domain' })).toEqual({
-        '[other]': [hero],
+        [OTHER_GROUP_NAME]: [hero],
         'docs.example.com': [linked[1]],
       });
     });

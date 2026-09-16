@@ -1224,6 +1224,8 @@
  * @property {FilteringConditions} [filter] Filtering conditions. Deprecated in favour of `filters`.
  * @property {FilteringConditions[]} [filters] One or more filtering conditions.
  * @property {GroupingConditions | null} [group] Grouping conditions.
+ * @property {Record<string, string[]>} [collapsedGroups] Names of the groups whose entries are
+ * hidden, under each grouping condition’s key. See `getGroupingKey()`.
  * @property {boolean} [showMedia] Whether to show the Media pane.
  */
 
@@ -1266,6 +1268,8 @@
  * @property {FilteringConditions} [filter] Filtering conditions.
  * @property {FilteringConditions[]} [filters] Unused.
  * @property {GroupingConditions | null} [group] Grouping conditions.
+ * @property {Record<string, string[]>} [collapsedGroups] Names of the groups whose assets are
+ * hidden, under each grouping condition’s key. See `getGroupingKey()`.
  * @property {boolean} [showInfo] Whether to show the Info pane.
  */
 

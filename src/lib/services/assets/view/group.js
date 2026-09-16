@@ -1,5 +1,3 @@
-import { _ } from '@sveltia/i18n';
-
 import { buildGroupMap } from '$lib/services/common/view';
 
 /**
@@ -10,8 +8,8 @@ import { buildGroupMap } from '$lib/services/common/view';
  * Group the given assets.
  * @param {Asset[]} assets Asset list.
  * @param {GroupingConditions | null} [conditions] Grouping conditions.
- * @returns {Record<string, Asset[]>} Grouped assets, where key is a group label and value is an
- * asset list.
+ * @returns {Record<string, Asset[]>} Grouped assets, where key is a group name, displayed with
+ * `getGroupLabel()`, and value is an asset list.
  */
 export const groupAssets = (assets, conditions) => {
   const { field, pattern } = conditions ?? {};
@@ -20,14 +18,7 @@ export const groupAssets = (assets, conditions) => {
     return assets.length ? { '*': assets } : {};
   }
 
-  const otherKey = _('other');
-
   return Object.fromEntries(
-    buildGroupMap(
-      assets,
-      pattern,
-      (asset) => /** @type {Record<string, any>} */ (asset)[field],
-      otherKey,
-    ),
+    buildGroupMap(assets, pattern, (asset) => /** @type {Record<string, any>} */ (asset)[field]),
   );
 };

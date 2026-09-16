@@ -3,6 +3,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { OTHER_GROUP_NAME } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { currentView } from '$lib/services/contents/collection/view/settings';
 
@@ -392,7 +393,7 @@ describe('groupEntries', () => {
 
     expect(result).toHaveLength(2);
     expect(result.find((g) => g.name === 'tech')?.entries).toHaveLength(1);
-    expect(result.find((g) => g.name === 'Other')?.entries).toHaveLength(1);
+    expect(result.find((g) => g.name === OTHER_GROUP_NAME)?.entries).toHaveLength(1);
   });
 
   test('should handle regex patterns', async () => {
@@ -620,7 +621,7 @@ describe('groupEntries', () => {
     const groupNames = result.map((g) => g.name);
 
     expect(groupNames).toContain('2023');
-    expect(groupNames).toContain('Other');
+    expect(groupNames).toContain(OTHER_GROUP_NAME);
   });
 });
 

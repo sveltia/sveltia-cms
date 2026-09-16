@@ -78,6 +78,7 @@
         disabled={!hasMultipleEntries}
         {currentView}
         groups={viewGroups.current}
+        groupNames={entryGroups.current.map(({ name }) => name)}
         aria-controls="entry-list"
       />
     {/if}

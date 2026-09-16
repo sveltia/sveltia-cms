@@ -8,6 +8,7 @@
   import EntryListItem from '$lib/components/contents/list/entry-list-item.svelte';
   import EntryReorderList from '$lib/components/contents/list/entry-reorder-list.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
+  import { getGroupLabel, isGroupCollapsed, setGroupCollapsed } from '$lib/services/common/view';
   import { selectedCollection } from '$lib/services/contents/collection';
   import {
     entryGroups,
@@ -53,10 +54,15 @@
             {#await sleep() then}
               <GridBody
                 label={name !== '*'
-                  ? name
+                  ? getGroupLabel(name)
                   : listedUnpublishedEntries.current.length
                     ? _('workflow.published_entries')
                     : undefined}
+                collapsible={name !== '*'}
+                expanded={!isGroupCollapsed(currentView.current, name)}
+                onChange={({ detail: { expanded } }) => {
+                  currentView.current = setGroupCollapsed(currentView.current, name, !expanded);
+                }}
               >
                 <InfiniteScroll
                   items={entries.filter(

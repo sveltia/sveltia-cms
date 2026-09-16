@@ -1,3 +1,4 @@
+import { _ } from '@sveltia/i18n';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
@@ -6,17 +7,44 @@ import { getRegex } from '$lib/services/utils/regex';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
+ * @import { GroupingConditions } from '$lib/types/private';
+ */
+
+/**
+ * View settings with the properties that the group expanders read and write. Any other property,
+ * such as the view type, is carried over untouched.
+ * @typedef {{
+ * group?: GroupingConditions | null,
+ * collapsedGroups?: Record<string, string[]>,
+ * } & Record<string, unknown>} ViewWithGroups
+ */
+
+/**
+ * Name of the group holding the items that have no value for the grouping field, or no match for
+ * its pattern. A stable token rather than the localized “Other” label, so that anything keyed by
+ * the group name — the collapsed state saved in the view — survives a change of the UI locale.
+ * Display it with {@link getGroupLabel}.
+ */
+export const OTHER_GROUP_NAME = '*other';
+
+/**
+ * Get the label of a group as it’s shown in the list.
+ * @param {string} name Group name.
+ * @returns {string} The localized “Other” label for {@link OTHER_GROUP_NAME}, otherwise the name.
+ */
+export const getGroupLabel = (name) => (name === OTHER_GROUP_NAME ? _('other') : name);
+
+/**
  * Build a sorted group map from a list of items.
  * @template T
  * @param {T[]} items Items to group.
  * @param {string | RegExp | boolean | undefined} pattern Pattern to extract the group key from each
  * value. When provided, the first match is used as the key; unmatched items fall back to
- * `otherKey`.
+ * {@link OTHER_GROUP_NAME}.
  * @param {(item: T) => any} getValue Function to get the groupable field value from an item.
- * @param {string} otherKey Fallback key for items with a null/undefined value or no regex match.
- * @returns {[string, T[]][]} Sorted array of `[groupKey, items]` pairs.
+ * @returns {[string, T[]][]} Array of `[groupKey, items]` pairs, sorted by the group labels.
  */
-export const buildGroupMap = (items, pattern, getValue, otherKey) => {
+export const buildGroupMap = (items, pattern, getValue) => {
   const regex = getRegex(pattern);
   /** @type {Record<string, T[]>} */
   const groups = {};
@@ -26,16 +54,16 @@ export const buildGroupMap = (items, pattern, getValue, otherKey) => {
 
     const key =
       value === null || value === undefined
-        ? otherKey
+        ? OTHER_GROUP_NAME
         : regex
-          ? (String(value).match(regex)?.[0] ?? otherKey)
+          ? (String(value).match(regex)?.[0] ?? OTHER_GROUP_NAME)
           : String(value);
 
     if (!(key in groups)) groups[key] = [];
     groups[key].push(item);
   });
 
-  return Object.entries(groups).sort(([a], [b]) => compare(a, b));
+  return Object.entries(groups).sort(([a], [b]) => compare(getGroupLabel(a), getGroupLabel(b)));
 };
 
 /**
@@ -85,6 +113,100 @@ export const sortItemsByKey = (items, getKey, isStringType, order) => {
 
   return items;
 };
+
+/**
+ * Get the names of the groups that can be collapsed. The `*` group, which holds every item when
+ * the list isn’t grouped, has no caption and so no expander.
+ * @param {string[]} names Names of all the groups in the list.
+ * @returns {string[]} Names of the captioned groups.
+ */
+export const getCollapsibleGroupNames = (names) => names.filter((name) => name !== '*');
+
+/**
+ * Get the key under which the collapsed groups of a view are saved. Each grouping condition
+ * produces its own set of groups, so the collapsed state is kept per condition.
+ * @param {GroupingConditions | null | undefined} conditions Grouping conditions.
+ * @returns {string | undefined} JSON array of the field and, if any, the pattern, e.g.
+ * `["date","\\d{4}"]`, or `undefined` when the list isn’t grouped. A pattern is a regular
+ * expression that can hold any character, so joining the two with a separator could be ambiguous.
+ */
+export const getGroupingKey = (conditions) => {
+  if (!conditions) {
+    return undefined;
+  }
+
+  const { field, pattern } = conditions;
+
+  return JSON.stringify(pattern === undefined ? [field] : [field, String(pattern)]);
+};
+
+/**
+ * Check whether a group is collapsed in the given view.
+ * @param {ViewWithGroups} view View settings.
+ * @param {string} name Group name.
+ * @returns {boolean} Whether the group’s items are hidden.
+ */
+export const isGroupCollapsed = (view, name) => {
+  const key = getGroupingKey(view.group);
+
+  return key !== undefined && !!view.collapsedGroups?.[key]?.includes(name);
+};
+
+/**
+ * Get the view settings with the collapsed groups of the current grouping condition replaced.
+ * @template {ViewWithGroups} T
+ * @param {T} view View settings.
+ * @param {string[]} names Names of the collapsed groups. The condition is dropped from the saved
+ * state when there is none, and so is the whole `collapsedGroups` property once it’s empty.
+ * @returns {T} New view settings.
+ */
+const setCollapsedGroups = (view, names) => {
+  const key = getGroupingKey(view.group);
+
+  // The list isn’t grouped, so there is nothing to collapse
+  if (key === undefined) {
+    return view;
+  }
+
+  const { [key]: _current, ...others } = view.collapsedGroups ?? {};
+  const collapsedGroups = names.length ? { ...others, [key]: names } : others;
+  const { collapsedGroups: _previous, ...rest } = view;
+
+  return /** @type {T} */ (
+    Object.keys(collapsedGroups).length ? { ...rest, collapsedGroups } : rest
+  );
+};
+
+/**
+ * Get the view settings with one group collapsed or expanded.
+ * @template {ViewWithGroups} T
+ * @param {T} view View settings.
+ * @param {string} name Group name.
+ * @param {boolean} collapsed Whether to hide the group’s items.
+ * @returns {T} New view settings.
+ */
+export const setGroupCollapsed = (view, name, collapsed) => {
+  const key = getGroupingKey(view.group);
+  const current = key === undefined ? [] : (view.collapsedGroups?.[key] ?? []);
+  const names = current.filter((_name) => _name !== name);
+
+  if (collapsed) {
+    names.push(name);
+  }
+
+  return setCollapsedGroups(view, names);
+};
+
+/**
+ * Get the view settings with all the given groups collapsed or expanded.
+ * @template {ViewWithGroups} T
+ * @param {T} view View settings.
+ * @param {string[]} names Names of the collapsible groups.
+ * @param {boolean} collapsed Whether to hide the groups’ items.
+ * @returns {T} New view settings.
+ */
+export const setAllGroupsCollapsed = (view, names, collapsed) =>
+  setCollapsedGroups(view, collapsed ? [...names] : []);
 
 /**
  * Initialize a view settings state backed by IndexedDB and persist any changes to it.

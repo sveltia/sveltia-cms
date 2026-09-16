@@ -16,6 +16,7 @@
   import { flip } from 'svelte/animate';
 
   import EntryReorderListItem from '$lib/components/contents/list/entry-reorder-list-item.svelte';
+  import { getGroupLabel } from '$lib/services/common/view';
   import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
   import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder';
   import {
@@ -168,7 +169,7 @@
 <div role="none" class="wrapper">
   {#each entryGroups.current as { name, entries } (name)}
     {#await sleep() then}
-      <GridBody label={name !== '*' ? name : undefined}>
+      <GridBody label={name !== '*' ? getGroupLabel(name) : undefined}>
         {@const localEntries = getLocalEntries(name, entries)}
         {#each localEntries as entry, index (entry.id)}
           <!--

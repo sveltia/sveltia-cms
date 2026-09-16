@@ -1,6 +1,12 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Menu, MenuButton, MenuItemRadio } from '@sveltia/ui';
+  import { Divider, Menu, MenuButton, MenuItem, MenuItemRadio } from '@sveltia/ui';
+
+  import {
+    getCollapsibleGroupNames,
+    isGroupCollapsed,
+    setAllGroupsCollapsed,
+  } from '$lib/services/common/view';
 
   /**
    * @import { AssetListView, EntryListView } from '$lib/types/private';
@@ -15,6 +21,8 @@
    * @property {boolean} [disabled] Whether to disable the button.
    * @property {string} [noneLabel] Label to be displayed on the None item.
    * @property {ViewGroup[]} [groups] Group conditions.
+   * @property {string[]} [groupNames] Names of the groups currently in the list, which the Expand
+   * All and Collapse All items act on.
    */
 
   /** @type {Props} */
@@ -26,8 +34,17 @@
     disabled = false,
     noneLabel = '',
     groups = [],
+    groupNames = [],
     /* eslint-enable prefer-const */
   } = $props();
+
+  const collapsibleGroupNames = $derived(getCollapsibleGroupNames(groupNames));
+  const canExpandAll = $derived(
+    collapsibleGroupNames.some((name) => isGroupCollapsed(currentView.current, name)),
+  );
+  const canCollapseAll = $derived(
+    collapsibleGroupNames.some((name) => !isGroupCollapsed(currentView.current, name)),
+  );
 </script>
 
 <MenuButton variant="ghost" label={label || _('group')} {disabled} popupPosition="bottom-right">
@@ -57,6 +74,29 @@
           }}
         />
       {/each}
+      <Divider />
+      <MenuItem
+        label={_('expand_all')}
+        disabled={!canExpandAll}
+        onclick={() => {
+          currentView.current = setAllGroupsCollapsed(
+            currentView.current,
+            collapsibleGroupNames,
+            false,
+          );
+        }}
+      />
+      <MenuItem
+        label={_('collapse_all')}
+        disabled={!canCollapseAll}
+        onclick={() => {
+          currentView.current = setAllGroupsCollapsed(
+            currentView.current,
+            collapsibleGroupNames,
+            true,
+          );
+        }}
+      />
     </Menu>
   {/snippet}
 </MenuButton>
