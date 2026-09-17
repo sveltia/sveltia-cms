@@ -63,11 +63,40 @@ describe('clearFileCache()', () => {
 
     await clearFileCache();
 
-    expect(IndexedDB).toHaveBeenCalledTimes(2);
+    expect(IndexedDB).toHaveBeenCalledTimes(3);
     expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'file-cache');
     expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'asset-thumbnails');
-    expect(clear).toHaveBeenCalledTimes(2);
+    expect(IndexedDB).toHaveBeenCalledWith('github:owner/repo', 'asset-hashes');
+    expect(clear).toHaveBeenCalledTimes(3);
     expect(removeEntry).not.toHaveBeenCalled();
+  });
+
+  test('clears the stores one after another', async () => {
+    backend.current = { name: 'github', repository: { databaseName: 'github:owner/repo' } };
+
+    /** @type {(() => void)[]} */
+    const resolvers = [];
+
+    clear.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    const promise = clearFileCache();
+
+    // Creating a missing store bumps the database version, and two concurrent bumps leave one
+    // connection without its store, so the next store is only opened once the previous is cleared
+    await vi.waitFor(() => expect(IndexedDB).toHaveBeenCalledTimes(1));
+    expect(clear).toHaveBeenCalledTimes(1);
+    resolvers[0]();
+    await vi.waitFor(() => expect(clear).toHaveBeenCalledTimes(2));
+    expect(IndexedDB).toHaveBeenCalledTimes(2);
+    resolvers[1]();
+    await vi.waitFor(() => expect(clear).toHaveBeenCalledTimes(3));
+    resolvers[2]();
+    await expect(promise).resolves.toBeUndefined();
   });
 
   test('does nothing when the backend is not initialized', async () => {

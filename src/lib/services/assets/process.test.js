@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { processFile } from './process';
 
+vi.mock('$lib/services/assets/info', () => ({
+  hasCachedThumbnail: vi.fn(async () => false),
+}));
 vi.mock('$lib/services/integrations/media-libraries/default');
 vi.mock('$lib/services/utils/media/image/validate', () => ({
   isValidImage: vi.fn().mockResolvedValue(true),
@@ -26,6 +29,12 @@ describe('assets/process', () => {
     // Default: the file is decodable. `clearAllMocks()` doesn’t reset implementations, so this is
     // reset here rather than left to leak from a test that overrides it.
     vi.mocked(isValidImage).mockResolvedValue(true);
+
+    const { hasCachedThumbnail } = await import('$lib/services/assets/info');
+    const { getGitHash } = await import('$lib/services/utils/file');
+
+    vi.mocked(hasCachedThumbnail).mockResolvedValue(false);
+    vi.mocked(getGitHash).mockResolvedValue('abc123');
   });
 
   describe('processFile', () => {
@@ -47,6 +56,63 @@ describe('assets/process', () => {
       expect(result.originalFile).toBeUndefined();
       // There’s nothing to transform, so the work is skipped
       expect(transformFile).not.toHaveBeenCalled();
+    });
+
+    it('should trust a cached thumbnail instead of decoding the file again', async () => {
+      const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+      const { hasCachedThumbnail } = await import('$lib/services/assets/info');
+      const { getGitHash } = await import('$lib/services/utils/file');
+
+      vi.mocked(hasCachedThumbnail).mockResolvedValue(true);
+
+      const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+      const result = await processFile(file, { slugify_filename: true });
+
+      // The thumbnail is looked up by the hash of the original file, whose hash is memoized;
+      // hashing the renamed copy would read the file again
+      expect(getGitHash).toHaveBeenCalledWith(file);
+      expect(hasCachedThumbnail).toHaveBeenCalledWith('abc123');
+      expect(isValidImage).not.toHaveBeenCalled();
+      expect(result.invalid).toBe(false);
+      expect(result.file.name).toBe('photo.jpg');
+    });
+
+    it('should not hash a file that is not checked for validity', async () => {
+      const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+      const { hasCachedThumbnail } = await import('$lib/services/assets/info');
+      const { getGitHash } = await import('$lib/services/utils/file');
+      // A video on its way to a cloud service would otherwise be read in full for nothing
+      const file = new File(['content'], 'clip.mp4', { type: 'video/mp4' });
+      const result = await processFile(file);
+
+      expect(getGitHash).not.toHaveBeenCalled();
+      expect(hasCachedThumbnail).not.toHaveBeenCalled();
+      expect(isValidImage).not.toHaveBeenCalled();
+      expect(result.invalid).toBe(false);
+    });
+
+    it('should fall back to decoding the file when the thumbnail cannot be looked up', async () => {
+      const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+      const { hasCachedThumbnail } = await import('$lib/services/assets/info');
+      const { getGitHash } = await import('$lib/services/utils/file');
+      const file = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+      // The file can’t be read any more, e.g. it was deleted after being picked
+      vi.mocked(getGitHash).mockRejectedValue(
+        new DOMException('The requested file could not be read', 'NotReadableError'),
+      );
+      vi.mocked(isValidImage).mockResolvedValue(false);
+
+      // The batch isn’t failed; the file is reported as invalid like any other undecodable one
+      await expect(processFile(file)).resolves.toMatchObject({ invalid: true });
+      expect(hasCachedThumbnail).not.toHaveBeenCalled();
+
+      vi.mocked(getGitHash).mockResolvedValue('abc123');
+      vi.mocked(hasCachedThumbnail).mockRejectedValue(new Error('Database error'));
+      vi.mocked(isValidImage).mockResolvedValue(true);
+
+      await expect(processFile(file)).resolves.toMatchObject({ invalid: false });
+      expect(isValidImage).toHaveBeenCalledTimes(2);
     });
 
     it('should return the original file unchanged with no options', async () => {

@@ -234,6 +234,26 @@ const resolveThumbnailBlob = async (asset, isPDF) => {
 };
 
 /**
+ * Check if a thumbnail has been generated for the given file content. A thumbnail is only ever made
+ * by decoding the file, so having one proves the file is a usable image, and a caller that would
+ * otherwise decode the file just to validate it can skip that.
+ * @param {string} sha Git object ID (SHA-1 hash) of the file.
+ * @returns {Promise<boolean>} Whether a thumbnail is cached or being generated. A generation in
+ * flight is awaited, as the outcome is what matters.
+ */
+export const hasCachedThumbnail = async (sha) => {
+  initThumbnailDB();
+
+  const pending = pendingThumbnailBlobs.get(sha);
+
+  if (pending) {
+    return !!(await pending.catch(() => undefined));
+  }
+
+  return !!(await thumbnailDB?.get(sha));
+};
+
+/**
  * Get a thumbnail image for the given asset.
  * @param {Asset} asset Asset.
  * @param {object} [options] Options.

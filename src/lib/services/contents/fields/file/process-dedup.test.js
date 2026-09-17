@@ -15,6 +15,7 @@ vi.mock('$lib/services/assets', () => ({
 
 vi.mock('$lib/services/assets/info', () => ({
   getAssetPublicURL: vi.fn(),
+  hasCachedThumbnail: vi.fn(async () => false),
 }));
 
 vi.mock('$lib/services/integrations/media-libraries/default', () => ({

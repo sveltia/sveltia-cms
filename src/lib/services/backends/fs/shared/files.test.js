@@ -1660,6 +1660,48 @@ describe('parseAssetFileInfo', () => {
     expect(result.sha).toBeDefined();
     expect(result.text).toBeUndefined();
   });
+
+  test('should reuse a cached hash while the file is unchanged', async () => {
+    const handle = createMockFileHandle('photo.jpg');
+    const file = new File(['photo'], 'photo.jpg', { type: 'image/jpeg', lastModified: 1000 });
+    const arrayBuffer = vi.spyOn(file, 'arrayBuffer');
+
+    handle.getFile = vi.fn(async () => file);
+
+    /** @type {any} */
+    const assetFile = { handle, path: 'static/photo.jpg', name: 'photo.jpg', size: 0, sha: '' };
+    const record = { sha: 'cached-sha', size: 5, lastModified: 1000 };
+    const cachedHashes = new Map([['static/photo.jpg', record]]);
+    /** @type {Map<string, any>} */
+    const newHashes = new Map();
+    const result = await parseAssetFileInfo(assetFile, { cachedHashes, newHashes });
+
+    expect(result.sha).toBe('cached-sha');
+    expect(result.size).toBe(5);
+    expect(arrayBuffer).not.toHaveBeenCalled();
+    expect(newHashes.size).toBe(0);
+
+    // A different size or modification time means the file has been changed
+    await Promise.all(
+      [
+        { ...record, size: 6 },
+        { ...record, lastModified: 2000 },
+      ].map(async (stale) => {
+        const rehashed = await parseAssetFileInfo(assetFile, {
+          cachedHashes: new Map([['static/photo.jpg', stale]]),
+          newHashes,
+        });
+
+        expect(rehashed.sha).not.toBe('cached-sha');
+        expect(rehashed.sha).toHaveLength(40);
+        expect(newHashes.get('static/photo.jpg')).toEqual({
+          sha: rehashed.sha,
+          size: 5,
+          lastModified: 1000,
+        });
+      }),
+    );
+  });
 });
 
 describe('saveChange', () => {
@@ -2208,22 +2250,28 @@ describe('getAllFiles', () => {
 });
 
 describe('loadFiles', () => {
-  test('should load files and populate all stores', async () => {
+  /**
+   * Mock the modules `loadFiles()` depends on, with one entry, one asset and one config file.
+   * @param {object} [options] Options.
+   * @param {File} [options.assetFile] The asset file.
+   * @returns {Promise<{ loadFiles: any, stores: Record<string, { current: any }>, mockLog: any,
+   * getGitHash: any, rootDirHandle: any, mockEntries: any[], mockErrors: any[] }>} The freshly
+   * imported `loadFiles()`, the mocked stores and other mocks.
+   */
+  const setup = async ({ assetFile = new File([''], 'image.png', { type: 'image/png' }) } = {}) => {
     vi.resetModules();
 
     const mockEntries = [/** @type {any} */ ({ id: '1', slug: 'post-1' })];
     /** @type {any[]} */
     const mockErrors = [];
-    /** @type {{ current: any }} */
-    const mockAllEntries = { current: undefined };
-    /** @type {{ current: any }} */
-    const mockAllAssets = { current: undefined };
-    /** @type {{ current: any }} */
-    const mockGitConfigFiles = { current: undefined };
-    /** @type {{ current: any }} */
-    const mockEntryParseErrors = { current: undefined };
-    /** @type {{ current: any }} */
-    const mockDataLoaded = { current: undefined };
+
+    const stores = {
+      allEntries: { current: undefined },
+      allAssets: { current: undefined },
+      gitConfigFiles: { current: undefined },
+      entryParseErrors: { current: undefined },
+      dataLoaded: { current: undefined },
+    };
 
     const fakeFile = {
       handle: /** @type {any} */ ({
@@ -2239,7 +2287,7 @@ describe('loadFiles', () => {
     const fakeAssetFile = {
       handle: /** @type {any} */ ({
         name: 'image.png',
-        getFile: vi.fn(async () => new File([''], 'image.png', { type: 'image/png' })),
+        getFile: vi.fn(async () => assetFile),
       }),
       path: 'static/image.png',
       name: 'image.png',
@@ -2259,14 +2307,14 @@ describe('loadFiles', () => {
     };
 
     vi.doMock('$lib/services/contents', () => ({
-      allEntries: mockAllEntries,
+      allEntries: stores.allEntries,
       allEntryFolders: { current: [] },
-      dataLoaded: mockDataLoaded,
-      entryParseErrors: mockEntryParseErrors,
+      dataLoaded: stores.dataLoaded,
+      entryParseErrors: stores.entryParseErrors,
     }));
 
     vi.doMock('$lib/services/assets', () => ({
-      allAssets: mockAllAssets,
+      allAssets: stores.allAssets,
     }));
 
     vi.doMock('$lib/services/assets/folders', () => ({
@@ -2275,7 +2323,7 @@ describe('loadFiles', () => {
 
     vi.doMock('$lib/services/backends/git/shared/config', () => ({
       GIT_CONFIG_FILE_REGEX: /^\.gitconfig$/,
-      gitConfigFiles: mockGitConfigFiles,
+      gitConfigFiles: stores.gitConfigFiles,
     }));
 
     vi.doMock('$lib/services/backends/process', () => ({
@@ -2302,12 +2350,14 @@ describe('loadFiles', () => {
       readAsText: vi.fn(async () => '# Post'),
     }));
 
+    const getGitHash = vi.fn(async () => 'abc123');
+
     vi.doMock('$lib/services/utils/file', async () => {
       const actual = /** @type {any} */ (await vi.importActual('$lib/services/utils/file'));
 
       return {
         ...actual,
-        getGitHash: vi.fn(async () => 'abc123'),
+        getGitHash,
         getBlob: vi.fn(() => 'blob:http://localhost/fake'),
       };
     });
@@ -2328,23 +2378,114 @@ describe('loadFiles', () => {
       },
     }));
 
+    return { loadFiles, stores, mockLog, getGitHash, rootDirHandle, mockEntries, mockErrors };
+  };
+
+  /**
+   * Create a mock asset hash cache store.
+   * @param {[string, any][]} [entries] Records in the store.
+   * @returns {any} Store.
+   */
+  const createMockHashCacheDB = (entries = []) => ({
+    entries: vi.fn(async () => entries),
+    saveEntries: vi.fn(async () => {}),
+    deleteEntries: vi.fn(async () => {}),
+  });
+
+  test('should load files and populate all stores', async () => {
+    const { loadFiles, stores, mockLog, rootDirHandle, mockEntries, mockErrors } = await setup();
+
     await loadFiles(rootDirHandle);
 
-    expect(mockAllEntries.current).toEqual(mockEntries);
-    expect(mockAllAssets.current).toEqual(expect.any(Array));
-    expect(mockDataLoaded.current).toEqual(true);
-    expect(mockEntryParseErrors.current).toEqual(mockErrors);
-    expect(mockGitConfigFiles.current).toEqual(expect.any(Array));
+    expect(stores.allEntries.current).toEqual(mockEntries);
+    expect(stores.allAssets.current).toEqual(expect.any(Array));
+    expect(stores.dataLoaded.current).toEqual(true);
+    expect(stores.entryParseErrors.current).toEqual(mockErrors);
+    expect(stores.gitConfigFiles.current).toEqual(expect.any(Array));
     // The loading is traced in the console
-    expect(mockLog.mock.calls.map(([message]) => message)).toEqual([
+    expect(mockLog.mock.calls.map((/** @type {string[]} */ [message]) => message)).toEqual([
       'Started: local repository root',
       'Scanned the directory: 1 entry files, 1 asset files, 1 config files',
       'Read 1 entry files',
       'Read 1 config files',
       'Parsed 1 entries (0 errors)',
-      'Hashed 1 asset files',
+      'Hashed 1 of 1 asset files (0 cached)',
       'The site data is ready',
     ]);
+  });
+
+  test('should cache the asset hashes for the next load', async () => {
+    const assetFile = new File(['image'], 'image.png', { type: 'image/png', lastModified: 1000 });
+    const { loadFiles, stores, getGitHash, rootDirHandle } = await setup({ assetFile });
+
+    const hashCacheDB = createMockHashCacheDB([
+      ['static/gone.png', { sha: 'old', size: 1, lastModified: 1 }],
+    ]);
+
+    await loadFiles(rootDirHandle, { hashCacheDB });
+
+    expect(getGitHash).toHaveBeenCalledWith(assetFile);
+    expect(stores.allAssets.current[0].sha).toBe('abc123');
+    // The hash is saved with the size and modification time it’s valid for, and the record of a
+    // file that no longer exists is dropped
+    expect(hashCacheDB.saveEntries).toHaveBeenCalledWith([
+      ['static/image.png', { sha: 'abc123', size: 5, lastModified: 1000 }],
+    ]);
+    expect(hashCacheDB.deleteEntries).toHaveBeenCalledWith(['static/gone.png']);
+  });
+
+  test('should reuse the cached hash of an unchanged asset', async () => {
+    const assetFile = new File(['image'], 'image.png', { type: 'image/png', lastModified: 1000 });
+    const { loadFiles, stores, getGitHash, mockLog, rootDirHandle } = await setup({ assetFile });
+
+    const hashCacheDB = createMockHashCacheDB([
+      ['static/image.png', { sha: 'cached', size: 5, lastModified: 1000 }],
+    ]);
+
+    await loadFiles(rootDirHandle, { hashCacheDB });
+
+    // The file isn’t read at all
+    expect(getGitHash).not.toHaveBeenCalled();
+    expect(stores.allAssets.current[0].sha).toBe('cached');
+    expect(mockLog).toHaveBeenCalledWith('Hashed 0 of 1 asset files (1 cached)');
+    // Nothing has changed, so nothing is written
+    expect(hashCacheDB.saveEntries).not.toHaveBeenCalled();
+    expect(hashCacheDB.deleteEntries).not.toHaveBeenCalled();
+  });
+
+  test('should hash an asset again if it has been modified', async () => {
+    const assetFile = new File(['image'], 'image.png', { type: 'image/png', lastModified: 2000 });
+    const { loadFiles, stores, getGitHash, rootDirHandle } = await setup({ assetFile });
+
+    const hashCacheDB = createMockHashCacheDB([
+      ['static/image.png', { sha: 'cached', size: 5, lastModified: 1000 }],
+    ]);
+
+    await loadFiles(rootDirHandle, { hashCacheDB });
+
+    expect(getGitHash).toHaveBeenCalledWith(assetFile);
+    expect(stores.allAssets.current[0].sha).toBe('abc123');
+    expect(hashCacheDB.saveEntries).toHaveBeenCalledWith([
+      ['static/image.png', { sha: 'abc123', size: 5, lastModified: 2000 }],
+    ]);
+  });
+
+  test('should load the files even if the hash cache is broken', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { loadFiles, stores, getGitHash, rootDirHandle } = await setup();
+    const hashCacheDB = createMockHashCacheDB();
+
+    hashCacheDB.entries.mockRejectedValue(new Error('Cannot read'));
+    hashCacheDB.saveEntries.mockRejectedValue(new Error('Cannot write'));
+
+    await loadFiles(rootDirHandle, { hashCacheDB });
+
+    // Every file is hashed, and the failed write doesn’t fail the load
+    expect(getGitHash).toHaveBeenCalledOnce();
+    expect(stores.dataLoaded.current).toBe(true);
+    expect(hashCacheDB.saveEntries).toHaveBeenCalledOnce();
+    expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
+    consoleErrorSpy.mockRestore();
   });
 });
 

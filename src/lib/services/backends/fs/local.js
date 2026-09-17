@@ -47,6 +47,13 @@ const ROOT_DIR_HANDLE_KEY = 'root_dir_handle';
  */
 let rootDirHandleDB = undefined;
 /**
+ * Store holding the Git object IDs of the asset files hashed by previous loads, so unchanged files
+ * don’t have to be read again. Like the other caches, it only exists when a remote repository is
+ * configured, as the database is named after it.
+ * @type {IndexedDB | null | undefined}
+ */
+let assetHashDB = undefined;
+/**
  * @type {FileSystemDirectoryHandle | undefined}
  */
 let rootDirHandle = undefined;
@@ -123,6 +130,7 @@ const init = () => {
   remoteRepository = allBackendServices[service]?.init?.();
 
   rootDirHandleDB = getRepositoryDatabase(remoteRepository, 'file-system-handles') ?? null;
+  assetHashDB = getRepositoryDatabase(remoteRepository, 'asset-hashes') ?? null;
 
   return repository;
 };
@@ -160,7 +168,9 @@ const signOut = async () => {
  * {@link allEntries} and {@link allAssets} stores.
  */
 const fetchFiles = async () => {
-  await loadFiles(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle));
+  await loadFiles(/** @type {FileSystemDirectoryHandle} */ (rootDirHandle), {
+    hashCacheDB: assetHashDB,
+  });
 };
 
 /**

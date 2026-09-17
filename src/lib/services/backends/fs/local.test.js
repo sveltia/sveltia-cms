@@ -692,6 +692,9 @@ describe('Local Backend Service', () => {
       mockDBGet.mockResolvedValue(null);
       mockLoadFiles.mockResolvedValue(undefined);
 
+      cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github' } });
+      mockInit.mockReturnValue({ service: 'github', databaseName: 'test-db' });
+
       const service = localBackend.default;
 
       service.init();
@@ -700,6 +703,10 @@ describe('Local Backend Service', () => {
 
       // Should not throw
       await expect(service.fetchFiles()).resolves.toBeUndefined();
+      // The asset hash cache store in the repository database is passed along
+      expect(mockLoadFiles).toHaveBeenCalledWith(mockDirHandle, {
+        hashCacheDB: expect.objectContaining({ get: mockDBGet }),
+      });
     });
   });
 

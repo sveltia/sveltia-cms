@@ -4,11 +4,12 @@ import { backend, gitBackendServices } from '$lib/services/backends';
 import { TEST_BACKEND_NAME, TEST_BACKEND_ROOT_DIR_NAME } from '$lib/services/backends/fs/test';
 
 /**
- * Names of the IndexedDB object stores holding cached file contents and generated asset thumbnails.
- * The data in these stores can always be re-fetched or regenerated, so it’s safe to delete.
+ * Names of the IndexedDB object stores holding cached file contents, generated asset thumbnails and
+ * the asset hashes computed by the local backend. The data in these stores can always be re-fetched
+ * or regenerated, so it’s safe to delete.
  * @type {string[]}
  */
-const CACHE_STORE_NAMES = ['file-cache', 'asset-thumbnails'];
+const CACHE_STORE_NAMES = ['file-cache', 'asset-thumbnails', 'asset-hashes'];
 /**
  * Prefix shared by all the local storage keys written by the CMS, such as `sveltia-cms.prefs`.
  */
@@ -51,8 +52,11 @@ export const clearFileCache = async () => {
   const { databaseName } = _backend?.repository ?? {};
 
   if (databaseName) {
-    await Promise.all(
-      CACHE_STORE_NAMES.map((storeName) => new IndexedDB(databaseName, storeName).clear()),
+    // One store at a time: clearing a store the database doesn’t have yet bumps the database
+    // version to create it, and two of those at once leave one connection without its store
+    await CACHE_STORE_NAMES.reduce(
+      (previous, storeName) => previous.then(() => new IndexedDB(databaseName, storeName).clear()),
+      Promise.resolve(),
     );
   }
 
