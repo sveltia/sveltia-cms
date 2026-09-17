@@ -428,7 +428,8 @@
  * draft state.
  * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} publish Function to merge the
  * pull request and delete the workflow branch. The service may leave the merge to the Git service
- * when a required check is still running, in which case it resolves once the merge is scheduled.
+ * when a required check is still running, in which case it resolves once the merge has landed, and
+ * rejects if it won’t — the check has failed, say — so the entry isn’t taken for published.
  * @property {(pullRequest: WorkflowPullRequest) => Promise<void>} discard Function to close the
  * pull request and delete the workflow branch.
  */

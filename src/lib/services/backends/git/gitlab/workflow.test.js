@@ -635,15 +635,32 @@ describe('GitLab Editorial Workflow service', () => {
       const createError = (status) =>
         new Error('Request failed', { cause: { status, message: `${status}` } });
 
+      /**
+       * A merge request read while GitLab waits for the pipeline.
+       * @param {object} [overrides] Properties to override.
+       * @returns {any} Merge request.
+       */
+      const createWaitingItem = (overrides = {}) => ({
+        state: 'opened',
+        merge_when_pipeline_succeeds: true,
+        detailed_merge_status: 'ci_still_running',
+        ...overrides,
+      });
+
+      /** A merge request that has been merged. */
+      const mergedItem = { state: 'merged', merge_when_pipeline_succeeds: false };
+
       test('sets the merge request to auto-merge while the pipeline is running', async () => {
         vi.mocked(fetchAPI)
           .mockRejectedValueOnce(createError(405))
           .mockResolvedValueOnce({ detailed_merge_status: 'ci_still_running' })
-          .mockResolvedValueOnce({});
+          .mockResolvedValueOnce({})
+          .mockResolvedValueOnce(mergedItem);
 
         await publish(pullRequest);
 
-        expect(fetchAPI).toHaveBeenCalledTimes(3);
+        // The failed merge, the status read, the auto-merge, and the read that found it merged
+        expect(fetchAPI).toHaveBeenCalledTimes(4);
 
         expect(fetchAPI).toHaveBeenNthCalledWith(2, `/projects/${PROJECT_ID}/merge_requests/1`);
 
@@ -677,14 +694,117 @@ describe('GitLab Editorial Workflow service', () => {
           .mockResolvedValueOnce({ detailed_merge_status: 'unchecked' })
           .mockResolvedValueOnce({ detailed_merge_status: 'checking' })
           .mockResolvedValueOnce({ detailed_merge_status: 'ci_still_running' })
-          .mockResolvedValueOnce({});
+          .mockResolvedValueOnce({})
+          .mockResolvedValueOnce(mergedItem);
 
         await publish(pullRequest);
 
-        expect(sleep).toHaveBeenCalledTimes(3);
-        expect(sleep).toHaveBeenCalledWith(1000);
-        expect(fetchAPI).toHaveBeenCalledTimes(6);
+        expect(sleep).toHaveBeenCalledTimes(4);
+        expect(sleep).toHaveBeenNthCalledWith(3, 1000);
+        expect(fetchAPI).toHaveBeenCalledTimes(7);
         expect(getRequestBody(5).auto_merge).toBe(true);
+      });
+
+      describe('once the merge request is set to auto-merge', () => {
+        beforeEach(() => {
+          vi.mocked(fetchAPI)
+            .mockRejectedValueOnce(createError(405))
+            .mockResolvedValueOnce({ detailed_merge_status: 'ci_still_running' })
+            .mockResolvedValueOnce({});
+        });
+
+        test('resolves only once the merge has landed', async () => {
+          vi.mocked(fetchAPI)
+            .mockResolvedValueOnce(createWaitingItem())
+            .mockResolvedValueOnce(createWaitingItem({ detailed_merge_status: 'checking' }))
+            .mockResolvedValueOnce(createWaitingItem({ detailed_merge_status: 'mergeable' }))
+            .mockResolvedValueOnce(createWaitingItem({ state: 'locked' }))
+            .mockResolvedValueOnce(mergedItem);
+
+          await publish(pullRequest);
+
+          // The reads are spaced out, because a pipeline takes minutes
+          expect(sleep).toHaveBeenCalledTimes(5);
+          expect(sleep).toHaveBeenCalledWith(10000);
+          expect(fetchAPI).toHaveBeenCalledTimes(8);
+
+          expect(fetchAPI).toHaveBeenLastCalledWith(`/projects/${PROJECT_ID}/merge_requests/1`);
+
+          // GitLab removes the branch along with the merge
+          expect(fetchAPI).not.toHaveBeenCalledWith(
+            expect.stringContaining('/repository/branches/'),
+            expect.anything(),
+          );
+        });
+
+        test('fails once the pipeline has failed', async () => {
+          vi.mocked(fetchAPI)
+            .mockResolvedValueOnce(createWaitingItem())
+            .mockResolvedValueOnce(createWaitingItem({ detailed_merge_status: 'ci_must_pass' }));
+
+          await expect(publish(pullRequest)).rejects.toThrow(
+            'Merge request !1 was not merged: opened, ci_must_pass, auto-merge on',
+          );
+
+          expect(fetchAPI).toHaveBeenCalledTimes(5);
+        });
+
+        test('fails once a new commit has cancelled the auto-merge', async () => {
+          vi.mocked(fetchAPI).mockResolvedValueOnce(
+            createWaitingItem({ merge_when_pipeline_succeeds: false }),
+          );
+
+          await expect(publish(pullRequest)).rejects.toThrow(
+            'Merge request !1 was not merged: opened, ci_still_running, auto-merge off',
+          );
+        });
+
+        test('fails once the merge request has been closed', async () => {
+          vi.mocked(fetchAPI).mockResolvedValueOnce(
+            createWaitingItem({ state: 'closed', detailed_merge_status: 'not_open' }),
+          );
+
+          await expect(publish(pullRequest)).rejects.toThrow(
+            'Merge request !1 was not merged: closed, not_open, auto-merge on',
+          );
+        });
+
+        test('keeps waiting when a read fails', async () => {
+          const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+          const error = new Error('Network error');
+
+          vi.mocked(fetchAPI).mockRejectedValueOnce(error).mockResolvedValueOnce(mergedItem);
+
+          await publish(pullRequest);
+
+          expect(fetchAPI).toHaveBeenCalledTimes(5);
+          expect(warn).toHaveBeenCalledWith(
+            'Failed to read merge request !1, still waiting.',
+            error,
+          );
+        });
+
+        test('gives up after an hour', async () => {
+          vi.useFakeTimers();
+
+          try {
+            vi.setSystemTime(0);
+            vi.mocked(fetchAPI).mockResolvedValue(createWaitingItem());
+            // Every read takes a while, so the wait runs out after a few of them
+            vi.mocked(sleep).mockImplementation(async () => {
+              vi.advanceTimersByTime(20 * 60 * 1000);
+            });
+
+            await expect(publish(pullRequest)).rejects.toThrow(
+              'Timed out waiting for merge request !1 to be merged',
+            );
+
+            // The three reads within the hour, after the three requests that set the auto-merge
+            expect(fetchAPI).toHaveBeenCalledTimes(6);
+          } finally {
+            vi.useRealTimers();
+          }
+        });
       });
 
       test('gives up on a mergeability check that never settles', async () => {
