@@ -41,6 +41,11 @@ const renderDialog = async (
   await expect.poll(() => document.querySelector('[role="dialog"]')).toBeNull();
   await renderWithDraft(EditSlugDialog, { draft, props });
 
+  // The dialog moves the focus to its first input shortly after opening. Wait for that to happen
+  // before interacting, or the focus could move while a test fills in another input, so the text
+  // would end up in the first one
+  await expect.element(page.getByRole('dialog').getByRole('textbox').first()).toHaveFocus();
+
   return { draft, props };
 };
 
