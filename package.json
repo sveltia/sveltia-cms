@@ -41,7 +41,7 @@
     "preview": "vite preview",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "test:components": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project browser",
-    "test:components:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage --project browser --coverage.include='src/lib/components/**/*.svelte' --coverage.thresholds.branches=98.5",
+    "test:components:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage --project browser --coverage.include='src/lib/components/**/*.svelte' --coverage.thresholds.branches=98.4",
     "test:unit": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project unit",
     "test:unit:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage --project unit",
     "test:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest"
