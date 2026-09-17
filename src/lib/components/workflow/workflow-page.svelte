@@ -9,6 +9,7 @@
   import { retainDeployPolling } from '$lib/services/deployments/poll';
   import {
     hasPublishedVersion,
+    publishingBranches,
     unpublishedEntries,
     workflowDataReady,
   } from '$lib/services/workflow';
@@ -92,6 +93,19 @@
    * @type {string[]}
    */
   let busyBranches = $state.raw([]);
+
+  /**
+   * Whether an action is in flight for the given entry. A publish is recorded by the service as
+   * well, because the merge can take minutes and outlive this page: a card for an entry whose
+   * merge was started before the page was opened is busy all the same.
+   * @param {UnpublishedEntry} entry Entry.
+   * @returns {boolean} Result.
+   */
+  const isBusy = ({
+    workflow: {
+      pullRequest: { branch },
+    },
+  }) => busyBranches.includes(branch) || publishingBranches.current.includes(branch);
 
   // `allEntries.current` is a dependency, because the entry can be published from another view
   const publishedVersionExists = $derived(
@@ -261,7 +275,7 @@
                 {#each entries as entry (entry.id)}
                   <WorkflowEntryCard
                     {entry}
-                    busy={busyBranches.includes(entry.workflow.pullRequest.branch)}
+                    busy={isBusy(entry)}
                     dragging={draggedEntry?.id === entry.id}
                     onDragStart={() => {
                       draggedEntry = entry;
@@ -299,7 +313,7 @@
                 {#each pendingDeletions as entry (entry.id)}
                   <WorkflowEntryCard
                     {entry}
-                    busy={busyBranches.includes(entry.workflow.pullRequest.branch)}
+                    busy={isBusy(entry)}
                     onDelete={() => {
                       targetEntry = entry;
                       showDeleteDialog = true;

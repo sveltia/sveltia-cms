@@ -9,6 +9,7 @@
   import { goBack } from '$lib/services/app/navigation';
   import { getCollection } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { publishingBranches } from '$lib/services/workflow';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import { publishWorkflowEntry } from '$lib/services/workflow/save';
   import { validateWorkflowEntry } from '$lib/services/workflow/validate';
@@ -37,13 +38,17 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  let publishing = $state(false);
   let showPublishDialog = $state(false);
   let showErrorToast = $state(false);
   let showValidationToast = $state(false);
 
   // Publishing a removal is what deletes the entry, so the control is presented as Delete
   const deletion = $derived(entry.workflow.status === 'pending_deletion');
+  // The service records the merge in flight, rather than this component: a merge can take minutes
+  // and outlive the editor, and the control stays disabled when the entry is reopened meanwhile
+  const publishing = $derived(
+    publishingBranches.current.includes(entry.workflow.pullRequest.branch),
+  );
   // The collection’s `publish` option can hide the control, so an editor can move an entry through
   // the review stages but leave the actual publishing to someone else. An Open Authoring
   // contributor can’t merge a pull request on the configured repository, so they never see it
@@ -70,8 +75,6 @@
     // prop is derived from that store, so it’s `undefined` once the merge resolves
     const { collectionName, pullRequest } = entry.workflow;
 
-    publishing = true;
-
     try {
       await publishWorkflowEntry(entry);
 
@@ -90,8 +93,6 @@
       showErrorToast = true;
       // eslint-disable-next-line no-console
       console.error(ex);
-    } finally {
-      publishing = false;
     }
   };
 </script>

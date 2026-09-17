@@ -14,6 +14,7 @@ import { refreshProductionSHA } from '$lib/services/deployments/resolve';
 import {
   getUnpublishedEntryByBranch,
   getUnpublishedEntryBySlug,
+  publishingBranches,
   unpublishedEntries,
 } from '$lib/services/workflow';
 import {
@@ -243,12 +244,18 @@ export const updateWorkflowStatus = async (entry, status) => {
 };
 
 /**
- * Publish the given unpublished entry by merging the corresponding pull request. The entry is then
- * moved from the unpublished entry list to the regular entry list.
+ * Publishes in flight, keyed by workflow branch. See {@link publishWorkflowEntry}.
+ * @type {Map<string, Promise<void>>}
+ */
+const pendingPublishes = new Map();
+
+/**
+ * Merge the pull request of the given unpublished entry, and move the entry from the unpublished
+ * entry list to the regular entry list once it has.
  * @param {UnpublishedEntry} entry Unpublished entry.
  * @returns {Promise<void>}
  */
-export const publishWorkflowEntry = async (entry) => {
+const mergeWorkflowEntry = async (entry) => {
   const workflow = getWorkflowService();
   const { pullRequest, status } = entry.workflow;
   const deletion = status === 'pending_deletion';
@@ -293,6 +300,34 @@ export const publishWorkflowEntry = async (entry) => {
   if (hookArgs) {
     await callEventHooks({ ...hookArgs, type: postType });
   }
+};
+
+/**
+ * Publish the given unpublished entry by merging the corresponding pull request. The entry is then
+ * moved from the unpublished entry list to the regular entry list. The merge can take minutes when
+ * the Git service waits for a pipeline, long enough for the user to leave and come back to the
+ * entry, so publishing it again meanwhile joins the merge in progress rather than starting another:
+ * the hooks would otherwise fire twice, and so would everything after the merge.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @returns {Promise<void>}
+ */
+export const publishWorkflowEntry = async (entry) => {
+  const { branch } = entry.workflow.pullRequest;
+  const pending = pendingPublishes.get(branch);
+
+  if (pending) {
+    return pending;
+  }
+
+  const promise = mergeWorkflowEntry(entry).finally(() => {
+    pendingPublishes.delete(branch);
+    publishingBranches.current = publishingBranches.current.filter((b) => b !== branch);
+  });
+
+  pendingPublishes.set(branch, promise);
+  publishingBranches.current = [...publishingBranches.current, branch];
+
+  return promise;
 };
 
 /**

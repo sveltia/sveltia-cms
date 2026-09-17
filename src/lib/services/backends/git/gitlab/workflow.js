@@ -47,10 +47,10 @@ const DRAFT_TITLE_PREFIX = 'Draft: ';
  * Merge statuses GitLab reports while its mergeability check is queued or running. The check runs
  * in the background once a merge request is created or pushed to, so one of these is what a merge
  * request opened or updated a moment ago answers with; the real status follows once the check is
- * done.
+ * done. Approval rules are re-synced in the background as well, on a project that has them.
  * @see https://docs.gitlab.com/api/merge_requests/#merge-status
  */
-const TRANSIENT_MERGE_STATUSES = ['preparing', 'unchecked', 'checking'];
+const TRANSIENT_MERGE_STATUSES = ['preparing', 'unchecked', 'checking', 'approvals_syncing'];
 /**
  * How many times, and how often, the merge status is read while it’s transient. The check
  * usually takes a second or two.

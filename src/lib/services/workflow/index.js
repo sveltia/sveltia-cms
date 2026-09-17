@@ -33,6 +33,15 @@ export const unpublishedEntriesLoading = createRawState(false);
 export const unpublishedEntriesLoaded = createRawState(false);
 
 /**
+ * Workflow branches of the entries being published, which is to say whose pull request is being
+ * merged. A merge can take minutes when the Git service waits for a pipeline, and the view that
+ * started it is created afresh each time it opens, so the wait is recorded here rather than in that
+ * view: any view can then show the entry as busy.
+ * @type {{ current: string[] }}
+ */
+export const publishingBranches = createRawState([]);
+
+/**
  * Whether everything needed to resolve an entry is available. The unpublished entries are fetched
  * after the initial data load, so an entry opened with a deep link can’t be resolved until they
  * arrive: a draft for a new entry wouldn’t be found at all, and a draft updating a published entry

@@ -719,6 +719,9 @@ describe('GitLab Editorial Workflow service', () => {
           vi.mocked(fetchAPI)
             .mockResolvedValueOnce(createWaitingItem())
             .mockResolvedValueOnce(createWaitingItem({ detailed_merge_status: 'checking' }))
+            .mockResolvedValueOnce(
+              createWaitingItem({ detailed_merge_status: 'approvals_syncing' }),
+            )
             .mockResolvedValueOnce(createWaitingItem({ detailed_merge_status: 'mergeable' }))
             .mockResolvedValueOnce(createWaitingItem({ state: 'locked' }))
             .mockResolvedValueOnce(mergedItem);
@@ -726,9 +729,9 @@ describe('GitLab Editorial Workflow service', () => {
           await publish(pullRequest);
 
           // The reads are spaced out, because a pipeline takes minutes
-          expect(sleep).toHaveBeenCalledTimes(5);
+          expect(sleep).toHaveBeenCalledTimes(6);
           expect(sleep).toHaveBeenCalledWith(10000);
-          expect(fetchAPI).toHaveBeenCalledTimes(8);
+          expect(fetchAPI).toHaveBeenCalledTimes(9);
 
           expect(fetchAPI).toHaveBeenLastCalledWith(`/projects/${PROJECT_ID}/merge_requests/1`);
 

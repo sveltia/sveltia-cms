@@ -4,7 +4,11 @@ import { render } from 'vitest-browser-svelte';
 
 import { announcedPageStatus } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
-import { unpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
+import {
+  publishingBranches,
+  unpublishedEntries,
+  unpublishedEntriesLoaded,
+} from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
   discardWorkflowEntry,
@@ -87,6 +91,7 @@ describe('WorkflowPage', () => {
     backendName.current = undefined;
     forkedRepository.current = undefined;
     unpublishedEntriesLoaded.current = true;
+    publishingBranches.current = [];
     unpublishedEntries.current = [
       createEntry('draft-1', 'draft'),
       createEntry('draft-2', 'draft'),
@@ -255,6 +260,28 @@ describe('WorkflowPage', () => {
     await expect
       .element(page.getByRole('status'))
       .toHaveTextContent('check_circle Success Entry published.');
+  });
+
+  test('keeps a card busy while a merge started elsewhere is in flight', async () => {
+    // A merge can take minutes and outlive the page it was started from
+    publishingBranches.current = ['cms/posts/ready-1'];
+
+    await render(WorkflowPage);
+
+    const ready = page.getByRole('list', { name: 'Ready' });
+
+    await expect
+      .element(ready.getByRole('button', { name: 'Publish Entry' }))
+      .toHaveAttribute('aria-disabled', 'true');
+    await expect
+      .element(ready.getByRole('button', { name: 'Delete Entry' }))
+      .toHaveAttribute('aria-disabled', 'true');
+
+    publishingBranches.current = [];
+
+    await expect
+      .element(ready.getByRole('button', { name: 'Publish Entry' }))
+      .toHaveAttribute('aria-disabled', 'false');
   });
 
   test('deletes a draft after confirmation, reporting a failure', async () => {

@@ -30,6 +30,7 @@ const mockLoadUnpublishedEntries = vi.fn();
 const mockStartLoadingPullRequests = vi.fn();
 const mockUnpublishedEntries = { current: /** @type {any[]} */ ([]) };
 const mockUnpublishedEntriesLoaded = { current: false };
+const mockPublishingBranches = { current: /** @type {string[]} */ ([]) };
 
 vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
@@ -77,6 +78,7 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
 vi.mock('$lib/services/workflow', () => ({
   unpublishedEntries: mockUnpublishedEntries,
   unpublishedEntriesLoaded: mockUnpublishedEntriesLoaded,
+  publishingBranches: mockPublishingBranches,
 }));
 
 vi.mock('$lib/services/workflow/load', () => ({
@@ -1038,6 +1040,9 @@ describe('auth service', () => {
   describe('signOut', () => {
     it('should sign out and reset state', async () => {
       mockBackend.signOut.mockResolvedValue(undefined);
+      mockUnpublishedEntries.current = [{}];
+      mockUnpublishedEntriesLoaded.current = true;
+      mockPublishingBranches.current = ['cms/posts/hello'];
 
       await authModule.signOut();
 
@@ -1047,6 +1052,9 @@ describe('auth service', () => {
       expect(mockUser.account).toBeUndefined();
       expect(auth.unauthenticated).toBe(true);
       expect(mockDataLoaded.current).toEqual(false);
+      expect(mockUnpublishedEntries.current).toEqual([]);
+      expect(mockUnpublishedEntriesLoaded.current).toBe(false);
+      expect(mockPublishingBranches.current).toEqual([]);
     });
 
     it('should redirect to logout URL when configured', async () => {
