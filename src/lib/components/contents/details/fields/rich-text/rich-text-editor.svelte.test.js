@@ -118,8 +118,7 @@ describe('RichTextEditor', () => {
 
     await expect.poll(() => editor.element().textContent).toBe('Hello');
     await editor.click();
-    // A change that is still pending isn’t tracked twice
-    await userEvent.keyboard('!!');
+    await userEvent.keyboard('!');
 
     await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
 
@@ -136,10 +135,14 @@ describe('RichTextEditor', () => {
 
     const start = Date.now();
 
+    // A synthetic event doesn’t change the content, so nothing writes the value back and the
+    // update stays pending: a second change in the meantime isn’t tracked twice
+    editor.element().dispatchEvent(new InputEvent('beforeinput', { bubbles: true }));
     editor.element().dispatchEvent(new InputEvent('beforeinput', { bubbles: true }));
     await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
     await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
     expect(Date.now() - start).toBeGreaterThanOrEqual(900);
+    expect(trackPendingFieldUpdate).toHaveBeenCalledTimes(1);
   });
 
   test('inserts a dropped image', async () => {
