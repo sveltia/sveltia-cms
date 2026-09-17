@@ -9,7 +9,7 @@
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { getAssetKey } from '$lib/services/assets';
-  import { normalize } from '$lib/services/search/util';
+  import { hasAllMatches, tokenize } from '$lib/services/search/util';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -45,9 +45,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  // Split the search terms into an array of individual terms for filtering purposes. If no search
-  // terms are provided, use an empty array.
-  const searchTermsArray = $derived(searchTerms ? searchTerms.split(/\s+/).filter(Boolean) : []);
+  // Split the search terms into individual words for filtering purposes
+  const tokens = $derived(tokenize(searchTerms));
 
   /** @type {(Asset & { relPath: string, key: string })[]} */
   const filteredAssets = $derived.by(() => {
@@ -65,11 +64,9 @@
       return { ...asset, relPath, key: getAssetKey(asset) };
     });
 
-    if (searchTermsArray.length) {
+    if (tokens.length) {
       // Filter assets by search terms in the relative path
-      return _assets.filter(({ relPath }) =>
-        searchTermsArray.every((term) => normalize(relPath).includes(term)),
-      );
+      return _assets.filter(({ relPath }) => hasAllMatches({ value: relPath, tokens }));
     }
 
     return _assets;

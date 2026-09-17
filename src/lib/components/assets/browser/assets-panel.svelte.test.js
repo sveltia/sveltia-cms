@@ -60,13 +60,16 @@ describe('AssetsPanel', () => {
   });
 
   test('filters the assets by search terms', async () => {
-    // The terms are normalized by the dialog
     const props = $state({ assets, basePath: 'static/uploads', searchTerms: 'logo' });
     const { container } = await render(AssetsPanel, props);
 
     await expect.poll(() => getLabels(container)).toEqual(['brand/logo.png']);
 
     props.searchTerms = 'brand png';
+    await expect.poll(() => getLabels(container)).toEqual(['brand/logo.png']);
+
+    // The terms are normalized here as well as by the dialog
+    props.searchTerms = ' PNG Logo ';
     await expect.poll(() => getLabels(container)).toEqual(['brand/logo.png']);
 
     props.searchTerms = 'missing';

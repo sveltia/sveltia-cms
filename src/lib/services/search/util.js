@@ -81,3 +81,27 @@ const getNormalizedValue = (value, normalizedValueCache = undefined) => {
  */
 export const hasMatch = ({ value, terms, normalizedValueCache = undefined }) =>
   getNormalizedValue(value, normalizedValueCache).includes(terms);
+
+/**
+ * Split the search terms into normalized, unique, whitespace-separated tokens, so that a query like
+ * “annual report cover” can match a file named `annual-report-cover-photo.png`, where the words are
+ * present but not separated by spaces.
+ * @param {string} terms Search terms.
+ * @returns {string[]} Tokens. Empty if the terms are blank.
+ */
+export const tokenize = (terms) => [...new Set(normalize(terms).split(/\s+/).filter(Boolean))];
+
+/**
+ * Check if the value contains every one of the given tokens, in any order.
+ * @param {object} args Arguments.
+ * @param {string} args.value Value to check against.
+ * @param {string[]} args.tokens Search tokens from {@link tokenize}. An empty list matches any
+ * value, so callers should bail out early when the search terms are blank.
+ * @param {NormalizedValueCache} [args.normalizedValueCache] Normalized value cache.
+ * @returns {boolean} Result of the match check.
+ */
+export const hasAllMatches = ({ value, tokens, normalizedValueCache = undefined }) => {
+  const normalizedValue = getNormalizedValue(value, normalizedValueCache);
+
+  return tokens.every((token) => normalizedValue.includes(token));
+};
