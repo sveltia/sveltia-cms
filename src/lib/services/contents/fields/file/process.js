@@ -1,4 +1,3 @@
-import { getHash } from '@sveltia/utils/crypto';
 import equal from 'fast-deep-equal';
 import { sanitize } from 'isomorphic-dompurify';
 
@@ -38,7 +37,8 @@ const FOLDER_PATH_REGEX = /(?<path>.+?)(?:\/[^/]+)?$/;
  * @returns {Promise<string | undefined>} Blob URL.
  */
 export const getExistingBlobURL = async ({ draft, file, folder }) => {
-  const hash = await getHash(file);
+  // The Git hash is memoized per file, so the files already in the draft aren’t read again
+  const hash = await getGitHash(file);
   /** @type {string | undefined} */
   let foundURL = undefined;
 
@@ -46,7 +46,7 @@ export const getExistingBlobURL = async ({ draft, file, folder }) => {
     Object.entries(draft.files ?? {}).map(async ([blobURL, f]) => {
       if (
         !foundURL &&
-        (await getHash(f.file)) === hash &&
+        (await getGitHash(f.file)) === hash &&
         (!folder?.entryRelative || equal(f.folder, folder))
       ) {
         foundURL = blobURL;
@@ -162,7 +162,17 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
 
   if (file) {
     const { folder } = resource;
-    const existingBlobURL = await getExistingBlobURL({ draft, file, folder });
+    /** @type {string | undefined} */
+    let existingBlobURL;
+
+    try {
+      existingBlobURL = await getExistingBlobURL({ draft, file, folder });
+    } catch {
+      // The file can’t be read any more, e.g. it was moved or deleted after being picked. It can’t
+      // be uploaded either way, so it’s reported along with the corrupt files rather than failing
+      // the whole batch and leaving the field stuck in the processing state.
+      return { value: undefined, credit: '', oversizedFileName, invalidFileName: file.name };
+    }
 
     if (existingBlobURL) {
       value = existingBlobURL;

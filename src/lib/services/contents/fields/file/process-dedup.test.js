@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Mock all dependencies
-vi.mock('@sveltia/utils/crypto', () => ({
-  getHash: vi.fn(),
-}));
-
 vi.mock('fast-deep-equal', () => ({
   default: vi.fn(),
 }));
@@ -35,17 +31,17 @@ vi.mock('$lib/services/assets/kinds', () => ({
 
 describe('Test getExistingBlobURL() entry-relative folder handling', () => {
   /** @type {import('vitest').MockedFunction<any>} */
-  let getHashMock;
+  let getGitHashMock;
   /** @type {import('vitest').MockedFunction<any>} */
   let equalMock;
 
   beforeEach(async () => {
     vi.resetAllMocks();
 
-    const { getHash } = await import('@sveltia/utils/crypto');
+    const { getGitHash } = await import('$lib/services/utils/file');
     const equal = (await import('fast-deep-equal')).default;
 
-    getHashMock = /** @type {any} */ (vi.mocked(getHash));
+    getGitHashMock = /** @type {any} */ (vi.mocked(getGitHash));
     equalMock = /** @type {any} */ (vi.mocked(equal));
   });
 
@@ -64,7 +60,7 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
     };
 
     // Same content hash but different entry-relative folders
-    getHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
+    getGitHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
     equalMock.mockReturnValue(false);
 
     // @ts-ignore - Simplified for testing
@@ -86,7 +82,7 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
       },
     };
 
-    getHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
+    getGitHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
     equalMock.mockReturnValue(true);
 
     // @ts-ignore - Simplified for testing
@@ -110,7 +106,7 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
     };
 
     // Same hash, different non-entry-relative folders - should still deduplicate
-    getHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
+    getGitHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
 
     // @ts-ignore - Simplified for testing
     const result = await getExistingBlobURL({ draft, file: mockFile, folder: folder2 });
@@ -133,7 +129,7 @@ describe('Test getExistingBlobURL() entry-relative folder handling', () => {
       },
     };
 
-    getHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
+    getGitHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
 
     // @ts-ignore - Simplified for testing
     const result = await getExistingBlobURL({ draft, file: mockFile });

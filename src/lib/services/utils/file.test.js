@@ -393,6 +393,41 @@ describe('Test getGitHash()', () => {
     expect(result).toBe('613754cfaf74a7a2d86984231479d5671731f18a');
   });
 
+  test('Read a blob only once, however many times it is hashed', async () => {
+    const file = new File(['hello world\n'], 'test.txt', { type: 'text/plain' });
+    const arrayBuffer = vi.spyOn(file, 'arrayBuffer');
+    // Concurrent callers share the one read, and a later caller gets the cached result
+    const [hash1, hash2] = await Promise.all([getGitHash(file), getGitHash(file)]);
+    const hash3 = await getGitHash(file);
+
+    expect(hash1).toBe('3b18e512dba79e4c8300dd08aeb37f8e728b8dad');
+    expect(hash2).toBe(hash1);
+    expect(hash3).toBe(hash1);
+    expect(arrayBuffer).toHaveBeenCalledOnce();
+  });
+
+  test('Hash each blob object on its own', async () => {
+    const file1 = new File(['hello world\n'], 'test.txt', { type: 'text/plain' });
+    const file2 = new File(['hello world\n'], 'test.txt', { type: 'text/plain' });
+    const arrayBuffer1 = vi.spyOn(file1, 'arrayBuffer');
+    const arrayBuffer2 = vi.spyOn(file2, 'arrayBuffer');
+
+    expect(await getGitHash(file1)).toBe(await getGitHash(file2));
+    expect(arrayBuffer1).toHaveBeenCalledOnce();
+    expect(arrayBuffer2).toHaveBeenCalledOnce();
+  });
+
+  test('Retry a blob that could not be read', async () => {
+    const file = new File(['hello world\n'], 'test.txt', { type: 'text/plain' });
+    const error = new DOMException('The requested file could not be read', 'NotReadableError');
+    const arrayBuffer = vi.spyOn(file, 'arrayBuffer').mockRejectedValueOnce(error);
+
+    await expect(getGitHash(file)).rejects.toBe(error);
+    // The failure is not cached, so the next call reads the file again
+    await expect(getGitHash(file)).resolves.toBe('3b18e512dba79e4c8300dd08aeb37f8e728b8dad');
+    expect(arrayBuffer).toHaveBeenCalledTimes(2);
+  });
+
   test('Hash image File object', async () => {
     // Test with the same image as a File object
     const pngBase64 =

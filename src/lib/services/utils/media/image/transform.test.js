@@ -191,6 +191,7 @@ describe('Image Transform Functions', () => {
     global.createImageBitmap = vi.fn().mockResolvedValue({
       width: 800,
       height: 600,
+      close: vi.fn(),
     });
 
     // Mock OffscreenCanvas
@@ -367,8 +368,11 @@ describe('Image Transform Functions', () => {
     vi.mocked(resizeCanvas).mockReturnValue({ scale: 1, width: 800, height: 600 });
 
     const result = await transformImage(mockBlob, { format: 'jpeg', quality: 90 });
+    const bitmap = await vi.mocked(global.createImageBitmap).mock.results[0].value;
 
     expect(global.createImageBitmap).toHaveBeenCalledWith(mockBlob);
+    // The decoded pixels are released once drawn
+    expect(bitmap.close).toHaveBeenCalledOnce();
     expect(resizeCanvas).toHaveBeenCalled();
     expect(exportCanvasAsBlob).toHaveBeenCalledWith(expect.any(Object), {
       format: 'jpeg',

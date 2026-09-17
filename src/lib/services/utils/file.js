@@ -257,16 +257,50 @@ export const getBlob = (input) =>
   typeof input === 'string' ? new Blob([input], { type: 'text/plain' }) : input;
 
 /**
+ * Compute the Git object ID (SHA-1 hash) of the given blob.
+ * @param {Blob} blob File or Blob object.
+ * @returns {Promise<string>} Git object ID (SHA-1 hash) of the blob.
+ * @see https://stackoverflow.com/a/68806436
+ * @see https://github.com/Richienb/git-hash-object/blob/master/index.js
+ */
+const computeGitHash = async (blob) => {
+  const buffer = await blob.arrayBuffer();
+
+  return getHash(new Blob([`blob ${buffer.byteLength}\0`, buffer]));
+};
+
+/**
+ * Git object IDs of the blobs hashed so far. A `File` picked by the user is hashed for every
+ * duplicate check, listing and save it takes part in, and each hash reads the whole file again, so
+ * a batch of uploads would otherwise read every file once per file in the batch. That many reads
+ * in flight at once make Chrome fail them with `NotReadableError`. A blob’s content never changes,
+ * so the promise is kept for the blob’s lifetime, and concurrent callers share the one read.
+ * @type {WeakMap<Blob, Promise<string>>}
+ */
+const gitHashCache = new WeakMap();
+
+/**
  * Get the Git object ID (SHA-1 hash) of the given file or blob.
  * @param {File | Blob | string} input File or Blob object, or a string representing the file
  * content.
  * @returns {Promise<string>} Git object ID (SHA-1 hash) of the file.
- * @see https://stackoverflow.com/a/68806436
- * @see https://github.com/Richienb/git-hash-object/blob/master/index.js
  */
-export const getGitHash = async (input) => {
-  const file = getBlob(input);
-  const buffer = await file.arrayBuffer();
+export const getGitHash = (input) => {
+  if (typeof input === 'string') {
+    return computeGitHash(getBlob(input));
+  }
 
-  return getHash(new Blob([`blob ${buffer.byteLength}\0`, buffer]));
+  let promise = gitHashCache.get(input);
+
+  if (!promise) {
+    promise = computeGitHash(input).catch((error) => {
+      // Leave room for a retry, e.g. once the file is readable again
+      gitHashCache.delete(input);
+      throw error;
+    });
+
+    gitHashCache.set(input, promise);
+  }
+
+  return promise;
 };

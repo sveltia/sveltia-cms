@@ -13,7 +13,6 @@
     Select,
     TextInput,
   } from '@sveltia/ui';
-  import { getHash } from '@sveltia/utils/crypto';
   import { untrack } from 'svelte';
 
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
@@ -44,6 +43,7 @@
   import { normalize } from '$lib/services/search/util';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
+  import { getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -203,10 +203,10 @@
    * exists.
    */
   const processFile = async (file, replace) => {
-    const hash = await getHash(file);
+    const sha = await getGitHash(file);
     const folder = selectedFolder;
 
-    if (await hasSameAsset({ hash, folder, unsavedAssets })) {
+    if (hasSameAsset({ sha, folder, unsavedAssets })) {
       return undefined;
     }
 
@@ -254,10 +254,16 @@
       return;
     }
 
-    const resources = $state.snapshot(selectedResources).map((resource) => {
-      const { asset: { unsaved, file, folder } = {}, replace } = resource;
+    const resources = selectedResources.map((resource) => {
+      const { asset, replace } = resource;
 
-      return unsaved ? { file, folder, replace } : resource;
+      if (!asset?.unsaved) {
+        return $state.snapshot(resource);
+      }
+
+      // The `File` is taken as is: `$state.snapshot()` would clone it with `structuredClone()`,
+      // and the copy would then have to be read and hashed all over again
+      return { file: asset.file, folder: $state.snapshot(asset.folder), replace };
     });
 
     onSelect?.(resources);

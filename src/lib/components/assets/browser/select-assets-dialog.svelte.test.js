@@ -344,6 +344,8 @@ describe('SelectAssetsDialog', () => {
         { file, folder: globalAssetFolder.current, replace: false },
       ]),
     );
+    // The very same `File` object is passed on, not a clone that would have to be read again
+    expect(onSelect.mock.calls[0][0][0].file).toBe(file);
   });
 
   test('asks whether to replace a dropped file that already exists', async () => {

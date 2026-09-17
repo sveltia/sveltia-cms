@@ -5,10 +5,6 @@ import { allAssets } from '$lib/services/assets';
 import { processResource } from './process';
 
 // Mock all dependencies
-vi.mock('@sveltia/utils/crypto', () => ({
-  getHash: vi.fn(),
-}));
-
 vi.mock('fast-deep-equal', () => ({
   default: vi.fn(),
 }));
@@ -43,8 +39,6 @@ vi.mock('$lib/services/assets/kinds', () => ({
 
 describe('Test processResource()', () => {
   /** @type {import('vitest').MockedFunction<any>} */
-  let getHashMock;
-  /** @type {import('vitest').MockedFunction<any>} */
   let equalMock;
   /** @type {import('vitest').MockedFunction<any>} */
   let domPurifyMock;
@@ -62,14 +56,12 @@ describe('Test processResource()', () => {
     // Mock URL.createObjectURL
     global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
 
-    const { getHash } = await import('@sveltia/utils/crypto');
     const equal = (await import('fast-deep-equal')).default;
     const { sanitize } = await import('isomorphic-dompurify');
     const { getAssetPublicURL } = await import('$lib/services/assets/info');
     const { transformFile } = await import('$lib/services/integrations/media-libraries/default');
     const { getGitHash } = await import('$lib/services/utils/file');
 
-    getHashMock = /** @type {any} */ (vi.mocked(getHash));
     equalMock = /** @type {any} */ (vi.mocked(equal));
     domPurifyMock = /** @type {any} */ (vi.mocked(sanitize));
     getAssetPublicURLMock = /** @type {any} */ (vi.mocked(getAssetPublicURL));
@@ -174,7 +166,7 @@ describe('Test processResource()', () => {
       max_file_size: 1000000,
     };
 
-    getHashMock.mockResolvedValueOnce('hash1').mockResolvedValueOnce('hash1');
+    getGitHashMock.mockResolvedValueOnce('hash1').mockResolvedValueOnce('hash1');
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });
@@ -207,7 +199,6 @@ describe('Test processResource()', () => {
       max_file_size: 1000000,
     };
 
-    getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([]);
 
@@ -237,7 +228,6 @@ describe('Test processResource()', () => {
     // @ts-ignore - Simplified resource for testing
     const resource = { file: mockFile, folder: { name: 'uploads' }, credit: '' };
 
-    getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([]);
 
@@ -247,6 +237,32 @@ describe('Test processResource()', () => {
     expect(result.invalidFileName).toBe('IMG_0001.jpg');
     expect(result.value).toBeUndefined();
     // The file isn’t queued for upload
+    expect(draft.files).toEqual({});
+  });
+
+  test('should reject a file that cannot be read', async () => {
+    const { isValidImage } = await import('$lib/services/utils/media/image/validate');
+    const mockFile = new File(['content'], 'moved.jpg', { type: 'image/jpeg' });
+    // @ts-ignore - Simplified draft for testing
+    const draft = { files: {} };
+    // @ts-ignore - Simplified resource for testing
+    const resource = { file: mockFile, folder: { name: 'uploads' }, credit: '' };
+
+    // The file was moved or deleted after being picked, so reading it fails
+    getGitHashMock.mockRejectedValue(
+      new DOMException('The requested file could not be read', 'NotReadableError'),
+    );
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig: {} });
+
+    expect(result).toEqual({
+      value: undefined,
+      credit: '',
+      oversizedFileName: undefined,
+      invalidFileName: 'moved.jpg',
+    });
+    expect(isValidImage).not.toHaveBeenCalled();
     expect(draft.files).toEqual({});
   });
 
@@ -273,7 +289,6 @@ describe('Test processResource()', () => {
       max_file_size: 1000000,
     };
 
-    getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([]);
 
@@ -314,7 +329,6 @@ describe('Test processResource()', () => {
       path: 'uploads/existing.jpg',
     };
 
-    getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([existingAsset]);
     equalMock.mockReturnValue(true);
@@ -356,7 +370,6 @@ describe('Test processResource()', () => {
       },
     };
 
-    getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([]);
     transformFileMock.mockResolvedValue(transformedFile);
@@ -400,7 +413,7 @@ describe('Test processResource()', () => {
       max_file_size: 1000000,
     };
 
-    getHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
+    getGitHashMock.mockResolvedValueOnce('same-hash').mockResolvedValueOnce('same-hash');
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });
@@ -533,7 +546,6 @@ describe('Test processResource()', () => {
       credit: '',
     };
 
-    getHashMock.mockResolvedValue('new-file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([]);
 
@@ -593,7 +605,6 @@ describe('Test processResource()', () => {
       path: 'src/content/people/person-a/assets/images/photo.jpg',
     };
 
-    getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([personAAsset]);
     equalMock.mockReturnValue(true);
@@ -656,7 +667,6 @@ describe('Test processResource()', () => {
       unsaved: false,
     };
 
-    getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([personBAsset]);
     equalMock.mockReturnValue(true);
@@ -713,7 +723,6 @@ describe('Test processResource()', () => {
       path: 'src/content/people/person-a/assets/images/photo.jpg',
     };
 
-    getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([otherAsset]);
     equalMock.mockReturnValue(true);
@@ -766,7 +775,6 @@ describe('Test processResource()', () => {
       path: 'src/content/pages/about/photo.jpg',
     };
 
-    getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([existingAsset]);
     equalMock.mockReturnValue(true);
@@ -819,7 +827,6 @@ describe('Test processResource()', () => {
       path: 'src/content/blog/hello-world/photo.jpg',
     };
 
-    getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([existingAsset]);
     equalMock.mockReturnValue(true);
@@ -869,7 +876,6 @@ describe('Test processResource()', () => {
     // @ts-ignore - Simplified config for testing
     const libraryConfig = { max_file_size: 1000000 };
 
-    getHashMock.mockResolvedValue('file-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([]);
 
@@ -898,7 +904,6 @@ describe('Test processResource()', () => {
     // @ts-ignore - Simplified config for testing
     const libraryConfig = { max_file_size: 1000000 };
 
-    getHashMock.mockResolvedValue('new-hash');
     getGitHashMock.mockResolvedValue('git-hash');
     allAssets.current = /** @type {any} */ ([]);
 
@@ -1200,14 +1205,14 @@ describe('Test getUnsavedAssets()', () => {
 
 describe('Test getExistingBlobURL()', () => {
   /** @type {import('vitest').MockedFunction<any>} */
-  let getHashMock;
+  let getGitHashMock;
 
   beforeEach(async () => {
     vi.resetAllMocks();
 
-    const { getHash } = await import('@sveltia/utils/crypto');
+    const { getGitHash } = await import('$lib/services/utils/file');
 
-    getHashMock = /** @type {any} */ (vi.mocked(getHash));
+    getGitHashMock = /** @type {any} */ (vi.mocked(getGitHash));
   });
 
   test('should find existing blob URL when file hash matches', async () => {
@@ -1224,8 +1229,8 @@ describe('Test getExistingBlobURL()', () => {
       },
     };
 
-    // Mock getHash to return matching hash for the second file
-    getHashMock
+    // Mock getGitHash to return matching hash for the second file
+    getGitHashMock
       .mockResolvedValueOnce('hash123') // Initial file hash
       .mockResolvedValueOnce('hash456') // First file in draft
       .mockResolvedValueOnce('hash123'); // Second file in draft (matches)
@@ -1248,8 +1253,8 @@ describe('Test getExistingBlobURL()', () => {
       },
     };
 
-    // Mock getHash to return different hashes
-    getHashMock
+    // Mock getGitHash to return different hashes
+    getGitHashMock
       .mockResolvedValueOnce('hash456') // Initial file hash
       .mockResolvedValueOnce('hash123'); // File in draft (doesn't match)
 
@@ -1268,7 +1273,7 @@ describe('Test getExistingBlobURL()', () => {
       files: undefined, // Using nullish coalescing
     };
 
-    getHashMock.mockResolvedValueOnce('hash123');
+    getGitHashMock.mockResolvedValueOnce('hash123');
 
     // @ts-ignore - Simplified file for testing
     const result = await getExistingBlobURL({ draft, file: mockFile });
@@ -1285,7 +1290,7 @@ describe('Test getExistingBlobURL()', () => {
       files: {},
     };
 
-    getHashMock.mockResolvedValueOnce('hash123');
+    getGitHashMock.mockResolvedValueOnce('hash123');
 
     // @ts-ignore - Simplified file for testing
     const result = await getExistingBlobURL({ draft, file: mockFile });
@@ -1308,8 +1313,8 @@ describe('Test getExistingBlobURL()', () => {
       },
     };
 
-    // Mock getHash - match on first file
-    getHashMock
+    // Mock getGitHash - match on first file
+    getGitHashMock
       .mockResolvedValueOnce('hash-match') // Initial file hash
       .mockResolvedValueOnce('hash-match') // First file in draft (matches)
       .mockResolvedValueOnce('other-hash') // Other drafts
@@ -1321,7 +1326,7 @@ describe('Test getExistingBlobURL()', () => {
     expect(result).toBe('blob:url-1');
     // Promise.all runs all hash comparisons in parallel, so foundURL is set
     // to the first match and returned after all promises resolve
-    expect(getHashMock).toHaveBeenCalled();
+    expect(getGitHashMock).toHaveBeenCalled();
   });
 
   test('should process unsaved asset when asset.file exists but no existing blob URL (line 96-97)', async () => {
@@ -1347,8 +1352,8 @@ describe('Test getExistingBlobURL()', () => {
       max_file_size: 1000000,
     };
 
-    // Mock getHash to return different hashes, so no existing blob URL is found
-    getHashMock.mockResolvedValueOnce('hash1').mockResolvedValueOnce('hash2');
+    // Mock getGitHash to return different hashes, so no existing blob URL is found
+    getGitHashMock.mockResolvedValueOnce('hash1').mockResolvedValueOnce('hash2');
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });
@@ -1393,14 +1398,14 @@ describe('Test getExistingBlobURL()', () => {
 
 describe('Test getExistingBlobURL()', () => {
   /** @type {import('vitest').MockedFunction<any>} */
-  let getHashMock;
+  let getGitHashMock;
 
   beforeEach(async () => {
     vi.resetAllMocks();
 
-    const { getHash } = await import('@sveltia/utils/crypto');
+    const { getGitHash } = await import('$lib/services/utils/file');
 
-    getHashMock = /** @type {any} */ (vi.mocked(getHash));
+    getGitHashMock = /** @type {any} */ (vi.mocked(getGitHash));
   });
 
   test('should find existing blob URL when file hash matches', async () => {
@@ -1417,8 +1422,8 @@ describe('Test getExistingBlobURL()', () => {
       },
     };
 
-    // Mock getHash to return matching hash for the second file
-    getHashMock
+    // Mock getGitHash to return matching hash for the second file
+    getGitHashMock
       .mockResolvedValueOnce('hash123') // Initial file hash
       .mockResolvedValueOnce('hash456') // First file in draft
       .mockResolvedValueOnce('hash123'); // Second file in draft (matches)
@@ -1441,8 +1446,8 @@ describe('Test getExistingBlobURL()', () => {
       },
     };
 
-    // Mock getHash to return different hashes
-    getHashMock
+    // Mock getGitHash to return different hashes
+    getGitHashMock
       .mockResolvedValueOnce('hash456') // Initial file hash
       .mockResolvedValueOnce('hash123'); // File in draft (doesn't match)
 
@@ -1461,7 +1466,7 @@ describe('Test getExistingBlobURL()', () => {
       files: undefined, // Using nullish coalescing
     };
 
-    getHashMock.mockResolvedValueOnce('hash123');
+    getGitHashMock.mockResolvedValueOnce('hash123');
 
     // @ts-ignore - Simplified file for testing
     const result = await getExistingBlobURL({ draft, file: mockFile });
@@ -1478,7 +1483,7 @@ describe('Test getExistingBlobURL()', () => {
       files: {},
     };
 
-    getHashMock.mockResolvedValueOnce('hash123');
+    getGitHashMock.mockResolvedValueOnce('hash123');
 
     // @ts-ignore - Simplified file for testing
     const result = await getExistingBlobURL({ draft, file: mockFile });
@@ -1501,8 +1506,8 @@ describe('Test getExistingBlobURL()', () => {
       },
     };
 
-    // Mock getHash - match on first file
-    getHashMock
+    // Mock getGitHash - match on first file
+    getGitHashMock
       .mockResolvedValueOnce('hash-match') // Initial file hash
       .mockResolvedValueOnce('hash-match') // First file in draft (matches)
       .mockResolvedValueOnce('other-hash') // Other drafts
@@ -1514,7 +1519,7 @@ describe('Test getExistingBlobURL()', () => {
     expect(result).toBe('blob:url-1');
     // Promise.all runs all hash comparisons in parallel, so foundURL is set
     // to the first match and returned after all promises resolve
-    expect(getHashMock).toHaveBeenCalled();
+    expect(getGitHashMock).toHaveBeenCalled();
   });
 
   test('should process unsaved asset when asset.file exists but no existing blob URL (line 96-97)', async () => {
@@ -1540,8 +1545,8 @@ describe('Test getExistingBlobURL()', () => {
       max_file_size: 1000000,
     };
 
-    // Mock getHash to return different hashes, so no existing blob URL is found
-    getHashMock.mockResolvedValueOnce('hash1').mockResolvedValueOnce('hash2');
+    // Mock getGitHash to return different hashes, so no existing blob URL is found
+    getGitHashMock.mockResolvedValueOnce('hash1').mockResolvedValueOnce('hash2');
 
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });

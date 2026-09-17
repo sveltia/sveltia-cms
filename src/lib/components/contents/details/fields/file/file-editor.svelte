@@ -219,74 +219,77 @@
     oversizedFileNames = [];
     invalidFileNames = [];
 
-    const resources = await Promise.all(
-      selectedResources.map((resource) => {
-        // Set the target folder for non-hotlinking stock assets from Pexels, etc.
-        if (resource.file && !resource.folder) {
-          resource.folder = targetFolder;
+    // The field must not stay in the processing state if something goes wrong along the way
+    try {
+      const resources = await Promise.all(
+        selectedResources.map((resource) => {
+          // Set the target folder for non-hotlinking stock assets from Pexels, etc.
+          if (resource.file && !resource.folder) {
+            resource.folder = targetFolder;
+          }
+
+          return processResource({ draft, resource, libraryConfig });
+        }),
+      );
+
+      /** @type {string[]} */
+      const credits = [];
+      let hasValidResource = false;
+
+      const lastIndex = multiple
+        ? (Object.keys(draft[valueStoreKey][locale])
+            .filter((key) => key.startsWith(`${keyPath}.`))
+            .map((key) => Number(key.replace(`${keyPath}.`, '')))
+            .pop() ?? -1)
+        : -1;
+
+      resources.forEach(({ value, credit, oversizedFileName, invalidFileName }, index) => {
+        if (value) {
+          hasValidResource = true;
+
+          if (multiple) {
+            const targetIndex = replaceMode ? replaceIndex : lastIndex + 1 + index;
+
+            draft[valueStoreKey][locale][`${keyPath}.${targetIndex}`] = value;
+          } else {
+            // Encode spaces as `%20` when the field is used in the rich text editor component to
+            // avoid issues with Markdown parsers that do not support unencoded spaces in URLs.
+            currentValue = inEditorComponent ? value.replaceAll(' ', '%20') : value;
+          }
         }
 
-        return processResource({ draft, resource, libraryConfig });
-      }),
-    );
-
-    /** @type {string[]} */
-    const credits = [];
-    let hasValidResource = false;
-
-    const lastIndex = multiple
-      ? (Object.keys(draft[valueStoreKey][locale])
-          .filter((key) => key.startsWith(`${keyPath}.`))
-          .map((key) => Number(key.replace(`${keyPath}.`, '')))
-          .pop() ?? -1)
-      : -1;
-
-    resources.forEach(({ value, credit, oversizedFileName, invalidFileName }, index) => {
-      if (value) {
-        hasValidResource = true;
-
-        if (multiple) {
-          const targetIndex = replaceMode ? replaceIndex : lastIndex + 1 + index;
-
-          draft[valueStoreKey][locale][`${keyPath}.${targetIndex}`] = value;
-        } else {
-          // Encode spaces as `%20` when the field is used in the rich text editor component to
-          // avoid issues with Markdown parsers that do not support unencoded spaces in URLs.
-          currentValue = inEditorComponent ? value.replaceAll(' ', '%20') : value;
+        if (credit) {
+          credits.push(credit);
         }
+
+        if (oversizedFileName) {
+          oversizedFileNames.push(oversizedFileName);
+        }
+
+        if (invalidFileName) {
+          invalidFileNames.push(invalidFileName);
+        }
+      });
+
+      // Restore the previous value if no valid resources were processed, so that a failed
+      // upload/replace doesn’t leave an empty or invalid reference in the YAML
+      if (!hasValidResource && !multiple && previousValue !== undefined) {
+        currentValue = previousValue;
       }
 
-      if (credit) {
-        credits.push(credit);
+      if (credits.length) {
+        photoCredit = credits.join('\n');
+        showPhotoCreditDialog = true;
+      } else {
+        photoCredit = '';
       }
 
-      if (oversizedFileName) {
-        oversizedFileNames.push(oversizedFileName);
+      if (oversizedFileNames.length || invalidFileNames.length) {
+        showRejectedFilesAlert = true;
       }
-
-      if (invalidFileName) {
-        invalidFileNames.push(invalidFileName);
-      }
-    });
-
-    // Restore the previous value if no valid resources were processed, so that a failed
-    // upload/replace doesn’t leave an empty or invalid reference in the YAML
-    if (!hasValidResource && !multiple && previousValue !== undefined) {
-      currentValue = previousValue;
+    } finally {
+      processing = false;
     }
-
-    if (credits.length) {
-      photoCredit = credits.join('\n');
-      showPhotoCreditDialog = true;
-    } else {
-      photoCredit = '';
-    }
-
-    if (oversizedFileNames.length || invalidFileNames.length) {
-      showRejectedFilesAlert = true;
-    }
-
-    processing = false;
   };
 
   /**

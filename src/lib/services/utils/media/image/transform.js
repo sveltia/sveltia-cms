@@ -173,6 +173,10 @@ export const transformImage = async (
   // Clean up
   if (source instanceof HTMLVideoElement) {
     document.body.removeChild(source);
+  } else if ('close' in source) {
+    // An `ImageBitmap` holds the decoded pixels until it’s closed, and a batch of thumbnails would
+    // otherwise keep a full-size copy of every image around until the garbage collector gets to it
+    source.close();
   }
 
   return exportCanvasAsBlob(canvas, { format, quality });

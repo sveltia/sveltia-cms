@@ -1548,97 +1548,66 @@ describe('contents/fields/file/helpers', () => {
       hasTemplateTags: false,
     };
 
-    it('should return false when unsavedAssets is empty', async () => {
-      const result = await hasSameAsset({ hash: 'abc123', folder, unsavedAssets: [] });
-
-      expect(result).toBe(false);
+    it('should return false when unsavedAssets is empty', () => {
+      expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [] })).toBe(false);
     });
 
-    it('should return false when asset has no file', async () => {
-      const asset = /** @type {any} */ ({ file: undefined, folder });
+    it('should return false when asset has no file', () => {
+      const asset = /** @type {any} */ ({ file: undefined, sha: 'abc123', folder });
 
       vi.mocked(equal).mockReturnValue(true);
 
-      const result = await hasSameAsset({ hash: 'abc123', folder, unsavedAssets: [asset] });
-
-      expect(result).toBe(false);
+      expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(false);
     });
 
-    it('should return false when asset folder does not match', async () => {
+    it('should return false when asset folder does not match', () => {
       const file = new File(['data'], 'photo.jpg');
-      const asset = /** @type {any} */ ({ file, folder: { ...folder, internalPath: 'other' } });
+      const assetFolder = { ...folder, internalPath: 'other' };
+      const asset = /** @type {any} */ ({ file, sha: 'abc123', folder: assetFolder });
 
       vi.mocked(equal).mockReturnValue(false);
 
-      const result = await hasSameAsset({ hash: 'abc123', folder, unsavedAssets: [asset] });
-
-      expect(result).toBe(false);
-      expect(getHash).not.toHaveBeenCalled();
+      expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(false);
+      expect(equal).toHaveBeenCalledWith(assetFolder, folder);
     });
 
-    it('should return false when hash does not match', async () => {
+    it('should return false when hash does not match', () => {
       const file = new File(['data'], 'photo.jpg');
-      const asset = /** @type {any} */ ({ file, folder });
+      const asset = /** @type {any} */ ({ file, sha: 'different-hash', folder });
 
       vi.mocked(equal).mockReturnValue(true);
-      vi.mocked(getHash).mockResolvedValue('different-hash');
 
-      const result = await hasSameAsset({ hash: 'abc123', folder, unsavedAssets: [asset] });
-
-      expect(result).toBe(false);
+      expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(false);
     });
 
-    it('should return true when hash and folder both match', async () => {
+    it('should return true when hash and folder both match', () => {
       const file = new File(['data'], 'photo.jpg');
-      const asset = /** @type {any} */ ({ file, folder });
+      const asset = /** @type {any} */ ({ file, sha: 'abc123', folder });
 
       vi.mocked(equal).mockReturnValue(true);
-      vi.mocked(getHash).mockResolvedValue('abc123');
 
-      const result = await hasSameAsset({ hash: 'abc123', folder, unsavedAssets: [asset] });
-
-      expect(result).toBe(true);
+      expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(true);
     });
 
-    it('should return true when at least one asset matches among multiple', async () => {
-      const file1 = new File(['data1'], 'photo1.jpg');
-      const file2 = new File(['data2'], 'photo2.jpg');
-
+    it('should return true when at least one asset matches among multiple', () => {
       const assets = /** @type {any[]} */ ([
-        { file: file1, folder },
-        { file: file2, folder },
+        { file: new File(['data1'], 'photo1.jpg'), sha: 'no-match', folder },
+        { file: new File(['data2'], 'photo2.jpg'), sha: 'abc123', folder },
       ]);
 
       vi.mocked(equal).mockReturnValue(true);
-      vi.mocked(getHash).mockResolvedValueOnce('no-match').mockResolvedValueOnce('abc123');
 
-      const result = await hasSameAsset({ hash: 'abc123', folder, unsavedAssets: assets });
-
-      expect(result).toBe(true);
+      expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: assets })).toBe(true);
     });
 
-    it('should pass the asset file to getHash', async () => {
+    it('should compare the stored hash without reading the file', () => {
       const file = new File(['data'], 'photo.jpg');
-      const asset = /** @type {any} */ ({ file, folder });
+      const asset = /** @type {any} */ ({ file, sha: 'abc123', folder });
 
       vi.mocked(equal).mockReturnValue(true);
-      vi.mocked(getHash).mockResolvedValue('abc123');
 
-      await hasSameAsset({ hash: 'abc123', folder, unsavedAssets: [asset] });
-
-      expect(getHash).toHaveBeenCalledWith(file);
-    });
-
-    it('should pass the asset folder and provided folder to equal', async () => {
-      const file = new File(['data'], 'photo.jpg');
-      const assetFolder = { ...folder };
-      const asset = /** @type {any} */ ({ file, folder: assetFolder });
-
-      vi.mocked(equal).mockReturnValue(false);
-
-      await hasSameAsset({ hash: 'abc123', folder, unsavedAssets: [asset] });
-
-      expect(equal).toHaveBeenCalledWith(assetFolder, folder);
+      expect(hasSameAsset({ sha: 'abc123', folder, unsavedAssets: [asset] })).toBe(true);
+      expect(getHash).not.toHaveBeenCalled();
     });
   });
 });

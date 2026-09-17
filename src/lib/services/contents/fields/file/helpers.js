@@ -1,4 +1,3 @@
-import { getHash } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
 import equal from 'fast-deep-equal';
 
@@ -317,20 +316,12 @@ export const listAssets = ({
 };
 
 /**
- * Check if an asset with the same hash and folder already exists in the unsaved assets.
+ * Check if an asset with the same content and folder already exists in the unsaved assets.
  * @param {object} args Arguments.
- * @param {string} args.hash Hash of the file.
+ * @param {string} args.sha Git object ID (SHA-1 hash) of the file.
  * @param {AssetFolderInfo | undefined} args.folder Asset folder.
  * @param {Asset[]} args.unsavedAssets Unsaved assets.
- * @returns {Promise<boolean>} `true` if the asset already exists.
+ * @returns {boolean} `true` if the asset already exists.
  */
-export const hasSameAsset = async ({ hash, folder, unsavedAssets }) => {
-  const results = await Promise.all(
-    unsavedAssets.map(
-      async (asset) =>
-        !!asset.file && equal(asset.folder, folder) && (await getHash(asset.file)) === hash,
-    ),
-  );
-
-  return results.includes(true);
-};
+export const hasSameAsset = ({ sha, folder, unsavedAssets }) =>
+  unsavedAssets.some((asset) => !!asset.file && asset.sha === sha && equal(asset.folder, folder));
