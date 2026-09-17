@@ -14,7 +14,7 @@
   import { listedEntries, listedUnpublishedEntries } from '$lib/services/contents/collection/view';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
-  import { workflowEnabled } from '$lib/services/workflow';
+  import { isWorkflowEnabled } from '$lib/services/workflow';
   import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
 
   /**
@@ -98,7 +98,7 @@
       }
 
       if (publishedEntries.length) {
-        if (workflowEnabled.current && selectedCollection.current) {
+        if (selectedCollection.current && isWorkflowEnabled(selectedCollection.current)) {
           // Committing the removals straight to the configured branch would bypass review and be
           // rejected outright when the branch is protected
           // @see https://github.com/decaporg/decap-cms/issues/6610

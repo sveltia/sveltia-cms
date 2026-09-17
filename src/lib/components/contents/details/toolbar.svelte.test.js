@@ -1124,5 +1124,70 @@ describe('Toolbar', () => {
       // The pane options are for large screens
       expect(menu.getByRole('menuitemcheckbox').elements()).toHaveLength(0);
     });
+
+    test('leaves a collection that opted out of the workflow alone', async () => {
+      // The collection-level `publish_mode` option overrides the site-level one
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: 'editorial_workflow',
+        collections: [{ ...postsCollection, publish_mode: 'simple' }],
+      });
+      vi.mocked(saveEntry).mockResolvedValue(/** @type {any} */ (helloEntry));
+
+      const { draft } = await renderToolbar();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+
+      // A plain save: no review prompt, and the editor closes
+      await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledWith({ draft, skipCI: undefined }));
+      await expect.poll(() => window.location.hash).toBe('#/collections/posts');
+      expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
+      expect(updateWorkflowStatus).not.toHaveBeenCalled();
+    });
+
+    test('keeps an entry with a pull request in the workflow after its collection opted out', async () => {
+      // The pull request may have been opened before the collection opted out, or by a contributor
+      // working on a fork. Saving straight to the configured branch would publish it unreviewed
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site', skip_ci: false },
+        publish_mode: 'editorial_workflow',
+        collections: [{ ...postsCollection, publish_mode: 'simple' }],
+      });
+      setEntries([helloEntry]);
+      vi.mocked(discardWorkflowEntry).mockResolvedValue(undefined);
+
+      await renderExisting();
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      await expect
+        .element(toolbar.getByRole('button', { name: 'Status: \u2068Draft\u2069' }))
+        .toBeInTheDocument();
+      // A plain Save button, not the Publish split button the simple mode would offer
+      await expect.element(toolbar.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+      expect(toolbar.getByRole('button', { name: 'Publish' }).elements()).toHaveLength(0);
+
+      await (await openMenu()).getByRole('menuitem', { name: 'Discard Changes' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Discard' }).click();
+
+      await vi.waitFor(() => expect(discardWorkflowEntry).toHaveBeenCalledWith(unpublishedEntry));
+    });
+
+    test('shows the status for a collection that opted in on its own', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        collections: [{ ...postsCollection, publish_mode: 'editorial_workflow' }],
+      });
+
+      await renderExisting();
+
+      await expect
+        .element(
+          page
+            .getByRole('toolbar', { name: 'Primary' })
+            .getByRole('button', { name: 'Status: \u2068Draft\u2069' }),
+        )
+        .toBeInTheDocument();
+    });
   });
 });

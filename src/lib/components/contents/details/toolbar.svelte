@@ -61,6 +61,7 @@
     getUnpublishedEntryByDraft,
     hasPublishedVersion,
     isPendingDeletion,
+    isWorkflowEnabled,
     workflowEnabled,
   } from '$lib/services/workflow';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -199,6 +200,9 @@
       ? getUnpublishedEntryByDraft({ collectionName, fileName, originalEntry })
       : undefined,
   );
+  // A collection can opt in or out of Editorial Workflow with its own `publish_mode` option, but an
+  // entry that already has a pull request stays in it until it’s published or discarded
+  const useWorkflow = $derived(!!unpublishedEntry || isWorkflowEnabled(collection));
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
   // the published version untouched, so it stays available even when deletion is disabled
   const canDelete = $derived(entryCollection?.delete !== false);
@@ -299,7 +303,7 @@
         return { deleted: true };
       }
 
-      if (originalEntry && workflowEnabled.current && collection) {
+      if (originalEntry && useWorkflow && collection) {
         await deleteWorkflowEntry(originalEntry, collection, collectionFile, associatedAssets);
 
         return { deleted: true, deletionPending: true };
@@ -378,7 +382,7 @@
       // it hasn’t been handed to anyone yet, and the status menu that would do it is easy to miss.
       // Offer it as the next step instead, once, while the entry is still in the drafting stage
       if (
-        workflowEnabled.current &&
+        useWorkflow &&
         savedDraft.workflow?.status === 'draft' &&
         // An incomplete entry isn’t ready to be handed over; the status menu is still there once
         // the remaining fields have been filled in
@@ -490,7 +494,7 @@
   {/if}
   {#if pendingDeletion}
     <!-- Nothing to save: the entry is shown for reference until the deletion is carried out -->
-  {:else if skipCIConfigured.current && !workflowEnabled.current}
+  {:else if skipCIConfigured.current && !useWorkflow}
     <SplitButton
       variant="primary"
       label={_(
@@ -736,7 +740,7 @@
   {:else}
     {#if unpublishedEntry && !publishedVersionExists}
       {_('workflow.confirm_deleting_unpublished_entry')}
-    {:else if workflowEnabled.current}
+    {:else if useWorkflow}
       <!-- The removal is committed to a pull request rather than to the configured branch -->
       {_('workflow.confirm_deleting_published_entry')}
     {:else}

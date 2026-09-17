@@ -11,12 +11,15 @@ import {
   getUnpublishedEntryByDraft,
   getUnpublishedEntryBySlug,
   hasPublishedVersion,
+  isWorkflowDraft,
+  isWorkflowEnabled,
   mergeUnpublishedEntries,
   unpublishedEntries,
   unpublishedEntriesLoaded,
   workflowDataReady,
   workflowEnabled,
 } from '$lib/services/workflow';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 /**
  * Create a minimal unpublished entry for testing.
@@ -44,6 +47,7 @@ describe('workflow/index', () => {
     allEntries.current = [];
     cmsConfig.current = undefined;
     backendName.current = undefined;
+    forkedRepository.current = undefined;
   });
 
   describe('workflowDataReady', () => {
@@ -85,6 +89,124 @@ describe('workflow/index', () => {
         expect(workflowEnabled.current).toBe(true);
       },
     );
+
+    test('is true when a collection opts in on its own', () => {
+      backendName.current = 'github';
+      cmsConfig.current = /** @type {any} */ ({
+        publish_mode: 'simple',
+        collections: [{ name: 'posts', folder: 'posts', publish_mode: 'editorial_workflow' }],
+      });
+      expect(workflowEnabled.current).toBe(true);
+    });
+
+    test('stays true when every collection opts out', () => {
+      // Singletons follow the site-level option
+      backendName.current = 'github';
+      cmsConfig.current = /** @type {any} */ ({
+        publish_mode: 'editorial_workflow',
+        collections: [{ name: 'posts', folder: 'posts', publish_mode: 'simple' }],
+      });
+      expect(workflowEnabled.current).toBe(true);
+    });
+  });
+
+  describe('isWorkflowEnabled', () => {
+    /** @type {any} */
+    const posts = { name: 'posts', folder: 'posts' };
+    /** @type {any} */
+    const optedOut = { name: 'settings', files: [], publish_mode: 'simple' };
+    /** @type {any} */
+    const optedIn = { name: 'reviewed', folder: 'reviewed', publish_mode: 'editorial_workflow' };
+
+    test('follows the site-level publish mode for a collection without its own', () => {
+      backendName.current = 'github';
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'simple' });
+      expect(isWorkflowEnabled(posts)).toBe(false);
+      expect(isWorkflowEnabled(undefined)).toBe(false);
+
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
+      expect(isWorkflowEnabled(posts)).toBe(true);
+      expect(isWorkflowEnabled(undefined)).toBe(true);
+    });
+
+    test('lets a collection override the site-level publish mode', () => {
+      backendName.current = 'github';
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
+      expect(isWorkflowEnabled(optedOut)).toBe(false);
+
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'simple' });
+      expect(isWorkflowEnabled(optedIn)).toBe(true);
+    });
+
+    test('is false when the backend doesn’t implement the feature', () => {
+      backendName.current = 'gitea';
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
+      expect(isWorkflowEnabled(posts)).toBe(false);
+      expect(isWorkflowEnabled(optedIn)).toBe(false);
+    });
+
+    test('ignores an opt-out for a contributor working on a fork', () => {
+      // The contributor can’t write to the configured repository, so every change has to go
+      // through a pull request
+      backendName.current = 'github';
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
+      forkedRepository.current = { owner: 'me', repo: 'site' };
+      expect(isWorkflowEnabled(optedOut)).toBe(true);
+    });
+  });
+
+  describe('isWorkflowDraft', () => {
+    /** @type {any} */
+    const optedOut = { name: 'posts', folder: 'posts', publish_mode: 'simple' };
+
+    beforeEach(() => {
+      backendName.current = 'github';
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
+    });
+
+    test('follows the collection’s publish mode for an entry without a pull request', () => {
+      const originalEntry = /** @type {any} */ ({ slug: 'a' });
+
+      expect(
+        isWorkflowDraft({ collection: optedOut, collectionName: 'posts', originalEntry }),
+      ).toBe(false);
+      expect(isWorkflowDraft({ collection: optedOut, collectionName: 'posts' })).toBe(false);
+      expect(
+        isWorkflowDraft({
+          collection: /** @type {any} */ ({ name: 'posts', folder: 'posts' }),
+          collectionName: 'posts',
+        }),
+      ).toBe(true);
+    });
+
+    test('keeps an entry that already has a pull request in the workflow', () => {
+      // The collection has opted out since the pull request was opened, or a contributor working
+      // on a fork opened it. Either way, saving straight to the configured branch would publish
+      // the unreviewed changes
+      const entry = createEntry({ collectionName: 'posts', subPath: 'a' });
+
+      unpublishedEntries.current = [entry];
+
+      expect(
+        isWorkflowDraft({ collection: optedOut, collectionName: 'posts', originalEntry: entry }),
+      ).toBe(true);
+      // The published version was opened, but the pull request is found by the slug
+      expect(
+        isWorkflowDraft({
+          collection: optedOut,
+          collectionName: 'posts',
+          originalEntry: /** @type {any} */ ({ slug: 'a' }),
+        }),
+      ).toBe(true);
+      // Another entry in the same collection has no pull request
+      expect(
+        isWorkflowDraft({
+          collection: optedOut,
+          collectionName: 'posts',
+          originalEntry: /** @type {any} */ ({ slug: 'b' }),
+        }),
+      ).toBe(false);
+    });
   });
 
   describe('getUnpublishedEntriesByCollection', () => {

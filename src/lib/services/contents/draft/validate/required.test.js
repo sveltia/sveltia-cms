@@ -1,16 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
-import { unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
+import { isWorkflowDraft, unpublishedEntries } from '$lib/services/workflow';
 
 vi.mock('$lib/services/workflow', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
-  workflowEnabled: { current: false },
+  isWorkflowDraft: vi.fn(),
 }));
 
-/** The mocked state, which is writable unlike the derived state it stands in for. */
-const enabled = /** @type {any} */ (workflowEnabled);
 const entries = /** @type {any} */ (unpublishedEntries);
+const collection = { name: 'posts' };
 
 /**
  * Build a minimal draft for an entry with the given workflow status.
@@ -18,6 +17,7 @@ const entries = /** @type {any} */ (unpublishedEntries);
  * @returns {any} Draft.
  */
 const draftFor = (status) => ({
+  collection,
   collectionName: 'posts',
   fileName: undefined,
   originalEntry: {
@@ -29,19 +29,31 @@ const draftFor = (status) => ({
 
 describe('contents/draft/validate/required', () => {
   beforeEach(() => {
-    enabled.current = true;
+    vi.mocked(isWorkflowDraft).mockReturnValue(true);
     entries.current = [];
   });
 
   test('enforces the required fields without Editorial Workflow', () => {
-    enabled.current = false;
+    vi.mocked(isWorkflowDraft).mockReturnValue(false);
 
     expect(isRequiredEnforced(draftFor('draft'))).toBe(true);
     expect(isRequiredEnforced(/** @type {any} */ ({}))).toBe(true);
   });
 
+  test('asks whether the draft itself goes through Editorial Workflow', () => {
+    // A collection can opt out of the workflow while it’s enabled for the site, and an entry that
+    // already has a pull request stays in it
+    const draft = draftFor('draft');
+
+    isRequiredEnforced(draft);
+
+    expect(isWorkflowDraft).toHaveBeenCalledWith(draft);
+  });
+
   test('relaxes them for an entry that has no pull request yet', () => {
-    expect(isRequiredEnforced(/** @type {any} */ ({ collectionName: 'posts' }))).toBe(false);
+    expect(isRequiredEnforced(/** @type {any} */ ({ collection, collectionName: 'posts' }))).toBe(
+      false,
+    );
     expect(isRequiredEnforced(draftFor())).toBe(false);
   });
 

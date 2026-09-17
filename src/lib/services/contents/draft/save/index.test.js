@@ -18,7 +18,7 @@ import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
-import { unpublishedEntries, workflowEnabled } from '$lib/services/workflow';
+import { isWorkflowDraft, unpublishedEntries } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 import { saveEntry as _saveEntry } from '.';
@@ -56,7 +56,7 @@ vi.mock('$lib/services/contents/entry/history');
 vi.mock('$lib/services/deployments/publish');
 vi.mock('$lib/services/workflow', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
-  workflowEnabled: { current: undefined },
+  isWorkflowDraft: vi.fn(),
   unpublishedEntries: { current: undefined },
 }));
 vi.mock('$lib/services/workflow/branch', () => ({
@@ -92,7 +92,7 @@ describe('draft/save/index', () => {
 
     /** @type {any} */ (skipCIConfigured).current = true;
     /** @type {any} */ (skipCIEnabled).current = false;
-    /** @type {any} */ (workflowEnabled).current = false;
+    vi.mocked(isWorkflowDraft).mockReturnValue(false);
     unpublishedEntries.current = [];
 
     vi.mocked(validateEntry).mockReturnValue(true);
@@ -140,7 +140,7 @@ describe('draft/save/index', () => {
     });
 
     it('should save through Editorial Workflow when enabled', async () => {
-      /** @type {any} */ (workflowEnabled).current = true;
+      vi.mocked(isWorkflowDraft).mockReturnValue(true);
 
       vi.mocked(saveWorkflowChanges).mockResolvedValue({
         commit: { sha: 'abc', files: {} },
@@ -167,12 +167,20 @@ describe('draft/save/index', () => {
       expect(vi.mocked(setLastCommitPublishHint)).toHaveBeenCalledWith(false);
     });
 
+    it('should decide on the workflow per draft', async () => {
+      // A collection can opt in or out of Editorial Workflow with its own `publish_mode` option,
+      // and an entry that already has a pull request stays in it
+      await saveEntry();
+
+      expect(isWorkflowDraft).toHaveBeenCalledWith(mockDraft);
+    });
+
     describe('required field enforcement', () => {
       /**
        * Make the mocked stores report that Editorial Workflow is enabled.
        */
       const enableWorkflow = () => {
-        /** @type {any} */ (workflowEnabled).current = true;
+        vi.mocked(isWorkflowDraft).mockReturnValue(true);
         unpublishedEntries.current = [];
 
         vi.mocked(saveWorkflowChanges).mockResolvedValue({

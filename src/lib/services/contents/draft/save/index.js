@@ -20,7 +20,7 @@ import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending'
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
-import { workflowEnabled } from '$lib/services/workflow';
+import { isWorkflowDraft } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 /**
@@ -30,14 +30,15 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
 /**
  * Update the application stores with deployment settings.
  * @param {object} args Arguments.
+ * @param {boolean} args.useWorkflow Whether the changes went to a pull request rather than the
+ * configured branch.
  * @param {boolean | undefined} args.skipCI Whether to disable automatic deployments for the change.
  * @param {number} args.count Number of entries saved, including any entry rewritten to keep its
  * references to the saved entry up to date.
  */
-const updateStores = ({ skipCI, count }) => {
+const updateStores = ({ useWorkflow, skipCI, count }) => {
   // With Editorial Workflow, changes go to a pull request, so nothing is published yet
-  const published =
-    !workflowEnabled.current && skipCIConfigured.current && !(skipCI ?? skipCIEnabled.current);
+  const published = !useWorkflow && skipCIConfigured.current && !(skipCI ?? skipCIEnabled.current);
 
   contentUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,
@@ -146,9 +147,12 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
   let results;
   /** @type {CommitOptions} */
   const options = { commitType: isNew ? 'create' : 'update', collection, skipCI };
+  // A collection can opt in or out of Editorial Workflow on its own, but an entry that already has a
+  // pull request stays in it
+  const useWorkflow = isWorkflowDraft(draft);
 
   try {
-    results = workflowEnabled.current
+    results = useWorkflow
       ? await saveWorkflowChanges({
           changes,
           savingEntry,
@@ -180,7 +184,7 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
     isNew,
   });
 
-  updateStores({ skipCI, count: 1 + cascadeEntries.length + movedEntries.length });
+  updateStores({ useWorkflow, skipCI, count: 1 + cascadeEntries.length + movedEntries.length });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
 
   if (originalEntry) {

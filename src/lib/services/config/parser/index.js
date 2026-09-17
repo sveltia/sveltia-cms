@@ -9,6 +9,7 @@ import { parseMediaConfig } from '$lib/services/config/parser/media';
 import { parseMediaLibraries } from '$lib/services/config/parser/media-libraries';
 import { parseSlugConfig } from '$lib/services/config/parser/slug';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
 /**
  * @import { CmsConfig } from '$lib/types/public';
@@ -54,11 +55,9 @@ const WORKFLOW_BACKENDS = ['github', 'gitlab'];
 export const parseCmsConfig = (cmsConfig, collectors) => {
   parseBackendConfig(cmsConfig, collectors);
 
-  // Editorial Workflow is not implemented for every backend yet
-  if (
-    cmsConfig.publish_mode === 'editorial_workflow' &&
-    !WORKFLOW_BACKENDS.includes(cmsConfig.backend?.name)
-  ) {
+  // Editorial Workflow is not implemented for every backend yet. A collection can enable it on its
+  // own, so the site-level option isn’t the only place to look
+  if (isWorkflowConfigured(cmsConfig) && !WORKFLOW_BACKENDS.includes(cmsConfig.backend?.name)) {
     addMessage({
       type: 'warning',
       strKey: 'editorial_workflow_unsupported',

@@ -1,4 +1,4 @@
-import { getUnpublishedEntryByDraft, workflowEnabled } from '$lib/services/workflow';
+import { getUnpublishedEntryByDraft, isWorkflowDraft } from '$lib/services/workflow';
 
 /**
  * @import { EntryDraft, UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -27,4 +27,4 @@ const getWorkflowStatus = (draft) =>
  */
 export const isRequiredEnforced = (draft) =>
   // An entry that has no pull request yet starts as a draft
-  !workflowEnabled.current || (getWorkflowStatus(draft) ?? 'draft') !== 'draft';
+  !isWorkflowDraft(draft) || (getWorkflowStatus(draft) ?? 'draft') !== 'draft';

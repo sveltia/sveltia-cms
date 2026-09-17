@@ -333,6 +333,58 @@ describe('Config Parser', () => {
       expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(true);
     });
 
+    it('should collect warnings for collection-level editorial_workflow on unsupported backends', async () => {
+      const { parseCmsConfig } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'gitea', repo: 'owner/repo' },
+        media_folder: '/media',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            publish_mode: 'editorial_workflow',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      parseCmsConfig(config, collectors);
+
+      const warningArray = Array.from(collectors.warnings);
+
+      expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(true);
+    });
+
+    it('should not warn about editorial_workflow when no collection uses it', async () => {
+      const { parseCmsConfig } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const config = {
+        backend: { name: 'gitea', repo: 'owner/repo' },
+        media_folder: '/media',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            publish_mode: 'simple',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      parseCmsConfig(config, collectors);
+
+      const warningArray = Array.from(collectors.warnings);
+
+      expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(false);
+    });
+
     it('should collect errors for no collections', async () => {
       const { parseCmsConfig } = await import('.');
       const collectors = createCollectors();

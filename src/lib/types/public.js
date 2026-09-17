@@ -1468,6 +1468,11 @@
  * @property {string} [public_folder] Public media folder path for an entry collection. This
  * overrides the global `public_folder` option. Default: `media_folder` option value.
  * @property {boolean} [hide] Whether to hide the collection in the UI. Default: `false`.
+ * @property {'simple' | 'editorial_workflow'} [publish_mode] Publish mode for the collection. This
+ * overrides the global `publish_mode` option, so Editorial Workflow can be enabled for some
+ * collections only, or turned off for a collection when it’s enabled globally. Default: global
+ * `publish_mode` option value. Note that a contributor working on a fork with Open Authoring always
+ * goes through Editorial Workflow, regardless of this option.
  * @property {boolean} [publish] Whether to show the publishing control UI for Editorial Workflow.
  * Default: `true`. Set this to `false` to let editors move an entry through the review stages
  * without being able to publish it themselves. It has no effect unless the `editorial_workflow`
@@ -1486,6 +1491,7 @@
  * DEPRECATED: Use the global YAML format options. `yaml_quote: true` is equivalent to `quote:
  * double`. See the documentation https://sveltiacms.app/en/docs/data-output#controlling-data-output
  * for details.
+ * @see https://github.com/decaporg/decap-cms/issues/1571
  * @see https://decapcms.org/docs/configuration-options/#collections
  * @see https://sveltiacms.app/en/docs/collections/entries
  * @see https://sveltiacms.app/en/docs/collections/files
@@ -1874,7 +1880,8 @@
  * only in the `CMS.init()` method’s `config` option. Default: `true`.
  * @property {Backend} backend Backend options.
  * @property {'' | 'simple' | 'editorial_workflow'} [publish_mode] Publish mode. An empty string is
- * the same as `simple`. Default: `simple`. Note that Editorial Workflow is currently supported with
+ * the same as `simple`. Default: `simple`. It can be overridden for each collection with the
+ * collection-level `publish_mode` option. Note that Editorial Workflow is currently supported with
  * the GitHub and GitLab backends only.
  * @property {string} [media_folder] Global internal media folder path, relative to the project’s
  * root directory. Required unless a cloud media storage is configured.
