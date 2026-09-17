@@ -993,6 +993,23 @@
  * @property {boolean} interacted Whether the user has manually interacted with the entry editor.
  * This prevents auto-backup from triggering when only programmatic changes (e.g. Lexical markdown
  * reformatting) have occurred.
+ * @property {PendingEntry[]} pendingEntries Entries created from a Relation field while editing
+ * this entry, to be saved along with it.
+ */
+
+/**
+ * An entry created with the quick-add dialog of a Relation field while another entry is being
+ * edited. It’s kept on that entry’s draft and saved in the same commit as the entry, rather than on
+ * its own, so the two never go out of sync. Everything needed to commit it is prepared as soon as
+ * it’s added, because the preparation replaces the blob URLs in the content with asset paths, which
+ * can only be done once.
+ * @typedef {object} PendingEntry
+ * @property {string} collectionName Name of the collection the entry belongs to.
+ * @property {Entry} entry Entry as it will be saved.
+ * @property {FileChange[]} changes File changes to be committed along with the parent entry.
+ * @property {Asset[]} savingAssets Assets to be saved along with the entry.
+ * @property {any[]} values Values the Relation field that created the entry stores for it, in any
+ * of the parent entry’s locales. The entry is only saved while one of them is still there.
  */
 
 /**
@@ -1008,6 +1025,8 @@
  * @property {LocaleContentMap} currentValues Key is a locale code, value is a flattened object
  * containing all the current field values while editing.
  * @property {EntryFileMap} files Files to be uploaded.
+ * @property {PendingEntry[]} [pendingEntries] Entries created from a Relation field, to be saved
+ * along with the entry. Missing from a backup taken before they were introduced.
  */
 
 /**

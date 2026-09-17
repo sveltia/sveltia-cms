@@ -414,6 +414,7 @@
       void $state.snapshot(draft.currentSlugs);
       // The files map holds `File` objects, which can’t be snapshotted; a file can be replaced
       Object.values(draft.files).forEach(({ file }) => void file);
+      void draft.pendingEntries.length;
       void draft.interacted;
     }
 

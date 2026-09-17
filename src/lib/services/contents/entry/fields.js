@@ -30,6 +30,7 @@ import { isNumeric } from '$lib/services/utils/number';
  * GetFieldArgs,
  * InternalEntryCollection,
  * InternalLocaleCode,
+ * PendingEntry,
  * StringTransformation,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
@@ -443,6 +444,8 @@ const numberFormatterCache = new Map();
  * @param {StringTransformation[]} [args.transformations] String transformations.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
+ * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
+ * being edited, which a Relation field value can refer to before they are saved.
  * @returns {string} Resolved display value.
  */
 export const getFieldDisplayValue = ({
@@ -453,6 +456,7 @@ export const getFieldDisplayValue = ({
   locale,
   transformations,
   isIndexFile = false,
+  pendingEntries = undefined,
 }) => {
   const fieldConfig = getField({ collectionName, fileName, valueMap, keyPath, isIndexFile });
   let value = valueMap[keyPath];
@@ -480,6 +484,7 @@ export const getFieldDisplayValue = ({
       valueMap,
       keyPath,
       locale,
+      pendingEntries,
     });
   }
 

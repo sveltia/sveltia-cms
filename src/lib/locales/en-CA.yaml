@@ -1353,7 +1353,8 @@ reorder_item: Reorder Item
 # take a label from
 list_item_value: Item Value
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: Add {$name}
@@ -1378,6 +1379,13 @@ opacity: Opacity
 
 # Select field: empty option placeholder
 unselected_option: (None)
+
+# Relation field: creating a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: The new {$name} will be saved along with the entry you’re editing.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: The {$name} couldn’t be added. Check the browser console for details.
 
 # Select Assets dialog
 assets_dialog:

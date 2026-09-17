@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { render } from 'vitest-browser-svelte';
 
 import { getOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
+import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import RelationPreview from './relation-preview.svelte';
 
 /**
- * @import { Entry } from '$lib/types/private';
+ * @import { Entry, PendingEntry } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
  */
 
@@ -26,15 +26,25 @@ const refEntries = /** @type {Entry[]} */ ([{ id: 'melvin-lucas' }, { id: 'elsie
  * Render the preview.
  * @param {string | string[] | undefined} currentValue Field value.
  * @param {Partial<RelationField>} [config] Field options.
+ * @param {object} [options] Options.
+ * @param {string} [options.locale] Locale.
+ * @param {PendingEntry[]} [options.pendingEntries] Pending entries on the draft.
  * @returns {Promise<HTMLElement>} Container.
  */
-const renderPreview = async (currentValue, config = {}) => {
-  const { container } = await render(RelationPreview, {
-    locale: 'en',
-    keyPath: 'author',
-    typedKeyPath: 'author',
-    fieldConfig: { ...fieldConfig, ...config },
-    currentValue,
+const renderPreview = async (
+  currentValue,
+  config = {},
+  { locale = 'en', pendingEntries = [] } = {},
+) => {
+  const { container } = await renderWithDraft(RelationPreview, {
+    draft: createMockDraft({ fields: [fieldConfig], draft: { pendingEntries } }),
+    props: {
+      locale,
+      keyPath: 'author',
+      typedKeyPath: 'author',
+      fieldConfig: { ...fieldConfig, ...config },
+      currentValue,
+    },
   });
 
   return container;
@@ -52,7 +62,12 @@ describe('RelationPreview', () => {
   test('shows the label of the referenced entry', async () => {
     expect(await renderPreview('melvin-lucas')).toHaveTextContent('Melvin Lucas');
     expect(getRefEntries).toHaveBeenCalledWith(fieldConfig);
-    expect(getOptions).toHaveBeenCalledWith({ locale: 'en', fieldConfig, refEntries });
+    expect(getOptions).toHaveBeenCalledWith({
+      locale: 'en',
+      fieldConfig,
+      refEntries,
+      pendingEntries: [],
+    });
   });
 
   test('lists the labels of multiple referenced entries in the stored order', async () => {
@@ -65,15 +80,47 @@ describe('RelationPreview', () => {
     expect(await renderPreview('deleted-entry')).toHaveTextContent('deleted-entry');
   });
 
-  test('marks the paragraph with the language and direction', async () => {
-    const { container } = await render(RelationPreview, {
-      locale: 'ar',
-      keyPath: 'author',
-      typedKeyPath: 'author',
-      fieldConfig,
-      currentValue: 'melvin-lucas',
-    });
+  test('offers the pending entries of the draft along with the saved ones', async () => {
+    const pendingEntry = /** @type {Entry} */ ({ id: 'new-member', slug: 'new-member' });
 
+    await renderPreview(
+      'new-member',
+      {},
+      {
+        pendingEntries: [
+          {
+            collectionName: 'members',
+            entry: pendingEntry,
+            changes: [],
+            savingAssets: [],
+            values: ['new-member'],
+          },
+          // Belongs to another collection, so it’s left out
+          {
+            collectionName: 'tags',
+            entry: /** @type {Entry} */ ({ id: 'tag', slug: 'tag' }),
+            changes: [],
+            savingAssets: [],
+            values: ['tag'],
+          },
+        ],
+      },
+    );
+
+    expect(getOptions).toHaveBeenCalledWith({
+      locale: 'en',
+      fieldConfig,
+      refEntries: [...refEntries, pendingEntry],
+      // Also passed on their own, so a label referring to another pending entry resolves
+      pendingEntries: [
+        expect.objectContaining({ entry: pendingEntry }),
+        expect.objectContaining({ collectionName: 'tags' }),
+      ],
+    });
+  });
+
+  test('marks the paragraph with the language and direction', async () => {
+    const container = await renderPreview('melvin-lucas', {}, { locale: 'ar' });
     const paragraph = container.querySelector('p');
 
     expect(paragraph).toHaveAttribute('lang', 'ar');

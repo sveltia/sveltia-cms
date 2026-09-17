@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { callEventHooks } from '$lib/services/api/events';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
+import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
@@ -29,6 +30,10 @@ vi.mock('$lib/services/backends/git/shared/integration', () => ({
   skipCIEnabled: { current: false },
 }));
 vi.mock('$lib/services/backends/save');
+vi.mock('$lib/services/contents/collection', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  getCollection: vi.fn(),
+}));
 vi.mock('$lib/services/contents/collection/data', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
   contentUpdatesToast: { current: undefined },
@@ -88,6 +93,8 @@ describe('draft/save/index', () => {
       collectionName: 'posts',
       fileName: undefined,
       currentValues: { en: { title: 'Test Post' } },
+      extraValues: { en: {} },
+      pendingEntries: [],
     };
 
     /** @type {any} */ (skipCIConfigured).current = true;
@@ -561,6 +568,94 @@ describe('draft/save/index', () => {
 
       // Reads from `ja` (collectionFile defaultLocale), so max = 9 → next = 10.
       expect(mockDraft.currentValues.en.order).toBe(10);
+    });
+  });
+
+  describe('pending entries', () => {
+    const tagCollection = { name: 'tags', _type: 'entry' };
+
+    /**
+     * Build a pending entry.
+     * @param {string} slug Slug.
+     * @returns {any} Pending entry.
+     */
+    const createPendingEntry = (slug) => ({
+      collectionName: 'tags',
+      entry: { id: `id-${slug}`, slug, subPath: slug, locales: {} },
+      changes: [{ action: 'create', path: `tags/${slug}.md`, data: `title: ${slug}` }],
+      savingAssets: [{ path: `uploads/${slug}.png` }],
+      values: [slug],
+    });
+
+    beforeEach(() => {
+      vi.mocked(getOrderFieldKey).mockReturnValue(undefined);
+      vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (tagCollection));
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: {
+          id: 'test-id',
+          slug: 'test-post',
+          locales: { en: { slug: 'test-post', path: 'posts/test-post.md' } },
+        },
+        changes: [{ action: 'create', path: 'posts/test-post.md', data: 'title: Test Post' }],
+        savingAssets: [{ path: 'uploads/hero.png' }],
+      });
+    });
+
+    it('should commit the referenced pending entries along with the entry', async () => {
+      const svelte = createPendingEntry('svelte');
+      const react = createPendingEntry('react');
+
+      mockDraft.currentValues = { en: { title: 'Test Post', 'tags.0': 'svelte' } };
+      mockDraft.pendingEntries = [svelte, react];
+
+      await saveEntry();
+
+      expect(saveChanges).toHaveBeenCalledWith({
+        changes: [
+          { action: 'create', path: 'posts/test-post.md', data: 'title: Test Post' },
+          ...svelte.changes,
+        ],
+        savingEntries: [expect.objectContaining({ id: 'test-id' }), svelte.entry],
+        savingAssets: [{ path: 'uploads/hero.png' }, ...svelte.savingAssets],
+        options: expect.objectContaining({ commitType: 'create' }),
+      });
+
+      expect(callEventHooks).toHaveBeenCalledWith({
+        type: 'postSave',
+        entry: svelte.entry,
+        collection: tagCollection,
+        isNew: true,
+      });
+      expect(callEventHooks).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'postSave', entry: react.entry }),
+      );
+      expect(getCollection).toHaveBeenCalledWith('tags');
+      expect(contentUpdatesToast.current).toEqual(expect.objectContaining({ count: 2 }));
+    });
+
+    it('should leave the pending entries out of the Editorial Workflow entry', async () => {
+      const svelte = createPendingEntry('svelte');
+
+      mockDraft.currentValues = { en: { title: 'Test Post', 'tags.0': 'svelte' } };
+      mockDraft.pendingEntries = [svelte];
+      vi.mocked(isWorkflowDraft).mockReturnValue(true);
+
+      vi.mocked(saveWorkflowChanges).mockResolvedValue({
+        commit: { sha: 'abc', files: {} },
+        savedEntries: [{ id: 'test-id', slug: 'test-post', locales: {} }],
+        savedAssets: [],
+      });
+
+      await saveEntry();
+
+      // The changes go into the pull request, while the tracked entry is the one being edited
+      expect(saveWorkflowChanges).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: expect.arrayContaining(svelte.changes),
+          savingEntry: expect.objectContaining({ id: 'test-id' }),
+          savingAssets: expect.arrayContaining(svelte.savingAssets),
+        }),
+      );
     });
   });
 });

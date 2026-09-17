@@ -236,6 +236,7 @@ export const buildDraft = ({
     expanderStates: expanderStates ?? { _: {} },
     slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs }),
     interacted: false,
+    pendingEntries: [],
   });
 
   enabledLocales.forEach((locale) => {

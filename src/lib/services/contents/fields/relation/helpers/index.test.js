@@ -15,6 +15,7 @@ import {
  * InternalEntryCollection,
  * InternalFileCollection,
  * LocalizedEntry,
+ * PendingEntry,
  * } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
  */
@@ -1362,6 +1363,53 @@ describe('Test getOptions()', async () => {
         });
 
         expect(result).toBe('nonexistent-slug');
+      });
+
+      test('should resolve a value referring to a pending entry', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          display_fields: ['name.first'],
+        };
+
+        vi.mocked(getFieldDisplayValue).mockImplementation(
+          ({ keyPath, valueMap }) => valueMap?.[keyPath] || 'display-value',
+        );
+
+        /** @type {PendingEntry[]} */
+        const pendingEntries = [
+          {
+            collectionName: 'members',
+            entry: {
+              id: 'new-member',
+              slug: 'jane-doe',
+              subPath: 'jane-doe',
+              locales: { _default: { ...localizedEntryProps, content: { 'name.first': 'Jane' } } },
+            },
+            changes: [],
+            savingAssets: [],
+            values: ['jane-doe'],
+          },
+          // Another collection’s entry is left alone
+          {
+            collectionName: 'tags',
+            entry: { id: 'new-tag', slug: 'jane-doe', subPath: 'jane-doe', locales: {} },
+            changes: [],
+            savingAssets: [],
+            values: ['jane-doe'],
+          },
+        ];
+
+        const args = { fieldConfig, valueMap: { author: 'jane-doe' }, keyPath: 'author', locale };
+
+        expect(getReferencedOptionLabel({ ...args, pendingEntries })).toBe('Jane');
+        // The pending entries are passed on, so a label made of another Relation field resolves
+        expect(getFieldDisplayValue).toHaveBeenCalledWith(
+          expect.objectContaining({ keyPath: 'name.first', pendingEntries }),
+        );
+        // Without them, the value stays as it is
+        expect(getReferencedOptionLabel(args)).toBe('jane-doe');
       });
 
       test('should handle undefined values', () => {

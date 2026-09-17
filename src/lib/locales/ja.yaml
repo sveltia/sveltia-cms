@@ -1277,7 +1277,8 @@ reorder_item: アイテムを並び替え
 # take a label from
 list_item_value: アイテムの値
 
-# Add item button label
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
 # Example: “Add Image”, “Add Author”
 # {$name} is the label of the item type that can be added
 add_x: '{$name} を追加'
@@ -1302,6 +1303,13 @@ opacity: 透明度
 
 # Select field: empty option placeholder
 unselected_option: (なし)
+
+# Relation field: creating a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: 新しい{$name}は、編集中のエントリーと一緒に保存されます。
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: '{$name} を追加できませんでした。詳細はブラウザーのコンソールを確認してください。'
 
 # Select Assets dialog
 assets_dialog:

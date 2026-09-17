@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfigVersion } from '$lib/services/config';
 import { isDraftModified } from '$lib/services/contents/draft';
+import { createState } from '$lib/services/utils/state.svelte';
 
 vi.mock('@sveltia/utils/storage');
 vi.mock('@sveltia/utils/file', () => ({
@@ -235,6 +236,41 @@ describe('draft/backup', () => {
           files: {},
         }),
       );
+    });
+
+    it('should include the pending entries as plain objects', async () => {
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
+      vi.mocked(isDraftModified).mockReturnValue(true);
+      interacted = true;
+
+      const pendingEntry = {
+        collectionName: 'tags',
+        entry: { id: 'new', slug: 'svelte', subPath: 'svelte', locales: {} },
+        changes: [{ action: 'create', path: 'content/tags/svelte.md', data: 'title: Svelte' }],
+        savingAssets: [],
+        values: ['svelte'],
+      };
+
+      const draft = createState({
+        collectionName: 'posts',
+        fileName: undefined,
+        originalEntry: { slug: 'my-post' },
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { 'tags.0': 'svelte' } },
+        files: {},
+        interacted,
+        pendingEntries: [pendingEntry],
+      });
+
+      await saveBackup(/** @type {any} */ (draft));
+
+      const [backup] = mockBackupDB.put.mock.calls[0];
+
+      expect(backup.pendingEntries).toEqual([pendingEntry]);
+      // Detached from the reactive draft, so IndexedDB can clone it
+      expect(backup.pendingEntries[0]).not.toBe(draft.pendingEntries[0]);
     });
 
     it('should not save backup when draft is not modified', async () => {
@@ -540,6 +576,35 @@ describe('draft/backup', () => {
       expect(() => {
         restoreBackup({ backup, draft: updatedDraft });
       }).not.toThrow();
+    });
+
+    it('should restore the pending entries, or none for an older backup', () => {
+      const pendingEntry = {
+        collectionName: 'tags',
+        entry: { id: 'new', slug: 'svelte', subPath: 'svelte', locales: {} },
+        changes: [],
+        savingAssets: [],
+        values: ['svelte'],
+      };
+
+      const backup = {
+        timestamp: new Date(),
+        cmsConfigVersion: 'v1.0.0',
+        collectionName: 'posts',
+        slug: 'my-post',
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { 'tags.0': 'svelte' } },
+        files: {},
+      };
+
+      updatedDraft = createMockDraft({ pendingEntries: [] });
+      restoreBackup({ backup: { ...backup, pendingEntries: [pendingEntry] }, draft: updatedDraft });
+      expect(updatedDraft.pendingEntries).toEqual([pendingEntry]);
+
+      updatedDraft = createMockDraft({ pendingEntries: [] });
+      restoreBackup({ backup, draft: updatedDraft });
+      expect(updatedDraft.pendingEntries).toEqual([]);
     });
 
     it('should update currentLocales and currentSlugs from backup', () => {

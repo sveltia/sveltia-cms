@@ -2340,11 +2340,14 @@ describe('Test getFieldDisplayValue()', () => {
         author: 'john-doe',
       };
 
+      const pendingEntries = /** @type {any[]} */ ([{ collectionName: 'authors' }]);
+
       const result = getFieldDisplayValue({
         collectionName: 'posts',
         valueMap,
         keyPath: 'author',
         locale: 'en',
+        pendingEntries,
       });
 
       expect(mockGetReferencedOptionLabel).toHaveBeenCalledWith(
@@ -2353,6 +2356,8 @@ describe('Test getFieldDisplayValue()', () => {
           valueMap,
           keyPath: 'author',
           locale: 'en',
+          // Passed on, so a reference to an entry that isn’t saved yet resolves
+          pendingEntries,
         }),
       );
       expect(result).toBe('John Doe');

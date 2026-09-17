@@ -15,6 +15,7 @@ import { replaceTemplateFields } from '$lib/services/contents/fields/relation/he
  * GetFieldArgs,
  * InternalCollection,
  * InternalLocaleCode,
+ * PendingEntry,
  * RelationOption,
  * } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
@@ -59,6 +60,8 @@ import { replaceTemplateFields } from '$lib/services/contents/fields/relation/he
  * @param {InternalLocaleCode} params.locale Current locale.
  * @param {string} params.identifierField Identifier field.
  * @param {InternalLocaleCode} params.defaultLocale Default locale.
+ * @param {PendingEntry[]} [params.pendingEntries] Entries created from a Relation field of the
+ * draft being edited, which a Relation field of the entry can refer to before they are saved.
  * @returns {RelationOption[]} Array of relation options.
  */
 export const processEntry = ({
@@ -73,6 +76,7 @@ export const processEntry = ({
   locale,
   identifierField,
   defaultLocale,
+  pendingEntries = undefined,
 }) => {
   const { locales } = refEntry;
   // In a nested collection an entry’s slug is its path within the collection folder, ending with
@@ -95,6 +99,7 @@ export const processEntry = ({
       keyPath,
       valueMap: _locale ? locales[_locale].content : content,
       locale: _locale ?? locale,
+      pendingEntries,
     });
 
   const context = { slug, locale, getDisplayValue };

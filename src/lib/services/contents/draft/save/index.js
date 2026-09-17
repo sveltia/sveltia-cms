@@ -1,16 +1,17 @@
 import { callEventHooks } from '$lib/services/api/events';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
+import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
+import { getReferencedPendingEntries } from '$lib/services/contents/draft/pending-entries';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
+import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
@@ -24,7 +25,13 @@ import { isWorkflowDraft } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 /**
- * @import { ChangeResults, CommitOptions, Entry, EntryDraft } from '$lib/types/private';
+ * @import {
+ * ChangeResults,
+ * CommitOptions,
+ * Entry,
+ * EntryDraft,
+ * InternalCollection,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -48,37 +55,6 @@ const updateStores = ({ useWorkflow, skipCI, count }) => {
   };
 
   setLastCommitPublishHint(published);
-};
-
-/**
- * For new entries in reorder-enabled entry collections, assign a fresh manual sort order to the
- * draft’s current values: highest existing order + 1, or 1 if no entries have one yet. Doing this
- * at save time (rather than draft creation) makes the assignment race-safe even when a draft has
- * been backed up and restored after another entry took the previously computed value. Callers must
- * gate on `draft.isNew` and `draft.collection._type === 'entry'` themselves.
- * @param {EntryDraft} draft Draft to mutate in place.
- */
-const assignManualSortOrder = (draft) => {
-  const { collection, collectionFile, currentValues } = draft;
-  const orderKey = getOrderFieldKey(collection);
-
-  if (!orderKey) {
-    return;
-  }
-
-  const { defaultLocale } = (collectionFile ?? collection)._i18n;
-
-  const maxOrder = getEntriesByCollection(collection.name).reduce((max, entry) => {
-    const value = Number(entry.locales[defaultLocale]?.content?.[orderKey]);
-
-    return Number.isFinite(value) && value > max ? value : max;
-  }, 0);
-
-  const nextOrder = maxOrder + 1;
-
-  Object.values(currentValues).forEach((valueMap) => {
-    valueMap[orderKey] = nextOrder;
-  });
 };
 
 /**
@@ -143,6 +119,14 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
   changes.push(...assetMoveChanges);
   savingAssets.push(...movedAssets);
 
+  // The entries created from a Relation field go into the same commit as the entry referring to
+  // them, so neither can end up without the other
+  const pendingEntries = getReferencedPendingEntries(draft);
+
+  changes.push(...pendingEntries.flatMap((pendingEntry) => pendingEntry.changes));
+  savingAssets.push(...pendingEntries.flatMap((pendingEntry) => pendingEntry.savingAssets));
+
+  const savingPendingEntries = pendingEntries.map((pendingEntry) => pendingEntry.entry);
   /** @type {ChangeResults} */
   let results;
   /** @type {CommitOptions} */
@@ -165,7 +149,7 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
         })
       : await saveChanges({
           changes,
-          savingEntries: [savingEntry, ...cascadeEntries, ...movedEntries],
+          savingEntries: [savingEntry, ...cascadeEntries, ...movedEntries, ...savingPendingEntries],
           savingAssets,
           options,
         });
@@ -184,7 +168,22 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
     isNew,
   });
 
-  updateStores({ useWorkflow, skipCI, count: 1 + cascadeEntries.length + movedEntries.length });
+  await Promise.all(
+    pendingEntries.map(({ collectionName: pendingCollectionName, entry }) =>
+      callEventHooks({
+        type: 'postSave',
+        entry,
+        collection: /** @type {InternalCollection} */ (getCollection(pendingCollectionName)),
+        isNew: true,
+      }),
+    ),
+  );
+
+  updateStores({
+    useWorkflow,
+    skipCI,
+    count: 1 + cascadeEntries.length + movedEntries.length + pendingEntries.length,
+  });
   deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
 
   if (originalEntry) {

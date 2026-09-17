@@ -87,6 +87,7 @@ export const createMockDraft = ({
       expanderStates: { _: {} },
       slugEditor: {},
       interacted: false,
+      pendingEntries: [],
       ...draft,
     }),
   );
