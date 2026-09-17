@@ -4,6 +4,8 @@
 
   import {
     getCollapsibleGroupNames,
+    getConditionKey,
+    getViewConditions,
     isGroupCollapsed,
     setAllGroupsCollapsed,
   } from '$lib/services/common/view';
@@ -60,16 +62,18 @@
           };
         }}
       />
-      {#each groups as group (`${group.field}|${String(group.pattern)}`)}
-        {@const { label: _label, field, pattern } = group}
+      {#each groups as group (getConditionKey(getViewConditions(group)))}
+        {@const { label: _label } = group}
+        {@const conditions = getViewConditions(group)}
+        {@const key = getConditionKey(conditions)}
         <MenuItemRadio
           label={_label}
-          checked={currentView.current.group?.field === field &&
-            String(currentView.current.group.pattern) === String(pattern)}
+          checked={!!currentView.current.group &&
+            getConditionKey(currentView.current.group) === key}
           onSelect={() => {
             currentView.current = {
               ...currentView.current,
-              group: { field, pattern },
+              group: conditions,
             };
           }}
         />

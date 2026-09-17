@@ -246,6 +246,48 @@ describe('Test checkViewOptions()', () => {
     );
   });
 
+  it('should accept a view filter or group with a comparison option', () => {
+    check({
+      fields,
+      view_groups: [{ label: 'Recent', field: 'title', gte: '{{year}}' }],
+      view_filters: [
+        { label: 'Upcoming', field: 'title', gte: '{{today}}' },
+        { label: 'Some', field: 'title', in: ['a', 'b'] },
+        { label: 'Range', field: 'title', pattern: '^2', lt: '3' },
+      ],
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should report a view filter without a pattern or comparison option', () => {
+    check({
+      fields,
+      // A group without a pattern groups the entries by the field value
+      view_groups: [{ label: 'Title', field: 'title' }],
+      view_filters: [
+        { label: 'Titled', field: 'title' },
+        { label: 'Upcoming', field: 'title', gte: '{{today}}' },
+        { label: 'Empty', field: 'title', eq: undefined },
+        'invalid',
+      ],
+    });
+
+    expect(mockAddMessage).toHaveBeenCalledTimes(2);
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_view_filter_no_condition',
+        values: { count: '1' },
+      }),
+    );
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_view_filter_no_condition',
+        values: { count: '3' },
+      }),
+    );
+  });
+
   it('should ignore a view option without a valid field', () => {
     check({
       fields,

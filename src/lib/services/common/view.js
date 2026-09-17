@@ -7,8 +7,93 @@ import { getRegex } from '$lib/services/utils/regex';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { GroupingConditions } from '$lib/types/private';
+ * @import { FilteringConditions, GroupingConditions } from '$lib/types/private';
+ * @import { ViewFilter, ViewGroup } from '$lib/types/public';
  */
+
+/**
+ * Conditions of a view filter or group: the target field, and what its value is matched against.
+ * @typedef {FilteringConditions | GroupingConditions} ViewConditions
+ */
+
+/**
+ * Comparison operators a view filter or group can define in addition to, or instead of, `pattern`.
+ * Listed in the order the operators are written to a condition key by {@link getConditionKey}.
+ * @type {('eq' | 'ne' | 'lt' | 'lte' | 'gt' | 'gte' | 'in' | 'not_in')[]}
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ */
+export const COMPARISON_OPERATORS = ['eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'in', 'not_in'];
+
+/**
+ * Get the conditions a view filter or group option defines, leaving out the `name` and `label`,
+ * which identify the option in the menu but not what it matches. This is what the view settings
+ * hold for an applied filter or group, so an option is applied by looking up its conditions with
+ * {@link getConditionKey}.
+ * @param {ViewFilter | ViewGroup} option View filter or group option.
+ * @returns {ViewConditions} Conditions, with only the properties the option defines.
+ */
+export const getViewConditions = (option) => {
+  const { field, pattern } = option;
+  /** @type {ViewConditions} */
+  const conditions = { field };
+
+  if (pattern !== undefined) {
+    conditions.pattern = pattern;
+  }
+
+  COMPARISON_OPERATORS.forEach((operator) => {
+    if (option[operator] !== undefined) {
+      conditions[operator] = /** @type {any} */ (option[operator]);
+    }
+  });
+
+  return conditions;
+};
+
+/**
+ * Check whether the conditions include a comparison operator, as opposed to a plain `pattern`, or
+ * nothing but the field in the case of a group.
+ * @param {ViewConditions | null | undefined} conditions Conditions.
+ * @returns {boolean} Whether at least one of the {@link COMPARISON_OPERATORS} is defined.
+ */
+export const hasComparison = (conditions) =>
+  !!conditions && COMPARISON_OPERATORS.some((operator) => conditions[operator] !== undefined);
+
+/**
+ * Get a key identifying the conditions of a view filter or group, so that an applied condition can
+ * be matched with the option it came from, and the collapsed groups of a view can be saved per
+ * condition. Two conditions get the same key when they match the same entries.
+ * @param {ViewConditions} conditions Conditions.
+ * @returns {string} JSON array of the field, the pattern if any, and the comparison operators if
+ * any, e.g. `["date","\\d{4}"]` or `["date",null,{"gte":"{{today}}"}]`. A pattern is a regular
+ * expression that can hold any character, so joining the parts with a separator could be
+ * ambiguous. A pattern given as a `RegExp` object is written as its string form, which is how the
+ * view settings saved before the object was supported hold it, and the operators are written in
+ * the order of {@link COMPARISON_OPERATORS} rather than the order they were configured in.
+ */
+export const getConditionKey = (conditions) => {
+  const { field, pattern } = conditions;
+  /** @type {any[]} */
+  const parts = [field];
+
+  const operators = Object.fromEntries(
+    COMPARISON_OPERATORS.filter((operator) => conditions[operator] !== undefined).map(
+      (operator) => [operator, conditions[operator]],
+    ),
+  );
+
+  if (pattern !== undefined) {
+    parts.push(String(pattern));
+  } else if (Object.keys(operators).length) {
+    parts.push(null);
+  }
+
+  if (Object.keys(operators).length) {
+    parts.push(operators);
+  }
+
+  return JSON.stringify(parts);
+};
 
 /**
  * View settings with the properties that the group expanders read and write. Any other property,
@@ -126,19 +211,11 @@ export const getCollapsibleGroupNames = (names) => names.filter((name) => name !
  * Get the key under which the collapsed groups of a view are saved. Each grouping condition
  * produces its own set of groups, so the collapsed state is kept per condition.
  * @param {GroupingConditions | null | undefined} conditions Grouping conditions.
- * @returns {string | undefined} JSON array of the field and, if any, the pattern, e.g.
- * `["date","\\d{4}"]`, or `undefined` when the list isn’t grouped. A pattern is a regular
- * expression that can hold any character, so joining the two with a separator could be ambiguous.
+ * @returns {string | undefined} Condition key from {@link getConditionKey}, or `undefined` when
+ * the list isn’t grouped.
  */
-export const getGroupingKey = (conditions) => {
-  if (!conditions) {
-    return undefined;
-  }
-
-  const { field, pattern } = conditions;
-
-  return JSON.stringify(pattern === undefined ? [field] : [field, String(pattern)]);
-};
+export const getGroupingKey = (conditions) =>
+  conditions ? getConditionKey(conditions) : undefined;
 
 /**
  * Check whether a group is collapsed in the given view.

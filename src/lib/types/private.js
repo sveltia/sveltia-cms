@@ -27,6 +27,7 @@
  * S3MediaLibrary,
  * SelectField,
  * SelectFieldValue,
+ * ViewComparisonOptions,
  * } from './public';
  */
 
@@ -1205,22 +1206,35 @@
  */
 
 /**
- * Entry/Asset filtering conditions.
- * @typedef {object} FilteringConditions
+ * Entry/Asset filtering conditions: what an entry collection’s view filter defines, minus its name
+ * and label. An asset filter only has a field and pattern.
+ * @typedef {object} FilteringConditionsProps
  * @property {FieldKeyPath} field Target field name.
- * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
+ * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
+ * value. Required unless a comparison operator is defined.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  * @see https://sveltiacms.app/en/docs/collections/entries#filtering
  */
 
 /**
- * Entry/Asset grouping conditions.
- * @typedef {object} GroupingConditions
+ * Entry/Asset filtering conditions.
+ * @typedef {FilteringConditionsProps & ViewComparisonOptions} FilteringConditions
+ */
+
+/**
+ * Entry/Asset grouping conditions: what an entry collection’s view group defines, minus its name
+ * and label. An asset group only has a field and pattern.
+ * @typedef {object} GroupingConditionsProps
  * @property {FieldKeyPath} field Target field name.
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  * @see https://sveltiacms.app/en/docs/collections/entries#grouping
+ */
+
+/**
+ * Entry/Asset grouping conditions.
+ * @typedef {GroupingConditionsProps & ViewComparisonOptions} GroupingConditions
  */
 
 /**

@@ -1270,14 +1270,55 @@
  */
 
 /**
- * View filter.
- * @typedef {object} ViewFilter
+ * A value that a view filter or group compares the field value with. A string can contain the
+ * `{{now}}` tag for the current date and time, the `{{today}}` tag for the current date in the
+ * `YYYY-MM-DD` format, or the `{{year}}`, `{{month}}`, `{{day}}`, `{{hour}}`, `{{minute}}` and
+ * `{{second}}` tags for the parts of the current date and time, all in the user’s local time zone.
+ * The tags are resolved whenever the entry list is updated, and every minute while such a filter
+ * or group is applied, so a filter like “Upcoming events” keeps working without a change to the
+ * configuration.
+ * @typedef {string | number | boolean} ViewComparisonValue
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ */
+
+/**
+ * Comparison options for a view filter or group, which can be combined with each other and with
+ * `pattern`. An entry has to satisfy all of them. The field value is compared as a date if the
+ * field is a DateTime field, as a number if both the value and the given value are numeric, or as
+ * a string otherwise. For a DateTime field, a given date should be in the same format as the field
+ * value, or be the `{{now}}` or `{{today}}` tag; `{{today}}` is the one to use with a date-only
+ * field, so that an entry dated today is included in a `gte` comparison.
+ * @typedef {object} ViewComparisonOptions
+ * @property {ViewComparisonValue} [eq] Value the field value has to be equal to.
+ * @property {ViewComparisonValue} [ne] Value the field value has to be different from. An entry
+ * without a value for the field also matches.
+ * @property {ViewComparisonValue} [lt] Value the field value has to be less than, e.g. `{{now}}`
+ * for past events.
+ * @property {ViewComparisonValue} [lte] Value the field value has to be less than or equal to.
+ * @property {ViewComparisonValue} [gt] Value the field value has to be greater than.
+ * @property {ViewComparisonValue} [gte] Value the field value has to be greater than or equal to,
+ * e.g. `{{today}}` for upcoming events.
+ * @property {ViewComparisonValue[]} [in] Values one of which the field value has to be equal to.
+ * @property {ViewComparisonValue[]} [not_in] Values the field value has to be different from. An
+ * entry without a value for the field also matches.
+ * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ */
+
+/**
+ * View filter properties.
+ * @typedef {object} ViewFilterProps
  * @property {string} [name] Unique identifier for the filter.
  * @property {string} label Label.
  * @property {FieldKeyPath} field Field name.
- * @property {string | RegExp | boolean} pattern Regular expression matching pattern or exact value.
+ * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
+ * value. Required unless one of the comparison options is defined.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ */
+
+/**
+ * View filter.
+ * @typedef {ViewFilterProps & ViewComparisonOptions} ViewFilter
  */
 
 /**
@@ -1290,15 +1331,21 @@
  */
 
 /**
- * View group.
- * @typedef {object} ViewGroup
+ * View group properties.
+ * @typedef {object} ViewGroupProps
  * @property {string} [name] Unique identifier for the group.
- * @property {string} label Label.
+ * @property {string} label Label. With a comparison option, the entries satisfying the condition
+ * are grouped under this label, and the other entries under “Other”.
  * @property {FieldKeyPath} field Field name.
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
  * @see https://sveltiacms.app/en/docs/collections/entries#grouping
+ */
+
+/**
+ * View group.
+ * @typedef {ViewGroupProps & ViewComparisonOptions} ViewGroup
  */
 
 /**

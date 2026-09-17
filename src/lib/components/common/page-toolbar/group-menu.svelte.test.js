@@ -59,6 +59,38 @@ describe('GroupMenu', () => {
     await expect.poll(() => currentView.current.group).toBe(null);
   });
 
+  test('tells apart the groups on the same field by their conditions', async () => {
+    const currentView = createRawState(
+      /** @type {any} */ ({ group: { field: 'date', gte: '{{today}}' } }),
+    );
+
+    await render(GroupMenu, {
+      currentView,
+      'aria-controls': 'entry-list',
+      groups: [
+        { name: 'upcoming', label: 'Upcoming', field: 'date', gte: '{{today}}' },
+        { name: 'past', label: 'Past', field: 'date', lt: '{{today}}' },
+        { name: 'year', label: 'Year', field: 'date', pattern: '\\d{4}' },
+      ],
+    });
+
+    await page.getByRole('button', { name: 'Group' }).click();
+    await sleep(150);
+
+    const items = page.getByRole('menu', { name: 'Grouping Options' }).getByRole('menuitemradio');
+
+    expect(items.elements().map((el) => el.getAttribute('aria-checked'))).toEqual([
+      'false',
+      'true',
+      'false',
+      'false',
+    ]);
+
+    await items.nth(2).click();
+    // The name and label are left out of the applied conditions
+    await expect.poll(() => currentView.current.group).toEqual({ field: 'date', lt: '{{today}}' });
+  });
+
   test('expands and collapses all the groups', async () => {
     const currentView = createRawState(
       /** @type {any} */ ({

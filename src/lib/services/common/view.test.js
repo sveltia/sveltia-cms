@@ -6,9 +6,13 @@ import { createRawState } from '$lib/services/utils/state.svelte';
 
 import {
   buildGroupMap,
+  COMPARISON_OPERATORS,
   getCollapsibleGroupNames,
+  getConditionKey,
   getGroupingKey,
   getGroupLabel,
+  getViewConditions,
+  hasComparison,
   initViewSettingsStorage,
   isGroupCollapsed,
   matchesFilter,
@@ -299,6 +303,95 @@ describe('Test getCollapsibleGroupNames()', () => {
   });
 });
 
+describe('Test getViewConditions()', () => {
+  test('keeps the field and pattern, leaving out the name and label', () => {
+    expect(
+      getViewConditions({ name: 'year', label: 'Year', field: 'date', pattern: '\\d{4}' }),
+    ).toEqual({ field: 'date', pattern: '\\d{4}' });
+    expect(getViewConditions({ label: 'Draft', field: 'draft', pattern: true })).toEqual({
+      field: 'draft',
+      pattern: true,
+    });
+  });
+
+  test('leaves out an undefined pattern', () => {
+    expect(getViewConditions({ label: 'Category', field: 'category' })).toEqual({
+      field: 'category',
+    });
+    expect(getViewConditions({ label: 'Category', field: 'category', pattern: undefined })).toEqual(
+      { field: 'category' },
+    );
+  });
+
+  test('keeps every comparison operator that is defined', () => {
+    expect(
+      getViewConditions({
+        label: 'Upcoming',
+        field: 'date',
+        gte: '{{today}}',
+        in: ['a', 'b'],
+        not_in: [],
+        eq: false,
+        lt: 0,
+        gt: undefined,
+      }),
+    ).toEqual({ field: 'date', gte: '{{today}}', in: ['a', 'b'], not_in: [], eq: false, lt: 0 });
+  });
+});
+
+describe('Test hasComparison()', () => {
+  test('detects a comparison operator', () => {
+    expect(hasComparison(undefined)).toBe(false);
+    expect(hasComparison(null)).toBe(false);
+    expect(hasComparison({ field: 'date' })).toBe(false);
+    expect(hasComparison({ field: 'date', pattern: '\\d{4}' })).toBe(false);
+    expect(hasComparison({ field: 'date', gte: undefined })).toBe(false);
+
+    COMPARISON_OPERATORS.forEach((operator) => {
+      expect(hasComparison({ field: 'date', [operator]: '2024' })).toBe(true);
+    });
+  });
+});
+
+describe('Test getConditionKey()', () => {
+  test('writes the field and the string form of the pattern', () => {
+    expect(getConditionKey({ field: 'category' })).toBe('["category"]');
+    expect(getConditionKey({ field: 'category', pattern: undefined })).toBe('["category"]');
+    expect(getConditionKey({ field: 'date', pattern: '\\d{4}' })).toBe('["date","\\\\d{4}"]');
+    expect(getConditionKey({ field: 'date', pattern: /\d{4}/ })).toBe('["date","/\\\\d{4}/"]');
+    expect(getConditionKey({ field: 'draft', pattern: true })).toBe('["draft","true"]');
+  });
+
+  test('writes the comparison operators in a fixed order after the pattern', () => {
+    expect(getConditionKey({ field: 'date', gte: '{{today}}' })).toBe(
+      '["date",null,{"gte":"{{today}}"}]',
+    );
+    expect(getConditionKey({ field: 'date', pattern: '^2024', lt: '{{now}}' })).toBe(
+      '["date","^2024",{"lt":"{{now}}"}]',
+    );
+    expect(getConditionKey({ field: 'n', in: [1, 2], eq: 3 })).toBe(
+      getConditionKey({ field: 'n', eq: 3, in: [1, 2] }),
+    );
+    expect(getConditionKey({ field: 'n', in: [1, 2], eq: 3 })).toBe(
+      '["n",null,{"eq":3,"in":[1,2]}]',
+    );
+  });
+
+  test('tells conditions apart', () => {
+    const keys = [
+      { field: 'date' },
+      { field: 'date', pattern: '\\d{4}' },
+      { field: 'date', gte: '{{today}}' },
+      { field: 'date', gt: '{{today}}' },
+      { field: 'date', lt: '{{today}}' },
+      { field: 'date', pattern: '\\d{4}', gte: '{{today}}' },
+      { field: 'time', gte: '{{today}}' },
+    ].map(getConditionKey);
+
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
 describe('Test getGroupingKey()', () => {
   test('keys a condition by its field and pattern', () => {
     expect(getGroupingKey(undefined)).toBeUndefined();
@@ -308,6 +401,9 @@ describe('Test getGroupingKey()', () => {
     expect(getGroupingKey({ field: 'draft', pattern: true })).toBe('["draft","true"]');
     // A pattern can hold any character without making the key ambiguous
     expect(getGroupingKey({ field: 'tag', pattern: 'a|b' })).toBe('["tag","a|b"]');
+    expect(getGroupingKey({ field: 'date', gte: '{{today}}' })).toBe(
+      '["date",null,{"gte":"{{today}}"}]',
+    );
   });
 });
 

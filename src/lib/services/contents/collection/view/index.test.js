@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
@@ -25,6 +25,8 @@ import {
   reorderedEntries,
   reordering,
   setReorderMode,
+  viewTime,
+  viewUsesTime,
 } from '.';
 
 /**
@@ -1654,6 +1656,99 @@ describe('collection/view/index', () => {
     // The snapshot is discarded first, so the previous collection’s view isn’t restored
     expect(currentView.current).not.toBe(view);
     expect(currentView.current.group).toBeNull();
+  });
+
+  describe('time-based view', () => {
+    const start = new Date(2026, 8, 16, 23, 59, 30);
+    /** @type {any} */
+    const entries = [{ id: '1', slug: 'event-1', locales: {}, sha: 'abc' }];
+
+    beforeEach(async () => {
+      // Keep `setTimeout` real, which `wait()` relies on
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+      vi.setSystemTime(start);
+      vi.mocked(getEntriesByCollection).mockReturnValue(entries);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(filterEntries).mockImplementation((_entries) => _entries);
+      vi.mocked(groupEntries).mockImplementation((_entries) => [{ name: '*', entries: _entries }]);
+      _allEntries.current = entries;
+      await wait();
+      _selectedCollection.current = /** @type {any} */ ({ name: 'events', _type: 'entry' });
+      await wait();
+    });
+
+    afterEach(async () => {
+      currentView.current = { type: 'list' };
+      await wait();
+      vi.useRealTimers();
+    });
+
+    test('viewUsesTime reflects the template tags in the applied filters and group', async () => {
+      expect(viewUsesTime.current).toBe(false);
+
+      currentView.current = { type: 'list', filters: [{ field: 'status', pattern: 'draft' }] };
+      expect(viewUsesTime.current).toBe(false);
+
+      currentView.current = { type: 'list', filters: [{ field: 'date', gte: '{{today}}' }] };
+      expect(viewUsesTime.current).toBe(true);
+
+      currentView.current = { type: 'list', filters: [{ field: 'date', pattern: '^{{year}}' }] };
+      expect(viewUsesTime.current).toBe(true);
+
+      currentView.current = { type: 'list', group: { field: 'date', lt: '{{now}}' } };
+      expect(viewUsesTime.current).toBe(true);
+
+      currentView.current = { type: 'list', group: { field: 'date', pattern: '\\d{4}' } };
+      expect(viewUsesTime.current).toBe(false);
+    });
+
+    test('recomputes the list every minute while a time-based filter is applied', async () => {
+      const filters = [{ field: 'date', gte: '{{today}}' }];
+      const collection = _selectedCollection.current;
+
+      currentView.current = { type: 'list', filters };
+      await wait();
+
+      // The time is reset when the filter is applied
+      expect(viewTime.current).toEqual(start);
+      expect(entryGroups.current).toEqual([{ name: '*', entries }]);
+      expect(filterEntries).toHaveBeenLastCalledWith(entries, collection, filters, start);
+      expect(groupEntries).toHaveBeenLastCalledWith(entries, collection, undefined, start);
+
+      vi.clearAllMocks();
+      vi.advanceTimersByTime(60000);
+      await wait();
+
+      const tick = new Date(2026, 8, 17, 0, 0, 30);
+
+      expect(viewTime.current).toEqual(tick);
+      expect(entryGroups.current).toEqual([{ name: '*', entries }]);
+      expect(filterEntries).toHaveBeenLastCalledWith(entries, collection, filters, tick);
+      expect(groupEntries).toHaveBeenLastCalledWith(entries, collection, undefined, tick);
+
+      // The timer is stopped once the filter is removed
+      currentView.current = { type: 'list', filters: [] };
+      await wait();
+      vi.advanceTimersByTime(60000);
+      await wait();
+
+      expect(viewTime.current).toEqual(tick);
+    });
+
+    test('passes the time to the unpublished entry list', async () => {
+      const filters = [{ field: 'date', gte: '{{today}}' }];
+      const collection = _selectedCollection.current;
+      const draft = { id: 'draft-1', workflow: { collectionName: 'events' }, locales: {} };
+
+      vi.mocked(sortEntries).mockImplementation((_entries) => _entries);
+      _unpublishedEntries.current = [draft];
+      await wait();
+      currentView.current = { type: 'list', filters };
+      await wait();
+
+      expect(listedUnpublishedEntries.current).toEqual([draft]);
+      expect(filterEntries).toHaveBeenLastCalledWith([draft], collection, filters, start);
+    });
   });
 
   describe('view restoration', () => {

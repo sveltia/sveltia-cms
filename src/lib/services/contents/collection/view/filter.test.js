@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { selectedCollection } from '$lib/services/contents/collection';
 
@@ -18,6 +18,7 @@ vi.mock('$lib/services/contents/collection/view/settings', () => ({
 }));
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
+  getField: vi.fn(),
   getPropertyValue: vi.fn(),
 }));
 
@@ -348,6 +349,137 @@ describe('Test filterEntries()', async () => {
 
     // Should convert object to string and test regex
     expect(result).toHaveLength(3);
+  });
+});
+
+describe('Test filterEntries() with a comparison', async () => {
+  const { getField, getPropertyValue } = await import('$lib/services/contents/entry/fields');
+  const { getRegex } = await import('$lib/services/utils/regex');
+
+  /**
+   * Create an entry.
+   * @param {string} id Entry ID.
+   * @param {Record<string, any>} content Content.
+   * @returns {any} Entry.
+   */
+  const createEntry = (id, content) => ({
+    id,
+    slug: id,
+    sha: id,
+    path: `content/events/${id}.md`,
+    locales: { en: content },
+  });
+
+  const entries = [
+    createEntry('past', { date: '2026-09-15T18:00', priority: 1, category: 'concert' }),
+    createEntry('today', { date: '2026-09-16T18:00', priority: 5, category: 'festival' }),
+    createEntry('future', { date: '2026-09-17T18:00', priority: 10, category: 'concert' }),
+    createEntry('undated', { priority: 3 }),
+  ];
+
+  const fields = [
+    { name: 'date', widget: 'datetime' },
+    { name: 'priority', widget: 'number' },
+    { name: 'category', widget: 'relation', collection: 'categories' },
+  ];
+
+  /** @type {any} */
+  const collection = {
+    name: 'events',
+    _type: 'entry',
+    _i18n: { defaultLocale: 'en' },
+    folder: 'content/events',
+    fields,
+    view_filters: [
+      { label: 'Upcoming', field: 'date', gte: '{{now}}' },
+      { label: 'Past', field: 'date', lt: '{{now}}' },
+      { label: 'Today', field: 'date', pattern: '^{{today}}' },
+      { label: 'This year', field: 'date', gte: '{{year}}-01-01', lt: '2027-01-01' },
+      { label: 'Important', field: 'priority', gte: 5 },
+      { label: 'Not important', field: 'priority', lt: 5 },
+      { label: 'Concerts', field: 'category', eq: 'Concert' },
+      { label: 'Other than concerts', field: 'category', ne: 'concert' },
+      { label: 'Some', field: 'category', in: ['festival', 'workshop'] },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 16, 14, 5, 9));
+
+    vi.mocked(getPropertyValue).mockImplementation(({ entry, key, resolveRef = true }) => {
+      const value = /** @type {any} */ (entry).locales?.en?.[key];
+
+      // Resolve the category label
+      if (key === 'category' && resolveRef && typeof value === 'string') {
+        return value.charAt(0).toUpperCase() + value.slice(1);
+      }
+
+      return value;
+    });
+
+    vi.mocked(getField).mockImplementation(
+      ({ keyPath }) => /** @type {any} */ (fields.find(({ name }) => name === keyPath)),
+    );
+
+    vi.mocked(getRegex).mockImplementation((pattern) =>
+      typeof pattern === 'string' ? new RegExp(pattern) : undefined,
+    );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /**
+   * Filter the entries and get the IDs of the result.
+   * @param {FilteringConditions[]} filters Filters.
+   * @returns {string[]} Entry IDs.
+   */
+  const filter = (filters) => filterEntries(entries, collection, filters).map(({ id }) => id);
+
+  test('compares a DateTime field with the current date and time', () => {
+    expect(filter([{ field: 'date', gte: '{{now}}' }])).toEqual(['today', 'future']);
+    expect(filter([{ field: 'date', lt: '{{now}}' }])).toEqual(['past']);
+    expect(filter([{ field: 'date', pattern: '^{{today}}' }])).toEqual(['today']);
+    expect(filter([{ field: 'date', gte: '{{year}}-01-01', lt: '2027-01-01' }])).toEqual([
+      'past',
+      'today',
+      'future',
+    ]);
+  });
+
+  test('looks up the field configuration to parse a date', () => {
+    filter([{ field: 'date', gte: '{{now}}' }]);
+
+    expect(getField).toHaveBeenCalledWith({ collectionName: 'events', keyPath: 'date' });
+  });
+
+  test('compares a number field', () => {
+    expect(filter([{ field: 'priority', gte: 5 }])).toEqual(['today', 'future']);
+    expect(filter([{ field: 'priority', lt: 5 }])).toEqual(['past', 'undated']);
+  });
+
+  test('compares the raw or referenced value for equality', () => {
+    expect(filter([{ field: 'category', eq: 'Concert' }])).toEqual(['past', 'future']);
+    expect(filter([{ field: 'category', ne: 'concert' }])).toEqual(['today', 'undated']);
+    expect(filter([{ field: 'category', in: ['festival', 'workshop'] }])).toEqual(['today']);
+  });
+
+  test('combines the filters', () => {
+    expect(
+      filter([
+        { field: 'date', gte: '{{now}}' },
+        { field: 'category', eq: 'Concert' },
+      ]),
+    ).toEqual(['future']);
+  });
+
+  test('ignores a filter whose comparison is not configured', () => {
+    expect(filter([{ field: 'priority', gte: 6 }])).toEqual(['past', 'today', 'future', 'undated']);
+    expect(filter([{ field: 'priority', gt: 5 }])).toEqual(['past', 'today', 'future', 'undated']);
+    expect(filter([{ field: 'priority' }])).toEqual(['past', 'today', 'future', 'undated']);
   });
 });
 

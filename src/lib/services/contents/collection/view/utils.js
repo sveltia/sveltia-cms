@@ -1,14 +1,16 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { getViewConditions } from '$lib/services/common/view';
+
 /**
  * @import { FilteringConditions, GroupingConditions, SortOrder } from '$lib/types/private';
- * @import { SortableFields } from '$lib/types/public';
+ * @import { SortableFields, ViewFilter, ViewGroup } from '$lib/types/public';
  */
 
 /**
  * Parse a view configuration that supports both an array (Netlify/Decap CMS compatible) and an
  * object (Static CMS compatible) format.
- * @template {{ name: string, field: string, pattern: string | RegExp }} T
+ * @template {ViewFilter | ViewGroup} T
  * @param {T[] | Record<string, any> | undefined} config Raw configuration value.
  * @param {string} optionsKey Property name to extract the options array from when config is an
  * object.
@@ -30,9 +32,7 @@ export const parseViewOptions = (config, optionsKey) => {
 
       return {
         options,
-        default: defaultItem
-          ? { field: defaultItem.field, pattern: defaultItem.pattern }
-          : undefined,
+        default: defaultItem ? getViewConditions(defaultItem) : undefined,
       };
     }
   }

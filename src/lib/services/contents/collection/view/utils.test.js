@@ -61,6 +61,20 @@ describe('Test parseViewOptions()', () => {
     });
   });
 
+  test('returns the comparison options of the default option without its name and label', () => {
+    const options = [
+      { name: 'upcoming', label: 'Upcoming', field: 'date', gte: '{{today}}', in: ['a'] },
+      { name: 'bar', field: 'category', pattern: 'tech' },
+    ];
+
+    const result = parseViewOptions({ items: options, default: 'upcoming' }, 'items');
+
+    expect(result).toEqual({
+      options,
+      default: { field: 'date', gte: '{{today}}', in: ['a'] },
+    });
+  });
+
   test('returns undefined default when default name does not match any option', () => {
     const options = [{ name: 'foo', field: 'status', pattern: 'published' }];
     const result = parseViewOptions({ items: options, default: 'nonexistent' }, 'items');

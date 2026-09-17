@@ -2,6 +2,7 @@ import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
 import { backend } from '$lib/services/backends';
+import { getGroupingKey } from '$lib/services/common/view';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
@@ -11,6 +12,7 @@ import {
   isNestedCollection,
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
+import { usesCurrentTime } from '$lib/services/contents/collection/view/conditions';
 import { filterEntries, parseFilterConfig } from '$lib/services/contents/collection/view/filter';
 import {
   getReorderGroupingConditions,
@@ -80,6 +82,30 @@ export const reorderDirty = createRawState(false);
  * @type {EntryListView | undefined}
  */
 let viewBeforeReorder;
+/**
+ * How often {@link viewTime} is updated while a time-based view filter or group is applied. A
+ * minute keeps the list close to the clock without recomputing it for nothing.
+ */
+const VIEW_TIME_INTERVAL = 60000;
+
+/**
+ * Current date and time that the template tags in the view filters and groups resolve to, such as
+ * `{{today}}` in an “Upcoming events” filter. It’s updated every minute while the current view has
+ * such a condition, so that the list is recomputed as time goes by, e.g. when an event starts or
+ * the day changes, and not only when the view or the entries change. See {@link viewUsesTime}.
+ * @type {{ current: Date }}
+ */
+export const viewTime = createRawState(new Date());
+
+/**
+ * Whether the current view has a filter or group depending on the current time.
+ * @type {{ readonly current: boolean }}
+ */
+export const viewUsesTime = createDerivedState(() => {
+  const { filters = [], group } = currentView.current;
+
+  return filters.some(usesCurrentTime) || usesCurrentTime(group);
+});
 
 /**
  * List of the entries shown in the entry list for the selected entry collection. For a nested
@@ -161,7 +187,7 @@ export const listedUnpublishedEntries = createDerivedState(() => {
   }
 
   if (_currentView.filters) {
-    entries = filterEntries(entries, _collection, _currentView.filters);
+    entries = filterEntries(entries, _collection, _currentView.filters, viewTime.current);
   }
 
   return entries;
@@ -236,7 +262,8 @@ export const collectionState = createDerivedState(() => {
 /**
  * Sorted, filtered and grouped entries for the selected entry collection. `sortEntries()` and
  * `groupEntries()` may return localized labels, and they read the current app locale, so the
- * groups are also recomputed when the locale changes.
+ * groups are also recomputed when the locale changes. They are also recomputed as {@link viewTime}
+ * ticks while a time-based filter or group is applied.
  * @type {{ readonly current: { name: string, entries: Entry[] }[] }}
  */
 export const entryGroups = createDerivedState(() => {
@@ -254,11 +281,13 @@ export const entryGroups = createDerivedState(() => {
     entries = sortEntries(entries, collection, _currentView.sort);
   }
 
+  const { current: now } = viewTime;
+
   if (_currentView.filters) {
-    entries = filterEntries(entries, collection, _currentView.filters);
+    entries = filterEntries(entries, collection, _currentView.filters, now);
   }
 
-  return groupEntries(entries, collection, _currentView.group);
+  return groupEntries(entries, collection, _currentView.group, now);
 });
 
 /**
@@ -350,7 +379,7 @@ export const setReorderMode = (value) => {
   }
 
   if (reorderGroup) {
-    if (view.group?.field !== reorderGroup.field || view.group?.pattern !== reorderGroup.pattern) {
+    if (getGroupingKey(view.group) !== getGroupingKey(reorderGroup)) {
       overrides.group = reorderGroup;
     }
   } else if (view.group) {
@@ -375,6 +404,24 @@ createRootEffect(() => {
       restoreView(collection, _allEntries);
     });
   }
+});
+
+// Keep the time-based view filters and groups up to date. The time is reset as soon as such a
+// condition is applied, as the last tick may date from long ago
+createRootEffect(() => {
+  if (!viewUsesTime.current) {
+    return undefined;
+  }
+
+  viewTime.current = new Date();
+
+  const timer = setInterval(() => {
+    viewTime.current = new Date();
+  }, VIEW_TIME_INTERVAL);
+
+  return () => {
+    clearInterval(timer);
+  };
 });
 
 createRootEffect(() => {

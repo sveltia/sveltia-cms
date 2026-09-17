@@ -101,6 +101,81 @@ describe('FilterMenu', () => {
       .toEqual([{ field: 'featured', pattern: true }]);
   });
 
+  test('tells apart the filters on the same field by their conditions', async () => {
+    const currentView = createRawState(
+      /** @type {any} */ ({ filters: [{ field: 'date', gte: '{{today}}' }] }),
+    );
+
+    await render(FilterMenu, {
+      currentView,
+      multiple: true,
+      'aria-controls': 'list',
+      filters: [
+        { name: 'upcoming', label: 'Upcoming', field: 'date', gte: '{{today}}' },
+        { name: 'past', label: 'Past', field: 'date', lt: '{{today}}' },
+        { name: 'year', label: 'This year', field: 'date', pattern: '^{{year}}' },
+      ],
+    });
+
+    await openMenu();
+
+    const items = page.getByRole('menuitemcheckbox');
+
+    expect(items.elements().map((el) => el.getAttribute('aria-checked'))).toEqual([
+      'true',
+      'false',
+      'false',
+    ]);
+
+    await items.nth(1).click();
+    // The name and label are left out of the applied conditions
+    await expect
+      .poll(() => currentView.current.filters)
+      .toEqual([
+        { field: 'date', gte: '{{today}}' },
+        { field: 'date', lt: '{{today}}' },
+      ]);
+    await expect.poll(isMenuOpen).toBe(false);
+
+    await openMenu();
+    expect(
+      getOpenMenu()
+        .getByRole('menuitemcheckbox')
+        .elements()
+        .map((el) => el.getAttribute('aria-checked')),
+    ).toEqual(['true', 'true', 'false']);
+  });
+
+  test('checks a single filter with a comparison', async () => {
+    const currentView = createRawState(
+      /** @type {any} */ ({ filter: { field: 'date', lt: '{{today}}' } }),
+    );
+
+    await render(FilterMenu, {
+      currentView,
+      'aria-controls': 'list',
+      filters: [
+        { label: 'Upcoming', field: 'date', gte: '{{today}}' },
+        { label: 'Past', field: 'date', lt: '{{today}}' },
+      ],
+    });
+
+    await openMenu();
+
+    const items = page.getByRole('menuitemradio');
+
+    expect(items.elements().map((el) => el.getAttribute('aria-checked'))).toEqual([
+      'false',
+      'false',
+      'true',
+    ]);
+
+    await items.nth(1).click();
+    await expect
+      .poll(() => currentView.current.filter)
+      .toEqual({ field: 'date', gte: '{{today}}' });
+  });
+
   test('offers no filtering without any filter', async () => {
     const currentView = createRawState(/** @type {any} */ ({}));
 

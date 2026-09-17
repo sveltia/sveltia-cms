@@ -1,5 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { hasComparison } from '$lib/services/common/view';
 import {
   getCanonicalSlugKey,
   hasField,
@@ -17,7 +18,6 @@ import {
  * CmsConfig,
  * EntryCollection,
  * Field,
- * FieldKeyPath,
  * ViewFilter,
  * ViewFilters,
  * ViewGroup,
@@ -38,8 +38,7 @@ const INTERNAL_SORT_KEYS = ['_summary', '_manual'];
  * @param {object} args Arguments.
  * @param {ViewGroup[] | ViewGroups | ViewFilter[] | ViewFilters | undefined} args.config Raw
  * configuration value.
- * @param {{ name?: string, field?: FieldKeyPath }[]} args.options Parsed view group or filter
- * options.
+ * @param {(ViewGroup | ViewFilter)[]} args.options Parsed view group or filter options.
  * @param {Field[]} args.fields Collection fields.
  * @param {string[]} args.specialKeys Keys that are resolved without a field definition.
  * @param {'view_group' | 'view_filter'} args.optionType Option type, used for message keys.
@@ -63,7 +62,7 @@ const checkNamedViewOptions = ({
   const nameCounts = {};
 
   options.forEach((option, index) => {
-    const { name, field: key } = isObject(option) ? option : {};
+    const { name, field: key, pattern } = isObject(option) ? option : {};
 
     checkName({
       name,
@@ -74,6 +73,19 @@ const checkNamedViewOptions = ({
       collectors,
       required: isNameRequired,
     });
+
+    // A group without a pattern or comparison groups the entries by the field value, but a filter
+    // has nothing to match against. The option type is checked against the JSON schema
+    if (optionType === 'view_filter' && isObject(option) && pattern === undefined) {
+      if (!hasComparison(option)) {
+        addMessage({
+          strKey: 'invalid_view_filter_no_condition',
+          values: { count: String(index + 1) },
+          context,
+          collectors,
+        });
+      }
+    }
 
     // A missing field is not validated here, as it just disables grouping or filtering
     if (typeof key !== 'string' || !key || specialKeys.includes(key)) {
