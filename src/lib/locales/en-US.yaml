@@ -693,6 +693,22 @@ confirm_deleting_selected_assets: |
     one {{ Are you sure you want to delete the selected asset? }}
     *   {{ Are you sure you want to delete the selected {$count} assets? }}
 confirm_deleting_all_assets: Are you sure you want to delete all the assets?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ The reference to it in an entry will be removed as well. }}
+    *   {{ The references to it in {$count} entries will be removed as well. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ This asset can’t be deleted, because the following fields in the entries using it would no longer be valid without it. Update those entries first. }}
+    *   {{ These assets can’t be deleted, because the following fields in the entries using them would no longer be valid without them. Update those entries first. }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action

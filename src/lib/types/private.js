@@ -1594,6 +1594,20 @@
  */
 
 /**
+ * A field holding a reference to an asset: an Image or File field storing its path, or a Markdown
+ * or rich text field embedding it as an image.
+ * @typedef {object} AssetReference
+ * @property {Entry} entry Entry holding the field.
+ * @property {InternalCollection} collection Collection the field is resolved in.
+ * @property {InternalCollectionFile} [collectionFile] Collection file, for file/singleton
+ * collections.
+ * @property {InternalLocaleCode} locale Locale of the content holding the field.
+ * @property {FieldKeyPath} keyPath Key path of the value holding the reference. For a multi-value
+ * field, that of the item, e.g. `images.1`.
+ * @property {Field} fieldConfig Field config.
+ */
+
+/**
  * Everything the deletion of one or more entries entails for the entries referencing them through
  * Relation fields.
  * @typedef {object} CascadeDeletePlan

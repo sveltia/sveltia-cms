@@ -14,6 +14,7 @@
   import NotFound from '$lib/components/global/not-found.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
   import { overlaidAsset } from '$lib/services/assets';
+  import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import { selectedAssetFolder } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
@@ -96,6 +97,7 @@
         // Don’t wait for the commit; the list is updated optimistically
         deleteAssets(_assets);
       }}
+      planDeletion={planAssetDeletion}
       buttonDescription={_('delete_assets', { values: { count: 1 } })}
       dialogDescription={_('confirm_deleting_this_asset')}
       onDelete={() => {

@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, ConfirmationDialog, Toast } from '@sveltia/ui';
 
-  import CascadeDeleteNote from '$lib/components/contents/shared/cascade-delete-note.svelte';
+  import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
   import { getAssetFolder } from '$lib/services/assets/folders';
   import { selectedCollection } from '$lib/services/contents/collection';
   import {

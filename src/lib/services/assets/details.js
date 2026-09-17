@@ -105,14 +105,22 @@ export const getAssetDetails = async (asset) => {
 };
 
 /**
+ * Get the URL an asset is referenced by in the entries: its public path, or its blob URL if it has
+ * no public path, as with an asset in an entry-relative folder.
+ * @param {Asset} asset Asset.
+ * @returns {Promise<string | undefined>} URL, or `undefined` if the asset can’t be located.
+ */
+export const getAssetReferenceURL = async (asset) =>
+  getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true }) ??
+  (await getAssetBlobURL(asset));
+
+/**
  * Get the list of entries using the given asset.
  * @param {Asset} asset Asset.
  * @returns {Promise<Entry[]>} List of entries using the asset.
  */
 export const getAssetUsedEntries = async (asset) => {
-  const url =
-    getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true }) ??
-    (await getAssetBlobURL(asset));
+  const url = await getAssetReferenceURL(asset);
 
   if (!url) {
     return [];

@@ -651,6 +651,22 @@ confirm_deleting_selected_assets: |
     1   {{ 選択されたアセットを削除してもよろしいですか？ }}
     *   {{ 選択された {$count} 個のアセットを削除してもよろしいですか？ }}
 confirm_deleting_all_assets: すべてのアセットを削除してもよろしいですか？
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    1   {{ エントリーからの参照も削除されます。 }}
+    *   {{ {$count} 個のエントリーからの参照も削除されます。 }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    1   {{ このアセットを使用しているエントリーの以下のフィールドがアセットなしでは無効になるため、削除できません。先にそれらのエントリーを更新してください。 }}
+    *   {{ これらのアセットを使用しているエントリーの以下のフィールドがアセットなしでは無効になるため、削除できません。先にそれらのエントリーを更新してください。 }}
 
 # Delete entries: dialog titles and confirmation messages
 # {$count} is the number of entries targeted by the action

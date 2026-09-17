@@ -24,9 +24,22 @@ vi.mock('$lib/services/contents/collection/data', () => ({
   },
 }));
 
+vi.mock('$lib/services/assets/data/cascade', () => ({
+  planAssetDeletion: vi.fn(async () => ({ targets: [], blockers: [] })),
+}));
+
+vi.mock('$lib/services/contents/entry/cascade', () => ({
+  buildTargetChanges: vi.fn(async () => ({ changes: [], savingEntries: [] })),
+}));
+
+const { planAssetDeletion } = await import('$lib/services/assets/data/cascade');
+const { buildTargetChanges } = await import('$lib/services/contents/entry/cascade');
+
 describe('assets/data/delete', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(planAssetDeletion).mockResolvedValue({ targets: [], blockers: [] });
+    vi.mocked(buildTargetChanges).mockResolvedValue({ changes: [], savingEntries: [] });
   });
 
   describe('updateStores', () => {
@@ -142,6 +155,7 @@ describe('assets/data/delete', () => {
           { action: 'delete', path: '/images/photo1.jpg', previousSha: 'sha1' },
           { action: 'delete', path: '/images/photo2.jpg', previousSha: 'sha2' },
         ],
+        savingEntries: [],
         options: { commitType: 'deleteMedia' },
       });
     });
@@ -180,8 +194,68 @@ describe('assets/data/delete', () => {
 
       expect(saveChanges).toHaveBeenCalledWith({
         changes: [],
+        savingEntries: [],
         options: { commitType: 'deleteMedia' },
       });
+    });
+
+    it('should rewrite the entries using the assets in the same commit', async () => {
+      const asset = createMockAssetWithSha('/images/photo1.jpg', 'photo1.jpg', 'sha1');
+      const { saveChanges } = await import('$lib/services/backends/save');
+
+      const target = /** @type {any} */ ({
+        entry: { id: 'post-1' },
+        collection: { name: 'posts' },
+      });
+
+      const cascadeChange = /** @type {any} */ ({
+        action: 'update',
+        slug: 'post-1',
+        path: 'content/posts/post-1.md',
+        data: 'image: ""',
+      });
+
+      vi.mocked(planAssetDeletion).mockResolvedValue({ targets: [target], blockers: [] });
+      vi.mocked(buildTargetChanges).mockResolvedValue({
+        changes: [cascadeChange],
+        savingEntries: [target.entry],
+      });
+      vi.mocked(saveChanges).mockResolvedValue({
+        commit: { sha: 'abc123', files: {} },
+        savedEntries: [],
+        savedAssets: [],
+      });
+
+      await deleteAssets([asset]);
+
+      expect(planAssetDeletion).toHaveBeenCalledWith([asset]);
+      expect(buildTargetChanges).toHaveBeenCalledWith({ targets: [target] });
+      expect(saveChanges).toHaveBeenCalledWith({
+        changes: [
+          { action: 'delete', path: '/images/photo1.jpg', previousSha: 'sha1' },
+          cascadeChange,
+        ],
+        savingEntries: [target.entry],
+        options: { commitType: 'deleteMedia' },
+      });
+    });
+
+    it('should refuse to delete assets that entries require', async () => {
+      const asset = createMockAssetWithSha('/images/photo1.jpg', 'photo1.jpg', 'sha1');
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const { assetUpdatesToast } = await import('$lib/services/assets/data');
+
+      assetUpdatesToast.current = /** @type {any} */ (undefined);
+      vi.mocked(planAssetDeletion).mockResolvedValue({
+        targets: [],
+        blockers: [/** @type {any} */ ({ entry: { id: 'post-1' }, keyPath: 'image' })],
+      });
+
+      await expect(deleteAssets([asset])).rejects.toThrow(
+        'Cannot delete assets that entries require',
+      );
+      expect(saveChanges).not.toHaveBeenCalled();
+      expect(assetUpdatesToast.current).toBeUndefined();
     });
   });
 });

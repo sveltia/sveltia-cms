@@ -17,10 +17,10 @@
     TruncatedText,
   } from '@sveltia/ui';
 
+  import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
-  import CascadeDeleteNote from '$lib/components/contents/shared/cascade-delete-note.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
   import { goBack, goto, overlayTitle } from '$lib/services/app/navigation';

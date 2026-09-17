@@ -1,20 +1,20 @@
 import { unique } from '@sveltia/utils/array';
 
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { validateAnyField } from '$lib/services/contents/draft/validate/fields';
-import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
+import {
+  buildTargetChanges,
+  compactList,
+  dedupeBlockers,
+  getFieldBlockers,
+  ITEM_INDEX_SUFFIX_REGEX,
+} from '$lib/services/contents/entry/cascade';
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
-import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import {
   getEntryRelationValues,
   getReferencingRelationFields,
   getRelationKeyPaths,
 } from '$lib/services/contents/entry/relations';
-import {
-  buildTargetChanges,
-  getCandidateEntries,
-} from '$lib/services/contents/entry/relations/cascade';
-import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { getCandidateEntries } from '$lib/services/contents/entry/relations/cascade';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { getPublishedVersion } from '$lib/services/workflow';
 
@@ -34,11 +34,6 @@ import { getPublishedVersion } from '$lib/services/workflow';
  * } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField } from '$lib/types/public';
  */
-
-/**
- * Matches the index suffix of a multi-value field’s item key path, e.g. `.1` in `tags.1`.
- */
-const ITEM_INDEX_SUFFIX_REGEX = /\.\d+$/;
 
 /**
  * Get the values identifying the entries being deleted in a Relation field, for entries holding
@@ -95,22 +90,16 @@ export const removeReferences = ({ content, relation, values }) => {
     unique(staleKeyPaths.map((key) => key.replace(ITEM_INDEX_SUFFIX_REGEX, '')))
   );
 
+  /**
+   * Check whether an item holds a reference to a deleted entry.
+   * @param {FieldKeyPath} _key Item key path.
+   * @param {any} value Stored value.
+   * @returns {boolean} Result.
+   */
+  const isStale = (_key, value) => values.has(value);
+
   listKeyPaths.forEach((listKeyPath) => {
-    const itemKeys = getListItemKeys(content, listKeyPath);
-    const remainingValues = itemKeys.map((key) => content[key]).filter((v) => !values.has(v));
-
-    itemKeys.forEach((key) => {
-      delete updatedContent[key];
-    });
-
-    if (remainingValues.length) {
-      remainingValues.forEach((value, index) => {
-        updatedContent[`${listKeyPath}.${index}`] = value;
-      });
-    } else {
-      // This is how an emptied multi-value field is stored in a draft
-      updatedContent[listKeyPath] = [];
-    }
+    compactList({ content: updatedContent, listKeyPath, isStale });
   });
 
   return { content: updatedContent, fieldKeyPaths: listKeyPaths };
@@ -118,7 +107,7 @@ export const removeReferences = ({ content, relation, values }) => {
 
 /**
  * Check the fields that lost a reference against their own validation rules, such as `required`
- * and `min`, the way a save of the entry would, and describe each one that no longer passes.
+ * and `min`, and describe each one that no longer passes. See {@link getFieldBlockers}.
  * @param {object} args Arguments.
  * @param {any} args.draft Synthetic draft for the entry holding the fields.
  * @param {Entry} args.entry Entry holding the fields, as stored.
@@ -128,42 +117,15 @@ export const removeReferences = ({ content, relation, values }) => {
  * @param {FieldKeyPath[]} args.fieldKeyPaths Key paths of the fields to check.
  * @returns {CascadeDeleteBlocker[]} Blockers, one per invalid field.
  */
-export const getBlockers = ({ draft, entry, relation, locale, content, fieldKeyPaths }) => {
-  const { fieldConfig, sourceCollection } = relation;
-
-  return fieldKeyPaths.flatMap((keyPath) => {
-    const validity = validateAnyField({
-      draft,
-      locale,
-      keyPath,
-      value: content[keyPath],
-      valueMap: content,
-      // A fresh map, so the field is validated rather than skipped as already validated
-      validities: { [locale]: {} },
-    });
-
-    // The validator declines a field it doesn’t validate in this locale, e.g. a non-i18n field in
-    // a non-default locale, in which case the field is fine by definition
-    if (!validity || validity.valid) {
-      return [];
-    }
-
-    const collectionName = sourceCollection.name;
-
-    return [
-      /** @type {CascadeDeleteBlocker} */ ({
-        collectionName,
-        collectionLabel: sourceCollection.label || collectionName,
-        fieldLabel: fieldConfig.label || fieldConfig.name,
-        entry,
-        summary: getEntrySummary(sourceCollection, entry),
-        locale,
-        keyPath,
-        messages: getFieldValidationMessages({ validity, fieldConfig }),
-      }),
-    ];
+export const getBlockers = ({ draft, entry, relation, locale, content, fieldKeyPaths }) =>
+  getFieldBlockers({
+    draft,
+    entry,
+    collection: relation.sourceCollection,
+    locale,
+    content,
+    fields: new Map(fieldKeyPaths.map((keyPath) => [keyPath, relation.fieldConfig])),
   });
-};
 
 /**
  * Remove the references to the deleted entries from every entry holding the given Relation field,
@@ -305,25 +267,7 @@ export const planCascadeDelete = ({ collection, collectionFile, entries }) => {
     });
   }
 
-  // A field invalid in more than one locale is reported once: the message is the same, and the
-  // editor shows the errors locale by locale once the entry is opened
-  /** @type {Set<string>} */
-  const seenBlockers = new Set();
-
-  return {
-    targets: [...targets.values()],
-    blockers: blockers.filter(({ entry, keyPath }) => {
-      const key = `${entry.id}\0${keyPath}`;
-
-      if (seenBlockers.has(key)) {
-        return false;
-      }
-
-      seenBlockers.add(key);
-
-      return true;
-    }),
-  };
+  return { targets: [...targets.values()], blockers: dedupeBlockers(blockers) };
 };
 
 /**

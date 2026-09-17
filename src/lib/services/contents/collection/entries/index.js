@@ -19,13 +19,14 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
 
 /**
  * @import {
+ * AssetReference,
  * Entry,
  * EntryFolderInfo,
  * FlattenedEntryContent,
  * InternalCollection,
  * InternalCollectionFile,
  * } from '$lib/types/private';
- * @import { FieldKeyPath } from '$lib/types/public';
+ * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -332,6 +333,101 @@ export const hasAsset = async ({
 };
 
 /**
+ * Walk the given entries looking for the given asset, calling back for each field holding it.
+ * @param {string} url Asset’s public or blob URL.
+ * @param {object} options Options.
+ * @param {Entry[]} options.entries Entries to be searched.
+ * @param {string} [options.newURL] New URL to replace the found URL with, in place.
+ * @param {boolean} [options.every] Whether to report every field holding the asset. Otherwise the
+ * search of an entry stops at the first field, unless the URL is being replaced.
+ * @param {(reference: AssetReference) => void} [options.onMatch] Called for each field found.
+ * @returns {Promise<boolean[]>} Whether each entry holds the asset, in the order given.
+ */
+const findAssetReferences = async (url, { entries, newURL = '', every = false, onMatch }) => {
+  const baseURL = cmsConfig.current?._baseURL;
+  const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
+  const isBlobURL = assetURL.startsWith('blob:');
+  const exhaustive = !!newURL || every;
+
+  return Promise.all(
+    entries.map(async (entry) => {
+      const { locales } = entry;
+      const collections = getAssociatedCollections(entry);
+      let found = false;
+
+      for (const [locale, { content }] of Object.entries(locales)) {
+        for (const [keyPath, value] of Object.entries(content)) {
+          if (typeof value !== 'string' || !value) continue;
+          // Pre-filter: skip values that can’t possibly contain the asset URL, avoiding the
+          // expensive getField() call for the vast majority of fields.
+          if (!isBlobURL && !value.includes(assetURL)) continue;
+
+          for (const collection of collections) {
+            const isIndexFile = isCollectionIndexFile(collection, entry);
+
+            const hasAssetArgs = {
+              assetURL,
+              newURL,
+              collectionName: collection.name,
+              entry,
+              content,
+              keyPath,
+              value,
+              isIndexFile,
+            };
+
+            const collectionFiles = getCollectionFilesByEntry(collection, entry);
+            /** @type {(InternalCollectionFile | undefined)[]} */
+            const files = collectionFiles.length ? collectionFiles : [undefined];
+
+            const matches = await Promise.all(
+              files.map((collectionFile) => hasAsset({ ...hasAssetArgs, collectionFile })),
+            );
+
+            matches.forEach((matched, index) => {
+              if (!matched || !onMatch) {
+                return;
+              }
+
+              const collectionFile = files[index];
+
+              onMatch({
+                entry,
+                collection,
+                collectionFile,
+                locale,
+                keyPath,
+                // The field is known to be configured, as `hasAsset()` bails out otherwise
+                fieldConfig: /** @type {Field} */ (
+                  getField({
+                    collectionName: collection.name,
+                    fileName: collectionFile?.name,
+                    valueMap: content,
+                    keyPath,
+                    isIndexFile,
+                  })
+                ),
+              });
+            });
+
+            if (matches.includes(true)) {
+              found = true;
+              if (!exhaustive) break;
+            }
+          }
+
+          if (found && !exhaustive) break;
+        }
+
+        if (found && !exhaustive) break;
+      }
+
+      return found;
+    }),
+  );
+};
+
+/**
  * Find entries by an asset URL, and replace the URL if needed.
  * @param {string} url Asset’s public or blob URL.
  * @param {object} [options] Options.
@@ -343,68 +439,34 @@ export const getEntriesByAssetURL = async (
   url,
   { entries = allEntries.current, newURL = '' } = {},
 ) => {
-  const baseURL = cmsConfig.current?._baseURL;
-  const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
-  const isBlobURL = assetURL.startsWith('blob:');
-  const isReplacing = !!newURL;
-
-  const results = await Promise.all(
-    entries.map(async (entry) => {
-      const { locales } = entry;
-      const collections = getAssociatedCollections(entry);
-      let found = false;
-
-      for (const { content } of Object.values(locales)) {
-        for (const [keyPath, value] of Object.entries(content)) {
-          if (typeof value !== 'string' || !value) continue;
-          // Pre-filter: skip values that can’t possibly contain the asset URL, avoiding the
-          // expensive getField() call for the vast majority of fields.
-          if (!isBlobURL && !value.includes(assetURL)) continue;
-
-          for (const collection of collections) {
-            const hasAssetArgs = {
-              assetURL,
-              newURL,
-              collectionName: collection.name,
-              entry,
-              content,
-              keyPath,
-              value,
-              isIndexFile: isCollectionIndexFile(collection, entry),
-            };
-
-            const collectionFiles = getCollectionFilesByEntry(collection, entry);
-            let matched;
-
-            if (collectionFiles.length) {
-              matched = (
-                await Promise.all(
-                  collectionFiles.map((collectionFile) =>
-                    hasAsset({ ...hasAssetArgs, collectionFile }),
-                  ),
-                )
-              ).includes(true);
-            } else {
-              matched = await hasAsset({ ...hasAssetArgs });
-            }
-
-            if (matched) {
-              found = true;
-              if (!isReplacing) break;
-            }
-          }
-
-          if (found && !isReplacing) break;
-        }
-
-        if (found && !isReplacing) break;
-      }
-
-      return found;
-    }),
-  );
+  const results = await findAssetReferences(url, { entries, newURL });
 
   return entries.filter((_entry, index) => results[index]);
+};
+
+/**
+ * Find every field holding the given asset in the given entries.
+ * @param {string} url Asset’s public or blob URL.
+ * @param {object} [options] Options.
+ * @param {Entry[]} [options.entries] Entries to be searched.
+ * @returns {Promise<AssetReference[]>} References, in the order found. An entry that belongs to
+ * more than one collection is reported once per collection the field resolves in.
+ */
+export const getAssetReferences = async (url, { entries = allEntries.current } = {}) => {
+  /** @type {AssetReference[]} */
+  const references = [];
+
+  /**
+   * Record a field found.
+   * @param {AssetReference} reference Reference.
+   */
+  const onMatch = (reference) => {
+    references.push(reference);
+  };
+
+  await findAssetReferences(url, { entries, every: true, onMatch });
+
+  return references;
 };
 
 /**

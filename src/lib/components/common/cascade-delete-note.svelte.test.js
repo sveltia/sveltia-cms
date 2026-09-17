@@ -108,4 +108,49 @@ describe('CascadeDeleteNote', () => {
       .element(page.getByRole('alert'))
       .toMatchTextContent('These entries can’t be deleted');
   });
+
+  test('words the note and the explanation for assets', async () => {
+    const { container } = await render(CascadeDeleteNote, {
+      plan: { targets: [createTarget('a')], blockers: [] },
+      kind: 'asset',
+      count: 1,
+    });
+
+    expect(container.textContent?.trim()).toBe(
+      'The reference to it in an entry will be removed as well.',
+    );
+
+    await render(CascadeDeleteNote, {
+      plan: { targets: [createTarget('a'), createTarget('b')], blockers: [] },
+      kind: 'asset',
+      count: 2,
+    });
+
+    await expect
+      .element(page.getByText('The references to it in 2 entries will be removed as well.'))
+      .toBeVisible();
+
+    await render(CascadeDeleteNote, {
+      plan: { targets: [createTarget('a')], blockers: [createBlocker('a')] },
+      kind: 'asset',
+      count: 1,
+    });
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent(
+        'This asset can’t be deleted, because the following fields in the entries using it ' +
+          'would no longer be valid without it. Update those entries first.',
+      );
+
+    await render(CascadeDeleteNote, {
+      plan: { targets: [createTarget('a')], blockers: [createBlocker('a')] },
+      kind: 'asset',
+      count: 2,
+    });
+
+    await expect
+      .element(page.getByText('These assets can’t be deleted', { exact: false }))
+      .toBeVisible();
+  });
 });

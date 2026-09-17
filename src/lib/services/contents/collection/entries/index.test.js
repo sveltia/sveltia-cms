@@ -7,6 +7,7 @@ import { allEntries, allEntryFolders } from '$lib/services/contents';
 import {
   _resetEntriesByCollectionCache,
   canCreateIndexFile,
+  getAssetReferences,
   getEntriesByAssetURL,
   getEntriesByCollection,
   getListedCollections,
@@ -1981,5 +1982,99 @@ describe('canCreateIndexFile()', () => {
     const result = canCreateIndexFile(collection);
 
     expect(result).toBe(false);
+  });
+});
+
+describe('getAssetReferences()', () => {
+  /**
+   * Set the mocks up for a `posts` entry collection whose every field is an Image field.
+   * @returns {Promise<{ getField: any, getCollectionFilesByEntry: any }>} Mocks.
+   */
+  const setup = async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    cmsConfig.current = { _baseURL: '' };
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts', _type: 'entry' }]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'image' }));
+
+    return { getField, getCollectionFilesByEntry };
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('reports every field holding the asset, in every locale', async () => {
+    await setup();
+
+    const entry = {
+      id: '1',
+      slug: 'test',
+      subPath: 'test',
+      locales: {
+        en: { content: { cover: 'a.jpg', 'gallery.0': 'b.jpg', 'gallery.1': 'a.jpg' } },
+        fr: { content: { cover: 'a.jpg' } },
+      },
+    };
+
+    const references = await getAssetReferences('a.jpg', { entries: [entry] });
+
+    expect(references).toEqual([
+      {
+        entry,
+        collection: { name: 'posts', _type: 'entry' },
+        collectionFile: undefined,
+        locale: 'en',
+        keyPath: 'cover',
+        fieldConfig: { name: 'cover', widget: 'image' },
+      },
+      expect.objectContaining({ locale: 'en', keyPath: 'gallery.1' }),
+      expect.objectContaining({ locale: 'fr', keyPath: 'cover' }),
+    ]);
+  });
+
+  test('reports nothing when no entry holds the asset', async () => {
+    await setup();
+
+    const entry = { id: '1', slug: 'test', subPath: 'test', locales: { en: { content: {} } } };
+
+    expect(await getAssetReferences('a.jpg', { entries: [entry] })).toEqual([]);
+  });
+
+  test('reports the collection file the field belongs to', async () => {
+    const { getCollectionFilesByEntry } = await setup();
+    const collectionFile = { name: 'general' };
+
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([collectionFile]);
+
+    const entry = {
+      id: '1',
+      slug: 'general',
+      subPath: 'general',
+      locales: { en: { content: { logo: 'a.jpg' } } },
+    };
+
+    const references = await getAssetReferences('a.jpg', { entries: [entry] });
+
+    expect(references).toEqual([expect.objectContaining({ collectionFile, keyPath: 'logo' })]);
+  });
+
+  test('searches the loaded entries by default', async () => {
+    await setup();
+
+    allEntries.current = [
+      { id: '1', slug: 'test', subPath: 'test', locales: { en: { content: { cover: 'a.jpg' } } } },
+    ];
+
+    expect(await getAssetReferences('a.jpg')).toHaveLength(1);
+    allEntries.current = undefined;
   });
 });

@@ -1,12 +1,10 @@
+import { buildTargetChanges } from '$lib/services/contents/entry/cascade';
 import {
   getEntryRelationValues,
   getReferencingRelationFields,
   getRelationKeyPaths,
 } from '$lib/services/contents/entry/relations';
-import {
-  buildTargetChanges,
-  getCandidateEntries,
-} from '$lib/services/contents/entry/relations/cascade';
+import { getCandidateEntries } from '$lib/services/contents/entry/relations/cascade';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**

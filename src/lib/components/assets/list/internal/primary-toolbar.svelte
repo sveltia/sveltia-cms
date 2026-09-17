@@ -9,6 +9,7 @@
   import PreviewAssetButton from '$lib/components/assets/list/preview-asset-button.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
   import { focusedAsset, selectedAssets } from '$lib/services/assets';
+  import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
     canCreateAsset,
@@ -59,6 +60,7 @@
         // Don’t wait for the commit; the list is updated optimistically
         deleteAssets(_assets);
       }}
+      planDeletion={planAssetDeletion}
       buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
       dialogDescription={_(
         assets.length > 1 && assets.length === listedAssets.current.length
