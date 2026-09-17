@@ -10,12 +10,13 @@ import { allAssets } from '$lib/services/assets';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends/git/shared/config';
-import { createFileList } from '$lib/services/backends/process';
+import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { allEntries, allEntryFolders, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { env } from '$lib/services/user/env.svelte';
 import { createPathRegEx, getBlob, getGitHash } from '$lib/services/utils/file';
+import { createDebugLogger } from '$lib/services/utils/logging';
 
 /**
  * @import {
@@ -282,7 +283,15 @@ export const parseAssetFileInfo = async (fileInfo) => {
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  */
 export const loadFiles = async (rootDirHandle) => {
-  const { entryFiles, assetFiles, configFiles } = createFileList(await getAllFiles(rootDirHandle));
+  const log = createDebugLogger('Loading site data');
+
+  log(`Started: local repository ${rootDirHandle.name}`);
+
+  const fileList = createFileList(await getAllFiles(rootDirHandle));
+  const { entryFiles, assetFiles, configFiles } = fileList;
+
+  log(`Scanned the directory: ${describeFileList(fileList)}`);
+
   /** @type {BaseEntryListItem[]} */
   const entryFileItems = [];
   /** @type {BaseConfigListItem[]} */
@@ -296,6 +305,8 @@ export const loadFiles = async (rootDirHandle) => {
     entryFileItems.push(.../** @type {BaseEntryListItem[]} */ (results));
   }
 
+  log(`Read ${entryFileItems.length} entry files`);
+
   for (let i = 0; i < configFiles.length; i += FILE_PROCESS_BATCH_SIZE) {
     const batch = configFiles.slice(i, i + FILE_PROCESS_BATCH_SIZE);
     const results = await Promise.all(batch.map((fileInfo) => parseTextFileInfo(fileInfo)));
@@ -303,7 +314,12 @@ export const loadFiles = async (rootDirHandle) => {
     configFileItems.push(.../** @type {BaseConfigListItem[]} */ (results));
   }
 
+  log(`Read ${configFileItems.length} config files`);
+
   const { entries, errors } = await prepareEntries(entryFileItems);
+
+  log(`Parsed ${entries.length} entries (${errors.length} errors)`);
+
   /** @type {Asset[]} */
   const assets = [];
 
@@ -314,11 +330,16 @@ export const loadFiles = async (rootDirHandle) => {
     assets.push(...results);
   }
 
+  // Each asset file is read in full to hash it, so this can take a while with large media
+  log(`Hashed ${assets.length} asset files`);
+
   allEntries.current = entries;
   allAssets.current = assets;
   gitConfigFiles.current = configFileItems;
   entryParseErrors.current = errors;
   dataLoaded.current = true;
+
+  log('The site data is ready');
 };
 
 /**

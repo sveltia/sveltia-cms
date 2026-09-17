@@ -65,3 +65,12 @@ export const createFileList = (files) => {
 
   return { entryFiles, assetFiles, configFiles, allFiles, count: allFiles.length };
 };
+
+/**
+ * Describe a file list for a debug message, e.g. `10 entry files, 2 asset files, 1 config files`.
+ * @param {Pick<BaseFileList, 'entryFiles' | 'assetFiles' | 'configFiles'>} fileList File list.
+ * @returns {string} Description.
+ */
+export const describeFileList = ({ entryFiles, assetFiles, configFiles }) =>
+  `${entryFiles.length} entry files, ${assetFiles.length} asset files, ` +
+  `${configFiles.length} config files`;

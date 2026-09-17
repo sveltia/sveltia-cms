@@ -2284,6 +2284,13 @@ describe('loadFiles', () => {
         assetFiles: [fakeAssetFile],
         configFiles: [fakeConfigFile],
       })),
+      describeFileList: vi.fn(() => '1 entry files, 1 asset files, 1 config files'),
+    }));
+
+    const mockLog = vi.fn();
+
+    vi.doMock('$lib/services/utils/logging', () => ({
+      createDebugLogger: vi.fn(() => mockLog),
     }));
 
     vi.doMock('$lib/services/contents/file/process', () => ({
@@ -2328,6 +2335,16 @@ describe('loadFiles', () => {
     expect(mockDataLoaded.current).toEqual(true);
     expect(mockEntryParseErrors.current).toEqual(mockErrors);
     expect(mockGitConfigFiles.current).toEqual(expect.any(Array));
+    // The loading is traced in the console
+    expect(mockLog.mock.calls.map(([message]) => message)).toEqual([
+      'Started: local repository root',
+      'Scanned the directory: 1 entry files, 1 asset files, 1 config files',
+      'Read 1 entry files',
+      'Read 1 config files',
+      'Parsed 1 entries (0 errors)',
+      'Hashed 1 asset files',
+      'The site data is ready',
+    ]);
   });
 });
 

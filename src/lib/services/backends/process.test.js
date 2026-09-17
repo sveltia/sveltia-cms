@@ -4,7 +4,7 @@ import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { getEntryFoldersByPath } from '$lib/services/contents';
 import { isIndexFile } from '$lib/services/contents/file/process';
 
-import { createFileList } from './process.js';
+import { createFileList, describeFileList } from './process.js';
 
 /**
  * @import {
@@ -338,6 +338,15 @@ describe('Backend Process', () => {
       const result = createFileList(files);
 
       expect(result.assetFiles).toEqual([]);
+    });
+  });
+
+  describe('describeFileList', () => {
+    test('should count the files of each type', () => {
+      /** @type {any} */
+      const fileList = { entryFiles: [{}, {}, {}], assetFiles: [{}, {}], configFiles: [{}] };
+
+      expect(describeFileList(fileList)).toBe('3 entry files, 2 asset files, 1 config files');
     });
   });
 });

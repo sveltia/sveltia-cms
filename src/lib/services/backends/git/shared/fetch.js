@@ -5,11 +5,12 @@ import { allAssets } from '$lib/services/assets';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { hasSkipCIMarker } from '$lib/services/backends/git/shared/commits';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
-import { createFileList } from '$lib/services/backends/process';
+import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
+import { createDebugLogger } from '$lib/services/utils/logging';
 
 /**
  * @import {
@@ -25,6 +26,7 @@ import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
  * RepositoryFileMetadata,
  * RepositoryInfo,
  * } from '$lib/types/private';
+ * @import { DebugLogger } from '$lib/services/utils/logging';
  */
 
 /**
@@ -45,6 +47,7 @@ import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
  * @param {[string, any][]} args.cachedFileEntries Cached file entries.
  * @param {FetchFileListFunction} args.fetchFileList Function to fetch the repository’s complete
  * file list.
+ * @param {DebugLogger} args.log Function to trace the loading in the console.
  * @returns {Promise<BaseFileList>} The file list.
  */
 export const getFileList = async ({
@@ -53,6 +56,7 @@ export const getFileList = async ({
   lastCommitHash,
   cachedFileEntries,
   fetchFileList,
+  log,
 }) => {
   const lastConfigHash = cmsConfigVersion.current;
 
@@ -75,17 +79,23 @@ export const getFileList = async ({
     gitConfigFetched &&
     cachedFileEntries.length
   ) {
-    return createFileList(
+    const fileList = createFileList(
       cachedFileEntries.map(([path, data]) => ({
         path,
         name: getPathInfo(path).basename,
         ...data,
       })),
     );
+
+    log(`Restored the file list from the cache: ${describeFileList(fileList)}`);
+
+    return fileList;
   }
 
   // Get a complete file list first, and filter what’s managed in CMS
   const fileList = createFileList(await fetchFileList(lastCommitHash));
+
+  log(`Fetched the file list: ${describeFileList(fileList)}`);
 
   metaDB.saveEntries(
     Object.entries({
@@ -298,7 +308,11 @@ export const fetchAndParseFiles = async ({
   fetchFileContents,
   fetchFileMetadata,
 }) => {
-  const { databaseName, branch: branchName } = repository;
+  const { service, owner, repo, databaseName, branch: branchName } = repository;
+  const log = createDebugLogger('Loading site data');
+
+  log(`Started: ${service} ${owner}/${repo}`);
+
   const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
   const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
   const accessPromise = checkAccess ? deferRejection(checkAccess()) : undefined;
@@ -328,6 +342,8 @@ export const fetchAndParseFiles = async ({
 
     branch = await branchPromise;
     repository.branch = branch;
+
+    log(`Fetched the default branch name: ${branch}`);
   }
 
   // This has to be done after the branch is determined. Again, only the request is started here,
@@ -337,7 +353,12 @@ export const fetchAndParseFiles = async ({
   await accessPromise;
 
   const { hash: lastCommitHash, message } = await lastCommitPromise;
+
+  log(`Fetched the last commit on ${branch}: ${lastCommitHash}`);
+
   const { metaEntries, cachedFileEntries } = await databaseEntriesPromise;
+
+  log(`Read the file cache: ${cachedFileEntries.length} files`);
 
   const fileList = await getFileList({
     metaDB,
@@ -345,6 +366,7 @@ export const fetchAndParseFiles = async ({
     lastCommitHash,
     cachedFileEntries,
     fetchFileList,
+    log,
   });
 
   // What the message says is only what the author asked for. It’s the answer until the CI/CD
@@ -354,6 +376,7 @@ export const fetchAndParseFiles = async ({
   // Skip fetching files if no files found
   if (!fileList.count) {
     updateStores({ entries: [], assets: [], configFiles: [] });
+    log('The site data is ready: no files to load');
 
     return;
   }
@@ -380,8 +403,18 @@ export const fetchAndParseFiles = async ({
     fetchingFiles.map(({ path, sha, size, text }) => [path, { sha, size, text, meta: undefined }]),
   );
 
+  log(
+    `Restored ${allFiles.length - fetchingFiles.length} files from the cache; ` +
+      `fetching ${fetchingFiles.length} files`,
+  );
+
   if (contentFiles.length) {
     Object.assign(fetchedFileMap, await fetchFileContents(contentFiles));
+
+    // Only the text files are downloaded; an asset in the list is just there for its metadata
+    log(
+      `Fetched the contents of ${contentFiles.filter(({ type }) => type !== 'asset').length} files`,
+    );
   }
 
   const { entries, errors } = await prepareEntries(
@@ -400,25 +433,40 @@ export const fetchAndParseFiles = async ({
     (fileInfo) => /** @type {BaseConfigListItem} */ (parseFileInfo({ fileInfo, fetchedFileMap })),
   );
 
+  log(`Parsed ${entries.length} entries (${errors.length} errors)`);
   updateStores({ entries, assets, configFiles: configFileItems, errors });
+  log('The site data is ready');
+
+  // Whether the cache written below is complete, or missing the metadata of the fetched files
+  let metadataFetched = true;
 
   if (fetchFileMetadata && fetchingFiles.length) {
     // Cache the text right away, so that a reload before the slower metadata pass has finished
     // only costs that pass next time, not the contents again
     await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
+    log(`Cached the contents of ${fetchingFiles.length} files`);
 
     try {
       applyFileMetadata({
         fetchedFileMap,
         metadataMap: await fetchFileMetadata(fetchingFiles),
       });
+      log(`Fetched the commit metadata of ${fetchingFiles.length} files`);
     } catch (/** @type {any} */ ex) {
       // The contents are already usable without it, and the metadata is fetched again next time
       // eslint-disable-next-line no-console
       console.error('Failed to fetch the commit metadata.', ex);
+      metadataFetched = false;
     }
   }
 
   // Cached with the metadata, which is what marks a file as fetched
   await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
+
+  log(
+    metadataFetched
+      ? `Cached ${fetchingFiles.length} files with their metadata`
+      : `Cached ${fetchingFiles.length} files without their metadata; they are fetched again ` +
+          'next time',
+  );
 };

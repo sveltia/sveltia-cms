@@ -4,11 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
-import { createFileList } from '$lib/services/backends/process';
+import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
+import { createDebugLogger } from '$lib/services/utils/logging';
 
 import {
   applyFileMetadata,
@@ -34,6 +35,7 @@ vi.mock('$lib/services/contents', () => ({
 }));
 vi.mock('$lib/services/contents/file/process');
 vi.mock('$lib/services/deployments/publish');
+vi.mock('$lib/services/utils/logging');
 
 const lastConfigHash = 'config-hash-1';
 
@@ -94,6 +96,7 @@ describe('git/shared/fetch', () => {
 
   describe('getFileList', () => {
     const mockFetchFileList = vi.fn();
+    const mockLog = vi.fn();
     const lastCommitHash = 'abc123';
 
     global.IndexedDB = vi.fn();
@@ -108,6 +111,7 @@ describe('git/shared/fetch', () => {
         { path: 'file1.md', name: 'file1.md', sha: 'def456' },
         { path: 'file2.md', name: 'file2.md', sha: 'ghi789' },
       ]);
+      vi.mocked(describeFileList).mockReturnValue('2 entry files, 0 asset files, 0 config files');
     });
 
     it('should use cached file list when hashes match and cache exists', async () => {
@@ -123,6 +127,7 @@ describe('git/shared/fetch', () => {
         lastCommitHash,
         cachedFileEntries,
         fetchFileList: mockFetchFileList,
+        log: mockLog,
       });
 
       expect(mockFetchFileList).not.toHaveBeenCalled();
@@ -131,6 +136,9 @@ describe('git/shared/fetch', () => {
         { path: 'file2.md', name: 'file2.md', sha: 'ghi789', size: 2048 },
       ]);
       expect(result).toBeDefined();
+      expect(mockLog).toHaveBeenCalledWith(
+        'Restored the file list from the cache: 2 entry files, 0 asset files, 0 config files',
+      );
     });
 
     it('should fetch new file list when commit hash does not match', async () => {
@@ -146,6 +154,7 @@ describe('git/shared/fetch', () => {
         lastCommitHash,
         cachedFileEntries,
         fetchFileList: mockFetchFileList,
+        log: mockLog,
       });
 
       expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
@@ -155,6 +164,9 @@ describe('git/shared/fetch', () => {
           last_commit_hash: lastCommitHash,
           git_config_fetched: true,
         }),
+      );
+      expect(mockLog).toHaveBeenCalledWith(
+        'Fetched the file list: 2 entry files, 0 asset files, 0 config files',
       );
     });
 
@@ -171,6 +183,7 @@ describe('git/shared/fetch', () => {
         lastCommitHash,
         cachedFileEntries,
         fetchFileList: mockFetchFileList,
+        log: mockLog,
       });
 
       expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
@@ -192,6 +205,7 @@ describe('git/shared/fetch', () => {
         lastCommitHash,
         cachedFileEntries: [], // Empty cache
         fetchFileList: mockFetchFileList,
+        log: mockLog,
       });
 
       expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
@@ -611,6 +625,7 @@ describe('git/shared/fetch', () => {
 
     const mockFetchFileList = vi.fn().mockResolvedValue([]);
     const mockFetchFileContents = vi.fn().mockResolvedValue({});
+    const mockLog = vi.fn();
 
     beforeEach(() => {
       mockMetaDB.entries.mockResolvedValue([]);
@@ -622,6 +637,7 @@ describe('git/shared/fetch', () => {
         configFiles: [],
         allFiles: [],
       });
+      vi.mocked(createDebugLogger).mockReturnValue(mockLog);
     });
 
     it('should set branch name if not provided', async () => {
@@ -842,19 +858,20 @@ describe('git/shared/fetch', () => {
       expect(allAssets.current).toEqual([]);
       expect(gitConfigFiles.current).toEqual([]);
       expect(dataLoaded.current).toEqual(true);
+      expect(mockLog).toHaveBeenLastCalledWith('The site data is ready: no files to load');
     });
 
     it('should fetch and process entries, assets, and config files', async () => {
       const mockEntryFiles = [
-        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024 },
+        { path: 'posts/post1.md', name: 'post1.md', sha: 'entry1', size: 1024, type: 'entry' },
       ];
 
       const mockAssetFiles = [
-        { path: 'images/image1.jpg', name: 'image1.jpg', sha: 'asset1', size: 2048 },
+        { path: 'images/image1.jpg', name: 'image1.jpg', sha: 'asset1', size: 2048, type: 'asset' },
       ];
 
       const mockConfigFiles = [
-        { path: '.gitignore', name: '.gitignore', sha: 'config1', size: 512 },
+        { path: '.gitignore', name: '.gitignore', sha: 'config1', size: 512, type: 'config' },
       ];
 
       const allFilesArray = [...mockEntryFiles, ...mockAssetFiles, ...mockConfigFiles];
@@ -885,6 +902,8 @@ describe('git/shared/fetch', () => {
 
       expect(prepareEntries).toHaveBeenCalled();
       expect(mockFetchFileContents).toHaveBeenCalledWith(allFilesArray);
+      // The asset is in the list for its metadata only; its contents are not downloaded
+      expect(mockLog).toHaveBeenCalledWith('Fetched the contents of 2 files');
     });
 
     describe('deferred metadata', () => {
@@ -1025,8 +1044,44 @@ describe('git/shared/fetch', () => {
           ['posts/a.md', expect.objectContaining({ meta: undefined })],
           ['img/a.png', expect.objectContaining({ meta: undefined })],
         ]);
+        expect(mockLog).toHaveBeenLastCalledWith(
+          'Cached 2 files without their metadata; they are fetched again next time',
+        );
 
         consoleError.mockRestore();
+      });
+
+      it('should trace each step of the loading in the console', async () => {
+        const fetchFileMetadata = vi.fn().mockResolvedValue({
+          'posts/a.md': meta,
+          'img/a.png': meta,
+        });
+
+        vi.mocked(describeFileList).mockReturnValue('1 entry files, 1 asset files, 0 config files');
+
+        await fetchAndParseFiles({
+          repository: { ...mockRepository, service: 'github', owner: 'owner', repo: 'repo' },
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+          fetchFileMetadata,
+        });
+
+        expect(createDebugLogger).toHaveBeenCalledWith('Loading site data');
+        expect(mockLog.mock.calls.map(([message]) => message)).toEqual([
+          'Started: github owner/repo',
+          'Fetched the last commit on main: abc123',
+          'Read the file cache: 0 files',
+          'Fetched the file list: 1 entry files, 1 asset files, 0 config files',
+          'Restored 0 files from the cache; fetching 2 files',
+          'Fetched the contents of 1 files',
+          'Parsed 1 entries (0 errors)',
+          'The site data is ready',
+          'Cached the contents of 2 files',
+          'Fetched the commit metadata of 2 files',
+          'Cached 2 files with their metadata',
+        ]);
       });
 
       it('should not request the metadata when every file was cached', async () => {
