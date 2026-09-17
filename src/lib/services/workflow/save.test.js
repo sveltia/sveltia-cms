@@ -7,11 +7,13 @@ import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
+import { refreshProductionSHA } from '$lib/services/deployments/resolve';
 import {
   getUnpublishedEntryByBranch,
   publishingBranches,
   unpublishedEntries,
 } from '$lib/services/workflow';
+import { trackDeployingEntry } from '$lib/services/workflow/deploy';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
   deleteWorkflowEntries,
@@ -33,6 +35,8 @@ vi.mock('$lib/services/contents/collection', () => ({
 vi.mock('$lib/services/contents/collection/files', () => ({ getCollectionFile: vi.fn() }));
 vi.mock('$lib/services/backends/git/shared/commits');
 vi.mock('$lib/services/backends/save');
+vi.mock('$lib/services/deployments/resolve');
+vi.mock('$lib/services/workflow/deploy');
 
 const workflowService = {
   fetchPullRequests: vi.fn(),
@@ -501,6 +505,10 @@ describe('workflow/save', () => {
       // The stale published version is replaced, and the unrelated entry is kept
       expect(published.map((/** @type {any} */ e) => e.id)).toEqual(['other', entry.id]);
       expect(/** @type {any} */ (published.at(-1)).workflow).toBeUndefined();
+
+      // The entry is listed as on its way to the site, once the branch head has been refreshed
+      expect(refreshProductionSHA).toHaveBeenCalledBefore(vi.mocked(trackDeployingEntry));
+      expect(trackDeployingEntry).toHaveBeenCalledWith(entry);
     });
 
     test('records the entry as being published while the merge is in flight', async () => {

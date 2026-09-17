@@ -23,6 +23,7 @@ import {
   removeWorkflowAssets,
 } from '$lib/services/workflow/assets';
 import { getBranchName } from '$lib/services/workflow/branch';
+import { trackDeployingEntry } from '$lib/services/workflow/deploy';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -294,8 +295,10 @@ const mergeWorkflowEntry = async (entry) => {
   publishWorkflowAssets(pullRequest.branch);
   forgetDeployments([pullRequest.headSHA]);
   // The merge put a new commit on the configured branch, so the production build to watch is a
-  // different one now
-  refreshProductionSHA();
+  // different one now. The entry is listed as on its way until that build is done, so the head has
+  // to be known before it’s recorded
+  await refreshProductionSHA();
+  trackDeployingEntry(entry);
 
   if (hookArgs) {
     await callEventHooks({ ...hookArgs, type: postType });

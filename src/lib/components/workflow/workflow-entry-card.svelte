@@ -1,7 +1,9 @@
 <!--
   @component
   Render a draggable card for an unpublished entry on the Editorial Workflow page. Clicking the card
-  opens the entry editor; dragging it to another column changes the entry’s status.
+  opens the entry editor; dragging it to another column changes the entry’s status. The card also
+  stands for an entry whose change has been published but hasn’t reached the site yet, in which case
+  it only reports the build.
 -->
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
@@ -19,7 +21,7 @@
   } from '$lib/services/contents/collection/files';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
-  import { deployments } from '$lib/services/deployments';
+  import { deployments, productionSHA } from '$lib/services/deployments';
   import { hasPublishedVersion } from '$lib/services/workflow';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -33,6 +35,9 @@
    * @property {boolean} [dragging] Whether this card is currently being dragged.
    * @property {boolean} [busy] Whether an action is in flight for this entry. The controls are
    * disabled meanwhile, so a second request can’t be sent against the same pull request.
+   * @property {boolean} [deploying] Whether the entry’s pull request has been merged and the site
+   * is being rebuilt from it. There’s nothing left to do with the entry, so the card can’t be
+   * dragged and has no actions; it shows the state of the production build instead of a preview’s.
    * @property {() => void} [onDragStart] Drag start handler.
    * @property {() => void} [onDragEnd] Drag end handler.
    * @property {() => void} [onDelete] Delete button click handler.
@@ -45,6 +50,7 @@
     entry,
     dragging = false,
     busy = false,
+    deploying = false,
     onDragStart = undefined,
     onDragEnd = undefined,
     onDelete = undefined,
@@ -60,9 +66,11 @@
   );
   // The card has no locale of its own, so the link points at the entry’s default one
   const defaultLocale = $derived((collectionFile ?? collection)?._i18n?.defaultLocale);
+  // A merged change goes out with the production build, which is a different commit from the pull
+  // request’s, and a later one if another change has been merged since
+  const deploySHA = $derived(deploying ? productionSHA.current : pullRequest.headSHA);
   const deployState = $derived(
-    (pullRequest.headSHA ? deployments.current[pullRequest.headSHA]?.state : undefined) ??
-      'unknown',
+    (deploySHA ? deployments.current[deploySHA]?.state : undefined) ?? 'unknown',
   );
   const summary = $derived.by(() => {
     // `appLocale.current` is a key, because the labels can be localized
@@ -81,7 +89,8 @@
   // hide the control altogether. An Open Authoring contributor can’t merge a pull request on the
   // configured repository, so they never get the control
   const canPublish = $derived(
-    !openAuthoring.current &&
+    !deploying &&
+      !openAuthoring.current &&
       (status === 'pending_publish' || deletion) &&
       collection?.publish !== false,
   );
@@ -91,20 +100,27 @@
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
   // the published version untouched, so it stays available even when deletion is disabled
   const canDelete = $derived(
-    publishedVersionExists || (collection?._type === 'entry' ? collection.delete !== false : true),
+    !deploying &&
+      (publishedVersionExists ||
+        (collection?._type === 'entry' ? collection.delete !== false : true)),
   );
+  // An entry being removed from the site has left the CMS as well, so there’s nothing to open, and
+  // its page isn’t worth a link either: it’s about to return a 404
+  const gone = $derived(deploying && deletion);
   // The left action does one of three things depending on the entry, and with the labels gone the
   // icon is all that says which: it reverses a pending deletion, throws away the changes a pull
   // request was about to make, or takes an unpublished entry away for good
   const deleteIcon = $derived(deletion || publishedVersionExists ? 'undo' : 'delete');
 </script>
 
-<!-- A pending deletion has no stages to move through, so its card doesn’t drag -->
+<!-- A pending deletion has no stages to move through, so its card doesn’t drag, and neither does
+a merged one -->
 <div
   role="listitem"
   class="card"
   class:dragging
-  draggable={!busy && !deletion}
+  class:static={deletion || deploying}
+  draggable={!busy && !deletion && !deploying}
   ondragstart={(/** @type {DragEvent} */ event) => {
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
@@ -122,6 +138,7 @@
     type="button"
     class="summary"
     aria-label={summary}
+    disabled={gone}
     onclick={() => {
       // A collection file is addressed by its name, while its `subPath` is the whole file path
       goto(`/collections/${collectionName}/entries/${fileName ?? entry.subPath}`, {
@@ -152,16 +169,20 @@
           day: 'numeric',
         })}
       </span>
+      {#if gone}
+        <span role="none" class="note">{_('workflow.deploying_deletion')}</span>
+      {/if}
       <DeployStatusBadge state={deployState} />
     </div>
     <div role="none" class="actions">
-      {#if collection && defaultLocale}
+      {#if collection && defaultLocale && !gone}
+        <!-- A merged change is on the live site, or on its way there, rather than on a preview -->
         <PreviewLinkButton
           {entry}
           locale={defaultLocale}
           {collection}
           {collectionFile}
-          {pullRequest}
+          pullRequest={deploying ? undefined : pullRequest}
           size="small"
           iconic
         />
@@ -222,6 +243,10 @@
     &.dragging {
       opacity: 0.5;
     }
+
+    &.static {
+      cursor: default;
+    }
   }
 
   .summary {
@@ -235,6 +260,10 @@
     font-family: inherit;
     text-align: left;
     cursor: pointer;
+
+    &:disabled {
+      cursor: default;
+    }
 
     /* Let the label column shrink instead of pushing the thumbnail out of the card */
     .text {
@@ -278,11 +307,13 @@
       white-space: nowrap;
     }
 
-    .date {
+    .date,
+    .note {
       flex: none;
     }
 
-    .author + .date::before {
+    .author + .date::before,
+    .date + .note::before {
       margin-inline-end: 6px;
       content: '\00B7'; /* middle dot */
     }

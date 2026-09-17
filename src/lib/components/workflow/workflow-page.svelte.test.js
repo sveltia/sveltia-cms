@@ -4,11 +4,13 @@ import { render } from 'vitest-browser-svelte';
 
 import { announcedPageStatus } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
+import { deployments, productionSHA } from '$lib/services/deployments';
 import {
   publishingBranches,
   unpublishedEntries,
   unpublishedEntriesLoaded,
 } from '$lib/services/workflow';
+import { resetDeployingEntries, trackDeployingEntry } from '$lib/services/workflow/deploy';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import {
   discardWorkflowEntry,
@@ -23,6 +25,9 @@ import WorkflowPage from './workflow-page.svelte';
 vi.mock('$lib/services/deployments/poll', () => ({
   retainDeployPolling: vi.fn(() => () => {}),
   recheckDeployments: vi.fn(),
+}));
+vi.mock('$lib/services/deployments/resolve', () => ({
+  canResolveDeployments: vi.fn(() => true),
 }));
 vi.mock('$lib/services/workflow/save', () => ({
   upsertUnpublishedEntry: vi.fn(),
@@ -92,6 +97,9 @@ describe('WorkflowPage', () => {
     forkedRepository.current = undefined;
     unpublishedEntriesLoaded.current = true;
     publishingBranches.current = [];
+    resetDeployingEntries();
+    deployments.current = {};
+    productionSHA.current = '';
     unpublishedEntries.current = [
       createEntry('draft-1', 'draft'),
       createEntry('draft-2', 'draft'),
@@ -260,6 +268,34 @@ describe('WorkflowPage', () => {
     await expect
       .element(page.getByRole('status'))
       .toHaveTextContent('check_circle Success Entry published.');
+  });
+
+  test('lists the merged entries until the site has caught up', async () => {
+    productionSHA.current = 'prod';
+    trackDeployingEntry(createEntry('live-1', 'pending_publish'));
+    trackDeployingEntry(createEntry('gone-2', 'pending_deletion'));
+
+    const { container } = await render(WorkflowPage);
+    const tray = page.getByRole('list', { name: 'Deploying' });
+
+    await expect.poll(() => tray.getByRole('listitem').elements().length).toBe(2);
+
+    const [published, deleted] = tray.getByRole('listitem').elements();
+
+    expect(published.querySelector('.title')).toHaveTextContent('live-1');
+    expect(published.querySelector('.note')).toBeNull();
+    expect(deleted.querySelector('.title')).toHaveTextContent('gone-2');
+    expect(deleted.querySelector('.note')).toHaveTextContent('Deletion');
+    // Nothing to do with them
+    expect(tray.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+    expect(tray.getByRole('button', { name: 'Delete Entry' }).elements()).toHaveLength(0);
+
+    deployments.current = { prod: { state: 'pending', checkedTime: 0 } };
+    await expect.poll(() => container.querySelectorAll('.deploy-status-badge').length).toBe(2);
+
+    // The tray goes with the last of them
+    deployments.current = { prod: { state: 'ready', checkedTime: 0 } };
+    await expect.poll(() => tray.elements().length).toBe(0);
   });
 
   test('keeps a card busy while a merge started elsewhere is in flight', async () => {

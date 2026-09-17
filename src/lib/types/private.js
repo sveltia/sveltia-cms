@@ -348,6 +348,16 @@
  */
 
 /**
+ * An entry whose pull request has been merged, and whose change is on its way to the site.
+ * @typedef {object} DeployingEntry
+ * @property {UnpublishedEntry} entry Entry as it was published, with the workflow properties it
+ * had: the status says whether the merge removed the entry from the site rather than putting it
+ * there, and the pull request’s `updatedDate` is when the merge landed.
+ * @property {string} sha Head commit of the configured branch once the merge had landed, which the
+ * site is being built from.
+ */
+
+/**
  * A file included in an Editorial Workflow pull request.
  * @typedef {object} WorkflowFile
  * @property {string} path File path relative to the project’s root directory.

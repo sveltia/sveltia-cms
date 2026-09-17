@@ -14,6 +14,7 @@
     workflowDataReady,
   } from '$lib/services/workflow';
   import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
+  import { deployingEntries } from '$lib/services/workflow/deploy';
   import { openAuthoring, workflowStages } from '$lib/services/workflow/open-authoring';
   import {
     discardWorkflowEntry,
@@ -304,7 +305,7 @@
         </div>
         <!-- Only rendered when something is pending, so the board keeps the height otherwise -->
         {#if pendingDeletions.length}
-          <div role="none" class="deletions">
+          <div role="none" class="tray">
             <Group class="group" aria-labelledby="deletions-title">
               <header role="none">
                 <h3 role="none" id="deletions-title">{_('status.pending_deletion')}</h3>
@@ -323,6 +324,22 @@
                       showPublishDialog = true;
                     }}
                   />
+                {/each}
+              </div>
+            </Group>
+          </div>
+        {/if}
+        <!-- Merged changes the site hasn’t caught up with yet. A deletion is gone from the entry
+        list once merged, so this is the only place left to say the site still has it -->
+        {#if deployingEntries.current.length}
+          <div role="none" class="tray">
+            <Group class="group" aria-labelledby="deploying-title">
+              <header role="none">
+                <h3 role="none" id="deploying-title">{_('status.deploying')}</h3>
+              </header>
+              <div role="list" class="entries" aria-label={_('status.deploying')}>
+                {#each deployingEntries.current as { entry } (entry.workflow.pullRequest.branch)}
+                  <WorkflowEntryCard {entry} deploying />
                 {/each}
               </div>
             </Group>
@@ -407,8 +424,9 @@
 
 <style>
   /*
-   * Entries awaiting removal, listed below the board rather than as a fourth column: they have no
-   * stages to move through, and a column would take a quarter of the width for something rare
+   * Entries awaiting removal, and merged ones the site hasn’t caught up with, are listed in trays
+   * below the board rather than as extra columns: they have no stages to move through, and a
+   * column would take a share of the width for something rare
    */
 
   .board {
@@ -418,7 +436,7 @@
     overflow: hidden;
   }
 
-  .deletions {
+  .tray {
     flex: none;
     display: flex;
     flex-direction: column;

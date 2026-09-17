@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { deployments } from '$lib/services/deployments';
+import { deployments, productionSHA } from '$lib/services/deployments';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$lib/test/config';
 
@@ -56,6 +56,7 @@ describe('WorkflowEntryCard', () => {
     });
     setEntries([]);
     deployments.current = {};
+    productionSHA.current = '';
     forkedRepository.current = undefined;
     window.location.hash = '#/workflow';
   });
@@ -204,6 +205,58 @@ describe('WorkflowEntryCard', () => {
     await expect
       .poll(() => page.getByRole('button', { name: 'Publish Entry' }).elements().length)
       .toBe(0);
+  });
+
+  test('reports the production build for a merged entry, with nothing left to do', async () => {
+    // The pull request’s own build is done; the production build is what the entry is waiting for
+    productionSHA.current = 'prod';
+    deployments.current = {
+      abc: { state: 'ready', checkedTime: 0 },
+      prod: { state: 'pending', checkedTime: 0 },
+    };
+
+    const { container } = await render(WorkflowEntryCard, {
+      entry: createEntry({ status: 'pending_publish' }),
+      deploying: true,
+    });
+
+    const card = page.getByRole('listitem');
+
+    expect(container.querySelector('.deploy-status-badge')).toHaveTextContent('Building…');
+    expect(container.querySelector('.note')).toBeNull();
+    await expect.element(card).toHaveAttribute('draggable', 'false');
+    expect(card.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+    expect(card.getByRole('button', { name: 'Delete Entry' }).elements()).toHaveLength(0);
+    expect(card.getByRole('button', { name: 'Discard Changes' }).elements()).toHaveLength(0);
+
+    // The entry is on the live site, or about to be, so that’s where the link goes
+    await expect
+      .element(card.getByRole('button', { name: 'View on Live Site' }))
+      .toHaveAttribute('aria-description', 'The preview is still being built.');
+    // The entry can still be opened
+    await expect.element(card.getByRole('button', { name: 'Hello' })).toBeEnabled();
+
+    deployments.current = { ...deployments.current, prod: { state: 'error', checkedTime: 0 } };
+    await expect.element(page.getByText('Build Failed')).toBeVisible();
+  });
+
+  test('marks a merged deletion, with nothing to open or link', async () => {
+    productionSHA.current = 'prod';
+    deployments.current = { prod: { state: 'pending', checkedTime: 0 } };
+
+    const { container } = await render(WorkflowEntryCard, {
+      entry: createEntry({ status: 'pending_deletion' }),
+      deploying: true,
+    });
+
+    const card = page.getByRole('listitem');
+
+    expect(container.querySelector('.note')).toHaveTextContent('Deletion');
+    expect(container.querySelector('.deploy-status-badge')).toHaveTextContent('Building…');
+    // The entry is gone from the CMS, and its page is about to go
+    await expect.element(card.getByRole('button', { name: 'Hello' })).toBeDisabled();
+    expect(card.getByRole('button', { name: 'View on Live Site' }).elements()).toHaveLength(0);
+    expect(card.getByRole('button', { name: 'Cancel Deletion' }).elements()).toHaveLength(0);
   });
 
   test('is disabled while busy, and marked while dragged', async () => {

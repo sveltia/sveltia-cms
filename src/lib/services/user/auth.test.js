@@ -28,6 +28,7 @@ const mockBackendName = { current: /** @type {string | undefined} */ (undefined)
 const mockCmsConfig = { backend: { name: 'github' } };
 const mockLoadUnpublishedEntries = vi.fn();
 const mockStartLoadingPullRequests = vi.fn();
+const mockResetDeployingEntries = vi.fn();
 const mockUnpublishedEntries = { current: /** @type {any[]} */ ([]) };
 const mockUnpublishedEntriesLoaded = { current: false };
 const mockPublishingBranches = { current: /** @type {string[]} */ ([]) };
@@ -84,6 +85,10 @@ vi.mock('$lib/services/workflow', () => ({
 vi.mock('$lib/services/workflow/load', () => ({
   loadUnpublishedEntries: mockLoadUnpublishedEntries,
   startLoadingPullRequests: mockStartLoadingPullRequests,
+}));
+
+vi.mock('$lib/services/workflow/deploy', () => ({
+  resetDeployingEntries: mockResetDeployingEntries,
 }));
 
 describe('auth service', () => {
@@ -1055,6 +1060,7 @@ describe('auth service', () => {
       expect(mockUnpublishedEntries.current).toEqual([]);
       expect(mockUnpublishedEntriesLoaded.current).toBe(false);
       expect(mockPublishingBranches.current).toEqual([]);
+      expect(mockResetDeployingEntries).toHaveBeenCalled();
     });
 
     it('should redirect to logout URL when configured', async () => {
