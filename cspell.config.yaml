@@ -35,10 +35,10 @@ words:
   - backlink
   - backlinks
   - beforeinstallprompt
+  - bindable
   - brotlied
   - bunnycdn
   - BYOK
-  - bindable
   - camelcase
   - cfworker
   - CLDR
@@ -106,9 +106,9 @@ words:
   - parseable
   - passwordless
   - pexels
-  - pingable
   - Photoshop
   - Picsum
+  - pingable
   - Pixabay
   - PKCE
   - plusplus
@@ -159,6 +159,7 @@ words:
   - unlocalized
   - unpatched
   - unproxify
+  - unreviewed
   - unrs
   - unsubscribers
   - Uploadcare
