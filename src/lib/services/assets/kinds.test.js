@@ -8,6 +8,8 @@ import {
   DOC_EXTENSION_REGEX,
   getAssetKind,
   getMediaKind,
+  getMediaKindFromPath,
+  getMediaKindFromType,
   isMediaKind,
   MEDIA_KINDS,
 } from './kinds';
@@ -266,6 +268,35 @@ describe('assets/kinds', () => {
       const result = await getMediaKind({} /* invalid source type */);
 
       expect(result).toBe(undefined);
+    });
+  });
+
+  describe('getMediaKindFromType', () => {
+    it('should map a MIME type to a media kind', () => {
+      expect(getMediaKindFromType('image/png')).toBe('image');
+      expect(getMediaKindFromType('video/mp4')).toBe('video');
+      expect(getMediaKindFromType('audio/mpeg')).toBe('audio');
+      expect(getMediaKindFromType('application/pdf')).toBe(undefined);
+      expect(getMediaKindFromType('image/x-custom')).toBe(undefined);
+      expect(getMediaKindFromType('')).toBe(undefined);
+    });
+  });
+
+  describe('getMediaKindFromPath', () => {
+    it('should read the MIME type of a data URL', () => {
+      expect(getMediaKindFromPath('data:image/png;base64,iVBORw0KGgo=')).toBe('image');
+      expect(getMediaKindFromPath('data:application/pdf;base64,JVBERi0=')).toBe(undefined);
+      expect(mime.getType).not.toHaveBeenCalled();
+    });
+
+    it('should use the extension of a path or URL', () => {
+      vi.mocked(mime.getType).mockReturnValue('image/jpeg');
+
+      expect(getMediaKindFromPath('https://example.com/photos/a.jpg?w=1')).toBe('image');
+      expect(mime.getType).toHaveBeenCalledWith('/photos/a.jpg');
+      expect(getMediaKindFromPath('a.jpg')).toBe('image');
+      expect(mime.getType).toHaveBeenCalledWith('a.jpg');
+      expect(getMediaKindFromPath('https://images.example.com/a')).toBe('image');
     });
   });
 

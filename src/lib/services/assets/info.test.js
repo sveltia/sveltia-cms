@@ -21,6 +21,7 @@ import {
   getAssetBlobURL,
   getAssetPublicURL,
   getAssetThumbnailURL,
+  getMediaFieldSource,
   getMediaFieldURL,
   revokeAssetBlobURLIfNeeded,
   revokeBlobURLIfNeeded,
@@ -1007,6 +1008,52 @@ describe('assets/info', () => {
       // Verify that getAssetFoldersByPath was called to search for the folder
       expect(getAssetFoldersByPath).toHaveBeenCalledWith(assetWithCollection.path);
       expect(result).toBeDefined();
+    });
+  });
+
+  describe('getMediaFieldSource', () => {
+    it('should return undefined for empty value', () => {
+      expect(getMediaFieldSource({ value: '', collectionName: 'posts' })).toBeUndefined();
+    });
+
+    it('should return an external URL as-is', () => {
+      expect(
+        getMediaFieldSource({ value: 'https://example.com/image.jpg', collectionName: 'posts' }),
+      ).toEqual({ url: 'https://example.com/image.jpg' });
+    });
+
+    it('should return the asset the path points to', async () => {
+      const { getAssetByPath } = await import('$lib/services/assets');
+
+      vi.mocked(getAssetByPath).mockReturnValue(mockAsset);
+
+      const entry = /** @type {any} */ ({ id: 'post' });
+
+      expect(
+        getMediaFieldSource({
+          value: '/uploads/test.jpg',
+          entry,
+          collectionName: 'posts',
+          fileName: 'about',
+          componentName: 'figure',
+          typedKeyPath: 'hero.image',
+        }),
+      ).toEqual({ asset: mockAsset });
+
+      expect(getAssetByPath).toHaveBeenCalledWith({
+        value: '/uploads/test.jpg',
+        entry,
+        collectionName: 'posts',
+        fileName: 'about',
+        componentName: 'figure',
+        typedKeyPath: 'hero.image',
+      });
+
+      vi.mocked(getAssetByPath).mockReturnValue(undefined);
+
+      expect(
+        getMediaFieldSource({ value: '/uploads/missing.jpg', collectionName: 'posts' }),
+      ).toBeUndefined();
     });
   });
 

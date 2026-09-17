@@ -30,7 +30,6 @@
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { getMediaFieldURL } from '$lib/services/assets/info';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListField } from '$lib/services/contents/draft/update/list';
@@ -40,15 +39,14 @@
     getInitialExpanderState,
     syncExpanderStates,
   } from '$lib/services/contents/editor/fields';
-  import { getField } from '$lib/services/contents/entry/fields';
   import { getSubtree } from '$lib/services/contents/entry/subtree';
   import { formatSummary, getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+  import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { env } from '$lib/services/user/env.svelte';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
-  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps, MediaFieldSource } from '$lib/types/private';
    * @import {
    * ComplexListField,
    * FieldKeyPath,
@@ -162,11 +160,6 @@
   );
   const isAddDisabled = $derived(isDuplicateField || !hasEditableSubFields);
 
-  /**
-   * List item thumbnails.
-   * @type {(string | undefined)[]}
-   */
-  const thumbnails = $state([]);
   /**
    * @type {HTMLElement | undefined}
    */
@@ -416,78 +409,25 @@
     });
 
   /**
-   * Get the thumbnail image URL for a list item.
+   * Get the thumbnail of a collapsed list item.
    * @param {number} index List index.
-   * @returns {Promise<string | undefined>} Thumbnail image URL.
+   * @param {string} [type] Variable type name of the item, if the list has variable types.
+   * @returns {MediaFieldSource | undefined} Thumbnail.
    */
-  const getThumbnail = async (index) => {
-    // Only called by `updateThumbnails()`, which has already checked the option
-    /* v8 ignore next 3 */
-    if (!thumbnailFieldName) {
-      return undefined;
-    }
-
-    const fieldNameNormalized = thumbnailFieldName.replace(/^fields\./, '');
-    const itemKeyPath = `${keyPath}.${index}`;
-
-    // For single-subfield lists (`field:` option), values are stored at the item key path directly
-    // (without the field name). `getField(itemKeyPath)` already traverses into the subfield, so we
-    // use it to validate the name match too.
-    const thumbnailKeyPath = hasSingleSubField
-      ? itemKeyPath
-      : `${itemKeyPath}.${fieldNameNormalized}`;
-
-    const thumbnailValue = valueMap[thumbnailKeyPath];
-
-    if (!thumbnailValue) {
-      return undefined;
-    }
-
-    const thumbnailFieldConfig = getField({
-      collectionName,
-      fileName,
-      valueMap,
-      keyPath: thumbnailKeyPath,
-      isIndexFile,
-    });
-
-    if (
-      thumbnailFieldConfig?.widget !== 'image' ||
-      (hasSingleSubField && thumbnailFieldConfig.name !== fieldNameNormalized)
-    ) {
-      return undefined;
-    }
-
-    return getMediaFieldURL({
-      value: thumbnailValue,
-      entry: entryDraft.current?.originalEntry,
+  const getThumbnail = (index, type) =>
+    getObjectThumbnail({
+      thumbnailFieldName,
+      keyPath: `${keyPath}.${index}`,
+      typedKeyPath: type ? `${typedKeyPath}.*<${type}>` : `${typedKeyPath}.*`,
+      hasSingleSubField,
       collectionName,
       fileName,
       componentName,
-      typedKeyPath: hasSingleSubField
-        ? `${typedKeyPath}.*`
-        : `${typedKeyPath}.*.${fieldNameNormalized}`,
+      valueMap,
+      isIndexFile,
+      entry: entryDraft.current?.originalEntry,
+      files: entryDraft.current?.files,
     });
-  };
-
-  /**
-   * Update thumbnails for all items.
-   */
-  const updateThumbnails = async () => {
-    if (!thumbnailFieldName) {
-      return;
-    }
-
-    thumbnails.length = items.length;
-
-    items.forEach(async (_item, index) => {
-      const itemThumbnail = await getThumbnail(index);
-
-      if (thumbnails[index] !== itemThumbnail) {
-        thumbnails[index] = itemThumbnail;
-      }
-    });
-  };
 
   /**
    * Warn about unknown variable types used in the list items.
@@ -513,13 +453,6 @@
       console.warn(`List item ${keyPath}.${index}: ${message}`);
     });
   };
-
-  watch(
-    () => items,
-    () => {
-      updateThumbnails();
-    },
-  );
 
   onMount(() => {
     initializeExpanderState();
@@ -717,9 +650,10 @@
                 </VisibilityObserver>
               {/each}
             {:else}
+              {@const thumbnail = getThumbnail(index, type)}
               <div role="none" class="summary">
-                {#if thumbnails[index]}
-                  <Image src={thumbnails[index]} variant="icon" cover />
+                {#if thumbnail}
+                  <Image asset={thumbnail.asset} src={thumbnail.url} variant="icon" cover />
                 {/if}
                 <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
                   {_formatSummary(index, summaryTemplate)}

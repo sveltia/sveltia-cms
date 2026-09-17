@@ -700,7 +700,7 @@
  * @property {string} [summary] Template of a label to be displayed on a collapsed list item.
  * @property {string} [thumbnail] Subfield name to be used as a thumbnail image for a list item. It
  * will be displayed along with the summary label when the item is collapsed. The subfield must be
- * an Image field. Default: none.
+ * an Image or File field. Default: none.
  * @property {boolean | 'auto'} [collapsed] Whether to collapse the list items by default. Default:
  * `false`. If set to `auto`, the UI is collapsed if the item has any filled subfields and expanded
  * if all the subfields are empty.
@@ -897,6 +897,9 @@
  * `false`. If set to `auto`, the UI is collapsed if the object has any filled subfields and
  * expanded if all the subfields are empty.
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
+ * @property {string} [thumbnail] Subfield name to be used as a thumbnail image for the object. It
+ * will be displayed along with the summary label when the object is collapsed. The subfield must be
+ * an Image or File field. Default: none.
  * @see https://decapcms.org/docs/widgets/#Object
  * @see https://sveltiacms.app/en/docs/fields/object
  */

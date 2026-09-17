@@ -665,7 +665,9 @@ describe('ListEditorComplex (more)', () => {
     thumbnail: 'fields.image',
     fields: [
       { name: 'image', widget: 'image' },
+      { name: 'file', widget: 'file' },
       { name: 'caption', widget: 'string' },
+      { name: 'mobile', widget: 'object', fields: [{ name: 'src', widget: 'image' }] },
     ],
   };
 
@@ -718,6 +720,30 @@ describe('ListEditorComplex (more)', () => {
     const { container } = await renderEditor(imagesField, {
       'images.0': '/static/uploads/photo.png',
     });
+
+    await page.getByRole('button', { name: 'Collapse' }).nth(1).click();
+    await expect
+      .poll(() => container.querySelector('.item-body .summary img')?.getAttribute('src'))
+      .toMatch(/^blob:/);
+  });
+
+  test('shows the thumbnails of a File field', async () => {
+    const { container } = await renderEditor(
+      { ...galleryField, thumbnail: 'file' },
+      { 'gallery.0.file': '/static/uploads/photo.png', 'gallery.0.caption': 'A photo' },
+    );
+
+    await page.getByRole('button', { name: 'Collapse' }).nth(1).click();
+    await expect
+      .poll(() => container.querySelector('.item-body .summary img')?.getAttribute('src'))
+      .toMatch(/^blob:/);
+  });
+
+  test('shows the thumbnails of a nested field', async () => {
+    const { container } = await renderEditor(
+      { ...galleryField, thumbnail: 'mobile.src' },
+      { 'gallery.0.mobile.src': '/static/uploads/photo.png', 'gallery.0.caption': 'A photo' },
+    );
 
     await page.getByRole('button', { name: 'Collapse' }).nth(1).click();
     await expect

@@ -1492,6 +1492,14 @@
  */
 
 /**
+ * The file an image/file field value points to.
+ * @typedef {object} MediaFieldSource
+ * @property {string} [url] Complete URL of a file on an external location, including a Cloudinary
+ * asset referenced by its relative path.
+ * @property {Asset} [asset] Asset in the repository. Exclusive with {@link MediaFieldSource.url}.
+ */
+
+/**
  * Arguments for the `getField` function.
  * @typedef {object} GetFieldArgs
  * @property {string} collectionName Collection name.

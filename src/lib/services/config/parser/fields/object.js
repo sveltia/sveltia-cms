@@ -1,8 +1,10 @@
 import { parseFields } from '$lib/services/config/parser/fields/registry';
+import { getSubFields } from '$lib/services/config/parser/utils/fields';
+import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 
 /**
- * @import { ObjectFieldWithSubFields, ObjectFieldWithTypes } from '$lib/types/public';
+ * @import { ObjectField, ObjectFieldWithSubFields, ObjectFieldWithTypes } from '$lib/types/public';
  * @import { FieldParserArgs } from '$lib/types/private';
  */
 
@@ -14,6 +16,7 @@ export const parseObjectFieldConfig = (args) => {
   const { config, context, collectors } = args;
   const { fields: subfields } = /** @type {ObjectFieldWithSubFields} */ (config);
   const { types } = /** @type {ObjectFieldWithTypes} */ (config);
+  const { thumbnail } = /** @type {ObjectField} */ (config);
   const { typedKeyPath } = context;
   const checkNameArgs = { nameCounts: {}, strKeyBase: 'variable_type', collectors };
 
@@ -35,6 +38,15 @@ export const parseObjectFieldConfig = (args) => {
 
     return;
   }
+
+  // The `thumbnail` option names a subfield
+  checkFieldReferences({
+    option: 'thumbnail',
+    keyPaths: thumbnail,
+    fields: getSubFields(config),
+    context,
+    collectors,
+  });
 
   // Handle subfields
   if (subfields) {

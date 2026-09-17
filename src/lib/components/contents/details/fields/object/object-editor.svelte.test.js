@@ -1,8 +1,9 @@
 import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { globalAssetFolder } from '$lib/services/assets/folders';
 import { env } from '$lib/services/user/env.svelte';
-import { initTestConfig } from '$lib/test/config';
+import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import ObjectEditor from './object-editor.svelte';
@@ -361,5 +362,81 @@ describe('ObjectEditor', () => {
     } finally {
       warn.mockRestore();
     }
+  });
+
+  /** @type {ObjectField} */
+  const heroField = {
+    name: 'hero',
+    widget: 'object',
+    summary: '{{fields.caption}}',
+    thumbnail: 'media',
+    fields: [
+      { name: 'media', widget: 'file' },
+      { name: 'caption', widget: 'string' },
+    ],
+  };
+
+  /**
+   * Load the site configuration and assets the thumbnail is looked up in.
+   */
+  const initThumbnailConfig = async () => {
+    await initTestConfig({
+      collections: [
+        { name: 'posts', label: 'Posts', folder: 'content/posts', fields: [heroField] },
+      ],
+    });
+    setAssets([
+      createMockAsset({
+        name: 'photo.png',
+        file: await createMockImageFile(),
+        asset: { folder: globalAssetFolder.current },
+      }),
+      createMockAsset({ name: 'notes.docx', asset: { folder: globalAssetFolder.current } }),
+    ]);
+  };
+
+  test('shows the thumbnail of a collapsed object', async () => {
+    await initThumbnailConfig();
+
+    const { draft, container } = await renderEditor(heroField, {
+      'hero.media': '/static/uploads/photo.png',
+      'hero.caption': 'A photo',
+    });
+
+    await page.getByRole('button', { name: 'Collapse' }).click();
+    await expect.poll(() => draft.expanderStates._['hero#']).toBe(false);
+    await expect
+      .poll(() => container.querySelector('.summary img')?.getAttribute('src'))
+      .toMatch(/^blob:/);
+    expect(container.querySelector('.summary')).toHaveTextContent('A photo');
+  });
+
+  test('shows the thumbnail without a summary', async () => {
+    await initThumbnailConfig();
+
+    const { draft, container } = await renderEditor(
+      { ...heroField, summary: undefined },
+      { 'hero.media': '/static/uploads/photo.png', 'hero.caption': '' },
+    );
+
+    await page.getByRole('button', { name: 'Collapse' }).click();
+    await expect.poll(() => draft.expanderStates._['hero#']).toBe(false);
+    await expect
+      .poll(() => container.querySelector('.summary img')?.getAttribute('src'))
+      .toMatch(/^blob:/);
+  });
+
+  test('shows no thumbnail for a file that has none', async () => {
+    await initThumbnailConfig();
+
+    const { draft, container } = await renderEditor(heroField, {
+      'hero.media': '/static/uploads/notes.docx',
+      'hero.caption': 'Notes',
+    });
+
+    await page.getByRole('button', { name: 'Collapse' }).click();
+    await expect.poll(() => draft.expanderStates._['hero#']).toBe(false);
+    expect(container.querySelector('.summary')).toHaveTextContent('Notes');
+    expect(container.querySelector('.summary img')).toBeNull();
   });
 });
