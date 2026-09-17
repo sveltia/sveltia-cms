@@ -66,16 +66,26 @@
       return;
     }
 
-    // Read the collection name up front: publishing takes the entry out of `unpublishedEntries`,
-    // and the `entry` prop is derived from that store, so it’s `undefined` once the merge resolves
-    const { collectionName } = entry.workflow;
+    // Read these up front: publishing takes the entry out of `unpublishedEntries`, and the `entry`
+    // prop is derived from that store, so it’s `undefined` once the merge resolves
+    const { collectionName, pullRequest } = entry.workflow;
 
     publishing = true;
 
     try {
       await publishWorkflowEntry(entry);
-      entryDraft.current = null;
-      goBack(`/collections/${collectionName}`);
+
+      // The merge can take minutes when the Git service waits for a pipeline, and the editor can
+      // have moved on by then: the draft state is shared by the whole page, so the draft open now
+      // may be another entry’s, with unsaved changes. Only this entry’s draft is closed
+      const originalEntry = /** @type {UnpublishedEntry | undefined} */ (
+        entryDraft.current?.originalEntry
+      );
+
+      if (originalEntry?.workflow?.pullRequest.branch === pullRequest.branch) {
+        entryDraft.current = null;
+        goBack(`/collections/${collectionName}`);
+      }
     } catch (/** @type {any} */ ex) {
       showErrorToast = true;
       // eslint-disable-next-line no-console

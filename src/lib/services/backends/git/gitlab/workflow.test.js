@@ -27,6 +27,8 @@ vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 
 const PROJECT_ID = encodeURIComponent('group/sub/project');
+/** Path to cancel the auto-merge on merge request !1. */
+const CANCEL_PATH = `/projects/${PROJECT_ID}/merge_requests/1/cancel_merge_when_pipeline_succeeds`;
 /**
  * Get the request body passed to the given `fetchAPI` call.
  * @param {number} [index] Call index.
@@ -737,7 +739,7 @@ describe('GitLab Editorial Workflow service', () => {
           );
         });
 
-        test('fails once the pipeline has failed', async () => {
+        test('fails once the pipeline has failed, cancelling the auto-merge', async () => {
           vi.mocked(fetchAPI)
             .mockResolvedValueOnce(createWaitingItem())
             .mockResolvedValueOnce(createWaitingItem({ detailed_merge_status: 'ci_must_pass' }));
@@ -746,7 +748,28 @@ describe('GitLab Editorial Workflow service', () => {
             'Merge request !1 was not merged: opened, ci_must_pass, auto-merge on',
           );
 
-          expect(fetchAPI).toHaveBeenCalledTimes(5);
+          // GitLab would otherwise still merge once a job is retried by hand, behind the CMS’s
+          // back
+          expect(fetchAPI).toHaveBeenCalledTimes(6);
+          expect(fetchAPI).toHaveBeenLastCalledWith(CANCEL_PATH, { method: 'POST' });
+        });
+
+        test('reports the failure even if the auto-merge can’t be cancelled', async () => {
+          const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+          const error = createError(406);
+
+          vi.mocked(fetchAPI)
+            .mockResolvedValueOnce(createWaitingItem({ detailed_merge_status: 'conflict' }))
+            .mockRejectedValueOnce(error);
+
+          await expect(publish(pullRequest)).rejects.toThrow(
+            'Merge request !1 was not merged: opened, conflict, auto-merge on',
+          );
+
+          expect(warn).toHaveBeenCalledWith(
+            'Failed to cancel the auto-merge on merge request !1.',
+            error,
+          );
         });
 
         test('fails once a new commit has cancelled the auto-merge', async () => {
@@ -757,6 +780,9 @@ describe('GitLab Editorial Workflow service', () => {
           await expect(publish(pullRequest)).rejects.toThrow(
             'Merge request !1 was not merged: opened, ci_still_running, auto-merge off',
           );
+
+          // Nothing left to cancel
+          expect(fetchAPI).toHaveBeenCalledTimes(4);
         });
 
         test('fails once the merge request has been closed', async () => {
@@ -767,11 +793,16 @@ describe('GitLab Editorial Workflow service', () => {
           await expect(publish(pullRequest)).rejects.toThrow(
             'Merge request !1 was not merged: closed, not_open, auto-merge on',
           );
+
+          expect(fetchAPI).toHaveBeenCalledTimes(4);
         });
 
-        test('keeps waiting when a read fails', async () => {
+        test.each([
+          ['a network error', new Error('Network error')],
+          ['a server error', createError(502)],
+          ['the request limit', createError(429)],
+        ])('keeps waiting when a read fails with %s', async (_label, error) => {
           const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-          const error = new Error('Network error');
 
           vi.mocked(fetchAPI).mockRejectedValueOnce(error).mockResolvedValueOnce(mergedItem);
 
@@ -784,7 +815,19 @@ describe('GitLab Editorial Workflow service', () => {
           );
         });
 
-        test('gives up after an hour', async () => {
+        test.each([401, 403, 404])('gives up when a read fails with a %i', async (status) => {
+          const error = createError(status);
+
+          vi.mocked(fetchAPI).mockRejectedValueOnce(error);
+
+          await expect(publish(pullRequest)).rejects.toBe(error);
+
+          // The session has ended or the merge request is gone, so nothing else is tried
+          expect(fetchAPI).toHaveBeenCalledTimes(4);
+          expect(sleep).toHaveBeenCalledTimes(1);
+        });
+
+        test('gives up after an hour, cancelling the auto-merge', async () => {
           vi.useFakeTimers();
 
           try {
@@ -799,8 +842,10 @@ describe('GitLab Editorial Workflow service', () => {
               'Timed out waiting for merge request !1 to be merged',
             );
 
-            // The three reads within the hour, after the three requests that set the auto-merge
-            expect(fetchAPI).toHaveBeenCalledTimes(6);
+            // The three reads within the hour, after the three requests that set the auto-merge,
+            // then the cancellation
+            expect(fetchAPI).toHaveBeenCalledTimes(7);
+            expect(fetchAPI).toHaveBeenLastCalledWith(CANCEL_PATH, { method: 'POST' });
           } finally {
             vi.useRealTimers();
           }

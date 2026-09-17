@@ -455,12 +455,35 @@ const fetchMergeStatus = async (pullRequest, attemptsLeft = MERGE_STATUS_POLL.at
 };
 
 /**
+ * Cancel the auto-merge on the given merge request. Failures are ignored: this is called once the
+ * publish is being reported as failed, and a merge request that has just been merged or closed
+ * has no auto-merge left to cancel.
+ * @param {WorkflowPullRequest} pullRequest Merge request.
+ * @see https://docs.gitlab.com/api/merge_requests/#cancel-merge-when-pipeline-succeeds
+ */
+const cancelAutoMerge = async (pullRequest) => {
+  try {
+    await fetchAPI(
+      `/projects/${getProjectId()}/merge_requests/${pullRequest.number}` +
+        '/cancel_merge_when_pipeline_succeeds',
+      { method: 'POST' },
+    );
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.warn(`Failed to cancel the auto-merge on merge request !${pullRequest.number}.`, ex);
+  }
+};
+
+/**
  * Wait for GitLab to merge a merge request that has been set to auto-merge. The merge request is
  * read every so often until it’s merged, in which case this resolves, or until it’s clear that the
  * merge won’t happen on its own: the pipeline has failed, a new commit has cancelled the
  * auto-merge, the merge request has been closed, or the wait has run out. Those are reported as
  * errors, so the entry stays on the Editorial Workflow board rather than being taken for
- * published.
+ * published. GitLab keeps the auto-merge armed after a failed pipeline, in case a job is retried by
+ * hand, but a merge made that way would happen behind the CMS’s back once it has reported a
+ * failure, so the auto-merge is cancelled along with the report: publishing again is what merges
+ * the entry from then on.
  * @param {WorkflowPullRequest} pullRequest Merge request.
  * @param {number} [deadline] Time to give up at, as a Unix timestamp in milliseconds.
  * @returns {Promise<void>}
@@ -472,14 +495,24 @@ const waitForAutoMerge = async (
   deadline = Date.now() + AUTO_MERGE_POLL.maxDuration,
 ) => {
   if (Date.now() >= deadline) {
+    await cancelAutoMerge(pullRequest);
+
     throw new Error(`Timed out waiting for merge request !${pullRequest.number} to be merged`);
   }
 
   await sleep(AUTO_MERGE_POLL.interval);
 
-  // A read failing says nothing about the merge, which GitLab carries out on its own, so keep
-  // waiting rather than reporting a failure that hasn’t happened
   const mergeRequest = await fetchMergeRequest(pullRequest).catch((ex) => {
+    const status = ex.cause?.status;
+
+    // A network error or a server error says nothing about the merge, which GitLab carries out on
+    // its own, so keep waiting rather than reporting a failure that hasn’t happened. A client
+    // error won’t go away by itself — the session has ended, or the merge request is gone — so
+    // there’s no point in asking again, except when the limit on requests has been hit
+    if (typeof status === 'number' && status >= 400 && status < 500 && status !== 429) {
+      throw ex;
+    }
+
     // eslint-disable-next-line no-console
     console.warn(`Failed to read merge request !${pullRequest.number}, still waiting.`, ex);
 
@@ -503,6 +536,10 @@ const waitForAutoMerge = async (
       (state === 'opened' && !!autoMerge && AUTO_MERGE_WAIT_STATUSES.includes(status));
 
     if (!waiting) {
+      if (state === 'opened' && autoMerge) {
+        await cancelAutoMerge(pullRequest);
+      }
+
       throw new Error(
         `Merge request !${pullRequest.number} was not merged: ${state}, ${status}, ` +
           `auto-merge ${autoMerge ? 'on' : 'off'}`,
