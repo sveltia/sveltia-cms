@@ -1570,6 +1570,40 @@
  */
 
 /**
+ * An entry that references another entry through a Relation field, with its references already
+ * updated or removed, along with where it lives so its file(s) can be written back.
+ * @typedef {object} CascadeTarget
+ * @property {Entry} entry Updated entry.
+ * @property {InternalCollection} collection Collection the entry belongs to.
+ * @property {InternalCollectionFile} [collectionFile] Collection file, for file/singleton
+ * collections.
+ */
+
+/**
+ * A Relation field that would no longer be valid once its references to the entries being deleted
+ * are removed, e.g. a required field with nothing left selected, which is what stops the deletion.
+ * @typedef {object} CascadeDeleteBlockerProps
+ * @property {InternalLocaleCode} locale Locale the field was found invalid in. A field invalid in
+ * several locales is reported once, for the first of them.
+ * @property {FieldKeyPath} keyPath Key path of the invalid field.
+ * @property {string[]} messages Validation messages, one per violated constraint.
+ */
+
+/**
+ * @typedef {EntryBacklink & CascadeDeleteBlockerProps} CascadeDeleteBlocker
+ */
+
+/**
+ * Everything the deletion of one or more entries entails for the entries referencing them through
+ * Relation fields.
+ * @typedef {object} CascadeDeletePlan
+ * @property {CascadeTarget[]} targets Referencing entries with the references removed, to be
+ * rewritten along with the deletion.
+ * @property {CascadeDeleteBlocker[]} blockers Fields that would be left invalid. The deletion can
+ * only go ahead if this is empty.
+ */
+
+/**
  * Collectors used during config parsing.
  * @typedef {object} ConfigParserCollectors
  * @property {Set<string>} errors Collected error messages.

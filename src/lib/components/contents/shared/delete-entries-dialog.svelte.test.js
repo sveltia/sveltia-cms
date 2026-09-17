@@ -229,4 +229,91 @@ describe('DeleteEntriesDialog', () => {
       );
     });
   });
+
+  describe('with referencing entries', () => {
+    const tagsCollection = {
+      name: 'tags',
+      label: 'Tags',
+      folder: 'content/tags',
+      fields: [{ name: 'title', widget: 'string' }],
+    };
+
+    const postsWithRelations = {
+      ...postsCollection,
+      fields: [
+        { name: 'title', widget: 'string' },
+        { name: 'category', label: 'Category', widget: 'relation', collection: 'tags' },
+        { name: 'topic', label: 'Topic', widget: 'relation', collection: 'tags', required: false },
+      ],
+    };
+
+    const tags = ['travel', 'food'].map((slug) =>
+      createMockEntry({ slug, folder: 'content/tags', content: { _default: { title: slug } } }),
+    );
+
+    /**
+     * Load the given posts along with the tags, and select the `travel` tag for deletion.
+     * @param {Record<string, any>[]} posts Flattened content of each post.
+     */
+    const selectTravelTag = (posts) => {
+      setEntries([
+        ...tags,
+        ...posts.map((content, index) =>
+          createMockEntry({ slug: `post-${index}`, content: { _default: content } }),
+        ),
+      ]);
+      // Let the selection be pruned for the new entry list first
+      flushSync();
+      selectedEntries.current = [tags[0]];
+    };
+
+    beforeEach(async () => {
+      await initTestConfig({ collections: [tagsCollection, postsWithRelations] });
+      selectedCollection.current = getCollection('tags');
+    });
+
+    test('notes the entries whose references are removed', async () => {
+      vi.mocked(deleteEntries).mockResolvedValue(undefined);
+      selectTravelTag([
+        { title: 'A', category: 'food', topic: 'travel' },
+        { title: 'B', category: 'food', topic: 'travel' },
+        { title: 'C', category: 'food' },
+      ]);
+
+      await render(DeleteEntriesDialog, { open: true });
+
+      const dialog = page.getByRole('alertdialog', { name: 'Delete Entry' });
+
+      await expect
+        .element(dialog)
+        .toHaveTextContent(
+          'Delete Entry Are you sure you want to delete the selected entry? The references to ' +
+            'it in 2 other entries will be removed as well. Delete Cancel',
+        );
+      await dialog.getByRole('button', { name: 'Delete' }).click();
+
+      await vi.waitFor(() => expect(deleteEntries).toHaveBeenCalledWith([tags[0]], []));
+    });
+
+    test('refuses the deletion when a required field would be left empty', async () => {
+      selectTravelTag([
+        { title: 'A', category: 'travel' },
+        { title: 'B', category: 'food', topic: 'travel' },
+      ]);
+
+      await render(DeleteEntriesDialog, { open: true });
+
+      const dialog = page.getByRole('alertdialog', { name: 'Delete Entry' });
+
+      await expect
+        .element(dialog.getByRole('alert'))
+        .toMatchTextContent('This entry can’t be deleted');
+      // There’s nothing to confirm
+      await expect.element(dialog).not.toMatchTextContent('Are you sure');
+      await expect
+        .element(dialog.getByRole('listitem'))
+        .toHaveTextContent('Posts › A Category: This field is required.');
+      await expect.element(dialog.getByRole('button', { name: 'Delete' })).toBeDisabled();
+    });
+  });
 });

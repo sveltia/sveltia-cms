@@ -7,6 +7,10 @@ import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
+import {
+  buildCascadeDeleteChanges,
+  planCascadeDelete,
+} from '$lib/services/contents/entry/relations/cascade/delete';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
 import {
   getUnpublishedEntryByBranch,
@@ -33,6 +37,10 @@ vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(() => ({ name: 'posts', _type: 'entry' })),
 }));
 vi.mock('$lib/services/contents/collection/files', () => ({ getCollectionFile: vi.fn() }));
+vi.mock('$lib/services/contents/entry/relations/cascade/delete', () => ({
+  planCascadeDelete: vi.fn(() => ({ targets: [], blockers: [] })),
+  buildCascadeDeleteChanges: vi.fn(async () => ({ changes: [], savingEntries: [] })),
+}));
 vi.mock('$lib/services/backends/git/shared/commits');
 vi.mock('$lib/services/backends/save');
 vi.mock('$lib/services/deployments/resolve');
@@ -612,6 +620,8 @@ describe('workflow/save', () => {
 
     beforeEach(() => {
       vi.mocked(createCommitMessage).mockReturnValue('Delete Post “hello”');
+      vi.mocked(planCascadeDelete).mockReturnValue({ targets: [], blockers: [] });
+      vi.mocked(buildCascadeDeleteChanges).mockResolvedValue({ changes: [], savingEntries: [] });
 
       // The backend opens the pull request at the status it was asked for
       // A new pull request opens at the status it was asked for; an existing one is returned as is
@@ -673,6 +683,55 @@ describe('workflow/save', () => {
           ],
         }),
       );
+    });
+
+    test('removes the references to the entry in the same pull request', async () => {
+      const entry = createPublishedEntry();
+      const target = /** @type {any} */ ({ entry: { id: 'post-1' }, collection });
+
+      const cascadeChange = /** @type {any} */ ({
+        action: 'update',
+        slug: 'post-1',
+        path: 'content/posts/post-1.md',
+        data: 'tag: ""',
+      });
+
+      vi.mocked(planCascadeDelete).mockReturnValue({ targets: [target], blockers: [] });
+      vi.mocked(buildCascadeDeleteChanges).mockResolvedValue({
+        changes: [cascadeChange],
+        savingEntries: [target.entry],
+      });
+
+      await deleteWorkflowEntry(entry, collection, undefined);
+
+      expect(planCascadeDelete).toHaveBeenCalledWith({
+        collection,
+        collectionFile: undefined,
+        entries: [entry],
+      });
+      expect(buildCascadeDeleteChanges).toHaveBeenCalledWith({ targets: [target] });
+      // Once the removal lands, no reference is left dangling
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: [
+            { action: 'delete', slug: 'hello', path: 'content/posts/hello.md' },
+            { action: 'delete', slug: 'hello', path: 'content/posts/ja/hello.md' },
+            cascadeChange,
+          ],
+        }),
+      );
+    });
+
+    test('refuses to delete an entry that other entries require', async () => {
+      vi.mocked(planCascadeDelete).mockReturnValue({
+        targets: [],
+        blockers: [/** @type {any} */ ({ entry: { id: 'post-1' }, keyPath: 'tag' })],
+      });
+
+      await expect(
+        deleteWorkflowEntry(createPublishedEntry(), collection, undefined),
+      ).rejects.toThrow('Cannot delete an entry that other entries require');
+      expect(workflowService.savePullRequest).not.toHaveBeenCalled();
     });
 
     test('opens one pull request per entry for a selection', async () => {
@@ -816,6 +875,153 @@ describe('workflow/save', () => {
 
       expect(allEntries.current.map((/** @type {any} */ e) => e.id)).toEqual(['other']);
       expect(unpublishedEntries.current).toEqual([]);
+    });
+
+    test('brings the referencing entries up to date once the removal is published', async () => {
+      const entry = createPublishedEntry();
+
+      const post = /** @type {any} */ ({
+        id: 'post-1',
+        slug: 'post-1',
+        subPath: 'post-1',
+        locales: {
+          _default: { slug: 'post-1', path: 'content/posts/post-1.md', content: { tag: 'hello' } },
+        },
+      });
+
+      const other = /** @type {any} */ ({
+        id: 'other',
+        slug: 'other',
+        subPath: 'other',
+        locales: { _default: { slug: 'other', path: 'content/posts/other.md', content: {} } },
+      });
+
+      const rewrittenPost = {
+        ...post,
+        locales: { _default: { ...post.locales._default, content: { tag: '' } } },
+      };
+
+      allEntries.current = [entry, post, other];
+
+      const unpublishedEntry = await deleteWorkflowEntry(entry, collection, undefined);
+
+      // The references are worked out again at publish time, while the deleted entry is still in
+      // the store, rather than remembered from when the pull request was opened
+      vi.mocked(planCascadeDelete).mockClear();
+      vi.mocked(planCascadeDelete).mockReturnValue({
+        targets: [{ entry: rewrittenPost, collection }],
+        blockers: [],
+      });
+
+      await publishWorkflowEntry(unpublishedEntry);
+
+      expect(planCascadeDelete).toHaveBeenCalledWith({
+        collection: { name: 'posts', _type: 'entry' },
+        collectionFile: undefined,
+        entries: [unpublishedEntry],
+      });
+      expect(allEntries.current).toEqual([rewrittenPost, other]);
+    });
+
+    test('leaves the store alone when a regular publish lands', async () => {
+      const entry = createEntry('cms/posts/hello', 'pending_publish');
+
+      upsertUnpublishedEntry(entry);
+      await publishWorkflowEntry(entry);
+
+      expect(planCascadeDelete).not.toHaveBeenCalled();
+    });
+
+    test('removes the references to the whole selection in every pull request', async () => {
+      const first = createPublishedEntry();
+      const second = createPublishedEntry();
+
+      second.id = 'published-2';
+      second.slug = 'world';
+      second.locales = {
+        _default: { slug: 'world', path: 'content/posts/world.md', content: {} },
+      };
+
+      const target = /** @type {any} */ ({ entry: { id: 'post-1' }, collection });
+
+      const cascadeChange = /** @type {any} */ ({
+        action: 'update',
+        slug: 'post-1',
+        path: 'content/posts/post-1.md',
+        data: 'tags: []',
+      });
+
+      vi.mocked(planCascadeDelete).mockReturnValue({ targets: [target], blockers: [] });
+      vi.mocked(buildCascadeDeleteChanges).mockResolvedValue({
+        changes: [cascadeChange],
+        savingEntries: [target.entry],
+      });
+
+      await deleteWorkflowEntries([
+        { entry: first, collection },
+        { entry: second, collection },
+      ]);
+
+      // One plan for the selection, so a post referencing both entries comes out the same in both
+      // pull requests, and the second one to be published doesn’t conflict with the first
+      expect(planCascadeDelete).toHaveBeenCalledTimes(1);
+      expect(planCascadeDelete).toHaveBeenCalledWith({
+        collection,
+        collectionFile: undefined,
+        entries: [first, second],
+      });
+      expect(buildCascadeDeleteChanges).toHaveBeenCalledTimes(2);
+      expect(buildCascadeDeleteChanges).toHaveBeenCalledWith({ targets: [target] });
+
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          branch: 'cms/posts/hello',
+          changes: expect.arrayContaining([cascadeChange]),
+        }),
+      );
+      expect(workflowService.savePullRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          branch: 'cms/posts/world',
+          changes: expect.arrayContaining([cascadeChange]),
+        }),
+      );
+    });
+
+    test('plans a selection spanning collections per collection', async () => {
+      const first = createPublishedEntry();
+      const second = createPublishedEntry();
+      const otherCollection = /** @type {any} */ ({ name: 'pages', _type: 'entry' });
+
+      second.id = 'published-2';
+      second.slug = 'world';
+      second.locales = {
+        _default: { slug: 'world', path: 'content/pages/world.md', content: {} },
+      };
+
+      await deleteWorkflowEntries([
+        { entry: first, collection },
+        { entry: second, collection: otherCollection },
+      ]);
+
+      expect(planCascadeDelete).toHaveBeenCalledTimes(2);
+      expect(planCascadeDelete).toHaveBeenCalledWith(
+        expect.objectContaining({ collection, entries: [first] }),
+      );
+      expect(planCascadeDelete).toHaveBeenCalledWith(
+        expect.objectContaining({ collection: otherCollection, entries: [second] }),
+      );
+    });
+
+    test('refuses a selection that other entries require', async () => {
+      vi.mocked(planCascadeDelete).mockReturnValue({
+        targets: [],
+        blockers: [/** @type {any} */ ({ entry: { id: 'post-1' }, keyPath: 'tag' })],
+      });
+
+      await expect(
+        deleteWorkflowEntries([{ entry: createPublishedEntry(), collection }]),
+      ).rejects.toThrow('Cannot delete entries that other entries require');
+      expect(workflowService.savePullRequest).not.toHaveBeenCalled();
     });
   });
 

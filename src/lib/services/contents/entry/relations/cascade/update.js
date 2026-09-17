@@ -1,20 +1,18 @@
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import {
-  buildEntryUpdateChanges,
-  createSyntheticDraft,
-  resolveCacheDB,
-} from '$lib/services/contents/entry/changes';
 import {
   getEntryRelationValues,
   getReferencingRelationFields,
   getRelationKeyPaths,
 } from '$lib/services/contents/entry/relations';
+import {
+  buildTargetChanges,
+  getCandidateEntries,
+} from '$lib/services/contents/entry/relations/cascade';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import {
+ * CascadeTarget,
  * Entry,
  * FileChange,
  * FlattenedEntryContent,
@@ -24,16 +22,6 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * ResolvedRelationField,
  * } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
- */
-
-/**
- * An entry in another collection that references the renamed entry, with the updated references
- * already applied, along with where it lives so its file(s) can be written back.
- * @typedef {object} CascadeTarget
- * @property {Entry} entry Updated entry.
- * @property {InternalCollection} collection Collection the entry belongs to.
- * @property {InternalCollectionFile} [collectionFile] Collection file, for file/singleton
- * collections.
  */
 
 /**
@@ -145,7 +133,6 @@ export const replaceReferences = ({ content, relation, replacements }) => {
  */
 const collectCascadeTargets = ({ relation, originalEntry, renamedEntry, targets }) => {
   const { fieldConfig, sourceCollection, sourceCollectionFile } = relation;
-  const sourceFileName = sourceCollectionFile?.name;
   const { allLocales } = sourceCollectionFile?._i18n ?? sourceCollection._i18n;
 
   // Relation values can vary by the locale of the entry holding the field, e.g. when the
@@ -164,15 +151,8 @@ const collectCascadeTargets = ({ relation, originalEntry, renamedEntry, targets 
     return;
   }
 
-  getEntriesByCollection(sourceCollection.name)
-    .filter(
-      (sourceEntry) =>
-        // The renamed entry is saved on its own, including any self-reference it may hold
-        sourceEntry.id !== originalEntry.id &&
-        // In a file/singleton collection, only the file holding the field can reference it
-        (!sourceFileName || sourceEntry.slug === sourceFileName),
-    )
-    .forEach((sourceEntry) => {
+  getCandidateEntries({ relation, excludeIds: new Set([originalEntry.id]) }).forEach(
+    (sourceEntry) => {
       // Pick up any update another Relation field has already made to the same entry
       const entry = targets.get(sourceEntry.id)?.entry ?? sourceEntry;
       /** @type {Entry['locales']} */
@@ -208,7 +188,8 @@ const collectCascadeTargets = ({ relation, originalEntry, renamedEntry, targets 
           collectionFile: sourceCollectionFile,
         });
       }
-    });
+    },
+  );
 };
 
 /**
@@ -268,31 +249,5 @@ export const buildCascadeChanges = async ({
     collectCascadeTargets({ relation, originalEntry, renamedEntry, targets });
   });
 
-  if (!targets.size) {
-    return noChanges;
-  }
-
-  const db = resolveCacheDB(cacheDB);
-
-  const perEntryChanges = await Promise.all(
-    [...targets.values()].map(
-      ({ entry, collection: sourceCollection, collectionFile: sourceCollectionFile }) =>
-        buildEntryUpdateChanges({
-          collection: sourceCollection,
-          collectionFile: sourceCollectionFile,
-          entry,
-          draft: createSyntheticDraft({
-            collection: sourceCollection,
-            collectionFile: sourceCollectionFile,
-            isIndexFile: isCollectionIndexFile(sourceCollection, entry),
-          }),
-          cacheDB: db,
-        }),
-    ),
-  );
-
-  return {
-    changes: perEntryChanges.flat(),
-    savingEntries: [...targets.values()].map(({ entry }) => entry),
-  };
+  return buildTargetChanges({ targets: [...targets.values()], cacheDB });
 };

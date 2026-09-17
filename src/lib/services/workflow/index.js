@@ -194,10 +194,37 @@ export const mergeUnpublishedEntries = (entries, drafts) => {
 };
 
 /**
+ * Get the entry on the production branch that the given unpublished entry updates. Files are
+ * matched by path, because an entry keeps its slug when updated.
+ * @param {Entry} entry Entry, which is only looked up when it’s an unpublished one.
+ * @returns {Entry | undefined} Published version, or `undefined` if the entry isn’t unpublished, or
+ * is an entirely new one that has never been published.
+ */
+export const getPublishedVersion = (entry) => {
+  const { workflow } = /** @type {UnpublishedEntry} */ (entry);
+
+  if (!workflow) {
+    return undefined;
+  }
+
+  const paths = new Set([
+    ...Object.values(entry.locales).map(({ path }) => path),
+    // The pull request may have renamed the entry, in which case the published version is still at
+    // one of the previous paths
+    ...(workflow.previousPaths ?? []),
+  ]);
+
+  // `allEntries` only holds published entries; an unpublished one lives in `unpublishedEntries`
+  // until it’s merged
+  return allEntries.current.find((publishedEntry) =>
+    Object.values(publishedEntry.locales).some(({ path }) => paths.has(path)),
+  );
+};
+
+/**
  * Check if the given unpublished entry updates an entry that already exists on the production
- * branch, rather than being an entirely new one. Files are matched by path, because an entry keeps
- * its slug when updated. The result decides whether the pull request can be discarded, leaving the
- * published version behind, or the entry has to be deleted outright.
+ * branch, rather than being an entirely new one. The result decides whether the pull request can be
+ * discarded, leaving the published version behind, or the entry has to be deleted outright.
  * @param {UnpublishedEntry} entry Unpublished entry.
  * @returns {boolean} `true` if a published version of the entry exists.
  */
@@ -208,16 +235,5 @@ export const hasPublishedVersion = (entry) => {
     return true;
   }
 
-  const paths = new Set([
-    ...Object.values(entry.locales).map(({ path }) => path),
-    // The pull request may have renamed the entry, in which case the published version is still at
-    // one of the previous paths
-    ...(entry.workflow.previousPaths ?? []),
-  ]);
-
-  // `allEntries` only holds published entries; an unpublished one lives in `unpublishedEntries`
-  // until it’s merged
-  return allEntries.current.some((publishedEntry) =>
-    Object.values(publishedEntry.locales).some(({ path }) => paths.has(path)),
-  );
+  return !!getPublishedVersion(entry);
 };

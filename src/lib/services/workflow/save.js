@@ -9,6 +9,10 @@ import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
+import {
+  buildCascadeDeleteChanges,
+  planCascadeDelete,
+} from '$lib/services/contents/entry/relations/cascade/delete';
 import { forgetDeployments } from '$lib/services/deployments';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
 import {
@@ -29,6 +33,7 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
 /**
  * @import {
  * Asset,
+ * CascadeTarget,
  * ChangeResults,
  * Entry,
  * FileChange,
@@ -283,9 +288,25 @@ const mergeWorkflowEntry = async (entry) => {
     ...(_workflow.previousPaths ?? []),
   ]);
 
-  const remaining = allEntries.current.filter(
-    (e) => !Object.values(e.locales).some(({ path }) => paths.has(path)),
+  // A removal also rewrote the entries referencing the deleted one, so the store is brought up to
+  // date with those as well, or they would show the stale references until the next reload. The
+  // references are worked out again rather than remembered from when the pull request was opened,
+  // because the entries may have been reloaded since; this has to happen while the deleted entry
+  // is still in the store, as it’s what the references are matched against
+  /** @type {Map<string, Entry>} */
+  const cascadedEntries = new Map(
+    deletion && hookArgs
+      ? planCascadeDelete({
+          collection: hookArgs.collection,
+          collectionFile: hookArgs.collectionFile,
+          entries: [entry],
+        }).targets.map(({ entry: target }) => [target.id, target])
+      : [],
   );
+
+  const remaining = allEntries.current
+    .filter((e) => !Object.values(e.locales).some(({ path }) => paths.has(path)))
+    .map((e) => cascadedEntries.get(e.id) ?? e);
 
   // Publishing a removal takes the entry off the configured branch rather than putting a new
   // version on it
@@ -352,22 +373,47 @@ export const discardWorkflowEntry = async (entry) => {
  * Delete the given published entry through Editorial Workflow: instead of committing the removal
  * straight to the configured branch, open a pull request that removes it, so taking an entry off
  * the site is reviewed and released like any other change. The entry stays on the site until that
- * pull request is published.
+ * pull request is published. The entries referencing it through Relation fields are rewritten in
+ * the same pull request, so that no reference is left dangling once the removal lands.
  * @param {Entry} entry Entry to be deleted.
  * @param {InternalCollection} collection Collection the entry belongs to.
  * @param {InternalCollectionFile} [collectionFile] Collection file, if the entry is one.
  * @param {Asset[]} [assets] Assets stored alongside the entry, which are removed with it. Only
  * applies to a collection with an entry-relative asset folder.
+ * @param {object} [options] Options.
+ * @param {CascadeTarget[]} [options.targets] Referencing entries to rewrite, already worked out
+ * by {@link deleteWorkflowEntries} for a whole selection. Worked out for the entry alone if
+ * omitted.
  * @returns {Promise<UnpublishedEntry>} Entry with the pull request attached.
+ * @throws {Error} When removing the references would leave another entry invalid. The dialogs
+ * report this before the deletion is confirmed, so this is only a safeguard.
  * @see https://github.com/sveltia/sveltia-cms/issues/770
  */
-export const deleteWorkflowEntry = async (entry, collection, collectionFile, assets = []) => {
+export const deleteWorkflowEntry = async (
+  entry,
+  collection,
+  collectionFile,
+  assets = [],
+  { targets = undefined } = {},
+) => {
   // Taking a published entry off the site is a maintainer’s call. A contributor can discard their
   // own draft, which leaves the published version alone, but not propose a removal
   if (openAuthoring.current) {
     throw new Error('Cannot delete a published entry as an Open Authoring contributor', {
       cause: new Error(_('open_authoring.direct_commit_unsupported')),
     });
+  }
+
+  if (!targets) {
+    const plan = planCascadeDelete({ collection, collectionFile, entries: [entry] });
+
+    if (plan.blockers.length) {
+      throw new Error('Cannot delete an entry that other entries require', {
+        cause: plan.blockers,
+      });
+    }
+
+    ({ targets } = plan);
   }
 
   const workflow = getWorkflowService();
@@ -392,11 +438,19 @@ export const deleteWorkflowEntry = async (entry, collection, collectionFile, ass
   // An entry-relative asset lives with the entry, so it goes in the same pull request rather than
   // being left behind once the removal lands
   const assetPaths = unique(assets.map(({ path }) => path));
+  // The references are removed from the published entries as they stand on the configured branch,
+  // which is where the pull request will land
+  const { changes: cascadeChanges } = await buildCascadeDeleteChanges({ targets });
 
   // Reuse any open pull request rather than discarding it first: closing it up front would throw
   // the pending changes away with no way back if opening the replacement then failed
   const { pullRequest } = await workflow.savePullRequest({
-    changes: [...paths, ...assetPaths].map((path) => ({ action: 'delete', slug, path })),
+    changes: [
+      ...[...paths, ...assetPaths].map(
+        (path) => /** @type {FileChange} */ ({ action: 'delete', slug, path }),
+      ),
+      ...cascadeChanges,
+    ],
     options: { commitType: 'delete', collection },
     branch,
     title: createCommitMessage([{ action: 'delete', slug, path: paths[0] }], {
@@ -450,12 +504,54 @@ export const discardWorkflowEntries = async (entries) => {
  * Delete the given published entries through Editorial Workflow. A branch is named after the entry
  * it holds, so a selection can’t share one pull request: each entry gets its own, and the requests
  * are throttled like any other batch.
+ *
+ * The entries referencing the selection are another matter. An entry referencing two of the
+ * selected entries can’t be rewritten one reference at a time, one pull request each: the second
+ * pull request to be published would conflict with the first, as both change the same lines of the
+ * same file, and there’s no way to resolve that from the CMS. So the references to the whole
+ * selection are worked out once, and every pull request carries the same rewrite; identical changes
+ * merge cleanly whichever is published first. The trade-off is that the selection is taken as a
+ * whole: if one of the pull requests is then cancelled, the others still remove the references to
+ * that entry when they’re published.
  * @param {{ entry: Entry, collection: InternalCollection,
  * collectionFile?: InternalCollectionFile, assets?: Asset[] }[]} items Entries to be deleted, with
  * the context each one needs.
+ * @throws {Error} When removing the references would leave another entry invalid. The dialog
+ * reports this before the deletion is confirmed, so this is only a safeguard.
  */
 export const deleteWorkflowEntries = async (items) => {
+  // A selection comes from one entry list, so it’s normally a single group
+  /** @type {Map<string, typeof items>} */
+  const groups = new Map();
+
+  items.forEach((item) => {
+    const key = `${item.collection.name}\0${item.collectionFile?.name ?? ''}`;
+
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  });
+
+  /** @type {Map<string, CascadeTarget[]>} */
+  const targetMap = new Map();
+
+  groups.forEach((group, key) => {
+    const [{ collection, collectionFile }] = group;
+
+    const { targets, blockers } = planCascadeDelete({
+      collection,
+      collectionFile,
+      entries: group.map(({ entry }) => entry),
+    });
+
+    if (blockers.length) {
+      throw new Error('Cannot delete entries that other entries require', { cause: blockers });
+    }
+
+    targetMap.set(key, targets);
+  });
+
   await runConcurrently(items, async ({ entry, collection, collectionFile, assets }) => {
-    await deleteWorkflowEntry(entry, collection, collectionFile, assets);
+    await deleteWorkflowEntry(entry, collection, collectionFile, assets, {
+      targets: targetMap.get(`${collection.name}\0${collectionFile?.name ?? ''}`),
+    });
   });
 };

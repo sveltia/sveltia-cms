@@ -2,6 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Alert, ConfirmationDialog, Toast } from '@sveltia/ui';
 
+  import CascadeDeleteNote from '$lib/components/contents/shared/cascade-delete-note.svelte';
   import { getAssetFolder } from '$lib/services/assets/folders';
   import { selectedCollection } from '$lib/services/contents/collection';
   import {
@@ -12,12 +13,16 @@
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries, listedUnpublishedEntries } from '$lib/services/contents/collection/view';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
+  import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
   import { workflowEnabled } from '$lib/services/workflow';
   import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
 
   /**
-   * @import { Asset, Entry, UnpublishedEntry } from '$lib/types/private';
+   * @import { Asset, CascadeDeletePlan, Entry, UnpublishedEntry } from '$lib/types/private';
    */
+
+  /** @type {CascadeDeletePlan} */
+  const EMPTY_PLAN = { targets: [], blockers: [] };
 
   /**
    * @typedef {object} Props
@@ -52,6 +57,17 @@
       ? getAssociatedAssets({ entry, collectionName, relative: true })
       : [];
   };
+
+  // What the deletion means for the entries referencing the published ones through Relation fields.
+  // Only worked out while the dialog is open: it scans every entry that could hold a reference,
+  // which is too much to do on every change of the selection
+  const cascadePlan = $derived.by(() => {
+    const collection = selectedCollection.current;
+
+    return open && collection && publishedEntries.length
+      ? planCascadeDelete({ collection, entries: publishedEntries })
+      : EMPTY_PLAN;
+  });
 
   const associatedAssets = $derived.by(() => {
     const collectionName = selectedCollection.current?.name;
@@ -122,6 +138,7 @@
   bind:open
   title={_('delete_entries', { values: { count: selectedEntries.current.length } })}
   okLabel={_('delete')}
+  okDisabled={!!cascadePlan.blockers.length}
   onOk={async () => {
     await deleteSelectedEntries();
   }}
@@ -130,23 +147,29 @@
     selectedEntries.current.length > 1 &&
     selectedEntries.current.length ===
       listedEntries.current.length + listedUnpublishedEntries.current.length}
-  {_(
-    associatedAssets.length
-      ? all
-        ? 'confirm_deleting_all_entries_with_assets'
-        : 'confirm_deleting_selected_entries_with_assets'
-      : all
-        ? 'confirm_deleting_all_entries'
-        : 'confirm_deleting_selected_entries',
-    { values: { count: selectedEntries.current.length } },
-  )}
-  {#if draftEntries.length}
+  <!-- There’s nothing to confirm when the deletion is refused; the note explains why -->
+  {#if cascadePlan.blockers.length}
+    <CascadeDeleteNote plan={cascadePlan} count={publishedEntries.length} />
+  {:else}
     {_(
-      publishedEntries.length
-        ? 'workflow.deleting_unpublished_note_some'
-        : 'workflow.deleting_unpublished_note_all',
-      { values: { count: draftEntries.length } },
+      associatedAssets.length
+        ? all
+          ? 'confirm_deleting_all_entries_with_assets'
+          : 'confirm_deleting_selected_entries_with_assets'
+        : all
+          ? 'confirm_deleting_all_entries'
+          : 'confirm_deleting_selected_entries',
+      { values: { count: selectedEntries.current.length } },
     )}
+    {#if draftEntries.length}
+      {_(
+        publishedEntries.length
+          ? 'workflow.deleting_unpublished_note_some'
+          : 'workflow.deleting_unpublished_note_all',
+        { values: { count: draftEntries.length } },
+      )}
+    {/if}
+    <CascadeDeleteNote plan={cascadePlan} count={publishedEntries.length} />
   {/if}
 </ConfirmationDialog>
 

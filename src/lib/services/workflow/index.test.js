@@ -4,6 +4,7 @@ import { backend, backendName } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import {
+  getPublishedVersion,
   getUnpublishedEntriesByCollection,
   getUnpublishedEntry,
   getUnpublishedEntryByBranch,
@@ -250,6 +251,60 @@ describe('workflow/index', () => {
         getUnpublishedEntryByDraft({ collectionName: 'posts', originalEntry: entry }),
       ).toBeUndefined();
     });
+  });
+});
+
+describe('getPublishedVersion', () => {
+  beforeEach(() => {
+    allEntries.current = [];
+  });
+
+  test('returns the published entry sharing a file path', () => {
+    const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+    const published = /** @type {any} */ ({
+      id: 'p1',
+      locales: { _default: { path: 'content/posts/hello.md' } },
+    });
+
+    allEntries.current = [published];
+
+    expect(getPublishedVersion(entry)).toBe(published);
+  });
+
+  test('matches the path the entry had before the pull request renamed it', () => {
+    const entry = createEntry({ collectionName: 'posts', subPath: 'renamed' });
+
+    const published = /** @type {any} */ ({
+      id: 'p1',
+      locales: { _default: { path: 'content/posts/hello.md' } },
+    });
+
+    entry.workflow.previousPaths = ['content/posts/hello.md'];
+    allEntries.current = [published];
+
+    expect(getPublishedVersion(entry)).toBe(published);
+  });
+
+  test('is undefined for an entry that has never been published', () => {
+    const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+    allEntries.current = [
+      /** @type {any} */ ({ id: 'p1', locales: { _default: { path: 'content/posts/other.md' } } }),
+    ];
+
+    expect(getPublishedVersion(entry)).toBeUndefined();
+  });
+
+  test('is undefined for a published entry, which has no other version', () => {
+    const published = /** @type {any} */ ({
+      id: 'p1',
+      locales: { _default: { path: 'content/posts/hello.md' } },
+    });
+
+    allEntries.current = [published];
+
+    expect(getPublishedVersion(published)).toBeUndefined();
   });
 });
 

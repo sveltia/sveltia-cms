@@ -18,7 +18,7 @@ import { isRequiredEnforced } from '$lib/services/contents/draft/validate/requir
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
-import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade';
+import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 import { workflowEnabled } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';

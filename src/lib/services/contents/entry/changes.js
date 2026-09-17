@@ -17,11 +17,12 @@ import { getRepositoryDatabase } from '$lib/services/utils/database';
  */
 
 /**
- * Build a synthetic draft object suitable for {@link serializeContent}. Bulk operations that re-
- * save existing entries — reordering, cascading relation updates — don’t go through the entry
- * editor, so there’s no real draft to serialize with; only the few properties read by the
- * serializer are needed. The shape is identical for every entry in a given collection, so callers
- * working on a batch should build it once and pass it down to avoid per-entry allocations.
+ * Build a synthetic draft object suitable for {@link serializeContent} and the field validator.
+ * Bulk operations that re-save existing entries — reordering, cascading relation updates — don’t
+ * go through the entry editor, so there’s no real draft to serialize with; only the few properties
+ * read by the serializer and the validator are needed. The shape is identical for every entry in a
+ * given collection, so callers working on a batch should build it once and pass it down to avoid
+ * per-entry allocations.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection the entries belong to.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file, for file/singleton
@@ -33,6 +34,7 @@ export const createSyntheticDraft = ({ collection, collectionFile, isIndexFile =
   collection,
   collectionName: collection.name,
   collectionFile,
+  fileName: collectionFile?.name,
   fields: collectionFile?.fields ?? /** @type {InternalEntryCollection} */ (collection).fields,
   isIndexFile,
 });

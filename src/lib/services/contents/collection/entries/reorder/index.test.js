@@ -607,6 +607,26 @@ describe('buildRenumberChanges()', () => {
 
     expect(IndexedDB).not.toHaveBeenCalled();
   });
+
+  test('renumbers the entries already rewritten by the same operation', async () => {
+    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
+    const collection = makeCollection({ _type: 'entry' });
+
+    vi.mocked(getEntriesByCollection).mockReturnValueOnce([
+      makeEntry('a', { title: 'A', order: 5 }),
+      makeEntry('b', { title: 'B', order: 7 }),
+    ]);
+
+    const result = await buildRenumberChanges(collection, {
+      updatedEntries: new Map([['b', makeEntry('b', { title: 'B', order: 7, tag: '' })]]),
+    });
+
+    // The rewritten entry stands in for the stored one, so the renumbered file carries both updates
+    expect(result.savingEntries.map((e) => e.locales._default.content)).toEqual([
+      { title: 'A', order: 1 },
+      { title: 'B', order: 2, tag: '' },
+    ]);
+  });
 });
 
 describe('sortEntriesByOrderField()', () => {

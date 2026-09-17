@@ -49,6 +49,14 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
 }));
 
+vi.mock('$lib/services/contents/entry/relations/cascade/delete', () => ({
+  planCascadeDelete: vi.fn(() => ({ targets: [], blockers: [] })),
+  buildCascadeDeleteChanges: vi.fn().mockResolvedValue({ changes: [], savingEntries: [] }),
+}));
+
+const { planCascadeDelete, buildCascadeDeleteChanges } =
+  await import('$lib/services/contents/entry/relations/cascade/delete');
+
 describe('Test updateStores()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -131,6 +139,8 @@ describe('Test updateStores()', () => {
 describe('Test deleteEntries()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(planCascadeDelete).mockReturnValue({ targets: [], blockers: [] });
+    vi.mocked(buildCascadeDeleteChanges).mockResolvedValue({ changes: [], savingEntries: [] });
   });
 
   test('creates file changes for entry deletion', async () => {
@@ -522,5 +532,159 @@ describe('Test deleteEntries()', () => {
     // Only the delete change should be present.
     expect(call.changes).toEqual([expect.objectContaining({ action: 'delete', slug: 'post-1' })]);
     expect(call.savingEntries).toEqual([]);
+  });
+});
+
+describe('Test deleteEntries() with referencing entries', () => {
+  const collection = /** @type {any} */ ({ name: 'tags', _type: 'entry' });
+
+  const tag = /** @type {any} */ ({
+    id: 'tag-1',
+    slug: 'travel',
+    locales: { en: { path: '/content/tags/travel.md' } },
+  });
+
+  /**
+   * Build a cascade target for a post that referenced the tag.
+   * @param {string} id Entry ID.
+   * @returns {any} Target.
+   */
+  const createTarget = (id) => ({
+    entry: { id, slug: id, locales: { en: { path: `/content/posts/${id}.md`, content: {} } } },
+    collection: { name: 'posts', _type: 'entry' },
+  });
+
+  beforeEach(async () => {
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+
+    vi.clearAllMocks();
+    selectedCollection.current = collection;
+    vi.mocked(buildCascadeDeleteChanges).mockResolvedValue({ changes: [], savingEntries: [] });
+  });
+
+  test('plans the removal of the references from the selected collection', async () => {
+    vi.mocked(planCascadeDelete).mockReturnValue({ targets: [], blockers: [] });
+
+    await deleteEntries([tag]);
+
+    expect(planCascadeDelete).toHaveBeenCalledWith({ collection, entries: [tag] });
+    expect(buildCascadeDeleteChanges).toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [] }),
+    );
+  });
+
+  test('refuses to delete when a referencing field would be left invalid', async () => {
+    const { saveChanges } = await import('$lib/services/backends/save');
+    const blocker = /** @type {any} */ ({ entry: { id: 'post-1' }, keyPath: 'tag' });
+
+    vi.mocked(planCascadeDelete).mockReturnValue({
+      targets: [createTarget('a')],
+      blockers: [blocker],
+    });
+
+    await expect(deleteEntries([tag])).rejects.toThrow('Cannot delete entries');
+    expect(saveChanges).not.toHaveBeenCalled();
+  });
+
+  test('bundles the reference removals into the same commit', async () => {
+    const { saveChanges } = await import('$lib/services/backends/save');
+    const target = createTarget('a');
+
+    const cascadeChange = /** @type {any} */ ({
+      action: 'update',
+      slug: 'a',
+      path: '/content/posts/a.md',
+      data: 'tag: ""',
+    });
+
+    vi.mocked(planCascadeDelete).mockReturnValue({ targets: [target], blockers: [] });
+    vi.mocked(buildCascadeDeleteChanges).mockResolvedValue({
+      changes: [cascadeChange],
+      savingEntries: [target.entry],
+    });
+
+    await deleteEntries([tag]);
+
+    expect(buildCascadeDeleteChanges).toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [target] }),
+    );
+
+    const call = vi.mocked(saveChanges).mock.calls[0][0];
+
+    expect(call.changes).toEqual([
+      expect.objectContaining({ action: 'delete', slug: 'travel' }),
+      cascadeChange,
+    ]);
+    expect(call.savingEntries).toEqual([target.entry]);
+  });
+
+  test('hands the rewritten entries to the renumber pass and writes each of them once', async () => {
+    const { buildRenumberChanges } =
+      await import('$lib/services/contents/collection/entries/reorder');
+
+    const { saveChanges } = await import('$lib/services/backends/save');
+    // Two posts referenced the tag, but only the first one moves up in the order
+    const targets = [createTarget('a'), createTarget('b')];
+    const renumberedEntry = { ...targets[0].entry, renumbered: true };
+
+    const renumberChange = /** @type {any} */ ({
+      action: 'update',
+      slug: 'a',
+      path: '/content/posts/a.md',
+      data: 'order: 1',
+    });
+
+    const cascadeChange = /** @type {any} */ ({
+      action: 'update',
+      slug: 'b',
+      path: '/content/posts/b.md',
+      data: 'tag: ""',
+    });
+
+    vi.mocked(planCascadeDelete).mockReturnValue({ targets, blockers: [] });
+    vi.mocked(buildRenumberChanges).mockResolvedValueOnce({
+      changes: [renumberChange],
+      savingEntries: [renumberedEntry],
+    });
+    vi.mocked(buildCascadeDeleteChanges).mockResolvedValue({
+      changes: [cascadeChange],
+      savingEntries: [targets[1].entry],
+    });
+
+    await deleteEntries([tag]);
+
+    expect(buildRenumberChanges).toHaveBeenCalledWith(
+      collection,
+      expect.objectContaining({
+        excludeIds: new Set(['tag-1']),
+        updatedEntries: new Map([
+          ['a', targets[0].entry],
+          ['b', targets[1].entry],
+        ]),
+      }),
+    );
+    // The renumber pass has already written the first post, with the reference removed
+    expect(buildCascadeDeleteChanges).toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [targets[1]] }),
+    );
+
+    const call = vi.mocked(saveChanges).mock.calls[0][0];
+
+    expect(call.changes).toEqual([
+      expect.objectContaining({ action: 'delete', slug: 'travel' }),
+      renumberChange,
+      cascadeChange,
+    ]);
+    expect(call.savingEntries).toEqual([renumberedEntry, targets[1].entry]);
+  });
+
+  test('skips the planning without a selected collection', async () => {
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+
+    selectedCollection.current = undefined;
+
+    await deleteEntries([tag]);
+
+    expect(planCascadeDelete).not.toHaveBeenCalled();
   });
 });

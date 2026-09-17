@@ -43,6 +43,7 @@ describe('createSyntheticDraft()', () => {
       collection,
       collectionName: 'posts',
       collectionFile: undefined,
+      fileName: undefined,
       fields: collection.fields,
       isIndexFile: false,
     });
@@ -56,6 +57,7 @@ describe('createSyntheticDraft()', () => {
       collection,
       collectionName: 'config',
       collectionFile,
+      fileName: 'general',
       fields: collectionFile.fields,
       isIndexFile: true,
     });

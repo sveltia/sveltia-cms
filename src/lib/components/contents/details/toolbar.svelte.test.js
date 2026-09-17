@@ -297,6 +297,98 @@ describe('Toolbar', () => {
     expect(draft.isNew).toBe(false);
   });
 
+  describe('deleting a referenced entry', () => {
+    const travelTag = createMockEntry({
+      slug: 'travel',
+      folder: 'content/tags',
+      content: { _default: { title: 'Travel' } },
+    });
+
+    /**
+     * Load the given posts along with the tag, and open the deletion dialog for the tag.
+     * @param {Record<string, any>[]} posts Flattened content of each post.
+     * @returns {Promise<import('vitest/browser').Locator>} Dialog.
+     */
+    const openDeleteDialog = async (posts) => {
+      setEntries([
+        travelTag,
+        ...posts.map((content, index) =>
+          createMockEntry({ slug: `post-${index}`, content: { _default: content } }),
+        ),
+      ]);
+
+      await renderToolbar({
+        isNew: false,
+        originalEntry: travelTag,
+        collectionName: 'tags',
+        collection: getCollection('tags'),
+      });
+      await (await openMenu()).getByRole('menuitem', { name: 'Delete Entry' }).click();
+
+      return page.getByRole('alertdialog', { name: 'Delete Entry' });
+    };
+
+    beforeEach(async () => {
+      await initTestConfig({
+        collections: [
+          {
+            name: 'tags',
+            label: 'Tags',
+            folder: 'content/tags',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            ...postsCollection,
+            fields: [
+              { name: 'title', widget: 'string' },
+              { name: 'category', label: 'Category', widget: 'relation', collection: 'tags' },
+              {
+                name: 'topic',
+                label: 'Topic',
+                widget: 'relation',
+                collection: 'tags',
+                required: false,
+              },
+            ],
+          },
+        ],
+      });
+      window.location.hash = '#/collections/tags/entries/travel';
+      vi.mocked(deleteEntries).mockResolvedValue(undefined);
+    });
+
+    test('notes the entry whose reference is removed', async () => {
+      const dialog = await openDeleteDialog([{ title: 'A', topic: 'travel' }]);
+
+      await expect
+        .element(dialog)
+        .toHaveTextContent(
+          'Delete Entry Are you sure you want to delete this entry? The reference to it in ' +
+            'another entry will be removed as well. Delete Cancel',
+        );
+      await dialog.getByRole('button', { name: 'Delete' }).click();
+
+      await vi.waitFor(() => expect(deleteEntries).toHaveBeenCalledWith([travelTag], []));
+    });
+
+    test('refuses the deletion when a required field would be left empty', async () => {
+      const dialog = await openDeleteDialog([
+        { title: 'A', category: 'travel' },
+        { title: 'B', topic: 'travel' },
+      ]);
+
+      await expect
+        .element(dialog.getByRole('alert'))
+        .toMatchTextContent('This entry can’t be deleted');
+      // There’s nothing to confirm
+      await expect.element(dialog).not.toMatchTextContent('Are you sure');
+      await expect
+        .element(dialog.getByRole('listitem'))
+        .toHaveTextContent('Posts › A Category: This field is required.');
+      await expect.element(dialog.getByRole('button', { name: 'Delete' })).toBeDisabled();
+    });
+  });
+
   test('opens the slug editor', async () => {
     await renderExisting({ currentSlugs: { _default: 'hello' } });
     await (await openMenu()).getByRole('menuitem', { name: 'Edit Slug' }).click();
@@ -880,6 +972,76 @@ describe('Toolbar', () => {
 
       await vi.waitFor(() => expect(deleteWorkflowEntry).toHaveBeenCalled());
       await expect.poll(() => contentUpdatesToast.current.deletionPending).toBe(true);
+    });
+
+    test('finds the references to a renamed entry’s published version', async () => {
+      await initTestConfig({
+        backend: { name: 'github', repo: 'me/site' },
+        publish_mode: 'editorial_workflow',
+        collections: [
+          {
+            name: 'tags',
+            label: 'Tags',
+            folder: 'content/tags',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            ...postsCollection,
+            fields: [
+              { name: 'title', widget: 'string' },
+              {
+                name: 'tag',
+                label: 'Tag',
+                widget: 'relation',
+                collection: 'tags',
+                required: false,
+              },
+            ],
+          },
+        ],
+      });
+
+      const travelTag = createMockEntry({
+        slug: 'travel',
+        folder: 'content/tags',
+        content: { _default: { title: 'Travel' } },
+      });
+
+      // The pull request renamed the tag; the published post still references the old slug
+      /** @type {any} */
+      const renamedTag = {
+        ...createMockEntry({
+          slug: 'trips',
+          folder: 'content/tags',
+          content: { _default: { title: 'Trips' } },
+        }),
+        workflow: {
+          status: 'draft',
+          collectionName: 'tags',
+          previousPaths: ['content/tags/travel.md'],
+          pullRequest: { number: 2, branch: 'cms/tags/travel' },
+        },
+      };
+
+      setEntries([
+        travelTag,
+        createMockEntry({ slug: 'a', content: { _default: { title: 'A', tag: 'travel' } } }),
+      ]);
+      unpublishedEntries.current = [renamedTag];
+      vi.mocked(deleteWorkflowEntry).mockResolvedValue(/** @type {any} */ (undefined));
+      window.location.hash = '#/collections/tags/entries/trips';
+
+      await renderToolbar({
+        isNew: false,
+        originalEntry: renamedTag,
+        collectionName: 'tags',
+        collection: getCollection('tags'),
+      });
+      await (await openMenu()).getByRole('menuitem', { name: 'Delete' }).click();
+
+      await expect
+        .element(page.getByRole('alertdialog', { name: 'Delete Entry' }))
+        .toMatchTextContent('The reference to it in another entry will be removed as well.');
     });
 
     test('discards the changes to a published entry', async () => {

@@ -167,16 +167,19 @@ export const reorderEntries = async (collection, orderedEntries, { silent = fals
  * @param {object} [options] Options.
  * @param {Set<string>} [options.excludeIds] IDs of entries to omit (e.g. entries about to be
  * deleted). The collection’s current entries are read from {@link getEntriesByCollection}.
+ * @param {Map<string, Entry>} [options.updatedEntries] Entries already rewritten by the same
+ * operation, keyed by ID, which stand in for their stored counterparts so that the renumbered file
+ * carries both updates.
  * @returns {Entry[]} Entries in the desired display order, with the index file removed.
  */
-const computeRenumberedEntries = (collection, { excludeIds } = {}) => {
+const computeRenumberedEntries = (collection, { excludeIds, updatedEntries } = {}) => {
   const indexFileName = getIndexFile(collection)?.name;
 
   // The index file (e.g. Hugo `_index.md`) is always pinned to the top of the list by the sort
   // pipeline regardless of its `order` value, so it should never participate in numbering.
-  const remaining = getEntriesByCollection(collection.name).filter(
-    (entry) => entry.slug !== indexFileName && !(excludeIds && excludeIds.has(entry.id)),
-  );
+  const remaining = getEntriesByCollection(collection.name)
+    .filter((entry) => entry.slug !== indexFileName && !(excludeIds && excludeIds.has(entry.id)))
+    .map((entry) => updatedEntries?.get(entry.id) ?? entry);
 
   return sortEntriesByOrderField(remaining, collection);
 };
@@ -188,18 +191,25 @@ const computeRenumberedEntries = (collection, { excludeIds } = {}) => {
  * @param {object} [options] Options.
  * @param {Set<string>} [options.excludeIds] IDs of entries to omit (e.g. entries about to be
  * deleted).
+ * @param {Map<string, Entry>} [options.updatedEntries] Entries already rewritten by the same
+ * operation, keyed by ID. See {@link computeRenumberedEntries}.
  * @param {IndexedDB} [options.cacheDB] Pre-opened file-cache database to reuse.
  * @returns {Promise<{ changes: FileChange[], savingEntries: Entry[] }>} Collected changes and the
  * entries to be saved. Empty when reordering is not enabled or nothing changed.
  */
-export const buildRenumberChanges = async (collection, { excludeIds, cacheDB } = {}) => {
+export const buildRenumberChanges = async (
+  collection,
+  { excludeIds, updatedEntries, cacheDB } = {},
+) => {
   if (!collection || collection._type !== 'entry' || !getOrderFieldKey(collection)) {
     return { changes: [], savingEntries: [] };
   }
 
-  return buildReorderChanges(collection, computeRenumberedEntries(collection, { excludeIds }), {
-    cacheDB,
-  });
+  return buildReorderChanges(
+    collection,
+    computeRenumberedEntries(collection, { excludeIds, updatedEntries }),
+    { cacheDB },
+  );
 };
 
 /**

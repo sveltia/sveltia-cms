@@ -7,7 +7,7 @@ import {
   createRenamedEntry,
   getReplacementMap,
   replaceReferences,
-} from '$lib/services/contents/entry/relations/cascade';
+} from '$lib/services/contents/entry/relations/cascade/update';
 
 /**
  * @import { Entry } from '$lib/types/private';
