@@ -147,8 +147,8 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
   let results;
   /** @type {CommitOptions} */
   const options = { commitType: isNew ? 'create' : 'update', collection, skipCI };
-  // A collection can opt in or out of Editorial Workflow on its own, but an entry that already has a
-  // pull request stays in it
+  // A collection can opt in or out of Editorial Workflow on its own, but an entry that already has
+  // a pull request stays in it
   const useWorkflow = isWorkflowDraft(draft);
 
   try {
