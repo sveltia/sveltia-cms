@@ -10,8 +10,8 @@ import { checkFieldReferences } from '$lib/services/config/parser/utils/referenc
  * Parse and validate a Compute field configuration. The `value` template reads other fields of the
  * entry through `{{fields.*}}` tags, and a tag that names no field yields an empty string, so the
  * computed value silently comes out wrong. Bare tags are not field references: `{{index}}` is the
- * position of the item in a list, and any other one yields nothing, so there is no point checking
- * them against the fields.
+ * position of the item in a list, `{{uuid}}` and its shorter variants are generated, and any other
+ * one yields nothing, so there is no point checking them against the fields.
  * @param {FieldParserArgs} args Arguments.
  */
 export const parseComputeFieldConfig = ({ config, context, collectors }) => {

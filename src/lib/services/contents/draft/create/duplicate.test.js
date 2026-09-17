@@ -14,6 +14,10 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/fields/compute/helpers', () => ({
+  hasUuidTag: vi.fn((template) => template.includes('{{uuid')),
+}));
+
 vi.mock('$lib/services/contents/fields/hidden/defaults', () => ({
   getDefaultValueMap: vi.fn(),
 }));
@@ -353,6 +357,62 @@ describe('contents/draft/create/duplicate', () => {
 
       expect(setCallArg.currentValues.en.uuid).toBe('new-uuid-value');
       expect(setCallArg.currentValues.ja.uuid).toBe('old-uuid-value-ja');
+    });
+
+    it('should clear a compute field holding a UUID', async () => {
+      mockEntryDraft.currentValues.en.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
+      mockEntryDraft.currentValues.ja.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'id') {
+          return { widget: 'compute', value: 'post-{{uuid}}', i18n: 'duplicate' };
+        }
+
+        return undefined;
+      });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      // The field is resolved again, with a new UUID, once the draft is in place
+      expect(newDraft.currentValues.en.id).toBe('');
+      expect(newDraft.currentValues.ja.id).toBe('');
+    });
+
+    it('should not clear a compute field holding a UUID for non-default locale when i18n is false', async () => {
+      mockEntryDraft.currentValues.en.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
+      mockEntryDraft.currentValues.ja.id = 'post-de305d54-75b4-431b-adb2-eb6b9e546014';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'id') {
+          return { widget: 'compute', value: 'post-{{uuid}}' };
+        }
+
+        return undefined;
+      });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(newDraft.currentValues.en.id).toBe('');
+      expect(newDraft.currentValues.ja.id).toBe('post-de305d54-75b4-431b-adb2-eb6b9e546014');
+    });
+
+    it('should keep a compute field holding no UUID', async () => {
+      mockEntryDraft.currentValues.en.id = 'post-test-post';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'id') {
+          return { widget: 'compute', value: 'post-{{fields.slug}}' };
+        }
+
+        return undefined;
+      });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(newDraft.currentValues.en.id).toBe('post-test-post');
     });
 
     it('should reset hidden field values', async () => {

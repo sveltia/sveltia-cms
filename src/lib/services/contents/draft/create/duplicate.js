@@ -6,6 +6,7 @@ import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { showDuplicateToast } from '$lib/services/contents/editor';
 import { getAliasesKey, removeAliases } from '$lib/services/contents/entry/aliases';
 import { getField, LIST_KEY_PATH_REGEX } from '$lib/services/contents/entry/fields';
+import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
 import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
@@ -13,7 +14,7 @@ import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 /**
  * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
  * @import { EntryDraft, LocaleContentMap } from '$lib/types/private';
- * @import { HiddenField, UuidField } from '$lib/types/public';
+ * @import { ComputeField, HiddenField, UuidField } from '$lib/types/public';
  */
 
 /**
@@ -67,6 +68,21 @@ export const duplicateDraft = async (entryDraft) => {
       if (fieldConfig?.widget === 'uuid') {
         if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
           valueMap[keyPath] = getInitialUuidValue(/** @type {UuidField} */ (fieldConfig));
+        }
+      }
+
+      // A Compute field keeps the UUIDs found in its current value when it’s resolved again, so
+      // the value has to be cleared for the duplicate to get UUIDs of its own. The field is
+      // resolved as soon as the new draft is in place
+      if (
+        fieldConfig?.widget === 'compute' &&
+        hasUuidTag(/** @type {ComputeField} */ (fieldConfig).value)
+      ) {
+        if (
+          locale === defaultLocale ||
+          [true, 'translate', 'duplicate'].includes(fieldConfig?.i18n ?? false)
+        ) {
+          valueMap[keyPath] = '';
         }
       }
 

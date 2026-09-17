@@ -516,8 +516,11 @@
  * Compute field properties.
  * @typedef {object} ComputeFieldProps
  * @property {'compute'} widget Field type.
- * @property {string} value Value template, like `posts-{{fields.slug}}`.
+ * @property {string} value Value template, like `posts-{{fields.slug}}`. Besides the `fields.*`
+ * tags, `{{index}}` is the position of the item in a list, and `{{uuid}}`, `{{uuid_short}}` and
+ * `{{uuid_shorter}}` generate a UUID, which is kept once the value is saved.
  * @see https://github.com/sveltia/sveltia-cms/issues/111
+ * @see https://github.com/sveltia/sveltia-cms/issues/122
  */
 
 /**
