@@ -43,9 +43,12 @@
     return index === undefined ? undefined : index + 1;
   });
 
+  /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
   // Names the row, so that it’s announced by the entry it holds rather than by the text of every
-  // cell, including the selection checkbox’s own label
+  // cell, including the selection checkbox’s own label. `appLocale.current` is a key, because the
+  // summary can include a localized label
   const summary = $derived(appLocale.current ? getEntrySummary(collection, entry) : '');
+  /* v8 ignore stop */
 
   /**
    * Update the entry selection.

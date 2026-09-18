@@ -170,6 +170,47 @@ describe('DeleteAssetsButton', () => {
       expect(planDeletion).toHaveBeenCalledTimes(2);
     });
 
+    test('ignores a plan that arrives after the dialog has been reopened', async () => {
+      const first = /** @type {PromiseWithResolvers<any>} */ (Promise.withResolvers());
+      const second = /** @type {PromiseWithResolvers<any>} */ (Promise.withResolvers());
+
+      const planDeletion = vi
+        .fn()
+        .mockReturnValueOnce(first.promise)
+        .mockReturnValue(second.promise);
+
+      const { rerender } = await render(DeleteAssetsButton, {
+        assets: [assets[0]],
+        deleteAssets: vi.fn(),
+        planDeletion,
+        dialogDescription: 'Are you sure?',
+      });
+
+      await page.getByRole('button', { name: 'Delete' }).click();
+
+      const dialog = page.getByRole('alertdialog', { name: 'Delete Asset' });
+
+      await expect.element(dialog.getByRole('button', { name: 'Delete' })).toBeDisabled();
+      await dialog.getByRole('button', { name: 'Cancel' }).click();
+      await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
+
+      // The dialog is reopened for another selection while the first plan is still on its way
+      await rerender({ assets });
+      await page.getByRole('button', { name: 'Delete' }).click();
+      expect(planDeletion).toHaveBeenLastCalledWith(assets);
+
+      first.resolve({ targets: [], blockers: [createBlocker()] });
+
+      // The stale plan doesn’t refuse the new deletion
+      const reopened = page.getByRole('alertdialog', { name: 'Delete Assets' });
+
+      await expect.element(reopened).toHaveTextContent('Delete Assets Are you sure? Delete Cancel');
+      await expect.element(reopened.getByRole('button', { name: 'Delete' })).toBeDisabled();
+
+      second.resolve({ targets: [], blockers: [] });
+      await expect.element(reopened.getByRole('button', { name: 'Delete' })).toBeEnabled();
+    });
+
     test('checks the fields against their real validation rules', async () => {
       await initTestConfig({
         collections: [

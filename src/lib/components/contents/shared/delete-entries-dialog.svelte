@@ -148,9 +148,7 @@
     selectedEntries.current.length ===
       listedEntries.current.length + listedUnpublishedEntries.current.length}
   <!-- There’s nothing to confirm when the deletion is refused; the note explains why -->
-  {#if cascadePlan.blockers.length}
-    <CascadeDeleteNote plan={cascadePlan} count={publishedEntries.length} />
-  {:else}
+  {#if !cascadePlan.blockers.length}
     {_(
       associatedAssets.length
         ? all
@@ -169,8 +167,8 @@
         { values: { count: draftEntries.length } },
       )}
     {/if}
-    <CascadeDeleteNote plan={cascadePlan} count={publishedEntries.length} />
   {/if}
+  <CascadeDeleteNote plan={cascadePlan} count={publishedEntries.length} />
 </ConfirmationDialog>
 
 <Toast bind:show={showErrorToast}>

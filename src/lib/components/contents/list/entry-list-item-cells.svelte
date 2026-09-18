@@ -50,9 +50,12 @@
 
   // Editorial Workflow information, only present on an unpublished entry
   const workflow = $derived(/** @type {UnpublishedEntry} */ (entry).workflow);
+  /* v8 ignore start -- the app locale is always set once the UI strings are loaded */
   // Plain-text summary naming the selection checkbox, so a screen reader hears which entry it
-  // selects rather than an unlabelled checkbox
+  // selects rather than an unlabelled checkbox. `appLocale.current` is a key, because the summary
+  // can include a localized label
   const summary = $derived(appLocale.current ? getEntrySummary(collection, entry) : '');
+  /* v8 ignore stop */
 </script>
 
 {#if showCheckbox && !(env.isSmallScreen || env.isMediumScreen)}

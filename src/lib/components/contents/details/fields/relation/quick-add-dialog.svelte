@@ -101,6 +101,7 @@
 
     // The entries pending on the parent draft are offered to the Relation fields of the new entry
     // as well, and a nested quick-add takes them into account when it names and counts entries
+    /* v8 ignore next -- the dialog is only opened from a field editor while the draft is there */
     draft.pendingEntries = [...(parentDraft.current?.pendingEntries ?? [])];
     entryDraft.current = draft;
     pane.current = { mode: 'edit', locale: defaultLocale };

@@ -462,6 +462,24 @@ describe('ListEditorComplex (more)', () => {
     }
   });
 
+  test('has nothing to expand for an item of a type without subfields', async () => {
+    const { draft, container } = await renderEditor(
+      { ...sectionsField, types: [{ name: 'divider', label: 'Divider' }] },
+      { 'sections.0.type': 'divider' },
+    );
+
+    // Only the type is saved for such an item, so the editor has no subfields to show
+    expect(container.querySelector('.item-body')).toHaveTextContent('');
+    expect(draft.expanderStates._['sections.0']).toBe(true);
+
+    await page.getByRole('button', { name: 'Collapse' }).nth(1).click();
+    // The item’s state isn’t tracked, unlike the list’s own
+    expect(draft.expanderStates._['sections.0']).toBe(true);
+
+    await page.getByRole('button', { name: 'Collapse' }).nth(0).click();
+    await expect.poll(() => draft.expanderStates._['sections#']).toBe(false);
+  });
+
   test('shows the item type as the summary label', async () => {
     const { container } = await renderEditor(
       { ...sectionsField, types: [{ ...sectionsField.types[0], summary: '{{fields.heading}}' }] },

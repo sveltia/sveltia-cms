@@ -48,6 +48,11 @@ describe('AdvancedPanel', () => {
     await expect.poll(() => prefs.deployHookURL).toBe('https://example.com/hook');
     expect(onChange).toHaveBeenCalledWith({ message: 'Hook URL saved.' });
 
+    await url.fill('');
+    await url.element().blur();
+    await expect.poll(() => prefs.deployHookURL).toBe('');
+    expect(onChange).toHaveBeenLastCalledWith({ message: 'Hook URL removed.' });
+
     const auth = page.getByRole('textbox', { name: /^Authorization header/ });
 
     await auth.fill('Bearer abc');
