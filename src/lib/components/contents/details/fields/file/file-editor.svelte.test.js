@@ -447,6 +447,39 @@ describe('FileEditor', () => {
     });
   });
 
+  test('accepts HEIC photos only when they are converted on upload', async () => {
+    /**
+     * Get the `accept` attribute of the file input in the given container.
+     * @param {HTMLElement} container Container.
+     * @returns {string} Accepted types.
+     */
+    const getAccept = (container) =>
+      /** @type {HTMLInputElement} */ (container.querySelector('input[type="file"]')).accept;
+
+    const { container } = await renderEditor({}, '');
+
+    // Listing the HEIC types would make iOS Safari hand over raw HEIC photos, which nothing else
+    // could display
+    expect(getAccept(container)).toContain('image/png');
+    expect(getAccept(container)).not.toContain('image/heic');
+
+    await initTestConfig({
+      media_libraries: { default: { config: { transformations: { raster_image: {} } } } },
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          fields: [{ name: 'image', widget: 'image' }],
+        },
+      ],
+    });
+
+    const { container: convertingContainer } = await renderEditor({}, '');
+
+    expect(getAccept(convertingContainer)).toContain('image/heic');
+  });
+
   test('reports a file that is too large', async () => {
     await initTestConfig({
       media_libraries: { all: { max_file_size: 10 } },

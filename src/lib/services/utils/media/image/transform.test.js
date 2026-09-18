@@ -10,6 +10,14 @@ vi.mock('$lib/services/utils/media/image/encode', () => ({
   exportCanvasAsBlob: vi.fn(),
 }));
 
+vi.mock('$lib/services/utils/media/image/heic', () => ({
+  decodeHEIC: vi.fn(),
+}));
+
+vi.mock('$lib/services/utils/media/image/sniff', () => ({
+  sniffRasterImageFormat: vi.fn(),
+}));
+
 vi.mock('$lib/services/utils/media/image/resize', () => ({
   resizeCanvas: vi.fn(),
 }));
@@ -43,8 +51,14 @@ class UndecodableImage {
 }
 
 describe('Image Transform Functions', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    const { sniffRasterImageFormat } = await import('$lib/services/utils/media/image/sniff');
+
+    // `clearAllMocks()` doesn’t reset implementations, so a test that makes this report HEIC would
+    // otherwise leak into the next
+    vi.mocked(sniffRasterImageFormat).mockResolvedValue(undefined);
 
     // Mock HTMLVideoElement first
     global.HTMLVideoElement = vi.fn();
@@ -398,6 +412,58 @@ describe('Image Transform Functions', () => {
     expect(global.createImageBitmap).toHaveBeenCalledWith(mockBlob);
     expect(global.Image).toHaveBeenCalled(); // Fallback to createImageSource
     expect(result).toBe(mockResultBlob);
+  });
+
+  test('transformImage should decode a HEIC image with the library', async () => {
+    const mockBlob = new Blob(['heic data'], { type: 'image/heic' });
+    const mockResultBlob = new Blob(['transformed'], { type: 'image/webp' });
+    const mockImageData = { width: 4032, height: 3024 };
+    const mockBitmap = { width: 4032, height: 3024, close: vi.fn() };
+    const { exportCanvasAsBlob } = await import('$lib/services/utils/media/image/encode');
+    const { decodeHEIC } = await import('$lib/services/utils/media/image/heic');
+    const { sniffRasterImageFormat } = await import('$lib/services/utils/media/image/sniff');
+    const { resizeCanvas } = await import('$lib/services/utils/media/image/resize');
+    const { transformImage } = await import('./transform.js');
+
+    // Only Safari decodes HEIC natively
+    vi.mocked(global.createImageBitmap)
+      .mockRejectedValueOnce(new Error('Not supported'))
+      .mockResolvedValueOnce(/** @type {any} */ (mockBitmap));
+    vi.mocked(sniffRasterImageFormat).mockResolvedValue('heic');
+    vi.mocked(decodeHEIC).mockResolvedValue(/** @type {any} */ (mockImageData));
+    vi.mocked(exportCanvasAsBlob).mockResolvedValue(mockResultBlob);
+    vi.mocked(resizeCanvas).mockReturnValue({ scale: 1, width: 4032, height: 3024 });
+
+    const result = await transformImage(mockBlob, { format: 'webp' });
+
+    expect(global.createImageBitmap).toHaveBeenNthCalledWith(1, mockBlob);
+    expect(sniffRasterImageFormat).toHaveBeenCalledWith(mockBlob);
+    expect(decodeHEIC).toHaveBeenCalledWith(mockBlob);
+    // The decoded pixels are turned into a bitmap, which is drawn and then released
+    expect(global.createImageBitmap).toHaveBeenNthCalledWith(2, mockImageData);
+    expect(resizeCanvas).toHaveBeenCalledWith(
+      expect.anything(),
+      { width: 4032, height: 3024 },
+      expect.anything(),
+    );
+    expect(mockBitmap.close).toHaveBeenCalled();
+    expect(global.Image).not.toHaveBeenCalled();
+    expect(result).toBe(mockResultBlob);
+  });
+
+  test('transformImage should reject when a HEIC image cannot be decoded', async () => {
+    const mockBlob = new Blob(['heic data'], { type: 'image/jpeg' });
+    const { decodeHEIC } = await import('$lib/services/utils/media/image/heic');
+    const { sniffRasterImageFormat } = await import('$lib/services/utils/media/image/sniff');
+    const { transformImage } = await import('./transform.js');
+
+    vi.mocked(global.createImageBitmap).mockRejectedValue(new Error('Not supported'));
+    vi.mocked(sniffRasterImageFormat).mockResolvedValue('heic');
+    vi.mocked(decodeHEIC).mockRejectedValue(new Error('Decoding error'));
+
+    // No point trying `<img>`, which can’t decode it either
+    await expect(transformImage(mockBlob)).rejects.toThrow('Decoding error');
+    expect(global.Image).not.toHaveBeenCalled();
   });
 
   test('transformImage should reject when the fallback source cannot be decoded', async () => {

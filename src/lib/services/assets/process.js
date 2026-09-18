@@ -1,7 +1,8 @@
 import { hasCachedThumbnail } from '$lib/services/assets/info';
-import { transformFile } from '$lib/services/integrations/media-libraries/default';
+import { canConvertHEIC, transformFile } from '$lib/services/integrations/media-libraries/default';
 import { formatFileName, getGitHash } from '$lib/services/utils/file';
 import { RASTER_IMAGE_TYPES } from '$lib/services/utils/media/image';
+import { sniffRasterImageFormat } from '$lib/services/utils/media/image/sniff';
 import { isValidImage } from '$lib/services/utils/media/image/validate';
 
 /**
@@ -24,27 +25,32 @@ import { isValidImage } from '$lib/services/utils/media/image/validate';
  * selection dialog, is proof enough. Decoding a large photo takes a good fraction of a second, and
  * it’s done on every file in a batch at once.
  * @param {File} file File to be checked.
+ * @param {boolean} convertHEIC Whether HEIC images are converted on upload.
  * @returns {Promise<boolean>} Whether the file is usable. `true` for any file that isn’t checked.
  * @see isValidImage
  */
-const isUsableImage = async (file) => {
+const isUsableImage = async (file, convertHEIC) => {
   // Only the formats `isValidImage()` decodes are worth looking up: hashing the file means reading
   // it in full, which a video or an archive on its way to a cloud service would never be otherwise
   if (!(/** @type {string[]} */ (RASTER_IMAGE_TYPES).includes(file.type))) {
     return true;
   }
 
-  try {
-    if (await hasCachedThumbnail(await getGitHash(file))) {
-      return true;
+  // A thumbnail proves a HEIC photo could be decoded by the library, not that it can be uploaded,
+  // which depends on the configuration
+  if ((await sniffRasterImageFormat(file)) !== 'heic') {
+    try {
+      if (await hasCachedThumbnail(await getGitHash(file))) {
+        return true;
+      }
+    } catch {
+      // The file couldn’t be read or the cache couldn’t be queried; either way the decoding check
+      // below gives the answer, and a file that can’t be read is reported as invalid rather than
+      // failing the whole batch
     }
-  } catch {
-    // The file couldn’t be read or the cache couldn’t be queried; either way the decoding check
-    // below gives the answer, and a file that can’t be read is reported as invalid rather than
-    // failing the whole batch
   }
 
-  return isValidImage(file);
+  return isValidImage(file, { convertHEIC });
 };
 
 /**
@@ -64,7 +70,7 @@ export const processFile = async (
 ) => {
   // Check the original file object, whose hash is likely memoized already; a renamed copy would
   // have to be read again to be hashed
-  const usable = await isUsableImage(file);
+  const usable = await isUsableImage(file, canConvertHEIC(transformations));
 
   if (slugifyFilename) {
     const { name, type, lastModified } = file;
@@ -80,7 +86,12 @@ export const processFile = async (
   const preTransformFile = file;
 
   if (transformations) {
-    file = await transformFile(file, transformations);
+    try {
+      file = await transformFile(file, transformations);
+    } catch {
+      // A HEIC image that can’t be decoded; it can’t be uploaded as is, as nothing could display it
+      return { file, originalFile: undefined, oversized: false, invalid: true };
+    }
   }
 
   return {

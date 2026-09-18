@@ -2036,6 +2036,8 @@ file_type_labels:
   avif: AVIF-afbeelding
   bmp: Bitmapafbeelding
   gif: GIF-afbeelding
+  heic: HEIC-afbeelding
+  heif: HEIF-afbeelding
   ico: Pictogram
   jpeg: JPEG-afbeelding
   jpg: JPEG-afbeelding

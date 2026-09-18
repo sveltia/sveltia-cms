@@ -16,7 +16,7 @@
     getPickedAssetKind,
     resolvePickedResources,
   } from '$lib/services/contents/fields/custom/files';
-  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
+  import { getAcceptedImageTypes } from '$lib/services/integrations/media-libraries/default';
 
   /**
    * @import { SelectedResource, TypedFieldKeyPath } from '$lib/types/private';
@@ -78,9 +78,13 @@
       : undefined,
   );
   const kind = $derived(getPickedAssetKind(options));
-  // The dialog only falls back to the image types once, so give it the types for every pick
+  // The dialog only falls back to the image types once, so give it the types for every pick. HEIC
+  // photos are accepted only if they’re converted on upload
   const accept = $derived(
-    options.accept ?? (kind === 'image' ? SUPPORTED_IMAGE_TYPES.join(',') : undefined),
+    options.accept ??
+      (kind === 'image'
+        ? getAcceptedImageTypes(assetOptions?.libraryConfig.transformations).join(',')
+        : undefined),
   );
   /* v8 ignore start -- only read to report a file exceeding the configured size */
   const maxSize = $derived(assetOptions?.libraryConfig.max_file_size ?? Infinity);

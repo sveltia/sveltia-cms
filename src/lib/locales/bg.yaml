@@ -2036,6 +2036,8 @@ file_type_labels:
   avif: AVIF изображение
   bmp: Bitmap изображение
   gif: GIF изображение
+  heic: HEIC изображение
+  heif: HEIF изображение
   ico: Икона
   jpeg: JPEG изображение
   jpg: JPEG изображение

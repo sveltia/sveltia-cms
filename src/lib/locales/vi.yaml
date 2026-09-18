@@ -2009,6 +2009,8 @@ file_type_labels:
   avif: Ảnh AVIF
   bmp: Ảnh bitmap
   gif: Ảnh GIF
+  heic: Ảnh HEIC
+  heif: Ảnh HEIF
   ico: Tệp biểu tượng
   jpeg: Ảnh JPEG
   jpg: Ảnh JPEG

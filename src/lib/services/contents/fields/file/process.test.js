@@ -23,6 +23,7 @@ vi.mock('$lib/services/assets/info', () => ({
 }));
 
 vi.mock('$lib/services/integrations/media-libraries/default', () => ({
+  canConvertHEIC: vi.fn(() => false),
   transformFile: vi.fn(),
 }));
 

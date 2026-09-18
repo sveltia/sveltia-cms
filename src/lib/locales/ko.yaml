@@ -1942,6 +1942,8 @@ file_type_labels:
   avif: AVIF 이미지
   bmp: 비트맵 이미지
   gif: GIF 이미지
+  heic: HEIC 이미지
+  heif: HEIF 이미지
   ico: 아이콘
   jpeg: JPEG 이미지
   jpg: JPEG 이미지

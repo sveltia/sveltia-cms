@@ -36,6 +36,7 @@ words:
   - backlinks
   - beforeinstallprompt
   - bindable
+  - BMFF
   - brotlied
   - bunnycdn
   - BYOK
@@ -63,12 +64,19 @@ words:
   - Flavored
   - Forgejo
   - frontmatter
+  - ftyp
   - GHSA
   - Ghsas
   - gitdir
   - Gitea
   - goldmark
   - groupable
+  - heim
+  - heis
+  - heix
+  - hevm
+  - hevs
+  - hevx
   - hotlinked
   - hotlinking
   - hugolify
@@ -86,6 +94,7 @@ words:
   - keyvalue
   - Kohei
   - kyoshino
+  - libheif
   - llms
   - Lume
   - lvml

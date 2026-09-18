@@ -42,8 +42,9 @@
  */
 
 /**
- * Supported raster image format.
- * @typedef {'avif' | 'gif' | 'jpeg' | 'png' | 'webp'} RasterImageFormat
+ * Supported raster image format. HEIC (HEIF) is an input format: browsers other than Safari can’t
+ * display it, so a `heic` or `raster_image` transformation converts it to a format they can.
+ * @typedef {'avif' | 'gif' | 'heic' | 'jpeg' | 'png' | 'webp'} RasterImageFormat
  */
 
 /**
@@ -77,6 +78,7 @@
  * that apply to any supported raster image format.
  * @property {RasterImageTransformationOptions} [avif] AVIF image transformation options.
  * @property {RasterImageTransformationOptions} [gif] GIF image transformation options.
+ * @property {RasterImageTransformationOptions} [heic] HEIC image transformation options.
  * @property {RasterImageTransformationOptions} [jpeg] JPEG image transformation options.
  * @property {RasterImageTransformationOptions} [png] PNG image transformation options.
  * @property {RasterImageTransformationOptions} [webp] WebP image transformation options.

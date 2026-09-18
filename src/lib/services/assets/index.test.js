@@ -47,6 +47,7 @@ vi.mock('$lib/services/integrations/media-libraries/default', () => ({
     enabled: true,
     config: { max_file_size: Infinity, multiple: false, transformations: undefined },
   })),
+  canConvertHEIC: vi.fn(() => false),
   transformFile: vi.fn(),
 }));
 // The backend services imported below pull in the environment detection, which isn’t needed here

@@ -1969,6 +1969,8 @@ file_type_labels:
   avif: AVIF 图片
   bmp: 位图图片
   gif: GIF 图片
+  heic: HEIC 图片
+  heif: HEIF 图片
   ico: 图标
   jpeg: JPEG 图片
   jpg: JPEG 图片

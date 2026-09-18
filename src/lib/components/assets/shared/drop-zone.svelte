@@ -7,7 +7,7 @@
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { getListFormatter } from '$lib/services/contents/i18n';
   import { env } from '$lib/services/user/env.svelte';
-  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
+  import { getAcceptedImageFormatLabels } from '$lib/services/utils/media/image';
 
   /**
    * @import { Snippet } from 'svelte';
@@ -52,6 +52,8 @@
   let files = $state([]);
 
   const showDefaultContent = $derived(showUploadButton || (showFilePreview && files.length));
+  // Named formats for the mismatch message, if `accept` is one of the image type lists
+  const acceptedImageFormats = $derived(getAcceptedImageFormatLabels(accept));
 
   /**
    * Open the file picker to let the user choose file(s).
@@ -114,10 +116,8 @@
 </script>
 
 {#snippet typeMismatchAlert()}
-  {#if accept === SUPPORTED_IMAGE_TYPES.join(',')}
-    {_('dropped_image_type_mismatch', {
-      values: { types: formatList(['GIF', 'JPEG', 'PNG', 'WebP', 'SVG']) },
-    })}
+  {#if acceptedImageFormats}
+    {_('dropped_image_type_mismatch', { values: { types: formatList(acceptedImageFormats) } })}
   {:else}
     {_('dropped_file_type_mismatch', {
       values: { types: formatList(/** @type {string} */ (accept).split(/,\s*/)) },

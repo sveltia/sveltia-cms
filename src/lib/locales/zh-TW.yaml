@@ -1973,6 +1973,8 @@ file_type_labels:
   avif: AVIF 圖片
   bmp: 點陣圖圖片
   gif: GIF 圖片
+  heic: HEIC 圖片
+  heif: HEIF 圖片
   ico: 圖示
   jpeg: JPEG 圖片
   jpg: JPEG 圖片

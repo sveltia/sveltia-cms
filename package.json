@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@cfworker/json-schema": "^4.1.1",
+    "@discourse/heic": "^1.0.0",
     "@jsquash/webp": "^1.5.0",
     "@lexical/markdown": "^0.50.0",
     "@sindresorhus/transliterate": "^2.3.1",

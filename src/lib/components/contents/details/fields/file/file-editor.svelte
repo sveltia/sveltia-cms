@@ -33,10 +33,12 @@
   } from '$lib/services/contents/fields/file/helpers';
   import { getUnsavedAssets, processResource } from '$lib/services/contents/fields/file/process';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
-  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+  import {
+    getAcceptedImageTypes,
+    getDefaultMediaLibraryOptions,
+  } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
-  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
    * @import {
@@ -117,6 +119,11 @@
   const kind = $derived(isImageField ? 'image' : undefined);
   const defaultLibraryOptions = $derived(getDefaultMediaLibraryOptions({ fieldConfig }));
   const libraryConfig = $derived(defaultLibraryOptions.config);
+  // An image field accepts HEIC photos only if they’re converted on upload
+  const acceptedTypes = $derived(
+    accept ??
+      (isImageField ? getAcceptedImageTypes(libraryConfig.transformations).join(',') : undefined),
+  );
   const assetLibraryFolderMap = $derived(
     getAssetLibraryFolderMap({
       collectionName,
@@ -477,7 +484,7 @@
     bind:this={dropZone}
     {multiple}
     disabled={readonly || sorter.dragIndex !== undefined}
-    accept={accept ?? (isImageField ? SUPPORTED_IMAGE_TYPES.join(',') : undefined)}
+    accept={acceptedTypes}
     {onDrop}
   >
     {@render content()}
@@ -489,7 +496,7 @@
 <SelectAssetsDialog
   {kind}
   multiple={replaceMode ? false : multiple}
-  {accept}
+  accept={acceptedTypes}
   {canEnterURL}
   draft={entryDraft.current}
   {fieldConfig}

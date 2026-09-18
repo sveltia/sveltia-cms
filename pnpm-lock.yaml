@@ -14,6 +14,9 @@ importers:
       '@cfworker/json-schema':
         specifier: ^4.1.1
         version: 4.1.1
+      '@discourse/heic':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@jsquash/webp':
         specifier: ^1.5.0
         version: 1.5.0
@@ -603,6 +606,9 @@ packages:
     engines: {node: '>=20.19.0'}
     peerDependencies:
       postcss-selector-parser: ^7.1.1
+
+  '@discourse/heic@1.0.0':
+    resolution: {integrity: sha512-YMW5o0bHvhL4rjzGt7kpr8geqMEhP7yS20Hh5eMJtDOmHuCqn+icpNLr1ImFygU/yN39MUHVenETXcpDG6PPww==}
 
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
@@ -4467,6 +4473,8 @@ snapshots:
   '@csstools/selector-specificity@6.0.0(postcss-selector-parser@7.1.6)':
     dependencies:
       postcss-selector-parser: 7.1.6
+
+  '@discourse/heic@1.0.0': {}
 
   '@emnapi/core@1.10.0':
     dependencies:

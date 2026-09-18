@@ -2078,6 +2078,8 @@ file_type_labels:
   avif: Obrázek AVIF
   bmp: Bitmapový obrázek
   gif: Obrázek GIF
+  heic: Obrázek HEIC
+  heif: Obrázek HEIF
   ico: Ikona
   jpeg: Obrázek JPEG
   jpg: Obrázek JPEG
