@@ -119,7 +119,7 @@ const yamlToJS = () => ({
  * Glob matching the component tests. A component test is written next to the `.svelte` file it
  * tests, with a `.svelte.test.js` suffix so it can use runes, and runs in a real browser: the
  * `@sveltia/ui` components rely on layout, focus and popovers, which a simulated DOM can’t provide.
- * Everything else runs in Node, or in jsdom with a `@vitest-environment` comment.
+ * Everything else runs in Node, or in happy-dom with a `@vitest-environment` comment.
  */
 const COMPONENT_TESTS = 'src/lib/components/**/*.svelte.test.js';
 
@@ -501,7 +501,7 @@ export default defineConfig({
     },
     extensions: ['.js', '.svelte'],
     // Vitest doesn’t use the `browser` condition by default, so the `svelte` package would resolve
-    // to its server build even in the `jsdom` environment, while the `.svelte.js` modules are
+    // to its server build even in the `happy-dom` environment, while the `.svelte.js` modules are
     // compiled for the client there. Runtime functions like `untrack()` and `flushSync()` would
     // then come from a different runtime than the one the compiled modules use, and wouldn’t work.
     // The list replaces Vite’s defaults rather than extending them, so spell out the full client

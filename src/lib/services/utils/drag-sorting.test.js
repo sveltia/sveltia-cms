@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -289,10 +289,8 @@ describe('startAutoScroll', () => {
     container.style.overflowY = 'auto';
     Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
     Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
-    // jsdom doesn’t implement scrolling, so back `scrollTop` with a plain property
-    Object.defineProperty(container, 'scrollTop', { value: 0, writable: true, configurable: true });
     /**
-     * Report a fixed rectangle, since jsdom doesn’t lay anything out.
+     * Report a fixed rectangle, since happy-dom doesn’t lay anything out.
      * @returns {DOMRect} Rectangle.
      */
     container.getBoundingClientRect = () =>

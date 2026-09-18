@@ -28,7 +28,7 @@ pnpm check:imports    # custom script, more accurate than standard unused-import
 pnpm check:audit
 
 pnpm test                      # unit + component tests
-pnpm test:unit                 # Vitest `unit` project: Node (or jsdom) tests
+pnpm test:unit                 # Vitest `unit` project: Node (or happy-dom) tests
 pnpm test:unit:coverage        # unit tests with coverage of the `.js` files
 pnpm test:components           # Vitest `browser` project: component tests in headless Chromium
 pnpm test:components:coverage  # component tests with coverage of the `.svelte` files

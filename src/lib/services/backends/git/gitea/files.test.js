@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { beforeEach, describe, expect, test, vi } from 'vitest';

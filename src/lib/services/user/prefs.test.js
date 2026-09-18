@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-param-description */
 /* eslint-disable jsdoc/require-returns */
 /* eslint-disable jsdoc/require-description */
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -57,13 +57,14 @@ describe('prefs service', () => {
       mockDictionary[key] = {};
     });
 
-    // The jsdom document is shared by every test in this file, so start each one with a clean
+    // The happy-dom document is shared by every test in this file, so start each one with a clean
     // `<html>` element instead of replacing the global, which the DOM doesn’t allow
     Object.keys(document.documentElement.dataset).forEach((key) => {
       delete document.documentElement.dataset[key];
     });
 
-    // jsdom’s `matchMedia` always reports no match, so stub it to control the detected theme
+    // happy-dom’s `matchMedia` reports no match for `prefers-color-scheme: dark` unless the
+    // environment is configured for it, so stub it to control the detected theme
     vi.stubGlobal(
       'matchMedia',
       vi.fn(() => ({ matches: false })),

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -25,7 +25,7 @@ const createList = (count) => {
     const item = document.createElement('div');
 
     /**
-     * Report a fixed rectangle, since jsdom doesn’t lay anything out.
+     * Report a fixed rectangle, since happy-dom doesn’t lay anything out.
      * @returns {DOMRect} Rectangle.
      */
     item.getBoundingClientRect = () =>

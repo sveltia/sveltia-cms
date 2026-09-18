@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { _ } from '@sveltia/i18n';
 import { beforeEach, describe, expect, test, vi } from 'vitest';

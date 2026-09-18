@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc */
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { encodeBase64 } from '@sveltia/utils/file';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

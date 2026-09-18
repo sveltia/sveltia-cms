@@ -1,5 +1,5 @@
 // @ts-nocheck
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { isProxy } from 'node:util/types';
 
@@ -562,9 +562,8 @@ describe('draft/backup', () => {
     beforeEach(() => {
       updatedDraft = createMockDraft();
 
-      // Restoring a backup regenerates a blob URL for every file. Vitest’s jsdom compatibility
-      // layer implements `createObjectURL()` by reaching into jsdom’s `Blob` internals, which
-      // jsdom 30.1 no longer exposes, so it’s stubbed with URLs that are unique per call
+      // Restoring a backup regenerates a blob URL for every file. happy-dom’s `createObjectURL()`
+      // returns a random URL, so it’s stubbed with predictable ones that are unique per call
       let count = 0;
 
       createObjectURL = vi.spyOn(URL, 'createObjectURL').mockImplementation(() => {

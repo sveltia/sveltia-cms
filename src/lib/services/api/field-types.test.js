@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 /* eslint-disable jsdoc/require-jsdoc */
 

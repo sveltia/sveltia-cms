@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
