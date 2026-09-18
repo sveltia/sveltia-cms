@@ -21,6 +21,10 @@ import {
   writeFile,
 } from './files';
 
+vi.mock('@sveltia/utils/misc', () => ({
+  sleep: vi.fn(async () => {}),
+}));
+
 // Provide a minimal FileSystemFileHandle global so canMoveFile() can inspect the prototype.
 // Tests that require canMoveFile() === false can set env.isBrave to true directly.
 // @ts-ignore - We only need the prototype.move property for testing
@@ -42,6 +46,18 @@ const createMockFileHandle = (name) => ({
   getFile: vi.fn(async () => new File(['mock content'], name)),
   move: vi.fn(),
   isSameEntry: vi.fn(async () => false),
+});
+
+/**
+ * Create an `entries()` implementation for a mock directory handle holding one entry, which
+ * represents a directory that is not empty.
+ * @param {string} name Name of the entry.
+ * @returns {any} `entries()` implementation.
+ */
+const createDirEntries = (name) => () => ({
+  [Symbol.asyncIterator]: async function* () {
+    yield [name, {}];
+  },
 });
 
 /**
@@ -648,8 +664,7 @@ describe('saveChanges', () => {
     expect(result.files['folder/subfolder/deep/file.txt']).toBeDefined();
   });
 
-  test('should continue processing even if one change fails', async () => {
-    // Mock a failure for one operation
+  test('should fail the save when a file cannot be written', async () => {
     const mockError = new Error('Write failed');
 
     /** @type {MockedFunction<any>} */ (rootDirHandle.getFileHandle).mockImplementationOnce(
@@ -672,12 +687,70 @@ describe('saveChanges', () => {
       },
     ];
 
+    // The user is told, rather than left with an entry referring to a file that isn’t there
+    await expect(saveChanges(rootDirHandle, changes)).rejects.toBe(mockError);
+    // The other file in the batch is still written, as it was already on its way
+    expect(rootDirHandle.getFileHandle).toHaveBeenCalledWith(
+      expect.stringMatching(/^\.sveltia-tmp-/),
+      { create: true },
+    );
+    expect(rootDirHandle.getFileHandle).toHaveBeenCalledTimes(2);
+  });
+
+  test('should write the assets before the entry files', async () => {
+    /** @type {string[]} */
+    const order = [];
+
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      { action: 'create', path: 'content/posts/post.md', slug: 'post', data: '# Post' },
+      { action: 'create', path: 'static/uploads/photo.jpg', data: new File(['x'], 'photo.jpg') },
+      { action: 'delete', path: 'content/posts/old.md', slug: 'old' },
+      { action: 'update', path: 'static/uploads/logo.png', data: new File(['y'], 'logo.png') },
+    ];
+
+    // Record the order in which the final names are given to the files. The entry files are
+    // written last, because a dev server watching the content may reload the CMS as soon as one
+    // lands, which would cut the asset writes short
+    const { getFileHandle: fileHandleMock, getDirectoryHandle: dirHandleMock } =
+      /** @type {Record<string, MockedFunction<any>>} */ (/** @type {any} */ (rootDirHandle));
+
+    fileHandleMock.mockImplementation(async (/** @type {string} */ name) => {
+      const handle = createMockFileHandle(name);
+
+      handle.move = vi.fn(async (_dir, newName) => {
+        order.push(newName);
+      });
+
+      return handle;
+    });
+    dirHandleMock.mockImplementation(async (/** @type {string} */ name) => {
+      const dir = createMockDirectoryHandle(name);
+
+      // @ts-ignore
+      dir.getFileHandle = fileHandleMock;
+      // @ts-ignore
+      dir.getDirectoryHandle = dirHandleMock;
+      // @ts-ignore
+      dir.removeEntry = vi.fn(async (entryName) => {
+        order.push(`delete ${entryName}`);
+      });
+      // @ts-ignore
+      dir.entries = createDirEntries('other.md');
+
+      return dir;
+    });
+
     const result = await saveChanges(rootDirHandle, changes);
 
-    expect(result).toBeDefined();
-    // The failing file should have a fallback blob
-    expect(result.files['failing.txt']).toBeDefined();
-    expect(result.files['success.txt']).toBeDefined();
+    // The entry changes are written at the same time as each other, so only the groups are ordered
+    expect(order.slice(0, 2)).toEqual(['photo.jpg', 'logo.png']);
+    expect(order.slice(2).sort()).toEqual(['delete old.md', 'post.md']);
+    expect(Object.keys(result.files)).toEqual([
+      'static/uploads/photo.jpg',
+      'static/uploads/logo.png',
+      'content/posts/post.md',
+    ]);
   });
 
   test('should handle delete action with nested paths', async () => {
@@ -688,6 +761,20 @@ describe('saveChanges', () => {
         path: 'folder/subfolder/file.txt',
       },
     ];
+
+    // The parent directories are left alone, as they have other entries
+    /** @type {MockedFunction<any>} */ (rootDirHandle.getDirectoryHandle).mockImplementation(
+      async (/** @type {string} */ name) => {
+        const dir = createMockDirectoryHandle(name);
+
+        // @ts-ignore
+        dir.getDirectoryHandle = rootDirHandle.getDirectoryHandle;
+        // @ts-ignore
+        dir.entries = createDirEntries('other.txt');
+
+        return dir;
+      },
+    );
 
     const result = await saveChanges(rootDirHandle, changes);
 
@@ -1366,6 +1453,73 @@ describe('saveFile', () => {
     expect(tempKeys[0]).not.toBe(tempKeys[1]);
   });
 
+  test('should try renaming the temp file again if it fails at first', async () => {
+    const { sleep } = await import('@sveltia/utils/misc');
+    const children = new Map();
+
+    rootDirHandle = createMockDirectoryHandle('root', children);
+
+    /** @type {MockedFunction<any>} */ (rootDirHandle.getFileHandle).mockImplementation(
+      async (/** @type {string} */ name) => {
+        const handle = createMockFileHandle(name);
+
+        // Another program has the file open for a moment, e.g. an antivirus scanner
+        handle.move = vi
+          .fn()
+          .mockRejectedValueOnce(new DOMException('Locked', 'NoModificationAllowedError'))
+          .mockRejectedValueOnce(new DOMException('Locked', 'NoModificationAllowedError'))
+          .mockResolvedValueOnce(undefined);
+        children.set(name, handle);
+
+        return handle;
+      },
+    );
+
+    const result = await saveFile({ rootDirHandle, path: 'post.md', data: 'hello' });
+    const tempHandle = [...children.values()][0];
+
+    expect(result).toBeInstanceOf(File);
+    expect(tempHandle.move).toHaveBeenCalledTimes(3);
+    expect(tempHandle.move).toHaveBeenLastCalledWith(rootDirHandle, 'post.md');
+    // The waits get longer
+    expect(vi.mocked(sleep).mock.calls).toEqual([[150], [300]]);
+    expect(rootDirHandle.removeEntry).not.toHaveBeenCalled();
+  });
+
+  test('should remove the temp file and fail if it cannot be renamed', async () => {
+    const error = new DOMException('Locked', 'NoModificationAllowedError');
+    const children = new Map();
+
+    rootDirHandle = createMockDirectoryHandle('root', children);
+
+    /** @type {MockedFunction<any>} */ (rootDirHandle.getFileHandle).mockImplementation(
+      async (/** @type {string} */ name) => {
+        const handle = createMockFileHandle(name);
+
+        handle.move = vi.fn().mockRejectedValue(error);
+        children.set(name, handle);
+
+        return handle;
+      },
+    );
+
+    await expect(saveFile({ rootDirHandle, path: 'post.md', data: 'hello' })).rejects.toBe(error);
+
+    const [tempName, tempHandle] = [...children.entries()][0];
+
+    expect(tempName).toMatch(/^\.sveltia-tmp-/);
+    expect(tempHandle.move).toHaveBeenCalledTimes(3);
+    // Nothing is left behind
+    expect(rootDirHandle.removeEntry).toHaveBeenCalledWith(tempName);
+
+    // A temp file that can’t be removed either doesn’t hide the original error
+    /** @type {MockedFunction<any>} */ (rootDirHandle.removeEntry).mockRejectedValue(
+      new Error('Cannot remove'),
+    );
+
+    await expect(saveFile({ rootDirHandle, path: 'post.md', data: 'hello' })).rejects.toBe(error);
+  });
+
   test('should write File object to file', async () => {
     const mockFileHandle = createMockFileHandle('test.txt');
 
@@ -1493,6 +1647,24 @@ describe('deleteFile', () => {
 
     expect(rootDirHandle.removeEntry).toHaveBeenCalledWith('test.txt');
   });
+
+  test('should treat a file that is already gone as deleted', async () => {
+    // The file was removed outside the CMS, e.g. in a file manager
+    /** @type {MockedFunction<any>} */ (rootDirHandle.removeEntry).mockRejectedValue(
+      new DOMException('A requested file or directory could not be found', 'NotFoundError'),
+    );
+
+    await expect(deleteFile({ rootDirHandle, path: 'test.txt' })).resolves.toBeUndefined();
+    expect(rootDirHandle.removeEntry).toHaveBeenCalledWith('test.txt');
+  });
+
+  test('should report any other error', async () => {
+    const error = new DOMException('Locked', 'NoModificationAllowedError');
+
+    /** @type {MockedFunction<any>} */ (rootDirHandle.removeEntry).mockRejectedValue(error);
+
+    await expect(deleteFile({ rootDirHandle, path: 'test.txt' })).rejects.toBe(error);
+  });
 });
 
 describe('deleteEmptyParentDirs', () => {
@@ -1553,6 +1725,36 @@ describe('deleteEmptyParentDirs', () => {
 
     // Should try to remove the folder from root
     expect(rootDirHandle.removeEntry).toHaveBeenCalledWith('folder');
+  });
+
+  test('should move on to the parent when a directory is already gone', async () => {
+    const notFound = new DOMException('Not found', 'NotFoundError');
+    const parentDir = createMockDirectoryHandle('parent');
+
+    // `parent/child` was removed outside the CMS, and `parent` is empty now
+    /** @type {MockedFunction<any>} */ (parentDir.getDirectoryHandle).mockRejectedValue(notFound);
+    // @ts-ignore - Mock async iterator
+    parentDir.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        // empty - no entries
+      },
+    }));
+
+    /** @type {MockedFunction<any>} */ (rootDirHandle.getDirectoryHandle).mockImplementation(
+      async (/** @type {string} */ name) => (name === 'parent' ? parentDir : rootDirHandle),
+    );
+
+    await deleteEmptyParentDirs(rootDirHandle, ['parent', 'child']);
+
+    expect(parentDir.removeEntry).not.toHaveBeenCalled();
+    expect(rootDirHandle.removeEntry).toHaveBeenCalledWith('parent');
+
+    // Any other error is reported
+    const error = new DOMException('Locked', 'NoModificationAllowedError');
+
+    /** @type {MockedFunction<any>} */ (parentDir.getDirectoryHandle).mockRejectedValue(error);
+
+    await expect(deleteEmptyParentDirs(rootDirHandle, ['parent', 'child'])).rejects.toBe(error);
   });
 });
 
