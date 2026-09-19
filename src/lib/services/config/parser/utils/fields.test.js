@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCanonicalSlugKey, getRootFields, getSubFields, hasField } from './fields';
+import { findFields, getCanonicalSlugKey, getRootFields, getSubFields, hasField } from './fields';
 
 /**
  * @import { Field } from '$lib/types/public';
@@ -50,6 +50,73 @@ const fields = [
     ],
   },
 ];
+
+describe('Test findFields()', () => {
+  it('should return the field a key path points to', () => {
+    expect(findFields(fields, 'title')).toEqual([fields[0]]);
+    expect(findFields(fields, 'author.name')).toEqual([/** @type {any} */ (fields[1]).fields[0]]);
+    expect(findFields(fields, 'images.0.src')).toEqual([/** @type {any} */ (fields[2]).fields[0]]);
+    expect(findFields(fields, 'thumbnail.src')).toEqual([/** @type {any} */ (fields[3]).field]);
+    expect(findFields(fields, 'blocks.*<image>.src')).toEqual([
+      /** @type {any} */ (fields[4]).types[1].fields[0],
+    ]);
+  });
+
+  it('should return every subfield of the variable types sharing the name', () => {
+    /** @type {Field[]} */
+    const blocks = [
+      {
+        name: 'blocks',
+        label: 'Blocks',
+        widget: 'list',
+        types: [
+          {
+            name: 'text',
+            label: 'Text',
+            widget: 'object',
+            fields: [{ name: 'src', label: 'Source', widget: 'string' }],
+          },
+          {
+            name: 'photo',
+            label: 'Photo',
+            widget: 'object',
+            fields: [
+              { name: 'src', label: 'Source', widget: 'image' },
+              { name: 'meta', label: 'Meta', widget: 'object', fields: [{ name: 'alt' }] },
+            ],
+          },
+          {
+            name: 'video',
+            label: 'Video',
+            widget: 'object',
+            fields: [
+              { name: 'src', label: 'Source', widget: 'file' },
+              { name: 'meta', label: 'Meta', widget: 'object', fields: [{ name: 'title' }] },
+            ],
+          },
+        ],
+      },
+    ];
+
+    expect(findFields(blocks, 'blocks.src').map(({ widget }) => widget)).toEqual([
+      'string',
+      'image',
+      'file',
+    ]);
+
+    // Nested paths are followed through each match
+    expect(findFields(blocks, 'blocks.meta.alt').map(({ name }) => name)).toEqual(['alt']);
+    expect(findFields(blocks, 'blocks.meta.title').map(({ name }) => name)).toEqual(['title']);
+    expect(findFields(blocks, 'blocks.meta.src')).toEqual([]);
+  });
+
+  it('should return an empty array for a key path that points to no field', () => {
+    expect(findFields(fields, 'date')).toEqual([]);
+    expect(findFields(fields, 'author.email')).toEqual([]);
+    expect(findFields(fields, 'title.name')).toEqual([]);
+    expect(findFields(fields, '')).toEqual([]);
+  });
+});
 
 describe('Test hasField()', () => {
   it('should resolve a top-level field', () => {

@@ -76,9 +76,28 @@ describe('parseSelectFieldConfig', () => {
   test('accepts a default among the options', () => {
     check({ options: ['a', 'b'], default: 'b' });
     check({ options: [{ label: 'A', value: 'a' }], default: 'a' });
-    check({ options: ['a', 'b'], default: ['a', 'b'] });
+    check({ options: ['a', 'b'], default: ['a', 'b'], multiple: true });
     check({ options: [1, null], default: null });
     expectMessages([]);
+  });
+
+  test('reports a default whose shape does not match the multiple option', () => {
+    check({ options: ['a', 'b'], default: ['a'] });
+    check({ options: ['a', 'b'], default: ['a'], multiple: false });
+    check({ options: ['a', 'b'], default: 'a', multiple: true });
+    expectMessages([
+      { strKey: 'invalid_default_single' },
+      { strKey: 'invalid_default_single' },
+      { strKey: 'invalid_default_multiple' },
+    ]);
+  });
+
+  test('checks the values of a mismatched default all the same', () => {
+    check({ options: ['a', 'b'], default: ['c'] });
+    expectMessages([
+      { strKey: 'invalid_default_single' },
+      { strKey: 'select_field_invalid_default', values: { value: 'c' } },
+    ]);
   });
 
   test('reports a default that is not among the options', () => {
@@ -87,7 +106,7 @@ describe('parseSelectFieldConfig', () => {
   });
 
   test('reports each default value that is not among the options', () => {
-    check({ options: ['a', 'b'], default: ['a', 'c', 1] });
+    check({ options: ['a', 'b'], default: ['a', 'c', 1], multiple: true });
     expectMessages([
       { strKey: 'select_field_invalid_default', values: { value: 'c' } },
       { strKey: 'select_field_invalid_default', values: { value: '1' } },

@@ -1026,4 +1026,46 @@ describe('Relation Field Config Parser', () => {
       expect(relationField.context).toBe(context);
     });
   });
+
+  describe('default option', () => {
+    /** @type {any} */
+    const context = {
+      cmsConfig: {
+        collections: [{ name: 'authors', folder: 'content/authors', fields: [{ name: 'name' }] }],
+      },
+      collection: { name: 'posts' },
+      typedKeyPath: 'author',
+    };
+
+    it('should check the shape of the default against the multiple option', async () => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+      const collectors = createCollectors();
+
+      /**
+       * Parse a Relation field with the given options.
+       * @param {Record<string, any>} options Field options.
+       */
+      const check = (options) => {
+        parseRelationFieldConfig({
+          config: { name: 'author', widget: 'relation', collection: 'authors', ...options },
+          context,
+          collectors,
+        });
+      };
+
+      check({ default: 'alice' });
+      check({ default: ['alice'], multiple: true });
+      check({});
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+
+      check({ default: ['alice'] });
+      check({ default: 'alice', multiple: true });
+
+      expect(mockAddMessage.mock.calls.map(([args]) => args)).toEqual([
+        { strKey: 'invalid_default_single', context, collectors },
+        { strKey: 'invalid_default_multiple', context, collectors },
+      ]);
+    });
+  });
 });

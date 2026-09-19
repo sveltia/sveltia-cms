@@ -1,6 +1,9 @@
+import { isObject } from '@sveltia/utils/object';
+
 import { parseFields } from '$lib/services/config/parser/fields/registry';
+import { checkObjectDefault } from '$lib/services/config/parser/utils/defaults';
 import { getSubFields } from '$lib/services/config/parser/utils/fields';
-import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
+import { checkThumbnailField } from '$lib/services/config/parser/utils/references';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
 
 /**
@@ -15,8 +18,8 @@ import { addMessage, checkName } from '$lib/services/config/parser/utils/validat
 export const parseObjectFieldConfig = (args) => {
   const { config, context, collectors } = args;
   const { fields: subfields } = /** @type {ObjectFieldWithSubFields} */ (config);
-  const { types } = /** @type {ObjectFieldWithTypes} */ (config);
-  const { thumbnail } = /** @type {ObjectField} */ (config);
+  const { types, typeKey } = /** @type {ObjectFieldWithTypes} */ (config);
+  const { default: defaultValue, thumbnail } = /** @type {ObjectField} */ (config);
   const { typedKeyPath } = context;
   const checkNameArgs = { nameCounts: {}, strKeyBase: 'variable_type', collectors };
 
@@ -39,14 +42,22 @@ export const parseObjectFieldConfig = (args) => {
     return;
   }
 
+  // The `default` object holds subfield values, or names a variable type. A value of another type
+  // is reported against the JSON schema
+  if (isObject(defaultValue)) {
+    checkObjectDefault({
+      value: defaultValue,
+      fields: subfields,
+      types,
+      typeKey,
+      strKeyBase: 'object_field',
+      context,
+      collectors,
+    });
+  }
+
   // The `thumbnail` option names a subfield
-  checkFieldReferences({
-    option: 'thumbnail',
-    keyPaths: thumbnail,
-    fields: getSubFields(config),
-    context,
-    collectors,
-  });
+  checkThumbnailField({ thumbnail, fields: getSubFields(config), context, collectors });
 
   // Handle subfields
   if (subfields) {

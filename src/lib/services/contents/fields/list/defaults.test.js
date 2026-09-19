@@ -263,6 +263,28 @@ describe('Test getDefaultValueMap()', () => {
     });
   });
 
+  test('should keep object values in a list with a single Object field', () => {
+    /** @type {ListField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      field: { name: 'author', widget: 'object', fields: [{ name: 'name', widget: 'string' }] },
+      default: [{ name: 'Alice' }, { name: 'Bob' }],
+    };
+
+    const result = getDefaultValueMap({
+      fieldConfig,
+      keyPath: 'items',
+      locale: '_default',
+      defaultLocale: '_default',
+    });
+
+    expect(result).toEqual({
+      items: [],
+      'items.0.name': 'Alice',
+      'items.1.name': 'Bob',
+    });
+  });
+
   test('should skip object values in simple list (no fields/types)', () => {
     // A mixed array is not a valid default, so it needs a cast
     const fieldConfig = /** @type {ListField} */ ({

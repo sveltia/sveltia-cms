@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
+import {
+  checkFieldReferences,
+  checkThumbnailField,
+} from '$lib/services/config/parser/utils/references';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 
 vi.mock('$lib/services/config/parser/utils/validator');
@@ -112,5 +115,96 @@ describe('checkFieldReferences', () => {
       check({ keyPaths: undefined });
       expectReported([]);
     });
+  });
+});
+
+describe('checkThumbnailField', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  /** @type {Field[]} */
+  const subfields = /** @type {any} */ ([
+    { name: 'image', widget: 'image' },
+    { name: 'document', widget: 'file' },
+    { name: 'caption', widget: 'string' },
+    { name: 'untyped' },
+    { name: 'meta', widget: 'object', fields: [{ name: 'cover', widget: 'image' }] },
+  ]);
+
+  /**
+   * Run the check with the given `thumbnail` option.
+   * @param {any} thumbnail The option value.
+   */
+  const checkThumbnail = (thumbnail) => {
+    checkThumbnailField({ thumbnail, fields: subfields, context, collectors });
+  };
+
+  /**
+   * Assert the messages that were added, in order.
+   * @param {object[]} messages Expected message properties.
+   */
+  const expectMessages = (messages) => {
+    expect(vi.mocked(addMessage).mock.calls.map(([args]) => args)).toEqual(
+      messages.map((message) => ({ context, collectors, ...message })),
+    );
+  };
+
+  test('accepts an Image or File subfield, nested or prefixed', () => {
+    checkThumbnail('image');
+    checkThumbnail('document');
+    checkThumbnail('meta.cover');
+    checkThumbnail('fields.image');
+    expectMessages([]);
+  });
+
+  test('skips a missing or wrongly typed option', () => {
+    checkThumbnail(undefined);
+    checkThumbnail('');
+    checkThumbnail(true);
+    checkThumbnail(['image']);
+    expectMessages([]);
+  });
+
+  test('reports a subfield that is not defined, and nothing else about it', () => {
+    checkThumbnail('photo');
+    expectMessages([
+      { strKey: 'option_field_not_found', values: { option: 'thumbnail', name: 'photo' } },
+    ]);
+  });
+
+  test('accepts a name shared by the subfields of several types if any is a media field', () => {
+    /** @type {Field[]} */
+    const typedFields = /** @type {any} */ ([
+      { name: 'src', widget: 'string' },
+      { name: 'src', widget: 'image' },
+    ]);
+
+    checkThumbnailField({ thumbnail: 'src', fields: typedFields, context, collectors });
+    expectMessages([]);
+  });
+
+  test('reports a name shared by the subfields of several types if none is a media field', () => {
+    /** @type {Field[]} */
+    const typedFields = /** @type {any} */ ([
+      { name: 'src', widget: 'string' },
+      { name: 'src', widget: 'number' },
+    ]);
+
+    checkThumbnailField({ thumbnail: 'src', fields: typedFields, context, collectors });
+    expectMessages([
+      { strKey: 'thumbnail_field_not_media', values: { name: 'src', widget: 'string' } },
+    ]);
+  });
+
+  test('reports a subfield of another type', () => {
+    checkThumbnail('caption');
+    checkThumbnail('untyped');
+    checkThumbnail('meta');
+    expectMessages([
+      { strKey: 'thumbnail_field_not_media', values: { name: 'caption', widget: 'string' } },
+      { strKey: 'thumbnail_field_not_media', values: { name: 'untyped', widget: 'string' } },
+      { strKey: 'thumbnail_field_not_media', values: { name: 'meta', widget: 'object' } },
+    ]);
   });
 });

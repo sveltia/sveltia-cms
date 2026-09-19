@@ -101,6 +101,23 @@ const checkNamedViewOptions = ({
       });
     }
   });
+
+  // The `default` option of the object format names one of the options. A name that matches none
+  // is silently ignored at runtime, so the collection opens without the intended view
+  const defaultName = isObject(config)
+    ? /** @type {ViewFilters | ViewGroups} */ (config).default
+    : undefined;
+
+  if (typeof defaultName === 'string' && defaultName) {
+    if (!options.some((option) => isObject(option) && option.name === defaultName)) {
+      addMessage({
+        strKey: `invalid_${optionType}_default`,
+        values: { name: defaultName },
+        context,
+        collectors,
+      });
+    }
+  }
 };
 
 /**

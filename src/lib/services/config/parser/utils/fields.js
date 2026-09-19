@@ -89,18 +89,18 @@ export const getSubFields = (field) => {
 };
 
 /**
- * Check if the given key path points to a field defined in the given field list. This is a lenient
+ * Find the fields the given key path can point to in the given field list. This is a lenient
  * version of `getField()`, which lives in the runtime module graph (stores, backends) this parser
- * runs before, and which needs entry values to resolve variable types.
+ * runs before, and which needs entry values to resolve variable types. Without those values, a
+ * name shared by the subfields of several variable types resolves to each of them.
  * @param {Field[]} fields Field list.
  * @param {FieldKeyPath} keyPath Field key path, e.g. `author.name` or `images.0.src`.
- * @returns {boolean} Whether the field is defined.
+ * @returns {Field[]} Field configurations. An empty array if the field is not defined.
  */
-export const hasField = (fields, keyPath) => {
+export const findFields = (fields, keyPath) => {
   /** @type {Field[]} */
-  let candidates = fields;
-  /** @type {Field | undefined} */
-  let field = undefined;
+  let matches = [];
+  let isFirstSegment = true;
 
   const isResolved = keyPath.split('.').every((segment) => {
     // Strip the explicit variable type, which is not part of the field name
@@ -112,17 +112,24 @@ export const hasField = (fields, keyPath) => {
       return true;
     }
 
-    if (field) {
-      candidates = getSubFields(field);
-    }
+    const candidates = isFirstSegment ? fields : matches.flatMap((field) => getSubFields(field));
 
-    field = candidates.find(({ name }) => name === key);
+    isFirstSegment = false;
+    matches = candidates.filter(({ name }) => name === key);
 
-    return !!field;
+    return !!matches.length;
   });
 
-  return isResolved && !!field;
+  return isResolved ? matches : [];
 };
+
+/**
+ * Check if the given key path points to a field defined in the given field list.
+ * @param {Field[]} fields Field list.
+ * @param {FieldKeyPath} keyPath Field key path, e.g. `author.name` or `images.0.src`.
+ * @returns {boolean} Whether the field is defined.
+ */
+export const hasField = (fields, keyPath) => !!findFields(fields, keyPath).length;
 
 /**
  * Get the top-level fields of the entry a field being parsed belongs to: those of the collection

@@ -1572,6 +1572,8 @@ config:
     invalid_filter_no_condition: '`filter` オプションには、エントリーを照合するための `value` または `pattern` オプションが必要です。'
     # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
     option_field_not_found: '`{$option}` オプションで `{$name}` が参照されていますが、そのフィールドは定義されていません。'
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: '`thumbnail` オプションに `{$name}` が指定されていますが、`{$widget}` フィールドではなく Image または File フィールドでなければなりません。'
     # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
     invalid_regex: '`{$option}` オプションに無効な正規表現 `{$pattern}` が含まれているため、無視されます。'
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
@@ -1594,6 +1596,10 @@ config:
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: ビューフィルター名 `{$name}` は無効です。特殊文字を含めることはできません。
     duplicate_view_filter_name: ビューフィルター名は一意である必要がありますが、`{$name}` が複数回使用されています。
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: '`view_groups` の `default` オプションに `{$name}` が指定されていますが、その名前のビューグループはありません。'
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: '`view_filters` の `default` オプションに `{$name}` が指定されていますが、その名前のビューフィルターはありません。'
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: コレクション {$count} には `name` オプションを空でない文字列として定義する必要があります。
     # {$name} is the invalid or duplicate collection name
@@ -1645,6 +1651,32 @@ config:
     select_field_invalid_default: Select フィールドの `default` オプションに `{$value}` が指定されていますが、`options` に含まれていません。
     # Don’t localize `fields` and `types`
     list_field_no_subfields: List フィールドの `fields` または `types` オプションには少なくとも 1 つの項目が必要です。単純な値のリストにする場合は、オプションを省略してください。
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: List フィールドの `default` オプションにオブジェクトが含まれていますが、フィールドに `fields` も `types` もないため、各項目は単純な値でなければなりません。
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: List フィールドの `default` オプションに `{$value}` が含まれていますが、フィールドに `fields` または `types` があるため、各項目はオブジェクトでなければなりません。
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: List フィールドの `default` オプションの項目に `{$key}` プロパティが含まれていますが、その名前のサブフィールドはありません。
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: List フィールドの `default` オプションの項目に、`types` のいずれかを識別する `{$typeKey}` プロパティがありません。
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: List フィールドの `default` オプションの項目の `{$typeKey}` プロパティが `{$value}` ですが、`types` に含まれていません。
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: '`multiple` オプションが `true` のため、`default` オプションは配列でなければなりません。'
+    invalid_default_single: '`multiple` オプションが `true` ではないため、`default` オプションは配列ではなく単一の値でなければなりません。'
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Object フィールドの `default` オプションに `{$key}` プロパティが含まれていますが、その名前のサブフィールドはありません。
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Object フィールドの `default` オプションに、`types` のいずれかを識別する `{$typeKey}` プロパティがありません。
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Object フィールドの `default` オプションの `{$typeKey}` プロパティが `{$value}` ですが、`types` に含まれていません。
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: '`output_code_only` オプションが `true` のため、Code フィールドの `default` オプションは文字列でなければなりません。'
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Code フィールドの `default` オプションに `{$key}` プロパティが含まれていますが、`keys` オプションで許可されているのは `{$code}` と `{$lang}` のみです。
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Number フィールドの `default` オプションに `{$value}` が指定されていますが、`value_type` オプションが `{$valueType}` のため、整数でなければなりません。
+    number_field_default_not_number: Number フィールドの `default` オプションに `{$value}` が指定されていますが、`value_type` オプションが `{$valueType}` のため、数値でなければなりません。
     # Don’t localize `fields` and `types`
     object_field_no_subfields: Object フィールドの `fields` または `types` オプションには少なくとも 1 つの項目が必要です。
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved

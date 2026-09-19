@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { checkMultipleDefault } from '$lib/services/config/parser/utils/defaults';
 import { getCanonicalSlugKey, hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 
@@ -155,8 +156,19 @@ const checkFieldReferences = ({ fieldConfig, fields, canonicalSlugKey, context, 
 export const parseRelationFieldConfig = (args) => {
   const { config, context, collectors } = args;
   const fieldConfig = /** @type {RelationField} */ (config);
-  const { collection: collectionName, file: fileName } = fieldConfig;
+
+  const {
+    collection: collectionName,
+    file: fileName,
+    default: defaultValue,
+    multiple,
+  } = fieldConfig;
+
   const { cmsConfig } = context;
+
+  // Whether the default matches an entry can only be known once the entries are loaded, but its
+  // shape is known here
+  checkMultipleDefault({ defaultValue, multiple, context, collectors });
 
   const collection =
     collectionName === '_singletons'

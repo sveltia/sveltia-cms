@@ -159,4 +159,64 @@ describe('File Field Parser', () => {
       expect(collectors.errors.size).toBe(0);
     });
   });
+
+  describe('default option', () => {
+    it('should check the default against an explicit multiple option', async () => {
+      const { parseFileFieldConfig } = await import('./file.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', multiple: false, default: '/a.pdf' },
+        context,
+        collectors,
+      });
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', multiple: true, default: ['/a.pdf'] },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', multiple: false, default: ['/a.pdf'] },
+        context,
+        collectors,
+      });
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', multiple: true, default: '/a.pdf' },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage.mock.calls.map(([args]) => args)).toEqual([
+        { strKey: 'invalid_default_single', context, collectors },
+        { strKey: 'invalid_default_multiple', context, collectors },
+      ]);
+    });
+
+    it('should leave the default alone without an explicit multiple option', async () => {
+      const { parseFileFieldConfig } = await import('./file.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      // The media library options can make the field multiple, which is only known at runtime
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', default: ['/a.pdf'] },
+        context,
+        collectors,
+      });
+
+      parseFileFieldConfig({
+        config: { name: 'document', widget: 'file', default: '/a.pdf' },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+  });
 });

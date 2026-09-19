@@ -360,4 +360,52 @@ describe('Test checkViewOptions()', () => {
       }),
     );
   });
+
+  it('should accept a default that names a group or filter in the object format', () => {
+    check({
+      fields,
+      view_groups: { groups: [{ name: 'by_author', field: 'author.name' }], default: 'by_author' },
+      view_filters: {
+        filters: [{ name: 'titled', field: 'title', pattern: '.' }],
+        default: 'titled',
+      },
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
+
+  it('should add an error for a default that names no group or filter', () => {
+    check({
+      fields,
+      view_groups: { groups: [{ name: 'by_author', field: 'author.name' }], default: 'by_title' },
+      view_filters: {
+        filters: [{ name: 'titled', field: 'title', pattern: '.' }],
+        default: 'drafts',
+      },
+    });
+
+    expect(mockAddMessage).toHaveBeenCalledTimes(2);
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_view_group_default',
+        values: { name: 'by_title' },
+      }),
+    );
+    expect(mockAddMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strKey: 'invalid_view_filter_default',
+        values: { name: 'drafts' },
+      }),
+    );
+  });
+
+  it('should leave a default of the wrong type or none to the schema', () => {
+    check({
+      fields,
+      view_groups: { groups: [{ name: 'by_author', field: 'author.name' }] },
+      view_filters: { filters: [{ name: 'titled', field: 'title', pattern: '.' }], default: 1 },
+    });
+
+    expect(mockAddMessage).not.toHaveBeenCalled();
+  });
 });

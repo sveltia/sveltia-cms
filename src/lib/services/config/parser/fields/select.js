@@ -1,5 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { checkMultipleDefault } from '$lib/services/config/parser/utils/defaults';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 
 /**
@@ -11,11 +12,14 @@ import { addMessage } from '$lib/services/config/parser/utils/validator';
  * Parse and validate a Select field configuration. The shape of the `options` list is checked
  * against the JSON schema; what’s checked here is whether the list makes a usable field: one with
  * something to choose from, where each choice can be told apart, and where the `default` is one of
- * the choices rather than a value that can never be selected again once changed.
+ * the choices rather than a value that can never be selected again once changed, in the shape the
+ * `multiple` option calls for.
  * @param {FieldParserArgs} args Arguments.
  */
 export const parseSelectFieldConfig = ({ config, context, collectors }) => {
-  const { options, default: defaultValue } = /** @type {SelectField} */ (config);
+  const { options, default: defaultValue, multiple } = /** @type {SelectField} */ (config);
+
+  checkMultipleDefault({ defaultValue, multiple, context, collectors });
 
   if (!Array.isArray(options)) {
     return;

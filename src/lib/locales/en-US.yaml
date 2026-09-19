@@ -1661,6 +1661,8 @@ config:
     invalid_filter_no_condition: The `filter` option must have either the `value` or `pattern` option to match entries against.
     # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
     option_field_not_found: The `{$option}` option refers to `{$name}`, but no such field is defined.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: The `thumbnail` option refers to `{$name}`, but it must be an Image or File field, not a `{$widget}` field.
     # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
     invalid_regex: The `{$option}` option contains an invalid regular expression `{$pattern}`, which is ignored.
     # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
@@ -1683,6 +1685,10 @@ config:
     # {$name} is the invalid or duplicate view filter name
     invalid_view_filter_name: The view filter name `{$name}` is invalid. It must not contain special characters.
     duplicate_view_filter_name: View filter names must be unique, but `{$name}` is used more than once.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: The `default` option of `view_groups` is set to `{$name}`, but no view group has that name.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: The `default` option of `view_filters` is set to `{$name}`, but no view filter has that name.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: The collection {$count} must have the `name` option defined as a non-empty string.
     # {$name} is the invalid or duplicate collection name
@@ -1734,6 +1740,32 @@ config:
     select_field_invalid_default: The Select field’s `default` option is set to `{$value}`, but it’s not one of the `options`.
     # Don’t localize `fields` and `types`
     list_field_no_subfields: The List field’s `fields` or `types` option must have at least one item. Omit the option for a list of plain values.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: The List field’s `default` option contains an object, but each item must be a plain value because the field has no `fields` or `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: The List field’s `default` option contains `{$value}`, but each item must be an object because the field has `fields` or `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: The List field’s `default` option contains an item with the `{$key}` property, but no subfield has that name.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: The List field’s `default` option contains an item without the `{$typeKey}` property, which identifies one of the `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: The List field’s `default` option contains an item whose `{$typeKey}` property is `{$value}`, but it’s not one of the `types`.
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: The `default` option must be an array because the `multiple` option is `true`.
+    invalid_default_single: The `default` option must be a single value, not an array, because the `multiple` option is not `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: The Object field’s `default` option has the `{$key}` property, but no subfield has that name.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: The Object field’s `default` option doesn’t have the `{$typeKey}` property, which identifies one of the `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: The `{$typeKey}` property of the Object field’s `default` option is `{$value}`, but it’s not one of the `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: The Code field’s `default` option must be a string because the `output_code_only` option is `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: The Code field’s `default` option has the `{$key}` property, but the `keys` option only allows `{$code}` and `{$lang}`.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: The Number field’s `default` option is set to `{$value}`, but it must be an integer because the `value_type` option is `{$valueType}`.
+    number_field_default_not_number: The Number field’s `default` option is set to `{$value}`, but it must be a number because the `value_type` option is `{$valueType}`.
     # Don’t localize `fields` and `types`
     object_field_no_subfields: The Object field’s `fields` or `types` option must have at least one item.
     # {$collection}, {$file}, and {$field} are referenced names that could not be resolved

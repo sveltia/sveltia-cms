@@ -1,3 +1,4 @@
+import { parseCodeFieldConfig } from '$lib/services/config/parser/fields/code';
 import { parseComputeFieldConfig } from '$lib/services/config/parser/fields/compute';
 import { parseDateTimeFieldConfig } from '$lib/services/config/parser/fields/datetime';
 import { parseFileFieldConfig } from '$lib/services/config/parser/fields/file';
@@ -13,6 +14,7 @@ export { parseFieldConfig, parseFields } from '$lib/services/config/parser/field
 
 // Register the built-in field parsers. See `registry.js` for why they aren’t imported there.
 Object.assign(fieldParsers, {
+  code: parseCodeFieldConfig,
   compute: parseComputeFieldConfig,
   datetime: parseDateTimeFieldConfig,
   file: parseFileFieldConfig,

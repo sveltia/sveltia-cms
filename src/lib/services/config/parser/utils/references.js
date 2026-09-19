@@ -1,6 +1,7 @@
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
-import { hasField } from '$lib/services/config/parser/utils/fields';
+import { findFields, hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
+import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
@@ -81,4 +82,38 @@ export const checkFieldReferences = ({
       });
     }
   });
+};
+
+/**
+ * Check that the `thumbnail` option of a List or Object field names an Image or File subfield. Any
+ * other field type is skipped at runtime, so no thumbnail is shown.
+ * @param {object} args Arguments.
+ * @param {any} args.thumbnail The `thumbnail` option. A value of another type is reported against
+ * the JSON schema, so it’s ignored here.
+ * @param {Field[]} args.fields Subfields the option can refer to.
+ * @param {ConfigParserContext} args.context Context.
+ * @param {ConfigParserCollectors} args.collectors Collectors.
+ */
+export const checkThumbnailField = ({ thumbnail, fields, context, collectors }) => {
+  checkFieldReferences({ option: 'thumbnail', keyPaths: thumbnail, fields, context, collectors });
+
+  if (typeof thumbnail !== 'string' || !thumbnail) {
+    return;
+  }
+
+  // A name shared by the subfields of several variable types resolves to each of them, and the
+  // runtime looks the field up per item type, so any Image or File field among them will do
+  const fieldTypes = findFields(fields, thumbnail.replace(FIELD_TAG_PREFIX_REGEX, '')).map(
+    ({ widget: fieldType = 'string' }) => fieldType,
+  );
+
+  // A missing field is reported above
+  if (fieldTypes.length && !fieldTypes.some((fieldType) => MEDIA_FIELD_TYPES.includes(fieldType))) {
+    addMessage({
+      strKey: 'thumbnail_field_not_media',
+      values: { name: thumbnail, widget: fieldTypes[0] },
+      context,
+      collectors,
+    });
+  }
 };

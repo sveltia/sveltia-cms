@@ -1,11 +1,16 @@
+import { isObject } from '@sveltia/utils/object';
+
 import { parseFieldConfig, parseFields } from '$lib/services/config/parser/fields/registry';
+import { checkObjectDefault } from '$lib/services/config/parser/utils/defaults';
 import { getSubFields } from '$lib/services/config/parser/utils/fields';
-import { checkFieldReferences } from '$lib/services/config/parser/utils/references';
+import { checkThumbnailField } from '$lib/services/config/parser/utils/references';
 import { addMessage, checkName } from '$lib/services/config/parser/utils/validator';
+import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 
 /**
  * @import {
  * ComplexListFieldBaseProps,
+ * ListField,
  * ListFieldWithSubField,
  * ListFieldWithSubFields,
  * ListFieldWithTypes,
@@ -40,6 +45,72 @@ export const checkFieldType = (fieldType, context, collectors) => {
 };
 
 /**
+ * Field types whose value is an object, so a List field with one of them as its single `field`
+ * holds objects rather than plain values.
+ */
+const OBJECT_FIELD_TYPES = ['keyvalue', 'object'];
+
+/**
+ * Check the shape of the `default` option, which depends on how the field is configured. The JSON
+ * schema only ensures it’s an array of strings or objects; what’s checked here is whether each item
+ * is what the field holds: a plain value for a simple list or a list with a single `field` of a
+ * plain type, an object with known properties for a list with `fields`, and an object naming one
+ * of the `types` for a list with variable types. A mismatched item would be dropped or saved as-is,
+ * so the user would find nothing or something unexpected in a new entry.
+ * @param {FieldParserArgs} args Arguments.
+ */
+export const checkDefaultValue = ({ config, context, collectors }) => {
+  const { default: defaultValue } = /** @type {ListField} */ (config);
+  const { field: subfield } = /** @type {ListFieldWithSubField} */ (config);
+  const { fields: subfields } = /** @type {ListFieldWithSubFields} */ (config);
+  const { types, typeKey = 'type' } = /** @type {ListFieldWithTypes} */ (config);
+
+  if (!Array.isArray(defaultValue)) {
+    return;
+  }
+
+  /** @type {any[]} */ (defaultValue).forEach((item) => {
+    if (!subfields && !types) {
+      // A simple list holds plain values; so does a list whose single `field` is a plain type. A
+      // custom field type can hold anything, so it’s left alone
+      const { widget: subfieldType = 'string' } = subfield ?? {};
+
+      const holdsObjects =
+        !!subfield &&
+        (OBJECT_FIELD_TYPES.includes(subfieldType) ||
+          !(/** @type {string[]} */ (BUILTIN_FIELD_TYPES).includes(subfieldType)));
+
+      if (isObject(item) && !holdsObjects) {
+        addMessage({ strKey: 'list_field_invalid_default_object', context, collectors });
+      }
+
+      return;
+    }
+
+    if (!isObject(item)) {
+      addMessage({
+        strKey: 'list_field_invalid_default_item',
+        values: { value: String(item) },
+        context,
+        collectors,
+      });
+
+      return;
+    }
+
+    checkObjectDefault({
+      value: item,
+      fields: subfields,
+      types,
+      typeKey,
+      strKeyBase: 'list_field',
+      context,
+      collectors,
+    });
+  });
+};
+
+/**
  * Parse and validate a List field configuration.
  * @param {FieldParserArgs} args Arguments.
  */
@@ -71,14 +142,10 @@ export const parseListFieldConfig = (args) => {
     return;
   }
 
+  checkDefaultValue(args);
+
   // The `thumbnail` option names a subfield of an item, or the single subfield
-  checkFieldReferences({
-    option: 'thumbnail',
-    keyPaths: thumbnail,
-    fields: getSubFields(config),
-    context,
-    collectors,
-  });
+  checkThumbnailField({ thumbnail, fields: getSubFields(config), context, collectors });
 
   // Handle single subfield
   if (subfield) {

@@ -390,6 +390,49 @@ describe('List Field Parser', () => {
       expect(mockAddMessage).not.toHaveBeenCalled();
     });
 
+    it('should error on a thumbnail that names a subfield of another type', async () => {
+      const { parseListFieldConfig } = await import('./list.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      parseListFieldConfig({
+        config: {
+          name: 'items',
+          widget: 'list',
+          fields: [{ name: 'caption', widget: 'string' }],
+          thumbnail: 'caption',
+        },
+        context,
+        collectors,
+      });
+
+      parseListFieldConfig({
+        config: {
+          name: 'tags',
+          widget: 'list',
+          field: { name: 'tag', widget: 'string' },
+          thumbnail: 'tag',
+        },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage.mock.calls.map(([args]) => args)).toEqual([
+        {
+          strKey: 'thumbnail_field_not_media',
+          values: { name: 'caption', widget: 'string' },
+          context,
+          collectors,
+        },
+        {
+          strKey: 'thumbnail_field_not_media',
+          values: { name: 'tag', widget: 'string' },
+          context,
+          collectors,
+        },
+      ]);
+    });
+
     it('should error on a thumbnail that names no subfield', async () => {
       const { parseListFieldConfig } = await import('./list.js');
       const context = createContext();
@@ -409,6 +452,238 @@ describe('List Field Parser', () => {
       expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
         strKey: 'option_field_not_found',
         values: { option: 'thumbnail', name: 'photo' },
+        context,
+        collectors,
+      });
+    });
+  });
+
+  describe('checkDefaultValue', () => {
+    /**
+     * Run the check against a List field with the given options.
+     * @param {Record<string, any>} options List field options.
+     * @returns {Promise<{ context: ConfigParserContext, collectors: ConfigParserCollectors }>}
+     * Arguments passed to the check, to match a reported message against.
+     */
+    const check = async (options) => {
+      const { checkDefaultValue } = await import('./list.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      checkDefaultValue({
+        config: { name: 'items', widget: 'list', ...options },
+        context,
+        collectors,
+      });
+
+      return { context, collectors };
+    };
+
+    it('should skip a missing default', async () => {
+      await check({});
+      await check({ fields: [{ name: 'title', widget: 'string' }] });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should skip a default that is not an array, which the schema reports', async () => {
+      await check({ default: { title: 'Title' }, fields: [{ name: 'title', widget: 'string' }] });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should accept plain values in a simple list', async () => {
+      await check({ default: ['a', 'b'] });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should error on an object in a simple list', async () => {
+      const { context, collectors } = await check({ default: ['a', { title: 'b' }] });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_invalid_default_object',
+        context,
+        collectors,
+      });
+    });
+
+    it('should error on an object in a list with a single field of a plain type', async () => {
+      const { context, collectors } = await check({
+        field: { name: 'tag', widget: 'string' },
+        default: [{ tag: 'a' }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_invalid_default_object',
+        context,
+        collectors,
+      });
+    });
+
+    it('should treat a single field without a widget as a String field', async () => {
+      await check({ field: { name: 'tag' }, default: [{ tag: 'a' }] });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ strKey: 'list_field_invalid_default_object' }),
+      );
+    });
+
+    it('should accept an object in a list with a single Object or KeyValue field', async () => {
+      await check({
+        field: { name: 'author', widget: 'object', fields: [{ name: 'name', widget: 'string' }] },
+        default: [{ name: 'Alice' }],
+      });
+      await check({ field: { name: 'meta', widget: 'keyvalue' }, default: [{ key: 'value' }] });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should accept an object in a list with a single custom field', async () => {
+      await check({ field: { name: 'geo', widget: 'my-custom' }, default: [{ lat: 0, lng: 0 }] });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should accept objects with known properties in a list with fields', async () => {
+      await check({
+        fields: [
+          { name: 'title', widget: 'string' },
+          { name: 'body', widget: 'text' },
+        ],
+        default: [{ title: 'A', body: 'a' }, { title: 'B' }],
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should error on a plain value in a list with fields', async () => {
+      const { context, collectors } = await check({
+        fields: [{ name: 'title', widget: 'string' }],
+        default: ['A', { title: 'B' }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_invalid_default_item',
+        values: { value: 'A' },
+        context,
+        collectors,
+      });
+    });
+
+    it('should error on each unknown property in a list with fields', async () => {
+      const { context, collectors } = await check({
+        fields: [{ name: 'title', widget: 'string' }],
+        default: [{ title: 'A', titel: 'A', body: 'a' }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'list_field_invalid_default_key',
+        values: { key: 'titel' },
+        context,
+        collectors,
+      });
+      expect(mockAddMessage).toHaveBeenCalledWith({
+        strKey: 'list_field_invalid_default_key',
+        values: { key: 'body' },
+        context,
+        collectors,
+      });
+    });
+
+    it('should accept objects naming a type and its fields in a list with types', async () => {
+      await check({
+        types: [{ name: 'text', fields: [{ name: 'body', widget: 'text' }] }, { name: 'divider' }],
+        default: [{ type: 'text', body: 'a' }, { type: 'divider' }],
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should respect a custom typeKey', async () => {
+      await check({
+        typeKey: 'kind',
+        types: [{ name: 'text', fields: [{ name: 'body', widget: 'text' }] }],
+        default: [{ kind: 'text', body: 'a' }],
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should error on a plain value in a list with types', async () => {
+      const { context, collectors } = await check({
+        types: [{ name: 'text' }],
+        default: [1],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_invalid_default_item',
+        values: { value: '1' },
+        context,
+        collectors,
+      });
+    });
+
+    it('should error on an item without the type key', async () => {
+      const { context, collectors } = await check({
+        typeKey: 'kind',
+        types: [{ name: 'text', fields: [{ name: 'body', widget: 'text' }] }],
+        default: [{ body: 'a' }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_default_missing_type',
+        values: { typeKey: 'kind' },
+        context,
+        collectors,
+      });
+    });
+
+    it('should error on an item naming an unknown type', async () => {
+      const { context, collectors } = await check({
+        types: [{ name: 'text' }],
+        default: [{ type: 'image' }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_invalid_default_type',
+        values: { typeKey: 'type', value: 'image' },
+        context,
+        collectors,
+      });
+    });
+
+    it('should error on a property that is not a field of the named type', async () => {
+      const { context, collectors } = await check({
+        types: [
+          { name: 'text', fields: [{ name: 'body', widget: 'text' }] },
+          { name: 'image', fields: [{ name: 'src', widget: 'image' }] },
+        ],
+        default: [{ type: 'text', src: 'a.png' }],
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_invalid_default_key',
+        values: { key: 'src' },
+        context,
+        collectors,
+      });
+    });
+
+    it('should run as part of parseListFieldConfig', async () => {
+      const { parseListFieldConfig } = await import('./list.js');
+      const context = createContext();
+      const collectors = createCollectors();
+
+      parseListFieldConfig({
+        config: { name: 'items', widget: 'list', default: [{ title: 'a' }] },
+        context,
+        collectors,
+      });
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith({
+        strKey: 'list_field_invalid_default_object',
         context,
         collectors,
       });
