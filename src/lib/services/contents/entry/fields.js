@@ -600,7 +600,9 @@ export const getVisibleFieldDisplayValue = ({
  * keys: `slug`, `commit_author` and `commit_date`.
  * @param {boolean} [args.resolveRef] Whether to resolve the referenced value if the target field is
  * a relation field.
- * @returns {any} Value.
+ * @returns {any} Value. An array of the item values for a multi-value field — a List field, or a
+ * Relation, Select or media field with `multiple: true` — which is stored flattened, so nothing
+ * lives at the field’s own key path.
  */
 export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRef = true }) => {
   const { slug, locales, commitAuthor: { name, login, email } = {}, commitDate } = entry;
@@ -629,18 +631,27 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
     return undefined;
   }
 
-  if (resolveRef) {
-    const isIndexFile = isCollectionIndexFile(collection, entry);
-    const fieldConfig = getField({ collectionName, keyPath: key, isIndexFile });
+  const isIndexFile = isCollectionIndexFile(collection, entry);
+  const fieldConfig = getField({ collectionName, keyPath: key, isIndexFile });
 
-    // Resolve the displayed value for a relation field
-    if (fieldConfig?.widget === 'relation') {
-      return getReferencedOptionLabel({
-        fieldConfig: /** @type {RelationField} */ (fieldConfig),
-        valueMap: content,
-        keyPath: key,
-        locale,
-      });
+  // Resolve the displayed value for a relation field
+  if (resolveRef && fieldConfig?.widget === 'relation') {
+    return getReferencedOptionLabel({
+      fieldConfig: /** @type {RelationField} */ (fieldConfig),
+      valueMap: content,
+      keyPath: key,
+      locale,
+    });
+  }
+
+  // Gather the items of a multi-value field, which are flattened under `key.0`, `key.1` and so on,
+  // so a view filter can match any of them
+  // @see https://github.com/sveltia/sveltia-cms/issues/997
+  if (fieldConfig && (fieldConfig.widget === 'list' || isFieldMultiple(fieldConfig))) {
+    const itemKeys = getListItemKeys(content, key);
+
+    if (itemKeys.length) {
+      return itemKeys.map((itemKey) => content[itemKey]);
     }
   }
 

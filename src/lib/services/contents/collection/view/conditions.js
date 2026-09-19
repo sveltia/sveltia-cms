@@ -244,20 +244,26 @@ export const prepareConditions = (conditions, { dateFieldConfig, now = new Date(
 /**
  * Check whether a field value satisfies the prepared conditions.
  * @param {object} args Arguments.
- * @param {any} args.rawValue Field value as stored in the entry.
+ * @param {any} args.rawValue Field value as stored in the entry. An array for a multi-value field,
+ * such as a List field or a Relation field with `multiple: true`, which is matched item by item:
+ * the entry satisfies a condition when any of its items does, and `ne` and `not_in` when none does.
  * @param {any} [args.refValue] Field value as displayed, when it differs from the stored value: the
- * label of the option a relation field refers to. An equality check accepts either, so a filter
- * can name the option the way the editor sees it or the way it’s stored.
+ * label of the option a relation field refers to, or an array of labels for a multi-value field. An
+ * equality check accepts either, so a filter can name the option the way the editor sees it or the
+ * way it’s stored.
  * @param {PreparedConditions} args.conditions Prepared conditions.
  * @returns {boolean} Whether the value matches the pattern, if any, and satisfies every
  * comparison. An entry without a value for the field only satisfies `ne` and `not_in`.
+ * @see https://github.com/sveltia/sveltia-cms/issues/997
  */
 export const matchesConditions = ({ rawValue, refValue, conditions }) => {
   const { pattern, regex, comparisons, dateFieldConfig } = conditions;
+  const rawValues = [rawValue].flat().filter((value) => value !== undefined);
 
-  const values = [rawValue, ...(refValue !== rawValue ? [refValue] : [])].filter(
-    (value) => value !== undefined,
-  );
+  // A label that can’t be resolved falls back to the stored value, so the two lists can overlap
+  const values = [
+    ...new Set([...rawValues, ...[refValue].flat().filter((value) => value !== undefined)]),
+  ];
 
   if (pattern !== undefined && !values.some((value) => matchesFilter(value, pattern, regex))) {
     return false;
@@ -274,27 +280,28 @@ export const matchesConditions = ({ rawValue, refValue, conditions }) => {
       case 'not_in':
         return !values.some((value) => target.some((/** @type {any} */ t) => isEqual(value, t)));
 
-      default: {
-        const result = compareValues({ value: rawValue, target, dateFieldConfig });
+      default:
+        return rawValues.some((value) => {
+          const result = compareValues({ value, target, dateFieldConfig });
 
-        if (result === undefined) {
-          return false;
-        }
+          if (result === undefined) {
+            return false;
+          }
 
-        if (operator === 'lt') {
-          return result < 0;
-        }
+          if (operator === 'lt') {
+            return result < 0;
+          }
 
-        if (operator === 'lte') {
-          return result <= 0;
-        }
+          if (operator === 'lte') {
+            return result <= 0;
+          }
 
-        if (operator === 'gt') {
-          return result > 0;
-        }
+          if (operator === 'gt') {
+            return result > 0;
+          }
 
-        return result >= 0;
-      }
+          return result >= 0;
+        });
     }
   });
 };

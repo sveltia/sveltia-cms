@@ -675,6 +675,60 @@ describe('matchesCollectionFilter()', () => {
     expect(getRegex).toHaveBeenCalledTimes(1);
   });
 
+  test('passes an entry when any item of a multi-value field matches', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+    const { getRegex } = await import('$lib/services/utils/regex');
+    const _i18n = { defaultLocale: 'en' };
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    const valueCollection = {
+      name: 'news',
+      _type: 'entry',
+      _i18n,
+      filter: { field: 'tags', value: 'news' },
+    };
+
+    const patternCollection = {
+      name: 'updates',
+      _type: 'entry',
+      _i18n,
+      filter: { field: 'tags', pattern: '^updates$' },
+    };
+
+    vi.mocked(getRegex).mockReturnValue(/^updates$/);
+
+    vi.mocked(getPropertyValue)
+      .mockReturnValueOnce(['news', 'updates'])
+      .mockReturnValueOnce(['events'])
+      .mockReturnValueOnce(['news', 'updates'])
+      .mockReturnValueOnce(['events'])
+      .mockReturnValueOnce([]);
+
+    expect(matchesCollectionFilter(valueCollection, entry)).toBe(true);
+    expect(matchesCollectionFilter(valueCollection, entry)).toBe(false);
+    expect(matchesCollectionFilter(patternCollection, entry)).toBe(true);
+    expect(matchesCollectionFilter(patternCollection, entry)).toBe(false);
+    expect(matchesCollectionFilter(patternCollection, entry)).toBe(false);
+  });
+
+  test('treats a missing value as null', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+
+    const collection = {
+      name: 'untagged',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'status', value: [null] },
+    };
+
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    vi.mocked(getPropertyValue).mockReturnValueOnce(undefined).mockReturnValueOnce('draft');
+
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+  });
+
   test('exempts Hugo’s special index file from the filter', async () => {
     const { isCollectionIndexFile } =
       await import('$lib/services/contents/collection/entries/index-file');

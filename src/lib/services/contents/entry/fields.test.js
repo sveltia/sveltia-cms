@@ -3407,6 +3407,94 @@ describe('Test getPropertyValue()', () => {
     expect(result).toBe('john-doe');
   });
 
+  test('should return the item values of a multiple relation field', () => {
+    const mockCollectionWithRelation = {
+      _type: 'entry',
+      fields: [
+        {
+          name: 'categories',
+          widget: 'relation',
+          collection: 'categories',
+          multiple: true,
+        },
+      ],
+      _i18n: {
+        i18nEnabled: false,
+      },
+    };
+
+    /** @type {any} */
+    const entry = {
+      locales: {
+        en: {
+          content: {
+            title: 'My Post',
+            'categories.0': 'news',
+            'categories.1': 'updates',
+          },
+        },
+      },
+    };
+
+    // @ts-ignore - Mock collection
+    mockGetCollection.mockReturnValue(mockCollectionWithRelation);
+    mockGetReferencedOptionLabel.mockReturnValue(['News', 'Updates']);
+
+    const args = {
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+      key: 'categories',
+    };
+
+    expect(getPropertyValue({ ...args, resolveRef: false })).toEqual(['news', 'updates']);
+    expect(getPropertyValue({ ...args })).toEqual(['News', 'Updates']);
+    expect(mockGetReferencedOptionLabel).toHaveBeenCalledTimes(1);
+  });
+
+  test('should return the item values of a list field', () => {
+    const mockCollectionWithList = {
+      _type: 'entry',
+      fields: [
+        { name: 'tags', widget: 'list' },
+        { name: 'empty', widget: 'list' },
+        { name: 'category', widget: 'select', options: ['a', 'b'] },
+      ],
+      _i18n: {
+        i18nEnabled: false,
+      },
+    };
+
+    /** @type {any} */
+    const entry = {
+      locales: {
+        en: {
+          content: {
+            'tags.0': 'svelte',
+            'tags.1': 'cms',
+            empty: [],
+            category: 'a',
+          },
+        },
+      },
+    };
+
+    // @ts-ignore - Mock collection
+    mockGetCollection.mockReturnValue(mockCollectionWithList);
+
+    const args = {
+      entry,
+      locale: 'en',
+      collectionName: 'posts',
+    };
+
+    expect(getPropertyValue({ ...args, key: 'tags' })).toEqual(['svelte', 'cms']);
+    // Nothing is stored under the item key paths
+    expect(getPropertyValue({ ...args, key: 'empty' })).toEqual([]);
+    // Not a multi-value field
+    expect(getPropertyValue({ ...args, key: 'category' })).toBe('a');
+  });
+
   test('should return raw field value for non-relation fields', () => {
     const mockNormalCollection = {
       _type: 'entry',

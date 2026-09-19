@@ -359,6 +359,76 @@ describe('Test matchesConditions()', () => {
     });
   });
 
+  describe('multi-value field', () => {
+    const raw = ['news', 'updates'];
+    const labels = ['News', 'Updates'];
+
+    test('matches the pattern against any item', () => {
+      expect(matches(raw, { field: 'categories', pattern: 'news' })).toBe(true);
+      expect(matches(raw, { field: 'categories', pattern: '^updates$' })).toBe(true);
+      expect(matches(raw, { field: 'categories', pattern: 'events' })).toBe(false);
+      expect(matches(raw, { field: 'categories', pattern: 'News' }, { refValue: labels })).toBe(
+        true,
+      );
+      // A joined string would match, an item never
+      expect(matches(raw, { field: 'categories', pattern: 'news,updates' })).toBe(false);
+      expect(matches([true, false], { field: 'flags', pattern: true })).toBe(true);
+      expect(matches([], { field: 'categories', pattern: '' })).toBe(false);
+    });
+
+    test('compares any item for equality', () => {
+      expect(matches(raw, { field: 'categories', eq: 'news' })).toBe(true);
+      expect(matches(raw, { field: 'categories', eq: 'updates' })).toBe(true);
+      expect(matches(raw, { field: 'categories', eq: 'events' })).toBe(false);
+      expect(matches(raw, { field: 'categories', eq: 'News' }, { refValue: labels })).toBe(true);
+      expect(matches(raw, { field: 'categories', in: ['events', 'updates'] })).toBe(true);
+      expect(matches(raw, { field: 'categories', in: ['events'] })).toBe(false);
+      expect(matches([], { field: 'categories', eq: 'news' })).toBe(false);
+    });
+
+    test('requires every item to differ for `ne` and `not_in`', () => {
+      expect(matches(raw, { field: 'categories', ne: 'news' })).toBe(false);
+      expect(matches(raw, { field: 'categories', ne: 'events' })).toBe(true);
+      expect(matches(raw, { field: 'categories', ne: 'Updates' }, { refValue: labels })).toBe(
+        false,
+      );
+      expect(matches(raw, { field: 'categories', not_in: ['events', 'updates'] })).toBe(false);
+      expect(matches(raw, { field: 'categories', not_in: ['events'] })).toBe(true);
+      expect(matches([], { field: 'categories', ne: 'news' })).toBe(true);
+    });
+
+    test('compares any raw item for an ordinal operator', () => {
+      expect(matches([3, 7], { field: 'scores', gte: 5 })).toBe(true);
+      expect(matches([3, 4], { field: 'scores', gte: 5 })).toBe(false);
+      expect(matches(['3', '7'], { field: 'scores', lt: 5 })).toBe(true);
+      expect(matches([3, 7], { field: 'scores', lt: 5 }, { refValue: [1, 2] })).toBe(true);
+      expect(matches([6, 7], { field: 'scores', lt: 5 }, { refValue: [1, 2] })).toBe(false);
+      expect(matches([], { field: 'scores', gte: 5 })).toBe(false);
+    });
+
+    test('ignores undefined items and duplicate labels', () => {
+      expect(matches([undefined, 'news'], { field: 'categories', eq: 'news' })).toBe(true);
+      expect(
+        matches(
+          ['news', 'gone'],
+          { field: 'categories', ne: 'gone' },
+          {
+            refValue: ['News', 'gone'],
+          },
+        ),
+      ).toBe(false);
+      expect(
+        matches(
+          ['news', 'gone'],
+          { field: 'categories', eq: 'gone' },
+          {
+            refValue: ['News', 'gone'],
+          },
+        ),
+      ).toBe(true);
+    });
+  });
+
   describe('DateTime field', () => {
     beforeEach(() => {
       vi.spyOn(console, 'error').mockImplementation(() => {});

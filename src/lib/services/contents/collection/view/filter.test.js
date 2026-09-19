@@ -375,12 +375,14 @@ describe('Test filterEntries() with a comparison', async () => {
     createEntry('today', { date: '2026-09-16T18:00', priority: 5, category: 'festival' }),
     createEntry('future', { date: '2026-09-17T18:00', priority: 10, category: 'concert' }),
     createEntry('undated', { priority: 3 }),
+    createEntry('tagged', { priority: 3, tags: ['news', 'updates'] }),
   ];
 
   const fields = [
     { name: 'date', widget: 'datetime' },
     { name: 'priority', widget: 'number' },
     { name: 'category', widget: 'relation', collection: 'categories' },
+    { name: 'tags', widget: 'relation', collection: 'tags', multiple: true },
   ];
 
   /** @type {any} */
@@ -400,6 +402,9 @@ describe('Test filterEntries() with a comparison', async () => {
       { label: 'Concerts', field: 'category', eq: 'Concert' },
       { label: 'Other than concerts', field: 'category', ne: 'concert' },
       { label: 'Some', field: 'category', in: ['festival', 'workshop'] },
+      { label: 'News', field: 'tags', pattern: 'news' },
+      { label: 'Updates', field: 'tags', eq: 'Updates' },
+      { label: 'Not news', field: 'tags', ne: 'news' },
     ],
   };
 
@@ -410,10 +415,20 @@ describe('Test filterEntries() with a comparison', async () => {
 
     vi.mocked(getPropertyValue).mockImplementation(({ entry, key, resolveRef = true }) => {
       const value = /** @type {any} */ (entry).locales?.en?.[key];
+      /**
+       * Resolve a category label.
+       * @param {string} slug Category slug.
+       * @returns {string} Label.
+       */
+      const getLabel = (slug) => slug.charAt(0).toUpperCase() + slug.slice(1);
 
-      // Resolve the category label
       if (key === 'category' && resolveRef && typeof value === 'string') {
-        return value.charAt(0).toUpperCase() + value.slice(1);
+        return getLabel(value);
+      }
+
+      // A multiple relation field resolves to an array of labels
+      if (key === 'tags' && resolveRef && Array.isArray(value)) {
+        return value.map(getLabel);
       }
 
       return value;
@@ -458,12 +473,19 @@ describe('Test filterEntries() with a comparison', async () => {
 
   test('compares a number field', () => {
     expect(filter([{ field: 'priority', gte: 5 }])).toEqual(['today', 'future']);
-    expect(filter([{ field: 'priority', lt: 5 }])).toEqual(['past', 'undated']);
+    expect(filter([{ field: 'priority', lt: 5 }])).toEqual(['past', 'undated', 'tagged']);
+  });
+
+  test('matches any item of a multiple relation field', () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/997
+    expect(filter([{ field: 'tags', pattern: 'news' }])).toEqual(['tagged']);
+    expect(filter([{ field: 'tags', eq: 'Updates' }])).toEqual(['tagged']);
+    expect(filter([{ field: 'tags', ne: 'news' }])).toEqual(['past', 'today', 'future', 'undated']);
   });
 
   test('compares the raw or referenced value for equality', () => {
     expect(filter([{ field: 'category', eq: 'Concert' }])).toEqual(['past', 'future']);
-    expect(filter([{ field: 'category', ne: 'concert' }])).toEqual(['today', 'undated']);
+    expect(filter([{ field: 'category', ne: 'concert' }])).toEqual(['today', 'undated', 'tagged']);
     expect(filter([{ field: 'category', in: ['festival', 'workshop'] }])).toEqual(['today']);
   });
 
@@ -477,9 +499,11 @@ describe('Test filterEntries() with a comparison', async () => {
   });
 
   test('ignores a filter whose comparison is not configured', () => {
-    expect(filter([{ field: 'priority', gte: 6 }])).toEqual(['past', 'today', 'future', 'undated']);
-    expect(filter([{ field: 'priority', gt: 5 }])).toEqual(['past', 'today', 'future', 'undated']);
-    expect(filter([{ field: 'priority' }])).toEqual(['past', 'today', 'future', 'undated']);
+    const all = ['past', 'today', 'future', 'undated', 'tagged'];
+
+    expect(filter([{ field: 'priority', gte: 6 }])).toEqual(all);
+    expect(filter([{ field: 'priority', gt: 5 }])).toEqual(all);
+    expect(filter([{ field: 'priority' }])).toEqual(all);
   });
 });
 
