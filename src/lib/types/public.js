@@ -669,9 +669,9 @@
  * List field properties.
  * @typedef {object} ListFieldProps
  * @property {'list'} widget Field type.
- * @property {string[] | Record<string, any>[] | Record<string, any>} [default] Default value. The
- * format depends on how the field is configured, with or without `field`, `fields` or `types`. See
- * the document for details.
+ * @property {string[] | Record<string, any>[]} [default] Default value. The format depends on how
+ * the field is configured, with or without `field`, `fields` or `types`. See the document for
+ * details.
  * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
  * field value.
  * @see https://decapcms.org/docs/widgets/#List

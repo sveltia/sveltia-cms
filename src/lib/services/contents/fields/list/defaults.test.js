@@ -264,11 +264,11 @@ describe('Test getDefaultValueMap()', () => {
   });
 
   test('should skip object values in simple list (no fields/types)', () => {
-    /** @type {ListField} */
-    const fieldConfig = {
+    // A mixed array is not a valid default, so it needs a cast
+    const fieldConfig = /** @type {ListField} */ ({
       ...baseFieldConfig,
       default: ['string1', { name: 'object' }, 'string2'],
-    };
+    });
 
     const keyPath = 'items';
 
