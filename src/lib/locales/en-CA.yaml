@@ -127,6 +127,8 @@ sign_in_with_x: Sign In with {$service}
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Sign In Using Access Token
 sign_in_using_access_token_description: Enter your token below. It must have read/write access to the repository content.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Since Editorial Workflow is enabled, it must also have read/write access to pull requests.
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: You can generate a token on the <a>{$service} user settings page</a>.

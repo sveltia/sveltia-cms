@@ -1,12 +1,15 @@
 import { getUserProfile } from '$lib/services/backends/git/github/user';
 import { signInToBackend } from '$lib/services/backends/git/shared/auth';
+import { cmsConfig } from '$lib/services/config';
+import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
 /**
  * @import { SignInOptions, User } from '$lib/types/private';
  */
 
 /**
- * Get the URL of the page for creating a new Personal Access Token (PAT) on GitHub.
+ * Get the URL of the page for creating a new Personal Access Token (PAT) on GitHub. The permissions
+ * the CMS needs are pre-filled, so a user who follows the link gets a token that works.
  * @param {string} repoURL Repository URL, e.g. `https://github.com/owner/repo`.
  * @returns {string} URL to create a new PAT.
  * @see https://github.blog/changelog/2025-08-26-template-urls-for-fine-grained-pats-and-updated-permissions-ui/
@@ -19,6 +22,14 @@ export const getTokenPageURL = (repoURL) => {
     name: 'Sveltia CMS',
     contents: 'write',
   });
+
+  // Editorial Workflow opens, labels, merges and closes pull requests. A token with content access
+  // alone gets as far as the commit on the workflow branch, then GitHub refuses to open the pull
+  // request. Pull request access also covers the label endpoints, which accept either it or issue
+  // access. @see https://github.com/sveltia/sveltia-cms/discussions/1000
+  if (isWorkflowConfigured(cmsConfig.current)) {
+    params.set('pull_requests', 'write');
+  }
 
   return `${origin}/settings/personal-access-tokens/new?${params}`;
 };

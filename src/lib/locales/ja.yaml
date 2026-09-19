@@ -127,6 +127,8 @@ sign_in_with_x: '{$service} にログイン'
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: アクセストークンを使用してログイン
 sign_in_using_access_token_description: 以下にトークンを入力してください。リポジトリコンテンツへの読み取り・書き込みアクセスが必要です。
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: 編集ワークフローが有効になっているため、プルリクエストへの読み取り・書き込みアクセスも必要です。
 # Inline link text with embedded HTML anchor tag
 # {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
 sign_in_using_access_token_link: <a>{$service} ユーザー設定ページ</a> でトークンを生成できます。

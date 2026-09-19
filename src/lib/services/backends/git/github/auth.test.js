@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/github/auth';
 import { getUserProfile } from '$lib/services/backends/git/github/user';
 import { signInToBackend } from '$lib/services/backends/git/shared/auth';
+import { cmsConfig } from '$lib/services/config';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/user');
@@ -13,10 +14,12 @@ vi.mock('$lib/services/backends/git/shared/auth', () => ({
 vi.mock('$lib/services/backends/git/shared/api', () => ({
   apiConfig: { authURL: undefined },
 }));
+vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 
 describe('GitHub auth service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    cmsConfig.current = undefined;
   });
 
   describe('getTokenPageURL', () => {
@@ -43,6 +46,32 @@ describe('GitHub auth service', () => {
       const result = getTokenPageURL(repoURL);
 
       expect(result).toBe(
+        'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
+      );
+    });
+
+    test('asks for pull request access when Editorial Workflow is enabled for the site', () => {
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'editorial_workflow' });
+
+      expect(getTokenPageURL('https://github.com/owner/repo')).toBe(
+        'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write&pull_requests=write',
+      );
+    });
+
+    test('asks for pull request access when Editorial Workflow is enabled for a collection', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        collections: [{ name: 'posts', publish_mode: 'editorial_workflow' }],
+      });
+
+      expect(getTokenPageURL('https://github.com/owner/repo')).toBe(
+        'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write&pull_requests=write',
+      );
+    });
+
+    test('asks for content access only in the simple publish mode', () => {
+      cmsConfig.current = /** @type {any} */ ({ publish_mode: 'simple', collections: [] });
+
+      expect(getTokenPageURL('https://github.com/owner/repo')).toBe(
         'https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write',
       );
     });

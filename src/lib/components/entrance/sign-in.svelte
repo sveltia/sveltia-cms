@@ -8,6 +8,7 @@
   import { auth, signInAutomatically, signInManually } from '$lib/services/user/auth.svelte';
   import { env } from '$lib/services/user/env.svelte';
   import { makeLink } from '$lib/services/utils/string';
+  import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
   /**
    * @import { Backend, GitBackend, GiteaBackend } from '$lib/types/public';
@@ -26,6 +27,14 @@
   );
   const showLocalBackendOption = $derived(env.isLocalHost && !isTestRepo);
   const trimmedToken = $derived(token.trim());
+  /**
+   * Whether to tell the user that the token also needs pull request access. Only a GitHub
+   * fine-grained token has that permission separate from the content one; a GitLab token with the
+   * `api` scope covers merge requests already.
+   */
+  const showWorkflowNote = $derived(
+    backendName === 'github' && isWorkflowConfigured(cmsConfig.current),
+  );
 
   /**
    * The label to use for the Sign In button, which is usually the backend’s label but can be
@@ -161,6 +170,9 @@
   }}
 >
   {_('sign_in_using_access_token_description')}
+  {#if showWorkflowNote}
+    {_('sign_in_using_access_token_workflow_note')}
+  {/if}
   {#if backend?.repository?.tokenPageURL}
     {@html makeLink(
       _('sign_in_using_access_token_link', { values: { service: signInServiceLabel } }),

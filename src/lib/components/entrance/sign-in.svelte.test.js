@@ -155,6 +155,31 @@ describe('SignIn', () => {
     await expect.poll(() => document.querySelector('[role="alertdialog"]')).toBeNull();
   });
 
+  test('mentions pull request access in the token dialog with Editorial Workflow', async () => {
+    cmsConfig.current = /** @type {any} */ ({
+      backend: { name: 'github', repo: 'acme/site' },
+      publish_mode: 'editorial_workflow',
+    });
+
+    await render(SignIn, {});
+    await page.getByRole('button', { name: 'Sign In Using Access Token' }).click();
+    await expect
+      .element(page.getByRole('alertdialog'))
+      .toMatchTextContent('It must have read/write access to the repository content.');
+    await expect
+      .element(page.getByRole('alertdialog'))
+      .toMatchTextContent('it must also have read/write access to pull requests.');
+  });
+
+  test('omits the pull request note in the simple publish mode', async () => {
+    await render(SignIn, {});
+    await page.getByRole('button', { name: 'Sign In Using Access Token' }).click();
+    await expect
+      .element(page.getByRole('alertdialog'))
+      .toMatchTextContent('It must have read/write access to the repository content.');
+    expect(page.getByText('pull requests').elements()).toHaveLength(0);
+  });
+
   test('uses the local repository', async () => {
     await render(SignIn, {});
     await page.getByRole('button', { name: 'Work with Local Repository' }).click();
