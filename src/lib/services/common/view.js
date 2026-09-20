@@ -20,7 +20,7 @@ import { createRootEffect } from '$lib/services/utils/state.svelte';
  * Comparison operators a view filter or group can define in addition to, or instead of, `pattern`.
  * Listed in the order the operators are written to a condition key by {@link getConditionKey}.
  * @type {('eq' | 'ne' | 'lt' | 'lte' | 'gt' | 'gte' | 'in' | 'not_in')[]}
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
  */
 export const COMPARISON_OPERATORS = ['eq', 'ne', 'lt', 'lte', 'gt', 'gte', 'in', 'not_in'];
 

@@ -63,7 +63,7 @@
 
 /**
  * Raster image transformation options. See the
- * [documentation](https://sveltiacms.app/en/docs/media/internal#image-optimization) for details.
+ * [documentation](https://sveltiacms.app/en/docs/media#image-optimization) for details.
  * @typedef {object} RasterImageTransformationOptions
  * @property {RasterImageConversionFormat} [format] New format. Default: `webp`.
  * @property {number} [quality] Image quality between 0 and 100. Default: `85`.
@@ -117,7 +117,7 @@
  * @property {FileTransformations} [transformations] File transformation option map. The key is an
  * original format like `png` or `jpeg`. It can also be `raster_image` that matches any supported
  * raster image format. See the
- * [documentation](https://sveltiacms.app/en/docs/media/internal#image-optimization) for details.
+ * [documentation](https://sveltiacms.app/en/docs/media#image-optimization) for details.
  */
 
 /**
@@ -309,7 +309,7 @@
  * non-default like `false` but automatically copies the default locale’s value to other locales.
  * `translate` and `none` are aliases of `true` and `false`, respectively. This option only works
  * when i18n is set up with the global and collection-level `i18n` option. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n#field-level-configuration) for details.
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#field-level-configuration) for details.
  */
 
 /**
@@ -323,7 +323,7 @@
  * in non-default locales and kept in sync with the default locale, while the values can be edited
  * in each locale. `translate` and `none` are aliases of `true` and `false`, respectively. This
  * option only works when i18n is set up with the global and collection-level `i18n` option. See
- * the [documentation](https://sveltiacms.app/en/docs/i18n#field-level-configuration) for details.
+ * the [documentation](https://sveltiacms.app/en/docs/i18n/options#field-level-configuration) for details.
  */
 
 /**
@@ -1142,7 +1142,7 @@
  * the global i18n options**. File/singleton collection must define the structure using `{{locale}}`
  * in the `file` option. `multiple_folders_i18n_root` has been deprecated in favor of
  * `multiple_root_folders`. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n#managing-content-structure) for details.
+ * [documentation](https://sveltiacms.app/en/docs/i18n/structures) for details.
  * @property {LocaleCode[]} [locales] List of all available locales. **Required for the global i18n
  * options**.
  * @property {LocaleCode} [default_locale] Default locale. Default: first locale in the `locales`
@@ -1150,18 +1150,18 @@
  * @property {LocaleCode[] | 'all' | 'default'} [initial_locales] Locales to be enabled when
  * creating a new entry draft. If this option is used, users will be able to disable the output of
  * non-default locales through the UI. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n#disabling-non-default-locale-content) for
+ * [documentation](https://sveltiacms.app/en/docs/i18n/options#disabling-non-default-locale-content) for
  * details.
  * @property {boolean} [save_all_locales] Whether to save collection entries in all the locales.
  * Default: `true`.
  * DEPRECATED: Use the `initial_locales` option instead, which provides more flexibility.
  * `save_all_locales: false` is equivalent to `initial_locales: all`. See the documentation
- * https://sveltiacms.app/en/docs/i18n#disabling-non-default-locale-content for details.
+ * https://sveltiacms.app/en/docs/i18n/options#disabling-non-default-locale-content for details.
  * @property {{ key?: string, value?: string }} [canonical_slug] Property name and value template
  * used to add a canonical slug to entry files, which helps Sveltia CMS and some frameworks to link
  * localized files when entry slugs are localized. The default property name is `translationKey`
  * used in Hugo’s multilingual support, and the default value is the default locale’s slug. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs) for details.
+ * [documentation](https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs) for details.
  * @property {boolean} [omit_default_locale_from_filename] Whether to exclude the default locale
  * from entry filenames. Default: `false`. This option applies to entry collections with the
  * `multiple_files` i18n structure enabled, as well as to file/singleton collection items with the
@@ -1226,14 +1226,14 @@
  * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'md' | 'markdown' | 'html' | 'txt' |
  * string} FileExtension
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
- * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
+ * @see https://sveltiacms.app/en/docs/collections/entries/formats
  */
 
 /**
  * Supported Markdown front matter format.
  * @typedef {'yaml-frontmatter' | 'toml-frontmatter' | 'json-frontmatter'} FrontMatterFormat
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
- * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
+ * @see https://sveltiacms.app/en/docs/collections/entries/formats
  */
 
 /**
@@ -1241,7 +1241,7 @@
  * @typedef {'yml' | 'yaml' | 'toml' | 'json' | 'frontmatter' | FrontMatterFormat | 'raw' |
  * string} FileFormat
  * @see https://decapcms.org/docs/configuration-options/#extension-and-format
- * @see https://sveltiacms.app/en/docs/collections/entries#file-format-and-extension
+ * @see https://sveltiacms.app/en/docs/collections/entries/formats
  */
 
 /**
@@ -1252,7 +1252,7 @@
  * Multiple values can be defined with an array. This option or `pattern` is required.
  * @property {string | RegExp} [pattern] Regular expression matching pattern.
  * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
+ * @see https://sveltiacms.app/en/docs/collections/entries/listings#filtering-entries
  * @see https://github.com/decaporg/decap-cms/issues/7347
  */
 
@@ -1270,7 +1270,7 @@
  * @typedef {object} SortableFields
  * @property {FieldKeyPath[]} fields A list of sortable field names.
  * @property {SortableFieldsDefaultOptions} [default] Default sort settings. See the
- * [documentation](https://sveltiacms.app/en/docs/collections/entries#sorting) for details.
+ * [documentation](https://sveltiacms.app/en/docs/collections/entries/views#sorting) for details.
  * @see https://staticjscms.netlify.app/docs/collection-overview#sortable-fields
  */
 
@@ -1283,7 +1283,7 @@
  * or group is applied, so a filter like “Upcoming events” keeps working without a change to the
  * configuration.
  * @typedef {string | number | boolean} ViewComparisonValue
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
  */
 
 /**
@@ -1306,7 +1306,7 @@
  * @property {ViewComparisonValue[]} [in] Values one of which the field value has to be equal to.
  * @property {ViewComparisonValue[]} [not_in] Values the field value has to be different from. An
  * entry without a value for the field also matches.
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
  */
 
 /**
@@ -1318,7 +1318,7 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value. Required unless one of the comparison options is defined.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
  */
 
 /**
@@ -1332,7 +1332,7 @@
  * @property {ViewFilter[]} filters A list of view filters.
  * @property {string} [default] Default filter name.
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-filters
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
  */
 
 /**
@@ -1345,7 +1345,7 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
- * @see https://sveltiacms.app/en/docs/collections/entries#grouping
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
  */
 
 /**
@@ -1359,7 +1359,7 @@
  * @property {ViewGroup[]} groups A list of view groups.
  * @property {string} [default] Default group name.
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-groups
- * @see https://sveltiacms.app/en/docs/collections/entries#grouping
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
  */
 
 /**
@@ -1371,7 +1371,7 @@
  * `categories`. Entries are grouped by it in reorder mode and can only be reordered within their
  * own group, with the order field numbered group by group. Default: no grouping, so the entry list
  * becomes a single flat sequence while reordering.
- * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-order
+ * @see https://sveltiacms.app/en/docs/collections/entries/operations#reordering-entries
  */
 
 /**
@@ -1415,7 +1415,7 @@
 
 /**
  * Index file inclusion options. See the
- * [documentation](https://sveltiacms.app/en/docs/collections/entries#managing-hugo-s-special-index-file)
+ * [documentation](https://sveltiacms.app/en/docs/collections/entries/listings#managing-hugo-s-special-index-file)
  * for details.
  * @typedef {object} CollectionIndexFile
  * @property {string} [name] Index file name without a locale or file extension. Default: `_index`,
@@ -1526,8 +1526,8 @@
  * entry. Default: `title`.
  * @property {string} [slug] Item slug template. Default: `identifier_field` option value. It cannot
  * contain slashes; to organize entries in subfolders, use the `path` option instead. It’s possible
- * to [localize the slug](https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs) or [use a
- * random ID](https://sveltiacms.app/en/docs/collections/entries#slug-template-tags). Also, it’s
+ * to [localize the slug](https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs) or [use a
+ * random ID](https://sveltiacms.app/en/docs/collections/entries/slugs#slug-template-tags). Also, it’s
  * possible to show a special slug editor field in initial entry drafts by using `{{fields._slug}}`
  * (with an underscore prefix) or `{{fields._slug | localize}}` (to localize the slug).
  * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
@@ -1537,7 +1537,7 @@
  * @property {FieldKeyPath[] | SortableFields} [sortable_fields] Custom sortable fields. Default:
  * `title`, `name`, `date`, `author` and `description`. For a Git backend, commit author and commit
  * date are also included by default. See the
- * [documentation](https://sveltiacms.app/en/docs/collections/entries#sorting) for details.
+ * [documentation](https://sveltiacms.app/en/docs/collections/entries/views#sorting) for details.
  * @property {ViewFilter[] | ViewFilters} [view_filters] View filters to be used in the entry list.
  * @property {ViewGroup[] | ViewGroups} [view_groups] View groups to be used in the entry list.
  * @property {NestedCollectionOptions} [nested] Options for a nested collection, which shows the
@@ -1546,7 +1546,7 @@
  * path editor. It has no effect without the `nested` option.
  * @property {CollectionIndexFile | boolean} [index_file] Index file inclusion options. If `true`,
  * the default index file name is `_index`, which is used for Hugo’s special index file. See the
- * [documentation](https://sveltiacms.app/en/docs/collections/entries#managing-hugo-s-special-index-file)
+ * [documentation](https://sveltiacms.app/en/docs/collections/entries/listings#managing-hugo-s-special-index-file)
  * for details.
  * @property {boolean | FieldKeyPath | FieldKeyPath[]} [thumbnail] Whether to show entry thumbnails
  * in the entry list. Default: `true` (auto-detect image/file fields). Set to `false` to disable, or
@@ -1765,7 +1765,7 @@
  * @property {string} [app_id] OAuth application ID. Required for OAuth sign-in; without one,
  * users can still sign in with a personal access token.
  * @see https://decapcms.org/docs/gitea-backend/
- * @see https://sveltiacms.app/en/docs/backends/gitea
+ * @see https://sveltiacms.app/en/docs/backends/gitea-forgejo
  */
 
 /**
@@ -1822,7 +1822,7 @@
  * CMS. Use `local` to generate slugs based on the local time of the user’s browser, which is more
  * intuitive in most cases.
  * @see https://decapcms.org/docs/configuration-options/#slug-type
- * @see https://sveltiacms.app/en/docs/collections/entries#global-slug-options
+ * @see https://sveltiacms.app/en/docs/collections/entries/slugs#global-slug-options
  */
 
 /**

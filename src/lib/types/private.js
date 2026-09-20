@@ -1221,7 +1221,7 @@
  * @property {string} [key] Target field name.
  * @property {SortOrder} [order] Sort order.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
- * @see https://sveltiacms.app/en/docs/collections/entries#sorting
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#sorting
  */
 
 /**
@@ -1232,7 +1232,7 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value. Required unless a comparison operator is defined.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
  */
 
 /**
@@ -1248,7 +1248,7 @@
  * @property {string | RegExp | boolean} [pattern] Regular expression matching pattern or exact
  * value.
  * @see https://decapcms.org/docs/configuration-options/#view_groups
- * @see https://sveltiacms.app/en/docs/collections/entries#grouping
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#grouping
  */
 
 /**

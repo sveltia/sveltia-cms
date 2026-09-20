@@ -190,7 +190,7 @@ export const createEntryPath = ({ draft, locale, slug }) => {
    * Support entry collection’s subpath.
    * @see https://decapcms.org/docs/collection-folder/#folder-collections-path
    * @see https://decapcms.org/docs/collection-nested/
-   * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-file-paths
+   * @see https://sveltiacms.app/en/docs/collections/entries/slugs#file-paths
    */
   let path = isIndexFile
     ? /** @type {string} */ (getIndexFile(entryCollection)?.name)

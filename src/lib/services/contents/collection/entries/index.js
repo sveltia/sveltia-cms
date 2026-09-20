@@ -105,7 +105,7 @@ const getFilterCondition = (collection) => {
  * @param {Entry} entry Entry.
  * @returns {boolean} Result.
  * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
+ * @see https://sveltiacms.app/en/docs/collections/entries/listings#filtering-entries
  */
 export const matchesCollectionFilter = (collection, entry) => {
   const condition = getFilterCondition(collection);
@@ -233,7 +233,7 @@ export const _resetEntriesByCollectionCache = () => {
  * @param {string} collectionName Collection name.
  * @returns {Entry[]} Entries.
  * @see https://decapcms.org/docs/collection-folder/#filtered-folder-collections
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering-entries
+ * @see https://sveltiacms.app/en/docs/collections/entries/listings#filtering-entries
  */
 export const getEntriesByCollection = (collectionName) => {
   const entrySource = allEntries.current;

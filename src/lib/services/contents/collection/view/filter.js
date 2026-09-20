@@ -20,7 +20,7 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
  * @returns {{ options: ViewFilter[], default?: FilteringConditions }} Parsed view filters.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
  * @see https://staticjscms.netlify.app/docs/collection-overview#view-filters
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
  */
 export const parseFilterConfig = (filters) =>
   /** @type {{ options: ViewFilter[], default?: FilteringConditions }} */
@@ -34,7 +34,7 @@ export const parseFilterConfig = (filters) =>
  * @param {Date} [now] Current date and time, which the template tags in the conditions resolve to.
  * @returns {Entry[]} Filtered entry list.
  * @see https://decapcms.org/docs/configuration-options/#view_filters
- * @see https://sveltiacms.app/en/docs/collections/entries#filtering
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
  */
 export const filterEntries = (entries, collection, filters, now = new Date()) => {
   const {

@@ -38,7 +38,7 @@ export const METADATA_KEYS = ['slug', 'commit_author', 'commit_date'];
  * @param {CollectionFile} [args.file] Collection file, if the collection is a file collection.
  * @returns {string | undefined} The key, or `undefined` if i18n is not enabled for the collection
  * or file.
- * @see https://sveltiacms.app/en/docs/i18n#localizing-entry-slugs
+ * @see https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs
  */
 export const getCanonicalSlugKey = ({ cmsConfig, collection, file }) => {
   const config = mergeI18nConfigs({ cmsConfig, collection, file });

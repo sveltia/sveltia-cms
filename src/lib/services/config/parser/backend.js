@@ -27,6 +27,11 @@ const UNSUPPORTED_BACKEND_SUGGESTION_URL =
   'https://sveltiacms.app/en/docs/backends#supported-backends';
 
 const AUTH_DOC_URL = 'https://sveltiacms.app/en/docs/backends/BACKEND_NAME#authentication';
+/**
+ * Backend names whose documentation page has a different slug.
+ * @type {Record<string, string>}
+ */
+const BACKEND_DOC_SLUGS = { gitea: 'gitea-forgejo' };
 const OPEN_AUTHORING_DOC_URL = 'https://sveltiacms.app/en/docs/workflows/open';
 
 /**
@@ -93,7 +98,7 @@ export const parseBackendConfig = (cmsConfig, collectors) => {
     }
 
     const allowTokenAuth = !authMethods || authMethods.includes('token');
-    const authDocURL = AUTH_DOC_URL.replace('BACKEND_NAME', name);
+    const authDocURL = AUTH_DOC_URL.replace('BACKEND_NAME', BACKEND_DOC_SLUGS[name] ?? name);
 
     if (repo === undefined) {
       errors.add(_('config.error.missing_repository'));

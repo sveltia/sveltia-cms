@@ -19,7 +19,7 @@ import { createDerivedState } from '$lib/services/utils/state.svelte';
  * `description` fields supported by Netlify/Decap CMS, it also includes `name` for the entry name
  * field, which is used by Sveltia CMS to infer the entry title.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
- * @see https://sveltiacms.app/en/docs/collections/entries#sorting
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#sorting
  */
 export const DEFAULT_SORT_KEYS = ['title', 'name', 'date', 'author', 'description'];
 

@@ -347,7 +347,7 @@ const formatEntrySummary = (
  * `nested.summary` option.
  * @returns {string} Formatted entry summary.
  * @see https://decapcms.org/docs/configuration-options/#summary
- * @see https://sveltiacms.app/en/docs/collections/entries#summaries
+ * @see https://sveltiacms.app/en/docs/collections/entries/listings#summaries
  */
 export const getEntrySummary = (collection, entry, options = {}) => {
   const { locale, useTemplate = false, allowMarkdown = false, template } = options;

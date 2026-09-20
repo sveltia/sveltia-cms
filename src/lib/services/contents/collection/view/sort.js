@@ -81,7 +81,7 @@ export const getSortKeyGetter = ({
  * @param {SortingConditions} [conditions] Sorting conditions.
  * @returns {Entry[]} Sorted entry list.
  * @see https://decapcms.org/docs/configuration-options/#sortable_fields
- * @see https://sveltiacms.app/en/docs/collections/entries#sorting
+ * @see https://sveltiacms.app/en/docs/collections/entries/views#sorting
  */
 export const sortEntries = (entries, collection, { key, order } = {}) => {
   const _entries = [...entries];

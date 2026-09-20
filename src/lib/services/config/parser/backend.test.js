@@ -479,6 +479,35 @@ describe('parseBackendConfig', () => {
       expect(error).toBe('OAuth implicit flow is not supported');
     });
 
+    it('should link to the Gitea/Forgejo documentation page for the Gitea backend', async () => {
+      const { parseBackendConfig } = await import('./backend.js');
+      const collectors = createCollectors();
+      const original = mockI18nStrings['config.error.oauth_implicit_flow'];
+
+      mockI18nStrings['config.error.oauth_implicit_flow'] = 'Not supported. <a>Learn more</a>';
+
+      /** @type {any} */
+      const config = {
+        backend: {
+          name: 'gitea',
+          repo: 'owner/repo',
+          auth_type: 'implicit',
+        },
+      };
+
+      try {
+        parseBackendConfig(config, collectors);
+      } finally {
+        mockI18nStrings['config.error.oauth_implicit_flow'] = original;
+      }
+
+      const [error] = [...collectors.errors];
+
+      expect(error).toContain(
+        'href="https://sveltiacms.app/en/docs/backends/gitea-forgejo#authentication"',
+      );
+    });
+
     it('should warn when Gitea backend has no app_id and auth_type is not set', async () => {
       const { parseBackendConfig } = await import('./backend.js');
       const collectors = createCollectors();

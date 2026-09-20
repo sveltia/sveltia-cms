@@ -132,7 +132,7 @@ const checkNamedViewOptions = ({
  * @param {CmsConfig} context.cmsConfig Raw CMS configuration.
  * @param {EntryCollection} context.collection Collection config to parse.
  * @param {ConfigParserCollectors} collectors Collectors.
- * @see https://sveltiacms.app/en/docs/collections/entries#managing-entry-views
+ * @see https://sveltiacms.app/en/docs/collections/entries/views
  */
 export const checkViewOptions = (context, collectors) => {
   const {
