@@ -1381,6 +1381,7 @@
  * @typedef {object} EditorOptions
  * @property {boolean} [preview] Whether to show the preview pane. Default: `true`.
  * @see https://decapcms.org/docs/configuration-options/#editor
+ * @see https://sveltiacms.app/en/docs/ui/content-editor#disabling-previews
  */
 
 /**
@@ -1394,6 +1395,7 @@
  * @property {boolean} [subfolders] Whether each entry is stored as an index file in its own
  * subfolder. If `false`, entries are regular files placed directly in the folders. Default: `true`.
  * @see https://decapcms.org/docs/collection-nested/
+ * @see https://sveltiacms.app/en/docs/collections/entries/nested#nested-collection-options
  */
 
 /**
@@ -1406,6 +1408,7 @@
  * @property {string} [index_file] File name, without an extension, shared by every entry in the
  * collection, e.g. `_index`. If omitted, each entry keeps its own file name.
  * @see https://decapcms.org/docs/collection-nested/
+ * @see https://sveltiacms.app/en/docs/collections/entries/nested#choosing-a-parent-folder
  */
 
 /**
@@ -1413,6 +1416,7 @@
  * @typedef {object} CollectionMetaData
  * @property {CollectionMetaDataPath} [path] Entry path options.
  * @see https://decapcms.org/docs/collection-nested/
+ * @see https://sveltiacms.app/en/docs/collections/entries/nested#choosing-a-parent-folder
  */
 
 /**
@@ -2209,6 +2213,7 @@
  * - A Promise that resolves to any of the above formats.
  * @typedef {ComponentType<CustomFieldControlProps>} CustomFieldControl
  * @see https://decapcms.org/docs/custom-widgets/#advanced-field-validation
+ * @see https://sveltiacms.app/en/docs/api/field-types#custom-validation
  */
 
 /**

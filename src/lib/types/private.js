@@ -345,6 +345,7 @@
  * corresponding pull request, prefixed with the `cms_label_prefix` backend option value.
  * @typedef {'draft' | 'pending_review' | 'pending_publish' | 'pending_deletion'} WorkflowStatus
  * @see https://decapcms.org/docs/editorial-workflows/
+ * @see https://sveltiacms.app/en/docs/workflows/editorial#statuses
  */
 
 /**
@@ -431,7 +432,7 @@
  * @property {() => Promise<WorkflowPullRequest[]>} fetchPullRequests Function to fetch all the open
  * pull requests managed by the CMS, along with the changed files.
  * @property {(args: WorkflowSaveOptions) => Promise<{ commit: CommitResults, pullRequest:
- * WorkflowPullRequest}>} savePullRequest Function to commit changes on the workflow branch,
+ * WorkflowPullRequest }>} savePullRequest Function to commit changes on the workflow branch,
  * creating the branch and the pull request if needed.
  * @property {(pullRequest: WorkflowPullRequest, status: WorkflowStatus) =>
  * Promise<WorkflowPullRequest>} updateStatus Function to update the pull request’s status label and
