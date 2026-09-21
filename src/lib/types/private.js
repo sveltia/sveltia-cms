@@ -79,8 +79,8 @@
  * @property {Record<string, string>} [apiKeys] API keys for integrations.
  * @property {Record<string, string>} [logins] Log-in credentials (user name and password) for
  * integrations.
- * @property {'auto' | 'dark' | 'light'} [theme] Selected UI theme, or `auto` to follow the
- * system’s color scheme.
+ * @property {'auto' | 'dark' | 'light'} [theme] Selected UI theme, or `auto` to follow the system’s
+ * color scheme.
  * @property {InternalLocaleCode | 'auto'} [locale] Selected UI locale, e.g. `en-US`, or `auto` to
  * follow the browser’s language settings.
  * @property {boolean} [useDraftBackup] Whether to use the entry draft backup mechanism.
@@ -324,17 +324,16 @@
  * @property {() => Promise<void>} fetchFiles Function to fetch files.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backends only.
- * @property {(changes: FileChange[], options: CommitOptions) =>
- * Promise<CommitResults>} commitChanges Function to save file changes, including additions and
- * deletions, and return the commit hash and a map of committed files.
+ * @property {(changes: FileChange[], options: CommitOptions) => Promise<CommitResults>}
+ * commitChanges Function to save file changes, including additions and deletions, and return the
+ * commit hash and a map of committed files.
  * @property {() => Promise<Response>} [triggerDeployment] Function to manually trigger a new
  * deployment on any connected CI/CD provider. GitHub only.
  * @property {() => Promise<string | undefined>} [fetchBranchHeadSHA] Function to resolve the head
  * commit of the configured branch, which is the production deployment target. Git backends only.
- * @property {(targets: DeployTarget[]) =>
- * Promise<Record<string, DeployStatus>>} [fetchDeployments] Function to resolve the deployment
- * status and URL for the given commits, keyed by commit SHA. Git backends only, and only when the
- * service exposes deployment or commit status information.
+ * @property {(targets: DeployTarget[]) => Promise<Record<string, DeployStatus>>} [fetchDeployments]
+ * Function to resolve the deployment status and URL for the given commits, keyed by commit SHA. Git
+ * backends only, and only when the service exposes deployment or commit status information.
  * @property {(paths: string[]) => Promise<FileCommit[]>} [fetchFileCommits] Function to fetch
  * commit history for given file paths. Git backends only.
  * @property {WorkflowBackendService} [workflow] Editorial Workflow implementation. Git backends
@@ -387,8 +386,8 @@
  * @property {Date} createdDate Date when the pull request was created.
  * @property {Date} updatedDate Date when the pull request was last updated.
  * @property {CommitAuthor} [author] Author of the pull request.
- * @property {string} [headSHA] Git object ID (SHA-1 hash) of the head commit on the pull
- * request’s branch. It’s used to look up the deploy preview created for the pull request.
+ * @property {string} [headSHA] Git object ID (SHA-1 hash) of the head commit on the pull request’s
+ * branch. It’s used to look up the deploy preview created for the pull request.
  * @property {WorkflowFile[]} files Files changed in the pull request.
  */
 
@@ -431,9 +430,9 @@
  * @typedef {object} WorkflowBackendService
  * @property {() => Promise<WorkflowPullRequest[]>} fetchPullRequests Function to fetch all the open
  * pull requests managed by the CMS, along with the changed files.
- * @property {(args: WorkflowSaveOptions) =>
- * Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} savePullRequest Function to
- * commit changes on the workflow branch, creating the branch and the pull request if needed.
+ * @property {(args: WorkflowSaveOptions) => Promise<{ commit: CommitResults, pullRequest:
+ * WorkflowPullRequest}>} savePullRequest Function to commit changes on the workflow branch,
+ * creating the branch and the pull request if needed.
  * @property {(pullRequest: WorkflowPullRequest, status: WorkflowStatus) =>
  * Promise<WorkflowPullRequest>} updateStatus Function to update the pull request’s status label and
  * draft state.
@@ -499,19 +498,19 @@
  * @property {(fieldConfig?: MediaField) => boolean} [isEnabled] Whether the service is enabled.
  * It’s determined by whether the service is defined in the CMS or field configuration.
  * @property {(url: string) => boolean} [isAssetURL] Whether the given URL points to a file on the
- * service, given the site configuration, so that such a file can be told apart from one linked
- * from elsewhere.
+ * service, given the site configuration, so that such a file can be told apart from one linked from
+ * elsewhere.
  * @property {() => Promise<boolean>} [init] Function to initialize the service.
  * @property {(userName: string, password: string) => Promise<boolean>} [signIn] Function to sign in
  * to the service.
- * @property {(query: string, options: MediaLibraryFetchOptions) =>
- * Promise<ExternalAsset[]>} [search] Function to search files.
+ * @property {(query: string, options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>}
+ * [search] Function to search files.
  * @property {(options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>} [list] Function to
  * list files. For stock asset services, it should return popular or curated images.
- * @property {(files: File[], options: MediaLibraryFetchOptions) =>
- * Promise<ExternalAsset[]>} [upload] Function to upload files to the cloud storage service.
- * @property {(assets: ExternalAsset[], options: MediaLibraryFetchOptions) =>
- * Promise<void>} [delete] Function to delete files from the cloud storage service.
+ * @property {(files: File[], options: MediaLibraryFetchOptions) => Promise<ExternalAsset[]>}
+ * [upload] Function to upload files to the cloud storage service.
+ * @property {(assets: ExternalAsset[], options: MediaLibraryFetchOptions) => Promise<void>}
+ * [delete] Function to delete files from the cloud storage service.
  * @property {(asset: ExternalAsset, newName: string, options: MediaLibraryFetchOptions) =>
  * Promise<ExternalAsset>} [rename] Function to rename a file on the cloud storage service. Omitted
  * when the service’s API can’t rename a file.
@@ -774,8 +773,8 @@
 
 /**
  * An entry collection definition.
- * @typedef {EntryCollection & EntryCollectionExtraProps &
- * CollectionExtraProps} InternalEntryCollection
+ * @typedef {EntryCollection & EntryCollectionExtraProps & CollectionExtraProps}
+ * InternalEntryCollection
  */
 
 /**
@@ -788,8 +787,8 @@
 
 /**
  * A file/singleton collection definition.
- * @typedef {FileCollection & FileCollectionExtraProps &
- * CollectionExtraProps} InternalFileCollection
+ * @typedef {FileCollection & FileCollectionExtraProps & CollectionExtraProps}
+ * InternalFileCollection
  */
 
 /**
@@ -1657,8 +1656,8 @@
 
 /**
  * The two variants of the configuration schema the validator uses. An unknown property is only
- * worth a warning, but it fails the object holding it all the same, so the violations that are
- * real errors are collected from the variant that accepts it.
+ * worth a warning, but it fails the object holding it all the same, so the violations that are real
+ * errors are collected from the variant that accepts it.
  * @typedef {object} ConfigSchemas
  * @property {Record<string, any>} strict Schema that rejects a property it doesn’t describe, used
  * to find the options the schema doesn’t know about.
