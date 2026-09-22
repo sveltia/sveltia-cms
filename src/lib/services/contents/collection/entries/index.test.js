@@ -7,6 +7,7 @@ import { allEntries, allEntryFolders } from '$lib/services/contents';
 import {
   _resetEntriesByCollectionCache,
   canCreateIndexFile,
+  countCollectionEntries,
   getAssetReferences,
   getEntriesByAssetURL,
   getEntriesByCollection,
@@ -42,6 +43,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
+  getIndexFileName: vi.fn(),
   isCollectionIndexFile: vi.fn(),
 }));
 
@@ -1927,6 +1929,70 @@ describe('selectedEntries', () => {
   test('is exported as reactive state', () => {
     selectedEntries.current = [];
     expect(selectedEntries.current).toEqual([]);
+  });
+});
+
+describe('countCollectionEntries()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /**
+   * Entries in a `pages` collection on `content`, which holds its own index file, another
+   * collection’s index file and a regular entry.
+   */
+  const entries = [
+    { id: '1', slug: '_index', locales: { en: { path: 'content/_index.md', content: {} } } },
+    { id: '2', slug: 'about', locales: { en: { path: 'content/about/_index.md', content: {} } } },
+    {
+      id: '3',
+      slug: '_index',
+      locales: { en: { path: 'content/posts/_index.md', content: {} } },
+    },
+  ];
+
+  test('leaves out the collection’s own index file', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    const { getIndexFileName, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(getCollection).mockReturnValue({ name: 'pages', _type: 'entry' });
+    vi.mocked(getIndexFileName).mockReturnValue('_index');
+    // `content/posts/_index.md` belongs to a collection below `content`, so it’s an ordinary entry
+    // as far as `pages` is concerned
+    // @see https://github.com/sveltia/sveltia-cms/issues/1005
+    vi.mocked(isCollectionIndexFile).mockImplementation(
+      (_collection, { locales }) => locales.en?.path === 'content/_index.md',
+    );
+
+    expect(countCollectionEntries('pages', entries)).toBe(2);
+  });
+
+  test('skips the pass entirely when the collection has no index file', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    const { getIndexFileName, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(getCollection).mockReturnValue({ name: 'pages', _type: 'entry' });
+    vi.mocked(getIndexFileName).mockReturnValue(undefined);
+
+    expect(countCollectionEntries('pages', entries)).toBe(3);
+    // Nothing can be left out, so the entries aren’t walked at all
+    expect(isCollectionIndexFile).not.toHaveBeenCalled();
+  });
+
+  test('counts every entry when the collection is gone', async () => {
+    const { getCollection } = await import('$lib/services/contents/collection');
+
+    const { getIndexFileName } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(getCollection).mockReturnValue(undefined);
+
+    expect(countCollectionEntries('pages', entries)).toBe(3);
+    expect(getIndexFileName).not.toHaveBeenCalled();
   });
 });
 

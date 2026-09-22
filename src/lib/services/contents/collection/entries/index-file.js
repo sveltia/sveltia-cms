@@ -22,12 +22,14 @@ const indexFileCacheMap = new WeakMap();
 /**
  * Get the name of the collection’s index file, without building the full configuration object. This
  * is the cheap path for {@link isCollectionIndexFile}, which is called once per entry in several
- * list-wide operations.
+ * list-wide operations, and for the callers that only need to know whether the collection has an
+ * index file at all. Unlike {@link getIndexFile}, it reads no state, so it can be called from a
+ * derivation without making it depend on the app locale.
  * @param {InternalCollection | Collection} collection Collection.
  * @returns {string | undefined} Index file name, or `undefined` if index file inclusion is not
  * enabled for the collection.
  */
-const getIndexFileName = (collection) => {
+export const getIndexFileName = (collection) => {
   if (!isEntryCollection(collection)) {
     return undefined;
   }

@@ -5,7 +5,11 @@ import { backend } from '$lib/services/backends';
 import { getGroupingKey } from '$lib/services/common/view';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
-import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
+import {
+  countCollectionEntries,
+  getEntriesByCollection,
+  selectedEntries,
+} from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import {
   filterNestedEntries,
@@ -228,10 +232,15 @@ export const collectionState = createDerivedState(() => {
     const quota = _selectedCollection?.limit ?? Infinity;
 
     // In a nested collection, `listedEntries` only holds the folder being browsed, while the
-    // quota applies to the whole collection
-    const entryCount = isNestedCollection(_selectedCollection)
-      ? getEntriesByCollection(_selectedCollection.name).length
-      : listedEntries.current.length;
+    // quota applies to the whole collection. Hugo’s special index file is the collection’s own
+    // page rather than one of the entries in it, so it doesn’t take up a slot — and leaving it in
+    // would make the quota disagree with the count shown next to the collection in the sidebar
+    const entryCount = countCollectionEntries(
+      _selectedCollection.name,
+      isNestedCollection(_selectedCollection)
+        ? getEntriesByCollection(_selectedCollection.name)
+        : listedEntries.current,
+    );
 
     const remaining = quota < Infinity ? quota - entryCount : Infinity;
 

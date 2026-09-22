@@ -90,6 +90,12 @@ vi.mock('$lib/services/contents/collection', () => ({
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
   selectedEntries: _selectedEntries,
+  // The real one drops the collection’s index file, which it tells by the entry’s path; here a
+  // test marks that entry with `_isIndexFile` instead
+  countCollectionEntries: vi.fn(
+    (_collectionName, entries) =>
+      entries.filter((/** @type {any} */ { _isIndexFile }) => !_isIndexFile).length,
+  ),
 }));
 
 vi.mock('$lib/services/contents/collection/files', () => ({
@@ -1130,6 +1136,53 @@ describe('collection/view/index', () => {
       // The root folder only lists two of the three entries
       expect(listedEntries.current).toHaveLength(2);
       expect(collectionState.current.remaining).toBe(7);
+    });
+
+    test('quota leaves out the collection’s index file', async () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: '_index', _isIndexFile: true },
+        { id: '2', slug: 'a' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.current = mockEntries;
+      await wait();
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        create: true,
+        index_file: true,
+        limit: 2,
+      });
+      await wait();
+
+      // Only `a` takes up a slot, so one is left rather than none
+      // @see https://github.com/sveltia/sveltia-cms/issues/1005
+      expect(collectionState.current.remaining).toBe(1);
+      expect(collectionState.current.creationDisabled).toBe(false);
+    });
+
+    test('quota leaves out the index file of a nested collection', async () => {
+      const mockEntries = /** @type {any[]} */ ([
+        { id: '1', slug: '_index', subPath: '_index', _isIndexFile: true },
+        { id: '2', slug: 'docs/_index', subPath: 'docs/_index' },
+        { id: '3', slug: 'docs/intro/_index', subPath: 'docs/intro/_index' },
+      ]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.current = mockEntries;
+      await wait();
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'pages',
+        _type: 'entry',
+        folder: 'content/pages',
+        nested: {},
+        create: true,
+        index_file: true,
+        limit: 10,
+      });
+
+      expect(collectionState.current.remaining).toBe(8);
     });
 
     test('creationDisabled is false when canCreate is true and entries are under quota', async () => {

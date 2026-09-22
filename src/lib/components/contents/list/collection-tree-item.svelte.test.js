@@ -25,6 +25,13 @@ describe('CollectionTreeItem', () => {
           fields: [{ name: 'title', widget: 'string' }],
         },
         { name: 'notes', folder: 'content/notes', fields: [{ name: 'title', widget: 'string' }] },
+        {
+          name: 'sections',
+          label: 'Sections',
+          folder: 'content/sections',
+          index_file: true,
+          fields: [{ name: 'title', widget: 'string' }],
+        },
       ],
     });
     setEntries([
@@ -37,6 +44,16 @@ describe('CollectionTreeItem', () => {
         slug: 'docs/intro',
         folder: 'content/pages',
         content: { _default: { title: 'Intro' } },
+      }),
+      createMockEntry({
+        slug: '_index',
+        folder: 'content/sections',
+        content: { _default: { title: 'Sections' } },
+      }),
+      createMockEntry({
+        slug: 'first',
+        folder: 'content/sections',
+        content: { _default: { title: 'First' } },
       }),
     ]);
   });
@@ -113,6 +130,23 @@ describe('CollectionTreeItem', () => {
     } finally {
       unpublishedEntries.current = [];
     }
+  });
+
+  test('leaves the index file out of the count', async () => {
+    env.isSmallScreen = false;
+    selectedCollection.current = undefined;
+
+    await render(
+      CollectionTreeItem,
+      { collection: /** @type {any} */ (getCollection('sections')) },
+      { wrapper: Tree },
+    );
+
+    // `content/sections/_index.md` is the collection’s own page, so only `first` is counted
+    // @see https://github.com/sveltia/sveltia-cms/issues/1005
+    await expect
+      .element(page.getByRole('treeitem', { name: 'Sections' }))
+      .toHaveTextContent('bookmark_manager Sections 1');
   });
 
   test('falls back to the collection name', async () => {

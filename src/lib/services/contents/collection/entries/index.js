@@ -8,6 +8,7 @@ import { allEntries, allEntryFolders } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   getIndexFile,
+  getIndexFileName,
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
@@ -472,6 +473,33 @@ export const getAssetReferences = async (url, { entries = allEntries.current } =
   await findAssetReferences(url, { entries, every: true, onMatch });
 
   return references;
+};
+
+/**
+ * Count the entries in the collection, leaving out Hugo’s special index file. The index file stands
+ * for the collection’s own page rather than for one of the entries in it, so it’s not part of the
+ * count shown next to the collection in the sidebar. It’s still listed in the entry list, where it
+ * has an icon and a label of its own that tell it from the entries.
+ *
+ * The entries are passed in rather than looked up, because the caller merges the pending changes
+ * into them, so an entry that only exists in a pull request is counted as well. The collection is
+ * looked up so that the index file can be told by the entry’s path in this collection, as another
+ * collection’s index file can be listed here — see {@link isCollectionIndexFile}.
+ * @param {string} collectionName Collection name.
+ * @param {Entry[]} entries Entries in the collection.
+ * @returns {number} Count.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1005
+ */
+export const countCollectionEntries = (collectionName, entries) => {
+  const collection = getCollection(collectionName);
+
+  // A collection without an index file has nothing to leave out, which is the common case, so skip
+  // the pass over the entries rather than testing each one
+  if (!collection || getIndexFileName(collection) === undefined) {
+    return entries.length;
+  }
+
+  return entries.filter((entry) => !isCollectionIndexFile(collection, entry)).length;
 };
 
 /**

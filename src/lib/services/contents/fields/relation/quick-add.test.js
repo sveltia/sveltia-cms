@@ -30,6 +30,12 @@ vi.mock('$lib/services/contents/collection', () => ({
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
+  // The real one drops the collection’s index file, which it tells by the entry’s path; here a
+  // test marks that entry with `_isIndexFile` instead
+  countCollectionEntries: vi.fn(
+    (_collectionName, entries) =>
+      entries.filter((/** @type {any} */ { _isIndexFile }) => !_isIndexFile).length,
+  ),
 }));
 
 vi.mock('$lib/services/contents/draft/pending-entries', () => ({
@@ -170,6 +176,18 @@ describe('hasCreationRoom', () => {
         draft: createParentDraft({ pendingEntries: [createPending('a'), createPending('b')] }),
       }),
     ).toBe(false);
+  });
+
+  it('doesn’t count the collection’s index file against the limit', () => {
+    const collection = { ...tagCollection, limit: 2 };
+
+    // `_index` is the collection’s own page, so only one of the two files takes up a slot
+    // @see https://github.com/sveltia/sveltia-cms/issues/1005
+    vi.mocked(getEntriesByCollection).mockReturnValue(
+      /** @type {any} */ ([{ _isIndexFile: true }, {}]),
+    );
+
+    expect(hasCreationRoom({ collection, draft: createParentDraft() })).toBe(true);
   });
 });
 

@@ -6,7 +6,10 @@
   import { goto } from '$lib/services/app/navigation';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { getValidCollections } from '$lib/services/contents/collection';
-  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+  import {
+    countCollectionEntries,
+    getEntriesByCollection,
+  } from '$lib/services/contents/collection/entries';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
@@ -40,7 +43,8 @@
           } = collection}
           <MenuItem
             label={labelSingular || label || name}
-            disabled={!create || getEntriesByCollection(name).length >= limit}
+            disabled={!create ||
+              countCollectionEntries(name, getEntriesByCollection(name)) >= limit}
             onclick={() => {
               goto(`/collections/${name}/new`, { transitionType: 'forwards' });
             }}

@@ -6,7 +6,10 @@
   import NestedTreeItem from '$lib/components/contents/list/nested-tree-item.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getCollection, selectedCollection } from '$lib/services/contents/collection';
-  import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+  import {
+    countCollectionEntries,
+    getEntriesByCollection,
+  } from '$lib/services/contents/collection/entries';
   import { nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { getNestedTree } from '$lib/services/contents/collection/nested/tree';
   import { env } from '$lib/services/user/env.svelte';
@@ -55,7 +58,11 @@
         ),
   );
 
-  const entryCount = $derived('files' in collection ? collection.files.length : entries.length);
+  // Hugo’s special index file stands for the collection’s own page rather than for one of the
+  // entries in it, so it’s not counted here, while it’s still shown in the entry list
+  const entryCount = $derived(
+    'files' in collection ? collection.files.length : countCollectionEntries(name, entries),
+  );
 
   const treeNodes = $derived.by(() => {
     const internalCollection = getCollection(name);

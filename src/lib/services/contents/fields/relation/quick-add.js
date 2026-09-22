@@ -1,7 +1,10 @@
 import { unique } from '@sveltia/utils/array';
 
 import { getCollection } from '$lib/services/contents/collection';
-import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import {
+  countCollectionEntries,
+  getEntriesByCollection,
+} from '$lib/services/contents/collection/entries';
 import { getReferencedPendingEntries } from '$lib/services/contents/draft/pending-entries';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
@@ -84,8 +87,12 @@ export const getCreatableCollection = ({
 export const hasCreationRoom = ({ collection, draft }) => {
   const { name, limit = Infinity } = collection;
 
+  // The collection’s index file is its own page rather than one of the entries in it, so it doesn’t
+  // take up a slot — see `countCollectionEntries()`
   return (
-    getEntriesByCollection(name).length + getPendingEntriesByCollection(draft, name).length < limit
+    countCollectionEntries(name, getEntriesByCollection(name)) +
+      getPendingEntriesByCollection(draft, name).length <
+    limit
   );
 };
 
