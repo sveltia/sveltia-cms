@@ -145,6 +145,45 @@ export const moveMultiValueItem = ({
 };
 
 /**
+ * Add values to a multi-value field, such as a File or Image field with the `multiple` option
+ * enabled, after its existing items, or put a value in place of an existing item.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.locale Target locale.
+ * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
+ * @param {FieldKeyPath} args.keyPath Dot-notated field name.
+ * @param {any[]} args.newValues Values to add.
+ * @param {number} [args.replaceIndex] Index of the item to replace with the first value. The other
+ * values are ignored, because an item can only be replaced by one.
+ */
+export const addMultiValueItems = ({
+  draft,
+  locale,
+  valueStoreKey = 'currentValues',
+  keyPath,
+  newValues,
+  replaceIndex,
+}) => {
+  const values = draft[valueStoreKey][locale];
+
+  if (replaceIndex !== undefined) {
+    const [newValue] = newValues;
+
+    if (newValue !== undefined) {
+      values[`${keyPath}.${replaceIndex}`] = newValue;
+    }
+
+    return;
+  }
+
+  const { length } = getMultiValueList(values, keyPath);
+
+  newValues.forEach((value, index) => {
+    values[`${keyPath}.${length + index}`] = value;
+  });
+};
+
+/**
  * Remove an item from a multi-value field, such as a File or Image field with the `multiple` option
  * enabled. Our internal representation of such a field is a flattened object, so the item is
  * removed by shifting the subsequent values down by one and dropping the now-unused last key.

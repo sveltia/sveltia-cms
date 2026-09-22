@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  addMultiValueItems as _addMultiValueItems,
   moveMultiValueItem as _moveMultiValueItem,
   removeMultiValueItem as _removeMultiValueItem,
   updateListField as _updateListField,
@@ -21,6 +22,7 @@ describe('draft/update/list', () => {
   const updateListField = (args) => _updateListField({ draft: mockEntryDraft, ...args });
   const moveMultiValueItem = (args) => _moveMultiValueItem({ draft: mockEntryDraft, ...args });
   const removeMultiValueItem = (args) => _removeMultiValueItem({ draft: mockEntryDraft, ...args });
+  const addMultiValueItems = (args) => _addMultiValueItems({ draft: mockEntryDraft, ...args });
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -503,6 +505,47 @@ describe('draft/update/list', () => {
       expect(items()).toEqual([]);
 
       expect(mockEntryDraft.currentValues.en).toEqual({ title: 'Hello' });
+    });
+  });
+
+  describe('addMultiValueItems', () => {
+    it('should append the values after the existing items', () => {
+      addMultiValueItems({ locale: 'en', keyPath: 'tags', newValues: ['tag4', 'tag5'] });
+
+      expect(mockEntryDraft.currentValues.en).toEqual({
+        'tags.0': 'tag1',
+        'tags.1': 'tag2',
+        'tags.2': 'tag3',
+        'tags.3': 'tag4',
+        'tags.4': 'tag5',
+      });
+    });
+
+    it('should start a new list at the first index', () => {
+      addMultiValueItems({ locale: 'en', keyPath: 'photos', newValues: ['a.png'] });
+
+      expect(mockEntryDraft.currentValues.en['photos.0']).toBe('a.png');
+    });
+
+    it('should replace an item with the first value', () => {
+      addMultiValueItems({
+        locale: 'en',
+        keyPath: 'tags',
+        newValues: ['new', 'ignored'],
+        replaceIndex: 1,
+      });
+
+      expect(mockEntryDraft.currentValues.en).toEqual({
+        'tags.0': 'tag1',
+        'tags.1': 'new',
+        'tags.2': 'tag3',
+      });
+    });
+
+    it('should leave the item alone when there is nothing to replace it with', () => {
+      addMultiValueItems({ locale: 'en', keyPath: 'tags', newValues: [], replaceIndex: 1 });
+
+      expect(mockEntryDraft.currentValues.en['tags.1']).toBe('tag2');
     });
   });
 });

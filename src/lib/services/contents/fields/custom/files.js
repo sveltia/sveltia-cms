@@ -1,20 +1,17 @@
 import { getAssetByPath } from '$lib/services/assets';
 import { getAssetBlob } from '$lib/services/assets/info';
-import {
-  getAssetLibraryFolderMap,
-  getDefaultAssetFolder,
-} from '$lib/services/contents/fields/file/helpers';
 import { processResource } from '$lib/services/contents/fields/file/process';
-import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
-import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+import {
+  getMediaFieldAssetOptions,
+  getRejectedFileNames,
+  processResources,
+  toFieldValue,
+} from '$lib/services/contents/fields/file/resources';
 
 /**
  * @import {
- * AssetFolderInfo,
- * AssetLibraryFolderMap,
  * EntryDraft,
  * MediaLibraryAssetKind,
- * MediaLibraryService,
  * SelectedResource,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
@@ -23,8 +20,8 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
  * CustomFieldAddFileOptions,
  * CustomFieldPickFileOptions,
  * CustomFieldPickedFile,
- * DefaultMediaLibraryConfig,
  * } from '$lib/types/public';
+ * @import { MediaFieldAssetOptions } from '$lib/services/contents/fields/file/resources';
  */
 
 /**
@@ -34,16 +31,6 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
  * @property {TypedFieldKeyPath} typedKeyPath Typed key path to the field.
  * @property {string} [componentName] Name of the rich text editor component the field is part of,
  * if any.
- */
-
-/**
- * @typedef {object} CustomFieldAssetOptions
- * @property {AssetLibraryFolderMap} folderMap Asset library folders available to the field.
- * @property {AssetFolderInfo | undefined} folder Folder a file added by the field is uploaded to.
- * @property {boolean} enabled Whether the default (repository) media library is enabled.
- * @property {DefaultMediaLibraryConfig} libraryConfig Default media library configuration.
- * @property {[string, MediaLibraryService][]} cloudServiceEntries Cloud storage services enabled
- * for the field.
  */
 
 /**
@@ -58,34 +45,19 @@ import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-
  * a File/Image field in the same place would use: the field’s own `media_folder` and
  * `media_library` options if any, otherwise the collection’s or the global ones.
  * @param {CustomFieldArgs} args Arguments.
- * @returns {CustomFieldAssetOptions} Options.
+ * @returns {MediaFieldAssetOptions} Options.
  */
 export const getCustomFieldAssetOptions = ({ draft, fieldConfig, typedKeyPath, componentName }) => {
   const { collectionName, fileName, isIndexFile } = draft;
 
-  const folderMap = getAssetLibraryFolderMap({
+  return getMediaFieldAssetOptions({
     collectionName,
     fileName,
+    isIndexFile,
     componentName,
     typedKeyPath,
-    isIndexFile,
+    fieldConfig,
   });
-
-  const { enabled, config: libraryConfig } = getDefaultMediaLibraryOptions({
-    fieldConfig: /** @type {any} */ (fieldConfig),
-  });
-
-  const cloudServiceEntries = Object.entries(allCloudStorageServices).filter(
-    ([, { isEnabled }]) => isEnabled?.(/** @type {any} */ (fieldConfig)) ?? true,
-  );
-
-  return {
-    folderMap,
-    folder: getDefaultAssetFolder(folderMap),
-    enabled,
-    libraryConfig,
-    cloudServiceEntries,
-  };
 };
 
 /**
@@ -220,47 +192,30 @@ export const resolvePickedResources = async ({
     componentName,
   });
 
-  /** @type {PickedResourcesResult} */
-  const result = { files: [], oversizedFileNames: [], invalidFileNames: [] };
+  const results = await processResources({ draft, resources, folder, libraryConfig });
 
-  const results = await Promise.all(
-    resources.map(async (resource) => {
-      // Set the target folder for uploads and non-hotlinking stock assets from Pexels, etc.
-      if (resource.file && !resource.folder) {
-        resource.folder = folder;
-      }
-
-      const processed = await processResource({ draft, resource, libraryConfig });
-      const { value } = processed;
-
-      const file = value
-        ? await getPickedBlob({ draft, fieldConfig, typedKeyPath, componentName, resource, value })
-        : undefined;
-
-      return { ...processed, file };
-    }),
+  const files = await Promise.all(
+    results.map(async ({ value, credit }, index) =>
+      value
+        ? {
+            // The same value a built-in File/Image field would store
+            value: toFieldValue(value, inEditorComponent),
+            file: await getPickedBlob({
+              draft,
+              fieldConfig,
+              typedKeyPath,
+              componentName,
+              resource: resources[index],
+              value,
+            }),
+            credit: credit || undefined,
+          }
+        : undefined,
+    ),
   );
 
-  results.forEach(({ value, file, credit, oversizedFileName, invalidFileName }) => {
-    if (value) {
-      // Encode spaces as `%20` when the field is used in the rich text editor component to avoid
-      // issues with Markdown parsers that do not support unencoded spaces in URLs, the same way as
-      // a built-in File/Image field
-      result.files.push({
-        value: inEditorComponent ? value.replaceAll(' ', '%20') : value,
-        file,
-        credit: credit || undefined,
-      });
-    }
-
-    if (oversizedFileName) {
-      result.oversizedFileNames.push(oversizedFileName);
-    }
-
-    if (invalidFileName) {
-      result.invalidFileNames.push(invalidFileName);
-    }
-  });
-
-  return result;
+  return {
+    files: /** @type {CustomFieldPickedFile[]} */ (files.filter(Boolean)),
+    ...getRejectedFileNames(results),
+  };
 };
