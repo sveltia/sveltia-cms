@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
 import { appendFile, cp, mkdir, readFile, writeFile } from 'fs/promises';
+import { availableParallelism } from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -122,6 +123,15 @@ const yamlToJS = () => ({
  * Everything else runs in Node, or in happy-dom with a `@vitest-environment` comment.
  */
 const COMPONENT_TESTS = 'src/lib/components/**/*.svelte.test.js';
+/**
+ * Number of browser tabs the component tests run in parallel. Vitest defaults to one tab per core,
+ * and a tab holds on to the memory of every file it has run — the whole suite costs about 600 MB
+ * per tab on top of a gigabyte of browser — so on a machine with many cores the run alone takes
+ * several gigabytes, and a second one beside it, from another worktree or an editor, pushes the
+ * machine into swap. Six tabs cost the run about fifteen percent of its time and save a fifth of
+ * that memory. A CI runner has fewer cores than the cap and is left alone.
+ */
+const BROWSER_WORKERS = Math.max(Math.min(availableParallelism() - 1, 6), 1);
 
 /**
  * Copy essential package files while modifying the `package.json` content.
@@ -616,6 +626,7 @@ export default defineConfig({
         test: {
           name: 'browser',
           include: [COMPONENT_TESTS],
+          maxWorkers: BROWSER_WORKERS,
           setupFiles: ['./vitest.browser.setup.js'],
           // `expect.element()` and `expect.poll()` retry for a second by default, which a shared
           // CI runner can’t always keep up with: a Sveltia UI dialog only reports its result once
