@@ -14,10 +14,10 @@ import { availability, createAiTranslate } from './shared.js';
 
 const serviceId = 'openai';
 const serviceLabel = 'OpenAI GPT';
-const model = 'gpt-5.6-luna';
+const model = 'gpt-6-luna';
 
 /**
- * Translation service using GPT-5.6 Luna. Supports markdown content and preserves formatting.
+ * Translation service using GPT-6 Luna. Supports markdown content and preserves formatting.
  * @type {TranslationService}
  * @see https://developers.openai.com/api/reference/resources/responses/methods/create
  */

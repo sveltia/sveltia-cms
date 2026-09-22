@@ -7,7 +7,7 @@ global.fetch = vi.fn();
 
 const defaultOptions = {
   apiKey: 'sk-proj-test-key-1234567890abcdef',
-  model: 'gpt-5.6-luna',
+  model: 'gpt-6-luna',
   systemPrompt: 'You are a helpful assistant.',
   userMessage: 'Hello!',
 };

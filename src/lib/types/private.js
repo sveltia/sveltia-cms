@@ -573,7 +573,7 @@
  * @property {string} model Model name.
  * @property {string} systemPrompt System/instruction prompt.
  * @property {string} userMessage User message content.
- * @property {number} [temperature] Sampling temperature (0–1). Default is 0.3. GPT-5.6 does not
+ * @property {number} [temperature] Sampling temperature (0–1). Default is 0.3. GPT-6 does not
  * support this parameter, so it will be ignored for that model.
  * @property {number} [maxTokens] Maximum output tokens. Default is 4000.
  * @property {'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'} [reasoning]
