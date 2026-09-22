@@ -15,13 +15,14 @@
   } from '$lib/services/workflow';
   import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
   import { deployingEntries } from '$lib/services/workflow/deploy';
+  import { getDiscardDialogStrings, getPublishDialogStrings } from '$lib/services/workflow/dialogs';
   import { openAuthoring, workflowStages } from '$lib/services/workflow/open-authoring';
   import {
     discardWorkflowEntry,
     publishWorkflowEntry,
     updateWorkflowStatus,
   } from '$lib/services/workflow/save';
-  import { validateWorkflowEntry } from '$lib/services/workflow/validate';
+  import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -115,6 +116,10 @@
   // For an entry awaiting deletion the two actions are reversed: the first one calls the removal
   // off, and the second one carries it out
   const targetIsDeletion = $derived(targetEntry?.workflow.status === 'pending_deletion');
+  const discardDialogStrings = $derived(
+    getDiscardDialogStrings({ pendingDeletion: targetIsDeletion, publishedVersionExists }),
+  );
+  const publishDialogStrings = $derived(getPublishDialogStrings({ deletion: targetIsDeletion }));
 
   // A pending deletion has a status of its own, so it never lands in a stage column. It’s listed
   // below the board instead, and its cards don’t drag: there are no stages to move it through
@@ -198,7 +203,7 @@
       return;
     }
 
-    if (status !== 'draft' && !validateWorkflowEntry({ entry })) {
+    if (!canMoveToStatus({ entry, status })) {
       reportValidationErrors('workflow.status_change_blocked');
 
       return;
@@ -352,14 +357,8 @@
 
 <ConfirmationDialog
   bind:open={showDeleteDialog}
-  title={targetIsDeletion
-    ? _('workflow.cancel_deletion')
-    : publishedVersionExists
-      ? _('workflow.discard_changes')
-      : _('delete_entries', { values: { count: 1 } })}
-  okLabel={_(
-    targetIsDeletion ? 'workflow.cancel_deletion' : publishedVersionExists ? 'discard' : 'delete',
-  )}
+  title={discardDialogStrings.title}
+  okLabel={discardDialogStrings.label}
   onOk={async () => {
     const entry = targetEntry;
 
@@ -373,21 +372,13 @@
     }
   }}
 >
-  {_(
-    targetIsDeletion
-      ? 'workflow.confirm_cancelling_deletion'
-      : publishedVersionExists
-        ? 'workflow.confirm_discarding_entry_changes'
-        : 'workflow.confirm_deleting_unpublished_entry',
-  )}
+  {discardDialogStrings.message}
 </ConfirmationDialog>
 
 <ConfirmationDialog
   bind:open={showPublishDialog}
-  title={targetIsDeletion
-    ? _('delete_entries', { values: { count: 1 } })
-    : _('workflow.publish_entry')}
-  okLabel={_(targetIsDeletion ? 'delete' : 'publish')}
+  title={publishDialogStrings.title}
+  okLabel={publishDialogStrings.label}
   onOk={async () => {
     const entry = targetEntry;
 
@@ -396,8 +387,7 @@
       return;
     }
 
-    // A removal has no content to check; publishing it is what carries the deletion out
-    if (!targetIsDeletion && !validateWorkflowEntry({ entry })) {
+    if (!canPublish({ entry })) {
       reportValidationErrors('workflow.publish_blocked');
 
       return;
@@ -410,9 +400,7 @@
     );
   }}
 >
-  {_(
-    targetIsDeletion ? 'workflow.confirm_completing_deletion' : 'workflow.confirm_publishing_entry',
-  )}
+  {publishDialogStrings.message}
 </ConfirmationDialog>
 
 <!-- The `id` makes the auto-hide timer restart when the message changes -->

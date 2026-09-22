@@ -4,7 +4,7 @@ import { page } from 'vitest/browser';
 import { publishingBranches } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { publishWorkflowEntry } from '$lib/services/workflow/save';
-import { validateWorkflowEntry } from '$lib/services/workflow/validate';
+import { canPublish } from '$lib/services/workflow/validate';
 import { initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 import { waitForToastsToHide } from '$lib/test/toast';
@@ -22,7 +22,7 @@ vi.mock('$lib/services/workflow/save', () => ({
   discardWorkflowEntries: vi.fn(),
   deleteWorkflowEntries: vi.fn(),
 }));
-vi.mock('$lib/services/workflow/validate', () => ({ validateWorkflowEntry: vi.fn(() => true) }));
+vi.mock('$lib/services/workflow/validate', () => ({ canPublish: vi.fn(() => true) }));
 
 /**
  * Build an unpublished entry.
@@ -58,7 +58,7 @@ describe('PublishEntryButton', () => {
   beforeEach(() => {
     forkedRepository.current = undefined;
     publishingBranches.current = [];
-    vi.mocked(validateWorkflowEntry).mockReturnValue(true);
+    vi.mocked(canPublish).mockReturnValue(true);
     window.location.hash = '#/collections/posts/entries/hello';
   });
 
@@ -205,7 +205,7 @@ describe('PublishEntryButton', () => {
   });
 
   test('blocks publishing an invalid entry', async () => {
-    vi.mocked(validateWorkflowEntry).mockReturnValue(false);
+    vi.mocked(canPublish).mockReturnValue(false);
 
     await renderWithDraft(PublishEntryButton, {
       draft: createMockDraft(),

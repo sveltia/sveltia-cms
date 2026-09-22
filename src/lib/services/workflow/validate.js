@@ -5,7 +5,7 @@ import { validateDraft, validateEntry } from '$lib/services/contents/draft/valid
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 
 /**
- * @import { EntryDraft, UnpublishedEntry } from '$lib/types/private';
+ * @import { EntryDraft, UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
  */
 
 /**
@@ -49,3 +49,27 @@ export const validateWorkflowEntry = ({ entry, draft }) => {
   return validateDraft({ draft: buildDraft({ collection, collectionFile, originalEntry: entry }) })
     .valid;
 };
+
+/**
+ * Check whether the given unpublished entry can be moved to the given status. Only moving it
+ * towards publication requires it to be complete; it can always go back to the drafting stage.
+ * @param {object} args Arguments.
+ * @param {UnpublishedEntry} args.entry Entry to move.
+ * @param {WorkflowStatus} args.status New status.
+ * @param {EntryDraft | null} [args.draft] Draft open in the editor, if any.
+ * @returns {boolean} Whether the entry can be moved.
+ */
+export const canMoveToStatus = ({ entry, status, draft }) =>
+  status === 'draft' || validateWorkflowEntry({ entry, draft });
+
+/**
+ * Check whether the given unpublished entry can be published. A pull request labelled ready
+ * elsewhere — by another CMS, or by hand — may never have been checked, so the entry has to be
+ * complete. A removal has no content to check; publishing it is what carries the deletion out.
+ * @param {object} args Arguments.
+ * @param {UnpublishedEntry} args.entry Entry to publish.
+ * @param {EntryDraft | null} [args.draft] Draft open in the editor, if any.
+ * @returns {boolean} Whether the entry can be published.
+ */
+export const canPublish = ({ entry, draft }) =>
+  entry.workflow.status === 'pending_deletion' || validateWorkflowEntry({ entry, draft });

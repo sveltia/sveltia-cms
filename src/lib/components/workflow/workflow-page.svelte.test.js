@@ -17,7 +17,7 @@ import {
   publishWorkflowEntry,
   updateWorkflowStatus,
 } from '$lib/services/workflow/save';
-import { validateWorkflowEntry } from '$lib/services/workflow/validate';
+import { canMoveToStatus, canPublish } from '$lib/services/workflow/validate';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
 import WorkflowPage from './workflow-page.svelte';
@@ -40,7 +40,10 @@ vi.mock('$lib/services/workflow/save', () => ({
   discardWorkflowEntries: vi.fn(),
   deleteWorkflowEntries: vi.fn(),
 }));
-vi.mock('$lib/services/workflow/validate', () => ({ validateWorkflowEntry: vi.fn(() => true) }));
+vi.mock('$lib/services/workflow/validate', () => ({
+  canMoveToStatus: vi.fn(() => true),
+  canPublish: vi.fn(() => true),
+}));
 
 /**
  * Build an unpublished entry.
@@ -107,7 +110,8 @@ describe('WorkflowPage', () => {
       createEntry('ready-1', 'pending_publish'),
       createEntry('gone-1', 'pending_deletion'),
     ];
-    vi.mocked(validateWorkflowEntry).mockReturnValue(true);
+    vi.mocked(canMoveToStatus).mockReturnValue(true);
+    vi.mocked(canPublish).mockReturnValue(true);
     vi.mocked(updateWorkflowStatus).mockResolvedValue(/** @type {any} */ ({}));
     vi.mocked(publishWorkflowEntry).mockResolvedValue(undefined);
     vi.mocked(discardWorkflowEntry).mockResolvedValue(undefined);
@@ -209,7 +213,7 @@ describe('WorkflowPage', () => {
   });
 
   test('refuses to move an invalid entry forward', async () => {
-    vi.mocked(validateWorkflowEntry).mockReturnValue(false);
+    vi.mocked(canMoveToStatus).mockReturnValue(false);
 
     const { container } = await render(WorkflowPage);
 
@@ -244,7 +248,7 @@ describe('WorkflowPage', () => {
       );
 
     // An invalid entry can’t be published
-    vi.mocked(validateWorkflowEntry).mockReturnValueOnce(false);
+    vi.mocked(canPublish).mockReturnValueOnce(false);
     await dialog.getByRole('button', { name: 'Publish' }).click();
     await expect
       .element(page.getByRole('alert'))

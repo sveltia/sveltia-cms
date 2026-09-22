@@ -5,7 +5,7 @@ import { page } from 'vitest/browser';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { updateWorkflowStatus } from '$lib/services/workflow/save';
-import { validateWorkflowEntry } from '$lib/services/workflow/validate';
+import { canMoveToStatus } from '$lib/services/workflow/validate';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 import { waitForToastsToHide } from '$lib/test/toast';
 
@@ -22,7 +22,7 @@ vi.mock('$lib/services/workflow/save', () => ({
   discardWorkflowEntries: vi.fn(),
   deleteWorkflowEntries: vi.fn(),
 }));
-vi.mock('$lib/services/workflow/validate', () => ({ validateWorkflowEntry: vi.fn(() => true) }));
+vi.mock('$lib/services/workflow/validate', () => ({ canMoveToStatus: vi.fn(() => true) }));
 
 const entry = /** @type {any} */ ({
   id: 'posts/hello',
@@ -36,7 +36,7 @@ describe('EntryStatusMenu', () => {
   beforeEach(() => {
     env.isLargeScreen = true;
     forkedRepository.current = undefined;
-    vi.mocked(validateWorkflowEntry).mockReturnValue(true);
+    vi.mocked(canMoveToStatus).mockReturnValue(true);
   });
 
   test('shows the status and offers the other stages', async () => {
@@ -86,7 +86,7 @@ describe('EntryStatusMenu', () => {
   });
 
   test('blocks moving an invalid entry forward', async () => {
-    vi.mocked(validateWorkflowEntry).mockReturnValue(false);
+    vi.mocked(canMoveToStatus).mockReturnValue(false);
 
     await renderWithDraft(EntryStatusMenu, { draft: createMockDraft(), props: { entry } });
     await page.getByRole('button').click();

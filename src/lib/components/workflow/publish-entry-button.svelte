@@ -10,9 +10,10 @@
   import { getCollection } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { publishingBranches } from '$lib/services/workflow';
+  import { getPublishDialogStrings } from '$lib/services/workflow/dialogs';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import { publishWorkflowEntry } from '$lib/services/workflow/save';
-  import { validateWorkflowEntry } from '$lib/services/workflow/validate';
+  import { canPublish } from '$lib/services/workflow/validate';
 
   /**
    * @import { UnpublishedEntry } from '$lib/types/private';
@@ -44,6 +45,7 @@
 
   // Publishing a removal is what deletes the entry, so the control is presented as Delete
   const deletion = $derived(entry.workflow.status === 'pending_deletion');
+  const dialogStrings = $derived(getPublishDialogStrings({ deletion }));
   // The service records the merge in flight, rather than this component: a merge can take minutes
   // and outlive the editor, and the control stays disabled when the entry is reopened meanwhile
   const publishing = $derived(
@@ -62,10 +64,8 @@
    * Publish the entry by merging the pull request, then go back to the entry list.
    */
   const publish = async () => {
-    // A pull request labelled ready elsewhere — by another CMS, or by hand — may never have been
-    // checked, and an entry can be saved as a draft with its required fields left empty. A removal
-    // has no content to check; publishing it is what carries the deletion out
-    if (!deletion && !validateWorkflowEntry({ entry, draft: entryDraft.current })) {
+    // An entry can be saved as a draft with its required fields left empty, so it’s checked first
+    if (!canPublish({ entry, draft: entryDraft.current })) {
       showValidationToast = true;
 
       return;
@@ -100,10 +100,8 @@
 {#if visible}
   <Button
     variant="primary"
-    label={_(deletion ? 'delete' : publishing ? 'publishing' : 'publish')}
-    aria-label={deletion
-      ? _('delete_entries', { values: { count: 1 } })
-      : _('workflow.publish_entry')}
+    label={publishing && !deletion ? _('publishing') : dialogStrings.label}
+    aria-label={dialogStrings.title}
     disabled={disabled || (modified && !deletion) || publishing}
     onclick={() => {
       showPublishDialog = true;
@@ -113,13 +111,13 @@
 
 <ConfirmationDialog
   bind:open={showPublishDialog}
-  title={deletion ? _('delete_entries', { values: { count: 1 } }) : _('workflow.publish_entry')}
-  okLabel={_(deletion ? 'delete' : 'publish')}
+  title={dialogStrings.title}
+  okLabel={dialogStrings.label}
   onOk={() => {
     publish();
   }}
 >
-  {_(deletion ? 'workflow.confirm_completing_deletion' : 'workflow.confirm_publishing_entry')}
+  {dialogStrings.message}
 </ConfirmationDialog>
 
 <Toast bind:show={showErrorToast}>

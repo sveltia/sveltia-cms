@@ -11,7 +11,7 @@
   import { WORKFLOW_STATUS_LABELS } from '$lib/services/workflow/constants';
   import { workflowStages } from '$lib/services/workflow/open-authoring';
   import { updateWorkflowStatus } from '$lib/services/workflow/save';
-  import { validateWorkflowEntry } from '$lib/services/workflow/validate';
+  import { canMoveToStatus } from '$lib/services/workflow/validate';
 
   /**
    * @import { UnpublishedEntry, WorkflowStatus } from '$lib/types/private';
@@ -56,7 +56,7 @@
 
     // An entry can be saved as a draft with its required fields left empty, so it has to be checked
     // before it moves towards being published
-    if (newStatus !== 'draft' && !validateWorkflowEntry({ entry, draft: entryDraft.current })) {
+    if (!canMoveToStatus({ entry, status: newStatus, draft: entryDraft.current })) {
       showValidationToast = true;
 
       return;
