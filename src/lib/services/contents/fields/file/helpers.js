@@ -7,6 +7,7 @@ import { hasTemplateTags } from '$lib/services/common/template';
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
+import { getOrCreate } from '$lib/services/utils/cache';
 import { createPath, formatFileName } from '$lib/services/utils/file';
 
 /**
@@ -244,7 +245,7 @@ export const resolveUnsavedAssetPaths = ({ savedAssets, unsavedAssets, slugifica
   savedAssets.forEach(({ path, name }) => {
     const dirName = getPathInfo(path).dirname ?? '';
 
-    namesByDir.set(dirName, [...(namesByDir.get(dirName) ?? []), name.normalize()]);
+    getOrCreate(namesByDir, dirName, () => []).push(name.normalize());
   });
 
   const resolvedUnsavedAssets = unsavedAssets.map((asset) => {

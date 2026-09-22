@@ -50,9 +50,11 @@ export const copyDefaultLocaleValue = ({
       // The regex always matches since keyPath is guaranteed to contain a dot (checked above).
       const parentKeyPath = /** @type {string} */ (keyPath.match(PATH_MATCH_REGEX)?.groups?.path);
 
+      // `getField()` is memoized, while the key scan walks the whole locale’s content through the
+      // `$state` proxy, so a configured parent — the usual case — never pays for the scan
       if (
-        !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`)) &&
-        !getField({ ...getFieldArgs, keyPath: parentKeyPath })
+        !getField({ ...getFieldArgs, keyPath: parentKeyPath }) &&
+        !Object.keys(content).some((_keyPath) => _keyPath.startsWith(`${parentKeyPath}.`))
       ) {
         return;
       }

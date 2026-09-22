@@ -11,6 +11,7 @@
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -42,10 +43,10 @@
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
+  // Ask the shared key path index rather than scanning the whole value map; see the same check in
+  // the Object field editor
   const hasValues = $derived(
-    Object.entries(valueMap).some(
-      ([_keyPath, value]) => !!_keyPath.startsWith(`${keyPath}.`) && !!value,
-    ),
+    getKeysByPrefix(valueMap, `${keyPath}.`).some((_keyPath) => !!valueMap[_keyPath]),
   );
   const hasVariableTypes = $derived(Array.isArray(types));
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);

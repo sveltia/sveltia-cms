@@ -7,6 +7,7 @@ import {
   getSharedEntryFileName,
 } from '$lib/services/contents/collection/nested';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { Entry, InternalCollection, InternalLocaleCode } from '$lib/types/private';
@@ -149,7 +150,7 @@ const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) =>
   [...folders.keys()].forEach((path) => {
     const parentPath = getParentPath(path);
 
-    childPaths.set(parentPath, [...(childPaths.get(parentPath) ?? []), path]);
+    getOrCreate(childPaths, parentPath, () => []).push(path);
   });
 
   /**

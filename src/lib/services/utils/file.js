@@ -1,7 +1,7 @@
 import { _, locale as appLocale } from '@sveltia/i18n';
 import { getHash } from '@sveltia/utils/crypto';
 import { getPathInfo } from '@sveltia/utils/file';
-import { compare, escapeRegExp } from '@sveltia/utils/string';
+import { escapeRegExp } from '@sveltia/utils/string';
 import sanitize from 'sanitize-filename';
 
 import { slugify } from '$lib/services/common/slug';
@@ -116,17 +116,24 @@ export const renameIfNeeded = (name, otherNames) => {
     `^${escapeRegExp(slug)}(?:-(?<num>\\d+?))?${extension ? `\\.${extension}` : ''}$`,
   );
 
-  const dupName = otherNames
-    .sort((a, b) => compare(a.split('.')[0], b.split('.')[0]))
-    .findLast((p) => regex.test(p));
+  // Only the highest number already taken matters, so the names are scanned once rather than
+  // sorted. The caller’s array is left alone: it’s typically every name in the folder, reused for
+  // each of the files being added
+  let highest = -1;
 
-  if (!dupName) {
+  otherNames.forEach((otherName) => {
+    const match = otherName.match(regex);
+
+    if (match) {
+      highest = Math.max(highest, Number(match.groups?.num ?? 0));
+    }
+  });
+
+  if (highest === -1) {
     return name;
   }
 
-  const number = Number(dupName.match(regex)?.groups?.num ?? 0) + 1;
-
-  return `${slug}-${number}${extension ? `.${extension}` : ''}`;
+  return `${slug}-${highest + 1}${extension ? `.${extension}` : ''}`;
 };
 
 /**

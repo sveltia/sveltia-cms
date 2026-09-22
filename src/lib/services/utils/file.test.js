@@ -11,6 +11,7 @@ import {
   getBlob,
   getGitHash,
   isEquivalentFileExtension,
+  renameIfNeeded,
   resolvePath,
   sanitizeFileName,
   sanitizePath,
@@ -205,6 +206,30 @@ describe('Test formatFileName()', () => {
     expect(formatFileName('My (Important) File - Copy [2023].pdf', options)).toEqual(
       'my-important-file-copy-2023.pdf',
     );
+  });
+});
+
+describe('Test renameIfNeeded()', () => {
+  test('should take the highest number already used, whatever order the names come in', () => {
+    expect(renameIfNeeded('photo.png', ['photo-1.png', 'photo-0.png'])).toEqual('photo-2.png');
+    expect(renameIfNeeded('photo.png', ['photo-10.png', 'photo-9.png'])).toEqual('photo-11.png');
+  });
+
+  test('should not be fooled by a dot in the base name', () => {
+    // The base name is everything before the last dot, so these candidates all share the `x.y.z`
+    // prefix. Picking anything but the highest number would hand back a name that is already taken
+    expect(renameIfNeeded('x.y.z.png', ['x.y.z-1.png', 'x.y.z-0.png'])).toEqual('x.y.z-2.png');
+    expect(renameIfNeeded('my.photo.jpg', ['my.photo-8.jpg', 'my.photo-3.jpg'])).toEqual(
+      'my.photo-9.jpg',
+    );
+  });
+
+  test('should leave the given list of other names alone', () => {
+    const otherNames = ['photo-2.png', 'photo.png', 'photo-1.png'];
+
+    renameIfNeeded('photo.png', otherNames);
+    // The caller reuses this list for the next file, so its order must survive the call
+    expect(otherNames).toEqual(['photo-2.png', 'photo.png', 'photo-1.png']);
   });
 });
 

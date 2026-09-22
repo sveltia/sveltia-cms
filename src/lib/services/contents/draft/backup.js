@@ -8,6 +8,7 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { isDraftModified, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { updateObject } from '$lib/services/contents/draft/update/list';
+import { hasChildKeys, indexContent } from '$lib/services/contents/entry/content-index';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createDeepState, createRootEffect, getSnapshot } from '$lib/services/utils/state.svelte';
 
@@ -231,13 +232,16 @@ export const restoreBackup = ({ backup, draft }) => {
 
       const newValueMap = draft.currentValues[locale];
       const keys = Object.keys(newValueMap);
+      // The loop only overwrites existing keys, so one index built up front stays valid throughout,
+      // and the child lookup is constant time instead of a scan per key path
+      const index = indexContent(newValueMap);
 
       keys.forEach((keyPath) => {
         const value = newValueMap[keyPath];
 
         // Remove an optional object field’s default `null` value when subfields are added
         // @see https://github.com/sveltia/sveltia-cms/issues/840
-        if (value === null && keys.some((k) => k.startsWith(`${keyPath}.`))) {
+        if (value === null && hasChildKeys(index, keyPath)) {
           newValueMap[keyPath] = {};
         }
       });

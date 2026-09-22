@@ -95,10 +95,11 @@
   const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const getFieldArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
+  // Ask the shared key path index rather than scanning the whole value map: the editor renders one
+  // component per field, and a large entry would otherwise be walked once per Object field on
+  // every keystroke
   const hasValues = $derived(
-    Object.entries(valueMap).some(
-      ([_keyPath, value]) => _keyPath.startsWith(`${keyPath}.`) && value !== undefined,
-    ),
+    getKeysByPrefix(valueMap, `${keyPath}.`).some((_keyPath) => valueMap[_keyPath] !== undefined),
   );
   const canEdit = $derived(
     fieldContext === 'rich-text-editor-component' || locale === defaultLocale || i18n !== false,

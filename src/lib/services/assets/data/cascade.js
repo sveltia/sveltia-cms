@@ -15,6 +15,7 @@ import {
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -217,7 +218,7 @@ export const planAssetDeletion = async (assets) => {
   references.forEach((reference) => {
     const { id } = reference.entry;
 
-    referencesByEntry.set(id, [...(referencesByEntry.get(id) ?? []), reference]);
+    getOrCreate(referencesByEntry, id, () => []).push(reference);
   });
 
   const results = await Promise.all(
@@ -240,7 +241,7 @@ export const planAssetDeletion = async (assets) => {
         .forEach((reference) => {
           const { locale } = reference;
 
-          referencesByLocale.set(locale, [...(referencesByLocale.get(locale) ?? []), reference]);
+          getOrCreate(referencesByLocale, locale, () => []).push(reference);
         });
 
       /** @type {Entry['locales']} */

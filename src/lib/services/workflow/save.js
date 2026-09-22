@@ -15,6 +15,7 @@ import {
 } from '$lib/services/contents/entry/relations/cascade/delete';
 import { forgetDeployments } from '$lib/services/deployments';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
+import { getOrCreate } from '$lib/services/utils/cache';
 import {
   getUnpublishedEntryByBranch,
   getUnpublishedEntryBySlug,
@@ -527,7 +528,7 @@ export const deleteWorkflowEntries = async (items) => {
   items.forEach((item) => {
     const key = `${item.collection.name}\0${item.collectionFile?.name ?? ''}`;
 
-    groups.set(key, [...(groups.get(key) ?? []), item]);
+    getOrCreate(groups, key, () => []).push(item);
   });
 
   /** @type {Map<string, CascadeTarget[]>} */

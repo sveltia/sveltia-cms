@@ -8,11 +8,20 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { Asset, Entry, InternalEntryCollection } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
  */
+
+/**
+ * Cache of the regular expressions matching a wildcard thumbnail field name, keyed by the name.
+ * The entry list asks for a thumbnail once per row, so the pattern is compiled once per collection
+ * rather than once per entry.
+ * @type {Map<string, RegExp>}
+ */
+const thumbnailFieldRegexCache = new Map();
 
 /**
  * Get the given entry’s thumbnail URL.
@@ -42,7 +51,11 @@ export const getEntryThumbnail = async (collection, entry) => {
   const keyPathList = _thumbnailFieldNames.flatMap((name) => {
     // Support a wildcard in the key path, e.g. `images.*.src`
     if (name.includes('*')) {
-      const regex = new RegExp(`^${escapeRegExp(name).replace('\\*', '.+')}$`);
+      const regex = getOrCreate(
+        thumbnailFieldRegexCache,
+        name,
+        () => new RegExp(`^${escapeRegExp(name).replace('\\*', '.+')}$`),
+      );
 
       return /** @type {string[]} */ (contentKeys).filter((keyPath) => regex.test(keyPath));
     }
