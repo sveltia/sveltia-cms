@@ -1,4 +1,4 @@
-import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
  * @import { BaseConfigListItem } from '$lib/types/private';
@@ -17,21 +17,3 @@ export const GIT_CONFIG_FILE_REGEX = /^(?:.+\/)?(\.git(?:attributes|ignore|keep)
  * @type {{ current: BaseConfigListItem[] }}
  */
 export const gitConfigFiles = createRawState([]);
-
-/**
- * File extensions that are tracked by Git LFS. This is derived from the `.gitattributes` file in
- * the repository, if it exists.
- */
-export const lfsFileExtensions = createDerivedState(
-  () =>
-    gitConfigFiles.current
-      .find(({ path }) => path === '.gitattributes')
-      ?.text?.replace(/\r\n?/g, '\n')
-      .split('\n')
-      .map((line) =>
-        line.startsWith('*.') && line.includes('filter=lfs')
-          ? line.split(' ')[0].slice(2).toLowerCase()
-          : '',
-      )
-      .filter(Boolean) ?? [],
-);

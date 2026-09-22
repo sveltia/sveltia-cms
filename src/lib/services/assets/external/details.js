@@ -1,4 +1,6 @@
+import { isMediaKind } from '$lib/services/assets/kinds';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
+import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getSourceInfo } from '$lib/services/utils/media';
 
 /**
@@ -40,23 +42,11 @@ export const _resetExternalAssetDetailsCache = () => {
 export const getExternalAssetDetails = (asset) => {
   const { kind, downloadURL } = asset;
 
-  if (!['image', 'video', 'audio'].includes(kind)) {
+  if (!isMediaKind(kind)) {
     return Promise.resolve({});
   }
 
-  let pending = cachedDetails.get(downloadURL);
-
-  if (!pending) {
-    pending = getSourceInfo(downloadURL, kind).catch((ex) => {
-      cachedDetails.delete(downloadURL);
-
-      throw ex;
-    });
-
-    cachedDetails.set(downloadURL, pending);
-  }
-
-  return pending;
+  return getOrCreateAsync(cachedDetails, downloadURL, () => getSourceInfo(downloadURL, kind));
 };
 
 /**

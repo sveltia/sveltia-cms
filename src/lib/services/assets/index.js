@@ -8,7 +8,7 @@ import {
   globalAssetFolder,
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
-import { processFile } from '$lib/services/assets/process';
+import { partitionProcessedFiles, processFile } from '$lib/services/assets/process';
 import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { fillTemplate, hasTemplateTags } from '$lib/services/common/template';
 import {
@@ -187,13 +187,7 @@ createRootEffect(() => {
 
     processedAssets.current = {
       processing: false,
-      validFiles: results
-        .filter(({ oversized, invalid }) => !oversized && !invalid)
-        .map(({ file }) => file),
-      oversizedFiles: results
-        .filter(({ oversized, invalid }) => oversized && !invalid)
-        .map(({ file }) => file),
-      invalidFiles: results.filter(({ invalid }) => invalid).map(({ file }) => file),
+      ...partitionProcessedFiles(results),
       transformedFileMap: new WeakMap(
         results
           .filter(({ originalFile }) => originalFile !== undefined)

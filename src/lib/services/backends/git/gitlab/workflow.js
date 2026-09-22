@@ -2,7 +2,7 @@ import { sleep } from '@sveltia/utils/misc';
 
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
-import { repository } from '$lib/services/backends/git/gitlab/repository';
+import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
@@ -70,17 +70,6 @@ const AUTO_MERGE_WAIT_STATUSES = [...TRANSIENT_MERGE_STATUSES, 'ci_still_running
  * safety net for a merge that never lands, e.g. one GitLab has queued but not carried out.
  */
 const AUTO_MERGE_POLL = { interval: 10000, maxDuration: 60 * 60 * 1000 };
-
-/**
- * Get the URL-encoded project identifier used in the REST API paths, e.g. the `group/project` path
- * with the slash percent-encoded.
- * @returns {string} Project ID.
- */
-export const getProjectId = () => {
-  const { owner, repo } = repository;
-
-  return encodeURIComponent(`${owner}/${repo}`);
-};
 
 /**
  * Remove any draft indicator from the given merge request title.

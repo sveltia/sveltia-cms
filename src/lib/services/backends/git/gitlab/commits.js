@@ -1,9 +1,9 @@
 import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
 
-import { repository } from '$lib/services/backends/git/gitlab/repository';
+import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
+import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
 import { getGitHash } from '$lib/services/utils/file';
 
 /**
@@ -85,7 +85,6 @@ export const fetchLastCommit = async () => {
  * @see https://forum.gitlab.com/t/how-to-commit-a-image-via-gitlab-commit-api/26632/4
  */
 export const commitChanges = async (changes, options) => {
-  const { owner, repo } = repository;
   const branch = options.branch ?? repository.branch;
 
   const actions = await Promise.all(
@@ -98,7 +97,7 @@ export const commitChanges = async (changes, options) => {
     })),
   );
 
-  const endpoint = `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`;
+  const endpoint = `/projects/${getProjectId()}/repository/commits`;
   const body = { branch, commit_message: createCommitMessage(changes, options), actions };
   const { startBranch } = options;
 
@@ -151,8 +150,8 @@ const fetchAvatarURL = async (email) => {
  * @see https://docs.gitlab.com/api/commits/#list-repository-commits
  */
 export const fetchFileCommits = async (paths) => {
-  const { owner, repo, branch } = repository;
-  const projectId = encodeURIComponent(`${owner}/${repo}`);
+  const { branch } = repository;
+  const projectId = getProjectId();
 
   const results = await Promise.all(
     paths.map(
@@ -167,25 +166,21 @@ export const fetchFileCommits = async (paths) => {
     ),
   );
 
-  /** @type {Map<string, FileCommit>} */
-  const commitMap = new Map();
-
-  results.flat().forEach((commit) => {
-    if (!commitMap.has(commit.id)) {
-      commitMap.set(commit.id, {
-        sha: commit.id,
-        authorName: commit.author_name,
-        authorEmail: commit.author_email,
-        authorAvatarURL: undefined,
-        date: new Date(commit.committed_date),
-      });
-    }
-  });
+  /** @type {FileCommit[]} */
+  const commitList = dedupeFileCommits(
+    results.flat().map((commit) => ({
+      sha: commit.id,
+      authorName: commit.author_name,
+      authorEmail: commit.author_email,
+      authorAvatarURL: undefined,
+      date: new Date(commit.committed_date),
+    })),
+  );
 
   // Resolve avatar URLs for unique author emails via the GitLab Avatar API
   /** @type {string[]} */
   const uniqueEmails = /** @type {string[]} */ (
-    [...new Set([...commitMap.values()].map((c) => c.authorEmail))].filter((e) => !!e)
+    [...new Set(commitList.map((c) => c.authorEmail))].filter((e) => !!e)
   );
 
   /** @type {Map<string, string | undefined>} */
@@ -196,8 +191,6 @@ export const fetchFileCommits = async (paths) => {
       ),
     ),
   );
-
-  const commitList = [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   commitList.forEach((commit) => {
     commit.authorAvatarURL = avatarMap.get(/** @type {string} */ (commit.authorEmail));

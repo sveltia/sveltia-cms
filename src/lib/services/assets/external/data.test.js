@@ -47,7 +47,8 @@ vi.mock('$lib/services/assets/external', () => ({
   getFetchOptions: vi.fn(() => ({ apiKey: 'secret' })),
 }));
 
-vi.mock('$lib/services/assets/process', () => ({
+vi.mock('$lib/services/assets/process', async (importOriginal) => ({
+  ...(await importOriginal()),
   processFile: vi.fn(async (file) => ({ file, oversized: false, invalid: false })),
 }));
 

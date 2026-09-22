@@ -35,6 +35,35 @@ export const apiConfig = { ...API_CONFIG_INFO_PLACEHOLDER };
 export const graphqlVars = {};
 
 /**
+ * Send a request to an OAuth token endpoint.
+ * @param {string} tokenURL OAuth token request URL.
+ * @param {Record<string, string>} body Request parameters, including the `grant_type`.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.includeCredentials] Whether to send cookies with the request.
+ * @returns {Promise<Response | undefined>} Response, or `undefined` if the URL isn’t secure or the
+ * request couldn’t be sent at all.
+ */
+export const requestAccessToken = async (tokenURL, body, { includeCredentials = false } = {}) => {
+  if (!isSecureURL(tokenURL)) {
+    return undefined;
+  }
+
+  try {
+    return await fetch(tokenURL, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      ...(includeCredentials && { credentials: 'include' }),
+    });
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Refresh the OAuth access token using the refresh token.
  * @param {object} args Arguments.
  * @param {string} args.clientId OAuth application ID.
@@ -43,30 +72,13 @@ export const graphqlVars = {};
  * @returns {Promise<AuthTokens>} New access token and refresh token.
  */
 export const refreshAccessToken = async ({ clientId, tokenURL, refreshToken }) => {
-  let response;
   let token = '';
 
-  if (!isSecureURL(tokenURL)) {
-    throw new Error(_('sign_in_error.TOKEN_REFRESH_FAILED'));
-  }
-
-  try {
-    response = await fetch(tokenURL, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        grant_type: 'refresh_token',
-        client_id: clientId,
-        refresh_token: refreshToken,
-      }),
-      ...(apiConfig.includeCredentials && { credentials: 'include' }),
-    });
-  } catch {
-    //
-  }
+  const response = await requestAccessToken(
+    tokenURL,
+    { grant_type: 'refresh_token', client_id: clientId, refresh_token: refreshToken },
+    { includeCredentials: apiConfig.includeCredentials },
+  );
 
   if (!response?.ok) {
     throw new Error(_('sign_in_error.TOKEN_REFRESH_FAILED'));

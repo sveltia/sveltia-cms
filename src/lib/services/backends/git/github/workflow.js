@@ -8,6 +8,7 @@ import {
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   MAX_ITEMS,
+  parseFileNodes,
   updateDraftState,
   updateLabels,
 } from '$lib/services/backends/git/github/pull-requests';
@@ -119,15 +120,7 @@ export const parsePullRequest = (node) => {
     createdDate: new Date(node.createdAt),
     updatedDate: new Date(node.updatedAt),
     author: login ? { name: name ?? login, email: email ?? '', id: databaseId, login } : undefined,
-    files: (node.files?.nodes ?? []).map((/** @type {any} */ { path, changeType }) => ({
-      path,
-      sha: '',
-      size: 0,
-      deleted: changeType === 'DELETED',
-      // The previous path of a renamed file isn’t available here; it’s filled in by
-      // {@link fetchPullRequestFileList}
-      renamed: changeType === 'RENAMED',
-    })),
+    files: parseFileNodes(node.files?.nodes ?? []),
   };
 };
 
@@ -290,15 +283,8 @@ export const createBranch = async (branch) => {
   const sha = base.ref.target.oid;
 
   try {
-    await fetchAPI('', {
-      method: 'POST',
-      isGraphQL: true,
-      body: {
-        query: CREATE_REF_MUTATION.replace(/\n\s*/g, ' '),
-        variables: {
-          input: { repositoryId: fork.id, name: `refs/heads/${branch}`, oid: sha },
-        },
-      },
+    await fetchGraphQL(CREATE_REF_MUTATION, {
+      input: { repositoryId: fork.id, name: `refs/heads/${branch}`, oid: sha },
     });
   } catch (/** @type {any} */ ex) {
     const message = ex.cause?.message ?? '';

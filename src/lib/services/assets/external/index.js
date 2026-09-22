@@ -1,8 +1,5 @@
-import { isTextFileType } from '@sveltia/utils/file';
-import mime from 'mime';
-
 import { LINKED_FILES_SERVICE_ID, linkedFilesService } from '$lib/services/assets/external/linked';
-import { isMediaKind } from '$lib/services/assets/kinds';
+import { canPreviewFile } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -73,11 +70,7 @@ export const getExternalAssetPath = (service, { id }) =>
  * @param {ExternalAsset} asset Asset.
  * @returns {boolean} Result.
  */
-export const canPreviewExternalAsset = ({ kind, fileName }) => {
-  const type = mime.getType(fileName);
-
-  return isMediaKind(kind) || type === 'application/pdf' || (!!type && isTextFileType(type));
-};
+export const canPreviewExternalAsset = ({ kind, fileName }) => canPreviewFile(kind, fileName);
 
 /**
  * Cloud storage service currently selected in the Asset Library, or `undefined` when a repository

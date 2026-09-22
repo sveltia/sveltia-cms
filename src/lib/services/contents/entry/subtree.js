@@ -1,7 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 import { flatten } from 'flat';
 
-import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+import { getKeysByPrefix, isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { unflattenMap } from '$lib/services/utils/object';
 
 /**
@@ -74,10 +74,8 @@ export const getSubtree = (valueMap, keyPath, { live = false } = {}) => {
  * @param {FieldKeyPath} keyPath Key path of the field.
  */
 export const deleteSubtree = (valueMap, keyPath) => {
-  const prefix = `${keyPath}.`;
-
   Object.keys(valueMap).forEach((key) => {
-    if (key === keyPath || key.startsWith(prefix)) {
+    if (isKeyPathWithin(key, keyPath)) {
       delete valueMap[key];
     }
   });

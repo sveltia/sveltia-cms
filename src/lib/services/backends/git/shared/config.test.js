@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { GIT_CONFIG_FILE_REGEX, gitConfigFiles, lfsFileExtensions } from './config';
+import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from './config';
 
 describe('git/shared/config', () => {
   afterEach(() => {
@@ -39,67 +39,6 @@ describe('git/shared/config', () => {
 
       gitConfigFiles.current = testFiles;
       expect(gitConfigFiles.current).toEqual(testFiles);
-    });
-  });
-
-  describe('lfsFileExtensions derived store', () => {
-    it('should return empty array when no .gitattributes file', () => {
-      gitConfigFiles.current = [
-        { path: '.gitignore', text: 'node_modules/' },
-        { path: '.gitkeep', text: '' },
-      ];
-
-      expect(lfsFileExtensions.current).toEqual([]);
-    });
-
-    it('should extract LFS file extensions from .gitattributes', () => {
-      gitConfigFiles.current = [
-        {
-          path: '.gitattributes',
-          text: '*.pdf filter=lfs diff=lfs merge=lfs -text\n*.zip filter=lfs diff=lfs merge=lfs -text',
-        },
-      ];
-
-      expect(lfsFileExtensions.current).toEqual(['pdf', 'zip']);
-    });
-
-    it('should handle mixed content in .gitattributes', () => {
-      gitConfigFiles.current = [
-        {
-          path: '.gitattributes',
-          text: '# Comment\n*.pdf filter=lfs diff=lfs merge=lfs -text\n*.js text eol=lf',
-        },
-      ];
-
-      expect(lfsFileExtensions.current).toEqual(['pdf']);
-    });
-
-    it('should convert extensions to lowercase', () => {
-      gitConfigFiles.current = [
-        {
-          path: '.gitattributes',
-          text: '*.PDF filter=lfs diff=lfs merge=lfs -text',
-        },
-      ];
-
-      expect(lfsFileExtensions.current).toEqual(['pdf']);
-    });
-
-    it('should update when gitConfigFiles changes', () => {
-      // Initial state
-      gitConfigFiles.current = [
-        {
-          path: '.gitattributes',
-          text: '*.pdf filter=lfs diff=lfs merge=lfs -text',
-        },
-      ];
-
-      expect(lfsFileExtensions.current).toEqual(['pdf']);
-
-      // Remove .gitattributes
-      gitConfigFiles.current = [{ path: '.gitignore', text: 'node_modules/' }];
-
-      expect(lfsFileExtensions.current).toEqual([]);
     });
   });
 });

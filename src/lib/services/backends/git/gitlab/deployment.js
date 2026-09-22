@@ -1,5 +1,4 @@
-import { repository } from '$lib/services/backends/git/gitlab/repository';
-import { getProjectId } from '$lib/services/backends/git/gitlab/workflow';
+import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { pickDeployment } from '$lib/services/backends/git/shared/deployment';

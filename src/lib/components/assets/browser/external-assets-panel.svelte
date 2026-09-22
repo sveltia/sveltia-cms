@@ -21,7 +21,7 @@
   import Breadcrumb from '$lib/components/common/breadcrumb.svelte';
   import { getFetchOptions } from '$lib/services/assets/external';
   import { fetchExternalAssetBlob } from '$lib/services/assets/external/data';
-  import { processFile } from '$lib/services/assets/process';
+  import { partitionProcessedFiles, processFile } from '$lib/services/assets/process';
   import { getDirName, getRelativePath, listSubfolders } from '$lib/services/assets/subfolders';
   import { cmsConfig } from '$lib/services/config';
   import { selectAssetsView } from '$lib/services/contents/editor';
@@ -223,16 +223,11 @@
     }
 
     const processed = await Promise.all(files.map((f) => processFile(f, allMediaLibraryOptions)));
+    const { validFiles, oversizedFiles, invalidFiles } = partitionProcessedFiles(processed);
 
-    files = processed
-      .filter(({ oversized, invalid }) => !oversized && !invalid)
-      .map(({ file }) => file);
-
-    oversizedFileNames = processed
-      .filter(({ oversized, invalid }) => oversized && !invalid)
-      .map(({ file }) => file.name);
-
-    invalidFileNames = processed.filter(({ invalid }) => invalid).map(({ file }) => file.name);
+    files = validFiles;
+    oversizedFileNames = oversizedFiles.map(({ name }) => name);
+    invalidFileNames = invalidFiles.map(({ name }) => name);
 
     if (oversizedFileNames.length || invalidFileNames.length) {
       showRejectedFilesAlert = true;

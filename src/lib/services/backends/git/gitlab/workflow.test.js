@@ -20,9 +20,18 @@ import { cmsConfig } from '$lib/services/config';
 
 vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 vi.mock('$lib/services/backends/git/gitlab/commits');
-vi.mock('$lib/services/backends/git/gitlab/repository', () => ({
-  repository: { owner: 'group/sub', repo: 'project', branch: 'main' },
-}));
+vi.mock('$lib/services/backends/git/gitlab/repository', () => {
+  const mockRepository = { owner: 'group/sub', repo: 'project', branch: 'main' };
+
+  return {
+    repository: mockRepository,
+    /**
+     * Get the project ID the same way the real module does.
+     * @returns {string} URL-encoded project path.
+     */
+    getProjectId: () => encodeURIComponent(`${mockRepository.owner}/${mockRepository.repo}`),
+  };
+});
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/config', () => ({ cmsConfig: { current: undefined } }));
 

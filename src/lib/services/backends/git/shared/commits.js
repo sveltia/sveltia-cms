@@ -4,7 +4,7 @@ import { user } from '$lib/services/user/account.svelte';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { CommitOptions, FileChange, User } from '$lib/types/private';
+ * @import { CommitOptions, FileChange, FileCommit, User } from '$lib/types/private';
  * @import { GitBackend } from '$lib/types/public';
  */
 
@@ -114,4 +114,23 @@ export const createCommitMessage = (
   }
 
   return message;
+};
+
+/**
+ * Merge the commit histories of several files into one list. A commit touching more than one of the
+ * files appears in each history, so only its first occurrence is kept.
+ * @param {FileCommit[]} commits Commits, possibly with duplicates.
+ * @returns {FileCommit[]} Unique commits, newest first.
+ */
+export const dedupeFileCommits = (commits) => {
+  /** @type {Map<string, FileCommit>} */
+  const commitMap = new Map();
+
+  commits.forEach((commit) => {
+    if (!commitMap.has(commit.sha)) {
+      commitMap.set(commit.sha, commit);
+    }
+  });
+
+  return [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
 };

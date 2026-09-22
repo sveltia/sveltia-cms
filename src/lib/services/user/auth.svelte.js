@@ -234,6 +234,23 @@ export const copyMagicLinkPrefs = (copiedPrefs) => {
 };
 
 /**
+ * Load the files and unpublished entries from the backend the user has just signed in to, then
+ * start keeping them up to date.
+ * @param {BackendService} _backend Backend.
+ */
+const loadRepositoryData = async (_backend) => {
+  // The pull requests don’t depend on the files, so they’re requested at the same time
+  const pullRequests = startLoadingPullRequests();
+
+  await _backend.fetchFiles();
+  await loadUnpublishedEntries(pullRequests);
+  // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI
+  initDeployments();
+  // From here on, someone else’s commits are picked up as they land
+  startRemoteChangePolling();
+};
+
+/**
  * Check if the user info is cached, set the backend, and automatically start loading files if the
  * backend is Git-based and user’s auth token is found.
  */
@@ -291,15 +308,7 @@ export const signInAutomatically = async () => {
   }
 
   try {
-    // The pull requests don’t depend on the files, so they’re requested at the same time
-    const pullRequests = startLoadingPullRequests();
-
-    await _backend.fetchFiles();
-    await loadUnpublishedEntries(pullRequests);
-    // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI
-    initDeployments();
-    // From here on, someone else’s commits are picked up as they land
-    startRemoteChangePolling();
+    await loadRepositoryData(_backend);
   } catch (/** @type {any} */ ex) {
     // The API request may fail if the cached token has been expired or revoked. Then let the user
     // sign in again. 404 Not Found is also considered an authentication error.
@@ -361,15 +370,7 @@ export const signInManually = async (_backendName, token) => {
   user.account = _user;
 
   try {
-    // The pull requests don’t depend on the files, so they’re requested at the same time
-    const pullRequests = startLoadingPullRequests();
-
-    await _backend.fetchFiles();
-    await loadUnpublishedEntries(pullRequests);
-    // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI
-    initDeployments();
-    // From here on, someone else’s commits are picked up as they land
-    startRemoteChangePolling();
+    await loadRepositoryData(_backend);
   } catch (/** @type {any} */ ex) {
     logError(ex, 'dataFetch');
     await clearUserCacheIfNeeded(ex);

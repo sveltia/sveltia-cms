@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import {
-  buildRenumberChanges,
-  renumberCollectionEntries,
-  reorderEntries,
-  sortEntriesByOrderField,
-} from '.';
+import { buildRenumberChanges, reorderEntries, sortEntriesByOrderField } from '.';
 
 vi.mock('$lib/services/backends', () => ({
   backend: { current: null },
@@ -298,24 +293,6 @@ describe('reorderEntries()', () => {
     expect(formatted.ja).toMatchObject({ title: 'あ', order: 1 });
   });
 
-  test('does not update the toast when called with silent option', async () => {
-    const { contentUpdatesToast } = await import('$lib/services/contents/collection/data');
-
-    contentUpdatesToast.current = /** @type {any} */ ({ marker: 'untouched' });
-
-    const collection = makeCollection();
-
-    const entries = [
-      makeEntry('b', { title: 'B', order: 2 }),
-      makeEntry('a', { title: 'A', order: 1 }),
-    ];
-
-    await reorderEntries(collection, entries, { silent: true });
-
-    // Toast state should not have been updated.
-    expect(contentUpdatesToast.current).toEqual({ marker: 'untouched' });
-  });
-
   test('handles a missing default locale in i18nSingleFileDefaultRoot mode', async () => {
     const collection = makeCollection({
       _i18n: {
@@ -365,184 +342,6 @@ describe('reorderEntries()', () => {
     expect(IndexedDB).toHaveBeenCalledWith('sveltia-cms-test', 'file-cache');
 
     backend.current = null;
-  });
-});
-
-describe('renumberCollectionEntries()', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test('returns 0 when collection is undefined', async () => {
-    expect(await renumberCollectionEntries(undefined)).toBe(0);
-  });
-
-  test('returns 0 for non-entry collections', async () => {
-    expect(await renumberCollectionEntries(/** @type {any} */ ({ _type: 'file' }))).toBe(0);
-  });
-
-  test('returns 0 when reorder is not enabled', async () => {
-    const collection = makeCollection({ _type: 'entry', reorder: false });
-
-    expect(await renumberCollectionEntries(collection)).toBe(0);
-  });
-
-  test('compacts gaps in the order field', async () => {
-    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
-
-    vi.mocked(getEntriesByCollection).mockReturnValue([
-      makeEntry('a', { title: 'A', order: 1 }),
-      makeEntry('c', { title: 'C', order: 5 }),
-      makeEntry('b', { title: 'B', order: 3 }),
-    ]);
-
-    const collection = makeCollection({ _type: 'entry' });
-    const result = await renumberCollectionEntries(collection);
-
-    // a stays at 1; b moves 3→2; c moves 5→3 → 2 entries updated.
-    expect(result).toBe(2);
-
-    const { saveChanges } = await import('$lib/services/backends/save');
-    const callArgs = vi.mocked(saveChanges).mock.calls[0][0];
-
-    expect(callArgs.savingEntries?.map((e) => e.locales._default.content.order)).toEqual([2, 3]);
-    expect(callArgs.savingEntries?.map((e) => e.slug)).toEqual(['b', 'c']);
-  });
-
-  test('places entries without a numeric order at the end', async () => {
-    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
-
-    vi.mocked(getEntriesByCollection).mockReturnValue([
-      makeEntry('noord1', { title: 'N1' }),
-      makeEntry('a', { title: 'A', order: 2 }),
-      makeEntry('noord2', { title: 'N2' }),
-      makeEntry('b', { title: 'B', order: 4 }),
-    ]);
-
-    const collection = makeCollection({ _type: 'entry' });
-
-    await renumberCollectionEntries(collection);
-
-    const { saveChanges } = await import('$lib/services/backends/save');
-    const callArgs = vi.mocked(saveChanges).mock.calls[0][0];
-
-    // Numeric-ordered entries first (a→1, b→2), then unordered ones (noord1→3, noord2→4).
-    expect(callArgs.savingEntries?.map((e) => [e.slug, e.locales._default.content.order])).toEqual([
-      ['a', 1],
-      ['b', 2],
-      ['noord1', 3],
-      ['noord2', 4],
-    ]);
-  });
-
-  test('returns 0 and does not save when nothing changes', async () => {
-    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
-
-    vi.mocked(getEntriesByCollection).mockReturnValue([
-      makeEntry('a', { title: 'A', order: 1 }),
-      makeEntry('b', { title: 'B', order: 2 }),
-    ]);
-
-    const collection = makeCollection({ _type: 'entry' });
-    const result = await renumberCollectionEntries(collection);
-
-    expect(result).toBe(0);
-
-    const { saveChanges } = await import('$lib/services/backends/save');
-
-    expect(saveChanges).not.toHaveBeenCalled();
-  });
-
-  test('preserves the original order of entries that all lack a numeric order', async () => {
-    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
-
-    vi.mocked(getEntriesByCollection).mockReturnValue([
-      makeEntry('x', { title: 'X' }),
-      makeEntry('y', { title: 'Y' }),
-      makeEntry('z', { title: 'Z' }),
-    ]);
-
-    const collection = makeCollection({ _type: 'entry' });
-
-    await renumberCollectionEntries(collection);
-
-    const { saveChanges } = await import('$lib/services/backends/save');
-    const callArgs = vi.mocked(saveChanges).mock.calls[0][0];
-
-    // The sort comparator returns 0 for these pairs; iteration order is preserved (1, 2, 3).
-    expect(callArgs.savingEntries?.map((e) => [e.slug, e.locales._default.content.order])).toEqual([
-      ['x', 1],
-      ['y', 2],
-      ['z', 3],
-    ]);
-  });
-
-  test('moves entries without a numeric order after ordered ones via the bHas comparator branch', async () => {
-    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
-
-    // Layout chosen so the v8 sort comparator is called with (noord, withOrder=3),
-    // exercising the `if (bHas) return 1` branch.
-    vi.mocked(getEntriesByCollection).mockReturnValue([
-      makeEntry('a', { title: 'A', order: 5 }),
-      makeEntry('noord', { title: 'N' }),
-      makeEntry('b', { title: 'B', order: 3 }),
-    ]);
-
-    const collection = makeCollection({ _type: 'entry' });
-
-    await renumberCollectionEntries(collection);
-
-    const { saveChanges } = await import('$lib/services/backends/save');
-    const callArgs = vi.mocked(saveChanges).mock.calls[0][0];
-
-    expect(callArgs.savingEntries?.map((e) => [e.slug, e.locales._default.content.order])).toEqual([
-      ['b', 1],
-      ['a', 2],
-      ['noord', 3],
-    ]);
-  });
-
-  test('excludes the index file from numbering', async () => {
-    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
-    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
-
-    vi.mocked(getIndexFile).mockReturnValueOnce(/** @type {any} */ ({ name: '_index' }));
-    vi.mocked(getEntriesByCollection).mockReturnValue([
-      makeEntry('_index', { title: 'Index', order: 99 }),
-      makeEntry('a', { title: 'A', order: 5 }),
-      makeEntry('b', { title: 'B', order: 7 }),
-    ]);
-
-    const collection = makeCollection({ _type: 'entry' });
-
-    await renumberCollectionEntries(collection);
-
-    const { saveChanges } = await import('$lib/services/backends/save');
-    const callArgs = vi.mocked(saveChanges).mock.calls[0][0];
-
-    // Only `a` and `b` should be renumbered to 1 and 2; `_index` is left alone.
-    expect(callArgs.savingEntries?.map((e) => e.slug)).toEqual(['a', 'b']);
-    expect(callArgs.savingEntries?.map((e) => e.locales._default.content.order)).toEqual([1, 2]);
-  });
-
-  test('does not produce a commit when string-typed order matches the target number', async () => {
-    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
-
-    // Order is stored as strings (e.g. coming from a number field saved as text). The compacted
-    // sequence is already 1,2 — so nothing needs to change.
-    vi.mocked(getEntriesByCollection).mockReturnValue([
-      makeEntry('a', { title: 'A', order: '1' }),
-      makeEntry('b', { title: 'B', order: '2' }),
-    ]);
-
-    const collection = makeCollection({ _type: 'entry' });
-    const result = await renumberCollectionEntries(collection);
-
-    expect(result).toBe(0);
-
-    const { saveChanges } = await import('$lib/services/backends/save');
-
-    expect(saveChanges).not.toHaveBeenCalled();
   });
 });
 
@@ -637,5 +436,30 @@ describe('sortEntriesByOrderField()', () => {
 
     expect(sorted).toEqual(entries);
     expect(sorted).not.toBe(entries);
+  });
+
+  test('sorts by the order value, with entries lacking one at the end in their input order', () => {
+    const unorderedA = makeEntry('x', { title: 'X' });
+    const second = makeEntry('b', { title: 'B', order: '2' });
+    const unorderedB = makeEntry('y', { title: 'Y', order: 'n/a' });
+    const first = makeEntry('a', { title: 'A', order: 1 });
+
+    expect(
+      sortEntriesByOrderField([unorderedA, second, unorderedB, first], makeCollection()),
+    ).toEqual([first, second, unorderedA, unorderedB]);
+  });
+
+  test('moves an entry without an order value after one that comes later with a value', () => {
+    // Laid out so the V8 comparator is called with (unordered, ordered), which is the branch the
+    // previous test doesn’t reach
+    const five = makeEntry('a', { title: 'A', order: 5 });
+    const unordered = makeEntry('n', { title: 'N' });
+    const three = makeEntry('b', { title: 'B', order: 3 });
+
+    expect(sortEntriesByOrderField([five, unordered, three], makeCollection())).toEqual([
+      three,
+      five,
+      unordered,
+    ]);
   });
 });

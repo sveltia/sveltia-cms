@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { getOrCreate, getOrCreateBounded } from './cache';
+import { getOrCreate, getOrCreateAsync, getOrCreateBounded, shareInFlight } from './cache';
 
 describe('Test getOrCreate()', () => {
   test('calls create and stores value when key is absent', () => {
@@ -169,5 +169,56 @@ describe('Test getOrCreateBounded()', () => {
 
     expect(cache.size).toBe(5);
     expect([...cache.keys()]).toEqual(['key-495', 'key-496', 'key-497', 'key-498', 'key-499']);
+  });
+});
+
+describe('Test shareInFlight()', () => {
+  test('shares a pending task, then forgets it once settled', async () => {
+    const cache = new Map();
+    let calls = 0;
+
+    /**
+     * Count the calls, resolving with the running total.
+     * @returns {Promise<number>} Number of calls so far.
+     */
+    const create = async () => {
+      calls += 1;
+
+      return calls;
+    };
+
+    const first = shareInFlight(cache, 'a', create);
+
+    expect(shareInFlight(cache, 'a', create)).toBe(first);
+    await expect(first).resolves.toBe(1);
+    expect(cache.has('a')).toBe(false);
+    await expect(shareInFlight(cache, 'a', create)).resolves.toBe(2);
+  });
+
+  test('forgets a failed task', async () => {
+    const cache = new Map();
+
+    await expect(shareInFlight(cache, 'a', () => Promise.reject(new Error('x')))).rejects.toThrow();
+    expect(cache.has('a')).toBe(false);
+  });
+});
+
+describe('Test getOrCreateAsync()', () => {
+  test('remembers a successful result', async () => {
+    const cache = new Map();
+    const first = getOrCreateAsync(cache, 'a', async () => 1);
+
+    await expect(first).resolves.toBe(1);
+    expect(getOrCreateAsync(cache, 'a', async () => 2)).toBe(first);
+  });
+
+  test('forgets a failure, so a later caller can try again', async () => {
+    const cache = new Map();
+
+    await expect(
+      getOrCreateAsync(cache, 'a', () => Promise.reject(new Error('x'))),
+    ).rejects.toThrow('x');
+    expect(cache.has('a')).toBe(false);
+    await expect(getOrCreateAsync(cache, 'a', async () => 2)).resolves.toBe(2);
   });
 });

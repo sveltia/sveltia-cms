@@ -1,3 +1,4 @@
+import { unique } from '@sveltia/utils/array';
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 
@@ -8,6 +9,7 @@ import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getField } from '$lib/services/contents/entry/fields';
+import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -197,38 +199,39 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
   }
 
   const isIndexFile = isCollectionIndexFile(collection, entry);
-  const seen = new Set();
 
   const assets = /** @type {Asset[]} */ (
-    Object.values(locales)
-      .flatMap(({ content }) =>
-        Object.entries(content ?? {}).map(([keyPath, value]) => {
-          if (typeof value === 'string' && (relative ? isRelativePath(value) : true)) {
-            const widget = getField({ collectionName, keyPath, isIndexFile })?.widget ?? 'string';
+    unique(
+      Object.values(locales)
+        .flatMap(({ content }) =>
+          Object.entries(content ?? {}).map(([keyPath, value]) => {
+            if (typeof value === 'string' && (relative ? isRelativePath(value) : true)) {
+              const widget = getField({ collectionName, keyPath, isIndexFile })?.widget ?? 'string';
 
-            if (widget !== 'image' && widget !== 'file') {
-              return undefined;
+              if (!MEDIA_FIELD_TYPES.includes(widget)) {
+                return undefined;
+              }
+
+              const asset = getAssetByPath({ value, entry, collectionName, fileName });
+
+              if (
+                asset &&
+                getAssetFoldersByPath(asset.path).some(
+                  (f) =>
+                    f.collectionName === collectionName &&
+                    f.fileName === fileName &&
+                    (relative ? f.entryRelative : true),
+                )
+              ) {
+                return asset;
+              }
             }
 
-            const asset = getAssetByPath({ value, entry, collectionName, fileName });
-
-            if (
-              asset &&
-              getAssetFoldersByPath(asset.path).some(
-                (f) =>
-                  f.collectionName === collectionName &&
-                  f.fileName === fileName &&
-                  (relative ? f.entryRelative : true),
-              )
-            ) {
-              return asset;
-            }
-          }
-
-          return undefined;
-        }),
-      )
-      .filter((value) => !!value && !seen.has(value) && (seen.add(value), true))
+            return undefined;
+          }),
+        )
+        .filter(Boolean),
+    )
   );
 
   // Add orphaned/unused entry-relative assets

@@ -101,3 +101,20 @@ export const processFile = async (
     invalid: false,
   };
 };
+
+/**
+ * Sort processed files by whether they can be uploaded. A file that is both invalid and oversized
+ * is reported as invalid only, as its size doesn’t matter once it can’t be uploaded anyway.
+ * @param {ProcessFileResult[]} results Results of {@link processFile}.
+ * @returns {{ validFiles: File[], oversizedFiles: File[], invalidFiles: File[] }} Processed files,
+ * grouped.
+ */
+export const partitionProcessedFiles = (results) => ({
+  validFiles: results
+    .filter(({ oversized, invalid }) => !oversized && !invalid)
+    .map(({ file }) => file),
+  oversizedFiles: results
+    .filter(({ oversized, invalid }) => oversized && !invalid)
+    .map(({ file }) => file),
+  invalidFiles: results.filter(({ invalid }) => invalid).map(({ file }) => file),
+});

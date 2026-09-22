@@ -3,9 +3,11 @@ import { generateRandomId, generateUUID, getHash } from '@sveltia/utils/crypto';
 import { isObject } from '@sveltia/utils/object';
 import { LocalStorage } from '@sveltia/utils/storage';
 
-import { apiConfig as sharedApiConfig } from '$lib/services/backends/git/shared/api';
+import {
+  requestAccessToken,
+  apiConfig as sharedApiConfig,
+} from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
-import { isSecureURL } from '$lib/services/utils/networking';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -23,6 +25,14 @@ import { createRawState } from '$lib/services/utils/state.svelte';
  * Whether the app is running in the authentication popup window.
  */
 export const inAuthPopup = createRawState(false);
+
+/**
+ * Create the error thrown when the user closes the authentication popup, which callers tell apart
+ * from a failure by its name.
+ * @returns {Error} Error.
+ */
+const createAbortError = () =>
+  Object.assign(new Error('Authentication aborted'), { name: 'AbortError' });
 
 /**
  * Open a popup window for authentication.
@@ -73,7 +83,7 @@ export const authorize = async ({ backendName, authURL, popup }) => {
             if (popup?.closed) {
               controller.abort();
               clearInterval(timer);
-              reject(Object.assign(new Error('Authentication aborted'), { name: 'AbortError' }));
+              reject(createAbortError());
             }
           }, 1000)
         : 0;
@@ -221,7 +231,7 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
   const popup = openPopup({ authURL: redirectURL });
 
   if (!popup) {
-    throw Object.assign(new Error('Authentication aborted'), { name: 'AbortError' });
+    throw createAbortError();
   }
 
   // Perform async operations after opening the popup
@@ -250,7 +260,7 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
 
   // Check if the popup was closed while we were doing async operations
   if (popup.closed) {
-    throw Object.assign(new Error('Authentication aborted'), { name: 'AbortError' });
+    throw createAbortError();
   }
 
   return authorize({
@@ -324,38 +334,21 @@ export const finishClientSideAuth = async ({ backendName, apiConfig, code, state
     });
   }
 
-  let response;
   let token = '';
   let refreshToken = '';
   let error = '';
 
-  if (!isSecureURL(tokenURL)) {
-    return sendMessage({
-      provider,
-      error: _('sign_in_error.TOKEN_REQUEST_FAILED'),
-      errorCode: 'TOKEN_REQUEST_FAILED',
-    });
-  }
-
-  try {
-    response = await fetch(tokenURL, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        client_id: clientId,
-        code,
-        redirect_uri: redirectURL,
-        code_verifier: codeVerifier,
-      }),
-      ...(includeCredentials && { credentials: 'include' }),
-    });
-  } catch {
-    //
-  }
+  const response = await requestAccessToken(
+    tokenURL,
+    {
+      grant_type: 'authorization_code',
+      client_id: clientId,
+      code,
+      redirect_uri: redirectURL,
+      code_verifier: codeVerifier,
+    },
+    { includeCredentials },
+  );
 
   if (!response) {
     return sendMessage({

@@ -7,6 +7,8 @@ import {
   indexContent,
 } from '$lib/services/contents/entry/content-index';
 import { getFieldKind, isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
+import { deleteSubtree, isPlaceholder } from '$lib/services/contents/entry/subtree';
 import { STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
@@ -59,31 +61,6 @@ import { getLocalizedRelationValue } from '$lib/services/contents/fields/relatio
 const OPAQUE_FIELD_TYPES = ['code', 'hidden', 'keyvalue'];
 
 /**
- * Check whether the value is an empty object or array. The `flat` library uses these as
- * placeholders that its `unflatten()` fills in from the child key paths, so unlike any other value
- * stored alongside children, they are harmless.
- * @param {any} value Value to check.
- * @returns {boolean} Result.
- */
-const isPlaceholder = (value) =>
-  (Array.isArray(value) && !value.length) || (isObject(value) && !Object.keys(value).length);
-
-/**
- * Delete a value stored at the given key path along with everything below it.
- * @param {FlattenedEntryContent} content Flattened entry content, modified in place.
- * @param {FieldKeyPath} keyPath Key path.
- */
-const discardValue = (content, keyPath) => {
-  const prefix = `${keyPath}.`;
-
-  Object.keys(content).forEach((key) => {
-    if (key === keyPath || key.startsWith(prefix)) {
-      delete content[key];
-    }
-  });
-};
-
-/**
  * Drop a value stored at a key path that also has children. `unflatten()` lets such a value win and
  * silently throws the children away, so an Object field whose file value is a plain string would
  * lose everything the user typed into its sub-fields on the next save.
@@ -111,11 +88,11 @@ const reconcileScalarValue = ({ field, fieldType, keyPath, content, index }) => 
     if (firstItemIndex !== undefined) {
       const firstItem = content[`${keyPath}.${firstItemIndex}`];
 
-      discardValue(content, keyPath);
+      deleteSubtree(content, keyPath);
       content[keyPath] = firstItem;
     } else {
       // The file holds an object where a single value is expected; there is nothing to salvage
-      discardValue(content, keyPath);
+      deleteSubtree(content, keyPath);
 
       return false;
     }
@@ -125,7 +102,7 @@ const reconcileScalarValue = ({ field, fieldType, keyPath, content, index }) => 
 
   // An empty object or array is as good as no value at all
   if (isObject(value) || Array.isArray(value)) {
-    discardValue(content, keyPath);
+    deleteSubtree(content, keyPath);
 
     return false;
   }
@@ -193,7 +170,7 @@ const reconcileListValue = ({ keyPath, content, index, hasSubFields }) => {
 
   // Non-numeric children: the file holds an object where a list is expected
   if (hasChildKeys(index, keyPath)) {
-    discardValue(content, keyPath);
+    deleteSubtree(content, keyPath);
 
     return false;
   }
@@ -214,7 +191,7 @@ const reconcileListValue = ({ keyPath, content, index, hasSubFields }) => {
     return true;
   }
 
-  discardValue(content, keyPath);
+  deleteSubtree(content, keyPath);
 
   return false;
 };
@@ -237,7 +214,7 @@ const reconcileObjectValue = ({ keyPath, content, index }) => {
   }
 
   // A scalar or an empty object where sub-values are expected
-  discardValue(content, keyPath);
+  deleteSubtree(content, keyPath);
 
   return false;
 };
@@ -306,11 +283,7 @@ const copyFromDefaultLocale = ({
   locale,
   defaultLocale,
 }) => {
-  const prefix = `${keyPath}.`;
-
-  const keys = Object.keys(defaultLocaleContent).filter(
-    (key) => key === keyPath || key.startsWith(prefix),
-  );
+  const keys = Object.keys(defaultLocaleContent).filter((key) => isKeyPathWithin(key, keyPath));
 
   keys.forEach((key) => {
     // The copied value may be a Relation field value holding the source locale as a prefix, which

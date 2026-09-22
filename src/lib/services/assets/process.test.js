@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { processFile } from './process';
+import { partitionProcessedFiles, processFile } from './process';
 
 vi.mock('$lib/services/assets/info', () => ({
   hasCachedThumbnail: vi.fn(async () => false),
@@ -369,6 +369,27 @@ describe('assets/process', () => {
       expect(result.file).toBe(transformed);
       expect(result.originalFile?.name).toBe('big-file.jpg');
       expect(result.oversized).toBe(true);
+    });
+  });
+
+  describe('partitionProcessedFiles', () => {
+    it('should group the files by whether they can be uploaded', () => {
+      const [valid, oversized, invalid, both] = ['a', 'b', 'c', 'd'].map(
+        (name) => new File([], name),
+      );
+
+      expect(
+        partitionProcessedFiles([
+          { file: valid, originalFile: undefined, oversized: false, invalid: false },
+          { file: oversized, originalFile: undefined, oversized: true, invalid: false },
+          { file: invalid, originalFile: undefined, oversized: false, invalid: true },
+          { file: both, originalFile: undefined, oversized: true, invalid: true },
+        ]),
+      ).toEqual({
+        validFiles: [valid],
+        oversizedFiles: [oversized],
+        invalidFiles: [invalid, both],
+      });
     });
   });
 });

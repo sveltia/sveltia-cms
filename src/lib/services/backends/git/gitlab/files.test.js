@@ -14,6 +14,7 @@ import {
 import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
+  getProjectId,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -41,6 +42,7 @@ describe('GitLab files service', () => {
     vi.mocked(repository).repo = 'test-repo';
     vi.mocked(repository).branch = 'main';
     vi.mocked(repository).owner = 'test-owner';
+    vi.mocked(getProjectId).mockReturnValue(encodeURIComponent('test-owner/test-repo'));
   });
 
   describe('fetchFileList', () => {

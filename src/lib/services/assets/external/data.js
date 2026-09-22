@@ -11,7 +11,7 @@ import {
   selectedExternalAssets,
   selectedExternalDirPath,
 } from '$lib/services/assets/external';
-import { processFile } from '$lib/services/assets/process';
+import { partitionProcessedFiles, processFile } from '$lib/services/assets/process';
 import { cmsConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { createDeepState, createRawState } from '$lib/services/utils/state.svelte';
@@ -227,16 +227,9 @@ export const uploadExternalAssets = async (files, { originalAsset } = {}) => {
   const service = selectedCloudService.current;
   const sharedOptions = getSharedMediaLibraryOptions();
   const processed = await Promise.all(files.map((file) => processFile(file, sharedOptions)));
-
-  const validFiles = processed
-    .filter(({ oversized, invalid }) => !oversized && !invalid)
-    .map(({ file }) => file);
-
-  const oversizedFileNames = processed
-    .filter(({ oversized, invalid }) => oversized && !invalid)
-    .map(({ file }) => file.name);
-
-  const invalidFileNames = processed.filter(({ invalid }) => invalid).map(({ file }) => file.name);
+  const { validFiles, oversizedFiles, invalidFiles } = partitionProcessedFiles(processed);
+  const oversizedFileNames = oversizedFiles.map(({ name }) => name);
+  const invalidFileNames = invalidFiles.map(({ name }) => name);
 
   if (service && validFiles.length) {
     externalAssetsToast.current = {

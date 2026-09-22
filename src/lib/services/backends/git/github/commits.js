@@ -4,7 +4,7 @@ import { encodeBase64 } from '@sveltia/utils/file';
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
+import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -265,25 +265,19 @@ export const fetchFileCommits = async (paths) => {
   `;
 
   const data = /** @type {{ repository: Record<string, any> }} */ (await fetchGraphQL(query));
-  /** @type {Map<string, FileCommit>} */
-  const commitMap = new Map();
 
-  paths.forEach((_path, i) => {
-    const nodes = data.repository[`history_${i}`]?.target?.history?.nodes ?? [];
-
-    nodes.forEach((/** @type {any} */ node) => {
-      if (!commitMap.has(node.oid)) {
-        commitMap.set(node.oid, {
+  return dedupeFileCommits(
+    paths.flatMap((_path, i) =>
+      (data.repository[`history_${i}`]?.target?.history?.nodes ?? []).map(
+        (/** @type {any} */ node) => ({
           sha: node.oid,
           authorName: node.author.name,
           authorEmail: node.author.email,
           authorAvatarURL: node.author.avatarUrl,
           authorLogin: node.author.user?.login,
           date: new Date(node.committedDate),
-        });
-      }
-    });
-  });
-
-  return [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
+        }),
+      ),
+    ),
+  );
 };

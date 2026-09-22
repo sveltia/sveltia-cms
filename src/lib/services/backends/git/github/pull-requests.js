@@ -28,6 +28,37 @@ export const MAX_ITEMS = {
 };
 
 /**
+ * Convert the changed files of a pull request, as listed by the GraphQL API, to workflow files.
+ * @param {{ path: string, changeType: string }[]} nodes File nodes.
+ * @returns {WorkflowFile[]} Files.
+ */
+export const parseFileNodes = (nodes) =>
+  nodes.map(({ path, changeType }) => ({
+    path,
+    sha: '',
+    size: 0,
+    deleted: changeType === 'DELETED',
+    // The previous path of a renamed file isn’t available here; it’s filled in by
+    // {@link fetchPullRequestFileList}
+    renamed: changeType === 'RENAMED',
+  }));
+
+/**
+ * Convert the changed files of a pull request or comparison, as listed by the REST API, to workflow
+ * files.
+ * @param {Record<string, any>[]} files Files.
+ * @returns {WorkflowFile[]} Files.
+ */
+export const parseRestFiles = (files) =>
+  files.map(({ filename, status, previous_filename: previousPath }) => ({
+    path: filename,
+    sha: '',
+    size: 0,
+    deleted: status === 'removed',
+    previousPath,
+  }));
+
+/**
  * Re-fetch the list of files changed in the given pull request with the REST API, which is the only
  * one that reports the path a renamed file had before. The GraphQL API used by
  * `fetchPullRequests()` has a `RENAMED` change type but no matching previous-path field, so
@@ -45,13 +76,7 @@ export const fetchPullRequestFileList = async (pullRequest) => {
     )
   );
 
-  pullRequest.files = files.map(({ filename, status, previous_filename: previousPath }) => ({
-    path: filename,
-    sha: '',
-    size: 0,
-    deleted: status === 'removed',
-    previousPath,
-  }));
+  pullRequest.files = parseRestFiles(files);
 };
 
 /**

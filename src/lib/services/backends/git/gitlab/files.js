@@ -6,6 +6,7 @@ import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
+  getProjectId,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
@@ -294,7 +295,7 @@ export const fetchFiles = async () => {
  * @see https://docs.gitlab.com/api/repository_files/#get-raw-file-from-repository
  */
 export const fetchBlob = async (asset) => {
-  const { owner, repo, branch = '' } = repository;
+  const { branch = '' } = repository;
   const { path, workflow } = asset;
   // An asset attached to an unpublished entry is committed to a workflow branch only, so it has to
   // be read from there; on the configured branch the path is missing or holds the published version
@@ -302,7 +303,7 @@ export const fetchBlob = async (asset) => {
 
   return /** @type {Promise<Blob>} */ (
     fetchAPI(
-      `/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/files` +
+      `/projects/${getProjectId()}/repository/files` +
         `/${encodeURIComponent(path)}/raw?lfs=true&ref=${encodeURIComponent(ref)}`,
       { responseType: 'blob' },
     )

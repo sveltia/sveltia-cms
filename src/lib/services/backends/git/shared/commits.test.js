@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createCommitMessage, hasSkipCIMarker } from './commits';
+import { createCommitMessage, dedupeFileCommits, hasSkipCIMarker } from './commits';
 
 const mockCmsConfig = vi.hoisted(() => ({
   backend: {
@@ -728,5 +728,15 @@ describe('git/shared/commits', () => {
         },
       );
     });
+  });
+});
+
+describe('dedupeFileCommits()', () => {
+  it('keeps the first occurrence of each commit and sorts them newest first', () => {
+    const older = { sha: 'a', authorName: 'A', date: new Date('2026-01-01') };
+    const newer = { sha: 'b', authorName: 'B', date: new Date('2026-02-01') };
+    const duplicate = { ...older, authorName: 'Duplicate' };
+
+    expect(dedupeFileCommits([older, newer, duplicate])).toEqual([newer, older]);
   });
 });

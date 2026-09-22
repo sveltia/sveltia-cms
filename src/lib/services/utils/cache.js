@@ -52,3 +52,37 @@ export const getOrCreateBounded = (cache, key, create, maxSize) => {
 
   return value;
 };
+
+/**
+ * Run an asynchronous task, letting concurrent callers with the same key share it. The promise is
+ * only cached while the task is in flight, so a caller coming after it has settled starts anew.
+ * @template K, V
+ * @param {Map<K, Promise<V>>} cache Cache of the tasks in flight.
+ * @param {K} key Cache key.
+ * @param {() => Promise<V>} create Function starting the task.
+ * @returns {Promise<V>} Result of the task.
+ */
+export const shareInFlight = (cache, key, create) =>
+  getOrCreate(cache, key, () =>
+    create().finally(() => {
+      cache.delete(key);
+    }),
+  );
+
+/**
+ * Run an asynchronous task once per key and remember its result. A failure isn’t remembered, so a
+ * later caller can try again.
+ * @template K, V
+ * @param {Map<K, Promise<V>>} cache Cache of the tasks.
+ * @param {K} key Cache key.
+ * @param {() => Promise<V>} create Function starting the task.
+ * @returns {Promise<V>} Result of the task.
+ */
+export const getOrCreateAsync = (cache, key, create) =>
+  getOrCreate(cache, key, () =>
+    create().catch((ex) => {
+      cache.delete(key);
+
+      throw ex;
+    }),
+  );

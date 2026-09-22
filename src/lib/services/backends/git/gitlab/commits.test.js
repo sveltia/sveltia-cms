@@ -16,15 +16,23 @@ vi.mock('@sveltia/i18n', () => ({
   locale: { current: 'en', set: vi.fn() },
   dictionary: {},
 }));
-vi.mock('$lib/services/backends/git/gitlab/repository', () => ({
-  repository: {
-    repo: 'test-repo',
-    branch: 'main',
-    owner: 'test-owner',
-  },
-}));
+vi.mock('$lib/services/backends/git/gitlab/repository', () => {
+  const mockRepository = { repo: 'test-repo', branch: 'main', owner: 'test-owner' };
+
+  return {
+    repository: mockRepository,
+    /**
+     * Get the project ID the same way the real module does.
+     * @returns {string} URL-encoded project path.
+     */
+    getProjectId: () => encodeURIComponent(`${mockRepository.owner}/${mockRepository.repo}`),
+  };
+});
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/backends/git/shared/commits');
+vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
+  dedupeFileCommits: /** @type {any} */ (await importOriginal()).dedupeFileCommits,
+  createCommitMessage: vi.fn(),
+}));
 vi.mock('$lib/services/utils/file', () => ({
   getGitHash: vi.fn(),
 }));

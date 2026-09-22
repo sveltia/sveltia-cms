@@ -4,6 +4,7 @@ import { suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
+import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getDuplicateKeysFieldKeyPaths } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
 
@@ -107,7 +108,7 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
     // Remove the field if i18n is disabled
     if (
       [false, 'none'].includes(i18n) ||
-      noI18nFieldKeys.some((key) => keyPath === key || keyPath.startsWith(`${key}.`))
+      noI18nFieldKeys.some((key) => isKeyPathWithin(keyPath, key))
     ) {
       delete newContent[keyPath];
       noI18nFieldKeys.push(keyPath);

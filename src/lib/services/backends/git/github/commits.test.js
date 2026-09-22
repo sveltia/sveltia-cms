@@ -16,7 +16,8 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
 vi.mock('$lib/services/backends/git/github/fork');
 vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/backends/git/shared/commits', () => ({
+vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
+  dedupeFileCommits: /** @type {any} */ (await importOriginal()).dedupeFileCommits,
   createCommitMessage: vi.fn().mockReturnValue('Test commit message'),
 }));
 vi.mock('$lib/services/backends/git/shared/fetch', () => ({

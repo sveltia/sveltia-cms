@@ -1,6 +1,8 @@
 import { getAssetBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
+import { isMediaKind } from '$lib/services/assets/kinds';
 import { backend } from '$lib/services/backends';
 import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
+import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getMediaMetadata } from '$lib/services/utils/media';
 
 /**
@@ -47,7 +49,7 @@ export const defaultAssetDetails = {
 const collectMediaMetadata = async (asset) => {
   const { kind } = asset;
 
-  if (!['image', 'video', 'audio'].includes(kind)) {
+  if (!isMediaKind(kind)) {
     return {};
   }
 
@@ -69,19 +71,7 @@ const getMediaMetadataOnce = (asset) => {
     return collectMediaMetadata(asset);
   }
 
-  let pending = cachedMetadata.get(sha);
-
-  if (!pending) {
-    pending = collectMediaMetadata(asset).catch((ex) => {
-      cachedMetadata.delete(sha);
-
-      throw ex;
-    });
-
-    cachedMetadata.set(sha, pending);
-  }
-
-  return pending;
+  return getOrCreateAsync(cachedMetadata, sha, () => collectMediaMetadata(asset));
 };
 
 /**

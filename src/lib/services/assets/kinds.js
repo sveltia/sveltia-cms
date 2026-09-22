@@ -41,15 +41,24 @@ const MEDIA_TYPE_REGEX = /^(?<type>image|video|audio)\//;
 export const isMediaKind = (kind) => /** @type {string[]} */ (MEDIA_KINDS).includes(kind);
 
 /**
+ * Whether a file of the given kind and name can be previewed: a media file, a PDF document or a
+ * plaintext file.
+ * @param {string} kind Kind, e.g. `image` or `document`.
+ * @param {string} fileName File name or path, e.g. `images/photo.jpg`.
+ * @returns {boolean} Result.
+ */
+export const canPreviewFile = (kind, fileName) => {
+  const type = mime.getType(fileName);
+
+  return isMediaKind(kind) || type === 'application/pdf' || (!!type && isTextFileType(type));
+};
+
+/**
  * Whether the given asset is previewable.
  * @param {Asset} asset Asset.
  * @returns {boolean} Result.
  */
-export const canPreviewAsset = (asset) => {
-  const type = mime.getType(asset.path);
-
-  return isMediaKind(asset.kind) || type === 'application/pdf' || (!!type && isTextFileType(type));
-};
+export const canPreviewAsset = (asset) => canPreviewFile(asset.kind, asset.path);
 
 /**
  * Get the media kind of the given MIME type.

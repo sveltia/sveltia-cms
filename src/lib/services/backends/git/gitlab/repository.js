@@ -15,6 +15,17 @@ import { user } from '$lib/services/user/account.svelte';
 export const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 
 /**
+ * Get the URL-encoded project identifier used in the REST API paths, e.g. the `group/project` path
+ * with the slash percent-encoded.
+ * @returns {string} Project ID.
+ */
+export const getProjectId = () => {
+  const { owner, repo } = repository;
+
+  return encodeURIComponent(`${owner}/${repo}`);
+};
+
+/**
  * Generate base URLs for accessing the repository’s resources.
  * @param {string} repoURL The base URL of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
@@ -35,9 +46,9 @@ export const getBaseURLs = (repoURL, branch) => ({
  * @see https://docs.gitlab.com/api/service_accounts/#list-all-project-service-accounts
  */
 export const checkRepositoryAccess = async () => {
-  const { owner, repo } = repository;
+  const { repo } = repository;
   const { id, login, bot } = /** @type {User} */ (user.account);
-  const baseURL = `/projects/${encodeURIComponent(`${owner}/${repo}`)}`;
+  const baseURL = `/projects/${getProjectId()}`;
   const url = bot ? `${baseURL}/service_accounts` : `${baseURL}/users?search=${login}`;
 
   const response = /** @type {Response} */ (

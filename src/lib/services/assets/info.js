@@ -4,6 +4,7 @@ import mime from 'mime';
 
 import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
+import { THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
 import { backend } from '$lib/services/backends';
 import {
   TEMPLATE_TAG_REGEX,
@@ -12,6 +13,7 @@ import {
 import { cmsConfig } from '$lib/services/config';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { getMergedLibraryOptions } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
+import { shareInFlight } from '$lib/services/utils/cache';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { createPath, createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
 import { createInertSVG } from '$lib/services/utils/media/image/svg';
@@ -107,19 +109,7 @@ const cacheAssetBlob = async (asset, blob) => {
  * @param {() => Promise<Blob>} download Function that performs the download.
  * @returns {Promise<Blob>} Blob.
  */
-const downloadOnce = (key, download) => {
-  let pending = pendingAssetBlobs.get(key);
-
-  if (!pending) {
-    pending = download().finally(() => {
-      pendingAssetBlobs.delete(key);
-    });
-
-    pendingAssetBlobs.set(key, pending);
-  }
-
-  return pending;
-};
+const downloadOnce = (key, download) => shareInFlight(pendingAssetBlobs, key, download);
 
 /**
  * Download the given asset from the backend.
@@ -272,33 +262,26 @@ export const hasCachedThumbnail = async (sha) => {
 export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) => {
   const isPDF = asset.name.endsWith('.pdf');
 
-  if (!(['image', 'video'].includes(asset.kind) || isPDF)) {
+  if (!(THUMBNAIL_KINDS.includes(asset.kind) || isPDF)) {
     return undefined;
   }
 
   initThumbnailDB();
 
   const { sha } = asset;
-  let pending = pendingThumbnailBlobs.get(sha);
 
-  if (!pending) {
-    if (cacheOnly) {
-      // Nothing is being generated for this asset, so stick to a cache lookup as requested
-      const cachedBlob = await thumbnailDB?.get(sha);
+  if (cacheOnly && !pendingThumbnailBlobs.has(sha)) {
+    // Nothing is being generated for this asset, so stick to a cache lookup as requested
+    const cachedBlob = await thumbnailDB?.get(sha);
 
-      return cachedBlob ? URL.createObjectURL(cachedBlob) : undefined;
-    }
-
-    pending = resolveThumbnailBlob(asset, isPDF).finally(() => {
-      pendingThumbnailBlobs.delete(sha);
-    });
-
-    pendingThumbnailBlobs.set(sha, pending);
+    return cachedBlob ? URL.createObjectURL(cachedBlob) : undefined;
   }
 
   // A `cacheOnly` caller joins an in-flight resolution rather than reading the database again: the
   // work is already happening, so waiting for it costs nothing extra
-  const thumbnailBlob = await pending;
+  const thumbnailBlob = await shareInFlight(pendingThumbnailBlobs, sha, () =>
+    resolveThumbnailBlob(asset, isPDF),
+  );
 
   return thumbnailBlob ? URL.createObjectURL(thumbnailBlob) : undefined;
 };

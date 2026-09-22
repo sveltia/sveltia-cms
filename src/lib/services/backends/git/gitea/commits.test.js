@@ -26,7 +26,8 @@ vi.mock('@sveltia/utils/file', () => ({
   encodeBase64: encodeBase64Mock,
 }));
 
-vi.mock('$lib/services/backends/git/shared/commits', () => ({
+vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
+  dedupeFileCommits: /** @type {any} */ (await importOriginal()).dedupeFileCommits,
   createCommitMessage: createCommitMessageMock,
 }));
 

@@ -130,12 +130,9 @@ const buildReorderChanges = async (collection, orderedEntries, { cacheDB } = {})
  * @param {InternalEntryCollection} collection Entry collection.
  * @param {Entry[]} orderedEntries Entries in the desired display order. The new order value
  * assigned to each entry is its 1-based index in this list.
- * @param {object} [options] Options.
- * @param {boolean} [options.silent] When `true`, do not update the {@link contentUpdatesToast}
- * store. Useful for follow-up renumbering done as part of another operation (e.g. delete).
  * @returns {Promise<number>} Number of entries actually updated.
  */
-export const reorderEntries = async (collection, orderedEntries, { silent = false } = {}) => {
+export const reorderEntries = async (collection, orderedEntries) => {
   const { changes, savingEntries } = await buildReorderChanges(collection, orderedEntries);
 
   if (!changes.length) {
@@ -148,13 +145,11 @@ export const reorderEntries = async (collection, orderedEntries, { silent = fals
     options: { commitType: 'update', collection },
   });
 
-  if (!silent) {
-    contentUpdatesToast.current = {
-      ...UPDATE_TOAST_DEFAULT_STATE,
-      saved: true,
-      count: savingEntries.length,
-    };
-  }
+  contentUpdatesToast.current = {
+    ...UPDATE_TOAST_DEFAULT_STATE,
+    saved: true,
+    count: savingEntries.length,
+  };
 
   return savingEntries.length;
 };
@@ -210,19 +205,4 @@ export const buildRenumberChanges = async (
     computeRenumberedEntries(collection, { excludeIds, updatedEntries }),
     { cacheDB },
   );
-};
-
-/**
- * Renumber the remaining entries in a collection after one or more entries have been deleted, so
- * that the order field stays compact (1, 2, 3, …). Entries currently lacking a valid numeric order
- * are placed at the end. Does nothing if the collection does not have reordering enabled.
- * @param {InternalEntryCollection | undefined} collection Entry collection.
- * @returns {Promise<number>} Number of entries actually updated.
- */
-export const renumberCollectionEntries = async (collection) => {
-  if (!collection || collection._type !== 'entry' || !getOrderFieldKey(collection)) {
-    return 0;
-  }
-
-  return reorderEntries(collection, computeRenumberedEntries(collection), { silent: true });
 };

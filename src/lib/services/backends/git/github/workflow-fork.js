@@ -7,6 +7,8 @@ import {
   fetchPullRequestFileList,
   fetchPullRequestFiles,
   MAX_ITEMS,
+  parseFileNodes,
+  parseRestFiles,
   reopenPullRequest,
   updateDraftState,
 } from '$lib/services/backends/git/github/pull-requests';
@@ -179,17 +181,7 @@ export const parseForkBranch = (node, branch, pullRequest) => {
     // branch without one, but it answers with a diff of every file, so it’s worth avoiding where
     // the paths are already at hand. A closed pull request is left to the comparison as well: its
     // diff is no longer a reliable account of a branch that has moved on since
-    files: isOpen
-      ? (current.files?.nodes ?? []).map((/** @type {any} */ { path, changeType }) => ({
-          path,
-          sha: '',
-          size: 0,
-          deleted: changeType === 'DELETED',
-          // The previous path of a renamed file isn’t available here; it’s filled in by
-          // {@link fetchPullRequestFileList}
-          renamed: changeType === 'RENAMED',
-        }))
-      : [],
+    files: isOpen ? parseFileNodes(current.files?.nodes ?? []) : [],
   };
 };
 
@@ -272,13 +264,7 @@ export const fetchForkBranchFileList = async (pullRequest) => {
     )
   );
 
-  pullRequest.files = files.map(({ filename, status, previous_filename: previousPath }) => ({
-    path: filename,
-    sha: '',
-    size: 0,
-    deleted: status === 'removed',
-    previousPath,
-  }));
+  pullRequest.files = parseRestFiles(files);
 };
 
 /**

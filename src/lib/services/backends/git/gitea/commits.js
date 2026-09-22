@@ -3,7 +3,7 @@ import { encodeBase64 } from '@sveltia/utils/file';
 
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
+import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -114,21 +114,14 @@ export const fetchFileCommits = async (paths) => {
     ),
   );
 
-  /** @type {Map<string, FileCommit>} */
-  const commitMap = new Map();
-
-  results.flat().forEach((commit) => {
-    if (!commitMap.has(commit.sha)) {
-      commitMap.set(commit.sha, {
-        sha: commit.sha,
-        authorName: commit.commit?.author?.name ?? '',
-        authorEmail: commit.commit?.author?.email,
-        authorAvatarURL: commit.author?.avatar_url,
-        authorLogin: commit.author?.login,
-        date: new Date(commit.commit?.author?.date ?? commit.created),
-      });
-    }
-  });
-
-  return [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
+  return dedupeFileCommits(
+    results.flat().map((commit) => ({
+      sha: commit.sha,
+      authorName: commit.commit?.author?.name ?? '',
+      authorEmail: commit.commit?.author?.email,
+      authorAvatarURL: commit.author?.avatar_url,
+      authorLogin: commit.author?.login,
+      date: new Date(commit.commit?.author?.date ?? commit.created),
+    })),
+  );
 };

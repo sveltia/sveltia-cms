@@ -1,5 +1,6 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
 
 /**
@@ -31,7 +32,7 @@ const populateMissingSubfields = ({ content, itemKeyPath, fields, funcArgs }) =>
     const subfieldKeyPath = `${itemKeyPath}.${subfield.name}`;
 
     // An Object or List subfield given in the item is held under its child key paths
-    if (keys.some((key) => key === subfieldKeyPath || key.startsWith(`${subfieldKeyPath}.`))) {
+    if (keys.some((key) => isKeyPathWithin(key, subfieldKeyPath))) {
       return;
     }
 

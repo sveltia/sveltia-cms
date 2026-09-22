@@ -242,7 +242,7 @@ describe('GitHub Editorial Workflow service', () => {
      * Mock the base query that supplies the repository node ID and the configured branch head.
      */
     const mockBase = () => {
-      vi.mocked(fetchGraphQL).mockResolvedValue({
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
         fork: { id: 'R_1' },
         base: { ref: { target: { oid: 'abc' } } },
       });
@@ -250,22 +250,15 @@ describe('GitHub Editorial Workflow service', () => {
 
     test('creates the reference with a mutation, which never returns a failed HTTP status', async () => {
       mockBase();
-      vi.mocked(fetchAPI).mockResolvedValue({ data: { createRef: { ref: { name: 'x' } } } });
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({ createRef: { ref: { name: 'x' } } });
 
       await expect(createBranch('cms/posts/hello')).resolves.toBe('abc');
 
-      expect(fetchAPI).toHaveBeenCalledWith('', {
-        method: 'POST',
-        isGraphQL: true,
-        body: {
-          query: expect.stringContaining('createRef'),
-          variables: {
-            input: {
-              repositoryId: 'R_1',
-              name: 'refs/heads/cms/posts/hello',
-              oid: 'abc',
-            },
-          },
+      expect(fetchGraphQL).toHaveBeenLastCalledWith(expect.stringContaining('createRef'), {
+        input: {
+          repositoryId: 'R_1',
+          name: 'refs/heads/cms/posts/hello',
+          oid: 'abc',
         },
       });
     });
@@ -286,12 +279,13 @@ describe('GitHub Editorial Workflow service', () => {
     const mockExisting = (totalCount) => {
       vi.mocked(fetchGraphQL)
         .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
+        .mockRejectedValueOnce(alreadyExists)
         .mockResolvedValueOnce({ repository: { pullRequests: { totalCount } } });
     };
 
     test('resets an existing reference that has no open pull request', async () => {
       mockExisting(0);
-      vi.mocked(fetchAPI).mockRejectedValueOnce(alreadyExists).mockResolvedValueOnce({});
+      vi.mocked(fetchAPI).mockResolvedValueOnce({});
 
       // The branch is left behind by an earlier pull request for the same entry — one merged
       // without deleting the branch, or closed on GitHub rather than discarded in the CMS. Starting
@@ -315,30 +309,30 @@ describe('GitHub Editorial Workflow service', () => {
 
     test('keeps an existing reference that has an open pull request', async () => {
       mockExisting(1);
-      vi.mocked(fetchAPI).mockRejectedValueOnce(alreadyExists);
 
       // The load didn’t pick the pull request up — its label is gone, or it’s beyond the number
       // fetched — but it’s someone’s work in progress, which is committed onto rather than wiped
       await expect(createBranch('cms/posts/hello')).resolves.toBeUndefined();
 
-      expect(fetchAPI).toHaveBeenCalledTimes(1);
+      expect(fetchAPI).not.toHaveBeenCalled();
     });
 
     test('keeps an existing reference with Open Authoring', async () => {
       mockStores({ fork: { owner: 'contributor', repo: 'repo' } });
       mockBase();
-      vi.mocked(fetchAPI).mockRejectedValueOnce(alreadyExists);
+      vi.mocked(fetchGraphQL).mockRejectedValueOnce(alreadyExists);
 
       // A draft is a branch without a pull request, so a leftover can’t be told from a live one
       await expect(createBranch('cms/posts/hello')).resolves.toBeUndefined();
 
-      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
-      expect(fetchAPI).toHaveBeenCalledTimes(1);
+      // The base query and the mutation, but no pull request lookup
+      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+      expect(fetchAPI).not.toHaveBeenCalled();
     });
 
     test('rethrows any other mutation error', async () => {
       mockBase();
-      vi.mocked(fetchAPI).mockRejectedValue(
+      vi.mocked(fetchGraphQL).mockRejectedValueOnce(
         new Error('Server responded with an error', {
           cause: { status: 200, message: 'Resource not accessible by integration' },
         }),
@@ -349,7 +343,7 @@ describe('GitHub Editorial Workflow service', () => {
 
     test('rethrows an error that carries no cause', async () => {
       mockBase();
-      vi.mocked(fetchAPI).mockRejectedValue(new Error('Failed to send the request'));
+      vi.mocked(fetchGraphQL).mockRejectedValueOnce(new Error('Failed to send the request'));
 
       await expect(createBranch('cms/posts/hello')).rejects.toThrow('Failed to create the branch.');
     });
@@ -385,7 +379,6 @@ describe('GitHub Editorial Workflow service', () => {
       });
       vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
       vi.mocked(fetchAPI)
-        .mockResolvedValueOnce({ data: { createRef: { ref: { name: 'x' } } } })
         .mockResolvedValueOnce({
           number: 5,
           node_id: 'PR_5',
@@ -411,13 +404,13 @@ describe('GitHub Editorial Workflow service', () => {
     test('starts over from the base head when the branch was left over', async () => {
       vi.mocked(fetchGraphQL)
         .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
+        .mockRejectedValueOnce(
+          new Error('Server responded with an error', {
+            cause: { status: 200, message: 'already exists' },
+          }),
+        )
         .mockResolvedValueOnce({ repository: { pullRequests: { totalCount: 0 } } });
       vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
-      vi.mocked(fetchAPI).mockRejectedValueOnce(
-        new Error('Server responded with an error', {
-          cause: { status: 200, message: 'already exists' },
-        }),
-      );
 
       await savePullRequest(args).catch(() => undefined);
 
@@ -429,13 +422,13 @@ describe('GitHub Editorial Workflow service', () => {
     test('looks the head up when the branch has an open pull request the load missed', async () => {
       vi.mocked(fetchGraphQL)
         .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
+        .mockRejectedValueOnce(
+          new Error('Server responded with an error', {
+            cause: { status: 200, message: 'already exists' },
+          }),
+        )
         .mockResolvedValueOnce({ repository: { pullRequests: { totalCount: 1 } } });
       vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
-      vi.mocked(fetchAPI).mockRejectedValueOnce(
-        new Error('Server responded with an error', {
-          cause: { status: 200, message: 'already exists' },
-        }),
-      );
 
       await savePullRequest(args).catch(() => undefined);
 
@@ -593,8 +586,6 @@ describe('GitHub Editorial Workflow service', () => {
           fork: { id: 'R_fork' },
           base: { ref: { target: { oid: 'upstream-head' } } },
         });
-        vi.mocked(fetchAPI).mockResolvedValue({ data: { createRef: { ref: { name: 'x' } } } });
-
         await expect(createBranch('cms/contributor/repo/posts/hello')).resolves.toBe(
           'upstream-head',
         );
@@ -608,16 +599,9 @@ describe('GitHub Editorial Workflow service', () => {
 
         // The branch goes in the fork but starts from the head upstream, so a fork that has
         // drifted doesn’t pass its own commits on
-        expect(fetchAPI).toHaveBeenCalledWith(
-          '',
-          expect.objectContaining({
-            body: expect.objectContaining({
-              variables: {
-                input: expect.objectContaining({ repositoryId: 'R_fork', oid: 'upstream-head' }),
-              },
-            }),
-          }),
-        );
+        expect(fetchGraphQL).toHaveBeenLastCalledWith(expect.stringContaining('createRef'), {
+          input: expect.objectContaining({ repositoryId: 'R_fork', oid: 'upstream-head' }),
+        });
       });
     });
 
@@ -639,7 +623,6 @@ describe('GitHub Editorial Workflow service', () => {
           date: new Date('2026-01-03T00:00:00Z'),
           files: {},
         });
-        vi.mocked(fetchAPI).mockResolvedValue({ data: { createRef: { ref: { name: 'x' } } } });
 
         const { pullRequest } = await savePullRequest({ ...args, status: 'draft' });
 
@@ -653,7 +636,11 @@ describe('GitHub Editorial Workflow service', () => {
         });
 
         // Only the `createRef` mutation; no pull request was opened
-        expect(fetchAPI).toHaveBeenCalledTimes(1);
+        expect(fetchGraphQL).toHaveBeenLastCalledWith(
+          expect.stringContaining('createRef'),
+          expect.anything(),
+        );
+        expect(fetchAPI).not.toHaveBeenCalled();
       });
 
       test('opens the pull request right away for a removal', async () => {
@@ -662,16 +649,14 @@ describe('GitHub Editorial Workflow service', () => {
           base: { ref: { target: { oid: 'abc' } } },
         });
         vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
-        vi.mocked(fetchAPI)
-          .mockResolvedValueOnce({ data: { createRef: { ref: { name: 'x' } } } })
-          .mockResolvedValueOnce({
-            number: 5,
-            node_id: 'PR_5',
-            title: 'x',
-            html_url: 'u',
-            created_at: '2026-01-01T00:00:00Z',
-            updated_at: '2026-01-01T00:00:00Z',
-          });
+        vi.mocked(fetchAPI).mockResolvedValueOnce({
+          number: 5,
+          node_id: 'PR_5',
+          title: 'x',
+          html_url: 'u',
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        });
 
         const { pullRequest } = await savePullRequest({ ...args, status: 'pending_deletion' });
 
