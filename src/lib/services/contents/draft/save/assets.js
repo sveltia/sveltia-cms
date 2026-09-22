@@ -148,7 +148,7 @@ export const getOwnedEntryFolderPath = (collection, entryFilePath) => {
  * @param {string} args.internalPath Internal path from folder config.
  * @returns {string} Folder path.
  */
-const getEntryAssetFolderPath = ({ collection, entryFilePath, internalPath }) =>
+export const getEntryAssetFolderPath = ({ collection, entryFilePath, internalPath }) =>
   getOwnedEntryFolderPath(collection, entryFilePath) ??
   // A file collection has no folder of its own to fall back on
   (collection._type === 'entry'

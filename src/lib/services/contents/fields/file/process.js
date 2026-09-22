@@ -5,6 +5,7 @@ import { allAssets } from '$lib/services/assets';
 import { getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { processFile } from '$lib/services/assets/process';
+import { getEntryAssetFolderPath } from '$lib/services/contents/draft/save/assets';
 import { createPath, getGitHash } from '$lib/services/utils/file';
 import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
@@ -24,8 +25,6 @@ import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
  * @property {string | undefined} invalidFileName File name if the file is corrupt or mislabeled and
  * therefore cannot be decoded.
  */
-
-const FOLDER_PATH_REGEX = /(?<path>.+?)(?:\/[^/]+)?$/;
 
 /**
  * Get the blob URL of an unsaved file that matches the given file.
@@ -113,8 +112,10 @@ export const getUnsavedAssets = async ({ draft, targetFolderPath }) =>
 
 /**
  * Get the saved assets relevant to the current entry draft and folder. For entry-relative folders,
- * the result is filtered to only include assets within the current entry’s own folder, preventing
- * false duplicate detection across entries that share the same folder config template.
+ * the result is filtered to only include assets within the folder the entry’s relative assets are
+ * saved to, preventing false duplicate detection across entries that share the same folder config
+ * template. That’s the entry’s own folder if it has one, and otherwise the folder it shares with
+ * the rest of the collection, as determined by {@link getEntryAssetFolderPath}.
  * @param {EntryDraft} draft Entry draft.
  * @param {AssetFolderInfo | undefined} folder Asset folder associated with the field.
  * @returns {Asset[]} Filtered saved assets.
@@ -134,17 +135,14 @@ const getSavedAssetsForEntry = (draft, folder) => {
     return [];
   }
 
-  const subPath = collection._type === 'entry' ? collection._file.subPath : undefined;
-  const lastSubPathSegment = subPath?.includes('/') ? subPath.split('/').at(-1) : undefined;
-  // Strip the file extension and any fixed nested filename suffix (e.g., `{{slug}}/index` → remove
-  // the trailing `index` segment) to get the entry folder path.
-  let entryFolderPath = entryFilePath.substring(0, entryFilePath.lastIndexOf('.'));
+  const assetFolderPath = getEntryAssetFolderPath({
+    collection,
+    entryFilePath,
+    // An entry-relative folder is always configured with a path
+    internalPath: /** @type {string} */ (folder.internalPath),
+  });
 
-  if (lastSubPathSegment && !lastSubPathSegment.includes('{{')) {
-    entryFolderPath = entryFolderPath.match(FOLDER_PATH_REGEX)?.groups?.path ?? entryFolderPath;
-  }
-
-  const expectedPrefix = [entryFolderPath, folder.internalSubPath].filter(Boolean).join('/');
+  const expectedPrefix = [assetFolderPath, folder.internalSubPath].filter(Boolean).join('/');
 
   return savedAssets.filter((a) => a.path.startsWith(`${expectedPrefix}/`));
 };

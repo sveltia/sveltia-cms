@@ -776,11 +776,12 @@ describe('Test processResource()', () => {
     // @ts-ignore - Simplified config for testing
     const libraryConfig = { max_file_size: 1000000 };
 
-    // Entry folder path derived from 'src/content/pages/about.md' → 'src/content/pages/about'
+    // A file collection entry has no folder of its own, so its assets are saved to the folder
+    // configured for it
     const existingAsset = {
       sha: 'git-hash',
       folder,
-      path: 'src/content/pages/about/photo.jpg',
+      path: 'src/content/pages/photo.jpg',
     };
 
     getGitHashMock.mockResolvedValue('git-hash');
@@ -829,10 +830,12 @@ describe('Test processResource()', () => {
     // @ts-ignore - Simplified config for testing
     const libraryConfig = { max_file_size: 1000000 };
 
+    // The entry file shares its folder with the rest of the collection, which is where its assets
+    // are saved as well
     const existingAsset = {
       sha: 'git-hash',
       folder,
-      path: 'src/content/blog/hello-world/photo.jpg',
+      path: 'src/content/blog/photo.jpg',
     };
 
     getGitHashMock.mockResolvedValue('git-hash');
@@ -843,12 +846,63 @@ describe('Test processResource()', () => {
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });
 
-    // Entry folder path from 'hello-world.md' → 'hello-world'; asset at 'hello-world/photo.jpg'
-    // starts with that prefix, so it's found and reused rather than re-uploaded.
+    // The asset is found in the shared folder and reused rather than uploaded again
     expect(result.value).toBe('/photo.jpg');
+    expect(Object.keys(draft.files)).toHaveLength(0);
   });
 
-  test('should fall back to entryFolderPath when regex yields no match (line 117)', async () => {
+  test('should deduplicate a file saved beside the index file of a nested collection entry', async () => {
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+
+    Object.defineProperty(mockFile, 'size', { value: 50000 });
+
+    const folder = {
+      entryRelative: true,
+      internalPath: 'content/pages',
+      internalSubPath: '',
+      publicPath: '',
+      hasTemplateTags: false,
+      collectionName: 'pages',
+    };
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+      defaultLocale: '_default',
+      originalEntry: {
+        locales: {
+          _default: { path: 'content/pages/about/_index.md' },
+        },
+      },
+      // Every entry is stored as an index file, so the folder holding it is the entry’s own
+      collection: {
+        _type: 'entry',
+        folder: 'content/pages',
+        nested: { depth: 10 },
+        meta: { path: { widget: 'string', index_file: '_index' } },
+        _file: { subPath: undefined },
+      },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = { file: mockFile, folder, credit: '' };
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+    const existingAsset = { sha: 'git-hash', folder, path: 'content/pages/about/photo.jpg' };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+    allAssets.current = /** @type {any} */ ([existingAsset]);
+    equalMock.mockReturnValue(true);
+    getAssetPublicURLMock.mockReturnValue('photo.jpg');
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    expect(result.value).toBe('photo.jpg');
+    expect(Object.keys(draft.files)).toHaveLength(0);
+  });
+
+  test('should handle an entry file path without an extension', async () => {
     const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
 
     Object.defineProperty(mockFile, 'size', { value: 50000 });
@@ -867,8 +921,7 @@ describe('Test processResource()', () => {
       files: {},
       defaultLocale: '_default',
       originalEntry: {
-        // entryFilePath with no extension: lastIndexOf('.') === -1, so entryFolderPath === ''
-        // The regex /(?<path>.+?).../ won't match an empty string → falls back to entryFolderPath
+        // With no extension to strip, the path yields no folder of its own
         locales: {
           _default: { path: 'no-extension' },
         },
