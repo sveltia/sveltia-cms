@@ -3,9 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { cmsConfig } from '$lib/services/config/state';
 
 import {
+  browseS3Objects,
+  createS3Folder,
+  deleteS3Folder,
   deleteS3Objects,
   isS3ObjectUrl,
   listS3Objects,
+  moveS3Object,
   renameS3Object,
   replaceS3Object,
   searchS3Objects,
@@ -23,6 +27,10 @@ vi.mock('$lib/services/config/state', () => ({
 }));
 
 vi.mock('./core', () => ({
+  browseS3Objects: vi.fn(),
+  createS3Folder: vi.fn(),
+  deleteS3Folder: vi.fn(),
+  moveS3Object: vi.fn(),
   listS3Objects: vi.fn(),
   searchS3Objects: vi.fn(),
   uploadToS3: vi.fn(),
@@ -305,6 +313,25 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
 
       await expect(service.replace(asset, file, fetchOptions)).resolves.toBe(asset);
       expect(replaceS3Object).toHaveBeenCalledWith(asset, file, libOptions, fetchOptions);
+    });
+
+    it('should call the folder functions with the resolved config', async () => {
+      const listing = { assets: [asset], folders: ['2024'] };
+
+      vi.mocked(browseS3Objects).mockResolvedValue(listing);
+      vi.mocked(moveS3Object).mockResolvedValue(asset);
+
+      await expect(service.browse(fetchOptions)).resolves.toBe(listing);
+      expect(browseS3Objects).toHaveBeenCalledWith(libOptions, fetchOptions);
+
+      await expect(service.move(asset, '2024/photo.jpg', fetchOptions)).resolves.toBe(asset);
+      expect(moveS3Object).toHaveBeenCalledWith(asset, '2024/photo.jpg', libOptions, fetchOptions);
+
+      await service.createFolder('2024', fetchOptions);
+      expect(createS3Folder).toHaveBeenCalledWith('2024', libOptions, fetchOptions);
+
+      await service.deleteFolder('2024', fetchOptions);
+      expect(deleteS3Folder).toHaveBeenCalledWith('2024', libOptions, fetchOptions);
     });
 
     it('should reject when config is not available', async () => {

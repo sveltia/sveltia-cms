@@ -414,6 +414,20 @@
         <Icon name="create_new_folder" />
       {/snippet}
     </Button>
+  {:else if isCloudLibrary && externalAssetsPanel?.canCreateFolder()}
+    <!-- A folder on a cloud storage service is created by the service, not committed -->
+    <Button
+      variant="ghost"
+      iconic
+      aria-label={_('new_folder')}
+      onclick={() => {
+        externalAssetsPanel?.showNewFolderDialog();
+      }}
+    >
+      {#snippet startIcon()}
+        <Icon name="create_new_folder" />
+      {/snippet}
+    </Button>
   {/if}
   {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary')}
     <Button

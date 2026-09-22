@@ -5,7 +5,11 @@ import { render } from 'vitest-browser-svelte';
 import {
   externalAssets,
   externalAssetsError,
+  externalFolders,
+  focusedExternalAsset,
+  focusedExternalSubfolder,
   selectedCloudService,
+  selectedExternalDirPath,
 } from '$lib/services/assets/external';
 import { uploadingExternalAssets } from '$lib/services/assets/external/data';
 import { currentView } from '$lib/services/assets/view/settings';
@@ -64,8 +68,57 @@ describe('AssetList', () => {
     currentView.current = { type: 'grid' };
     selectedCloudService.current = createMockCloudService({ upload: vi.fn() });
     externalAssets.current = [...assets];
+    externalFolders.current = [];
+    selectedExternalDirPath.current = '';
+    focusedExternalAsset.current = undefined;
+    focusedExternalSubfolder.current = undefined;
     externalAssetsError.current = undefined;
     uploadingExternalAssets.current = { files: [] };
+  });
+
+  test('lists the subfolders ahead of the assets on a service with folder support', async () => {
+    selectedCloudService.current = createMockCloudService({ browse: vi.fn(), upload: vi.fn() });
+    externalAssets.current = [
+      createMockExternalAsset({ fileName: 'a.png', folder: 'images' }),
+      createMockExternalAsset({ fileName: 'b.png', folder: 'images/2024' }),
+    ];
+    externalFolders.current = ['images/empty', 'docs'];
+    selectedExternalDirPath.current = 'images';
+    focusedExternalSubfolder.current = { name: '2024', path: 'images/2024' };
+
+    const { container } = await render(AssetList);
+    const grid = page.getByRole('grid', { name: 'Assets' });
+
+    // The folder rows, then the assets right in the folder, numbered in that order
+    await expect.element(grid).toHaveAttribute('aria-rowcount', '3');
+    await expect
+      .element(grid.getByRole('row', { name: '2024' }))
+      .toHaveAttribute('aria-rowindex', '1');
+    await expect
+      .element(grid.getByRole('row', { name: 'empty' }))
+      .toHaveAttribute('aria-rowindex', '2');
+    await expect
+      .element(grid.getByRole('row', { name: 'a.png' }))
+      .toHaveAttribute('aria-rowindex', '3');
+    expect(grid.getByRole('row', { name: 'b.png' }).elements()).toHaveLength(0);
+    expect(grid.getByRole('row', { name: 'docs' }).elements()).toHaveLength(0);
+
+    // A click on the blank area takes the focus off the folder
+    /** @type {HTMLElement} */ (container.querySelector('.list-container')).click();
+    await expect.poll(() => focusedExternalSubfolder.current).toBeUndefined();
+  });
+
+  test('shows the grid for an empty folder that has subfolders', async () => {
+    selectedCloudService.current = createMockCloudService({ browse: vi.fn(), upload: vi.fn() });
+    externalAssets.current = [];
+    externalFolders.current = ['empty'];
+
+    await render(AssetList);
+
+    const grid = page.getByRole('grid', { name: 'Assets' });
+
+    await expect.element(grid).toHaveAttribute('aria-rowcount', '1');
+    await expect.element(grid.getByRole('row', { name: 'empty' })).toBeInTheDocument();
   });
 
   test('lists the assets, accepting dropped files', async () => {

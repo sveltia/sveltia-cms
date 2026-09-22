@@ -12,6 +12,7 @@ import {
   createMockImageFile,
   initTestConfig,
 } from '$lib/test/config';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import ExternalAssetsPanel from './external-assets-panel.svelte';
 
@@ -163,6 +164,11 @@ describe('ExternalAssetsPanel', () => {
 
     search.mockResolvedValue([]);
     props.searchTerms = 'c';
+    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+
+    // A service that can’t search finds nothing
+    props.serviceProps = createMockCloudService({ list });
+    props.searchTerms = 'd';
     await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
   });
 
@@ -446,5 +452,169 @@ describe('ExternalAssetsPanel', () => {
 
     await waitForList(1);
     expect(container.querySelector('[role="listbox"]')).toHaveClass('grid');
+  });
+
+  describe('folders', () => {
+    const folderAssets = [
+      createMockExternalAsset({ fileName: 'a.png', folder: 'images' }),
+      createMockExternalAsset({ fileName: 'b.png', folder: 'images/2024' }),
+      createMockExternalAsset({ fileName: 'c.png', folder: 'docs' }),
+    ];
+
+    /**
+     * Render the panel for a service with folder support.
+     * @param {Partial<import('$lib/types/private').MediaLibraryService>} [service] Extra
+     * service functions.
+     * @returns {Promise<{ props: any, component: any, container: HTMLElement }>} Result.
+     */
+    const renderPanel = async (service = {}) => {
+      const props = $state({
+        multiple: true,
+        searchTerms: '',
+        serviceProps: createMockCloudService({
+          browse: vi.fn().mockResolvedValue({ assets: folderAssets, folders: ['images/empty'] }),
+          search: vi.fn().mockResolvedValue([folderAssets[1]]),
+          upload: vi.fn(async (/** @type {File[]} */ files, /** @type {any} */ { dirPath }) =>
+            files.map((file) => createMockExternalAsset({ fileName: file.name, folder: dirPath })),
+          ),
+          ...service,
+        }),
+        selectedResources: /** @type {any[]} */ ([]),
+      });
+
+      const { component, container } = await render(ExternalAssetsPanel, props);
+
+      return { props, component, container };
+    };
+
+    /**
+     * Get the names of the listed subfolders.
+     * @returns {string[]} Names.
+     */
+    const getFolderNames = () =>
+      page
+        .getByRole('list', { name: 'Folders' })
+        .getByRole('button')
+        .elements()
+        .map((el) => el.textContent?.replace(/\s+/g, ' ').trim());
+
+    test('browses the service folder by folder, with a breadcrumb leading back', async () => {
+      // Give the breadcrumb room, or it folds its middle into a menu
+      await page.viewport(1024, 768);
+
+      const { props, component } = await renderPanel();
+
+      // The root lists its folders and none of the files, which are all in folders
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      expect(page.getByRole('option').elements()).toHaveLength(0);
+      expect(page.getByRole('navigation').elements()).toHaveLength(0);
+      expect(component.canCreateFolder()).toBe(false);
+
+      await page.getByRole('button', { name: 'images' }).click();
+      await expect.poll(getFolderNames).toEqual(['folder 2024', 'folder empty']);
+      await waitForList(1);
+      expect(page.getByRole('option').elements()[0].dataset.value).toBe('images/a.png');
+      // The path is relative to the folder being browsed
+      expect(page.getByRole('option').elements()[0].querySelector('.name')).toHaveTextContent(
+        'a.png',
+      );
+
+      const breadcrumb = page.getByRole('navigation', { name: 'Folder' });
+
+      await expect.element(breadcrumb).toMatchTextContent(/Test Cloud.*images/);
+
+      // An empty folder has nothing but the breadcrumb
+      await page.getByRole('button', { name: 'empty' }).click();
+      await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+      await expect.element(breadcrumb).toMatchTextContent(/Test Cloud.*images.*empty/);
+
+      await breadcrumb.getByRole('button', { name: 'Test Cloud' }).click();
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+
+      // A search looks through the whole service, listing the matches with their paths
+      props.searchTerms = 'b';
+      await expect.poll(() => page.getByRole('list', { name: 'Folders' }).elements()).toEqual([]);
+      await waitForList(1);
+      expect(page.getByRole('option').elements()[0].dataset.value).toBe('images/2024/b.png');
+      expect(page.getByRole('option').elements()[0].querySelector('.name')).toMatchTextContent(
+        'images/2024/b.png',
+      );
+
+      await page.viewport(414, 896);
+    });
+
+    test('uploads files to the folder being browsed', async () => {
+      const { props, component } = await renderPanel();
+
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      await page.getByRole('button', { name: 'images' }).click();
+      await waitForList(1);
+
+      const file = await createMockImageFile({ name: 'd.png' });
+
+      await component.uploadFiles([file]);
+
+      expect(props.serviceProps.upload).toHaveBeenCalledWith(
+        [file],
+        expect.objectContaining({ dirPath: 'images' }),
+      );
+      await waitForList(2);
+      expect(page.getByRole('option').elements()[0].dataset.value).toBe('images/d.png');
+    });
+
+    test('creates a folder where the user is', async () => {
+      const createFolder = vi.fn().mockResolvedValue(undefined);
+      const { component } = await renderPanel({ createFolder });
+
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      await page.getByRole('button', { name: 'images' }).click();
+      await waitForList(1);
+      expect(component.canCreateFolder()).toBe(true);
+
+      component.showNewFolderDialog();
+
+      const dialog = page.getByRole('dialog', { name: 'New Folder' });
+
+      await expect.element(dialog).toMatchTextContent('created in “\u2068/images\u2069”');
+
+      // A subfolder or a file already in the folder can’t be taken over
+      await dialog.getByRole('textbox').fill('2024');
+      await expect.element(dialog.getByRole('button', { name: 'Create' })).toBeDisabled();
+      await dialog.getByRole('textbox').fill('a.png');
+      await expect.element(dialog.getByRole('button', { name: 'Create' })).toBeDisabled();
+
+      await dialog.getByRole('textbox').fill('2025');
+      await dialog.getByRole('button', { name: 'Create' }).click();
+
+      await vi.waitFor(() =>
+        expect(createFolder).toHaveBeenCalledWith('images/2025', expect.anything()),
+      );
+      await expect.poll(getFolderNames).toEqual(['folder 2024', 'folder 2025', 'folder empty']);
+    });
+
+    test('names the service at its root, and reports a failure to create a folder', async () => {
+      const createFolder = vi.fn().mockRejectedValue(new Error('denied'));
+
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const { component } = await renderPanel({ createFolder });
+
+      await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
+      component.showNewFolderDialog();
+
+      const dialog = page.getByRole('dialog', { name: 'New Folder' });
+
+      await expect.element(dialog).toMatchTextContent('created in “\u2068Test Cloud\u2069”');
+      await dialog.getByRole('textbox').fill('2025');
+      await dialog.getByRole('button', { name: 'Create' }).click();
+
+      await expect
+        .poll(() =>
+          document.querySelector('.sui.alert.error')?.textContent?.replace(/\s+/g, ' ').trim(),
+        )
+        .toContain('Couldn’t create the folder.');
+      expect(getFolderNames()).toEqual(['folder docs', 'folder images']);
+      await waitForToastsToHide();
+    });
   });
 });

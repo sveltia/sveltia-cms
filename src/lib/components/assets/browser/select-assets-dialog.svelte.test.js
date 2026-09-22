@@ -411,6 +411,37 @@ describe('SelectAssetsDialog', () => {
     );
   });
 
+  test('creates a folder on a cloud storage service that has folders', async () => {
+    const createFolder = vi.fn().mockResolvedValue(undefined);
+
+    const browse = vi.fn().mockResolvedValue({
+      assets: [createMockExternalAsset({ fileName: 'cloud.png' })],
+      folders: [],
+    });
+
+    await renderDialog({}, { list: vi.fn(), browse, createFolder });
+
+    const dialog = page.getByRole('dialog');
+
+    // The button is for the repository folder until a cloud service is picked
+    await expect.element(dialog.getByRole('button', { name: 'New Folder' })).toBeInTheDocument();
+    await sleep(150);
+    await dialog.getByRole('option', { name: 'Test Cloud' }).click();
+    await expect.element(page.getByRole('list', { name: 'Folders' })).toMatchTextContent('images');
+    await dialog.getByRole('button', { name: 'New Folder' }).click();
+
+    const nameDialog = page.getByRole('dialog', { name: 'New Folder' });
+
+    await expect.element(nameDialog).toMatchTextContent('created in “\u2068Test Cloud\u2069”');
+    await nameDialog.getByRole('textbox').fill('docs');
+    await nameDialog.getByRole('button', { name: 'Create' }).click();
+
+    await vi.waitFor(() => expect(createFolder).toHaveBeenCalledWith('docs', expect.anything()));
+    await expect
+      .element(page.getByRole('list', { name: 'Folders' }))
+      .toMatchTextContent(/docs.*images/);
+  });
+
   test('shows the credit for a stock photo service', async () => {
     await renderDialog();
 

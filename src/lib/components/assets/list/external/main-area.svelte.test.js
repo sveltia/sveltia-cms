@@ -4,9 +4,13 @@ import { render } from 'vitest-browser-svelte';
 
 import {
   externalAssets,
+  externalFolders,
   focusedExternalAsset,
+  focusedExternalSubfolder,
   selectedCloudService,
   selectedExternalAssets,
+  selectedExternalDirPath,
+  showNewExternalFolderDialog,
 } from '$lib/services/assets/external';
 import { externalAssetsToast, uploadingExternalAssets } from '$lib/services/assets/external/data';
 import { currentView } from '$lib/services/assets/view/settings';
@@ -36,7 +40,11 @@ describe('MainArea', () => {
     env.isLargeScreen = true;
     currentView.current = { type: 'grid', showInfo: true };
     externalAssets.current = [...assets];
+    externalFolders.current = [];
+    selectedExternalDirPath.current = '';
     focusedExternalAsset.current = undefined;
+    focusedExternalSubfolder.current = undefined;
+    showNewExternalFolderDialog.current = false;
     selectedExternalAssets.current = [];
     uploadingExternalAssets.current = { files: [] };
     externalAssetsToast.current = { show: false, status: 'info', message: '' };
@@ -63,6 +71,28 @@ describe('MainArea', () => {
         area.getByRole('group', { name: 'Asset Info' }).getByRole('heading', { name: 'Kind' }),
       )
       .toBeInTheDocument();
+  });
+
+  test('describes the folder in the info pane and offers the folder dialogs', async () => {
+    selectedCloudService.current = createMockCloudService({
+      browse: vi.fn(),
+      createFolder: vi.fn(),
+    });
+    selectedExternalDirPath.current = 'images';
+
+    await render(MainArea);
+
+    const area = page.getByRole('main', { name: '\u2068Test Cloud\u2069 Asset Folder' });
+    const info = area.getByRole('group', { name: 'Asset Info' });
+
+    // The folder being browsed is described while no asset is focused
+    await expect.element(info).toMatchTextContent('Folder images Folder Path /images');
+
+    focusedExternalSubfolder.current = { name: '2024', path: 'images/2024' };
+    await expect.element(info).toMatchTextContent('Folder 2024 Folder Path /images/2024');
+
+    showNewExternalFolderDialog.current = true;
+    await expect.element(page.getByRole('dialog', { name: 'New Folder' })).toBeInTheDocument();
   });
 
   test('uploads the files handed over, reporting the rejected ones', async () => {

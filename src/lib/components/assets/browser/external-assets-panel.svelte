@@ -12,13 +12,17 @@
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
+  import SubfolderStrip from '$lib/components/assets/browser/subfolder-strip.svelte';
+  import SubfolderNameDialog from '$lib/components/assets/list/subfolder-name-dialog.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import CloudServiceAuth from '$lib/components/assets/shared/cloud-service-auth.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
+  import Breadcrumb from '$lib/components/common/breadcrumb.svelte';
   import { getFetchOptions } from '$lib/services/assets/external';
   import { fetchExternalAssetBlob } from '$lib/services/assets/external/data';
   import { processFile } from '$lib/services/assets/process';
+  import { getDirName, getRelativePath, listSubfolders } from '$lib/services/assets/subfolders';
   import { cmsConfig } from '$lib/services/config';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { env } from '$lib/services/user/env.svelte';
@@ -62,12 +66,15 @@
   const {
     serviceType = 'stock_assets',
     serviceId = '',
+    serviceLabel = '',
     hotlinking = false,
     authType = 'api_key',
     init,
     list,
+    browse,
     search,
     upload,
+    createFolder,
   } = $derived(serviceProps);
 
   // Use the grid view for Picsum as it doesn’t provide description for the assets, and the list
@@ -90,6 +97,18 @@
   let password = $state('');
   /** @type {ExternalAsset[] | null} */
   let listedAssets = $state(null);
+  /**
+   * Paths of the empty folders on a service with folder support, each kept by a placeholder.
+   * @type {string[]}
+   */
+  let folders = $state([]);
+  /**
+   * Path of the folder being browsed on a service with folder support, relative to the configured
+   * prefix. Empty at the root.
+   */
+  let dirPath = $state('');
+  let newFolderDialogOpen = $state(false);
+  let folderCreationFailed = $state(false);
   /** @type {string | undefined} */
   let error = $state();
   /** @type {{ show: boolean, status: 'info' | 'error', length: number }} */
@@ -102,6 +121,43 @@
 
   /** @type {MediaLibraryFetchOptions} */
   const listFetchOptions = $derived({ kind, fieldConfig, apiKey, userName, password });
+  /**
+   * Whether the service is browsed folder by folder, like a repository folder in the picker. A
+   * search looks through the whole service instead, listing the matches with their paths.
+   */
+  const browsing = $derived(!!browse && !searchTerms.trim());
+  /**
+   * Assets shown in the panel: those right in the folder being browsed, or every asset listed.
+   * @type {ExternalAsset[]}
+   */
+  const panelAssets = $derived.by(() => {
+    const assets = listedAssets ?? [];
+
+    return browsing
+      ? assets.filter(({ description }) => getDirName(description) === dirPath)
+      : assets;
+  });
+  const subfolders = $derived(
+    browsing
+      ? listSubfolders({
+          dirPath,
+          paths: [
+            ...(listedAssets ?? []).map(({ description }) => description),
+            // An empty folder is given with a trailing slash, as it has no file to be read off
+            ...folders.map((path) => `${path}/`),
+          ],
+        })
+      : [],
+  );
+  /** Names of the folders leading to the one being browsed, from the service root down. */
+  const subfolderNames = $derived(dirPath ? dirPath.split('/') : []);
+  /** Names already taken in the folder being browsed, which a new folder can’t be given. */
+  const takenNames = $derived([
+    ...subfolders.map(({ name }) => name),
+    ...panelAssets.map(({ fileName }) => fileName),
+  ]);
+  /** The folder being browsed, named after the service at the root. */
+  const folderLabel = $derived(dirPath ? `/${dirPath}` : serviceLabel);
 
   /**
    * Search or list assets from the external media library.
@@ -112,8 +168,17 @@
     query = query.trim();
 
     try {
-      listedAssets =
-        (await (query ? search?.(query, listFetchOptions) : list?.(listFetchOptions))) ?? [];
+      if (query) {
+        listedAssets = (await search?.(query, listFetchOptions)) ?? [];
+      } else if (browse) {
+        // A service with folder support lists its empty folders along with the files
+        const listing = await browse(listFetchOptions);
+
+        listedAssets = listing.assets;
+        folders = listing.folders;
+      } else {
+        listedAssets = (await list?.(listFetchOptions)) ?? [];
+      }
     } catch (ex) {
       error = 'search_fetch_failed';
       // eslint-disable-next-line no-console
@@ -180,13 +245,45 @@
     uploadingToast = { show: true, status: 'info', length: files.length };
 
     try {
-      const uploaded = await upload(files, listFetchOptions);
+      // The files go to the folder being browsed, or the one the search started from
+      const uploaded = await upload(files, { ...listFetchOptions, dirPath });
       const resources = await Promise.all(uploaded.map((asset) => getResource(asset)));
 
       selectedResources = resources.filter((r) => !!r).slice(0, multiple ? undefined : 1);
       listedAssets = [...uploaded, ...(listedAssets ?? [])];
     } catch {
       uploadingToast = { show: true, status: 'error', length: files.length };
+    }
+  };
+
+  /**
+   * Whether a folder can be created in the folder being browsed, which takes a service with folder
+   * support that can create one, while it’s browsed rather than searched.
+   * @returns {boolean} Result.
+   */
+  export const canCreateFolder = () => browsing && !!createFolder;
+
+  /**
+   * Open the New Folder dialog.
+   */
+  export const showNewFolderDialog = () => {
+    newFolderDialogOpen = true;
+  };
+
+  /**
+   * Create a folder in the folder being browsed, which is then listed along with the others.
+   * @param {string} name Folder name.
+   */
+  const createNewFolder = async (name) => {
+    const path = dirPath ? `${dirPath}/${name}` : name;
+
+    try {
+      await /** @type {NonNullable<typeof createFolder>} */ (createFolder)(path, listFetchOptions);
+      folders = [...folders, path];
+    } catch (ex) {
+      folderCreationFailed = true;
+      // eslint-disable-next-line no-console
+      console.error(ex);
     }
   };
 
@@ -255,19 +352,49 @@
   );
 </script>
 
+{#snippet breadcrumb()}
+  {#if browsing && subfolderNames.length}
+    <!-- Each ancestor leads back to itself, like the breadcrumb of the Asset Library -->
+    <Breadcrumb
+      class="picker-breadcrumb"
+      items={[
+        ...[serviceLabel, ...subfolderNames.slice(0, -1)].map((label, depth) => ({
+          label,
+          // eslint-disable-next-line jsdoc/require-jsdoc
+          onClick: () => {
+            dirPath = subfolderNames.slice(0, depth).join('/');
+          },
+        })),
+        { label: /** @type {string} */ (subfolderNames.at(-1)) },
+      ]}
+    />
+  {/if}
+{/snippet}
+
 {#snippet content()}
   {#if !listedAssets}
     <EmptyState>
       <span role="alert">{_(searchTerms ? 'searching' : 'loading')}</span>
     </EmptyState>
-  {:else if !listedAssets.length}
+  {:else if !panelAssets.length && !subfolders.length}
+    {@render breadcrumb()}
     <EmptyState>
       <span role="alert">{_('no_files_found')}</span>
     </EmptyState>
   {:else}
+    {@render breadcrumb()}
     <div role="none" class="grid-wrapper">
+      {#if subfolders.length}
+        <SubfolderStrip
+          {subfolders}
+          {viewType}
+          onOpen={({ path }) => {
+            dirPath = path;
+          }}
+        />
+      {/if}
       <SimpleImageGrid {viewType} {gridId} {multiple}>
-        <InfiniteScroll items={listedAssets} itemKey="id">
+        <InfiniteScroll items={panelAssets} itemKey="id">
           {#snippet renderItem(/** @type {ExternalAsset} */ asset)}
             {#await sleep() then}
               {@const { id, previewURL, description, kind: _kind } = asset}
@@ -289,8 +416,11 @@
                   crossorigin="anonymous"
                 />
                 {#if viewType === 'list' || (!env.isSmallScreen && !isStockAssets)}
+                  <!-- The path is relative to the folder being browsed -->
                   <AssetPath
-                    {...isStockAssets ? { caption: description } : { path: description }}
+                    {...isStockAssets
+                      ? { caption: description }
+                      : { path: browsing ? getRelativePath(description, dirPath) : description }}
                   />
                 {/if}
               </SimpleImageGridItem>
@@ -340,7 +470,33 @@
   {maxSize}
 />
 
+<Toast bind:show={folderCreationFailed}>
+  <Alert status="error">{_('creating_folder_failed')}</Alert>
+</Toast>
+
+{#if createFolder}
+  <SubfolderNameDialog
+    bind:open={newFolderDialogOpen}
+    title={_('new_folder')}
+    okLabel={_('new_folder_create')}
+    description={_('new_folder_description', { values: { folder: folderLabel } })}
+    {takenNames}
+    onSubmit={(name) => {
+      createNewFolder(name);
+    }}
+  />
+{/if}
+
 <style>
+  :global(.picker-breadcrumb) {
+    flex: none;
+    padding: 0 8px 8px;
+
+    :global(.current) {
+      font-weight: var(--sui-font-weight-bold);
+    }
+  }
+
   .grid-wrapper {
     overflow-y: auto;
     height: 100%;

@@ -4,9 +4,11 @@ import { render } from 'vitest-browser-svelte';
 
 import {
   externalAssets,
+  externalAssetSearchTerms,
   focusedExternalAsset,
   selectedCloudService,
   selectedExternalAssets,
+  selectedExternalDirPath,
 } from '$lib/services/assets/external';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockCloudService, createMockExternalAsset } from '$lib/test/config';
@@ -24,8 +26,67 @@ describe('PrimaryToolbar', () => {
   beforeEach(() => {
     env.isSmallScreen = false;
     externalAssets.current = [...assets];
+    externalAssetSearchTerms.current = '';
+    selectedExternalDirPath.current = '';
     focusedExternalAsset.current = undefined;
     selectedExternalAssets.current = [];
+  });
+
+  test('shows a breadcrumb leading back from the folder being browsed', async () => {
+    // Give the breadcrumb room, or it folds its middle into a menu
+    await page.viewport(1024, 768);
+
+    selectedCloudService.current = createMockCloudService({
+      browse: vi.fn(),
+      upload: vi.fn(),
+      createFolder: vi.fn(),
+    });
+    selectedExternalDirPath.current = '2024/summer';
+
+    const { container } = await render(PrimaryToolbar);
+    const toolbar = page.getByRole('toolbar', { name: 'Folder' });
+    const breadcrumb = toolbar.getByRole('navigation', { name: 'Folder' });
+
+    expect(container.querySelector('h2')).toMatchTextContent(/Test Cloud.*2024.*summer/);
+    await expect.element(toolbar.getByRole('button', { name: 'New Folder' })).toBeEnabled();
+
+    await breadcrumb.getByRole('button', { name: '2024' }).click();
+    expect(selectedExternalDirPath.current).toBe('2024');
+    expect(container.querySelector('h2')).toMatchTextContent(/Test Cloud.*2024/);
+
+    await breadcrumb.getByRole('button', { name: 'Test Cloud' }).click();
+    expect(selectedExternalDirPath.current).toBe('');
+    expect(container.querySelector('h2')).toHaveTextContent('Test Cloud');
+    expect(toolbar.getByRole('navigation').elements()).toHaveLength(0);
+
+    // A search looks through the whole service, so the trail is left out meanwhile
+    selectedExternalDirPath.current = '2024';
+    await expect.element(toolbar.getByRole('navigation')).toBeInTheDocument();
+    externalAssetSearchTerms.current = 'photo';
+    await expect.poll(() => toolbar.getByRole('navigation').elements()).toEqual([]);
+    expect(container.querySelector('h2')).toHaveTextContent('Test Cloud');
+    expect(toolbar.getByRole('button', { name: 'New Folder' }).elements()).toHaveLength(0);
+
+    await page.viewport(414, 896);
+  });
+
+  test('goes back to the parent folder with the back button on a small screen', async () => {
+    env.isSmallScreen = true;
+    selectedCloudService.current = createMockCloudService({ browse: vi.fn() });
+    selectedExternalDirPath.current = '2024/summer';
+
+    const { container } = await render(PrimaryToolbar);
+
+    expect(container.querySelector('h2')).toHaveTextContent('summer');
+
+    await page.getByRole('button', { name: 'Back to Parent Folder' }).click();
+    expect(selectedExternalDirPath.current).toBe('2024');
+
+    await page.getByRole('button', { name: 'Back to Parent Folder' }).click();
+    expect(selectedExternalDirPath.current).toBe('');
+    await expect
+      .element(page.getByRole('button', { name: 'Back to Asset Folder List' }))
+      .toBeInTheDocument();
   });
 
   test('shows the service name and all the actions it supports', async () => {

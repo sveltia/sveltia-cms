@@ -3,10 +3,13 @@ import {
   externalAssetCounts,
   externalAssets,
   externalAssetsError,
+  externalFolders,
   focusedExternalAsset,
+  focusedExternalSubfolder,
   getFetchOptions,
   selectedCloudService,
   selectedExternalAssets,
+  selectedExternalDirPath,
 } from '$lib/services/assets/external';
 import { processFile } from '$lib/services/assets/process';
 import { cmsConfig } from '$lib/services/config';
@@ -14,7 +17,7 @@ import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/da
 import { createDeepState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { ExternalAsset, MediaLibraryService } from '$lib/types/private';
+ * @import { AssetSubfolder, ExternalAsset, MediaLibraryService } from '$lib/types/private';
  * @import { SharedMediaLibraryOptions } from '$lib/types/public';
  */
 
@@ -53,10 +56,11 @@ const reportError = (message, ex) => {
 
 /**
  * Show the toast reporting a successful operation.
- * @param {'saved' | 'renamed' | 'deleted'} action Action.
- * @param {number} count Number of assets.
+ * @param {'saved' | 'renamed' | 'deleted' | 'folderCreated' | 'folderRenamed' | 'folderDeleted'}
+ * action Action.
+ * @param {number} [count] Number of assets.
  */
-const reportSuccess = (action, count) => {
+const reportSuccess = (action, count = 1) => {
   externalAssetsToast.current.show = false;
   assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, [action]: true, count };
 };
@@ -101,17 +105,29 @@ const updateAsset = (oldAsset, newAsset) => {
 };
 
 /**
- * Drop the selected and focused assets that are no longer in the list, e.g. after the list has
- * been reloaded from the service.
+ * Drop the selected and focused assets, and the focused subfolder, that are no longer in the list,
+ * e.g. after the list has been reloaded from the service.
  * @param {ExternalAsset[]} assets Assets in the list.
+ * @param {string[]} [folders] Paths of the empty folders in the list.
  */
-const pruneSelection = (assets) => {
+const pruneSelection = (assets, folders = []) => {
   const ids = new Set(assets.map(({ id }) => id));
 
   selectedExternalAssets.current = selectedExternalAssets.current.filter(({ id }) => ids.has(id));
 
   if (focusedExternalAsset.current && !ids.has(focusedExternalAsset.current.id)) {
     focusedExternalAsset.current = undefined;
+  }
+
+  const focusedPath = focusedExternalSubfolder.current?.path;
+
+  // A folder exists as long as a file or a placeholder sits below it
+  if (
+    focusedPath !== undefined &&
+    !assets.some(({ description }) => description.startsWith(`${focusedPath}/`)) &&
+    !folders.some((path) => path === focusedPath || path.startsWith(`${focusedPath}/`))
+  ) {
+    focusedExternalSubfolder.current = undefined;
   }
 };
 
@@ -152,17 +168,24 @@ export const loadExternalAssets = async (service) => {
   externalAssetsError.current = undefined;
 
   try {
-    const assets = (await service.list?.(getFetchOptions(service))) ?? [];
+    const fetchOptions = getFetchOptions(service);
+
+    // A service with folder support lists its empty folders along with the files
+    const { assets, folders } = service.browse
+      ? await service.browse(fetchOptions)
+      : { assets: (await service.list?.(fetchOptions)) ?? [], folders: [] };
 
     // Ignore the result if a different service has been selected or a newer load has been started
     // in the meantime
     if (selectedCloudService.current === service && loadId === latestLoadId) {
       setAssets(assets);
-      pruneSelection(assets);
+      externalFolders.current = folders;
+      pruneSelection(assets, folders);
     }
   } catch (ex) {
     if (selectedCloudService.current === service && loadId === latestLoadId) {
       setAssets([]);
+      externalFolders.current = [];
       externalAssetsError.current = 'search_fetch_failed';
       pruneSelection([]);
     }
@@ -205,7 +228,11 @@ export const uploadExternalAssets = async (files, { originalAsset } = {}) => {
     };
 
     try {
-      const fetchOptions = getFetchOptions(service);
+      // A new file goes to the folder being browsed; a replacement keeps the asset’s own path
+      const fetchOptions = {
+        ...getFetchOptions(service),
+        dirPath: selectedExternalDirPath.current,
+      };
 
       if (originalAsset) {
         if (service.replace) {
@@ -299,4 +326,171 @@ export const renameExternalAsset = async (asset, newName) => {
 
     return undefined;
   }
+};
+
+/**
+ * Get the assets below a folder on the selected cloud storage service, at any depth, which are
+ * what a rename moves along and a deletion removes.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @returns {ExternalAsset[]} Assets.
+ */
+export const getExternalSubfolderAssets = (dirPath) =>
+  (externalAssets.current ?? []).filter(({ description }) => description.startsWith(`${dirPath}/`));
+
+/**
+ * Create an empty folder in the folder being browsed on the selected cloud storage service. The
+ * service keeps a placeholder object for it, which is what the folder is listed from.
+ * @param {string} name Folder name.
+ * @returns {Promise<boolean>} Whether the folder has been created.
+ */
+export const createExternalFolder = async (name) => {
+  const service = selectedCloudService.current;
+
+  if (!service?.createFolder) {
+    return false;
+  }
+
+  const dirPath = [selectedExternalDirPath.current, name].filter(Boolean).join('/');
+
+  try {
+    await service.createFolder(dirPath, getFetchOptions(service));
+  } catch (ex) {
+    reportError('creating_folder_failed', ex);
+
+    return false;
+  }
+
+  externalFolders.current = [...externalFolders.current, dirPath];
+  reportSuccess('folderCreated');
+
+  return true;
+};
+
+/**
+ * Rename a folder on the selected cloud storage service, which moves every asset below it, one by
+ * one, along with the placeholder of any empty folder below it. The list is reloaded from the
+ * service afterwards, whether or not every move went through, so it never shows a file at a path
+ * it no longer has.
+ * @param {AssetSubfolder} subfolder Folder to be renamed.
+ * @param {string} newName New folder name.
+ * @returns {Promise<boolean>} Whether the folder has been renamed.
+ */
+export const renameExternalFolder = async ({ path: dirPath }, newName) => {
+  const service = selectedCloudService.current;
+
+  if (!service?.move || !service.createFolder || !service.deleteFolder) {
+    return false;
+  }
+
+  const newDirPath = [...dirPath.split('/').slice(0, -1), newName].join('/');
+  /**
+   * Get the path of a file or folder once the folder has been renamed.
+   * @param {string} path Current path.
+   * @returns {string} New path.
+   */
+  const rebase = (path) => `${newDirPath}${path.slice(dirPath.length)}`;
+  const fetchOptions = getFetchOptions(service);
+  const assets = getExternalSubfolderAssets(dirPath);
+
+  const folders = externalFolders.current.filter(
+    (path) => path === dirPath || path.startsWith(`${dirPath}/`),
+  );
+
+  externalAssetsToast.current = { show: true, status: 'info', message: 'renaming_folder' };
+
+  try {
+    // Move the files one at a time, as the services do
+    // eslint-disable-next-line no-restricted-syntax
+    for (const asset of assets) {
+      // eslint-disable-next-line no-await-in-loop
+      await service.move(asset, rebase(asset.description), fetchOptions);
+    }
+
+    // A placeholder can’t be moved, so a new one is made and the old one removed. The renamed
+    // folder itself gets one only if it had one, i.e. it held no file
+    // eslint-disable-next-line no-restricted-syntax
+    for (const path of folders) {
+      // eslint-disable-next-line no-await-in-loop
+      await service.createFolder(rebase(path), fetchOptions);
+      // eslint-disable-next-line no-await-in-loop
+      await service.deleteFolder(path, fetchOptions);
+    }
+  } catch (ex) {
+    reportError('renaming_folder_failed', ex);
+    await loadExternalAssets(service);
+
+    return false;
+  }
+
+  await loadExternalAssets(service);
+
+  // Keep the Info pane on the folder under its new name
+  if (focusedExternalSubfolder.current?.path === dirPath) {
+    focusedExternalSubfolder.current = { name: newName, path: newDirPath };
+  }
+
+  reportSuccess('folderRenamed');
+
+  return true;
+};
+
+/**
+ * Delete a folder on the selected cloud storage service along with every asset below it, and the
+ * placeholder of any empty folder below it, including its own.
+ * @param {AssetSubfolder} subfolder Folder to be deleted.
+ * @returns {Promise<boolean>} Whether the folder has been deleted.
+ */
+export const deleteExternalFolder = async ({ path: dirPath }) => {
+  const service = selectedCloudService.current;
+
+  if (!service?.delete || !service.deleteFolder) {
+    return false;
+  }
+
+  const fetchOptions = getFetchOptions(service);
+  const assets = getExternalSubfolderAssets(dirPath);
+
+  const folders = externalFolders.current.filter(
+    (path) => path === dirPath || path.startsWith(`${dirPath}/`),
+  );
+
+  externalAssetsToast.current = { show: true, status: 'info', message: 'deleting_folder' };
+
+  try {
+    await service.delete(assets, fetchOptions);
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const path of folders) {
+      // eslint-disable-next-line no-await-in-loop
+      await service.deleteFolder(path, fetchOptions);
+    }
+  } catch (ex) {
+    reportError('deleting_folder_failed', ex);
+    // Some of the files may have been deleted before the failure, so reload the list rather than
+    // keep showing files that no longer exist
+    await loadExternalAssets(service);
+
+    return false;
+  }
+
+  const deletedIds = new Set(assets.map(({ id }) => id));
+
+  setAssets(externalAssets.current?.filter(({ id }) => !deletedIds.has(id)));
+  externalFolders.current = externalFolders.current.filter((path) => !folders.includes(path));
+  selectedExternalAssets.current = selectedExternalAssets.current.filter(
+    ({ id }) => !deletedIds.has(id),
+  );
+
+  if (focusedExternalAsset.current && deletedIds.has(focusedExternalAsset.current.id)) {
+    focusedExternalAsset.current = undefined;
+  }
+
+  // The Info pane has nothing to describe once the folder is gone
+  if (focusedExternalSubfolder.current?.path === dirPath) {
+    focusedExternalSubfolder.current = undefined;
+  }
+
+  reportSuccess('folderDeleted');
+
+  return true;
 };

@@ -1,9 +1,11 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import {
+  externalAssetSearchTerms,
   focusedExternalAsset,
+  focusedExternalSubfolder,
   selectedCloudService,
   selectedExternalAssets,
 } from '$lib/services/assets/external';
@@ -24,7 +26,26 @@ describe('AssetListItem', () => {
     selectedCloudService.current = createMockCloudService();
     selectedExternalAssets.current = [];
     focusedExternalAsset.current = undefined;
+    focusedExternalSubfolder.current = undefined;
+    externalAssetSearchTerms.current = '';
     externalAssetAvailability.current = {};
+  });
+
+  test('shows the path in place of the name while a folder service is searched', async () => {
+    selectedCloudService.current = createMockCloudService({ browse: vi.fn() });
+    focusedExternalSubfolder.current = { name: 'images', path: 'images' };
+
+    await render(AssetListItem, { asset, index: 0, viewType: 'list' });
+
+    await expect.element(page.getByRole('row', { name: 'photo.png' })).toBeInTheDocument();
+
+    // Focusing the asset takes the focus off a folder
+    await page.getByRole('row', { name: 'photo.png' }).click();
+    expect(focusedExternalAsset.current).toBe(asset);
+    expect(focusedExternalSubfolder.current).toBeUndefined();
+
+    externalAssetSearchTerms.current = 'photo';
+    await expect.element(page.getByRole('row', { name: 'images/photo.png' })).toBeInTheDocument();
   });
 
   test('reflects the position and selection of the asset in the list', async () => {

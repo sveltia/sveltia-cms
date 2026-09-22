@@ -145,6 +145,37 @@ export const browsedDirPath = createDerivedState(() => {
 });
 
 /**
+ * List the immediate subfolders of a directory, read off the paths of the files below it. A folder
+ * isn’t an object of its own in a Git repository or an object storage bucket, so this is how the
+ * folders are found. A folder path ending with a slash stands for an empty folder kept by a
+ * placeholder, which has no file to be read off.
+ * @param {object} args Arguments.
+ * @param {string} args.dirPath Directory path. An empty string for the root.
+ * @param {string[]} args.paths Paths of the files below the directory, at any depth. Paths outside
+ * the directory are left alone.
+ * @returns {AssetSubfolder[]} Subfolders, sorted by name.
+ */
+export const listSubfolders = ({ dirPath, paths }) => {
+  const prefix = dirPath ? `${dirPath}/` : '';
+  /** @type {Set<string>} */
+  const names = new Set();
+
+  paths.forEach((path) => {
+    if (!path.startsWith(prefix)) {
+      return;
+    }
+
+    const index = path.indexOf('/', prefix.length);
+
+    if (index > prefix.length) {
+      names.add(path.slice(prefix.length, index));
+    }
+  });
+
+  return [...names].sort(compare).map((name) => ({ name, path: createPath([dirPath, name]) }));
+};
+
+/**
  * Get the `internalPath` of the asset folder that a directory belongs to: the folder at that path,
  * or else the deepest one it sits below.
  * @param {string} dirPath Directory path.
@@ -166,9 +197,6 @@ const getOwnerFolderPath = (dirPath) => resolveAssetFolderPath(dirPath)?.folder.
  * @returns {AssetSubfolder[]} Subfolders, sorted by name.
  */
 export const getSubfolders = ({ dirPath, assets }) => {
-  const prefix = dirPath ? `${dirPath}/` : '';
-  /** @type {Set<string>} */
-  const names = new Set();
   // A Git config file counts the same way as an asset: only when it belongs to the same asset
   // folder as the directory, so a nested asset folder isn’t listed for the `.gitkeep` it holds
   const ownerFolderPath = getOwnerFolderPath(dirPath);
@@ -177,19 +205,7 @@ export const getSubfolders = ({ dirPath, assets }) => {
     ({ path }) => getOwnerFolderPath(getDirName(path)) === ownerFolderPath,
   );
 
-  [...assets, ...configFiles].forEach(({ path }) => {
-    if (!path.startsWith(prefix)) {
-      return;
-    }
-
-    const index = path.indexOf('/', prefix.length);
-
-    if (index > prefix.length) {
-      names.add(path.slice(prefix.length, index));
-    }
-  });
-
-  return [...names].sort(compare).map((name) => ({ name, path: createPath([dirPath, name]) }));
+  return listSubfolders({ dirPath, paths: [...assets, ...configFiles].map(({ path }) => path) });
 };
 
 /**

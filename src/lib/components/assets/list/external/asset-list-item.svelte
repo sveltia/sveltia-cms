@@ -5,12 +5,15 @@
   import {
     canPreviewExternalAsset,
     focusedExternalAsset,
+    focusedExternalSubfolder,
     getExternalAssetPath,
+    hasFolderSupport,
     selectedCloudService,
     selectedExternalAssets,
   } from '$lib/services/assets/external';
   import { externalAssetAvailability } from '$lib/services/assets/external/availability';
   import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
+  import { browsingExternalFolders } from '$lib/services/assets/external/view';
   import { toggleListItem } from '$lib/services/utils/array';
 
   /**
@@ -42,6 +45,15 @@
     selectedCloudService.current?.serviceId === LINKED_FILES_SERVICE_ID,
   );
   const unavailable = $derived(externalAssetAvailability.current[asset.id] === false);
+  /**
+   * The name shown: the file name while the service is browsed folder by folder, or the path when
+   * a search lists the matches from every folder at once, so they can be told apart.
+   */
+  const name = $derived(
+    hasFolderSupport(selectedCloudService.current) && !browsingExternalFolders.current
+      ? asset.description
+      : asset.fileName,
+  );
 
   /**
    * Show the details of the asset.
@@ -76,7 +88,7 @@
 {/snippet}
 
 <AssetListItem
-  name={asset.fileName}
+  {name}
   kind={asset.kind}
   src={asset.previewURL}
   rowIndex={index}
@@ -86,6 +98,7 @@
   onSelectionChange={updateSelection}
   onFocus={() => {
     focusedExternalAsset.current = asset;
+    focusedExternalSubfolder.current = undefined;
   }}
   onPreview={() => {
     showDetails();

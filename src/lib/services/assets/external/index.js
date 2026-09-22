@@ -10,6 +10,7 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
 
 /**
  * @import {
+ * AssetSubfolder,
  * ExternalAsset,
  * MediaLibraryService,
  * } from '$lib/types/private';
@@ -93,6 +94,55 @@ export const selectedCloudService = createRawState();
 export const externalAssets = createRawState();
 
 /**
+ * Whether the given cloud storage service stores files at paths that the Asset Library and the
+ * asset picker browse folder by folder, like a repository folder. That takes a service that lists
+ * its folders — an S3-compatible service or Azure Blob Storage — rather than one with a flat file
+ * list, like Uploadcare, or one with a widget of its own, like Cloudinary.
+ * @param {MediaLibraryService | undefined} service Service.
+ * @returns {service is MediaLibraryService} Result.
+ */
+export const hasFolderSupport = (service) => !!service?.browse;
+
+/**
+ * Paths of the empty folders on the selected cloud storage service, each kept by a placeholder
+ * object, relative to the configured prefix. The folders that hold files are read off the file
+ * paths instead. Empty for a service without folder support.
+ * @type {{ current: string[] }}
+ */
+export const externalFolders = createRawState([]);
+
+/**
+ * Path of the folder being browsed on the selected cloud storage service, relative to the
+ * configured prefix. Empty at the root, and always empty for a service without folder support.
+ * @type {{ current: string }}
+ */
+export const selectedExternalDirPath = createRawState('');
+
+/**
+ * Subfolder currently focused in the list, whose info is shown in the Info pane, if any.
+ * @type {{ current: AssetSubfolder | undefined }}
+ */
+export const focusedExternalSubfolder = createRawState();
+
+/**
+ * Whether to show the New Folder dialog for the selected cloud storage service.
+ * @type {{ current: boolean }}
+ */
+export const showNewExternalFolderDialog = createRawState(false);
+
+/**
+ * Subfolder being renamed with the Rename Folder dialog, if any.
+ * @type {{ current: AssetSubfolder | undefined }}
+ */
+export const renamingExternalSubfolder = createRawState();
+
+/**
+ * Subfolder being deleted with the Delete Folder dialog, if any.
+ * @type {{ current: AssetSubfolder | undefined }}
+ */
+export const deletingExternalSubfolder = createRawState();
+
+/**
  * Number of assets on each cloud storage service whose list has been fetched so far, keyed by
  * service ID. Shown in the Asset Library sidebar; a service that hasn’t been visited yet has no
  * count, as listing it would require the user’s credentials and an extra API call.
@@ -167,10 +217,29 @@ export const hasAuthInfo = (service) => {
  */
 export const resetExternalAssets = () => {
   externalAssets.current = undefined;
+  externalFolders.current = [];
   externalAssetsError.current = undefined;
   selectedExternalAssets.current = [];
+  selectedExternalDirPath.current = '';
   focusedExternalAsset.current = undefined;
+  focusedExternalSubfolder.current = undefined;
   overlaidExternalAssetId.current = undefined;
   renamingExternalAsset.current = undefined;
+  renamingExternalSubfolder.current = undefined;
+  deletingExternalSubfolder.current = undefined;
   externalAssetSearchTerms.current = '';
+};
+
+/**
+ * Browse a folder on the selected cloud storage service. The focus moves off whatever was focused
+ * in the folder being left, and the selection is emptied, so the toolbar never acts on an asset
+ * the user can’t see.
+ * @param {string} dirPath Folder path relative to the configured prefix. An empty string for the
+ * root.
+ */
+export const browseExternalFolder = (dirPath) => {
+  selectedExternalDirPath.current = dirPath;
+  selectedExternalAssets.current = [];
+  focusedExternalAsset.current = undefined;
+  focusedExternalSubfolder.current = undefined;
 };

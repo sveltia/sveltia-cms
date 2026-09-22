@@ -9,7 +9,12 @@ import { hmacSha256, toHex } from '$lib/services/utils/crypto';
 import { parseXml } from '$lib/services/utils/xml';
 
 /**
- * @import { ExternalAsset, MediaLibraryFetchOptions, S3Config } from '$lib/types/private';
+ * @import {
+ * ExternalAsset,
+ * ExternalFolderListing,
+ * MediaLibraryFetchOptions,
+ * S3Config,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -249,6 +254,41 @@ export const buildObjectApiUrl = (config, key) => {
  * @returns {Record<string, string>} Header, or an empty object.
  */
 const getAclHeader = ({ acl }) => (acl !== false ? { 'x-amz-acl': acl ?? 'public-read' } : {});
+/**
+ * Get the configured prefix as a directory, with a trailing slash. The option is documented as
+ * ending with one, but a prefix without it would otherwise glue itself to the file names and make
+ * every path start with a slash, so it’s put right rather than left to break the listing.
+ * @param {S3Config} config S3 configuration.
+ * @returns {string} Prefix, or an empty string for the bucket root.
+ */
+const getPrefix = ({ prefix = '' }) => (prefix && !prefix.endsWith('/') ? `${prefix}/` : prefix);
+/**
+ * Get the key of the placeholder object that keeps an empty folder, which is the folder path with
+ * a trailing slash, the way the AWS console creates a folder.
+ * @param {S3Config} config S3 configuration.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @returns {string} Object key.
+ */
+const getFolderKey = (config, dirPath) => `${getPrefix(config)}${dirPath}/`;
+/**
+ * Get the key of a file at the given path.
+ * @param {S3Config} config S3 configuration.
+ * @param {string} path File path relative to the configured prefix.
+ * @returns {string} Object key.
+ */
+const getObjectKey = (config, path) => `${getPrefix(config)}${path}`;
+
+/**
+ * Get the path of an object relative to the configured prefix.
+ * @param {S3Config} config S3 configuration.
+ * @param {string} key Object key.
+ * @returns {string} Path.
+ */
+const getRelativeKey = (config, key) => {
+  const prefix = getPrefix(config);
+
+  return prefix && key.startsWith(prefix) ? key.slice(prefix.length) : key;
+};
 
 /**
  * Parse S3 list response into ExternalAsset format.
@@ -262,14 +302,13 @@ export const parseS3Results = (objects, config) => {
     region,
     endpoint,
     force_path_style: forcePathStyle,
-    prefix = '',
     public_url: publicUrl,
   } = config;
 
   return objects.map((obj) => {
     const key = obj.Key;
     const fileName = key.split('/').pop() || key;
-    const displayKey = prefix && key.startsWith(prefix) ? key.slice(prefix.length) : key;
+    const displayKey = getRelativeKey(config, key);
     const baseUrl = buildObjectUrl({ bucket, key, endpoint, region, forcePathStyle, publicUrl });
 
     return {
@@ -286,23 +325,27 @@ export const parseS3Results = (objects, config) => {
 };
 
 /**
- * List objects from S3-compatible storage.
+ * Fetch the objects under the configured prefix from S3-compatible storage, page by page.
  * @param {S3Config} config S3 configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
  * @param {object} [params] Additional parameters.
  * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10.
- * @returns {Promise<ExternalAsset[]>} Assets.
+ * @returns {Promise<{ files: S3Object[], folders: string[] }>} Objects, split into the files and
+ * the folder placeholders, the latter given as folder paths relative to the prefix.
  */
-export const listS3Objects = async (config, options, { maxPages = 10 } = {}) => {
-  const { bucket, region, endpoint, force_path_style: forcePathStyle, prefix = '' } = config;
-  const { kind, apiKey: secretAccessKey } = options;
+const fetchS3Listing = async (config, options, { maxPages = 10 } = {}) => {
+  const { bucket, region, endpoint, force_path_style: forcePathStyle } = config;
+  const { apiKey: secretAccessKey } = options;
+  const prefix = getPrefix(config);
 
   if (!secretAccessKey) {
     return Promise.reject(new Error('S3 secret access key is required'));
   }
 
   /** @type {S3Object[]} */
-  const allObjects = [];
+  const files = [];
+  /** @type {string[]} */
+  const folders = [];
   /** @type {string | undefined} */
   let continuationToken;
 
@@ -339,10 +382,19 @@ export const listS3Objects = async (config, options, { maxPages = 10 } = {}) => 
         : [data.Contents]
       : [];
 
-    // Filter out directories (keys ending with /)
-    const files = contents.filter((/** @type {S3Object} */ obj) => !obj.Key.endsWith('/'));
+    contents.forEach((/** @type {S3Object} */ obj) => {
+      // A key ending with a slash is a folder placeholder rather than a file
+      if (obj.Key.endsWith('/')) {
+        const dirPath = getRelativeKey(config, obj.Key).replace(/\/$/, '');
 
-    allObjects.push(...files);
+        // The placeholder of the prefix itself isn’t a folder below it
+        if (dirPath) {
+          folders.push(dirPath);
+        }
+      } else {
+        files.push(obj);
+      }
+    });
 
     continuationToken = data.NextContinuationToken;
 
@@ -354,12 +406,38 @@ export const listS3Objects = async (config, options, { maxPages = 10 } = {}) => 
     await sleep(50);
   }
 
+  return { files, folders };
+};
+
+/**
+ * List objects from S3-compatible storage.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @param {object} [params] Additional parameters.
+ * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10.
+ * @returns {Promise<ExternalAsset[]>} Assets.
+ */
+export const listS3Objects = async (config, options, params = {}) => {
+  const { kind } = options;
+  const { files } = await fetchS3Listing(config, options, params);
   // Filter by kind if specified
-  const filteredObjects = kind
-    ? allObjects.filter((obj) => getAssetKind(obj.Key) === kind)
-    : allObjects;
+  const filteredObjects = kind ? files.filter((obj) => getAssetKind(obj.Key) === kind) : files;
 
   return parseS3Results(filteredObjects, config);
+};
+
+/**
+ * List the files and the empty folders under the configured prefix on S3-compatible storage.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @returns {Promise<ExternalFolderListing>} Files and folders.
+ */
+export const browseS3Objects = async (config, options) => {
+  const { kind } = options;
+  const { files, folders } = await fetchS3Listing(config, options);
+  const filteredObjects = kind ? files.filter((obj) => getAssetKind(obj.Key) === kind) : files;
+
+  return { assets: parseS3Results(filteredObjects, config), folders };
 };
 
 /**
@@ -428,8 +506,7 @@ export const uploadToS3 = async (files, config, options) => {
     return [];
   }
 
-  const { prefix = '' } = config;
-  const { apiKey: secretAccessKey } = options;
+  const { apiKey: secretAccessKey, dirPath = '' } = options;
 
   if (!secretAccessKey) {
     return Promise.reject(new Error('S3 secret access key is required'));
@@ -443,7 +520,7 @@ export const uploadToS3 = async (files, config, options) => {
   for (const file of files) {
     // Extract only the filename to prevent path traversal via crafted File objects
     const sanitizedName = file.name.split(/[/\\]/).filter(Boolean).at(-1) ?? file.name;
-    const key = prefix ? `${prefix}${sanitizedName}` : sanitizedName;
+    const key = getObjectKey(config, dirPath ? `${dirPath}/${sanitizedName}` : sanitizedName);
 
     uploadedObjects.push(await putS3Object({ key, file, config, secretAccessKey }));
 
@@ -500,19 +577,19 @@ export const deleteS3Objects = async (assets, config, options) => {
 };
 
 /**
- * Rename an object on S3-compatible storage. S3 has no rename operation, so the object is copied
- * to the new key and then the original is deleted. The bucket’s CORS policy must allow the `PUT`
- * and `DELETE` methods as well as the `x-amz-copy-source` and `x-amz-metadata-directive` headers
- * (an `AllowedHeaders` of `*` is the simplest); otherwise the browser blocks the request at the
- * preflight stage.
- * @param {ExternalAsset} asset Asset to rename. Its `id` is the object key.
- * @param {string} newName New file name, without a directory.
+ * Move an object on S3-compatible storage to another path. S3 has no move operation, so the object
+ * is copied to the new key and then the original is deleted. The bucket’s CORS policy must allow
+ * the `PUT` and `DELETE` methods as well as the `x-amz-copy-source` and `x-amz-metadata-directive`
+ * headers (an `AllowedHeaders` of `*` is the simplest); otherwise the browser blocks the request at
+ * the preflight stage.
+ * @param {ExternalAsset} asset Asset to move. Its `id` is the object key.
+ * @param {string} newPath New path relative to the configured prefix.
  * @param {S3Config} config S3 configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @returns {Promise<ExternalAsset>} Renamed asset.
+ * @returns {Promise<ExternalAsset>} Moved asset.
  * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html
  */
-export const renameS3Object = async (asset, newName, config, options) => {
+export const moveS3Object = async (asset, newPath, config, options) => {
   const { bucket } = config;
   const { apiKey: secretAccessKey } = options;
 
@@ -521,8 +598,7 @@ export const renameS3Object = async (asset, newName, config, options) => {
   }
 
   const { id: key, size = 0 } = asset;
-  const dirName = key.split('/').slice(0, -1).join('/');
-  const newKey = dirName ? `${dirName}/${newName}` : newName;
+  const newKey = getObjectKey(config, newPath);
 
   const response = await signedRequest({
     method: 'PUT',
@@ -549,6 +625,69 @@ export const renameS3Object = async (asset, newName, config, options) => {
     config,
   )[0];
 };
+
+/**
+ * Rename an object on S3-compatible storage, keeping it in its folder.
+ * @param {ExternalAsset} asset Asset to rename. Its `id` is the object key.
+ * @param {string} newName New file name, without a directory.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @returns {Promise<ExternalAsset>} Renamed asset.
+ */
+export const renameS3Object = async (asset, newName, config, options) => {
+  const dirName = getRelativeKey(config, asset.id).split('/').slice(0, -1).join('/');
+
+  return moveS3Object(asset, dirName ? `${dirName}/${newName}` : newName, config, options);
+};
+
+/**
+ * Create an empty folder on S3-compatible storage by putting a zero-byte placeholder object at the
+ * folder key, the way the AWS console does.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @returns {Promise<void>}
+ */
+export const createS3Folder = async (dirPath, config, options) => {
+  const { apiKey: secretAccessKey } = options;
+
+  if (!secretAccessKey) {
+    return Promise.reject(new Error('S3 secret access key is required'));
+  }
+
+  const key = getFolderKey(config, dirPath);
+
+  const response = await signedRequest({
+    method: 'PUT',
+    url: buildObjectApiUrl(config, key),
+    config,
+    secretAccessKey,
+    extraHeaders: { 'Content-Type': 'application/x-directory', ...getAclHeader(config) },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    throw new Error(`Failed to create folder ${key}: ${errorText}`);
+  }
+
+  return undefined;
+};
+
+/**
+ * Remove the placeholder object of a folder on S3-compatible storage. S3 reports success for a key
+ * that doesn’t exist, so a folder that has no placeholder is fine.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @returns {Promise<void>}
+ */
+export const deleteS3Folder = async (dirPath, config, options) =>
+  deleteS3Objects(
+    [/** @type {ExternalAsset} */ ({ id: getFolderKey(config, dirPath) })],
+    config,
+    options,
+  );
 
 /**
  * Replace an object on S3-compatible storage with a new file, keeping the object key so that the

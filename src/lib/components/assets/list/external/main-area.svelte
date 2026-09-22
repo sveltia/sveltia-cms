@@ -10,9 +10,13 @@
   import { untrack } from 'svelte';
 
   import AssetList from '$lib/components/assets/list/external/asset-list.svelte';
+  import DeleteFolderDialog from '$lib/components/assets/list/external/delete-folder-dialog.svelte';
+  import FolderInfoPanel from '$lib/components/assets/list/external/folder-info-panel.svelte';
   import InfoPanel from '$lib/components/assets/list/external/info-panel.svelte';
+  import NewFolderDialog from '$lib/components/assets/list/external/new-folder-dialog.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/external/primary-toolbar.svelte';
   import RenameDialog from '$lib/components/assets/list/external/rename-dialog.svelte';
+  import RenameFolderDialog from '$lib/components/assets/list/external/rename-folder-dialog.svelte';
   import SecondarySidebar from '$lib/components/assets/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
@@ -21,6 +25,7 @@
     externalAssets,
     externalAssetSearchTerms,
     focusedExternalAsset,
+    hasFolderSupport,
     selectedCloudService,
     selectedExternalAssets,
   } from '$lib/services/assets/external';
@@ -77,6 +82,10 @@
   });
 </script>
 
+{#snippet folderInfo()}
+  <FolderInfoPanel />
+{/snippet}
+
 <PageContainerMainArea
   id="assets-container"
   aria-label={_('x_asset_folder', { values: { folder: service.serviceLabel } })}
@@ -102,7 +111,11 @@
     <AssetList />
   {/snippet}
   {#snippet secondarySidebar()}
-    <SecondarySidebar asset={focusedExternalAsset.current}>
+    <!-- A service without folders has nothing to describe in place of an asset -->
+    <SecondarySidebar
+      asset={focusedExternalAsset.current}
+      fallback={hasFolderSupport(service) && externalAssets.current ? folderInfo : undefined}
+    >
       {#snippet children(/** @type {ExternalAsset} */ asset)}
         <InfoPanel {asset} />
       {/snippet}
@@ -111,6 +124,11 @@
 </PageContainerMainArea>
 
 <RenameDialog />
+{#if hasFolderSupport(service)}
+  <NewFolderDialog />
+  <RenameFolderDialog />
+  <DeleteFolderDialog />
+{/if}
 
 <Toast bind:show={externalAssetsToast.current.show}>
   <Alert status={externalAssetsToast.current.status}>

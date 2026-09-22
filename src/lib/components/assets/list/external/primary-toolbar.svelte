@@ -5,18 +5,22 @@
   import DownloadAssetsButton from '$lib/components/assets/list/download-assets-button.svelte';
   import CopyAssetsButton from '$lib/components/assets/list/external/copy-assets-button.svelte';
   import EditOptionsButton from '$lib/components/assets/list/external/edit-options-button.svelte';
+  import NewFolderButton from '$lib/components/assets/list/external/new-folder-button.svelte';
   import UploadAssetsButton from '$lib/components/assets/list/external/upload-assets-button.svelte';
   import PreviewAssetButton from '$lib/components/assets/list/preview-asset-button.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
   import {
+    browseExternalFolder,
     canPreviewExternalAsset,
     externalAssets,
     focusedExternalAsset,
     getExternalAssetPath,
     selectedCloudService,
     selectedExternalAssets,
+    selectedExternalDirPath,
   } from '$lib/services/assets/external';
   import { deleteExternalAssets, fetchExternalAssetBlob } from '$lib/services/assets/external/data';
+  import { browsingExternalFolders } from '$lib/services/assets/external/view';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -26,6 +30,27 @@
   /** The component is only rendered while a service is selected. */
   const service = $derived(/** @type {MediaLibraryService} */ (selectedCloudService.current));
   const asset = $derived(focusedExternalAsset.current);
+  /**
+   * Names of the folders leading to the one being browsed, from the service root down. A search
+   * looks through the whole service, so the trail is left out while one is under way.
+   */
+  const subfolderNames = $derived(
+    browsingExternalFolders.current && selectedExternalDirPath.current
+      ? selectedExternalDirPath.current.split('/')
+      : [],
+  );
+  /** The folder being browsed is the title; at the root, the service itself is. */
+  const title = $derived(subfolderNames.at(-1) ?? service.serviceLabel);
+  /** Ancestor folders of the one being browsed, each leading back to itself. */
+  const breadcrumbs = $derived(
+    subfolderNames.length
+      ? [service.serviceLabel, ...subfolderNames.slice(0, -1)].map((label, depth) => ({
+          label,
+          // eslint-disable-next-line jsdoc/require-jsdoc
+          onClick: () => browseExternalFolder(subfolderNames.slice(0, depth).join('/')),
+        }))
+      : [],
+  );
 
   const assets = $derived.by(() => {
     if (selectedExternalAssets.current.length) return [...selectedExternalAssets.current];
@@ -34,7 +59,14 @@
   });
 </script>
 
-<PrimaryToolbar title={service.serviceLabel}>
+<PrimaryToolbar
+  {title}
+  {breadcrumbs}
+  backLabel={subfolderNames.length ? _('back_to_parent_folder') : undefined}
+  onBack={subfolderNames.length
+    ? () => browseExternalFolder(subfolderNames.slice(0, -1).join('/'))
+    : undefined}
+>
   {#snippet actions()}
     <PreviewAssetButton
       path={asset ? getExternalAssetPath(service, asset) : undefined}
@@ -61,6 +93,7 @@
     {/if}
   {/snippet}
   {#snippet fab()}
+    <NewFolderButton />
     {#if service.upload && (!env.isSmallScreen || externalAssets.current?.length)}
       <UploadAssetsButton label={env.isSmallScreen ? undefined : _('upload')} />
     {/if}

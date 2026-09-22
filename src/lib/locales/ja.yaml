@@ -572,6 +572,14 @@ enter_new_name_for_folder: |
     0   {{ 新しい名前を以下に入力してください。 }}
     1   {{ 新しい名前を以下に入力してください。フォルダー内のアセットも一緒に移動され、それを使用しているエントリーも更新されます。 }}
     *   {{ 新しい名前を以下に入力してください。フォルダー内の {$count} 個のアセットも一緒に移動され、それらを使用しているエントリーも更新されます。 }}
+# クラウドストレージサービスのフォルダー名変更ダイアログの本文。ファイルは直接リンクされているため、移動すると
+# URL が変わり、エントリーは更新されない
+enter_new_name_for_external_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 新しい名前を以下に入力してください。 }}
+    1   {{ 新しい名前を以下に入力してください。フォルダー内のファイルも一緒に移動され、URL が変わるため、それを使用しているエントリーは更新してください。 }}
+    *   {{ 新しい名前を以下に入力してください。フォルダー内の {$count} 個のファイルも一緒に移動され、URL が変わるため、それらを使用しているエントリーは更新してください。 }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -583,6 +591,7 @@ confirm_deleting_folder: |
 # Progress and error messages while the folder is being renamed or deleted
 renaming_folder: フォルダーの名前を変更中…
 renaming_folder_failed: フォルダーの名前を変更できませんでした。
+deleting_folder: フォルダーを削除中…
 deleting_folder_failed: フォルダーを削除できませんでした。
 
 # Edit options menu: button and item labels

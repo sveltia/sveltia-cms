@@ -5,24 +5,31 @@ import { allCloudStorageServices } from '$lib/services/integrations/media-librar
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 import {
+  browseExternalFolder,
   canPreviewExternalAsset,
+  deletingExternalSubfolder,
   enabledCloudServices,
   EXTERNAL_LOCATION_PATH_PREFIX,
   externalAssetCounts,
   externalAssets,
   externalAssetSearchTerms,
   externalAssetsError,
+  externalFolders,
   focusedExternalAsset,
+  focusedExternalSubfolder,
   getCloudService,
   getCloudServicePath,
   getExternalAssetPath,
   getFetchOptions,
   hasAuthInfo,
+  hasFolderSupport,
   overlaidExternalAssetId,
   renamingExternalAsset,
+  renamingExternalSubfolder,
   resetExternalAssets,
   selectedCloudService,
   selectedExternalAssets,
+  selectedExternalDirPath,
 } from '.';
 
 vi.mock('$lib/services/config', () => ({
@@ -187,6 +194,56 @@ describe('assets/external', () => {
       expect(overlaidExternalAssetId.current).toBeUndefined();
       expect(renamingExternalAsset.current).toBeUndefined();
       expect(externalAssetSearchTerms.current).toBe('');
+    });
+
+    it('should clear the folder state', () => {
+      /** @type {any} */
+      const subfolder = { name: '2024', path: '2024' };
+
+      externalFolders.current = ['2024'];
+      selectedExternalDirPath.current = '2024';
+      focusedExternalSubfolder.current = subfolder;
+      renamingExternalSubfolder.current = subfolder;
+      deletingExternalSubfolder.current = subfolder;
+
+      resetExternalAssets();
+
+      expect(externalFolders.current).toEqual([]);
+      expect(selectedExternalDirPath.current).toBe('');
+      expect(focusedExternalSubfolder.current).toBeUndefined();
+      expect(renamingExternalSubfolder.current).toBeUndefined();
+      expect(deletingExternalSubfolder.current).toBeUndefined();
+    });
+  });
+
+  describe('hasFolderSupport', () => {
+    it('should take a service that lists its folders', () => {
+      expect(hasFolderSupport(undefined)).toBe(false);
+      expect(hasFolderSupport(allCloudStorageServices.uploadcare)).toBe(false);
+      expect(hasFolderSupport(/** @type {any} */ ({ serviceId: 'aws_s3', browse: vi.fn() }))).toBe(
+        true,
+      );
+    });
+  });
+
+  describe('browseExternalFolder', () => {
+    it('should move to the folder, dropping the focus and selection', () => {
+      /** @type {any} */
+      const asset = { id: 'a' };
+
+      selectedExternalAssets.current = [asset];
+      focusedExternalAsset.current = asset;
+      focusedExternalSubfolder.current = { name: '2024', path: '2024' };
+
+      browseExternalFolder('2024/summer');
+
+      expect(selectedExternalDirPath.current).toBe('2024/summer');
+      expect(selectedExternalAssets.current).toEqual([]);
+      expect(focusedExternalAsset.current).toBeUndefined();
+      expect(focusedExternalSubfolder.current).toBeUndefined();
+
+      browseExternalFolder('');
+      expect(selectedExternalDirPath.current).toBe('');
     });
   });
 });

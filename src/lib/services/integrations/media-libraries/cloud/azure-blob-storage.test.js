@@ -5,16 +5,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { cmsConfig } from '$lib/services/config/state';
 
 import azureBlobStorageService, {
+  browse,
+  browseBlobs,
   buildContainerUrl,
   buildRequestUrl,
+  createEmptyFolder,
+  createFolder,
   deleteBlobs,
   deleteFiles,
+  deleteFolder,
   getLibraryOptions,
   isAssetURL,
   isEnabled,
   list,
   listBlobs,
+  move,
+  moveBlob,
   parseBlobResults,
+  removeFolder,
   rename,
   renameBlob,
   replace,
@@ -820,6 +828,187 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
       await expect(deleteFiles([asset], { apiKey: token })).rejects.toThrow(message);
       await expect(rename(asset, 'renamed.jpg', { apiKey: token })).rejects.toThrow(message);
       await expect(replace(asset, file, { apiKey: token })).rejects.toThrow(message);
+    });
+  });
+
+  describe('folders', () => {
+    const prefixedConfig = { ...config, prefix: 'uploads/' };
+    const options = { apiKey: token };
+
+    it('should list the files and the empty folders, relative to the prefix', async () => {
+      const xml = buildListXml([
+        { name: 'uploads/' },
+        { ...sampleBlob, name: 'uploads/2024/photo.jpg' },
+        { name: 'uploads/2024/empty/' },
+        { name: 'uploads/notes.txt', type: 'text/plain' },
+      ]);
+
+      vi.mocked(fetch).mockImplementation(async () => new Response(xml, { status: 200 }));
+
+      const { assets, folders } = await browseBlobs(prefixedConfig, options);
+
+      expect(assets.map(({ description }) => description)).toEqual(['2024/photo.jpg', 'notes.txt']);
+      // The placeholder of the prefix itself isn’t a folder below it
+      expect(folders).toEqual(['2024/empty']);
+
+      const filtered = await browseBlobs(prefixedConfig, { ...options, kind: 'image' });
+
+      expect(filtered.assets.map(({ description }) => description)).toEqual(['2024/photo.jpg']);
+      expect(filtered.folders).toEqual(['2024/empty']);
+    });
+
+    it('should put right a prefix that lacks the trailing slash', async () => {
+      const slashlessConfig = { ...config, prefix: 'uploads' };
+
+      const xml = buildListXml([
+        { ...sampleBlob, name: 'uploads/2024/photo.jpg' },
+        { name: 'uploads/2024/empty/' },
+      ]);
+
+      vi.mocked(fetch).mockImplementation(async () => new Response(xml, { status: 200 }));
+
+      const { assets, folders } = await browseBlobs(slashlessConfig, options);
+
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('prefix=uploads%2F'));
+      expect(assets.map(({ description }) => description)).toEqual(['2024/photo.jpg']);
+      expect(folders).toEqual(['2024/empty']);
+
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+      await createFolder('2025', slashlessConfig, options);
+      expect(fetch).toHaveBeenLastCalledWith(
+        `${containerURL}/uploads/2025/?${token}`,
+        expect.anything(),
+      );
+    });
+
+    it('should create a folder by putting a placeholder blob', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+
+      await createFolder('2024/summer', prefixedConfig, options);
+
+      expect(fetch).toHaveBeenCalledExactlyOnceWith(
+        `${containerURL}/uploads/2024/summer/?${token}`,
+        {
+          method: 'PUT',
+          headers: { 'x-ms-blob-type': 'BlockBlob', 'Content-Type': 'application/x-directory' },
+        },
+      );
+
+      vi.mocked(fetch).mockResolvedValue(new Response('AuthorizationFailure', { status: 403 }));
+      await expect(createFolder('2024', prefixedConfig, options)).rejects.toThrow(
+        'Failed to create folder uploads/2024/: AuthorizationFailure',
+      );
+      await expect(createFolder('2024', prefixedConfig, { apiKey: '' })).rejects.toThrow(
+        'Azure Blob Storage SAS token is required',
+      );
+    });
+
+    it('should delete the placeholder blob of a folder, if any', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 202 }));
+
+      await deleteFolder('2024/summer', prefixedConfig, options);
+
+      expect(fetch).toHaveBeenCalledExactlyOnceWith(
+        `${containerURL}/uploads/2024/summer/?${token}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      // A folder that only ever held files has no placeholder
+      vi.mocked(fetch).mockResolvedValue(new Response('BlobNotFound', { status: 404 }));
+      await expect(deleteFolder('2024', prefixedConfig, options)).resolves.toBeUndefined();
+
+      vi.mocked(fetch).mockResolvedValue(new Response('AuthorizationFailure', { status: 403 }));
+      await expect(deleteFolder('2024', prefixedConfig, options)).rejects.toThrow(
+        'Failed to delete folder uploads/2024/: AuthorizationFailure',
+      );
+      await expect(deleteFolder('2024', prefixedConfig, { apiKey: '' })).rejects.toThrow(
+        'Azure Blob Storage SAS token is required',
+      );
+    });
+
+    it('should move a blob to another path below the prefix', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+
+      const result = await moveBlob(
+        /** @type {any} */ ({ id: 'uploads/2024/photo.jpg', fileName: 'photo.jpg', size: 12 }),
+        '2025/photo.jpg',
+        prefixedConfig,
+        options,
+      );
+
+      expect(fetch).toHaveBeenNthCalledWith(1, `${containerURL}/uploads/2025/photo.jpg?${token}`, {
+        method: 'PUT',
+        headers: {
+          'x-ms-blob-type': 'BlockBlob',
+          'x-ms-copy-source': `${containerURL}/uploads/2024/photo.jpg?${token}`,
+        },
+      });
+      expect(fetch).toHaveBeenNthCalledWith(2, `${containerURL}/uploads/2024/photo.jpg?${token}`, {
+        method: 'DELETE',
+      });
+      expect(result).toEqual(
+        expect.objectContaining({ id: 'uploads/2025/photo.jpg', description: '2025/photo.jpg' }),
+      );
+    });
+
+    it('should rename a blob below the prefix within its folder', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+
+      const result = await renameBlob(
+        /** @type {any} */ ({ id: 'uploads/2024/photo.jpg', fileName: 'photo.jpg', size: 12 }),
+        'renamed.jpg',
+        prefixedConfig,
+        options,
+      );
+
+      expect(result.id).toBe('uploads/2024/renamed.jpg');
+    });
+
+    it('should upload files to the given folder', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+
+      const results = await uploadBlobs([new File(['x'], 'photo.jpg')], prefixedConfig, {
+        ...options,
+        dirPath: '2024/summer',
+      });
+
+      expect(fetch).toHaveBeenCalledExactlyOnceWith(
+        `${containerURL}/uploads/2024/summer/photo.jpg?${token}`,
+        expect.objectContaining({ method: 'PUT' }),
+      );
+      expect(results[0].description).toBe('2024/summer/photo.jpg');
+    });
+
+    it('should expose the folder functions on the service, using the library options', async () => {
+      expect(azureBlobStorageService).toMatchObject({
+        browse,
+        move,
+        createFolder: createEmptyFolder,
+        deleteFolder: removeFolder,
+      });
+
+      vi.mocked(fetch).mockResolvedValue(new Response(buildListXml([sampleBlob]), { status: 200 }));
+      expect((await browse(options)).assets).toHaveLength(1);
+
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 201 }));
+      expect(
+        (await move(/** @type {any} */ ({ id: 'photo.jpg' }), '2024/photo.jpg', options)).id,
+      ).toBe('2024/photo.jpg');
+      await expect(createEmptyFolder('2024', options)).resolves.toBeUndefined();
+      await expect(removeFolder('2024', options)).resolves.toBeUndefined();
+
+      cmsConfig.current = /** @type {any} */ ({});
+
+      const message = 'Azure Blob Storage configuration is not available';
+
+      await expect(browse(options)).rejects.toThrow(message);
+      await expect(move(/** @type {any} */ ({ id: 'photo.jpg' }), 'x', options)).rejects.toThrow(
+        message,
+      );
+      await expect(createEmptyFolder('2024', options)).rejects.toThrow(message);
+      await expect(removeFolder('2024', options)).rejects.toThrow(message);
     });
   });
 });

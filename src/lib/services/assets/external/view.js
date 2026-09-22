@@ -4,11 +4,15 @@ import { untrack } from 'svelte';
 import {
   externalAssets,
   externalAssetSearchTerms,
+  externalFolders,
   focusedExternalAsset,
+  hasFolderSupport,
   selectedCloudService,
   selectedExternalAssets,
+  selectedExternalDirPath,
 } from '$lib/services/assets/external';
 import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
+import { getDirName, listSubfolders } from '$lib/services/assets/subfolders';
 import { currentView } from '$lib/services/assets/view/settings';
 import { buildGroupMap, sortItemsByKey } from '$lib/services/common/view';
 import { normalize } from '$lib/services/search/util';
@@ -16,6 +20,7 @@ import { createDerivedState, createRootEffect } from '$lib/services/utils/state.
 
 /**
  * @import {
+ * AssetSubfolder,
  * ExternalAsset,
  * FilteringConditions,
  * GroupingConditions,
@@ -176,14 +181,51 @@ export const searchExternalAssets = (assets, terms) => {
 };
 
 /**
+ * Whether the selected cloud storage service is being browsed folder by folder: it has folder
+ * support, and nothing is being searched for. A search looks through the whole service instead,
+ * listing the matches with their paths.
+ * @type {{ readonly current: boolean }}
+ */
+export const browsingExternalFolders = createDerivedState(
+  () => hasFolderSupport(selectedCloudService.current) && !externalAssetSearchTerms.current,
+);
+
+/**
+ * Subfolders of the folder being browsed on the selected cloud storage service, listed ahead of
+ * the assets. Empty unless the service is browsed folder by folder.
+ * @type {{ readonly current: AssetSubfolder[] }}
+ */
+export const listedExternalSubfolders = createDerivedState(() => {
+  if (!browsingExternalFolders.current) {
+    return [];
+  }
+
+  return listSubfolders({
+    dirPath: selectedExternalDirPath.current,
+    paths: [
+      ...(externalAssets.current ?? []).map(({ description }) => description),
+      // An empty folder is given with a trailing slash, as it has no file to be read off
+      ...externalFolders.current.map((dirPath) => `${dirPath}/`),
+    ],
+  });
+});
+
+/**
  * Sorted, filtered and searched assets on the selected cloud storage service. The Asset Library’s
  * {@link currentView} is shared with repository folders, so the view type, sort order and file
- * type filter are remembered per service just like per folder.
+ * type filter are remembered per service just like per folder. While the service is browsed folder
+ * by folder, only the assets right in the folder being browsed are listed.
  * @type {{ readonly current: ExternalAsset[] }}
  */
 export const listedExternalAssets = createDerivedState(() => {
   const { sort, filter } = currentView.current;
   let assets = externalAssets.current ?? [];
+
+  if (browsingExternalFolders.current) {
+    const dirPath = selectedExternalDirPath.current;
+
+    assets = assets.filter(({ description }) => getDirName(description) === dirPath);
+  }
 
   assets = sortExternalAssets(assets, sort);
   assets = filterExternalAssets(assets, filter);

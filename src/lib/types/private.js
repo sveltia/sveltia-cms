@@ -488,6 +488,9 @@
  * cloud storage services.
  * @property {string} [password] Password for services that require user authentication, such as
  * cloud storage services.
+ * @property {string} [dirPath] Directory the uploaded files go to, relative to the configured
+ * prefix, e.g. `2024/summer`. An empty string or `undefined` for the prefix itself. Only a cloud
+ * storage service that stores files at paths reads it.
  */
 
 /**
@@ -536,6 +539,31 @@
  * Promise<ExternalAsset>} [replace] Function to replace a file on the cloud storage service with a
  * new file, keeping the file name and URL. Omitted when the service assigns a new URL to every
  * uploaded file.
+ * @property {(options: MediaLibraryFetchOptions) => Promise<ExternalFolderListing>} [browse]
+ * Function to list the files on a cloud storage service that stores them at paths, along with the
+ * empty folders it keeps. The Asset Library and the asset picker then browse the service folder by
+ * folder, reading the folders off the file paths in `description`. Omitted when the service has no
+ * folders, like Uploadcare, or handles them in its own widget, like Cloudinary.
+ * @property {(dirPath: string, options: MediaLibraryFetchOptions) => Promise<void>}
+ * [createFolder] Function to create an empty folder on the service, which keeps a placeholder
+ * object for it, as object storage has no folders of its own. The path is relative to the
+ * configured prefix.
+ * @property {(dirPath: string, options: MediaLibraryFetchOptions) => Promise<void>}
+ * [deleteFolder] Function to remove the placeholder object of a folder once the files in it have
+ * been deleted or moved. A folder without a placeholder is as good as removed.
+ * @property {(asset: ExternalAsset, newPath: string, options: MediaLibraryFetchOptions) =>
+ * Promise<ExternalAsset>} [move] Function to move a file to another path on the service, relative
+ * to the configured prefix, which is how a folder is renamed. Omitted when the service can’t move
+ * a file.
+ */
+
+/**
+ * Files and folders on a cloud storage service that stores files at paths.
+ * @typedef {object} ExternalFolderListing
+ * @property {ExternalAsset[]} assets Files.
+ * @property {string[]} folders Paths of the folders kept by a placeholder object, relative to the
+ * configured prefix, e.g. `2024/summer`. The folders that hold files are read off the file paths
+ * instead.
  */
 
 /**

@@ -5,10 +5,9 @@
   or the keyboard, if any, or else the folder being browsed.
 -->
 <script>
-  import { _, locale as appLocale } from '@sveltia/i18n';
-  import { Icon } from '@sveltia/ui';
+  import { locale as appLocale } from '@sveltia/i18n';
 
-  import InfoPanelLayout from '$lib/components/assets/list/info-panel-layout.svelte';
+  import FolderInfoPanel from '$lib/components/assets/list/folder-info-panel.svelte';
   import { selectedAssetFolder } from '$lib/services/assets/folders';
   import {
     browsedDirPath,
@@ -66,42 +65,9 @@
   });
 </script>
 
-{#snippet preview()}
-  <div role="none" class="folder-preview">
-    <Icon name="folder" />
-  </div>
-{/snippet}
-
-<InfoPanelLayout {preview}>
-  <section>
-    <h4>{_('folder')}</h4>
-    <p><bdi>{info.name}</bdi></p>
-  </section>
-  {#if info.path !== undefined}
-    <section>
-      <h4>{_('folder_path')}</h4>
-      <p><bdi dir="ltr">{`/${info.path}`}</bdi></p>
-    </section>
-  {/if}
-  <section>
-    <h4>{_('folder_contents')}</h4>
-    {#if info.folderCount !== undefined}
-      <p>{_('x_folders', { values: { count: info.folderCount } })}</p>
-    {/if}
-    <p>{_('x_assets', { values: { count: info.assetCount } })}</p>
-  </section>
-</InfoPanelLayout>
-
-<style>
-  .folder-preview {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--sui-secondary-foreground-color);
-
-    :global(.sui.icon) {
-      font-size: 96px;
-    }
-  }
-</style>
+<FolderInfoPanel
+  name={info.name}
+  path={info.path}
+  folderCount={info.folderCount}
+  assetCount={info.assetCount}
+/>

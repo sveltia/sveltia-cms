@@ -3,14 +3,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   externalAssets,
   externalAssetSearchTerms,
+  externalFolders,
   focusedExternalAsset,
   selectedCloudService,
   selectedExternalAssets,
+  selectedExternalDirPath,
 } from '$lib/services/assets/external';
 import { currentView } from '$lib/services/assets/view/settings';
 import { OTHER_GROUP_NAME } from '$lib/services/common/view';
 
 import {
+  browsingExternalFolders,
   EXTERNAL_ASSET_SORT_KEYS,
   externalAssetGroups,
   externalAssetSortKeys,
@@ -20,6 +23,7 @@ import {
   getSortValue,
   groupExternalAssets,
   listedExternalAssets,
+  listedExternalSubfolders,
   pruneHiddenAssets,
   searchExternalAssets,
   sortExternalAssets,
@@ -32,9 +36,13 @@ vi.mock('@sveltia/i18n', () => ({
 vi.mock('$lib/services/assets/external', () => ({
   externalAssets: { current: undefined },
   externalAssetSearchTerms: { current: '' },
+  externalFolders: { current: [] },
   focusedExternalAsset: { current: undefined },
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  hasFolderSupport: (/** @type {any} */ service) => !!service?.browse,
   selectedCloudService: { current: undefined },
   selectedExternalAssets: { current: [] },
+  selectedExternalDirPath: { current: '' },
 }));
 
 vi.mock('$lib/services/assets/external/linked', () => ({
@@ -86,6 +94,8 @@ describe('assets/external/view', () => {
     focusedExternalAsset.current = undefined;
     selectedCloudService.current = undefined;
     selectedExternalAssets.current = [];
+    externalFolders.current = [];
+    selectedExternalDirPath.current = '';
     currentView.current = { type: 'grid' };
   });
 
@@ -252,6 +262,59 @@ describe('assets/external/view', () => {
       externalAssetSearchTerms.current = 'hero';
 
       expect(listedExternalAssets.current).toEqual([hero2, hero]);
+    });
+  });
+
+  describe('folder browsing', () => {
+    /** @type {any} */
+    const service = { serviceId: 'aws_s3', browse: vi.fn() };
+
+    it('should browse a service with folder support unless something is searched for', () => {
+      expect(browsingExternalFolders.current).toBe(false);
+
+      selectedCloudService.current = service;
+      expect(browsingExternalFolders.current).toBe(true);
+
+      externalAssetSearchTerms.current = 'hero';
+      expect(browsingExternalFolders.current).toBe(false);
+
+      externalAssetSearchTerms.current = '';
+      selectedCloudService.current = /** @type {any} */ ({ serviceId: 'uploadcare' });
+      expect(browsingExternalFolders.current).toBe(false);
+    });
+
+    it('should list the subfolders of the folder being browsed, and its assets only', () => {
+      // The empty folders are listed before the assets are loaded
+      selectedCloudService.current = service;
+      externalFolders.current = ['images/empty', 'archive'];
+      expect(listedExternalSubfolders.current).toEqual([
+        { name: 'archive', path: 'archive' },
+        { name: 'images', path: 'images' },
+      ]);
+
+      selectedCloudService.current = undefined;
+      externalAssets.current = assets;
+
+      // A service without folder support lists everything at once
+      expect(listedExternalSubfolders.current).toEqual([]);
+      expect(listedExternalAssets.current).toEqual(assets);
+
+      selectedCloudService.current = service;
+      expect(listedExternalSubfolders.current).toEqual([
+        { name: 'archive', path: 'archive' },
+        { name: 'docs', path: 'docs' },
+        { name: 'images', path: 'images' },
+      ]);
+      expect(listedExternalAssets.current).toEqual([]);
+
+      selectedExternalDirPath.current = 'images';
+      expect(listedExternalSubfolders.current).toEqual([{ name: 'empty', path: 'images/empty' }]);
+      expect(listedExternalAssets.current).toEqual([hero2, hero]);
+
+      // A search looks through every folder
+      externalAssetSearchTerms.current = 'guide';
+      expect(listedExternalSubfolders.current).toEqual([]);
+      expect(listedExternalAssets.current).toEqual([guide]);
     });
   });
 

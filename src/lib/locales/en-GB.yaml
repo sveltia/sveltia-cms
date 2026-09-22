@@ -592,6 +592,14 @@ enter_new_name_for_folder: |
     0   {{ Enter a new name below. }}
     one {{ Enter a new name below. The asset in the folder will be moved along, and any entry using it will be updated. }}
     *   {{ Enter a new name below. The {$count} assets in the folder will be moved along, and any entries using them will be updated. }}
+# Rename Folder dialog body text for a cloud storage service, whose files are hotlinked from the
+# entries, so a move changes the URLs and the entries aren’t updated
+enter_new_name_for_external_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Enter a new name below. }}
+    one {{ Enter a new name below. The file in the folder will be moved along, and its URL will change, so update any entry using it. }}
+    *   {{ Enter a new name below. The {$count} files in the folder will be moved along, and their URLs will change, so update any entries using them. }}
 # Delete Folder confirmation
 # {$name} is the folder name and {$count} is the number of assets in the folder
 confirm_deleting_folder: |
@@ -603,6 +611,7 @@ confirm_deleting_folder: |
 # Progress and error messages while the folder is being renamed or deleted
 renaming_folder: Renaming the folder…
 renaming_folder_failed: Couldn’t rename the folder.
+deleting_folder: Deleting the folder…
 deleting_folder_failed: Couldn’t delete the folder.
 
 # Edit options menu: button and item labels

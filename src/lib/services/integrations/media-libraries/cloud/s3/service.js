@@ -5,9 +5,13 @@ import {
 } from '$lib/services/integrations/media-libraries/options';
 
 import {
+  browseS3Objects,
+  createS3Folder,
+  deleteS3Folder,
   deleteS3Objects,
   isS3ObjectUrl,
   listS3Objects,
+  moveS3Object,
   renameS3Object,
   replaceS3Object,
   searchS3Objects,
@@ -17,6 +21,7 @@ import {
 /**
  * @import {
  * ExternalAsset,
+ * ExternalFolderListing,
  * MediaLibraryFetchOptions,
  * MediaLibraryService,
  * S3Config,
@@ -158,6 +163,13 @@ export class S3CompatibleService {
   list = async (options) => listS3Objects(this.getConfig(options), options);
 
   /**
+   * List the files and the empty folders on the service.
+   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+   * @returns {Promise<ExternalFolderListing>} Files and folders.
+   */
+  browse = async (options) => browseS3Objects(this.getConfig(options), options);
+
+  /**
    * Search files on the service.
    * @param {string} query Search query.
    * @param {MediaLibraryFetchOptions} options Options containing the configuration.
@@ -200,4 +212,32 @@ export class S3CompatibleService {
    */
   replace = async (asset, file, options) =>
     replaceS3Object(asset, file, this.getConfig(options), options);
+
+  /**
+   * Move a file on the service to another path.
+   * @param {ExternalAsset} asset Asset to move.
+   * @param {string} newPath New path relative to the configured prefix.
+   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+   * @returns {Promise<ExternalAsset>} Moved asset.
+   */
+  move = async (asset, newPath, options) =>
+    moveS3Object(asset, newPath, this.getConfig(options), options);
+
+  /**
+   * Create an empty folder on the service.
+   * @param {string} dirPath Folder path relative to the configured prefix.
+   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+   * @returns {Promise<void>}
+   */
+  createFolder = async (dirPath, options) =>
+    createS3Folder(dirPath, this.getConfig(options), options);
+
+  /**
+   * Remove the placeholder of a folder on the service.
+   * @param {string} dirPath Folder path relative to the configured prefix.
+   * @param {MediaLibraryFetchOptions} options Options containing the configuration.
+   * @returns {Promise<void>}
+   */
+  deleteFolder = async (dirPath, options) =>
+    deleteS3Folder(dirPath, this.getConfig(options), options);
 }

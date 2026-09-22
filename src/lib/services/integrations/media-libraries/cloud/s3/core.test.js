@@ -1,13 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  browseS3Objects,
   buildObjectApiUrl,
   buildObjectUrl,
+  createS3Folder,
+  deleteS3Folder,
   deleteS3Objects,
   encodeKey,
   generateAwsSignature,
   isS3ObjectUrl,
   listS3Objects,
+  moveS3Object,
   parseS3Results,
   renameS3Object,
   replaceS3Object,
@@ -730,6 +734,197 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       });
 
       expect(results).toHaveLength(1);
+    });
+  });
+
+  describe('browseS3Objects', () => {
+    const mockConfig = {
+      access_key_id: 'AKIAIOSFODNN7EXAMPLE',
+      bucket: 'test-bucket',
+      region: 'us-east-1',
+      prefix: 'uploads/',
+    };
+
+    const options = { apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' };
+
+    const xmlResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult>
+  <Contents>
+    <Key>uploads/</Key>
+    <LastModified>2025-01-01T00:00:00.000Z</LastModified>
+    <Size>0</Size>
+  </Contents>
+  <Contents>
+    <Key>uploads/2024/photo.jpg</Key>
+    <LastModified>2025-01-01T00:00:00.000Z</LastModified>
+    <Size>1024</Size>
+  </Contents>
+  <Contents>
+    <Key>uploads/2024/empty/</Key>
+    <LastModified>2025-01-02T00:00:00.000Z</LastModified>
+    <Size>0</Size>
+  </Contents>
+  <Contents>
+    <Key>uploads/notes.txt</Key>
+    <LastModified>2025-01-02T00:00:00.000Z</LastModified>
+    <Size>10</Size>
+  </Contents>
+  <IsTruncated>false</IsTruncated>
+</ListBucketResult>`;
+
+    it('should list the files and the empty folders, relative to the prefix', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(xmlResponse, { status: 200 }));
+
+      const { assets, folders } = await browseS3Objects(mockConfig, options);
+
+      expect(assets.map(({ description }) => description)).toEqual(['2024/photo.jpg', 'notes.txt']);
+      // The placeholder of the prefix itself isn’t a folder below it
+      expect(folders).toEqual(['2024/empty']);
+    });
+
+    it('should filter the files by kind', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(xmlResponse, { status: 200 }));
+
+      const { assets, folders } = await browseS3Objects(mockConfig, { ...options, kind: 'image' });
+
+      expect(assets.map(({ description }) => description)).toEqual(['2024/photo.jpg']);
+      expect(folders).toEqual(['2024/empty']);
+    });
+
+    it('should require the secret access key', async () => {
+      await expect(browseS3Objects(mockConfig, { apiKey: '' })).rejects.toThrow(
+        'S3 secret access key is required',
+      );
+    });
+
+    it('should put right a prefix that lacks the trailing slash', async () => {
+      const config = { ...mockConfig, prefix: 'uploads' };
+
+      vi.mocked(fetch).mockResolvedValue(new Response(xmlResponse, { status: 200 }));
+
+      const { assets, folders } = await browseS3Objects(config, options);
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('prefix=uploads%2F'),
+        expect.anything(),
+      );
+      expect(assets.map(({ description }) => description)).toEqual(['2024/photo.jpg', 'notes.txt']);
+      expect(folders).toEqual(['2024/empty']);
+
+      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+      await createS3Folder('2025', config, options);
+      expect(fetch).toHaveBeenLastCalledWith(
+        'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2025/',
+        expect.anything(),
+      );
+    });
+  });
+
+  describe('folders', () => {
+    const mockConfig = {
+      access_key_id: 'AKIAIOSFODNN7EXAMPLE',
+      bucket: 'test-bucket',
+      region: 'us-east-1',
+      prefix: 'uploads/',
+    };
+
+    const options = { apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' };
+
+    it('should create a folder by putting a placeholder object', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+
+      await createS3Folder('2024/summer', mockConfig, options);
+
+      expect(fetch).toHaveBeenCalledExactlyOnceWith(
+        'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2024/summer/',
+        expect.objectContaining({
+          method: 'PUT',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/x-directory',
+            'x-amz-acl': 'public-read',
+          }),
+        }),
+      );
+    });
+
+    it('should report a failure to create a folder', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response('Access Denied', { status: 403 }));
+
+      await expect(createS3Folder('2024', mockConfig, options)).rejects.toThrow(
+        'Failed to create folder uploads/2024/: Access Denied',
+      );
+      await expect(createS3Folder('2024', mockConfig, { apiKey: '' })).rejects.toThrow(
+        'S3 secret access key is required',
+      );
+    });
+
+    it('should delete the placeholder object of a folder', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }));
+
+      await deleteS3Folder('2024/summer', mockConfig, options);
+
+      expect(fetch).toHaveBeenCalledExactlyOnceWith(
+        'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2024/summer/',
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+    });
+
+    it('should move an object to another path below the prefix', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+
+      const result = await moveS3Object(
+        /** @type {any} */ ({ id: 'uploads/2024/photo.jpg', fileName: 'photo.jpg', size: 12 }),
+        '2025/photo.jpg',
+        mockConfig,
+        options,
+      );
+
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2025/photo.jpg',
+        expect.objectContaining({
+          method: 'PUT',
+          headers: expect.objectContaining({
+            'x-amz-copy-source': '/test-bucket/uploads/2024/photo.jpg',
+          }),
+        }),
+      );
+      expect(fetch).toHaveBeenNthCalledWith(
+        2,
+        'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2024/photo.jpg',
+        expect.objectContaining({ method: 'DELETE' }),
+      );
+      expect(result).toEqual(
+        expect.objectContaining({ id: 'uploads/2025/photo.jpg', description: '2025/photo.jpg' }),
+      );
+    });
+
+    it('should rename an object below the prefix within its folder', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+
+      const result = await renameS3Object(
+        /** @type {any} */ ({ id: 'uploads/2024/photo.jpg', fileName: 'photo.jpg', size: 12 }),
+        'renamed.jpg',
+        mockConfig,
+        options,
+      );
+
+      expect(result.id).toBe('uploads/2024/renamed.jpg');
+    });
+
+    it('should upload files to the given folder', async () => {
+      vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+
+      const results = await uploadToS3([new File(['x'], 'photo.jpg')], mockConfig, {
+        ...options,
+        dirPath: '2024/summer',
+      });
+
+      expect(fetch).toHaveBeenCalledExactlyOnceWith(
+        'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2024/summer/photo.jpg',
+        expect.objectContaining({ method: 'PUT' }),
+      );
+      expect(results[0].description).toBe('2024/summer/photo.jpg');
     });
   });
 
