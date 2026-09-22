@@ -1,5 +1,6 @@
 import { fetchBlobText } from '$lib/services/backends/git/github/files';
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
@@ -80,6 +81,12 @@ export const fetchPullRequestFileList = async (pullRequest) => {
 };
 
 /**
+ * Number of changed files whose content is requested per GraphQL query. With up to 100 files in
+ * each of up to 100 pull requests, asking for all of them at once could exceed the API’s limits.
+ */
+const FILES_CHUNK_SIZE = 100;
+
+/**
  * Fetch the content of the files changed in the given pull requests, and populate the
  * {@link WorkflowFile} objects in place. Binary files, such as images, are skipped; only their blob
  * metadata is stored.
@@ -101,44 +108,38 @@ export const fetchPullRequestFiles = async (pullRequests) => {
     return;
   }
 
-  const innerQuery = targets
-    .map(
-      ({ pullRequest, file }, index) => `
-        file_${index}: object(expression: ${JSON.stringify(`${pullRequest.branch}:${file.path}`)}) {
-          ... on Blob {
-            oid
-            byteSize
-            isBinary
-            isTruncated
-            text
-          }
-        }
-      `,
-    )
-    .join('');
-
   // A workflow branch lives in the contributor’s fork with Open Authoring, so that’s where the
   // blobs have to be read from
   const workflowRepository = getWorkflowRepository();
 
-  const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(
-      `
-        query($owner: String!, $repo: String!) {
-          repository(owner: $owner, name: $repo) {
-            ${innerQuery}
-          }
+  const blobs = await fetchAliasedBatch({
+    items: targets,
+    alias: 'file',
+    /**
+     * Build the field selection for a changed file on its pull request branch.
+     * @param {{ pullRequest: WorkflowPullRequest, file: WorkflowFile }} target Target.
+     * @returns {string} Field selection.
+     */
+    getFragment: ({ pullRequest, file }) => `
+      object(expression: ${JSON.stringify(`${pullRequest.branch}:${file.path}`)}) {
+        ... on Blob {
+          oid
+          byteSize
+          isBinary
+          isTruncated
+          text
         }
-      `,
-      workflowRepository,
-    )
-  );
+      }
+    `,
+    chunkSize: FILES_CHUNK_SIZE,
+    variables: workflowRepository,
+  });
 
   /** @type {WorkflowFile[]} */
   const truncatedFiles = [];
 
   targets.forEach(({ file }, index) => {
-    const blob = result?.[`file_${index}`];
+    const blob = blobs[index];
 
     if (blob) {
       Object.assign(file, {

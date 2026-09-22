@@ -194,6 +194,37 @@ describe('GitHub pull request helpers', () => {
 
       expect(pullRequest.files[0].deleted).toBe(true);
     });
+
+    test('splits a long file list into several queries', async () => {
+      const pullRequests = /** @type {any[]} */ (
+        Array.from({ length: 3 }, (_, p) => ({
+          branch: `cms/posts/p${p}`,
+          files: Array.from({ length: 50 }, (__, f) => ({
+            path: `content/posts/p${p}/f${f}.md`,
+            sha: '',
+            size: 0,
+            deleted: false,
+          })),
+        }))
+      );
+
+      vi.mocked(fetchGraphQL).mockImplementation(async (query) => ({
+        repository: Object.fromEntries(
+          [.../** @type {string} */ (query).matchAll(/file_(\d+):/g)].map(([, i]) => [
+            `file_${i}`,
+            { oid: `sha${i}`, byteSize: 1, isBinary: false, text: `text ${i}` },
+          ]),
+        ),
+      }));
+
+      await fetchPullRequestFiles(pullRequests);
+
+      // 150 files / 100 per query = 2 requests
+      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+      expect(pullRequests[2].files[49]).toEqual(
+        expect.objectContaining({ sha: 'sha149', text: 'text 149', deleted: false }),
+      );
+    });
   });
 
   describe('deleteBranch', () => {

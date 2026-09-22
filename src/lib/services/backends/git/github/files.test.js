@@ -8,8 +8,8 @@ import {
   fetchFileList,
   fetchFileMetadata,
   fetchFiles,
-  getFileContentsQuery,
-  getFileMetadataQuery,
+  getFileContentsFragment,
+  getFileMetadataFragment,
   parseFileContents,
   parseFileMetadata,
 } from '$lib/services/backends/git/github/files';
@@ -96,62 +96,34 @@ describe('GitHub files service', () => {
     });
   });
 
-  describe('getFileContentsQuery', () => {
-    test('generates GraphQL query for file contents', () => {
-      const chunk = /** @type {any[]} */ ([
-        { type: 'entry', path: 'file1.txt', sha: 'sha1' },
-        { type: 'entry', path: 'file2.md', sha: 'sha2' },
-      ]);
+  describe('getFileContentsFragment', () => {
+    test('generates the field selection for a file’s contents', () => {
+      const result = getFileContentsFragment(
+        /** @type {any} */ ({ type: 'entry', path: 'file1.txt', sha: 'sha1' }),
+      );
 
-      const result = getFileContentsQuery(chunk, 0);
-
-      expect(result).toContain('query($owner: String!, $repo: String!)');
-      expect(result).toContain('repository');
-      expect(result).toContain('content_0: object(oid: "sha1")');
-      expect(result).toContain('content_1: object(oid: "sha2")');
+      expect(result).toContain('object(oid: "sha1")');
       // The truncation flag is needed to detect an oversized blob
       expect(result).toContain('... on Blob { text isTruncated }');
       // The commit history is fetched separately, as it’s the slow part
       expect(result).not.toContain('history(');
     });
 
-    test('generates query with start index offset', () => {
-      const chunk = /** @type {any[]} */ ([{ type: 'entry', path: 'file.txt', sha: 'sha1' }]);
-      const result = getFileContentsQuery(chunk, 10);
-
-      expect(result).toContain('content_10:');
-    });
-
-    test('skips content query for asset types while keeping the indices', () => {
-      const chunk = /** @type {any[]} */ ([
-        { type: 'asset', path: 'image.png', sha: 'sha1' },
-        { type: 'asset', path: 'video.mp4', sha: 'sha2' },
-        { type: 'entry', path: 'doc.md', sha: 'sha3' },
-      ]);
-
-      const result = getFileContentsQuery(chunk, 5);
-
-      expect(result).not.toContain('content_5:');
-      expect(result).not.toContain('content_6:');
-      expect(result).toContain('content_7:');
+    test('skips an asset, which has no content to read', () => {
+      expect(
+        getFileContentsFragment(/** @type {any} */ ({ type: 'asset', path: 'a.png', sha: 's' })),
+      ).toBe('');
     });
   });
 
-  describe('getFileMetadataQuery', () => {
-    test('generates GraphQL query for the last commit of every file', () => {
-      const chunk = /** @type {any[]} */ ([
-        { type: 'asset', path: 'image.png', sha: 'sha1' },
-        { type: 'entry', path: 'doc.md', sha: 'sha2' },
-      ]);
+  describe('getFileMetadataFragment', () => {
+    test('generates the field selection for the last commit of a file', () => {
+      const result = getFileMetadataFragment(
+        /** @type {any} */ ({ type: 'asset', path: 'image.png', sha: 'sha1' }),
+      );
 
-      const result = getFileMetadataQuery(chunk, 5);
-
-      expect(result).toContain('query($owner: String!, $repo: String!, $branch: String!)');
-      expect(result).toContain('commit_5: ref(qualifiedName: $branch)');
+      expect(result).toContain('ref(qualifiedName: $branch)');
       expect(result).toContain('history(first: 1, path: "image.png")');
-      expect(result).toContain('commit_6: ref(qualifiedName: $branch)');
-      expect(result).toContain('history(first: 1, path: "doc.md")');
-      expect(result).not.toContain('content_');
     });
   });
 
@@ -176,11 +148,7 @@ describe('GitHub files service', () => {
         { path: 'file2.md', sha: 'sha2', size: 200, name: 'file2.md' },
       ]);
 
-      const results = {
-        content_0: { text: 'Content of file1' },
-        content_1: { text: 'Content of file2' },
-      };
-
+      const results = [{ text: 'Content of file1' }, { text: 'Content of file2' }];
       const result = await parseFileContents(fetchingFiles, results);
 
       expect(result).toEqual({
@@ -194,7 +162,7 @@ describe('GitHub files service', () => {
         { path: 'image.png', sha: 'sha1', size: 100, name: 'image.png' },
       ]);
 
-      const result = await parseFileContents(fetchingFiles, {});
+      const result = await parseFileContents(fetchingFiles, [undefined]);
 
       expect(result['image.png']).toEqual({
         sha: 'sha1',
@@ -210,10 +178,10 @@ describe('GitHub files service', () => {
         { path: 'small.md', sha: 'sha2', size: 100 },
       ]);
 
-      const results = {
-        content_0: { text: 'Cut short at 512 KB', isTruncated: true },
-        content_1: { text: 'Content of small.md', isTruncated: false },
-      };
+      const results = [
+        { text: 'Cut short at 512 KB', isTruncated: true },
+        { text: 'Content of small.md', isTruncated: false },
+      ];
 
       vi.mocked(fetchAPI).mockResolvedValue('Complete content of large.md');
 
@@ -252,15 +220,11 @@ describe('GitHub files service', () => {
         { path: 'image.png', sha: 'sha2', size: 200 },
       ]);
 
-      const results = {
-        commit_0: createCommit(
-          'Author 1',
-          { id: 'user1', login: 'author1' },
-          '2023-01-01T00:00:00Z',
-        ),
+      const results = [
+        createCommit('Author 1', { id: 'user1', login: 'author1' }, '2023-01-01T00:00:00Z'),
         // A commit whose author isn’t linked to a GitHub account
-        commit_1: createCommit('Author 2', null, '2023-01-02T00:00:00Z'),
-      };
+        createCommit('Author 2', null, '2023-01-02T00:00:00Z'),
+      ];
 
       expect(parseFileMetadata(fetchingFiles, results)).toEqual({
         'file1.txt': {
@@ -304,7 +268,7 @@ describe('GitHub files service', () => {
 
       const result = await fetchFileContents(fetchingFiles);
 
-      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('content_0: object'));
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('content_0: object'), {});
       expect(startSimulatedProgress).toHaveBeenCalledWith(fetchingFiles.length);
       expect(stopProgress).toHaveBeenCalledOnce();
       expect(result['file.txt']).toEqual({
@@ -467,7 +431,11 @@ describe('GitHub files service', () => {
       const result = await fetchFileMetadata(fetchingFiles);
 
       expect(fetchGraphQL).toHaveBeenCalledTimes(2);
-      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('history(first: 1'));
+      expect(fetchGraphQL).toHaveBeenCalledWith(
+        expect.stringContaining('query($owner: String!, $repo: String!, $branch: String!)'),
+        {},
+      );
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('history(first: 1'), {});
       // No progress bar: this runs in the background once the contents are shown
       expect(startSimulatedProgress).not.toHaveBeenCalled();
       expect(Object.keys(result)).toHaveLength(300);

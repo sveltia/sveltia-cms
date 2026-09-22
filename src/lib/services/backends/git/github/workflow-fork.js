@@ -1,6 +1,7 @@
 import { _ } from '@sveltia/i18n';
 
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import {
   createPullRequest,
   deleteBranch,
@@ -57,50 +58,46 @@ const getFetchForkBranchesQuery = () => `
 `;
 
 /**
- * Build the query to fetch the pull request each of the given fork branches has, if any. A ref in
+ * Number of fork branches whose pull requests are looked up per GraphQL query. Each one carries
+ * the file lists of its candidate pull requests, so a long list is split to keep a query within the
+ * API’s limits.
+ */
+const BRANCH_PULL_REQUESTS_CHUNK_SIZE = 50;
+
+/**
+ * Build the field selection to fetch the pull request the given fork branch has, if any. A ref in
  * the fork doesn’t report the pull requests opened from it against the configured repository, so
- * they’re looked up from that repository instead, matched by head branch name. One aliased sub-
- * query per branch keeps it to a single request.
- * @param {string[]} branches Branch names to look up.
- * @returns {string} GraphQL query.
+ * they’re looked up from that repository instead, matched by head branch name.
+ * @param {string} branch Branch name to look up.
+ * @returns {string} Field selection on the `Repository` type.
  * @see https://docs.github.com/en/graphql/reference/objects#repository
  */
-const getFetchForkPullRequestsQuery = (branches) => `
-  query($owner: String!, $repo: String!) {
-    repository(owner: $owner, name: $repo) {
-      ${branches
-        .map(
-          (branch, index) => `
-            pr_${index}: pullRequests(
-              headRefName: ${JSON.stringify(branch)}
-              states: [OPEN, CLOSED, MERGED]
-              first: ${MAX_ITEMS.branchPullRequests}
-              orderBy: { field: CREATED_AT, direction: DESC }
-            ) {
-              nodes {
-                id
-                number
-                title
-                url
-                state
-                isDraft
-                createdAt
-                updatedAt
-                headRefOid
-                headRepositoryOwner {
-                  login
-                }
-                files(first: ${MAX_ITEMS.files}) {
-                  nodes {
-                    path
-                    changeType
-                  }
-                }
-              }
-            }
-          `,
-        )
-        .join('')}
+const getForkPullRequestsFragment = (branch) => `
+  pullRequests(
+    headRefName: ${JSON.stringify(branch)}
+    states: [OPEN, CLOSED, MERGED]
+    first: ${MAX_ITEMS.branchPullRequests}
+    orderBy: { field: CREATED_AT, direction: DESC }
+  ) {
+    nodes {
+      id
+      number
+      title
+      url
+      state
+      isDraft
+      createdAt
+      updatedAt
+      headRefOid
+      headRepositoryOwner {
+        login
+      }
+      files(first: ${MAX_ITEMS.files}) {
+        nodes {
+          path
+          changeType
+        }
+      }
     }
   }
 `;
@@ -121,12 +118,15 @@ export const fetchForkBranchPullRequests = async (branches) => {
 
   const fork = forkedRepository.current;
 
-  const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(getFetchForkPullRequestsQuery(branches))
-  );
+  const results = await fetchAliasedBatch({
+    items: branches,
+    alias: 'pr',
+    getFragment: getForkPullRequestsFragment,
+    chunkSize: BRANCH_PULL_REQUESTS_CHUNK_SIZE,
+  });
 
   branches.forEach((branch, index) => {
-    const [node] = (result?.[`pr_${index}`]?.nodes ?? []).filter(
+    const [node] = (results[index]?.nodes ?? []).filter(
       // The configured repository can have a branch of the same name, whose pull request isn’t the
       // contributor’s
       (/** @type {any} */ pr) => pr.headRepositoryOwner?.login === fork?.owner,

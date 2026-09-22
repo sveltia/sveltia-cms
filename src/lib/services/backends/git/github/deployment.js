@@ -1,3 +1,4 @@
+import { fetchAliasedBatch, splitIntoChunks } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
@@ -112,29 +113,23 @@ export const fetchBranchHeadSHA = async () => {
 };
 
 /**
- * Build a batched query that reads the given field from each commit. GraphQL aliases can’t be
- * variables, so the commit SHAs are inlined the same way {@link fetchPullRequestFiles} does.
- * @param {string[]} shas Commit SHAs.
+ * Read the given fields from each commit in a single batched request.
+ * @param {string[]} shas Commit SHAs. The caller keeps the list to {@link MAX_ITEMS.commits}.
  * @param {string} selection Inner selection on the `Commit` type.
- * @returns {string} GraphQL query.
+ * @returns {Promise<any[]>} Commit node for each SHA, in the same order.
  */
-const buildCommitQuery = (shas, selection) => `
-  query($owner: String!, $repo: String!) {
-    repository(owner: $owner, name: $repo) {
-      ${shas
-        .map(
-          (sha, index) => `
-            commit_${index}: object(oid: ${JSON.stringify(sha)}) {
-              ... on Commit {
-                ${selection}
-              }
-            }
-          `,
-        )
-        .join('')}
-    }
-  }
-`;
+const fetchCommits = (shas, selection) =>
+  fetchAliasedBatch({
+    items: shas,
+    alias: 'commit',
+    /**
+     * Build the field selection for a commit.
+     * @param {string} sha Commit SHA.
+     * @returns {string} Field selection.
+     */
+    getFragment: (sha) => `object(oid: ${JSON.stringify(sha)}) { ... on Commit { ${selection} } }`,
+    chunkSize: MAX_ITEMS.commits,
+  });
 
 /**
  * What to ask for on each commit, and how to read the answer. Keeping the two side by side lets the
@@ -296,14 +291,10 @@ const collectTogether = async (shas, candidateMap) => {
     .map(({ selection: part }) => part)
     .join('\n');
 
-  const { repository: result } = /** @type {Record<string, any>} */ (
-    await fetchGraphQL(buildCommitQuery(shas, selection))
-  );
+  const commits = await fetchCommits(shas, selection);
 
   shas.forEach((sha, index) => {
-    Object.values(SOURCES).forEach(({ parse }) =>
-      parse(result?.[`commit_${index}`], sha, candidateMap),
-    );
+    Object.values(SOURCES).forEach(({ parse }) => parse(commits[index], sha, candidateMap));
   });
 };
 
@@ -316,11 +307,9 @@ const collectOneByOne = async (shas, candidateMap) => {
   await Promise.all(
     Object.values(SOURCES).map(async ({ selection, parse }) => {
       try {
-        const { repository: result } = /** @type {Record<string, any>} */ (
-          await fetchGraphQL(buildCommitQuery(shas, selection))
-        );
+        const commits = await fetchCommits(shas, selection);
 
-        shas.forEach((sha, index) => parse(result?.[`commit_${index}`], sha, candidateMap));
+        shas.forEach((sha, index) => parse(commits[index], sha, candidateMap));
       } catch (ex) {
         // A missing or restricted field shouldn’t take the other sources down with it
         // eslint-disable-next-line no-console
@@ -351,14 +340,10 @@ export const fetchDeployments = async (targets) => {
 
   /** @type {Record<string, DeployCandidate[]>} */
   const candidateMap = Object.fromEntries(shas.map((sha) => [sha, []]));
-  /** @type {string[][]} */
-  const chunks = [];
 
-  for (let i = 0; i < shas.length; i += MAX_ITEMS.commits) {
-    chunks.push(shas.slice(i, i + MAX_ITEMS.commits));
-  }
-
-  await runConcurrently(chunks, async (chunk) => {
+  // Chunked here rather than in `fetchAliasedBatch`, so a failure only sends its own chunk down the
+  // one-request-per-source path
+  await runConcurrently(splitIntoChunks(shas, MAX_ITEMS.commits), async (chunk) => {
     if (!askSeparately) {
       try {
         await collectTogether(chunk, candidateMap);

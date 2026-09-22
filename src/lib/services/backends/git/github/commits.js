@@ -2,6 +2,7 @@ import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
 
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
+import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
@@ -225,59 +226,60 @@ export const commitChanges = async (changes, options) => {
 };
 
 /**
+ * Number of file paths whose history is requested per GraphQL query. Each one asks for up to 100
+ * commits, so a long list is split to keep a query within the API’s cost limits.
+ */
+const FILE_COMMITS_CHUNK_SIZE = 50;
+
+/**
  * Fetch commit history for the given file paths.
  * @param {string[]} paths File paths to fetch commit history for.
  * @returns {Promise<FileCommit[]>} Deduplicated and sorted list of commits.
  * @see https://docs.github.com/en/graphql/reference/objects#commit
  */
 export const fetchFileCommits = async (paths) => {
-  const innerQuery = paths
-    .map(
-      (path, i) => `
-        history_${i}: ref(qualifiedName: $branch) {
-          target {
-            ... on Commit {
-              history(first: 100, path: ${JSON.stringify(path)}) {
-                nodes {
-                  oid
-                  author {
-                    name
-                    email
-                    avatarUrl
-                    user { login }
-                  }
-                  committedDate
+  const results = await fetchAliasedBatch({
+    items: paths,
+    alias: 'history',
+    useBranch: true,
+    /**
+     * Build the field selection for the history of a file.
+     * @param {string} path File path.
+     * @returns {string} Field selection.
+     */
+    getFragment: (path) => `
+      ref(qualifiedName: $branch) {
+        target {
+          ... on Commit {
+            history(first: 100, path: ${JSON.stringify(path)}) {
+              nodes {
+                oid
+                author {
+                  name
+                  email
+                  avatarUrl
+                  user { login }
                 }
+                committedDate
               }
             }
           }
         }
-      `,
-    )
-    .join('');
-
-  const query = `
-    query($owner: String!, $repo: String!, $branch: String!) {
-      repository(owner: $owner, name: $repo) {
-        ${innerQuery}
       }
-    }
-  `;
-
-  const data = /** @type {{ repository: Record<string, any> }} */ (await fetchGraphQL(query));
+    `,
+    chunkSize: FILE_COMMITS_CHUNK_SIZE,
+  });
 
   return dedupeFileCommits(
-    paths.flatMap((_path, i) =>
-      (data.repository[`history_${i}`]?.target?.history?.nodes ?? []).map(
-        (/** @type {any} */ node) => ({
-          sha: node.oid,
-          authorName: node.author.name,
-          authorEmail: node.author.email,
-          authorAvatarURL: node.author.avatarUrl,
-          authorLogin: node.author.user?.login,
-          date: new Date(node.committedDate),
-        }),
-      ),
+    results.flatMap((result) =>
+      (result?.target?.history?.nodes ?? []).map((/** @type {any} */ node) => ({
+        sha: node.oid,
+        authorName: node.author.name,
+        authorEmail: node.author.email,
+        authorAvatarURL: node.author.avatarUrl,
+        authorLogin: node.author.user?.login,
+        date: new Date(node.committedDate),
+      })),
     ),
   );
 };

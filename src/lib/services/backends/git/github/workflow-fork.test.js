@@ -217,8 +217,10 @@ describe('GitHub Open Authoring workflow', () => {
 
         const result = await fetchForkBranchPullRequests([BRANCH]);
 
+        // No `owner` or `repo` variables are given, so the configured repository is used
         expect(fetchGraphQL).toHaveBeenCalledWith(
           expect.stringContaining(`headRefName: "${BRANCH}"`),
+          {},
         );
 
         expect(result.get(BRANCH)).toEqual(expect.objectContaining({ number: 1 }));
