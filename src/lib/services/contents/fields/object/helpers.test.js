@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { formatSummary } from '$lib/services/contents/fields/object/helpers';
+import { formatSummary, getUnknownTypeMessage } from '$lib/services/contents/fields/object/helpers';
 
 vi.mock('$lib/services/config');
 
@@ -444,5 +444,33 @@ describe('Test formatSummary() — comprehensive tests', async () => {
 
       expect(result1).toEqual(result2);
     });
+  });
+});
+
+describe('getUnknownTypeMessage()', () => {
+  const types = [{ name: 'image' }, { name: 'text' }];
+
+  test('names a type the field doesn’t define', () => {
+    expect(
+      getUnknownTypeMessage({ fieldType: 'object', type: 'video', typeKey: 'type', types }),
+    ).toBe('The “video” type is not defined for the object field.');
+    expect(
+      getUnknownTypeMessage({ fieldType: 'list', type: 'video', typeKey: 'type', types }),
+    ).toBe('The “video” type is not defined for the list field.');
+  });
+
+  test('explains a missing type key', () => {
+    expect(
+      getUnknownTypeMessage({ fieldType: 'object', type: undefined, typeKey: 'kind', types }),
+    ).toBe(
+      'The type key is not found in the object. The item must include the “kind” property with ' +
+        'one of the defined types: image, text',
+    );
+    expect(
+      getUnknownTypeMessage({ fieldType: 'list', type: undefined, typeKey: 'kind', types }),
+    ).toBe(
+      'The type key is not found in the list item. The item must include the “kind” property ' +
+        'with one of the defined types: image, text',
+    );
   });
 });

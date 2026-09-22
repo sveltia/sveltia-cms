@@ -8,14 +8,12 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import {
-    Alert,
     Button,
     Icon,
     Menu,
     MenuButton,
     MenuItem,
     Spacer,
-    TruncatedText,
     VisibilityObserver,
   } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
@@ -24,11 +22,10 @@
   import { getContext, onMount } from 'svelte';
   import { flip } from 'svelte/animate';
 
-  import Image from '$lib/components/assets/shared/image.svelte';
   import ExpandIcon from '$lib/components/common/expand-icon.svelte';
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
-  import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
+  import ObjectBody from '$lib/components/contents/details/fields/object/object-body.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -41,8 +38,8 @@
   } from '$lib/services/contents/editor/fields';
   import { getSubtree } from '$lib/services/contents/entry/subtree';
   import { formatSummary, getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+  import { getUnknownTypeMessage } from '$lib/services/contents/fields/object/helpers';
   import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
-  import { env } from '$lib/services/user/env.svelte';
   import { focusReorderControl } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
 
@@ -441,10 +438,7 @@
         return;
       }
 
-      const message = type
-        ? `The “${type}” type is not defined for the list field.`
-        : `The type key is not found in the list item. The item must include the “${typeKey}” ` +
-          `property with one of the defined types: ${types.map((t) => t.name).join(', ')}`;
+      const message = getUnknownTypeMessage({ fieldType: 'list', type, typeKey, types });
 
       // eslint-disable-next-line no-console
       console.warn(`List item ${keyPath}.${index}: ${message}`);
@@ -630,33 +624,21 @@
             {/snippet}
           </ObjectHeader>
           <div role="none" class="item-body" id="list-{fieldId}-item-{index}-body">
-            {#if unknownType}
-              <Alert status="warning">{_('unknown_variable_type')}</Alert>
-            {:else if expanded}
-              {#each subFields as subField (subField.name)}
-                <VisibilityObserver>
-                  <FieldEditor
-                    keyPath={hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`}
-                    typedKeyPath={hasVariableTypes
-                      ? `${typedKeyPath}.*<${type}>.${subField.name}`
-                      : `${typedKeyPath}.*.${subField.name}`}
-                    {locale}
-                    fieldConfig={subField}
-                    context={hasSingleSubField ? 'single-subfield-list-field' : undefined}
-                  />
-                </VisibilityObserver>
-              {/each}
-            {:else}
-              {@const thumbnail = getThumbnail(index, type)}
-              <div role="none" class="summary">
-                {#if thumbnail}
-                  <Image asset={thumbnail.asset} src={thumbnail.url} variant="icon" cover />
-                {/if}
-                <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
-                  {_formatSummary(index, summaryTemplate)}
-                </TruncatedText>
-              </div>
-            {/if}
+            <ObjectBody
+              {locale}
+              {subFields}
+              getSubFieldProps={(subField) => ({
+                keyPath: hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${subField.name}`,
+                typedKeyPath: hasVariableTypes
+                  ? `${typedKeyPath}.*<${type}>.${subField.name}`
+                  : `${typedKeyPath}.*.${subField.name}`,
+                context: hasSingleSubField ? 'single-subfield-list-field' : undefined,
+              })}
+              {expanded}
+              {unknownType}
+              getSummary={() => _formatSummary(index, summaryTemplate)}
+              getThumbnail={() => getThumbnail(index, type)}
+            />
           </div>
         </div>
       </VisibilityObserver>
@@ -734,17 +716,6 @@
 
     &.dragging {
       opacity: 0.25;
-    }
-
-    .summary {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px;
-
-      &:empty {
-        display: none;
-      }
     }
   }
 </style>

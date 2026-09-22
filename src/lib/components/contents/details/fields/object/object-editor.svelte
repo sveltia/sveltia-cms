@@ -6,13 +6,12 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Button, Checkbox, Icon, TruncatedText, VisibilityObserver } from '@sveltia/ui';
+  import { Button, Checkbox, Icon } from '@sveltia/ui';
   import { toRaw } from '@sveltia/utils/object';
   import { getContext, onMount, tick } from 'svelte';
 
-  import Image from '$lib/components/assets/shared/image.svelte';
-  import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
+  import ObjectBody from '$lib/components/contents/details/fields/object/object-body.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import { suspendAutoDuplication } from '$lib/services/contents/draft';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
@@ -27,9 +26,11 @@
     syncExpanderStates,
   } from '$lib/services/contents/editor/fields';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
-  import { formatSummary } from '$lib/services/contents/fields/object/helpers';
+  import {
+    formatSummary,
+    getUnknownTypeMessage,
+  } from '$lib/services/contents/fields/object/helpers';
   import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
-  import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import {
@@ -239,10 +240,7 @@
    * Warn about unknown variable type.
    */
   const warnUnknownType = () => {
-    const message = type
-      ? `The “${type}” type is not defined for the object field.`
-      : `The type key is not found in the object. The item must include the “${typeKey}” ` +
-        `property with one of the defined types: ${types.map((t) => t.name).join(', ')}`;
+    const message = getUnknownTypeMessage({ fieldType: 'object', type, typeKey, types });
 
     // eslint-disable-next-line no-console
     console.warn(`List item ${keyPath}: ${message}`);
@@ -317,36 +315,22 @@
       </ObjectHeader>
     {/if}
     <div role="none" class="item-list" id="object-{fieldId}-item-list">
-      {#if unknownType}
-        <Alert status="warning">{_('unknown_variable_type')}</Alert>
-      {:else if parentExpanded}
-        {#each subFields as subField (subField.name)}
-          {@const subFieldKeyPath = `${keyPath}.${subField.name}`}
-          <VisibilityObserver>
-            <FieldEditor
-              keyPath={subFieldKeyPath}
-              typedKeyPath={hasVariableTypes && type
-                ? `${typedKeyPath}<${type}>.${subField.name}`
-                : subFieldKeyPath}
-              {locale}
-              fieldConfig={subField}
-            />
-          </VisibilityObserver>
-        {/each}
-      {:else}
-        {@const formattedSummary = _formatSummary()}
-        {@const thumbnail = getThumbnail()}
-        {#if formattedSummary || thumbnail}
-          <div role="none" class="summary" id="object-{fieldId}-summary">
-            {#if thumbnail}
-              <Image asset={thumbnail.asset} src={thumbnail.url} variant="icon" cover />
-            {/if}
-            <TruncatedText lines={env.isSmallScreen ? 2 : 1}>
-              {formattedSummary}
-            </TruncatedText>
-          </div>
-        {/if}
-      {/if}
+      <ObjectBody
+        {locale}
+        {subFields}
+        getSubFieldProps={(subField) => ({
+          keyPath: `${keyPath}.${subField.name}`,
+          typedKeyPath:
+            hasVariableTypes && type
+              ? `${typedKeyPath}<${type}>.${subField.name}`
+              : `${keyPath}.${subField.name}`,
+        })}
+        expanded={parentExpanded}
+        {unknownType}
+        getSummary={_formatSummary}
+        {getThumbnail}
+        summaryId="object-{fieldId}-summary"
+      />
     </div>
   </div>
 {/if}
@@ -358,7 +342,7 @@
     border-radius: var(--sui-control-medium-border-radius);
 
     &.expanded,
-    &:has(.summary) {
+    &:has(:global(.summary)) {
       border-bottom-width: 2px;
     }
 
@@ -376,12 +360,5 @@
     & > :global(.group) {
       margin-top: 8px;
     }
-  }
-
-  .summary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px;
   }
 </style>

@@ -84,3 +84,22 @@ export const formatSummary = ({
 
   return replaceTemplateTags(summaryTemplate, replacer);
 };
+
+/**
+ * Get the message logged when an Object field value or a List field item doesn’t have a type that
+ * the field defines, so the developer can fix the content or the configuration.
+ * @param {object} args Arguments.
+ * @param {'object' | 'list'} args.fieldType Type of the field holding the value.
+ * @param {string | undefined} args.type Type the value has, if any.
+ * @param {string} args.typeKey Property holding the type.
+ * @param {{ name: string }[]} args.types Types the field defines.
+ * @returns {string} Message.
+ */
+export const getUnknownTypeMessage = ({ fieldType, type, typeKey, types }) => {
+  const target = fieldType === 'list' ? 'list item' : 'object';
+
+  return type
+    ? `The “${type}” type is not defined for the ${fieldType} field.`
+    : `The type key is not found in the ${target}. The item must include the “${typeKey}” ` +
+        `property with one of the defined types: ${types.map((t) => t.name).join(', ')}`;
+};
