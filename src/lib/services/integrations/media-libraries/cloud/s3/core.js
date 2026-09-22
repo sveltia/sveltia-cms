@@ -5,6 +5,12 @@ import { sleep } from '@sveltia/utils/misc';
 
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { filterAssetsByQuery } from '$lib/services/integrations/media-libraries/cloud/search';
+import {
+  getFileKey,
+  getFolderKey,
+  getPrefix,
+  getRelativeKey,
+} from '$lib/services/integrations/media-libraries/cloud/shared/keys';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
 import { parseXml } from '$lib/services/utils/xml';
 
@@ -254,40 +260,19 @@ export const buildObjectApiUrl = (config, key) => {
  * @returns {Record<string, string>} Header, or an empty object.
  */
 const getAclHeader = ({ acl }) => (acl !== false ? { 'x-amz-acl': acl ?? 'public-read' } : {});
-/**
- * Get the configured prefix as a directory, with a trailing slash. The option is documented as
- * ending with one, but a prefix without it would otherwise glue itself to the file names and make
- * every path start with a slash, so it’s put right rather than left to break the listing.
- * @param {S3Config} config S3 configuration.
- * @returns {string} Prefix, or an empty string for the bucket root.
- */
-const getPrefix = ({ prefix = '' }) => (prefix && !prefix.endsWith('/') ? `${prefix}/` : prefix);
-/**
- * Get the key of the placeholder object that keeps an empty folder, which is the folder path with
- * a trailing slash, the way the AWS console creates a folder.
- * @param {S3Config} config S3 configuration.
- * @param {string} dirPath Folder path relative to the configured prefix.
- * @returns {string} Object key.
- */
-const getFolderKey = (config, dirPath) => `${getPrefix(config)}${dirPath}/`;
-/**
- * Get the key of a file at the given path.
- * @param {S3Config} config S3 configuration.
- * @param {string} path File path relative to the configured prefix.
- * @returns {string} Object key.
- */
-const getObjectKey = (config, path) => `${getPrefix(config)}${path}`;
 
 /**
- * Get the path of an object relative to the configured prefix.
- * @param {S3Config} config S3 configuration.
- * @param {string} key Object key.
- * @returns {string} Path.
+ * Get the secret access key from the given fetch options.
+ * @param {MediaLibraryFetchOptions} options Fetch options.
+ * @returns {string} Secret access key.
+ * @throws {Error} When no key was provided.
  */
-const getRelativeKey = (config, key) => {
-  const prefix = getPrefix(config);
+const requireSecretAccessKey = ({ apiKey: secretAccessKey }) => {
+  if (!secretAccessKey) {
+    throw new Error('S3 secret access key is required');
+  }
 
-  return prefix && key.startsWith(prefix) ? key.slice(prefix.length) : key;
+  return secretAccessKey;
 };
 
 /**
@@ -335,13 +320,8 @@ export const parseS3Results = (objects, config) => {
  */
 const fetchS3Listing = async (config, options, { maxPages = 10 } = {}) => {
   const { bucket, region, endpoint, force_path_style: forcePathStyle } = config;
-  const { apiKey: secretAccessKey } = options;
+  const secretAccessKey = requireSecretAccessKey(options);
   const prefix = getPrefix(config);
-
-  if (!secretAccessKey) {
-    return Promise.reject(new Error('S3 secret access key is required'));
-  }
-
   /** @type {S3Object[]} */
   const files = [];
   /** @type {string[]} */
@@ -464,7 +444,7 @@ export const searchS3Objects = async (query, config, options) => {
  * @param {string} params.secretAccessKey AWS secret access key.
  * @returns {Promise<S3Object>} Uploaded object.
  */
-export const putS3Object = async ({ key, file, config, secretAccessKey }) => {
+const putS3Object = async ({ key, file, config, secretAccessKey }) => {
   const fileContent = await file.arrayBuffer();
 
   const response = await signedRequest({
@@ -506,12 +486,8 @@ export const uploadToS3 = async (files, config, options) => {
     return [];
   }
 
-  const { apiKey: secretAccessKey, dirPath = '' } = options;
-
-  if (!secretAccessKey) {
-    return Promise.reject(new Error('S3 secret access key is required'));
-  }
-
+  const secretAccessKey = requireSecretAccessKey(options);
+  const { dirPath = '' } = options;
   /** @type {S3Object[]} */
   const uploadedObjects = [];
 
@@ -520,7 +496,7 @@ export const uploadToS3 = async (files, config, options) => {
   for (const file of files) {
     // Extract only the filename to prevent path traversal via crafted File objects
     const sanitizedName = file.name.split(/[/\\]/).filter(Boolean).at(-1) ?? file.name;
-    const key = getObjectKey(config, dirPath ? `${dirPath}/${sanitizedName}` : sanitizedName);
+    const key = getFileKey(config, dirPath ? `${dirPath}/${sanitizedName}` : sanitizedName);
 
     uploadedObjects.push(await putS3Object({ key, file, config, secretAccessKey }));
 
@@ -544,11 +520,7 @@ export const uploadToS3 = async (files, config, options) => {
  * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
  */
 export const deleteS3Objects = async (assets, config, options) => {
-  const { apiKey: secretAccessKey } = options;
-
-  if (!secretAccessKey) {
-    return Promise.reject(new Error('S3 secret access key is required'));
-  }
+  const secretAccessKey = requireSecretAccessKey(options);
 
   // Delete objects one by one, as the multi-object delete API requires a `Content-MD5` header,
   // which some S3-compatible services don’t support
@@ -591,14 +563,9 @@ export const deleteS3Objects = async (assets, config, options) => {
  */
 export const moveS3Object = async (asset, newPath, config, options) => {
   const { bucket } = config;
-  const { apiKey: secretAccessKey } = options;
-
-  if (!secretAccessKey) {
-    return Promise.reject(new Error('S3 secret access key is required'));
-  }
-
+  const secretAccessKey = requireSecretAccessKey(options);
   const { id: key, size = 0 } = asset;
-  const newKey = getObjectKey(config, newPath);
+  const newKey = getFileKey(config, newPath);
 
   const response = await signedRequest({
     method: 'PUT',
@@ -649,12 +616,7 @@ export const renameS3Object = async (asset, newName, config, options) => {
  * @returns {Promise<void>}
  */
 export const createS3Folder = async (dirPath, config, options) => {
-  const { apiKey: secretAccessKey } = options;
-
-  if (!secretAccessKey) {
-    return Promise.reject(new Error('S3 secret access key is required'));
-  }
-
+  const secretAccessKey = requireSecretAccessKey(options);
   const key = getFolderKey(config, dirPath);
 
   const response = await signedRequest({
@@ -699,12 +661,7 @@ export const deleteS3Folder = async (dirPath, config, options) =>
  * @returns {Promise<ExternalAsset>} Replaced asset.
  */
 export const replaceS3Object = async (asset, file, config, options) => {
-  const { apiKey: secretAccessKey } = options;
-
-  if (!secretAccessKey) {
-    return Promise.reject(new Error('S3 secret access key is required'));
-  }
-
+  const secretAccessKey = requireSecretAccessKey(options);
   const object = await putS3Object({ key: asset.id, file, config, secretAccessKey });
 
   return parseS3Results([object], config)[0];

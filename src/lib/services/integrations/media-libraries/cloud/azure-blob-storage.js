@@ -6,6 +6,12 @@ import { getAssetKind } from '$lib/services/assets/kinds';
 import { cmsConfig } from '$lib/services/config/state';
 import { filterAssetsByQuery } from '$lib/services/integrations/media-libraries/cloud/search';
 import {
+  getFileKey,
+  getFolderKey,
+  getPrefix,
+  getRelativeKey,
+} from '$lib/services/integrations/media-libraries/cloud/shared/keys';
+import {
   findLibraryOptions,
   resolveLibraryOptions,
 } from '$lib/services/integrations/media-libraries/options';
@@ -124,39 +130,17 @@ export const buildRequestUrl = ({ url, token, searchParams }) => {
 };
 
 /**
- * Get the configured prefix as a directory, with a trailing slash. The option is documented as
- * ending with one, but a prefix without it would otherwise glue itself to the blob names and make
- * every path start with a slash, so it’s put right rather than left to break the listing.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @returns {string} Prefix, or an empty string for the container root.
+ * Get the SAS token from the given fetch options.
+ * @param {MediaLibraryFetchOptions} options Fetch options.
+ * @returns {string} SAS token.
+ * @throws {Error} When no token was provided.
  */
-const getPrefix = ({ prefix = '' }) => (prefix && !prefix.endsWith('/') ? `${prefix}/` : prefix);
-/**
- * Get the name of the placeholder blob that keeps an empty folder, which is the folder path with a
- * trailing slash, the way Azure Storage Explorer creates a virtual directory.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {string} dirPath Folder path relative to the configured prefix.
- * @returns {string} Blob name.
- */
-const getFolderKey = (config, dirPath) => `${getPrefix(config)}${dirPath}/`;
-/**
- * Get the name of a blob at the given path.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {string} path File path relative to the configured prefix.
- * @returns {string} Blob name.
- */
-const getBlobKey = (config, path) => `${getPrefix(config)}${path}`;
+const requireToken = ({ apiKey: token }) => {
+  if (!token) {
+    throw new Error('Azure Blob Storage SAS token is required');
+  }
 
-/**
- * Get the path of a blob relative to the configured prefix.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {string} key Blob name.
- * @returns {string} Path.
- */
-const getRelativeKey = (config, key) => {
-  const prefix = getPrefix(config);
-
-  return prefix && key.startsWith(prefix) ? key.slice(prefix.length) : key;
+  return token;
 };
 
 /**
@@ -206,13 +190,8 @@ export const parseBlobResults = (blobs, config, token) => {
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/list-blobs
  */
 const fetchBlobListing = async (config, options, { maxPages = 10 } = {}) => {
-  const { apiKey: token } = options;
+  const token = requireToken(options);
   const prefix = getPrefix(config);
-
-  if (!token) {
-    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
-  }
-
   const url = buildContainerUrl(config);
   /** @type {AzureBlob[]} */
   const files = [];
@@ -331,7 +310,7 @@ export const searchBlobs = async (query, config, options) => {
  * @returns {Promise<AzureBlob>} Uploaded blob.
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob
  */
-export const putBlob = async ({ key, file, config, token }) => {
+const putBlob = async ({ key, file, config, token }) => {
   const url = `${buildContainerUrl(config)}/${encodeKey(key)}`;
   const fileContent = await file.arrayBuffer();
 
@@ -374,12 +353,8 @@ export const uploadBlobs = async (files, config, options) => {
     return [];
   }
 
-  const { apiKey: token, dirPath = '' } = options;
-
-  if (!token) {
-    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
-  }
-
+  const token = requireToken(options);
+  const { dirPath = '' } = options;
   /** @type {AzureBlob[]} */
   const uploadedBlobs = [];
 
@@ -388,7 +363,7 @@ export const uploadBlobs = async (files, config, options) => {
   for (const file of files) {
     // Extract only the filename to prevent path traversal via crafted File objects
     const sanitizedName = file.name.split(/[/\\]/).filter(Boolean).at(-1) ?? file.name;
-    const key = getBlobKey(config, dirPath ? `${dirPath}/${sanitizedName}` : sanitizedName);
+    const key = getFileKey(config, dirPath ? `${dirPath}/${sanitizedName}` : sanitizedName);
 
     uploadedBlobs.push(await putBlob({ key, file, config, token }));
 
@@ -412,12 +387,7 @@ export const uploadBlobs = async (files, config, options) => {
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/delete-blob
  */
 export const deleteBlobs = async (assets, config, options) => {
-  const { apiKey: token } = options;
-
-  if (!token) {
-    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
-  }
-
+  const token = requireToken(options);
   const containerUrl = buildContainerUrl(config);
 
   // Delete blobs one by one
@@ -455,15 +425,10 @@ export const deleteBlobs = async (assets, config, options) => {
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob-from-url
  */
 export const moveBlob = async (asset, newPath, config, options) => {
-  const { apiKey: token } = options;
-
-  if (!token) {
-    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
-  }
-
+  const token = requireToken(options);
   const { id: key, size, lastModified } = asset;
   const containerUrl = buildContainerUrl(config);
-  const newKey = getBlobKey(config, newPath);
+  const newKey = getFileKey(config, newPath);
   const url = `${containerUrl}/${encodeKey(newKey)}`;
 
   const response = await fetch(buildRequestUrl({ url, token }), {
@@ -528,12 +493,7 @@ export const renameBlob = async (asset, newName, config, options) => {
  * @returns {Promise<void>}
  */
 export const createFolder = async (dirPath, config, options) => {
-  const { apiKey: token } = options;
-
-  if (!token) {
-    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
-  }
-
+  const token = requireToken(options);
   const key = getFolderKey(config, dirPath);
   const url = `${buildContainerUrl(config)}/${encodeKey(key)}`;
 
@@ -560,12 +520,7 @@ export const createFolder = async (dirPath, config, options) => {
  * @returns {Promise<void>}
  */
 export const deleteFolder = async (dirPath, config, options) => {
-  const { apiKey: token } = options;
-
-  if (!token) {
-    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
-  }
-
+  const token = requireToken(options);
   const key = getFolderKey(config, dirPath);
   const url = `${buildContainerUrl(config)}/${encodeKey(key)}`;
   const response = await fetch(buildRequestUrl({ url, token }), { method: 'DELETE' });
@@ -589,12 +544,7 @@ export const deleteFolder = async (dirPath, config, options) => {
  * @returns {Promise<ExternalAsset>} Replaced asset.
  */
 export const replaceBlob = async (asset, file, config, options) => {
-  const { apiKey: token } = options;
-
-  if (!token) {
-    return Promise.reject(new Error('Azure Blob Storage SAS token is required'));
-  }
-
+  const token = requireToken(options);
   const blob = await putBlob({ key: asset.id, file, config, token });
 
   return parseBlobResults([blob], config, token)[0];

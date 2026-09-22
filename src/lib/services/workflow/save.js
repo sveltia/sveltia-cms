@@ -86,6 +86,33 @@ const getEventHookArgs = (entry) => {
 };
 
 /**
+ * Find the pull request an entry’s changes belong to, and the branch they go to. The branch name is
+ * derived from the slug, so looking the pull request up by branch alone would miss it after the
+ * slug has been edited and start a second pull request for the same entry. The branch the entry
+ * already carries is used when there is one, and kept even though it no longer matches the slug:
+ * only the collection name is read back from it.
+ * @param {object} args Arguments.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} args.slug Entry slug used for the workflow branch name.
+ * @param {Entry} [args.entry] Entry being saved or deleted, as it stands before the changes.
+ * @returns {{ existingEntry: UnpublishedEntry | undefined, branch: string }} Unpublished entry the
+ * changes belong to, if the entry is already under review, and the branch to commit them to.
+ */
+const resolveWorkflowBranch = ({ collectionName, slug, entry }) => {
+  const currentBranch = /** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.pullRequest
+    .branch;
+
+  const existingEntry =
+    (currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined) ??
+    getUnpublishedEntryBySlug({ collectionName, slug });
+
+  const branch =
+    existingEntry?.workflow.pullRequest.branch ?? getBranchName({ collectionName, slug });
+
+  return { existingEntry, branch };
+};
+
+/**
  * Replace or append the given unpublished entry in the {@link unpublishedEntries} store, keyed by
  * the workflow branch name. An existing entry is replaced in place, so a status change doesn’t make
  * the entry jump to the end of the list on the Editorial Workflow page.
@@ -136,19 +163,11 @@ export const saveWorkflowChanges = async ({
 }) => {
   const workflow = getWorkflowService();
 
-  // The branch name is derived from the slug, so looking the pull request up by branch alone would
-  // miss it after the slug has been edited and start a second pull request for the same entry. Use
-  // the branch the entry is already associated with when there is one, and keep that branch name
-  // even though it no longer matches the slug: only the collection name is read back from it.
-  const currentBranch = /** @type {UnpublishedEntry} */ (originalEntry)?.workflow?.pullRequest
-    .branch;
-
-  const existingEntry =
-    (currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined) ??
-    getUnpublishedEntryBySlug({ collectionName, slug });
-
-  const branch =
-    existingEntry?.workflow.pullRequest.branch ?? getBranchName({ collectionName, slug });
+  const { existingEntry, branch } = resolveWorkflowBranch({
+    collectionName,
+    slug,
+    entry: originalEntry,
+  });
 
   const { commit, pullRequest } = await workflow.savePullRequest({
     changes,
@@ -420,18 +439,7 @@ export const deleteWorkflowEntry = async (
   const workflow = getWorkflowService();
   const collectionName = collection.name;
   const { slug } = entry;
-  // The branch keeps the slug the entry had when the pull request was opened, so deriving it from
-  // the current slug would miss the pull request after the slug has been edited, leaving it open
-  // and starting a second one
-  const currentBranch = /** @type {UnpublishedEntry} */ (entry)?.workflow?.pullRequest.branch;
-
-  const existingEntry =
-    (currentBranch ? getUnpublishedEntryByBranch(currentBranch) : undefined) ??
-    getUnpublishedEntryBySlug({ collectionName, slug });
-
-  const branch =
-    existingEntry?.workflow.pullRequest.branch ?? getBranchName({ collectionName, slug });
-
+  const { existingEntry, branch } = resolveWorkflowBranch({ collectionName, slug, entry });
   // Remove the files as they stand on the branch. A pull request that renamed the entry has already
   // staged the deletion of the old paths there, so removing the new ones leaves nothing behind once
   // the merge lands

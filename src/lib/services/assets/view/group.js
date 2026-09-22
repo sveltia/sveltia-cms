@@ -1,4 +1,4 @@
-import { buildGroupMap } from '$lib/services/common/view';
+import { groupItems } from '$lib/services/common/view';
 
 /**
  * @import { Asset, GroupingConditions } from '$lib/types/private';
@@ -11,14 +11,9 @@ import { buildGroupMap } from '$lib/services/common/view';
  * @returns {Record<string, Asset[]>} Grouped assets, where key is a group name, displayed with
  * `getGroupLabel()`, and value is an asset list.
  */
-export const groupAssets = (assets, conditions) => {
-  const { field, pattern } = conditions ?? {};
-
-  if (!field) {
-    return assets.length ? { '*': assets } : {};
-  }
-
-  return Object.fromEntries(
-    buildGroupMap(assets, pattern, (asset) => /** @type {Record<string, any>} */ (asset)[field]),
+export const groupAssets = (assets, conditions) =>
+  groupItems(
+    assets,
+    conditions,
+    (asset, field) => /** @type {Record<string, any>} */ (asset)[field],
   );
-};

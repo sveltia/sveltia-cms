@@ -83,6 +83,24 @@ const setAssets = (assets) => {
 };
 
 /**
+ * Drop the given assets from the list, the selection and the focus, once a deletion has removed
+ * them from the service.
+ * @param {ExternalAsset[]} assets Assets that no longer exist.
+ */
+const forgetDeletedAssets = (assets) => {
+  const deletedIds = new Set(assets.map(({ id }) => id));
+
+  setAssets(externalAssets.current?.filter(({ id }) => !deletedIds.has(id)));
+  selectedExternalAssets.current = selectedExternalAssets.current.filter(
+    ({ id }) => !deletedIds.has(id),
+  );
+
+  if (focusedExternalAsset.current && deletedIds.has(focusedExternalAsset.current.id)) {
+    focusedExternalAsset.current = undefined;
+  }
+};
+
+/**
  * Replace an asset in the list with an updated one, e.g. after renaming or replacing the file. The
  * focus and selection are updated as well.
  * @param {ExternalAsset} oldAsset Asset to be replaced.
@@ -284,17 +302,7 @@ export const deleteExternalAssets = async (assets) => {
     return false;
   }
 
-  const deletedIds = new Set(assets.map(({ id }) => id));
-
-  setAssets(externalAssets.current?.filter(({ id }) => !deletedIds.has(id)));
-  selectedExternalAssets.current = selectedExternalAssets.current.filter(
-    ({ id }) => !deletedIds.has(id),
-  );
-
-  if (focusedExternalAsset.current && deletedIds.has(focusedExternalAsset.current.id)) {
-    focusedExternalAsset.current = undefined;
-  }
-
+  forgetDeletedAssets(assets);
   reportSuccess('deleted', assets.length);
 
   return true;
@@ -336,6 +344,15 @@ export const renameExternalAsset = async (asset, newName) => {
  */
 export const getExternalSubfolderAssets = (dirPath) =>
   (externalAssets.current ?? []).filter(({ description }) => description.startsWith(`${dirPath}/`));
+
+/**
+ * Get a folder on the selected cloud storage service and every folder below it, which are what a
+ * rename rebases and a deletion removes.
+ * @param {string} dirPath Folder path relative to the configured prefix.
+ * @returns {string[]} Folder paths.
+ */
+const getExternalFolderTree = (dirPath) =>
+  externalFolders.current.filter((path) => path === dirPath || path.startsWith(`${dirPath}/`));
 
 /**
  * Create an empty folder in the folder being browsed on the selected cloud storage service. The
@@ -391,10 +408,7 @@ export const renameExternalFolder = async ({ path: dirPath }, newName) => {
   const rebase = (path) => `${newDirPath}${path.slice(dirPath.length)}`;
   const fetchOptions = getFetchOptions(service);
   const assets = getExternalSubfolderAssets(dirPath);
-
-  const folders = externalFolders.current.filter(
-    (path) => path === dirPath || path.startsWith(`${dirPath}/`),
-  );
+  const folders = getExternalFolderTree(dirPath);
 
   externalAssetsToast.current = { show: true, status: 'info', message: 'renaming_folder' };
 
@@ -449,10 +463,7 @@ export const deleteExternalFolder = async ({ path: dirPath }) => {
 
   const fetchOptions = getFetchOptions(service);
   const assets = getExternalSubfolderAssets(dirPath);
-
-  const folders = externalFolders.current.filter(
-    (path) => path === dirPath || path.startsWith(`${dirPath}/`),
-  );
+  const folders = getExternalFolderTree(dirPath);
 
   externalAssetsToast.current = { show: true, status: 'info', message: 'deleting_folder' };
 
@@ -473,17 +484,8 @@ export const deleteExternalFolder = async ({ path: dirPath }) => {
     return false;
   }
 
-  const deletedIds = new Set(assets.map(({ id }) => id));
-
-  setAssets(externalAssets.current?.filter(({ id }) => !deletedIds.has(id)));
+  forgetDeletedAssets(assets);
   externalFolders.current = externalFolders.current.filter((path) => !folders.includes(path));
-  selectedExternalAssets.current = selectedExternalAssets.current.filter(
-    ({ id }) => !deletedIds.has(id),
-  );
-
-  if (focusedExternalAsset.current && deletedIds.has(focusedExternalAsset.current.id)) {
-    focusedExternalAsset.current = undefined;
-  }
 
   // The Info pane has nothing to describe once the folder is gone
   if (focusedExternalSubfolder.current?.path === dirPath) {

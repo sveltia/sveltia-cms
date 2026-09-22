@@ -152,6 +152,27 @@ export const buildGroupMap = (items, pattern, getValue) => {
 };
 
 /**
+ * Group the given items by a view group’s conditions.
+ * @template T
+ * @param {T[]} items Items to group.
+ * @param {GroupingConditions | null | undefined} conditions Grouping conditions.
+ * @param {(item: T, field: string) => any} getValue Function to get the groupable field value from
+ * an item.
+ * @returns {Record<string, T[]>} Grouped items, where the key is a group name, displayed with
+ * {@link getGroupLabel}, and the value is an item list. Without a field to group by, all the items
+ * are in a single group named `*`.
+ */
+export const groupItems = (items, conditions, getValue) => {
+  const { field, pattern } = conditions ?? {};
+
+  if (!field) {
+    return items.length ? { '*': items } : {};
+  }
+
+  return Object.fromEntries(buildGroupMap(items, pattern, (item) => getValue(item, field)));
+};
+
+/**
  * Check whether a value matches a filter condition.
  * @param {any} value The value to test.
  * @param {any} pattern Expected value.

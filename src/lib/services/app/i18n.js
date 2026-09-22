@@ -19,7 +19,7 @@ import { createRawState, createRootEffect } from '$lib/services/utils/state.svel
  * Default application locale. This is the only locale bundled with the app; the strings for the
  * other locales are loaded from the CDN on demand.
  */
-export const DEFAULT_APP_LOCALE = 'en-US';
+const DEFAULT_APP_LOCALE = 'en-US';
 
 /**
  * List of all the available application locales, injected by Vite at build time based on the file

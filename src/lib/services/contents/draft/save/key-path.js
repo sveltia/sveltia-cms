@@ -18,7 +18,7 @@ import { MULTI_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
  * @param {FieldKeyPath} args.keyPath Key path of the field.
  * @param {FieldKeyPath[]} args.keyPathList Key path list.
  */
-export const parseField = ({ field, keyPath, keyPathList }) => {
+const parseField = ({ field, keyPath, keyPathList }) => {
   const { widget: fieldType } = field;
   const isList = fieldType === 'list';
 

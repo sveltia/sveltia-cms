@@ -59,7 +59,7 @@ export const getReferenceURLs = async (assets) => {
  * @param {number} length Length of the markup.
  * @returns {string} Markdown without the markup.
  */
-export const cutMarkup = (text, index, length) => {
+const cutMarkup = (text, index, length) => {
   const end = index + length;
   const lineStart = text.lastIndexOf('\n', index - 1) + 1;
   const nextBreak = text.indexOf('\n', end);

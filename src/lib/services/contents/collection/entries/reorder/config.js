@@ -5,7 +5,7 @@ import { isObject } from '@sveltia/utils/object';
  * custom key is configured.
  * @type {string}
  */
-export const DEFAULT_ORDER_FIELD_KEY = 'order';
+const DEFAULT_ORDER_FIELD_KEY = 'order';
 
 /**
  * Get the field key used to persist an entry’s display order for the given collection.

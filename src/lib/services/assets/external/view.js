@@ -14,7 +14,7 @@ import {
 import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
 import { getDirName, listSubfolders } from '$lib/services/assets/subfolders';
 import { currentView } from '$lib/services/assets/view/settings';
-import { buildGroupMap, sortItemsByKey } from '$lib/services/common/view';
+import { groupItems, sortItemsByKey } from '$lib/services/common/view';
 import { normalize } from '$lib/services/search/util';
 import { createDerivedState, createRootEffect } from '$lib/services/utils/state.svelte';
 
@@ -36,7 +36,7 @@ import { createDerivedState, createRootEffect } from '$lib/services/utils/state.
  * the services report when a file was last modified and its size.
  * @type {Record<string, 'date' | 'number' | undefined>}
  */
-export const EXTERNAL_ASSET_SORT_KEY_TYPES = {
+const EXTERNAL_ASSET_SORT_KEY_TYPES = {
   name: undefined,
   last_modified: 'date',
   size: 'number',
@@ -137,15 +137,8 @@ export const getGroupValue = (asset, field) => {
  * with `getGroupLabel()`, and value is an asset list. Without conditions, all the assets are in a
  * single group named `*`.
  */
-export const groupExternalAssets = (assets, conditions) => {
-  const { field, pattern } = conditions ?? {};
-
-  if (!field) {
-    return assets.length ? { '*': assets } : {};
-  }
-
-  return Object.fromEntries(buildGroupMap(assets, pattern, (asset) => getGroupValue(asset, field)));
-};
+export const groupExternalAssets = (assets, conditions) =>
+  groupItems(assets, conditions, getGroupValue);
 
 /**
  * Grouping options offered for the selected location. The files linked from entries can be grouped

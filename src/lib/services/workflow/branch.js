@@ -5,7 +5,7 @@ import { forkedRepository } from '$lib/services/workflow/open-authoring';
  * `cms/[COLLECTION_NAME]/[SLUG]`, which is compatible with Netlify/Decap CMS.
  * @see https://decapcms.org/docs/editorial-workflows/
  */
-export const WORKFLOW_BRANCH_PREFIX = 'cms';
+const WORKFLOW_BRANCH_PREFIX = 'cms';
 
 /**
  * Get the prefix that every Editorial Workflow branch name starts with, including the trailing

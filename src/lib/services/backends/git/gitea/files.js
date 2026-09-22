@@ -128,7 +128,7 @@ export const parseFileContents = async (fetchingFiles, results) => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetRawFile
  * @see https://github.com/go-gitea/gitea/issues/14432
  */
-export const fetchRawFile = async (path) => {
+const fetchRawFile = async (path) => {
   const { owner, repo, branch = '' } = repository;
 
   return /** @type {Promise<string>} */ (

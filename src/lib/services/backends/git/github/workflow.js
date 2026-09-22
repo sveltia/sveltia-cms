@@ -137,7 +137,7 @@ export const parsePullRequest = (node) => {
  * repository; see {@link fetchForkPullRequests} for the Open Authoring one.
  * @returns {Promise<WorkflowPullRequest[]>} Pull requests.
  */
-export const fetchLabelledPullRequests = async () => {
+const fetchLabelledPullRequests = async () => {
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
     await fetchGraphQL(getFetchPullRequestsQuery())
   );

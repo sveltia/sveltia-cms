@@ -18,6 +18,49 @@ import { isObject } from '@sveltia/utils/object';
  */
 
 /**
+ * Get the request headers for an API that authenticates with a bearer token.
+ * @param {string} apiKey API key.
+ * @param {Record<string, string>} headers Additional headers, which take precedence.
+ * @returns {Record<string, string>} Headers.
+ */
+const getBearerHeaders = (apiKey, headers) => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${apiKey}`,
+  ...headers,
+});
+
+/**
+ * Send a JSON request to an API endpoint and return the parsed response.
+ * @param {object} args Arguments.
+ * @param {string} args.endpoint API endpoint URL.
+ * @param {Record<string, string>} args.headers Request headers.
+ * @param {Record<string, any>} args.body Request body, serialized as JSON.
+ * @param {string} args.apiLabel API name to be used in an error message, e.g. `Messages`.
+ * @returns {Promise<Record<string, any>>} Parsed response body.
+ * @throws {Error} When the API returns a non-OK response.
+ */
+const postJSON = async ({ endpoint, headers, body, apiLabel }) => {
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    // The services disagree on where they put the message, so both places are looked at
+    const errorMessage = errorData.error?.message || errorData.message || '';
+
+    throw new Error(
+      `${apiLabel} API error: ${response.status} ${response.statusText}` +
+        `${errorMessage ? ` - ${errorMessage}` : ''}`,
+    );
+  }
+
+  return response.json();
+};
+
+/**
  * Sends a message using the Chat Completions API format.
  * Used by: Mistral, DeepSeek, and compatible custom endpoints.
  * @param {AiCompletionOptions & RequestOptions} options Options.
@@ -36,17 +79,11 @@ export const chatCompletions = async ({
   reasoning = 'high',
   extraBody = {},
 }) => {
-  /** @type {Record<string, string>} */
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${apiKey}`,
-    ...headers,
-  };
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: defaultHeaders,
-    body: JSON.stringify({
+  const data = await postJSON({
+    endpoint,
+    headers: getBearerHeaders(apiKey, headers),
+    apiLabel: 'Chat Completions',
+    body: {
       model,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -57,20 +94,8 @@ export const chatCompletions = async ({
       stream: false,
       reasoning_effort: reasoning,
       ...extraBody,
-    }),
+    },
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.message || errorData.error?.message || '';
-
-    throw new Error(
-      `Chat Completions API error: ${response.status} ${response.statusText}` +
-        `${errorMessage ? ` - ${errorMessage}` : ''}`,
-    );
-  }
-
-  const data = await response.json();
 
   if (!data.choices || !Array.isArray(data.choices) || !data.choices[0]?.message?.content) {
     throw new Error('Invalid response format from Chat Completions API.');
@@ -96,37 +121,19 @@ export const responses = async ({
   maxTokens = 4000,
   extraBody = {},
 }) => {
-  /** @type {Record<string, string>} */
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${apiKey}`,
-    ...headers,
-  };
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: defaultHeaders,
-    body: JSON.stringify({
+  const data = await postJSON({
+    endpoint,
+    headers: getBearerHeaders(apiKey, headers),
+    apiLabel: 'Responses',
+    body: {
       model,
       instructions: systemPrompt,
       input: userMessage,
       store: false,
       max_output_tokens: maxTokens,
       ...extraBody,
-    }),
+    },
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.error?.message || '';
-
-    throw new Error(
-      `Responses API error: ${response.status} ${response.statusText}` +
-        `${errorMessage ? ` - ${errorMessage}` : ''}`,
-    );
-  }
-
-  const data = await response.json();
 
   // Try to get output_text directly first (simpler response format)
   if (typeof data.output_text === 'string') {
@@ -196,30 +203,19 @@ export const messages = async ({
     defaultHeaders['x-api-key'] = apiKey;
   }
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
+  const data = await postJSON({
+    endpoint,
     headers: defaultHeaders,
-    body: JSON.stringify({
+    apiLabel: 'Messages',
+    body: {
       model,
       max_tokens: maxTokens,
       temperature,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
       ...extraBody,
-    }),
+    },
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.error?.message || errorData.message || '';
-
-    throw new Error(
-      `Messages API error: ${response.status} ${response.statusText}` +
-        `${errorMessage ? ` - ${errorMessage}` : ''}`,
-    );
-  }
-
-  const data = await response.json();
 
   if (!data.content || !Array.isArray(data.content) || !data.content[0]) {
     throw new Error('Invalid response format from Messages API.');

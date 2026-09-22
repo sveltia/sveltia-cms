@@ -178,7 +178,7 @@ export const formatFileName = (
  * another doesn’t change how the file is handled.
  * @type {string[][]}
  */
-export const EQUIVALENT_FILE_EXTENSIONS = [
+const EQUIVALENT_FILE_EXTENSIONS = [
   ['jpg', 'jpeg', 'jpe', 'jfif'],
   ['tif', 'tiff'],
   ['htm', 'html'],

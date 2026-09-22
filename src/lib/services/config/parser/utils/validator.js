@@ -122,7 +122,7 @@ export const checkUnsupportedOptions = ({ UNSUPPORTED_OPTIONS, config, context, 
  * asterisks are used for wildcard matching for relation fields, colons are used for editor
  * component identification, and angle brackets are used for variable type placeholders.
  */
-export const VALID_NAME_REGEX = /^[^\s.*:<>]+$/;
+const VALID_NAME_REGEX = /^[^\s.*:<>]+$/;
 
 /**
  * Checks if the given name is valid.

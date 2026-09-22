@@ -35,12 +35,11 @@ import { isPendingDeletion } from '$lib/services/workflow';
 /**
  * Tag to enable the slug editor for the default locale.
  */
-export const SLUG_EDITOR_TAG = '{{fields._slug}}';
-
+const SLUG_EDITOR_TAG = '{{fields._slug}}';
 /**
  * Tag to enable the slug editor for all locales.
  */
-export const LOCALIZED_SLUG_EDITOR_TAG = '{{fields._slug | localize}}';
+const LOCALIZED_SLUG_EDITOR_TAG = '{{fields._slug | localize}}';
 
 /**
  * Get the `slugEditor` property for an entry draft.

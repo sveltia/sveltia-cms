@@ -37,7 +37,7 @@ const probeSource = ({ element, eventType, src, getInfo }) =>
  * @returns {Promise<SourceInfo>} Dimensions (width/height). `dimensions` is `undefined` if the
  * image cannot be decoded.
  */
-export const getImageSourceInfo = (src) => {
+const getImageSourceInfo = (src) => {
   const element = new Image();
 
   return probeSource({
@@ -58,7 +58,7 @@ export const getImageSourceInfo = (src) => {
  * @returns {Promise<SourceInfo>} Dimensions and duration of the media. Both are `undefined` if the
  * media cannot be decoded.
  */
-export const getMediaSourceInfo = async (src, kind) => {
+const getMediaSourceInfo = async (src, kind) => {
   const element = /** @type {HTMLMediaElement} */ (document.createElement(kind));
 
   return probeSource({

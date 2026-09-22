@@ -82,7 +82,7 @@ export const createTranslationUserPrompt = (texts) =>
  * @returns {string[]} Array of translated strings.
  * @throws {Error} When the content cannot be parsed or the count doesn’t match.
  */
-export const parseAiTranslationResponse = (content, expectedCount, serviceLabel) => {
+const parseAiTranslationResponse = (content, expectedCount, serviceLabel) => {
   let translations;
 
   try {

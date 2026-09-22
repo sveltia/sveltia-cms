@@ -12,7 +12,7 @@ export const PROGRESS_TICK_INTERVAL = 100;
  * {@link PROGRESS_CEILING} once this much time has passed per file, then holds there until the
  * fetch actually finishes.
  */
-export const PROGRESS_TIME_PER_FILE = 10;
+const PROGRESS_TIME_PER_FILE = 10;
 
 /**
  * Highest value the simulated progress reaches on its own. The bar only shows completion once the

@@ -33,7 +33,7 @@ export const BUILTIN_FIELD_TYPES = [
  * List of field types that support a simple value: boolean, number or string.
  * @type {string[]}
  */
-export const SIMPLE_VALUE_FIELD_TYPES = [
+const SIMPLE_VALUE_FIELD_TYPES = [
   'boolean',
   'color',
   'compute',

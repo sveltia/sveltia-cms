@@ -81,7 +81,7 @@ export const DEFAULT_VALIDITY = {
  * `valid`.
  * @type {Record<string, (args: ValidateFieldFuncArgs) => { validity: EntryValidityState }>}
  */
-export const VALIDATE_FIELD_FUNCTIONS = {
+const VALIDATE_FIELD_FUNCTIONS = {
   datetime: validateDateTimeField,
   number: validateNumberField,
   string: validateStringField,
