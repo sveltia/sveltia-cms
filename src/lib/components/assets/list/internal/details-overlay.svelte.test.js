@@ -4,7 +4,8 @@ import { render } from 'vitest-browser-svelte';
 
 import { overlaidAsset } from '$lib/services/assets';
 import { deleteAssets } from '$lib/services/assets/data/delete';
-import { selectedAssetFolder } from '$lib/services/assets/folders';
+import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
+import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { currentView } from '$lib/services/assets/view/settings';
 import {
@@ -57,6 +58,7 @@ describe('DetailsOverlay', () => {
   beforeEach(() => {
     showAssetOverlay.current = true;
     selectedAssetFolder.current = undefined;
+    selectedSubfolderPath.current = '';
     currentView.current = { type: 'grid' };
     window.location.hash = '#/assets/static/uploads/notes.txt';
   });
@@ -195,5 +197,16 @@ describe('DetailsOverlay', () => {
     await page.getByRole('button', { name: 'Cancel Editing' }).click();
 
     await expect.poll(() => window.location.hash).toBe('#/assets/-/all');
+  });
+
+  test('goes back to the subfolder the asset was opened from', async () => {
+    selectedAssetFolder.current = globalAssetFolder.current;
+    selectedSubfolderPath.current = '2024/summer';
+    overlaidAsset.current = imageAsset;
+
+    await render(DetailsOverlay);
+    await page.getByRole('button', { name: 'Cancel Editing' }).click();
+
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/2024/summer');
   });
 });

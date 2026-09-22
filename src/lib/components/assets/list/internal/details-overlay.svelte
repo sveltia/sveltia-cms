@@ -19,6 +19,7 @@
   import { selectedAssetFolder } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { isMediaKind } from '$lib/services/assets/kinds';
+  import { browsedDirPath } from '$lib/services/assets/subfolders';
   import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -41,7 +42,10 @@
   const blobURL = $derived(asset?.blobURL);
   const name = $derived(asset?.name ?? '');
   const assets = $derived(asset ? [asset] : []);
-  const backPath = $derived(`/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`);
+  // Back to the subfolder the asset was opened from, if the folder is browsed by subfolder
+  const backPath = $derived(
+    `/assets/${browsedDirPath.current ?? selectedAssetFolder.current?.internalPath ?? '-/all'}`,
+  );
   /** The assets right before and after the shown one in the list the overlay was opened from. */
   const { previous, next } = $derived(
     getAdjacentAssets(Object.values(assetGroups.current).flat(1), (a) => a.path === asset?.path),

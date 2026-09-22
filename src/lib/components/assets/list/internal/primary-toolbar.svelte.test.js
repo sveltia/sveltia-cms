@@ -1,11 +1,12 @@
 import { tick } from 'svelte';
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { focusedAsset, selectedAssets } from '$lib/services/assets';
 import { deleteAssets } from '$lib/services/assets/data/delete';
-import { selectedAssetFolder } from '$lib/services/assets/folders';
+import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
+import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
@@ -31,6 +32,7 @@ describe('PrimaryToolbar', () => {
   beforeEach(() => {
     env.isSmallScreen = false;
     selectedAssetFolder.current = undefined;
+    selectedSubfolderPath.current = '';
     forkedRepository.current = undefined;
     focusedAsset.current = undefined;
     selectedAssets.current = [];
@@ -88,7 +90,7 @@ describe('PrimaryToolbar', () => {
 
     const { container } = await render(PrimaryToolbar);
 
-    expect(container.querySelector('h2')).toHaveTextContent('Global Assets /static/uploads');
+    expect(container.querySelector('h2')).toHaveTextContent('Global Assets');
 
     // The selection is reset whenever the listed assets change, so select the assets afterwards
     await tick();
@@ -128,5 +130,60 @@ describe('PrimaryToolbar', () => {
     await render(PrimaryToolbar);
 
     expect(page.getByRole('button', { name: 'Upload New Assets' }).elements()).toHaveLength(0);
+  });
+
+  describe('in a subfolder', () => {
+    // Give the breadcrumb room, or it folds its middle into a menu
+    beforeAll(async () => {
+      await page.viewport(1024, 768);
+    });
+
+    afterAll(async () => {
+      await page.viewport(414, 896);
+    });
+
+    beforeEach(() => {
+      selectedAssetFolder.current = globalAssetFolder.current;
+      selectedSubfolderPath.current = '2024/summer';
+      window.location.hash = '#/assets/static/uploads/2024/summer';
+    });
+
+    test('shows the subfolder in a breadcrumb, which leads back to an ancestor', async () => {
+      const { container } = await render(PrimaryToolbar);
+
+      expect(
+        /** @type {HTMLElement} */ (container.querySelector('h2')).innerText
+          .replace(/\s+/g, ' ')
+          .trim(),
+      ).toBe('Global Assets chevron_right 2024 chevron_right summer');
+      await expect.element(page.getByRole('button', { name: 'New Folder' })).toBeEnabled();
+
+      await page.getByRole('button', { name: '2024' }).click();
+      await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/2024');
+      expect(window.history.state.folder).toEqual(globalAssetFolder.current);
+
+      await page.getByRole('button', { name: 'Global Assets' }).click();
+      await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads');
+    });
+
+    test('shows the folder alone at its root', async () => {
+      selectedSubfolderPath.current = '';
+
+      const { container } = await render(PrimaryToolbar);
+
+      expect(container.querySelector('h2')).toHaveTextContent('Global Assets');
+      expect(container.querySelectorAll('h2 button')).toHaveLength(0);
+    });
+
+    test('leads back to the parent folder on a small screen', async () => {
+      env.isSmallScreen = true;
+
+      const { container } = await render(PrimaryToolbar);
+
+      expect(container.querySelector('h2')).toHaveTextContent('summer');
+
+      await page.getByRole('button', { name: 'Back to Parent Folder' }).click();
+      await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/2024');
+    });
   });
 });

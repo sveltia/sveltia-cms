@@ -65,6 +65,47 @@ describe('UploadAssetsConfirmDialog', () => {
     await expect.poll(() => uploadingAssets.current.files).toEqual([]);
   });
 
+  test('names the subfolder the files will be saved to', async () => {
+    vi.mocked(saveAssets).mockResolvedValue(undefined);
+    setAssets([createMockAsset({ name: 'photo.png', folderPath: 'static/uploads/2024' })]);
+
+    try {
+      await render(UploadAssetsConfirmDialog, {});
+
+      const folder = globalAssetFolder.current;
+
+      uploadingAssets.current = { folder, subfolderPath: '2024', files: [image] };
+
+      const dialog = page.getByRole('alertdialog', { name: 'Upload New Assets' });
+
+      await expect
+        .element(
+          dialog.getByText(
+            'This file will be saved to the “\u2068/static/uploads/2024\u2069” folder:',
+          ),
+        )
+        .toBeVisible();
+      // The duplicates are looked for in the subfolder
+      await expect
+        .element(dialog.getByRole('radiogroup', { name: 'File Name Conflict Resolution' }))
+        .toBeInTheDocument();
+      expect(dialog.element().textContent).toContain(
+        'A file with the same name already exists in this folder. Do you want to replace it?',
+      );
+
+      await dialog.getByRole('button', { name: 'Upload' }).click();
+
+      await vi.waitFor(() =>
+        expect(saveAssets).toHaveBeenCalledWith(
+          { files: [image], folder, subfolderPath: '2024', replaceDuplicates: true },
+          { commitType: 'uploadMedia' },
+        ),
+      );
+    } finally {
+      setAssets([]);
+    }
+  });
+
   test('is worded as a replacement when replacing an asset', async () => {
     await render(UploadAssetsConfirmDialog, {});
 

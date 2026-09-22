@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { focusedAsset, selectedAssets } from '$lib/services/assets';
+import { focusedSubfolder } from '$lib/services/assets/subfolders';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';
 
@@ -55,13 +56,16 @@ describe('AssetListItem', () => {
 
   test('focuses the asset and opens the details on double click', async () => {
     window.location.hash = '#/assets';
+    focusedSubfolder.current = { name: '2024', path: 'static/uploads/2024' };
 
     await render(AssetListItem, { asset: assets[0], viewType: 'list' });
 
     const row = page.getByRole('row', { name: 'a.png' });
 
+    // The asset’s info takes the place of a folder’s
     await row.click();
     expect(focusedAsset.current).toBe(assets[0]);
+    expect(focusedSubfolder.current).toBeUndefined();
 
     await row.dblClick();
     await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/a.png');

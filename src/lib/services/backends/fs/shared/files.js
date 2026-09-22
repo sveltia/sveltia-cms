@@ -72,12 +72,21 @@ const RENAME_RETRY_DELAY = 150;
  * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
  * @param {string | undefined} path Path to the file/directory.
  * @param {'file' | 'directory'} [type] Type of the handle to retrieve.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.create] Whether to create the file/directory, along with any missing
+ * parent directory, if it doesn’t exist. Default: `true`.
  * @returns {Promise<FileSystemFileHandle | FileSystemDirectoryHandle>} Handle.
- * @throws {Error} If the path is empty and the type is `file`.
+ * @throws {Error} If the path is empty and the type is `file`, or if the file/directory doesn’t
+ * exist and `create` is `false`.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/getFileHandle
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle/getDirectoryHandle
  */
-export const getHandleByPath = async (rootDirHandle, path, type = 'file') => {
+export const getHandleByPath = async (
+  rootDirHandle,
+  path,
+  type = 'file',
+  { create = true } = {},
+) => {
   const normalizedPath = stripSlashes(path ?? '');
   /** @type {FileSystemFileHandle | FileSystemDirectoryHandle} */
   let handle = rootDirHandle;
@@ -92,7 +101,6 @@ export const getHandleByPath = async (rootDirHandle, path, type = 'file') => {
 
   const pathParts = normalizedPath.split('/');
   const lastIndex = pathParts.length - 1;
-  const create = true;
 
   for await (const [index, name] of pathParts.entries()) {
     // If the part is the last one and the type is `file`, we need to ensure that we get a file
@@ -128,6 +136,21 @@ export const getDirectoryHandle = (rootDirHandle, path) =>
   /** @type {Promise<FileSystemDirectoryHandle>} */ (
     getHandleByPath(rootDirHandle, path, 'directory')
   );
+
+/**
+ * Read a file at the given path.
+ * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
+ * @param {string} path Path to the file.
+ * @returns {Promise<File>} File.
+ * @throws {Error} If the file doesn’t exist.
+ */
+export const readFile = async (rootDirHandle, path) => {
+  const handle = /** @type {FileSystemFileHandle} */ (
+    await getHandleByPath(rootDirHandle, path, 'file', { create: false })
+  );
+
+  return handle.getFile();
+};
 
 /**
  * Create a regular expression that matches the given path, taking template tags into account.
@@ -607,9 +630,13 @@ export const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
   for (let i = pathSegments.length; i > 0; i -= 1) {
     const dirName = pathSegments[i - 1];
     const parentPath = pathSegments.slice(0, i - 1).join('/');
-    const parentHandle = await getDirectoryHandle(rootDirHandle, parentPath);
 
     try {
+      // Don’t bring back a parent directory that has been removed already
+      const parentHandle = /** @type {FileSystemDirectoryHandle} */ (
+        await getHandleByPath(rootDirHandle, parentPath, 'directory', { create: false })
+      );
+
       const dirHandle = await parentHandle.getDirectoryHandle(dirName);
 
       // Use for...of to check if directory is empty with early exit on first entry found
@@ -631,7 +658,10 @@ export const deleteEmptyParentDirs = async (rootDirHandle, pathSegments) => {
 };
 
 /**
- * Delete a file at the specified path within the file system.
+ * Delete a file at the specified path within the file system. The directory the file was in is left
+ * alone even if it’s now empty; {@link deleteEmptyDirs} cleans up once a whole batch of changes has
+ * been saved, because the files in a batch are removed all at once, and a directory can’t be
+ * removed while another file is being removed from it.
  * @param {object} args Arguments.
  * @param {FileSystemDirectoryHandle} args.rootDirHandle Root directory handle.
  * @param {string} args.path The path to the file to be deleted.
@@ -649,9 +679,20 @@ export const deleteFile = async ({ rootDirHandle, path }) => {
       throw ex;
     }
   }
+};
 
-  if (dirPath) {
-    await deleteEmptyParentDirs(rootDirHandle, dirPath.split('/'));
+/**
+ * Delete the given directories, and their parents, if they’re empty. The directories are handled
+ * one at a time, because the file system won’t let a directory be removed while it’s being
+ * modified.
+ * @param {FileSystemDirectoryHandle} rootDirHandle Root directory handle.
+ * @param {Iterable<string>} dirPaths Paths to the directories.
+ */
+export const deleteEmptyDirs = async (rootDirHandle, dirPaths) => {
+  for (const dirPath of new Set(dirPaths)) {
+    if (dirPath) {
+      await deleteEmptyParentDirs(rootDirHandle, dirPath.split('/'));
+    }
   }
 };
 
@@ -749,6 +790,28 @@ export const saveChanges = async (rootDirHandle, changes) => {
     ...(await saveChangeBatch(rootDirHandle, assetChanges)),
     ...(await saveChangeBatch(rootDirHandle, entryChanges)),
   ];
+
+  if (rootDirHandle) {
+    // A directory left empty by the deleted and moved files is removed, as Git doesn’t track empty
+    // directories, so the local checkout matches what a Git backend would end up with
+    await deleteEmptyDirs(
+      rootDirHandle,
+      changes
+        .map(({ action, path, previousPath }) => {
+          if (action === 'delete') {
+            return path;
+          }
+
+          if (action === 'move' && previousPath) {
+            return previousPath;
+          }
+
+          return undefined;
+        })
+        .filter((path) => path !== undefined)
+        .map((path) => getPathInfo(stripSlashes(path)).dirname ?? ''),
+    );
+  }
 
   return {
     // Use a hash of the current date as a pseudo SHA

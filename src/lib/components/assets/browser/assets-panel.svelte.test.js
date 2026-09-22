@@ -59,6 +59,52 @@ describe('AssetsPanel', () => {
     ).toHaveTextContent('Unsaved');
   });
 
+  test('lists the subfolders ahead of the assets, opening one on a click', async () => {
+    const onOpenSubfolder = vi.fn();
+
+    const subfolders = [
+      { name: '2023', path: 'static/uploads/2023' },
+      { name: 'brand', path: 'static/uploads/brand' },
+    ];
+
+    const { container } = await render(AssetsPanel, {
+      assets,
+      basePath: 'static/uploads',
+      subfolders,
+      onOpenSubfolder,
+    });
+
+    await expect.poll(() => getLabels(container)).toHaveLength(3);
+
+    const folders = page.getByRole('list', { name: 'Folders' });
+
+    expect(folders.getByRole('listitem').elements()).toHaveLength(2);
+    await expect
+      .element(folders.getByRole('button', { name: 'brand' }))
+      .toHaveAccessibleDescription('Folder');
+
+    await folders.getByRole('button', { name: 'brand' }).click();
+    expect(onOpenSubfolder).toHaveBeenCalledWith(subfolders[1]);
+
+    // Nothing to select in the folders, so the selection is left alone
+    expect(page.getByRole('option', { selected: true }).elements()).toHaveLength(0);
+  });
+
+  test('lists the subfolders alone in a folder without an asset', async () => {
+    await render(AssetsPanel, {
+      assets: [],
+      subfolders: [{ name: '2023', path: 'static/uploads/2023' }],
+    });
+
+    await expect
+      .element(page.getByRole('list', { name: 'Folders' }).getByRole('button', { name: '2023' }))
+      .toBeVisible();
+    expect(page.getByText('No files found.').elements()).toHaveLength(0);
+
+    // A click does nothing without a handler
+    await page.getByRole('button', { name: '2023' }).click();
+  });
+
   test('filters the assets by search terms', async () => {
     const props = $state({ assets, basePath: 'static/uploads', searchTerms: 'logo' });
     const { container } = await render(AssetsPanel, props);

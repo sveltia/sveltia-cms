@@ -5,7 +5,12 @@ import { render } from 'vitest-browser-svelte';
 import { announcedPageStatus } from '$lib/services/app/navigation';
 import { allAssets, focusedAsset, overlaidAsset } from '$lib/services/assets';
 import { selectedCloudService } from '$lib/services/assets/external';
-import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import {
+  allAssetFolders,
+  globalAssetFolder,
+  selectedAssetFolder,
+} from '$lib/services/assets/folders';
+import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { currentView } from '$lib/services/assets/view/settings';
 import { searchMode, searchTerms } from '$lib/services/search';
@@ -57,6 +62,7 @@ describe('AssetsPage', () => {
     prefs.logins = {};
     currentView.current = { type: 'grid' };
     selectedAssetFolder.current = undefined;
+    selectedSubfolderPath.current = '';
     selectedCloudService.current = undefined;
     showAssetOverlay.current = false;
     overlaidAsset.current = undefined;
@@ -131,10 +137,50 @@ describe('AssetsPage', () => {
     await expect.element(page.getByText('File not found.')).toBeInTheDocument();
     expect(announcedPageStatus.current).toBe('File not found.');
 
-    // An asset in a subfolder, which isn’t a configured folder
+    // A missing asset in a subfolder, which is browsed within the folder it belongs to
     window.location.hash = '#/assets/static/uploads/sub/missing.png';
-    await expect.poll(() => selectedAssetFolder.current).toBeUndefined();
+    await expect.poll(() => selectedSubfolderPath.current).toBe('sub');
+    expect(selectedAssetFolder.current?.internalPath).toBe('static/uploads');
     expect(announcedPageStatus.current).toBe('File not found.');
+
+    // An asset in a folder that isn’t configured
+    window.location.hash = '#/assets/content/missing.png';
+    await expect.poll(() => selectedAssetFolder.current).toBeUndefined();
+    expect(selectedSubfolderPath.current).toBe('');
+    expect(announcedPageStatus.current).toBe('File not found.');
+  });
+
+  test('browses a subfolder of a folder', async () => {
+    const folder = globalAssetFolder.current;
+
+    setAssets([
+      createMockAsset({ name: 'a.png', asset: { folder } }),
+      createMockAsset({ name: 'b.png', folderPath: 'static/uploads/2024', asset: { folder } }),
+    ]);
+    window.location.hash = '#/assets/static/uploads/2024';
+
+    await render(AssetsPage);
+
+    await expect.poll(() => selectedSubfolderPath.current).toBe('2024');
+    expect(selectedAssetFolder.current?.internalPath).toBe('static/uploads');
+    await expect
+      .element(page.getByRole('grid', { name: 'Assets' }).getByRole('row', { name: 'b.png' }))
+      .toBeInTheDocument();
+    // The toolbar is rendered once the folder is known
+    await expect
+      .element(
+        page
+          .getByRole('toolbar', { name: 'Folder' })
+          .getByRole('button', { name: 'Global Assets' }),
+      )
+      .toBeInTheDocument();
+    await expect
+      .element(page.getByRole('toolbar', { name: 'Folder' }))
+      .toMatchTextContent('Global Assets chevron_right 2024');
+    // The folder in the sidebar stays selected while its subfolder is browsed
+    await expect
+      .element(page.getByRole('option', { name: /^Global Assets/ }))
+      .toHaveAttribute('aria-selected', 'true');
   });
 
   test('shows the info of the focused asset in the sidebar', async () => {
@@ -144,7 +190,8 @@ describe('AssetsPage', () => {
     const { container } = await render(AssetsPage);
     const sidebar = page.getByRole('group', { name: 'Asset Info' });
 
-    await expect.element(sidebar).toHaveTextContent('Select an asset to show its info.');
+    // The info of the folder is shown while no asset is focused
+    await expect.element(sidebar).toMatchTextContent('Folder All Assets Contents 2 assets');
 
     const [firstAsset] = allAssets.current;
 
@@ -153,6 +200,11 @@ describe('AssetsPage', () => {
       .element(sidebar.getByRole('link', { name: 'https://example.com/uploads/a.png' }))
       .toBeInTheDocument();
     expect(container.querySelector('#asset-info img')).not.toBeNull();
+
+    // A click on the empty area of the list brings the folder info back
+    /** @type {HTMLElement} */ (container.querySelector('.list-container')).click();
+    await expect.element(sidebar).toMatchTextContent('Folder All Assets');
+    expect(focusedAsset.current).toBeUndefined();
   });
 
   test('redirects to the first external location when no folder is configured', async () => {

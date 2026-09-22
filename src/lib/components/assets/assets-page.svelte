@@ -7,11 +7,15 @@
   import ExternalDetailsOverlay from '$lib/components/assets/list/external/details-overlay.svelte';
   import ExternalMainArea from '$lib/components/assets/list/external/main-area.svelte';
   import AssetList from '$lib/components/assets/list/internal/asset-list.svelte';
+  import DeleteSubfolderDialog from '$lib/components/assets/list/internal/delete-subfolder-dialog.svelte';
   import AssetDetailsOverlay from '$lib/components/assets/list/internal/details-overlay.svelte';
   import EditAssetDialog from '$lib/components/assets/list/internal/edit-asset-dialog.svelte';
+  import FolderInfoPanel from '$lib/components/assets/list/internal/folder-info-panel.svelte';
   import InfoPanel from '$lib/components/assets/list/internal/info-panel.svelte';
+  import NewSubfolderDialog from '$lib/components/assets/list/internal/new-subfolder-dialog.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/internal/primary-toolbar.svelte';
   import RenameAssetDialog from '$lib/components/assets/list/internal/rename-dialog.svelte';
+  import RenameSubfolderDialog from '$lib/components/assets/list/internal/rename-subfolder-dialog.svelte';
   import PrimarySidebar from '$lib/components/assets/list/primary-sidebar.svelte';
   import SecondarySidebar from '$lib/components/assets/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
@@ -43,6 +47,7 @@
     linkedFilesService,
   } from '$lib/services/assets/external/linked';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+  import { resolveAssetFolderPath, selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import {
     assetGroups,
     getFolderLabelByCollection,
@@ -176,16 +181,15 @@
       return;
     }
 
-    const folder =
-      window.history.state?.folder ??
-      allAssetFolders.current.find(({ internalPath, collectionName }) =>
-        folderPath === '-/all'
-          ? internalPath === undefined && collectionName === undefined
-          : internalPath === folderPath,
-      );
+    // The path can also point at a subfolder of a configured folder. An internal path can be
+    // shared by multiple collections, files and fields, so the folder passed as history state
+    // takes precedence over the lookup by path
+    const { folder, subfolderPath = '' } =
+      resolveAssetFolderPath(folderPath, window.history.state?.folder) ?? {};
 
     if (!folder && !fileName) {
       selectedAssetFolder.current = undefined;
+      selectedSubfolderPath.current = '';
       showAssetOverlay.current = false;
       announcedPageStatus.current = _('asset_folder_not_found');
       notFound = true;
@@ -198,8 +202,13 @@
       // because an asset can live in a subfolder of one. The asset itself is looked up by its full
       // path below, so leave the resolution to that
       selectedAssetFolder.current = undefined;
-    } else if (!equal(selectedAssetFolder.current, folder)) {
-      selectedAssetFolder.current = folder;
+      selectedSubfolderPath.current = '';
+    } else {
+      if (!equal(selectedAssetFolder.current, folder)) {
+        selectedAssetFolder.current = folder;
+      }
+
+      selectedSubfolderPath.current = subfolderPath;
     }
 
     if (!fileName) {
@@ -310,6 +319,9 @@
             {#snippet children(/** @type {Asset} */ asset)}
               <InfoPanel {asset} showPreview={true} />
             {/snippet}
+            {#snippet fallback()}
+              <FolderInfoPanel />
+            {/snippet}
           </SecondarySidebar>
         {/snippet}
       </PageContainerMainArea>
@@ -327,3 +339,6 @@
 
 <EditAssetDialog />
 <RenameAssetDialog />
+<NewSubfolderDialog />
+<RenameSubfolderDialog />
+<DeleteSubfolderDialog />

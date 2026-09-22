@@ -292,12 +292,32 @@ export const createPublicURL = (publicPath, fileName) =>
  * @param {string} [args.slug] Entry slug for that locale.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
  * @param {AssetFolderInfo} args.folder Asset folder associated with a new file.
+ * @param {string} [args.subfolderPath] Subfolder below the folder the file is saved to, picked
+ * while browsing the folder in the asset picker.
  * @returns {{ assetFolderPaths: ResolvedAssetFolderPaths, assetNamesInSameFolder: string[],
  * savingAssetProps: SavingAsset }} Arguments.
  */
-export const getAssetSavingInfo = ({ draft, locale, slug, defaultLocaleSlug, folder }) => {
+export const getAssetSavingInfo = ({
+  draft,
+  locale,
+  slug,
+  defaultLocaleSlug,
+  folder,
+  subfolderPath = '',
+}) => {
   const { collectionName } = draft;
-  const assetFolderPaths = getAssetFolderPaths({ draft, locale, slug, defaultLocaleSlug, folder });
+  let assetFolderPaths = getAssetFolderPaths({ draft, locale, slug, defaultLocaleSlug, folder });
+
+  if (subfolderPath) {
+    const { resolvedInternalPath, resolvedPublicPath } = assetFolderPaths;
+
+    assetFolderPaths = {
+      ...assetFolderPaths,
+      resolvedInternalPath: createPath([resolvedInternalPath, subfolderPath]),
+      resolvedPublicPath: createPublicURL(resolvedPublicPath, subfolderPath),
+    };
+  }
+
   const { resolvedInternalPath } = assetFolderPaths;
 
   return {
@@ -312,6 +332,7 @@ export const getAssetSavingInfo = ({ draft, locale, slug, defaultLocaleSlug, fol
  * @param {object} args Arguments.
  * @param {File} args.file Raw file.
  * @param {AssetFolderInfo} args.folder Asset folder associated with the new file.
+ * @param {string} [args.subfolderPath] Subfolder below the folder the file is saved to.
  * @param {boolean} args.replace Whether to replace an existing file.
  * @param {string} args.blobURL Blob URL of the file.
  * @param {EntryDraft} args.draft Entry draft.
@@ -328,6 +349,7 @@ export const getAssetSavingInfo = ({ draft, locale, slug, defaultLocaleSlug, fol
 export const replaceBlobURL = async ({
   file,
   folder,
+  subfolderPath,
   replace,
   blobURL,
   draft,
@@ -342,15 +364,20 @@ export const replaceBlobURL = async ({
 }) => {
   const sha = await getGitHash(file);
 
-  const dupFile = savingAssets.find(
-    (f) => f.sha === sha && (!folder.entryRelative || equal(f.folder, folder)),
-  );
-
   const {
     savingAssetProps,
     assetNamesInSameFolder,
     assetFolderPaths: { resolvedInternalPath, resolvedPublicPath },
-  } = getAssetSavingInfo({ draft, locale, slug, defaultLocaleSlug, folder });
+  } = getAssetSavingInfo({ draft, locale, slug, defaultLocaleSlug, folder, subfolderPath });
+
+  // The same file picked for another field or locale is saved once, as long as it goes to the same
+  // place: the same folder, and the same subfolder in it
+  const dupFile = savingAssets.find(
+    (f) =>
+      f.sha === sha &&
+      (!folder.entryRelative || equal(f.folder, folder)) &&
+      getPathInfo(f.path).dirname === (resolvedInternalPath || undefined),
+  );
 
   let fileName = '';
 

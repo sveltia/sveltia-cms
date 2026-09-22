@@ -3,6 +3,7 @@
   import { goto } from '$lib/services/app/navigation';
   import { focusedAsset, selectedAssetPathSet, selectedAssets } from '$lib/services/assets';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
+  import { focusedSubfolder } from '$lib/services/assets/subfolders';
   import { listedAssetIndexMap } from '$lib/services/assets/view';
   import { toggleListItem } from '$lib/services/utils/array';
 
@@ -44,6 +45,8 @@
   onSelectionChange={updateSelection}
   onFocus={() => {
     focusedAsset.current = asset;
+    // Show the asset’s info in the sidebar in place of a folder’s
+    focusedSubfolder.current = undefined;
   }}
   onPreview={() => {
     goto(`/assets/${asset.path}`, { transitionType: 'forwards' });

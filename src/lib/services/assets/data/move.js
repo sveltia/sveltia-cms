@@ -131,20 +131,23 @@ export const collectEntryChanges = async ({ entry, savingEntries, changes }) => 
 };
 
 /**
- * Collect changes for the given asset and update the entries that use it.
+ * Rewrite the references to the given asset in the entries that use it, so these point at the
+ * asset’s new path.
  * @param {object} args Arguments.
  * @param {AssetFolderInfo} args._globalAssetFolder Global asset folder.
  * @param {string} args.newPath New path for the asset.
  * @param {Asset} args.asset Asset to collect changes for.
- * @param {Entry[]} args.savingEntries Entries to be saved. This will be modified.
- * @param {FileChange[]} args.changes File changes to be saved. This will be modified.
+ * @param {Map<string, Entry>} args.updatingEntryMap Copies of the entries being rewritten, keyed by
+ * entry ID, shared between the assets of one move. An entry using several of the moved assets is
+ * copied once and has every reference replaced in that copy, so it’s saved once with all of them;
+ * a copy per asset would each hold a single replacement and overwrite the others. The caller
+ * collects the changes from the copies once every asset has been dealt with.
  */
 export const collectEntryChangesFromAsset = async ({
   _globalAssetFolder,
   newPath,
   asset,
-  savingEntries,
-  changes,
+  updatingEntryMap,
 }) => {
   const assetURL = getAssetPublicURL(asset) ?? asset.blobURL;
   const usedEntries = assetURL ? await getEntriesByAssetURL(assetURL) : [];
@@ -157,18 +160,22 @@ export const collectEntryChangesFromAsset = async ({
     getAssetFoldersByPath(asset.path).find(({ collectionName }) => collectionName !== undefined) ??
     _globalAssetFolder;
 
-  const updatingEntries = await getEntriesByAssetURL(assetURL, {
-    entries: structuredClone(usedEntries),
-    newURL: newPath.replace(asset.folder.internalPath ?? '', publicPath ?? ''),
+  const entries = usedEntries.map((entry) => {
+    let copy = updatingEntryMap.get(entry.id);
+
+    if (!copy) {
+      copy = structuredClone(entry);
+      updatingEntryMap.set(entry.id, copy);
+    }
+
+    return copy;
   });
 
-  if (!updatingEntries.length) {
-    return;
-  }
-
-  await Promise.all(
-    updatingEntries.map(async (entry) => collectEntryChanges({ entry, savingEntries, changes })),
-  );
+  // The references are replaced in place
+  await getEntriesByAssetURL(assetURL, {
+    entries,
+    newURL: newPath.replace(asset.folder.internalPath ?? '', publicPath ?? ''),
+  });
 };
 
 /**
@@ -176,8 +183,9 @@ export const collectEntryChangesFromAsset = async ({
  * @param {object} args Arguments.
  * @param {'move' | 'rename'} args.action The action performed, either 'move' or 'rename'.
  * @param {MovingAsset[]} args.movedAssets The assets that have been moved or renamed.
+ * @param {boolean} [args.notify] Whether to show a toast reporting the move. Default: `true`.
  */
-export const updateStores = ({ action, movedAssets }) => {
+export const updateStores = ({ action, movedAssets, notify = true }) => {
   const focusedAssetPath = focusedAsset.current?.path;
   const _focusedAsset = movedAssets.find((a) => a.asset.path === focusedAssetPath);
   const overlaidAssetPath = overlaidAsset.current?.path;
@@ -193,20 +201,31 @@ export const updateStores = ({ action, movedAssets }) => {
     overlaidAsset.current = getAssetByInternalPath(_overlaidAsset.path);
   }
 
-  assetUpdatesToast.current = {
-    ...UPDATE_TOAST_DEFAULT_STATE,
-    moved: action === 'move',
-    renamed: action === 'rename',
-    count: movedAssets.length,
-  };
+  if (notify) {
+    assetUpdatesToast.current = {
+      ...UPDATE_TOAST_DEFAULT_STATE,
+      moved: action === 'move',
+      renamed: action === 'rename',
+      count: movedAssets.length,
+    };
+  }
 };
 
 /**
  * Move or rename assets while updating links in the entries.
  * @param {'move' | 'rename'} action Action type.
  * @param {MovingAsset[]} movingAssets Assets to be moved/renamed.
+ * @param {object} [options] Options.
+ * @param {FileChange[]} [options.extraChanges] Changes to files other than the assets, committed
+ * along with the move, e.g. the `.gitkeep` of a folder being renamed.
+ * @param {boolean} [options.notify] Whether to show a toast reporting the move. Default: `true`.
+ * A caller that reports the result in its own words, like a folder rename, turns it off.
  */
-export const moveAssets = async (action, movingAssets) => {
+export const moveAssets = async (
+  action,
+  movingAssets,
+  { extraChanges = [], notify = true } = {},
+) => {
   const _globalAssetFolder = globalAssetFolder.current;
   /** @type {FileChange[]} */
   const changes = [];
@@ -214,6 +233,8 @@ export const moveAssets = async (action, movingAssets) => {
   const savingEntries = [];
   /** @type {Asset[]} */
   const savingAssets = [];
+  /** @type {Map<string, Entry>} */
+  const updatingEntryMap = new Map();
 
   await Promise.all(
     movingAssets.map(async ({ asset, path }) => {
@@ -234,22 +255,22 @@ export const moveAssets = async (action, movingAssets) => {
         data: new File([await blob.arrayBuffer()], newName, { type: blob.type }),
       });
 
-      await collectEntryChangesFromAsset({
-        _globalAssetFolder,
-        newPath,
-        asset,
-        savingEntries,
-        changes,
-      });
+      await collectEntryChangesFromAsset({ _globalAssetFolder, newPath, asset, updatingEntryMap });
     }),
   );
 
+  await Promise.all(
+    [...updatingEntryMap.values()].map((entry) =>
+      collectEntryChanges({ entry, savingEntries, changes }),
+    ),
+  );
+
   await saveChanges({
-    changes,
+    changes: [...changes, ...extraChanges],
     savingEntries,
     savingAssets,
     options: { commitType: 'uploadMedia' },
   });
 
-  updateStores({ action, movedAssets: movingAssets });
+  updateStores({ action, movedAssets: movingAssets, notify });
 };

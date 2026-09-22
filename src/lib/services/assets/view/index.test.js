@@ -14,7 +14,10 @@ import {
   getFolderLabelByCollection,
   listedAssetIndexMap,
   listedAssets,
+  listedSubfolders,
+  selectedFolderAssets,
   showAssetOverlay,
+  showNewSubfolderDialog,
   showUploadAssetsConfirmDialog,
   showUploadAssetsDialog,
 } from '.';
@@ -26,6 +29,7 @@ const {
   _selectedAssets,
   _uploadingAssets,
   _selectedAssetFolder,
+  _browsedDirPath,
   _backend,
   _currentView,
   _prefs,
@@ -41,6 +45,8 @@ const {
     _uploadingAssets: createRawState({ folder: undefined, files: [] }),
     /** @type {{ current: any }} */
     _selectedAssetFolder: createRawState(undefined),
+    /** @type {{ current: any }} */
+    _browsedDirPath: createRawState(undefined),
     /** @type {{ current: any }} */
     _backend: createRawState(null),
     /** @type {{ current: any }} */
@@ -80,6 +86,25 @@ vi.mock('$lib/services/assets', () => ({
 
 vi.mock('$lib/services/assets/folders', () => ({
   selectedAssetFolder: _selectedAssetFolder,
+}));
+
+vi.mock('$lib/services/assets/subfolders', () => ({
+  browsedDirPath: _browsedDirPath,
+  getDirName: (/** @type {string} */ path) =>
+    path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '',
+  getSubfolders: vi.fn((/** @type {{ dirPath: string, assets: any[] }} */ { dirPath, assets }) => {
+    const prefix = dirPath ? `${dirPath}/` : '';
+
+    /** @type {Set<string>} */
+    const names = new Set(
+      assets
+        .map(({ path }) => (path.startsWith(prefix) ? path.slice(prefix.length) : ''))
+        .filter((/** @type {string} */ rest) => rest.includes('/'))
+        .map((/** @type {string} */ rest) => rest.split('/')[0]),
+    );
+
+    return [...names].sort().map((name) => ({ name, path: `${prefix}${name}` }));
+  }),
 }));
 
 vi.mock('$lib/services/assets/view/filter', () => ({
@@ -141,6 +166,7 @@ describe('assets/view/index', () => {
     _selectedAssets.current = [];
     _uploadingAssets.current = { folder: undefined, files: [] };
     _selectedAssetFolder.current = undefined;
+    _browsedDirPath.current = undefined;
     currentView.current = { type: 'grid', showInfo: true };
     await wait();
   });
@@ -148,6 +174,12 @@ describe('assets/view/index', () => {
     it('should be defined as reactive state', () => {
       expect(showAssetOverlay).toBeDefined();
       expect('current' in showAssetOverlay).toBe(true);
+    });
+  });
+
+  describe('showNewSubfolderDialog', () => {
+    it('should be hidden by default', () => {
+      expect(showNewSubfolderDialog.current).toBe(false);
     });
   });
 
@@ -452,6 +484,68 @@ describe('assets/view/index', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith('listedAssets', expect.any(Array));
       consoleSpy.mockRestore();
+    });
+
+    describe('with folder support', () => {
+      beforeEach(() => {
+        _publishedAssets.current = [
+          createAsset('images/photo1.jpg', globalFolder),
+          createAsset('images/2024/photo2.jpg', globalFolder),
+          createAsset('images/2024/summer/photo3.jpg', globalFolder),
+          createAsset('images/2023/photo4.jpg', globalFolder),
+          createAsset('blog/photo5.jpg', blogFolder),
+        ];
+        _selectedAssetFolder.current = globalFolder;
+      });
+
+      it('should list every asset in the folder via selectedFolderAssets', () => {
+        _browsedDirPath.current = 'images/2024';
+
+        expect(selectedFolderAssets.current.map(({ path }) => path)).toEqual([
+          'images/photo1.jpg',
+          'images/2024/photo2.jpg',
+          'images/2024/summer/photo3.jpg',
+          'images/2023/photo4.jpg',
+        ]);
+      });
+
+      it('should list only the assets in the browsed directory', () => {
+        _browsedDirPath.current = 'images';
+        expect(listedAssets.current.map(({ path }) => path)).toEqual(['images/photo1.jpg']);
+
+        _browsedDirPath.current = 'images/2024';
+        expect(listedAssets.current.map(({ path }) => path)).toEqual(['images/2024/photo2.jpg']);
+
+        _browsedDirPath.current = 'images/2024/summer';
+        expect(listedAssets.current.map(({ path }) => path)).toEqual([
+          'images/2024/summer/photo3.jpg',
+        ]);
+      });
+
+      it('should list the subfolders of the browsed directory', () => {
+        _browsedDirPath.current = 'images';
+        expect(listedSubfolders.current).toEqual([
+          { name: '2023', path: 'images/2023' },
+          { name: '2024', path: 'images/2024' },
+        ]);
+
+        _browsedDirPath.current = 'images/2024';
+        expect(listedSubfolders.current).toEqual([{ name: 'summer', path: 'images/2024/summer' }]);
+
+        _browsedDirPath.current = 'images/2023';
+        expect(listedSubfolders.current).toEqual([]);
+      });
+
+      it('should list no subfolder when the folder is not browsed by subfolder', () => {
+        expect(listedSubfolders.current).toEqual([]);
+        expect(listedAssets.current).toHaveLength(4);
+      });
+
+      it('should offset the asset row indexes by the subfolder count', () => {
+        _browsedDirPath.current = 'images';
+
+        expect([...listedAssetIndexMap.current]).toEqual([['images/photo1.jpg', 2]]);
+      });
     });
   });
 

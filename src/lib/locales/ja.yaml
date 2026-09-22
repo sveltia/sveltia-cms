@@ -71,6 +71,10 @@ primary: プライマリー
 secondary: セカンダリー
 collection: コレクション
 folder: フォルダー
+# Label of the subfolder list in the asset picker
+folders: フォルダー
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: その他のフォルダー
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -490,6 +494,8 @@ collection_list: コレクションリスト
 back_to_collection_list: コレクションリストへ戻る
 asset_folder_list: アセットフォルダーリスト
 back_to_asset_folder_list: アセットフォルダーリストへ戻る
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: 親フォルダーへ戻る
 
 # ==============================================================================
 # Search
@@ -537,6 +543,47 @@ no_entries_found: エントリーは見つかりませんでした。
 
 # Upload dialog: title and button label
 upload_assets: 新しいアセットをアップロード
+
+# New Folder button and dialog in the Asset Library
+new_folder: 新しいフォルダー
+new_folder_name: フォルダー名
+new_folder_create: 作成
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: 新しいフォルダーは「{$folder}」内に作成されます。
+# Validation errors for the new folder name
+new_folder_error:
+  empty: フォルダー名は空白にはできません。
+  invalid: フォルダー名にスラッシュを含めたり、ドットで始めたりすることはできません。
+  duplicate: この名前のフォルダーまたはファイルは既に存在します。
+# Progress and error messages while the folder is being created
+creating_folder: フォルダーを作成中…
+creating_folder_failed: フォルダーを作成できませんでした。
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: フォルダーオプション
+show_folder_options: フォルダーオプションを表示
+rename_folder: フォルダーの名前を変更
+delete_folder: フォルダーを削除
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 新しい名前を以下に入力してください。 }}
+    1   {{ 新しい名前を以下に入力してください。フォルダー内のアセットも一緒に移動され、それを使用しているエントリーも更新されます。 }}
+    *   {{ 新しい名前を以下に入力してください。フォルダー内の {$count} 個のアセットも一緒に移動され、それらを使用しているエントリーも更新されます。 }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ 空の「{$name}」フォルダーを削除してもよろしいですか？ }}
+    1   {{ 「{$name}」フォルダーとその中のアセットを削除してもよろしいですか？ }}
+    *   {{ 「{$name}」フォルダーとその中の {$count} 個のアセットを削除してもよろしいですか？ }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: フォルダーの名前を変更中…
+renaming_folder_failed: フォルダーの名前を変更できませんでした。
+deleting_folder_failed: フォルダーを削除できませんでした。
 
 # Edit options menu: button and item labels
 edit_options: 編集オプション
@@ -919,6 +966,18 @@ assets_deleted: |
   .match $count
     1   {{ アセットが削除されました。 }}
     *   {{ {$count} 個のアセットが削除されました。 }}
+folder_created: フォルダーが作成されました。
+# Folder info panel in the Asset Library sidebar
+folder_path: フォルダーのパス
+folder_contents: 内容
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ フォルダーなし }}
+    *   {{ {$count} 個のフォルダー }}
+folder_renamed: フォルダーの名前が変更されました。
+folder_deleted: フォルダーが削除されました。
 
 # ==============================================================================
 # Content Editor

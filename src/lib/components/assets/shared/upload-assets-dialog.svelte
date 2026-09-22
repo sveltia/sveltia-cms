@@ -7,6 +7,7 @@
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { uploadingAssets } from '$lib/services/assets';
   import { targetAssetFolder } from '$lib/services/assets/folders';
+  import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { showAssetOverlay, showUploadAssetsDialog } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
 
@@ -30,11 +31,10 @@
       return;
     }
 
-    uploadingAssets.current = {
-      folder: originalAsset ? originalAsset.folder : targetAssetFolder.current,
-      files,
-      originalAssets,
-    };
+    // A replacement takes over the path of the asset it replaces, so it needs no subfolder
+    uploadingAssets.current = originalAsset
+      ? { folder: originalAsset.folder, files, originalAssets }
+      : { folder: targetAssetFolder.current, subfolderPath: selectedSubfolderPath.current, files };
     showUploadAssetsDialog.current = false;
   };
 

@@ -130,6 +130,16 @@ export const renameIfNeeded = (name, otherNames) => {
 };
 
 /**
+ * Sanitize a file or folder name: normalize it to NFC (composed characters), replace every kind of
+ * whitespace — non-breaking spaces, tabs, newlines and so on — with a regular space, collapsing
+ * consecutive ones, then drop the characters a file system won’t take.
+ * @param {string} name Name.
+ * @returns {string} Sanitized name.
+ */
+export const sanitizeFileName = (name) =>
+  sanitize(name.normalize().replace(/[\s\u00A0\u202F]+/g, ' '));
+
+/**
  * Format the file name for uploading, ensuring it is sanitized and optionally slugified.
  * @param {string} originalName The original file name.
  * @param {object} [options] Options.
@@ -142,10 +152,7 @@ export const formatFileName = (
   originalName,
   { slugificationEnabled = false, assetNamesInSameFolder = [] } = {},
 ) => {
-  // Normalize the name to NFC format (composed characters), then replace all whitespace characters
-  // (including non-breaking spaces, tabs, newlines, etc.) with regular spaces before sanitizing.
-  // Consecutive whitespace characters are collapsed into a single space.
-  let fileName = sanitize(originalName.normalize().replace(/[\s\u00A0\u202F]+/g, ' '));
+  let fileName = sanitizeFileName(originalName);
 
   if (slugificationEnabled) {
     const { filename, extension } = getPathInfo(fileName);

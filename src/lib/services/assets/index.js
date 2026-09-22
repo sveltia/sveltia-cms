@@ -9,6 +9,7 @@ import {
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
 import { processFile } from '$lib/services/assets/process';
+import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { fillTemplate, hasTemplateTags } from '$lib/services/common/template';
 import {
   ESCAPED_PLACEHOLDER_REGEX,
@@ -595,11 +596,13 @@ export const getAssetsByFolder = (folder) =>
 export const getAssetsByDirName = (dirname) =>
   allAssets.current.filter((a) => getPathInfo(a.path).dirname === dirname);
 
-// Reset the asset selection when a different folder is selected
+// Reset the asset selection when a different folder or subfolder is selected
 createRootEffect(() => {
-  // Read the folder so that the effect re-runs whenever it changes
+  // Read the folder and subfolder so that the effect re-runs whenever either changes
   void selectedAssetFolder.current;
+  void selectedSubfolderPath.current;
   focusedAsset.current = undefined;
+  focusedSubfolder.current = undefined;
 });
 
 /**

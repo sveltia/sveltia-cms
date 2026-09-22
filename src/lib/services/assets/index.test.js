@@ -1082,6 +1082,22 @@ describe('assets/index', () => {
       // focusedAsset should be reset to undefined
       expect(focusedAsset.current).toBe(undefined);
     });
+
+    it('should reset the focused asset and subfolder when a subfolder is selected', async () => {
+      const { focusedSubfolder, selectedSubfolderPath } =
+        await import('$lib/services/assets/subfolders');
+
+      focusedAsset.current = /** @type {any} */ ({ path: 'assets/image.jpg' });
+      focusedSubfolder.current = { name: '2024', path: 'assets/2024' };
+      selectedSubfolderPath.current = '2024';
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+
+      expect(focusedAsset.current).toBeUndefined();
+      expect(focusedSubfolder.current).toBeUndefined();
+    });
   });
 
   describe('getAssetByRelativePathAndCollection', () => {

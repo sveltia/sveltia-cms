@@ -914,6 +914,24 @@ describe('contents/fields/file/helpers', () => {
       expect(getSlugs).not.toHaveBeenCalled();
     });
 
+    it('should include the subfolder the file was picked for', () => {
+      /** @type {any} */
+      const draft = {
+        files: {
+          'blob:test': {
+            file: new File([], 'photo.png'),
+            folder: { entryRelative: false, publicPath: '/images' },
+            subfolderPath: '2024/summer',
+            replace: false,
+          },
+        },
+      };
+
+      expect(
+        getUnsavedFileDisplayPath({ draft, blobURL: 'blob:test', fileName: 'photo.png' }),
+      ).toBe('/images/2024/summer/photo.png');
+    });
+
     it('should return the file name only when the public path is empty', () => {
       const result = getUnsavedFileDisplayPath({
         draft: createDraft({ entryRelative: false, publicPath: '' }),

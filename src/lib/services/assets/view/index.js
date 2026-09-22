@@ -4,6 +4,7 @@ import { untrack } from 'svelte';
 
 import { publishedAssets, selectedAssets, uploadingAssets } from '$lib/services/assets';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
+import { browsedDirPath, getDirName, getSubfolders } from '$lib/services/assets/subfolders';
 import { filterAssets } from '$lib/services/assets/view/filter';
 import { groupAssets } from '$lib/services/assets/view/group';
 import { assetListSettings, currentView, initSettings } from '$lib/services/assets/view/settings';
@@ -31,6 +32,11 @@ export const showAssetOverlay = createRawState(false);
  * Whether to show the Upload Assets dialog.
  */
 export const showUploadAssetsDialog = createRawState(false);
+
+/**
+ * Whether to show the New Folder dialog.
+ */
+export const showNewSubfolderDialog = createRawState(false);
 
 /**
  * Whether to show the Upload Assets confirmation dialog.
@@ -70,9 +76,9 @@ export const getFolderLabelByCollection = ({ label, collectionName, fileName, in
 };
 
 /**
- * List of all the assets for the selected asset collection.
+ * List of all the assets in the selected asset folder, including those in its subfolders.
  */
-export const listedAssets = createDerivedState(() => {
+export const selectedFolderAssets = createDerivedState(() => {
   const { current: _allAssets } = publishedAssets;
   const { current: _selectedAssetFolder } = selectedAssetFolder;
 
@@ -89,14 +95,45 @@ export const listedAssets = createDerivedState(() => {
 });
 
 /**
- * Map from asset path to the asset’s index in {@link listedAssets}, used by list rows to resolve
- * their `aria-rowindex` in O(1). Rows are appended by an infinite scroller and never unmounted, so
- * once a large folder has been scrolled through, an `indexOf()` per row would make every subsequent
- * list update O(n²).
+ * List of the assets shown for the selected asset folder: the assets right in the directory being
+ * browsed, the ones in its subfolders being reached through {@link listedSubfolders}. Every asset
+ * below the folder is listed at once when the folder can’t be browsed by subfolder.
  */
-export const listedAssetIndexMap = createDerivedState(
-  () => new Map(listedAssets.current.map((asset, index) => [asset.path, index])),
-);
+export const listedAssets = createDerivedState(() => {
+  const assets = selectedFolderAssets.current;
+  const dirPath = browsedDirPath.current;
+
+  if (dirPath === undefined) {
+    return assets;
+  }
+
+  return assets.filter(({ path }) => getDirName(path) === dirPath);
+});
+
+/**
+ * Subfolders of the directory being browsed, listed ahead of the assets. Empty unless the selected
+ * asset folder is browsed by subfolder.
+ */
+export const listedSubfolders = createDerivedState(() => {
+  const dirPath = browsedDirPath.current;
+
+  return dirPath === undefined
+    ? []
+    : getSubfolders({ dirPath, assets: selectedFolderAssets.current });
+});
+
+/**
+ * Map from asset path to the asset’s row index in the list, used by list rows to resolve their
+ * `aria-rowindex` in O(1). The subfolders come first, so the index of an asset in
+ * {@link listedAssets} is offset by their count. Rows are appended by an infinite scroller and
+ * never unmounted, so once a large folder has been scrolled through, an `indexOf()` per row would
+ * make every subsequent list update O(n²).
+ */
+export const listedAssetIndexMap = createDerivedState(() => {
+  const offset = listedSubfolders.current.length;
+
+  return new Map(listedAssets.current.map((asset, index) => [asset.path, index + offset]));
+});
 
 /**
  * Find the assets listed right before and after the given one, for the previous/next navigation in

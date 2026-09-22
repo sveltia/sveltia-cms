@@ -1,5 +1,6 @@
+import { addMessages, locale } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
@@ -44,8 +45,75 @@ const createDropEvent = (files) => {
 };
 
 describe('InternalAssetsPanel', () => {
+  // Register a right-to-left locale, without strings, so it can be switched to
+  beforeAll(() => {
+    addMessages('ar', {});
+  });
+
   beforeEach(() => {
     selectAssetsView.current = { type: 'list' };
+  });
+
+  test('shows a breadcrumb while a subfolder is browsed, leading back up', async () => {
+    const onNavigate = vi.fn();
+    const onOpenSubfolder = vi.fn();
+    const subfolders = [{ name: 'august', path: 'static/uploads/2024/summer/august' }];
+
+    await render(InternalAssetsPanel, {
+      assets,
+      basePath: 'static/uploads/2024/summer',
+      folderLabel: 'Global Assets',
+      subfolderPath: '2024/summer',
+      subfolders,
+      selectedResources: [],
+      onDrop: vi.fn(),
+      onNavigate,
+      onOpenSubfolder,
+    });
+
+    const breadcrumb = page.getByRole('navigation', { name: 'Folder' });
+
+    await expect
+      .element(breadcrumb)
+      .toMatchTextContent('Global Assets chevron_right 2024 chevron_right summer');
+
+    await breadcrumb.getByRole('button', { name: '2024' }).click();
+    expect(onNavigate).toHaveBeenCalledWith('2024');
+    await breadcrumb.getByRole('button', { name: 'Global Assets' }).click();
+    expect(onNavigate).toHaveBeenCalledWith('');
+
+    await page
+      .getByRole('list', { name: 'Folders' })
+      .getByRole('button', { name: 'august' })
+      .click();
+    expect(onOpenSubfolder).toHaveBeenCalledWith(subfolders[0]);
+  });
+
+  test('points the breadcrumb separators the other way in a right-to-left locale', async () => {
+    locale.set('ar');
+
+    try {
+      await render(InternalAssetsPanel, {
+        assets,
+        folderLabel: 'Global Assets',
+        subfolderPath: '2024',
+        selectedResources: [],
+        onDrop: vi.fn(),
+      });
+
+      await expect
+        .element(page.getByRole('navigation', { name: 'Folder' }))
+        .toMatchTextContent('Global Assets chevron_left 2024');
+    } finally {
+      locale.set('en-US');
+    }
+  });
+
+  test('has no breadcrumb at the folder root', async () => {
+    await render(InternalAssetsPanel, { assets, selectedResources: [], onDrop: vi.fn() });
+
+    await expect.poll(() => page.getByRole('option').elements().length).toBe(2);
+    expect(page.getByRole('navigation').elements()).toHaveLength(0);
   });
 
   test('lists the assets in the saved view type within a drop zone', async () => {

@@ -12,6 +12,7 @@ import {
   getGitHash,
   isEquivalentFileExtension,
   resolvePath,
+  sanitizeFileName,
   sanitizePath,
 } from '$lib/services/utils/file';
 
@@ -40,6 +41,15 @@ describe('Test decodeFilePath()', () => {
     expect(decodeFilePath('@assets/images/%E7%A7%81%E3%81%AE%E7%94%BB%E5%83%8F.jpg')).toEqual(
       '@assets/images/私の画像.jpg',
     );
+  });
+});
+
+describe('Test sanitizeFileName()', () => {
+  test('should normalize, collapse whitespace and drop unsafe characters', () => {
+    // A decomposed “é” is composed
+    expect(sanitizeFileName('cafe\u0301.jpg')).toEqual('café.jpg');
+    expect(sanitizeFileName('a\u00A0b\t\n  c.jpg')).toEqual('a b c.jpg');
+    expect(sanitizeFileName('a/b\\c:d?.jpg')).toEqual('abcd.jpg');
   });
 });
 

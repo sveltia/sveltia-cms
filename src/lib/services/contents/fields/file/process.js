@@ -5,7 +5,7 @@ import { allAssets } from '$lib/services/assets';
 import { getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { processFile } from '$lib/services/assets/process';
-import { getGitHash } from '$lib/services/utils/file';
+import { createPath, getGitHash } from '$lib/services/utils/file';
 import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
 /**
@@ -34,9 +34,11 @@ const FOLDER_PATH_REGEX = /(?<path>.+?)(?:\/[^/]+)?$/;
  * @param {File} args.file File to be searched.
  * @param {AssetFolderInfo} [args.folder] Asset folder for the field. When the folder is
  * entry-relative, only files in the same folder are considered a match.
+ * @param {string} [args.subfolderPath] Subfolder the file is saved to. The same file pending for
+ * another subfolder is a different upload.
  * @returns {Promise<string | undefined>} Blob URL.
  */
-export const getExistingBlobURL = async ({ draft, file, folder }) => {
+export const getExistingBlobURL = async ({ draft, file, folder, subfolderPath = '' }) => {
   // The Git hash is memoized per file, so the files already in the draft aren’t read again
   const hash = await getGitHash(file);
   /** @type {string | undefined} */
@@ -47,7 +49,8 @@ export const getExistingBlobURL = async ({ draft, file, folder }) => {
       if (
         !foundURL &&
         (await getGitHash(f.file)) === hash &&
-        (!folder?.entryRelative || equal(f.folder, folder))
+        (!folder?.entryRelative || equal(f.folder, folder)) &&
+        (f.subfolderPath ?? '') === subfolderPath
       ) {
         foundURL = blobURL;
       }
@@ -64,6 +67,7 @@ export const getExistingBlobURL = async ({ draft, file, folder }) => {
  * @param {string} [args.blobURL] Blob URL of the file.
  * @param {AssetFolderInfo | undefined} args.folder Asset folder.
  * @param {string} [args.targetFolderPath] Target folder path.
+ * @param {string} [args.subfolderPath] Subfolder below the target folder the file is saved to.
  * @param {boolean} [args.replace] Whether the file overwrites an existing asset with the same name.
  * @returns {Promise<Asset>} Asset.
  */
@@ -72,6 +76,7 @@ export const convertFileItemToAsset = async ({
   blobURL,
   folder,
   targetFolderPath,
+  subfolderPath,
   replace,
 }) => {
   const { name, size } = file;
@@ -84,7 +89,7 @@ export const convertFileItemToAsset = async ({
     name,
     // A provisional path. `listAssets` resolves it against the assets already in the folder,
     // because the final file name is only determined when the entry is saved.
-    path: targetFolderPath ? `${targetFolderPath}/${name}` : name,
+    path: createPath([targetFolderPath, subfolderPath, name]),
     sha: await getGitHash(file),
     size,
     kind: getAssetKind(name),
@@ -101,8 +106,8 @@ export const convertFileItemToAsset = async ({
  */
 export const getUnsavedAssets = async ({ draft, targetFolderPath }) =>
   Promise.all(
-    Object.entries(draft.files).map(async ([blobURL, { file, folder, replace }]) =>
-      convertFileItemToAsset({ file, blobURL, folder, targetFolderPath, replace }),
+    Object.entries(draft.files).map(async ([blobURL, { file, folder, replace, subfolderPath }]) =>
+      convertFileItemToAsset({ file, blobURL, folder, targetFolderPath, subfolderPath, replace }),
     ),
   );
 
@@ -153,7 +158,7 @@ const getSavedAssetsForEntry = (draft, folder) => {
  * @returns {Promise<ProcessResourceResult>} Result of processing the resource.
  */
 export const processResource = async ({ draft, resource, libraryConfig }) => {
-  const { url, credit, replace = false } = resource;
+  const { url, credit, replace = false, subfolderPath } = resource;
   let { asset, file } = resource;
   /** @type {string | undefined} */
   let value = '';
@@ -166,7 +171,7 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
     let existingBlobURL;
 
     try {
-      existingBlobURL = await getExistingBlobURL({ draft, file, folder });
+      existingBlobURL = await getExistingBlobURL({ draft, file, folder, subfolderPath });
     } catch {
       // The file can’t be read any more, e.g. it was moved or deleted after being picked. It can’t
       // be uploaded either way, so it’s reported along with the corrupt files rather than failing
@@ -210,7 +215,7 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
         // Set a temporary blob URL, which will be later replaced with the actual file path
         value = URL.createObjectURL(file);
         // Cache the file itself for later upload
-        draft.files[value] = { file, folder, replace };
+        draft.files[value] = { file, folder, replace, subfolderPath };
       }
     }
   }

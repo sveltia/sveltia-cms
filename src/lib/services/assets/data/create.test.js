@@ -92,6 +92,14 @@ vi.mock('$lib/services/utils/file', () => ({
   formatFileName: vi.fn((fileName) => fileName),
 }));
 
+vi.mock('$lib/services/assets/subfolders', () => ({
+  getUploadDirPath: vi.fn(({ folder, subfolderPath }) =>
+    folder?.internalPath !== undefined
+      ? [folder.internalPath, subfolderPath].filter(Boolean).join('/')
+      : undefined,
+  ),
+}));
+
 vi.mock('$lib/services/contents/collection/data', () => ({
   UPDATE_TOAST_DEFAULT_STATE: {
     saved: false,
@@ -136,6 +144,26 @@ describe('assets/data/create', () => {
           file: mockFile,
         },
       ]);
+    });
+
+    it('should save the files to the subfolder being browsed', async () => {
+      const { getAssetsByDirName } = await import('$lib/services/assets');
+      const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+
+      const result = createFileList({
+        files: [mockFile],
+        folder: {
+          internalPath: 'images',
+          collectionName: undefined,
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        subfolderPath: '2024/summer',
+      });
+
+      expect(getAssetsByDirName).toHaveBeenCalledWith('images/2024/summer');
+      expect(result[0].path).toBe('images/2024/summer/test.jpg');
     });
 
     it('should call getAssetsByDirName when folder has internalPath', async () => {

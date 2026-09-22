@@ -4,6 +4,7 @@ import { cmsConfig } from '$lib/services/config';
 
 // Mock dependencies
 const mockLoadFiles = vi.fn();
+const mockReadFile = vi.fn();
 const mockSaveChanges = vi.fn();
 const mockInit = vi.fn();
 // Shared mock functions for IndexedDB instances — controlled by individual tests
@@ -33,6 +34,7 @@ vi.mock('@sveltia/utils/storage', () => {
 
 vi.mock('$lib/services/backends/fs/shared/files', () => ({
   loadFiles: mockLoadFiles,
+  readFile: mockReadFile,
   saveChanges: mockSaveChanges,
 }));
 
@@ -402,6 +404,7 @@ describe('Local Backend Service', () => {
         signIn: expect.any(Function),
         signOut: expect.any(Function),
         fetchFiles: expect.any(Function),
+        fetchBlob: expect.any(Function),
         commitChanges: expect.any(Function),
       });
     });
@@ -749,6 +752,44 @@ describe('Local Backend Service', () => {
 
       // Verify the result matches expected mock results
       expect(result).toEqual(mockResults);
+    });
+  });
+
+  describe('fetchBlob', () => {
+    it('should read the asset file with the directory handle', async () => {
+      const file = new File(['image'], 'a.png');
+
+      mockDirHandle.requestPermission.mockResolvedValue('granted');
+      mockDirHandle.entries.mockReturnValue({
+        next: vi.fn().mockResolvedValue({ done: false }),
+      });
+      mockDirHandle.getDirectoryHandle.mockResolvedValue({});
+
+      // @ts-ignore - Mock setup
+      global.window = /** @type {any} */ ({
+        showDirectoryPicker: /** @type {any} */ (vi.fn().mockResolvedValue(mockDirHandle)),
+      });
+
+      mockDBGet.mockResolvedValue(null);
+      mockReadFile.mockResolvedValue(file);
+
+      const service = localBackend.default;
+
+      service.init();
+
+      await service.signIn({ auto: false });
+
+      await expect(service.fetchBlob({ path: 'static/a.png' })).resolves.toBe(file);
+      expect(mockReadFile).toHaveBeenCalledWith(mockDirHandle, 'static/a.png');
+    });
+
+    it('should fail before signing in', async () => {
+      const service = localBackend.default;
+
+      await expect(service.fetchBlob({ path: 'static/a.png' })).rejects.toThrow(
+        'Root directory handle is not available',
+      );
+      expect(mockReadFile).not.toHaveBeenCalled();
     });
   });
 

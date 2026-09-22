@@ -33,6 +33,34 @@ describe('AssetUpdatesToast', () => {
       .toHaveTextContent('check_circle Success Asset saved and published.');
   }, 20000);
 
+  test('reports a created folder', async () => {
+    await render(AssetUpdatesToast, {});
+
+    assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, folderCreated: true };
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Folder created.');
+    await waitForToastsToHide();
+    expect(assetUpdatesToast.current.folderCreated).toBe(false);
+  }, 15000);
+
+  test('reports a renamed or deleted folder', async () => {
+    await render(AssetUpdatesToast, {});
+
+    assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, folderRenamed: true };
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Folder renamed.');
+    await waitForToastsToHide();
+
+    assetUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, folderDeleted: true };
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent('check_circle Success Folder deleted.');
+    await waitForToastsToHide();
+    expect(assetUpdatesToast.current.folderDeleted).toBe(false);
+  }, 20000);
+
   test('reports a moved, renamed or deleted asset', async () => {
     await render(AssetUpdatesToast, {});
 

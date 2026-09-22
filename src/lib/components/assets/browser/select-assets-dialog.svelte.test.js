@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { createSubfolder } from '$lib/services/assets/data/subfolder';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
 import { duplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
@@ -24,6 +25,11 @@ import {
 } from '$lib/test/config';
 
 import SelectAssetsDialog from './select-assets-dialog.svelte';
+
+vi.mock('$lib/services/assets/data/subfolder', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
+  createSubfolder: vi.fn(),
+}));
 
 /**
  * @import { MediaLibraryService } from '$lib/types/private';
@@ -178,6 +184,163 @@ describe('SelectAssetsDialog', () => {
         { asset: expect.objectContaining({ path: assets[1].path }) },
       ]),
     );
+  });
+
+  describe('with subfolders', () => {
+    beforeEach(async () => {
+      const folder = globalAssetFolder.current;
+
+      assets.push(
+        createMockAsset({
+          name: 'd.png',
+          folderPath: 'static/uploads/2024',
+          file: await createMockImageFile({ name: 'd.png' }),
+          asset: { folder },
+        }),
+        createMockAsset({
+          name: 'e.png',
+          folderPath: 'static/uploads/2024/summer',
+          file: await createMockImageFile({ name: 'e.png' }),
+          asset: { folder },
+        }),
+      );
+      setAssets(assets);
+    });
+
+    test('browses the folder by subfolder, with a breadcrumb leading back', async () => {
+      const { onSelect } = await renderDialog();
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+      const folders = dialog.getByRole('list', { name: 'Folders' });
+
+      // The folder root: the assets right in it, and its subfolders
+      await waitForGrid(2);
+      await expect.element(folders.getByRole('button', { name: '2024' })).toBeVisible();
+      expect(folders.getByRole('listitem').elements()).toHaveLength(1);
+      expect(dialog.getByRole('navigation').elements()).toHaveLength(0);
+
+      await folders.getByRole('button', { name: '2024' }).click();
+      await waitForGrid(1);
+      expect(document.querySelector('#select-assets-grid [role="option"]')).toHaveAttribute(
+        'data-value',
+        'static/uploads/2024/d.png',
+      );
+      await expect.element(folders.getByRole('button', { name: 'summer' })).toBeVisible();
+
+      const breadcrumb = dialog.getByRole('navigation', { name: 'Folder' });
+
+      await expect.element(breadcrumb).toMatchTextContent('Global Assets chevron_right 2024');
+
+      await folders.getByRole('button', { name: 'summer' }).click();
+      await waitForGrid(1);
+      await expect
+        .element(breadcrumb)
+        .toMatchTextContent('Global Assets chevron_right 2024 chevron_right summer');
+      expect(dialog.getByRole('list', { name: 'Folders' }).elements()).toHaveLength(0);
+
+      // An asset in a subfolder is picked like any other
+      await getOption('static/uploads/2024/summer/e.png').click();
+      await dialog.getByRole('button', { name: 'Insert' }).click();
+      await vi.waitFor(() =>
+        expect(onSelect).toHaveBeenCalledWith([
+          { asset: expect.objectContaining({ path: 'static/uploads/2024/summer/e.png' }) },
+        ]),
+      );
+    });
+
+    test('goes back through the breadcrumb, and searches the whole folder', async () => {
+      await renderDialog();
+
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+      const folders = dialog.getByRole('list', { name: 'Folders' });
+
+      await waitForGrid(2);
+      await folders.getByRole('button', { name: '2024' }).click();
+      await waitForGrid(1);
+      await folders.getByRole('button', { name: 'summer' }).click();
+      await waitForGrid(1);
+
+      await dialog.getByRole('navigation').getByRole('button', { name: '2024' }).click();
+      await waitForGrid(1);
+      await expect.element(folders.getByRole('button', { name: 'summer' })).toBeVisible();
+
+      await dialog.getByRole('navigation').getByRole('button', { name: 'Global Assets' }).click();
+      await waitForGrid(2);
+      expect(dialog.getByRole('navigation').elements()).toHaveLength(0);
+
+      // A search looks through every subfolder, listing the matches with their paths
+      await page.getByRole('searchbox', { name: 'Search for Images' }).fill('e');
+      await waitForGrid(1);
+      expect(document.querySelector('#select-assets-grid .name')).toHaveTextContent(
+        '2024/summer/e.png',
+      );
+      expect(dialog.getByRole('list', { name: 'Folders' }).elements()).toHaveLength(0);
+    });
+
+    test('creates a folder where the user is, and uploads there', async () => {
+      vi.mocked(createSubfolder).mockResolvedValue(undefined);
+
+      const { onSelect } = await renderDialog();
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+      await waitForGrid(2);
+      await dialog
+        .getByRole('list', { name: 'Folders' })
+        .getByRole('button', { name: '2024' })
+        .click();
+      await waitForGrid(1);
+
+      await dialog.getByRole('button', { name: 'New Folder' }).click();
+
+      const newFolder = page.getByRole('dialog', { name: 'New Folder' });
+
+      await expect
+        .element(
+          newFolder.getByText(
+            'The new folder will be created in “\u2068/static/uploads/2024\u2069”.',
+          ),
+        )
+        .toBeVisible();
+      // The names in the browsed directory are taken
+      await newFolder.getByRole('textbox', { name: 'Folder Name' }).fill('summer');
+      await expect.element(newFolder.getByRole('button', { name: 'Create' })).toBeDisabled();
+      await newFolder.getByRole('textbox', { name: 'Folder Name' }).fill('autumn');
+      await newFolder.getByRole('button', { name: 'Create' }).click();
+      await vi.waitFor(() =>
+        expect(createSubfolder).toHaveBeenCalledWith('static/uploads/2024/autumn'),
+      );
+
+      // A dropped file goes to the subfolder being browsed
+      const file = await createMockImageFile({ name: 'new.png' });
+
+      dropFiles([file]);
+      await waitForGrid(2);
+      await dialog.getByRole('button', { name: 'Insert' }).click();
+
+      await vi.waitFor(() =>
+        expect(onSelect).toHaveBeenCalledWith([
+          { file, folder: globalAssetFolder.current, subfolderPath: '2024', replace: false },
+        ]),
+      );
+    });
+
+    test('lists the folder root again once another location has been picked', async () => {
+      await renderDialog();
+
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+      const locations = dialog.getByRole('listbox', { name: 'Locations' });
+
+      await waitForGrid(2);
+      await dialog
+        .getByRole('list', { name: 'Folders' })
+        .getByRole('button', { name: '2024' })
+        .click();
+      await waitForGrid(1);
+
+      await locations.getByRole('option', { name: 'Enter URL' }).click();
+      await locations.getByRole('option', { name: 'Global Assets' }).click();
+      await waitForGrid(2);
+      expect(dialog.getByRole('navigation').elements()).toHaveLength(0);
+    });
   });
 
   test('filters the listed assets', async () => {
@@ -341,7 +504,7 @@ describe('SelectAssetsDialog', () => {
 
     await vi.waitFor(() =>
       expect(onSelect).toHaveBeenCalledWith([
-        { file, folder: globalAssetFolder.current, replace: false },
+        { file, folder: globalAssetFolder.current, subfolderPath: '', replace: false },
       ]),
     );
     // The very same `File` object is passed on, not a clone that would have to be read again
@@ -386,7 +549,7 @@ describe('SelectAssetsDialog', () => {
     await dialog.getByRole('button', { name: 'Insert' }).click();
     await vi.waitFor(() =>
       expect(onSelect).toHaveBeenCalledWith([
-        { file: duplicate, folder: globalAssetFolder.current, replace: true },
+        { file: duplicate, folder: globalAssetFolder.current, subfolderPath: '', replace: true },
       ]),
     );
   });

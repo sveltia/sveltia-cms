@@ -6,6 +6,7 @@ import {
 } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { getUploadDirPath } from '$lib/services/assets/subfolders';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
@@ -26,12 +27,10 @@ import { formatFileName } from '$lib/services/utils/file';
  * object.
  */
 export const createFileList = (uploadingAssets) => {
-  const { files, folder, originalAssets, replaceDuplicates = false } = uploadingAssets;
+  const { files, originalAssets, replaceDuplicates = false } = uploadingAssets;
   const { slugify_filename: slugificationEnabled = false } = getDefaultMediaLibraryOptions().config;
-
-  const assetsInSameFolder =
-    folder?.internalPath !== undefined ? getAssetsByDirName(folder.internalPath) : [];
-
+  const dirPath = getUploadDirPath(uploadingAssets);
+  const assetsInSameFolder = dirPath !== undefined ? getAssetsByDirName(dirPath) : [];
   const assetNamesInSameFolder = assetsInSameFolder.map((a) => a.name.normalize());
 
   return files.map((file, index) => {
@@ -57,7 +56,7 @@ export const createFileList = (uploadingAssets) => {
     return {
       action: /** @type {CommitAction} */ (replacedAsset ? 'update' : 'create'),
       name: fileName,
-      path: replacedAsset?.path ?? [folder?.internalPath, fileName].join('/'),
+      path: replacedAsset?.path ?? [dirPath, fileName].join('/'),
       file,
     };
   });

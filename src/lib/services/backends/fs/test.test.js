@@ -6,11 +6,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
 const mockLoadFiles = vi.fn();
+const mockReadFile = vi.fn();
 const mockSaveChanges = vi.fn();
 const mockGetDirectoryHandle = vi.fn();
 
 vi.mock('$lib/services/backends/fs/shared/files', () => ({
   loadFiles: mockLoadFiles,
+  readFile: mockReadFile,
   saveChanges: mockSaveChanges,
   getDirectoryHandle: mockGetDirectoryHandle,
 }));
@@ -61,6 +63,7 @@ describe('Test Backend Service', () => {
         signIn: expect.any(Function),
         signOut: expect.any(Function),
         fetchFiles: expect.any(Function),
+        fetchBlob: expect.any(Function),
         commitChanges: expect.any(Function),
       });
     });
@@ -281,6 +284,35 @@ describe('Test Backend Service', () => {
 
       expect(mockSaveChanges).toHaveBeenCalledWith(undefined, changes);
       expect(result).toEqual(mockResults);
+    });
+  });
+
+  describe('fetchBlob', () => {
+    it('should read the asset file with the root handle', async () => {
+      const file = new File(['image'], 'a.png');
+
+      mockGetDirectoryHandle.mockResolvedValue(mockRootHandle);
+      mockReadFile.mockResolvedValue(file);
+
+      // @ts-ignore - Testing actual implementation signature
+      await testBackend.signIn();
+
+      // @ts-ignore - Only the path is used
+      await expect(testBackend.fetchBlob({ path: 'static/a.png' })).resolves.toBe(file);
+      expect(mockReadFile).toHaveBeenCalledWith(mockRootHandle, 'static/a.png');
+    });
+
+    it('should fail when the root handle is not available', async () => {
+      mockGetDirectoryHandle.mockRejectedValue(new Error('Handle not available'));
+
+      // @ts-ignore - Testing actual implementation signature
+      await testBackend.signIn();
+
+      // @ts-ignore - Only the path is used
+      await expect(testBackend.fetchBlob({ path: 'static/a.png' })).rejects.toThrow(
+        'Root directory handle is not available',
+      );
+      expect(mockReadFile).not.toHaveBeenCalled();
     });
   });
 

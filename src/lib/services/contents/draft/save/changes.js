@@ -181,10 +181,22 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
             // Replace blob URLs in File/Image fields with asset paths
             await Promise.all(
               matches.map(async ([blobURL]) => {
-                const { file, folder = _globalAssetFolder, replace } = files[blobURL] ?? {};
+                const {
+                  file,
+                  folder = _globalAssetFolder,
+                  replace,
+                  subfolderPath,
+                } = files[blobURL] ?? {};
 
                 if (file) {
-                  await replaceBlobURL({ ...replaceBlobArgs, file, folder, replace, blobURL });
+                  await replaceBlobURL({
+                    ...replaceBlobArgs,
+                    file,
+                    folder,
+                    replace,
+                    subfolderPath,
+                    blobURL,
+                  });
                 }
               }),
             );

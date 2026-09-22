@@ -23,6 +23,14 @@ const emptyAction = createRawSnippet(() => ({
   render: () => '<button type="button">Upload</button>',
 }));
 
+const subfolders = createRawSnippet(() => ({
+  /**
+   * Render the content.
+   * @returns {string} HTML.
+   */
+  render: () => '<div role="row" aria-label="2024"></div>',
+}));
+
 /** @type {any} */
 const groups = {
   '*': [{ name: 'a.png' }, { name: 'b.png' }],
@@ -44,6 +52,88 @@ describe('AssetListContainer', () => {
 
     await expect.element(grid).toHaveAttribute('aria-rowcount', '2');
     await expect.element(grid.getByRole('row', { name: 'b.png' })).toBeInTheDocument();
+    expect(page.getByRole('rowgroup').elements()).toHaveLength(1);
+  });
+
+  test('reports a click on the empty area, but not on a row', async () => {
+    const onBlankClick = vi.fn();
+
+    const { container } = await render(AssetListContainer, {
+      groups,
+      itemKey: 'name',
+      totalCount: 2,
+      viewType: 'grid',
+      uploadDisabled: false,
+      onDrop: vi.fn(),
+      onBlankClick,
+      renderItem,
+    });
+
+    await expect.element(page.getByRole('row', { name: 'a.png' })).toBeInTheDocument();
+    /** @type {HTMLElement} */ (container.querySelector('[role="row"]')).click();
+    expect(onBlankClick).not.toHaveBeenCalled();
+
+    /** @type {HTMLElement} */ (container.querySelector('.list-container')).click();
+    expect(onBlankClick).toHaveBeenCalledOnce();
+  });
+
+  test('lists the subfolders ahead of the assets', async () => {
+    await render(AssetListContainer, {
+      groups,
+      itemKey: 'name',
+      totalCount: 3,
+      viewType: 'grid',
+      uploadDisabled: false,
+      onDrop: vi.fn(),
+      renderItem,
+      subfolders,
+      hasSubfolders: true,
+    });
+
+    const grid = page.getByRole('grid', { name: 'Assets' });
+
+    await expect.element(grid).toHaveAttribute('aria-rowcount', '3');
+    await expect.element(grid.getByRole('row', { name: 'b.png' })).toBeInTheDocument();
+    expect(page.getByRole('rowgroup').elements()).toHaveLength(2);
+    expect(
+      page
+        .getByRole('row')
+        .elements()
+        .map((el) => el.getAttribute('aria-label')),
+    ).toEqual(['2024', 'a.png', 'b.png']);
+  });
+
+  test('lists the subfolders even without an asset', async () => {
+    await render(AssetListContainer, {
+      groups: {},
+      itemKey: 'name',
+      totalCount: 1,
+      viewType: 'grid',
+      uploadDisabled: false,
+      onDrop: vi.fn(),
+      renderItem,
+      subfolders,
+      hasSubfolders: true,
+      emptyAction,
+    });
+
+    await expect.element(page.getByRole('row', { name: '2024' })).toBeInTheDocument();
+    expect(page.getByText('No files found.').elements()).toHaveLength(0);
+  });
+
+  test('shows the grid for subfolders even without their rows', async () => {
+    await render(AssetListContainer, {
+      groups: {},
+      itemKey: 'name',
+      totalCount: 0,
+      viewType: 'grid',
+      uploadDisabled: false,
+      onDrop: vi.fn(),
+      renderItem,
+      hasSubfolders: true,
+    });
+
+    await expect.element(page.getByRole('grid', { name: 'Assets' })).toBeInTheDocument();
     expect(page.getByRole('rowgroup').elements()).toHaveLength(1);
   });
 

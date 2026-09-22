@@ -181,6 +181,33 @@ describe('assets/data/delete', () => {
       });
     });
 
+    it('should commit the extra changes along, and keep quiet when asked', async () => {
+      const assetsToDelete = [createMockAssetWithSha('/images/photo1.jpg', 'photo1.jpg', 'sha1')];
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const { assetUpdatesToast } = await import('$lib/services/assets/data');
+      /** @type {import('$lib/types/private').FileChange} */
+      const extraChange = { action: 'delete', path: '/images/.gitkeep', previousSha: 'k' };
+
+      /** @type {any} */ (assetUpdatesToast).current = undefined;
+      vi.mocked(saveChanges).mockResolvedValue({
+        commit: { sha: 'def456', files: {} },
+        savedEntries: [],
+        savedAssets: [],
+      });
+
+      await deleteAssets(assetsToDelete, { extraChanges: [extraChange], notify: false });
+
+      expect(saveChanges).toHaveBeenCalledWith({
+        changes: [
+          { action: 'delete', path: '/images/photo1.jpg', previousSha: 'sha1' },
+          extraChange,
+        ],
+        savingEntries: [],
+        options: { commitType: 'deleteMedia' },
+      });
+      expect(assetUpdatesToast.current).toBeUndefined();
+    });
+
     it('should handle empty assets array', async () => {
       const { saveChanges } = await import('$lib/services/backends/save');
 

@@ -901,6 +901,9 @@
  * @typedef {object} EntryFileItem
  * @property {File} file File to be uploaded.
  * @property {AssetFolderInfo | undefined} folder Target asset folder information.
+ * @property {string} [subfolderPath] Path of the subfolder below the target folder that the file is
+ * saved to, relative to it, when the file was picked while browsing a subfolder in the asset
+ * picker. Empty or `undefined` for the folder root.
  * @property {boolean} replace Whether to replace the existing file if there’s a file with the same
  * name in the target folder.
  */
@@ -1080,6 +1083,9 @@
  * @property {boolean} moved Whether the items have been moved.
  * @property {boolean} renamed Whether the items have been renamed.
  * @property {boolean} deleted Whether the items have been deleted.
+ * @property {boolean} [folderCreated] Whether a subfolder has been created in an asset folder.
+ * @property {boolean} [folderRenamed] Whether a subfolder of an asset folder has been renamed.
+ * @property {boolean} [folderDeleted] Whether a subfolder of an asset folder has been deleted.
  * @property {boolean} [deletionPending] Whether the removal awaits publication rather than having
  * taken effect, which is how Editorial Workflow deletes a published entry.
  * @property {boolean} [discarded] Whether the items’ unpublished changes have been thrown away,
@@ -1094,6 +1100,9 @@
  * Asset to be uploaded.
  * @typedef {object} UploadingAssets
  * @property {AssetFolderInfo | undefined} folder Target asset folder info.
+ * @property {string} [subfolderPath] Path of the subfolder below the target folder’s
+ * `internalPath` that the files are saved to, relative to it. Empty or `undefined` for the folder
+ * root.
  * @property {File[]} files File list.
  * @property {Asset[]} [originalAssets] Assets the user picked to be replaced. Each file replaces
  * the asset at the same index, taking over its name and path, so an asset can be replaced with a
@@ -1142,6 +1151,21 @@
 /**
  * Asset item.
  * @typedef {AssetProps & RepositoryFileMetadata} Asset
+ */
+
+/**
+ * Item in a breadcrumb trail of folders.
+ * @typedef {object} BreadcrumbItem
+ * @property {string} label Folder name.
+ * @property {() => void} [onClick] Called when the folder is selected. Not needed for the current
+ * folder, which is shown as text.
+ */
+
+/**
+ * Subfolder of an asset folder, listed in the Asset Library ahead of the assets.
+ * @typedef {object} AssetSubfolder
+ * @property {string} name Folder name.
+ * @property {string} path Folder path, relative to the project root directory.
  */
 
 /**
@@ -1215,6 +1239,8 @@
  * @property {File} [file] File selected from the user’s computer, or an image file downloaded from
  * a stock asset provider.
  * @property {AssetFolderInfo} [folder] Target asset folder info for the `file`.
+ * @property {string} [subfolderPath] Path of the subfolder below the target folder that the `file`
+ * is saved to, relative to it. Empty or `undefined` for the folder root.
  * @property {string} [url] URL from direct input or a hotlinking stock asset.
  * @property {string} [credit] Attribution HTML string for a stock asset, including the photographer
  * name/link and service name/link.

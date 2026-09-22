@@ -71,6 +71,10 @@ primary: Primary
 secondary: Secondary
 collection: Collection
 folder: Folder
+# Label of the subfolder list in the asset picker
+folders: Folders
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: More Folders
 
 # ==============================================================================
 # Miscellaneous Labels
@@ -500,6 +504,8 @@ collection_list: Collection List
 back_to_collection_list: Back to Collection List
 asset_folder_list: Asset Folder List
 back_to_asset_folder_list: Back to Asset Folder List
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Back to Parent Folder
 
 # ==============================================================================
 # Search
@@ -557,6 +563,47 @@ no_entries_found: No entries found.
 
 # Upload dialog: title and button label
 upload_assets: Upload New Assets
+
+# New Folder button and dialog in the Asset Library
+new_folder: New Folder
+new_folder_name: Folder Name
+new_folder_create: Create
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: The new folder will be created in “{$folder}”.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: The folder name cannot be empty.
+  invalid: The folder name cannot contain slashes or start with a dot.
+  duplicate: A folder or file with this name already exists here.
+# Progress and error messages while the folder is being created
+creating_folder: Creating the folder…
+creating_folder_failed: Couldn’t create the folder.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Folder Options
+show_folder_options: Show Folder Options
+rename_folder: Rename Folder
+delete_folder: Delete Folder
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Enter a new name below. }}
+    one {{ Enter a new name below. The asset in the folder will be moved along, and any entry using it will be updated. }}
+    *   {{ Enter a new name below. The {$count} assets in the folder will be moved along, and any entries using them will be updated. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Are you sure you want to delete the empty “{$name}” folder? }}
+    one {{ Are you sure you want to delete the “{$name}” folder and the asset in it? }}
+    *   {{ Are you sure you want to delete the “{$name}” folder and the {$count} assets in it? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: Renaming the folder…
+renaming_folder_failed: Couldn’t rename the folder.
+deleting_folder_failed: Couldn’t delete the folder.
 
 # Edit options menu: button and item labels
 edit_options: Edit Options
@@ -965,6 +1012,19 @@ assets_deleted: |
   .match $count
     one {{ Asset deleted. }}
     *   {{ {$count} assets deleted. }}
+folder_created: Folder created.
+# Folder info panel in the Asset Library sidebar
+folder_path: Folder Path
+folder_contents: Contents
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ No folders }}
+    one {{ {$count} folder }}
+    *   {{ {$count} folders }}
+folder_renamed: Folder renamed.
+folder_deleted: Folder deleted.
 
 # ==============================================================================
 # Content Editor

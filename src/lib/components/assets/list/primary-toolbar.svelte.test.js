@@ -1,5 +1,6 @@
+import { addMessages, locale } from '@sveltia/i18n';
 import { createRawSnippet } from 'svelte';
-import { describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
@@ -15,19 +16,36 @@ const actions = createRawSnippet(() => ({
   render: () => '<button type="button">Action</button>',
 }));
 
+/**
+ * Get the heading text as shown, leaving out the hidden copy the breadcrumb is measured with.
+ * @param {HTMLElement} container Container.
+ * @returns {string} Text.
+ */
+const getHeading = (container) =>
+  /** @type {HTMLElement} */ (container.querySelector('h2')).innerText.replace(/\s+/g, ' ').trim();
+
 describe('PrimaryToolbar', () => {
-  test('shows the folder title, path and actions on a large screen', async () => {
+  // Register a right-to-left locale, without strings, so it can be switched to
+  beforeAll(async () => {
+    addMessages('ar', {});
+    // Give the breadcrumb room, or it folds its middle into a menu
+    await page.viewport(1024, 768);
+  });
+
+  afterAll(async () => {
+    await page.viewport(414, 896);
+  });
+
+  test('shows the folder title and actions on a large screen', async () => {
     env.isSmallScreen = false;
     env.isMediumScreen = false;
 
-    const { container } = await render(PrimaryToolbar, {
-      title: 'Images',
-      path: 'static/images',
-      actions,
-    });
+    const { container } = await render(PrimaryToolbar, { title: 'Images', actions });
 
     await expect.element(page.getByRole('toolbar', { name: 'Folder' })).toBeVisible();
-    expect(container.querySelector('h2')).toHaveTextContent('Images /static/images');
+    expect(container.querySelector('h2')).toHaveTextContent('Images');
+    // No breadcrumb at the root of a location
+    expect(page.getByRole('navigation').elements()).toHaveLength(0);
     await expect.element(page.getByRole('button', { name: 'Action' })).toBeVisible();
   });
 
@@ -35,17 +53,69 @@ describe('PrimaryToolbar', () => {
     env.isSmallScreen = true;
     window.location.hash = '#/assets/static/images';
 
-    const { container } = await render(PrimaryToolbar, {
-      title: 'Images',
-      path: 'static/images',
-      actions,
-    });
+    const { container } = await render(PrimaryToolbar, { title: 'Images', actions });
 
     expect(container.querySelector('h2')).toHaveTextContent('Images');
     expect(page.getByRole('button', { name: 'Action' }).elements()).toHaveLength(0);
 
     await page.getByRole('button', { name: 'Back to Asset Folder List' }).click();
     await expect.poll(() => window.location.hash).toBe('#/assets');
+  });
+
+  test('leads back through the breadcrumb on a large screen', async () => {
+    env.isSmallScreen = false;
+    env.isMediumScreen = false;
+
+    const onClick = vi.fn();
+
+    const { container } = await render(PrimaryToolbar, {
+      title: 'summer',
+      breadcrumbs: [
+        { label: 'Images', onClick },
+        { label: '2024', onClick: vi.fn() },
+      ],
+    });
+
+    expect(getHeading(container)).toBe('Images chevron_right 2024 chevron_right summer');
+
+    await page.getByRole('button', { name: 'Images' }).click();
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  test('points the breadcrumb separators the other way in a right-to-left locale', async () => {
+    env.isSmallScreen = false;
+    env.isMediumScreen = false;
+    locale.set('ar');
+
+    try {
+      const { container } = await render(PrimaryToolbar, {
+        title: 'summer',
+        breadcrumbs: [{ label: 'Images', onClick: vi.fn() }],
+      });
+
+      expect(getHeading(container)).toBe('Images chevron_left summer');
+    } finally {
+      locale.set('en-US');
+    }
+  });
+
+  test('leaves the breadcrumb out on a small screen, where the back button leads up', async () => {
+    env.isSmallScreen = true;
+
+    const onBack = vi.fn();
+
+    const { container } = await render(PrimaryToolbar, {
+      title: 'summer',
+      breadcrumbs: [{ label: 'Images', onClick: vi.fn() }],
+      backLabel: 'Back to Parent Folder',
+      onBack,
+    });
+
+    expect(container.querySelector('h2')).toHaveTextContent('summer');
+    expect(page.getByRole('button', { name: 'Images' }).elements()).toHaveLength(0);
+
+    await page.getByRole('button', { name: 'Back to Parent Folder' }).click();
+    expect(onBack).toHaveBeenCalledOnce();
   });
 
   test('does without actions and a floating button', async () => {

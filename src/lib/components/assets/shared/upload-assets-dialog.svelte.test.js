@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { uploadingAssets } from '$lib/services/assets';
 import { globalAssetFolder } from '$lib/services/assets/folders';
+import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showAssetOverlay, showUploadAssetsDialog } from '$lib/services/assets/view';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockImageFile, initTestConfig } from '$lib/test/config';
@@ -19,6 +20,7 @@ describe('UploadAssetsDialog', () => {
     env.hasMouse = true;
     showAssetOverlay.current = true;
     uploadingAssets.current = { folder: undefined, files: [] };
+    selectedSubfolderPath.current = '';
   });
 
   test('offers a drop zone for new assets', async () => {
@@ -121,8 +123,9 @@ describe('UploadAssetsDialog', () => {
       input.dispatchEvent(new Event('cancel', { bubbles: true }));
       await expect.poll(() => showUploadAssetsDialog.current).toBe(false);
 
-      // Choosing files stores them in the target folder
+      // Choosing files stores them in the target folder, in the subfolder being browsed
       showUploadAssetsDialog.current = true;
+      selectedSubfolderPath.current = '2024';
       await vi.waitFor(() => expect(click).toHaveBeenCalledTimes(2));
 
       const file = await createMockImageFile({ name: 'new.png' });
@@ -133,6 +136,7 @@ describe('UploadAssetsDialog', () => {
       input.dispatchEvent(new Event('change', { bubbles: true }));
       expect(uploadingAssets.current.files).toEqual([file]);
       expect(uploadingAssets.current.folder).toBe(globalAssetFolder.current);
+      expect(uploadingAssets.current.subfolderPath).toBe('2024');
       await expect.poll(() => showUploadAssetsDialog.current).toBe(false);
     } finally {
       click.mockRestore();

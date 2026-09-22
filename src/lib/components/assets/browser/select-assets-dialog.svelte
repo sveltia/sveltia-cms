@@ -18,7 +18,14 @@
   import CloudinaryPanel from '$lib/components/assets/browser/cloudinary-panel.svelte';
   import ExternalAssetsPanel from '$lib/components/assets/browser/external-assets-panel.svelte';
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
+  import CreateSubfolderDialog from '$lib/components/assets/list/create-subfolder-dialog.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import {
+    canBrowseSubfolders,
+    getDirName,
+    getRelativePath,
+    getSubfolders,
+  } from '$lib/services/assets/subfolders';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
   import {
@@ -43,8 +50,9 @@
   import { normalize } from '$lib/services/search/util';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
-  import { getGitHash } from '$lib/services/utils/file';
+  import { createPath, getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import {
@@ -105,6 +113,12 @@
   let enteredURL = $state('');
   let rawSearchTerms = $state('');
   let libraryName = $state('default-global');
+  /**
+   * Path of the subfolder being browsed below the selected folder, relative to it. Empty at the
+   * folder root.
+   */
+  let subfolderPath = $state('');
+  let showNewFolderDialog = $state(false);
   /** @type {Asset[]} */
   let droppedAssets = $state([]);
   /** @type {Asset[]} */
@@ -163,6 +177,33 @@
       slugificationEnabled,
     }),
   );
+  /**
+   * Whether the selected folder is browsed by subfolder, like in the Asset Library. A search looks
+   * through the whole folder instead, listing the matches with their paths.
+   */
+  const browsingSubfolders = $derived(
+    canBrowseSubfolders(selectedFolder) && targetFolderPath !== undefined && !searchTerms,
+  );
+  /** Path of the directory being browsed, which is where uploaded files go. */
+  const browsedPath = $derived(createPath([targetFolderPath, subfolderPath]));
+  /** Assets shown in the panel: those right in the browsed directory, or every asset listed. */
+  const panelAssets = $derived(
+    browsingSubfolders
+      ? listedAssets.filter(({ path }) => getDirName(path) === browsedPath)
+      : listedAssets,
+  );
+  const subfolders = $derived(
+    browsingSubfolders ? getSubfolders({ dirPath: browsedPath, assets: listedAssets }) : [],
+  );
+  /** Names already taken in the browsed directory, which a new folder can’t be given. */
+  const takenNames = $derived([
+    ...subfolders.map(({ name }) => name),
+    ...panelAssets.map(({ name }) => name),
+  ]);
+  /** Label of the selected folder, at the start of the breadcrumb. */
+  const selectedFolderLabel = $derived(
+    selectedFolder?.label || _(`assets_dialog.folder.${libraryName.replace('default-', '')}`),
+  );
   const enabledStockAssetProviderEntries = $derived.by(() => {
     const { providers = [] } = getStockAssetMediaLibraryOptions({ fieldConfig });
 
@@ -210,7 +251,14 @@
       return undefined;
     }
 
-    const asset = await convertFileItemToAsset({ file, folder, targetFolderPath, replace });
+    const asset = await convertFileItemToAsset({
+      file,
+      folder,
+      targetFolderPath,
+      // The file goes to the subfolder being browsed, or the one the search started from
+      subfolderPath,
+      replace,
+    });
 
     droppedAssets.push(asset);
 
@@ -240,10 +288,22 @@
   const resetValues = () => {
     enteredURL = '';
     rawSearchTerms = '';
+    subfolderPath = '';
     droppedAssets = [];
     unsavedAssets = [];
     selectedResources = [];
   };
+
+  /* v8 ignore start -- an unsaved asset’s path is made of the target folder path, which every
+  folder in the picker has, so the fallback is out of reach */
+  /**
+   * Get the subfolder an unsaved asset is going to be saved to, which its provisional path holds.
+   * @param {Asset} asset Unsaved asset.
+   * @returns {string} Subfolder path relative to the target folder. Empty for the folder root.
+   */
+  const getUnsavedAssetSubfolderPath = ({ path }) =>
+    targetFolderPath !== undefined ? getDirName(getRelativePath(path, targetFolderPath)) : '';
+  /* v8 ignore stop */
 
   /**
    * Handle the OK button click.
@@ -263,7 +323,12 @@
 
       // The `File` is taken as is: `$state.snapshot()` would clone it with `structuredClone()`,
       // and the copy would then have to be read and hashed all over again
-      return { file: asset.file, folder: $state.snapshot(asset.folder), replace };
+      return {
+        file: asset.file,
+        folder: $state.snapshot(asset.folder),
+        subfolderPath: getUnsavedAssetSubfolderPath(asset),
+        replace,
+      };
     });
 
     onSelect?.(resources);
@@ -331,6 +396,25 @@
       ariaLabel={_(`assets_dialog.search_for_${kind ?? 'file'}`)}
     />
   {/if}
+  {#if browsingSubfolders}
+    <!--
+      Creating a folder commits straight to the configured branch rather than going through
+      review, so it’s not something an Open Authoring contributor can do
+    -->
+    <Button
+      variant="ghost"
+      iconic
+      disabled={openAuthoring.current}
+      aria-label={_('new_folder')}
+      onclick={() => {
+        showNewFolderDialog = true;
+      }}
+    >
+      {#snippet startIcon()}
+        <Icon name="create_new_folder" />
+      {/snippet}
+    </Button>
+  {/if}
   {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary')}
     <Button
       variant="primary"
@@ -384,6 +468,7 @@
         filterThreshold={-1}
         onChange={(event) => {
           libraryName = event.detail.name;
+          subfolderPath = '';
           selectedResources = [];
         }}
       >
@@ -459,12 +544,21 @@
         <InternalAssetsPanel
           {accept}
           {multiple}
-          assets={listedAssets}
+          assets={panelAssets}
           bind:selectedResources
           {searchTerms}
-          basePath={selectedFolder.internalPath}
+          basePath={browsingSubfolders ? browsedPath : selectedFolder.internalPath}
+          folderLabel={selectedFolderLabel}
+          subfolderPath={browsingSubfolders ? subfolderPath : ''}
+          {subfolders}
           onDrop={({ files }) => {
             onDrop(files);
+          }}
+          onNavigate={(path) => {
+            subfolderPath = path;
+          }}
+          onOpenSubfolder={({ path }) => {
+            subfolderPath = getRelativePath(path, /** @type {string} */ (targetFolderPath));
           }}
         />
       {/if}
@@ -517,6 +611,10 @@
     </div>
   </div>
 </Dialog>
+
+{#if browsingSubfolders}
+  <CreateSubfolderDialog bind:open={showNewFolderDialog} dirPath={browsedPath} {takenNames} />
+{/if}
 
 <FilePicker
   bind:this={filePicker}

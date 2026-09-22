@@ -71,3 +71,20 @@ export const initUserEnvDetection = () => {
   mqlLarge.addEventListener('change', isLargeScreenSetter);
   mqlPointer.addEventListener('change', hasMouseSetter);
 };
+
+/**
+ * Whether a click on a list item opens it right away, as there is no double-click to wait for: on
+ * a small or medium screen, where the selection checkbox is hidden, and on a touch screen of any
+ * size, e.g. a tablet in landscape, because Safari never fires `dblclick` for a double tap.
+ * `pointerType` tells a tap from a mouse click where the browser dispatches `click` as a
+ * `PointerEvent`; elsewhere, the lack of a fine pointer does. A click with no pointer at all — one
+ * synthesized for the Enter key — opens the item as well, so it can be opened from the keyboard.
+ * @param {MouseEvent} event `click` event.
+ * @returns {boolean} Result.
+ */
+export const opensOnClick = (event) =>
+  env.isSmallScreen ||
+  env.isMediumScreen ||
+  event.detail === 0 ||
+  /** @type {PointerEvent} */ (event).pointerType === 'touch' ||
+  !env.hasMouse;

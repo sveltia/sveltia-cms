@@ -11,6 +11,7 @@
     uploadingAssets,
   } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';
+  import { getUploadDirPath } from '$lib/services/assets/subfolders';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { formatSize, isEquivalentFileExtension } from '$lib/services/utils/file';
@@ -23,16 +24,21 @@
   let uploading = $state(false);
   let uploadFailed = $state(false);
 
-  const { files: originalFiles, folder, originalAssets } = $derived(uploadingAssets.current);
+  const {
+    files: originalFiles,
+    folder,
+    subfolderPath,
+    originalAssets,
+  } = $derived(uploadingAssets.current);
   const originalAsset = $derived(originalAssets?.[0]);
   const { processing, validFiles, oversizedFiles, invalidFiles, transformedFileMap } = $derived(
     processedAssets.current,
   );
   const { max_file_size: maxSize } = $derived(getDefaultMediaLibraryOptions().config);
+  /** Path of the directory the files are saved to, named in the dialog and checked for dupes. */
+  const dirPath = $derived(getUploadDirPath(uploadingAssets.current));
   const assetsInSameFolder = $derived(
-    originalAsset || folder?.internalPath === undefined
-      ? []
-      : getAssetsByDirName(folder.internalPath),
+    originalAsset || dirPath === undefined ? [] : getAssetsByDirName(dirPath),
   );
   const dupFiles = $derived(getDuplicateFiles(files, assetsInSameFolder));
   const dupFileCount = $derived(dupFiles.length);
@@ -79,7 +85,7 @@
       await saveAssets(
         originalAsset
           ? { files, folder, originalAssets }
-          : { files, folder, replaceDuplicates: replaceFiles },
+          : { files, folder, subfolderPath, replaceDuplicates: replaceFiles },
         { commitType: 'uploadMedia' },
       );
     } catch (/** @type {any} */ ex) {
@@ -111,7 +117,7 @@
           })}
         {:else}
           {_('confirm_uploading_files', {
-            values: { count: files.length, folder: `/${folder?.internalPath}` },
+            values: { count: files.length, folder: `/${dirPath}` },
           })}
         {/if}
       </div>

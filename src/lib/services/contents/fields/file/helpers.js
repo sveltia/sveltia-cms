@@ -7,7 +7,7 @@ import { hasTemplateTags } from '$lib/services/common/template';
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
-import { formatFileName } from '$lib/services/utils/file';
+import { createPath, formatFileName } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -157,18 +157,20 @@ export const getTargetFolderPath = ({ entry, folder }) => {
  * or the public path is empty.
  */
 export const getUnsavedFileDisplayPath = ({ draft, blobURL, fileName }) => {
-  const { folder } = draft.files[blobURL] ?? {};
+  const { folder, subfolderPath } = draft.files[blobURL] ?? {};
   const { entryRelative, publicPath = '' } = folder ?? {};
+  // The file sits in the subfolder it was picked for, if any
+  const subPath = createPath([subfolderPath, fileName]);
 
   // Nothing has to be resolved if the path is absolute and has no template tags
   if (!folder || (!entryRelative && !hasTemplateTags(publicPath))) {
-    return createPublicURL(publicPath, fileName);
+    return createPublicURL(publicPath, subPath);
   }
 
   const { defaultLocaleSlug } = getSlugs({ draft });
   const { resolvedPublicPath } = getAssetFolderPaths({ draft, defaultLocaleSlug, folder });
 
-  return createPublicURL(resolvedPublicPath.replace(EMPTY_PATH_SEGMENT_REGEX, ''), fileName);
+  return createPublicURL(resolvedPublicPath.replace(EMPTY_PATH_SEGMENT_REGEX, ''), subPath);
 };
 
 /**

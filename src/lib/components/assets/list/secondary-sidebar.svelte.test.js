@@ -40,6 +40,22 @@ describe('SecondarySidebar', () => {
       .toHaveTextContent('Select an asset to show its info.');
   });
 
+  test('shows the fallback instead when given one', async () => {
+    env.isLargeScreen = true;
+    currentView.current = { ...currentView.current, showInfo: true };
+
+    const fallback = createRawSnippet(() => ({
+      /**
+       * Render the content.
+       * @returns {string} HTML.
+       */
+      render: () => '<p>Folder info</p>',
+    }));
+
+    await render(SecondarySidebar, { asset: undefined, children, fallback });
+    await expect.element(page.getByRole('group')).toHaveTextContent('Folder info');
+  });
+
   test('is hidden while the info pane is off, or on a small screen', async () => {
     env.isLargeScreen = true;
     currentView.current = { ...currentView.current, showInfo: false };

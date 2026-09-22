@@ -31,6 +31,18 @@
   </Alert>
 </Toast>
 
+<Toast bind:show={assetUpdatesToast.current.folderCreated}>
+  <Alert status="success">{_('folder_created')}</Alert>
+</Toast>
+
+<Toast bind:show={assetUpdatesToast.current.folderRenamed}>
+  <Alert status="success">{_('folder_renamed')}</Alert>
+</Toast>
+
+<Toast bind:show={assetUpdatesToast.current.folderDeleted}>
+  <Alert status="success">{_('folder_deleted')}</Alert>
+</Toast>
+
 <Toast bind:show={assetUpdatesToast.current.deleted}>
   <Alert status="success">
     {_('assets_deleted', { values: { count: assetUpdatesToast.current.count } })}

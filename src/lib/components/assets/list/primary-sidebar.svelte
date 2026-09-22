@@ -15,6 +15,7 @@
   } from '$lib/services/assets/external';
   import { linkedAssets, linkedFilesService } from '$lib/services/assets/external/linked';
   import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+  import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';
   import {
@@ -117,6 +118,16 @@
                   // folders while keeping the URL clean.
                   state: { folder },
                 });
+              }}
+              onclick={() => {
+                // Selecting the folder already selected doesn’t fire `onSelect` again, but a click
+                // on it while one of its subfolders is browsed should still lead back to its root
+                if (selected && selectedSubfolderPath.current) {
+                  goto(`/assets/${internalPath}`, {
+                    transitionType: 'backwards',
+                    state: { folder },
+                  });
+                }
               }}
               ondragover={(event) => {
                 event.preventDefault();

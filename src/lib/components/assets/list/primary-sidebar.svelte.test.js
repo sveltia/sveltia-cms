@@ -5,6 +5,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { externalAssetCounts, selectedCloudService } from '$lib/services/assets/external';
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { searchMode } from '$lib/services/search';
@@ -90,6 +91,7 @@ describe('PrimarySidebar', () => {
   beforeEach(() => {
     env.isSmallScreen = false;
     selectedAssetFolder.current = undefined;
+    selectedSubfolderPath.current = '';
     selectedCloudService.current = undefined;
     externalAssetCounts.current = {};
   });
@@ -187,6 +189,24 @@ describe('PrimarySidebar', () => {
 
     await page.getByRole('option', { name: /^Linked Files/ }).click();
     await expect.poll(() => window.location.hash).toBe('#/assets/-/linked');
+  });
+
+  test('leads back to the root of the selected folder from one of its subfolders', async () => {
+    const folder = allAssetFolders.current.find(
+      ({ internalPath }) => internalPath === 'static/uploads',
+    );
+
+    selectedAssetFolder.current = folder;
+    selectedSubfolderPath.current = '2024';
+    window.location.hash = '#/assets/static/uploads/2024';
+
+    await render(PrimarySidebar);
+    await sleep(150);
+
+    // The folder is selected already, so this is a plain click rather than a selection
+    await page.getByRole('option', { name: /^Global Assets/ }).click();
+    await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads');
+    expect(window.history.state.folder).toEqual(folder);
   });
 
   test('highlights the selected folder unless searching', async () => {

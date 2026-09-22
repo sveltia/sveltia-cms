@@ -1,11 +1,12 @@
 import { allBackendServices } from '$lib/services/backends';
-import { loadFiles, saveChanges } from '$lib/services/backends/fs/shared/files';
+import { loadFiles, readFile, saveChanges } from '$lib/services/backends/fs/shared/files';
 import { cmsConfig } from '$lib/services/config';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import {
+ * Asset,
  * BackendService,
  * CommitResults,
  * FileChange,
@@ -182,6 +183,22 @@ const fetchFiles = async () => {
 const commitChanges = async (changes) => saveChanges(rootDirHandle, changes);
 
 /**
+ * Read an asset file from the file system. An asset uploaded or moved during the session has no
+ * file handle of its own, so once the object URL it was given is revoked, the file is read from the
+ * disk again.
+ * @param {Asset} asset Asset to be fetched.
+ * @returns {Promise<Blob>} Blob.
+ * @throws {Error} If the root directory handle is not available or the file doesn’t exist.
+ */
+const fetchBlob = async ({ path }) => {
+  if (!rootDirHandle) {
+    throw new Error('Root directory handle is not available');
+  }
+
+  return readFile(rootDirHandle, path);
+};
+
+/**
  * @type {BackendService}
  */
 export default {
@@ -193,5 +210,6 @@ export default {
   signIn,
   signOut,
   fetchFiles,
+  fetchBlob,
   commitChanges,
 };

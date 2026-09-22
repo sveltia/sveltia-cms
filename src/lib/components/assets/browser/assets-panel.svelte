@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { EmptyState, InfiniteScroll } from '@sveltia/ui';
+  import { Button, EmptyState, Icon, InfiniteScroll } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { stripSlashes } from '@sveltia/utils/string';
 
@@ -13,7 +13,7 @@
   import { env } from '$lib/services/user/env.svelte';
 
   /**
-   * @import { Asset, SelectedResource, ViewType } from '$lib/types/private';
+   * @import { Asset, AssetSubfolder, SelectedResource, ViewType } from '$lib/types/private';
    */
 
   /**
@@ -27,7 +27,11 @@
    * @property {boolean} [checkerboard] Whether to show a checkerboard background below a
    * transparent image.
    * @property {SelectedResource[]} [selectedResources] Selected resources.
+   * @property {AssetSubfolder[]} [subfolders] Subfolders of the folder being browsed, listed ahead
+   * of the assets.
    * @property {(detail: { asset: Asset }) => void} [onSelect] Custom `select` event handler.
+   * @property {(subfolder: AssetSubfolder) => void} [onOpenSubfolder] Called when a subfolder is
+   * opened.
    */
 
   /** @type {Props} */
@@ -41,7 +45,9 @@
     gridId = undefined,
     checkerboard = false,
     selectedResources = $bindable([]),
+    subfolders = [],
     onSelect = undefined,
+    onOpenSubfolder = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -101,8 +107,30 @@
   };
 </script>
 
-{#if filteredAssets.length}
+{#if filteredAssets.length || subfolders.length}
   <div role="none" class="grid-wrapper">
+    {#if subfolders.length}
+      <!-- A folder is opened rather than selected, so it isn’t an option in the list box below -->
+      <div role="list" class="subfolders {viewType}" aria-label={_('folders')}>
+        {#each subfolders as subfolder (subfolder.path)}
+          <div role="listitem">
+            <Button
+              variant="ghost"
+              class="subfolder"
+              label={subfolder.name}
+              aria-description={_('folder')}
+              onclick={() => {
+                onOpenSubfolder?.(subfolder);
+              }}
+            >
+              {#snippet startIcon()}
+                <Icon name="folder" />
+              {/snippet}
+            </Button>
+          </div>
+        {/each}
+      </div>
+    {/if}
     <SimpleImageGrid {multiple} {gridId} {viewType}>
       <InfiniteScroll items={filteredAssets} itemKey="key">
         {#snippet renderItem(/** @type {Asset & { relPath: string, key: string }} */ asset)}
@@ -142,6 +170,39 @@
 {/if}
 
 <style>
+  .subfolders {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 8px;
+
+    &.grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+
+    /* The button fills the cell, but with `flex` rather than `width: 100%`, which would leave the
+    margin it keeps for its focus ring sticking out of the cell, making the panel scroll sideways */
+
+    [role='listitem'] {
+      display: flex;
+      min-width: 0;
+    }
+
+    :global {
+      .subfolder {
+        flex: auto;
+        justify-content: flex-start;
+        min-width: 0;
+        height: 40px;
+
+        .label {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+
   .grid-wrapper {
     overflow-y: auto;
     height: 100%;

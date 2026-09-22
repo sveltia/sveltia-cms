@@ -1839,6 +1839,143 @@ describe('Test replaceBlobURL()', () => {
     expect(savingAssets).toHaveLength(1); // No new asset added
   });
 
+  test('should reuse an existing file at the repository root', async () => {
+    const { getGitHash } = await import('$lib/services/utils/file');
+    const mockFile = new File(['test content'], 'duplicate.jpg', { type: 'image/jpeg' });
+    const blobURL = 'blob:http://localhost:5173/def-456';
+
+    vi.mocked(getGitHash).mockResolvedValue('sha-duplicate');
+
+    /** @type {any} */
+    const draft = {
+      collection: {
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'posts' },
+        _assetFolder: { fields: [] },
+      },
+      collectionName: 'posts',
+      fileName: undefined,
+      collectionFile: undefined,
+      isIndexFile: false,
+      currentValues: { en: { title: 'Test' } },
+      currentSlugs: { en: 'test-post' },
+    };
+
+    /** @type {any} */
+    const folder = {
+      internalPath: '',
+      publicPath: '/',
+      entryRelative: false,
+      collectionName: 'posts',
+      hasTemplateTags: false,
+    };
+
+    const content = { image: blobURL };
+    /** @type {any[]} */
+    const changes = [];
+
+    /** @type {any[]} */
+    const savingAssets = [
+      {
+        collectionName: 'posts',
+        name: 'existing-file.jpg',
+        path: 'existing-file.jpg',
+        sha: 'sha-duplicate',
+        size: 1024,
+        kind: 'image',
+      },
+    ];
+
+    await replaceBlobURL({
+      file: mockFile,
+      folder,
+      replace: false,
+      blobURL,
+      draft,
+      defaultLocaleSlug: 'test-post',
+      keyPath: 'image',
+      content,
+      changes,
+      savingAssets,
+      encodingEnabled: false,
+    });
+
+    expect(content.image).toBe('/existing-file.jpg');
+    expect(changes).toHaveLength(0);
+  });
+
+  test('should save the same file again when it goes to another subfolder', async () => {
+    const { getGitHash } = await import('$lib/services/utils/file');
+    const mockFile = new File(['test content'], 'duplicate.jpg', { type: 'image/jpeg' });
+    const blobURL = 'blob:http://localhost:5173/def-456';
+
+    vi.mocked(getGitHash).mockResolvedValue('sha-duplicate');
+
+    /** @type {any} */
+    const draft = {
+      collection: {
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'posts' },
+        _assetFolder: { fields: [] },
+      },
+      collectionName: 'posts',
+      fileName: undefined,
+      collectionFile: undefined,
+      isIndexFile: false,
+      currentValues: { en: { title: 'Test' } },
+      currentSlugs: { en: 'test-post' },
+    };
+
+    /** @type {any} */
+    const folder = {
+      internalPath: 'static/images',
+      publicPath: '/images',
+      entryRelative: false,
+      collectionName: 'posts',
+      hasTemplateTags: false,
+    };
+
+    const content = { image: blobURL };
+    /** @type {any[]} */
+    const changes = [];
+
+    /** @type {any[]} */
+    const savingAssets = [
+      {
+        collectionName: 'posts',
+        name: 'existing-file.jpg',
+        path: 'static/images/existing-file.jpg',
+        sha: 'sha-duplicate',
+        size: 1024,
+        kind: 'image',
+      },
+    ];
+
+    await replaceBlobURL({
+      file: mockFile,
+      folder,
+      subfolderPath: '2024',
+      replace: false,
+      blobURL,
+      draft,
+      defaultLocaleSlug: 'test-post',
+      keyPath: 'image',
+      content,
+      changes,
+      savingAssets,
+      encodingEnabled: false,
+    });
+
+    // The file at the folder root is another asset, so this one is saved in the subfolder
+    expect(content.image).toBe('/images/2024/duplicate.jpg');
+    expect(changes).toEqual([
+      { action: 'create', path: 'static/images/2024/duplicate.jpg', data: mockFile },
+    ]);
+    expect(savingAssets).toHaveLength(2);
+  });
+
   test('should handle root public path correctly', async () => {
     const mockFile = new File(['content'], 'root-image.jpg', { type: 'image/jpeg' });
     const blobURL = 'blob:http://localhost:5173/ghi-789';
@@ -2405,6 +2542,67 @@ describe('Test getAssetSavingInfo()', () => {
     });
 
     expect(mockGetAssetsByDirName).toHaveBeenCalledWith('static/uploads');
+  });
+
+  test('should put the asset in the subfolder picked in the asset picker', async () => {
+    /** @type {any} */
+    const draft = {
+      collection: {
+        name: 'posts',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'content/posts' },
+      },
+      collectionName: 'posts',
+      collectionFile: undefined,
+      isIndexFile: false,
+    };
+
+    /** @type {any} */
+    const folder = {
+      collectionName: 'posts',
+      entryRelative: false,
+      internalPath: 'static/uploads',
+      publicPath: '/uploads',
+    };
+
+    mockGetAssetsByDirName.mockReturnValue([{ name: 'spring.jpg' }]);
+    mockGetFillSlugOptions.mockReturnValue({ collection: draft.collection, content: {} });
+    mockCreateEntryPath.mockReturnValue('content/posts/my-post.md');
+
+    const result = getAssetSavingInfo({
+      draft,
+      defaultLocaleSlug: 'my-post',
+      folder,
+      subfolderPath: '2024/summer',
+    });
+
+    expect(result.assetFolderPaths).toEqual({
+      resolvedInternalPath: 'static/uploads/2024/summer',
+      resolvedPublicPath: '/uploads/2024/summer',
+    });
+    // The names taken are those in the subfolder
+    expect(mockGetAssetsByDirName).toHaveBeenCalledWith('static/uploads/2024/summer');
+    expect(result.assetNamesInSameFolder).toEqual(['spring.jpg']);
+
+    // A public path at the root, or an empty one, is joined without a double slash
+    mockGetAssetsByDirName.mockReturnValue([]);
+    expect(
+      getAssetSavingInfo({
+        draft,
+        defaultLocaleSlug: 'my-post',
+        folder: { ...folder, publicPath: '/' },
+        subfolderPath: '2024',
+      }).assetFolderPaths.resolvedPublicPath,
+    ).toBe('/2024');
+    expect(
+      getAssetSavingInfo({
+        draft,
+        defaultLocaleSlug: 'my-post',
+        folder: { ...folder, publicPath: '' },
+        subfolderPath: '2024',
+      }).assetFolderPaths.resolvedPublicPath,
+    ).toBe('2024');
   });
 
   test('should return asset saving info for entry-relative folder with multiple_folders', async () => {

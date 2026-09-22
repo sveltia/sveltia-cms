@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   canMoveFile,
   collectScanningPaths,
+  deleteEmptyDirs,
   deleteEmptyParentDirs,
   deleteFile,
   getDirectoryHandle,
@@ -14,6 +15,7 @@ import {
   moveFile,
   parseAssetFileInfo,
   parseTextFileInfo,
+  readFile,
   saveChange,
   saveChanges,
   saveFile,
@@ -112,6 +114,91 @@ const createMockDirectoryHandle = (name = 'root', children = new Map()) => ({
   isSameEntry: vi.fn(async () => false),
   [Symbol.asyncIterator]: vi.fn(),
 });
+
+/**
+ * Mock directory handle whose `entries()` and `removeEntry()` reflect its children, so a directory
+ * tree can be changed by the code under test and checked afterwards. A file handle in it moves
+ * between the directories of the tree.
+ * @param {string} name Handle name.
+ * @param {Map<string, any>} [children] Child handles.
+ * @returns {FileSystemDirectoryHandle} Mock directory handle.
+ */
+const createLiveDirectoryHandle = (name, children = new Map()) => {
+  const handle = createMockDirectoryHandle(name, children);
+
+  // @ts-ignore - Mock async iterator
+  handle.entries = vi.fn(() => ({
+    [Symbol.asyncIterator]: async function* () {
+      yield* children.entries();
+    },
+  }));
+
+  // @ts-ignore - Mock removal
+  handle.removeEntry = vi.fn(async (/** @type {string} */ entryName) => {
+    if (!children.has(entryName)) {
+      throw new DOMException('Not found', 'NotFoundError');
+    }
+
+    children.delete(entryName);
+  });
+
+  // A subdirectory created along the way is live as well, and a missing one is reported the way
+  // the File System API does
+  // @ts-ignore - Mock retrieval
+  handle.getDirectoryHandle = vi.fn(
+    async (/** @type {string} */ dirName, /** @type {any} */ options = {}) => {
+      const child = children.get(dirName);
+
+      if (child?.kind === 'directory') {
+        return child;
+      }
+
+      if (options.create) {
+        const newDirHandle = createLiveDirectoryHandle(dirName);
+
+        children.set(dirName, newDirHandle);
+
+        return newDirHandle;
+      }
+
+      throw new DOMException(`Directory not found: ${dirName}`, 'NotFoundError');
+    },
+  );
+
+  children.forEach((child, childName) => {
+    if (child.kind === 'file') {
+      child.move = vi.fn(async (/** @type {any} */ dirHandle, /** @type {string} */ newName) => {
+        children.delete(childName);
+        dirHandle.children.set(newName, child);
+      });
+    }
+  });
+
+  // @ts-ignore - Exposed for `move`
+  handle.children = children;
+
+  return handle;
+};
+
+/**
+ * Build a mock directory tree of `static/images/<folder>` holding the given files.
+ * @param {string} folder Folder name.
+ * @param {string[]} fileNames File names.
+ * @returns {{ rootDirHandle: FileSystemDirectoryHandle, imagesDir: FileSystemDirectoryHandle }}
+ * Root and `static/images` directory handles.
+ */
+const createImageTree = (folder, fileNames) => {
+  const folderDir = createLiveDirectoryHandle(
+    folder,
+    new Map(fileNames.map((fileName) => [fileName, createMockFileHandle(fileName)])),
+  );
+
+  const imagesDir = createLiveDirectoryHandle('images', new Map([[folder, folderDir]]));
+  const staticDir = createLiveDirectoryHandle('static', new Map([['images', imagesDir]]));
+  const rootDirHandle = createLiveDirectoryHandle('root', new Map([['static', staticDir]]));
+
+  return { rootDirHandle, imagesDir };
+};
 
 describe('getFileHandle', () => {
   /** @type {FileSystemDirectoryHandle} */
@@ -480,6 +567,25 @@ describe('Integration scenarios', () => {
   });
 });
 
+describe('readFile', () => {
+  test('should read an existing file', async () => {
+    const rootDirHandle = createMockDirectoryHandle();
+    const fileHandle = await getFileHandle(rootDirHandle, 'static/a.png');
+    const file = await readFile(rootDirHandle, 'static/a.png');
+
+    expect(file.name).toBe('a.png');
+    expect(fileHandle.getFile).toHaveBeenCalled();
+  });
+
+  test('should not create a missing file', async () => {
+    const rootDirHandle = createMockDirectoryHandle();
+
+    await getDirectoryHandle(rootDirHandle, 'static');
+
+    await expect(readFile(rootDirHandle, 'static/a.png')).rejects.toThrow('File not found: a.png');
+  });
+});
+
 describe('saveChanges', () => {
   /** @type {FileSystemDirectoryHandle} */
   let rootDirHandle;
@@ -782,6 +888,69 @@ describe('saveChanges', () => {
     expect(result.sha).toBeDefined();
   });
 
+  test('should remove the folder left empty by deleting all of its files', async () => {
+    const { rootDirHandle: root, imagesDir } = createImageTree('folder 1', [
+      'a.png',
+      'b.png',
+      '.gitkeep',
+    ]);
+
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      { action: 'delete', path: 'static/images/folder 1/a.png' },
+      { action: 'delete', path: 'static/images/folder 1/b.png' },
+      { action: 'delete', path: 'static/images/folder 1/.gitkeep' },
+    ];
+
+    await saveChanges(root, changes);
+
+    // The folder is removed once, after the files, not while they’re being removed; `static/images`
+    // is removed too as it’s now empty, and so on up to the root
+    expect(imagesDir.removeEntry).toHaveBeenCalledExactlyOnceWith('folder 1');
+    // @ts-ignore - Mock property
+    expect(root.children.size).toBe(0);
+  });
+
+  test('should remove the folder left empty by moving all of its files', async () => {
+    const { rootDirHandle: root, imagesDir } = createImageTree('folder 1', ['a.png', 'b.png']);
+
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      {
+        action: 'move',
+        path: 'static/images/folder 2/a.png',
+        previousPath: 'static/images/folder 1/a.png',
+        data: new File(['a'], 'a.png'),
+      },
+      {
+        action: 'move',
+        path: 'static/images/folder 2/b.png',
+        previousPath: 'static/images/folder 1/b.png',
+        data: new File(['b'], 'b.png'),
+      },
+    ];
+
+    await saveChanges(root, changes);
+
+    expect(imagesDir.removeEntry).toHaveBeenCalledExactlyOnceWith('folder 1');
+    // @ts-ignore - Mock property
+    expect([...imagesDir.children.keys()]).toEqual(['folder 2']);
+  });
+
+  test('should leave a folder that still has files', async () => {
+    const { rootDirHandle: root, imagesDir } = createImageTree('folder 1', ['a.png', 'b.png']);
+
+    /** @type {import('$lib/types/private').FileChange[]} */
+    const changes = [
+      { action: 'delete', path: 'static/images/folder 1/a.png' },
+      { action: 'create', path: 'static/images/folder 1/c.png', data: new File(['c'], 'c.png') },
+    ];
+
+    await saveChanges(root, changes);
+
+    expect(imagesDir.removeEntry).not.toHaveBeenCalled();
+  });
+
   test('should handle move action with data', async () => {
     const mockFileHandle = createMockFileHandle('oldfile.txt');
 
@@ -897,6 +1066,24 @@ describe('getHandleByPath', () => {
 
     expect(handle.kind).toBe('directory');
     expect(handle.name).toBe('root');
+  });
+
+  test('should not create a missing file or directory when told not to', async () => {
+    await expect(
+      getHandleByPath(rootDirHandle, 'folder/test.txt', 'file', { create: false }),
+    ).rejects.toThrow('Directory not found: folder');
+    expect(rootDirHandle.getDirectoryHandle).toHaveBeenCalledWith('folder', { create: false });
+
+    // An existing file is returned as is
+    await getHandleByPath(rootDirHandle, 'folder/test.txt');
+    /** @type {MockedFunction<any>} */ (rootDirHandle.getDirectoryHandle).mockClear();
+
+    const handle = await getHandleByPath(rootDirHandle, 'folder/test.txt', 'file', {
+      create: false,
+    });
+
+    expect(handle.name).toBe('test.txt');
+    expect(rootDirHandle.getDirectoryHandle).toHaveBeenCalledWith('folder', { create: false });
   });
 
   test('should throw for empty path and file type', async () => {
@@ -1664,6 +1851,35 @@ describe('deleteFile', () => {
     /** @type {MockedFunction<any>} */ (rootDirHandle.removeEntry).mockRejectedValue(error);
 
     await expect(deleteFile({ rootDirHandle, path: 'test.txt' })).rejects.toBe(error);
+  });
+
+  test('should leave the directory alone even if it’s now empty', async () => {
+    const { rootDirHandle: root, imagesDir } = createImageTree('folder 1', ['a.png']);
+
+    await deleteFile({ rootDirHandle: root, path: 'static/images/folder 1/a.png' });
+
+    // @ts-ignore - Mock property
+    expect(imagesDir.children.get('folder 1').children.size).toBe(0);
+    expect(imagesDir.removeEntry).not.toHaveBeenCalled();
+  });
+});
+
+describe('deleteEmptyDirs', () => {
+  test('should clean up each directory once, leaving out the root', async () => {
+    const { rootDirHandle, imagesDir } = createImageTree('folder 1', []);
+
+    await deleteEmptyDirs(rootDirHandle, [
+      'static/images/folder 1',
+      '',
+      'static/images/folder 1',
+      'static/images',
+    ]);
+
+    expect(imagesDir.removeEntry).toHaveBeenCalledExactlyOnceWith('folder 1');
+    // @ts-ignore - Mock property
+    expect(rootDirHandle.children.size).toBe(0);
+    // The root itself is never removed
+    expect(rootDirHandle.removeEntry).toHaveBeenCalledExactlyOnceWith('static');
   });
 });
 

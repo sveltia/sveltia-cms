@@ -29,6 +29,12 @@ vi.mock('$lib/services/integrations/media-libraries/default', () => ({
 
 vi.mock('$lib/services/utils/file', () => ({
   getGitHash: vi.fn(),
+  /**
+   * Join the given path segments, ignoring the empty ones.
+   * @param {(string | undefined)[]} segments Segments.
+   * @returns {string} Path.
+   */
+  createPath: (segments) => segments.filter(Boolean).join('/'),
 }));
 
 vi.mock('$lib/services/utils/media/image/validate', () => ({
@@ -940,6 +946,24 @@ describe('Test convertFileItemToAsset()', () => {
     global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
   });
 
+  test('should put the asset in the subfolder it was picked for', async () => {
+    const { convertFileItemToAsset } = await import('./process');
+    const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+
+    getGitHashMock.mockResolvedValue('git-hash-123');
+    getAssetKindMock.mockReturnValue('image');
+
+    // @ts-ignore - Simplified testing
+    const result = await convertFileItemToAsset({
+      file: mockFile,
+      folder: undefined,
+      targetFolderPath: 'uploads',
+      subfolderPath: '2024/summer',
+    });
+
+    expect(result.path).toBe('uploads/2024/summer/test.jpg');
+  });
+
   test('should convert file to asset with all properties', async () => {
     const { convertFileItemToAsset } = await import('./process');
     const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
@@ -1241,6 +1265,29 @@ describe('Test getExistingBlobURL()', () => {
     const result = await getExistingBlobURL({ draft, file: mockFile2 });
 
     expect(result).toBe('blob:url-2');
+  });
+
+  test('should not match the same file pending for another subfolder', async () => {
+    const { getExistingBlobURL } = await import('./process');
+    const mockFile = new File(['content'], 'test.jpg');
+
+    /** @type {any} */
+    const draft = {
+      files: {
+        'blob:root': { file: mockFile },
+        'blob:sub': { file: mockFile, subfolderPath: '2024' },
+      },
+    };
+
+    getGitHashMock.mockResolvedValue('hash123');
+
+    await expect(getExistingBlobURL({ draft, file: mockFile })).resolves.toBe('blob:root');
+    await expect(
+      getExistingBlobURL({ draft, file: mockFile, subfolderPath: '2024' }),
+    ).resolves.toBe('blob:sub');
+    await expect(
+      getExistingBlobURL({ draft, file: mockFile, subfolderPath: '2023' }),
+    ).resolves.toBeUndefined();
   });
 
   test('should return undefined when no matching file found', async () => {
