@@ -1979,7 +1979,9 @@ describe('canCreateIndexFile()', () => {
   });
 
   test('returns false when index file already exists in collection entries', async () => {
-    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
+    const { getIndexFile, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
 
@@ -1991,6 +1993,9 @@ describe('canCreateIndexFile()', () => {
 
     vi.mocked(getIndexFile).mockReturnValue({ name: '_index' });
     vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(isCollectionIndexFile).mockImplementation(
+      (_collection, { slug }) => slug === '_index',
+    );
 
     const entries = [
       { id: '1', slug: '_index', locales: { en: { content: {} } } },
@@ -2009,7 +2014,9 @@ describe('canCreateIndexFile()', () => {
   });
 
   test('returns false when custom-named index file already exists', async () => {
-    const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
+    const { getIndexFile, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
     const { getCollection } = await import('$lib/services/contents/collection');
     const { getAssociatedCollections } = await import('$lib/services/contents/entry');
 
@@ -2021,6 +2028,7 @@ describe('canCreateIndexFile()', () => {
 
     vi.mocked(getIndexFile).mockReturnValue({ name: 'home' });
     vi.mocked(getCollection).mockReturnValue(collection);
+    vi.mocked(isCollectionIndexFile).mockImplementation((_collection, { slug }) => slug === 'home');
 
     const entries = [
       { id: '1', slug: 'home', locales: { en: { content: {} } } },
@@ -2036,6 +2044,47 @@ describe('canCreateIndexFile()', () => {
     const result = canCreateIndexFile(collection);
 
     expect(result).toBe(false);
+  });
+
+  test('ignores a nested collection’s index file listed in the collection', async () => {
+    const { getIndexFile, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    const collection = {
+      name: 'pages',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+    };
+
+    vi.mocked(getIndexFile).mockReturnValue({ name: '_index' });
+    vi.mocked(getCollection).mockReturnValue(collection);
+
+    // `content/posts/_index.md` belongs to a `posts` collection below `content`, which gave it the
+    // slug `_index`, but it isn’t the `pages` collection’s own index file
+    // @see https://github.com/sveltia/sveltia-cms/issues/1005
+    vi.mocked(isCollectionIndexFile).mockImplementation(
+      (_collection, { locales }) => locales.en?.path === 'content/_index.md',
+    );
+
+    const entries = [
+      {
+        id: '1',
+        slug: '_index',
+        locales: { en: { path: 'content/posts/_index.md', content: {} } },
+      },
+      { id: '2', slug: 'about', locales: { en: { path: 'content/about/_index.md', content: {} } } },
+    ];
+
+    allEntries.current = entries;
+    vi.mocked(getAssociatedCollections)
+      .mockReturnValueOnce([{ name: 'pages' }])
+      .mockReturnValueOnce([{ name: 'pages' }]);
+
+    // @ts-ignore - Intentionally incomplete for testing
+    expect(canCreateIndexFile(collection)).toBe(true);
   });
 });
 

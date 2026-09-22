@@ -475,16 +475,19 @@ export const getAssetReferences = async (url, { entries = allEntries.current } =
 };
 
 /**
- * Check if index file creation is allowed in the collection.
+ * Check if index file creation is allowed in the collection. The listed entries can include another
+ * collection’s index file, when that collection’s folder sits below this one’s, so each entry is
+ * tested by its path rather than by the slug the owning collection computed for it.
  * @param {InternalCollection} collection Collection.
  * @returns {boolean} Result. It returns `false` if the index file already exists.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1005
  */
 export const canCreateIndexFile = (collection) => {
-  const indexFile = getIndexFile(collection);
-
-  if (!indexFile) {
+  if (!getIndexFile(collection)) {
     return false;
   }
 
-  return !getEntriesByCollection(collection.name).some(({ slug }) => slug === indexFile.name);
+  return !getEntriesByCollection(collection.name).some((entry) =>
+    isCollectionIndexFile(collection, entry),
+  );
 };

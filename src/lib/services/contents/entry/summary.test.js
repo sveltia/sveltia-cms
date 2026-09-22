@@ -356,15 +356,22 @@ describe('Test getEntrySummary()', () => {
     const indexFileCollection = {
       ...collection,
       index_file: {
-        name: 'net',
         label: 'Category Index',
+      },
+      _file: {
+        ...collection._file,
+        fullPathRegEx: /^content\/tags\/(?<subPath>[^/]+?\/index|_index)\.(?<locale>en|de)\.md$/,
       },
     };
 
     // Create entry that would be identified as an index file
     const indexFileEntry = {
       ...entry,
-      slug: 'net',
+      slug: '_index',
+      subPath: '_index',
+      locales: {
+        de: { ...entry.locales.de, path: 'content/tags/_index.de.md' },
+      },
     };
 
     const result = getEntrySummary(indexFileCollection, indexFileEntry, {

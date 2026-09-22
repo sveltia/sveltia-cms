@@ -336,6 +336,104 @@ describe('isCollectionIndexFile()', () => {
 
     expect(result).toBe(false);
   });
+
+  test('handles a partial entry without any locale', () => {
+    const collection = {
+      name: 'test-collection',
+      folder: 'content/posts',
+      index_file: true,
+    };
+
+    // `buildDraft()` calls this with an empty object for a new entry
+    // @ts-ignore - Intentionally incomplete for testing
+    expect(isCollectionIndexFile(collection, {})).toBe(false);
+  });
+
+  test('tells the index file from the entries by the entry path', () => {
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+      index_file: true,
+      _file: { fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.md$/ },
+    };
+
+    /**
+     * Build an entry with the given path.
+     * @param {string} slug Entry slug.
+     * @param {string} path File path.
+     * @returns {any} Entry.
+     */
+    const getEntry = (slug, path) => ({
+      id: path,
+      slug,
+      subPath: slug,
+      locales: { _default: { slug, path, content: {} } },
+    });
+
+    expect(isCollectionIndexFile(collection, getEntry('_index', 'content/posts/_index.md'))).toBe(
+      true,
+    );
+    expect(isCollectionIndexFile(collection, getEntry('hello', 'content/posts/hello.md'))).toBe(
+      false,
+    );
+  });
+
+  test('doesn’t take a nested collection’s index file for its own', () => {
+    // A `pages` collection on the content root with the `path` option claims a `posts` collection’s
+    // own index file, which carries the slug computed by `posts`
+    // @see https://github.com/sveltia/sveltia-cms/issues/1005
+    const collection = {
+      name: 'pages',
+      folder: 'content',
+      path: '{{slug}}/_index',
+      index_file: true,
+      _file: { fullPathRegEx: /^content\/(?<subPath>[^/]+?\/_index|_index)\.md$/ },
+    };
+
+    /**
+     * Build an entry with the given path. The slug is what the owning collection computed.
+     * @param {string} slug Entry slug.
+     * @param {string} path File path.
+     * @returns {any} Entry.
+     */
+    const getEntry = (slug, path) => ({
+      id: path,
+      slug,
+      subPath: slug,
+      locales: { _default: { slug, path, content: {} } },
+    });
+
+    expect(isCollectionIndexFile(collection, getEntry('_index', 'content/_index.md'))).toBe(true);
+    // `content/posts/_index.md` belongs to the `posts` collection, where its slug is `_index`
+    expect(isCollectionIndexFile(collection, getEntry('_index', 'content/posts/_index.md'))).toBe(
+      false,
+    );
+    expect(isCollectionIndexFile(collection, getEntry('about', 'content/about/_index.md'))).toBe(
+      false,
+    );
+  });
+
+  test('uses any locale’s path', () => {
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+      index_file: true,
+      _file: { fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.md$/ },
+    };
+
+    const entry = {
+      id: 'entry-1',
+      slug: '_index',
+      subPath: '_index',
+      locales: {
+        fr: { slug: '_index', path: 'content/posts/_index.fr.md', content: {} },
+        en: { slug: '_index', path: 'content/posts/_index.en.md', content: {} },
+      },
+    };
+
+    // @ts-ignore - Intentionally incomplete for testing
+    expect(isCollectionIndexFile(collection, entry)).toBe(true);
+  });
 });
 
 describe('isCollectionIndexFilePath()', () => {
