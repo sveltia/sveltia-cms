@@ -70,6 +70,7 @@ vi.mock('$lib/services/assets/folders', () => ({
 vi.mock('$lib/services/contents/collection/entries');
 vi.mock('$lib/services/utils/file');
 vi.mock('$lib/services/utils/media');
+vi.mock('$lib/services/utils/media/image/svg');
 vi.mock('$lib/services/utils/media/image/transform');
 vi.mock('$lib/services/utils/media/pdf');
 vi.mock('$lib/services/integrations/media-libraries/cloud', () => ({
@@ -215,6 +216,54 @@ describe('assets/info', () => {
       expect(mimeMock.getType).toHaveBeenCalledWith('test.jpg');
       expect(result).toBeInstanceOf(Blob);
       expect(result.type).toBe('image/jpeg');
+    });
+
+    it('should give an SVG image the URL of an inert wrapper, but return the original', async () => {
+      const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
+      const { default: mime } = await import('mime');
+      const svgAsset = { ...mockAsset, path: 'assets/images/test.svg', name: 'test.svg' };
+      const wrapper = new Blob(['<svg/>'], { type: 'image/svg+xml' });
+
+      vi.mocked(mime).getType.mockReturnValue('image/svg+xml');
+      vi.mocked(createInertSVG).mockResolvedValue(wrapper);
+      mockBackend.fetchBlob.mockResolvedValue(new Blob(['<svg><script/></svg>']));
+
+      const result = await getAssetBlob(svgAsset);
+
+      expect(result.type).toBe('image/svg+xml');
+      expect(createInertSVG).toHaveBeenCalledWith(result);
+      expect(global.URL.createObjectURL).toHaveBeenCalledExactlyOnceWith(wrapper);
+      expect(svgAsset.blobURL).toBe('blob:mock-url');
+      // Later reads get the original file, not the wrapper behind the URL
+      expect(await getAssetBlob(svgAsset)).toBe(result);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('should wrap an SVG file held by the asset, and create its URL only once', async () => {
+      const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
+      const file = new File(['<svg/>'], 'test.svg', { type: 'image/svg+xml' });
+      const wrapper = new Blob(['<svg/>'], { type: 'image/svg+xml' });
+      const svgAsset = { ...mockAsset, name: 'test.svg', file, blobURL: undefined };
+
+      vi.mocked(createInertSVG).mockResolvedValue(wrapper);
+
+      const [blob1, blob2] = await Promise.all([getAssetBlob(svgAsset), getAssetBlob(svgAsset)]);
+
+      expect(blob1).toBe(file);
+      expect(blob2).toBe(file);
+      expect(global.URL.createObjectURL).toHaveBeenCalledExactlyOnceWith(wrapper);
+    });
+
+    it('should not wrap other file types', async () => {
+      const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
+      const { default: mime } = await import('mime');
+
+      vi.mocked(mime).getType.mockReturnValue('image/jpeg');
+      mockBackend.fetchBlob.mockResolvedValue(new Blob(['data']));
+
+      await getAssetBlob({ ...mockAsset });
+
+      expect(createInertSVG).not.toHaveBeenCalled();
     });
 
     it('should throw error if backend fails to fetch blob', async () => {
@@ -1650,6 +1699,23 @@ describe('assets/info', () => {
       await expect(getAssetBlob(assetWithFailingHandle)).rejects.toThrow(
         'Failed to retrieve blob from file handle',
       );
+    });
+
+    it('should throw the same error when the SVG file from a handle cannot be read', async () => {
+      const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
+      const file = new File(['<svg/>'], 'test.svg', { type: 'image/svg+xml' });
+
+      vi.mocked(createInertSVG).mockRejectedValue(new DOMException('Gone', 'NotFoundError'));
+
+      await expect(
+        getAssetBlob({
+          ...mockAsset,
+          name: 'test.svg',
+          file: undefined,
+          blobURL: undefined,
+          handle: { getFile: vi.fn(async () => file) },
+        }),
+      ).rejects.toThrow('Failed to retrieve blob from file handle');
     });
 
     it('should handle undefined thumbnail DB gracefully', async () => {

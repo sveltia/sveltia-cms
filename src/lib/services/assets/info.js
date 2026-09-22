@@ -14,6 +14,7 @@ import { allCloudStorageServices } from '$lib/services/integrations/media-librar
 import { getMergedLibraryOptions } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { createPath, createPathRegEx, encodeFilePath } from '$lib/services/utils/file';
+import { createInertSVG } from '$lib/services/utils/media/image/svg';
 import {
   THUMBNAIL_TRANSFORM_OPTIONS,
   transformImage,
@@ -64,13 +65,20 @@ export const _resetAssetBlobCache = () => {
 };
 
 /**
- * Give the asset an object URL for the given blob if it doesn’t have one yet.
+ * Give the asset an object URL for the given blob if it doesn’t have one yet. An SVG image gets the
+ * URL of a wrapper that can’t run any script, because the URL has the CMS origin and could be
+ * opened in a new tab from a preview; the blob itself is left untouched.
  * @param {Asset} asset Asset.
  * @param {Blob} blob Blob.
- * @returns {Blob} The same blob.
+ * @returns {Promise<Blob>} The same blob.
  */
-const cacheAssetBlobURL = (asset, blob) => {
-  asset.blobURL ??= URL.createObjectURL(blob);
+const cacheAssetBlobURL = async (asset, blob) => {
+  if (!asset.blobURL) {
+    const displayBlob = blob.type === 'image/svg+xml' ? await createInertSVG(blob) : blob;
+
+    // Another caller may have created the URL while the wrapper was being made
+    asset.blobURL ??= URL.createObjectURL(displayBlob);
+  }
 
   return blob;
 };
@@ -80,10 +88,10 @@ const cacheAssetBlobURL = (asset, blob) => {
  * callers can have it without reading the URL back.
  * @param {Asset} asset Asset.
  * @param {Blob} blob Blob.
- * @returns {Blob} The same blob.
+ * @returns {Promise<Blob>} The same blob.
  */
-const cacheAssetBlob = (asset, blob) => {
-  cacheAssetBlobURL(asset, blob);
+const cacheAssetBlob = async (asset, blob) => {
+  await cacheAssetBlobURL(asset, blob);
 
   if (asset.blobURL) {
     cachedBlobs.set(asset.blobURL, blob);
@@ -158,7 +166,7 @@ export const getAssetBlob = async (asset) => {
 
   if (handle) {
     try {
-      return cacheAssetBlob(asset, await handle.getFile());
+      return await cacheAssetBlob(asset, await handle.getFile());
     } catch {
       throw new Error('Failed to retrieve blob from file handle');
     }
