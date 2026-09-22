@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 
 import { parseAssetFileInfo } from '$lib/services/backends/git/shared/fetch';
 import { createFileList } from '$lib/services/backends/process';
-import { allEntries } from '$lib/services/contents';
+import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { parseBranchName } from '$lib/services/workflow/branch';
 
@@ -34,9 +34,7 @@ const completeEntry = (entry, previousPaths) => {
   ]);
 
   // `allEntries` holds the version currently on the configured branch
-  const publishedEntry = allEntries.current.find((published) =>
-    Object.values(published.locales).some(({ path }) => paths.has(path)),
-  );
+  const publishedEntry = findEntryByPaths(paths);
 
   if (!publishedEntry) {
     return entry;

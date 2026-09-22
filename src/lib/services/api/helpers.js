@@ -11,6 +11,7 @@ import { unflattenMap } from '$lib/services/utils/object';
  * @import { MapOf } from 'immutable';
  * @import {
  * Asset,
+ * AssetFolderInfo,
  * Entry,
  * EntryDraft,
  * FlattenedEntryContent,
@@ -142,6 +143,54 @@ export const createGetAsset =
   };
 
 /**
+ * Cache of {@link getReferencedEntryLookup} results, keyed by the entry list they index.
+ * @type {WeakMap<Entry[], Map<string, Map<any, Entry>>>}
+ */
+const referencedEntryLookupCache = new WeakMap();
+
+/**
+ * Get a lookup table of the given referenced entries by the value a Relation field stores. The
+ * table is built once per entry list, locale and value field, instead of the list being scanned
+ * for every value — the metadata is rebuilt whenever the entry draft is updated.
+ * @param {Entry[]} entries Referenced entries.
+ * @param {InternalLocaleCode} locale Locale code.
+ * @param {string} valueField Relation field’s `value_field` option.
+ * @returns {Map<any, Entry>} Entries by value. When several entries share a value, the first one
+ * is kept.
+ */
+const getReferencedEntryLookup = (entries, locale, valueField) => {
+  let lookups = referencedEntryLookupCache.get(entries);
+
+  if (!lookups) {
+    lookups = new Map();
+    referencedEntryLookupCache.set(entries, lookups);
+  }
+
+  const key = `${locale}\n${valueField}`;
+  const cached = lookups.get(key);
+
+  if (cached) {
+    return cached;
+  }
+
+  /** @type {Map<any, Entry>} */
+  const lookup = new Map();
+
+  entries.forEach((entry) => {
+    const value =
+      valueField === '{{slug}}' ? entry.slug : entry.locales[locale]?.content?.[valueField];
+
+    if (!lookup.has(value)) {
+      lookup.set(value, entry);
+    }
+  });
+
+  lookups.set(key, lookup);
+
+  return lookup;
+};
+
+/**
  * Get metadata for fields. For relation fields, looks up and stores the referenced entry content
  * keyed by collection name and value, matching the `fieldsMetaData` structure expected by
  * Netlify/Decap CMS preview templates and custom field types.
@@ -177,11 +226,11 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
           return cache;
         }
 
-        const entries = (
-          refFile
-            ? [getCollectionFileEntry(refCollection, refFile)]
-            : getEntriesByCollection(refCollection)
-        ).filter((entry) => !!entry);
+        // The collection’s entry list is used as is, rather than copied, so that it keeps the same
+        // identity across calls and its lookup table in `getReferencedEntryLookup()` can be reused
+        const entries = refFile
+          ? [getCollectionFileEntry(refCollection, refFile)].filter((entry) => !!entry)
+          : getEntriesByCollection(refCollection);
 
         refEntriesCache.set(cacheKey, entries);
 
@@ -190,11 +239,11 @@ export const getMetaData = ({ locale, getFieldArgs }) => {
 
       metaData[keyPath] ??= {};
       metaData[keyPath][refCollection] ??= {};
-      metaData[keyPath][refCollection][value] = refEntries.find((entry) =>
-        valueField === '{{slug}}'
-          ? entry.slug === value
-          : entry.locales[locale]?.content?.[valueField] === value,
-      )?.locales[locale]?.content;
+      metaData[keyPath][refCollection][value] = getReferencedEntryLookup(
+        refEntries,
+        locale,
+        valueField,
+      ).get(value)?.locales[locale]?.content;
     }
   });
 
@@ -226,6 +275,17 @@ export const buildEntry = ({ originalEntry, currentValues }) =>
   });
 
 /**
+ * Cache of {@link getAssociatedPreviewAssets} results, keyed by the asset folder and dropped when
+ * `allAssets` is replaced. The preview data is rebuilt whenever the entry draft is updated, so
+ * without it every keystroke would walk the whole asset library.
+ */
+const previewAssetCache = {
+  source: /** @type {Asset[] | undefined} */ (undefined),
+  /** @type {WeakMap<AssetFolderInfo, Asset[]>} */
+  map: new WeakMap(),
+};
+
+/**
  * Get assets associated with a collection or entry folder.
  * @param {object} args Arguments.
  * @param {string} [args.collectionName] Collection name.
@@ -235,11 +295,25 @@ export const buildEntry = ({ originalEntry, currentValues }) =>
 export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
   const assetFolder = getAssetFolder({ collectionName, fileName });
 
-  if (assetFolder) {
-    return allAssets.current.filter((asset) => isAssetInFolder(asset, assetFolder));
+  if (!assetFolder) {
+    return [];
   }
 
-  return [];
+  const { current: _allAssets } = allAssets;
+
+  if (_allAssets !== previewAssetCache.source) {
+    previewAssetCache.source = _allAssets;
+    previewAssetCache.map = new WeakMap();
+  }
+
+  let assets = previewAssetCache.map.get(assetFolder);
+
+  if (!assets) {
+    assets = _allAssets.filter((asset) => isAssetInFolder(asset, assetFolder));
+    previewAssetCache.map.set(assetFolder, assets);
+  }
+
+  return assets;
 };
 
 /**

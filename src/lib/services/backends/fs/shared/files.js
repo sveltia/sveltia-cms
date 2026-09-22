@@ -10,6 +10,7 @@ import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { allAssets } from '$lib/services/assets';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
@@ -55,10 +56,34 @@ import { createDebugLogger } from '$lib/services/utils/logging';
  */
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 /**
- * Batch size for processing files to balance performance with memory safety.
+ * Maximum number of files processed at the same time, to balance performance with memory safety.
  * @see https://github.com/sveltia/sveltia-cms/issues/224
  */
-const FILE_PROCESS_BATCH_SIZE = 10;
+const FILE_PROCESS_CONCURRENCY = 10;
+
+/**
+ * Process the given files with a limited number of them in flight. Unlike fixed batches, a new file
+ * is picked up as soon as a slot frees up, so one large file doesn’t stall the others.
+ * @template T, R
+ * @param {T[]} items Files to process.
+ * @param {(item: T) => Promise<R>} task Task to be performed for each file.
+ * @returns {Promise<R[]>} Results, in the same order as the given files.
+ */
+const processFiles = async (items, task) => {
+  /** @type {R[]} */
+  const results = Array.from({ length: items.length });
+
+  await runConcurrently(
+    [...items.keys()],
+    async (index) => {
+      results[index] = await task(items[index]);
+    },
+    { concurrency: FILE_PROCESS_CONCURRENCY },
+  );
+
+  return results;
+};
+
 /**
  * How many times renaming a temporary file to its final name is attempted, and how long to wait
  * between attempts, in milliseconds. A rename can fail for a moment while another program has the
@@ -404,27 +429,15 @@ export const loadFiles = async (rootDirHandle, { hashCacheDB = null } = {}) => {
 
   log(`Scanned the directory: ${describeFileList(fileList)}`);
 
-  /** @type {BaseEntryListItem[]} */
-  const entryFileItems = [];
-  /** @type {BaseConfigListItem[]} */
-  const configFileItems = [];
-
-  // Process files in batches to balance performance with memory safety
-  for (let i = 0; i < entryFiles.length; i += FILE_PROCESS_BATCH_SIZE) {
-    const batch = entryFiles.slice(i, i + FILE_PROCESS_BATCH_SIZE);
-    const results = await Promise.all(batch.map((fileInfo) => parseTextFileInfo(fileInfo)));
-
-    entryFileItems.push(.../** @type {BaseEntryListItem[]} */ (results));
-  }
+  const entryFileItems = /** @type {BaseEntryListItem[]} */ (
+    await processFiles(entryFiles, parseTextFileInfo)
+  );
 
   log(`Read ${entryFileItems.length} entry files`);
 
-  for (let i = 0; i < configFiles.length; i += FILE_PROCESS_BATCH_SIZE) {
-    const batch = configFiles.slice(i, i + FILE_PROCESS_BATCH_SIZE);
-    const results = await Promise.all(batch.map((fileInfo) => parseTextFileInfo(fileInfo)));
-
-    configFileItems.push(.../** @type {BaseConfigListItem[]} */ (results));
-  }
+  const configFileItems = /** @type {BaseConfigListItem[]} */ (
+    await processFiles(configFiles, parseTextFileInfo)
+  );
 
   log(`Read ${configFileItems.length} config files`);
 
@@ -432,21 +445,14 @@ export const loadFiles = async (rootDirHandle, { hashCacheDB = null } = {}) => {
 
   log(`Parsed ${entries.length} entries (${errors.length} errors)`);
 
-  /** @type {Asset[]} */
-  const assets = [];
   const cachedHashes = await cachedHashesPromise;
   /** @type {Map<string, AssetHashCacheRecord>} */
   const newHashes = new Map();
 
-  for (let i = 0; i < assetFiles.length; i += FILE_PROCESS_BATCH_SIZE) {
-    const batch = assetFiles.slice(i, i + FILE_PROCESS_BATCH_SIZE);
-
-    const results = await Promise.all(
-      batch.map((fileInfo) => parseAssetFileInfo(fileInfo, { cachedHashes, newHashes })),
-    );
-
-    assets.push(...results);
-  }
+  /** @type {Asset[]} */
+  const assets = await processFiles(assetFiles, (fileInfo) =>
+    parseAssetFileInfo(fileInfo, { cachedHashes, newHashes }),
+  );
 
   // Each asset file is read in full to hash it, so this can take a while with large media, unless
   // the hash is still cached from a previous load

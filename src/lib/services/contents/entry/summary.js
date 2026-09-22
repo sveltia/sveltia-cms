@@ -49,6 +49,13 @@ import {
  * @property {string | undefined} [fallbackSummary] Fallback summary for the entry.
  */
 
+/**
+ * @typedef {object} CachedSummary
+ * @property {string} summary Formatted summary.
+ * @property {number} [generation] {@link entriesGeneration} the summary was formatted in, if it
+ * contains a Relation field label and has to be regenerated once other entries change.
+ */
+
 const BODY_HEADER_REGEX = /^#+\s+(?<header>.+?)(?:\s+\{#.+?\})?\s*$/m;
 
 /**
@@ -164,6 +171,13 @@ export const replaceSub = (tag, context) => {
 };
 
 /**
+ * Whether a Relation field label has been resolved since the flag was last reset. Set by
+ * {@link replace}, so {@link getEntrySummary} can tell whether the summary it has just formatted
+ * depends on other entries.
+ */
+let relationLabelResolved = false;
+
+/**
  * Replacer.
  * @param {string} placeholder Field name or one of special tags. May contain transformations.
  * @param {ReplaceContext} context Context.
@@ -193,9 +207,16 @@ export const replace = (placeholder, context) => {
     // raw field value from the entry content. Otherwise, use the field display value. This is to
     // avoid applying the transformation to the display value, which leads to unexpected results.
     // Also use raw value for ternary transformations to preserve boolean truthiness.
-    value = transformations.some(({ method }) => method === 'date' || method === 'ternary')
-      ? valueMap[keyPath]
-      : getFieldDisplayValue({ ...getFieldArgs, locale: defaultLocale });
+    if (transformations.some(({ method }) => method === 'date' || method === 'ternary')) {
+      value = valueMap[keyPath];
+    } else {
+      // A Relation field is displayed with a label taken from the referenced entry
+      if (getField(getFieldArgs)?.widget === 'relation') {
+        relationLabelResolved = true;
+      }
+
+      value = getFieldDisplayValue({ ...getFieldArgs, locale: defaultLocale });
+    }
 
     // If the field is `title` and the value is empty, use the fallback summary if available
     if (keyPath === 'title' && !value) {
@@ -231,7 +252,7 @@ export const replace = (placeholder, context) => {
  * invalidated for free: the entry store always receives freshly-built objects when entries are
  * loaded or saved, and {@link getCollection} returns a stable object per collection. The entries
  * are garbage-collected along with the objects they belong to.
- * @type {WeakMap<Entry, WeakMap<InternalCollection, Map<string, string>>>}
+ * @type {WeakMap<Entry, WeakMap<InternalCollection, Map<string, CachedSummary>>>}
  */
 const summaryCacheMap = new WeakMap();
 /**
@@ -240,9 +261,10 @@ const summaryCacheMap = new WeakMap();
  */
 let lastAllEntries;
 /**
- * Number of times `allEntries` has changed. Folded into the {@link summaryCacheMap} key so that a
- * summary containing a Relation field label is regenerated when the referenced entries change,
- * which does not necessarily replace the referencing entry itself.
+ * Number of times `allEntries` has changed. Recorded with a cached summary containing a Relation
+ * field label, so it’s regenerated when the referenced entries change, which does not necessarily
+ * replace the referencing entry itself. Other summaries only depend on their own entry, so they
+ * survive a change to the rest of the store, such as a save or a remote refresh.
  */
 let entriesGeneration = 0;
 
@@ -381,18 +403,26 @@ export const getEntrySummary = (collection, entry, options = {}) => {
     template ?? '',
     // `Array.join()` turns an unset locale into an empty string
     appLocale.current,
-    getEntriesGeneration(),
   ].join('\n');
 
+  const generation = getEntriesGeneration();
   const cached = optionCache.get(cacheKey);
 
-  if (cached !== undefined) {
-    return cached;
+  if (cached && (cached.generation === undefined || cached.generation === generation)) {
+    return cached.summary;
   }
 
-  const summary = formatEntrySummary(collection, entry, options);
+  // Resolving a Relation field label may format a summary of the referenced entry, so the flag is
+  // saved and restored around this one, passing on whether it has been set
+  const outerFlag = relationLabelResolved;
 
-  optionCache.set(cacheKey, summary);
+  relationLabelResolved = false;
+
+  const summary = formatEntrySummary(collection, entry, options);
+  const dependsOnEntries = relationLabelResolved;
+
+  relationLabelResolved = outerFlag || dependsOnEntries;
+  optionCache.set(cacheKey, { summary, generation: dependsOnEntries ? generation : undefined });
 
   return summary;
 };

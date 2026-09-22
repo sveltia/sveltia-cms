@@ -35,6 +35,7 @@ import {
   createDerivedState,
   createRawState,
   createRootEffect,
+  createStableDerivedState,
 } from '$lib/services/utils/state.svelte';
 import { swapUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -112,6 +113,22 @@ export const viewUsesTime = createDerivedState(() => {
 });
 
 /**
+ * Sorting conditions of the current view. This and the other view conditions below are picked out
+ * of {@link currentView} one by one, so replacing the view to switch between list and grid, or to
+ * collapse a group, doesn’t sort, filter and group the entries all over again: each step only
+ * reruns when the conditions it uses have actually changed.
+ */
+const sortConditions = createStableDerivedState(() => currentView.current.sort);
+/**
+ * Filtering conditions of the current view. See {@link sortConditions}.
+ */
+const filterConditions = createStableDerivedState(() => currentView.current.filters);
+/**
+ * Grouping conditions of the current view. See {@link sortConditions}.
+ */
+const groupConditions = createStableDerivedState(() => currentView.current.group);
+
+/**
  * List of the entries shown in the entry list for the selected entry collection. For a nested
  * collection, only the entries in the folder the user is currently browsing are included; the
  * deeper ones are reachable through the collection tree in the primary sidebar.
@@ -163,7 +180,6 @@ export const listedEntries = createDerivedState(() => {
  */
 export const listedUnpublishedEntries = createDerivedState(() => {
   const { current: _collection } = selectedCollection;
-  const { current: _currentView } = currentView;
 
   if (_collection?._type !== 'entry' || reordering.current) {
     return [];
@@ -186,12 +202,15 @@ export const listedUnpublishedEntries = createDerivedState(() => {
     return [];
   }
 
-  if (_currentView.sort) {
-    entries = sortEntries(entries, _collection, _currentView.sort);
+  const { current: sort } = sortConditions;
+  const { current: filters } = filterConditions;
+
+  if (sort) {
+    entries = sortEntries(entries, _collection, sort);
   }
 
-  if (_currentView.filters) {
-    entries = filterEntries(entries, _collection, _currentView.filters, viewTime.current);
+  if (filters) {
+    entries = filterEntries(entries, _collection, filters, viewTime.current);
   }
 
   return entries;
@@ -269,34 +288,52 @@ export const collectionState = createDerivedState(() => {
 });
 
 /**
- * Sorted, filtered and grouped entries for the selected entry collection. `sortEntries()` and
- * `groupEntries()` may return localized labels, and they read the current app locale, so the
- * groups are also recomputed when the locale changes. They are also recomputed as {@link viewTime}
- * ticks while a time-based filter or group is applied.
+ * {@link listedEntries} sorted with the current view’s conditions. Sorting is the costliest step,
+ * as it reads a value from every entry, so it comes first: changing a filter, or {@link viewTime}
+ * ticking, then only reruns the cheaper steps below. `sortEntries()` reads the current app locale,
+ * so this is also recomputed when the locale changes.
+ * @type {{ readonly current: Entry[] }}
+ */
+const sortedEntries = createDerivedState(() => {
+  const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
+  const { current: entries } = listedEntries;
+  const { current: sort } = sortConditions;
+
+  return sort ? sortEntries(entries, collection, sort) : entries;
+});
+
+/**
+ * {@link sortedEntries} filtered with the current view’s conditions.
+ * @type {{ readonly current: Entry[] }}
+ */
+const filteredEntries = createDerivedState(() => {
+  const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
+  const { current: entries } = sortedEntries;
+  const { current: filters } = filterConditions;
+
+  return filters ? filterEntries(entries, collection, filters, viewTime.current) : entries;
+});
+
+/**
+ * Sorted, filtered and grouped entries for the selected entry collection. `groupEntries()` may
+ * return localized labels, as it reads the current app locale, so the groups are also recomputed
+ * when the locale changes. They are also recomputed as {@link viewTime} ticks while a time-based
+ * filter or group is applied.
  * @type {{ readonly current: { name: string, entries: Entry[] }[] }}
  */
 export const entryGroups = createDerivedState(() => {
-  const { current: _currentView } = currentView;
   const collection = /** @type {InternalEntryCollection} */ (selectedCollection.current);
-  /** @type {Entry[]} */
-  let entries = [...listedEntries.current];
+  const { current: entries } = listedEntries;
 
-  // Reset the groups if the current collection is empty or a file/singleton collection
+  // Reset the groups if the current collection is empty or a file/singleton collection. This is
+  // checked before the entries are sorted and filtered, so neither is done for nothing
   if (!entries.length || !!getCollectionFilesByEntry(collection, entries[0]).length) {
     return [];
   }
 
-  if (_currentView.sort) {
-    entries = sortEntries(entries, collection, _currentView.sort);
-  }
+  const { current: group } = groupConditions;
 
-  const { current: now } = viewTime;
-
-  if (_currentView.filters) {
-    entries = filterEntries(entries, collection, _currentView.filters, now);
-  }
-
-  return groupEntries(entries, collection, _currentView.group, now);
+  return groupEntries(filteredEntries.current, collection, group, viewTime.current);
 });
 
 /**

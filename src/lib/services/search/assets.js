@@ -1,11 +1,10 @@
 import { publishedAssets } from '$lib/services/assets';
 import { searchTerms } from '$lib/services/search';
-import { hasAllMatches, tokenize } from '$lib/services/search/util';
+import { getNormalizedValueCache, hasAllMatches, tokenize } from '$lib/services/search/util';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**
  * @import { Asset } from '$lib/types/private';
- * @import { NormalizedValueCache } from '$lib/services/search/util';
  */
 
 /**
@@ -25,11 +24,14 @@ export const searchAssets = ({ assets, terms }) => {
     return [];
   }
 
-  /** @type {NormalizedValueCache} */
-  const normalizedValueCache = new Map();
-
+  // Each asset’s normalized name is kept for later searches, as long as the asset object is around,
+  // so a keystroke doesn’t normalize every name in the library again
   return assets.filter((asset) =>
-    hasAllMatches({ value: asset.name, tokens, normalizedValueCache }),
+    hasAllMatches({
+      value: asset.name,
+      tokens,
+      normalizedValueCache: getNormalizedValueCache(asset),
+    }),
   );
 };
 

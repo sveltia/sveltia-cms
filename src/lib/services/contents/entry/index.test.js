@@ -1024,6 +1024,36 @@ describe('Test getAssociatedCollections()', () => {
 
     expect(result).toEqual([]);
   });
+
+  test('should look up the folders once per entry until the entry folders change', async () => {
+    const mockEntry = {
+      id: 'cached-entry',
+      slug: 'cached-entry',
+      subPath: 'cached-entry',
+      locales: {
+        en: { slug: 'cached-entry', path: 'content/posts/cached-entry.md', content: {} },
+      },
+    };
+
+    const { allEntryFolders, getEntryFoldersByPath } = await import('$lib/services/contents');
+    const { getCollection } = await import('$lib/services/contents/collection');
+    const mockCollection = /** @type {InternalCollection} */ ({ name: 'posts' });
+
+    vi.mocked(getEntryFoldersByPath).mockReturnValue([{ collectionName: 'posts' }]);
+    vi.mocked(getCollection).mockReturnValue(mockCollection);
+
+    const getFolders = vi.spyOn(allEntryFolders, 'current', 'get').mockReturnValue([]);
+
+    expect(getAssociatedCollections(mockEntry)).toEqual([mockCollection]);
+    expect(getAssociatedCollections(mockEntry)).toEqual([mockCollection]);
+    expect(getEntryFoldersByPath).toHaveBeenCalledTimes(1);
+
+    // A configuration change replaces the folder list, which drops the cache
+    getFolders.mockReturnValue([]);
+
+    expect(getAssociatedCollections(mockEntry)).toEqual([mockCollection]);
+    expect(getEntryFoldersByPath).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('Test extractDateTime()', () => {

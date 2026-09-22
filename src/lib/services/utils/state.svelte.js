@@ -1,3 +1,4 @@
+import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
 /**
@@ -116,6 +117,32 @@ export const createDerivedState = (getter) => {
       return current;
     },
   };
+};
+
+/**
+ * Create a read-only reactive box like {@link createDerivedState}, but keep handing out the
+ * previous value as long as the new one is deeply equal to it. A derived value only notifies what
+ * depends on it when it’s a different object, so this stops a change that leaves the value as it
+ * was from rippling any further. For example, the sort conditions picked out of a view object stay
+ * the same object when the view is replaced to switch from list to grid, so the sorted list isn’t
+ * recomputed.
+ * @template T
+ * @param {() => T} getter Function computing the value.
+ * @returns {{ readonly current: T }} Reactive box.
+ */
+export const createStableDerivedState = (getter) => {
+  /** @type {T | undefined} */
+  let previous;
+
+  return createDerivedState(() => {
+    const value = getter();
+
+    if (!equal(value, previous)) {
+      previous = value;
+    }
+
+    return /** @type {T} */ (previous);
+  });
 };
 
 /**

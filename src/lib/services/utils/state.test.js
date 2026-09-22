@@ -7,6 +7,7 @@ import {
   createDerivedState,
   createRawState,
   createRootEffect,
+  createStableDerivedState,
   createState,
   getSnapshot,
   watch,
@@ -106,6 +107,37 @@ describe('createDerivedState()', () => {
 
     state.current = 3;
     expect(derived.current).toBe(6);
+  });
+});
+
+describe('createStableDerivedState()', () => {
+  it('should keep the previous value while the new one is deeply equal', () => {
+    const state = createRawState({ sort: { key: 'title' }, type: 'list' });
+    const derived = createStableDerivedState(() => state.current.sort);
+    const dependent = createDerivedState(() => ({ sort: derived.current }));
+    const first = derived.current;
+    const firstDependent = dependent.current;
+
+    expect(first).toEqual({ key: 'title' });
+
+    // A different object with the same value is not passed on, so the dependent isn’t recomputed
+    state.current = { sort: { key: 'title' }, type: 'grid' };
+    expect(derived.current).toBe(first);
+    expect(dependent.current).toBe(firstDependent);
+
+    state.current = { sort: { key: 'date' }, type: 'grid' };
+    expect(derived.current).toEqual({ key: 'date' });
+    expect(dependent.current).not.toBe(firstDependent);
+  });
+
+  it('should hand out the first value even when it is undefined', () => {
+    const state = createRawState(/** @type {string | undefined} */ (undefined));
+    const derived = createStableDerivedState(() => state.current);
+
+    expect(derived.current).toBeUndefined();
+
+    state.current = 'a';
+    expect(derived.current).toBe('a');
   });
 });
 

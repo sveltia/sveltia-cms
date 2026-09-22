@@ -8,6 +8,7 @@ import {
   dataLoaded,
   dataLoadedProgress,
   entryParseErrors,
+  findEntryByPaths,
   getEntryFoldersByPath,
 } from '.';
 
@@ -333,6 +334,50 @@ describe('contents/index', () => {
       expect(result2).toHaveLength(1);
       expect(result1[0].collectionName).toBe('posts');
       expect(result2[0].collectionName).toBe('posts');
+    });
+  });
+
+  describe('findEntryByPaths()', () => {
+    /**
+     * Create an entry with a file per locale.
+     * @param {string} id Entry ID.
+     * @param {Record<string, string>} paths File path by locale.
+     * @returns {any} Entry.
+     */
+    const createEntry = (id, paths) => ({
+      id,
+      locales: Object.fromEntries(
+        Object.entries(paths).map(([locale, path]) => [locale, { path, content: {} }]),
+      ),
+    });
+
+    it('should find the entry holding a file at any of the given paths', () => {
+      const post = createEntry('post', { en: 'posts/en/a.md', ja: 'posts/ja/a.md' });
+
+      allEntries.current = [createEntry('page', { en: 'pages/b.md' }), post];
+
+      expect(findEntryByPaths(new Set(['missing.md', 'posts/ja/a.md']))).toBe(post);
+      expect(findEntryByPaths(['missing.md'])).toBeUndefined();
+    });
+
+    it('should prefer the entry that comes first in the store', () => {
+      const first = createEntry('first', { en: 'a.md', ja: 'shared.md' });
+      const second = createEntry('second', { en: 'b.md', ja: 'shared.md' });
+
+      allEntries.current = [first, second];
+
+      // Found by its own path, but the other entry comes first
+      expect(findEntryByPaths(['b.md', 'a.md'])).toBe(first);
+      // Two entries share a path, and the first one wins
+      expect(findEntryByPaths(['shared.md'])).toBe(first);
+    });
+
+    it('should index the store again once it is replaced', () => {
+      allEntries.current = [createEntry('old', { en: 'a.md' })];
+      expect(findEntryByPaths(['a.md'])?.id).toBe('old');
+
+      allEntries.current = [createEntry('new', { en: 'a.md' })];
+      expect(findEntryByPaths(['a.md'])?.id).toBe('new');
     });
   });
 });

@@ -17,6 +17,7 @@ import {
   createDerivedState,
   createRawState,
   createRootEffect,
+  createStableDerivedState,
 } from '$lib/services/utils/state.svelte';
 
 /**
@@ -161,20 +162,45 @@ export const getAdjacentAssets = (assets, isCurrent) => {
  * @type {Record<string, Asset[]>}
  */
 let previousAssetGroups = {};
+/**
+ * Sorting conditions of the current view. This and the other view conditions below are picked out
+ * of {@link currentView} one by one, so replacing the view to switch between list and grid, or to
+ * collapse a group, doesn’t sort, filter and group the assets all over again: each step only
+ * reruns when the conditions it uses have actually changed.
+ */
+const sortConditions = createStableDerivedState(() => currentView.current.sort);
+/**
+ * Filtering conditions of the current view. See {@link sortConditions}.
+ */
+const filterConditions = createStableDerivedState(() => currentView.current.filter);
+/**
+ * Grouping conditions of the current view. See {@link sortConditions}.
+ */
+const groupConditions = createStableDerivedState(() => currentView.current.group);
+
+/**
+ * {@link listedAssets} sorted with the current view’s conditions. Sorting is the costliest step, so
+ * it comes first: changing a filter then only reruns the cheaper steps below.
+ * @type {{ readonly current: Asset[] }}
+ */
+const sortedAssets = createDerivedState(() =>
+  sortAssets(listedAssets.current, sortConditions.current),
+);
+
+/**
+ * {@link sortedAssets} filtered with the current view’s conditions.
+ * @type {{ readonly current: Asset[] }}
+ */
+const filteredAssets = createDerivedState(() =>
+  filterAssets(sortedAssets.current, filterConditions.current),
+);
 
 /**
  * Sorted, filtered and grouped assets for the selected asset collection.
  * @type {{ readonly current: Record<string, Asset[]> }}
  */
 export const assetGroups = createDerivedState(() => {
-  const { current: _currentView } = currentView;
-  /** @type {Asset[]} */
-  let assets = [...listedAssets.current];
-
-  assets = sortAssets(assets, _currentView.sort);
-  assets = filterAssets(assets, _currentView.filter);
-
-  const groups = groupAssets(assets, _currentView.group);
+  const groups = groupAssets(filteredAssets.current, groupConditions.current);
 
   if (!equal(previousAssetGroups, groups)) {
     previousAssetGroups = groups;

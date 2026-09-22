@@ -1047,6 +1047,22 @@ describe('getAssociatedAssets', () => {
       ).toEqual([ownAsset]);
     });
 
+    test('ignores an entry stored at the repository root', () => {
+      const ownAsset = /** @type {any} */ ({ path: 'pages/about/parent.jpg' });
+
+      const rootEntry = /** @type {any} */ ({
+        id: 'readme',
+        locales: { en: { path: 'README.md', content: { title: 'Readme' } } },
+      });
+
+      setupNestedCollection([ownAsset]);
+      mockGetEntriesByCollection.mockReturnValue([rootEntry, parentEntry, childEntry]);
+
+      expect(
+        getAssociatedAssets({ entry: parentEntry, collectionName: 'pages', relative: true }),
+      ).toEqual([ownAsset]);
+    });
+
     test('keeps its own assets when looking at the descendant', () => {
       const childAsset = /** @type {any} */ ({ path: 'pages/about/team/child.jpg' });
 

@@ -636,6 +636,40 @@ describe('React Helpers', () => {
       expect(result instanceof ImmutableMap).toBe(true);
     });
 
+    it('should look up referenced entries once per entry list, keeping the first match', () => {
+      const first = { slug: 'dup', locales: { en: { content: { title: 'First' } } } };
+      const second = { slug: 'dup', locales: { en: { content: { title: 'Second' } } } };
+      const refEntries = [first, second];
+
+      /**
+       * Build the metadata of an entry referencing `dup`.
+       * @returns {any} Metadata as a plain object.
+       */
+      const build = () => {
+        mockGetField.mockReturnValueOnce({
+          widget: 'relation',
+          collection: 'posts',
+          value_field: '{{slug}}',
+        });
+        // @ts-ignore
+        mockGetEntriesByCollection.mockReturnValueOnce(refEntries);
+
+        return getMetaData({
+          locale: 'en',
+          getFieldArgs: {
+            collectionName: 'posts',
+            fileName: undefined,
+            valueMap: { relatedPost: 'dup' },
+            isIndexFile: false,
+          },
+        }).toJS();
+      };
+
+      expect(build().relatedPost.posts.dup.title).toBe('First');
+      // Answered from the lookup table cached with the entry list
+      expect(build().relatedPost.posts.dup.title).toBe('First');
+    });
+
     it('should handle multiple relation fields', () => {
       const mockRefEntry1 = {
         slug: 'post-1',
@@ -877,6 +911,24 @@ describe('React Helpers', () => {
         fileName: undefined,
       });
       expect(mockIsAssetInFolder).toHaveBeenCalledTimes(2);
+    });
+
+    it('should reuse the result until the asset list is replaced', () => {
+      const mockAssetFolder = { collectionName: 'posts', internalPath: 'assets' };
+      const mockAssets = [{ name: 'image1.jpg', path: '/assets/image1.jpg' }];
+
+      mockGetAssetFolder.mockReturnValue(mockAssetFolder);
+      mockIsAssetInFolder.mockImplementation(() => true);
+      mockAllAssets.current = mockAssets;
+
+      const first = getAssociatedPreviewAssets({ collectionName: 'posts' });
+
+      expect(getAssociatedPreviewAssets({ collectionName: 'posts' })).toBe(first);
+      expect(mockIsAssetInFolder).toHaveBeenCalledTimes(1);
+
+      mockAllAssets.current = [...mockAssets, { name: 'image2.jpg', path: '/assets/image2.jpg' }];
+
+      expect(getAssociatedPreviewAssets({ collectionName: 'posts' })).toHaveLength(2);
     });
 
     it('should filter assets based on folder membership', () => {

@@ -574,6 +574,43 @@ describe('assets/view/index', () => {
       expect(groupAssets).toHaveBeenCalledWith([asset], { field: 'kind' });
     });
 
+    it('should only rerun the steps whose view conditions have changed', () => {
+      vi.mocked(sortAssets).mockImplementation((assets) => [...assets]);
+      vi.mocked(filterAssets).mockImplementation((assets) => [...assets]);
+
+      /** @type {any} */
+      const view = {
+        type: 'grid',
+        showInfo: true,
+        sort: { key: 'name', order: 'ascending' },
+        filter: { field: 'kind', pattern: 'image' },
+        group: { field: 'kind' },
+      };
+
+      // Assets of its own, so the groups aren’t equal to what an earlier test left behind
+      _publishedAssets.current = [createAsset('images/photo3.jpg')];
+      currentView.current = view;
+      void assetGroups.current;
+      vi.clearAllMocks();
+
+      // Switching to the list view leaves the conditions as they were, even though the view is a
+      // new object with copies of them
+      currentView.current = { ...structuredClone(view), type: 'list' };
+      void assetGroups.current;
+
+      expect(sortAssets).not.toHaveBeenCalled();
+      expect(filterAssets).not.toHaveBeenCalled();
+      expect(groupAssets).not.toHaveBeenCalled();
+
+      // A new filter doesn’t sort the assets again
+      currentView.current = { ...view, filter: { field: 'kind', pattern: 'video' } };
+      void assetGroups.current;
+
+      expect(sortAssets).not.toHaveBeenCalled();
+      expect(filterAssets).toHaveBeenCalledTimes(1);
+      expect(groupAssets).toHaveBeenCalledTimes(1);
+    });
+
     it('should keep the same groups when the computed groups are equal', () => {
       const groups = assetGroups.current;
 

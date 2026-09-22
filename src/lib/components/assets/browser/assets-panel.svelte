@@ -10,7 +10,7 @@
   import SubfolderStrip from '$lib/components/assets/browser/subfolder-strip.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import { getAssetKey } from '$lib/services/assets';
-  import { hasAllMatches, tokenize } from '$lib/services/search/util';
+  import { getNormalizedValueCache, hasAllMatches, tokenize } from '$lib/services/search/util';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -55,9 +55,11 @@
   // Split the search terms into individual words for filtering purposes
   const tokens = $derived(tokenize(searchTerms));
 
+  // The items are built separately from the filtering, so typing a search term reuses them instead
+  // of creating a new object for every asset, which would make every rendered preview load again
   /** @type {(Asset & { relPath: string, key: string })[]} */
-  const filteredAssets = $derived.by(() => {
-    const _assets = assets.map((asset) => {
+  const listedAssets = $derived(
+    assets.map((asset) => {
       const { folder, name, path } = asset;
 
       // Compute the relative path for display and filtering purposes. If the asset is in a folder,
@@ -69,15 +71,23 @@
       // An unsaved asset can share a path with the saved asset it’s going to overwrite, so each
       // item is identified by a unique key instead, avoiding Svelte `each` key conflicts
       return { ...asset, relPath, key: getAssetKey(asset) };
-    });
+    }),
+  );
 
-    if (tokens.length) {
-      // Filter assets by search terms in the relative path
-      return _assets.filter(({ relPath }) => hasAllMatches({ value: relPath, tokens }));
-    }
-
-    return _assets;
-  });
+  /** @type {(Asset & { relPath: string, key: string })[]} */
+  const filteredAssets = $derived(
+    tokens.length
+      ? // Filter assets by search terms in the relative path, keeping each normalized path for the
+        // next keystroke
+        listedAssets.filter((asset) =>
+          hasAllMatches({
+            value: asset.relPath,
+            tokens,
+            normalizedValueCache: getNormalizedValueCache(asset),
+          }),
+        )
+      : listedAssets,
+  );
 
   /**
    * Check if the given asset is already selected.

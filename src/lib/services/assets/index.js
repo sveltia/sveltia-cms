@@ -446,6 +446,32 @@ export const getAssetByRelativePath = ({
 };
 
 /**
+ * Cache of {@link getPublicPathRegex} results, keyed by the asset folder.
+ * @type {WeakMap<AssetFolderInfo, RegExp>}
+ */
+const publicPathRegexCache = new WeakMap();
+
+/**
+ * Get a regular expression matching a directory at or below the given folder’s public path, with
+ * any template tag in the path matching a segment.
+ * @param {AssetFolderInfo} folder Asset folder.
+ * @returns {RegExp} Regular expression.
+ */
+const getPublicPathRegex = (folder) => {
+  let regex = publicPathRegexCache.get(folder);
+
+  if (!regex) {
+    const publicPath = folder.publicPath ?? '';
+    const normalizedPath = escapeRegExp(publicPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
+
+    regex = new RegExp(`^${normalizedPath}${publicPath ? '(?=\\/|$)' : '$'}`);
+    publicPathRegexCache.set(folder, regex);
+  }
+
+  return regex;
+};
+
+/**
  * Get an asset by an absolute public path typically stored as an image field value.
  * @param {object} args Arguments.
  * @param {string} args.path Saved absolute path.
@@ -472,25 +498,13 @@ export const getAssetByAbsolutePath = ({
   }
 
   const { dirname: dirName = '', basename: baseName } = getPathInfo(path);
-  /** @type {Asset | undefined} */
-  let foundAsset = undefined;
 
-  const scanningFolders = [
-    componentName ? getAssetFolder({ componentName, typedKeyPath }) : undefined,
-    typedKeyPath ? getAssetFolder({ collectionName, fileName, typedKeyPath }) : undefined,
-    getAssetFolder({ collectionName, fileName }),
-    getAssetFolder({ collectionName }),
-    globalAssetFolder.current,
-    allAssetFolders.current.findLast((folder) => {
-      const publicPath = folder.publicPath ?? '';
-      const normalizedPath = escapeRegExp(publicPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
-
-      return dirName.match(`^${normalizedPath}${publicPath ? '(?=\\/|$)' : '$'}`);
-    }),
-  ].filter((folder) => !!folder);
-
-  // Use `find` to stop scanning folders as soon as the asset is found
-  scanningFolders.find((folder) => {
+  /**
+   * Look for the asset in the given folder.
+   * @param {AssetFolderInfo} folder Asset folder.
+   * @returns {Asset | undefined} Asset, if found.
+   */
+  const findInFolder = (folder) => {
     const { publicPath, collectionName: _collectionName } = folder;
     let { internalPath } = folder;
 
@@ -504,7 +518,7 @@ export const getAssetByAbsolutePath = ({
 
       if (internalPath === undefined) {
         // Cannot resolve the path
-        return false;
+        return undefined;
       }
     }
 
@@ -517,17 +531,40 @@ export const getAssetByAbsolutePath = ({
       }
     }
 
-    const fullPath = createPath([internalPath, baseName]);
-    const found = getAssetPathMap().get(fullPath);
+    return getAssetPathMap().get(createPath([internalPath, baseName]));
+  };
 
-    if (found) {
-      foundAsset = found;
-    }
+  const scanningFolders = /** @type {AssetFolderInfo[]} */ (
+    [
+      componentName ? getAssetFolder({ componentName, typedKeyPath }) : undefined,
+      typedKeyPath ? getAssetFolder({ collectionName, fileName, typedKeyPath }) : undefined,
+      getAssetFolder({ collectionName, fileName }),
+      getAssetFolder({ collectionName }),
+      globalAssetFolder.current,
+    ].filter((folder) => !!folder)
+  );
 
-    return !!found;
+  /** @type {Asset | undefined} */
+  let foundAsset = undefined;
+
+  // Use `some` to stop scanning folders as soon as the asset is found
+  scanningFolders.some((folder) => {
+    foundAsset = findInFolder(folder);
+
+    return !!foundAsset;
   });
 
-  return foundAsset;
+  if (foundAsset) {
+    return foundAsset;
+  }
+
+  // Fall back to the last folder whose public path matches the directory. This is only worked out
+  // once the likely folders above have missed, as it tests the path against every asset folder
+  const matchingFolder = allAssetFolders.current.findLast((folder) =>
+    getPublicPathRegex(folder).test(dirName),
+  );
+
+  return matchingFolder ? findInFolder(matchingFolder) : undefined;
 };
 
 /**

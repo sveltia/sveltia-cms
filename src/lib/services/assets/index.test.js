@@ -4196,6 +4196,11 @@ describe('assets/index', () => {
       // Asset not in allAssets → undefined; the test's purpose is to exercise the predicate
       expect(result).toBeUndefined();
 
+      // Another lookup reuses the regular expressions compiled for the folders
+      expect(
+        getAssetByAbsolutePath({ path: '/posts/images/photo.jpg', collectionName: 'posts' }),
+      ).toBeUndefined();
+
       // Restore allAssetFolders
       allAssetFolders.current = [];
     });

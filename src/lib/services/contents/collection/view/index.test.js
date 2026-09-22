@@ -244,6 +244,69 @@ describe('collection/view/index', () => {
     expect(entryGroups).toBeDefined();
   });
 
+  test('entryGroups only reruns the steps whose view conditions have changed', async () => {
+    /** @type {any} */
+    const mockEntries = [
+      { id: '1', slug: 'post-1', locales: {}, sha: 'abc', collectionName: 'posts' },
+      { id: '2', slug: 'post-2', locales: {}, sha: 'def', collectionName: 'posts' },
+    ];
+
+    vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(sortEntries).mockImplementation((entries) => [...entries]);
+    vi.mocked(filterEntries).mockImplementation((entries) => [...entries]);
+    vi.mocked(groupEntries).mockImplementation((entries) => [{ name: '*', entries }]);
+
+    _allEntries.current = mockEntries;
+    _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+    await wait();
+
+    /** @type {any} */
+    const view = {
+      type: 'list',
+      sort: { key: 'title', order: 'ascending' },
+      filters: [{ field: 'status', pattern: 'published' }],
+      group: { field: 'category' },
+    };
+
+    currentView.current = view;
+
+    const groups = entryGroups.current;
+
+    expect(sortEntries).toHaveBeenCalledTimes(1);
+    expect(filterEntries).toHaveBeenCalledTimes(1);
+    expect(groupEntries).toHaveBeenCalledTimes(1);
+
+    // Switching to the grid view and collapsing a group leave the conditions as they were, even
+    // though the view is a new object with copies of them
+    currentView.current = {
+      ...structuredClone(view),
+      type: 'grid',
+      collapsedGroups: { category: ['news'] },
+    };
+
+    expect(entryGroups.current).toBe(groups);
+    expect(sortEntries).toHaveBeenCalledTimes(1);
+    expect(filterEntries).toHaveBeenCalledTimes(1);
+    expect(groupEntries).toHaveBeenCalledTimes(1);
+
+    // A new filter doesn’t sort the entries again
+    currentView.current = { ...view, filters: [{ field: 'status', pattern: 'draft' }] };
+
+    expect(entryGroups.current).not.toBe(groups);
+    expect(sortEntries).toHaveBeenCalledTimes(1);
+    expect(filterEntries).toHaveBeenCalledTimes(2);
+    expect(groupEntries).toHaveBeenCalledTimes(2);
+
+    // A new sort order reruns every step
+    currentView.current = { ...view, sort: { key: 'title', order: 'descending' } };
+    void entryGroups.current;
+
+    expect(sortEntries).toHaveBeenCalledTimes(2);
+    expect(filterEntries).toHaveBeenCalledTimes(3);
+    expect(groupEntries).toHaveBeenCalledTimes(3);
+  });
+
   test('entryGroups skips processing for file/singleton collections', async () => {
     /** @type {any} */
     const mockEntry = { id: '1', slug: 'about', locales: {}, sha: 'abc', collectionName: 'pages' };

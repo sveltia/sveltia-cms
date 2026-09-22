@@ -1,6 +1,6 @@
 import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
-import { allEntries } from '$lib/services/contents';
+import { findEntryByPaths } from '$lib/services/contents';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { isEntryBranch } from '$lib/services/workflow/branch';
 import { getPublishMode, isWorkflowConfigured } from '$lib/services/workflow/config';
@@ -256,9 +256,7 @@ export const getPublishedVersion = (entry) => {
 
   // `allEntries` only holds published entries; an unpublished one lives in `unpublishedEntries`
   // until it’s merged
-  return allEntries.current.find((publishedEntry) =>
-    Object.values(publishedEntry.locales).some(({ path }) => paths.has(path)),
-  );
+  return findEntryByPaths(paths);
 };
 
 /**

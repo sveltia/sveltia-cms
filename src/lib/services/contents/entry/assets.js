@@ -86,35 +86,97 @@ export const getEntryThumbnail = async (collection, entry) => {
 };
 
 /**
- * Collect the folders below the given one that hold an entry of their own. In a nested collection,
- * an entry can have others stored beneath it, and each of those keeps its media in its own folder,
- * so those files belong to the descendant rather than to the entry being looked at.
- * @param {object} args Arguments.
- * @param {string} args.collectionName Name of the collection the entry belongs to.
- * @param {Entry} args.entry Entry being looked at.
- * @param {string} args.entryFolderPath Folder the entry is stored in.
- * @returns {Set<string>} Folder paths. A folder the entry shares with another one is not included,
- * because neither entry owns it.
+ * Cache of {@link getEntryIdsByFolder} results, keyed by a collection’s entry list, which keeps its
+ * identity until the entries change.
+ * @type {WeakMap<Entry[], Map<string, Set<string>>>}
  */
-const getDescendantEntryFolderPaths = ({ collectionName, entry, entryFolderPath }) => {
-  /** @type {Set<string>} */
-  const paths = new Set();
+const entryIdsByFolderCache = new WeakMap();
 
-  getEntriesByCollection(collectionName).forEach((otherEntry) => {
-    if (otherEntry.id === entry.id) {
-      return;
-    }
+/**
+ * Index the entries of the given collection by the folders their files are stored in.
+ * @param {string} collectionName Collection name.
+ * @returns {Map<string, Set<string>>} IDs of the entries with a file in each folder.
+ */
+const getEntryIdsByFolder = (collectionName) => {
+  const entries = getEntriesByCollection(collectionName);
+  let index = entryIdsByFolderCache.get(entries);
 
-    Object.values(otherEntry.locales).forEach(({ path }) => {
-      const dirPath = getPathInfo(path).dirname;
+  if (!index) {
+    /** @type {Map<string, Set<string>>} */
+    const map = new Map();
 
-      if (dirPath !== undefined && dirPath.startsWith(`${entryFolderPath}/`)) {
-        paths.add(dirPath);
+    entries.forEach(({ id, locales }) => {
+      Object.values(locales).forEach(({ path }) => {
+        const dirPath = getPathInfo(path).dirname;
+
+        if (dirPath !== undefined) {
+          getOrCreate(map, dirPath, () => new Set()).add(id);
+        }
+      });
+    });
+
+    index = map;
+    entryIdsByFolderCache.set(entries, index);
+  }
+
+  return index;
+};
+
+/**
+ * An asset along with the folder it’s stored in.
+ * @typedef {object} IndexedAsset
+ * @property {Asset} asset Asset.
+ * @property {string} dirPath Folder the asset is stored in.
+ */
+
+/**
+ * Index of `allAssets` by folder, rebuilt when the store is replaced. See
+ * {@link getAssetsBelowFolder}.
+ */
+const assetsByFolderCache = {
+  source: /** @type {Asset[] | undefined} */ (undefined),
+  /** @type {Map<string, IndexedAsset[]>} */
+  map: new Map(),
+};
+
+/**
+ * Get the assets stored in the given folder or any of its subfolders. Every asset is indexed under
+ * its own folder and each folder above it, so this is a lookup rather than a scan of the whole
+ * asset library — which would otherwise be repeated for every entry being deleted at once.
+ * @param {string} folderPath Folder path.
+ * @returns {IndexedAsset[]} Assets, in the order of `allAssets`.
+ */
+const getAssetsBelowFolder = (folderPath) => {
+  const { current: _allAssets } = allAssets;
+
+  if (_allAssets !== assetsByFolderCache.source) {
+    /** @type {Map<string, IndexedAsset[]>} */
+    const map = new Map();
+
+    _allAssets.forEach((asset) => {
+      const dirPath = getPathInfo(asset.path).dirname;
+
+      if (dirPath === undefined) {
+        return;
+      }
+
+      const item = { asset, dirPath };
+
+      // Walk up to the top-level folder
+      for (let path = dirPath; ; path = path.slice(0, path.lastIndexOf('/'))) {
+        getOrCreate(map, path, () => []).push(item);
+
+        if (!path.includes('/')) {
+          break;
+        }
       }
     });
-  });
 
-  return paths;
+    assetsByFolderCache.source = _allAssets;
+    assetsByFolderCache.map = map;
+  }
+
+  return assetsByFolderCache.map.get(folderPath) ?? [];
 };
 
 /**
@@ -182,18 +244,13 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
     );
 
     const existingPaths = new Set(assets.map(({ path }) => path));
-    const _allAssets = allAssets.current;
+    const entryIdsByFolder = getEntryIdsByFolder(collectionName);
 
     entryFolderPaths.forEach((entryFolderPath) => {
-      const descendantFolderPaths = getDescendantEntryFolderPaths({
-        collectionName,
-        entry,
-        entryFolderPath,
-      });
-
       /**
        * Check whether the given folder belongs to an entry stored below this one, which owns the
-       * files in it.
+       * files in it. In a nested collection, an entry can have others stored beneath it, and each
+       * of those keeps its media in its own folder.
        * @param {string} assetFolderPath Folder holding an asset, at or below the entry folder.
        * @returns {boolean} Result.
        */
@@ -202,7 +259,9 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
         let dirPath = assetFolderPath;
 
         while (dirPath.length > entryFolderPath.length) {
-          if (descendantFolderPaths.has(dirPath)) {
+          const entryIds = entryIdsByFolder.get(dirPath);
+
+          if (entryIds && [...entryIds].some((id) => id !== entry.id)) {
             return true;
           }
 
@@ -212,17 +271,9 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
         return false;
       };
 
-      _allAssets.forEach((asset) => {
-        const assetFolderPath = getPathInfo(asset.path).dirname;
-
-        if (
-          assetFolderPath !== undefined &&
-          // Include assets in the entry folder and its subfolders
-          (assetFolderPath === entryFolderPath ||
-            assetFolderPath.startsWith(`${entryFolderPath}/`)) &&
-          !isDescendantEntryFolder(assetFolderPath) &&
-          !existingPaths.has(asset.path)
-        ) {
+      // Include assets in the entry folder and its subfolders
+      getAssetsBelowFolder(entryFolderPath).forEach(({ asset, dirPath }) => {
+        if (!isDescendantEntryFolder(dirPath) && !existingPaths.has(asset.path)) {
           assets.push(asset);
           existingPaths.add(asset.path);
         }
