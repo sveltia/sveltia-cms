@@ -21,10 +21,12 @@ import { getRepositoryDatabase } from '$lib/services/utils/database';
  * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import {
  * Asset,
+ * AssetFolderInfo,
  * Entry,
  * EntryDraft,
  * EntrySlugVariants,
  * FileChange,
+ * FlattenedEntryContent,
  * GetFieldArgs,
  * InternalCollectionFile,
  * InternalEntryCollection,
@@ -32,6 +34,7 @@ import { getRepositoryDatabase } from '$lib/services/utils/database';
  * LocalizedEntryMap,
  * RepositoryFileInfo,
  * } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -83,6 +86,138 @@ const getNestedCanonicalSlug = ({ draft, slugs: { defaultLocaleSlug, localizedSl
 };
 
 /**
+ * Arguments shared by the normalization of an entry’s content in every locale.
+ * @typedef {object} NormalizeContentArgs
+ * @property {EntryDraft} draft Entry draft.
+ * @property {EntryDraft['files']} files Files attached to the draft, keyed by blob URL.
+ * @property {string} defaultLocaleSlug Default locale’s entry slug.
+ * @property {FileChange[]} changes File changeset, which saved assets are added to.
+ * @property {Asset[]} savingAssets List of assets to be saved.
+ * @property {GetFieldArgs} getFieldArgs Arguments to get a field configuration.
+ * @property {boolean} encodingEnabled Whether the file path encoding is enabled.
+ * @property {AssetFolderInfo} globalAssetFolder Global asset folder, which a file is saved to
+ * unless it’s associated with another folder.
+ */
+
+/**
+ * Replace the blob URLs found in a field value with the paths of the assets they point to.
+ * @param {NormalizeContentArgs & {
+ * locale: InternalLocaleCode, slug: string, content: FlattenedEntryContent, keyPath: FieldKeyPath,
+ * matches: RegExpExecArray[] }} args Arguments. `content` is modified in place, and `matches` are
+ * the blob URLs found in the value.
+ */
+const replaceBlobURLs = async ({
+  draft,
+  files,
+  defaultLocaleSlug,
+  changes,
+  savingAssets,
+  getFieldArgs,
+  encodingEnabled,
+  globalAssetFolder: _globalAssetFolder,
+  locale,
+  slug,
+  content,
+  keyPath,
+  matches,
+}) => {
+  const field = getField({ ...getFieldArgs, valueMap: content, keyPath });
+
+  const replaceBlobArgs = {
+    draft,
+    defaultLocaleSlug,
+    changes,
+    savingAssets,
+    locale,
+    slug,
+    keyPath,
+    content,
+    // Enable encoding for markdown fields to support embedded images
+    encodingEnabled:
+      field?.widget === 'richtext' || field?.widget === 'markdown' ? true : encodingEnabled,
+  };
+
+  // Replace blob URLs in File/Image fields with asset paths
+  await Promise.all(
+    matches.map(async ([blobURL]) => {
+      const { file, folder = _globalAssetFolder, replace, subfolderPath } = files[blobURL] ?? {};
+
+      if (file) {
+        await replaceBlobURL({
+          ...replaceBlobArgs,
+          file,
+          folder,
+          replace,
+          subfolderPath,
+          blobURL,
+        });
+      }
+    }),
+  );
+};
+
+/**
+ * Normalize a field value for saving: remove an undefined value, trim a string, and replace the
+ * blob URLs in it with asset paths.
+ * @param {NormalizeContentArgs & {
+ * locale: InternalLocaleCode, slug: string, content: FlattenedEntryContent, keyPath: FieldKeyPath,
+ * value: any }} args Arguments. `content` is modified in place.
+ */
+const normalizeFieldValue = async ({ keyPath, value, ...args }) => {
+  const { content } = args;
+
+  if (value === undefined) {
+    delete content[keyPath];
+
+    return;
+  }
+
+  if (typeof value !== 'string') {
+    return;
+  }
+
+  // Remove leading & trailing whitespace
+  content[keyPath] = value.trim();
+
+  const matches = [...value.matchAll(getBlobRegex('g'))];
+
+  if (!matches.length) {
+    return;
+  }
+
+  await replaceBlobURLs({ ...args, keyPath, matches });
+};
+
+/**
+ * Normalize an entry’s content in a locale for saving: add the canonical slug and an alias, then
+ * normalize each field value.
+ * @param {NormalizeContentArgs & {
+ * locale: InternalLocaleCode, slug: string, path: string, content: FlattenedEntryContent,
+ * canonicalSlug: string | undefined, canonicalSlugKey: string }} args Arguments. `content` is
+ * modified in place.
+ */
+const normalizeLocaleContent = async ({ path, canonicalSlug, canonicalSlugKey, ...args }) => {
+  const { draft, locale, slug, content } = args;
+
+  // Add the canonical slug only when it’s defined; if it’s undefined (e.g. the slug template
+  // has no `| localize` filter), skip the assignment to avoid wiping a user-defined field
+  // that happens to share the same key (e.g. `translationKey`).
+  if (canonicalSlug !== undefined) {
+    content[canonicalSlugKey] = canonicalSlug;
+  }
+
+  // Keep links to the entry’s previous path working after the slug has been edited
+  addAlias({ draft, locale, content, slug, path });
+
+  // Normalize data
+  await Promise.all(
+    Object.entries(content).map(([keyPath, value]) =>
+      normalizeFieldValue({ ...args, keyPath, value }),
+    ),
+  );
+};
+
+/**
  * Create base saving entry data.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -118,8 +253,19 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
   const { encode_file_path: encodingEnabled = false } = cmsConfig.current?.output ?? {};
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap: {}, isIndexFile };
-  const replaceBlobBaseArgs = { draft, defaultLocaleSlug, changes, savingAssets };
   const canonicalSlug = getNestedCanonicalSlug({ draft, slugs }) ?? slugs.canonicalSlug;
+
+  /** @type {NormalizeContentArgs} */
+  const normalizeArgs = {
+    draft,
+    files,
+    defaultLocaleSlug,
+    changes,
+    savingAssets,
+    getFieldArgs,
+    encodingEnabled,
+    globalAssetFolder: _globalAssetFolder,
+  };
 
   const localizedEntryMap = Object.fromEntries(
     await Promise.all(
@@ -132,77 +278,15 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
           return [locale, { path }];
         }
 
-        // Add the canonical slug only when it’s defined; if it’s undefined (e.g. the slug template
-        // has no `| localize` filter), skip the assignment to avoid wiping a user-defined field
-        // that happens to share the same key (e.g. `translationKey`).
-        if (canonicalSlug !== undefined) {
-          content[canonicalSlugKey] = canonicalSlug;
-        }
-
-        // Keep links to the entry’s previous path working after the slug has been edited
-        addAlias({ draft, locale, content, slug, path });
-
-        // Normalize data
-        await Promise.all(
-          Object.entries(content).map(async ([keyPath, value]) => {
-            if (value === undefined) {
-              delete content[keyPath];
-
-              return;
-            }
-
-            if (typeof value !== 'string') {
-              return;
-            }
-
-            // Remove leading & trailing whitespace
-            content[keyPath] = value.trim();
-
-            const matches = [...value.matchAll(getBlobRegex('g'))];
-
-            if (!matches.length) {
-              return;
-            }
-
-            const field = getField({ ...getFieldArgs, valueMap: content, keyPath });
-
-            const replaceBlobArgs = {
-              ...replaceBlobBaseArgs,
-              locale,
-              slug,
-              keyPath,
-              content,
-              // Enable encoding for markdown fields to support embedded images
-              encodingEnabled:
-                field?.widget === 'richtext' || field?.widget === 'markdown'
-                  ? true
-                  : encodingEnabled,
-            };
-
-            // Replace blob URLs in File/Image fields with asset paths
-            await Promise.all(
-              matches.map(async ([blobURL]) => {
-                const {
-                  file,
-                  folder = _globalAssetFolder,
-                  replace,
-                  subfolderPath,
-                } = files[blobURL] ?? {};
-
-                if (file) {
-                  await replaceBlobURL({
-                    ...replaceBlobArgs,
-                    file,
-                    folder,
-                    replace,
-                    subfolderPath,
-                    blobURL,
-                  });
-                }
-              }),
-            );
-          }),
-        );
+        await normalizeLocaleContent({
+          ...normalizeArgs,
+          locale,
+          slug,
+          path,
+          content,
+          canonicalSlug,
+          canonicalSlugKey,
+        });
 
         return [locale, { slug, path, content: toRaw(content) }];
       }),
