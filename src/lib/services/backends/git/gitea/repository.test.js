@@ -174,7 +174,10 @@ describe('Gitea Repository Service', () => {
       fetchAPIMock.mockResolvedValue(mockRepoInfo);
 
       await expect(fetchDefaultBranchName()).rejects.toThrow(
-        'Failed to retrieve the default branch name.',
+        expect.objectContaining({
+          message: 'Failed to retrieve the default branch name.',
+          cause: expect.objectContaining({ message: 'repository_empty' }),
+        }),
       );
     });
 
@@ -184,7 +187,10 @@ describe('Gitea Repository Service', () => {
       fetchAPIMock.mockResolvedValue(mockRepoInfo);
 
       await expect(fetchDefaultBranchName()).rejects.toThrow(
-        'Failed to retrieve the default branch name.',
+        expect.objectContaining({
+          message: 'Failed to retrieve the default branch name.',
+          cause: expect.objectContaining({ message: 'repository_empty' }),
+        }),
       );
     });
 
@@ -192,7 +198,10 @@ describe('Gitea Repository Service', () => {
       fetchAPIMock.mockRejectedValue(new Error('Network error'));
 
       await expect(fetchDefaultBranchName()).rejects.toThrow(
-        'Failed to retrieve the default branch name.',
+        expect.objectContaining({
+          message: 'Failed to retrieve the default branch name.',
+          cause: expect.objectContaining({ message: 'repository_not_found' }),
+        }),
       );
     });
 

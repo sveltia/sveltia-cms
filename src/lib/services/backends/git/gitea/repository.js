@@ -1,7 +1,10 @@
 import { _ } from '@sveltia/i18n';
 
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
+import {
+  applyDefaultBranch,
+  REPOSITORY_INFO_PLACEHOLDER,
+} from '$lib/services/backends/git/shared/repository';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
@@ -89,23 +92,13 @@ export const checkRepositoryAccess = async () => {
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
 export const fetchDefaultBranchName = async () => {
-  const { repo, repoURL = '' } = repository;
+  // A request that fails means the repository could not be read at all, which `applyDefaultBranch`
+  // reports as a missing repository; a repository that was read but has no default branch is empty
+  const info = await getRepositoryInfo().catch(() => undefined);
 
-  try {
-    const { default_branch: branch } = await getRepositoryInfo();
-
-    if (!branch) {
-      throw new Error('Failed to retrieve the default branch name.', {
-        cause: new Error(_('repository_empty', { values: { repo } })),
-      });
-    }
-
-    Object.assign(repository, { branch }, getBaseURLs(repoURL, branch));
-
-    return branch;
-  } catch {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(_('repository_not_found', { values: { repo } })),
-    });
-  }
+  return applyDefaultBranch(repository, {
+    found: !!info,
+    branch: info?.default_branch,
+    getBaseURLs,
+  });
 };
