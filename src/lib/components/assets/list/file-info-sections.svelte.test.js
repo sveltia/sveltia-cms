@@ -24,7 +24,7 @@ describe('FileInfoSections', () => {
       size: 13,
     });
 
-    expect(getSections(container)).toEqual({ Kind: 'text/plain', Size: '⁨13⁩ bytes' });
+    expect(getSections(container)).toEqual({ Kind: 'text/plain', Size: '\u206813\u2069 bytes' });
   });
 
   test('shows the dimensions of an image once read', async () => {
