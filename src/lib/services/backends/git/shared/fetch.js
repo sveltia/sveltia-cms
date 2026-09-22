@@ -41,6 +41,16 @@ import { createRawState } from '$lib/services/utils/state.svelte';
  */
 
 /**
+ * @typedef {(fetchingFiles: BaseFileListItem[]) => Promise<RepositoryContentsMap>
+ * } FetchFileContentsFunction
+ */
+
+/**
+ * @typedef {(fetchingFiles: BaseFileListItem[]) => Promise<RepositoryMetadataMap>
+ * } FetchFileMetadataFunction
+ */
+
+/**
  * Head commit of the configured branch that the loaded site data reflects: the commit the files
  * were fetched at, or the user’s own latest commit. Comparing it with the branch’s current head
  * tells whether someone else has pushed since. Empty until the site data has been loaded, and for a
@@ -133,15 +143,17 @@ export const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
 };
 
 /**
- * Parse file info and add additional metadata, such as name, size, and text content.
+ * Complete file info with the size, text content and commit metadata fetched for the file.
  * @param {object} args Arguments.
  * @param {BaseFileListItem} args.fileInfo File info.
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of fetched file metadata and content.
- * @returns {BaseFileListItem} Parsed file with additional metadata.
+ * @returns {BaseFileListItem} Completed file info.
  */
 export const parseFileInfo = ({ fileInfo, fetchedFileMap }) => {
-  // Some backends only provide the `size` or `text` in the 2nd request (`fetchFileContents`), so
-  // we need to set them here if they are not already defined
+  // The file list only has what the backend lists, plus what was restored from the cache. The
+  // rest comes from `fetchFileContents`: some backends only provide the `size` there, and it’s
+  // where the `text` of an uncached file comes from, as well as its `meta` unless the metadata is
+  // fetched in a separate pass, which fills it in later with `applyFileMetadata`
   const { meta, size, text } = fetchedFileMap[fileInfo.path] ?? {};
 
   return {
@@ -308,56 +320,18 @@ const deferRejection = (promise) => {
 };
 
 /**
- * Fetch file list from a backend service, download/parse all the entry files, then cache them in
- * the {@link allEntries} and {@link allAssets} stores.
+ * Start reading the meta and file cache databases.
  * @param {object} args Arguments.
- * @param {RepositoryInfo} args.repository Repository info.
- * @param {() => Promise<void>} [args.checkAccess] Function to check that the user can read the
- * repository, throwing if not. It only needs the signed-in user, so it runs at the same time as the
- * branch and commit requests below rather than before them, saving a round trip on every start.
- * Its error takes precedence over theirs, as a missing branch is usually a symptom of no access.
- * @param {() => Promise<string>} args.fetchDefaultBranchName Function to fetch the repository’s
- * default branch name.
- * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit Function to fetch
- * the last commit’s SHA-1 hash and message.
- * @param {FetchFileListFunction} args.fetchFileList Function to fetch the repository’s complete
- * file list.
- * @param {(fetchingFiles: BaseFileListItem[]) => Promise<RepositoryContentsMap>
- * } args.fetchFileContents Function to fetch the metadata of entry/asset files as well as text file
- * contents. If {@link fetchFileMetadata} is given, this is expected to leave the metadata out.
- * @param {(fetchingFiles: BaseFileListItem[]) => Promise<RepositoryMetadataMap>
- * } [args.fetchFileMetadata] Function to fetch the commit metadata of entry/asset files separately.
- * Looking up the last commit of every file is by far the slowest part of a cold start on some
- * services, and nothing in the UI needs it right away, so with this the contents are shown as soon
- * as they arrive and the metadata is filled in afterwards.
+ * @param {IndexedDB} args.metaDB The meta database instance.
+ * @param {IndexedDB} args.cacheDB The cache database instance.
+ * @returns {Promise<{ metaEntries: [string, any][], cachedFileEntries: [string, any][] }>} Entries
+ * read from the databases.
  */
-export const fetchAndParseFiles = async ({
-  repository,
-  checkAccess,
-  fetchDefaultBranchName,
-  fetchLastCommit,
-  fetchFileList,
-  fetchFileContents,
-  fetchFileMetadata,
-}) => {
-  const { service, owner, repo, databaseName, branch: branchName } = repository;
-  const log = createDebugLogger('Loading site data');
-
-  log(`Started: ${service} ${owner}/${repo}`);
-
-  const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
-  const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
-
-  // The access was verified when the data was first loaded; a later call only brings it up to date
-  const accessPromise =
-    checkAccess && !repositoryHead.current ? deferRejection(checkAccess()) : undefined;
-
-  // Start reading the databases right away, but only wait for them once the last commit is known,
-  // so the reads — the file cache holds the text of every entry — overlap the network round trips
-  // below instead of delaying them. The two stores are opened one after the other, though: both
-  // live in the same database, and on a brand-new one two instances opening it at the same time
-  // race to create their stores, which leaves one of them with a connection missing its store
-  const databaseEntriesPromise = deferRejection(
+const readDatabaseEntries = ({ metaDB, cacheDB }) =>
+  // The two stores are opened one after the other: both live in the same database, and on a
+  // brand-new one two instances opening it at the same time race to create their stores, which
+  // leaves one of them with a connection missing its store
+  deferRejection(
     (async () => {
       const cachedFileEntries = await cacheDB.entries();
       const metaEntries = await metaDB.entries();
@@ -366,7 +340,27 @@ export const fetchAndParseFiles = async ({
     })(),
   );
 
-  let branch = branchName;
+/**
+ * Determine the branch if not configured, and fetch its last commit.
+ * @param {object} args Arguments.
+ * @param {RepositoryInfo} args.repository Repository info. Its `branch` is set to the default
+ * branch if not configured.
+ * @param {Promise<void> | undefined} args.accessPromise Access check in progress, if any.
+ * @param {() => Promise<string>} args.fetchDefaultBranchName Function to fetch the repository’s
+ * default branch name.
+ * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit Function to fetch
+ * the last commit’s SHA-1 hash and message.
+ * @param {DebugLogger} args.log Function to trace the loading in the console.
+ * @returns {Promise<{ hash: string, message: string }>} Last commit’s SHA-1 hash and message.
+ */
+const resolveHead = async ({
+  repository,
+  accessPromise,
+  fetchDefaultBranchName,
+  fetchLastCommit,
+  log,
+}) => {
+  let { branch } = repository;
 
   if (!branch) {
     // Only the request is started here; the access check is settled first, so that its error is
@@ -387,37 +381,34 @@ export const fetchAndParseFiles = async ({
 
   await accessPromise;
 
-  const { hash: lastCommitHash, message } = await lastCommitPromise;
+  const lastCommit = await lastCommitPromise;
 
-  log(`Fetched the last commit on ${branch}: ${lastCommitHash}`);
+  log(`Fetched the last commit on ${branch}: ${lastCommit.hash}`);
 
-  const { metaEntries, cachedFileEntries } = await databaseEntriesPromise;
+  return lastCommit;
+};
 
-  log(`Read the file cache: ${cachedFileEntries.length} files`);
-
-  const fileList = await getFileList({
-    metaDB,
-    metaEntries,
-    lastCommitHash,
-    cachedFileEntries,
-    fetchFileList,
-    log,
-  });
-
-  // What the message says is only what the author asked for. It’s the answer until the CI/CD
-  // provider is asked about the commit, which `isLastCommitPublished` prefers once it has one
-  setLastCommitPublishHint(!hasSkipCIMarker(message));
-
-  // Skip fetching files if no files found
-  if (!fileList.count) {
-    updateStores({ entries: [], assets: [], configFiles: [] });
-    repositoryHead.current = lastCommitHash;
-    log('The site data is ready: no files to load');
-
-    return;
-  }
-
-  const { entryFiles, assetFiles, configFiles, allFiles } = fileList;
+/**
+ * Restore the cached files, and fetch the contents of the rest.
+ * @param {object} args Arguments.
+ * @param {BaseFileList} args.fileList Repository’s file list.
+ * @param {[string, any][]} args.cachedFileEntries Cached file entries.
+ * @param {FetchFileContentsFunction} args.fetchFileContents Function to fetch the metadata of
+ * entry/asset files as well as text file contents.
+ * @param {FetchFileMetadataFunction} [args.fetchFileMetadata] Function to fetch the commit metadata
+ * of entry/asset files separately.
+ * @param {DebugLogger} args.log Function to trace the loading in the console.
+ * @returns {Promise<{ cachedFiles: RepositoryContentsMap, changedPaths: Set<string>, fetchingFiles:
+ * BaseFileListItem[], fetchedFileMap: RepositoryContentsMap }>} Cached files, paths of the files
+ * changed since the last fetch, files being fetched, and what’s known about them.
+ */
+const loadContents = async ({
+  fileList: { allFiles },
+  cachedFileEntries,
+  fetchFileContents,
+  fetchFileMetadata,
+  log,
+}) => {
   /** @type {RepositoryContentsMap} */
   const cachedFiles = Object.fromEntries(cachedFileEntries);
 
@@ -459,6 +450,22 @@ export const fetchAndParseFiles = async ({
     );
   }
 
+  return { cachedFiles, changedPaths, fetchingFiles, fetchedFileMap };
+};
+
+/**
+ * Parse the entry, asset and config files in the file list.
+ * @param {object} args Arguments.
+ * @param {BaseFileList} args.fileList Repository’s file list.
+ * @param {RepositoryContentsMap} args.fetchedFileMap Map of fetched file metadata and content.
+ * @returns {Promise<{ entries: Entry[], errors: Error[], assets: Asset[], configFiles:
+ * BaseConfigListItem[] }>} Parsed entries, errors encountered while parsing them, assets and config
+ * files.
+ */
+const parseFiles = async ({
+  fileList: { entryFiles, assetFiles, configFiles },
+  fetchedFileMap,
+}) => {
   const { entries, errors } = await prepareEntries(
     entryFiles.map(
       (fileInfo) => /** @type {BaseEntryListItem} */ (parseFileInfo({ fileInfo, fetchedFileMap })),
@@ -475,13 +482,31 @@ export const fetchAndParseFiles = async ({
     (fileInfo) => /** @type {BaseConfigListItem} */ (parseFileInfo({ fileInfo, fetchedFileMap })),
   );
 
-  log(`Parsed ${entries.length} entries (${errors.length} errors)`);
-  updateStores({ entries, assets, configFiles: configFileItems, errors, changedPaths });
-  // Recorded once the stores reflect the commit, so a check made in the meantime still sees the
-  // previous head and knows the data isn’t there yet
-  repositoryHead.current = lastCommitHash;
-  log('The site data is ready');
+  return { entries, errors, assets, configFiles: configFileItems };
+};
 
+/**
+ * Cache the fetched files, completing them with their commit metadata first if it’s fetched in a
+ * separate pass.
+ * @param {object} args Arguments.
+ * @param {IndexedDB} args.cacheDB The cache database instance.
+ * @param {BaseFileListItem[]} args.allFiles List of all files in the repository.
+ * @param {RepositoryContentsMap} args.cachedFiles Cached files object.
+ * @param {BaseFileListItem[]} args.fetchingFiles List of files being fetched.
+ * @param {RepositoryContentsMap} args.fetchedFileMap Map of newly fetched file data.
+ * @param {FetchFileMetadataFunction} [args.fetchFileMetadata] Function to fetch the commit metadata
+ * of entry/asset files separately.
+ * @param {DebugLogger} args.log Function to trace the loading in the console.
+ */
+const completeMetadata = async ({
+  cacheDB,
+  allFiles,
+  cachedFiles,
+  fetchingFiles,
+  fetchedFileMap,
+  fetchFileMetadata,
+  log,
+}) => {
   // Whether the cache written below is complete, or missing the metadata of the fetched files
   let metadataFetched = true;
 
@@ -514,4 +539,115 @@ export const fetchAndParseFiles = async ({
       : `Cached ${fetchingFiles.length} files without their metadata; they are fetched again ` +
           'next time',
   );
+};
+
+/**
+ * Fetch file list from a backend service, download/parse all the entry files, then cache them in
+ * the {@link allEntries} and {@link allAssets} stores.
+ * @param {object} args Arguments.
+ * @param {RepositoryInfo} args.repository Repository info.
+ * @param {() => Promise<void>} [args.checkAccess] Function to check that the user can read the
+ * repository, throwing if not. It only needs the signed-in user, so it runs at the same time as the
+ * branch and commit requests below rather than before them, saving a round trip on every start.
+ * Its error takes precedence over theirs, as a missing branch is usually a symptom of no access.
+ * @param {() => Promise<string>} args.fetchDefaultBranchName Function to fetch the repository’s
+ * default branch name.
+ * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit Function to fetch
+ * the last commit’s SHA-1 hash and message.
+ * @param {FetchFileListFunction} args.fetchFileList Function to fetch the repository’s complete
+ * file list.
+ * @param {FetchFileContentsFunction} args.fetchFileContents Function to fetch the metadata of
+ * entry/asset files as well as text file contents. If {@link fetchFileMetadata} is given, this is
+ * expected to leave the metadata out.
+ * @param {FetchFileMetadataFunction} [args.fetchFileMetadata] Function to fetch the commit metadata
+ * of entry/asset files separately. Looking up the last commit of every file is by far the slowest
+ * part of a cold start on some services, and nothing in the UI needs it right away, so with this
+ * the contents are shown as soon as they arrive and the metadata is filled in afterwards.
+ */
+export const fetchAndParseFiles = async ({
+  repository,
+  checkAccess,
+  fetchDefaultBranchName,
+  fetchLastCommit,
+  fetchFileList,
+  fetchFileContents,
+  fetchFileMetadata,
+}) => {
+  const { service, owner, repo, databaseName } = repository;
+  const log = createDebugLogger('Loading site data');
+
+  log(`Started: ${service} ${owner}/${repo}`);
+
+  const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
+  const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
+
+  // The access was verified when the data was first loaded; a later call only brings it up to date
+  const accessPromise =
+    checkAccess && !repositoryHead.current ? deferRejection(checkAccess()) : undefined;
+
+  // Start reading the databases right away, but only wait for them once the last commit is known,
+  // so the reads — the file cache holds the text of every entry — overlap the network round trips
+  // below instead of delaying them
+  const databaseEntriesPromise = readDatabaseEntries({ metaDB, cacheDB });
+
+  const { hash: lastCommitHash, message } = await resolveHead({
+    repository,
+    accessPromise,
+    fetchDefaultBranchName,
+    fetchLastCommit,
+    log,
+  });
+
+  const { metaEntries, cachedFileEntries } = await databaseEntriesPromise;
+
+  log(`Read the file cache: ${cachedFileEntries.length} files`);
+
+  const fileList = await getFileList({
+    metaDB,
+    metaEntries,
+    lastCommitHash,
+    cachedFileEntries,
+    fetchFileList,
+    log,
+  });
+
+  // What the message says is only what the author asked for. It’s the answer until the CI/CD
+  // provider is asked about the commit, which `isLastCommitPublished` prefers once it has one
+  setLastCommitPublishHint(!hasSkipCIMarker(message));
+
+  // Skip fetching files if no files found
+  if (!fileList.count) {
+    updateStores({ entries: [], assets: [], configFiles: [] });
+    repositoryHead.current = lastCommitHash;
+    log('The site data is ready: no files to load');
+
+    return;
+  }
+
+  const { cachedFiles, changedPaths, fetchingFiles, fetchedFileMap } = await loadContents({
+    fileList,
+    cachedFileEntries,
+    fetchFileContents,
+    fetchFileMetadata,
+    log,
+  });
+
+  const { entries, errors, assets, configFiles } = await parseFiles({ fileList, fetchedFileMap });
+
+  log(`Parsed ${entries.length} entries (${errors.length} errors)`);
+  updateStores({ entries, assets, configFiles, errors, changedPaths });
+  // Recorded once the stores reflect the commit, so a check made in the meantime still sees the
+  // previous head and knows the data isn’t there yet
+  repositoryHead.current = lastCommitHash;
+  log('The site data is ready');
+
+  await completeMetadata({
+    cacheDB,
+    allFiles: fileList.allFiles,
+    cachedFiles,
+    fetchingFiles,
+    fetchedFileMap,
+    fetchFileMetadata,
+    log,
+  });
 };
