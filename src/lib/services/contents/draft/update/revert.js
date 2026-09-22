@@ -1,4 +1,5 @@
 import { getField } from '$lib/services/contents/entry/fields';
+import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs';
 import { isNumeric } from '$lib/services/utils/number';
@@ -70,7 +71,7 @@ export const revertFields = ({
   const { valueMap = {} } = getFieldArgs;
 
   Object.entries(valueMap).forEach(([_keyPath, value]) => {
-    if (!keyPath || _keyPath.startsWith(keyPath)) {
+    if (!keyPath || isKeyPathWithin(_keyPath, keyPath)) {
       const fieldConfig =
         getField({ ...getFieldArgs, keyPath: _keyPath }) ??
         // A KeyValue pair is governed by its field

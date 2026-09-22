@@ -6,7 +6,6 @@ import {
   fetchBlob,
   fetchBlobBatch,
   fetchBlobs,
-  fetchCommits,
   fetchFileContents,
   fetchFileList,
   fetchFiles,
@@ -142,286 +141,30 @@ describe('GitLab files service', () => {
     });
   });
 
-  describe('fetchCommits', () => {
-    test('fetches commits for files and returns Record mapping paths to commits', async () => {
-      const paths = ['file1.md', 'file2.md'];
-
-      const mockResponse = {
-        project: {
-          repository: {
-            tree_0: {
-              lastCommit: {
-                author: { id: 'user1', username: 'testuser' },
-                authorName: 'Test User',
-                authorEmail: 'test@example.com',
-                committedDate: '2023-01-01T00:00:00Z',
-              },
-            },
-            tree_1: {
-              lastCommit: {
-                author: null,
-                authorName: 'Anonymous',
-                authorEmail: 'anon@example.com',
-                committedDate: '2023-01-02T00:00:00Z',
-              },
-            },
-          },
-        },
-      };
-
-      vi.mocked(fetchGraphQL).mockResolvedValue(mockResponse);
-
-      const result = await fetchCommits(paths);
-
-      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
-      expect(result['file1.md']).toEqual({
-        author: { id: 'user1', username: 'testuser' },
-        authorName: 'Test User',
-        authorEmail: 'test@example.com',
-        committedDate: '2023-01-01T00:00:00Z',
-      });
-      expect(result['file2.md']).toEqual({
-        author: null,
-        authorName: 'Anonymous',
-        authorEmail: 'anon@example.com',
-        committedDate: '2023-01-02T00:00:00Z',
-      });
-    });
-
-    test('handles large number of paths with multiple batches', async () => {
-      const paths = Array.from({ length: 20 }, (_, i) => `file${i}.md`);
-
-      const mockResponse1 = {
-        project: {
-          repository: Array.from({ length: 13 }, (_, i) => ({
-            [`tree_${i}`]: {
-              lastCommit: {
-                author: null,
-                authorName: `Author ${i + 1}`,
-                authorEmail: `author${i + 1}@example.com`,
-                committedDate: '2023-01-01T00:00:00Z',
-              },
-            },
-          })).reduce((acc, curr) => ({ ...acc, ...curr }), {}),
-        },
-      };
-
-      const mockResponse2 = {
-        project: {
-          repository: Array.from({ length: 7 }, (_, i) => ({
-            [`tree_${i}`]: {
-              lastCommit: {
-                author: null,
-                authorName: `Author ${i + 14}`,
-                authorEmail: `author${i + 14}@example.com`,
-                committedDate: '2023-01-01T00:00:00Z',
-              },
-            },
-          })).reduce((acc, curr) => ({ ...acc, ...curr }), {}),
-        },
-      };
-
-      vi.mocked(fetchGraphQL)
-        .mockResolvedValueOnce(mockResponse1)
-        .mockResolvedValueOnce(mockResponse2);
-
-      const result = await fetchCommits(paths);
-
-      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
-      expect(Object.keys(result)).toHaveLength(20);
-      expect(result['file0.md']).toBeDefined();
-      expect(result['file19.md']).toBeDefined();
-    });
-  });
-
   describe('parseFileContents', () => {
-    test('parses file contents with commit metadata', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
-      ]);
-
-      const sizes = { 'file1.md': { size: '100' } };
-      const blobs = { 'file1.md': { rawTextBlob: 'file content' } };
-
-      const commits = {
-        'file1.md': {
-          author: { id: 'gid://gitlab/User/123', username: 'testuser' },
-          authorName: 'Test User',
-          authorEmail: 'test@example.com',
-          committedDate: '2023-01-01T00:00:00Z',
-        },
-      };
-
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
-
-      expect(result['file1.md']).toEqual({
-        sha: 'sha1',
-        size: 100,
-        text: 'file content',
-        meta: {
-          commitAuthor: {
-            name: 'Test User',
-            email: 'test@example.com',
-            id: 123,
-            login: 'testuser',
-          },
-          committedDate: new Date('2023-01-01T00:00:00Z'),
-        },
-      });
-    });
-
-    test('parses file contents with null author', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
-      ]);
-
-      const sizes = { 'file1.md': { size: '200' } };
-      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs });
-
-      expect(result['file1.md']).toEqual({
-        sha: 'sha1',
-        size: 200,
-        text: 'content',
-        meta: {},
-      });
-    });
-
-    test('handles commit with null author (L283 binary-expr — author ?? {})', async () => {
-      // When author is null, `author ?? {}` uses the fallback {}, so id and username are undefined.
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
-      ]);
-
-      const sizes = { 'file1.md': { size: '50' } };
-      const blobs = { 'file1.md': { rawTextBlob: 'data' } };
-
-      const commits = {
-        'file1.md': {
-          author: null, // triggers author ?? {} fallback
-          authorName: 'No Author',
-          authorEmail: 'none@example.com',
-          committedDate: '2024-01-01T00:00:00Z',
-        },
-      };
-
-      const result = await parseFileContents({
-        fetchingFiles,
-        sizes,
-        blobs,
-        commits,
-      });
-
-      expect(result['file1.md'].meta?.commitAuthor).toEqual({
-        name: 'No Author',
-        email: 'none@example.com',
-        id: undefined,
-        login: undefined,
-      });
-    });
-
-    test('handles multiple files with mixed commit data', async () => {
+    test('parses the text contents of the files', () => {
       const fetchingFiles = /** @type {any[]} */ ([
         { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
         { path: 'file2.md', sha: 'sha2', size: 0, name: 'file2.md' },
       ]);
 
-      const sizes = {
-        'file1.md': { size: '100' },
-        'file2.md': { size: '200' },
-      };
+      const blobs = { 'file1.md': { rawTextBlob: 'content1' }, 'file2.md': { rawTextBlob: '' } };
 
-      const blobs = {
-        'file1.md': { rawTextBlob: 'content1' },
-        'file2.md': { rawTextBlob: 'content2' },
-      };
-
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs });
-
-      expect(result['file1.md']).toBeDefined();
-      expect(result['file2.md']).toBeDefined();
-      expect(result['file1.md'].size).toBe(100);
-      expect(result['file2.md'].size).toBe(200);
-    });
-
-    test('parses file contents without commits', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
-      ]);
-
-      const sizes = { 'file1.md': { size: '50' } };
-      const blobs = { 'file1.md': { rawTextBlob: 'minimal' } };
-      const commits = /** @type {Record<string, any>} */ ({});
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
-
-      expect(result['file1.md']).toEqual({
-        sha: 'sha1',
-        size: 50,
-        text: 'minimal',
-        meta: {},
+      expect(parseFileContents({ fetchingFiles, blobs })).toEqual({
+        'file1.md': { sha: 'sha1', size: 0, text: 'content1', meta: {} },
+        'file2.md': { sha: 'sha2', size: 0, text: '', meta: {} },
       });
     });
 
-    test('handles conversion of size from string to number', async () => {
+    test('leaves the text undefined for a file without a blob', () => {
       const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
+        { path: 'image.png', sha: 'sha1', size: 0, name: 'image.png' },
       ]);
 
-      const sizes = { 'file1.md': { size: '12345' } };
-      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs });
+      const blobs = /** @type {Record<string, any>} */ ({ 'image.png': { rawTextBlob: null } });
 
-      expect(result['file1.md'].size).toBe(12345);
-      expect(typeof result['file1.md'].size).toBe('number');
-    });
-
-    test('handles invalid author id with non-numeric characters', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
-      ]);
-
-      const sizes = { 'file1.md': { size: '100' } };
-      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
-
-      const commits = {
-        'file1.md': {
-          author: { id: 'invalid-non-numeric-id', username: 'testuser' },
-          authorName: 'Test User',
-          authorEmail: 'test@example.com',
-          committedDate: '2023-01-01T00:00:00Z',
-        },
-      };
-
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs, commits });
-
-      expect(result['file1.md']?.meta?.commitAuthor?.id).toBeUndefined();
-      expect(result['file1.md']?.meta?.commitAuthor?.login).toBe('testuser');
-    });
-
-    test('handles missing blob text for file', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
-      ]);
-
-      const sizes = { 'file1.md': { size: '100' } };
-      const blobs = /** @type {Record<string, any>} */ ({});
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs });
-
-      expect(result['file1.md'].text).toBeUndefined();
-      expect(result['file1.md'].size).toBe(100);
-    });
-
-    test('handles missing size for file and defaults to 0', async () => {
-      const fetchingFiles = /** @type {any[]} */ ([
-        { path: 'file1.md', sha: 'sha1', size: 0, name: 'file1.md' },
-      ]);
-
-      const sizes = /** @type {Record<string, any>} */ ({});
-      const blobs = { 'file1.md': { rawTextBlob: 'content' } };
-      const result = await parseFileContents({ fetchingFiles, sizes, blobs });
-
-      expect(result['file1.md'].size).toBe(0);
-      expect(result['file1.md'].text).toBe('content');
+      expect(parseFileContents({ fetchingFiles, blobs })['image.png'].text).toBeUndefined();
+      expect(parseFileContents({ fetchingFiles, blobs: {} })['image.png'].text).toBeUndefined();
     });
   });
 

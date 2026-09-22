@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 
-import { getKeysByPrefix, getListItemKeys } from '$lib/services/contents/entry/key-paths';
+import {
+  getKeysByPrefix,
+  getListItemKeys,
+  isKeyPathWithin,
+} from '$lib/services/contents/entry/key-paths';
 
 describe('getKeysByPrefix()', () => {
   test('returns the keys under the prefix in the value map’s own order', () => {
@@ -112,5 +116,19 @@ describe('getListItemKeys()', () => {
       'authors.0',
       'authors.1',
     ]);
+  });
+});
+
+describe('isKeyPathWithin()', () => {
+  test('matches the root itself and its descendants', () => {
+    expect(isKeyPathWithin('tag', 'tag')).toBe(true);
+    expect(isKeyPathWithin('tag.0', 'tag')).toBe(true);
+    expect(isKeyPathWithin('authors.0.name', 'authors')).toBe(true);
+  });
+
+  test('doesn’t match a sibling whose name begins with the root’s', () => {
+    expect(isKeyPathWithin('tags', 'tag')).toBe(false);
+    expect(isKeyPathWithin('tagline', 'tag')).toBe(false);
+    expect(isKeyPathWithin('title_suffix', 'title')).toBe(false);
   });
 });

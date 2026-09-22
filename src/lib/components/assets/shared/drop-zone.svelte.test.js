@@ -238,7 +238,7 @@ describe('DropZone', () => {
       .element(page.getByRole('alert'))
       .toHaveTextContent(
         'The dropped file is not supported. Only an image of the following types is accepted: ' +
-          '\u2068GIF, JPEG, PNG, WebP, or SVG\u2069. Please try again.',
+          '\u2068AVIF, GIF, JPEG, PNG, WebP, or SVG\u2069. Please try again.',
       );
   });
 

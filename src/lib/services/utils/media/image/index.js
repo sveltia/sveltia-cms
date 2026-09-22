@@ -42,21 +42,35 @@ export const SUPPORTED_IMAGE_TYPES = [...RASTER_IMAGE_TYPES, ...VECTOR_IMAGE_TYP
 export const SUPPORTED_IMAGE_TYPES_WITH_HEIC = [...SUPPORTED_IMAGE_TYPES, ...HEIC_IMAGE_TYPES];
 
 /**
+ * Display labels of the supported image formats.
+ * @type {Record<RasterImageFormat | VectorImageFormat, string>}
+ */
+const IMAGE_FORMAT_LABELS = {
+  avif: 'AVIF',
+  gif: 'GIF',
+  heic: 'HEIC',
+  jpeg: 'JPEG',
+  png: 'PNG',
+  webp: 'WebP',
+  svg: 'SVG',
+};
+
+/**
  * Get the labels of the image formats an `accept` list built from {@link SUPPORTED_IMAGE_TYPES} or
  * {@link SUPPORTED_IMAGE_TYPES_WITH_HEIC} covers, to tell the user which images are accepted.
  * @param {string | undefined} accept Accepted file type specifiers, comma-separated.
  * @returns {string[] | undefined} Labels, or `undefined` if the list isn’t one of those.
  */
 export const getAcceptedImageFormatLabels = (accept) => {
-  if (accept === SUPPORTED_IMAGE_TYPES.join(',')) {
-    return ['GIF', 'JPEG', 'PNG', 'WebP', 'SVG'];
+  const withHeic = accept === SUPPORTED_IMAGE_TYPES_WITH_HEIC.join(',');
+
+  if (!withHeic && accept !== SUPPORTED_IMAGE_TYPES.join(',')) {
+    return undefined;
   }
 
-  if (accept === SUPPORTED_IMAGE_TYPES_WITH_HEIC.join(',')) {
-    return ['GIF', 'HEIC', 'JPEG', 'PNG', 'WebP', 'SVG'];
-  }
-
-  return undefined;
+  return SUPPORTED_IMAGE_FORMATS.filter((format) => withHeic || format !== 'heic').map(
+    (format) => IMAGE_FORMAT_LABELS[format],
+  );
 };
 
 /** @type {RasterImageConversionFormat[]} */

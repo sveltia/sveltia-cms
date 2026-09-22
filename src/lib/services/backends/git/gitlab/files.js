@@ -22,20 +22,6 @@ import { startSimulatedProgress } from '$lib/services/backends/git/shared/progre
  */
 
 /**
- * @typedef {object} GitLabUserInfo
- * @property {string} [id] GitLab user ID.
- * @property {string} [username] GitLab user username.
- */
-
-/**
- * @typedef {object} GitLabCommit
- * @property {GitLabUserInfo | null} author Commit author’s GitLab user info.
- * @property {string} authorName Commit author’s full name.
- * @property {string} authorEmail Commit author’s email.
- * @property {string} committedDate Committed date.
- */
-
-/**
  * @typedef {object} FetchFileListResponse
  * @property {object} project Project information.
  * @property {object} project.repository Repository information.
@@ -66,13 +52,6 @@ import { startSimulatedProgress } from '$lib/services/backends/git/shared/progre
  * @property {object} project.repository.blobs Blobs information.
  * @property {BlobItem[]} project.repository.blobs.nodes List of file blobs with their sizes and raw
  * text contents.
- */
-
-/**
- * @typedef {object} FetchCommitsResponse
- * @property {object} project Project information.
- * @property {Record<string, { lastCommit: GitLabCommit }>} project.repository Mapping of file paths
- * to their last commit information.
  */
 
 const FETCH_FILE_LIST_QUERY = `
@@ -127,7 +106,7 @@ export const fetchFileList = async () => {
     }
   }
 
-  // The `size` is not available here; it will be retrieved in `fetchFileContents` below
+  // The `size` is not available from the GitLab API in bulk
   return blobs
     .filter(({ type }) => type === 'blob')
     .map(({ path, sha }) => ({ path, sha, size: 0, name: getPathInfo(path).basename }));
@@ -254,110 +233,20 @@ export const fetchBlobs = async (paths, query) => {
 };
 
 /**
- * Generate the inner GraphQL query for fetching the last commit information of a file at the
- * specified path.
- * @param {string} path File path.
- * @param {number} index Index of the path in the current batch.
- * @returns {string} GraphQL query string for fetching the last commit information of the file at
- * the specified path.
- */
-const getFetchCommitsInnerQuery = (path, index) => `
-  tree_${index}: tree(ref: $branch, path: ${JSON.stringify(path)}) {
-    lastCommit {
-      author {
-        id
-        username
-      }
-      authorName
-      authorEmail
-      committedDate
-    }
-  }
-`;
-
-/**
- * Fetch commit information for each file in the repository. This function retrieves the last commit
- * information for each file path using the GitLab GraphQL API. It handles pagination by fetching a
- * fixed number of paths at a time, ensuring that the complexity score of the query does not exceed
- * the limit. The commit information includes the author’s GitLab user info, name, email, and
- * committed date.
- * This function is unused at the moment due to performance concerns but may be used in the future.
- * @param {string[]} paths List of file paths to fetch.
- * @returns {Promise<Record<string, GitLabCommit>>} Fetched commit information for each file.
- */
-export const fetchCommits = async (paths) => {
-  const fetchingPaths = [...paths];
-  /** @type {GitLabCommit[]} */
-  const commits = [];
-
-  // The complexity score of this query is 5 + (18 * node size) so 13 paths = 239 complexity
-  for (;;) {
-    const currentPaths = fetchingPaths.splice(0, 13);
-
-    const query = `
-      query($fullPath: ID!, $branch: String!) {
-        project(fullPath: $fullPath) {
-          repository {
-            ${currentPaths.map(getFetchCommitsInnerQuery).join('')}
-          }
-        }
-      }
-    `;
-
-    const result = /** @type {FetchCommitsResponse} */ (await fetchGraphQL(query));
-
-    commits.push(...Object.values(result.project.repository).map(({ lastCommit }) => lastCommit));
-
-    if (!fetchingPaths.length) {
-      break;
-    }
-  }
-
-  // Map the commits back to their respective file paths
-  return Object.fromEntries(paths.map((path, index) => [path, commits[index]]));
-};
-
-/**
- * Parse the file contents from the API response.
+ * Parse the file contents from the API response. The GitLab API doesn’t give us file sizes or
+ * commit information in bulk, so only the text contents are filled in.
  * @param {object} args Arguments.
  * @param {BaseFileListItem[]} args.fetchingFiles Base file list.
  * @param {Record<string, BlobItem>} args.blobs Raw text blobs.
- * @param {Record<string, BlobItem>} [args.sizes] File sizes.
- * @param {Record<string, GitLabCommit>} [args.commits] Commit information for each file.
- * @returns {Promise<RepositoryContentsMap>} Parsed file contents map.
+ * @returns {RepositoryContentsMap} Parsed file contents map.
  */
-export const parseFileContents = async ({ fetchingFiles, blobs, sizes = {}, commits = {} }) => {
-  const entries = fetchingFiles.map(({ path, sha }) => {
-    const commit = commits[path];
-
-    const data = {
-      sha,
-      size: Number(sizes[path]?.size ?? 0),
-      text: blobs[path]?.rawTextBlob ?? undefined,
-      meta: {},
-    };
-
-    if (commit) {
-      const { author, authorName, authorEmail, committedDate } = commit;
-      const { id, username } = author ?? {};
-      const idMatcher = id?.match(/\d+/);
-
-      data.meta = {
-        commitAuthor: {
-          name: authorName,
-          email: authorEmail,
-          id: idMatcher ? Number(idMatcher[0]) : undefined,
-          login: username,
-        },
-        committedDate: new Date(committedDate),
-      };
-    }
-
-    return [path, data];
-  });
-
-  return Object.fromEntries(entries);
-};
+export const parseFileContents = ({ fetchingFiles, blobs }) =>
+  Object.fromEntries(
+    fetchingFiles.map(({ path, sha }) => [
+      path,
+      { sha, size: 0, text: blobs[path]?.rawTextBlob ?? undefined, meta: {} },
+    ]),
+  );
 
 /**
  * Fetch the metadata of entry/asset files as well as text file contents.

@@ -20,6 +20,17 @@
  */
 
 /**
+ * Check whether a key path is the given root key path or sits under it. A plain `startsWith()`
+ * check isn’t enough, as it would also match a sibling whose name merely begins with the root’s,
+ * e.g. `tags` or `tagline` for `tag`.
+ * @param {FieldKeyPath} keyPath Key path to check, e.g. `authors.0.name`.
+ * @param {FieldKeyPath} root Root key path, e.g. `authors`.
+ * @returns {boolean} Whether `keyPath` is `root` or one of its descendants.
+ */
+export const isKeyPathWithin = (keyPath, root) =>
+  keyPath === root || keyPath.startsWith(`${root}.`);
+
+/**
  * Cache of key path indexes, keyed by the value map object. Each entry is the map’s key paths
  * sorted lexicographically and paired with their original position, so {@link getKeysByPrefix} can
  * binary-search a prefix range and still hand the matches back in insertion order.

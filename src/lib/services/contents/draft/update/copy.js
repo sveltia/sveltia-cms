@@ -3,6 +3,7 @@ import { parse } from 'marked';
 import { loadModule } from '$lib/services/app/dependencies';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
+import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -90,7 +91,7 @@ export const getCopyingFieldMap = ({ draft, options }) => {
         const fieldType = field?.widget ?? 'string';
 
         if (
-          (keyPath && !_keyPath.startsWith(keyPath)) ||
+          (keyPath && !isKeyPathWithin(_keyPath, keyPath)) ||
           typeof value !== 'string' ||
           !value ||
           !['richtext', 'markdown', 'text', 'string', 'list'].includes(fieldType) ||

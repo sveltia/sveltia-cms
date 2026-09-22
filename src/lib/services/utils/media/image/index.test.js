@@ -92,6 +92,7 @@ describe('Image Constants', () => {
   describe('getAcceptedImageFormatLabels', () => {
     test('should name the formats of the image type lists', () => {
       expect(getAcceptedImageFormatLabels(SUPPORTED_IMAGE_TYPES.join(','))).toEqual([
+        'AVIF',
         'GIF',
         'JPEG',
         'PNG',
@@ -99,6 +100,7 @@ describe('Image Constants', () => {
         'SVG',
       ]);
       expect(getAcceptedImageFormatLabels(SUPPORTED_IMAGE_TYPES_WITH_HEIC.join(','))).toEqual([
+        'AVIF',
         'GIF',
         'HEIC',
         'JPEG',

@@ -285,6 +285,26 @@ describe('draft/update/copy', () => {
       expect(result).not.toHaveProperty('body');
     });
 
+    it('should not copy a sibling whose name begins with the key path', () => {
+      mockEntryDraft.currentValues.en.title_suffix = 'English Suffix';
+      mockEntryDraft.currentValues.ja.title_suffix = '';
+
+      vi.mocked(getField).mockImplementation(() => ({ name: 'title', widget: 'string' }));
+
+      const result = getCopyingFieldMap({
+        draft: mockEntryDraft,
+        options: {
+          sourceLanguage: 'en',
+          targetLanguage: 'ja',
+          keyPath: 'title',
+          translate: false,
+        },
+      });
+
+      expect(result).toHaveProperty('title');
+      expect(result).not.toHaveProperty('title_suffix');
+    });
+
     it('should skip non-string fields', () => {
       mockEntryDraft.currentValues.en.count = 42;
       mockEntryDraft.currentValues.ja.count = 0;

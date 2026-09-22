@@ -159,6 +159,42 @@ describe('draft/update/revert', () => {
       expect(mockEntryDraft.currentValues.en.body).toBe('Modified Body');
     });
 
+    it('should not revert a sibling whose name begins with the key path', () => {
+      const currentValues = {
+        en: {
+          tag: 'Modified Tag',
+          tags: 'Modified Tags',
+          tagline: 'Modified Tagline',
+          'tag.0': 'Modified Item',
+        },
+      };
+
+      revertFields({
+        locale: 'en',
+        isDefaultLocale: true,
+        keyPath: 'tag',
+        getFieldArgs: {
+          valueMap: {
+            tag: 'Original Tag',
+            tags: 'Original Tags',
+            tagline: 'Original Tagline',
+            'tag.0': 'Original Item',
+          },
+          collectionName: 'posts',
+          fileName: undefined,
+          keyPath: '',
+          isIndexFile: false,
+        },
+        currentValues,
+        reset: false,
+      });
+
+      expect(currentValues.en.tag).toBe('Original Tag');
+      expect(currentValues.en['tag.0']).toBe('Original Item');
+      expect(currentValues.en.tags).toBe('Modified Tags');
+      expect(currentValues.en.tagline).toBe('Modified Tagline');
+    });
+
     it('should only revert translatable fields in non-default locale', () => {
       revertChanges({ locale: 'ja' });
 

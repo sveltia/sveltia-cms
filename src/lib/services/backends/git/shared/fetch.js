@@ -140,8 +140,8 @@ export const restoreCachedFileData = ({ allFiles, cachedFiles }) => {
  * @returns {BaseFileListItem} Parsed file with additional metadata.
  */
 export const parseFileInfo = ({ fileInfo, fetchedFileMap }) => {
-  // The `size` and `text` are only available in the 2nd request (`fetchFileContents`) for the
-  // GitLab backend, so we need to set them here if they are not already defined
+  // Some backends only provide the `size` or `text` in the 2nd request (`fetchFileContents`), so
+  // we need to set them here if they are not already defined
   const { meta, size, text } = fetchedFileMap[fileInfo.path] ?? {};
 
   return {
