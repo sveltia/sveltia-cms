@@ -43,6 +43,7 @@
   import { formatSummary, getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
   import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { env } from '$lib/services/user/env.svelte';
+  import { focusReorderControl } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
 
   /**
@@ -368,11 +369,7 @@
     });
 
     await sleep(50);
-    // Move the focus back to the control on the item that was just moved, so that it can be used
-    // repeatedly without having to find it again
-    /** @type {HTMLElement | null | undefined} */ (
-      getItem(to)?.querySelector(`button[data-action="${action}"]`)
-    )?.focus();
+    focusReorderControl({ listElement: itemList, index: to, action });
   };
 
   const sorter = createDragSorter({

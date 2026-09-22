@@ -38,6 +38,7 @@
     getDefaultMediaLibraryOptions,
   } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+  import { focusReorderControl } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
 
   /**
@@ -364,11 +365,7 @@
     moveMultiValueItem({ draft, locale, valueStoreKey, keyPath, from, to });
 
     await sleep(50);
-    // Move the focus back to the control on the item that was just moved, so that it can be used
-    // repeatedly without having to find it again
-    /** @type {HTMLElement | null | undefined} */ (
-      itemList?.children[to]?.querySelector(`button[data-action="${action}"]`)
-    )?.focus();
+    focusReorderControl({ listElement: itemList, index: to, action });
   };
 
   const sorter = createDragSorter({

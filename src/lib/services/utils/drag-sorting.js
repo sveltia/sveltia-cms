@@ -122,6 +122,22 @@ export const getListItemAt = ({ target, listElement }) => {
 };
 
 /**
+ * Move the focus to a reorder control on the list item at the given index. Call it once an item has
+ * been moved with one of its controls, so the control can be used repeatedly without having to find
+ * it again.
+ * @param {object} args Arguments.
+ * @param {HTMLElement | undefined} args.listElement Element whose direct children are the list
+ * items.
+ * @param {number} args.index Index the item was moved to.
+ * @param {string} [args.action] `data-action` of the control to focus.
+ */
+export const focusReorderControl = ({ listElement, index, action = 'reorder' }) => {
+  /** @type {HTMLElement | null | undefined} */ (
+    listElement?.children[index]?.querySelector(`button[data-action="${action}"]`)
+  )?.focus();
+};
+
+/**
  * Distance in pixels from a scroll container’s top or bottom edge where the auto-scroll kicks in.
  */
 const AUTO_SCROLL_THRESHOLD = 64;

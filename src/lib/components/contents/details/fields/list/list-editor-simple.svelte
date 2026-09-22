@@ -22,7 +22,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import { getDirection } from '$lib/services/contents/i18n';
-  import { moveListItem } from '$lib/services/utils/drag-sorting';
+  import { focusReorderControl, moveListItem } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
 
@@ -178,12 +178,7 @@
     itemIds = moveListItem(itemIds, from, to);
 
     await tick();
-
-    // Move the focus back to the control on the row that was just moved, so that it can be used
-    // repeatedly without having to find it again
-    /** @type {HTMLElement | null | undefined} */ (
-      itemList?.children[to]?.querySelector(`button[data-action="${action}"]`)
-    )?.focus();
+    focusReorderControl({ listElement: itemList, index: to, action });
   };
 
   const sorter = createDragSorter({

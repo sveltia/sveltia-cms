@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  focusReorderControl,
   getAutoScrollSpeed,
   getDropIndex,
   getKeyboardMoveTarget,
@@ -451,5 +452,47 @@ describe('startAutoScroll', () => {
     createScrollable();
 
     expect(() => stopAutoScroll()).not.toThrow();
+  });
+});
+
+describe('focusReorderControl', () => {
+  /**
+   * Create a list whose items each hold a `reorder` and a `move-up` control.
+   * @returns {HTMLElement} List element, attached to the document so its controls can be focused.
+   */
+  const createList = () => {
+    const list = document.createElement('div');
+
+    list.innerHTML = [0, 1]
+      .map(
+        () =>
+          '<div><button data-action="reorder"></button><button data-action="move-up"></button></div>',
+      )
+      .join('');
+    document.body.append(list);
+
+    return list;
+  };
+
+  test('focuses the control with the given action on the item at the index', () => {
+    const list = createList();
+
+    focusReorderControl({ listElement: list, index: 1, action: 'move-up' });
+    expect(document.activeElement).toBe(list.children[1].querySelector('[data-action="move-up"]'));
+
+    focusReorderControl({ listElement: list, index: 0 });
+    expect(document.activeElement).toBe(list.children[0].querySelector('[data-action="reorder"]'));
+
+    list.remove();
+  });
+
+  test('does nothing without a list or an item at the index', () => {
+    expect(() => focusReorderControl({ listElement: undefined, index: 0 })).not.toThrow();
+
+    const list = createList();
+
+    expect(() => focusReorderControl({ listElement: list, index: 5 })).not.toThrow();
+
+    list.remove();
   });
 });
