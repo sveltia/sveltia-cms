@@ -971,6 +971,45 @@ describe('Test normalizeI18nConfig()', () => {
     });
   });
 
+  test('config with the locale placeholder in the collection folder', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        ...cmsConfigBase,
+        i18n: {
+          structure: 'multiple_root_folders',
+          locales: ['en', 'de', 'fr'],
+          omit_default_locale_from_file_path: true,
+        },
+        collections: [collectionWithI18n],
+      },
+    };
+
+    /** @type {Collection} */
+    const collection = { ...collectionWithI18n, folder: 'content/{{locale}}/posts' };
+
+    // The placeholder says where the locale folder goes, so the configured structure is replaced
+    // with `multiple_folders`, and the default locale can be omitted from the file path
+    expect(normalizeI18nConfig(collection)).toEqual({
+      structure: 'multiple_folders',
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: true,
+        i18nMultiRootFolder: false,
+      },
+      i18nEnabled: true,
+      allLocales: ['en', 'de', 'fr'],
+      initialLocales: ['en', 'de', 'fr'],
+      defaultLocale: 'en',
+      saveAllLocales: true,
+      canonicalSlug,
+      omitDefaultLocaleFromFilePath: true,
+      omitDefaultLocaleFromPreviewPath: false,
+    });
+  });
+
   test('backward compatibility: both legacy and new option names work together (new option takes precedence)', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = {
@@ -1113,6 +1152,33 @@ describe('Test internal helper functions', () => {
       expect(determineStructure('multiple_folders', file1)).toBe('multiple_files');
       expect(determineStructure('single_file', file2)).toBe('multiple_files');
       expect(determineStructure('multiple_folders_i18n_root', file3)).toBe('multiple_files');
+    });
+
+    test('should return multiple_folders when the folder includes {{locale}}', () => {
+      expect(determineStructure('single_file', undefined, 'content/{{locale}}/posts')).toBe(
+        'multiple_folders',
+      );
+      expect(determineStructure('multiple_files', undefined, '{{locale}}/posts')).toBe(
+        'multiple_folders',
+      );
+      expect(determineStructure('multiple_root_folders', undefined, 'content/{{locale}}')).toBe(
+        'multiple_folders',
+      );
+    });
+
+    test('should return default structure when the folder does not include {{locale}}', () => {
+      expect(determineStructure('multiple_root_folders', undefined, 'content/posts')).toBe(
+        'multiple_root_folders',
+      );
+      expect(determineStructure('single_file', undefined, '')).toBe('single_file');
+    });
+
+    test('should ignore the folder when a file is given', () => {
+      const file = { name: 'home', file: 'data/home.json', fields: [] };
+
+      expect(determineStructure('multiple_folders', file, 'content/{{locale}}/posts')).toBe(
+        'single_file',
+      );
     });
   });
 

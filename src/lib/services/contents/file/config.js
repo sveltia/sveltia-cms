@@ -14,6 +14,10 @@ import {
   MARKDOWN_EXTENSIONS,
 } from '$lib/services/contents/file';
 import { getLocalePath } from '$lib/services/contents/i18n';
+import {
+  getLocaleFolderPattern,
+  hasLocalePlaceholder,
+} from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import { FileConfig, InternalI18nOptions } from '$lib/types/private';
@@ -162,11 +166,21 @@ export const getEntryPathRegEx = ({
     ? `(?:\\.(?<locale>${joinedNonDefaultLocales}))?`
     : `\\.${localeMatcher}`;
 
+  // The `{{locale}}` placeholder in the `folder` option says where the locale folder goes, so the
+  // locale folder matcher replaces it rather than coming before or after the whole base path
+  const localeInBasePath = !!basePath && hasLocalePlaceholder(basePath);
+
+  const basePathMatcher = localeInBasePath
+    ? getLocaleFolderPattern(basePath, localeFolderMatcher)
+    : basePath
+      ? `${escapeRegExp(basePath)}\\/`
+      : '';
+
   const pattern = [
     '^',
-    i18nMultiRootFolder ? localeFolderMatcher : '',
-    basePath ? `${escapeRegExp(basePath)}\\/` : '',
-    i18nMultiFolder ? localeFolderMatcher : '',
+    i18nMultiRootFolder && !localeInBasePath ? localeFolderMatcher : '',
+    basePathMatcher,
+    i18nMultiFolder && !localeInBasePath ? localeFolderMatcher : '',
     getFilePathMatcher(subPath, indexFileName, nestedDepth),
     i18nMultiFile ? localeFileMatcher : '',
     '\\.',

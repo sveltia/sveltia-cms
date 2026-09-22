@@ -6,6 +6,7 @@ import {
   I18N_STRUCTURES,
 } from '$lib/services/contents/i18n/config/constants';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
+import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import {
@@ -40,13 +41,20 @@ export const DEFAULT_I18N_CONFIG = {
 };
 
 /**
- * Determines the appropriate structure based on file configuration.
+ * Determines the appropriate structure based on the collection or file configuration.
  * @param {I18nFileStructure} defaultStructure The default structure from config.
  * @param {CollectionFile} [file] The collection file configuration.
+ * @param {string} [folder] The `folder` option of an entry collection.
  * @returns {I18nFileStructure} The determined structure.
  */
-export const determineStructure = (defaultStructure, file) => {
+export const determineStructure = (defaultStructure, file, folder) => {
   if (!file) {
+    // The `{{locale}}` placeholder says where the locale folder goes, so the collection has one
+    // folder per locale wherever the configured structure would put it
+    if (typeof folder === 'string' && hasLocalePlaceholder(folder)) {
+      return I18N_STRUCTURES.MULTIPLE_FOLDERS;
+    }
+
     return defaultStructure;
   }
 
@@ -186,7 +194,8 @@ export const normalizeI18nConfig = (collection, file) => {
   const i18nEnabled = locales.length > 0;
   const allLocales = i18nEnabled ? locales : [DEFAULT_LOCALE_KEY];
   const defaultLocale = determineDefaultLocale(i18nEnabled, allLocales, specifiedDefaultLocale);
-  const structure = determineStructure(defaultStructure, file);
+  const { folder } = /** @type {{ folder?: string }} */ (collection);
+  const structure = determineStructure(defaultStructure, file, folder);
   const structureMap = createStructureMap(i18nEnabled, structure);
 
   const saveAllLocales = i18nEnabled

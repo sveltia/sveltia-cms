@@ -7,6 +7,7 @@ import {
 } from '$lib/services/contents/collection/files';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
+import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import { EntryFolderInfo, InternalCmsConfig, InternalLocaleCode } from '$lib/types/private';
@@ -71,26 +72,40 @@ export const getEntryCollectionFolders = ({ collections }) =>
     .map((collection) => {
       const { name: collectionName, folder } = /** @type {EntryCollection} */ (collection);
       const folderPath = stripSlashes(/** @type {string} */ (folder));
+      const _i18n = normalizeI18nConfig(collection);
 
       const {
         allLocales,
         defaultLocale,
         omitDefaultLocaleFromFilePath,
         structureMap: { i18nMultiRootFolder },
-      } = normalizeI18nConfig(collection);
+      } = _i18n;
+
+      /**
+       * Get the folder path for the given locale.
+       * @param {InternalLocaleCode} locale Locale code.
+       * @returns {string} Folder path.
+       */
+      const getFolderPath = (locale) => {
+        // The `{{locale}}` placeholder says where the locale folder goes
+        if (hasLocalePlaceholder(folderPath)) {
+          return getLocalePath({ _i18n, locale, path: folderPath });
+        }
+
+        if (i18nMultiRootFolder) {
+          return omitDefaultLocaleFromFilePath && locale === defaultLocale
+            ? folderPath
+            : `${locale}/${folderPath}`;
+        }
+
+        return folderPath;
+      };
 
       return {
         collectionName,
         folderPath,
         folderPathMap: Object.fromEntries(
-          allLocales.map((locale) => [
-            locale,
-            i18nMultiRootFolder
-              ? omitDefaultLocaleFromFilePath && locale === defaultLocale
-                ? folderPath
-                : `${locale}/${folderPath}`
-              : folderPath,
-          ]),
+          allLocales.map((locale) => [locale, getFolderPath(locale)]),
         ),
       };
     })

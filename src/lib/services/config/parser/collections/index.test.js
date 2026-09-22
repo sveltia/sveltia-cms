@@ -444,6 +444,173 @@ describe('Collections Parser', () => {
       );
     });
 
+    it('should require i18n when the folder has the locale placeholder', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: { i18n: { locales: ['en', 'fr'] } },
+        collection: {
+          name: 'posts',
+          folder: 'content/{{locale}}/posts',
+          fields: [],
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'collection_folder_i18n_required' }),
+      );
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_collection_folder_locale' }),
+      );
+    });
+
+    it('should require site-level locales when the folder has the locale placeholder', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      // The collection opts in, but the site defines no locales, so the placeholder would be
+      // replaced with the internal `_default` locale code
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/{{locale}}/posts',
+          fields: [],
+          i18n: true,
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'collection_folder_i18n_required' }),
+      );
+
+      mockAddMessage.mockClear();
+      context.cmsConfig = { i18n: { structure: 'multiple_folders' } };
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'collection_folder_i18n_required' }),
+      );
+    });
+
+    it('should accept the locale placeholder with locales defined on the collection', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: { i18n: { structure: 'multiple_folders' } },
+        collection: {
+          name: 'posts',
+          folder: 'content/{{locale}}/posts',
+          fields: [],
+          i18n: { locales: ['en', 'fr'] },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'collection_folder_i18n_required' }),
+      );
+    });
+
+    it('should accept the locale placeholder as a whole folder name with i18n', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      ['content/{{locale}}/posts', '{{locale}}/posts', 'content/{{locale}}'].forEach((folder) => {
+        /** @type {any} */
+        const context = {
+          cmsConfig: { i18n: { locales: ['en', 'fr'] } },
+          collection: { name: 'posts', folder, fields: [], i18n: true },
+        };
+
+        parseEntryCollection(context, collectors);
+      });
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'collection_folder_i18n_required' }),
+      );
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_collection_folder_locale' }),
+      );
+    });
+
+    it('should reject a locale placeholder that is not a whole folder name', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: { i18n: { locales: ['en', 'fr'] } },
+        collection: {
+          name: 'posts',
+          folder: 'content-{{locale}}/posts',
+          fields: [],
+          i18n: true,
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'invalid_collection_folder_locale',
+          values: { folder: 'content-{{locale}}/posts' },
+        }),
+      );
+    });
+
+    it('should reject more than one locale placeholder in the folder', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: { i18n: { locales: ['en', 'fr'] } },
+        collection: {
+          name: 'posts',
+          folder: '{{locale}}/content/{{locale}}/posts',
+          fields: [],
+          i18n: true,
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_collection_folder_locale' }),
+      );
+    });
+
+    it('should not check the locale placeholder in a folder without one', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts', folder: 'content/posts', fields: [] },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'collection_folder_i18n_required' }),
+      );
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'invalid_collection_folder_locale' }),
+      );
+    });
+
     it('should accept a reorder group defined in the object format view_groups', async () => {
       const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();

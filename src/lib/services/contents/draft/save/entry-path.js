@@ -15,6 +15,10 @@ import {
 } from '$lib/services/contents/collection/nested/i18n';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { getLocalePath } from '$lib/services/contents/i18n';
+import {
+  fillLocalePlaceholder,
+  hasLocalePlaceholder,
+} from '$lib/services/contents/i18n/placeholder';
 import { createPath } from '$lib/services/utils/file';
 
 /**
@@ -46,6 +50,12 @@ export const buildPathByStructure = ({
   omitLocale,
   structure,
 }) => {
+  // The `{{locale}}` placeholder in the `folder` option says where the locale folder goes, so the
+  // structure has nothing to add
+  if (hasLocalePlaceholder(basePath)) {
+    return `${fillLocalePlaceholder({ path: basePath, locale, omitLocale })}/${path}.${extension}`;
+  }
+
   switch (structure) {
     case 'multiple_folders':
       return omitLocale

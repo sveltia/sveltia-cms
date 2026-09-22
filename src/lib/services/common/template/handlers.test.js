@@ -221,6 +221,19 @@ describe('Template handler functions', () => {
       ).toBe('nested/folder');
     });
 
+    test('should return dirname below a base path with the locale placeholder', () => {
+      const basePath = 'content/{{locale}}/posts';
+
+      // The locale folder is part of the base path, not of the returned folder
+      expect(handleFilePathTag('dirname', 'content/en/posts/2024/my-post.md', basePath)).toBe(
+        '2024',
+      );
+      expect(handleFilePathTag('dirname', 'content/fr/posts/a/b/my-post.md', basePath)).toBe('a/b');
+      expect(handleFilePathTag('dirname', 'content/fr/posts/my-post.md', basePath)).toBe('');
+      // The default locale may be omitted from the path
+      expect(handleFilePathTag('dirname', 'content/posts/2024/my-post.md', basePath)).toBe('2024');
+    });
+
     test('should return filename without extension', () => {
       expect(handleFilePathTag('filename', 'content/posts/my-post.md', 'content/posts')).toBe(
         'my-post',

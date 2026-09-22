@@ -7,6 +7,10 @@ import {
   stripIndexFileName,
 } from '$lib/services/contents/collection/nested';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
+import {
+  hasLocalePlaceholder,
+  stripLocaleFolderPath,
+} from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import { ReplaceSubContext } from '$lib/services/common/template/replacers';
@@ -92,8 +96,14 @@ export const handleFilePathTag = (tag, entryFilePath, basePath) => {
     case 'dirname': {
       // The folder is relative to the collection folder, so it must not keep the slash left behind
       // by the removed base path, or a template like `media/{{dirname}}` would produce `media//sub`
+      // A base path with the `{{locale}}` placeholder stands for a folder per locale
       // @see https://github.com/decaporg/decap-cms/issues/7752
-      const pathAfterBase = stripSlashes(entryFilePath.replace(basePath ?? '', ''));
+      const pathAfterBase = stripSlashes(
+        basePath && hasLocalePlaceholder(basePath)
+          ? stripLocaleFolderPath(entryFilePath, basePath)
+          : entryFilePath.replace(basePath ?? '', ''),
+      );
+
       const lastSlashIndex = pathAfterBase.lastIndexOf('/');
 
       return lastSlashIndex > 0 ? pathAfterBase.substring(0, lastSlashIndex) : '';

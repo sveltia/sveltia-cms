@@ -2,6 +2,10 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
+import {
+  getLocaleFolderPattern,
+  hasLocalePlaceholder,
+} from '$lib/services/contents/i18n/placeholder';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -88,7 +92,8 @@ export const getAssetFolder = (cond) => {
  * collection’s own files and the assets stored alongside them. With the `multiple_root_folders`
  * i18n structure the collection folder sits below a folder named after the locale, so a locale name
  * is allowed in front of it — optionally, because `omit_default_locale_from_file_path` leaves the
- * default locale’s files where they would be without i18n.
+ * default locale’s files where they would be without i18n. A collection `folder` with the
+ * `{{locale}}` placeholder says where the locale name goes instead.
  * @param {AssetFolderInfo} folder Asset folder.
  * @returns {RegExp} Regular expression.
  */
@@ -97,7 +102,13 @@ const getEntryRelativePathRegEx = ({ internalPath, localeFolderNames }) => {
     ? `(?:(?:${localeFolderNames.map(escapeRegExp).join('|')})\\/)?`
     : '';
 
-  return new RegExp(`^${localeMatcher}${escapeRegExp(/** @type {string} */ (internalPath))}\\/`);
+  const folderPath = /** @type {string} */ (internalPath);
+
+  if (hasLocalePlaceholder(folderPath)) {
+    return new RegExp(`^${getLocaleFolderPattern(folderPath, localeMatcher)}`);
+  }
+
+  return new RegExp(`^${localeMatcher}${escapeRegExp(folderPath)}\\/`);
 };
 
 /**

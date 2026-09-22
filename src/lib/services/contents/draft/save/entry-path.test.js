@@ -55,6 +55,55 @@ describe('contents/draft/save/entry-path', () => {
   });
 
   describe('buildPathByStructure', () => {
+    it('should fill in the locale placeholder in basePath regardless of the structure', () => {
+      expect(
+        buildPathByStructure({
+          basePath: 'content/{{locale}}/posts',
+          path: '2026/hello/index',
+          extension: 'md',
+          locale: 'fr',
+          omitLocale: false,
+          structure: 'multiple_folders',
+        }),
+      ).toBe('content/fr/posts/2026/hello/index.md');
+
+      expect(
+        buildPathByStructure({
+          basePath: '{{locale}}/posts',
+          path: 'hello',
+          extension: 'md',
+          locale: 'fr',
+          omitLocale: false,
+          structure: 'multiple_root_folders',
+        }),
+      ).toBe('fr/posts/hello.md');
+    });
+
+    it('should leave out the locale placeholder folder with omitLocale=true', () => {
+      expect(
+        buildPathByStructure({
+          basePath: 'content/{{locale}}/posts',
+          path: 'hello',
+          extension: 'md',
+          locale: 'en',
+          omitLocale: true,
+          structure: 'multiple_folders',
+        }),
+      ).toBe('content/posts/hello.md');
+
+      // The leading slash left behind by a bare placeholder is removed by `createEntryPath()`
+      expect(
+        buildPathByStructure({
+          basePath: '{{locale}}',
+          path: 'hello',
+          extension: 'md',
+          locale: 'en',
+          omitLocale: true,
+          structure: 'multiple_folders',
+        }),
+      ).toBe('/hello.md');
+    });
+
     it('should handle multiple_folders structure with omitLocale=false', async () => {
       const result = buildPathByStructure({
         basePath: 'content',
@@ -298,6 +347,72 @@ describe('contents/draft/save/entry-path', () => {
       const result = createEntryPath({ draft, locale: 'en', slug: 'my-post' });
 
       expect(result).toBe('posts/en/my-post.md');
+    });
+
+    it('should create path with the locale placeholder in the collection folder', async () => {
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            structure: 'multiple_folders',
+            omitDefaultLocaleFromFilePath: true,
+            omitDefaultLocaleFromPreviewPath: false,
+          },
+          _file: {
+            basePath: 'content/{{locale}}/posts',
+            subPath: '{{slug}}/index',
+            extension: 'md',
+          },
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: { en: {}, fr: {} },
+        isIndexFile: false,
+      };
+
+      mockFillTemplate.mockImplementation((template, { currentSlug }) =>
+        template.replace('{{slug}}', currentSlug),
+      );
+
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'my-post' })).toBe(
+        'content/fr/posts/my-post/index.md',
+      );
+      // The default locale is omitted from the path
+      expect(createEntryPath({ draft, locale: 'en', slug: 'my-post' })).toBe(
+        'content/posts/my-post/index.md',
+      );
+    });
+
+    it('should create the index file path with the locale placeholder in the collection folder', async () => {
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            structure: 'multiple_folders',
+            omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
+          },
+          _file: {
+            basePath: 'content/{{locale}}/posts',
+            subPath: '{{year}}/{{slug}}/index',
+            extension: 'md',
+          },
+          index_file: true,
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: { en: {}, fr: {} },
+        isIndexFile: true,
+      };
+
+      mockGetIndexFile.mockReturnValue({ name: '_index' });
+
+      // The index file sits right under the locale’s collection folder
+      expect(createEntryPath({ draft, locale: 'fr', slug: '_index' })).toBe(
+        'content/fr/posts/_index.md',
+      );
     });
 
     it('should create path for multiple_folders_i18n_root structure', async () => {

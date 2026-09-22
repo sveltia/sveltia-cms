@@ -1141,10 +1141,12 @@
  * [documentation](https://sveltiacms.app/en/docs/i18n) for details.
  * @typedef {object} I18nOptions
  * @property {I18nFileStructure} [structure] File structure for entry collections. **Required for
- * the global i18n options**. File/singleton collection must define the structure using `{{locale}}`
- * in the `file` option. `multiple_folders_i18n_root` has been deprecated in favor of
- * `multiple_root_folders`. See the [documentation](https://sveltiacms.app/en/docs/i18n/structures)
- * for details.
+ * the global i18n options**. An entry collection can instead say where the locale folder goes with
+ * the `{{locale}}` placeholder in the `folder` option, like `content/{{locale}}/posts`, which is
+ * useful when the locale folders sit between the site’s content folder and the collection folders.
+ * File/singleton collection must define the structure using `{{locale}}` in the `file` option.
+ * `multiple_folders_i18n_root` has been deprecated in favor of `multiple_root_folders`. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/structures) for details.
  * @property {LocaleCode[]} [locales] List of all available locales. **Required for the global i18n
  * options**.
  * @property {LocaleCode} [default_locale] Default locale. Default: first locale in the `locales`
@@ -1509,7 +1511,12 @@
  * Entry collection properties.
  * @typedef {object} EntryCollectionProps
  * @property {string} folder Base folder path relative to the project root. It can contain slashes
- * to create subfolders.
+ * to create subfolders. With i18n enabled, it can also contain the `{{locale}}` placeholder as a
+ * whole folder name, like `content/{{locale}}/posts`, to say where each locale’s folder goes. The
+ * placeholder takes precedence over the `structure` i18n option: the collection then has one
+ * folder per locale wherever the placeholder is, and the `omit_default_locale_from_file_path`
+ * option leaves the default locale’s folder out. See the
+ * [documentation](https://sveltiacms.app/en/docs/i18n/structures) for details.
  * @property {Field[]} fields Set of fields to be included in entries.
  * @property {string} [path] File path relative to `folder`, without a file extension. It can
  * contain slashes to create subfolders. Default: `{{slug}}`. To use Hugo’s page bundle, set this to

@@ -33,6 +33,7 @@ const { getValidCollections } = await import('$lib/services/contents/collection'
 const { getValidCollectionFiles, isValidCollectionFile } =
   await import('$lib/services/contents/collection/files');
 
+const { getLocalePath } = await import('$lib/services/contents/i18n');
 const { normalizeI18nConfig } = await import('$lib/services/contents/i18n/config');
 
 describe('config/folders/entries', () => {
@@ -792,6 +793,49 @@ describe('config/folders/entries', () => {
           de: 'de/events',
           fr: 'fr/events',
         },
+      });
+    });
+
+    it('should fill in the locale placeholder in the folder path', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified mock for testing
+        { name: 'posts', folder: '/content/{{locale}}/posts/' },
+      ]);
+
+      /** @type {any} */
+      const _i18n = {
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        omitDefaultLocaleFromFilePath: false,
+        structureMap: { i18nMultiRootFolder: false },
+      };
+
+      vi.mocked(normalizeI18nConfig).mockReturnValue(_i18n);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getEntryCollectionFolders(config);
+
+      expect(result).toEqual([
+        {
+          collectionName: 'posts',
+          folderPath: 'content/{{locale}}/posts',
+          folderPathMap: {
+            en: 'content/en/posts',
+            fr: 'content/fr/posts',
+          },
+        },
+      ]);
+
+      // The default locale can be omitted from the path, which `getLocalePath()` takes care of
+      expect(getLocalePath).toHaveBeenCalledWith({
+        _i18n,
+        locale: 'en',
+        path: 'content/{{locale}}/posts',
       });
     });
 

@@ -667,7 +667,8 @@
  * @property {string} [folderPath] Folder path. Entry collection only.
  * @property {Record<InternalLocaleCode, string>} [folderPathMap] Folder path map. Entry collection
  * only. Paths in `folderPathMap` are prefixed with a locale if the `multiple_root_folders` i18n
- * structure is used, while `folderPath` is a bare collection `folder` path.
+ * structure is used, or have the `{{locale}}` placeholder filled in if the collection `folder`
+ * option has one, while `folderPath` is a bare collection `folder` path.
  */
 
 /**
@@ -681,13 +682,16 @@
  * specifically in Hugo. It works only for field-level asset folders in an entry collection.
  * @property {string[]} [localeFolderNames] Names of the locale folders that can precede
  * `internalPath`, for an entry-relative folder in a site using the `multiple_root_folders` i18n
- * structure. Unset when the site has no i18n configuration.
+ * structure, or stand in for the `{{locale}}` placeholder in `internalPath`, for an entry-relative
+ * folder of a collection whose `folder` option has one. Unset when the site has no i18n
+ * configuration.
  * @property {string} [componentName] Custom editor component name for a field-level asset folder,
  * registered with `CMS.registerEditorComponent()`.
  * @property {string | undefined} internalPath Folder path on the repository/filesystem, relative to
  * the project root directory. It can be a partial path if the collection’s `media_folder` property
- * is a relative path, because the complete path is entry-specific in that case. It will be
- * `undefined` for the All Assets folder.
+ * is a relative path, because the complete path is entry-specific in that case; it’s then the
+ * collection `folder` path, which may include the `{{locale}}` placeholder. It will be `undefined`
+ * for the All Assets folder.
  * @property {string | undefined} [internalSubPath] Subfolder below the `internalPath`, relative to
  * the entry folder. It will be set when `entryRelative` is `true`.
  * @property {string | undefined} publicPath Absolute folder path that will appear in the public

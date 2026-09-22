@@ -6,6 +6,7 @@ import { getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/files';
 import { LOCALE_ROOT_FOLDER_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
+import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import {
@@ -395,20 +396,21 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
 
   // The `multiple_root_folders` i18n structure stores each locale’s copy of the whole site below a
   // folder named after it, so an entry-relative folder’s own files can sit one level deeper than
-  // the collection `folder` option says. Record the locale names so the asset paths can be matched
-  // there too; the entry folders already carry the same information in their `folderPathMap`.
-  // The locales are read per collection rather than from the site configuration, because a
-  // collection can define its own, and only the structures that put the locale in front matter
+  // the collection `folder` option says. The same goes for a `folder` with the `{{locale}}`
+  // placeholder, which names the locale folder in the middle of the path. Record the locale names
+  // so the asset paths can be matched there too; the entry folders already carry the same
+  // information in their `folderPathMap`. The locales are read per collection rather than from the
+  // site configuration, because a collection can define its own, and only the structures that put
+  // the locale in front matter
   const localeFolderNameMap = new Map(
     validCollections.map((collection) => {
       const i18n = mergeI18nConfigs({ cmsConfig: config, collection });
 
-      const locales =
-        i18n?.structure && LOCALE_ROOT_FOLDER_STRUCTURES.includes(i18n.structure)
-          ? (i18n.locales ?? [])
-          : [];
+      const hasLocaleFolder =
+        ('folder' in collection && hasLocalePlaceholder(collection.folder)) ||
+        (!!i18n?.structure && LOCALE_ROOT_FOLDER_STRUCTURES.includes(i18n.structure));
 
-      return [collection.name, locales];
+      return [collection.name, hasLocaleFolder ? (i18n?.locales ?? []) : []];
     }),
   );
 

@@ -20,6 +20,11 @@ import {
 } from '$lib/services/config/parser/utils/validator';
 import { getReorderGroupName } from '$lib/services/contents/collection/entries/reorder/config';
 import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
+import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
+import {
+  hasLocalePlaceholder,
+  isValidLocaleFolderPath,
+} from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import { CmsConfig, Collection, CollectionDivider, EntryCollection } from '$lib/types/public';
@@ -51,8 +56,9 @@ export const parseEntryCollection = (context, collectors) => {
 
   const {
     extension,
-    format,
     fields,
+    folder,
+    format,
     index_file,
     preview_path,
     preview_path_date_field,
@@ -80,6 +86,29 @@ export const parseEntryCollection = (context, collectors) => {
 
   if (!fields?.length) {
     addMessage({ strKey: 'collection_no_fields', context, collectors });
+  }
+
+  // The type of the `folder` option is checked against the JSON schema
+  if (typeof folder === 'string' && hasLocalePlaceholder(folder)) {
+    // The `{{locale}}` placeholder in the `folder` path is only valid if i18n is enabled for the
+    // collection, which takes the site-level configuration as well as the collection’s own `i18n`
+    // option: with either missing, `checkI18nOverrides()` merely warns that the collection stays
+    // monolingual, but the placeholder would then be replaced with the internal `_default` locale
+    // code, hiding the existing entries and saving new ones in the wrong place
+    if (!mergeI18nConfigs({ cmsConfig, collection })?.locales?.length) {
+      addMessage({ strKey: 'collection_folder_i18n_required', context, collectors });
+    }
+
+    // The placeholder stands for a folder named after the locale, and the entry path matcher can
+    // only capture one
+    if (!isValidLocaleFolderPath(folder)) {
+      addMessage({
+        strKey: 'invalid_collection_folder_locale',
+        values: { folder },
+        context,
+        collectors,
+      });
+    }
   }
 
   parseFields(fields, context, collectors);

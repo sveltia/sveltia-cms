@@ -876,6 +876,27 @@ describe('Test replaceSub()', () => {
     expect(result).toBe('');
   });
 
+  test('should handle dirname with the locale placeholder in basePath', () => {
+    const localeContext = {
+      slug: 'test-entry',
+      entryPath: 'content/fr/posts/blog/article.md',
+      basePath: 'content/{{locale}}/posts',
+      locales: ['en', 'fr'],
+      commitDate: new Date('2024-01-15T10:30:00Z'),
+      commitAuthor: { name: 'John Doe', login: 'john', email: 'john@test.com' },
+    };
+
+    // The locale folder is part of the base path
+    expect(replaceSub('dirname', localeContext)).toBe('blog');
+    // The default locale may be omitted from the path
+    expect(
+      replaceSub('dirname', { ...localeContext, entryPath: 'content/posts/blog/article.md' }),
+    ).toBe('blog');
+    expect(
+      replaceSub('dirname', { ...localeContext, entryPath: 'content/fr/posts/article.md' }),
+    ).toBe('');
+  });
+
   test('should handle dirname when basePath is undefined (line 105)', () => {
     // Test when basePath is undefined to exercise basePath ?? ''
     const contextWithoutBasePath = {

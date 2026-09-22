@@ -1,5 +1,7 @@
 import { locale as appLocale, isRTL } from '@sveltia/i18n';
 
+import { fillLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
+
 /**
  * @import { InternalI18nOptions, InternalLocaleCode, } from '$lib/types/private';
  * @import { LocaleCode } from '$lib/types/public';
@@ -139,23 +141,20 @@ export const getListFormatter = (locale, options = {}) => {
 };
 
 /**
- * Get the complete path for the given entry folder, including the locale.
+ * Get the complete path for the given collection folder or file, including the locale.
  * @param {object} args Arguments.
  * @param {InternalI18nOptions} args._i18n I18n configuration.
  * @param {InternalLocaleCode} args.locale Locale code.
- * @param {string} args.path Collection file path with `{{locale}}` placeholder.
+ * @param {string} args.path Collection folder or file path with the `{{locale}}` placeholder.
  * @returns {string} Complete path, including the locale.
  */
 export const getLocalePath = ({ _i18n, locale, path }) => {
   const { defaultLocale, omitDefaultLocaleFromFilePath } = _i18n;
 
-  // Remove the default locale from the file name (for Zola compatibility)
-  // @see https://github.com/sveltia/sveltia-cms/discussions/394
-  if (omitDefaultLocaleFromFilePath && locale === defaultLocale) {
-    path = path.replace(/{{locale}}[./]/, '');
-  }
-
-  // Replace the placeholder with the actual locale. The placeholder may appear multiple times
-  // @see https://github.com/sveltia/sveltia-cms/issues/462
-  return path.replaceAll('{{locale}}', locale);
+  return fillLocalePlaceholder({
+    path,
+    locale,
+    // Remove the default locale from the path (for Zola compatibility)
+    omitLocale: omitDefaultLocaleFromFilePath && locale === defaultLocale,
+  });
 };

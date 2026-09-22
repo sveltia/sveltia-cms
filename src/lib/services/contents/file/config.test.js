@@ -566,6 +566,121 @@ describe('Test getEntryPathRegEx()', () => {
     expect('fr/content/posts/my-post.md'.match(regex)?.groups?.locale).toBe('fr');
     expect('fr/content/posts/my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
   });
+
+  test('generates regex with the locale placeholder in basePath', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: true,
+        i18nMultiRootFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/{{locale}}/posts',
+      subPath: '{{year}}/{{slug}}/index',
+      indexFileName: '_index',
+      _i18n,
+    });
+
+    // The locale folder goes where the placeholder is, not after the base path
+    expect(regex.source).toBe(
+      '^content\\/(?<locale>en|fr)\\/posts\\/(?<subPath>[^/]+?\\/[^/]+?\\/index|_index)\\.md$',
+    );
+    expect('content/en/posts/2026/my-post/index.md'.match(regex)?.groups).toEqual({
+      locale: 'en',
+      subPath: '2026/my-post/index',
+    });
+    expect('content/fr/posts/_index.md'.match(regex)?.groups).toEqual({
+      locale: 'fr',
+      subPath: '_index',
+    });
+    expect(regex.test('content/posts/en/2026/my-post/index.md')).toBe(false);
+    expect(regex.test('en/content/posts/2026/my-post/index.md')).toBe(false);
+    expect(regex.test('content/en/_index.md')).toBe(false);
+  });
+
+  test('generates regex with the locale placeholder at the start or end of basePath', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: true,
+        i18nMultiRootFolder: false,
+      },
+    };
+
+    expect(
+      getEntryPathRegEx({ extension: 'md', format: 'frontmatter', basePath: '{{locale}}', _i18n })
+        .source,
+    ).toBe('^(?<locale>en|fr)\\/(?<subPath>[^/]+?)\\.md$');
+
+    expect(
+      getEntryPathRegEx({
+        extension: 'md',
+        format: 'frontmatter',
+        basePath: 'content/{{locale}}',
+        _i18n,
+      }).source,
+    ).toBe('^content\\/(?<locale>en|fr)\\/(?<subPath>[^/]+?)\\.md$');
+  });
+
+  test('ignores the structure when basePath has the locale placeholder', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: true,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/{{locale}}/posts',
+      _i18n,
+    });
+
+    expect(regex.source).toBe('^content\\/(?<locale>en|fr)\\/posts\\/(?<subPath>[^/]+?)\\.md$');
+  });
+
+  test('generates regex with omitDefaultLocaleFromFilePath and the locale placeholder', () => {
+    const _i18n = {
+      ...baseI18nOptions,
+      omitDefaultLocaleFromFilePath: true,
+      structureMap: {
+        i18nSingleFile: false,
+        i18nSingleFileDefaultRoot: false,
+        i18nMultiFile: false,
+        i18nMultiFolder: true,
+        i18nMultiRootFolder: false,
+      },
+    };
+
+    const regex = getEntryPathRegEx({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/{{locale}}/posts',
+      _i18n,
+    });
+
+    // The locale folder becomes optional, allowing both 'content/fr/posts' and 'content/posts'
+    expect(regex.source).toBe('^content\\/(?:(?<locale>fr)\\/)?posts\\/(?<subPath>[^/]+?)\\.md$');
+    expect('content/posts/my-post.md'.match(regex)?.groups?.locale).toBeUndefined();
+    expect('content/posts/my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
+    expect('content/fr/posts/my-post.md'.match(regex)?.groups?.locale).toBe('fr');
+    expect(regex.test('content/en/posts/my-post.md')).toBe(false);
+  });
 });
 
 describe('Test getFrontMatterDelimiters()', () => {

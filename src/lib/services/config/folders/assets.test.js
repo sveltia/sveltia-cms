@@ -101,6 +101,36 @@ describe('config/folders/assets', () => {
       ).toEqual(['en', 'fr']);
     });
 
+    it('records the locale folder names for a folder with the locale placeholder', () => {
+      // The placeholder names the locale folder in the middle of the path, whatever the structure
+      const collections = [
+        {
+          name: 'posts',
+          folder: 'content/{{locale}}/posts',
+          media_folder: '',
+          public_folder: '',
+          i18n: true,
+        },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        i18n: { structure: 'multiple_folders', locales: ['en', 'de'] },
+        collections,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+      const folder = result.find(({ collectionName }) => collectionName === 'posts');
+
+      expect(folder?.internalPath).toBe('content/{{locale}}/posts');
+      expect(folder?.localeFolderNames).toEqual(['en', 'de']);
+    });
+
     it('leaves the locale folder names off for a structure with no locale folder in front', () => {
       // `multiple_folders` puts the locale below the collection folder, not in front of it
       const collections = [

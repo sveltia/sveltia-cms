@@ -1642,6 +1642,11 @@ config:
     collection_no_fields: コレクションには少なくとも 1 つのフィールドを定義する必要があります。
     # Don’t localize `fields`
     collection_file_no_fields: コレクションファイルには少なくとも 1 つのフィールドを定義する必要があります。
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: コレクションには、`folder` パスで `locale` プレースホルダーを使用する場合、`i18n` オプションを定義する必要があります。
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: '`folder` パス `{$folder}` は無効です。`locale` プレースホルダーは `content/\{\{locale\}\}/posts` のように、フォルダー名全体として一度だけ使用できます。'
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: コレクションファイルには、`file` パスで `locale` プレースホルダーを使用する場合、`i18n` オプションを定義する必要があります。
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
