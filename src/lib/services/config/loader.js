@@ -146,9 +146,14 @@ export const fetchFile = async (
  * correct path to the configuration file.
  * @param {string} path Current `location.pathname` starting with a slash, like `/admin/`, `/admin`,
  * or `/admin/index.html`.
- * @returns {string} Path to the configuration file.
+ * @returns {string} Path to the configuration file. It’s always on the same origin as the page.
  */
 export const getConfigPath = (path) => {
+  // Collapse leading slashes, because a path like `//evil.example/` would otherwise resolve to a
+  // protocol-relative URL on another host, where anyone could serve a config file that points the
+  // backend at their own server and receives the cached token when the CMS signs in automatically
+  path = path.replace(/^\/+/, '/');
+
   // If the path ends with a slash, like `/admin/`, we can safely assume it is a directory and
   // append `config.yml`.
   if (path.endsWith('/')) {

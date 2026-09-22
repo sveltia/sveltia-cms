@@ -106,6 +106,16 @@ describe('config/loader', () => {
       expect(getConfigPath('/admin/file.name.ext')).toBe('/admin/config.yml');
       expect(getConfigPath('/admin/no-extension')).toBe('/admin/no-extension/config.yml');
     });
+
+    test('should keep the path on the same origin when it starts with multiple slashes', () => {
+      expect(getConfigPath('//evil.example/')).toBe('/evil.example/config.yml');
+      expect(getConfigPath('///evil.example/admin')).toBe('/evil.example/admin/config.yml');
+      expect(getConfigPath('//evil.example/index.html')).toBe('/evil.example/config.yml');
+      expect(getConfigPath('//')).toBe('/config.yml');
+      expect(new URL(getConfigPath('//evil.example/'), 'https://example.com/').origin).toBe(
+        'https://example.com',
+      );
+    });
   });
 
   describe('verifyLinksAreSecure', () => {
