@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets';
 import { backend } from '$lib/services/backends';
+import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
 import { allEntries } from '$lib/services/contents';
 
 import { getCommitAuthor, saveChanges, updateCache, updateStores } from './save.js';
@@ -33,6 +35,15 @@ vi.mock('$lib/services/assets', () => ({
 
 vi.mock('$lib/services/backends', () => ({
   backend: { current: undefined },
+}));
+
+vi.mock('$lib/services/backends/git/shared/fetch', () => ({
+  repositoryHead: { current: '' },
+}));
+
+vi.mock('$lib/services/backends/refresh', () => ({
+  checkForRemoteChanges: vi.fn(),
+  suspendChecksWhile: vi.fn((commit) => commit()),
 }));
 
 vi.mock('$lib/services/contents', () => ({
@@ -69,6 +80,8 @@ describe('save', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(suspendChecksWhile).mockImplementation((commit) => commit());
+    repositoryHead.current = '';
     mockPrefs.devModeEnabled = false;
     mockUserState.account = {
       name: 'Test User',
@@ -210,7 +223,10 @@ describe('save', () => {
       // Test passes if no error is thrown
     });
 
-    test('should skip asset changes (non-string data)', async () => {
+    test('should cache an asset without text, so a later fetch knows its SHA', async () => {
+      const date = new Date();
+      const author = { name: 'Test User', email: 'test@example.com' };
+
       /** @type {FileChange[]} */
       const changes = [
         {
@@ -222,13 +238,24 @@ describe('save', () => {
 
       await updateCache({
         changes,
-        commit: { sha: 'commit-sha', files: {}, author: undefined, date: new Date() },
+        commit: {
+          sha: 'commit-sha',
+          files: { 'images/photo.jpg': { sha: 'asset-sha' } },
+          author,
+          date,
+        },
       });
 
-      // Test passes if no error is thrown
+      expect(mockCacheDB.delete).not.toHaveBeenCalled();
+      expect(mockCacheDB.set).toHaveBeenCalledWith('images/photo.jpg', {
+        sha: 'asset-sha',
+        size: 1024,
+        text: undefined,
+        meta: { commitAuthor: author, commitDate: date },
+      });
     });
 
-    test('should skip changes without slug', async () => {
+    test('should cache a file without a slug', async () => {
       /** @type {FileChange[]} */
       const changes = [
         {
@@ -244,7 +271,10 @@ describe('save', () => {
       });
 
       expect(mockCacheDB.delete).not.toHaveBeenCalled();
-      expect(mockCacheDB.set).not.toHaveBeenCalled();
+      expect(mockCacheDB.set).toHaveBeenCalledWith(
+        'config.yml',
+        expect.objectContaining({ sha: undefined, text: 'backend:\n  name: github' }),
+      );
     });
 
     test('should delete file from cache when action is delete', async () => {
@@ -598,6 +628,83 @@ describe('save', () => {
   });
 
   describe('saveChanges', () => {
+    /** @type {FileChange[]} */
+    const simpleChanges = [
+      {
+        action: /** @type {CommitAction} */ ('create'),
+        path: 'posts/a.md',
+        slug: 'a',
+        data: '# A',
+      },
+    ];
+
+    /** @type {CommitOptions} */
+    const simpleOptions = { commitType: /** @type {CommitType} */ ('create') };
+
+    test('should check the repository for changes before committing', async () => {
+      /** @type {string[]} */
+      const order = [];
+
+      vi.mocked(checkForRemoteChanges).mockImplementation(async () => {
+        order.push('check');
+
+        return undefined;
+      });
+
+      mockCommitChanges.mockImplementation(async () => {
+        order.push('commit');
+
+        return { sha: 'commit123', date: new Date(), files: {} };
+      });
+
+      await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      expect(order).toEqual(['check', 'commit']);
+    });
+
+    test('should commit anyway when the check fails, reporting the failure', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('offline');
+
+      vi.mocked(checkForRemoteChanges).mockRejectedValue(error);
+
+      await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      expect(mockCommitChanges).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to check the repository for changes.', error);
+      consoleSpy.mockRestore();
+    });
+
+    test('should hold off further checks while the commit is being made', async () => {
+      await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      expect(suspendChecksWhile).toHaveBeenCalledTimes(1);
+
+      // The commit was made inside the suspended section
+      const [task] = vi.mocked(suspendChecksWhile).mock.calls[0];
+
+      expect(task).toBeInstanceOf(Function);
+      expect(mockCommitChanges).toHaveBeenCalledTimes(1);
+    });
+
+    test('should record the commit as the head the stores reflect on a Git backend', async () => {
+      /** @type {any} */ (backend).current = {
+        commitChanges: mockCommitChanges,
+        fetchLastCommit: vi.fn(),
+        repository: { databaseName: 'test-db' },
+      };
+
+      await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      expect(repositoryHead.current).toBe('commit123');
+    });
+
+    test('should leave the head alone on a backend without commits to compare', async () => {
+      await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      expect(repositoryHead.current).toBe('');
+    });
+
     test('should commit changes and return results', async () => {
       /** @type {FileChange[]} */
       const changes = [

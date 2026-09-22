@@ -18,6 +18,7 @@ vi.mock('$lib/services/backends/git/gitea/auth', () => ({
 vi.mock('$lib/services/backends/git/gitea/commits', () => ({
   commitChanges: vi.fn(),
   fetchFileCommits: vi.fn(),
+  fetchLastCommit: vi.fn(),
 }));
 
 vi.mock('$lib/services/backends/git/gitea/constants', () => ({
@@ -267,6 +268,7 @@ describe('Gitea Index Service', () => {
       expect(typeof backend.signIn).toBe('function');
       expect(typeof backend.signOut).toBe('function');
       expect(typeof backend.fetchFiles).toBe('function');
+      expect(typeof backend.fetchLastCommit).toBe('function');
       expect(typeof backend.fetchBlob).toBe('function');
       expect(typeof backend.commitChanges).toBe('function');
     });

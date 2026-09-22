@@ -11,6 +11,7 @@ import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { getReferencedPendingEntries } from '$lib/services/contents/draft/pending-entries';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
+import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
@@ -62,11 +63,18 @@ const updateStores = ({ useWorkflow, skipCI, count }) => {
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Draft to save.
  * @param {boolean} [args.skipCI] Whether to disable automatic deployments for the change.
+ * @param {boolean} [args.overwrite] Whether to save even if someone else has changed the entry
+ * since the draft was opened. Without it, such a save is refused with a `save_conflict` error whose
+ * `cause` is the conflict found by {@link detectEntryConflict}, so the user can be asked first.
  * @returns {Promise<Entry>} Saved entry.
- * @throws {Error} When the entry could not be validated or saved.
+ * @throws {Error} When the entry could not be validated or saved, or would overwrite someone else’s
+ * change.
  */
-export const saveEntry = async ({ draft, skipCI = undefined }) => {
+export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }) => {
   const { isNew, collection, collectionName, fileName, originalEntry } = draft;
+  // A collection can opt in or out of Editorial Workflow on its own, but an entry that already has
+  // a pull request stays in it
+  const useWorkflow = isWorkflowDraft(draft);
 
   // A rich text editor writes what was just typed to the draft with a short delay, so wait for such
   // updates first. Otherwise a save right after typing would validate the field’s previous value,
@@ -80,6 +88,17 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
     expandInvalidFields({ draft });
 
     throw new Error('validation_failed');
+  }
+
+  // Bring the site data up to date before the changes are worked out from it, and refuse to save
+  // over someone else’s change to this entry unless the user has said so. A workflow draft goes to
+  // its own branch, where nobody else writes
+  if (!useWorkflow) {
+    const conflict = await detectEntryConflict(draft);
+
+    if (conflict && !overwrite) {
+      throw new Error('save_conflict', { cause: conflict });
+    }
   }
 
   if (isNew && collection._type === 'entry') {
@@ -131,9 +150,6 @@ export const saveEntry = async ({ draft, skipCI = undefined }) => {
   let results;
   /** @type {CommitOptions} */
   const options = { commitType: isNew ? 'create' : 'update', collection, skipCI };
-  // A collection can opt in or out of Editorial Workflow on its own, but an entry that already has
-  // a pull request stays in it
-  const useWorkflow = isWorkflowDraft(draft);
 
   try {
     results = useWorkflow

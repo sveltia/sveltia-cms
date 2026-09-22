@@ -35,6 +35,7 @@ vi.mock('$lib/services/backends/git/github/auth', () => ({
 vi.mock('$lib/services/backends/git/github/commits', () => ({
   commitChanges: vi.fn(),
   fetchFileCommits: vi.fn(),
+  fetchLastCommit: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/github/deployment', () => ({
   triggerDeployment: vi.fn(),
@@ -83,6 +84,7 @@ describe('GitHub backend service', () => {
       signIn: expect.any(Function),
       signOut: expect.any(Function),
       fetchFiles: expect.any(Function),
+      fetchLastCommit: expect.any(Function),
       fetchBlob: expect.any(Function),
       commitChanges: expect.any(Function),
       fetchFileCommits: expect.any(Function),

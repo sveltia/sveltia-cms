@@ -43,6 +43,7 @@
   import { createDraft } from '$lib/services/contents/draft/create';
   import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
   import { saveEntry } from '$lib/services/contents/draft/save';
+  import { describeConflict } from '$lib/services/contents/draft/save/conflict';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { validateDraft } from '$lib/services/contents/draft/validate';
@@ -73,6 +74,7 @@
 
   /**
    * @import { CascadeDeletePlan, UnpublishedEntry, UpdateToastState } from '$lib/types/private';
+   * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
    */
 
   /** @type {CascadeDeletePlan} */
@@ -106,6 +108,13 @@
    */
   let resolveReviewPrompt = $state();
   let showDiscardDialog = $state(false);
+  let showConflictDialog = $state(false);
+  /**
+   * Someone else’s change to the entry that the last save attempt would have overwritten, along
+   * with the options of that attempt, so the save can be repeated as asked once the user agrees.
+   * @type {{ conflict: EntryConflict, skipCI: boolean | undefined } | undefined}
+   */
+  let saveConflict = $state();
   let showDeleteErrorToast = $state(false);
   let showErrorDialog = $state(false);
   let errorMessage = $state('');
@@ -364,8 +373,10 @@
    * Save the entry draft.
    * @param {object} [options] Options.
    * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
+   * @param {boolean} [options.overwrite] Whether to save over someone else’s change to the entry,
+   * once the user has been asked.
    */
-  const save = async ({ skipCI = undefined } = {}) => {
+  const save = async ({ skipCI = undefined, overwrite = false } = {}) => {
     const draft = entryDraft.current;
 
     if (!collection || !draft) {
@@ -375,7 +386,7 @@
     saving = true;
 
     try {
-      const savedEntry = await saveEntry({ draft, skipCI });
+      const savedEntry = await saveEntry({ draft, skipCI, overwrite });
       const savedDraft = /** @type {UnpublishedEntry} */ (savedEntry);
 
       // Saving with Editorial Workflow leaves the entry as a draft, which nothing on screen says:
@@ -434,6 +445,10 @@
           .flatMap((validity) => Object.values(validity).map(({ valid }) => !valid))
           .filter(Boolean).length;
         showValidationToast = true;
+      } else if (ex.message === 'save_conflict') {
+        // Someone else has changed the entry since it was opened; let the user decide
+        saveConflict = { conflict: ex.cause, skipCI };
+        showConflictDialog = true;
       } else if (ex.message === 'saving_failed') {
         showErrorDialog = true;
         errorMessage = ex.cause?.message ?? ex.message;
@@ -770,6 +785,24 @@
       ? 'workflow.confirm_cancelling_deletion'
       : 'workflow.confirm_discarding_entry_changes',
   )}
+</ConfirmationDialog>
+
+<ConfirmationDialog
+  bind:open={showConflictDialog}
+  title={_('save_conflict.title')}
+  okLabel={_('save_conflict.save_anyway')}
+  onOk={async () => {
+    await save({ skipCI: saveConflict?.skipCI, overwrite: true });
+  }}
+  onClose={() => {
+    menuButton?.focus();
+  }}
+>
+  {#if saveConflict}
+    {@const { description, warning } = describeConflict(saveConflict.conflict, appLocale.current)}
+    {description}
+    {warning}
+  {/if}
 </ConfirmationDialog>
 
 <!-- Shown while the request is in flight. The result is reported by the content library page,

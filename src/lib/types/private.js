@@ -217,6 +217,18 @@
  */
 
 /**
+ * What someone else’s commits have changed on the configured branch, as found by a check made after
+ * the site data was loaded. A modified entry is listed as it is now; a deleted one as it was.
+ * @typedef {object} RemoteChanges
+ * @property {Entry[]} addedEntries Entries that weren’t there before.
+ * @property {Entry[]} modifiedEntries Entries whose files have changed.
+ * @property {Entry[]} deletedEntries Entries whose files are gone.
+ * @property {Asset[]} addedAssets Assets that weren’t there before.
+ * @property {Asset[]} modifiedAssets Assets whose files have changed.
+ * @property {Asset[]} deletedAssets Assets whose files are gone.
+ */
+
+/**
  * State of a deployment created by a CI/CD provider connected to the Git backend.
  * - `checking`: a request to the backend is in flight, or nothing has been reported yet for a
  * commit made moments ago and the provider is being given time to post its first status.
@@ -321,7 +333,12 @@
  * @property {() => RepositoryInfo | undefined} init Function to initialize the backend.
  * @property {(options: SignInOptions) => Promise<User | void>} signIn Function to sign in.
  * @property {() => Promise<void>} signOut Function to sign out.
- * @property {() => Promise<void>} fetchFiles Function to fetch files.
+ * @property {() => Promise<void>} fetchFiles Function to fetch files. Calling it again once the
+ * site data has been loaded brings the stores up to date with the repository, fetching only what
+ * has changed.
+ * @property {() => Promise<{ hash: string, message: string }>} [fetchLastCommit] Function to fetch
+ * the configured branch’s head commit, to tell whether the repository has changed since the site
+ * data was loaded. Git backends only.
  * @property {(asset: Asset) => Promise<Blob>} [fetchBlob] Function to fetch an asset as a Blob. Git
  * backends only.
  * @property {(changes: FileChange[], options: CommitOptions) => Promise<CommitResults>}

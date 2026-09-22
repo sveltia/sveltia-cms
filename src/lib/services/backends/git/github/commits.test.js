@@ -9,6 +9,7 @@ import {
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
@@ -17,6 +18,9 @@ vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', () => ({
   createCommitMessage: vi.fn().mockReturnValue('Test commit message'),
+}));
+vi.mock('$lib/services/backends/git/shared/fetch', () => ({
+  repositoryHead: { current: '' },
 }));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn(() => 'Translation message'),
@@ -44,6 +48,7 @@ describe('GitHub commits service', () => {
       branch: 'main',
     });
     forkedRepository.current = undefined;
+    repositoryHead.current = '';
     vi.mocked(getWorkflowRepository).mockReturnValue({ owner: 'test-owner', repo: 'test-repo' });
   });
 
@@ -237,6 +242,115 @@ describe('GitHub commits service', () => {
       expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('createCommitOnBranch'), {
         input: expect.objectContaining({ expectedHeadOid: 'known-head-sha' }),
       });
+    });
+
+    test('expects the head the loaded site data reflects on the configured branch', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      vi.mocked(fetchGraphQL).mockResolvedValueOnce({
+        createCommitOnBranch: {
+          commit: { oid: 'new-commit-sha', committedDate: '2023-01-01T00:00:00Z' },
+        },
+      });
+
+      await commitChanges([], /** @type {any} */ ({ commitType: 'update' }));
+
+      // No lookup: the known head is what the commit must go on top of
+      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('createCommitOnBranch'), {
+        input: expect.objectContaining({ expectedHeadOid: 'loaded-head-sha' }),
+      });
+    });
+
+    test('still looks the head up for a workflow branch', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          repository: {
+            ref: { target: { history: { nodes: [{ oid: 'branch-head-sha', message: '' }] } } },
+          },
+        })
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: { oid: 'new-commit-sha', committedDate: '2023-01-01T00:00:00Z' },
+          },
+        });
+
+      await commitChanges([], /** @type {any} */ ({ commitType: 'update', branch: 'cms/posts/a' }));
+
+      expect(fetchGraphQL).toHaveBeenCalledTimes(2);
+      expect(fetchGraphQL).toHaveBeenLastCalledWith(
+        expect.stringContaining('createCommitOnBranch'),
+        { input: expect.objectContaining({ expectedHeadOid: 'branch-head-sha' }) },
+      );
+    });
+
+    test('reports a commit refused because the branch has moved', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const apiError = new Error('Server responded with an error', {
+        cause: { status: 200, message: 'Expected branch to point to "loaded-head-sha"' },
+      });
+
+      vi.mocked(fetchGraphQL)
+        .mockRejectedValueOnce(apiError)
+        // The head lookup that follows finds a different commit
+        .mockResolvedValueOnce({
+          repository: {
+            ref: { target: { history: { nodes: [{ oid: 'someone-elses-sha', message: '' }] } } },
+          },
+        });
+
+      await expect(
+        commitChanges([], /** @type {any} */ ({ commitType: 'update' })),
+      ).rejects.toThrow('The branch has moved since the site data was loaded.');
+    });
+
+    test('passes any other failure on when the head is where it was expected', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const apiError = new Error('Server responded with an error', { cause: { status: 500 } });
+
+      vi.mocked(fetchGraphQL)
+        .mockRejectedValueOnce(apiError)
+        .mockResolvedValueOnce({
+          repository: {
+            ref: { target: { history: { nodes: [{ oid: 'loaded-head-sha', message: '' }] } } },
+          },
+        });
+
+      await expect(commitChanges([], /** @type {any} */ ({ commitType: 'update' }))).rejects.toBe(
+        apiError,
+      );
+    });
+
+    test('passes the failure on when the head can’t be looked up afterwards', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const apiError = new Error('Server responded with an error', { cause: { status: 500 } });
+
+      vi.mocked(fetchGraphQL)
+        .mockRejectedValueOnce(apiError)
+        .mockRejectedValueOnce(new Error('Failed to send the request'));
+
+      await expect(commitChanges([], /** @type {any} */ ({ commitType: 'update' }))).rejects.toBe(
+        apiError,
+      );
+    });
+
+    test('passes a failure on a workflow branch on without a head lookup', async () => {
+      const apiError = new Error('Server responded with an error', { cause: { status: 500 } });
+
+      vi.mocked(fetchGraphQL).mockRejectedValueOnce(apiError);
+
+      await expect(
+        commitChanges(
+          [],
+          /** @type {any} */ ({ commitType: 'update', branch: 'cms/posts/a', headOid: 'known' }),
+        ),
+      ).rejects.toBe(apiError);
+      expect(fetchGraphQL).toHaveBeenCalledTimes(1);
     });
 
     test('handles empty changes', async () => {

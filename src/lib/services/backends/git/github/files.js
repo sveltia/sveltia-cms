@@ -16,6 +16,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
@@ -293,7 +294,9 @@ export const fetchFiles = async () => {
   // the user, so it has to finish before the data is fetched, unlike a plain access check
   const openAuthoring = isOpenAuthoringConfigured();
 
-  if (openAuthoring) {
+  // Once only: a later call brings the stores up to date with the repository, and setting the fork
+  // up again would reset the fork state while a workflow commit may be relying on it
+  if (openAuthoring && !openAuthoringInitialized.current) {
     await initOpenAuthoring();
   }
 

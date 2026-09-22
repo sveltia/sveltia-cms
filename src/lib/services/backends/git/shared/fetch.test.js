@@ -17,6 +17,7 @@ import {
   getFileList,
   parseAssetFileInfo,
   parseFileInfo,
+  repositoryHead,
   restoreCachedFileData,
   updateCache,
   updateStores,
@@ -45,6 +46,9 @@ describe('git/shared/fetch', () => {
 
   beforeEach(() => {
     cmsConfigVersion.current = lastConfigHash;
+    allEntries.current = [];
+    allAssets.current = [];
+    repositoryHead.current = '';
 
     mockMetaDB = {
       entries: vi.fn(),
@@ -425,7 +429,7 @@ describe('git/shared/fetch', () => {
 
   describe('updateStores', () => {
     it('should update all stores with provided data', () => {
-      const entries = [{ path: 'entry1.md' }];
+      const entries = [{ id: 'e1', locales: { _default: { path: 'entry1.md' } } }];
       const assets = [{ path: 'asset1.jpg' }];
       const configFiles = [{ path: '.gitignore' }];
       const errors = [new Error('Parse error')];
@@ -437,6 +441,47 @@ describe('git/shared/fetch', () => {
       expect(gitConfigFiles.current).toEqual(configFiles);
       expect(entryParseErrors.current).toEqual(errors);
       expect(dataLoaded.current).toEqual(true);
+    });
+
+    it('should keep the entries and assets already in the stores where the files are unchanged', () => {
+      const oldEntry = { id: 'old-1', locales: { _default: { path: 'entry1.md' } } };
+      const oldChangedEntry = { id: 'old-2', locales: { _default: { path: 'entry2.md' } } };
+      const oldAsset = { path: 'asset1.jpg', blobURL: 'blob:1' };
+
+      allEntries.current = [oldEntry, oldChangedEntry];
+      allAssets.current = [oldAsset];
+
+      const newEntry = { id: 'new-1', locales: { _default: { path: 'entry1.md' } } };
+      const newChangedEntry = { id: 'new-2', locales: { _default: { path: 'entry2.md' } } };
+      const newAsset = { path: 'asset1.jpg' };
+
+      updateStores({
+        entries: [newEntry, newChangedEntry],
+        assets: [newAsset],
+        configFiles: [],
+        changedPaths: new Set(['entry2.md']),
+      });
+
+      // Unchanged: the same object; changed: the new object under the old ID
+      expect(allEntries.current[0]).toBe(oldEntry);
+      expect(allEntries.current[1]).toEqual({ ...newChangedEntry, id: 'old-2' });
+      expect(allAssets.current[0]).toBe(oldAsset);
+    });
+
+    it('should treat every file as changed when the changed paths are not given', () => {
+      const oldEntry = { id: 'old-1', locales: { _default: { path: 'entry1.md' } } };
+      const oldAsset = { path: 'asset1.jpg', blobURL: 'blob:1' };
+
+      allEntries.current = [oldEntry];
+      allAssets.current = [oldAsset];
+
+      const newEntry = { id: 'new-1', locales: { _default: { path: 'entry1.md' } } };
+      const newAsset = { path: 'asset1.jpg' };
+
+      updateStores({ entries: [newEntry], assets: [newAsset], configFiles: [] });
+
+      expect(allEntries.current[0]).toEqual({ ...newEntry, id: 'old-1' });
+      expect(allAssets.current[0]).toBe(newAsset);
     });
 
     it('should update stores with empty errors array by default', () => {
@@ -858,7 +903,109 @@ describe('git/shared/fetch', () => {
       expect(allAssets.current).toEqual([]);
       expect(gitConfigFiles.current).toEqual([]);
       expect(dataLoaded.current).toEqual(true);
+      expect(repositoryHead.current).toEqual('abc123');
       expect(mockLog).toHaveBeenLastCalledWith('The site data is ready: no files to load');
+    });
+
+    it('should record the head once the stores reflect the commit', async () => {
+      const entryFile = { path: 'posts/a.md', name: 'a.md', sha: 'sha1', size: 10, type: 'entry' };
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: [entryFile],
+        assetFiles: [],
+        configFiles: [],
+        allFiles: [entryFile],
+      });
+      vi.mocked(prepareEntries).mockImplementation(async () => {
+        // Still the previous head while the files are being parsed
+        expect(repositoryHead.current).toBe('');
+
+        return { entries: [{ id: 'a', locales: { en: { path: 'posts/a.md' } } }], errors: [] };
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(repositoryHead.current).toBe('abc123');
+    });
+
+    it('should not repeat the access check on a later fetch', async () => {
+      const mockCheckAccess = vi.fn().mockResolvedValue(undefined);
+
+      repositoryHead.current = 'abc123';
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        checkAccess: mockCheckAccess,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockCheckAccess).not.toHaveBeenCalled();
+    });
+
+    it('should carry the unchanged entries and assets over on a later fetch', async () => {
+      const entryFile = { path: 'posts/a.md', name: 'a.md', sha: 'sha1', size: 10, type: 'entry' };
+
+      const changedFile = {
+        path: 'posts/b.md',
+        name: 'b.md',
+        sha: 'sha2-new',
+        size: 10,
+        type: 'entry',
+      };
+
+      const assetFile = { path: 'img/a.png', name: 'a.png', sha: 'sha3', size: 20, type: 'asset' };
+      const oldEntry = { id: 'a', locales: { en: { path: 'posts/a.md' } } };
+      const oldChangedEntry = { id: 'b', locales: { en: { path: 'posts/b.md' } } };
+      const oldAsset = { path: 'img/a.png', sha: 'sha3', blobURL: 'blob:1' };
+      const newEntry = { id: 'a2', locales: { en: { path: 'posts/a.md' } } };
+      const newChangedEntry = { id: 'b2', locales: { en: { path: 'posts/b.md' } } };
+
+      allEntries.current = [oldEntry, oldChangedEntry];
+      allAssets.current = [oldAsset];
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 3,
+        entryFiles: [entryFile, changedFile],
+        assetFiles: [assetFile],
+        configFiles: [],
+        allFiles: [entryFile, changedFile, assetFile],
+      });
+      vi.mocked(prepareEntries).mockResolvedValue({
+        entries: [newEntry, newChangedEntry],
+        errors: [],
+      });
+      // The cache stands for the previous fetch: `b.md` has a different SHA now
+      mockCacheDB.entries.mockResolvedValue([
+        ['posts/a.md', { sha: 'sha1', size: 10, text: 'a', meta: {} }],
+        ['posts/b.md', { sha: 'sha2-old', size: 10, text: 'b', meta: {} }],
+        ['img/a.png', { sha: 'sha3', size: 20, meta: {} }],
+      ]);
+      mockFetchFileContents.mockResolvedValue({
+        'posts/b.md': { sha: 'sha2-new', size: 10, text: 'b2', meta: {} },
+      });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockFetchFileContents).toHaveBeenCalledWith([changedFile]);
+      expect(allEntries.current[0]).toBe(oldEntry);
+      expect(allEntries.current[1]).toEqual({ ...newChangedEntry, id: 'b' });
+      expect(allAssets.current[0]).toBe(oldAsset);
     });
 
     it('should fetch and process entries, assets, and config files', async () => {

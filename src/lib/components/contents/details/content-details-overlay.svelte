@@ -18,6 +18,7 @@
   import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
+  import RemoteChangeInfobar from '$lib/components/contents/details/remote-change-infobar.svelte';
   import Sidebar from '$lib/components/contents/details/sidebar/sidebar.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { rememberFocus } from '$lib/services/app/focus';
@@ -546,6 +547,7 @@
         </div>
       </EmptyState>
     {:else}
+      <RemoteChangeInfobar />
       <div role="none" class="body" onpointerdown={markInteracted} onkeydown={markInteracted}>
         {#key `${collectionName}|${fileName}|${isIndexFile}`}
           <div role="none" class="content-area">

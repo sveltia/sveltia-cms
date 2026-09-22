@@ -2,7 +2,11 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/gitlab/auth';
-import { commitChanges, fetchFileCommits } from '$lib/services/backends/git/gitlab/commits';
+import {
+  commitChanges,
+  fetchFileCommits,
+  fetchLastCommit,
+} from '$lib/services/backends/git/gitlab/commits';
 import { BACKEND_LABEL, BACKEND_NAME } from '$lib/services/backends/git/gitlab/constants';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import gitlabBackend, { init } from '$lib/services/backends/git/gitlab/index';
@@ -21,6 +25,7 @@ vi.mock('$lib/services/backends/git/gitlab/auth', () => ({
 vi.mock('$lib/services/backends/git/gitlab/commits', () => ({
   commitChanges: vi.fn(),
   fetchFileCommits: vi.fn(),
+  fetchLastCommit: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/gitlab/files', () => ({
   fetchBlob: vi.fn(),
@@ -302,6 +307,7 @@ describe('GitLab backend service', () => {
         signIn,
         signOut,
         fetchFiles,
+        fetchLastCommit,
         fetchBlob,
         commitChanges,
         fetchFileCommits,

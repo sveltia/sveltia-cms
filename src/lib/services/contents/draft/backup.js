@@ -90,7 +90,7 @@ export const getBackup = async (collectionName, slug = '') => {
  * @param {EntryDraft} draft Draft.
  * @returns {string} Entry slug. An empty string for a new entry.
  */
-const getBackupSlug = ({ fileName, originalEntry }) => fileName ?? originalEntry?.slug ?? '';
+export const getBackupSlug = ({ fileName, originalEntry }) => fileName ?? originalEntry?.slug ?? '';
 
 /**
  * Backup the entry draft to IndexedDB.

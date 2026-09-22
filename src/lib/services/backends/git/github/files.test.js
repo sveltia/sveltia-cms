@@ -27,6 +27,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { MAX_CONCURRENT_REQUESTS } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/commits');
@@ -34,6 +35,9 @@ vi.mock('$lib/services/backends/git/github/fork');
 vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/fetch');
+vi.mock('$lib/services/workflow/open-authoring', () => ({
+  openAuthoringInitialized: { current: false },
+}));
 
 // The function returned by `startSimulatedProgress()`, so the tests can verify it’s called
 const stopProgress = vi.hoisted(() => vi.fn());
@@ -495,12 +499,26 @@ describe('GitHub files service', () => {
       vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
       vi.mocked(initOpenAuthoring).mockResolvedValue();
       vi.mocked(fetchAndParseFiles).mockResolvedValue();
+      openAuthoringInitialized.current = false;
 
       await fetchFiles();
 
       expect(initOpenAuthoring).toHaveBeenCalled();
       // A contributor without write access is expected here, so the plain access check is skipped
       expect(checkRepositoryAccess).not.toHaveBeenCalled();
+      expect(fetchAndParseFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ checkAccess: undefined }),
+      );
+    });
+
+    test('leaves the fork alone once it has been set up', async () => {
+      vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+      openAuthoringInitialized.current = true;
+
+      await fetchFiles();
+
+      expect(initOpenAuthoring).not.toHaveBeenCalled();
       expect(fetchAndParseFiles).toHaveBeenCalledWith(
         expect.objectContaining({ checkAccess: undefined }),
       );

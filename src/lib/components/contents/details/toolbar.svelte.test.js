@@ -19,6 +19,7 @@ import { deployPollTimedOut } from '$lib/services/deployments';
 import { recheckDeployments } from '$lib/services/deployments/poll';
 import { env } from '$lib/services/user/env.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { formatDate } from '$lib/services/utils/date';
 import { unpublishedEntries } from '$lib/services/workflow';
 import {
   deleteWorkflowEntry,
@@ -142,7 +143,9 @@ describe('Toolbar', () => {
     await expect.element(save).toBeEnabled();
     await save.click();
 
-    await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledWith({ draft, skipCI: undefined }));
+    await vi.waitFor(() =>
+      expect(saveEntry).toHaveBeenCalledWith({ draft, skipCI: undefined, overwrite: false }),
+    );
     await expect.poll(() => window.location.hash).toBe('#/collections/posts');
     expect(entryDraft.current).toBeNull();
   });
@@ -200,6 +203,72 @@ describe('Toolbar', () => {
 
     await expect.element(dialog).toBeInTheDocument();
     expect(dialog.element().textContent).toContain('Server is down');
+  });
+
+  test('asks before saving over someone else’s change, and saves when told to', async () => {
+    const commitDate = new Date('2026-03-04T05:06:00Z');
+
+    vi.mocked(saveEntry)
+      .mockRejectedValueOnce(
+        new Error('save_conflict', {
+          cause: {
+            type: 'modified',
+            entry: { ...helloEntry, commitAuthor: { name: 'Alex' }, commitDate },
+          },
+        }),
+      )
+      .mockResolvedValueOnce(/** @type {any} */ (helloEntry));
+
+    const { draft, entryDraft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+
+    draft.currentValues._default.title = 'Hi';
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    expect(dialog.element().textContent?.replace(/\s+/g, ' ')).toContain(
+      `\u2068Alex\u2069 changed this entry on \u2068${formatDate(commitDate, 'en-US')}\u2069, ` +
+        'after you opened it. If you save now, their changes will be lost.',
+    );
+
+    await dialog.getByRole('button', { name: 'Save Anyway' }).click();
+
+    await vi.waitFor(() =>
+      expect(saveEntry).toHaveBeenLastCalledWith({ draft, skipCI: undefined, overwrite: true }),
+    );
+    // Saved and closed
+    await expect.poll(() => entryDraft.current).toBe(null);
+  });
+
+  test('says when the entry was deleted by someone else, and leaves it when cancelled', async () => {
+    vi.mocked(saveEntry).mockRejectedValue(
+      new Error('save_conflict', { cause: { type: 'deleted' } }),
+    );
+
+    const { draft, entryDraft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+
+    draft.currentValues._default.title = 'Hi';
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    expect(dialog.element().textContent?.replace(/\s+/g, ' ')).toContain(
+      'This entry has been deleted from the repository after you opened it. ' +
+        'If you save now, the entry will be created again.',
+    );
+
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+
+    await expect.element(dialog).not.toBeInTheDocument();
+    expect(saveEntry).toHaveBeenCalledOnce();
+    // Still editing
+    expect(entryDraft.current).toBe(draft);
   });
 
   test('duplicates the entry once its assets are copied, then opens the duplicate', async () => {
@@ -452,7 +521,9 @@ describe('Toolbar', () => {
     const { draft } = await renderToolbar();
 
     await page.getByRole('button', { name: 'Publish' }).click();
-    await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledWith({ draft, skipCI: undefined }));
+    await vi.waitFor(() =>
+      expect(saveEntry).toHaveBeenCalledWith({ draft, skipCI: undefined, overwrite: false }),
+    );
 
     // The split button offers the opposite
     const { draft: anotherDraft } = await renderToolbar();
@@ -461,7 +532,11 @@ describe('Toolbar', () => {
     await sleep(150);
     await page.getByRole('menuitem', { name: 'Save without Publishing' }).click();
     await vi.waitFor(() =>
-      expect(saveEntry).toHaveBeenCalledWith({ draft: anotherDraft, skipCI: true }),
+      expect(saveEntry).toHaveBeenCalledWith({
+        draft: anotherDraft,
+        skipCI: true,
+        overwrite: false,
+      }),
     );
   });
 
@@ -1139,7 +1214,9 @@ describe('Toolbar', () => {
       await page.getByRole('button', { name: 'Save' }).click();
 
       // A plain save: no review prompt, and the editor closes
-      await vi.waitFor(() => expect(saveEntry).toHaveBeenCalledWith({ draft, skipCI: undefined }));
+      await vi.waitFor(() =>
+        expect(saveEntry).toHaveBeenCalledWith({ draft, skipCI: undefined, overwrite: false }),
+      );
       await expect.poll(() => window.location.hash).toBe('#/collections/posts');
       expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
       expect(updateWorkflowStatus).not.toHaveBeenCalled();

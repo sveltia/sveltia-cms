@@ -1209,6 +1209,32 @@ saving_entry:
     title: エラー
     description: エントリーを保存中に問題が発生しました。後で再度お試しください。
 
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: 他のユーザーがエントリーを変更しました
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: あなたがこのエントリーを開いた後、{$date} に {$name} がこのエントリーを変更しました。
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: あなたがこのエントリーを開いた後、リポジトリ上でこのエントリーが変更されました。
+  deleted: あなたがこのエントリーを開いた後、リポジトリからこのエントリーが削除されました。
+  # Follows `modified_by` or `modified`
+  overwrite_warning: 今保存すると、その変更は失われます。
+  # Follows `deleted`
+  recreate_warning: 今保存すると、エントリーが再作成されます。
+  # OK button label
+  save_anyway: このまま保存
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: 保存中に他のユーザーがリポジトリを更新しました。再度お試しください。
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: エントリーを再読み込み
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: エントリーを再読み込みしてもよろしいですか？未保存の変更は失われます。
+
 # ==============================================================================
 # Asset Editor
 # ==============================================================================

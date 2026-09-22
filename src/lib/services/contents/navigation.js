@@ -21,6 +21,7 @@ import {
 } from '$lib/services/contents/collection/nested';
 import { listedEntries } from '$lib/services/contents/collection/view';
 import { createDraft } from '$lib/services/contents/draft/create';
+import { refreshOpenedDraft } from '$lib/services/contents/draft/reload';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { isSearchRoute } from '$lib/services/search/navigation';
@@ -234,6 +235,8 @@ export const resolveContentsRoute = ({ entryDraft }) => {
         };
 
     createDraft({ entryDraft, collection, collectionFile, originalEntry });
+    // Not awaited: the draft is shown right away, and made again if the entry has changed
+    refreshOpenedDraft(entryDraft);
 
     announcedPageStatus.current = _(`edit_${collection._type}_announcement`, {
       values: { collection: collectionLabel, file: getCollectionFileLabel(collectionFile) },
@@ -282,6 +285,7 @@ export const resolveContentsRoute = ({ entryDraft }) => {
 
     if (appLocale.current) {
       createDraft({ entryDraft, collection, originalEntry });
+      refreshOpenedDraft(entryDraft);
 
       announcedPageStatus.current = _('edit_entry_announcement', {
         values: {

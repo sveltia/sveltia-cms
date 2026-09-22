@@ -23,6 +23,7 @@ import {
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
 import { createDraft } from '$lib/services/contents/draft/create';
+import { refreshOpenedDraft } from '$lib/services/contents/draft/reload';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { CONTENTS_ROUTE_REGEX, resolveContentsRoute } from '$lib/services/contents/navigation';
@@ -68,6 +69,7 @@ vi.mock('$lib/services/contents/collection/nested', () => ({
 
 vi.mock('$lib/services/contents/collection/view', () => ({ listedEntries: { current: [] } }));
 vi.mock('$lib/services/contents/draft/create', () => ({ createDraft: vi.fn() }));
+vi.mock('$lib/services/contents/draft/reload', () => ({ refreshOpenedDraft: vi.fn() }));
 vi.mock('$lib/services/contents/editor', () => ({ showContentOverlay: { current: false } }));
 vi.mock('$lib/services/contents/entry/summary', () => ({ getEntrySummary: vi.fn() }));
 vi.mock('$lib/services/search/navigation', () => ({ isSearchRoute: vi.fn() }));
@@ -349,6 +351,8 @@ describe('resolveContentsRoute()', () => {
         initialPath: undefined,
         isIndexFile: false,
       });
+      // Nothing to bring up to date for a new entry
+      expect(refreshOpenedDraft).not.toHaveBeenCalled();
       expect(announcedPageStatus.current).toBe('create_entry_announcement');
     });
 
@@ -380,6 +384,8 @@ describe('resolveContentsRoute()', () => {
         collection: posts,
         originalEntry: entry,
       });
+      // The entry is brought up to date with the repository in the background
+      expect(refreshOpenedDraft).toHaveBeenCalledWith(entryDraft);
       expect(announcedPageStatus.current).toBe('edit_entry_announcement');
     });
 
@@ -449,6 +455,7 @@ describe('resolveContentsRoute()', () => {
         collectionFile: general,
         originalEntry: entry,
       });
+      expect(refreshOpenedDraft).toHaveBeenCalledWith(entryDraft);
       expect(announcedPageStatus.current).toBe('edit_file_announcement');
     });
 

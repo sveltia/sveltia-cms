@@ -5,12 +5,14 @@ import { allAssets } from '$lib/services/assets';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { hasSkipCIMarker } from '$lib/services/backends/git/shared/commits';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
+import { reconcileAssets, reconcileEntries } from '$lib/services/backends/git/shared/reconcile';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 import { createDebugLogger } from '$lib/services/utils/logging';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
  * @import {
@@ -37,6 +39,14 @@ import { createDebugLogger } from '$lib/services/utils/logging';
 /**
  * @typedef {(lastHash: string) => Promise<BaseFileListItemProps[]>} FetchFileListFunction
  */
+
+/**
+ * Head commit of the configured branch that the loaded site data reflects: the commit the files
+ * were fetched at, or the user’s own latest commit. Comparing it with the branch’s current head
+ * tells whether someone else has pushed since. Empty until the site data has been loaded, and for a
+ * backend that doesn’t track commits.
+ */
+export const repositoryHead = createRawState('');
 
 /**
  * Get the file list from the meta database or fetch it if not cached.
@@ -155,16 +165,38 @@ export const parseAssetFileInfo = (fileInfo) => {
 };
 
 /**
- * Update the stores with the latest entries, assets, config files, and errors.
+ * List the paths of the files an entry or asset is made of.
+ * @param {Entry | Asset} item Entry or asset.
+ * @returns {string[]} Paths.
+ */
+const getFilePaths = (item) =>
+  'locales' in item ? Object.values(item.locales).map(({ path }) => path) : [item.path];
+
+/**
+ * Update the stores with the latest entries, assets, config files, and errors. On a fetch made
+ * after the initial load, the entries and assets already in the stores are carried over wherever
+ * their files haven’t changed, so the rest of the app doesn’t lose track of them.
  * @param {object} args Arguments.
  * @param {Entry[]} args.entries List of entry files.
  * @param {Asset[]} args.assets List of asset files.
  * @param {BaseConfigListItem[]} args.configFiles List of Git config files.
  * @param {Error[]} [args.errors] List of errors encountered while parsing entries.
+ * @param {Set<string>} [args.changedPaths] Paths of the files whose content differs from what was
+ * fetched last time. Every file counts as changed if omitted.
  */
-export const updateStores = ({ entries, assets, configFiles, errors = [] }) => {
-  allEntries.current = entries;
-  allAssets.current = assets;
+export const updateStores = ({ entries, assets, configFiles, errors = [], changedPaths }) => {
+  const changed = changedPaths ?? new Set([...entries, ...assets].flatMap(getFilePaths));
+
+  allEntries.current = reconcileEntries({
+    entries,
+    previous: allEntries.current,
+    changedPaths: changed,
+  });
+  allAssets.current = reconcileAssets({
+    assets,
+    previous: allAssets.current,
+    changedPaths: changed,
+  });
   gitConfigFiles.current = configFiles;
   entryParseErrors.current = errors;
   dataLoaded.current = true;
@@ -315,7 +347,10 @@ export const fetchAndParseFiles = async ({
 
   const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
   const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
-  const accessPromise = checkAccess ? deferRejection(checkAccess()) : undefined;
+
+  // The access was verified when the data was first loaded; a later call only brings it up to date
+  const accessPromise =
+    checkAccess && !repositoryHead.current ? deferRejection(checkAccess()) : undefined;
 
   // Start reading the databases right away, but only wait for them once the last commit is known,
   // so the reads — the file cache holds the text of every entry — overlap the network round trips
@@ -376,6 +411,7 @@ export const fetchAndParseFiles = async ({
   // Skip fetching files if no files found
   if (!fileList.count) {
     updateStores({ entries: [], assets: [], configFiles: [] });
+    repositoryHead.current = lastCommitHash;
     log('The site data is ready: no files to load');
 
     return;
@@ -386,6 +422,12 @@ export const fetchAndParseFiles = async ({
   const cachedFiles = Object.fromEntries(cachedFileEntries);
 
   restoreCachedFileData({ allFiles, cachedFiles });
+
+  // What differs from the last fetch, which the cache stands for; the user’s own commits keep it up
+  // to date, so their files don’t count. Everything is new on a first load into an empty cache
+  const changedPaths = new Set(
+    allFiles.filter(({ path, sha }) => cachedFiles[path]?.sha !== sha).map(({ path }) => path),
+  );
 
   // A file is fetched again until its metadata is cached along with its text
   const fetchingFiles = allFiles.filter(({ meta }) => !meta);
@@ -434,7 +476,10 @@ export const fetchAndParseFiles = async ({
   );
 
   log(`Parsed ${entries.length} entries (${errors.length} errors)`);
-  updateStores({ entries, assets, configFiles: configFileItems, errors });
+  updateStores({ entries, assets, configFiles: configFileItems, errors, changedPaths });
+  // Recorded once the stores reflect the commit, so a check made in the meantime still sees the
+  // previous head and knows the data isn’t there yet
+  repositoryHead.current = lastCommitHash;
   log('The site data is ready');
 
   // Whether the cache written below is complete, or missing the metadata of the fetched files

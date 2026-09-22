@@ -5,6 +5,7 @@ import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
+import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -81,6 +82,27 @@ export const fetchLastCommit = async (branchName) => {
 const MAX_GRAPHQL_BLOB_SIZE = 10 * 1024 * 1024;
 
 /**
+ * Get the head a commit is expected to go on top of. The caller knows it when it has just created
+ * the branch. On the configured branch, it’s the commit the loaded site data reflects, which the
+ * caller has just brought up to date: GitHub then refuses the commit if someone else has pushed in
+ * the meantime, rather than letting it overwrite their change. A workflow branch is only ever
+ * written by its own author, so its head is simply looked up.
+ * @param {CommitOptions} options Commit options.
+ * @returns {Promise<string>} Commit SHA.
+ */
+const getExpectedHeadOid = async ({ headOid, branch }) => {
+  if (headOid) {
+    return headOid;
+  }
+
+  if (!branch && repositoryHead.current) {
+    return repositoryHead.current;
+  }
+
+  return (await fetchLastCommit(branch)).hash;
+};
+
+/**
  * Save entries or assets remotely.
  * @param {FileChange[]} changes File changes to be saved.
  * @param {CommitOptions} options Commit options.
@@ -145,22 +167,42 @@ export const commitChanges = async (changes, options) => {
     }
   `;
 
+  const expectedHeadOid = await getExpectedHeadOid(options);
+
   const input = {
     branch: {
       repositoryNameWithOwner: `${owner}/${repo}`,
       branchName: branch,
     },
-    // The caller knows the head when it has just created the branch, so skip the extra request
-    expectedHeadOid: options.headOid ?? (await fetchLastCommit(options.branch)).hash,
+    expectedHeadOid,
     fileChanges: { additions, deletions },
     message: { headline: createCommitMessage(changes, options) },
   };
 
-  const {
-    createCommitOnBranch: { commit },
-  } = /** @type {{ createCommitOnBranch: { commit: Record<string, any> }}} */ (
-    await fetchGraphQL(query, { input })
-  );
+  /** @type {Record<string, any>} */
+  let commit;
+
+  try {
+    ({
+      createCommitOnBranch: { commit },
+    } = /** @type {{ createCommitOnBranch: { commit: Record<string, any> }}} */ (
+      await fetchGraphQL(query, { input })
+    ));
+  } catch (ex) {
+    // Tell a commit refused over a moved head from any other failure, so the user is told what
+    // happened and to try again, which picks up the other change first. GitHub says so in the
+    // error message, but the head is looked up rather than the wording relied upon. A failed lookup
+    // leaves the original error to be reported
+    const head = options.branch ? undefined : await fetchLastCommit().catch(() => undefined);
+
+    if (head && head.hash !== expectedHeadOid) {
+      throw new Error('The branch has moved since the site data was loaded.', {
+        cause: new Error(_('save_conflict.branch_moved')),
+      });
+    }
+
+    throw ex;
+  }
 
   return {
     sha: commit.oid,

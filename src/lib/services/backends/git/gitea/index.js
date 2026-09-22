@@ -1,7 +1,11 @@
 import { stripSlashes } from '@sveltia/utils/string';
 
 import { getTokenPageURL, signIn, signOut } from '$lib/services/backends/git/gitea/auth';
-import { commitChanges, fetchFileCommits } from '$lib/services/backends/git/gitea/commits';
+import {
+  commitChanges,
+  fetchFileCommits,
+  fetchLastCommit,
+} from '$lib/services/backends/git/gitea/commits';
 import {
   BACKEND_LABEL,
   BACKEND_NAME,
@@ -84,6 +88,7 @@ export default {
   signIn,
   signOut,
   fetchFiles,
+  fetchLastCommit,
   fetchBlob,
   commitChanges,
   fetchFileCommits,

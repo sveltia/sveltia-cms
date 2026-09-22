@@ -91,6 +91,22 @@ vi.mock('$lib/services/workflow/deploy', () => ({
   resetDeployingEntries: mockResetDeployingEntries,
 }));
 
+const { mockStartRemoteChangePolling, mockStopRemoteChangePolling } = vi.hoisted(() => ({
+  mockStartRemoteChangePolling: vi.fn(),
+  mockStopRemoteChangePolling: vi.fn(),
+}));
+
+vi.mock('$lib/services/backends/poll', () => ({
+  startRemoteChangePolling: mockStartRemoteChangePolling,
+  stopRemoteChangePolling: mockStopRemoteChangePolling,
+}));
+
+const mockRepositoryHead = vi.hoisted(() => ({ current: '' }));
+
+vi.mock('$lib/services/backends/git/shared/fetch', () => ({
+  repositoryHead: mockRepositoryHead,
+}));
+
 describe('auth service', () => {
   /** @type {any} */
   let authModule;
@@ -664,6 +680,8 @@ describe('auth service', () => {
       expect(auth.unauthenticated).toBe(false);
       expect(mockUser.account).toEqual(cachedUser);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
+      // The checks for someone else’s commits start once the data is there
+      expect(mockStartRemoteChangePolling).toHaveBeenCalledAfter(mockBackend.fetchFiles);
     });
 
     it('should request the pull requests while the files are being fetched', async () => {
@@ -931,6 +949,7 @@ describe('auth service', () => {
         auto: false,
       });
       expect(auth.signingIn).toBe(false);
+      expect(mockStartRemoteChangePolling).toHaveBeenCalledAfter(mockBackend.fetchFiles);
       expect(auth.unauthenticated).toBe(false);
       expect(mockUser.account).toEqual(user);
       expect(mockBackend.fetchFiles).toHaveBeenCalled();
@@ -1049,8 +1068,12 @@ describe('auth service', () => {
       mockUnpublishedEntriesLoaded.current = true;
       mockPublishingBranches.current = ['cms/posts/hello'];
 
+      mockRepositoryHead.current = 'abc123';
+
       await authModule.signOut();
 
+      expect(mockStopRemoteChangePolling).toHaveBeenCalled();
+      expect(mockRepositoryHead.current).toBe('');
       expect(mockBackend.signOut).toHaveBeenCalled();
       expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
       expect(mockBackendName.current).toEqual(undefined);

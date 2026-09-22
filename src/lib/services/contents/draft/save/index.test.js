@@ -13,6 +13,7 @@ import { getEntriesByCollection } from '$lib/services/contents/collection/entrie
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { deleteBackup } from '$lib/services/contents/draft/backup';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
+import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
@@ -53,6 +54,7 @@ vi.mock('$lib/services/contents/draft/save/asset-move', () => ({
   buildEntryAssetMoveChanges: vi.fn(async () => ({ changes: [], savingAssets: [] })),
 }));
 vi.mock('$lib/services/contents/draft/save/changes');
+vi.mock('$lib/services/contents/draft/save/conflict');
 vi.mock('$lib/services/contents/draft/slugs');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/fields');
@@ -266,6 +268,48 @@ describe('draft/save/index', () => {
 
       await expect(saveEntry()).rejects.toThrow('validation_failed');
       expect(expandInvalidFields).toHaveBeenCalledWith({ draft: mockDraft });
+      // Nothing is fetched for a draft that can’t be saved anyway
+      expect(detectEntryConflict).not.toHaveBeenCalled();
+    });
+
+    it('should refuse to save over someone else’s change unless told to', async () => {
+      const conflict = { type: 'modified', entry: { id: 'test-id' } };
+
+      vi.mocked(detectEntryConflict).mockResolvedValue(conflict);
+
+      const error = await saveEntry().catch((ex) => ex);
+
+      expect(error.message).toBe('save_conflict');
+      expect(error.cause).toBe(conflict);
+      expect(detectEntryConflict).toHaveBeenCalledWith(mockDraft);
+      expect(createSavingEntryData).not.toHaveBeenCalled();
+      expect(saveChanges).not.toHaveBeenCalled();
+
+      await saveEntry({ overwrite: true });
+
+      expect(saveChanges).toHaveBeenCalledTimes(1);
+    });
+
+    it('should save when there is no conflict', async () => {
+      vi.mocked(detectEntryConflict).mockResolvedValue(undefined);
+
+      await saveEntry();
+
+      expect(detectEntryConflict).toHaveBeenCalledWith(mockDraft);
+      expect(saveChanges).toHaveBeenCalled();
+    });
+
+    it('should not look for a conflict for an Editorial Workflow draft', async () => {
+      vi.mocked(isWorkflowDraft).mockReturnValue(true);
+      vi.mocked(saveWorkflowChanges).mockResolvedValue({
+        commit: { sha: 'abc', files: {} },
+        savedEntries: [{ id: 'test-id', slug: 'test-post', locales: {} }],
+        savedAssets: [],
+      });
+
+      await saveEntry();
+
+      expect(detectEntryConflict).not.toHaveBeenCalled();
     });
 
     it('should handle save failure', async () => {

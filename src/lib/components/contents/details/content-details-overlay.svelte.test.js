@@ -31,6 +31,7 @@ vi.mock('$lib/services/contents/draft/backup', async () => {
     backupToastState: createDeepState({ saved: false, restored: false, deleted: false }),
     deleteBackup: vi.fn(),
     getBackup: vi.fn(),
+    getBackupSlug: vi.fn(() => ''),
     saveBackup: vi.fn(),
     restoreBackup: vi.fn(),
     restoreBackupIfNeeded: vi.fn(),

@@ -1281,6 +1281,32 @@ saving_entry:
     title: Error
     description: There was an error while saving the entry. Please try again later.
 
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: Entry Changed by Someone Else
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: '{$name} changed this entry on {$date}, after you opened it.'
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: This entry has been changed in the repository after you opened it.
+  deleted: This entry has been deleted from the repository after you opened it.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: If you save now, their changes will be lost.
+  # Follows `deleted`
+  recreate_warning: If you save now, the entry will be created again.
+  # OK button label
+  save_anyway: Save Anyway
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: The repository has been updated by someone else while saving. Please try again.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Reload Entry
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Are you sure you want to reload the entry? Your unsaved changes will be lost.
+
 # ==============================================================================
 # Asset Editor
 # ==============================================================================

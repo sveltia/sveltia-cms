@@ -4,6 +4,8 @@ import { LocalStorage } from '@sveltia/utils/storage';
 
 import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName, selectBackend } from '$lib/services/backends';
+import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { startRemoteChangePolling, stopRemoteChangePolling } from '$lib/services/backends/poll';
 import { cmsConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
 import { resetDeployments } from '$lib/services/deployments';
@@ -231,6 +233,8 @@ export const signInAutomatically = async () => {
     await loadUnpublishedEntries(pullRequests);
     // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI
     initDeployments();
+    // From here on, someone else’s commits are picked up as they land
+    startRemoteChangePolling();
   } catch (/** @type {any} */ ex) {
     // The API request may fail if the cached token has been expired or revoked. Then let the user
     // sign in again. 404 Not Found is also considered an authentication error.
@@ -299,6 +303,8 @@ export const signInManually = async (_backendName, token) => {
     await loadUnpublishedEntries(pullRequests);
     // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI
     initDeployments();
+    // From here on, someone else’s commits are picked up as they land
+    startRemoteChangePolling();
   } catch (/** @type {any} */ ex) {
     logError(ex, 'dataFetch');
     await clearUserCacheIfNeeded(ex);
@@ -309,11 +315,13 @@ export const signInManually = async (_backendName, token) => {
  * Sign out from the current backend.
  */
 export const signOut = async () => {
+  stopRemoteChangePolling();
   await backend.current?.signOut();
   await clearUserCache();
 
   selectBackend(undefined);
   dataLoaded.current = false;
+  repositoryHead.current = '';
   unpublishedEntries.current = [];
   unpublishedEntriesLoaded.current = false;
   publishingBranches.current = [];
