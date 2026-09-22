@@ -85,6 +85,20 @@
    * @type {string[]}
    */
   const ownedURLs = [];
+  /**
+   * The asset this preview last rendered, kept outside the reactive graph like {@link ownedURLs}.
+   *
+   * The cleanup below runs while the component is being destroyed, and reading the `asset` prop
+   * there would read whatever the parent passes it from — a `$derived` holding the thumbnail of a
+   * collapsed Object field or List item. Svelte answers a read made while an effect is being torn
+   * down by walking that derived’s dependency graph to see whether it has to be recomputed, and
+   * that walk doesn’t memoize: in a deeply nested entry editor, where every level multiplies the
+   * number of paths to the same derived, expanding one field froze the browser for tens of seconds.
+   * The cleanup reads this copy instead, so it touches nothing reactive.
+   * @type {Asset | undefined}
+   * @see https://github.com/sveltia/sveltia-cms/issues/1006
+   */
+  let currentAsset = undefined;
 
   /**
    * Remember an object URL this preview created, so that it can be released later.
@@ -228,6 +242,10 @@
   });
 
   $effect(() => {
+    currentAsset = asset;
+  });
+
+  $effect(() => {
     if (mediaElement && asset) {
       updateSrc();
     }
@@ -263,8 +281,8 @@
   onMount(() => {
     // Clean up
     return () => {
-      if (asset) {
-        revokeAssetBlobURLIfNeeded(asset);
+      if (currentAsset) {
+        revokeAssetBlobURLIfNeeded(currentAsset);
       }
 
       // The revocation is batched into the next frame and skips any URL an element is still
