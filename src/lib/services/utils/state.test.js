@@ -38,6 +38,34 @@ describe('utils/state', () => {
 
       expect(createState(state)).toBe(state);
     });
+
+    it('should hand out a static property as it is, rather than a proxy of it', () => {
+      const config = { nested: { b: 2 } };
+      const reactive = { nested: { b: 2 } };
+      const state = createState({ config, reactive }, ['config']);
+
+      expect(state.config).toBe(config);
+      // A reactive property, in contrast, is handed out as a proxy
+      expect(state.reactive).not.toBe(reactive);
+      expect(state.reactive).toEqual(reactive);
+    });
+
+    it('should skip a static key the object doesn’t carry', () => {
+      const state = createState({ a: 1 }, ['config']);
+
+      expect('config' in state).toBe(false);
+      expect(state.a).toBe(1);
+    });
+
+    it('should hand out the same static property to every state built from it', () => {
+      // Two proxies of the same configuration would look like a change to every reader
+      // @see https://github.com/sveltia/sveltia-cms/issues/1006
+      const config = { nested: { b: 2 } };
+
+      expect(createState({ config }, ['config']).config).toBe(
+        createState({ config }, ['config']).config,
+      );
+    });
   });
 
   describe('getSnapshot()', () => {

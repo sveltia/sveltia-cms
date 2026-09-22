@@ -1,5 +1,6 @@
 import { render } from 'vitest-browser-svelte';
 
+import { STATIC_DRAFT_KEYS } from '$lib/services/contents/draft';
 import {
   createEntryDraftMountContext,
   EntryDraftState,
@@ -90,6 +91,8 @@ export const createMockDraft = ({
       pendingEntries: [],
       ...draft,
     }),
+    // Match what `buildDraft()` ships, so a component test renders the draft shape the app builds
+    STATIC_DRAFT_KEYS,
   );
 };
 

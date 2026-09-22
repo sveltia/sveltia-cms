@@ -1,5 +1,6 @@
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getEntryDirPath, getSharedEntryFileName } from '$lib/services/contents/collection/nested';
+import { STATIC_DRAFT_KEYS } from '$lib/services/contents/draft';
 import { getSlugEditorProp } from '$lib/services/contents/draft/create';
 import { copyEntryRelativeAssets } from '$lib/services/contents/draft/create/duplicate-assets';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
@@ -130,27 +131,30 @@ export const duplicateDraft = async (entryDraft) => {
 
   // The original draft is discarded, so the rest of its state can be carried over as is
   /** @type {EntryDraft} */
-  const newDraft = createState({
-    ...draft,
-    id: crypto.randomUUID(),
-    createdAt: Date.now(),
-    isNew: true,
-    originalEntry: undefined,
-    originalSlugs: {},
-    currentSlugs: {},
-    // The duplicate is filed alongside the original, not inside it. Where every entry owns a
-    // folder, `currentPath` is the original’s own folder, so the copy has to start from its parent
-    // and get a folder of its own there
-    originalPath: duplicatePath,
-    currentPath: duplicatePath,
-    // The value proxies are created below, as they need a reference to the new draft
-    currentValues: {},
-    files,
-    // Reset the validities
-    validities: Object.fromEntries(Object.keys(draft.validities).map((locale) => [locale, {}])),
-    slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs: {} }),
-    interacted: false,
-  });
+  const newDraft = createState(
+    {
+      ...draft,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+      isNew: true,
+      originalEntry: undefined,
+      originalSlugs: {},
+      currentSlugs: {},
+      // The duplicate is filed alongside the original, not inside it. Where every entry owns a
+      // folder, `currentPath` is the original’s own folder, so the copy has to start from its
+      // parent and get a folder of its own there
+      originalPath: duplicatePath,
+      currentPath: duplicatePath,
+      // The value proxies are created below, as they need a reference to the new draft
+      currentValues: {},
+      files,
+      // Reset the validities
+      validities: Object.fromEntries(Object.keys(draft.validities).map((locale) => [locale, {}])),
+      slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs: {} }),
+      interacted: false,
+    },
+    STATIC_DRAFT_KEYS,
+  );
 
   Object.entries(currentValues).forEach(([locale, valueMap]) => {
     newDraft.currentValues[locale] = createProxy({ draft: newDraft, locale, target: valueMap });

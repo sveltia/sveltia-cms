@@ -11,7 +11,8 @@ vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   isCollectionIndexFile: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/draft', () => ({
+vi.mock('$lib/services/contents/draft', async (importOriginal) => ({
+  ...(await importOriginal()),
   revokeDraftFileURLs: vi.fn(),
 }));
 

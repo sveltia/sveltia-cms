@@ -10,7 +10,7 @@ import {
   getMetaPathConfig,
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
-import { revokeDraftFileURLs } from '$lib/services/contents/draft';
+import { revokeDraftFileURLs, STATIC_DRAFT_KEYS } from '$lib/services/contents/draft';
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { normalizeContentMap } from '$lib/services/contents/draft/create/normalize';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
@@ -206,38 +206,41 @@ export const buildDraft = ({
   }
 
   /** @type {EntryDraft} */
-  const draft = createState({
-    id: isNew ? crypto.randomUUID() : id,
-    createdAt: Date.now(),
-    isNew,
-    isIndexFile,
-    canPreview,
-    collectionName,
-    collection,
-    fileName,
-    collectionFile,
-    fields,
-    originalEntry: isNew ? undefined : originalEntry,
-    defaultLocale,
-    originalLocales,
-    currentLocales: structuredClone(originalLocales),
-    originalSlugs,
-    currentSlugs: structuredClone(originalSlugs),
-    originalPath,
-    currentPath: originalPath,
-    originalValues,
-    // The value proxies are created below, as they need a reference to the reactive draft
-    currentValues: {},
-    files: {},
-    extraValues: extraValues ?? Object.fromEntries(allLocales.map((locale) => [locale, {}])),
-    validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
-    validationMessages: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
-    // Any locale-agnostic view states will be put under the `_` key
-    expanderStates: expanderStates ?? { _: {} },
-    slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs }),
-    interacted: false,
-    pendingEntries: [],
-  });
+  const draft = createState(
+    {
+      id: isNew ? crypto.randomUUID() : id,
+      createdAt: Date.now(),
+      isNew,
+      isIndexFile,
+      canPreview,
+      collectionName,
+      collection,
+      fileName,
+      collectionFile,
+      fields,
+      originalEntry: isNew ? undefined : originalEntry,
+      defaultLocale,
+      originalLocales,
+      currentLocales: structuredClone(originalLocales),
+      originalSlugs,
+      currentSlugs: structuredClone(originalSlugs),
+      originalPath,
+      currentPath: originalPath,
+      originalValues,
+      // The value proxies are created below, as they need a reference to the reactive draft
+      currentValues: {},
+      files: {},
+      extraValues: extraValues ?? Object.fromEntries(allLocales.map((locale) => [locale, {}])),
+      validities: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
+      validationMessages: Object.fromEntries(allLocales.map((locale) => [locale, {}])),
+      // Any locale-agnostic view states will be put under the `_` key
+      expanderStates: expanderStates ?? { _: {} },
+      slugEditor: getSlugEditorProp({ collection, collectionFile, originalSlugs }),
+      interacted: false,
+      pendingEntries: [],
+    },
+    STATIC_DRAFT_KEYS,
+  );
 
   enabledLocales.forEach((locale) => {
     draft.currentValues[locale] = createProxy({

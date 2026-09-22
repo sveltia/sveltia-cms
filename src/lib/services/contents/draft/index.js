@@ -7,6 +7,15 @@ import equal from 'fast-deep-equal';
 export const INTERNAL_PROP_REGEX = /\.__sc_\w+$/;
 
 /**
+ * Draft properties holding the collection configuration and the entry being edited, which are fixed
+ * for the lifetime of a draft. Every function building a draft hands these to `createState()` as
+ * static keys, so that all the drafts opened for one collection hand out the very same objects
+ * rather than a reactive proxy each.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1006
+ */
+export const STATIC_DRAFT_KEYS = ['collection', 'collectionFile', 'fields', 'originalEntry'];
+
+/**
  * @import { EntryDraft, FlattenedEntryContent, LocaleContentMap } from '$lib/types/private';
  */
 
