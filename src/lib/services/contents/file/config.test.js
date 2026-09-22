@@ -7,6 +7,8 @@ import {
   getEntryPathRegEx,
   getFileConfig,
   getFrontMatterDelimiters,
+  getIndexFileFormat,
+  resolveFileConfig,
 } from '$lib/services/contents/file/config';
 
 /**
@@ -680,6 +682,157 @@ describe('Test getEntryPathRegEx()', () => {
     expect('content/posts/my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
     expect('content/fr/posts/my-post.md'.match(regex)?.groups?.locale).toBe('fr');
     expect(regex.test('content/en/posts/my-post.md')).toBe(false);
+  });
+
+  describe('with an index file extension of its own', () => {
+    const structureMap = {
+      i18nSingleFile: false,
+      i18nSingleFileDefaultRoot: false,
+      i18nMultiFile: false,
+      i18nMultiFolder: false,
+      i18nMultiRootFolder: false,
+    };
+
+    test('ignores the index file extension if it’s the same as the entries’', () => {
+      const _i18n = { ...baseI18nOptions, structureMap };
+
+      expect(
+        getEntryPathRegEx({
+          extension: 'md',
+          format: 'frontmatter',
+          basePath: 'posts',
+          indexFileName: '_index',
+          indexFileExtension: 'md',
+          _i18n,
+        }).source,
+      ).toBe('^posts\\/(?<subPath>[^/]+?)\\.md$');
+    });
+
+    test('matches the index file by its own extension, right under the folder', () => {
+      const _i18n = { ...baseI18nOptions, structureMap };
+
+      const regex = getEntryPathRegEx({
+        extension: 'md',
+        format: 'frontmatter',
+        basePath: 'posts',
+        indexFileName: 'posts',
+        indexFileExtension: 'json',
+        _i18n,
+      });
+
+      expect(regex.source).toBe(
+        '^posts\\/(?<subPath>(?!posts(?=\\.md$))(?:[^/]+?)(?=\\.md$)|posts(?=\\.json$))\\.(?:md|json)$',
+      );
+      expect('posts/hello.md'.match(regex)?.groups?.subPath).toBe('hello');
+      expect('posts/posts.json'.match(regex)?.groups?.subPath).toBe('posts');
+      // An unrelated file with either extension is out
+      expect(regex.test('posts/hello.json')).toBe(false);
+      expect(regex.test('posts/sub/posts.json')).toBe(false);
+      // So is an entry going by the index file’s name, which is reserved, but not one that merely
+      // starts with it
+      expect(regex.test('posts/posts.md')).toBe(false);
+      expect(regex.test('posts/posts-2.md')).toBe(true);
+    });
+
+    test('escapes the index file name', () => {
+      const _i18n = { ...baseI18nOptions, structureMap };
+
+      const regex = getEntryPathRegEx({
+        extension: 'md',
+        format: 'frontmatter',
+        basePath: 'posts',
+        subPath: '{{slug}}',
+        indexFileName: 'posts.data',
+        indexFileExtension: 'json',
+        _i18n,
+      });
+
+      expect(regex.test('posts/posts.data.json')).toBe(true);
+      expect(regex.test('posts/postsXdata.json')).toBe(false);
+    });
+
+    test('works with the path option and a nested collection', () => {
+      const _i18n = { ...baseI18nOptions, structureMap };
+
+      const regex = getEntryPathRegEx({
+        extension: 'md',
+        format: 'frontmatter',
+        basePath: 'posts',
+        subPath: '{{slug}}/index',
+        indexFileName: 'posts',
+        indexFileExtension: 'json',
+        _i18n,
+      });
+
+      expect(regex.source).toBe(
+        '^posts\\/(?<subPath>(?!posts(?=\\.md$))(?:[^/]+?\\/index)(?=\\.md$)|posts(?=\\.json$))\\.(?:md|json)$',
+      );
+      expect('posts/hello/index.md'.match(regex)?.groups?.subPath).toBe('hello/index');
+      expect('posts/posts.json'.match(regex)?.groups?.subPath).toBe('posts');
+      expect(regex.test('posts/hello/index.json')).toBe(false);
+
+      const nestedRegex = getEntryPathRegEx({
+        extension: 'md',
+        format: 'frontmatter',
+        basePath: 'posts',
+        indexFileName: 'posts',
+        indexFileExtension: 'json',
+        nestedDepth: 3,
+        _i18n,
+      });
+
+      expect('posts/a/b/c.md'.match(nestedRegex)?.groups?.subPath).toBe('a/b/c');
+      expect('posts/posts.json'.match(nestedRegex)?.groups?.subPath).toBe('posts');
+      // Only the collection’s own index file has the other extension
+      expect(nestedRegex.test('posts/a/posts.json')).toBe(false);
+      // The reserved name only applies right under the collection folder
+      expect(nestedRegex.test('posts/posts.md')).toBe(false);
+      expect(nestedRegex.test('posts/a/posts.md')).toBe(true);
+      expect(nestedRegex.test('posts/posts/a.md')).toBe(true);
+    });
+
+    test('works with a locale in the file name', () => {
+      const _i18n = {
+        ...baseI18nOptions,
+        structureMap: { ...structureMap, i18nMultiFile: true },
+      };
+
+      const regex = getEntryPathRegEx({
+        extension: 'md',
+        format: 'frontmatter',
+        basePath: 'posts',
+        indexFileName: 'posts',
+        indexFileExtension: 'json',
+        _i18n,
+      });
+
+      expect(regex.source).toBe(
+        '^posts\\/(?<subPath>(?!posts(?=\\.(?:en|fr)\\.md$))(?:[^/]+?)(?=\\.(?:en|fr)\\.md$)' +
+          '|posts(?=\\.(?:en|fr)\\.json$))' +
+          '\\.(?<locale>en|fr)\\.(?:md|json)$',
+      );
+      expect('posts/hello.fr.md'.match(regex)?.groups).toEqual({ subPath: 'hello', locale: 'fr' });
+      expect('posts/posts.en.json'.match(regex)?.groups).toEqual({
+        subPath: 'posts',
+        locale: 'en',
+      });
+      expect(regex.test('posts/hello.fr.json')).toBe(false);
+      expect(regex.test('posts/posts.json')).toBe(false);
+      expect(regex.test('posts/posts.en.md')).toBe(false);
+
+      const omitRegex = getEntryPathRegEx({
+        extension: 'md',
+        format: 'frontmatter',
+        basePath: 'posts',
+        indexFileName: 'posts',
+        indexFileExtension: 'json',
+        _i18n: { ..._i18n, omitDefaultLocaleFromFilePath: true },
+      });
+
+      expect('posts/posts.json'.match(omitRegex)?.groups?.subPath).toBe('posts');
+      expect('posts/posts.fr.json'.match(omitRegex)?.groups?.locale).toBe('fr');
+      expect(omitRegex.test('posts/posts.en.json')).toBe(false);
+    });
   });
 });
 
@@ -1842,6 +1995,80 @@ describe('Test getFileConfig()', () => {
     expect(result.fullPathRegEx?.toString()).toContain('_index');
   });
 
+  test('gives the index file a configuration of its own with its own extension', () => {
+    const result = getFileConfig({
+      rawCollection: {
+        ...rawFolderCollection,
+        index_file: { name: 'posts', extension: 'json' },
+      },
+      _i18n: i18nDisabled,
+    });
+
+    const { indexFile, ...entryConfig } = result;
+
+    expect(entryConfig).toEqual({
+      extension: 'md',
+      format: 'frontmatter',
+      basePath: 'content/posts',
+      subPath: undefined,
+      fullPathRegEx:
+        /^content\/posts\/(?<subPath>(?!posts(?=\.md$))(?:[^/]+?)(?=\.md$)|posts(?=\.json$))\.(?:md|json)$/,
+      fullPath: undefined,
+      fmDelimiters: undefined,
+      bodyField: undefined,
+      yamlQuote: false,
+    });
+
+    // The index file shares the path matcher and the rest, but not the extension and format
+    expect(indexFile).toEqual({ ...entryConfig, extension: 'json', format: 'json' });
+    expect(indexFile?.fullPathRegEx).toBe(entryConfig.fullPathRegEx);
+  });
+
+  test('gives the index file a configuration of its own with its own format', () => {
+    const result = getFileConfig({
+      rawCollection: {
+        ...rawFolderCollection,
+        index_file: { format: 'yaml' },
+      },
+      _i18n: i18nDisabled,
+    });
+
+    expect(result.fullPathRegEx?.source).toBe(
+      '^content\\/posts\\/(?<subPath>(?!_index(?=\\.md$))(?:[^/]+?)(?=\\.md$)|_index(?=\\.yml$))\\.(?:md|yml)$',
+    );
+    expect(result.indexFile?.extension).toBe('yml');
+    expect(result.indexFile?.format).toBe('yaml');
+
+    // The front matter delimiters follow the index file’s format
+    const tomlResult = getFileConfig({
+      rawCollection: {
+        ...rawFolderCollection,
+        index_file: { format: 'toml-frontmatter' },
+      },
+      _i18n: i18nDisabled,
+    });
+
+    expect(tomlResult.fmDelimiters).toBeUndefined();
+    expect(tomlResult.indexFile?.extension).toBe('md');
+    expect(tomlResult.indexFile?.fmDelimiters).toEqual(['+++', '+++']);
+  });
+
+  test('leaves the index file configuration off when it matches the entries’', () => {
+    expect(
+      getFileConfig({
+        rawCollection: { ...rawFolderCollection, index_file: { extension: 'md' } },
+        _i18n: i18nDisabled,
+      }).indexFile,
+    ).toBeUndefined();
+
+    expect(
+      getFileConfig({
+        rawCollection: { ...rawFolderCollection, index_file: true },
+        _i18n: i18nDisabled,
+      }).indexFile,
+    ).toBeUndefined();
+  });
+
   test('entry collection with empty folder (root)', () => {
     const result = getFileConfig({
       rawCollection: {
@@ -1914,5 +2141,85 @@ describe('Test getFileConfig()', () => {
     });
 
     expect(result.bodyField).toBeUndefined();
+  });
+});
+
+describe('Test getIndexFileFormat()', () => {
+  test('returns undefined without an index file or an extension or format of its own', () => {
+    expect(getIndexFileFormat({ indexFile: undefined, extension: 'md' })).toBeUndefined();
+    expect(getIndexFileFormat({ indexFile: { name: '_index' }, extension: 'md' })).toBeUndefined();
+  });
+
+  test('returns undefined when the index file matches the entries', () => {
+    expect(
+      getIndexFileFormat({ indexFile: { name: '_index', extension: 'md' }, extension: 'md' }),
+    ).toBeUndefined();
+    expect(
+      getIndexFileFormat({ indexFile: { name: '_index', format: 'frontmatter' } }),
+    ).toBeUndefined();
+    expect(
+      getIndexFileFormat({ indexFile: { name: 'data', format: 'yaml' }, extension: 'yml' }),
+    ).toBeUndefined();
+  });
+
+  test('detects the format from the extension and vice versa', () => {
+    expect(getIndexFileFormat({ indexFile: { name: 'posts', extension: 'json' } })).toEqual({
+      extension: 'json',
+      format: 'json',
+    });
+    expect(getIndexFileFormat({ indexFile: { name: 'posts', format: 'toml' } })).toEqual({
+      extension: 'toml',
+      format: 'toml',
+    });
+    expect(
+      getIndexFileFormat({
+        indexFile: { name: 'posts', extension: 'yaml', format: 'yaml' },
+        extension: 'md',
+        format: 'frontmatter',
+      }),
+    ).toEqual({ extension: 'yaml', format: 'yaml' });
+  });
+
+  test('returns a different format for the same extension', () => {
+    expect(
+      getIndexFileFormat({
+        indexFile: { name: '_index', format: 'toml-frontmatter' },
+        extension: 'md',
+      }),
+    ).toEqual({ extension: 'md', format: 'toml-frontmatter' });
+  });
+});
+
+describe('Test resolveFileConfig()', () => {
+  /** @type {any} */
+  const indexFileConfig = { extension: 'json', format: 'json' };
+
+  /** @type {any} */
+  const collection = {
+    _file: { extension: 'md', format: 'frontmatter', indexFile: indexFileConfig },
+  };
+
+  /** @type {any} */
+  const plainCollection = { _file: { extension: 'md', format: 'frontmatter' } };
+  /** @type {any} */
+  const collectionFile = { _file: { extension: 'yml', format: 'yaml' } };
+
+  test('returns the collection file’s configuration', () => {
+    expect(resolveFileConfig({ collection, collectionFile })).toBe(collectionFile._file);
+    expect(resolveFileConfig({ collection, collectionFile, isIndexFile: true })).toBe(
+      collectionFile._file,
+    );
+  });
+
+  test('returns the index file’s configuration for the index file', () => {
+    expect(resolveFileConfig({ collection, isIndexFile: true })).toBe(indexFileConfig);
+    expect(resolveFileConfig({ collection })).toBe(collection._file);
+    expect(resolveFileConfig({ collection, isIndexFile: false })).toBe(collection._file);
+  });
+
+  test('falls back to the collection’s configuration', () => {
+    expect(resolveFileConfig({ collection: plainCollection, isIndexFile: true })).toBe(
+      plainCollection._file,
+    );
   });
 });

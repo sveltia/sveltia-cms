@@ -305,6 +305,56 @@ describe('Collections Parser', () => {
       );
     });
 
+    it('should detect format mismatch in the index file', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      // The collection’s own options agree; the index file’s don’t
+      mockIsFormatMismatch.mockImplementation((extension) => extension === 'json');
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'posts',
+          folder: 'content/posts',
+          fields: [],
+          index_file: { name: 'posts', extension: 'json', format: 'yaml' },
+        },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockIsFormatMismatch).toHaveBeenCalledWith('json', 'yaml');
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'file_format_mismatch',
+          values: { extension: 'json', format: 'yaml' },
+          context: expect.objectContaining({ isIndexFile: true }),
+        }),
+      );
+    });
+
+    it('should not check the format of an index file without options of its own', async () => {
+      const { parseEntryCollection } = await import('.');
+      const collectors = createCollectors();
+
+      mockIsFormatMismatch.mockReturnValue(false);
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: { name: 'posts', folder: 'content/posts', fields: [], index_file: true },
+      };
+
+      parseEntryCollection(context, collectors);
+
+      expect(mockIsFormatMismatch).toHaveBeenCalledTimes(1);
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'file_format_mismatch' }),
+      );
+    });
+
     it('should add error when entry collection has no fields', async () => {
       const { parseEntryCollection } = await import('.');
       const collectors = createCollectors();

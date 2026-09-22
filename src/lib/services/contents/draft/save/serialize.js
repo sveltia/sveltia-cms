@@ -11,6 +11,7 @@ import { getAliasesKey, getAliasKeyPaths } from '$lib/services/contents/entry/al
 import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { TOML_FORMATS } from '$lib/services/contents/file';
+import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -246,13 +247,13 @@ export const serializeContent = ({ draft, locale, valueMap }) => {
   const { collection, collectionName, collectionFile, fields, isIndexFile } = draft;
 
   const {
-    _file,
     _i18n: {
       canonicalSlug: { key: canonicalSlugKey },
     },
   } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
-  const isTomlOutput = TOML_FORMATS.includes(_file.format);
+  const { format } = resolveFileConfig({ collection, collectionFile, isIndexFile });
+  const isTomlOutput = TOML_FORMATS.includes(format);
 
   const content = finalizeContent({
     collectionName,

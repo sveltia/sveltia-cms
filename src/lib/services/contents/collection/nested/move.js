@@ -12,6 +12,7 @@ import { buildSingleFileContent } from '$lib/services/contents/draft/save/conten
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
+import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 
 /**
@@ -172,7 +173,6 @@ const updateCanonicalSlug = ({ collection, entry }) => {
  */
 const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, cacheDB }) => {
   const {
-    _file,
     _i18n: {
       i18nEnabled,
       allLocales,
@@ -180,6 +180,8 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
       structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot } = {},
     },
   } = /** @type {InternalEntryCollection} */ (collection);
+
+  const _file = resolveFileConfig({ collection, isIndexFile: draft.isIndexFile });
 
   if (!i18nEnabled || i18nSingleFile || i18nSingleFileDefaultRoot) {
     const previousPath = originalEntry.locales[defaultLocale].path;

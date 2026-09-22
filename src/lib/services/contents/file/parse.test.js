@@ -21,6 +21,15 @@ vi.mock('$lib/services/contents/collection/files', () => ({
 vi.mock('$lib/services/contents/file/config', () => ({
   customFileFormatRegistry: new Map(),
   getFrontMatterDelimiters: vi.fn(),
+  resolveFileConfig: vi.fn(
+    ({ collection, collectionFile, isIndexFile }) =>
+      (isIndexFile ? collection._file.indexFile : undefined) ??
+      (collectionFile ?? collection)._file,
+  ),
+}));
+
+vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
+  isCollectionIndexFilePath: vi.fn(() => false),
 }));
 
 describe('Test parseJSON()', () => {
@@ -980,6 +989,49 @@ describe('Test parseEntryFile()', () => {
 
     expect(result.title).toBe('Test Post');
     expect(result.published).toBe(true);
+  });
+
+  test('parses the collection’s index file with its own format', async () => {
+    const { isCollectionIndexFilePath } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const collection = {
+      _file: { format: 'frontmatter', indexFile: { format: 'json' } },
+    };
+
+    getCollection.mockReturnValue(collection);
+    // The index file is told from the entries by its path
+    vi.mocked(isCollectionIndexFilePath).mockImplementation((_c, path) => path.endsWith('.json'));
+
+    const folder = { collectionName: 'posts', fileName: undefined };
+
+    expect(
+      await parseEntryFile({
+        ...entryBase,
+        path: 'content/posts/posts.json',
+        text: '{ "layout": "post" }',
+        folder,
+      }),
+    ).toEqual({ layout: 'post' });
+
+    expect(isCollectionIndexFilePath).toHaveBeenCalledWith(collection, 'content/posts/posts.json');
+
+    // An entry is parsed with the collection’s format
+    expect(
+      await parseEntryFile({
+        ...entryBase,
+        path: 'content/posts/hello.md',
+        text: '---\ntitle: Hello\n---\nBody',
+        folder,
+      }),
+    ).toEqual({ title: 'Hello', body: 'Body' });
+
+    // A collection file is never the index file
+    getCollectionFile.mockReturnValue({ _file: { format: 'yaml' } });
+    vi.mocked(isCollectionIndexFilePath).mockClear();
+
+    expect(await parseEntryFile({ ...entryBase, text: 'title: Test' })).toEqual({ title: 'Test' });
+    expect(isCollectionIndexFilePath).not.toHaveBeenCalled();
   });
 
   test('throws error for parsing failures', async () => {

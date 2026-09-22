@@ -13,6 +13,7 @@ import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
 import { getField } from '$lib/services/contents/entry/fields';
+import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
@@ -237,14 +238,14 @@ export const getPreviousSha = async ({ previousPath, cacheDB }) => {
  * @returns {Promise<FileChange>} File change information.
  */
 export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
-  const { collection, isNew, originalEntry, collectionFile } = draft;
+  const { collection, isNew, originalEntry, collectionFile, isIndexFile } = draft;
   const config = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
 
   const {
-    _file,
     _i18n: { defaultLocale },
   } = config;
 
+  const _file = resolveFileConfig({ collection, collectionFile, isIndexFile });
   const { slug, path } = savingEntry.locales[defaultLocale];
   const previousPath = originalEntry?.locales[defaultLocale]?.path;
   // Comparing the paths rather than the slugs also catches an entry moved with the path editor,
@@ -274,10 +275,17 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
  * @returns {Promise<FileChange | undefined>} File change information.
  */
 export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }) => {
-  const { collection, isNew, originalLocales, currentLocales, originalEntry, collectionFile } =
-    draft;
+  const {
+    collection,
+    isNew,
+    originalLocales,
+    currentLocales,
+    originalEntry,
+    collectionFile,
+    isIndexFile,
+  } = draft;
 
-  const { _file } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+  const _file = resolveFileConfig({ collection, collectionFile, isIndexFile });
   const { slug, path, content } = savingEntry.locales[locale] ?? {};
   const previousPath = originalEntry?.locales[locale]?.path;
   const previousSha = await getPreviousSha({ cacheDB, previousPath });

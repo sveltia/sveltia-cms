@@ -7,6 +7,7 @@ import { isEntryCollection } from '$lib/services/contents/collection';
 import {
   getIndexFile,
   isCollectionIndexFile,
+  isCollectionIndexFilePath,
 } from '$lib/services/contents/collection/entries/index-file';
 
 // Mock dependencies
@@ -120,6 +121,24 @@ describe('getIndexFile()', () => {
       icon: 'folder',
       fields: [{ name: 'title', widget: 'string' }],
       editor: { preview: false },
+    });
+  });
+
+  test('passes the extension and format options through', () => {
+    const collection = {
+      name: 'test-collection',
+      folder: 'content/posts',
+      index_file: { name: 'posts', extension: 'json', format: 'json' },
+    };
+
+    expect(getIndexFile(collection)).toEqual({
+      name: 'posts',
+      label: 'Index File',
+      icon: 'home',
+      extension: 'json',
+      format: 'json',
+      fields: undefined,
+      editor: undefined,
     });
   });
 
@@ -316,5 +335,42 @@ describe('isCollectionIndexFile()', () => {
     const result = isCollectionIndexFile(collection, entry);
 
     expect(result).toBe(false);
+  });
+});
+
+describe('isCollectionIndexFilePath()', () => {
+  beforeEach(() => {
+    vi.mocked(isEntryCollection).mockImplementation(
+      (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
+    );
+  });
+
+  const fullPathRegEx =
+    /^content\/posts\/(?<subPath>(?!posts(?=\.md$))(?:[^/]+?)(?=\.md$)|posts(?=\.json$))\.(?:md|json)$/;
+
+  test('returns false when index file inclusion is disabled', () => {
+    const collection = { name: 'posts', folder: 'content/posts', _file: { fullPathRegEx } };
+
+    expect(isCollectionIndexFilePath(collection, 'content/posts/_index.md')).toBe(false);
+  });
+
+  test('returns false without a path matcher', () => {
+    const collection = { name: 'posts', folder: 'content/posts', index_file: true };
+
+    expect(isCollectionIndexFilePath(collection, 'content/posts/_index.md')).toBe(false);
+  });
+
+  test('tells the index file from the entries by the sub path', () => {
+    const collection = {
+      name: 'posts',
+      folder: 'content/posts',
+      index_file: { name: 'posts', extension: 'json' },
+      _file: { fullPathRegEx },
+    };
+
+    expect(isCollectionIndexFilePath(collection, 'content/posts/posts.json')).toBe(true);
+    expect(isCollectionIndexFilePath(collection, 'content/posts/hello.md')).toBe(false);
+    expect(isCollectionIndexFilePath(collection, 'content/posts/hello.json')).toBe(false);
+    expect(isCollectionIndexFilePath(collection, 'content/pages/posts.json')).toBe(false);
   });
 });

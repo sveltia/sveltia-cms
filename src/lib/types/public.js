@@ -1428,6 +1428,12 @@
  * @typedef {object} CollectionIndexFile
  * @property {string} [name] Index file name without a locale or file extension. Default: `_index`,
  * which is used for Hugo’s special index file.
+ * @property {FileExtension} [extension] File extension of the index file, if it differs from the
+ * entries’. Default: the collection’s `extension`, or the one that goes with `format` if given.
+ * This allows an Eleventy [directory data file](https://www.11ty.dev/docs/data-template-dir/) like
+ * `posts/posts.json` to be managed beside the Markdown entries in the same folder.
+ * @property {FileFormat} [format] File format of the index file, if it differs from the entries’.
+ * Default: detected from `extension` if given, or the collection’s `format`.
  * @property {string} [label] Label to be displayed in the editor UI. Default: Index File or its
  * localized version.
  * @property {string} [icon] Name of a [Material Symbols

@@ -5,9 +5,10 @@ import { parse as libParseYAML } from 'yaml';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { getCollection } from '$lib/services/contents/collection';
+import { isCollectionIndexFilePath } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
-import { getFrontMatterDelimiters } from '$lib/services/contents/file/config';
+import { getFrontMatterDelimiters, resolveFileConfig } from '$lib/services/contents/file/config';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -15,7 +16,6 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * BaseEntryListItem,
  * InternalCollection,
  * InternalCollectionFile,
- * InternalEntryCollection,
  * } from '$lib/types/private';
  * @import { FrontMatterFormat } from '$lib/types/public';
  */
@@ -74,17 +74,19 @@ const frontMatterRegexCache = new Map();
  * @param {InternalCollection} args.collection Collection.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File/singleton collection
  * only.
+ * @param {boolean} [args.isIndexFile] Whether the file is the collection’s special index file,
+ * which can have a format of its own.
  * @param {FrontMatterFormat} args.format Front matter format.
  * @param {string} args.text File content.
  * @returns {Record<string, any>} Parsed front matter and body.
  * @throws {Error} When the front matter block could not be parsed.
  */
-export const parseFrontMatter = ({ collection, collectionFile, format, text }) => {
+export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, format, text }) => {
   const {
     format: _format,
     fmDelimiters,
     bodyField: { key: bodyKey = 'body', inline: bodyInline = false } = {},
-  } = (collectionFile ?? /** @type {InternalEntryCollection} */ (collection))._file;
+  } = resolveFileConfig({ collection, collectionFile, isIndexFile });
 
   const [startDelimiter, endDelimiter] = (_format === 'frontmatter'
     ? getFrontMatterDelimiters({ format, delimiter: fmDelimiters })
@@ -160,10 +162,9 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
   // Normalize line breaks
   text = text.trim().replace(/\r\n?/g, '\n');
 
-  let {
-    _file: { format },
-  } = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
-
+  // The collection’s special index file can have a format of its own
+  const isIndexFile = !collectionFile && isCollectionIndexFilePath(collection, path);
+  let { format } = resolveFileConfig({ collection, collectionFile, isIndexFile });
   const customParser = customFileFormatRegistry.get(format)?.parser;
 
   if (customParser) {
@@ -196,6 +197,7 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
       return parseFrontMatter({
         collection,
         collectionFile,
+        isIndexFile,
         format: /** @type {FrontMatterFormat} */ (format),
         text,
       });

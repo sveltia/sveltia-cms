@@ -3,7 +3,7 @@ import { _, locale as appLocale } from '@sveltia/i18n';
 import { isEntryCollection } from '$lib/services/contents/collection';
 
 /**
- * @import { Entry, InternalCollection } from '$lib/types/private';
+ * @import { Entry, InternalCollection, InternalEntryCollection } from '$lib/types/private';
  * @import { Collection, CollectionIndexFile } from '$lib/types/public';
  */
 
@@ -79,6 +79,8 @@ export const getIndexFile = (collection) => {
       icon: file.icon ?? 'home',
       // The following properties are inherited from the collection file, collection or global
       // config
+      extension: file.extension,
+      format: file.format,
       fields: file.fields,
       editor: file.editor,
     };
@@ -100,4 +102,25 @@ export const isCollectionIndexFile = (collection, entry) => {
   const name = getIndexFileName(collection);
 
   return name !== undefined && entry.slug === name;
+};
+
+/**
+ * Check if index file inclusion is enabled for the collection, and the file at the given path is
+ * the special index file. This is for a file that has yet to be parsed into an entry, so the sub
+ * path is taken from the path with the collection’s path matcher. The matcher also tells an index
+ * file with an extension of its own from the entries, and leaves out an entry going by its name.
+ * @param {InternalCollection} collection Collection.
+ * @param {string} path File path.
+ * @returns {boolean} Result.
+ */
+export const isCollectionIndexFilePath = (collection, path) => {
+  const name = getIndexFileName(collection);
+
+  if (name === undefined) {
+    return false;
+  }
+
+  const regex = /** @type {InternalEntryCollection} */ (collection)._file?.fullPathRegEx;
+
+  return !!regex && path.match(regex)?.groups?.subPath === name;
 };

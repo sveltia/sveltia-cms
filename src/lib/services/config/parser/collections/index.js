@@ -27,7 +27,13 @@ import {
 } from '$lib/services/contents/i18n/placeholder';
 
 /**
- * @import { CmsConfig, Collection, CollectionDivider, EntryCollection } from '$lib/types/public';
+ * @import {
+ * CmsConfig,
+ * Collection,
+ * CollectionDivider,
+ * CollectionIndexFile,
+ * EntryCollection,
+ * } from '$lib/types/public';
  * @import {
  * ConfigParserCollectors,
  * InternalSingletonCollection,
@@ -124,6 +130,26 @@ export const parseEntryCollection = (context, collectors) => {
   checkCollectionFilter({ collection, context, collectors });
 
   if (index_file) {
+    // The index file can have an extension and format of its own, which have to agree with each
+    // other like the collection’s
+    if (
+      isObject(index_file) &&
+      isFormatMismatch(
+        /** @type {CollectionIndexFile} */ (index_file).extension,
+        /** @type {CollectionIndexFile} */ (index_file).format,
+      )
+    ) {
+      addMessage({
+        strKey: 'file_format_mismatch',
+        values: {
+          extension: /** @type {CollectionIndexFile} */ (index_file).extension,
+          format: /** @type {CollectionIndexFile} */ (index_file).format,
+        },
+        context: { cmsConfig, collection, isIndexFile: true },
+        collectors,
+      });
+    }
+
     parseFields(
       index_file === true ? fields : (index_file.fields ?? fields),
       { cmsConfig, collection, isIndexFile: true },

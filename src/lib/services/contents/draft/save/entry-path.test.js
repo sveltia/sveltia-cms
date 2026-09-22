@@ -600,6 +600,44 @@ describe('contents/draft/save/entry-path', () => {
       expect(result).toBe('posts/index.md');
     });
 
+    it('should use the index file’s own extension', async () => {
+      mockGetIndexFile.mockReturnValue({ name: 'posts' });
+
+      const _file = {
+        basePath: 'posts',
+        subPath: '{{slug}}/index',
+        extension: 'md',
+      };
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            defaultLocale: 'en',
+            structure: 'single_file',
+            omitDefaultLocaleFromFilePath: false,
+            omitDefaultLocaleFromPreviewPath: false,
+          },
+          _file: { ..._file, indexFile: { ..._file, extension: 'json', format: 'json' } },
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: { en: {} },
+        isIndexFile: true,
+      };
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'posts' })).toBe('posts/posts.json');
+
+      // An entry keeps the collection’s extension
+      mockFillTemplate.mockImplementation((template, { currentSlug }) =>
+        template.replace('{{slug}}', currentSlug),
+      );
+
+      expect(
+        createEntryPath({ draft: { ...draft, isIndexFile: false }, locale: 'en', slug: 'hello' }),
+      ).toBe('posts/hello/index.md');
+    });
+
     it('should use fallback to single_file structure if unknown', async () => {
       const draft = {
         collection: {

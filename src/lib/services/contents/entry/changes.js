@@ -2,6 +2,7 @@ import { backend } from '$lib/services/backends';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
 import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
@@ -76,7 +77,6 @@ export const buildEntryUpdateChanges = async ({
   const config = /** @type {InternalCollectionFile} */ (collectionFile ?? collection);
 
   const {
-    _file,
     _i18n: {
       i18nEnabled,
       allLocales,
@@ -84,6 +84,8 @@ export const buildEntryUpdateChanges = async ({
       structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot } = {},
     },
   } = config;
+
+  const _file = resolveFileConfig({ collection, collectionFile, isIndexFile: draft.isIndexFile });
 
   if (!i18nEnabled || i18nSingleFile || i18nSingleFileDefaultRoot) {
     const { slug, path } = entry.locales[defaultLocale];

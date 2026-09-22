@@ -649,6 +649,37 @@ describe('draft/save/changes', () => {
       expect(result.previousPath).toBeUndefined();
     });
 
+    it('should format the index file with its own configuration', async () => {
+      const { formatEntryFile } = await import('$lib/services/contents/file/format');
+      const { serializeContent } = await import('./serialize');
+
+      vi.mocked(formatEntryFile).mockResolvedValue('{}');
+      vi.mocked(serializeContent).mockReturnValue({ layout: 'post' });
+
+      const indexFile = { format: 'json', extension: 'json' };
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'frontmatter', extension: 'md', indexFile },
+          _i18n: { i18nEnabled: false, defaultLocale: 'en' },
+        },
+        isNew: false,
+        originalEntry: { locales: { en: { path: 'posts/posts.json' } } },
+        collectionFile: undefined,
+        isIndexFile: true,
+      };
+
+      const savingEntry = {
+        locales: { en: { slug: 'posts', path: 'posts/posts.json', content: { layout: 'post' } } },
+      };
+
+      const result = await getSingleFileChange({ draft, savingEntry, cacheDB: undefined });
+
+      expect(result.action).toBe('update');
+      expect(formatEntryFile).toHaveBeenCalledWith(expect.objectContaining({ _file: indexFile }));
+    });
+
     it('should create file change for renamed entry', async () => {
       const { formatEntryFile } = await import('$lib/services/contents/file/format');
       const { serializeContent } = await import('./serialize');

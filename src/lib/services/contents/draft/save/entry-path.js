@@ -14,6 +14,7 @@ import {
   localizeDirPath,
 } from '$lib/services/contents/collection/nested/i18n';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
+import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import {
   fillLocalePlaceholder,
@@ -192,9 +193,11 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     return /** @type {Entry} */ (originalEntry).locales[locale].path;
   }
 
-  const {
-    _file: { basePath, subPath, extension },
-  } = entryCollection;
+  // The index file can have an extension of its own
+  const { basePath, subPath, extension } = resolveFileConfig({
+    collection: entryCollection,
+    isIndexFile,
+  });
 
   /**
    * Support entry collection’s subpath.

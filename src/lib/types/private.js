@@ -643,6 +643,9 @@
  * @property {BodyFieldOptions} [bodyField] Body field options for front matter formats.
  * @property {boolean} [yamlQuote] YAML quote configuration. DEPRECATED in favor of the global YAML
  * format options.
+ * @property {FileConfig} [indexFile] Configuration for the collection’s special index file, when
+ * it has an `extension` or `format` of its own. It shares everything else with the entries,
+ * including `fullPathRegEx`, which matches both. Entry collection only.
  */
 
 /**
