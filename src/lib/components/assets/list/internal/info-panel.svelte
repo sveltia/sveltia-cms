@@ -1,8 +1,7 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
-  import { getPathInfo } from '@sveltia/utils/file';
-  import mime from 'mime';
 
+  import FileInfoSections from '$lib/components/assets/list/file-info-sections.svelte';
   import InfoPanelLayout from '$lib/components/assets/list/info-panel-layout.svelte';
   import UsedEntries from '$lib/components/assets/list/used-entries.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -14,8 +13,6 @@
   } from '$lib/services/assets/details';
   import { isMediaKind } from '$lib/services/assets/kinds';
   import { formatDate } from '$lib/services/utils/date';
-  import { formatSize } from '$lib/services/utils/file';
-  import { formatDuration } from '$lib/services/utils/media/video';
 
   /**
    * @import { Asset, AssetDetails } from '$lib/types/private';
@@ -42,7 +39,6 @@
   const { path, size, kind, commitAuthor, commitDate } = $derived(asset);
   const { publicURL, repoBlobURL, dimensions, duration, createdDate, coordinates, usedEntries } =
     $derived(details);
-  const { extension = '' } = $derived(getPathInfo(path));
   const canPreview = $derived(isMediaKind(kind) || path.endsWith('.pdf'));
 
   /**
@@ -76,36 +72,14 @@
 {/snippet}
 
 <InfoPanelLayout preview={showPreview && canPreview ? preview : undefined}>
-  <section>
-    <h4>{_('kind')}</h4>
-    <p>
-      {_(`file_type_labels.${extension}`, {
-        default: mime.getType(path) ?? extension.toUpperCase(),
-      })}
-    </p>
-  </section>
-  {#if !!size}
-    <section>
-      <h4>{_('size')}</h4>
-      <p>
-        {#key appLocale.current}
-          {formatSize(size)}
-        {/key}
-      </p>
-    </section>
-  {/if}
-  {#if canPreview}
-    <section>
-      <h4>{_('dimensions')}</h4>
-      <p>{dimensions ? `${dimensions.width}×${dimensions.height}` : '–'}</p>
-    </section>
-  {/if}
-  {#if ['audio', 'video'].includes(kind)}
-    <section>
-      <h4>{_('duration')}</h4>
-      <p>{duration ? formatDuration(duration) : '–'}</p>
-    </section>
-  {/if}
+  <FileInfoSections
+    fileName={path}
+    {kind}
+    {size}
+    hasDimensions={canPreview}
+    {dimensions}
+    {duration}
+  />
   <section>
     <h4>{_('public_urls', { values: { count: 1 } })}</h4>
     <p>

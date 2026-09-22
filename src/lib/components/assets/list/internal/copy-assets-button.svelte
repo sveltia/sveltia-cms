@@ -3,13 +3,11 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { isTextFileType } from '@sveltia/utils/file';
 
   import CopyMenu from '$lib/components/assets/list/copy-menu.svelte';
   import { getAssetDetails } from '$lib/services/assets/details';
   import { getAssetBlob } from '$lib/services/assets/info';
-  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
-  import { transformImage } from '$lib/services/utils/media/image/transform';
+  import { canCopyFileData, copyFileData } from '$lib/services/utils/clipboard';
 
   /**
    * @import { Asset, AssetDetails } from '$lib/types/private';
@@ -31,7 +29,7 @@
 
   /** @type {AssetDetails[]} */
   let assetsDetailList = $state([]);
-  let canCopyFileData = $state(false);
+  let canCopyData = $state(false);
 
   const publicURLs = $derived(
     assetsDetailList.filter(({ publicURL }) => !!publicURL).map(({ publicURL }) => publicURL),
@@ -42,8 +40,7 @@
 
   /**
    * Check if the file data can be copied to clipboard. Since OSes usually support only one item,
-   * enable the menu only when one file is selected. Also check if the file type is plaintext or
-   * image and if the copy method is supported in the browser.
+   * enable the menu only when one file is selected.
    * @returns {Promise<boolean>} Result.
    */
   const checkCanCopyFileData = async () => {
@@ -53,46 +50,9 @@
       return false;
     }
 
-    const blob = await getAssetBlob(assets[0]);
-    const { type } = blob;
+    assetBlob = await getAssetBlob(assets[0]);
 
-    assetBlob = blob;
-
-    if (isTextFileType(type)) {
-      return true;
-    }
-
-    if (SUPPORTED_IMAGE_TYPES.includes(type)) {
-      return typeof navigator.clipboard.write === 'function';
-    }
-
-    return false;
-  };
-
-  /**
-   * Copy the file data to clipboard. Given that browsers typically support only plaintext and PNG
-   * image, convert the file if necessary.
-   */
-  const copyFileData = async () => {
-    let blob = /** @type {Blob} */ (assetBlob);
-    const { type } = blob;
-
-    if (isTextFileType(type)) {
-      await navigator.clipboard.writeText(await blob.text());
-
-      return;
-    }
-
-    /* v8 ignore next 3 -- the menu item is disabled for any other type */
-    if (!SUPPORTED_IMAGE_TYPES.includes(type)) {
-      throw new Error('Unsupported type');
-    }
-
-    if (type !== 'image/png') {
-      blob = await transformImage(blob);
-    }
-
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    return canCopyFileData(assetBlob.type);
   };
 
   const items = $derived([
@@ -119,8 +79,13 @@
     },
     {
       label: _('file_data'),
-      disabled: !canCopyFileData,
-      copy: copyFileData,
+      disabled: !canCopyData,
+      /**
+       * Copy the file data to clipboard.
+       */
+      copy: async () => {
+        await copyFileData(/** @type {Blob} */ (assetBlob));
+      },
       toastKey: 'asset_data_copied',
     },
   ]);
@@ -128,7 +93,7 @@
   $effect(() => {
     (async () => {
       assetsDetailList = await Promise.all(assets.map(getAssetDetails));
-      canCopyFileData = await checkCanCopyFileData();
+      canCopyData = await checkCanCopyFileData();
     })();
   });
 </script>

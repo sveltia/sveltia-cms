@@ -8,9 +8,9 @@ import { env } from '$lib/services/user/env.svelte';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { initTestConfig } from '$lib/test/config';
 
-import NewSubfolderButton from './new-subfolder-button.svelte';
+import NewFolderButton from './new-folder-button.svelte';
 
-describe('NewSubfolderButton', () => {
+describe('NewFolderButton', () => {
   beforeAll(async () => {
     await initTestConfig();
   });
@@ -23,7 +23,7 @@ describe('NewSubfolderButton', () => {
   });
 
   test('opens the New Folder dialog', async () => {
-    const { container } = await render(NewSubfolderButton);
+    const { container } = await render(NewFolderButton);
     const button = page.getByRole('button', { name: 'New Folder' });
 
     // A ghost button on a large screen, next to the other toolbar actions
@@ -36,7 +36,7 @@ describe('NewSubfolderButton', () => {
   test('gets a surface on a small screen, where it floats', async () => {
     env.isSmallScreen = true;
 
-    const { container } = await render(NewSubfolderButton);
+    const { container } = await render(NewFolderButton);
 
     expect(container.querySelector('button')).toHaveClass('secondary');
   });
@@ -44,7 +44,7 @@ describe('NewSubfolderButton', () => {
   test('is left out for the All Assets folder and a folder that can’t be browsed', async () => {
     selectedAssetFolder.current = undefined;
 
-    await render(NewSubfolderButton);
+    await render(NewFolderButton);
     expect(page.getByRole('button').elements()).toHaveLength(0);
 
     selectedAssetFolder.current = /** @type {any} */ ({
@@ -55,14 +55,14 @@ describe('NewSubfolderButton', () => {
       hasTemplateTags: false,
     });
 
-    await render(NewSubfolderButton);
+    await render(NewFolderButton);
     expect(page.getByRole('button').elements()).toHaveLength(0);
   });
 
   test('is disabled while contributing via a fork', async () => {
     forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });
 
-    await render(NewSubfolderButton);
+    await render(NewFolderButton);
     await expect.element(page.getByRole('button', { name: 'New Folder' })).toBeDisabled();
   });
 });

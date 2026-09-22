@@ -8,7 +8,7 @@ import { renamingSubfolder, selectedSubfolderPath } from '$lib/services/assets/s
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
 import { waitForToastsToHide } from '$lib/test/toast';
 
-import RenameSubfolderDialog from './rename-subfolder-dialog.svelte';
+import RenameFolderDialog from './rename-folder-dialog.svelte';
 
 vi.mock('$lib/services/assets/data/subfolder', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
@@ -17,7 +17,7 @@ vi.mock('$lib/services/assets/data/subfolder', async (importOriginal) => ({
 
 const subfolder = { name: '2024', path: 'static/uploads/2024' };
 
-describe('RenameSubfolderDialog', () => {
+describe('RenameFolderDialog', () => {
   beforeAll(async () => {
     await initTestConfig();
 
@@ -44,7 +44,7 @@ describe('RenameSubfolderDialog', () => {
   test('opens for the folder being renamed and renames it', async () => {
     vi.mocked(renameSubfolder).mockResolvedValue(undefined);
 
-    await render(RenameSubfolderDialog);
+    await render(RenameFolderDialog);
     expect(page.getByRole('dialog').elements()).toHaveLength(0);
 
     renamingSubfolder.current = subfolder;
@@ -90,7 +90,7 @@ describe('RenameSubfolderDialog', () => {
   test('lets go of the folder when cancelled', async () => {
     renamingSubfolder.current = { name: '2023', path: 'static/uploads/2023' };
 
-    await render(RenameSubfolderDialog);
+    await render(RenameFolderDialog);
 
     const dialog = page.getByRole('dialog', { name: 'Rename \u20682023\u2069' });
 
@@ -115,7 +115,7 @@ describe('RenameSubfolderDialog', () => {
     renamingSubfolder.current = { name: 'empty', path: 'static/uploads/empty' };
 
     try {
-      await render(RenameSubfolderDialog);
+      await render(RenameFolderDialog);
 
       const dialog = page.getByRole('dialog', { name: 'Rename \u2068empty\u2069' });
 

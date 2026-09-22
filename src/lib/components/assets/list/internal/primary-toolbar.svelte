@@ -5,7 +5,7 @@
   import DownloadAssetsButton from '$lib/components/assets/list/download-assets-button.svelte';
   import CopyAssetsButton from '$lib/components/assets/list/internal/copy-assets-button.svelte';
   import EditOptionsButton from '$lib/components/assets/list/internal/edit-options-button.svelte';
-  import NewSubfolderButton from '$lib/components/assets/list/internal/new-subfolder-button.svelte';
+  import NewFolderButton from '$lib/components/assets/list/internal/new-folder-button.svelte';
   import UploadAssetsButton from '$lib/components/assets/list/internal/upload-assets-button.svelte';
   import PreviewAssetButton from '$lib/components/assets/list/preview-asset-button.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
@@ -35,8 +35,6 @@
   const subfolderNames = $derived(
     selectedSubfolderPath.current ? selectedSubfolderPath.current.split('/') : [],
   );
-  /** The subfolder being browsed is the title; at the folder root, the folder itself is. */
-  const title = $derived(subfolderNames.at(-1) ?? folderLabel);
   const asset = $derived(focusedAsset.current);
 
   const assets = $derived.by(() => {
@@ -57,10 +55,10 @@
    * state, the same way it does from the sidebar, so the page can tell it from another folder
    * sharing its path.
    * @param {number} depth How many subfolder names to keep, `0` being the folder root.
-   * @param {boolean} [back] Whether to go back in the history if the ancestor is the previous
-   * page, as the back button on small screens does.
+   * @param {boolean} back Whether to go back in the history if the ancestor is the previous page,
+   * as the back button on small screens does.
    */
-  const browseAncestor = (depth, back = false) => {
+  const browseAncestor = (depth, back) => {
     const path = `/assets/${createPath([folder?.internalPath, ...subfolderNames.slice(0, depth)])}`;
     const options = { transitionType: /** @type {const} */ ('backwards'), state: { folder } };
 
@@ -70,25 +68,9 @@
       goto(path, options);
     }
   };
-
-  /** Ancestor folders of the subfolder being browsed, each leading back to itself. */
-  const breadcrumbs = $derived(
-    subfolderNames.length
-      ? [folderLabel, ...subfolderNames.slice(0, -1)].map((label, depth) => ({
-          label,
-          // eslint-disable-next-line jsdoc/require-jsdoc
-          onClick: () => browseAncestor(depth),
-        }))
-      : [],
-  );
 </script>
 
-<PrimaryToolbar
-  {title}
-  {breadcrumbs}
-  backLabel={subfolderNames.length ? _('back_to_parent_folder') : undefined}
-  onBack={subfolderNames.length ? () => browseAncestor(subfolderNames.length - 1, true) : undefined}
->
+<PrimaryToolbar rootLabel={folderLabel} {subfolderNames} onBrowse={browseAncestor}>
   {#snippet actions()}
     <PreviewAssetButton
       path={asset ? `/assets/${asset.path}` : undefined}
@@ -121,7 +103,7 @@
   {#snippet fab()}
     <!-- A folder-level action like Upload, so it sits with the Upload button on every screen size
     rather than with the asset actions, which are hidden on medium screens -->
-    <NewSubfolderButton />
+    <NewFolderButton />
     {#if !env.isSmallScreen || (listedAssets.current.length && !uploadDisabled)}
       <UploadAssetsButton label={env.isSmallScreen ? undefined : _('upload')} />
     {/if}

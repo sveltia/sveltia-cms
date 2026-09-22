@@ -15,18 +15,17 @@
 
   /**
    * @import { Snippet } from 'svelte';
-   * @import { BreadcrumbItem } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
-   * @property {string} title Location label.
-   * @property {BreadcrumbItem[]} [breadcrumbs] Ancestor folders shown before the title on larger
-   * screens, when a subfolder is browsed.
-   * @property {string} [backLabel] Label of the back button on small screens. Default: back to the
-   * asset folder list.
-   * @property {() => void} [onBack] Called when the back button on small screens is clicked.
-   * Default: go back to the asset folder list.
+   * @property {string} rootLabel Label of the location: the asset folder or the cloud storage
+   * service.
+   * @property {string[]} [subfolderNames] Names of the subfolders leading to the one being browsed,
+   * from the location root down. Empty at the root.
+   * @property {(depth: number, back: boolean) => void} onBrowse Called to browse an ancestor of
+   * the subfolder being browsed, with how many subfolder names to keep, `0` being the root, and
+   * whether the ancestor is the previous page, as it is for the back button on small screens.
    * @property {Snippet} [actions] Action buttons, shown on large screens only.
    * @property {Snippet} [fab] Upload button placed in the floating action button wrapper.
    */
@@ -34,23 +33,35 @@
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
-    title,
-    breadcrumbs = [],
-    backLabel = undefined,
-    onBack = undefined,
+    rootLabel,
+    subfolderNames = [],
+    onBrowse,
     actions = undefined,
     fab = undefined,
     /* eslint-enable prefer-const */
   } = $props();
+
+  /** The subfolder being browsed is the title; at the root, the location itself is. */
+  const title = $derived(subfolderNames.at(-1) ?? rootLabel);
+  /** Ancestor folders of the subfolder being browsed, each leading back to itself. */
+  const breadcrumbs = $derived(
+    subfolderNames.length
+      ? [rootLabel, ...subfolderNames.slice(0, -1)].map((label, depth) => ({
+          label,
+          // eslint-disable-next-line jsdoc/require-jsdoc
+          onClick: () => onBrowse(depth, false),
+        }))
+      : [],
+  );
 </script>
 
 <Toolbar variant="primary" class="asset-library-toolbar" ariaLabel={_('folder')}>
   {#if env.isSmallScreen}
     <BackButton
-      aria-label={backLabel ?? _('back_to_asset_folder_list')}
+      aria-label={_(subfolderNames.length ? 'back_to_parent_folder' : 'back_to_asset_folder_list')}
       onclick={() => {
-        if (onBack) {
-          onBack();
+        if (subfolderNames.length) {
+          onBrowse(subfolderNames.length - 1, true);
         } else {
           goBack('/assets');
         }

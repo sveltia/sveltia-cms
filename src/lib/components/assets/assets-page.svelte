@@ -7,15 +7,15 @@
   import ExternalDetailsOverlay from '$lib/components/assets/list/external/details-overlay.svelte';
   import ExternalMainArea from '$lib/components/assets/list/external/main-area.svelte';
   import AssetList from '$lib/components/assets/list/internal/asset-list.svelte';
-  import DeleteSubfolderDialog from '$lib/components/assets/list/internal/delete-subfolder-dialog.svelte';
+  import DeleteFolderDialog from '$lib/components/assets/list/internal/delete-folder-dialog.svelte';
   import AssetDetailsOverlay from '$lib/components/assets/list/internal/details-overlay.svelte';
   import EditAssetDialog from '$lib/components/assets/list/internal/edit-asset-dialog.svelte';
   import FolderInfoPanel from '$lib/components/assets/list/internal/folder-info-panel.svelte';
   import InfoPanel from '$lib/components/assets/list/internal/info-panel.svelte';
-  import NewSubfolderDialog from '$lib/components/assets/list/internal/new-subfolder-dialog.svelte';
+  import NewFolderDialog from '$lib/components/assets/list/internal/new-folder-dialog.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/internal/primary-toolbar.svelte';
   import RenameAssetDialog from '$lib/components/assets/list/internal/rename-dialog.svelte';
-  import RenameSubfolderDialog from '$lib/components/assets/list/internal/rename-subfolder-dialog.svelte';
+  import RenameFolderDialog from '$lib/components/assets/list/internal/rename-folder-dialog.svelte';
   import PrimarySidebar from '$lib/components/assets/list/primary-sidebar.svelte';
   import SecondarySidebar from '$lib/components/assets/list/secondary-sidebar.svelte';
   import SecondaryToolbar from '$lib/components/assets/list/secondary-toolbar.svelte';
@@ -339,6 +339,6 @@
 
 <EditAssetDialog />
 <RenameAssetDialog />
-<NewSubfolderDialog />
-<RenameSubfolderDialog />
-<DeleteSubfolderDialog />
+<NewFolderDialog />
+<RenameFolderDialog />
+<DeleteFolderDialog />

@@ -40,7 +40,11 @@ describe('PrimaryToolbar', () => {
     env.isSmallScreen = false;
     env.isMediumScreen = false;
 
-    const { container } = await render(PrimaryToolbar, { title: 'Images', actions });
+    const { container } = await render(PrimaryToolbar, {
+      rootLabel: 'Images',
+      onBrowse: vi.fn(),
+      actions,
+    });
 
     await expect.element(page.getByRole('toolbar', { name: 'Folder' })).toBeVisible();
     expect(container.querySelector('h2')).toHaveTextContent('Images');
@@ -53,7 +57,11 @@ describe('PrimaryToolbar', () => {
     env.isSmallScreen = true;
     window.location.hash = '#/assets/static/images';
 
-    const { container } = await render(PrimaryToolbar, { title: 'Images', actions });
+    const { container } = await render(PrimaryToolbar, {
+      rootLabel: 'Images',
+      onBrowse: vi.fn(),
+      actions,
+    });
 
     expect(container.querySelector('h2')).toHaveTextContent('Images');
     expect(page.getByRole('button', { name: 'Action' }).elements()).toHaveLength(0);
@@ -66,20 +74,21 @@ describe('PrimaryToolbar', () => {
     env.isSmallScreen = false;
     env.isMediumScreen = false;
 
-    const onClick = vi.fn();
+    const onBrowse = vi.fn();
 
     const { container } = await render(PrimaryToolbar, {
-      title: 'summer',
-      breadcrumbs: [
-        { label: 'Images', onClick },
-        { label: '2024', onClick: vi.fn() },
-      ],
+      rootLabel: 'Images',
+      subfolderNames: ['2024', 'summer'],
+      onBrowse,
     });
 
     expect(getHeading(container)).toBe('Images chevron_right 2024 chevron_right summer');
 
+    await page.getByRole('button', { name: '2024' }).click();
+    expect(onBrowse).toHaveBeenCalledWith(1, false);
+
     await page.getByRole('button', { name: 'Images' }).click();
-    expect(onClick).toHaveBeenCalledOnce();
+    expect(onBrowse).toHaveBeenCalledWith(0, false);
   });
 
   test('points the breadcrumb separators the other way in a right-to-left locale', async () => {
@@ -89,8 +98,9 @@ describe('PrimaryToolbar', () => {
 
     try {
       const { container } = await render(PrimaryToolbar, {
-        title: 'summer',
-        breadcrumbs: [{ label: 'Images', onClick: vi.fn() }],
+        rootLabel: 'Images',
+        subfolderNames: ['summer'],
+        onBrowse: vi.fn(),
       });
 
       expect(getHeading(container)).toBe('Images chevron_left summer');
@@ -102,27 +112,26 @@ describe('PrimaryToolbar', () => {
   test('leaves the breadcrumb out on a small screen, where the back button leads up', async () => {
     env.isSmallScreen = true;
 
-    const onBack = vi.fn();
+    const onBrowse = vi.fn();
 
     const { container } = await render(PrimaryToolbar, {
-      title: 'summer',
-      breadcrumbs: [{ label: 'Images', onClick: vi.fn() }],
-      backLabel: 'Back to Parent Folder',
-      onBack,
+      rootLabel: 'Images',
+      subfolderNames: ['2024', 'summer'],
+      onBrowse,
     });
 
     expect(container.querySelector('h2')).toHaveTextContent('summer');
     expect(page.getByRole('button', { name: 'Images' }).elements()).toHaveLength(0);
 
     await page.getByRole('button', { name: 'Back to Parent Folder' }).click();
-    expect(onBack).toHaveBeenCalledOnce();
+    expect(onBrowse).toHaveBeenCalledWith(1, true);
   });
 
   test('does without actions and a floating button', async () => {
     env.isSmallScreen = false;
     env.isMediumScreen = false;
 
-    await render(PrimaryToolbar, { title: 'Images' });
+    await render(PrimaryToolbar, { rootLabel: 'Images', onBrowse: vi.fn() });
 
     await expect.element(page.getByRole('toolbar', { name: 'Folder' })).toBeVisible();
     expect(page.getByRole('button').elements()).toHaveLength(0);

@@ -14,14 +14,14 @@ import {
 } from '$lib/test/config';
 import { waitForToastsToHide } from '$lib/test/toast';
 
-import DeleteSubfolderDialog from './delete-subfolder-dialog.svelte';
+import DeleteFolderDialog from './delete-folder-dialog.svelte';
 
 vi.mock('$lib/services/assets/data/subfolder', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
   deleteSubfolder: vi.fn(),
 }));
 
-describe('DeleteSubfolderDialog', () => {
+describe('DeleteFolderDialog', () => {
   beforeAll(async () => {
     await initTestConfig({
       collections: [
@@ -66,7 +66,7 @@ describe('DeleteSubfolderDialog', () => {
   test('confirms the deletion of the folder and the assets in it', async () => {
     vi.mocked(deleteSubfolder).mockResolvedValue(undefined);
 
-    await render(DeleteSubfolderDialog);
+    await render(DeleteFolderDialog);
     expect(page.getByRole('alertdialog').elements()).toHaveLength(0);
 
     deletingSubfolder.current = { name: '2024', path: 'static/uploads/2024' };
@@ -90,7 +90,7 @@ describe('DeleteSubfolderDialog', () => {
   test('confirms the deletion of an empty folder', async () => {
     deletingSubfolder.current = { name: 'empty', path: 'static/uploads/empty' };
 
-    await render(DeleteSubfolderDialog);
+    await render(DeleteFolderDialog);
 
     const dialog = page.getByRole('alertdialog', { name: 'Delete Folder' });
 
@@ -108,7 +108,7 @@ describe('DeleteSubfolderDialog', () => {
   test('refuses to delete a folder holding an asset an entry requires', async () => {
     deletingSubfolder.current = { name: '2023', path: 'static/uploads/2023' };
 
-    await render(DeleteSubfolderDialog);
+    await render(DeleteFolderDialog);
 
     const dialog = page.getByRole('alertdialog', { name: 'Delete Folder' });
 
@@ -124,7 +124,7 @@ describe('DeleteSubfolderDialog', () => {
     deletingSubfolder.current = { name: 'empty', path: 'static/uploads/empty' };
 
     try {
-      await render(DeleteSubfolderDialog);
+      await render(DeleteFolderDialog);
 
       const dialog = page.getByRole('alertdialog', { name: 'Delete Folder' });
 

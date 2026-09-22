@@ -9,14 +9,14 @@ import { showNewSubfolderDialog } from '$lib/services/assets/view';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
 import { waitForToastsToHide } from '$lib/test/toast';
 
-import NewSubfolderDialog from './new-subfolder-dialog.svelte';
+import NewFolderDialog from './new-folder-dialog.svelte';
 
 vi.mock('$lib/services/assets/data/subfolder', () => ({
   GITKEEP_FILE_NAME: '.gitkeep',
   createSubfolder: vi.fn(),
 }));
 
-describe('NewSubfolderDialog', () => {
+describe('NewFolderDialog', () => {
   beforeAll(async () => {
     await initTestConfig();
     setAssets([
@@ -40,7 +40,7 @@ describe('NewSubfolderDialog', () => {
   test('validates the name, then creates the folder and stays put', async () => {
     vi.mocked(createSubfolder).mockResolvedValue(undefined);
 
-    await render(NewSubfolderDialog);
+    await render(NewFolderDialog);
     expect(page.getByRole('dialog').elements()).toHaveLength(0);
 
     showNewSubfolderDialog.current = true;
@@ -102,7 +102,7 @@ describe('NewSubfolderDialog', () => {
     selectedSubfolderPath.current = '2024';
     showNewSubfolderDialog.current = true;
 
-    await render(NewSubfolderDialog);
+    await render(NewFolderDialog);
 
     const dialog = page.getByRole('dialog', { name: 'New Folder' });
 
@@ -140,7 +140,7 @@ describe('NewSubfolderDialog', () => {
     selectedAssetFolder.current = undefined;
     showNewSubfolderDialog.current = true;
 
-    await render(NewSubfolderDialog);
+    await render(NewFolderDialog);
 
     await expect
       .element(
@@ -158,7 +158,7 @@ describe('NewSubfolderDialog', () => {
     showNewSubfolderDialog.current = true;
 
     try {
-      await render(NewSubfolderDialog);
+      await render(NewFolderDialog);
 
       const dialog = page.getByRole('dialog', { name: 'New Folder' });
 

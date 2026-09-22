@@ -7,12 +7,10 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import { isTextFileType } from '@sveltia/utils/file';
 
   import CopyMenu from '$lib/components/assets/list/copy-menu.svelte';
   import { fetchExternalAssetBlob } from '$lib/services/assets/external/data';
-  import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
-  import { transformImage } from '$lib/services/utils/media/image/transform';
+  import { copyFileData } from '$lib/services/utils/clipboard';
 
   /**
    * @import { ExternalAsset } from '$lib/types/private';
@@ -47,32 +45,6 @@
 
     return kind === 'image' || /\.(?:css|csv|html?|js|json|md|svg|txt|xml|ya?ml)$/i.test(fileName);
   });
-
-  /**
-   * Fetch the file and copy its data to clipboard. Given that browsers typically support only
-   * plaintext and PNG image, convert the file if necessary.
-   */
-  const copyFileData = async () => {
-    let blob = await fetchExternalAssetBlob(assets[0]);
-    const { type } = blob;
-
-    if (isTextFileType(type)) {
-      await navigator.clipboard.writeText(await blob.text());
-
-      return;
-    }
-
-    /* v8 ignore next 3 -- the menu item is disabled for any other type */
-    if (!SUPPORTED_IMAGE_TYPES.includes(type)) {
-      throw new Error('Unsupported type');
-    }
-
-    if (type !== 'image/png') {
-      blob = await transformImage(blob);
-    }
-
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-  };
 
   /**
    * Copy the asset public URL(s) to clipboard.
@@ -119,7 +91,12 @@
       {
         label: _('file_data'),
         disabled: !canCopyFileData,
-        copy: copyFileData,
+        /**
+         * Fetch the file and copy its data to clipboard.
+         */
+        copy: async () => {
+          await copyFileData(await fetchExternalAssetBlob(assets[0]));
+        },
         toastKey: 'asset_data_copied',
       },
     ].filter((item) => !!item),

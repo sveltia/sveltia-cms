@@ -1,9 +1,8 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Alert } from '@sveltia/ui';
-  import { getPathInfo } from '@sveltia/utils/file';
-  import mime from 'mime';
 
+  import FileInfoSections from '$lib/components/assets/list/file-info-sections.svelte';
   import InfoPanelLayout from '$lib/components/assets/list/info-panel-layout.svelte';
   import UsedEntries from '$lib/components/assets/list/used-entries.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
@@ -14,8 +13,6 @@
   } from '$lib/services/assets/external/details';
   import { isMediaKind } from '$lib/services/assets/kinds';
   import { formatDate } from '$lib/services/utils/date';
-  import { formatSize } from '$lib/services/utils/file';
-  import { formatDuration } from '$lib/services/utils/media/video';
 
   /**
    * @import { ExternalAssetDetails } from '$lib/services/assets/external/details';
@@ -42,7 +39,6 @@
   const { fileName, description, previewURL, downloadURL, kind, size, lastModified } =
     $derived(asset);
   const { dimensions, duration } = $derived(details);
-  const { extension = '' } = $derived(getPathInfo(fileName));
   const canPreview = $derived(isMediaKind(kind));
   /** Only a file linked from an entry is checked, so this is never `true` on a cloud service. */
   const unavailable = $derived(externalAssetAvailability.current[asset.id] === false);
@@ -89,37 +85,7 @@
       <Alert status="error" ariaLive="off">{_('file_unavailable_description')}</Alert>
     </div>
   {/if}
-  <section>
-    <h4>{_('kind')}</h4>
-    <p>
-      <!-- A linked file may have no extension, e.g. an avatar URL, so fall back to the kind -->
-      {_(`file_type_labels.${extension}`, {
-        default: mime.getType(fileName) ?? (extension ? extension.toUpperCase() : _(kind)),
-      })}
-    </p>
-  </section>
-  {#if !!size}
-    <section>
-      <h4>{_('size')}</h4>
-      <p>
-        {#key appLocale.current}
-          {formatSize(size)}
-        {/key}
-      </p>
-    </section>
-  {/if}
-  {#if canPreview}
-    <section>
-      <h4>{_('dimensions')}</h4>
-      <p>{dimensions ? `${dimensions.width}×${dimensions.height}` : '–'}</p>
-    </section>
-  {/if}
-  {#if ['audio', 'video'].includes(kind)}
-    <section>
-      <h4>{_('duration')}</h4>
-      <p>{duration ? formatDuration(duration) : '–'}</p>
-    </section>
-  {/if}
+  <FileInfoSections {fileName} {kind} {size} hasDimensions={canPreview} {dimensions} {duration} />
   <section>
     <h4>{_('public_urls', { values: { count: 1 } })}</h4>
     <p>

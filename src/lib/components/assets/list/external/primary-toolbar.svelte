@@ -39,19 +39,6 @@
       ? selectedExternalDirPath.current.split('/')
       : [],
   );
-  /** The folder being browsed is the title; at the root, the service itself is. */
-  const title = $derived(subfolderNames.at(-1) ?? service.serviceLabel);
-  /** Ancestor folders of the one being browsed, each leading back to itself. */
-  const breadcrumbs = $derived(
-    subfolderNames.length
-      ? [service.serviceLabel, ...subfolderNames.slice(0, -1)].map((label, depth) => ({
-          label,
-          // eslint-disable-next-line jsdoc/require-jsdoc
-          onClick: () => browseExternalFolder(subfolderNames.slice(0, depth).join('/')),
-        }))
-      : [],
-  );
-
   const assets = $derived.by(() => {
     if (selectedExternalAssets.current.length) return [...selectedExternalAssets.current];
     if (asset) return [asset];
@@ -60,12 +47,11 @@
 </script>
 
 <PrimaryToolbar
-  {title}
-  {breadcrumbs}
-  backLabel={subfolderNames.length ? _('back_to_parent_folder') : undefined}
-  onBack={subfolderNames.length
-    ? () => browseExternalFolder(subfolderNames.slice(0, -1).join('/'))
-    : undefined}
+  rootLabel={service.serviceLabel}
+  {subfolderNames}
+  onBrowse={(depth) => {
+    browseExternalFolder(subfolderNames.slice(0, depth).join('/'));
+  }}
 >
   {#snippet actions()}
     <PreviewAssetButton
