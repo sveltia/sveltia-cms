@@ -1,18 +1,23 @@
-/* eslint-disable no-await-in-loop */
-
 import { getHash } from '@sveltia/utils/crypto';
-import { sleep } from '@sveltia/utils/misc';
 
 import { getAssetKind } from '$lib/services/assets/kinds';
-import { filterAssetsByQuery } from '$lib/services/integrations/media-libraries/cloud/search';
 import {
+  encodeKey as encodeKeyPath,
   getFileKey,
   getFolderKey,
-  getPrefix,
   getRelativeKey,
 } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
+import {
+  browseObjects,
+  deleteObjects,
+  getRenamedPath,
+  listObjects,
+  replaceObject,
+  searchObjects,
+  uploadObjects,
+} from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
-import { parseXml } from '$lib/services/utils/xml';
+import { parseXml, toArray } from '$lib/services/utils/xml';
 
 /**
  * @import {
@@ -21,6 +26,9 @@ import { parseXml } from '$lib/services/utils/xml';
  * MediaLibraryFetchOptions,
  * S3Config,
  * } from '$lib/types/private';
+ * @import {
+ * ObjectStorageProvider,
+ * } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
  */
 
 /**
@@ -228,15 +236,12 @@ export const isS3ObjectUrl = (config, url) => {
  * @see https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
  */
 export const encodeKey = (key) =>
-  key
-    .split('/')
-    .map((part) =>
-      encodeURIComponent(part).replace(
-        /[!'()*]/g,
-        (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
-      ),
-    )
-    .join('/');
+  encodeKeyPath(key, (part) =>
+    encodeURIComponent(part).replace(
+      /[!'()*]/g,
+      (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+    ),
+  );
 
 /**
  * Build the API endpoint URL of an object, which is where the object is read, written and deleted.
@@ -310,128 +315,47 @@ export const parseS3Results = (objects, config) => {
 };
 
 /**
- * Fetch the objects under the configured prefix from S3-compatible storage, page by page.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @param {object} [params] Additional parameters.
- * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10.
- * @returns {Promise<{ files: S3Object[], folders: string[] }>} Objects, split into the files and
- * the folder placeholders, the latter given as folder paths relative to the prefix.
+ * Fetch a page of the objects under the given prefix from S3-compatible storage.
+ * @param {object} params Parameters.
+ * @param {S3Config} params.config S3 configuration.
+ * @param {string} params.credential Secret access key.
+ * @param {string} params.prefix Key prefix.
+ * @param {string} [params.cursor] Continuation token of the page.
+ * @returns {Promise<{ items: S3Object[], cursor?: string }>} Objects and the continuation token of
+ * the next page, if any.
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
  */
-const fetchS3Listing = async (config, options, { maxPages = 10 } = {}) => {
+const listS3Page = async ({ config, credential: secretAccessKey, prefix, cursor }) => {
   const { bucket, region, endpoint, force_path_style: forcePathStyle } = config;
-  const secretAccessKey = requireSecretAccessKey(options);
-  const prefix = getPrefix(config);
-  /** @type {S3Object[]} */
-  const files = [];
-  /** @type {string[]} */
-  const folders = [];
-  /** @type {string | undefined} */
-  let continuationToken;
 
-  // Fetch up to maxPages pages
-  for (let page = 0; page < maxPages; page += 1) {
-    const params = new URLSearchParams({
-      'list-type': '2',
-      'max-keys': '1000',
-      ...(prefix && { prefix }),
-      ...(continuationToken && { 'continuation-token': continuationToken }),
-    });
+  const params = new URLSearchParams({
+    'list-type': '2',
+    'max-keys': '1000',
+    ...(prefix && { prefix }),
+    ...(cursor && { 'continuation-token': cursor }),
+  });
 
-    const url = endpoint
-      ? `${endpoint}/${bucket}?${params}`
-      : forcePathStyle
-        ? `https://s3.${region}.amazonaws.com/${bucket}?${params}`
-        : `https://${bucket}.s3.${region}.amazonaws.com/?${params}`;
+  const url = endpoint
+    ? `${endpoint}/${bucket}?${params}`
+    : forcePathStyle
+      ? `https://s3.${region}.amazonaws.com/${bucket}?${params}`
+      : `https://${bucket}.s3.${region}.amazonaws.com/?${params}`;
 
-    const response = await signedRequest({ method: 'GET', url, config, secretAccessKey });
+  const response = await signedRequest({ method: 'GET', url, config, secretAccessKey });
 
-    if (!response.ok) {
-      const errorText = await response.text();
+  if (!response.ok) {
+    const errorText = await response.text();
 
-      return Promise.reject(new Error(`Failed to list objects: ${errorText}`));
-    }
-
-    const xml = await response.text();
-    /** @type {any} */
-    const data = parseXml(xml);
-
-    const contents = data.Contents
-      ? Array.isArray(data.Contents)
-        ? data.Contents
-        : [data.Contents]
-      : [];
-
-    contents.forEach((/** @type {S3Object} */ obj) => {
-      // A key ending with a slash is a folder placeholder rather than a file
-      if (obj.Key.endsWith('/')) {
-        const dirPath = getRelativeKey(config, obj.Key).replace(/\/$/, '');
-
-        // The placeholder of the prefix itself isn’t a folder below it
-        if (dirPath) {
-          folders.push(dirPath);
-        }
-      } else {
-        files.push(obj);
-      }
-    });
-
-    continuationToken = data.NextContinuationToken;
-
-    if (data.IsTruncated !== 'true' || !continuationToken) {
-      break;
-    }
-
-    // Wait for a bit before requesting the next page
-    await sleep(50);
+    throw new Error(`Failed to list objects: ${errorText}`);
   }
 
-  return { files, folders };
-};
+  /** @type {any} */
+  const data = parseXml(await response.text());
 
-/**
- * List objects from S3-compatible storage.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @param {object} [params] Additional parameters.
- * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10.
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const listS3Objects = async (config, options, params = {}) => {
-  const { kind } = options;
-  const { files } = await fetchS3Listing(config, options, params);
-  // Filter by kind if specified
-  const filteredObjects = kind ? files.filter((obj) => getAssetKind(obj.Key) === kind) : files;
-
-  return parseS3Results(filteredObjects, config);
-};
-
-/**
- * List the files and the empty folders under the configured prefix on S3-compatible storage.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @returns {Promise<ExternalFolderListing>} Files and folders.
- */
-export const browseS3Objects = async (config, options) => {
-  const { kind } = options;
-  const { files, folders } = await fetchS3Listing(config, options);
-  const filteredObjects = kind ? files.filter((obj) => getAssetKind(obj.Key) === kind) : files;
-
-  return { assets: parseS3Results(filteredObjects, config), folders };
-};
-
-/**
- * Search objects in S3-compatible storage.
- * @param {string} query Search query.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const searchS3Objects = async (query, config, options) => {
-  // S3 doesn’t have native search, so we list all objects and filter client-side
-  const allAssets = await listS3Objects(config, options, { maxPages: 5 });
-
-  return filterAssetsByQuery(allAssets, query);
+  return {
+    items: toArray(data.Contents),
+    cursor: (data.IsTruncated === 'true' && data.NextContinuationToken) || undefined,
+  };
 };
 
 /**
@@ -441,10 +365,10 @@ export const searchS3Objects = async (query, config, options) => {
  * @param {string} params.key Object key.
  * @param {File} params.file File to upload.
  * @param {S3Config} params.config S3 configuration.
- * @param {string} params.secretAccessKey AWS secret access key.
+ * @param {string} params.credential Secret access key.
  * @returns {Promise<S3Object>} Uploaded object.
  */
-const putS3Object = async ({ key, file, config, secretAccessKey }) => {
+const putS3Object = async ({ key, file, config, credential: secretAccessKey }) => {
   const fileContent = await file.arrayBuffer();
 
   const response = await signedRequest({
@@ -475,78 +399,104 @@ const putS3Object = async ({ key, file, config, secretAccessKey }) => {
 };
 
 /**
+ * Delete a single object from S3-compatible storage.
+ * @param {object} params Parameters.
+ * @param {string} params.key Object key.
+ * @param {S3Config} params.config S3 configuration.
+ * @param {string} params.credential Secret access key.
+ * @returns {Promise<void>}
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
+ */
+const deleteS3Object = async ({ key, config, credential: secretAccessKey }) => {
+  const response = await signedRequest({
+    method: 'DELETE',
+    url: buildObjectApiUrl(config, key),
+    config,
+    secretAccessKey,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    throw new Error(`Failed to delete object ${key}: ${errorText}`);
+  }
+};
+
+/**
+ * S3 API calls for the operations shared with the other object storage services.
+ * @type {ObjectStorageProvider<S3Object, S3Config>}
+ */
+const provider = {
+  requireCredential: requireSecretAccessKey,
+  listPage: listS3Page,
+  /**
+   * Get the key of an object.
+   * @param {S3Object} object Object.
+   * @returns {string} Key.
+   */
+  getKey: ({ Key }) => Key,
+  /**
+   * Convert objects into the `ExternalAsset` format. S3 URLs carry no credential.
+   * @param {S3Object[]} objects Objects.
+   * @param {S3Config} config S3 configuration.
+   * @returns {ExternalAsset[]} Assets.
+   */
+  parseResults: (objects, config) => parseS3Results(objects, config),
+  putObject: putS3Object,
+  deleteObject: deleteS3Object,
+};
+
+/**
+ * List objects from S3-compatible storage.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @param {object} [params] Additional parameters.
+ * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10.
+ * @returns {Promise<ExternalAsset[]>} Assets.
+ */
+export const listS3Objects = async (config, options, params = {}) =>
+  listObjects(provider, config, options, params);
+
+/**
+ * List the files and the empty folders under the configured prefix on S3-compatible storage.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @returns {Promise<ExternalFolderListing>} Files and folders.
+ */
+export const browseS3Objects = async (config, options) => browseObjects(provider, config, options);
+
+/**
+ * Search objects in S3-compatible storage.
+ * @param {string} query Search query.
+ * @param {S3Config} config S3 configuration.
+ * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
+ * @returns {Promise<ExternalAsset[]>} Assets.
+ */
+export const searchS3Objects = async (query, config, options) =>
+  searchObjects(provider, query, config, options);
+
+/**
  * Upload files to S3-compatible storage.
  * @param {File[]} files Files to upload.
  * @param {S3Config} config S3 configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
  * @returns {Promise<ExternalAsset[]>} Uploaded assets.
  */
-export const uploadToS3 = async (files, config, options) => {
-  if (files.length === 0) {
-    return [];
-  }
-
-  const secretAccessKey = requireSecretAccessKey(options);
-  const { dirPath = '' } = options;
-  /** @type {S3Object[]} */
-  const uploadedObjects = [];
-
-  // Upload files one by one
-  // eslint-disable-next-line no-restricted-syntax
-  for (const file of files) {
-    // Extract only the filename to prevent path traversal via crafted File objects
-    const sanitizedName = file.name.split(/[/\\]/).filter(Boolean).at(-1) ?? file.name;
-    const key = getFileKey(config, dirPath ? `${dirPath}/${sanitizedName}` : sanitizedName);
-
-    uploadedObjects.push(await putS3Object({ key, file, config, secretAccessKey }));
-
-    // Wait a bit between uploads
-    if (files.length > 1) {
-      await sleep(50);
-    }
-  }
-
-  return parseS3Results(uploadedObjects, config);
-};
+export const uploadToS3 = async (files, config, options) =>
+  uploadObjects(provider, files, config, options);
 
 /**
- * Delete objects from S3-compatible storage. The bucket’s CORS policy must allow the `DELETE`
- * method, in addition to the `GET` and `PUT` methods needed for listing and uploading; otherwise
- * the browser blocks the request at the preflight stage.
+ * Delete objects from S3-compatible storage, one by one, as the multi-object delete API requires a
+ * `Content-MD5` header, which some S3-compatible services don’t support. The bucket’s CORS policy
+ * must allow the `DELETE` method, in addition to the `GET` and `PUT` methods needed for listing and
+ * uploading; otherwise the browser blocks the request at the preflight stage.
  * @param {ExternalAsset[]} assets Assets to delete. The `id` of each asset is the object key.
  * @param {S3Config} config S3 configuration.
  * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
  * @returns {Promise<void>}
- * @see https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
  */
-export const deleteS3Objects = async (assets, config, options) => {
-  const secretAccessKey = requireSecretAccessKey(options);
-
-  // Delete objects one by one, as the multi-object delete API requires a `Content-MD5` header,
-  // which some S3-compatible services don’t support
-  // eslint-disable-next-line no-restricted-syntax
-  for (const { id: key } of assets) {
-    const response = await signedRequest({
-      method: 'DELETE',
-      url: buildObjectApiUrl(config, key),
-      config,
-      secretAccessKey,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      throw new Error(`Failed to delete object ${key}: ${errorText}`);
-    }
-
-    // Wait a bit between requests
-    if (assets.length > 1) {
-      await sleep(50);
-    }
-  }
-
-  return undefined;
-};
+export const deleteS3Objects = async (assets, config, options) =>
+  deleteObjects(provider, assets, config, options);
 
 /**
  * Move an object on S3-compatible storage to another path. S3 has no move operation, so the object
@@ -585,7 +535,7 @@ export const moveS3Object = async (asset, newPath, config, options) => {
     throw new Error(`Failed to copy object ${key}: ${errorText}`);
   }
 
-  await deleteS3Objects([asset], config, options);
+  await deleteS3Object({ key, config, credential: secretAccessKey });
 
   return parseS3Results(
     [{ Key: newKey, LastModified: new Date().toISOString(), ETag: '', Size: size }],
@@ -601,11 +551,8 @@ export const moveS3Object = async (asset, newPath, config, options) => {
  * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
  * @returns {Promise<ExternalAsset>} Renamed asset.
  */
-export const renameS3Object = async (asset, newName, config, options) => {
-  const dirName = getRelativeKey(config, asset.id).split('/').slice(0, -1).join('/');
-
-  return moveS3Object(asset, dirName ? `${dirName}/${newName}` : newName, config, options);
-};
+export const renameS3Object = async (asset, newName, config, options) =>
+  moveS3Object(asset, getRenamedPath(config, asset, newName), config, options);
 
 /**
  * Create an empty folder on S3-compatible storage by putting a zero-byte placeholder object at the
@@ -660,9 +607,5 @@ export const deleteS3Folder = async (dirPath, config, options) =>
  * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
  * @returns {Promise<ExternalAsset>} Replaced asset.
  */
-export const replaceS3Object = async (asset, file, config, options) => {
-  const secretAccessKey = requireSecretAccessKey(options);
-  const object = await putS3Object({ key: asset.id, file, config, secretAccessKey });
-
-  return parseS3Results([object], config)[0];
-};
+export const replaceS3Object = async (asset, file, config, options) =>
+  replaceObject(provider, asset, file, config, options);

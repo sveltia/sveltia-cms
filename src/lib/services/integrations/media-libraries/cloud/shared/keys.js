@@ -56,3 +56,16 @@ export const getRelativeKey = (config, key) => {
 
   return prefix && key.startsWith(prefix) ? key.slice(prefix.length) : key;
 };
+
+/**
+ * Percent-encode an object key for use in a URL path, keeping the path separators intact.
+ * @param {string} key Object key.
+ * @param {(segment: string) => string} [encodeSegment] Function to encode each path segment.
+ * Default: `encodeURIComponent`.
+ * @returns {string} Encoded key.
+ */
+export const encodeKey = (key, encodeSegment = encodeURIComponent) =>
+  key
+    .split('/')
+    .map((segment) => encodeSegment(segment))
+    .join('/');

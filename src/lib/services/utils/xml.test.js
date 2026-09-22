@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { parseXml } from '$lib/services/utils/xml';
+import { parseXml, toArray } from '$lib/services/utils/xml';
 
 describe('parseXml', () => {
   it('should parse simple XML to object', () => {
@@ -47,5 +47,22 @@ describe('parseXml', () => {
   it('should return an empty string for an empty element', () => {
     expect(parseXml('<Root />')).toBe('');
     expect(parseXml('<Root><Child /></Root>')).toEqual({ Child: '' });
+  });
+});
+
+describe('toArray', () => {
+  it('should wrap a single value in an array', () => {
+    expect(toArray({ Name: 'a' })).toEqual([{ Name: 'a' }]);
+  });
+
+  it('should return an array as is', () => {
+    const value = [{ Name: 'a' }, { Name: 'b' }];
+
+    expect(toArray(value)).toBe(value);
+  });
+
+  it('should return an empty array for a missing or empty element', () => {
+    expect(toArray(undefined)).toEqual([]);
+    expect(toArray('')).toEqual([]);
   });
 });

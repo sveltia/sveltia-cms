@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config/state';
 
-import azureBlobStorageService, {
+import azureBlobStorage, {
   browse,
   browseBlobs,
   buildContainerUrl,
@@ -98,27 +98,27 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
 
   describe('service configuration', () => {
     it('should have correct service configuration', () => {
-      expect(azureBlobStorageService.serviceType).toBe('cloud_storage');
-      expect(azureBlobStorageService.serviceId).toBe('azure_blob_storage');
-      expect(azureBlobStorageService.serviceLabel).toBe('Azure Blob Storage');
-      expect(azureBlobStorageService.serviceURL).toBe(
+      expect(azureBlobStorage.serviceType).toBe('cloud_storage');
+      expect(azureBlobStorage.serviceId).toBe('azure_blob_storage');
+      expect(azureBlobStorage.serviceLabel).toBe('Azure Blob Storage');
+      expect(azureBlobStorage.serviceURL).toBe(
         'https://azure.microsoft.com/products/storage/blobs/',
       );
-      expect(azureBlobStorageService.showServiceLink).toBe(true);
-      expect(azureBlobStorageService.hotlinking).toBe(true);
-      expect(azureBlobStorageService.authType).toBe('api_key');
-      expect(azureBlobStorageService.developerURL).toBe(
+      expect(azureBlobStorage.showServiceLink).toBe(true);
+      expect(azureBlobStorage.hotlinking).toBe(true);
+      expect(azureBlobStorage.authType).toBe('api_key');
+      expect(azureBlobStorage.developerURL).toBe(
         'https://learn.microsoft.com/en-us/rest/api/storageservices/blob-service-rest-api',
       );
-      expect(azureBlobStorageService.apiKeyURL).toBe(
+      expect(azureBlobStorage.apiKeyURL).toBe(
         'https://portal.azure.com/#browse/Microsoft.Storage%2FStorageAccounts',
       );
       // eslint-disable-next-line import-x/no-named-as-default-member
-      expect(azureBlobStorageService.isEnabled).toBeDefined();
+      expect(azureBlobStorage.isEnabled).toBeDefined();
     });
 
     it('should validate the SAS token format', () => {
-      const { apiKeyPattern } = azureBlobStorageService;
+      const { apiKeyPattern } = azureBlobStorage;
 
       if (!apiKeyPattern) {
         throw new Error('apiKeyPattern is not defined');
@@ -632,7 +632,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
 
   describe('isAssetURL', () => {
     it('should match the container URL and the public URL', () => {
-      expect(azureBlobStorageService).toMatchObject({ isAssetURL });
+      expect(azureBlobStorage).toMatchObject({ isAssetURL });
       expect(isAssetURL(`${containerURL}/images/a.jpg`)).toBe(true);
       expect(isAssetURL('https://cdn.example.com/a.jpg')).toBe(false);
 
@@ -806,7 +806,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     const asset = { id: 'photo.jpg', fileName: 'photo.jpg' };
 
     it('should expose the management functions on the service', () => {
-      expect(azureBlobStorageService).toMatchObject({ delete: deleteFiles, rename, replace });
+      expect(azureBlobStorage).toMatchObject({ delete: deleteFiles, rename, replace });
     });
 
     it('should use the configured library options', async () => {
@@ -982,7 +982,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
     });
 
     it('should expose the folder functions on the service, using the library options', async () => {
-      expect(azureBlobStorageService).toMatchObject({
+      expect(azureBlobStorage).toMatchObject({
         browse,
         move,
         createFolder: createEmptyFolder,
