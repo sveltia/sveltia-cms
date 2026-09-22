@@ -18,6 +18,7 @@ vi.mock('$lib/services/user/auth.svelte', async () => {
       signInError: { message: '', context: 'authentication' },
       unauthenticated: true,
       signingIn: false,
+      magicLinkConfirmation: undefined,
     }),
     resetError: vi.fn(),
     logError: vi.fn(),
@@ -34,6 +35,7 @@ describe('SignIn', () => {
   beforeEach(() => {
     auth.signInError = { message: '', context: 'authentication' };
     auth.signingIn = false;
+    auth.magicLinkConfirmation = undefined;
     env.isLocalHost = true;
     env.isLocalBackendSupported = true;
     cmsConfig.current = /** @type {any} */ ({ backend: { name: 'github', repo: 'acme/site' } });
@@ -56,6 +58,50 @@ describe('SignIn', () => {
       .toBeVisible();
     await page.getByRole('button', { name: 'Sign In with \u2068GitHub\u2069' }).click();
     expect(signInManually).toHaveBeenCalledWith('github');
+  });
+
+  test('asks before signing in with a magic link, naming the account', async () => {
+    const resolve = vi.fn();
+
+    await render(SignIn, {});
+    auth.magicLinkConfirmation = {
+      account: { backendName: 'github', login: 'octocat', name: 'The Octocat' },
+      resolve,
+    };
+
+    const dialog = page.getByRole('alertdialog', { name: 'Sign In with Link' });
+
+    await expect
+      .element(dialog)
+      .toMatchTextContent(
+        'This link signs you in as \u2068octocat\u2069 on \u2068GitHub\u2069 and copies the settings',
+      );
+    await dialog.getByRole('button', { name: 'Sign In' }).click();
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(true));
+  });
+
+  test('declines a magic link when the dialog is cancelled', async () => {
+    const resolve = vi.fn();
+
+    await render(SignIn, {});
+    auth.magicLinkConfirmation = { account: { backendName: 'github', name: 'Octo' }, resolve };
+
+    const dialog = page.getByRole('alertdialog', { name: 'Sign In with Link' });
+
+    // Without a login name, the display name is shown instead
+    await expect.element(dialog).toMatchTextContent('signs you in as \u2068Octo\u2069 on');
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledWith(false));
+    expect(resolve).not.toHaveBeenCalledWith(true);
+  });
+
+  test('shows the magic link prompt for an account without a name', async () => {
+    await render(SignIn, {});
+    auth.magicLinkConfirmation = { account: { backendName: 'github' }, resolve: vi.fn() };
+
+    await expect
+      .element(page.getByRole('alertdialog', { name: 'Sign In with Link' }))
+      .toMatchTextContent('signs you in as \u2068\u2069 on');
   });
 
   test('signs in with a personal access token', async () => {

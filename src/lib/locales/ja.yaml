@@ -208,6 +208,10 @@ sign_in: ログイン
 sign_in_with_mobile: モバイルでログイン
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: 以下の QR コードを携帯電話かタブレットでスキャンすると、パスワードなしでログインできます。ユーザー設定は自動的にコピーされます。
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: リンクでログイン
+sign_in_with_link_confirmation: このリンクを使うと {$service} に {$account} としてログインし、リンクを作成したデバイスのユーザー設定がコピーされます。ご自身で作成したリンクの場合のみ続行してください。
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu

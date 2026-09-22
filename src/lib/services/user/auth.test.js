@@ -144,6 +144,18 @@ describe('auth service', () => {
     vi.unstubAllGlobals();
   });
 
+  /**
+   * Answer the prompt shown when a magic link is opened, once it appears.
+   * @param {boolean} confirmed Whether the user accepts the account.
+   */
+  const answerMagicLinkPrompt = async (confirmed) => {
+    await vi.waitFor(() => {
+      expect(auth.magicLinkConfirmation).toBeDefined();
+    });
+
+    auth.magicLinkConfirmation.resolve(confirmed);
+  };
+
   describe('initial state', () => {
     it('should export auth with correct default values', () => {
       expect(auth.signInError).toEqual({ message: '', context: 'authentication' });
@@ -569,9 +581,10 @@ describe('auth service', () => {
       mockBackend.signIn.mockResolvedValue({ token: 'magic-token' });
       mockBackend.fetchFiles.mockResolvedValue(undefined);
 
-      await authModule.signInAutomatically();
+      await Promise.all([authModule.signInAutomatically(), answerMagicLinkPrompt(true)]);
 
       // Should use magic link token, not cached token
+      expect(mockBackend.signIn).toHaveBeenCalledOnce();
       expect(mockBackend.signIn).toHaveBeenCalledWith({
         token: 'magic-token',
         refreshToken: undefined,
@@ -581,6 +594,122 @@ describe('auth service', () => {
       expect(mockPrefs).toMatchObject({ theme: 'dark' });
       // Should remove token from URL
       expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
+    });
+
+    it('should leave the cached session alone while the magic link account is being confirmed', async () => {
+      const encodedData = btoa(JSON.stringify({ token: 'magic-token' }));
+      const magicUser = { backendName: 'github', token: 'magic-token', login: 'someone' };
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+      mockLocalStorage.get.mockResolvedValue(null);
+      mockBackend.signIn.mockResolvedValue(magicUser);
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      const signingIn = authModule.signInAutomatically();
+
+      await vi.waitFor(() => {
+        expect(auth.magicLinkConfirmation).toBeDefined();
+      });
+
+      // The account is verified with the token alone, and shown to the user before anything else
+      expect(auth.magicLinkConfirmation.account).toEqual(magicUser);
+      expect(mockUser.account).toBeUndefined();
+      expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
+
+      auth.magicLinkConfirmation.resolve(true);
+      await signingIn;
+
+      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(mockUser.account).toEqual(magicUser);
+      expect(mockBackend.fetchFiles).toHaveBeenCalled();
+    });
+
+    it('should fall back to the cached user when the magic link is declined', async () => {
+      const encodedData = btoa(
+        JSON.stringify({ token: 'magic-token', prefs: { deployHookURL: 'https://evil.example' } }),
+      );
+
+      const cachedUser = { token: 'cached-token', backendName: 'github' };
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+      mockLocalStorage.get.mockResolvedValue(cachedUser);
+      mockBackend.signIn.mockImplementation(async ({ token }) =>
+        token === 'magic-token' ? { backendName: 'github', token, login: 'attacker' } : cachedUser,
+      );
+      mockBackend.fetchFiles.mockResolvedValue(undefined);
+
+      await Promise.all([authModule.signInAutomatically(), answerMagicLinkPrompt(false)]);
+
+      expect(mockBackend.signIn).toHaveBeenLastCalledWith({
+        token: 'cached-token',
+        refreshToken: undefined,
+        auto: true,
+      });
+      expect(mockUser.account).toEqual(cachedUser);
+      expect(auth.magicLinkConfirmation).toBeUndefined();
+      // The settings in the link are discarded along with it
+      expect(mockPrefs.deployHookURL).toBeUndefined();
+    });
+
+    it('should show the sign-in page when the magic link is declined and nothing is cached', async () => {
+      const encodedData = btoa(JSON.stringify({ token: 'magic-token', prefs: { theme: 'dark' } }));
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+      mockLocalStorage.get.mockResolvedValue(null);
+      mockBackend.signIn.mockResolvedValue({ backendName: 'github', token: 'magic-token' });
+
+      await Promise.all([authModule.signInAutomatically(), answerMagicLinkPrompt(false)]);
+
+      expect(mockBackend.signIn).toHaveBeenCalledOnce();
+      expect(mockUser.account).toBeUndefined();
+      expect(auth.unauthenticated).toBe(true);
+      expect(mockPrefs.theme).toBeUndefined();
+    });
+
+    it('should not ask about a magic link whose token is invalid', async () => {
+      const encodedData = btoa(JSON.stringify({ token: 'bad-token' }));
+
+      mockParseLocation.mockReturnValue({
+        path: {
+          /**
+           * Mock match function.
+           * @returns {object} Match result with groups.
+           */
+          match: () => ({ groups: { encodedData } }),
+        },
+      });
+      mockLocalStorage.get.mockResolvedValue(null);
+      mockBackend.signIn.mockRejectedValue(new Error('Bad credentials'));
+
+      await authModule.signInAutomatically();
+
+      expect(auth.magicLinkConfirmation).toBeUndefined();
+      expect(auth.signingIn).toBe(false);
+      expect(auth.unauthenticated).toBe(true);
     });
 
     it('should fallback to cached user when no magic link', async () => {
@@ -722,7 +851,7 @@ describe('auth service', () => {
       mockBackend.signIn.mockResolvedValue({ token: 'qr-token' });
       mockBackend.fetchFiles.mockResolvedValue(undefined);
 
-      await authModule.signInAutomatically();
+      await Promise.all([authModule.signInAutomatically(), answerMagicLinkPrompt(true)]);
 
       expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
       expect(mockBackend.signIn).toHaveBeenCalledWith({
@@ -753,7 +882,7 @@ describe('auth service', () => {
       mockBackend.signIn.mockResolvedValue({ token: 'qr-token' });
       mockBackend.fetchFiles.mockResolvedValue(undefined);
 
-      await authModule.signInAutomatically();
+      await Promise.all([authModule.signInAutomatically(), answerMagicLinkPrompt(true)]);
 
       expect(mockGoto).toHaveBeenCalledWith('', { replaceState: true });
       // Should sign in without prefs update (line 127 condition is false)
@@ -932,6 +1061,78 @@ describe('auth service', () => {
       expect(mockBackend.fetchFiles).not.toHaveBeenCalled();
       // unauthenticated should be set to false since _user is still truthy
       expect(auth.unauthenticated).toBe(false);
+    });
+  });
+
+  describe('confirmMagicLink', () => {
+    it('should return undefined when there is no backend', async () => {
+      mockBackendStore.current = undefined;
+
+      expect(await authModule.confirmMagicLink('magic-token')).toBeUndefined();
+      expect(auth.magicLinkConfirmation).toBeUndefined();
+    });
+
+    it('should return undefined when the token does not resolve to an account', async () => {
+      mockBackend.signIn.mockResolvedValue(undefined);
+
+      expect(await authModule.confirmMagicLink('magic-token')).toBeUndefined();
+      expect(auth.magicLinkConfirmation).toBeUndefined();
+    });
+
+    it('should return the account once the user has confirmed it', async () => {
+      const account = { backendName: 'github', token: 'magic-token', login: 'me' };
+
+      mockBackend.signIn.mockResolvedValue(account);
+
+      const [result] = await Promise.all([
+        authModule.confirmMagicLink('magic-token'),
+        answerMagicLinkPrompt(true),
+      ]);
+
+      expect(result).toEqual(account);
+      expect(mockBackend.signIn).toHaveBeenCalledWith({ token: 'magic-token', auto: true });
+    });
+  });
+
+  describe('copyMagicLinkPrefs', () => {
+    it('should drop the existing deploy hook header when the link sets a new URL', () => {
+      Object.assign(mockPrefs, {
+        deployHookURL: 'https://api.netlify.com/build_hooks/mine',
+        deployHookAuthHeader: 'Bearer secret',
+      });
+
+      authModule.copyMagicLinkPrefs({ deployHookURL: 'https://evil.example/hook', theme: 'dark' });
+
+      expect(mockPrefs).toEqual({ deployHookURL: 'https://evil.example/hook', theme: 'dark' });
+    });
+
+    it('should copy the deploy hook URL and header together', () => {
+      Object.assign(mockPrefs, { deployHookAuthHeader: 'Bearer old' });
+
+      authModule.copyMagicLinkPrefs({
+        deployHookURL: 'https://example.com/hook',
+        deployHookAuthHeader: 'Bearer new',
+      });
+
+      expect(mockPrefs).toEqual({
+        deployHookURL: 'https://example.com/hook',
+        deployHookAuthHeader: 'Bearer new',
+      });
+    });
+
+    it('should keep the existing deploy hook when the link has no URL', () => {
+      Object.assign(mockPrefs, {
+        deployHookURL: 'https://example.com/hook',
+        deployHookAuthHeader: 'Bearer secret',
+      });
+
+      authModule.copyMagicLinkPrefs({ theme: 'light' });
+
+      expect(mockPrefs).toEqual({
+        deployHookURL: 'https://example.com/hook',
+        deployHookAuthHeader: 'Bearer secret',
+        theme: 'light',
+      });
     });
   });
 

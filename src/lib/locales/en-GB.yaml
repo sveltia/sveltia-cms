@@ -211,6 +211,10 @@ sign_in: Sign In
 sign_in_with_mobile: Sign In with Mobile
 # Instructions shown in the mobile sign-in dialog for passwordless authentication
 sign_in_with_mobile_instruction: Scan the QR code below with your phone or tablet for passwordless sign-in. Your settings will be automatically copied.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Sign In with Link
+sign_in_with_link_confirmation: This link signs you in as {$account} on {$service} and copies the settings from the device it was created on. Continue only if you created the link yourself.
 
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu

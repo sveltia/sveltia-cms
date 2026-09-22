@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Button, Icon, PromptDialog, Spacer } from '@sveltia/ui';
+  import { Button, ConfirmationDialog, Icon, PromptDialog, Spacer } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
   import { allBackendServices } from '$lib/services/backends';
@@ -76,6 +76,17 @@
   const oauthOptionDisabled = $derived(
     backendName === 'gitea' && !(/** @type {GiteaBackend} */ (configuredBackend).app_id),
   );
+
+  /* v8 ignore start -- the name is only read while the dialog is open, when the account is set */
+  /**
+   * Account name to show when the user is asked whether to sign in with a magic link.
+   */
+  const magicLinkAccountName = $derived.by(() => {
+    const { login, name } = auth.magicLinkConfirmation?.account ?? {};
+
+    return login || name || '';
+  });
+  /* v8 ignore stop */
 
   onMount(() => {
     // Skip automatic sign-in if there’s already an error (e.g. repository access denied), so the
@@ -180,6 +191,24 @@
     )}
   {/if}
 </PromptDialog>
+
+<ConfirmationDialog
+  open={!!auth.magicLinkConfirmation}
+  title={_('sign_in_with_link')}
+  okLabel={_('sign_in')}
+  onOk={() => {
+    auth.magicLinkConfirmation?.resolve(true);
+  }}
+  onClose={() => {
+    // Covers the Cancel button, the Escape key and any other way out. Signing in has already
+    // settled the prompt, so this leaves it alone
+    auth.magicLinkConfirmation?.resolve(false);
+  }}
+>
+  {_('sign_in_with_link_confirmation', {
+    values: { account: magicLinkAccountName, service: signInServiceLabel },
+  })}
+</ConfirmationDialog>
 
 <style>
   .buttons {
