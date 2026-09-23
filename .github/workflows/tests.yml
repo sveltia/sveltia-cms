@@ -41,8 +41,25 @@ jobs:
           version: latest
           runtime: node@26
           cache: true
-      - name: Install Chromium
+      # The browser is cached per Playwright version, which pins the Chromium build. The tests run
+      # headless, so only the headless shell is installed, not the full browser. The system packages
+      # it needs aren’t cached, and are installed on every run
+      - name: Get the Playwright version
+        id: playwright
         if: ${{ matrix.task.browser }}
-        run: pnpm exec playwright install chromium --with-deps
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Chromium
+        id: chromium-cache
+        if: ${{ matrix.task.browser }}
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        if: ${{ matrix.task.browser && steps.chromium-cache.outputs.cache-hit != 'true' }}
+        run: pnpm exec playwright install chromium --only-shell --with-deps
+      - name: Install Chromium dependencies
+        if: ${{ matrix.task.browser && steps.chromium-cache.outputs.cache-hit == 'true' }}
+        run: pnpm exec playwright install-deps chromium-headless-shell
       - name: ${{ matrix.task.name }}
         run: ${{ matrix.task.command }}
