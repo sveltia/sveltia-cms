@@ -122,10 +122,15 @@
   /** @type {MediaLibraryFetchOptions} */
   const listFetchOptions = $derived({ kind, fieldConfig, apiKey, userName, password });
   /**
+   * Search query. The search terms are shared by all the services in the dialog, so a service that
+   * can’t search, like Lorem Picsum, ignores the terms entered for another service.
+   */
+  const searchQuery = $derived(search ? searchTerms.trim() : '');
+  /**
    * Whether the service is browsed folder by folder, like a repository folder in the picker. A
    * search looks through the whole service instead, listing the matches with their paths.
    */
-  const browsing = $derived(!!browse && !searchTerms.trim());
+  const browsing = $derived(!!browse && !searchQuery);
   /**
    * Assets shown in the panel: those right in the folder being browsed, or every asset listed.
    * @type {ExternalAsset[]}
@@ -161,15 +166,18 @@
 
   /**
    * Search or list assets from the external media library.
-   * @param {string} [query] Search query.
+   * @param {string} query Search query, which is only given to a service that can search.
    */
-  const getAssets = async (query = '') => {
+  const getAssets = async (query) => {
     listedAssets = null;
-    query = query.trim();
+    error = undefined;
 
     try {
       if (query) {
-        listedAssets = (await search?.(query, listFetchOptions)) ?? [];
+        listedAssets = await /** @type {NonNullable<typeof search>} */ (search)(
+          query,
+          listFetchOptions,
+        );
       } else if (browse) {
         // A service with folder support lists its empty folders along with the files
         const listing = await browse(listFetchOptions);
@@ -338,10 +346,10 @@
   });
 
   watch(
-    () => [searchTerms, hasAuthInfo],
+    () => [searchQuery, hasAuthInfo],
     () => {
       if (hasAuthInfo) {
-        getAssets(searchTerms);
+        getAssets(searchQuery);
       }
     },
   );
@@ -369,7 +377,7 @@
 {#snippet content()}
   {#if !listedAssets}
     <EmptyState>
-      <span role="alert">{_(searchTerms ? 'searching' : 'loading')}</span>
+      <span role="alert">{_(searchQuery ? 'searching' : 'loading')}</span>
     </EmptyState>
   {:else if !panelAssets.length && !subfolders.length}
     {@render breadcrumb()}

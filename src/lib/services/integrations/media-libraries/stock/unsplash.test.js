@@ -435,6 +435,22 @@ describe('integrations/media-libraries/stock/unsplash', () => {
       expect(results).toHaveLength(0);
     });
 
+    it('should fetch only one page when there are no results', async () => {
+      const fetchMock = vi.mocked(fetch);
+
+      fetchMock.mockResolvedValue(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ results: [], total_pages: 0 }),
+        }),
+      );
+
+      const results = await search('nothing', { apiKey: mockApiKey });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(results).toHaveLength(0);
+    });
+
     it('should handle multiple pages of search results', async () => {
       const { sleep } = await import('@sveltia/utils/misc');
       const sleepMock = vi.mocked(sleep);

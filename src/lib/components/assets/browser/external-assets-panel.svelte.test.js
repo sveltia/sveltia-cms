@@ -172,11 +172,25 @@ describe('ExternalAssetsPanel', () => {
     search.mockResolvedValue([]);
     props.searchTerms = 'c';
     await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+  });
 
-    // A service that can’t search finds nothing
-    props.serviceProps = createMockCloudService({ list });
-    props.searchTerms = 'd';
-    await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
+  test('ignores the search terms on a service that can’t search', async () => {
+    const list = vi.fn().mockResolvedValue(assets);
+
+    // The terms are shared with another service in the dialog, like Unsplash for Lorem Picsum
+    const props = $state({
+      serviceProps: createMockCloudService({ list }),
+      searchTerms: 'a',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(2);
+    expect(list).toHaveBeenCalledTimes(1);
+
+    props.searchTerms = 'b';
+    await sleep(100);
+    expect(list).toHaveBeenCalledTimes(1);
   });
 
   test('reports a listing failure', async () => {
@@ -194,6 +208,28 @@ describe('ExternalAssetsPanel', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent('There was an error while searching assets. Please try again later.');
+  });
+
+  test('clears a search failure on the next search', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const search = vi.fn().mockRejectedValueOnce(new Error('Boom')).mockResolvedValue(assets);
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), search }),
+      searchTerms: 'a',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+
+    await expect
+      .element(page.getByRole('alert'))
+      .toHaveTextContent('There was an error while searching assets. Please try again later.');
+
+    props.searchTerms = 'b';
+    await waitForList(2);
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
   });
 
   test('asks for the credentials first', async () => {

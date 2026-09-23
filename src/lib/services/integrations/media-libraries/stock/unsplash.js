@@ -121,7 +121,7 @@ export const search = async (query, { apiKey }) => {
    */
   const parsePage = ({ results, total_pages: totalPages }, page) => ({
     results,
-    hasMore: totalPages !== page,
+    hasMore: page < totalPages,
   });
 
   const results = await fetchPagedResults({ maxPages: 5, fetchPage, parsePage });
