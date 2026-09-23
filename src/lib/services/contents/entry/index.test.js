@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   extractDateTime,
+  fillEntryPathTemplate,
   getAssociatedCollections,
   getEntryPreviewURL,
   getEntryRepoBlobURL,
@@ -1248,6 +1249,91 @@ describe('Test extractDateTime()', () => {
         second: '00',
       }),
     );
+  });
+});
+
+describe('Test fillEntryPathTemplate()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const collection = /** @type {InternalCollection} */ (
+    /** @type {unknown} */ ({ name: 'posts', _type: 'entry' })
+  );
+
+  const args = {
+    collection,
+    fields: /** @type {any[]} */ ([
+      { name: 'date', widget: 'datetime', format: 'YYYY-MM-DD' },
+      { name: 'published', widget: 'datetime', format: 'YYYY-MM-DD' },
+    ]),
+    locale: 'en',
+    slug: 'hello',
+    entryFilePath: 'content/posts/hello.md',
+    content: { date: '2024-01-15', published: '2025-06-30' },
+  };
+
+  test('fills in a template without date and time tags', async () => {
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('/images/hello.webp');
+
+    expect(fillEntryPathTemplate({ ...args, pathTemplate: '/images/{{slug}}.webp' })).toBe(
+      '/images/hello.webp',
+    );
+    expect(fillTemplate).toHaveBeenCalledWith('/images/{{slug}}.webp', {
+      type: 'preview_path',
+      collection,
+      content: args.content,
+      locale: 'en',
+      currentSlug: 'hello',
+      entryFilePath: 'content/posts/hello.md',
+      dateTimeParts: undefined,
+      isIndexFile: false,
+    });
+  });
+
+  test('fills in date and time tags from the given date field', async () => {
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('/images/2025/hello.webp');
+
+    expect(
+      fillEntryPathTemplate({
+        ...args,
+        pathTemplate: '/images/{{year}}/{{slug}}.webp',
+        dateFieldName: 'published',
+        isIndexFile: true,
+      }),
+    ).toBe('/images/2025/hello.webp');
+    expect(fillTemplate).toHaveBeenCalledWith(
+      '/images/{{year}}/{{slug}}.webp',
+      expect.objectContaining({
+        dateTimeParts: expect.objectContaining({ year: '2025' }),
+        isIndexFile: true,
+      }),
+    );
+  });
+
+  test('returns undefined without a date to fill in date and time tags', async () => {
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    expect(
+      fillEntryPathTemplate({ ...args, content: {}, pathTemplate: '/images/{{year}}.webp' }),
+    ).toBeUndefined();
+    expect(fillTemplate).not.toHaveBeenCalled();
+  });
+
+  test('returns undefined when a tag cannot be resolved', async () => {
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockImplementation(() => {
+      throw new Error('Unresolvable template tag');
+    });
+
+    expect(
+      fillEntryPathTemplate({ ...args, pathTemplate: '/images/{{fields.missing}}.webp' }),
+    ).toBeUndefined();
   });
 });
 

@@ -820,8 +820,9 @@
  * @typedef {object} EntryCollectionExtraProps
  * @property {Extract<CollectionType, "entry">} _type Collection type.
  * @property {FileConfig} _file Entry file configuration.
- * @property {FieldKeyPath[]} _thumbnailFieldNames A list of field key paths to be used to find an
- * entry thumbnail. See {@link Collection.thumbnail} for details.
+ * @property {FieldKeyPath[]} _thumbnailFieldNames A list of field key paths, or file path templates
+ * starting with a slash, to be used to find an entry thumbnail. See {@link Collection.thumbnail}
+ * for details.
  */
 
 /**

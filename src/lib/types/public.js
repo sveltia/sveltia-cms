@@ -1575,8 +1575,11 @@
  * @property {boolean | FieldKeyPath | FieldKeyPath[]} [thumbnail] Whether to show entry thumbnails
  * in the entry list. Default: `true` (auto-detect image/file fields). Set to `false` to disable, or
  * provide a field key path (e.g., `heroImage.src`) or an array of paths for fallbacks. Supports
- * nested fields with dot notation and wildcards (e.g., `images.*.src`). An empty array equals
- * `false`.
+ * nested fields with dot notation and wildcards (e.g., `images.*.src`). A value starting with a
+ * slash is a file path instead, resolved like an Image field value, which can contain template tags
+ * like the `preview_path` option, e.g. `/images/thumbnails/{{slug}}.webp`. Date and time tags are
+ * filled from the field named with the `preview_path_date_field` option, or the first DateTime
+ * field. An empty array equals `false`.
  * @property {number} [limit] The maximum number of entries that can be created in the collection.
  * Default: `Infinity`.
  * @property {FieldKeyPath | boolean} [aliases_field] Property name used to store URL aliases

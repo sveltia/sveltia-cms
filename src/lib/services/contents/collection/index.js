@@ -134,7 +134,8 @@ export const getValidCollections = ({
 export const getFirstCollection = () => getValidCollections({ visible: true })[0];
 
 /**
- * Get a list of field key paths to be used to find an entry thumbnail.
+ * Get a list of field key paths, or file path templates starting with a slash, to be used to find
+ * an entry thumbnail.
  * @param {Collection} rawCollection Raw collection definition.
  * @returns {FieldKeyPath[]} Key path list.
  */

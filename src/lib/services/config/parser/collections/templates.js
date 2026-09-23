@@ -86,6 +86,14 @@ export const checkCollectionTemplates = ({ collection, context, collectors }) =>
   // The `thumbnail` option lists key paths rather than a template; a boolean turns the thumbnails
   // on or off
   if (typeof thumbnail === 'string' || Array.isArray(thumbnail)) {
-    checkFieldReferences({ ...args, option: 'thumbnail', keyPaths: thumbnail });
+    /** @type {any[]} */ (Array.isArray(thumbnail) ? thumbnail : [thumbnail]).forEach((item) => {
+      // A path starting with a slash is a template like `preview_path`, whose bare tags may be
+      // special ones such as `{{slug}}`, so only the tags with the `fields.` prefix are checked
+      if (typeof item === 'string' && item.startsWith('/')) {
+        checkFieldReferences({ ...args, option: 'thumbnail', template: item, prefixedOnly: true });
+      } else {
+        checkFieldReferences({ ...args, option: 'thumbnail', keyPaths: item });
+      }
+    });
   }
 };

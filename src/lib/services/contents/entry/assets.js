@@ -8,6 +8,7 @@ import { getMediaFieldURL } from '$lib/services/assets/info';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { fillEntryPathTemplate } from '$lib/services/contents/entry';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
@@ -26,6 +27,20 @@ import { getOrCreate } from '$lib/services/utils/cache';
 const thumbnailFieldRegexCache = new Map();
 
 /**
+ * A field value or filled file path to look for an entry thumbnail.
+ * @typedef {object} ThumbnailCandidate
+ * @property {any} value Field value or file path.
+ * @property {FieldKeyPath} [keyPath] Field key path. Not available for a file path.
+ */
+
+/**
+ * Check if the given `thumbnail` option item is a path template rather than a field key path.
+ * @param {string} name Field key path or path template.
+ * @returns {boolean} Result.
+ */
+export const isThumbnailPath = (name) => name.startsWith('/');
+
+/**
  * Get the given entry’s thumbnail URL.
  * @param {InternalEntryCollection} collection Entry’s collection.
  * @param {Entry} entry Entry.
@@ -34,12 +49,15 @@ const thumbnailFieldRegexCache = new Map();
 export const getEntryThumbnail = async (collection, entry) => {
   const {
     name: collectionName,
+    fields = [],
+    preview_path_date_field: dateFieldName,
     _i18n: { defaultLocale },
     _thumbnailFieldNames,
   } = collection;
 
   const { locales } = entry;
-  const { content } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {};
+  const locale = defaultLocale in locales ? defaultLocale : Object.keys(locales)[0];
+  const { content, slug, path: entryFilePath } = locales[locale] ?? {};
 
   if (!content) {
     return undefined;
@@ -49,8 +67,25 @@ export const getEntryThumbnail = async (collection, entry) => {
     ? Object.keys(content)
     : undefined;
 
-  /** @type {FieldKeyPath[]} */
-  const keyPathList = _thumbnailFieldNames.flatMap((name) => {
+  /** @type {ThumbnailCandidate[]} */
+  const candidates = _thumbnailFieldNames.flatMap((name) => {
+    // Fill in a path template like `/images/{{slug}}.webp`, which works like a field value
+    if (isThumbnailPath(name)) {
+      const value = fillEntryPathTemplate({
+        pathTemplate: name,
+        dateFieldName,
+        fields,
+        collection,
+        locale,
+        slug,
+        entryFilePath,
+        content,
+        isIndexFile: isCollectionIndexFile(collection, entry),
+      });
+
+      return /** @type {ThumbnailCandidate[]} */ ([{ value }]);
+    }
+
     // Support a wildcard in the key path, e.g. `images.*.src`
     if (name.includes('*')) {
       const regex = getOrCreate(
@@ -59,19 +94,21 @@ export const getEntryThumbnail = async (collection, entry) => {
         () => new RegExp(`^${escapeRegExp(name).replace('\\*', '.+')}$`),
       );
 
-      return /** @type {string[]} */ (contentKeys).filter((keyPath) => regex.test(keyPath));
+      return /** @type {string[]} */ (contentKeys)
+        .filter((keyPath) => regex.test(keyPath))
+        .map((keyPath) => ({ value: content[keyPath], keyPath }));
     }
 
-    return name;
+    return [{ value: content[name], keyPath: name }];
   });
 
   // Cannot use `Promise.all` or `Promise.any` here because we need the first available URL
   // eslint-disable-next-line no-restricted-syntax
-  for (const keyPath of keyPathList) {
-    const url = content[keyPath]
+  for (const { value, keyPath } of candidates) {
+    const url = value
       ? // eslint-disable-next-line no-await-in-loop
         await getMediaFieldURL({
-          value: content[keyPath],
+          value,
           entry,
           collectionName,
           typedKeyPath: keyPath,

@@ -117,6 +117,64 @@ export const extractDateTime = ({ dateFieldName, fields, content }) => {
 };
 
 /**
+ * Fill the given path template with an entry’s values, the way the `preview_path` option is filled:
+ * besides field values, it supports the `{{slug}}`, `{{locale}}`, `{{dirname}}`, `{{filename}}`
+ * and date/time tags. It’s also used for a path given as the `thumbnail` option.
+ * @param {object} args Arguments.
+ * @param {string} args.pathTemplate Path template.
+ * @param {string} [args.dateFieldName] Name of the DateTime field to fill the date/time tags from.
+ * If omitted, the first DateTime field is used.
+ * @param {Field[]} args.fields Fields of the collection or collection file.
+ * @param {InternalCollection} args.collection Collection.
+ * @param {InternalLocaleCode} args.locale Locale.
+ * @param {string} [args.slug] Entry slug for the locale.
+ * @param {string} args.entryFilePath Entry file path for the locale.
+ * @param {FlattenedEntryContent} args.content Entry content for the locale.
+ * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
+ * @returns {string | undefined} Filled path, or `undefined` if it cannot be determined because the
+ * date/time parts are not available or a tag cannot be resolved.
+ */
+export const fillEntryPathTemplate = ({
+  pathTemplate,
+  dateFieldName,
+  fields,
+  collection,
+  locale,
+  slug,
+  entryFilePath,
+  content,
+  isIndexFile = false,
+}) => {
+  /** @type {Record<string, string> | undefined} */
+  let dateTimeParts;
+
+  if (DATE_TIME_TEMPLATE_REGEX.test(pathTemplate)) {
+    dateTimeParts = extractDateTime({ dateFieldName, fields, content });
+
+    // Cannot generate a path if the date and time parts are not available
+    if (!dateTimeParts) {
+      return undefined;
+    }
+  }
+
+  try {
+    return fillTemplate(pathTemplate, {
+      type: 'preview_path',
+      collection,
+      content,
+      locale,
+      currentSlug: slug,
+      entryFilePath,
+      dateTimeParts,
+      isIndexFile,
+    });
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Get the given entry’s path on the live site, based on the `preview_path` option defined on the
  * collection or collection file. The result is not normalized, so it may or may not have a leading
  * slash, depending on the template.
@@ -154,19 +212,6 @@ export const getPreviewPath = ({
   }
 
   const indexFile = isIndexFile ? getIndexFile(collection) : undefined;
-  const fields = indexFile?.fields ?? regularFields;
-  /** @type {Record<string, string> | undefined} */
-  let dateTimeParts;
-
-  if (DATE_TIME_TEMPLATE_REGEX.test(pathTemplate)) {
-    dateTimeParts = extractDateTime({ dateFieldName, fields, content });
-
-    // Cannot generate a URL if the date and time parts are not available
-    if (!dateTimeParts) {
-      return undefined;
-    }
-  }
-
   let template = pathTemplate;
 
   // Handle the case where the default locale is omitted from the preview path, ensuring that the
@@ -175,20 +220,17 @@ export const getPreviewPath = ({
     template = template.replace(/{{locale}}[./]/, '');
   }
 
-  try {
-    return fillTemplate(template, {
-      type: 'preview_path',
-      collection,
-      content,
-      locale,
-      currentSlug: slug,
-      entryFilePath,
-      dateTimeParts,
-      isIndexFile,
-    });
-  } catch {
-    return undefined;
-  }
+  return fillEntryPathTemplate({
+    pathTemplate: template,
+    dateFieldName,
+    fields: indexFile?.fields ?? regularFields,
+    collection,
+    locale,
+    slug,
+    entryFilePath,
+    content,
+    isIndexFile,
+  });
 };
 
 /**

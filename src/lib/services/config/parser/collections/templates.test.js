@@ -137,5 +137,21 @@ describe('checkCollectionTemplates', () => {
         ['thumbnail', 'gallery.*.url'],
       ]);
     });
+
+    test('accepts a path whose field tags name fields', () => {
+      check({ thumbnail: '/images/{{slug}}/{{title}}.webp' });
+      check({ thumbnail: ['/images/{{fields.cover}}', 'cover'] });
+      expectReported([]);
+    });
+
+    test('reports field tags in a path that name no field', () => {
+      check({ thumbnail: '/images/{{fields.hero}}.webp' });
+      check({ thumbnail: ['/images/{{fields.icon}}.webp', 'hero'] });
+      expectReported([
+        ['thumbnail', 'fields.hero'],
+        ['thumbnail', 'fields.icon'],
+        ['thumbnail', 'hero'],
+      ]);
+    });
   });
 });
