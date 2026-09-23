@@ -26,3 +26,50 @@ export const rememberFocus = () => {
     }
   };
 };
+
+/**
+ * Keep the focus within a container whose content is about to be replaced, such as the pane of the
+ * asset picker when a folder is opened. If the element that has the focus is removed along with
+ * the old content, the focus would drop on `<body>`, and a keyboard or screen reader user would
+ * have to work their way back from the top of the document. It goes to the first list box in the
+ * container instead, which is the list of folders or files, or the container itself if there is
+ * none yet, while the new content is still loading. The container is watched for a moment after
+ * that, so the focus can move on to a list box that shows up in the meantime.
+ * @param {HTMLElement} container Container that stays in the document.
+ * @param {object} [options] Options.
+ * @param {number} [options.timeout] How long to watch the container, in milliseconds.
+ */
+export const keepFocusIn = (container, { timeout = 2000 } = {}) => {
+  const startTime = performance.now();
+
+  /**
+   * Check where the focus is, once the content has been updated.
+   */
+  const check = () => {
+    const { activeElement } = document;
+
+    // The focus has stayed within the new content, or the user has moved it elsewhere
+    if (activeElement !== document.body && activeElement !== container) {
+      return;
+    }
+
+    const listbox = container.querySelector('[role="listbox"]');
+
+    if (listbox instanceof HTMLElement) {
+      listbox.focus();
+
+      return;
+    }
+
+    if (activeElement === document.body && container.isConnected) {
+      container.tabIndex = -1;
+      container.focus();
+    }
+
+    if (performance.now() - startTime < timeout) {
+      window.requestAnimationFrame(check);
+    }
+  };
+
+  window.requestAnimationFrame(check);
+};

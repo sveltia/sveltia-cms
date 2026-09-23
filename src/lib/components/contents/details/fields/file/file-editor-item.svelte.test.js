@@ -104,6 +104,16 @@ describe('FileEditorItem', () => {
     expect(container.querySelector('.no-thumbnail')).toHaveTextContent('draft');
   });
 
+  test('shows a folder with a folder icon', async () => {
+    const { container } = await renderItem('/uploads/gallery', {
+      fieldConfig: { name: 'folder', widget: 'file', select_folder: true },
+    });
+
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('/uploads/gallery');
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('.no-thumbnail')).toHaveTextContent('folder');
+  });
+
   test('renames an unsaved file', async () => {
     const file = await createMockImageFile({ name: 'new photo.png' });
     const blobURL = URL.createObjectURL(file);

@@ -32,12 +32,19 @@ const getOption = (id) =>
   );
 
 /**
+ * Get the options of the listed assets, leaving out the folders listed ahead of them.
+ * @returns {import('vitest/browser').Locator} Locator.
+ */
+const getAssetOptions = () =>
+  page.getByRole('listbox', { name: 'Available Images' }).getByRole('option');
+
+/**
  * Wait for the list to be rendered.
  * @param {number} count Expected number of items.
  * @returns {Promise<void>}
  */
 const waitForList = async (count) => {
-  await expect.poll(() => page.getByRole('option').elements().length).toBe(count);
+  await expect.poll(() => getAssetOptions().elements().length).toBe(count);
   // A Sveltia UI list box starts handling clicks 100 ms after it’s mounted
   await sleep(150);
 };
@@ -254,8 +261,7 @@ describe('ExternalAssetsPanel', () => {
     // The uploaded file is listed first
     await expect
       .poll(() =>
-        page
-          .getByRole('option')
+        getAssetOptions()
           .elements()
           .map((el) => el.dataset.value),
       )
@@ -493,8 +499,8 @@ describe('ExternalAssetsPanel', () => {
      */
     const getFolderNames = () =>
       page
-        .getByRole('list', { name: 'Folders' })
-        .getByRole('button')
+        .getByRole('listbox', { name: 'Folders' })
+        .getByRole('option')
         .elements()
         .map((el) => el.textContent?.replace(/\s+/g, ' ').trim());
 
@@ -506,25 +512,23 @@ describe('ExternalAssetsPanel', () => {
 
       // The root lists its folders and none of the files, which are all in folders
       await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
-      expect(page.getByRole('option').elements()).toHaveLength(0);
+      expect(getAssetOptions().elements()).toHaveLength(0);
       expect(page.getByRole('navigation').elements()).toHaveLength(0);
       expect(component.canCreateFolder()).toBe(false);
 
-      await page.getByRole('button', { name: 'images' }).click();
+      await page.getByRole('option', { name: 'images' }).click();
       await expect.poll(getFolderNames).toEqual(['folder 2024', 'folder empty']);
       await waitForList(1);
-      expect(page.getByRole('option').elements()[0].dataset.value).toBe('images/a.png');
+      expect(getAssetOptions().elements()[0].dataset.value).toBe('images/a.png');
       // The path is relative to the folder being browsed
-      expect(page.getByRole('option').elements()[0].querySelector('.name')).toHaveTextContent(
-        'a.png',
-      );
+      expect(getAssetOptions().elements()[0].querySelector('.name')).toHaveTextContent('a.png');
 
       const breadcrumb = page.getByRole('navigation', { name: 'Folder' });
 
       await expect.element(breadcrumb).toMatchTextContent(/Test Cloud.*images/);
 
       // An empty folder has nothing but the breadcrumb
-      await page.getByRole('button', { name: 'empty' }).click();
+      await page.getByRole('option', { name: 'empty' }).click();
       await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
       await expect.element(breadcrumb).toMatchTextContent(/Test Cloud.*images.*empty/);
 
@@ -533,10 +537,12 @@ describe('ExternalAssetsPanel', () => {
 
       // A search looks through the whole service, listing the matches with their paths
       props.searchTerms = 'b';
-      await expect.poll(() => page.getByRole('list', { name: 'Folders' }).elements()).toEqual([]);
+      await expect
+        .poll(() => page.getByRole('listbox', { name: 'Folders' }).elements())
+        .toEqual([]);
       await waitForList(1);
-      expect(page.getByRole('option').elements()[0].dataset.value).toBe('images/2024/b.png');
-      expect(page.getByRole('option').elements()[0].querySelector('.name')).toMatchTextContent(
+      expect(getAssetOptions().elements()[0].dataset.value).toBe('images/2024/b.png');
+      expect(getAssetOptions().elements()[0].querySelector('.name')).toMatchTextContent(
         'images/2024/b.png',
       );
 
@@ -547,7 +553,7 @@ describe('ExternalAssetsPanel', () => {
       const { props, component } = await renderPanel();
 
       await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
-      await page.getByRole('button', { name: 'images' }).click();
+      await page.getByRole('option', { name: 'images' }).click();
       await waitForList(1);
 
       const file = await createMockImageFile({ name: 'd.png' });
@@ -559,7 +565,7 @@ describe('ExternalAssetsPanel', () => {
         expect.objectContaining({ dirPath: 'images' }),
       );
       await waitForList(2);
-      expect(page.getByRole('option').elements()[0].dataset.value).toBe('images/d.png');
+      expect(getAssetOptions().elements()[0].dataset.value).toBe('images/d.png');
     });
 
     test('creates a folder where the user is', async () => {
@@ -567,7 +573,7 @@ describe('ExternalAssetsPanel', () => {
       const { component } = await renderPanel({ createFolder });
 
       await expect.poll(getFolderNames).toEqual(['folder docs', 'folder images']);
-      await page.getByRole('button', { name: 'images' }).click();
+      await page.getByRole('option', { name: 'images' }).click();
       await waitForList(1);
       expect(component.canCreateFolder()).toBe(true);
 

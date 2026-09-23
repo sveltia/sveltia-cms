@@ -184,6 +184,83 @@ describe('FileEditor', () => {
     await expect.element(page.getByRole('dialog', { name: 'Select Image' })).toBeInTheDocument();
   });
 
+  test('selects a folder, without taking dropped or pasted files', async () => {
+    setAssets([
+      createMockAsset({
+        name: 'photo.png',
+        folderPath: 'static/uploads/gallery',
+        file: await createMockImageFile(),
+        asset: { folder: globalAssetFolder.current },
+      }),
+    ]);
+
+    const { props, container } = await renderEditor(
+      { name: 'folder', widget: 'file', select_folder: true },
+      '',
+    );
+
+    await expect.element(page.getByText(/Click to browse/)).toBeInTheDocument();
+    expect(container.querySelector('.drop-target')).toBeNull();
+    expect(page.getByRole('button', { name: 'Paste' }).elements()).toHaveLength(0);
+
+    await page.getByRole('button', { name: 'Browse' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Select Folder' });
+
+    await expect.element(dialog.getByRole('listbox', { name: 'Folders' })).toBeVisible();
+    // A Sveltia UI list box starts handling clicks 100 ms after it’s mounted
+    await sleep(150);
+    await dialog
+      .getByRole('listbox', { name: 'Folders' })
+      .getByRole('option', { name: 'gallery' })
+      .click();
+    await dialog.getByRole('button', { name: 'Select' }).click();
+
+    await expect.poll(() => props.currentValue).toBe('/static/uploads/gallery');
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('/static/uploads/gallery');
+  });
+
+  test('adds multiple folders at once', async () => {
+    setAssets(
+      await Promise.all(
+        ['gallery', 'news'].map(async (name) =>
+          createMockAsset({
+            name: 'photo.png',
+            folderPath: `static/uploads/${name}`,
+            file: await createMockImageFile(),
+            asset: { folder: globalAssetFolder.current },
+          }),
+        ),
+      ),
+    );
+
+    const { draft } = await renderEditor(
+      { name: 'folders', widget: 'file', select_folder: true, multiple: true },
+      [],
+      {},
+      { keyPath: 'folders', typedKeyPath: 'folders', fieldId: 'folders' },
+    );
+
+    await page.getByRole('button', { name: 'Browse' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Select Folder' });
+    const folders = dialog.getByRole('listbox', { name: 'Folders' });
+
+    await expect.element(folders).toBeVisible();
+    // A Sveltia UI list box starts handling clicks 100 ms after it’s mounted
+    await sleep(150);
+    await folders.getByRole('option', { name: 'gallery' }).click();
+    await folders.getByRole('option', { name: 'news' }).click();
+    await dialog.getByRole('button', { name: 'Select' }).click();
+
+    await expect
+      .poll(() => draft.currentValues._default)
+      .toEqual({
+        'folders.0': '/static/uploads/gallery',
+        'folders.1': '/static/uploads/news',
+      });
+  });
+
   test('lists multiple files, adding, reordering and removing them', async () => {
     const { draft, props, container } = await renderEditor(
       { name: 'images', multiple: true },

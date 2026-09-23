@@ -606,6 +606,10 @@
  * File field properties.
  * @typedef {object} FileFieldProps
  * @property {'file'} widget Field type.
+ * @property {boolean} [select_folder] Whether to select a folder instead of a file. The public
+ * path of the selected folder, e.g. `/images/gallery`, is saved as the field value. Only an asset
+ * folder with a fixed path can be browsed, so entry-relative folders and folders with template tags
+ * are not available, nor are external media storage providers. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#File
  * @see https://sveltiacms.app/en/docs/fields/file
  */

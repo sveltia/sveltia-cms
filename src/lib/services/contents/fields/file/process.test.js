@@ -431,6 +431,19 @@ describe('Test processResource()', () => {
     expect(result.oversizedFileName).toBeUndefined();
   });
 
+  test('should use the public path of a selected folder', async () => {
+    // @ts-ignore - Simplified draft for testing
+    const draft = { files: {} };
+    const resource = { folderPath: '/images/gallery' };
+    // @ts-ignore - Simplified config for testing
+    const libraryConfig = { max_file_size: 1000000 };
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig });
+
+    expect(result.value).toBe('/images/gallery');
+    expect(result.credit).toBe('');
+  });
+
   test('should sanitize credit with HTML tags', async () => {
     // @ts-ignore - Simplified draft for testing
     const draft = {

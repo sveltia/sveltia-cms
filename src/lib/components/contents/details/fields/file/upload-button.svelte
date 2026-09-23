@@ -13,6 +13,7 @@
    * @property {boolean} processing Whether the field is processing.
    * @property {boolean} isImageField Whether the field is an image field.
    * @property {boolean} multiple Whether the field allows multiple files.
+   * @property {boolean} [selectFolder] Whether the field takes a folder instead of files.
    * @property {boolean} showSelectAssetsDialog Whether to show the select assets dialog.
    * @property {boolean} replaceMode Whether the dialog is in replace mode.
    * @property {(file: File) => void} [onFilePaste] Callback invoked when an image is pasted from
@@ -28,6 +29,7 @@
     processing,
     isImageField,
     multiple,
+    selectFolder = false,
     showSelectAssetsDialog = $bindable(false),
     replaceMode = $bindable(false),
     onFilePaste = undefined,
@@ -138,7 +140,7 @@ works while any of the buttons has focus. -->
     }
   }}
 >
-  <Icon name="cloud_upload" />
+  <Icon name={selectFolder ? 'folder' : 'cloud_upload'} />
   <div role="none" class="label">
     {#if processing}
       <div role="status">

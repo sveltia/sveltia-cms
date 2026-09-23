@@ -1,4 +1,5 @@
 <script>
+  import { _ } from '@sveltia/i18n';
   import { untrack } from 'svelte';
 
   import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
@@ -13,6 +14,8 @@
   /**
    * @typedef {object} Props
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
+   * @property {boolean} [selectFolder] Whether a folder is being selected instead of files, which
+   * takes no dropped files and lists subfolders only.
    * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {Asset[]} [assets] Asset list.
    * @property {string} [searchTerms] Search terms for filtering assets.
@@ -28,12 +31,16 @@
    * ancestor folder to go back to from the breadcrumb, or an empty string for the folder root.
    * @property {(subfolder: AssetSubfolder) => void} [onOpenSubfolder] Called when a listed
    * subfolder is opened.
+   * @property {string[]} [selectedSubfolderPaths] Paths of the selected subfolders.
+   * @property {(subfolder: AssetSubfolder, selected: boolean) => void} [onSelectSubfolder] Called
+   * with a subfolder and whether it’s now selected, when a folder is to be picked.
    */
 
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
     multiple = false,
+    selectFolder = false,
     accept = undefined,
     assets = [],
     searchTerms = '',
@@ -45,6 +52,8 @@
     onDrop,
     onNavigate = undefined,
     onOpenSubfolder = undefined,
+    selectedSubfolderPaths = [],
+    onSelectSubfolder = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -63,7 +72,7 @@
   });
 </script>
 
-<DropZone bind:this={dropZone} {multiple} {accept} {onDrop}>
+<DropZone bind:this={dropZone} disabled={selectFolder} {multiple} {accept} {onDrop}>
   <div role="none" class="wrapper">
     {#if subfolderNames.length}
       <!-- Each ancestor leads back to itself, like the breadcrumb of the Asset Library -->
@@ -91,8 +100,11 @@
         {subfolders}
         gridId="select-assets-grid"
         checkerboard={true}
+        emptyMessage={selectFolder ? _('assets_dialog.no_subfolders') : undefined}
         bind:selectedResources
         {onOpenSubfolder}
+        {selectedSubfolderPaths}
+        {onSelectSubfolder}
       />
     </div>
   </div>

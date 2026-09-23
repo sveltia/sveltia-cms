@@ -27,6 +27,7 @@ import { renderPDF } from '$lib/services/utils/media/pdf';
  * @import { IndexedDB } from '@sveltia/utils/storage';
  * @import {
  * Asset,
+ * AssetFolderInfo,
  * Entry,
  * InternalCmsConfig,
  * MediaFieldSource,
@@ -458,6 +459,26 @@ export const getAssetPublicURL = (
   }
 
   return `${baseURL}${path}`;
+};
+
+/**
+ * Get the public path of a directory in an asset folder, which is saved as the value of a File
+ * field with the `select_folder` option.
+ * @param {object} args Arguments.
+ * @param {AssetFolderInfo} args.folder Asset folder with a fixed path, which can be browsed by
+ * subfolder.
+ * @param {string} args.subfolderPath Path of the directory below the folder, relative to it. Empty
+ * for the folder root.
+ * @returns {string} Public path, e.g. `/images/gallery`.
+ */
+export const getFolderPublicPath = ({ folder, subfolderPath }) => {
+  const { output: { encode_file_path: encodingEnabled = false } = {} } =
+    /** @type {InternalCmsConfig} */ (cmsConfig.current);
+
+  const basePath = (folder.publicPath ?? '').replace(/\/$/, '');
+  const path = (subfolderPath ? `${basePath}/${subfolderPath}` : basePath) || '/';
+
+  return encodingEnabled ? encodeFilePath(path) : path;
 };
 
 /**

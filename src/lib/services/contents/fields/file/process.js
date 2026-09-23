@@ -156,7 +156,7 @@ const getSavedAssetsForEntry = (draft, folder) => {
  * @returns {Promise<ProcessResourceResult>} Result of processing the resource.
  */
 export const processResource = async ({ draft, resource, libraryConfig }) => {
-  const { url, credit, replace = false, subfolderPath } = resource;
+  const { url, folderPath, credit, replace = false, subfolderPath } = resource;
   let { asset, file } = resource;
   /** @type {string | undefined} */
   let value = '';
@@ -232,6 +232,10 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
 
   if (url && !file && !asset) {
     value = url;
+  }
+
+  if (folderPath) {
+    value = folderPath;
   }
 
   return {

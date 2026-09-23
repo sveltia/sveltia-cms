@@ -83,8 +83,8 @@ describe('InternalAssetsPanel', () => {
     expect(onNavigate).toHaveBeenCalledWith('');
 
     await page
-      .getByRole('list', { name: 'Folders' })
-      .getByRole('button', { name: 'august' })
+      .getByRole('listbox', { name: 'Folders' })
+      .getByRole('option', { name: 'august' })
       .click();
     expect(onOpenSubfolder).toHaveBeenCalledWith(subfolders[0]);
   });

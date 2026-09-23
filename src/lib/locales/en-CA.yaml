@@ -1494,6 +1494,7 @@ assets_dialog:
   title:
     file: Select File
     image: Select Image
+    folder: Select Folder
 
   # Search input labels
   search_for_file: Search for Files
@@ -1501,6 +1502,16 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: Locations
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Selected folder: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ {$count} folder selected }}
+      *   {{ {$count} folders selected }}
+  no_subfolders: This folder has no subfolders.
 
   # Asset folder options
   folder:

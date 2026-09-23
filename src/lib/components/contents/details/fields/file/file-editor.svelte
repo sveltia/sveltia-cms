@@ -46,7 +46,7 @@
    * FieldEditorProps,
    * SelectedResource,
    * } from '$lib/types/private';
-   * @import { MediaField } from '$lib/types/public';
+   * @import { FileField, MediaField } from '$lib/types/public';
    */
 
   /**
@@ -108,6 +108,10 @@
     accept,
     choose_url: canEnterURL = true,
   } = $derived(fieldConfig);
+  /** Whether the field takes a folder instead of a file, with the File field’s own option. */
+  const selectFolder = $derived(
+    fieldType === 'file' && /** @type {FileField} */ (fieldConfig).select_folder === true,
+  );
   const entry = $derived(entryDraft.current?.originalEntry);
   /* v8 ignore start -- the editor is only rendered while the draft is there */
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
@@ -185,9 +189,9 @@
   );
   /**
    * Disable the drop zone if there are no providers or multiple providers are available, to avoid
-   * confusion about where dropped files will be stored.
+   * confusion about where dropped files will be stored. A folder can’t be dropped at all.
    */
-  const allowDrop = $derived(totalProviders === 1);
+  const allowDrop = $derived(totalProviders === 1 && !selectFolder);
 
   /**
    * Reset the current selection.
@@ -379,11 +383,14 @@
     {processing}
     {isImageField}
     {multiple}
+    {selectFolder}
     bind:showSelectAssetsDialog
     bind:replaceMode
-    onFilePaste={(file) => {
-      onResourcesSelect([{ file, folder: targetFolder }]);
-    }}
+    onFilePaste={selectFolder
+      ? undefined
+      : (file) => {
+          onResourcesSelect([{ file, folder: targetFolder }]);
+        }}
   />
 {/snippet}
 
@@ -468,6 +475,7 @@
   multiple={replaceMode ? false : multiple}
   accept={acceptedTypes}
   {canEnterURL}
+  {selectFolder}
   draft={entryDraft.current}
   {fieldConfig}
   {assetLibraryFolderMap}

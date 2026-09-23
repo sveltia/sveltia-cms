@@ -1,6 +1,6 @@
 import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { createSubfolder } from '$lib/services/assets/data/subfolder';
@@ -210,32 +210,32 @@ describe('SelectAssetsDialog', () => {
     test('browses the folder by subfolder, with a breadcrumb leading back', async () => {
       const { onSelect } = await renderDialog();
       const dialog = page.getByRole('dialog', { name: 'Select Image' });
-      const folders = dialog.getByRole('list', { name: 'Folders' });
+      const folders = dialog.getByRole('listbox', { name: 'Folders' });
 
       // The folder root: the assets right in it, and its subfolders
       await waitForGrid(2);
-      await expect.element(folders.getByRole('button', { name: '2024' })).toBeVisible();
-      expect(folders.getByRole('listitem').elements()).toHaveLength(1);
+      await expect.element(folders.getByRole('option', { name: '2024' })).toBeVisible();
+      expect(folders.getByRole('option').elements()).toHaveLength(1);
       expect(dialog.getByRole('navigation').elements()).toHaveLength(0);
 
-      await folders.getByRole('button', { name: '2024' }).click();
+      await folders.getByRole('option', { name: '2024' }).click();
       await waitForGrid(1);
       expect(document.querySelector('#select-assets-grid [role="option"]')).toHaveAttribute(
         'data-value',
         'static/uploads/2024/d.png',
       );
-      await expect.element(folders.getByRole('button', { name: 'summer' })).toBeVisible();
+      await expect.element(folders.getByRole('option', { name: 'summer' })).toBeVisible();
 
       const breadcrumb = dialog.getByRole('navigation', { name: 'Folder' });
 
       await expect.element(breadcrumb).toMatchTextContent('Global Assets chevron_right 2024');
 
-      await folders.getByRole('button', { name: 'summer' }).click();
+      await folders.getByRole('option', { name: 'summer' }).click();
       await waitForGrid(1);
       await expect
         .element(breadcrumb)
         .toMatchTextContent('Global Assets chevron_right 2024 chevron_right summer');
-      expect(dialog.getByRole('list', { name: 'Folders' }).elements()).toHaveLength(0);
+      expect(dialog.getByRole('listbox', { name: 'Folders' }).elements()).toHaveLength(0);
 
       // An asset in a subfolder is picked like any other
       await getOption('static/uploads/2024/summer/e.png').click();
@@ -251,17 +251,17 @@ describe('SelectAssetsDialog', () => {
       await renderDialog();
 
       const dialog = page.getByRole('dialog', { name: 'Select Image' });
-      const folders = dialog.getByRole('list', { name: 'Folders' });
+      const folders = dialog.getByRole('listbox', { name: 'Folders' });
 
       await waitForGrid(2);
-      await folders.getByRole('button', { name: '2024' }).click();
+      await folders.getByRole('option', { name: '2024' }).click();
       await waitForGrid(1);
-      await folders.getByRole('button', { name: 'summer' }).click();
+      await folders.getByRole('option', { name: 'summer' }).click();
       await waitForGrid(1);
 
       await dialog.getByRole('navigation').getByRole('button', { name: '2024' }).click();
       await waitForGrid(1);
-      await expect.element(folders.getByRole('button', { name: 'summer' })).toBeVisible();
+      await expect.element(folders.getByRole('option', { name: 'summer' })).toBeVisible();
 
       await dialog.getByRole('navigation').getByRole('button', { name: 'Global Assets' }).click();
       await waitForGrid(2);
@@ -273,7 +273,7 @@ describe('SelectAssetsDialog', () => {
       expect(document.querySelector('#select-assets-grid .name')).toHaveTextContent(
         '2024/summer/e.png',
       );
-      expect(dialog.getByRole('list', { name: 'Folders' }).elements()).toHaveLength(0);
+      expect(dialog.getByRole('listbox', { name: 'Folders' }).elements()).toHaveLength(0);
     });
 
     test('creates a folder where the user is, and uploads there', async () => {
@@ -284,8 +284,8 @@ describe('SelectAssetsDialog', () => {
 
       await waitForGrid(2);
       await dialog
-        .getByRole('list', { name: 'Folders' })
-        .getByRole('button', { name: '2024' })
+        .getByRole('listbox', { name: 'Folders' })
+        .getByRole('option', { name: '2024' })
         .click();
       await waitForGrid(1);
 
@@ -323,6 +323,214 @@ describe('SelectAssetsDialog', () => {
       );
     });
 
+    test('selects a folder instead of files', async () => {
+      const { onSelect } = await renderDialog({
+        kind: undefined,
+        selectFolder: true,
+        fieldConfig: { name: 'folder', widget: 'file', select_folder: true },
+        assetLibraryFolderMap: {
+          global: { folder: globalAssetFolder.current, enabled: true },
+          entry: {
+            folder: { ...globalAssetFolder.current, collectionName: 'posts', entryRelative: true },
+            enabled: true,
+          },
+        },
+      });
+
+      const dialog = page.getByRole('dialog', { name: 'Select Folder' });
+      const locations = dialog.getByRole('listbox', { name: 'Locations' });
+      const folders = dialog.getByRole('listbox', { name: 'Folders' });
+      const status = dialog.getByRole('status');
+
+      await expect.element(dialog).toBeInTheDocument();
+      // Only the folders that can be browsed are offered: no entry-relative folder, no cloud
+      // storage, no URL input and no stock photos
+      expect(
+        locations
+          .getByRole('option')
+          .elements()
+          .map((el) => el.querySelector('.label')?.textContent?.trim()),
+      ).toEqual(['Global Assets']);
+      // Nothing to search or upload, and no files are listed
+      expect(dialog.getByRole('searchbox').elements()).toHaveLength(0);
+      expect(dialog.getByRole('button', { name: 'Upload' }).elements()).toHaveLength(0);
+      await expect.element(folders.getByRole('option', { name: '2024' })).toBeVisible();
+      expect(document.querySelectorAll('#select-assets-grid [role="option"]')).toHaveLength(0);
+
+      // The folder being browsed is the one to be selected, unless a subfolder is
+      await expect
+        .element(status)
+        .toHaveTextContent('Selected folder: \u2068/static/uploads\u2069');
+      await expect.element(dialog.getByRole('button', { name: 'Select' })).toBeEnabled();
+
+      const folder2024 = folders.getByRole('option', { name: '2024' });
+
+      // A Sveltia UI list box starts handling clicks and keys 100 ms after it’s mounted
+      await sleep(150);
+
+      // A click selects a subfolder, and another click clears the selection
+      await folder2024.click();
+      await expect.element(folder2024).toHaveAttribute('aria-selected', 'true');
+      await expect
+        .element(status)
+        .toHaveTextContent('Selected folder: \u2068/static/uploads/2024\u2069');
+      await folder2024.click();
+      await expect.element(folder2024).toHaveAttribute('aria-selected', 'false');
+      await expect
+        .element(status)
+        .toHaveTextContent('Selected folder: \u2068/static/uploads\u2069');
+
+      // A double click opens it
+      await folder2024.dblClick();
+      await expect
+        .element(dialog.getByRole('navigation', { name: 'Folder' }))
+        .toMatchTextContent('Global Assets chevron_right 2024');
+      await expect
+        .element(status)
+        .toHaveTextContent('Selected folder: \u2068/static/uploads/2024\u2069');
+
+      // The arrow keys move the selection through the subfolders, and the Enter key opens one
+      const summer = folders.getByRole('option', { name: 'summer' });
+
+      await expect.element(summer).toBeVisible();
+      /** @type {HTMLElement} */ (folders.element()).focus();
+      await userEvent.keyboard('{ArrowDown}');
+      await expect.element(summer).toHaveAttribute('aria-selected', 'true');
+      await expect
+        .element(status)
+        .toHaveTextContent('Selected folder: \u2068/static/uploads/2024/summer\u2069');
+      await userEvent.keyboard('{Enter}');
+      await expect.element(dialog.getByText('This folder has no subfolders.')).toBeVisible();
+      // The folders are gone along with the focus, which is kept within the pane
+      await expect.poll(() => document.activeElement?.hasAttribute('data-focus-scope')).toBe(true);
+      await expect
+        .element(status)
+        .toHaveTextContent('Selected folder: \u2068/static/uploads/2024/summer\u2069');
+
+      // Going back clears the selection
+      await dialog.getByRole('navigation').getByRole('button', { name: '2024' }).click();
+      await expect.element(summer).toHaveAttribute('aria-selected', 'false');
+      await expect
+        .element(status)
+        .toHaveTextContent('Selected folder: \u2068/static/uploads/2024\u2069');
+      await summer.dblClick();
+      await expect.element(dialog.getByText('This folder has no subfolders.')).toBeVisible();
+
+      await dialog.getByRole('button', { name: 'Select' }).click();
+      await vi.waitFor(() =>
+        expect(onSelect).toHaveBeenCalledWith([{ folderPath: '/static/uploads/2024/summer' }]),
+      );
+    });
+
+    test('selects multiple folders, from anywhere in the folder', async () => {
+      const folder = globalAssetFolder.current;
+
+      assets.push(
+        createMockAsset({
+          name: 'f.png',
+          folderPath: 'static/uploads/2025',
+          file: await createMockImageFile({ name: 'f.png' }),
+          asset: { folder },
+        }),
+      );
+      setAssets(assets);
+
+      const { onSelect } = await renderDialog({
+        kind: undefined,
+        multiple: true,
+        selectFolder: true,
+        fieldConfig: { name: 'folders', widget: 'file', select_folder: true, multiple: true },
+      });
+
+      const dialog = page.getByRole('dialog', { name: 'Select Folder' });
+      const folders = dialog.getByRole('listbox', { name: 'Folders' });
+      const status = dialog.getByRole('status');
+      const folder2024 = folders.getByRole('option', { name: '2024' });
+      const folder2025 = folders.getByRole('option', { name: '2025' });
+
+      // A Sveltia UI list box starts handling clicks and keys 100 ms after it’s mounted
+      await expect.element(folder2024).toBeVisible();
+      await sleep(150);
+
+      // Without a selection, the folder being browsed is picked
+      await expect
+        .element(status)
+        .toHaveTextContent('Selected folder: \u2068/static/uploads\u2069');
+
+      // Clicks add folders to the selection, and remove them from it
+      await folder2024.click();
+      await folder2025.click();
+      await expect.element(folder2024).toHaveAttribute('aria-selected', 'true');
+      await expect.element(folder2025).toHaveAttribute('aria-selected', 'true');
+      await expect.element(status).toHaveTextContent('2 folders selected');
+      await folder2025.click();
+      await expect.element(folder2025).toHaveAttribute('aria-selected', 'false');
+      await expect
+        .element(status)
+        .toHaveTextContent('Selected folder: \u2068/static/uploads/2024\u2069');
+
+      // The selection is kept while another folder is browsed
+      await folder2024.dblClick();
+      await folders.getByRole('option', { name: 'summer' }).click();
+      await expect.element(status).toHaveTextContent('2 folders selected');
+      await dialog.getByRole('navigation').getByRole('button', { name: 'Global Assets' }).click();
+      await expect.element(folder2024).toHaveAttribute('aria-selected', 'true');
+
+      await dialog.getByRole('button', { name: 'Select' }).click();
+      await vi.waitFor(() =>
+        expect(onSelect).toHaveBeenCalledWith([
+          { folderPath: '/static/uploads/2024' },
+          { folderPath: '/static/uploads/2024/summer' },
+        ]),
+      );
+    });
+
+    test('offers nothing to select without a folder that can be browsed', async () => {
+      await renderDialog({
+        kind: undefined,
+        selectFolder: true,
+        fieldConfig: { name: 'folder', widget: 'file', select_folder: true },
+        assetLibraryFolderMap: {
+          entry: {
+            folder: { ...globalAssetFolder.current, collectionName: 'posts', entryRelative: true },
+            enabled: true,
+          },
+        },
+      });
+
+      const dialog = page.getByRole('dialog', { name: 'Select Folder' });
+
+      await expect.element(dialog).toBeInTheDocument();
+      expect(dialog.getByRole('option').elements()).toHaveLength(0);
+      expect(dialog.getByRole('status').elements()).toHaveLength(0);
+      await expect.element(dialog.getByRole('button', { name: 'Select' })).toBeDisabled();
+    });
+
+    test('keeps the focus in the pane when a folder is opened with the keyboard', async () => {
+      await renderDialog();
+
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+      const folders = dialog.getByRole('listbox', { name: 'Folders' });
+
+      await waitForGrid(2);
+      /** @type {HTMLElement} */ (folders.element()).focus();
+      await userEvent.keyboard('{ArrowRight}');
+      await userEvent.keyboard('{Enter}');
+      await waitForGrid(1);
+
+      // The folders of the opened folder take the place of the others, keeping the focus
+      await expect.element(folders.getByRole('option', { name: 'summer' })).toBeVisible();
+      expect(document.activeElement).toBe(folders.element());
+
+      // A folder without subfolders has its files take the focus
+      await userEvent.keyboard('{ArrowRight}');
+      await userEvent.keyboard('{Enter}');
+      await expect
+        .element(dialog.getByRole('navigation'))
+        .toMatchTextContent('Global Assets chevron_right 2024 chevron_right summer');
+      await expect.poll(() => document.activeElement?.id).toBe('select-assets-grid');
+    });
+
     test('lists the folder root again once another location has been picked', async () => {
       await renderDialog();
 
@@ -331,8 +539,8 @@ describe('SelectAssetsDialog', () => {
 
       await waitForGrid(2);
       await dialog
-        .getByRole('list', { name: 'Folders' })
-        .getByRole('button', { name: '2024' })
+        .getByRole('listbox', { name: 'Folders' })
+        .getByRole('option', { name: '2024' })
         .click();
       await waitForGrid(1);
 
@@ -427,7 +635,9 @@ describe('SelectAssetsDialog', () => {
     await expect.element(dialog.getByRole('button', { name: 'New Folder' })).toBeInTheDocument();
     await sleep(150);
     await dialog.getByRole('option', { name: 'Test Cloud' }).click();
-    await expect.element(page.getByRole('list', { name: 'Folders' })).toMatchTextContent('images');
+    await expect
+      .element(page.getByRole('listbox', { name: 'Folders' }))
+      .toMatchTextContent('images');
     await dialog.getByRole('button', { name: 'New Folder' }).click();
 
     const nameDialog = page.getByRole('dialog', { name: 'New Folder' });
@@ -438,7 +648,7 @@ describe('SelectAssetsDialog', () => {
 
     await vi.waitFor(() => expect(createFolder).toHaveBeenCalledWith('docs', expect.anything()));
     await expect
-      .element(page.getByRole('list', { name: 'Folders' }))
+      .element(page.getByRole('listbox', { name: 'Folders' }))
       .toMatchTextContent(/docs.*images/);
   });
 

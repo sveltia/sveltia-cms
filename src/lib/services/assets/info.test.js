@@ -21,6 +21,7 @@ import {
   getAssetBlobURL,
   getAssetPublicURL,
   getAssetThumbnailURL,
+  getFolderPublicPath,
   getMediaFieldSource,
   getMediaFieldURL,
   hasCachedThumbnail,
@@ -2695,6 +2696,58 @@ describe('assets/info', () => {
       getAssetBaseURL(fieldConfig);
 
       expect(vi.mocked(cloudinaryModule.getMergedLibraryOptions)).toHaveBeenCalledWith(fieldConfig);
+    });
+  });
+
+  describe('getFolderPublicPath', () => {
+    /** @type {any} */
+    const folder = { internalPath: 'static/images', publicPath: '/images' };
+
+    beforeEach(() => {
+      mockCmsConfigState.current = {};
+    });
+
+    it('should return the public path of the folder root', () => {
+      expect(getFolderPublicPath({ folder, subfolderPath: '' })).toBe('/images');
+    });
+
+    it('should append the subfolder path', () => {
+      expect(getFolderPublicPath({ folder, subfolderPath: 'gallery/2024' })).toBe(
+        '/images/gallery/2024',
+      );
+    });
+
+    it('should drop a trailing slash of the public path', () => {
+      expect(
+        getFolderPublicPath({ folder: { ...folder, publicPath: '/images/' }, subfolderPath: 'a' }),
+      ).toBe('/images/a');
+    });
+
+    it('should return the root path for a folder published at the root', () => {
+      expect(
+        getFolderPublicPath({ folder: { ...folder, publicPath: '/' }, subfolderPath: '' }),
+      ).toBe('/');
+      expect(
+        getFolderPublicPath({ folder: { ...folder, publicPath: '/' }, subfolderPath: 'gallery' }),
+      ).toBe('/gallery');
+    });
+
+    it('should handle a folder without a public path', () => {
+      expect(
+        getFolderPublicPath({ folder: { ...folder, publicPath: undefined }, subfolderPath: '' }),
+      ).toBe('/');
+    });
+
+    it('should encode the path when `encode_file_path` is enabled', async () => {
+      const { encodeFilePath } = await import('$lib/services/utils/file');
+
+      vi.mocked(encodeFilePath).mockReturnValue('/images/my%20gallery');
+      mockCmsConfigState.current = { output: { encode_file_path: true } };
+
+      expect(getFolderPublicPath({ folder, subfolderPath: 'my gallery' })).toBe(
+        '/images/my%20gallery',
+      );
+      expect(vi.mocked(encodeFilePath)).toHaveBeenCalledWith('/images/my gallery');
     });
   });
 

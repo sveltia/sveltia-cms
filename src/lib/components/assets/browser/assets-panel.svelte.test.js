@@ -28,12 +28,13 @@ const getOption = (value) =>
   );
 
 /**
- * Get the labels of the listed items.
+ * Get the labels of the listed assets. The subfolders listed ahead of them are options in a list
+ * box of their own, which is left out.
  * @param {HTMLElement} container Container.
  * @returns {(string | undefined)[]} Labels.
  */
 const getLabels = (container) =>
-  [...container.querySelectorAll('[role="option"]')].map((el) =>
+  [...container.querySelectorAll('[role="listbox"]:not(.subfolders) [role="option"]')].map((el) =>
     el.querySelector('.name')?.textContent?.replace(/\s+/g, ' ').trim(),
   );
 
@@ -76,18 +77,23 @@ describe('AssetsPanel', () => {
 
     await expect.poll(() => getLabels(container)).toHaveLength(3);
 
-    const folders = page.getByRole('list', { name: 'Folders' });
+    const folders = page.getByRole('listbox', { name: 'Folders' });
 
-    expect(folders.getByRole('listitem').elements()).toHaveLength(2);
+    expect(folders.getByRole('option').elements()).toHaveLength(2);
     await expect
-      .element(folders.getByRole('button', { name: 'brand' }))
+      .element(folders.getByRole('option', { name: 'brand' }))
       .toHaveAccessibleDescription('Folder');
 
-    await folders.getByRole('button', { name: 'brand' }).click();
+    await folders.getByRole('option', { name: 'brand' }).click();
     expect(onOpenSubfolder).toHaveBeenCalledWith(subfolders[1]);
 
-    // Nothing to select in the folders, so the selection is left alone
-    expect(page.getByRole('option', { selected: true }).elements()).toHaveLength(0);
+    // Nothing to select in the folders, so the selection of assets is left alone
+    expect(
+      page
+        .getByRole('listbox', { name: 'Available Images' })
+        .getByRole('option', { selected: true })
+        .elements(),
+    ).toHaveLength(0);
   });
 
   test('lists the subfolders alone in a folder without an asset', async () => {
@@ -97,12 +103,12 @@ describe('AssetsPanel', () => {
     });
 
     await expect
-      .element(page.getByRole('list', { name: 'Folders' }).getByRole('button', { name: '2023' }))
+      .element(page.getByRole('listbox', { name: 'Folders' }).getByRole('option', { name: '2023' }))
       .toBeVisible();
     expect(page.getByText('No files found.').elements()).toHaveLength(0);
 
     // A click does nothing without a handler
-    await page.getByRole('button', { name: '2023' }).click();
+    await page.getByRole('option', { name: '2023' }).click();
   });
 
   test('filters the assets by search terms', async () => {

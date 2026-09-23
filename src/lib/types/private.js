@@ -1273,6 +1273,8 @@
  * @property {string} [subfolderPath] Path of the subfolder below the target folder that the `file`
  * is saved to, relative to it. Empty or `undefined` for the folder root.
  * @property {string} [url] URL from direct input or a hotlinking stock asset.
+ * @property {string} [folderPath] Public path of a folder selected in place of a file, for a File
+ * field with the `select_folder` option.
  * @property {string} [credit] Attribution HTML string for a stock asset, including the photographer
  * name/link and service name/link.
  * @property {boolean} [replace] Whether to replace an existing file.

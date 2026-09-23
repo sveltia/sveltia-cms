@@ -1417,6 +1417,7 @@ assets_dialog:
   title:
     file: ファイルを選択
     image: 画像を選択
+    folder: フォルダーを選択
 
   # Search input labels
   search_for_file: ファイルを検索
@@ -1424,6 +1425,12 @@ assets_dialog:
 
   # Locations panel aria-label
   locations: 場所
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: '選択中のフォルダー: {$path}'
+  selected_folders: '{$count} 個のフォルダーを選択中'
+  no_subfolders: このフォルダーにはサブフォルダーがありません。
 
   # Asset folder options
   folder:

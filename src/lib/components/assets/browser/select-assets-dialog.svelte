@@ -20,6 +20,7 @@
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import CreateSubfolderDialog from '$lib/components/assets/list/create-subfolder-dialog.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import { getFolderPublicPath } from '$lib/services/assets/info';
   import {
     canBrowseSubfolders,
     getDirName,
@@ -57,8 +58,10 @@
   /**
    * @import {
    * Asset,
+   * AssetFolderInfo,
    * AssetLibraryFolderMap,
    * AssetLibraryFolderMapKey,
+   * AssetSubfolder,
    * EntryDraft,
    * MediaLibraryAssetKind,
    * MediaLibraryService,
@@ -75,6 +78,9 @@
    * @property {MediaLibraryAssetKind} [kind] Asset kind.
    * @property {string | undefined} [accept] Accepted file type specifiers.
    * @property {boolean} [canEnterURL] Whether to allow entering a URL.
+   * @property {boolean} [selectFolder] Whether to select a folder instead of files, for a File
+   * field with the `select_folder` option. Only the repository folders that can be browsed by
+   * subfolder are offered, and the directory being browsed is what gets selected.
    * @property {EntryDraft | null | undefined} [draft] Associated entry draft.
    * @property {MediaField} [fieldConfig] Field configuration.
    * @property {AssetLibraryFolderMap} assetLibraryFolderMap Default asset library folder map.
@@ -98,6 +104,7 @@
     // svelte-ignore state_referenced_locally
     accept = kind === 'image' ? SUPPORTED_IMAGE_TYPES.join(',') : undefined,
     canEnterURL = true,
+    selectFolder = false,
     draft = undefined,
     fieldConfig,
     assetLibraryFolderMap,
@@ -118,6 +125,14 @@
    * folder root.
    */
   let subfolderPath = $state('');
+  /**
+   * Paths of the subfolders selected when a folder is to be picked. Without any, the directory
+   * being browsed is what gets picked. A single selection is cleared on going to another directory,
+   * while a multiple selection is kept, like the selected assets, so folders can be picked from
+   * anywhere.
+   * @type {string[]}
+   */
+  let selectedSubfolderPaths = $state([]);
   let showNewFolderDialog = $state(false);
   /** @type {Asset[]} */
   let droppedAssets = $state([]);
@@ -143,14 +158,31 @@
     return nameA.localeCompare(nameB);
   };
 
+  /**
+   * Check if a repository folder is offered in the dialog. Folder selection takes a folder that can
+   * be browsed by subfolder.
+   * @param {{ folder: AssetFolderInfo | undefined, enabled: boolean }} entry Folder map entry.
+   * @returns {boolean} Result.
+   */
+  const isFolderOffered = ({ folder, enabled }) =>
+    enabled && (!selectFolder || canBrowseSubfolders(folder));
+
   const title = $derived(
-    kind === 'image' ? _('assets_dialog.title.image') : _('assets_dialog.title.file'),
+    selectFolder
+      ? _('assets_dialog.title.folder')
+      : kind === 'image'
+        ? _('assets_dialog.title.image')
+        : _('assets_dialog.title.file'),
   );
   const searchTerms = $derived(normalize(rawSearchTerms));
   const isDefaultLibraryEnabled = $derived(
     getMediaLibraryOptions({ fieldConfig }) !== false &&
-      Object.values(assetLibraryFolderMap).some(({ enabled }) => enabled),
+      Object.values(assetLibraryFolderMap).some(isFolderOffered),
   );
+  /** Whether the URL input is offered. A folder can only be picked from the repository. */
+  const showURLInput = $derived(canEnterURL && !selectFolder);
+  /** Cloud storage services offered in the dialog. */
+  const cloudServiceEntries = $derived(selectFolder ? [] : enabledCloudServiceEntries);
   const isDefaultLibrary = $derived(libraryName.startsWith('default-'));
   const selectedFolder = $derived.by(() => {
     if (!isDefaultLibrary) {
@@ -205,6 +237,10 @@
     selectedFolder?.label || _(`assets_dialog.folder.${libraryName.replace('default-', '')}`),
   );
   const enabledStockAssetProviderEntries = $derived.by(() => {
+    if (selectFolder) {
+      return [];
+    }
+
     const { providers = [] } = getStockAssetMediaLibraryOptions({ fieldConfig });
 
     return Object.entries(allStockAssetProviders)
@@ -224,10 +260,10 @@
     ),
   );
   const enabledExternalServiceEntries = $derived(
-    [...enabledCloudServiceEntries, ...enabledStockAssetProviderEntries].sort(sortServicesByName),
+    [...cloudServiceEntries, ...enabledStockAssetProviderEntries].sort(sortServicesByName),
   );
   const isCloudLibrary = $derived(
-    enabledCloudServiceEntries.map(([serviceId]) => serviceId).includes(libraryName),
+    cloudServiceEntries.map(([serviceId]) => serviceId).includes(libraryName),
   );
   const isStockLibrary = $derived(
     enabledStockAssetProviderEntries
@@ -235,6 +271,50 @@
       .includes(/** @type {any} */ (libraryName)),
   );
   const Selector = $derived(env.isSmallScreen ? Select : Listbox);
+  /**
+   * Public paths of the folders to be picked: the selected subfolders, or the directory being
+   * browsed. Empty unless a folder is to be picked from a folder that can be browsed.
+   * @type {string[]}
+   */
+  const pickedFolderPublicPaths = $derived.by(() => {
+    if (!selectFolder || !browsingSubfolders) {
+      return [];
+    }
+
+    const folder = /** @type {AssetFolderInfo} */ (selectedFolder);
+    const basePath = /** @type {string} */ (targetFolderPath);
+
+    const subfolderPaths = selectedSubfolderPaths.length
+      ? selectedSubfolderPaths.map((path) => getRelativePath(path, basePath))
+      : [subfolderPath];
+
+    return subfolderPaths.map((path) => getFolderPublicPath({ folder, subfolderPath: path }));
+  });
+
+  /**
+   * Select or deselect a subfolder when a folder is to be picked.
+   * @param {AssetSubfolder} subfolder Subfolder.
+   * @param {boolean} selected Whether the subfolder is now selected.
+   */
+  const onSelectSubfolder = ({ path }, selected) => {
+    const otherPaths = selectedSubfolderPaths.filter((p) => p !== path);
+
+    // The list box reports the folder that loses a single selection after the one that gets it, if
+    // it comes later in the list, so only the given folder is removed on deselection
+    selectedSubfolderPaths = selected ? [...(multiple ? otherPaths : []), path] : otherPaths;
+  };
+
+  /**
+   * Go to another directory within the selected folder, clearing a single subfolder selection.
+   * @param {string} path Subfolder path relative to the selected folder. Empty for its root.
+   */
+  const navigate = (path) => {
+    subfolderPath = path;
+
+    if (!multiple) {
+      selectedSubfolderPaths = [];
+    }
+  };
 
   /**
    * Process a dropped file.
@@ -289,6 +369,7 @@
     enteredURL = '';
     rawSearchTerms = '';
     subfolderPath = '';
+    selectedSubfolderPaths = [];
     droppedAssets = [];
     unsavedAssets = [];
     selectedResources = [];
@@ -309,6 +390,17 @@
    * Handle the OK button click.
    */
   const onOk = () => {
+    if (selectFolder) {
+      /* v8 ignore next 3 -- the Select button is disabled until a folder is browsed */
+      if (!pickedFolderPublicPaths.length) {
+        return;
+      }
+
+      onSelect?.(pickedFolderPublicPaths.map((folderPath) => ({ folderPath })));
+
+      return;
+    }
+
     /* v8 ignore next 3 -- the Insert button is disabled until something is selected */
     if (!selectedResources.length) {
       return;
@@ -336,7 +428,7 @@
 
   $effect.pre(() => {
     const firstDefaultLibraryId = isDefaultLibraryEnabled
-      ? Object.entries(assetLibraryFolderMap).find(([, { enabled }]) => enabled)?.[0]
+      ? Object.entries(assetLibraryFolderMap).find(([, entry]) => isFolderOffered(entry))?.[0]
       : undefined;
 
     if (firstDefaultLibraryId) {
@@ -344,10 +436,11 @@
       libraryName = `default-${firstDefaultLibraryId}`;
     } else if (untrack(() => pendingFiles.length)) {
       // Select the first cloud storage service, which can take the files to be uploaded
-      libraryName = enabledCloudServiceEntries[0]?.[0] ?? enabledExternalServiceEntries[0]?.[0];
+      libraryName = cloudServiceEntries[0]?.[0] ?? enabledExternalServiceEntries[0]?.[0];
     } else {
-      // Select the first available external service
-      libraryName = enabledExternalServiceEntries[0]?.[0];
+      // Select the first available external service, if any. There can be none when a folder is
+      // to be selected but the field has no folder that can be browsed
+      libraryName = enabledExternalServiceEntries[0]?.[0] ?? '';
     }
   });
 
@@ -387,14 +480,17 @@
         aria-controls="select-assets-grid"
       />
     {/if}
-    <SearchBar
-      dir="auto"
-      flex={env.isSmallScreen}
-      bind:value={rawSearchTerms}
-      debounce={!isDefaultLibrary}
-      disabled={selectedResources.some((r) => r.file)}
-      ariaLabel={_(`assets_dialog.search_for_${kind ?? 'file'}`)}
-    />
+    <!-- A search lists matching files rather than folders, so it’s not offered for a folder -->
+    {#if !selectFolder}
+      <SearchBar
+        dir="auto"
+        flex={env.isSmallScreen}
+        bind:value={rawSearchTerms}
+        debounce={!isDefaultLibrary}
+        disabled={selectedResources.some((r) => r.file)}
+        ariaLabel={_(`assets_dialog.search_for_${kind ?? 'file'}`)}
+      />
+    {/if}
   {/if}
   {#if browsingSubfolders}
     <!--
@@ -429,7 +525,7 @@
       {/snippet}
     </Button>
   {/if}
-  {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary')}
+  {#if !selectFolder && (isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary'))}
     <Button
       variant="primary"
       label={_('upload')}
@@ -447,8 +543,8 @@
 <Dialog
   {title}
   size="x-large"
-  okLabel={_('insert')}
-  okDisabled={!selectedResources.length}
+  okLabel={selectFolder ? _('select') : _('insert')}
+  okDisabled={selectFolder ? !pickedFolderPublicPaths.length : !selectedResources.length}
   focusInput={false}
   bind:open
   {onOk}
@@ -463,6 +559,17 @@
     {/if}
   {/snippet}
   {#snippet footerExtra()}
+    {#if pickedFolderPublicPaths.length}
+      <div role="status" class="selected-folder" dir="auto">
+        {#if pickedFolderPublicPaths.length === 1}
+          {_('assets_dialog.selected_folder', { values: { path: pickedFolderPublicPaths[0] } })}
+        {:else}
+          {_('assets_dialog.selected_folders', {
+            values: { count: pickedFolderPublicPaths.length },
+          })}
+        {/if}
+      </div>
+    {/if}
     {#if isEnabledMediaService}
       {@const { showServiceLink, serviceLabel, serviceURL } =
         allStockAssetProviders[/** @type {StockAssetProviderName} */ (libraryName)]}
@@ -483,13 +590,15 @@
         onChange={(event) => {
           libraryName = event.detail.name;
           subfolderPath = '';
+          selectedSubfolderPaths = [];
           selectedResources = [];
         }}
       >
         {#if isDefaultLibraryEnabled}
           <OptionGroup label={_('asset_location.repository')}>
-            {#each Object.entries(assetLibraryFolderMap) as [id, { folder, enabled }] (id)}
-              {#if enabled}
+            {#each Object.entries(assetLibraryFolderMap) as [id, entry] (id)}
+              {#if isFolderOffered(entry)}
+                {@const { folder } = entry}
                 {@const name = `default-${id}`}
                 <Option
                   {name}
@@ -504,9 +613,9 @@
             {/each}
           </OptionGroup>
         {/if}
-        {#if canEnterURL || !!Object.keys(enabledCloudServiceEntries).length}
+        {#if showURLInput || !!cloudServiceEntries.length}
           <OptionGroup label={_('asset_location.external')}>
-            {#each enabledCloudServiceEntries as [, { serviceId, serviceLabel }] (serviceId)}
+            {#each cloudServiceEntries as [, { serviceId, serviceLabel }] (serviceId)}
               <Option
                 name={serviceId}
                 label={serviceLabel}
@@ -522,7 +631,7 @@
                 {/snippet}
               </Option>
             {/each}
-            {#if canEnterURL}
+            {#if showURLInput}
               <Option
                 name="enter-url"
                 label={_('assets_dialog.enter_url')}
@@ -553,12 +662,14 @@
         </div>
       {/if}
     </div>
-    <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane">
+    <!-- The focus is kept here while the folders being browsed are replaced -->
+    <div role="none" id="{elementIdPrefix}-content-pane" class="content-pane" data-focus-scope>
       {#if isDefaultLibrary && selectedFolder}
         <InternalAssetsPanel
           {accept}
           {multiple}
-          assets={panelAssets}
+          {selectFolder}
+          assets={selectFolder ? [] : panelAssets}
           bind:selectedResources
           {searchTerms}
           basePath={browsingSubfolders ? browsedPath : selectedFolder.internalPath}
@@ -568,15 +679,15 @@
           onDrop={({ files }) => {
             onDrop(files);
           }}
-          onNavigate={(path) => {
-            subfolderPath = path;
-          }}
+          {selectedSubfolderPaths}
+          onSelectSubfolder={selectFolder ? onSelectSubfolder : undefined}
+          onNavigate={navigate}
           onOpenSubfolder={({ path }) => {
-            subfolderPath = getRelativePath(path, /** @type {string} */ (targetFolderPath));
+            navigate(getRelativePath(path, /** @type {string} */ (targetFolderPath)));
           }}
         />
       {/if}
-      {#if canEnterURL && libraryName === 'enter-url'}
+      {#if showURLInput && libraryName === 'enter-url'}
         <EmptyState>
           <div role="none">
             {kind === 'image'
@@ -684,8 +795,15 @@
     }
   }
 
-  .service-link {
+  .service-link,
+  .selected-folder {
     font-size: var(--sui-font-size-small);
+  }
+
+  .selected-folder {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .filter-tools {

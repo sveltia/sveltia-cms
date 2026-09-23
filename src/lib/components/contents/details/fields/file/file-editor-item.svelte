@@ -19,7 +19,7 @@
 
   /**
    * @import { Asset, AssetKind, Entry, EntryDraft } from '$lib/types/private';
-   * @import { MediaField } from '$lib/types/public';
+   * @import { FileField, MediaField } from '$lib/types/public';
    */
 
   /**
@@ -95,6 +95,10 @@
 
   const { widget: fieldType } = $derived(fieldConfig);
   const isImageField = $derived(fieldType === 'image');
+  /** Whether the value is a folder path, with the File field’s `select_folder` option. */
+  const isFolder = $derived(
+    fieldType === 'file' && /** @type {FileField} */ (fieldConfig).select_folder === true,
+  );
   const sortable = $derived(!!onMove && !readonly);
   /**
    * Whether the file is not yet saved to the repository. An unsaved file is a pending upload cached
@@ -225,6 +229,15 @@
       file = entryDraft.current.files[value]?.file;
     }
 
+    // A folder has no preview
+    if (isFolder) {
+      asset = undefined;
+      kind = undefined;
+      src = undefined;
+
+      return;
+    }
+
     // Update the `src` when an asset is selected
     if (value) {
       if (isImageField && /^https?:/.test(value)) {
@@ -316,7 +329,7 @@
     <AssetPreview kind={asset.kind} {asset} variant="tile" checkerboard={true} />
   {:else}
     <span role="none" class="preview no-thumbnail">
-      <Icon name="draft" />
+      <Icon name={isFolder ? 'folder' : 'draft'} />
     </span>
   {/if}
   <div role="none">

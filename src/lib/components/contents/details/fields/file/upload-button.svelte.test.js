@@ -123,6 +123,23 @@ describe('UploadButton', () => {
       .toHaveTextContent('Click to browse… Browse');
   });
 
+  test('shows a folder icon for a folder', async () => {
+    const { container } = await render(UploadButton, {
+      allowDrop: false,
+      invalid: false,
+      readonly: false,
+      processing: false,
+      isImageField: false,
+      multiple: false,
+      selectFolder: true,
+      showSelectAssetsDialog: false,
+      replaceMode: false,
+    });
+
+    await expect.element(page.getByText(/Click to browse/)).toBeInTheDocument();
+    expect(container.querySelector('.empty > .icon')).toHaveTextContent('folder');
+  });
+
   test('asks for a single file, or several images', async () => {
     await renderButton({ isImageField: false });
 
