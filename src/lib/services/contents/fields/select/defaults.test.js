@@ -292,6 +292,7 @@ describe('Test getDefaultValueMap()', () => {
   });
 
   test('should start a single select field without default with the matching empty value', () => {
+    // eslint-disable-next-line jsdoc/require-jsdoc
     const getValue = (/** @type {any[] | undefined} */ options) =>
       getDefaultValueMap({
         fieldConfig: /** @type {SelectField} */ ({ ...baseFieldConfig, options }),
