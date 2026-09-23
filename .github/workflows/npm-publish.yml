@@ -7,17 +7,20 @@ on:
     types:
       - published
 
-permissions:
-  id-token: write
-  contents: read
+permissions: {}
 
 jobs:
   build-and-publish:
     name: Build and Publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing
     steps:
       - name: Checkout the branch
         uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
       - name: Install pnpm and Node.js
         uses: pnpm/setup@v3.0.0
         with:
@@ -26,9 +29,21 @@ jobs:
           cache: true
       - name: Build & publish the app
         run: pnpm publish --no-git-checks
+  # A separate job without `id-token`, so the third-party action can’t obtain npm credentials
+  notify-discord:
+    name: Notify Discord of Release
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
       - name: Notify Discord of Release
-        uses: SethCohen/github-releases-to-discord@v1.20.0
+        uses: sarisia/actions-status-discord@v1.16.0
         with:
-          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          reduce_headings: true
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          title: ${{ github.event.release.name || github.event.release.tag_name }}
+          description: ${{ github.event.release.body }}
+          url: ${{ github.event.release.html_url }}
+          color: 2105893
+          noprefix: true
+          nocontext: true
         continue-on-error: true
