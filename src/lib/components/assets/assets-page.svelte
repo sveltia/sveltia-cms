@@ -59,7 +59,7 @@
   import { env } from '$lib/services/user/env.svelte';
 
   /**
-   * @import { Asset } from '$lib/types/private';
+   * @import { Asset, AssetFolderInfo } from '$lib/types/private';
    */
 
   const ROUTE_REGEX = /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
@@ -170,6 +170,12 @@
         announcedPageStatus.current = _('viewing_asset_folder_list');
         isIndexPage = true;
       } else if (allAssetFolders.current.length) {
+        // Select All Assets right away, because the redirect below takes effect asynchronously in a
+        // view transition, and the folder info panel would be rendered with no folder until then
+        selectedAssetFolder.current = /** @type {{ folder: AssetFolderInfo }} */ (
+          resolveAssetFolderPath('-/all')
+        ).folder;
+        selectedSubfolderPath.current = '';
         // Redirect to All Assets
         goto('/assets/-/all');
       } else {

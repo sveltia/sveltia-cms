@@ -207,6 +207,70 @@ describe('AssetsPage', () => {
     expect(focusedAsset.current).toBeUndefined();
   });
 
+  test('selects all the assets while the index is being redirected', async () => {
+    /** @type {HashChangeEvent[]} */
+    const heldEvents = [];
+
+    /**
+     * Hold back the `hashchange` event of the redirect, which the app fires asynchronously in a
+     * view transition, so the page is rendered before the redirect takes effect.
+     * @param {HashChangeEvent} event Event.
+     */
+    const holdEvent = (event) => {
+      event.stopImmediatePropagation();
+      heldEvents.push(event);
+    };
+
+    window.location.hash = '#/assets/-/all';
+    currentView.current = { type: 'grid', showInfo: true };
+
+    // Let the `hashchange` events go by, as the app does before mounting the page, so the redirect
+    // is the only navigation. The change to `-/all` above fires one of its own unless the previous
+    // test has left the URL there, so wait for the one to the index
+    await new Promise((resolve) => {
+      /**
+       * Resolve once the URL has changed to the index.
+       * @param {HashChangeEvent} event Event.
+       */
+      const onHashChange = ({ newURL }) => {
+        if (new URL(newURL).hash === '#/assets') {
+          window.removeEventListener('hashchange', onHashChange);
+          resolve(undefined);
+        }
+      };
+
+      window.addEventListener('hashchange', onHashChange);
+      window.location.hash = '#/assets';
+    });
+
+    // The previous test may have left the same announcement, which is only made once the redirect
+    // has taken effect
+    announcedPageStatus.current = '';
+    window.addEventListener('hashchange', holdEvent, { capture: true });
+
+    try {
+      await render(AssetsPage);
+      await expect.poll(() => heldEvents.length).toBe(1);
+
+      const sidebar = page.getByRole('group', { name: 'Asset Info' });
+
+      expect(window.location.hash).toBe('#/assets/-/all');
+      await expect.element(sidebar).toMatchTextContent('Folder All Assets Contents 2 assets');
+      expect(announcedPageStatus.current).toBe('');
+      window.removeEventListener('hashchange', holdEvent, { capture: true });
+
+      const [{ oldURL, newURL }] = heldEvents;
+
+      window.dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL }));
+      await expect
+        .poll(() => announcedPageStatus.current)
+        .toBe('You’re now viewing the “\u2068All Assets\u2069” asset folder, which has 2 assets.');
+      await expect.element(sidebar).toMatchTextContent('Folder All Assets Contents 2 assets');
+    } finally {
+      window.removeEventListener('hashchange', holdEvent, { capture: true });
+    }
+  });
+
   test('redirects to the first external location when no folder is configured', async () => {
     const folders = allAssetFolders.current;
 
