@@ -53,7 +53,7 @@
     "@lexical/markdown": "^0.51.0",
     "@sindresorhus/transliterate": "^2.3.1",
     "@sveltia/i18n": "^1.4.0",
-    "@sveltia/ui": "^0.75.6",
+    "@sveltia/ui": "^0.76.0",
     "@sveltia/utils": "^0.12.1",
     "create-react-class": "^15.7.0",
     "dayjs": "^1.11.23",
