@@ -1147,6 +1147,48 @@ describe('draft/validate/fields', () => {
         expect(result.valid).toBe(false);
       });
 
+      it('should accept `null` and `false` on a required select field offering them', () => {
+        const options = [
+          { label: 'Yes', value: true },
+          { label: 'No', value: false },
+          { label: 'Not relevant', value: null },
+        ];
+
+        vi.mocked(getField).mockReturnValue({ name: 'fip', widget: 'select', options });
+        vi.mocked(isFieldRequired).mockReturnValue(true);
+
+        [true, false, null].forEach((value) => {
+          const result = validateAnyField({
+            draft: mockEntryDraft,
+            validities: { en: {} },
+            locale: 'en',
+            keyPath: 'fip',
+            valueMap: { fip: value },
+            value,
+          });
+
+          expect(result.valueMissing).toBe(false);
+          expect(result.valid).toBe(true);
+        });
+      });
+
+      it('should reject `null` on a required select field not offering it', () => {
+        vi.mocked(getField).mockReturnValue({ name: 'fip', widget: 'select', options: [1, 2] });
+        vi.mocked(isFieldRequired).mockReturnValue(true);
+
+        const result = validateAnyField({
+          draft: mockEntryDraft,
+          validities: { en: {} },
+          locale: 'en',
+          keyPath: 'fip',
+          valueMap: { fip: null },
+          value: null,
+        });
+
+        expect(result.valueMissing).toBe(true);
+        expect(result.valid).toBe(false);
+      });
+
       it('should validate required number field (float) with null value', () => {
         const validities = { en: {} };
 

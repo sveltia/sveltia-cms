@@ -980,7 +980,7 @@
 
 /**
  * Select field option value.
- * @typedef {string | number | null} SelectFieldValue
+ * @typedef {string | number | boolean | null} SelectFieldValue
  */
 
 /**

@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest';
 
-import { getOptionLabel, getPreviewLabels } from './helpers';
+import {
+  getEmptyOptionValue,
+  getOptionLabel,
+  getOptionValueType,
+  getPreviewLabels,
+  isOptionValue,
+} from './helpers';
 
 /**
  * @import { SelectField } from '$lib/types/public';
@@ -191,9 +197,8 @@ describe('Test getPreviewLabels()', () => {
       'banana',
     ]);
     expect(getPreviewLabels({ fieldConfig: plainFieldConfig, currentValue: 42 })).toEqual(['42']);
-    expect(getPreviewLabels({ fieldConfig: plainFieldConfig, currentValue: null })).toEqual([
-      'null',
-    ]);
+    // `null` is a cleared value unless it’s one of the options
+    expect(getPreviewLabels({ fieldConfig: plainFieldConfig, currentValue: null })).toEqual([]);
   });
 
   test('should show the label of a value when the options have labels', () => {
@@ -209,6 +214,22 @@ describe('Test getPreviewLabels()', () => {
     expect(getPreviewLabels({ fieldConfig: labeledFieldConfig, currentValue: 'cherry' })).toEqual([
       'cherry',
     ]);
+  });
+
+  test('should show nothing for a cleared `null` value unless it is one of the options', () => {
+    expect(getPreviewLabels({ fieldConfig: labeledFieldConfig, currentValue: null })).toEqual([]);
+    expect(
+      getPreviewLabels({
+        fieldConfig: {
+          ...baseFieldConfig,
+          options: [
+            { label: 'Yes', value: true },
+            { label: 'Not relevant', value: null },
+          ],
+        },
+        currentValue: null,
+      }),
+    ).toEqual(['Not relevant']);
   });
 
   test('should sort the labels of multiple values', () => {
@@ -233,5 +254,56 @@ describe('Test getPreviewLabels()', () => {
         currentValue: 'apple',
       }),
     ).toEqual([]);
+  });
+});
+
+describe('isOptionValue', () => {
+  test('should find a value among labeled options, including `false` and `null`', () => {
+    /** @type {SelectField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      options: [
+        { label: 'Yes', value: true },
+        { label: 'No', value: false },
+        { label: 'Not relevant', value: null },
+      ],
+    };
+
+    expect(isOptionValue({ fieldConfig, value: true })).toBe(true);
+    expect(isOptionValue({ fieldConfig, value: false })).toBe(true);
+    expect(isOptionValue({ fieldConfig, value: null })).toBe(true);
+    expect(isOptionValue({ fieldConfig, value: '' })).toBe(false);
+    expect(isOptionValue({ fieldConfig, value: undefined })).toBe(false);
+  });
+
+  test('should find a value among plain options', () => {
+    /** @type {SelectField} */
+    const fieldConfig = { ...baseFieldConfig, options: [1, 2] };
+
+    expect(isOptionValue({ fieldConfig, value: 1 })).toBe(true);
+    expect(isOptionValue({ fieldConfig, value: '1' })).toBe(false);
+    expect(isOptionValue({ fieldConfig, value: null })).toBe(false);
+  });
+});
+
+describe('getOptionValueType', () => {
+  test('should return the type of the value, typing `null` as a number', () => {
+    expect(getOptionValueType('a')).toBe('string');
+    expect(getOptionValueType(1)).toBe('number');
+    expect(getOptionValueType(false)).toBe('boolean');
+    expect(getOptionValueType(null)).toBe('number');
+  });
+});
+
+describe('getEmptyOptionValue', () => {
+  test('should return an empty string for string options or no options', () => {
+    expect(getEmptyOptionValue('apple')).toBe('');
+    expect(getEmptyOptionValue(undefined)).toBe('');
+  });
+
+  test('should return `null` for other types of options', () => {
+    expect(getEmptyOptionValue(1)).toBeNull();
+    expect(getEmptyOptionValue(true)).toBeNull();
+    expect(getEmptyOptionValue(null)).toBeNull();
   });
 });

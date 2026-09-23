@@ -16,6 +16,7 @@ import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { validateListField } from '$lib/services/contents/fields/list/validate';
 import { validateNumberField } from '$lib/services/contents/fields/number/validate';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
+import { isOptionValue } from '$lib/services/contents/fields/select/helpers';
 import { validateStringField } from '$lib/services/contents/fields/string/validate';
 import { getRegex } from '$lib/services/utils/regex';
 
@@ -37,6 +38,7 @@ import { getRegex } from '$lib/services/utils/regex';
  * ListField,
  * LocaleCode,
  * MinMaxValueField,
+ * SelectField,
  * } from '$lib/types/public';
  */
 
@@ -113,11 +115,13 @@ export const finalizeValidity = (validity) => {
  * @param {boolean} args.required Whether the field is required.
  * @param {any} args.validation Pattern validation array or undefined.
  * @param {EntryValidityState} args.validity Validity state to update.
+ * @param {boolean} [args.selected] Whether the value is a selected option, which is never empty,
+ * even if the option’s value is `null` or an empty string.
  * @returns {{ empty: boolean }} Whether the field holds no value at all.
  */
-const validateScalarField = ({ value, required, validation, validity }) => {
+const validateScalarField = ({ value, required, validation, validity, selected = false }) => {
   const trimmed = typeof value === 'string' ? value.trim() : value;
-  const empty = trimmed === undefined || trimmed === null || trimmed === '';
+  const empty = !selected && (trimmed === undefined || trimmed === null || trimmed === '');
 
   if (required && empty) {
     validity.valueMissing = true;
@@ -388,7 +392,11 @@ export const validateAnyField = (args) => {
   value = resolveMediaValue({ fieldType, value, files });
 
   if (!(['object', 'list', 'hidden', 'compute', 'keyvalue'].includes(fieldType) || multiple)) {
-    ({ empty } = validateScalarField({ value, required, validation, validity }));
+    const selected =
+      fieldType === 'select' &&
+      isOptionValue({ fieldConfig: /** @type {SelectField} */ (fieldConfig), value });
+
+    ({ empty } = validateScalarField({ value, required, validation, validity, selected }));
   }
 
   const validateFieldFn = VALIDATE_FIELD_FUNCTIONS[fieldType];

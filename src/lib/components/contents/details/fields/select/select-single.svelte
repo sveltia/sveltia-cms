@@ -2,6 +2,11 @@
   import { _ } from '@sveltia/i18n';
   import { Option, Radio, RadioGroup, Select } from '@sveltia/ui';
 
+  import {
+    getEmptyOptionValue,
+    getOptionValueType,
+  } from '$lib/services/contents/fields/select/helpers';
+
   /**
    * @import { SelectFieldSelectorOption, SelectFieldSelectorProps } from '$lib/types/private';
    * @import { SelectFieldValue } from '$lib/types/public';
@@ -26,7 +31,8 @@
   } = $props();
 
   const { dropdown_threshold: dropdownThreshold = 5 } = $derived(fieldConfig);
-  const valueType = $derived(options[0]?.value !== undefined ? typeof options[0].value : 'string');
+  /** Whether one of the options already clears the value, so no “unselected” option is needed. */
+  const hasEmptyOption = $derived(options.some(({ value }) => value === null || value === ''));
   /**
    * Options to render, with an extra “unselected” option prepended so the user can clear the value
    * if the field is optional. This is derived rather than written back to the `options` prop from
@@ -38,11 +44,11 @@
    * @type {SelectFieldSelectorOption[]}
    */
   const allOptions = $derived(
-    !required && !options.some(({ value }) => !value)
+    !required && !hasEmptyOption
       ? [
           {
             label: _('unselected_option'),
-            value: valueType === 'number' ? null : '',
+            value: getEmptyOptionValue(options[0]?.value),
             searchValue: '',
           },
           ...options,
@@ -61,7 +67,14 @@
     aria-errormessage="{fieldId}-error"
   >
     {#each allOptions as { label, value, searchValue }, index (`${index}-${value}`)}
-      <Option {label} {value} {valueType} {searchValue} selected={value === currentValue} wrap />
+      <Option
+        {label}
+        {value}
+        valueType={getOptionValueType(value)}
+        {searchValue}
+        selected={value === currentValue}
+        wrap
+      />
     {/each}
   </Select>
 {:else}
@@ -76,7 +89,12 @@
     }}
   >
     {#each allOptions as { label, value }, index (`${index}-${value}`)}
-      <Radio {label} {value} {valueType} checked={value === currentValue} />
+      <Radio
+        {label}
+        {value}
+        valueType={getOptionValueType(value)}
+        checked={value === currentValue}
+      />
     {/each}
   </RadioGroup>
 {/if}

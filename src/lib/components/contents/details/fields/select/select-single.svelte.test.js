@@ -73,6 +73,90 @@ describe('SelectSingle', () => {
     expect(props.currentValue).toBeNull();
   });
 
+  test('writes back boolean and `null` option values as they are', async () => {
+    const props = $state({
+      fieldId: 'fip',
+      fieldConfig: { name: 'fip', widget: 'select', options: [] },
+      currentValue: /** @type {boolean | null} */ (null),
+      options: [
+        { label: 'Yes', value: true, searchValue: 'true' },
+        { label: 'No', value: false, searchValue: 'false' },
+        { label: 'Not relevant', value: null, searchValue: 'null' },
+      ],
+    });
+
+    await render(SelectSingle, /** @type {any} */ (props));
+    await sleep(150);
+
+    expect(page.getByRole('radio').elements()).toHaveLength(3);
+    await expect.element(page.getByRole('radio', { name: 'Not relevant' })).toBeChecked();
+
+    await page.getByRole('radio', { name: 'No' }).click();
+    expect(props.currentValue).toBe(false);
+
+    await page.getByRole('radio', { name: 'Yes' }).click();
+    expect(props.currentValue).toBe(true);
+
+    await page.getByRole('radio', { name: 'Not relevant' }).click();
+    expect(props.currentValue).toBeNull();
+  });
+
+  test('clears an optional boolean field with `null`', async () => {
+    const props = $state({
+      fieldId: 'fip',
+      fieldConfig: { name: 'fip', widget: 'select', options: [] },
+      currentValue: /** @type {boolean | null} */ (null),
+      required: false,
+      options: [
+        { label: 'Yes', value: true, searchValue: 'true' },
+        { label: 'No', value: false, searchValue: 'false' },
+      ],
+    });
+
+    await render(SelectSingle, /** @type {any} */ (props));
+    await sleep(150);
+
+    // `false` is a choice, not an empty value, so the empty option is still offered, and it’s
+    // checked for the `null` value a new entry starts with
+    expect(page.getByRole('radio').elements()).toHaveLength(3);
+    await expect.element(page.getByRole('radio', { name: '(None)' })).toBeChecked();
+
+    await page.getByRole('radio', { name: 'No', exact: true }).click();
+    expect(props.currentValue).toBe(false);
+
+    await page.getByRole('radio', { name: '(None)' }).click();
+    expect(props.currentValue).toBeNull();
+  });
+
+  test('writes back boolean and `null` option values from a drop-down', async () => {
+    const props = $state({
+      fieldId: 'fip',
+      fieldConfig: { name: 'fip', widget: 'select', options: [], dropdown_threshold: 2 },
+      currentValue: /** @type {boolean | null} */ (true),
+      options: [
+        { label: 'Yes', value: true, searchValue: 'true' },
+        { label: 'No', value: false, searchValue: 'false' },
+        { label: 'Not relevant', value: null, searchValue: 'null' },
+      ],
+    });
+
+    await render(SelectSingle, /** @type {any} */ (props));
+
+    const select = page.getByRole('combobox');
+
+    await expect.element(select).toHaveTextContent('Yes');
+
+    await select.click();
+    await sleep(150);
+    await page.getByRole('option', { name: 'No' }).click();
+    expect(props.currentValue).toBe(false);
+
+    await select.click();
+    await sleep(150);
+    await page.getByRole('option', { name: 'Not relevant' }).click();
+    expect(props.currentValue).toBeNull();
+  });
+
   test('offers many options in a drop-down', async () => {
     const props = $state({
       fieldId: 'letter',
