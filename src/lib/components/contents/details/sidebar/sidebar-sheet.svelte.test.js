@@ -43,6 +43,24 @@ describe('SidebarSheet', () => {
     await expect.poll(() => page.getByRole('dialog').elements().length).toBe(0);
   });
 
+  test('closes when swiped down', async () => {
+    await renderWithDraft(SidebarSheet, { draft: createMockDraft({ fields }) });
+
+    sidebarSheetPanel.current = 'validation';
+    await expect.element(page.getByRole('dialog', { name: 'Validation' })).toBeVisible();
+
+    const handle = /** @type {HTMLElement} */ (document.querySelector('dialog .handle'));
+    const { left, top } = handle.getBoundingClientRect();
+    const init = { bubbles: true, pointerId: 1, isPrimary: true, clientX: left };
+
+    handle.dispatchEvent(new PointerEvent('pointerdown', { ...init, clientY: top }));
+    handle.dispatchEvent(new PointerEvent('pointermove', { ...init, clientY: top + 400 }));
+    handle.dispatchEvent(new PointerEvent('pointerup', { ...init, clientY: top + 400 }));
+
+    await expect.poll(() => sidebarSheetPanel.current).toBeNull();
+    await expect.poll(() => page.getByRole('dialog').elements().length).toBe(0);
+  });
+
   test('closes when the panel is cleared elsewhere', async () => {
     await renderWithDraft(SidebarSheet, { draft: createMockDraft({ fields }) });
 

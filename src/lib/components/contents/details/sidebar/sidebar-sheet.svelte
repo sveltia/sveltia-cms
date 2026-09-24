@@ -55,6 +55,7 @@
   class="entry-sidebar-sheet"
   position="bottom"
   size="medium"
+  swipeDismiss
   title={key ? _(`entry_sidebar.${key}.title`) : ''}
   onClose={() => {
     closingKey = null;
