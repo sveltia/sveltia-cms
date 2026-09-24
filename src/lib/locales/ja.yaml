@@ -903,6 +903,8 @@ entry_validation_errors: |
   .match $count
     1   {{ ひとつのフィールドにエラーがあります。エントリーを保存するには問題を修正してください。 }}
     *   {{ {$count} 個のフィールドにエラーがあります。エントリーを保存するには問題を修正してください。 }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: エラーを表示
 
 # ==============================================================================
 # Success Notifications

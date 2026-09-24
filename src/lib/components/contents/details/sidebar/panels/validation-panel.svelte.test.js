@@ -77,6 +77,25 @@ describe('ValidationPanel', () => {
     );
   });
 
+  test('hands the selected field over when asked to', async () => {
+    const onSelectField = vi.fn();
+    const postMessage = vi.spyOn(window, 'postMessage');
+
+    await renderWithDraft(ValidationPanel, {
+      draft: createMockDraft({
+        collectionName: 'pages',
+        fields,
+        values: { _default: { title: '', body: 'long enough text' } },
+      }),
+      props: { onSelectField },
+    });
+    await page.getByRole('button', { name: 'Validate' }).click();
+    await page.getByRole('button', { name: /Title/ }).click();
+
+    expect(onSelectField).toHaveBeenCalledExactlyOnceWith({ locale: '_default', keyPath: 'title' });
+    expect(postMessage).not.toHaveBeenCalled();
+  });
+
   test('has nothing to validate without a draft', async () => {
     await renderWithDraft(ValidationPanel, { draft: /** @type {any} */ (null) });
 

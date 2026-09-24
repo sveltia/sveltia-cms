@@ -16,6 +16,19 @@
    * @import { VisibleField } from '$lib/types/public';
    */
 
+  /**
+   * @typedef {object} Props
+   * @property {typeof highlightEditorField} [onSelectField] Called when an invalid field is
+   * selected. Defaults to highlighting the field in the editor.
+   */
+
+  /** @type {Props} */
+  let {
+    /* eslint-disable prefer-const */
+    onSelectField = highlightEditorField,
+    /* eslint-enable prefer-const */
+  } = $props();
+
   const entryDraft = getEntryDraftContext();
 
   const { validationMessages, collectionName, fileName, currentValues, isIndexFile, validities } =
@@ -85,7 +98,7 @@
                 class="ref"
                 variant="ghost"
                 onclick={() => {
-                  highlightEditorField({ locale, keyPath });
+                  onSelectField({ locale, keyPath });
                 }}
               >
                 <span class="summary">

@@ -11,6 +11,7 @@ import {
   showDuplicateToast,
 } from '$lib/services/contents/editor';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+import { sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
 import { env } from '$lib/services/user/env.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
@@ -163,7 +164,7 @@ describe('ContentDetailsOverlay', () => {
       .toHaveValue('Bonjour');
   });
 
-  test('shows a single pane on a small screen, without the sidebar', async () => {
+  test('shows a single pane on a small screen, with the sidebar panels in a sheet', async () => {
     env.isSmallScreen = true;
     env.isLargeScreen = false;
 
@@ -174,6 +175,9 @@ describe('ContentDetailsOverlay', () => {
       .toBeInTheDocument();
     expect(page.getByRole('group', { name: /Preview/ }).elements()).toHaveLength(0);
     expect(page.getByRole('radiogroup', { name: 'Sidebar Panels' }).elements()).toHaveLength(0);
+
+    sidebarSheetPanel.current = 'validation';
+    await expect.element(page.getByRole('dialog', { name: 'Validation' })).toBeVisible();
   });
 
   test('starts with the requested locale', async () => {

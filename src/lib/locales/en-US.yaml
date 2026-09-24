@@ -954,6 +954,8 @@ entry_validation_errors: |
   .match $count
     one {{ One field has an error. Please correct it to save the entry. }}
     *   {{ {$count} fields have errors. Please correct them to save the entry. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Show Errors
 
 # ==============================================================================
 # Success Notifications

@@ -15,6 +15,7 @@ import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
 import { saveEntry } from '$lib/services/contents/draft/save';
 import { copyFromLocaleToast } from '$lib/services/contents/editor';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+import { sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
 import { deployPollTimedOut } from '$lib/services/deployments';
 import { recheckDeployments } from '$lib/services/deployments/poll';
 import { env } from '$lib/services/user/env.svelte';
@@ -123,6 +124,7 @@ describe('Toolbar', () => {
     env.isLargeScreen = true;
     prefs.closeOnSave = true;
     entryEditorSettings.current = { showPreview: true, showSecondPane: true, syncScrolling: true };
+    sidebarSheetPanel.current = null;
     unpublishedEntries.current = [];
     deployPollTimedOut.current = false;
     contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
@@ -187,8 +189,51 @@ describe('Toolbar', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent(
-        'error Error 2 fields have errors. Please correct them to save the entry.',
+        'error Error 2 fields have errors. Please correct them to save the entry. Show Errors',
       );
+
+    // The button opens the Validation panel in the sidebar, and puts the toast away
+    await page.getByRole('button', { name: 'Show Errors' }).click();
+    expect(entryEditorSettings.current?.sidebarPanel).toBe('validation');
+    expect(sidebarSheetPanel.current).toBeNull();
+    await expect.poll(getShownToastText).toBeUndefined();
+  });
+
+  test('offers no sidebar panels for a missing entry on a small screen', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+
+    await renderWithDraft(Toolbar, { draft: undefined });
+
+    const menu = await openMenu();
+
+    await expect.element(menu.getByRole('menuitem', { name: 'Revert All Changes' })).toBeVisible();
+    expect(menu.getByRole('menuitem', { name: 'Validation' }).elements()).toHaveLength(0);
+  });
+
+  test('opens the sidebar panels in the sheet on a small screen', async () => {
+    env.isSmallScreen = true;
+    env.isLargeScreen = false;
+    vi.mocked(saveEntry).mockRejectedValue(new Error('validation_failed'));
+
+    await renderToolbar({ validities: { _default: { title: { valid: false } } } });
+
+    const menu = await openMenu();
+
+    // A new entry has no history, and nothing refers to the collection
+    await expect.element(menu.getByRole('menuitem', { name: 'Validation' })).toBeEnabled();
+    await expect.element(menu.getByRole('menuitem', { name: 'History' })).toBeDisabled();
+    await expect.element(menu.getByRole('menuitem', { name: 'Backlinks' })).toBeDisabled();
+
+    await menu.getByRole('menuitem', { name: 'Validation' }).click();
+    expect(sidebarSheetPanel.current).toBe('validation');
+    // The sheet isn’t remembered
+    expect(entryEditorSettings.current?.sidebarPanel).toBeUndefined();
+
+    sidebarSheetPanel.current = null;
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Show Errors' }).click();
+    expect(sidebarSheetPanel.current).toBe('validation');
   });
 
   test('reports a failure to save', async () => {
@@ -1190,6 +1235,9 @@ describe('Toolbar', () => {
           .map((el) => el.textContent?.trim()),
       ).toEqual([
         'View on Live Site',
+        'Validation',
+        'History',
+        'Backlinks',
         'Duplicate',
         'Discard',
         'Delete',

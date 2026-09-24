@@ -19,6 +19,7 @@
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import RemoteChangeInfobar from '$lib/components/contents/details/remote-change-infobar.svelte';
+  import SidebarSheet from '$lib/components/contents/details/sidebar/sidebar-sheet.svelte';
   import Sidebar from '$lib/components/contents/details/sidebar/sidebar.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { rememberFocus } from '$lib/services/app/focus';
@@ -596,8 +597,10 @@
               <Spacer flex />
             {/if}
           </div>
-          <!-- @todo Enable sidebar for mobile -->
-          {#if !env.isSmallScreen}
+          <!-- The sidebar doesn’t fit on a small screen, so its panels open in a bottom sheet -->
+          {#if env.isSmallScreen}
+            <SidebarSheet />
+          {:else}
             <Sidebar />
           {/if}
         {/key}

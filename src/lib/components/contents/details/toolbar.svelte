@@ -49,6 +49,7 @@
   import { validateDraft } from '$lib/services/contents/draft/validate';
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+  import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -570,6 +571,20 @@
       <Menu ariaLabel={_('editor_options')}>
         {#if env.isSmallScreen}
           {@render overflowButtons()}
+          <!-- The sidebar doesn’t fit on a small screen, so its panels open in a bottom sheet. The
+            menu can’t be opened while the toolbar is disabled -->
+          {#if !notFound}
+            {#each getSidebarPanels(entryDraft.current) as { key, disabled: panelDisabled } (key)}
+              <MenuItem
+                label={_(`entry_sidebar.${key}.title`)}
+                disabled={panelDisabled}
+                onclick={() => {
+                  showSidebarPanel(key);
+                }}
+              />
+            {/each}
+            <Divider />
+          {/if}
         {/if}
         {#if !disabled && !isNew}
           {@const canDuplicate =
@@ -704,6 +719,15 @@
 <Toast bind:show={showValidationToast}>
   <Alert status="error">
     {_('entry_validation_errors', { values: { count: errorCount } })}
+    <Button
+      variant="secondary"
+      size="small"
+      label={_('show_errors')}
+      onclick={() => {
+        showValidationToast = false;
+        showSidebarPanel('validation');
+      }}
+    />
   </Alert>
 </Toast>
 

@@ -85,6 +85,16 @@ describe('Sidebar', () => {
     await expect.element(page.getByRole('group', { name: 'Validation' })).toBeInTheDocument();
   });
 
+  test('opens the panel chosen elsewhere', async () => {
+    await renderWithDraft(Sidebar, { draft: createMockDraft() });
+    expect(page.getByRole('group').elements()).toHaveLength(0);
+
+    // E.g. with the Show Errors button on the validation toast
+    entryEditorSettings.current = { ...entryEditorSettings.current, sidebarPanel: 'validation' };
+    await expect.element(page.getByRole('group', { name: 'Validation' })).toBeInTheDocument();
+    await expect.element(page.getByRole('radio', { name: 'Validation' })).toBeChecked();
+  });
+
   test('disables the panels that don’t apply', async () => {
     // A new entry in a collection nothing refers to, with a backend that has no history
     await renderWithDraft(Sidebar, { draft: createMockDraft() });
