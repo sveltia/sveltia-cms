@@ -15,15 +15,18 @@ import { build, defineConfig } from 'vite';
 import { defaultExclude } from 'vitest/config';
 import { parse as parseYAML } from 'yaml';
 
+import { buildNpm, getNpmDependencies } from './scripts/npm-build.js';
 import { SHARED_REACT_KEY } from './src/lib/chunks/constants.js';
 // eslint-disable-next-line import-x/no-useless-path-segments
 import { BUILTIN_FIELD_TYPES } from './src/lib/services/contents/fields/index.js';
 import svelteConfig from './svelte.config.js';
 
 /**
- * List of dev dependencies to include in the published `package.json`.
+ * Packages whose types the generated `d.ts` files import, listed in the published `package.json`
+ * as optional peer dependencies: the code is bundled, so only a TypeScript user needs them, and a
+ * package manager never installs the dev dependencies of a dependency.
  */
-const DEV_DEPENDENCIES = ['@types/react', 'immutable'];
+const TYPE_DEPENDENCIES = ['@types/react', 'immutable'];
 /**
  * Path to the generated main type declaration file.
  */
@@ -150,21 +153,30 @@ const copyPackageFiles = () => ({
 
       // Remove unnecessary properties as we only publish compiled bundles
       delete packageJson.dependencies;
+      delete packageJson.devDependencies;
       delete packageJson.scripts;
+      // `directory` only points `pnpm publish` at this folder from the repository root, and the
+      // other options are passed on the command line. Kept here, it would make pnpm look for the
+      // manifest in a `package` subfolder when the folder is installed as a local dependency
+      delete packageJson.publishConfig;
 
       // Add properties for distribution; paths are relative to `package`
       Object.assign(packageJson, {
-        // Keep only type declarations imported in the generated `d.ts` files
-        devDependencies: Object.fromEntries(
-          DEV_DEPENDENCIES.map((key) => [key, dependencies[key] ?? devDependencies[key]]),
+        peerDependencies: Object.fromEntries(
+          TYPE_DEPENDENCIES.map((key) => [key, dependencies[key] ?? devDependencies[key]]),
         ),
-        files: ['dist', 'locales', 'schema', 'services', 'types', 'main.d.ts'],
-        main: './dist/sveltia-cms.mjs',
-        module: './dist/sveltia-cms.mjs',
+        peerDependenciesMeta: Object.fromEntries(
+          TYPE_DEPENDENCIES.map((key) => [key, { optional: true }]),
+        ),
+        // Needed by the npm build only; the CDN builds are self-contained
+        dependencies: await getNpmDependencies(),
+        files: ['dist', 'npm', 'locales', 'schema', 'services', 'types', 'main.d.ts'],
+        main: './npm/index.js',
+        module: './npm/index.js',
         exports: {
           '.': {
             types: './main.d.ts',
-            default: './dist/sveltia-cms.mjs',
+            default: './npm/index.js',
           },
         },
         typesVersions: {
@@ -503,13 +515,41 @@ const generateExtraFiles = () => ({
   },
 });
 
+/**
+ * Module resolution options shared by the CDN builds and the npm build.
+ */
+const SHARED_RESOLVE = {
+  alias: {
+    $lib: path.resolve('./src/lib/'),
+  },
+  extensions: ['.js', '.svelte'],
+};
+
+/**
+ * Global constants shared by the CDN builds and the npm build.
+ */
+const SHARED_DEFINE = {
+  'import.meta.env.VITE_APP_LOCALES': JSON.stringify(getAppLocales().join(',')),
+};
+
+/**
+ * Get the plugins processing the source, shared by the CDN builds and the npm build. A new instance
+ * of each is needed per build.
+ * @returns {import('vite').PluginOption[]} Plugins.
+ */
+const getSharedPlugins = () => [
+  yamlToJS(),
+  svelte({
+    ...svelteConfig,
+    emitCss: false,
+  }),
+  bundleSchema(),
+];
+
 // https://vitejs.dev/config/
 export default defineConfig({
   resolve: {
-    alias: {
-      $lib: path.resolve('./src/lib/'),
-    },
-    extensions: ['.js', '.svelte'],
+    ...SHARED_RESOLVE,
     // Vitest doesn’t use the `browser` condition by default, so the `svelte` package would resolve
     // to its server build even in the `happy-dom` environment, while the `.svelte.js` modules are
     // compiled for the client there. Runtime functions like `untrack()` and `flushSync()` would
@@ -530,7 +570,9 @@ export default defineConfig({
     include: ['create-react-class'],
   },
   define: {
-    'import.meta.env.VITE_APP_LOCALES': JSON.stringify(getAppLocales().join(',')),
+    ...SHARED_DEFINE,
+    // Vitest would expose the value as a string, and `'false'` is truthy
+    ...(process.env.VITEST ? {} : { 'import.meta.env.NPM_BUILD': 'false' }),
   },
   build: {
     reportCompressedSize: false,
@@ -572,15 +614,16 @@ export default defineConfig({
     outDir: 'package/dist',
   },
   plugins: [
-    yamlToJS(),
-    svelte({
-      ...svelteConfig,
-      emitCss: false,
-    }),
+    ...getSharedPlugins(),
     copyPackageFiles(),
     generateExtraFiles(),
-    bundleSchema(),
     buildChunks(),
+    buildNpm({
+      resolve: SHARED_RESOLVE,
+      define: SHARED_DEFINE,
+      plugins: getSharedPlugins,
+      locales: getAppLocales(),
+    }),
     // https://sonda.dev/configuration.html
     Sonda({
       enabled: false,

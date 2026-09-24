@@ -19,6 +19,26 @@ export const MEDIA_KINDS = ['image', 'video', 'audio'];
 export const THUMBNAIL_KINDS = ['image', 'video'];
 
 /**
+ * Whether a thumbnail can be generated for a PDF document with the given name, by rendering its
+ * first page with PDF.js. Not in the npm build, which doesn’t load PDF.js from a CDN and doesn’t
+ * bundle it either, as the library comes with hundreds of files for character maps, fonts and
+ * image decoders; `pdf.npm.js` replaces `pdf.js` there. A PDF is shown with a generic icon instead.
+ * @param {string} fileName File name or path, e.g. `files/brochure.pdf`.
+ * @returns {boolean} Result.
+ */
+export const hasPDFThumbnail = (fileName) =>
+  !import.meta.env.NPM_BUILD && fileName.endsWith('.pdf');
+
+/**
+ * Whether a thumbnail can be generated for the given asset: an image, a video, or a PDF document
+ * outside the npm build, see {@link hasPDFThumbnail}.
+ * @param {Asset} asset Asset.
+ * @returns {boolean} Result.
+ */
+export const canCreateThumbnail = (asset) =>
+  THUMBNAIL_KINDS.includes(asset.kind) || hasPDFThumbnail(asset.name);
+
+/**
  * List of all asset kinds.
  * @type {AssetKind[]}
  */

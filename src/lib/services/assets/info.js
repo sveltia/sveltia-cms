@@ -4,7 +4,7 @@ import mime from 'mime';
 
 import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
-import { THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
+import { canCreateThumbnail, hasPDFThumbnail } from '$lib/services/assets/kinds';
 import { backend } from '$lib/services/backends';
 import {
   TEMPLATE_TAG_REGEX,
@@ -261,11 +261,11 @@ export const hasCachedThumbnail = async (sha) => {
  * so it can be revoked independently.
  */
 export const getAssetThumbnailURL = async (asset, { cacheOnly = false } = {}) => {
-  const isPDF = asset.name.endsWith('.pdf');
-
-  if (!(THUMBNAIL_KINDS.includes(asset.kind) || isPDF)) {
+  if (!canCreateThumbnail(asset)) {
     return undefined;
   }
+
+  const isPDF = hasPDFThumbnail(asset.name);
 
   initThumbnailDB();
 

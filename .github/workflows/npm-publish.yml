@@ -28,7 +28,7 @@ jobs:
           runtime: node@26
           cache: true
       - name: Build & publish the app
-        run: pnpm publish --no-git-checks
+        run: pnpm publish --no-git-checks --access public --provenance
   # A separate job without `id-token`, so the third-party action can’t obtain npm credentials
   notify-discord:
     name: Notify Discord of Release

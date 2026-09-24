@@ -9,6 +9,9 @@ import MapEditor from './map-editor.svelte';
 
 vi.mock('$lib/services/app/dependencies', () => ({
   getUnpkgURL: vi.fn((name) => `https://unpkg.com/${name}`),
+  getLeafletMarkerIconURL: vi.fn(
+    async () => 'https://unpkg.com/leaflet/dist/images/marker-icon-2x.png',
+  ),
   loadModule: vi.fn((library) => {
     if (library === 'leaflet') {
       return import('leaflet/dist/leaflet-src.esm.js');

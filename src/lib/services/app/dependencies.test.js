@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getChunkURLs, getUnpkgURL, loadChunk, loadModule } from './dependencies';
+import {
+  getChunkURLs,
+  getLeafletMarkerIconURL,
+  getUnpkgURL,
+  loadChunk,
+  loadModule,
+} from './dependencies';
 
 // Mock the dependencies import
 vi.mock('$lib/services/app', () => ({
@@ -91,6 +97,14 @@ describe('dependencies', () => {
       const fullURL = `${expectedURL}/${testPath}`;
 
       expect(fullURL).toBe('https://unpkg.com/unknown-library/lib/main.js');
+    });
+  });
+
+  describe('getLeafletMarkerIconURL', () => {
+    it('should point to the icon on UNPKG', async () => {
+      await expect(getLeafletMarkerIconURL()).resolves.toBe(
+        'https://unpkg.com/leaflet/dist/images/marker-icon-2x.png',
+      );
     });
   });
 

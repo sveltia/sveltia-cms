@@ -10,7 +10,7 @@
     revokeAssetBlobURLIfNeeded,
     revokeBlobURLIfNeeded,
   } from '$lib/services/assets/info';
-  import { THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
+  import { hasPDFThumbnail, THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
   import { requestFlushSync } from '$lib/services/utils/render';
 
   /**
@@ -72,7 +72,7 @@
   const isThumbnail = $derived(!!asset && !!variant && !controls);
   const isImage = $derived(
     kind === 'image' ||
-      asset?.name.endsWith('.pdf') ||
+      (!!asset && hasPDFThumbnail(asset.name)) ||
       (isThumbnail && THUMBNAIL_KINDS.includes(kind)),
   );
 

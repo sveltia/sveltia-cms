@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 // Create hoisted mocks
 const {
   mockGetMediaFieldURL,
+  mockGetMediaFieldSource,
   mockGetCollection,
   mockIsCollectionIndexFile,
   mockGetField,
@@ -19,6 +20,7 @@ const {
   mockFillEntryPathTemplate,
 } = vi.hoisted(() => ({
   mockGetMediaFieldURL: vi.fn(),
+  mockGetMediaFieldSource: vi.fn(),
   mockGetCollection: vi.fn(),
   mockIsCollectionIndexFile: vi.fn(),
   mockGetField: vi.fn(),
@@ -49,6 +51,7 @@ vi.mock('$lib/services/assets/folders', () => ({
 }));
 
 vi.mock('$lib/services/assets/info', () => ({
+  getMediaFieldSource: mockGetMediaFieldSource,
   getMediaFieldURL: mockGetMediaFieldURL,
 }));
 
@@ -382,6 +385,33 @@ describe('getAssociatedAssets', () => {
     const result = await getEntryThumbnail(mockCollection, mockEntryLocal);
 
     expect(result).toBe('https://example.com/test.jpg');
+  });
+
+  test('skips a file without a thumbnail, like a document, for the next candidate', async () => {
+    const mockCollection = /** @type {any} */ ({
+      name: 'posts',
+      _i18n: { defaultLocale: 'en' },
+      _thumbnailFieldNames: ['brochure', 'image'],
+    });
+
+    const mockEntryLocal = /** @type {any} */ ({
+      locales: {
+        en: { path: 'test.md', content: { brochure: '/files/flyer.docx', image: '/test.jpg' } },
+      },
+    });
+
+    mockGetMediaFieldSource.mockImplementation(({ value }) => ({
+      asset: value.endsWith('.docx')
+        ? { name: 'flyer.docx', kind: 'document' }
+        : { name: 'test.jpg', kind: 'image' },
+    }));
+    mockGetMediaFieldURL.mockImplementation(async ({ value }) => `https://example.com${value}`);
+
+    const result = await getEntryThumbnail(mockCollection, mockEntryLocal);
+
+    expect(result).toBe('https://example.com/test.jpg');
+    // The document isn’t shown as its own thumbnail
+    expect(mockGetMediaFieldURL).toHaveBeenCalledOnce();
   });
 
   test('fills in a path template and resolves it like a field value', async () => {

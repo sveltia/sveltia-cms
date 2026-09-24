@@ -1,4 +1,5 @@
 import { getUnpkgURL, loadModule } from '$lib/services/app/dependencies';
+import { createModuleWorker } from '$lib/services/utils/media/image/heic-worker-factory';
 
 /**
  * How long the worker is kept after its last job. Decoding a photo grows the WebAssembly heap to
@@ -70,7 +71,7 @@ const createWorker = () =>
     let worker;
 
     try {
-      worker = new Worker(blobURL, { type: 'module' });
+      worker = createModuleWorker?.() ?? new Worker(blobURL, { type: 'module' });
     } catch (error) {
       // Chrome throws here when a Content Security Policy blocks the worker
       URL.revokeObjectURL(blobURL);

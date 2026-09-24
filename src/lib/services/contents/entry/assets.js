@@ -4,7 +4,8 @@ import { escapeRegExp } from '@sveltia/utils/string';
 
 import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
-import { getMediaFieldURL } from '$lib/services/assets/info';
+import { getMediaFieldSource, getMediaFieldURL } from '$lib/services/assets/info';
+import { canCreateThumbnail } from '$lib/services/assets/kinds';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -105,16 +106,16 @@ export const getEntryThumbnail = async (collection, entry) => {
   // Cannot use `Promise.all` or `Promise.any` here because we need the first available URL
   // eslint-disable-next-line no-restricted-syntax
   for (const { value, keyPath } of candidates) {
-    const url = value
-      ? // eslint-disable-next-line no-await-in-loop
-        await getMediaFieldURL({
-          value,
-          entry,
-          collectionName,
-          typedKeyPath: keyPath,
-          thumbnail: true,
-        })
-      : undefined;
+    const args = { value, entry, collectionName, typedKeyPath: keyPath };
+    const { asset } = (value && getMediaFieldSource(args)) || {};
+
+    // Skip a file without a thumbnail, like a document, rather than show it as a broken image, and
+    // try the next candidate instead
+    const url =
+      value && (!asset || canCreateThumbnail(asset))
+        ? // eslint-disable-next-line no-await-in-loop
+          await getMediaFieldURL({ ...args, thumbnail: true })
+        : undefined;
 
     if (url) {
       return url;

@@ -12,6 +12,7 @@ import { LocalStorage } from '@sveltia/utils/storage';
 
 import defaultLocaleStrings from '$lib/locales/en-US.yaml';
 import { UNPKG_BASE_URL, version } from '$lib/services/app';
+import { PUBLISHED_LOCALE_LOADERS } from '$lib/services/app/published-locales';
 import { navigatorLocale, PREFS_STORAGE_KEY } from '$lib/services/user/prefs.svelte';
 import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
 
@@ -83,13 +84,25 @@ export const appLocaleLoading = createRawState();
 export const appLocaleLoadError = createRawState();
 
 /**
+ * Whether the strings loaded for a locale are cached in the local storage. The cache saves a CDN
+ * request on the next visit; the npm build loads them from a chunk of the consumer’s app instead,
+ * which the browser caches anyway, so the copy would only take up the site’s storage quota.
+ * @returns {boolean} Result.
+ */
+const isLocaleCacheEnabled = () => !import.meta.env.NPM_BUILD;
+
+/**
  * Get the cached strings for the given locale from the local storage. The cache is discarded when
  * the locale or the app version doesn’t match, as the strings can change with each release.
  * @param {string} locale Locale code.
  * @returns {Promise<Record<string, any> | undefined>} Strings, or `undefined` if the cache is
- * unavailable, empty or stale.
+ * unavailable, empty, stale or disabled.
  */
 const getCachedLocaleStrings = async (locale) => {
+  if (!isLocaleCacheEnabled()) {
+    return undefined;
+  }
+
   try {
     const { _locale, _version, ...strings } = (await LocalStorage.get(LOCALE_CACHE_KEY)) ?? {};
 
@@ -110,6 +123,10 @@ const getCachedLocaleStrings = async (locale) => {
  * @param {Record<string, any>} strings Strings.
  */
 const cacheLocaleStrings = async (locale, strings) => {
+  if (!isLocaleCacheEnabled()) {
+    return;
+  }
+
   try {
     await LocalStorage.set(LOCALE_CACHE_KEY, { _locale: locale, _version: version, ...strings });
   } catch {
@@ -129,13 +146,28 @@ const deleteCachedLocaleStrings = async () => {
 };
 
 /**
- * Fetch the strings for the given locale from the CDN. The remote JSON files already contain the
- * Sveltia UI strings under the `_sui` key, so no merge is needed here.
+ * Load the strings for the given locale in the npm build, from the JSON file published with the
+ * package, which the other builds fetch from the CDN. The consumer’s bundler emits each file as a
+ * chunk loaded on demand.
+ * @param {string} locale Locale code, one of {@link APP_LOCALES}.
+ * @returns {Promise<Record<string, any>>} Strings.
+ */
+const loadPublishedLocaleStrings = async (locale) =>
+  (await PUBLISHED_LOCALE_LOADERS[locale]()).default;
+
+/**
+ * Fetch the strings for the given locale from the CDN, or load them from the package in the npm
+ * build. The remote JSON files already contain the Sveltia UI strings under the `_sui` key, so no
+ * merge is needed here.
  * @param {string} locale Locale code.
  * @returns {Promise<Record<string, any>>} Strings.
  * @throws {Error} When the file cannot be fetched within {@link REMOTE_LOCALE_FETCH_TIMEOUT}.
  */
 const fetchLocaleStrings = async (locale) => {
+  if (import.meta.env.NPM_BUILD) {
+    return loadPublishedLocaleStrings(locale);
+  }
+
   const response = await fetch(`${REMOTE_LOCALES_BASE_URL}/${locale}.json`, {
     signal: AbortSignal.timeout(REMOTE_LOCALE_FETCH_TIMEOUT),
   });

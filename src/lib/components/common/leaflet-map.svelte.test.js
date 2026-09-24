@@ -7,6 +7,9 @@ import LeafletMap from './leaflet-map.svelte';
 // Leaflet is normally fetched from a CDN; the installed package serves the same module here
 vi.mock('$lib/services/app/dependencies', () => ({
   getUnpkgURL: vi.fn((name) => `https://unpkg.com/${name}`),
+  getLeafletMarkerIconURL: vi.fn(
+    async () => 'https://unpkg.com/leaflet/dist/images/marker-icon-2x.png',
+  ),
   loadModule: vi.fn(() => import('leaflet/dist/leaflet-src.esm.js')),
   getChunkURLs: vi.fn(() => []),
   loadChunk: vi.fn(),

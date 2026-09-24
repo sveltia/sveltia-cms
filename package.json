@@ -119,8 +119,6 @@
     "vitest-browser-svelte": "^3.1.0"
   },
   "publishConfig": {
-    "directory": "package",
-    "access": "public",
-    "provenance": true
+    "directory": "package"
   }
 }

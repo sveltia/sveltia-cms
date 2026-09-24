@@ -419,6 +419,50 @@ describe('i18n', () => {
       });
     });
 
+    it('should load the published strings in the npm build without hitting the CDN', async () => {
+      const strings = { hello: 'こんにちは', _sui: { button: 'ボタン' } };
+      const mockFetch = vi.fn();
+
+      vi.stubGlobal('fetch', mockFetch);
+      vi.stubEnv('NPM_BUILD', 'true');
+      // The npm build generates a loader for each locale file published with the package
+      vi.doMock('$lib/services/app/published-locales', () => ({
+        // eslint-disable-next-line jsdoc/require-jsdoc
+        PUBLISHED_LOCALE_LOADERS: { ja: async () => ({ default: strings }) },
+      }));
+      vi.resetModules();
+
+      try {
+        const { initAppLocale } = await import('./i18n.js');
+
+        initAppLocale();
+
+        const [, loader] = /** @type {[string, () => Promise<any>]} */ (
+          mockRegister.mock.calls.find(([locale]) => locale === 'ja')
+        );
+
+        await expect(loader()).resolves.toEqual(strings);
+        expect(mockFetch).not.toHaveBeenCalled();
+        // The strings aren’t copied to the local storage, as the browser caches the chunk
+        expect(mockLocalStorage.get).not.toHaveBeenCalledWith('sveltia-cms.locale');
+        expect(mockLocalStorage.set).not.toHaveBeenCalledWith(
+          'sveltia-cms.locale',
+          expect.anything(),
+        );
+
+        // Nor when the locale is activated again later in the session
+        const { updateLocaleCache } = await import('./i18n.js');
+
+        await updateLocaleCache('ja');
+        expect(mockLocalStorage.set).not.toHaveBeenCalledWith(
+          'sveltia-cms.locale',
+          expect.anything(),
+        );
+      } finally {
+        vi.doUnmock('$lib/services/app/published-locales');
+      }
+    });
+
     it('should use the cached strings without hitting the CDN', async () => {
       const strings = { hello: 'こんにちは', _sui: { button: 'ボタン' } };
       const mockFetch = vi.fn();

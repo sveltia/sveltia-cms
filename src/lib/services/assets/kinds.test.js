@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ASSET_KINDS,
+  canCreateThumbnail,
   canEditAsset,
   canPreviewAsset,
   DOC_EXTENSION_REGEX,
@@ -10,6 +11,7 @@ import {
   getMediaKind,
   getMediaKindFromPath,
   getMediaKindFromType,
+  hasPDFThumbnail,
   isMediaKind,
   MEDIA_KINDS,
 } from './kinds';
@@ -52,6 +54,50 @@ describe('assets/kinds', () => {
       expect(DOC_EXTENSION_REGEX.test('.xlsx')).toBe(true);
       expect(DOC_EXTENSION_REGEX.test('.txt')).toBe(false);
       expect(DOC_EXTENSION_REGEX.test('.jpg')).toBe(false);
+    });
+  });
+
+  describe('canCreateThumbnail', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it('should create a thumbnail for an image, a video or a PDF document', () => {
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.jpg', kind: 'image' }))).toBe(true);
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.mp4', kind: 'video' }))).toBe(true);
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.pdf', kind: 'document' }))).toBe(
+        true,
+      );
+    });
+
+    it('should not for any other file, or a PDF document in the npm build', () => {
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.mp3', kind: 'audio' }))).toBe(false);
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.docx', kind: 'document' }))).toBe(
+        false,
+      );
+
+      vi.stubEnv('NPM_BUILD', 'true');
+
+      expect(canCreateThumbnail(/** @type {any} */ ({ name: 'a.pdf', kind: 'document' }))).toBe(
+        false,
+      );
+    });
+  });
+
+  describe('hasPDFThumbnail', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it('should generate a thumbnail for a PDF document', () => {
+      expect(hasPDFThumbnail('files/brochure.pdf')).toBe(true);
+      expect(hasPDFThumbnail('files/brochure.docx')).toBe(false);
+    });
+
+    it('should not in the npm build, which doesn’t include PDF.js', () => {
+      vi.stubEnv('NPM_BUILD', 'true');
+
+      expect(hasPDFThumbnail('files/brochure.pdf')).toBe(false);
     });
   });
 

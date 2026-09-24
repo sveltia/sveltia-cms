@@ -26,6 +26,15 @@ describe('UpdateNotification', () => {
     expect(isUpdateAvailable).not.toHaveBeenCalled();
   });
 
+  test('shows nothing in the npm build, which is updated with the package manager', async () => {
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('NPM_BUILD', 'true');
+
+    await render(UpdateNotification);
+
+    expect(isUpdateAvailable).not.toHaveBeenCalled();
+  });
+
   test('checks for updates periodically in production, and offers to reload', async () => {
     vi.stubEnv('DEV', false);
     vi.mocked(isUpdateAvailable).mockResolvedValue(false);

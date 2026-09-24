@@ -13,6 +13,9 @@ import EntryPreview from './entry-preview.svelte';
 
 vi.mock('$lib/services/app/dependencies', () => ({
   getUnpkgURL: vi.fn((name) => `https://unpkg.com/${name}`),
+  getLeafletMarkerIconURL: vi.fn(
+    async () => 'https://unpkg.com/leaflet/dist/images/marker-icon-2x.png',
+  ),
   loadModule: vi.fn(() => import('immutable')),
   getChunkURLs: vi.fn(() => []),
   loadChunk: vi.fn(() => import('$lib/chunks/react-dom.js')),

@@ -165,6 +165,22 @@ describe('decodeHEIC', () => {
     expect(transfer).toEqual([data]);
   });
 
+  test('should decode in the bundled module worker in the npm build', async () => {
+    autoReply();
+    vi.doMock('$lib/services/utils/media/image/heic-worker-factory', () => ({
+      createModuleWorker: () => new MockWorker('/assets/heic-worker.js', { type: 'module' }),
+    }));
+
+    try {
+      const { decodeHEIC } = await importModule();
+
+      await expect(decodeHEIC(heicBlob)).resolves.toBeInstanceOf(MockImageData);
+      expect(MockWorker.instances.map(({ url }) => url)).toEqual(['/assets/heic-worker.js']);
+    } finally {
+      vi.doUnmock('$lib/services/utils/media/image/heic-worker-factory');
+    }
+  });
+
   test('should decode one image at a time and reuse the worker', async () => {
     MockWorker.onCreate = (worker) => queueMicrotask(() => worker.reply({ ready: true }));
 

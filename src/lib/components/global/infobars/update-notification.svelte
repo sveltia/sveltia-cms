@@ -36,7 +36,8 @@
   /* v8 ignore stop */
 
   onMount(() => {
-    if (import.meta.env.DEV) {
+    // An npm install is updated with the package manager, not by reloading the page
+    if (import.meta.env.DEV || import.meta.env.NPM_BUILD) {
       return undefined;
     }
 

@@ -7,7 +7,7 @@
   import { _ } from '@sveltia/i18n';
   import { onMount } from 'svelte';
 
-  import { getUnpkgURL, loadModule } from '$lib/services/app/dependencies';
+  import { getLeafletMarkerIconURL, loadModule } from '$lib/services/app/dependencies';
 
   /**
    * @import Leaflet from 'leaflet';
@@ -50,7 +50,7 @@
 
     /** @type {Leaflet} */
     const leaflet = await loadModule('leaflet', 'dist/leaflet-src.esm.js');
-    const iconUrl = `${getUnpkgURL('leaflet')}/dist/images/marker-icon-2x.png`;
+    const iconUrl = await getLeafletMarkerIconURL();
     const map = leaflet.map(mapElement, { center: [0, 0], zoom: 2 });
 
     leaflet

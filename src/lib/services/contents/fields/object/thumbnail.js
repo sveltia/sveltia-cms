@@ -1,8 +1,8 @@
 import { getMediaFieldSource } from '$lib/services/assets/info';
 import {
+  canCreateThumbnail,
   getMediaKindFromPath,
   getMediaKindFromType,
-  THUMBNAIL_KINDS,
 } from '$lib/services/assets/kinds';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
@@ -108,9 +108,9 @@ export const getObjectThumbnail = ({
 
   const { asset, url } = source;
 
-  // A File field can hold anything; only an image, a video or a PDF has a thumbnail generated
+  // A File field can hold anything, but only some files have a thumbnail generated
   if (asset) {
-    return THUMBNAIL_KINDS.includes(asset.kind) || asset.name.endsWith('.pdf') ? source : undefined;
+    return canCreateThumbnail(asset) ? source : undefined;
   }
 
   // A file elsewhere is shown as it is, so it has to be an image: a file uploaded in the draft is
