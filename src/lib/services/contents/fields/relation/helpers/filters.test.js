@@ -229,6 +229,87 @@ describe('Test filterAndPrepareEntries()', () => {
     expect(result).toHaveLength(3);
   });
 
+  describe('list field values', () => {
+    /**
+     * Create an entry with the given flattened content.
+     * @param {string} slug Entry slug.
+     * @param {Record<string, any>} content Flattened content.
+     * @returns {Entry} Entry.
+     */
+    const createEntry = (slug, content) => ({
+      id: slug,
+      slug,
+      subPath: slug,
+      locales: { en: { slug, path: `${slug}.md`, content: { title: slug, ...content } } },
+    });
+
+    /** @type {Entry[]} */
+    const listEntries = [
+      createEntry('cats-birds', { 'pets.0': 'cats', 'pets.1': 'birds' }),
+      createEntry('birds', { 'pets.0': 'birds' }),
+      createEntry('dogs', { pets: 'dogs' }),
+      createEntry('none', {}),
+      createEntry('nested', { 'pets.0.name': 'cats' }),
+      // Draft content stores an empty placeholder at the list’s own key path
+      createEntry('placeholder', { pets: [], 'pets.0': 'dogs' }),
+      createEntry('empty', { pets: [] }),
+    ];
+
+    /**
+     * Get the slugs of the entries matching the given filters.
+     * @param {any[]} entryFilters Entry filters.
+     * @param {Entry[]} [refEntries] Reference entries.
+     * @returns {string[]} Entry slugs.
+     */
+    const getSlugs = (entryFilters, refEntries = listEntries) =>
+      filterAndPrepareEntries({ refEntries, collection, locale, entryFilters }).map(
+        ({ refEntry }) => refEntry.slug,
+      );
+
+    test('should match a list value when any of its items is included', () => {
+      expect(getSlugs([{ field: 'pets', values: ['cats', 'dogs'] }])).toEqual([
+        'cats-birds',
+        'dogs',
+        'placeholder',
+      ]);
+    });
+
+    test('should exclude a list value when any of its items is included', () => {
+      expect(getSlugs([{ field: 'pets', values: ['cats', 'dogs'], exclude: true }])).toEqual([
+        'birds',
+        'none',
+        'nested',
+        'empty',
+      ]);
+    });
+
+    test('should support the `fields.` prefix', () => {
+      expect(getSlugs([{ field: 'fields.pets', values: ['birds'] }])).toEqual([
+        'cats-birds',
+        'birds',
+      ]);
+    });
+
+    test('should match entries sharing a list item with the current entry', () => {
+      const entryFilters = resolveFilterValues([{ field: 'pets', values: ['{{fields.pets}}'] }], {
+        'pets.0': 'cats',
+        'pets.1': 'dogs',
+      });
+
+      expect(getSlugs(entryFilters)).toEqual(['cats-birds', 'dogs', 'placeholder']);
+    });
+
+    test('should escape special characters in the field name', () => {
+      /** @type {Entry[]} */
+      const refEntries = [
+        createEntry('match', { 'a+b.0': 'x' }),
+        createEntry('no-match', { 'aab.0': 'x' }),
+      ];
+
+      expect(getSlugs([{ field: 'a+b', values: ['x'] }], refEntries)).toEqual(['match']);
+    });
+  });
+
   test('should filter by entry slug when field is "slug"', () => {
     // Bare `slug` refers to the entry slug (refEntry.slug), not a content field
     const filters = [{ field: 'slug', values: ['entry-1'] }];
@@ -426,5 +507,81 @@ describe('Test resolveFilterValues()', () => {
     const result = resolveFilterValues(filters, { myTag: 'dynamic' });
 
     expect(result[0].values).toEqual(['static', 'dynamic']);
+  });
+
+  test('should expand a list value resolved from {{fields.x}} into its items', () => {
+    const filters = [{ field: 'pets', values: ['fish', '{{fields.pets}}'] }];
+    const result = resolveFilterValues(filters, { 'pets.0': 'cats', 'pets.1': 'birds' });
+
+    expect(result[0].values).toEqual(['fish', 'cats', 'birds']);
+  });
+
+  test('should expand a list value stored next to its placeholder', () => {
+    const filters = [{ field: 'tags', values: ['{{fields.tags}}'] }];
+    const values = { tags: [], 'tags.0': 'a', 'tags.1': 'b' };
+    const result = resolveFilterValues(filters, values);
+
+    expect(result[0].values).toEqual(['a', 'b']);
+    // The placeholder must not be filled in, as the values can be the live state of an entry draft
+    expect(values.tags).toEqual([]);
+  });
+
+  test('should reflect list items added to or removed from the current values in place', () => {
+    const filters = [{ field: 'tags', values: ['{{fields.tags}}'] }];
+    /** @type {Record<string, any>} */
+    const values = { tags: [], 'tags.0': 'a' };
+
+    expect(resolveFilterValues(filters, values)[0].values).toEqual(['a']);
+
+    values['tags.1'] = 'b';
+
+    expect(resolveFilterValues(filters, values)[0].values).toEqual(['a', 'b']);
+
+    delete values['tags.0'];
+    delete values['tags.1'];
+    values['tags.0'] = 'c';
+
+    expect(resolveFilterValues(filters, values)[0].values).toEqual(['c']);
+  });
+
+  test('should only read the values it needs from the current values', () => {
+    /** @type {string[]} */
+    const reads = [];
+
+    /**
+     * Wrap values in a proxy recording the properties read, like a draft’s `$state` would track.
+     * @param {Record<string, any>} values Values.
+     * @returns {Record<string, any>} Proxy.
+     */
+    const track = (values) =>
+      new Proxy(values, {
+        /**
+         * Record the property read, then read it.
+         * @param {Record<string, any>} target Wrapped values.
+         * @param {string | symbol} key Property key.
+         * @returns {any} Property value.
+         */
+        get: (target, key) => {
+          reads.push(String(key));
+
+          return Reflect.get(target, key);
+        },
+      });
+
+    const values = { uuid: 'abc', body: 'text', tags: [], 'tags.0': 'a' };
+
+    resolveFilterValues([{ field: 'uuid', values: ['{{fields.uuid}}'] }], track(values));
+    expect(reads).toEqual(['uuid']);
+
+    reads.length = 0;
+    resolveFilterValues([{ field: 'tags', values: ['{{fields.tags}}'] }], track(values));
+    expect(reads).toEqual(['tags', 'tags.0']);
+  });
+
+  test('should resolve an empty list value from {{fields.x}} to no values', () => {
+    const filters = [{ field: 'pets', values: ['{{fields.pets}}'] }];
+    const result = resolveFilterValues(filters, { pets: [] });
+
+    expect(result[0].values).toEqual([]);
   });
 });
