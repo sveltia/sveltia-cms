@@ -1,4 +1,5 @@
 import { dependencies, UNPKG_BASE_URL, version } from '$lib/services/app';
+import { BUNDLED_MARKER_ICON_URL, BUNDLED_MODULE_LOADERS } from '$lib/services/app/bundled-modules';
 
 /**
  * URL of the script the CMS was loaded from, captured while it’s running. `document.currentScript`
@@ -25,35 +26,6 @@ export const getUnpkgURL = (name) => {
 };
 
 /**
- * Loaders of the third-party libraries bundled with the npm build, which is code-split so that the
- * consumer’s bundler can emit each library as its own chunk. Empty in the CDN builds, which load
- * them from UNPKG instead.
- * @type {Record<string, () => Promise<any>>}
- */
-const npmModuleLoaders = import.meta.env.NPM_BUILD
-  ? {
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      '@discourse/heic': () => import('@discourse/heic'),
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      '@jsquash/webp': () => import('@jsquash/webp/encode.js'),
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      exifr: () => import('exifr/dist/lite.esm.mjs'),
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      immutable: () => import('immutable'),
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      leaflet: () => import('leaflet/dist/leaflet-src.esm.js'),
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      svgo: () => import('svgo/browser'),
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      'terra-draw': () => import('terra-draw'),
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      'terra-draw-leaflet-adapter': () => import('terra-draw-leaflet-adapter'),
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      turndown: () => import('turndown/lib/turndown.browser.es.js'),
-    }
-  : {};
-
-/**
  * Load an ES module of a third-party library from UNPKG.
  * @param {string} library Library name.
  * @param {string} path Absolute path of the module file to be loaded without the leading slash.
@@ -63,7 +35,7 @@ export const loadModule = async (library, path) =>
   // The npm build has no fallback to UNPKG: webpack would take the variable specifier as a request
   // to bundle every file in the package
   import.meta.env.NPM_BUILD
-    ? npmModuleLoaders[library]()
+    ? BUNDLED_MODULE_LOADERS[library]()
     : import(/* @vite-ignore */ `${getUnpkgURL(library)}/${path}`);
 
 /**
@@ -71,9 +43,7 @@ export const loadModule = async (library, path) =>
  * @returns {Promise<string>} URL.
  */
 export const getLeafletMarkerIconURL = async () =>
-  import.meta.env.NPM_BUILD
-    ? (await import('leaflet/dist/images/marker-icon-2x.png?url')).default
-    : `${getUnpkgURL('leaflet')}/dist/images/marker-icon-2x.png`;
+  BUNDLED_MARKER_ICON_URL ?? `${getUnpkgURL('leaflet')}/dist/images/marker-icon-2x.png`;
 
 /**
  * Get the URLs a chunk of the CMS bundle can be loaded from, in order of preference: next to the

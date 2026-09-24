@@ -12,21 +12,56 @@ import { fileURLToPath } from 'url';
 import { build } from 'vite';
 
 /**
- * Packages the npm build leaves to the consumer’s bundler rather than bundling: the Shiki grammars
+ * Shiki packages the npm build leaves to the consumer’s bundler rather than bundling: the grammars
  * and themes, which the Sveltia UI self-hosted loaders import one by one. Bundled, they would add a
  * few hundred chunks to every release of the package; as dependencies, they’re installed once and
- * only emitted with the consumer’s app.
+ * only emitted with the consumer’s app. They’re pinned to the versions Sveltia UI depends on.
  */
-const NPM_EXTERNAL_PACKAGES = ['@shikijs/langs', '@shikijs/themes'];
+const SHIKI_PACKAGES = ['@shikijs/langs', '@shikijs/themes'];
 
 /**
- * Get the dependencies of the npm build, pinned to the versions the installed Sveltia UI depends
- * on: the grammars and themes must match the Shiki version its prebuilt engine was built with.
- * @returns {Promise<Record<string, string>>} Versions keyed with the package name.
- * @throws {Error} If Sveltia UI doesn’t pin a package to an exact version.
+ * Libraries the npm build leaves to the consumer’s bundler, like {@link SHIKI_PACKAGES}: the ones
+ * loaded on demand with `loadModule()` that work as they are with any bundler. They take the
+ * version ranges the CMS depends on, so a site that uses one of them too can share a single copy.
+ * The jSquash and HEIC codecs are bundled instead, as `stripImportMetaAssignment()` has to fix them
+ * for webpack, and so is React DOM, which has to share the bundled React with custom components.
  */
-export const getNpmDependencies = async () => {
-  const { dependencies } = JSON.parse(
+const LIBRARY_PACKAGES = [
+  'exifr',
+  'immutable',
+  'leaflet',
+  'svgo',
+  'terra-draw',
+  'terra-draw-leaflet-adapter',
+  'turndown',
+];
+
+/**
+ * All the packages the npm build leaves to the consumer’s bundler.
+ */
+const NPM_EXTERNAL_PACKAGES = [...SHIKI_PACKAGES, ...LIBRARY_PACKAGES];
+
+/**
+ * Check whether a module is imported from one of the {@link NPM_EXTERNAL_PACKAGES}. An import with
+ * a query, like the Leaflet marker icon imported with `?url`, is an asset bundled with the app.
+ * @param {string} id Module ID.
+ * @returns {boolean} Result.
+ */
+const isNpmExternal = (id) =>
+  !id.includes('?') &&
+  NPM_EXTERNAL_PACKAGES.some((name) => id === name || id.startsWith(`${name}/`));
+
+/**
+ * Get the dependencies of the npm build: the {@link SHIKI_PACKAGES}, pinned to the versions the
+ * installed Sveltia UI depends on, as the grammars and themes must match the Shiki version its
+ * prebuilt engine was built with, and the {@link LIBRARY_PACKAGES}, with the ranges of the CMS.
+ * @param {Record<string, string>} appDependencies Dependencies of the CMS.
+ * @returns {Promise<Record<string, string>>} Versions keyed with the package name.
+ * @throws {Error} If Sveltia UI doesn’t pin a Shiki package to an exact version, or the CMS doesn’t
+ * depend on a library.
+ */
+export const getNpmDependencies = async (appDependencies) => {
+  const { dependencies: uiDependencies } = JSON.parse(
     await readFile(
       path.resolve(
         path.dirname(fileURLToPath(import.meta.resolve('@sveltia/ui'))),
@@ -36,9 +71,9 @@ export const getNpmDependencies = async () => {
     ),
   );
 
-  return Object.fromEntries(
-    NPM_EXTERNAL_PACKAGES.map((name) => {
-      const version = dependencies?.[name];
+  return Object.fromEntries([
+    ...SHIKI_PACKAGES.map((name) => {
+      const version = uiDependencies?.[name];
 
       if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {
         throw new Error(`Sveltia UI doesn’t pin ${name} to an exact version: ${version}`);
@@ -46,7 +81,16 @@ export const getNpmDependencies = async () => {
 
       return [name, version];
     }),
-  );
+    ...LIBRARY_PACKAGES.map((name) => {
+      const version = appDependencies[name];
+
+      if (!version) {
+        throw new Error(`The CMS doesn’t depend on ${name}.`);
+      }
+
+      return [name, version];
+    }),
+  ]);
 };
 
 /**
@@ -215,8 +259,7 @@ export const buildNpm = ({ resolve, define, plugins, locales }) => ({
         modulePreload: false,
         rolldownOptions: {
           input: { index: 'src/lib/npm.js' },
-          // eslint-disable-next-line jsdoc/require-jsdoc
-          external: (id) => NPM_EXTERNAL_PACKAGES.some((name) => id.startsWith(`${name}/`)),
+          external: isNpmExternal,
           output: {
             format: 'es',
             entryFileNames: '[name].js',

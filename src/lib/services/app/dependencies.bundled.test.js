@@ -1,6 +1,11 @@
-// @vitest-environment happy-dom
-
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const loadExifr = vi.fn(async () => ({ parse: vi.fn() }));
+
+vi.mock('$lib/services/app/bundled-modules', () => ({
+  BUNDLED_MODULE_LOADERS: { exifr: loadExifr },
+  BUNDLED_MARKER_ICON_URL: '/assets/marker-icon-2x.png',
+}));
 
 /**
  * Import a fresh copy of the module as built for npm, where the libraries and chunks are bundled.
@@ -9,7 +14,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 const importNpmBuild = async () => {
   vi.stubEnv('DEV', false);
   vi.stubEnv('NPM_BUILD', 'true');
-  // The loaders are chosen when the module is loaded
+  // The chunk loaders are chosen when the module is loaded
   vi.resetModules();
 
   return import('./dependencies');
@@ -20,29 +25,18 @@ describe('dependencies in the npm build', () => {
     vi.unstubAllEnvs();
   });
 
-  it.each([
-    ['@discourse/heic', 'decode'],
-    ['@jsquash/webp', 'default'],
-    ['exifr', 'parse'],
-    ['immutable', 'Map'],
-    ['leaflet', 'map'],
-    ['svgo', 'optimize'],
-    ['terra-draw', 'TerraDraw'],
-    ['terra-draw-leaflet-adapter', 'TerraDrawLeafletAdapter'],
-    ['turndown', 'default'],
-  ])('loads %s from the bundle', async (library, exportName) => {
+  it('loads a library with its bundled loader', async () => {
     const { loadModule } = await importNpmBuild();
 
     // The path is only used for UNPKG
-    await expect(loadModule(library, 'ignored.js')).resolves.toHaveProperty(exportName);
+    await expect(loadModule('exifr', 'ignored.js')).resolves.toHaveProperty('parse');
+    expect(loadExifr).toHaveBeenCalledOnce();
   });
 
-  it('bundles the Leaflet marker icon', async () => {
+  it('uses the bundled Leaflet marker icon', async () => {
     const { getLeafletMarkerIconURL } = await importNpmBuild();
 
-    await expect(getLeafletMarkerIconURL()).resolves.toMatch(
-      /\/leaflet\/dist\/images\/marker-icon-2x\.png$/,
-    );
+    await expect(getLeafletMarkerIconURL()).resolves.toBe('/assets/marker-icon-2x.png');
   });
 
   it('loads a chunk from the bundle', async () => {

@@ -22,9 +22,10 @@ import { BUILTIN_FIELD_TYPES } from './src/lib/services/contents/fields/index.js
 import svelteConfig from './svelte.config.js';
 
 /**
- * Packages whose types the generated `d.ts` files import, listed in the published `package.json`
- * as optional peer dependencies: the code is bundled, so only a TypeScript user needs them, and a
- * package manager never installs the dev dependencies of a dependency.
+ * Packages whose types the generated `d.ts` files import. Those that aren’t dependencies of the npm
+ * build are listed in the published `package.json` as optional peer dependencies: their code is
+ * bundled, so only a TypeScript user needs them, and a package manager never installs the dev
+ * dependencies of a dependency.
  */
 const TYPE_DEPENDENCIES = ['@types/react', 'immutable'];
 /**
@@ -160,16 +161,19 @@ const copyPackageFiles = () => ({
       // manifest in a `package` subfolder when the folder is installed as a local dependency
       delete packageJson.publishConfig;
 
+      // Needed by the npm build only; the CDN builds are self-contained
+      const npmDependencies = await getNpmDependencies(dependencies);
+      const peerDependencies = TYPE_DEPENDENCIES.filter((key) => !(key in npmDependencies));
+
       // Add properties for distribution; paths are relative to `package`
       Object.assign(packageJson, {
         peerDependencies: Object.fromEntries(
-          TYPE_DEPENDENCIES.map((key) => [key, dependencies[key] ?? devDependencies[key]]),
+          peerDependencies.map((key) => [key, dependencies[key] ?? devDependencies[key]]),
         ),
         peerDependenciesMeta: Object.fromEntries(
-          TYPE_DEPENDENCIES.map((key) => [key, { optional: true }]),
+          peerDependencies.map((key) => [key, { optional: true }]),
         ),
-        // Needed by the npm build only; the CDN builds are self-contained
-        dependencies: await getNpmDependencies(),
+        dependencies: npmDependencies,
         files: ['dist', 'npm', 'locales', 'schema', 'services', 'types', 'main.d.ts'],
         main: './npm/index.js',
         module: './npm/index.js',
