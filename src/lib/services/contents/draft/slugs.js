@@ -1,5 +1,7 @@
 import { fillTemplate } from '$lib/services/common/template';
+import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
 
 /**
  * @import {
@@ -35,6 +37,30 @@ export const resolveBlobURLs = (valueMap, files) => {
 };
 
 /**
+ * Random values generated for each entry draft’s slug. See {@link getRandomValues}.
+ * @type {WeakMap<EntryDraft, Map<string, string>>}
+ */
+const randomValueMaps = new WeakMap();
+
+/**
+ * Get the random values generated so far for the given draft’s slug, such as the one for a
+ * `{{uuid}}` tag. A new entry’s slug is shown while it’s being edited, so reusing them keeps the
+ * slug from changing on every keystroke, and the saved slug the same as the one shown.
+ * @param {EntryDraft} draft Entry draft.
+ * @returns {Map<string, string>} Random values keyed by what they stand for.
+ */
+export const getRandomValues = (draft) => {
+  let randomValues = randomValueMaps.get(draft);
+
+  if (!randomValues) {
+    randomValues = new Map();
+    randomValueMaps.set(draft, randomValues);
+  }
+
+  return randomValues;
+};
+
+/**
  * Get base options for {@link fillTemplate}.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -56,7 +82,37 @@ export const getFillSlugOptions = ({ draft }) => {
     },
     locale: defaultLocale,
     isIndexFile,
+    randomValues: getRandomValues(draft),
   };
+};
+
+/**
+ * Get the slug template to fill for a new entry in the given locale. A slug editor filled in by the
+ * user takes over from the configured template, unless the template itself takes the slug from the
+ * slug editor.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.locale Locale.
+ * @param {boolean} [args.templateOnly] Whether to ignore a filled-in slug editor, to get the slug
+ * the template fills.
+ * @returns {string} Slug template, e.g. `{{title}}`. An empty string for a non-entry collection,
+ * whose entry slug is the file name.
+ */
+export const getSlugTemplate = ({ draft, locale, templateOnly = false }) => {
+  const { collection, currentSlugs, slugEditor } = draft;
+
+  if (collection._type !== 'entry') {
+    return '';
+  }
+
+  const { template, editorRequired } = getSlugOptions(collection);
+  const editorValue = currentSlugs?.[locale] ?? currentSlugs?._;
+
+  if (!templateOnly && !editorRequired && slugEditor[locale] && editorValue?.trim()) {
+    return LEGACY_SLUG_EDITOR_TAG;
+  }
+
+  return template;
 };
 
 /**
@@ -65,9 +121,10 @@ export const getFillSlugOptions = ({ draft }) => {
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.locale Locale.
  * @param {string[]} args.localizingKeyPaths List of key paths that the value will be localized.
+ * @param {boolean} [args.templateOnly] See {@link getSlugTemplate}.
  * @returns {string} Localized slug.
  */
-export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
+export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths, templateOnly = false }) => {
   const {
     isNew,
     collection,
@@ -79,13 +136,6 @@ export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
     isIndexFile,
   } = draft;
 
-  const { _type } = collection;
-
-  const {
-    identifier_field: identifierField = 'title',
-    slug: slugTemplate = `{{${identifierField}}}`,
-  } = _type === 'entry' ? collection : {};
-
   const {
     _i18n: { defaultLocale },
   } = collectionFile ?? collection;
@@ -96,7 +146,7 @@ export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
   // template to generate the initial slug for the new locale. For other cases, we keep the existing
   // slug to avoid changing URLs unexpectedly.
   if (isNew || !originalLocales[locale]) {
-    return fillTemplate(slugTemplate, {
+    return fillTemplate(getSlugTemplate({ draft, locale, templateOnly }), {
       collection,
       locale,
       content: {
@@ -112,6 +162,7 @@ export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
         _slug,
       },
       isIndexFile,
+      randomValues: getRandomValues(draft),
     });
   }
 
@@ -119,39 +170,45 @@ export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths }) => {
 };
 
 /**
- * Get the slug template of the given collection. Only an entry collection has one; the slug of a
- * file/singleton collection’s entry is the file name.
- * @param {InternalCollection} collection Collection.
- * @returns {string} Slug template, e.g. `{{title}}`. An empty string for a non-entry collection.
+ * Template tags a slug template can use that don’t refer to a field, and therefore can’t be
+ * localized.
+ * @type {string[]}
  */
-const getSlugTemplate = (collection) => {
-  if (collection._type !== 'entry') {
-    return '';
-  }
-
-  const {
-    identifier_field: identifierField = 'title',
-    slug: slugTemplate = `{{${identifierField}}}`,
-  } = /** @type {InternalEntryCollection} */ (collection);
-
-  return slugTemplate;
-};
+const NON_FIELD_TAGS = [...DATE_TIME_FIELDS, ...Object.keys(UUID_TYPES), 'slug'];
 
 /**
  * Get the key paths of the fields whose values are localized in the slug, which are the tags in the
- * slug template carrying the `localize` flag, e.g. `{{title | localize}}`.
- * @param {string} slugTemplate Slug template.
+ * slug template carrying the `localize` flag, e.g. `{{title | localize}}`. With the slug’s `i18n`
+ * option enabled, every field tag in the template is localized.
+ * @param {InternalEntryCollection} collection Collection.
  * @returns {string[]} Key paths. An empty array if the slug isn’t localized.
  */
-const getLocalizingKeyPaths = (slugTemplate) =>
-  [...slugTemplate.matchAll(/{{((?:fields\.)?.+?)( \| localize)?}}/g)]
-    .filter(([, , localize]) => !!localize)
-    .map(([, keyPath]) => keyPath.replace(/^fields\./, ''));
+const getLocalizingKeyPaths = (collection) => {
+  const { template, localized } = getSlugOptions(collection);
+  /** @type {Set<string>} */
+  const keyPaths = new Set();
+
+  [...template.matchAll(/{{((?:fields\.)?.+?)( \| localize)?}}/g)].forEach(([, tag, localize]) => {
+    if (localize) {
+      keyPaths.add(tag.replace(/^fields\./, ''));
+    } else if (localized) {
+      // Leave out the transformations, e.g. `upper` in `{{title | upper}}`
+      const [keyPath] = tag.replace(/^fields\./, '').split(' | ');
+
+      if (!NON_FIELD_TAGS.includes(keyPath)) {
+        keyPaths.add(keyPath);
+      }
+    }
+  });
+
+  return [...keyPaths];
+};
 
 /**
  * Check whether the entries in the given collection get a slug of their own for each locale, which
- * is the case when the i18n structure is multiple files or folders, and the slug template contains
- * the `localize` flag, e.g. `{{title | localize}}`.
+ * is the case when i18n is enabled with the multiple files or folders structure, and either the
+ * slug’s `i18n` option is enabled or the slug template contains the `localize` flag, e.g.
+ * `{{title | localize}}`.
  * @param {InternalCollection} collection Collection.
  * @returns {boolean} Result.
  * @see https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs
@@ -159,14 +216,18 @@ const getLocalizingKeyPaths = (slugTemplate) =>
 export const hasLocalizedSlugs = (collection) => {
   const {
     _i18n: {
+      i18nEnabled,
       structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot },
     },
   } = collection;
 
   return (
+    // A monolingual collection has only one locale, so there’s nothing to localize
+    i18nEnabled &&
     !i18nSingleFile &&
     !i18nSingleFileDefaultRoot &&
-    !!getLocalizingKeyPaths(getSlugTemplate(collection)).length
+    collection._type === 'entry' &&
+    (getSlugOptions(collection).localized || !!getLocalizingKeyPaths(collection).length)
   );
 };
 
@@ -176,9 +237,10 @@ export const hasLocalizedSlugs = (collection) => {
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
  * @param {string} args.defaultLocaleSlug Default locale’s entry slug.
+ * @param {boolean} [args.templateOnly] See {@link getSlugTemplate}.
  * @returns {LocaleSlugMap | undefined} Localized slug map.
  */
-export const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
+export const getLocalizedSlugs = ({ draft, defaultLocaleSlug, templateOnly = false }) => {
   const { collection, collectionFile, currentLocales } = draft;
 
   const {
@@ -193,14 +255,16 @@ export const getLocalizedSlugs = ({ draft, defaultLocaleSlug }) => {
   /**
    * List of key paths that the value will be localized.
    */
-  const localizingKeyPaths = getLocalizingKeyPaths(getSlugTemplate(collection));
+  const localizingKeyPaths = getLocalizingKeyPaths(
+    /** @type {InternalEntryCollection} */ (collection),
+  );
 
   return Object.fromEntries(
     Object.entries(currentLocales).map(([locale]) => {
       const slug =
         locale === defaultLocale
           ? defaultLocaleSlug
-          : getLocalizedSlug({ draft, locale, localizingKeyPaths });
+          : getLocalizedSlug({ draft, locale, localizingKeyPaths, templateOnly });
 
       return [locale, slug];
     }),
@@ -248,16 +312,12 @@ export const getCanonicalSlug = ({ draft, defaultLocaleSlug, localizedSlugs, fil
  * Determine entry slugs.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
+ * @param {boolean} [args.templateOnly] Whether to ignore a filled-in slug editor, to get the slugs
+ * the template fills for a new entry.
  * @returns {EntrySlugVariants} Slugs.
  */
-export const getSlugs = ({ draft }) => {
+export const getSlugs = ({ draft, templateOnly = false }) => {
   const { isNew, collection, collectionFile, fileName, currentSlugs, isIndexFile } = draft;
-  const { _type } = collection;
-
-  const {
-    identifier_field: identifierField = 'title',
-    slug: slugTemplate = `{{${identifierField}}}`,
-  } = _type === 'entry' ? collection : {};
 
   if (isIndexFile) {
     return {
@@ -276,10 +336,13 @@ export const getSlugs = ({ draft }) => {
   const defaultLocaleSlug =
     fileName ??
     (isNew
-      ? fillTemplate(slugTemplate, fillSlugOptions)
+      ? fillTemplate(
+          getSlugTemplate({ draft, locale: defaultLocale, templateOnly }),
+          fillSlugOptions,
+        )
       : /** @type {string} */ (currentSlugs?.[defaultLocale] ?? currentSlugs?._));
 
-  const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug });
+  const localizedSlugs = getLocalizedSlugs({ draft, defaultLocaleSlug, templateOnly });
 
   const canonicalSlug = getCanonicalSlug({
     draft,

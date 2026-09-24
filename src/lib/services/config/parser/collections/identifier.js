@@ -1,5 +1,6 @@
 import { hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
+import { getConfiguredSlugTemplate, getSlugOptions } from '$lib/services/contents/collection/slug';
 
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
@@ -25,7 +26,7 @@ const DEFAULT_IDENTIFIER_FIELD = 'title';
  * @see https://decapcms.org/docs/configuration-options/#identifier_field
  */
 export const checkIdentifierField = ({ collection, context, collectors }) => {
-  const { create = true, fields, identifier_field: identifierField, slug } = collection;
+  const { create = true, fields, identifier_field: identifierField } = collection;
 
   // A collection without fields is reported as such, and no field can be found in it anyway
   if (!fields?.length) {
@@ -47,10 +48,16 @@ export const checkIdentifierField = ({ collection, context, collectors }) => {
   }
 
   // Without the option, the default is only relied on to make the slug of a new entry, which a
-  // custom slug template does its own way. Netlify/Decap CMS refuses to save such an entry, but
-  // its collections can’t be created in by default, so a configuration that worked there may
-  // simply never have needed the field; it’s a warning rather than an error for that reason
-  if (create && slug === undefined && !hasField(fields, DEFAULT_IDENTIFIER_FIELD)) {
+  // custom slug template, or a slug that has to be typed in, makes its own way. Netlify/Decap CMS
+  // refuses to save such an entry, but its collections can’t be created in by default, so a
+  // configuration that worked there may simply never have needed the field; it’s a warning rather
+  // than an error for that reason
+  if (
+    create &&
+    getConfiguredSlugTemplate(collection) === undefined &&
+    !getSlugOptions(collection).editorRequired &&
+    !hasField(fields, DEFAULT_IDENTIFIER_FIELD)
+  ) {
     addMessage({
       type: 'warning',
       strKey: 'missing_identifier_field',

@@ -36,6 +36,7 @@ describe('draft/validate', () => {
       collection: {
         name: 'posts',
         _type: 'entry',
+        slug: '{{fields._slug}}',
         _i18n: {
           i18nEnabled: true,
           defaultLocale: 'en',
@@ -49,6 +50,8 @@ describe('draft/validate', () => {
       currentLocales: { en: true },
       currentValues: { en: {} },
       extraValues: { en: {} },
+      isNew: true,
+      originalSlugs: {},
       currentSlugs: { en: 'test-post' },
       slugEditor: { en: false },
     };

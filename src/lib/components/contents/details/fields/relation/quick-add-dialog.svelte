@@ -11,6 +11,7 @@
   import { untrack } from 'svelte';
 
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
+  import SlugEditor from '$lib/components/contents/details/editor/slug-editor.svelte';
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { revokeDraftFileURLs } from '$lib/services/contents/draft';
@@ -27,6 +28,7 @@
   import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
   import { expandInvalidFields } from '$lib/services/contents/editor/fields';
   import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
+  import { needsSlugInput } from '$lib/services/contents/editor/slug';
   import {
     createPendingEntry,
     getNestedPendingEntries,
@@ -225,8 +227,16 @@
   <div role="none" class="wrapper" bind:this={wrapper}>
     <p class="hint">{_('relation_field.save_together_hint', { values: { name } })}</p>
     {#if entryDraft.current && pane.current}
+      {@const { locale } = pane.current}
       <div role="none" id="{componentId}-body" class="fields">
-        <EntryEditor locale={pane.current.locale} />
+        <!-- There’s no sidebar with the Slug panel in the dialog, so a slug that has to be typed
+          in is edited here. Otherwise, the slug template fills it -->
+        {#if needsSlugInput(entryDraft.current) && entryDraft.current.slugEditor[locale]}
+          {#key locale}
+            <SlugEditor {locale} />
+          {/key}
+        {/if}
+        <EntryEditor {locale} />
       </div>
     {/if}
   </div>

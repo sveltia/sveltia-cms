@@ -663,7 +663,7 @@ describe('FileEditor', () => {
     );
     // The move is previewed, animated, before it’s committed
     await expect
-      .poll(() => container.querySelector('.item-list > div .filename')?.textContent?.trim())
+      .poll(() => container.querySelector('.item-list > div [role="textbox"]')?.textContent?.trim())
       .toBe('/static/uploads/photo.png');
     second.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
     item.dispatchEvent(new DragEvent('dragend', { bubbles: true }));

@@ -245,6 +245,37 @@ describe('fillTemplate()', async () => {
     expect(fillTemplate('{{uuid_shorter}}', { collection, content: {} })).toMatch(/[0-9a-f]{8}/);
   });
 
+  test('reuse the random values given with the options', async () => {
+    await setupCmsConfig();
+
+    const randomValues = new Map();
+    const options = { collection, content: {}, locale: 'en', randomValues };
+    // Short enough not to be truncated with the `slug.maxlength` option
+    const template = "{{uuid_shorter}}_{{title}}_{{name | default('{{a}}-{{b}}')}}";
+    const first = fillTemplate(template, options);
+
+    expect(first).toMatch(/^[0-9a-f]{8}_[0-9a-f]{12}_[0-9a-f]{12}-[0-9a-f]{12}$/);
+    expect(fillTemplate(template, options)).toBe(first);
+    expect([...randomValues.keys()]).toEqual([
+      'en:uuid_shorter',
+      'en:fallback:title',
+      "en:fallback:name | default('{{a}}-{{b}}')",
+    ]);
+
+    // So is the random ID for a value that leaves nothing once slugified, e.g. an empty field
+    const emptyOptions = { collection, content: { title: '' }, locale: 'en', randomValues };
+    const emptyFirst = fillTemplate('{{title}}', emptyOptions);
+
+    expect(emptyFirst).toMatch(/^[0-9a-f]{12}$/);
+    expect(fillTemplate('{{title}}', emptyOptions)).toBe(emptyFirst);
+    // Another locale gets values of its own
+    expect(fillTemplate(template, { ...options, locale: 'fr' })).not.toBe(first);
+    // Without the cache, new values are generated every time
+    expect(fillTemplate('{{uuid}}', { collection, content: {} })).not.toBe(
+      fillTemplate('{{uuid}}', { collection, content: {} }),
+    );
+  });
+
   test('fields prefix', async () => {
     await setupCmsConfig();
 

@@ -1553,13 +1553,14 @@
  * @property {FileExtension} [extension] File extension. Default: `md`.
  * @property {FieldKeyPath} [identifier_field] Field name to be used as the title and slug of an
  * entry. Default: `title`.
- * @property {string} [slug] Item slug template. Default: `identifier_field` option value. It cannot
- * contain slashes; to organize entries in subfolders, use the `path` option instead. It’s possible
- * to [localize the slug](https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs) or [use
- * a random ID](https://sveltiacms.app/en/docs/collections/entries/slugs#slug-template-tags). Also,
- * it’s possible to show a special slug editor field in initial entry drafts by using
- * `{{fields._slug}}` (with an underscore prefix) or `{{fields._slug | localize}}` (to localize the
- * slug).
+ * @property {string | CollectionSlugOptions} [slug] Item slug template, or an object with the
+ * template and the options to let users edit the slug. Default: `identifier_field` option value.
+ * The template cannot contain slashes; to organize entries in subfolders, use the `path` option
+ * instead. It’s possible to [localize the
+ * slug](https://sveltiacms.app/en/docs/i18n/slugs#localizing-entry-slugs) or [use a random
+ * ID](https://sveltiacms.app/en/docs/collections/entries/slugs#slug-template-tags). The
+ * `{{fields._slug}}` and `{{fields._slug | localize}}` tags, which show a slug editor in new entry
+ * drafts, are deprecated; use the object form with the `editable` and `i18n` options instead.
  * @property {number} [slug_length] The maximum number of characters allowed for an entry slug.
  * Default: `Infinity`.
  * DEPRECATED: Use the global `slug.maxlength` option instead.
@@ -1597,6 +1598,36 @@
  * defined in the `fields` option, in which case the property is left to the editor to manage.
  * @see https://decapcms.org/docs/collection-folder/
  * @see https://sveltiacms.app/en/docs/collections/entries
+ */
+
+/**
+ * Stage of an entry’s life at which its slug can be edited: when the entry is created, or once it
+ * has been saved.
+ * @typedef {'create' | 'update'} SlugEditableStage
+ */
+
+/**
+ * Entry slug options for an entry collection. Not to be confused with the global `slug` option,
+ * which defines how slugs are formatted across the site.
+ * @typedef {object} CollectionSlugOptions
+ * @property {string} [template] Slug template. Default: `identifier_field` option value. It cannot
+ * contain slashes; to organize entries in subfolders, use the `path` option instead.
+ * @property {boolean | SlugEditableStage[]} [editable] Whether users can edit the slug. `true`
+ * means both when an entry is created and once it has been saved, `false` means neither, and an
+ * array like `[create]` or `[update]` picks the stages. Default: `true`. When the slug is editable
+ * on creation, a new entry draft shows a slug field, prefilled with the slug the template fills,
+ * whose value takes over from the template once it’s typed in. If the option is set to allow it
+ * without a `template`, the slug has to be typed in.
+ * @property {boolean | 'duplicate'} [i18n] Whether each locale has a slug of its own. `true` lets
+ * users edit the slug for each locale, and fills every field tag in the template with the locale’s
+ * own value. `duplicate` (default) shares the default locale’s slug with the other locales. It only
+ * has an effect with the `multiple_files`, `multiple_folders` or `multiple_root_folders` i18n
+ * structure.
+ * @property {string} [hint] Short description shown with the slug field.
+ * @property {[string | RegExp, string]} [pattern] Validation format of the slug. The first argument
+ * is a regular expression matching pattern for a valid slug, and the second argument is an error
+ * message to be displayed when the slug does not match the pattern.
+ * @see https://github.com/sveltia/sveltia-cms/issues/999
  */
 
 /**

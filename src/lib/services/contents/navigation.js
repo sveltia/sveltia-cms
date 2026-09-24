@@ -268,11 +268,19 @@ const resolveEntryRoute = ({
       delete params.path;
     }
 
+    // The slug can be given as `?_slug=`, which is used where the slug is editable. It’s not a
+    // field value, so it’s left out of the dynamic default values either way
+    // @see https://github.com/sveltia/sveltia-cms/discussions/938
+    const { _slug: initialSlug } = params;
+
+    delete params._slug;
+
     createDraft({
       entryDraft,
       collection,
       dynamicValues: params,
       initialPath,
+      initialSlug,
       isIndexFile: !!window.history.state?.index,
     });
 

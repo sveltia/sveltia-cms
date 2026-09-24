@@ -7,6 +7,7 @@ import {
   showSidebarPanel,
   sidebarSheetPanel,
 } from '$lib/services/contents/editor/sidebar';
+import { hasEntrySlug } from '$lib/services/contents/editor/slug';
 import { getReferencingRelationFields } from '$lib/services/contents/entry/relations';
 import { env } from '$lib/services/user/env.svelte';
 
@@ -14,6 +15,7 @@ vi.mock('$lib/services/backends', () => ({ backend: { current: undefined } }));
 vi.mock('$lib/services/contents/editor/settings', () => ({
   entryEditorSettings: { current: undefined },
 }));
+vi.mock('$lib/services/contents/editor/slug', () => ({ hasEntrySlug: vi.fn(() => false) }));
 vi.mock('$lib/services/contents/entry/relations', () => ({
   getReferencingRelationFields: vi.fn(() => []),
 }));
@@ -39,11 +41,22 @@ describe('getSidebarPanels()', () => {
 
   test('lists the panels in order', () => {
     expect(getSidebarPanels(undefined)).toEqual([
+      { key: 'slug', icon: 'anchor', disabled: true },
       { key: 'validation', icon: 'check_circle', disabled: false },
       { key: 'history', icon: 'history', disabled: true },
       { key: 'backlinks', icon: 'article_shortcut', disabled: true },
     ]);
     expect(getReferencingRelationFields).not.toHaveBeenCalled();
+  });
+
+  test('offers the slug of an entry that has one', () => {
+    const draft = { collectionName: 'posts' };
+
+    expect(getDisabledKeys(draft)).toContain('slug');
+    expect(hasEntrySlug).toHaveBeenCalledWith(draft);
+
+    vi.mocked(hasEntrySlug).mockReturnValueOnce(true);
+    expect(getDisabledKeys(draft)).not.toContain('slug');
   });
 
   test('offers the history of a saved entry on a Git backend', () => {

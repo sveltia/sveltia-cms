@@ -349,6 +349,7 @@ describe('resolveContentsRoute()', () => {
         collection: posts,
         dynamicValues: { title: 'Hi', path: 'sub' },
         initialPath: undefined,
+        initialSlug: undefined,
         isIndexFile: false,
       });
       // Nothing to bring up to date for a new entry
@@ -368,7 +369,24 @@ describe('resolveContentsRoute()', () => {
         collection: posts,
         dynamicValues: {},
         initialPath: 'sub',
+        initialSlug: undefined,
         isIndexFile: true,
+      });
+    });
+
+    test('creates a new entry with the slug given as `_slug`', () => {
+      visit('/collections/posts/new', { title: 'Hi', _slug: 'hello-world' });
+
+      resolve();
+
+      expect(createDraft).toHaveBeenCalledWith({
+        entryDraft,
+        collection: posts,
+        // Not a field value
+        dynamicValues: { title: 'Hi' },
+        initialPath: undefined,
+        initialSlug: 'hello-world',
+        isIndexFile: false,
       });
     });
 

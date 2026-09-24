@@ -9,6 +9,7 @@ import { checkCollectionFilter } from '$lib/services/config/parser/collections/f
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { checkIdentifierField } from '$lib/services/config/parser/collections/identifier';
 import { checkPreviewPath } from '$lib/services/config/parser/collections/preview';
+import { checkSlugOptions } from '$lib/services/config/parser/collections/slug';
 import { checkCollectionTemplates } from '$lib/services/config/parser/collections/templates';
 import { checkViewOptions } from '$lib/services/config/parser/collections/views';
 import { parseFields } from '$lib/services/config/parser/fields';
@@ -69,7 +70,6 @@ export const parseEntryCollection = (context, collectors) => {
     preview_path,
     preview_path_date_field,
     reorder,
-    slug,
     slug_length: legacySlugLength,
     view_groups,
   } = collection;
@@ -122,6 +122,9 @@ export const parseEntryCollection = (context, collectors) => {
   // Validate the `identifier_field` option, and the `title` field it defaults to, against the
   // fields. An index file has a fixed name, so its own fields don’t count
   checkIdentifierField({ collection, context, collectors });
+
+  // Validate the `slug` option itself
+  checkSlugOptions({ collection, context, collectors });
 
   // Validate the `slug`, `path`, `summary` and `thumbnail` options against the fields
   checkCollectionTemplates({ collection, context, collectors });
@@ -190,17 +193,6 @@ export const parseEntryCollection = (context, collectors) => {
   // Validate the `sortable_fields`, `view_groups` and `view_filters` options, including the fields
   // they refer to and the view group and filter names
   checkViewOptions(context, collectors);
-
-  // Validate slug template: should not contain slashes to avoid confusion with `path` option.
-  // @see https://github.com/decaporg/decap-cms/issues/513
-  if (slug?.includes('/')) {
-    addMessage({
-      strKey: 'invalid_slug_slash',
-      values: { slug },
-      context,
-      collectors,
-    });
-  }
 };
 
 /**

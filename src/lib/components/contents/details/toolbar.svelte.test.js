@@ -35,6 +35,7 @@ import {
   setEntries,
 } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import Toolbar from './toolbar.svelte';
 
@@ -197,6 +198,16 @@ describe('Toolbar', () => {
     expect(entryEditorSettings.current?.sidebarPanel).toBe('validation');
     expect(sidebarSheetPanel.current).toBeNull();
     await expect.poll(getShownToastText).toBeUndefined();
+  });
+
+  test('puts the validation error toast away by itself', async () => {
+    vi.mocked(saveEntry).mockRejectedValue(new Error('validation_failed'));
+
+    await renderToolbar({ validities: { _default: { title: { valid: false } } } });
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect.element(page.getByRole('button', { name: 'Show Errors' })).toBeVisible();
+
+    await waitForToastsToHide();
   });
 
   test('offers no sidebar panels for a missing entry on a small screen', async () => {
@@ -503,13 +514,11 @@ describe('Toolbar', () => {
     });
   });
 
-  test('opens the slug editor', async () => {
+  test('opens the Slug panel', async () => {
     await renderExisting({ currentSlugs: { _default: 'hello' } });
     await (await openMenu()).getByRole('menuitem', { name: 'Edit Slug' }).click();
 
-    await expect.element(page.getByRole('dialog', { name: 'Edit Slug' })).toBeInTheDocument();
-    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
-    await expect.poll(() => page.getByRole('dialog').elements().length).toBe(0);
+    expect(entryEditorSettings.current?.sidebarPanel).toBe('slug');
   });
 
   test('reverts the changes', async () => {
@@ -1235,13 +1244,14 @@ describe('Toolbar', () => {
           .map((el) => el.textContent?.trim()),
       ).toEqual([
         'View on Live Site',
+        'Slug',
         'Validation',
         'History',
         'Backlinks',
         'Duplicate',
         'Discard',
         'Delete',
-        'Edit Slug',
+        // The Slug panel above takes the place of the Edit Slug shortcut
         'Revert All Changes',
       ]);
       // The pane options are for large screens

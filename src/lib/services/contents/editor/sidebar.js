@@ -1,5 +1,6 @@
 import { backend } from '$lib/services/backends';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+import { hasEntrySlug } from '$lib/services/contents/editor/slug';
 import { getReferencingRelationFields } from '$lib/services/contents/entry/relations';
 import { env } from '$lib/services/user/env.svelte';
 import { createRawState } from '$lib/services/utils/state.svelte';
@@ -33,6 +34,13 @@ export const getSidebarPanels = (draft) => {
   const { collectionName, fileName, isNew = true } = draft ?? {};
 
   return [
+    {
+      key: 'slug',
+      icon: 'anchor',
+      // Available if the entry has a slug of its own, which the panel shows, and lets the user edit
+      // if allowed
+      disabled: !hasEntrySlug(draft),
+    },
     {
       key: 'validation',
       icon: 'check_circle',

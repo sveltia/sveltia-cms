@@ -18,6 +18,7 @@ const collection = {
     { name: 'extras', widget: 'list', required: false, min: 2 },
   ],
   _i18n: {
+    structureMap: {},
     i18nEnabled: false,
     allLocales: ['_default'],
     initialLocales: ['_default'],

@@ -5,6 +5,7 @@
  */
 export const warnedOnceMap = {
   slug_length: false,
+  slug_editor_tag: false,
   yaml_quote: false,
   uuid_read_only: false,
   save_all_locales: false,
@@ -21,6 +22,12 @@ export const warningMessages = {
   slug_length:
     'The `slug_length` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the global `slug.maxlength` option instead. ',
+  slug_editor_tag:
+    'The `{{fields._slug}}` and `{{fields._slug | localize}}` slug template tags are deprecated ' +
+    'and will be removed in Sveltia CMS 1.0. Use the `slug` collection option’s object form ' +
+    'instead: `{{fields._slug}}` is equivalent to `slug: { editable: true }`, and ' +
+    '`{{fields._slug | localize}}` is equivalent to `slug: { editable: true, i18n: true }`. ' +
+    'https://sveltiacms.app/en/docs/collections/entries/slugs#making-slugs-editable',
   yaml_quote:
     'The `yaml_quote` collection option is deprecated and will be removed in Sveltia CMS 1.0. ' +
     'Use the global `output.yaml.quote` option instead. `yaml_quote: true` is equivalent to ' +

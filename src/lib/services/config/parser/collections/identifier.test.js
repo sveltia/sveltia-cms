@@ -145,6 +145,22 @@ describe('checkIdentifierField', () => {
       expect(addMessage).not.toHaveBeenCalled();
     });
 
+    test('says nothing with a template in the object form of the slug option', () => {
+      check({ fields: withoutTitle, slug: { template: '{{name}}' } });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('says nothing when the slug is given with the slug editor', () => {
+      check({ fields: withoutTitle, slug: { editable: true } });
+      check({ fields: withoutTitle, slug: { editable: ['create'] } });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('warns when the object form of the slug option relies on the default', () => {
+      check({ fields: withoutTitle, slug: { editable: ['update'], hint: 'Hint' } });
+      expectMissing();
+    });
+
     test('does not count a nested title field', () => {
       check({
         fields: [{ name: 'meta', widget: 'object', fields: [{ name: 'title', widget: 'string' }] }],

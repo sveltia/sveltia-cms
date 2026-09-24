@@ -802,7 +802,10 @@ describe('contents/draft/save/entry-path', () => {
   });
   describe('buildCustomEntryPath', () => {
     /** Collection whose slugs aren’t localized. */
-    const collection = { _type: 'entry', _i18n: { defaultLocale: 'en', structureMap: {} } };
+    const collection = {
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en', i18nEnabled: true, structureMap: {} },
+    };
 
     it('should use the configured index file name', async () => {
       const result = buildCustomEntryPath({
@@ -867,6 +870,7 @@ describe('contents/draft/save/entry-path', () => {
       _i18n: {
         defaultLocale: 'en',
         structure: 'single_file',
+        i18nEnabled: true,
         structureMap: { i18nSingleFile: true },
         omitDefaultLocaleFromFilePath: false,
         omitDefaultLocaleFromPreviewPath: false,
@@ -1045,7 +1049,7 @@ describe('contents/draft/save/entry-path', () => {
       folder: 'content/pages',
       nested: {},
       meta: { path: { index_file: '_index' } },
-      _i18n: { defaultLocale: 'en', structureMap: {} },
+      _i18n: { defaultLocale: 'en', i18nEnabled: true, structureMap: {} },
     };
 
     const originalEntry = {
@@ -1132,6 +1136,7 @@ describe('contents/draft/save/entry-path', () => {
       _i18n: {
         defaultLocale: 'en',
         structure: 'multiple_folders',
+        i18nEnabled: true,
         structureMap: {},
         omitDefaultLocaleFromFilePath: false,
         omitDefaultLocaleFromPreviewPath: false,

@@ -19,7 +19,6 @@
 
   import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
-  import EditSlugDialog from '$lib/components/contents/details/edit-slug-dialog.svelte';
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
@@ -34,11 +33,7 @@
   } from '$lib/services/contents/collection/data';
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { getCollectionFileLabel } from '$lib/services/contents/collection/files';
-  import {
-    getSharedEntryFileName,
-    isNestedCollection,
-    nestedFilterPath,
-  } from '$lib/services/contents/collection/nested';
+  import { isNestedCollection, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { createDraft } from '$lib/services/contents/draft/create';
   import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
@@ -50,6 +45,7 @@
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
+  import { canUpdateSlug } from '$lib/services/contents/editor/slug';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -101,7 +97,6 @@
   // count: the fields are revalidated as they’re corrected, and a toast counting down to “0 fields
   // have errors” while it’s still on screen would be confusing
   let errorCount = $state(0);
-  let showEditSlugDialog = $state(false);
   let showDeleteDialog = $state(false);
   let showReviewDialog = $state(false);
   /**
@@ -134,14 +129,6 @@
   const isIndexFile = $derived(!!entryDraft.current?.isIndexFile);
   const collection = $derived(entryDraft.current?.collection);
   const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
-  /**
-   * Whether an entry is identified by its path within the collection folder rather than by a name
-   * of its own, which is the case in a nested collection that doesn’t store every entry as an index
-   * file. The slug editor can’t rename such an entry without relocating it, so it’s not offered.
-   */
-  const slugIsEntryPath = $derived(
-    !!collection && isNestedCollection(collection) && !getSharedEntryFileName(collection),
-  );
   const collectionFile = $derived(entryDraft.current?.collectionFile);
   const originalEntry = $derived(entryDraft.current?.originalEntry);
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
@@ -643,18 +630,17 @@
             }}
           />
         {/if}
-        <MenuItem
-          label={_('edit_slug')}
-          disabled={!!collectionFile ||
-            isNew ||
-            isIndexFile ||
-            pendingDeletion ||
-            entryCollection?.delete === false ||
-            slugIsEntryPath}
-          onclick={() => {
-            showEditSlugDialog = true;
-          }}
-        />
+        <!-- A shortcut to the Slug panel, which a small screen lists above along with the other
+          sidebar panels -->
+        {#if !env.isSmallScreen}
+          <MenuItem
+            label={_('edit_slug')}
+            disabled={!canUpdateSlug(entryDraft.current)}
+            onclick={() => {
+              showSidebarPanel('slug');
+            }}
+          />
+        {/if}
         <MenuItem
           label={_('revert_all_changes')}
           disabled={!modified || pendingDeletion}
@@ -742,8 +728,6 @@
     })}
   </Alert>
 </Toast>
-
-<EditSlugDialog bind:open={showEditSlugDialog} />
 
 <ConfirmationDialog
   bind:open={showReviewDialog}

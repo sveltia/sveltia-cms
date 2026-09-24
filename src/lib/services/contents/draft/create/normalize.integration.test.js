@@ -14,6 +14,7 @@ const collection = {
     { name: 'featured', widget: 'boolean', required: false, default: true },
   ],
   _i18n: {
+    structureMap: {},
     i18nEnabled: false,
     allLocales: ['_default'],
     initialLocales: ['_default'],

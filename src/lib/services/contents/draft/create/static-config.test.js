@@ -60,6 +60,8 @@ const collection = {
     { name: 'blocks', widget: 'list', fields: [{ name: 'body', widget: 'string' }] },
   ],
   _i18n: {
+    i18nEnabled: true,
+    structureMap: {},
     allLocales: ['_default'],
     initialLocales: ['_default'],
     defaultLocale: '_default',

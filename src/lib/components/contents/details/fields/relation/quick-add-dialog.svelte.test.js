@@ -81,6 +81,15 @@ describe('QuickAddDialog', () => {
           ],
         },
         {
+          name: 'languages',
+          label: 'Languages',
+          label_singular: 'Language',
+          folder: 'content/languages',
+          // The slug is only given with the slug editor
+          slug: { editable: true },
+          fields: [{ name: 'title', label: 'Title', widget: 'string' }],
+        },
+        {
           name: 'categories',
           label: 'Categories',
           label_singular: 'Category',
@@ -128,6 +137,31 @@ describe('QuickAddDialog', () => {
     });
     expect(draft.pendingEntries).toEqual([pendingEntry]);
     expect(onAdd).toHaveBeenCalledWith(pendingEntry);
+  });
+
+  test('lets the slug be given, as there’s no Slug panel in the dialog', async () => {
+    const { props } = await renderDialog({ collectionName: 'languages' });
+    const dialog = page.getByRole('dialog', { name: /Creating.*Language/ });
+    const slugInput = dialog.getByRole('textbox', { name: 'Slug' });
+
+    vi.mocked(createPendingEntry).mockResolvedValue(createPending('languages', 'de'));
+
+    await expect.element(slugInput).toBeRequired();
+    await dialog.getByRole('textbox', { name: 'Title' }).fill('German');
+    await dialog.getByRole('button', { name: 'Add' }).click();
+    await expect.element(slugInput).toHaveAttribute('aria-invalid', 'true');
+    expect(createPendingEntry).not.toHaveBeenCalled();
+
+    await slugInput.fill('de');
+    await dialog.getByRole('button', { name: 'Add' }).click();
+
+    await expect.poll(() => props.open).toBe(false);
+    expect(createPendingEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft: expect.objectContaining({ currentSlugs: { _default: 'de' } }),
+      }),
+    );
+    await waitForToastsToHide();
   });
 
   test('carries the entries pending on the parent over to the new entry and back', async () => {

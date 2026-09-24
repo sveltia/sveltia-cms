@@ -826,6 +826,27 @@
  */
 
 /**
+ * Normalized entry slug options of an entry collection, whether the `slug` option is a template
+ * string or an object.
+ * @typedef {object} InternalSlugOptions
+ * @property {string} template Slug template to fill for a new entry. It’s the configured template,
+ * the legacy `{{fields._slug}}` tag when the slug is only given with the slug editor, or the
+ * identifier field tag by default.
+ * @property {boolean} editorRequired Whether the template takes the slug from the slug editor, in
+ * which case the slug editor must be filled in. Otherwise, a filled-in slug editor takes over from
+ * the template.
+ * @property {boolean} editorValueIsSlug Whether the slug editor’s value is the whole slug. It’s
+ * only a part of it with a legacy template that puts the value among other tags, e.g.
+ * `{{year}}-{{fields._slug}}`.
+ * @property {{ create: boolean, update: boolean }} editable Whether the slug can be edited when an
+ * entry is created, and once it has been saved.
+ * @property {boolean} localized Whether each locale has a slug editor of its own, and every field
+ * tag in the template is filled with the locale’s own value.
+ * @property {string} [hint] Short description shown with the slug editor.
+ * @property {[string | RegExp, string]} [pattern] Validation format of the slug.
+ */
+
+/**
  * An entry collection definition.
  * @typedef {EntryCollection & EntryCollectionExtraProps & CollectionExtraProps}
  * InternalEntryCollection
@@ -1566,6 +1587,9 @@
  * is `preview_path`.
  * @property {boolean} [isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
+ * @property {Map<string, string>} [randomValues] Random values generated for the entry so far,
+ * such as the one for a `{{uuid}}` tag, to be reused instead of generating new ones. It keeps a new
+ * entry’s slug the same between the one shown while editing and the one saved.
  */
 
 /**

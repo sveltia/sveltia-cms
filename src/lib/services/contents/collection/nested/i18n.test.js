@@ -58,6 +58,7 @@ const createCollection = (overrides = {}) => ({
   _i18n: {
     defaultLocale: 'en',
     structure: 'multiple_folders',
+    i18nEnabled: true,
     structureMap: {},
   },
   ...overrides,
@@ -120,7 +121,7 @@ describe('hasLocalizedFolders()', () => {
     expect(
       hasLocalizedFolders(
         createCollection({
-          _i18n: { defaultLocale: 'en', structureMap: { i18nSingleFile: true } },
+          _i18n: { defaultLocale: 'en', i18nEnabled: true, structureMap: { i18nSingleFile: true } },
         }),
       ),
     ).toBe(false);

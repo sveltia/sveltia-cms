@@ -8,6 +8,7 @@
   import { validateEntry } from '$lib/services/contents/draft/validate';
   import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
   import { expandInvalidFields, highlightEditorField } from '$lib/services/contents/editor/fields';
+  import { showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { getField } from '$lib/services/contents/entry/fields';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
@@ -90,6 +91,22 @@
           <h4>{label}</h4>
         {/if}
         {#if Object.values(validities[locale]).some((v) => v.valid === false)}
+          {@const slugValidity = validities[locale]._slug}
+          {#if slugValidity?.valid === false}
+            <!-- The slug is edited in the Slug panel rather than in the editor -->
+            <Button
+              class="ref"
+              variant="ghost"
+              onclick={() => {
+                showSidebarPanel('slug');
+              }}
+            >
+              <span class="summary">{_('slug')}</span>
+              <ValidationError live="off">
+                {slugValidity.customErrorMessage}
+              </ValidationError>
+            </Button>
+          {/if}
           {#each Object.keys(valueMap) as keyPath (keyPath)}
             {@const field = getField({ ...getFieldArgs, valueMap, keyPath })}
             {@const messages = messagesByKey[keyPath] ?? []}

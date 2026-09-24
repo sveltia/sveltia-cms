@@ -89,6 +89,16 @@ describe('checkCollectionTemplates', () => {
       check({ slug: '{{locale}}-{{title}}' });
       expectReported([['slug', 'locale']]);
     });
+
+    test('check the template in the object form of the slug option', () => {
+      check({ slug: { template: '{{titel}}', editable: true } });
+      expectReported([['slug', 'titel']]);
+    });
+
+    test('leave the default slug template to the identifier field check', () => {
+      check({ slug: { editable: ['update'] }, fields: [{ name: 'name', widget: 'string' }] });
+      expectReported([]);
+    });
   });
 
   describe('summary', () => {

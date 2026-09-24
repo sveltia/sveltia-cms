@@ -1,6 +1,7 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
 import { slugify } from '$lib/services/common/slug';
+import { UUID_TYPES } from '$lib/services/common/template/constants';
 import {
   handleDateTimeTag,
   handleFilePathTag,
@@ -33,6 +34,27 @@ import { sanitizePath } from '$lib/services/utils/file';
  */
 
 /**
+ * Get a random value, reusing the one generated earlier for the same key if the context carries a
+ * cache of them. A new entry’s slug is filled while it’s being edited to show what it will be, so a
+ * random ID has to stay the same from one fill to the next, and until the entry is saved.
+ * @param {ReplaceSubContext} context Replacement context.
+ * @param {string} key What the value stands for, e.g. a tag in a locale.
+ * @param {() => string} generate Function to generate a new value.
+ * @returns {string} Value.
+ */
+const getRandomValue = ({ randomValues }, key, generate) => {
+  if (!randomValues) {
+    return generate();
+  }
+
+  if (!randomValues.has(key)) {
+    randomValues.set(key, generate());
+  }
+
+  return /** @type {string} */ (randomValues.get(key));
+};
+
+/**
  * Template tag replacer subroutine.
  * @param {string} tag Field name or special tag.
  * @param {ReplaceSubContext} context Replacement context.
@@ -57,10 +79,12 @@ export const replaceTemplateTag = (tag, context) => {
   }
 
   // Handle UUID tags
-  const uuidValue = handleUuidTag(tag);
-
-  if (uuidValue !== undefined) {
-    return uuidValue;
+  if (Object.hasOwn(UUID_TYPES, tag)) {
+    return getRandomValue(
+      context,
+      `${locale}:${tag}`,
+      () => /** @type {string} */ (handleUuidTag(tag)),
+    );
   }
 
   // Handle locale tag for preview path
@@ -137,7 +161,9 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
   if (value === undefined && !hasDefaultTransformation) {
     bailOnUnresolvableTag();
 
-    return generateUUID('short');
+    return getRandomValue(replaceSubContext, `${locale}:fallback:${placeholder}`, () =>
+      generateUUID('short'),
+    );
   }
 
   if (
@@ -147,7 +173,11 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
   ) {
     bailOnUnresolvableTag();
 
-    return `${generateUUID('short')}-${generateUUID('short')}`;
+    return getRandomValue(
+      replaceSubContext,
+      `${locale}:fallback:${placeholder}`,
+      () => `${generateUUID('short')}-${generateUUID('short')}`,
+    );
   }
 
   if (transformations.length) {
@@ -170,6 +200,12 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
   }
 
   // Slugify the value for a slug or filename. Don’t limit the length here; it will be handled later
-  // in `fillTemplate`.
-  return slugify(value, { locale, maxLength: Infinity });
+  // in `fillTemplate`. A value that leaves nothing, e.g. an empty field, falls back to a random ID,
+  // which is reused like the other random values
+  return (
+    slugify(value, { locale, maxLength: Infinity, fallback: false }) ||
+    getRandomValue(replaceSubContext, `${locale}:fallback:${placeholder}`, () =>
+      generateUUID('short'),
+    )
+  );
 };

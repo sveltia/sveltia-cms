@@ -8,7 +8,9 @@ import {
   getFillSlugOptions,
   getLocalizedSlug,
   getLocalizedSlugs,
+  getRandomValues,
   getSlugs,
+  getSlugTemplate,
   hasLocalizedSlugs,
   resolveBlobURLs,
 } from './slugs';
@@ -117,7 +119,10 @@ describe('draft/slugs', () => {
     const createCollection = (overrides = {}) => ({
       _type: 'entry',
       slug: '{{title | localize}}',
-      _i18n: { structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false } },
+      _i18n: {
+        i18nEnabled: true,
+        structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
+      },
       ...overrides,
     });
 
@@ -135,17 +140,149 @@ describe('draft/slugs', () => {
 
     it('should be false with a single-file structure', () => {
       expect(
-        hasLocalizedSlugs(createCollection({ _i18n: { structureMap: { i18nSingleFile: true } } })),
+        hasLocalizedSlugs(
+          createCollection({
+            _i18n: { i18nEnabled: true, structureMap: { i18nSingleFile: true } },
+          }),
+        ),
       ).toBe(false);
       expect(
         hasLocalizedSlugs(
-          createCollection({ _i18n: { structureMap: { i18nSingleFileDefaultRoot: true } } }),
+          createCollection({
+            _i18n: { i18nEnabled: true, structureMap: { i18nSingleFileDefaultRoot: true } },
+          }),
         ),
       ).toBe(false);
     });
 
+    it('should be false for a monolingual collection', () => {
+      const _i18n = { i18nEnabled: false, structureMap: {} };
+
+      expect(hasLocalizedSlugs(createCollection({ _i18n }))).toBe(false);
+      expect(hasLocalizedSlugs(createCollection({ _i18n, slug: { i18n: true } }))).toBe(false);
+    });
+
     it('should be false for a file collection', () => {
       expect(hasLocalizedSlugs(createCollection({ _type: 'file' }))).toBe(false);
+    });
+
+    it('should be true with the i18n option of the slug', () => {
+      expect(hasLocalizedSlugs(createCollection({ slug: { i18n: true } }))).toBe(true);
+      expect(hasLocalizedSlugs(createCollection({ slug: { editable: true, i18n: true } }))).toBe(
+        true,
+      );
+      // Even without any field tag to localize
+      expect(
+        hasLocalizedSlugs(createCollection({ slug: { template: '{{uuid}}', i18n: true } })),
+      ).toBe(true);
+    });
+
+    it('should be false when the slug is duplicated', () => {
+      expect(hasLocalizedSlugs(createCollection({ slug: { i18n: 'duplicate' } }))).toBe(false);
+      expect(hasLocalizedSlugs(createCollection({ slug: { editable: true } }))).toBe(false);
+    });
+
+    it('should be false with the i18n option and a single-file structure', () => {
+      expect(
+        hasLocalizedSlugs(
+          createCollection({
+            slug: { i18n: true },
+            _i18n: { i18nEnabled: true, structureMap: { i18nSingleFile: true } },
+          }),
+        ),
+      ).toBe(false);
+    });
+  });
+
+  describe('getRandomValues', () => {
+    it('should keep the random values of each draft', () => {
+      const draft = {};
+      const randomValues = getRandomValues(draft);
+
+      randomValues.set('en:uuid', 'abc');
+
+      expect(getRandomValues(draft)).toBe(randomValues);
+      expect(getRandomValues(draft).get('en:uuid')).toBe('abc');
+      expect(getRandomValues({})).not.toBe(randomValues);
+    });
+  });
+
+  describe('getSlugTemplate', () => {
+    /**
+     * Create an entry draft.
+     * @param {object} [overrides] Property overrides.
+     * @returns {any} Draft.
+     */
+    const createDraft = (overrides = {}) => ({
+      collection: { _type: 'entry', slug: { template: '{{title}}', editable: true } },
+      currentSlugs: { en: '' },
+      slugEditor: { en: true },
+      ...overrides,
+    });
+
+    it('should return an empty string for a file collection', () => {
+      expect(
+        getSlugTemplate({ draft: createDraft({ collection: { _type: 'file' } }), locale: 'en' }),
+      ).toBe('');
+    });
+
+    it('should return the template while the slug editor is empty', () => {
+      expect(getSlugTemplate({ draft: createDraft(), locale: 'en' })).toBe('{{title}}');
+      expect(
+        getSlugTemplate({ draft: createDraft({ currentSlugs: { en: '  ' } }), locale: 'en' }),
+      ).toBe('{{title}}');
+      expect(getSlugTemplate({ draft: createDraft({ currentSlugs: {} }), locale: 'en' })).toBe(
+        '{{title}}',
+      );
+    });
+
+    it('should let a filled-in slug editor take over from the template', () => {
+      expect(
+        getSlugTemplate({ draft: createDraft({ currentSlugs: { en: 'my-slug' } }), locale: 'en' }),
+      ).toBe('{{fields._slug}}');
+      expect(
+        getSlugTemplate({ draft: createDraft({ currentSlugs: { _: 'my-slug' } }), locale: 'en' }),
+      ).toBe('{{fields._slug}}');
+    });
+
+    it('should ignore a filled-in slug editor to get the slug the template fills', () => {
+      expect(
+        getSlugTemplate({
+          draft: createDraft({ currentSlugs: { en: 'my-slug' } }),
+          locale: 'en',
+          templateOnly: true,
+        }),
+      ).toBe('{{title}}');
+    });
+
+    it('should ignore the slug value when the slug editor is not shown', () => {
+      expect(
+        getSlugTemplate({
+          draft: createDraft({ currentSlugs: { en: 'my-slug' }, slugEditor: { en: false } }),
+          locale: 'en',
+        }),
+      ).toBe('{{title}}');
+    });
+
+    it('should keep a template that takes the slug from the slug editor', () => {
+      expect(
+        getSlugTemplate({
+          draft: createDraft({
+            collection: { _type: 'entry', slug: '{{year}}-{{fields._slug}}' },
+            currentSlugs: { en: 'my-slug' },
+          }),
+          locale: 'en',
+        }),
+      ).toBe('{{year}}-{{fields._slug}}');
+    });
+
+    it('should return the default template without the slug option', () => {
+      expect(
+        getSlugTemplate({
+          draft: createDraft({ collection: { _type: 'entry', identifier_field: 'name' } }),
+          locale: 'en',
+        }),
+      ).toBe('{{name}}');
     });
   });
 
@@ -159,6 +296,7 @@ describe('draft/slugs', () => {
         },
         collectionFile: undefined,
         currentSlugs: { en: 'my-post' },
+        slugEditor: {},
         currentValues: { en: { title: 'My Post', body: 'Content' } },
         files: {},
         isIndexFile: false,
@@ -175,6 +313,7 @@ describe('draft/slugs', () => {
         },
         locale: 'en',
         isIndexFile: false,
+        randomValues: getRandomValues(draft),
       });
     });
 
@@ -187,6 +326,7 @@ describe('draft/slugs', () => {
         },
         collectionFile: undefined,
         currentSlugs: { _: 'default-slug' },
+        slugEditor: {},
         currentValues: { en: { title: 'My Post' } },
         files: {},
         isIndexFile: false,
@@ -209,6 +349,7 @@ describe('draft/slugs', () => {
           _i18n: { defaultLocale: 'en' },
         },
         currentSlugs: {},
+        slugEditor: {},
         currentValues: { en: { title: 'Config' } },
         files: {},
         isIndexFile: false,
@@ -228,6 +369,7 @@ describe('draft/slugs', () => {
         },
         collectionFile: undefined,
         currentSlugs: { en: 'index' },
+        slugEditor: {},
         currentValues: { en: { title: 'Index' } },
         files: {},
         isIndexFile: true,
@@ -249,6 +391,7 @@ describe('draft/slugs', () => {
         },
         collectionFile: undefined,
         currentSlugs: {},
+        slugEditor: {},
         currentValues: { en: { title: 'My Photo', image: blobURL } },
         files: { [blobURL]: { file: new File([], '202407_IMG_0023.jpg') } },
         isIndexFile: false,
@@ -274,6 +417,7 @@ describe('draft/slugs', () => {
         collectionFile: undefined,
         fileName: undefined,
         currentSlugs: { en: 'my-post' },
+        slugEditor: {},
         files: {},
         isIndexFile: true,
       };
@@ -293,6 +437,7 @@ describe('draft/slugs', () => {
           _i18n: {
             defaultLocale: 'en',
             canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
@@ -301,11 +446,13 @@ describe('draft/slugs', () => {
           _i18n: {
             defaultLocale: 'en',
             canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
         fileName: 'config',
         currentSlugs: {},
+        slugEditor: {},
         currentValues: { en: {} },
         currentLocales: { en: true },
         files: {},
@@ -327,12 +474,14 @@ describe('draft/slugs', () => {
           _i18n: {
             defaultLocale: 'en',
             canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
         collectionFile: undefined,
         fileName: undefined,
         currentSlugs: { en: 'my-existing-post' },
+        slugEditor: {},
         currentValues: { en: { title: 'My Existing Post' } },
         currentLocales: { en: true },
         files: {},
@@ -354,12 +503,14 @@ describe('draft/slugs', () => {
           _i18n: {
             defaultLocale: 'en',
             canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
         collectionFile: undefined,
         fileName: undefined,
         currentSlugs: { _: 'default-post' },
+        slugEditor: {},
         currentValues: { en: { title: 'Default Post' } },
         currentLocales: { en: true },
         files: {},
@@ -385,12 +536,14 @@ describe('draft/slugs', () => {
           _i18n: {
             defaultLocale: 'en',
             canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
         collectionFile: undefined,
         fileName: undefined,
         currentSlugs: {},
+        slugEditor: {},
         currentValues: { en: { title: 'My New Post' } },
         currentLocales: { en: true },
         files: {},
@@ -416,12 +569,14 @@ describe('draft/slugs', () => {
           _i18n: {
             defaultLocale: 'en',
             canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
         collectionFile: undefined,
         fileName: undefined,
         currentSlugs: {},
+        slugEditor: {},
         currentValues: { en: { title: 'Default Title' } },
         currentLocales: { en: true },
         files: {},
@@ -457,12 +612,14 @@ describe('draft/slugs', () => {
           _i18n: {
             defaultLocale: 'en',
             canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
         collectionFile: undefined,
         fileName: undefined,
         currentSlugs: {},
+        slugEditor: {},
         currentValues: { en: { title: 'My Post' } },
         currentLocales: { en: true },
         files: {},
@@ -490,12 +647,14 @@ describe('draft/slugs', () => {
           _i18n: {
             defaultLocale: 'en',
             canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
         collectionFile: undefined,
         fileName: undefined,
         currentSlugs: {},
+        slugEditor: {},
         currentValues: { en: { title: 'My Photo', image: blobURL } },
         currentLocales: { en: true },
         files: { [blobURL]: { file: new File([], '202407_IMG_0023.jpg') } },
@@ -530,6 +689,7 @@ describe('draft/slugs', () => {
         },
         collectionFile: undefined,
         currentSlugs: {},
+        slugEditor: {},
         currentValues: {
           en: { title: 'My Article' },
           fr: { title: 'Mon Article' },
@@ -562,6 +722,7 @@ describe('draft/slugs', () => {
         },
         collectionFile: undefined,
         currentSlugs: { fr: 'mon-article-existant' },
+        slugEditor: {},
         currentValues: {
           en: { title: 'My Existing Article' },
           fr: { title: 'Mon Article Existant' },
@@ -589,6 +750,7 @@ describe('draft/slugs', () => {
         },
         collectionFile: undefined,
         currentSlugs: { _: 'default-slug' },
+        slugEditor: {},
         currentValues: {
           en: { title: 'My Article' },
           fr: { title: 'Mon Article' },
@@ -622,6 +784,7 @@ describe('draft/slugs', () => {
         },
         collectionFile: undefined,
         currentSlugs: {},
+        slugEditor: {},
         currentValues: {
           en: { title: 'New Article' },
           fr: { title: 'Nouvel Article' },
@@ -659,6 +822,7 @@ describe('draft/slugs', () => {
         },
         collectionFile: undefined,
         currentSlugs: {},
+        slugEditor: {},
         currentValues: {
           en: { title: 'Some File' },
           fr: { title: 'Un Fichier' },
@@ -688,6 +852,7 @@ describe('draft/slugs', () => {
           slug: '{{title | localize}}',
           _i18n: {
             defaultLocale: 'en',
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: true },
           },
         },
@@ -708,6 +873,7 @@ describe('draft/slugs', () => {
           slug: '{{title | localize}}',
           _i18n: {
             defaultLocale: 'en',
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: true },
           },
         },
@@ -728,6 +894,7 @@ describe('draft/slugs', () => {
           slug: '{{title}}', // No localize modifier
           _i18n: {
             defaultLocale: 'en',
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
@@ -758,12 +925,14 @@ describe('draft/slugs', () => {
           slug: '{{title | localize}}',
           _i18n: {
             defaultLocale: 'en',
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
         collectionFile: undefined,
         currentLocales: { en: true, fr: true },
         currentSlugs: {},
+        slugEditor: {},
         currentValues: {
           en: { title: 'My Article' },
           fr: { title: 'Mon Article' },
@@ -778,6 +947,124 @@ describe('draft/slugs', () => {
       expect(result).toEqual({
         en: 'my-article',
         fr: 'mon-article',
+      });
+    });
+
+    it('should localize every field tag with the i18n option of the slug', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      fillTemplate.mockImplementation((template, options) =>
+        options.locale === 'fr' ? 'mon-article' : 'my-article',
+      );
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          slug: {
+            template: '{{year}}-{{fields.title | upper}}-{{category}}-{{uuid_short}}',
+            i18n: true,
+          },
+          _i18n: {
+            defaultLocale: 'en',
+            i18nEnabled: true,
+            structureMap: { i18nSingleFile: false },
+          },
+        },
+        collectionFile: undefined,
+        currentLocales: { en: true, fr: true },
+        currentSlugs: {},
+        slugEditor: {},
+        currentValues: {
+          en: { title: 'My Article', category: 'news', author: 'Me' },
+          fr: { title: 'Mon Article', category: 'actualites', author: 'Moi' },
+        },
+        files: {},
+        isIndexFile: false,
+        isNew: true,
+      };
+
+      const result = getLocalizedSlugs({ draft, defaultLocaleSlug: 'my-article' });
+
+      expect(result).toEqual({ en: 'my-article', fr: 'mon-article' });
+      expect(fillTemplate).toHaveBeenLastCalledWith(
+        '{{year}}-{{fields.title | upper}}-{{category}}-{{uuid_short}}',
+        expect.objectContaining({
+          locale: 'fr',
+          // Only the field tags are filled with the locale’s own values
+          content: { title: 'Mon Article', category: 'actualites', author: 'Me', _slug: undefined },
+        }),
+      );
+    });
+
+    it('should localize the slug editor value with the i18n option of the slug', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      fillTemplate.mockImplementation((template, options) => options.content._slug);
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          slug: { editable: true, i18n: true },
+          _i18n: {
+            defaultLocale: 'en',
+            i18nEnabled: true,
+            structureMap: { i18nSingleFile: false },
+          },
+        },
+        collectionFile: undefined,
+        currentLocales: { en: true, fr: true },
+        currentSlugs: { en: 'my-article', fr: 'mon-article' },
+        slugEditor: { en: true, fr: true },
+        currentValues: { en: {}, fr: {} },
+        files: {},
+        isIndexFile: false,
+        isNew: true,
+      };
+
+      expect(getLocalizedSlugs({ draft, defaultLocaleSlug: 'my-article' })).toEqual({
+        en: 'my-article',
+        fr: 'mon-article',
+      });
+      expect(fillTemplate).toHaveBeenLastCalledWith(
+        '{{fields._slug | localize}}',
+        expect.objectContaining({ locale: 'fr' }),
+      );
+    });
+
+    it('should ignore the filled-in slug editors with the templateOnly option', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      fillTemplate.mockImplementation((template) => template);
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          slug: { template: '{{title | localize}}' },
+          _i18n: {
+            defaultLocale: 'en',
+            i18nEnabled: true,
+            structureMap: { i18nSingleFile: false },
+            canonicalSlug: { key: 'translationKey', value: '{{slug}}' },
+          },
+        },
+        collectionFile: undefined,
+        currentLocales: { en: true, fr: true },
+        originalLocales: { en: true, fr: true },
+        currentSlugs: { en: 'my-article', fr: 'mon-article' },
+        slugEditor: { en: true, fr: true },
+        currentValues: { en: {}, fr: {} },
+        files: {},
+        isIndexFile: false,
+        isNew: true,
+      };
+
+      expect(getSlugs({ draft }).localizedSlugs).toEqual({
+        en: '{{fields._slug}}',
+        fr: '{{fields._slug}}',
+      });
+      expect(getSlugs({ draft, templateOnly: true }).localizedSlugs).toEqual({
+        en: '{{title | localize}}',
+        fr: '{{title | localize}}',
       });
     });
 
@@ -799,12 +1086,14 @@ describe('draft/slugs', () => {
           slug: '{{fields.title | localize}}',
           _i18n: {
             defaultLocale: 'en',
+            i18nEnabled: true,
             structureMap: { i18nSingleFile: false },
           },
         },
         collectionFile: undefined,
         currentLocales: { en: true, fr: true },
         currentSlugs: {},
+        slugEditor: {},
         currentValues: {
           en: { title: 'My Article' },
           fr: { title: 'Mon Article' },

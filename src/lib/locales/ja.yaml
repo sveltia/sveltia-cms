@@ -1266,6 +1266,12 @@ entry_sidebar:
     # Button in the panel header that validates the entry on demand
     validate: 検証
 
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: スラッグ
+    generated_on_save: スラッグはエントリーの保存時にその内容から生成されます。スラッグに含まれる日時は保存時のものになります。
+    unavailable: このエントリーにはスラッグがありません。
+
   # History panel: shows entry commit history
   history:
     title: 履歴
@@ -1848,6 +1854,8 @@ config:
     preview_path_field_not_found: '`preview_path` オプションで `{$name}` が参照されていますが、そのフィールドはコレクションに定義されていないため、プレビューリンクは表示されません。'
     # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
     missing_identifier_field: コレクションに新しいエントリーの名前となる `{$name}` フィールドがないため、新しいエントリーにはランダムなスラッグが付けられます。`{$name}` フィールドを追加するか、`identifier_field` または `slug` オプションを設定してください。
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: コレクションが各ロケールのファイルを個別に持つ `multiple_files`、`multiple_folders`、`multiple_root_folders` のいずれの i18n 構造も使用していないため、`slug` の `i18n` オプションは効果がありません。
     # Don’t localize `i18n`
     i18n_not_configured: '`i18n` オプションが有効になっていますが、設定のトップレベルまたはコレクションで i18n が設定されていないため、このオプションは効果がありません。'
     # {$option} is an option path from the configuration, such as `filter.Regulation`

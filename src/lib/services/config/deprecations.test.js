@@ -7,6 +7,7 @@ describe('Test warnedOnceMap', () => {
   test('should have all deprecation keys set to false initially', () => {
     expect(warnedOnceMap).toEqual({
       slug_length: false,
+      slug_editor_tag: false,
       yaml_quote: false,
       uuid_read_only: false,
       save_all_locales: false,
@@ -45,6 +46,13 @@ describe('Test warningMessages', () => {
     expect(warningMessages.slug_length).toContain('slug_length');
     expect(warningMessages.slug_length).toContain('deprecated');
     expect(warningMessages.slug_length).toContain('slug.maxlength');
+  });
+
+  test('should contain useful information in slug_editor_tag message', () => {
+    expect(warningMessages.slug_editor_tag).toContain('{{fields._slug}}');
+    expect(warningMessages.slug_editor_tag).toContain('deprecated');
+    expect(warningMessages.slug_editor_tag).toContain('editable: true');
+    expect(warningMessages.slug_editor_tag).toContain('i18n: true');
   });
 
   test('should contain useful information in yaml_quote message', () => {

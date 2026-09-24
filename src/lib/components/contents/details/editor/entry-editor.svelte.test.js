@@ -32,7 +32,7 @@ describe('EntryEditor', () => {
     expect(page.getByRole('textbox', { name: 'Slug' }).elements()).toHaveLength(0);
   });
 
-  test('adds the slug editor when the slug can be edited', async () => {
+  test('leaves the slug editor to the Slug panel', async () => {
     const draft = createMockDraft({
       fields,
       values: { _default: { title: 'Hello', body: '' } },
@@ -41,16 +41,15 @@ describe('EntryEditor', () => {
 
     await renderWithDraft(EntryEditor, { draft, props: { locale: '_default' } });
 
-    // The slug comes first
     await expect
       .poll(() =>
         page
           .getByRole('group')
           .elements()
-          .map((el) => el.getAttribute('data-key-path') ?? 'slug'),
+          .map((el) => el.getAttribute('data-key-path')),
       )
-      .toEqual(['slug', 'title', 'body']);
-    await expect.element(page.getByRole('textbox', { name: 'Slug' })).toBeInTheDocument();
+      .toEqual(['title', 'body']);
+    expect(page.getByRole('textbox', { name: 'Slug' }).elements()).toHaveLength(0);
   });
 
   test('adds the path editor for a nested collection', async () => {

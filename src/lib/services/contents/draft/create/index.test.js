@@ -41,7 +41,7 @@ const { createProxy } = await import('$lib/services/contents/draft/create/proxy.
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
 const { cmsConfig } = await import('$lib/services/config');
 const { nestedFilterPath } = await import('$lib/services/contents/collection/nested');
-const { createDraft, getOriginalPath, getSlugEditorProp } = await import('.');
+const { createDraft, getInitialSlugs, getOriginalPath, getSlugEditorProp } = await import('.');
 /**
  * Fake entry draft state.
  * @type {{ current: any }}
@@ -101,6 +101,8 @@ describe('contents/draft/create/index', () => {
 
   describe('getSlugEditorProp', () => {
     const baseI18n = {
+      i18nEnabled: true,
+      structureMap: {},
       allLocales: ['en', 'ja'],
       defaultLocale: 'en',
     };
@@ -117,7 +119,7 @@ describe('contents/draft/create/index', () => {
       });
     });
 
-    it('should return all false when the slug template has no slug editor tag', () => {
+    it('should show the slug editor by default, shared by the locales', () => {
       const collection = {
         _type: 'entry',
         identifier_field: 'title',
@@ -126,6 +128,34 @@ describe('contents/draft/create/index', () => {
       };
 
       expect(getSlugEditorProp({ collection, originalSlugs: {} })).toEqual({
+        en: true,
+        ja: 'readonly',
+      });
+    });
+
+    it('should show the slug editor for each locale when the template localizes the slug', () => {
+      const collection = { _type: 'entry', slug: '{{title | localize}}', _i18n: baseI18n };
+
+      expect(getSlugEditorProp({ collection, originalSlugs: {} })).toEqual({ en: true, ja: true });
+    });
+
+    it('should share the slug in a single file, where the slug can’t be localized', () => {
+      const collection = {
+        _type: 'entry',
+        slug: '{{fields._slug | localize}}',
+        _i18n: { ...baseI18n, structureMap: { i18nSingleFile: true } },
+      };
+
+      expect(getSlugEditorProp({ collection, originalSlugs: {} })).toEqual({
+        en: true,
+        ja: 'readonly',
+      });
+    });
+
+    it('should return all false for the collection’s index file', () => {
+      const collection = { _type: 'entry', _i18n: baseI18n };
+
+      expect(getSlugEditorProp({ collection, originalSlugs: {}, isIndexFile: true })).toEqual({
         en: false,
         ja: false,
       });
@@ -155,6 +185,40 @@ describe('contents/draft/create/index', () => {
         en: true,
         ja: true,
       });
+    });
+
+    it('should follow the editable and i18n options of the object form', () => {
+      expect(
+        getSlugEditorProp({
+          collection: { _type: 'entry', slug: { editable: ['create'] }, _i18n: baseI18n },
+          originalSlugs: {},
+        }),
+      ).toEqual({ en: true, ja: 'readonly' });
+      expect(
+        getSlugEditorProp({
+          collection: { _type: 'entry', slug: { editable: true, i18n: true }, _i18n: baseI18n },
+          originalSlugs: {},
+        }),
+      ).toEqual({ en: true, ja: true });
+      expect(
+        getSlugEditorProp({
+          collection: {
+            _type: 'entry',
+            slug: { template: '{{title}}', editable: true, i18n: 'duplicate' },
+            _i18n: baseI18n,
+          },
+          originalSlugs: {},
+        }),
+      ).toEqual({ en: true, ja: 'readonly' });
+    });
+
+    it('should return all false when the slug is not editable on creation', () => {
+      expect(
+        getSlugEditorProp({
+          collection: { _type: 'entry', slug: { editable: ['update'] }, _i18n: baseI18n },
+          originalSlugs: {},
+        }),
+      ).toEqual({ en: false, ja: false });
     });
 
     it('should return false for locales whose slug is already set', () => {
@@ -188,11 +252,21 @@ describe('contents/draft/create/index', () => {
       const collection = {
         _type: 'entry',
         slug: '{{fields._slug}}',
-        _i18n: { allLocales: ['en', 'ja', 'fr'], defaultLocale: 'en' },
+        _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
+          allLocales: ['en', 'ja', 'fr'],
+          defaultLocale: 'en',
+        },
       };
 
       const collectionFile = {
-        _i18n: { allLocales: ['en', 'de'], defaultLocale: 'en' },
+        _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
+          allLocales: ['en', 'de'],
+          defaultLocale: 'en',
+        },
       };
 
       expect(getSlugEditorProp({ collection, collectionFile, originalSlugs: {} })).toEqual({
@@ -242,7 +316,68 @@ describe('contents/draft/create/index', () => {
     cmsConfig.current = /** @type {any} */ ({ editor: { preview: true } });
   });
 
+  describe('getInitialSlugs', () => {
+    it('should give the slug to the default locale and the read-only locales', () => {
+      expect(
+        getInitialSlugs({
+          slugEditor: { en: true, ja: 'readonly', fr: false },
+          defaultLocale: 'en',
+          initialSlug: 'hello',
+        }),
+      ).toEqual({ en: 'hello', ja: 'hello' });
+      // A localized slug is only given to the default locale
+      expect(
+        getInitialSlugs({
+          slugEditor: { en: true, ja: true },
+          defaultLocale: 'en',
+          initialSlug: 'hello',
+        }),
+      ).toEqual({ en: 'hello' });
+    });
+
+    it('should ignore the slug where the slug editor isn’t shown', () => {
+      expect(
+        getInitialSlugs({
+          slugEditor: { en: false, ja: false },
+          defaultLocale: 'en',
+          initialSlug: 'hello',
+        }),
+      ).toEqual({});
+    });
+
+    it('should ignore an empty slug', () => {
+      const slugEditor = { en: true };
+
+      expect(getInitialSlugs({ slugEditor, defaultLocale: 'en', initialSlug: undefined })).toEqual(
+        {},
+      );
+      expect(getInitialSlugs({ slugEditor, defaultLocale: 'en', initialSlug: ' ' })).toEqual({});
+    });
+  });
+
   describe('createDraft', () => {
+    it('should start a new entry with the slug given through the URL', () => {
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        slug: { editable: true },
+        fields: [{ name: 'title', widget: 'string' }],
+        _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
+          allLocales: ['en', 'ja'],
+          initialLocales: ['en', 'ja'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+      };
+
+      createDraft({ entryDraft, collection, initialSlug: 'my-post' });
+
+      expect(entryDraft.current?.currentSlugs).toEqual({ en: 'my-post', ja: 'my-post' });
+      expect(entryDraft.current?.originalSlugs).toEqual({});
+    });
+
     it('should create a new entry draft', () => {
       const collection = {
         name: 'posts',
@@ -252,6 +387,8 @@ describe('contents/draft/create/index', () => {
           { name: 'body', widget: 'markdown' },
         ],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'ja'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -284,6 +421,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [{ name: 'title', widget: 'string' }],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'ja'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -335,6 +474,8 @@ describe('contents/draft/create/index', () => {
           { name: 'aBoolean', widget: 'boolean', required: false, default: true },
         ],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -366,6 +507,8 @@ describe('contents/draft/create/index', () => {
         _type: 'file',
         files: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -377,6 +520,8 @@ describe('contents/draft/create/index', () => {
         name: 'about',
         fields: [{ name: 'title', widget: 'string' }],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -403,6 +548,8 @@ describe('contents/draft/create/index', () => {
         fields: [],
         editor: { preview: false },
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -425,6 +572,8 @@ describe('contents/draft/create/index', () => {
         _type: 'file',
         files: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -437,6 +586,8 @@ describe('contents/draft/create/index', () => {
         fields: [],
         editor: { preview: false },
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -464,6 +615,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -487,6 +640,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'fr', 'ja'],
           initialLocales: ['en', 'fr'],
           defaultLocale: 'en',
@@ -511,6 +666,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -535,6 +692,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [{ name: 'title', widget: 'string' }],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -562,6 +721,8 @@ describe('contents/draft/create/index', () => {
         identifier_field: 'title',
         slug: '{{fields._slug}}',
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'ja'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -587,6 +748,8 @@ describe('contents/draft/create/index', () => {
         identifier_field: 'title',
         slug: '{{fields._slug | localize}}',
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'ja'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -611,6 +774,8 @@ describe('contents/draft/create/index', () => {
         fields: [],
         slug: '{{fields._slug}}',
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -643,6 +808,8 @@ describe('contents/draft/create/index', () => {
         fields: [],
         slug: '{{fields._slug}}',
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -676,6 +843,8 @@ describe('contents/draft/create/index', () => {
         fields: [],
         slug: '{{fields._slug | localize}}',
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'fr'],
           initialLocales: ['en', 'fr'],
           defaultLocale: 'en',
@@ -711,6 +880,8 @@ describe('contents/draft/create/index', () => {
         _type: 'file',
         files: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -722,6 +893,8 @@ describe('contents/draft/create/index', () => {
         name: 'about',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -745,6 +918,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [{ name: 'title', widget: 'string' }],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -777,6 +952,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -803,6 +980,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -827,6 +1006,7 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          structureMap: {},
           i18nEnabled: false,
           allLocales: ['_default'],
           initialLocales: ['_default'],
@@ -854,6 +1034,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'ja'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -881,6 +1063,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'ja'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -903,6 +1087,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -927,6 +1113,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -949,6 +1137,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'ja'],
           initialLocales: ['en'],
           defaultLocale: 'en',
@@ -986,6 +1176,8 @@ describe('contents/draft/create/index', () => {
         _type: 'entry',
         fields: [],
         _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
           allLocales: ['en', 'ja'],
           initialLocales: ['en'],
           defaultLocale: 'en',
