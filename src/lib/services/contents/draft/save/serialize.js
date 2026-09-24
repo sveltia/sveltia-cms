@@ -1,4 +1,4 @@
-import { isObject, toRaw } from '@sveltia/utils/object';
+import { toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
@@ -13,6 +13,7 @@ import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/con
 import { TOML_FORMATS } from '$lib/services/contents/file';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { isValueEmpty } from '$lib/services/utils/object';
 
 /**
  * @import {
@@ -29,20 +30,6 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * @type {Map<string, RegExp>}
  */
 const wildcardKeyPathRegexCache = new Map();
-
-/**
- * Check whether a value is empty, such as `undefined`, `null`, an empty string, an empty array, or
- * an empty object.
- * @param {any} value Value to check.
- * @returns {boolean} Whether the value is empty.
- */
-export const isValueEmpty = (value) =>
-  // Don’t use `!value` as `false` and `0` are valid values
-  value === undefined ||
-  value === null ||
-  value === '' ||
-  (Array.isArray(value) && !value.length) ||
-  (isObject(value) && !Object.keys(value).length);
 
 /**
  * Move a property name/value from a unsorted property map to a sorted property map.

@@ -405,6 +405,8 @@ describe('Test filterEntries() with a comparison', async () => {
       { label: 'News', field: 'tags', pattern: 'news' },
       { label: 'Updates', field: 'tags', eq: 'Updates' },
       { label: 'Not news', field: 'tags', ne: 'news' },
+      { label: 'Dated', field: 'date', empty: false },
+      { label: 'Undated', field: 'date', empty: true },
     ],
   };
 
@@ -487,6 +489,12 @@ describe('Test filterEntries() with a comparison', async () => {
     expect(filter([{ field: 'category', eq: 'Concert' }])).toEqual(['past', 'future']);
     expect(filter([{ field: 'category', ne: 'concert' }])).toEqual(['today', 'undated', 'tagged']);
     expect(filter([{ field: 'category', in: ['festival', 'workshop'] }])).toEqual(['today']);
+  });
+
+  test('checks whether a field is empty', () => {
+    // @see https://github.com/sveltia/sveltia-cms/issues/1004
+    expect(filter([{ field: 'date', empty: false }])).toEqual(['past', 'today', 'future']);
+    expect(filter([{ field: 'date', empty: true }])).toEqual(['undated', 'tagged']);
   });
 
   test('combines the filters', () => {

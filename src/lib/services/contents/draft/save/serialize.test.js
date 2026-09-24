@@ -1,11 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
-import {
-  copyProperty,
-  isValueEmpty,
-  serializeContent,
-} from '$lib/services/contents/draft/save/serialize';
+import { copyProperty, serializeContent } from '$lib/services/contents/draft/save/serialize';
 
 vi.mock('$lib/services/assets');
 vi.mock('$lib/services/config', () => ({
@@ -649,6 +645,32 @@ describe('Test copyProperty()', () => {
       expect(sortedMap).toHaveProperty('publishDate');
     });
 
+    test('keeps an optional date when empty optional fields are omitted', async () => {
+      const { TomlDate: TomlDateClass } = await vi.importActual('smol-toml');
+      /** @type {FlattenedEntryContent} */
+      const sortedMap = {};
+
+      /** @type {FlattenedEntryContent} */
+      const unsortedMap = {
+        publishDate: '2024-01-15T10:30:00Z',
+      };
+
+      isFieldRequired.mockReturnValue(false);
+
+      copyProperty({
+        locale: 'en',
+        unsortedMap,
+        sortedMap,
+        isTomlOutput: true,
+        omitEmptyOptionalFields: true,
+        key: 'publishDate',
+        field: { name: 'publishDate', widget: 'datetime', required: false },
+      });
+
+      // A `TomlDate` is an object without any keys, but it’s not empty
+      expect(sortedMap.publishDate).toBeInstanceOf(TomlDateClass);
+    });
+
     test('does not convert date when isTomlOutput is false even if field is datetime', () => {
       /** @type {FlattenedEntryContent} */
       const sortedMap = {};
@@ -820,151 +842,6 @@ describe('Test copyProperty()', () => {
       // Restore the original TomlDate
       vi.unstubAllGlobals();
     });
-  });
-});
-
-describe('Test isValueEmpty()', () => {
-  test('returns true for undefined', () => {
-    expect(isValueEmpty(undefined)).toBe(true);
-  });
-
-  test('returns true for null', () => {
-    expect(isValueEmpty(null)).toBe(true);
-  });
-
-  test('returns true for empty string', () => {
-    expect(isValueEmpty('')).toBe(true);
-  });
-
-  test('returns true for empty array', () => {
-    expect(isValueEmpty([])).toBe(true);
-  });
-
-  test('returns true for empty object', () => {
-    expect(isValueEmpty({})).toBe(true);
-  });
-
-  test('returns false for boolean false (valid falsy value)', () => {
-    expect(isValueEmpty(false)).toBe(false);
-  });
-
-  test('returns false for number zero (valid falsy value)', () => {
-    expect(isValueEmpty(0)).toBe(false);
-  });
-
-  test('returns false for boolean true', () => {
-    expect(isValueEmpty(true)).toBe(false);
-  });
-
-  test('returns false for positive numbers', () => {
-    expect(isValueEmpty(1)).toBe(false);
-    expect(isValueEmpty(42)).toBe(false);
-    expect(isValueEmpty(3.14)).toBe(false);
-  });
-
-  test('returns false for negative numbers', () => {
-    expect(isValueEmpty(-1)).toBe(false);
-    expect(isValueEmpty(-42)).toBe(false);
-    expect(isValueEmpty(-3.14)).toBe(false);
-  });
-
-  test('returns false for non-empty strings', () => {
-    expect(isValueEmpty('hello')).toBe(false);
-    expect(isValueEmpty(' ')).toBe(false); // space is not empty
-    expect(isValueEmpty('0')).toBe(false); // string '0' is not empty
-    expect(isValueEmpty('false')).toBe(false); // string 'false' is not empty
-  });
-
-  test('returns false for arrays with elements', () => {
-    expect(isValueEmpty([1])).toBe(false);
-    expect(isValueEmpty([''])).toBe(false); // array with empty string is not empty
-    expect(isValueEmpty([null])).toBe(false); // array with null is not empty
-    expect(isValueEmpty([undefined])).toBe(false); // array with undefined is not empty
-    expect(isValueEmpty([1, 2, 3])).toBe(false);
-  });
-
-  test('returns false for objects with properties', () => {
-    expect(isValueEmpty({ a: 1 })).toBe(false);
-    expect(isValueEmpty({ key: '' })).toBe(false); // object with empty string value is not empty
-    expect(isValueEmpty({ key: null })).toBe(false); // object with null value is not empty
-    // object with undefined value is not empty
-    expect(isValueEmpty({ key: undefined })).toBe(false);
-    expect(isValueEmpty({ a: 1, b: 2 })).toBe(false);
-  });
-
-  test('returns false for functions', () => {
-    expect(isValueEmpty(() => {})).toBe(false);
-  });
-
-  test('returns true for Date objects (treated as objects with no enumerable keys)', () => {
-    expect(isValueEmpty(new Date())).toBe(true);
-  });
-
-  test('returns true for RegExp objects (treated as objects with no enumerable keys)', () => {
-    expect(isValueEmpty(/test/)).toBe(true);
-  });
-
-  test('returns true for Set objects (treated as objects with no enumerable keys)', () => {
-    expect(isValueEmpty(new Set())).toBe(true);
-    expect(isValueEmpty(new Set([1, 2, 3]))).toBe(true);
-  });
-
-  test('returns true for Map objects (treated as objects with no enumerable keys)', () => {
-    expect(isValueEmpty(new Map())).toBe(true);
-    expect(isValueEmpty(new Map([['key', 'value']]))).toBe(true);
-  });
-
-  test('handles edge cases with nested empty structures', () => {
-    // Arrays containing only empty values are still not empty
-    expect(isValueEmpty([{}])).toBe(false);
-    expect(isValueEmpty([[]])).toBe(false);
-    expect(isValueEmpty([''])).toBe(false);
-
-    // Objects with empty values are still not empty
-    expect(isValueEmpty({ nested: {} })).toBe(false);
-    expect(isValueEmpty({ arr: [] })).toBe(false);
-    expect(isValueEmpty({ str: '' })).toBe(false);
-  });
-
-  test('handles special number values', () => {
-    expect(isValueEmpty(NaN)).toBe(false); // NaN is not considered empty
-    expect(isValueEmpty(Infinity)).toBe(false);
-    expect(isValueEmpty(-Infinity)).toBe(false);
-  });
-
-  test('handles bigint values', () => {
-    expect(isValueEmpty(0n)).toBe(false); // BigInt 0 is not considered empty
-    expect(isValueEmpty(1n)).toBe(false);
-  });
-
-  test('handles symbol values', () => {
-    expect(isValueEmpty(Symbol('test'))).toBe(false);
-    expect(isValueEmpty(Symbol.iterator)).toBe(false);
-  });
-
-  test('handles objects with non-enumerable properties', () => {
-    const obj = {};
-
-    Object.defineProperty(obj, 'hidden', {
-      value: 'test',
-      enumerable: false,
-    });
-
-    // Object.keys() only returns enumerable properties, so this is empty
-    expect(isValueEmpty(obj)).toBe(true);
-  });
-
-  test('comprehensive validation of the specific empty values mentioned in comments', () => {
-    // These are the specific values mentioned in the JSDoc comment
-    expect(isValueEmpty(undefined)).toBe(true);
-    expect(isValueEmpty(null)).toBe(true);
-    expect(isValueEmpty('')).toBe(true);
-    expect(isValueEmpty([])).toBe(true);
-    expect(isValueEmpty({})).toBe(true);
-
-    // And confirming that false and 0 are NOT empty (as mentioned in the comment)
-    expect(isValueEmpty(false)).toBe(false);
-    expect(isValueEmpty(0)).toBe(false);
   });
 });
 

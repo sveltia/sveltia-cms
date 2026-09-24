@@ -254,6 +254,7 @@ describe('Test checkViewOptions()', () => {
         { label: 'Upcoming', field: 'title', gte: '{{today}}' },
         { label: 'Some', field: 'title', in: ['a', 'b'] },
         { label: 'Range', field: 'title', pattern: '^2', lt: '3' },
+        { label: 'Untitled', field: 'title', empty: true },
       ],
     });
 

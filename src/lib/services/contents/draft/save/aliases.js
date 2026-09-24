@@ -4,6 +4,7 @@ import {
   getAliasKeyPaths,
   removeAliases,
 } from '$lib/services/contents/entry/aliases';
+import { isValueEmpty } from '$lib/services/utils/object';
 
 /**
  * @import {
@@ -89,16 +90,9 @@ export const addAlias = ({ draft, locale, content, slug, path }) => {
   }
 
   const keyPaths = getAliasKeyPaths(content, aliasesKey);
-  const value = content[aliasesKey];
-
-  const isEmpty =
-    value === undefined ||
-    value === null ||
-    (Array.isArray(value) && !value.length) ||
-    value === '';
 
   // Leave an unsupported shape, such as a plain string, untouched
-  if (!keyPaths.length && !isEmpty) {
+  if (!keyPaths.length && !isValueEmpty(content[aliasesKey])) {
     return;
   }
 

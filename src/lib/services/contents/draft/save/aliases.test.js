@@ -105,8 +105,8 @@ describe('Test addAlias()', () => {
     });
   });
 
-  test('should treat an empty list, `null` and an empty string as a missing property', () => {
-    [[], null, ''].forEach((value) => {
+  test('should treat an empty list or object, `null` and an empty string as a missing property', () => {
+    [[], {}, null, ''].forEach((value) => {
       const content = { title: 'New Title', aliases: value };
 
       addAlias({ ...baseArgs, draft: createDraft(), content });

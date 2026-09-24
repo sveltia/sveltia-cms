@@ -3495,6 +3495,75 @@ describe('Test getPropertyValue()', () => {
     expect(getPropertyValue({ ...args, key: 'category' })).toBe('a');
   });
 
+  test('should return the subfield values of an object field or a list of objects', () => {
+    const mockCollectionWithObjects = {
+      _type: 'entry',
+      fields: [
+        {
+          name: 'author',
+          widget: 'object',
+          fields: [
+            { name: 'name', widget: 'string' },
+            { name: 'bio', widget: 'text' },
+          ],
+        },
+        { name: 'editor', widget: 'object', fields: [{ name: 'name', widget: 'string' }] },
+        { name: 'reviewer', widget: 'object', fields: [{ name: 'name', widget: 'string' }] },
+        {
+          name: 'links',
+          widget: 'list',
+          fields: [
+            { name: 'label', widget: 'string' },
+            { name: 'url', widget: 'string' },
+          ],
+        },
+        { name: 'authors', widget: 'string' },
+      ],
+      _i18n: {
+        i18nEnabled: false,
+      },
+    };
+
+    /** @type {any} */
+    const entry = {
+      locales: {
+        en: {
+          content: {
+            'author.name': 'Jane',
+            'author.bio': '',
+            editor: null,
+            'links.0.label': 'Home',
+            'links.0.url': '/',
+            'links.1.label': 'About',
+            'links.1.url': '/about',
+            authors: 'Jane, John',
+          },
+        },
+      },
+    };
+
+    // @ts-ignore - Mock collection
+    mockGetCollection.mockReturnValue(mockCollectionWithObjects);
+
+    // A collection name of its own, as the field configurations are cached by collection
+    const args = {
+      entry,
+      locale: 'en',
+      collectionName: 'profiles',
+    };
+
+    expect(getPropertyValue({ ...args, key: 'author' })).toEqual(['Jane', '']);
+    // An empty optional object is stored as `null`
+    expect(getPropertyValue({ ...args, key: 'editor' })).toBeNull();
+    // A field added after the entry was created
+    expect(getPropertyValue({ ...args, key: 'reviewer' })).toBeUndefined();
+    expect(getPropertyValue({ ...args, key: 'links' })).toEqual(['Home', '/', 'About', '/about']);
+    // A subfield is still read directly
+    expect(getPropertyValue({ ...args, key: 'author.name' })).toBe('Jane');
+    // Not an object field, whose name happens to share a prefix with one
+    expect(getPropertyValue({ ...args, key: 'authors' })).toBe('Jane, John');
+  });
+
   test('should return raw field value for non-relation fields', () => {
     const mockNormalCollection = {
       _type: 'entry',

@@ -7,6 +7,7 @@ import {
 } from '$lib/services/common/template/constants';
 import { COMPARISON_OPERATORS, matchesFilter } from '$lib/services/common/view';
 import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/helpers';
+import { isValueEmpty } from '$lib/services/utils/object';
 import { getRegex } from '$lib/services/utils/regex';
 
 /**
@@ -220,6 +221,10 @@ export const prepareConditions = (conditions, { dateFieldConfig, now = new Date(
   ).map((operator) => {
     const value = conditions[operator];
 
+    if (operator === 'empty') {
+      return { operator, target: value };
+    }
+
     if (operator === 'in' || operator === 'not_in') {
       return {
         operator,
@@ -253,8 +258,10 @@ export const prepareConditions = (conditions, { dateFieldConfig, now = new Date(
  * way it’s stored.
  * @param {PreparedConditions} args.conditions Prepared conditions.
  * @returns {boolean} Whether the value matches the pattern, if any, and satisfies every
- * comparison. An entry without a value for the field only satisfies `ne` and `not_in`.
+ * comparison. An entry without a value for the field only satisfies `ne`, `not_in` and `empty:
+ * true`.
  * @see https://github.com/sveltia/sveltia-cms/issues/997
+ * @see https://github.com/sveltia/sveltia-cms/issues/1004
  */
 export const matchesConditions = ({ rawValue, refValue, conditions }) => {
   const { pattern, regex, comparisons, dateFieldConfig } = conditions;
@@ -279,6 +286,9 @@ export const matchesConditions = ({ rawValue, refValue, conditions }) => {
         return values.some((value) => target.some((/** @type {any} */ t) => isEqual(value, t)));
       case 'not_in':
         return !values.some((value) => target.some((/** @type {any} */ t) => isEqual(value, t)));
+      case 'empty':
+        // A multi-value or Object field is empty when none of its items has a value
+        return [rawValue].flat().every(isValueEmpty) === target;
 
       default:
         return rawValues.some((value) => {

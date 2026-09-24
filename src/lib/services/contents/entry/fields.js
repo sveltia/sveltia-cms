@@ -601,8 +601,9 @@ export const getVisibleFieldDisplayValue = ({
  * @param {boolean} [args.resolveRef] Whether to resolve the referenced value if the target field is
  * a relation field.
  * @returns {any} Value. An array of the item values for a multi-value field — a List field, or a
- * Relation, Select or media field with `multiple: true` — which is stored flattened, so nothing
- * lives at the field’s own key path.
+ * Relation, Select or media field with `multiple: true` — or of the subfield values for an Object
+ * field or a List field with subfields, which are stored flattened, so nothing lives at the field’s
+ * own key path.
  */
 export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRef = true }) => {
   const { slug, locales, commitAuthor: { name, login, email } = {}, commitDate } = entry;
@@ -652,6 +653,22 @@ export const getPropertyValue = ({ entry, locale, collectionName, key, resolveRe
 
     if (itemKeys.length) {
       return itemKeys.map((itemKey) => content[itemKey]);
+    }
+  }
+
+  // Gather the subfield values of an Object field, or a List field with subfields, which are
+  // flattened under `key.name`, `key.0.name` and so on, so nothing lives at the field’s own key
+  // path unless it’s `null`. A view filter can then tell whether it has a value, or match any of
+  // the subfield values
+  // @see https://github.com/sveltia/sveltia-cms/issues/1004
+  if (
+    content[key] === undefined &&
+    (fieldConfig?.widget === 'object' || fieldConfig?.widget === 'list')
+  ) {
+    const subKeys = getKeysByPrefix(content, `${key}.`);
+
+    if (subKeys.length) {
+      return subKeys.map((subKey) => content[subKey]);
     }
   }
 

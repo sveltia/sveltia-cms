@@ -1314,7 +1314,13 @@
  * @property {ViewComparisonValue[]} [in] Values one of which the field value has to be equal to.
  * @property {ViewComparisonValue[]} [not_in] Values the field value has to be different from. An
  * entry without a value for the field also matches.
+ * @property {boolean} [empty] Whether the field value has to be empty (`true`) or not (`false`). A
+ * value is empty if the field is missing from the entry, e.g. because it was added to the
+ * configuration after the entry was created, or if it’s `null`, an empty string, an empty list, or
+ * an Object field whose subfields are all empty. This works in every configuration format,
+ * including TOML, which has no `null`.
  * @see https://sveltiacms.app/en/docs/collections/entries/views#filtering
+ * @see https://github.com/sveltia/sveltia-cms/issues/1004
  */
 
 /**

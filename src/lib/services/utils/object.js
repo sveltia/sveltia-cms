@@ -1,3 +1,4 @@
+import { isObject } from '@sveltia/utils/object';
 import { compare } from '@sveltia/utils/string';
 import { unflatten } from 'flat';
 
@@ -19,3 +20,21 @@ export const unflattenMap = (map) =>
   map
     ? unflatten(Object.fromEntries(Object.entries(map).sort(([a], [b]) => compare(a, b))))
     : unflatten(map);
+
+/**
+ * Check whether a value is empty, such as `undefined`, `null`, an empty string, an empty array, or
+ * an empty object.
+ * @param {any} value Value to check.
+ * @returns {boolean} Whether the value is empty. An array or object holding only empty values is
+ * not empty. Only a plain object counts as an object, as a `Date`, including a `TomlDate`, is an
+ * object without any keys.
+ */
+export const isValueEmpty = (value) =>
+  // Don’t use `!value` as `false` and `0` are valid values
+  value === undefined ||
+  value === null ||
+  value === '' ||
+  (Array.isArray(value) && !value.length) ||
+  (isObject(value) &&
+    [Object.prototype, null].includes(Object.getPrototypeOf(value)) &&
+    !Object.keys(value).length);

@@ -1,3 +1,4 @@
+import { parse as parseTOML } from 'smol-toml';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -171,6 +172,15 @@ describe('Test prepareConditions()', () => {
     ).toEqual([{ operator: 'gte', target: undefined }]);
 
     vi.restoreAllMocks();
+  });
+
+  test('keeps the `empty` flag as is, even on a DateTime field', () => {
+    /** @type {DateTimeField} */
+    const dateFieldConfig = { name: 'date', widget: 'datetime' };
+
+    expect(
+      prepareConditions({ field: 'date', empty: false }, { dateFieldConfig, now: NOW }).comparisons,
+    ).toEqual([{ operator: 'empty', target: false }]);
   });
 });
 
@@ -426,6 +436,43 @@ describe('Test matchesConditions()', () => {
           },
         ),
       ).toBe(true);
+    });
+  });
+
+  describe('empty', () => {
+    test('matches a missing or blank value with `empty: true`', () => {
+      [undefined, null, '', [], {}, [null, ''], ['', {}]].forEach((value) => {
+        expect(matches(value, { field: 'x', empty: true })).toBe(true);
+        expect(matches(value, { field: 'x', empty: false })).toBe(false);
+      });
+    });
+
+    test('matches any other value with `empty: false`', () => {
+      ['a', 0, false, ['', 'a'], [null, { a: 1 }], new Date(0)].forEach((value) => {
+        expect(matches(value, { field: 'x', empty: false })).toBe(true);
+        expect(matches(value, { field: 'x', empty: true })).toBe(false);
+      });
+    });
+
+    test('treats an empty TOML table as empty', () => {
+      // `smol-toml` parses a table into an object without a prototype
+      const { author } = parseTOML('author = {}');
+
+      expect(Object.getPrototypeOf(author)).toBeNull();
+      expect(matches(author, { field: 'author', empty: true })).toBe(true);
+      expect(
+        matches(parseTOML('author = { name = "Jane" }').author, { field: 'author', empty: true }),
+      ).toBe(false);
+    });
+
+    test('checks the stored value, not the referenced label', () => {
+      expect(matches(undefined, { field: 'x', empty: true }, { refValue: 'Label' })).toBe(true);
+    });
+
+    test('combines with the other conditions', () => {
+      expect(matches('a', { field: 'x', empty: false, ne: 'b' })).toBe(true);
+      expect(matches('b', { field: 'x', empty: false, ne: 'b' })).toBe(false);
+      expect(matches(undefined, { field: 'x', empty: false, ne: 'b' })).toBe(false);
     });
   });
 
