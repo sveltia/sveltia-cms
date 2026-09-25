@@ -104,49 +104,91 @@ const getExpectedHeadOid = async ({ headOid, branch }) => {
 };
 
 /**
- * Save entries or assets remotely.
- * @param {FileChange[]} changes File changes to be saved.
- * @param {CommitOptions} options Commit options.
- * @returns {Promise<CommitResults>} Commit results, including the commit SHA and updated file SHAs.
- * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
- * @see https://docs.github.com/en/graphql/reference/mutations#createcommitonbranch
+ * Maximum size of the Base64-encoded file contents sent in a single commit mutation (16 MB).
+ * GitHub’s GraphQL API aborts a much larger request, which the browser only reports as a network
+ * error, so the changes are split into several commits beyond this size.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1012
  */
-export const commitChanges = async (changes, options) => {
-  // An Open Authoring contributor can’t write to the configured repository at all, so a change that
-  // doesn’t go through Editorial Workflow has nowhere to land. Fail here with an explanation rather
-  // than letting the API reject the commit with a bare permission error
-  if (openAuthoring.current && !options.branch) {
-    throw new Error('Cannot commit directly to the configured repository', {
-      cause: new Error(_('open_authoring.direct_commit_unsupported')),
+export const MAX_COMMIT_PAYLOAD_SIZE = 16 * 1024 * 1024;
+
+/**
+ * A file addition in a commit mutation, along with the change it comes from.
+ * @typedef {object} FileAddition
+ * @property {number} index Index of the addition in the changeset, which is used to alias the file
+ * in the query for its new SHA.
+ * @property {string} path File path.
+ * @property {string} contents Base64-encoded file contents.
+ * @property {FileChange['data']} data Original file data.
+ */
+
+/**
+ * Split file additions into groups, each of which is committed in a single mutation. Assets come
+ * first and text files like entries last, so an entry never lands in the repository before the
+ * files it refers to. The deletions go into the last commit, so a file that is deleted and added
+ * again at the same path, which GitHub resolves within a single commit, goes into the last group
+ * as well, however large it is; otherwise the deletion would remove it again.
+ * @param {FileAddition[]} additions File additions.
+ * @param {Set<string>} [deletedPaths] Paths of the files to be deleted.
+ * @returns {FileAddition[][]} Groups of file additions. There is always at least one group, which
+ * can be empty, so a changeset with only deletions is still committed.
+ */
+export const splitAdditions = (additions, deletedPaths = new Set()) => {
+  /** @type {FileAddition[][]} */
+  const groups = [[]];
+  let size = 0;
+
+  additions
+    .filter(({ path }) => !deletedPaths.has(path))
+    .toSorted((a, b) => Number(typeof a.data === 'string') - Number(typeof b.data === 'string'))
+    .forEach((addition) => {
+      const { length } = addition.contents;
+
+      // A single file over the limit goes on its own
+      if (size && size + length > MAX_COMMIT_PAYLOAD_SIZE) {
+        groups.push([]);
+        size = 0;
+      }
+
+      /** @type {FileAddition[]} */ (groups.at(-1)).push(addition);
+      size += length;
     });
-  }
 
-  // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
-  // branch is only ever committed to by someone who can write to the configured repository
-  const { owner, repo } = options.branch ? getWorkflowRepository() : repository;
-  const branch = options.branch ?? repository.branch;
-
-  const additionChanges = changes.filter(({ action }) =>
-    ['create', 'update', 'move'].includes(action),
+  /** @type {FileAddition[]} */ (groups.at(-1)).push(
+    ...additions.filter(({ path }) => deletedPaths.has(path)),
   );
 
-  const additions = await Promise.all(
-    additionChanges.map(async ({ path, data }) => ({
-      path,
-      contents: await encodeBase64(data ?? ''),
-    })),
-  );
+  return groups;
+};
 
-  const deletions = changes
-    .filter(({ action }) => ['move', 'delete'].includes(action))
-    .map(({ previousPath, path }) => ({ path: previousPath ?? path }));
-
+/**
+ * Commit the given additions and deletions on top of the given head.
+ * @param {object} args Arguments.
+ * @param {string} args.owner Repository owner.
+ * @param {string} args.repo Repository name.
+ * @param {string} args.branch Branch name.
+ * @param {string} args.expectedHeadOid Commit the new commit has to go on top of.
+ * @param {FileAddition[]} args.additions File additions.
+ * @param {{ path: string }[]} args.deletions File deletions.
+ * @param {string} args.message Commit message.
+ * @param {boolean} args.onWorkflowBranch Whether the commit goes to an Editorial Workflow branch.
+ * @returns {Promise<Record<string, any>>} Commit, including the new file SHAs aliased as
+ * `file_{index}`.
+ */
+const createCommit = async ({
+  owner,
+  repo,
+  branch,
+  expectedHeadOid,
+  additions,
+  deletions,
+  message,
+  onWorkflowBranch,
+}) => {
   // Part of the query to fetch new file SHAs; skip files over 10 MB to avoid a GitHub GraphQL
   // limitation where large blob OIDs cannot be resolved
   // @see https://github.com/sveltia/sveltia-cms/issues/692
   const fileShaQuery = additions
-    .map(({ path }, index) => {
-      const { data } = additionChanges[index];
+    .map(({ index, path, data }) => {
       const size = data instanceof Blob ? data.size : new Blob([data ?? '']).size;
 
       return size <= MAX_GRAPHQL_BLOB_SIZE
@@ -168,33 +210,33 @@ export const commitChanges = async (changes, options) => {
     }
   `;
 
-  const expectedHeadOid = await getExpectedHeadOid(options);
-
   const input = {
     branch: {
       repositoryNameWithOwner: `${owner}/${repo}`,
       branchName: branch,
     },
     expectedHeadOid,
-    fileChanges: { additions, deletions },
-    message: { headline: createCommitMessage(changes, options) },
+    fileChanges: {
+      additions: additions.map(({ path, contents }) => ({ path, contents })),
+      deletions,
+    },
+    message: { headline: message },
   };
 
-  /** @type {Record<string, any>} */
-  let commit;
-
   try {
-    ({
+    const {
       createCommitOnBranch: { commit },
     } = /** @type {{ createCommitOnBranch: { commit: Record<string, any> }}} */ (
       await fetchGraphQL(query, { input })
-    ));
+    );
+
+    return commit;
   } catch (ex) {
     // Tell a commit refused over a moved head from any other failure, so the user is told what
     // happened and to try again, which picks up the other change first. GitHub says so in the
     // error message, but the head is looked up rather than the wording relied upon. A failed lookup
     // leaves the original error to be reported
-    const head = options.branch ? undefined : await fetchLastCommit().catch(() => undefined);
+    const head = onWorkflowBranch ? undefined : await fetchLastCommit().catch(() => undefined);
 
     if (head && head.hash !== expectedHeadOid) {
       throw new Error('The branch has moved since the site data was loaded.', {
@@ -204,23 +246,103 @@ export const commitChanges = async (changes, options) => {
 
     throw ex;
   }
+};
+
+/**
+ * Save entries or assets remotely. The changes normally go into a single commit, but a large
+ * changeset, typically an entry with many new images, is split into several commits made one after
+ * another, with the entry files in the last one.
+ * @param {FileChange[]} changes File changes to be saved.
+ * @param {CommitOptions} options Commit options.
+ * @returns {Promise<CommitResults>} Commit results, including the commit SHA and updated file SHAs.
+ * The commit is the last one made when the changes have been split.
+ * @see https://github.blog/changelog/2021-09-13-a-simpler-api-for-authoring-commits/
+ * @see https://docs.github.com/en/graphql/reference/mutations#createcommitonbranch
+ */
+export const commitChanges = async (changes, options) => {
+  // An Open Authoring contributor can’t write to the configured repository at all, so a change that
+  // doesn’t go through Editorial Workflow has nowhere to land. Fail here with an explanation rather
+  // than letting the API reject the commit with a bare permission error
+  if (openAuthoring.current && !options.branch) {
+    throw new Error('Cannot commit directly to the configured repository', {
+      cause: new Error(_('open_authoring.direct_commit_unsupported')),
+    });
+  }
+
+  // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured
+  // branch is only ever committed to by someone who can write to the configured repository
+  const { owner, repo } = options.branch ? getWorkflowRepository() : repository;
+  const branch = /** @type {string} */ (options.branch ?? repository.branch);
+
+  /** @type {FileAddition[]} */
+  const additions = await Promise.all(
+    changes
+      .filter(({ action }) => ['create', 'update', 'move'].includes(action))
+      .map(async ({ path, data }, index) => ({
+        index,
+        path,
+        contents: await encodeBase64(data ?? ''),
+        data,
+      })),
+  );
+
+  const deletions = changes
+    .filter(({ action }) => ['move', 'delete'].includes(action))
+    .map(({ previousPath, path }) => ({ path: previousPath ?? path }));
+
+  const groups = splitAdditions(additions, new Set(deletions.map(({ path }) => path)));
+  const message = createCommitMessage(changes, options);
+  let expectedHeadOid = await getExpectedHeadOid(options);
+  /** @type {Record<string, any>} */
+  let commit = {};
+  /** @type {Record<string, any>} */
+  const fileShas = {};
+
+  // Commit the groups one by one, each on top of the previous one. The deletions go into the last
+  // commit along with the entries, so a file isn’t removed before the entry stops referring to it
+  // eslint-disable-next-line no-restricted-syntax
+  for (const [groupIndex, group] of groups.entries()) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      commit = await createCommit({
+        owner,
+        repo,
+        branch,
+        expectedHeadOid,
+        additions: group,
+        deletions: groupIndex === groups.length - 1 ? deletions : [],
+        message,
+        onWorkflowBranch: !!options.branch,
+      });
+    } catch (ex) {
+      // Some of the assets have landed on the configured branch, but the entry hasn’t. Take the
+      // last commit made as the known head, so the check before the retry doesn’t load those
+      // assets, which would then be saved again under different names. The retry saves them under
+      // the same paths instead, with the same content, along with the entry. A workflow branch
+      // isn’t tracked this way; it’s reset from scratch when no pull request comes out of it
+      if (groupIndex > 0 && !options.branch) {
+        repositoryHead.current = expectedHeadOid;
+      }
+
+      throw ex;
+    }
+
+    Object.assign(fileShas, commit);
+    expectedHeadOid = commit.oid;
+  }
 
   return {
     sha: commit.oid,
     date: new Date(commit.committedDate),
     files: Object.fromEntries(
-      additions.map(({ path }, index) => {
-        const { data } = additionChanges[index];
-
-        return [
-          path,
-          {
-            sha: commit[`file_${index}`]?.oid,
-            // Preserve the original file for large uploads so the UI can create a blob URL
-            ...(data instanceof Blob && data.size > MAX_GRAPHQL_BLOB_SIZE ? { file: data } : {}),
-          },
-        ];
-      }),
+      additions.map(({ index, path, data }) => [
+        path,
+        {
+          sha: fileShas[`file_${index}`]?.oid,
+          // Preserve the original file for large uploads so the UI can create a blob URL
+          ...(data instanceof Blob && data.size > MAX_GRAPHQL_BLOB_SIZE ? { file: data } : {}),
+        },
+      ]),
     ),
   };
 };

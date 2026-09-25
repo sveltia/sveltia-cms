@@ -1174,6 +1174,58 @@ describe('draft/save/changes', () => {
       expect(vi.mocked(replaceBlobURL)).toHaveBeenCalled();
     });
 
+    it('should leave the blob URLs in the draft, so a failed save can be retried', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { replaceBlobURL } = await import('$lib/services/contents/draft/save/assets');
+      const { getField } = await import('$lib/services/contents/entry/fields');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getField).mockReturnValue({ widget: 'image' });
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+      vi.mocked(replaceBlobURL).mockImplementation(async ({ content, keyPath, blobURL }) => {
+        content[keyPath] = /** @type {string} */ (content[keyPath]).replace(blobURL, '/image.jpg');
+      });
+
+      const blobURL = 'blob:http://localhost:5000/abc123';
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: { title: ' Test ', image: blobURL },
+        },
+        files: {
+          [blobURL]: { file: { name: 'image.jpg', size: 1024 }, folder: 'uploads' },
+        },
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      const result = await createBaseSavingEntryData({ draft, slugs });
+
+      expect(result.localizedEntryMap.en.content).toEqual({
+        title: 'Test',
+        image: '/image.jpg',
+        translationKey: 'test-post',
+      });
+      // The draft itself is untouched
+      expect(draft.currentValues.en).toEqual({ title: ' Test ', image: blobURL });
+    });
+
     it('should handle markdown fields with blob URLs and enable encoding', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { getField } = await import('$lib/services/contents/entry/fields');

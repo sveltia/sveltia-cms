@@ -269,7 +269,12 @@ export const createBaseSavingEntryData = async ({ draft, slugs }) => {
 
   const localizedEntryMap = Object.fromEntries(
     await Promise.all(
-      Object.entries(currentValues).map(async ([locale, content]) => {
+      Object.entries(currentValues).map(async ([locale, valueMap]) => {
+        // Normalize a copy, so the draft keeps its blob URLs until the save has gone through. If
+        // the commit fails, a retry then saves the files again, rather than committing the entry
+        // with paths to files that never reached the repository
+        // @see https://github.com/sveltia/sveltia-cms/issues/1012
+        const content = { ...valueMap };
         const localizedSlug = localizedSlugs?.[locale];
         const slug = localizedSlug ?? defaultLocaleSlug;
         const path = createEntryPath({ draft, locale, slug });

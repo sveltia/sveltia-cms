@@ -5,6 +5,8 @@ import {
   commitChanges,
   fetchFileCommits,
   fetchLastCommit,
+  MAX_COMMIT_PAYLOAD_SIZE,
+  splitAdditions,
 } from '$lib/services/backends/git/github/commits';
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { repository } from '$lib/services/backends/git/github/repository';
@@ -43,6 +45,7 @@ Object.defineProperty(global, 'FileReader', {
 describe('GitHub commits service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(encodeBase64).mockResolvedValue('base64content');
     Object.assign(repository, {
       owner: 'test-owner',
       repo: 'test-repo',
@@ -678,6 +681,251 @@ describe('GitHub commits service', () => {
       expect(result.files).toEqual({
         'public/files/exact.bin': { sha: 'exact-file-sha' },
       });
+    });
+  });
+
+  describe('splitAdditions', () => {
+    /**
+     * Create a file addition.
+     * @param {number} index Index.
+     * @param {number} size Size of the encoded contents.
+     * @param {boolean} [isText] Whether the file is a text file, like an entry.
+     * @returns {any} File addition.
+     */
+    const addition = (index, size, isText = false) => ({
+      index,
+      path: `file-${index}`,
+      contents: 'a'.repeat(size),
+      data: isText ? 'text' : new Blob(['x']),
+    });
+
+    test('keeps everything in one group when it fits', () => {
+      const additions = [addition(0, 10), addition(1, 20)];
+
+      expect(splitAdditions(additions)).toEqual([additions]);
+    });
+
+    test('returns an empty group when there is nothing to add', () => {
+      expect(splitAdditions([])).toEqual([[]]);
+    });
+
+    test('splits additions over the payload limit, with text files last', () => {
+      const half = MAX_COMMIT_PAYLOAD_SIZE / 2;
+      const entry = addition(0, 100, true);
+      const image1 = addition(1, half);
+      const image2 = addition(2, half);
+      const image3 = addition(3, half);
+
+      expect(splitAdditions([entry, image1, image2, image3])).toEqual([
+        [image1, image2],
+        [image3, entry],
+      ]);
+    });
+
+    test('keeps a file deleted and added again at the same path in the last group', () => {
+      const half = MAX_COMMIT_PAYLOAD_SIZE / 2;
+      const readded = addition(0, half);
+      const image1 = addition(1, half);
+      const image2 = addition(2, half);
+      const entry = addition(3, 100, true);
+
+      expect(splitAdditions([readded, image1, image2, entry], new Set(['file-0']))).toEqual([
+        [image1, image2],
+        [entry, readded],
+      ]);
+    });
+
+    test('puts a file over the limit in a group of its own', () => {
+      const huge = addition(0, MAX_COMMIT_PAYLOAD_SIZE + 1);
+      const small = addition(1, 10);
+
+      expect(splitAdditions([small, huge])).toEqual([[small], [huge]]);
+    });
+  });
+
+  describe('commitChanges with a large changeset', () => {
+    test('commits the changes in several commits, each on top of the previous one', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const half = 'a'.repeat(MAX_COMMIT_PAYLOAD_SIZE / 2 + 1);
+
+      vi.mocked(encodeBase64).mockImplementation(async (data) =>
+        typeof data === 'string' ? 'entry' : half,
+      );
+
+      const image1 = new File(['1'], 'image1.webp');
+      const image2 = new File(['2'], 'image2.webp');
+
+      const changes = /** @type {any[]} */ ([
+        { action: 'update', path: 'content/entry.json', data: '{}' },
+        { action: 'create', path: 'images/image1.webp', data: image1 },
+        { action: 'create', path: 'images/image2.webp', data: image2 },
+        { action: 'delete', path: 'images/old.webp' },
+      ]);
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: { oid: 'sha-1', committedDate: '2023-01-01T00:00:00Z', file_1: { oid: 'i1' } },
+          },
+        })
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: {
+              oid: 'sha-2',
+              committedDate: '2023-01-02T00:00:00Z',
+              file_0: { oid: 'e' },
+              file_2: { oid: 'i2' },
+            },
+          },
+        });
+
+      const result = await commitChanges(changes, /** @type {any} */ ({ commitType: 'update' }));
+      const { calls } = vi.mocked(fetchGraphQL).mock;
+
+      expect(calls).toHaveLength(2);
+
+      const [firstQuery, { input: firstInput }] = /** @type {any} */ (calls[0]);
+      const [secondQuery, { input: secondInput }] = /** @type {any} */ (calls[1]);
+
+      // The first image goes on its own, on top of the loaded head
+      expect(firstInput.expectedHeadOid).toBe('loaded-head-sha');
+      expect(firstInput.fileChanges).toEqual({
+        additions: [{ path: 'images/image1.webp', contents: half }],
+        deletions: [],
+      });
+      expect(firstQuery).toContain('file_1: file(path: "images/image1.webp") { oid }');
+      expect(firstQuery).not.toContain('file_0');
+
+      // The entry comes last along with the deletion, on top of the first commit
+      expect(secondInput.expectedHeadOid).toBe('sha-1');
+      expect(secondInput.fileChanges).toEqual({
+        additions: [
+          { path: 'images/image2.webp', contents: half },
+          { path: 'content/entry.json', contents: 'entry' },
+        ],
+        deletions: [{ path: 'images/old.webp' }],
+      });
+      expect(secondQuery).toContain('file_0: file(path: "content/entry.json") { oid }');
+      expect(secondQuery).toContain('file_2: file(path: "images/image2.webp") { oid }');
+
+      expect(result).toEqual({
+        sha: 'sha-2',
+        date: new Date('2023-01-02T00:00:00Z'),
+        files: {
+          'content/entry.json': { sha: 'e' },
+          'images/image1.webp': { sha: 'i1' },
+          'images/image2.webp': { sha: 'i2' },
+        },
+      });
+    });
+
+    test('stops at the first commit that fails, before the entry is committed', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const half = 'a'.repeat(MAX_COMMIT_PAYLOAD_SIZE / 2 + 1);
+
+      vi.mocked(encodeBase64).mockImplementation(async (data) =>
+        typeof data === 'string' ? 'entry' : half,
+      );
+
+      const apiError = new Error('Failed to fetch');
+
+      vi.mocked(fetchGraphQL)
+        .mockRejectedValueOnce(apiError)
+        // The head lookup that follows finds the head where it was expected
+        .mockResolvedValueOnce({
+          repository: {
+            ref: { target: { history: { nodes: [{ oid: 'loaded-head-sha', message: '' }] } } },
+          },
+        });
+
+      const changes = /** @type {any[]} */ ([
+        { action: 'update', path: 'content/entry.json', data: '{}' },
+        { action: 'create', path: 'images/image1.webp', data: new File(['1'], 'image1.webp') },
+        { action: 'create', path: 'images/image2.webp', data: new File(['2'], 'image2.webp') },
+      ]);
+
+      await expect(
+        commitChanges(changes, /** @type {any} */ ({ commitType: 'update' })),
+      ).rejects.toBe(apiError);
+      expect(
+        vi
+          .mocked(fetchGraphQL)
+          .mock.calls.filter(([query]) => query.includes('createCommitOnBranch')),
+      ).toHaveLength(1);
+      // Nothing has landed, so the known head stays where it was
+      expect(repositoryHead.current).toBe('loaded-head-sha');
+    });
+
+    test('takes the last commit made as the head when a later commit fails', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const half = 'a'.repeat(MAX_COMMIT_PAYLOAD_SIZE / 2 + 1);
+
+      vi.mocked(encodeBase64).mockImplementation(async (data) =>
+        typeof data === 'string' ? 'entry' : half,
+      );
+
+      const apiError = new Error('Failed to fetch');
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: { oid: 'sha-1', committedDate: '2023-01-01T00:00:00Z' },
+          },
+        })
+        .mockRejectedValueOnce(apiError)
+        .mockResolvedValueOnce({
+          repository: {
+            ref: { target: { history: { nodes: [{ oid: 'sha-1', message: '' }] } } },
+          },
+        });
+
+      const changes = /** @type {any[]} */ ([
+        { action: 'update', path: 'content/entry.json', data: '{}' },
+        { action: 'create', path: 'images/image1.webp', data: new File(['1'], 'image1.webp') },
+        { action: 'create', path: 'images/image2.webp', data: new File(['2'], 'image2.webp') },
+      ]);
+
+      await expect(
+        commitChanges(changes, /** @type {any} */ ({ commitType: 'update' })),
+      ).rejects.toBe(apiError);
+      expect(repositoryHead.current).toBe('sha-1');
+    });
+
+    test('leaves the known head alone when a later commit on a workflow branch fails', async () => {
+      repositoryHead.current = 'loaded-head-sha';
+
+      const half = 'a'.repeat(MAX_COMMIT_PAYLOAD_SIZE / 2 + 1);
+
+      vi.mocked(encodeBase64).mockImplementation(async (data) =>
+        typeof data === 'string' ? 'entry' : half,
+      );
+
+      const apiError = new Error('Failed to fetch');
+
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({
+          createCommitOnBranch: {
+            commit: { oid: 'sha-1', committedDate: '2023-01-01T00:00:00Z' },
+          },
+        })
+        .mockRejectedValueOnce(apiError);
+
+      const changes = /** @type {any[]} */ ([
+        { action: 'update', path: 'content/entry.json', data: '{}' },
+        { action: 'create', path: 'images/image1.webp', data: new File(['1'], 'image1.webp') },
+        { action: 'create', path: 'images/image2.webp', data: new File(['2'], 'image2.webp') },
+      ]);
+
+      await expect(
+        commitChanges(
+          changes,
+          /** @type {any} */ ({ commitType: 'update', branch: 'cms/posts/a', headOid: 'known' }),
+        ),
+      ).rejects.toBe(apiError);
+      expect(repositoryHead.current).toBe('loaded-head-sha');
     });
   });
 
