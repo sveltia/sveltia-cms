@@ -9,7 +9,7 @@ import { copyFile, readdir, readFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { build } from 'vite';
+import { build, normalizePath } from 'vite';
 
 /**
  * Shiki packages the npm build leaves to the consumer’s bundler rather than bundling: the grammars
@@ -129,6 +129,72 @@ const stripImportMetaAssignment = () => ({
 });
 
 /**
+ * Base URL of the Fontsource files on jsDelivr, from which Sveltia UI loads its fonts by default.
+ */
+const FONT_CDN_BASE_URL = 'https://cdn.jsdelivr.net/fontsource/';
+
+/**
+ * In the npm build, remove the `@font-face` rules for the Fontsource CDN from the `FontLinks`
+ * component of Sveltia UI. `setupSelfHostedAssets()` registers the bundled fonts with the same
+ * descriptors, which are meant to take precedence, but the browser still fetches the CDN files,
+ * e.g. as a fallback while a bundled font is loading, which a strict Content Security Policy
+ * reports as a violation. The rest of the component, like the `.material-symbols-outlined` class,
+ * is kept.
+ * @returns {import('vite').Plugin} Vite plugin.
+ */
+const stripCdnFontFaces = () => {
+  // Real path of the component, which Vite and Node both resolve to, whether Sveltia UI is
+  // installed from the registry or linked to a local copy
+  const componentPath = normalizePath(
+    path.resolve(
+      path.dirname(fileURLToPath(import.meta.resolve('@sveltia/ui'))),
+      'components/util/font-links.svelte',
+    ),
+  );
+
+  return {
+    name: 'strip-cdn-font-faces',
+    // Run on the component source, before the Svelte compiler
+    enforce: 'pre',
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    transform(code, id) {
+      if (id !== componentPath) {
+        return null;
+      }
+
+      const result = code.replace(/@font-face\s*\{[^}]*\}/g, (rule) =>
+        rule.includes(FONT_CDN_BASE_URL) ? '' : rule,
+      );
+
+      // Fail the build rather than ship a package that loads fonts from the CDN, e.g. once a
+      // Sveltia UI update has changed the rules so the replacement above no longer matches
+      if (result.includes(FONT_CDN_BASE_URL)) {
+        this.error(`Unexpected \`@font-face\` rules for the CDN left in ${id}.`);
+      }
+
+      // Also fail once Sveltia UI no longer declares the rules, so this plugin doesn’t linger
+      if (result === code) {
+        this.error(`No \`@font-face\` rules for the CDN found in ${id}. Remove this plugin.`);
+      }
+
+      return { code: result, map: null };
+    },
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    generateBundle(_options, bundle) {
+      const chunks = Object.values(bundle).filter(
+        (chunk) => chunk.type === 'chunk' && chunk.code.includes(FONT_CDN_BASE_URL),
+      );
+
+      if (chunks.length) {
+        this.error(
+          `The CDN fonts are still referenced in: ${chunks.map(({ fileName }) => fileName).join(', ')}`,
+        );
+      }
+    },
+  };
+};
+
+/**
  * In the npm build, generate `published-locales.js` with a loader for each locale file published
  * with the package, except the default one, which is bundled. Each file is imported with a static
  * path, left to the consumer’s bundler to emit it as a chunk: a path with a variable part wouldn’t
@@ -238,6 +304,7 @@ export const buildNpm = ({ resolve, define, plugins, locales }) => ({
       plugins: [
         useNpmVariants(),
         stripImportMetaAssignment(),
+        stripCdnFontFaces(),
         publishedLocales(locales),
         ...plugins(),
       ],
