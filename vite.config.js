@@ -674,6 +674,9 @@ export default defineConfig({
           name: 'browser',
           include: [COMPONENT_TESTS],
           maxWorkers: BROWSER_WORKERS,
+          // A group runs with a single `maxWorkers`, so the project needs its own when `unit` runs
+          // beside it with the default of one worker per core
+          sequence: { groupOrder: 1 },
           setupFiles: ['./vitest.browser.setup.js'],
           // `expect.element()` and `expect.poll()` retry for a second by default, which a shared
           // CI runner can’t always keep up with: a Sveltia UI dialog only reports its result once
