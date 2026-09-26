@@ -27,6 +27,70 @@ export const SANITIZE_OPTIONS = {
 };
 
 /**
+ * Sandbox tokens an embedded iframe can keep in the preview. Any other token supplied in the
+ * content is dropped, including `allow-top-navigation`, which would let the embed take over the
+ * CMS tab, and `allow-popups-to-escape-sandbox`, `allow-modals` and `allow-downloads`. It’s an
+ * allowlist, so a token added to browsers in the future is dropped until it’s been reviewed.
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe#sandbox
+ */
+const ALLOWED_SANDBOX_TOKENS = [
+  'allow-forms',
+  'allow-orientation-lock',
+  'allow-pointer-lock',
+  'allow-popups',
+  'allow-presentation',
+  'allow-same-origin',
+  'allow-scripts',
+  'allow-storage-access-by-user-activation',
+];
+
+/**
+ * Permissions Policy features an embedded iframe can be granted in the preview with the `allow`
+ * attribute. These cover the embed codes of common media services such as YouTube and Vimeo. Other
+ * features, like `camera`, `microphone` and `geolocation`, are dropped, because the permission
+ * prompt would name the CMS origin, and a permission the user has already granted to the CMS would
+ * pass to the embed without a prompt.
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy
+ */
+const ALLOWED_PERMISSIONS_POLICY_FEATURES = [
+  'accelerometer',
+  'autoplay',
+  'clipboard-write',
+  'encrypted-media',
+  'fullscreen',
+  'gyroscope',
+  'picture-in-picture',
+  'web-share',
+];
+
+/**
+ * Filter the `allow` attribute of an iframe, keeping only the directives for the features in
+ * {@link ALLOWED_PERMISSIONS_POLICY_FEATURES}. A directive can have an allowlist of origins after
+ * the feature name, e.g. `autoplay 'self' https://example.com`, which is kept as is.
+ * @param {HTMLIFrameElement} iframe The iframe element to update.
+ */
+const filterPermissionsPolicy = (iframe) => {
+  const allow = iframe.getAttribute('allow');
+
+  if (allow === null) {
+    return;
+  }
+
+  const directives = allow
+    .split(';')
+    .map((directive) => directive.trim())
+    .filter((directive) =>
+      ALLOWED_PERMISSIONS_POLICY_FEATURES.includes(directive.split(/\s+/)[0].toLowerCase()),
+    );
+
+  if (directives.length) {
+    iframe.setAttribute('allow', directives.join('; '));
+  } else {
+    iframe.removeAttribute('allow');
+  }
+};
+
+/**
  * Validate and secure an iframe element.
  * @param {HTMLIFrameElement} iframe The iframe element to validate.
  * @returns {boolean} `true` if the iframe is safe and should be kept, `false` if it should be
@@ -59,9 +123,15 @@ const validateIframe = (iframe) => {
   // Enforce restrictive sandbox for cross-origin iframes. Since we already block same-origin
   // iframes above, it’s safe to allow both `allow-scripts` and `allow-same-origin` here: the iframe
   // can only access its own origin’s APIs (like Cache Storage for YouTube embeds), not the parent
-  // window.
+  // window. Sandbox tokens are ASCII case-insensitive, so they’re compared in lowercase.
   const currentSandbox = iframe.getAttribute('sandbox') || '';
-  const sandboxTokens = new Set(currentSandbox.split(/\s+/).filter(Boolean));
+
+  const sandboxTokens = new Set(
+    currentSandbox
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((token) => ALLOWED_SANDBOX_TOKENS.includes(token)),
+  );
 
   // Required for embed functionality
   sandboxTokens.add('allow-scripts');
@@ -69,6 +139,7 @@ const validateIframe = (iframe) => {
 
   // Set the enforced sandbox attribute
   iframe.setAttribute('sandbox', Array.from(sandboxTokens).join(' '));
+  filterPermissionsPolicy(iframe);
 
   return true;
 };

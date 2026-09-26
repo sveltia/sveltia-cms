@@ -1156,4 +1156,105 @@ describe('SANITIZE_OPTIONS iframe security (XSS prevention)', () => {
     expect(sanitized).toContain('allow-scripts');
     expect(sanitized).toContain('allow-same-origin');
   });
+
+  /**
+   * Sanitize the given iframe HTML and return an accessor for the resulting iframe’s attributes.
+   * The unit tests run without a DOM, so the attributes are read from the serialized HTML.
+   * @param {string} html Iframe HTML.
+   * @returns {{ getAttribute: (name: string) => string | null, hasAttribute: (name: string) =>
+   * boolean } | null} Attribute accessor, or `null` if the iframe was removed.
+   */
+  const sanitizeIframe = (html) => {
+    const tag = sanitizeRichTextHTML(html).match(/<iframe\b[^>]*>/)?.[0];
+
+    if (!tag) {
+      return null;
+    }
+
+    const getAttribute = (/** @type {string} */ name) => {
+      const match = tag.match(new RegExp(`\\s${name}(?:="([^"]*)")?(?=[\\s>])`));
+
+      return match ? (match[1] ?? '').replaceAll('&amp;', '&') : null;
+    };
+
+    return { getAttribute, hasAttribute: (name) => getAttribute(name) !== null };
+  };
+
+  it('should drop sandbox tokens that are not on the allowlist', () => {
+    const iframe = sanitizeIframe(
+      '<iframe src="https://attacker.example/phish.html" sandbox="allow-top-navigation ' +
+        'allow-top-navigation-by-user-activation allow-top-navigation-to-custom-protocols ' +
+        'allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-forms ' +
+        'allow-unknown-future-token"></iframe>',
+    );
+
+    expect(iframe?.getAttribute('sandbox')).toBe(
+      'allow-popups allow-forms allow-scripts allow-same-origin',
+    );
+  });
+
+  it('should keep all the allowed sandbox tokens', () => {
+    const tokens =
+      'allow-forms allow-orientation-lock allow-pointer-lock allow-popups allow-presentation ' +
+      'allow-same-origin allow-scripts allow-storage-access-by-user-activation';
+
+    const iframe = sanitizeIframe(
+      `<iframe src="https://example.com" sandbox="${tokens}"></iframe>`,
+    );
+
+    expect(iframe?.getAttribute('sandbox')).toBe(tokens);
+  });
+
+  it('should compare sandbox tokens case-insensitively', () => {
+    const iframe = sanitizeIframe(
+      '<iframe src="https://example.com" sandbox="ALLOW-TOP-NAVIGATION Allow-Popups"></iframe>',
+    );
+
+    expect(iframe?.getAttribute('sandbox')).toBe('allow-popups allow-scripts allow-same-origin');
+  });
+
+  it('should drop Permissions Policy features that are not on the allowlist', () => {
+    const iframe = sanitizeIframe(
+      '<iframe src="https://example.com" allow="camera; autoplay; geolocation; ' +
+        'clipboard-read; Encrypted-Media; microphone; display-capture"></iframe>',
+    );
+
+    expect(iframe?.getAttribute('allow')).toBe('autoplay; Encrypted-Media');
+  });
+
+  it('should keep the allowed Permissions Policy features of common embed codes', () => {
+    const allow =
+      'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; ' +
+      'picture-in-picture; web-share';
+
+    const iframe = sanitizeIframe(
+      `<iframe src="https://www.youtube.com/embed/abc" allow="${allow}" allowfullscreen></iframe>`,
+    );
+
+    expect(iframe?.getAttribute('allow')).toBe(allow);
+    expect(iframe?.hasAttribute('allowfullscreen')).toBe(true);
+  });
+
+  it('should keep the origin allowlist of a Permissions Policy directive', () => {
+    const iframe = sanitizeIframe(
+      '<iframe src="https://example.com" allow="fullscreen \'self\' https://example.com; camera \'src\';"></iframe>',
+    );
+
+    expect(iframe?.getAttribute('allow')).toBe("fullscreen 'self' https://example.com");
+  });
+
+  it('should remove the allow attribute when no feature is allowed', () => {
+    const iframe = sanitizeIframe(
+      '<iframe src="https://example.com" allow="camera; microphone"></iframe>',
+    );
+
+    expect(iframe).not.toBeNull();
+    expect(iframe?.hasAttribute('allow')).toBe(false);
+  });
+
+  it('should not add an allow attribute when there is none', () => {
+    const iframe = sanitizeIframe('<iframe src="https://example.com"></iframe>');
+
+    expect(iframe?.hasAttribute('allow')).toBe(false);
+  });
 });
