@@ -25,8 +25,10 @@ export const getTokenPageURL = (repoURL) => {
 
   // Editorial Workflow opens, labels, merges and closes pull requests. A token with content access
   // alone gets as far as the commit on the workflow branch, then GitHub refuses to open the pull
-  // request. Pull request access also covers the label endpoints, which accept either it or issue
-  // access. @see https://github.com/sveltia/sveltia-cms/discussions/1000
+  // request. Pull request access also covers the label writes, which accept either it or issue
+  // access, and the labels are read from the pulls endpoint rather than the issues one.
+  // @see https://github.com/sveltia/sveltia-cms/discussions/1000
+  // @see https://github.com/sveltia/sveltia-cms/issues/1014
   if (isWorkflowConfigured(cmsConfig.current)) {
     params.set('pull_requests', 'write');
   }

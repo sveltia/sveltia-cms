@@ -251,6 +251,8 @@ describe('GitHub pull request helpers', () => {
 
       await updateLabels(/** @type {any} */ ({ number: 1 }), 'pending_review');
 
+      // The labels are read from the pulls endpoint, which only needs pull request access
+      expect(fetchAPI).toHaveBeenNthCalledWith(1, '/repos/owner/repo/pulls/1');
       expect(fetchAPI).toHaveBeenLastCalledWith('/repos/owner/repo/issues/1', {
         method: 'PATCH',
         body: { labels: ['bug', 'sveltia-cms/pending_review'] },
