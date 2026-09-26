@@ -12,4 +12,4 @@ However, exceptions may be made in the event of critical security issues affecti
 
 Please email us at [hello@sveltia.dev](mailto:hello@sveltia.dev). We will respond as soon as possible.
 
-Although we do not offer a bug bounty program, if you report a security vulnerability in good faith, we will gladly acknowledge your contribution in our release notes.
+Although we do not offer a bug bounty program, if you report a security vulnerability in good faith, we will gladly acknowledge your contribution in our security advisory and release notes.
