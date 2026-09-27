@@ -330,16 +330,14 @@ test.describe('existing Markdown', () => {
     });
   });
 
-  test('loses a change made with a keyboard shortcut right before saving (known issue)', async ({
+  test('keeps a change made with a keyboard shortcut right before saving', async ({
     cms,
     page,
   }) => {
-    // Known issue: the editor converts the content to Markdown 100 ms after a change. A change
-    // typed as text holds up a save until then, but one made with a keyboard shortcut, a toolbar
-    // button or a menu doesn’t, so a save right after it writes the previous content. The Save
-    // button is clicked with a dispatched event, which comes within 100 ms even on a busy runner,
-    // unlike a Playwright click, or the Accel+S shortcut, which Sveltia UI ignores now and then
-    // right after another shortcut in a test. Once it’s fixed, expect both words to be bold
+    // The editor converts the content to Markdown 100 ms after a change, so a save right after a
+    // change has to wait for it. The Save button is clicked with a dispatched event, which comes
+    // within 100 ms even on a busy runner, unlike a Playwright click, or the Accel+S shortcut,
+    // which Sveltia UI ignores now and then right after another shortcut in a test
     await cms.open();
     await cms.seed(MONOLINGUAL_FILES);
     await cms.signIn();
@@ -358,14 +356,14 @@ test.describe('existing Markdown', () => {
       editor.getByRole('document', { name: 'Content Preview' }).locator('strong'),
     ).toHaveText('observatory');
 
-    // Another one saved right away is lost, while the CMS reports the entry as saved
+    // Another one saved right away is kept too
     await selectText(body, 'opens');
     await page.keyboard.press('ControlOrMeta+b');
     await editor.getByRole('button', { name: 'Save' }).dispatchEvent('click');
 
     await expect(page.getByRole('status').filter({ hasText: 'Entry saved.' })).toBeVisible();
     expect((await cms.readRepo())['content/posts/2026-01-first-light.md']).toContain(
-      '\nThe **observatory** opens its doors.\n',
+      '\nThe **observatory** **opens** its doors.\n',
     );
   });
 });

@@ -323,11 +323,11 @@
   });
 
   /**
-   * Register a pending update when the user is about to change the content. The editor converts
-   * the content to Markdown with a short delay, so a save right after typing would otherwise
-   * validate the previous value.
+   * Register a pending update when the user is about to change the content, or has just changed it.
+   * The editor converts the content to Markdown with a short delay, so a save right after a change
+   * would otherwise validate and write the previous value.
    */
-  const onBeforeInput = () => {
+  const registerPendingUpdate = () => {
     if (settlePendingUpdate) {
       return;
     }
@@ -359,6 +359,47 @@
     settlePendingUpdate?.();
   };
 
+  /**
+   * Root element of the Lexical editor whose updates are being listened to.
+   * @type {Element | undefined}
+   */
+  let editorRoot;
+  /**
+   * Function to stop listening to the updates of the editor at {@link editorRoot}.
+   * @type {(() => void) | undefined}
+   */
+  let unregisterUpdateListener;
+
+  /**
+   * Listen to the updates of the Lexical editor, to register a pending update when the content has
+   * changed in a way that doesn’t fire `beforeinput`: a toolbar button, a menu, a keyboard shortcut
+   * or a component. Lexical calls the listener as the change is made, and the editor writes the
+   * Markdown back a moment later, which settles the update. A change to the user interface of a
+   * component, e.g. collapsing it, doesn’t go through Lexical, so it doesn’t hold up a save. The
+   * editor’s root element is only there once the editor is rendered, and is replaced when the
+   * editor is reset, so this is called on every change to the wrapper’s DOM. The first root in the
+   * wrapper is this editor’s own; any other belongs to an editor nested in a component, which
+   * tracks its own updates.
+   */
+  const listenToEditorUpdates = () => {
+    const root = wrapper?.querySelector('[data-lexical-editor]') ?? undefined;
+    // Lexical attaches the editor to the root element once it’s rendered
+    const editor = root ? getNearestEditorFromDOMNode(root) : null;
+
+    if (!editor || root === editorRoot) {
+      return;
+    }
+
+    unregisterUpdateListener?.();
+    editorRoot = root;
+    unregisterUpdateListener = editor.registerUpdateListener(({ dirtyElements, dirtyLeaves }) => {
+      // An update that only moves the selection doesn’t change the content
+      if (dirtyElements.size || dirtyLeaves.size) {
+        registerPendingUpdate();
+      }
+    });
+  };
+
   $effect(() => {
     // The wrapper is bound before the effects run, so it’s always there
     /* v8 ignore next 3 */
@@ -367,15 +408,22 @@
     }
 
     const target = wrapper;
+    const observer = new MutationObserver(listenToEditorUpdates);
 
     // The `Update` event is dispatched on the editor’s root element without bubbling, so it can
     // only be caught in the capture phase
-    target.addEventListener('beforeinput', onBeforeInput, true);
+    target.addEventListener('beforeinput', registerPendingUpdate, true);
     target.addEventListener('Update', onUpdate, true);
+    observer.observe(target, { subtree: true, childList: true });
+    listenToEditorUpdates();
 
     return () => {
-      target.removeEventListener('beforeinput', onBeforeInput, true);
+      target.removeEventListener('beforeinput', registerPendingUpdate, true);
       target.removeEventListener('Update', onUpdate, true);
+      observer.disconnect();
+      unregisterUpdateListener?.();
+      unregisterUpdateListener = undefined;
+      editorRoot = undefined;
       // Don’t hold up a save when the editor goes away
       settlePendingUpdate?.();
     };

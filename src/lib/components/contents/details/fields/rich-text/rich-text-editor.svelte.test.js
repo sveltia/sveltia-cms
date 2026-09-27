@@ -146,6 +146,39 @@ describe('RichTextEditor', () => {
     expect(trackPendingFieldUpdate).toHaveBeenCalledTimes(1);
   });
 
+  test('tracks a pending update for a change that doesn’t fire `beforeinput`', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
+    // Loading the content changes the editor too; wait for that update to be settled
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
+    await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
+    vi.mocked(trackPendingFieldUpdate).mockClear();
+
+    // An attribute change on the editor’s root element doesn’t change the content
+    props.invalid = true;
+    await expect.poll(() => editor.element().getAttribute('aria-invalid')).toBe('true');
+    expect(trackPendingFieldUpdate).not.toHaveBeenCalled();
+
+    // Select the text, and let the editor pick up the selection, then make it bold with the toolbar
+    const range = document.createRange();
+
+    range.selectNodeContents(editor.element());
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(range);
+    document.dispatchEvent(new Event('selectionchange'));
+    await new Promise((resolve) => {
+      requestAnimationFrame(resolve);
+    });
+    await page.getByRole('button', { name: 'Bold' }).click();
+
+    // A save waits for the update, which is settled once the Markdown is written back
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
+    await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
+    expect(props.currentValue).toBe('**Hello**');
+  });
+
   test('inserts a dropped image', async () => {
     await initTestConfig({
       collections: [
