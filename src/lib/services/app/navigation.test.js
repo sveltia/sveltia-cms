@@ -15,6 +15,33 @@ import {
   updateContentFromHashChange,
 } from './navigation';
 
+// The module listens to `keydown` as it’s loaded, before the tests can set anything up
+const { keydownListeners } = vi.hoisted(() => {
+  /** @type {EventListener[]} */
+  const listeners = [];
+
+  /**
+   * Collect the `keydown` listeners, as Node has no global event target.
+   * @param {string} type Event type.
+   * @param {any} listener Listener.
+   */
+  // @ts-ignore - Node has no global event target
+  globalThis.addEventListener = (type, listener) => {
+    if (type === 'keydown') {
+      listeners.push(listener);
+    }
+  };
+
+  return { keydownListeners: listeners };
+});
+
+/**
+ * Press a key, as far as the module’s listeners are concerned.
+ */
+const pressKey = () => {
+  keydownListeners.forEach((listener) => listener(new Event('keydown')));
+};
+
 /**
  * Mock HashChangeEvent class for testing.
  */
@@ -1066,6 +1093,30 @@ describe('navigation', () => {
         expect.objectContaining({ types: ['unknown'] }),
       );
       expect(mockUpdateContent).toHaveBeenCalled();
+    });
+
+    it('should skip the running transition when a key is pressed', async () => {
+      const { promise: finished, resolve } = Promise.withResolvers();
+
+      const mockTransition = {
+        ready: Promise.resolve(),
+        finished,
+        skipTransition: vi.fn(),
+      };
+
+      // @ts-ignore - Simplified mock for testing
+      document.startViewTransition = vi.fn().mockReturnValue(mockTransition);
+
+      startViewTransition('forwards', vi.fn());
+      pressKey();
+      expect(mockTransition.skipTransition).toHaveBeenCalledTimes(1);
+
+      // Nothing to skip once the transition is over
+      resolve(undefined);
+      await finished;
+      await Promise.resolve();
+      pressKey();
+      expect(mockTransition.skipTransition).toHaveBeenCalledTimes(1);
     });
 
     it('should observe a rejected ready promise when the transition is skipped', async () => {

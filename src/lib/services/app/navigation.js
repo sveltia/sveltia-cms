@@ -86,6 +86,20 @@ export const parseLocation = (href = window.location.href) => {
  */
 let activeTransition = null;
 
+// Finish the running view transition as soon as a key is pressed. Until the animation is over, the
+// transition overlay catches every hit test, and Sveltia UI only activates a button with its
+// keyboard shortcut if a hit test finds the button, so a shortcut pressed right after the page
+// changed would be ignored, e.g. Accel+S or Escape right after the entry editor opened, and the
+// browser would handle Accel+S itself. The listener is added as the module is loaded, so it runs
+// before the one Sveltia UI adds once a component with a shortcut is mounted
+globalThis.addEventListener?.(
+  'keydown',
+  () => {
+    activeTransition?.skipTransition();
+  },
+  { capture: true },
+);
+
 /**
  * Start page transition, if possible, after updating the content.
  * @param {ViewTransitionType} transitionType View transition type.
