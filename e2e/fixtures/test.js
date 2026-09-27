@@ -50,7 +50,7 @@ export const GITHUB_CONFIG = {
 /**
  * The CMS on the test page.
  */
-class CMS {
+export class CMS {
   /**
    * Create a handle for the CMS on a page.
    * @param {Page} page Page.
@@ -113,16 +113,25 @@ class CMS {
   }
 
   /**
+   * Open a popup, e.g. a menu or a dropdown list, and wait until it takes input. A Sveltia UI menu
+   * or listbox ignores input for 100 ms after it opens, so the click that opened it can’t choose an
+   * item by accident. A user never clicks or types that fast, but a test does.
+   * @param {Locator} trigger Element that opens the popup, e.g. a button or a combobox.
+   * @param {Locator} popup Popup, or an element in it.
+   */
+  async openPopup(trigger, popup) {
+    await trigger.click();
+    await expect(popup).toBeVisible();
+    await this.page.waitForTimeout(150);
+  }
+
+  /**
    * Open a menu and choose one of its items.
    * @param {Locator} button Button that opens the menu.
    * @param {Locator} item Menu item.
    */
   async chooseMenuItem(button, item) {
-    await button.click();
-    await expect(item).toBeVisible();
-    // A Sveltia UI menu ignores input for 100 ms after it opens, so the click that opened it can’t
-    // choose an item by accident. A user never clicks that fast, but a test does
-    await this.page.waitForTimeout(150);
+    await this.openPopup(button, item);
     await item.click();
   }
 
