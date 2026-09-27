@@ -1,17 +1,19 @@
 import { parse } from 'marked';
 
 import { loadModule } from '$lib/services/app/dependencies';
+import { getInheritedI18nOption } from '$lib/services/contents/draft/create/proxy.svelte';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { RICH_TEXT_FIELD_TYPES, TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
  * @import { EntryDraft, InternalLocaleCode, LocaleContentMap } from '$lib/types/private';
- * @import { FieldKeyPath, ListField } from '$lib/types/public';
+ * @import { Field, FieldKeyPath, ListField } from '$lib/types/public';
  */
 
 /**
@@ -130,6 +132,16 @@ export const getCopyingFieldMap = ({ draft, options }) => {
 
         if (
           (keyPath && !isKeyPathWithin(_keyPath, keyPath)) ||
+          // Only a translatable field has a value of its own in each locale: a field that isn’t
+          // localized is only saved in the default locale, and a duplicated one can’t be edited
+          // in the other locales. An item of a List field without subfields has no configuration
+          // of its own, so it takes the option of the List field
+          !isFieldTranslatable(
+            getInheritedI18nOption({
+              fieldConfig: field ?? /** @type {Field} */ ({}),
+              getFieldArgs: { ...getFieldArgs, keyPath: _keyPath },
+            }),
+          ) ||
           typeof value !== 'string' ||
           !value ||
           ![...TEXT_FIELD_TYPES, 'list'].includes(fieldType) ||

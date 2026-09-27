@@ -26,21 +26,17 @@ const VERSION_KEY = Symbol('valueMapVersion');
 export const getValueMapVersion = (valueMap) => /** @type {any} */ (valueMap)?.[VERSION_KEY];
 
 /**
- * Check if the given field’s value is duplicated from the default locale to the other locales. That
- * is the case when the field has the `duplicate` i18n strategy, or, if the field has no `i18n`
- * option of its own, when the nearest ancestor that has one, such as the List or Object field it
- * belongs to, has the `duplicate` strategy. A duplicated List or Object field then holds the same
- * items and values in every locale, the way `normalizeContentMap()` copies it when an entry is
- * loaded, while a subfield explicitly made translatable keeps a value of its own in each locale.
+ * Get the `i18n` option that applies to the given field: its own, or, if the field has none, that
+ * of the nearest ancestor that has one, such as the List or Object field it belongs to.
  * @param {object} args Arguments.
  * @param {Field} args.fieldConfig Field configuration.
  * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
  * path of the field.
- * @returns {boolean} Whether the value is duplicated.
+ * @returns {Field['i18n']} Option, or `undefined` if neither the field nor its ancestors have one.
  */
-export const isDuplicatedField = ({ fieldConfig, getFieldArgs }) => {
+export const getInheritedI18nOption = ({ fieldConfig, getFieldArgs }) => {
   if (fieldConfig.i18n !== undefined) {
-    return fieldConfig.i18n === 'duplicate';
+    return fieldConfig.i18n;
   }
 
   const segments = getFieldArgs.keyPath.split('.');
@@ -53,13 +49,28 @@ export const isDuplicatedField = ({ fieldConfig, getFieldArgs }) => {
         getField({ ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') }) ?? {};
 
       if (i18n !== undefined) {
-        return i18n === 'duplicate';
+        return i18n;
       }
     }
   }
 
-  return false;
+  return undefined;
 };
+
+/**
+ * Check if the given field’s value is duplicated from the default locale to the other locales. That
+ * is the case when the field has the `duplicate` i18n strategy, or, if the field has no `i18n`
+ * option of its own, when the nearest ancestor that has one, such as the List or Object field it
+ * belongs to, has the `duplicate` strategy. A duplicated List or Object field then holds the same
+ * items and values in every locale, the way `normalizeContentMap()` copies it when an entry is
+ * loaded, while a subfield explicitly made translatable keeps a value of its own in each locale.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
+ * path of the field.
+ * @returns {boolean} Whether the value is duplicated.
+ */
+export const isDuplicatedField = (args) => getInheritedI18nOption(args) === 'duplicate';
 
 /**
  * Copy the default locale value to other locales if the field’s i18n strategy is `duplicate`.
