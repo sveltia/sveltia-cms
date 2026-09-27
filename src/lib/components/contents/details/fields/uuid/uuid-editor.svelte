@@ -12,6 +12,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getInitialValue } from '$lib/services/contents/fields/uuid/helpers';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -41,15 +42,20 @@
 
   const defaultLocale = $derived(entryDraft.current?.defaultLocale);
 
-  // Generate the default value here instead of in `create.js` because `getDefaultValues()` doesn’t
-  // i18n-duplicate the value
-  onMount(() => {
-    if (!currentValue) {
-      if (locale === defaultLocale || isFieldTranslatable(fieldConfig?.i18n)) {
+  // A new draft has its UUIDs filled in when it’s created, but an existing entry can lack one, e.g.
+  // when the field was added after the entry was saved, and so can a newly added list item. Fill
+  // in the value once the field is shown in a locale where it’s editable. The editor is reused when
+  // the user switches the locale, so do it on every locale change rather than only on mount
+  watch(
+    () => locale,
+    () => {
+      if (!currentValue && (locale === defaultLocale || isFieldTranslatable(fieldConfig?.i18n))) {
         currentValue = getInitialValue(fieldConfig);
       }
-    }
+    },
+  );
 
+  onMount(() => {
     // @todo Remove the option prior to the 1.0 release.
     if ('read_only' in fieldConfig) {
       warnDeprecation('uuid_read_only');

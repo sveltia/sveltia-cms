@@ -15,6 +15,7 @@ import { revokeDraftFileURLs, STATIC_DRAFT_KEYS } from '$lib/services/contents/d
 import { restoreBackupIfNeeded } from '$lib/services/contents/draft/backup';
 import { normalizeContentMap } from '$lib/services/contents/draft/create/normalize';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
+import { fillUuidValues } from '$lib/services/contents/draft/create/uuid';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { resetCustomFieldValidation } from '$lib/services/contents/draft/validate/custom-fields';
@@ -244,7 +245,15 @@ export const buildDraft = ({
     ),
   );
 
-  if (!isNew) {
+  if (isNew) {
+    // Give every UUID field its value up front rather than when its editor is rendered, which may
+    // never happen in a long form or in a locale the user doesn’t open
+    fillUuidValues({
+      contentMap: originalValues,
+      defaultLocale,
+      getFieldArgs: { collectionName, fileName, isIndexFile },
+    });
+  } else {
     // Existing entries can predate the current field configuration: a field added since, or an
     // optional field left empty and later made required, is simply absent from the file. Fill those
     // in so the editor shows their default values and the validator sees them

@@ -24,6 +24,10 @@ vi.mock('$lib/services/contents/draft/create/proxy.svelte', () => ({
   createProxy: vi.fn((args) => args.target),
 }));
 
+vi.mock('$lib/services/contents/draft/create/uuid', () => ({
+  fillUuidValues: vi.fn(),
+}));
+
 // `populateDefaultValue` is kept intact because `normalizeContentMap()` relies on it to fill in the
 // values missing from an existing entry
 vi.mock('$lib/services/contents/draft/defaults', async (importOriginal) => ({
@@ -39,6 +43,7 @@ const { revokeDraftFileURLs } = await import('$lib/services/contents/draft');
 const { restoreBackupIfNeeded } = await import('$lib/services/contents/draft/backup');
 const { createProxy } = await import('$lib/services/contents/draft/create/proxy.svelte');
 const { getDefaultValues } = await import('$lib/services/contents/draft/defaults');
+const { fillUuidValues } = await import('$lib/services/contents/draft/create/uuid');
 const { cmsConfig } = await import('$lib/services/config');
 const { nestedFilterPath } = await import('$lib/services/contents/collection/nested');
 const { createDraft, getInitialSlugs, getOriginalPath, getSlugEditorProp } = await import('.');
@@ -413,6 +418,45 @@ describe('contents/draft/create/index', () => {
           currentSlugs: {},
         }),
       );
+    });
+
+    it('should fill in the UUIDs of a new entry, but not of an existing one', () => {
+      const collection = {
+        name: 'posts',
+        _type: 'entry',
+        fields: [{ name: 'uid', widget: 'uuid' }],
+        _i18n: {
+          i18nEnabled: true,
+          structureMap: {},
+          allLocales: ['en', 'ja'],
+          initialLocales: ['en', 'ja'],
+          defaultLocale: 'en',
+          canonicalSlug: { key: 'translationKey' },
+        },
+      };
+
+      getDefaultValues.mockImplementation(() => ({ uid: '' }));
+      createDraft({ entryDraft, collection });
+
+      expect(fillUuidValues).toHaveBeenCalledOnce();
+      expect(fillUuidValues).toHaveBeenCalledWith({
+        contentMap: entryDraft.current?.originalValues,
+        defaultLocale: 'en',
+        getFieldArgs: { collectionName: 'posts', fileName: undefined, isIndexFile: false },
+      });
+
+      vi.mocked(fillUuidValues).mockClear();
+      createDraft({
+        entryDraft,
+        collection,
+        originalEntry: {
+          id: 'entry-123',
+          slug: 'post',
+          locales: { en: { content: { uid: 'x' }, slug: 'post' } },
+        },
+      });
+
+      expect(fillUuidValues).not.toHaveBeenCalled();
     });
 
     it('should create draft for existing entry', () => {
