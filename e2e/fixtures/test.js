@@ -1,3 +1,7 @@
+import { mkdtemp, rm, writeFile } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
+
 import { test as base, expect } from '@playwright/test';
 import { stringify } from 'yaml';
 
@@ -59,6 +63,18 @@ export class CMS {
   constructor(page, adminPath) {
     this.page = page;
     this.adminPath = adminPath;
+    /**
+     * Temporary directories holding the files dropped with {@link dropFiles}.
+     * @type {string[]}
+     */
+    this.tempDirs = [];
+  }
+
+  /**
+   * Remove the temporary files the test has created.
+   */
+  async cleanUp() {
+    await Promise.all(this.tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
   }
 
   /**
@@ -71,7 +87,8 @@ export class CMS {
   /**
    * Write files to the test repository. Call this after {@link open}, as OPFS is per origin, and
    * before {@link signIn}, which is when the backend reads them.
-   * @param {Record<string, string>} files File content keyed by path, e.g. `content/posts/a.md`.
+   * @param {Record<string, string | Buffer>} files File content keyed by path, e.g.
+   * `content/posts/a.md`: text, or a `Buffer` for a binary file such as an image.
    */
   async seed(files) {
     await this.page.evaluate(
@@ -95,12 +112,23 @@ export class CMS {
               await dir.getFileHandle(fileName, { create: true })
             ).createWritable();
 
-            await writable.write(content);
+            await writable.write(
+              typeof content === 'string'
+                ? content
+                : Uint8Array.from(atob(content.base64), (char) => char.charCodeAt(0)),
+            );
             await writable.close();
           }),
         );
       },
-      { rootDirName: TEST_REPO_DIR_NAME, entries: Object.entries(files) },
+      {
+        rootDirName: TEST_REPO_DIR_NAME,
+        // A `Buffer` can’t be passed to the page as is, so send binary content as Base64
+        entries: Object.entries(files).map(([path, content]) => [
+          path,
+          typeof content === 'string' ? content : { base64: content.toString('base64') },
+        ]),
+      },
     );
   }
 
@@ -133,6 +161,51 @@ export class CMS {
   async chooseMenuItem(button, item) {
     await this.openPopup(button, item);
     await item.click();
+  }
+
+  /**
+   * Drop files on an element, as a user does from the file manager. A `drop` event dispatched from
+   * the page is ignored, as its files can’t be read as file system entries, so the files are
+   * written to disk and dragged in by the browser.
+   * @param {Locator} target Element to drop the files on.
+   * @param {{ name: string, buffer: Buffer }[]} files Files to drop.
+   */
+  async dropFiles(target, files) {
+    const dir = await mkdtemp(join(tmpdir(), 'sveltia-cms-e2e-'));
+
+    this.tempDirs.push(dir);
+
+    const paths = await Promise.all(
+      files.map(async ({ name, buffer }) => {
+        const path = join(dir, name);
+
+        await writeFile(path, buffer);
+
+        return path;
+      }),
+    );
+
+    const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (
+      await target.boundingBox()
+    );
+
+    const cdp = await this.page.context().newCDPSession(this.page);
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    const data = { items: [], files: paths, dragOperationsMask: 1 }; // copy
+
+    await cdp.send('Input.dispatchDragEvent', { type: 'dragEnter', x, y, data });
+    // Chromium only drops once the page has accepted the drag in a `dragover` handler, which is
+    // when the drop zone shows its indicator; a drop sent before that is lost. The page doesn’t
+    // always get the first `dragover`, so send it until the indicator shows up
+    await expect(async () => {
+      await cdp.send('Input.dispatchDragEvent', { type: 'dragOver', x, y, data });
+      await expect(this.page.getByText(/^Drop (a file|files) here$/)).toBeVisible({
+        timeout: 200,
+      });
+    }).toPass();
+    await cdp.send('Input.dispatchDragEvent', { type: 'drop', x, y, data });
+    await cdp.detach();
   }
 
   /**
@@ -232,7 +305,10 @@ export const test = base.extend({
       }),
     );
 
-    await use(new CMS(page, adminPath));
+    const cms = new CMS(page, adminPath);
+
+    await use(cms);
+    await cms.cleanUp();
   },
   // A test that asks for this fixture signs in to a mocked GitHub repository when the page opens
   // eslint-disable-next-line jsdoc/require-jsdoc
