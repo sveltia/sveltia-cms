@@ -269,6 +269,26 @@ describe('ListEditorComplex (more)', () => {
       .toEqual(['a', 'c', 'new']);
   });
 
+  test('adds an item with an empty pair to a list with a single KeyValue subfield', async () => {
+    /** @type {ComplexListField} */
+    const pairsField = {
+      name: 'pairs',
+      widget: 'list',
+      label: 'Pairs',
+      label_singular: 'Pair',
+      field: { name: 'pair', widget: 'keyvalue' },
+    };
+
+    const { draft } = await renderEditor(pairsField, { 'pairs.0.foo': 'bar' });
+
+    await page.getByRole('button', { name: /Add\W+Pair/ }).click();
+
+    // The empty key is kept as is, not turned into an array index
+    await expect.poll(() => draft.currentValues._default['pairs.1.']).toBe('');
+    expect(Object.keys(draft.currentValues._default)).not.toContain('pairs.1.0');
+    expect(draft.currentValues._default['pairs.0.foo']).toBe('bar');
+  });
+
   test('removes and reorders the items of a list with a single subfield', async () => {
     const { draft } = await renderEditor(tagsField, {
       'tags.0': 'a',

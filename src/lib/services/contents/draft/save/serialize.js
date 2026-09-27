@@ -1,6 +1,5 @@
 import { toRaw } from '@sveltia/utils/object';
 import { compare, escapeRegExp } from '@sveltia/utils/string';
-import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 
 import { cmsConfig } from '$lib/services/config';
@@ -13,7 +12,7 @@ import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/con
 import { TOML_FORMATS } from '$lib/services/contents/file';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { isValueEmpty } from '$lib/services/utils/object';
+import { isValueEmpty, unflattenKeys } from '$lib/services/utils/object';
 
 /**
  * @import {
@@ -30,6 +29,23 @@ import { isValueEmpty } from '$lib/services/utils/object';
  * @type {Map<string, RegExp>}
  */
 const wildcardKeyPathRegexCache = new Map();
+
+/**
+ * Get a regular expression that matches a concrete key path of a wildcard key path, or any key path
+ * below it, capturing the concrete key path, e.g. `list.0.title` in `list.0.title` and
+ * `list.0.pairs` in `list.0.pairs.foo` for `list.*.title` and `list.*.pairs` respectively.
+ * @param {string} keyPath Key path that may contain wildcards.
+ * @returns {RegExp} Regular expression.
+ */
+const getWildcardKeyPathRegex = (keyPath) =>
+  getOrCreate(
+    wildcardKeyPathRegexCache,
+    keyPath,
+    () =>
+      new RegExp(
+        `^(${escapeRegExp(keyPath.replaceAll('*', '\\d+')).replaceAll('\\\\d\\+', '\\d+')})(?:\\.|$)`,
+      ),
+  );
 
 /**
  * Move a property name/value from a unsorted property map to a sorted property map.
@@ -170,43 +186,67 @@ const finalizeContent = ({
     copyProperty({ ...copyArgs, key: orderKey });
   }
 
+  /**
+   * Copy a KeyValue field’s key-value pairs to the sorted property map.
+   * @param {string} keyPath Concrete key path of the field.
+   * @param {Field} field Field configuration.
+   */
+  const copyKeyValueField = (keyPath, field) => {
+    const pairKeyPaths = Object.keys(unsortedMap).filter((_keyPath) =>
+      _keyPath.startsWith(`${keyPath}.`),
+    );
+
+    // The editor stores `null` at the field’s own key path while it holds no pairs. Copy it like
+    // any other value so that `copyProperty()` can omit it if the field is optional
+    if (keyPath in unsortedMap && !pairKeyPaths.length) {
+      copyProperty({ ...copyArgs, key: keyPath, field });
+
+      return;
+    }
+
+    // Work around a bug in the flat library where numeric property keys used for KeyValue fields
+    // trigger a wrong conversion to an array instead of an object
+    // @see https://github.com/hughsk/flat/issues/103
+    sortedMap[keyPath] = {};
+    delete unsortedMap[keyPath];
+
+    pairKeyPaths.forEach((_keyPath) => {
+      copyProperty({ ...copyArgs, key: _keyPath, field });
+    });
+  };
+
   // Move the listed properties to a new object
   createKeyPathList(fields).forEach((keyPath) => {
     const field = getField({ ...getFieldArgs, keyPath });
 
     if (keyPath in unsortedMap) {
       copyProperty({ ...copyArgs, key: keyPath, field });
-    } else if (field?.widget === 'keyvalue') {
-      // Work around a bug in the flat library where numeric property keys used for KeyValue fields
-      // trigger a wrong conversion to an array instead of an object
-      // @see https://github.com/hughsk/flat/issues/103
-      sortedMap[keyPath] = {};
-
-      // Copy key-value pairs
-      Object.entries(unsortedMap)
-        .filter(([_keyPath]) => _keyPath.startsWith(`${keyPath}.`))
-        .forEach(([_keyPath]) => {
-          copyProperty({ ...copyArgs, key: _keyPath, field });
-        });
+    } else if (field?.widget === 'keyvalue' && !keyPath.includes('*')) {
+      copyKeyValueField(keyPath, field);
     } else {
-      const regex = getOrCreate(
-        wildcardKeyPathRegexCache,
-        keyPath,
-        () =>
-          new RegExp(
-            `^${escapeRegExp(keyPath.replaceAll('*', '\\d+')).replaceAll('\\\\d\\+', '\\d+')}$`,
-          ),
+      // Resolve the wildcards in the key path to the concrete key paths of the list items, e.g.
+      // `list.*.title` → `list.0.title`, `list.1.title`. A KeyValue field has no value at its own
+      // key path when it holds pairs, so look for the key paths below it as well
+      const regex = getWildcardKeyPathRegex(keyPath);
+
+      const concreteKeyPaths = new Set(
+        Object.keys(unsortedMap)
+          .map((_keyPath) => _keyPath.match(regex)?.[1])
+          .filter((_keyPath) => _keyPath !== undefined),
       );
 
-      Object.keys(unsortedMap)
-        .filter((_keyPath) => regex.test(_keyPath))
+      [...concreteKeyPaths]
         .sort((a, b) => compare(a, b))
-        .forEach((_keyPath) => {
+        .forEach((concreteKeyPath) => {
           // When the wildcard path couldn’t resolve a typed list field, resolve with the concrete
           // key path so that field metadata (e.g. `required`) is available to `copyProperty`
-          const resolvedField = field ?? getField({ ...getFieldArgs, keyPath: _keyPath });
+          const resolvedField = field ?? getField({ ...getFieldArgs, keyPath: concreteKeyPath });
 
-          copyProperty({ ...copyArgs, key: _keyPath, field: resolvedField });
+          if (resolvedField?.widget === 'keyvalue') {
+            copyKeyValueField(concreteKeyPath, resolvedField);
+          } else if (concreteKeyPath in unsortedMap) {
+            copyProperty({ ...copyArgs, key: concreteKeyPath, field: resolvedField });
+          }
         });
     }
   });
@@ -219,7 +259,7 @@ const finalizeContent = ({
       copyProperty({ ...copyArgs, key });
     });
 
-  return unflatten(sortedMap);
+  return unflattenKeys(sortedMap);
 };
 
 /**

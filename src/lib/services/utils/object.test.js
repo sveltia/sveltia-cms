@@ -2,7 +2,57 @@ import { unflatten } from 'flat';
 import { TomlDate } from 'smol-toml';
 import { describe, expect, test } from 'vitest';
 
-import { isValueEmpty, unflattenMap } from '$lib/services/utils/object';
+import { isValueEmpty, unflattenKeys, unflattenMap } from '$lib/services/utils/object';
+
+describe('unflattenKeys()', () => {
+  test('unflattens a map like the `flat` library', () => {
+    expect(unflattenKeys({ 'a.b': 'c', 'list.0': 'x', 'list.1': 'y' })).toEqual({
+      a: { b: 'c' },
+      list: ['x', 'y'],
+    });
+  });
+
+  test('keeps an empty key as a string key', () => {
+    // The `flat` library alone turns it into an array index
+    expect(unflatten({ 'kv.': '' })).toEqual({ kv: [''] });
+
+    expect(unflattenKeys({ 'kv.': '' })).toEqual({ kv: { '': '' } });
+    expect(unflattenKeys({ '': 'root' })).toEqual({ '': 'root' });
+  });
+
+  test('keeps non-index numeric keys as string keys', () => {
+    const result = unflattenKeys({
+      'list.0.kv.': 'empty',
+      'list.0.kv. ': 'space',
+      'list.0.kv.01': 'leading zero',
+      'list.0.kv.-1': 'negative',
+      'list.0.kv.1e3': 'exponent',
+      'list.1.kv.foo': 'bar',
+    });
+
+    expect(Array.isArray(result.list)).toBe(true);
+    expect(result.list).toEqual([
+      {
+        kv: {
+          '': 'empty',
+          ' ': 'space',
+          '01': 'leading zero',
+          '-1': 'negative',
+          '1e3': 'exponent',
+        },
+      },
+      { kv: { foo: 'bar' } },
+    ]);
+  });
+
+  test('leaves class instances as they are', () => {
+    const date = new Date();
+    const result = unflattenKeys({ 'a.': 'x', 'a.date': date });
+
+    expect(result).toEqual({ a: { '': 'x', date } });
+    expect(result.a.date).toBe(date);
+  });
+});
 
 describe('unflattenMap()', () => {
   test('keeps the children of a placeholder written after them', () => {
@@ -55,6 +105,12 @@ describe('unflattenMap()', () => {
 
     expect(unflattenMap(content)).toEqual({
       obj: { snippet: { lang: 'css', code: 'a{}' } },
+    });
+  });
+
+  test('keeps an empty key of a KeyValue field in a List field item', () => {
+    expect(unflattenMap({ 'list.0.kv.': 'value', 'list.0.title': 'a' })).toEqual({
+      list: [{ kv: { '': 'value' }, title: 'a' }],
     });
   });
 

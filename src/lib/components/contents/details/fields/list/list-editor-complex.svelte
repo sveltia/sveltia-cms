@@ -18,7 +18,6 @@
   } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { isObject } from '@sveltia/utils/object';
-  import { unflatten } from 'flat';
   import { getContext, onMount } from 'svelte';
   import { flip } from 'svelte/animate';
 
@@ -42,6 +41,7 @@
   import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { focusReorderControl } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
+  import { unflattenKeys } from '$lib/services/utils/object';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps, MediaFieldSource } from '$lib/types/private';
@@ -271,7 +271,7 @@
           return structuredClone(valueList[dupIndex]);
         }
 
-        const item = unflatten(
+        const item = unflattenKeys(
           getDefaultValues({ fields: subFields, locale, defaultLocale: draft.defaultLocale }),
         );
 

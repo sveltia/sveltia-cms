@@ -1343,6 +1343,195 @@ describe('Test serializeContent()', () => {
     });
   });
 
+  describe('keyvalue field in list field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [{ name: 'test_list', widget: 'list' }],
+      isIndexFile: false,
+    };
+
+    test('serializes list with `fields` containing a keyvalue subfield as array', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'test_list',
+        'test_list.*.title',
+        'test_list.*.pairs',
+      ]);
+
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'test_list.*.pairs'
+          ? { name: 'pairs', widget: 'keyvalue' }
+          : { name: keyPath, widget: 'string' },
+      );
+
+      const valueMap = {
+        'test_list.0.title': 'First',
+        'test_list.0.pairs.foo': 'bar',
+        'test_list.1.title': 'Second',
+        'test_list.1.pairs.0': 'zero',
+        'test_list.1.pairs.1': 'one',
+        'test_list.1.pairs.': 'empty',
+        'test_list.2.title': 'Third',
+        'test_list.2.pairs': {},
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      expect(result).toEqual({
+        test_list: [
+          { title: 'First', pairs: { foo: 'bar' } },
+          { title: 'Second', pairs: { 0: 'zero', 1: 'one', '': 'empty' } },
+          { title: 'Third', pairs: {} },
+        ],
+      });
+      expect(Array.isArray(result.test_list)).toBe(true);
+      expect(Array.isArray(result.test_list[1].pairs)).toBe(false);
+      expect(JSON.stringify(result)).not.toContain('*');
+    });
+
+    test('serializes list with a keyvalue `field` as array', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['test_list', 'test_list.*']);
+
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'test_list.*'
+          ? { name: 'test_keyvalue', widget: 'keyvalue' }
+          : { name: keyPath, widget: 'string' },
+      );
+
+      const valueMap = {
+        'test_list.0.foo': 'bar',
+        'test_list.1.0': 'zero',
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      expect(result).toEqual({ test_list: [{ foo: 'bar' }, { 0: 'zero' }] });
+      expect(Array.isArray(result.test_list)).toBe(true);
+      expect(Array.isArray(result.test_list[1])).toBe(false);
+    });
+
+    test('serializes keyvalue subfields of a list with variable types as objects', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'test_list',
+        'test_list.*.type',
+        'test_list.*.pairs',
+      ]);
+
+      // The wildcard key path can’t be resolved without knowing the item type, so the field is
+      // only found with a concrete key path
+      getField.mockImplementation(({ keyPath }) => {
+        if (keyPath === 'test_list.0.pairs') {
+          return { name: 'pairs', widget: 'keyvalue' };
+        }
+
+        if (keyPath === 'test_list.1.pairs') {
+          return { name: 'pairs', widget: 'string' };
+        }
+
+        return keyPath === 'test_list.*.pairs'
+          ? /** @type {any} */ (undefined)
+          : { name: keyPath, widget: 'string' };
+      });
+
+      const valueMap = {
+        'test_list.0.type': 'a',
+        'test_list.0.pairs.0': 'zero',
+        'test_list.0.pairs.1': 'one',
+        'test_list.1.type': 'b',
+        'test_list.1.pairs': 'text',
+      };
+
+      const result = serializeContent({ draft, locale: 'en', valueMap });
+
+      expect(result).toEqual({
+        test_list: [
+          { type: 'a', pairs: { 0: 'zero', 1: 'one' } },
+          { type: 'b', pairs: 'text' },
+        ],
+      });
+      expect(Array.isArray(result.test_list[0].pairs)).toBe(false);
+    });
+
+    test('handles an empty keyvalue subfield like a top-level keyvalue field', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+      /** @type {any} */
+      const config = cmsConfig;
+
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'test_list.*.pairs'
+          ? { name: 'pairs', widget: 'keyvalue', required: false }
+          : { name: keyPath, widget: 'string' },
+      );
+      isFieldRequired.mockImplementation(({ fieldConfig }) => fieldConfig.required !== false);
+
+      // The editor stores `null` at the field’s own key path while it holds no pairs
+      const valueMap = {
+        'test_list.0.title': 'First',
+        'test_list.0.pairs': null,
+        'test_list.1.title': 'Second',
+        'test_list.1.pairs.foo': 'bar',
+      };
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'test_list',
+        'test_list.*.title',
+        'test_list.*.pairs',
+      ]);
+
+      expect(serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } })).toEqual({
+        test_list: [
+          { title: 'First', pairs: null },
+          { title: 'Second', pairs: { foo: 'bar' } },
+        ],
+      });
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'test_list',
+        'test_list.*.title',
+        'test_list.*.pairs',
+      ]);
+
+      config.current = { output: { omit_empty_optional_fields: true } };
+
+      try {
+        expect(serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } })).toEqual({
+          test_list: [{ title: 'First' }, { title: 'Second', pairs: { foo: 'bar' } }],
+        });
+      } finally {
+        config.current = {};
+        isFieldRequired.mockReset();
+      }
+    });
+
+    test('serializes empty list with a keyvalue subfield without wildcard keys', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['test_list', 'test_list.*.pairs']);
+
+      getField.mockImplementation(({ keyPath }) =>
+        keyPath === 'test_list.*.pairs'
+          ? { name: 'pairs', widget: 'keyvalue' }
+          : { name: keyPath, widget: 'list' },
+      );
+
+      const result = serializeContent({ draft, locale: 'en', valueMap: { test_list: [] } });
+
+      expect(result).toEqual({ test_list: [] });
+    });
+  });
+
   test('serializes content with remainder properties not in field list', () => {
     /** @type {any} */
     const draft = {
