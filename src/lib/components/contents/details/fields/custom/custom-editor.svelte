@@ -57,13 +57,14 @@
 
   /**
    * @import { Root } from 'react-dom/client';
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorContext, FieldEditorProps, InternalLocaleCode } from '$lib/types/private';
    * @import {
    * CustomField,
    * CustomFieldAddFileOptions,
    * CustomFieldControl,
    * CustomFieldPickFileOptions,
    * CustomFieldPickedFile,
+   * FieldKeyPath,
    * } from '$lib/types/public';
    */
 
@@ -108,6 +109,14 @@
   let componentInstance = $state();
   /** @type {AssetPicker | undefined} */
   let assetPicker = $state();
+  /**
+   * Plain copies of the {@link locale} and {@link keyPath} props for unregistering the instance,
+   * which also happens in the teardown. A prop read there makes Svelte walk the derived graph above
+   * it without memoizing, which takes exponentially longer with each level of nesting.
+   * @type {{ locale: InternalLocaleCode, keyPath: FieldKeyPath }}
+   */
+  // svelte-ignore state_referenced_locally
+  let registration = { locale, keyPath };
 
   const { i18n = false } = $derived(fieldConfig);
   const resolvedControl = $derived(resolveControl(control));
@@ -184,7 +193,7 @@
       // Register the instance for validation when it’s available
       registerCustomFieldInstance({ locale, keyPath, instance });
     } else {
-      unregisterCustomFieldInstance({ locale, keyPath });
+      unregisterCustomFieldInstance(registration);
     }
   };
 
@@ -237,11 +246,13 @@
     return () => {
       reactRoot?.unmount();
       // Unregister the instance on unmount
-      unregisterCustomFieldInstance({ locale, keyPath });
+      unregisterCustomFieldInstance(registration);
     };
   });
 
   $effect(() => {
+    registration = { locale, keyPath };
+
     // Depend on every field in the locale, so that a control showing values derived from other
     // fields, such as dynamically generated select options, stays up to date. The values are read
     // through a cache shared between controls when the props are built, so they have to be tracked

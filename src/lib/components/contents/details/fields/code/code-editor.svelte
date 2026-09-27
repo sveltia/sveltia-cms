@@ -106,17 +106,33 @@
       return;
     }
 
+    /** @type {Record<string, any>} */
+    const updates = {};
+
     if (!isObject(valueMap[keyPath]) || Object.keys(valueMap[keyPath]).length) {
-      draft[valueStoreKey][locale][keyPath] = {};
+      updates[keyPath] = {};
     }
 
     if (valueMap[codeKeyPath] !== code) {
-      draft[valueStoreKey][locale][codeKeyPath] = code;
+      updates[codeKeyPath] = code;
     }
 
     if (valueMap[langKeyPath] !== lang) {
-      draft[valueStoreKey][locale][langKeyPath] = lang;
+      updates[langKeyPath] = lang;
     }
+
+    if (!Object.keys(updates).length) {
+      return;
+    }
+
+    const valueStore = draft[valueStoreKey][locale];
+
+    // This runs from an effect, so defer the write to the draft like `<FieldEditor>` does: a write
+    // made while an effect is running makes Svelte walk the derived graph below the value map
+    // without memoizing, which takes exponentially longer with each level of nesting
+    queueMicrotask(() => {
+      Object.assign(valueStore, updates);
+    });
   };
 
   watch(

@@ -140,6 +140,16 @@ describe('PageContainer', () => {
       const db = new IndexedDB('sveltia-cms-test-ui', 'ui-settings');
 
       await expect.poll(async () => (await db.get('contents'))?.sidebarWidth).toBeGreaterThan(240);
+
+      // The width is restored again once an overlay is closed, from the same database
+      showContentOverlay.current = true;
+      await expect.poll(() => outer.hasAttribute('inert')).toBe(true);
+      showContentOverlay.current = false;
+      await expect.poll(() => outer.hasAttribute('inert')).toBe(false);
+      await new Promise((resolve) => {
+        window.requestAnimationFrame(resolve);
+      });
+      await expect.element(page.getByRole('separator')).toBeInTheDocument();
     } finally {
       backendName.current = undefined;
       Object.assign(repository, { databaseName: '' });

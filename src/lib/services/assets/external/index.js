@@ -156,6 +156,13 @@ export const externalAssetsError = createRawState();
 export const selectedExternalAssets = createRawState([]);
 
 /**
+ * Set of selected asset IDs, for O(1) membership checks in list items.
+ */
+export const selectedExternalAssetIdSet = createDerivedState(
+  () => new Set(selectedExternalAssets.current.map(({ id }) => id)),
+);
+
+/**
  * Asset that has focus in the list, whose details are shown in the Info pane.
  * @type {{ current: ExternalAsset | undefined }}
  */

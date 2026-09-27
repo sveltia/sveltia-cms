@@ -95,8 +95,12 @@
   let apiKey = $state('');
   let userName = $state('');
   let password = $state('');
-  /** @type {ExternalAsset[] | null} */
-  let listedAssets = $state(null);
+  /**
+   * Assets listed by the service. Only ever replaced as a whole, so the list, which can run to
+   * thousands of files on a cloud storage service, isn’t wrapped in a deep proxy.
+   * @type {ExternalAsset[] | null}
+   */
+  let listedAssets = $state.raw(null);
   /**
    * Paths of the empty folders on a service with folder support, each kept by a placeholder.
    * @type {string[]}
@@ -291,11 +295,17 @@
   };
 
   /**
+   * URLs of the selected resources, built once per selection change so that each listed item can
+   * check its own selection without going through the whole selection.
+   */
+  const selectedURLs = $derived(new Set(selectedResources.map(({ url }) => url)));
+
+  /**
    * Check if the given asset is already selected.
    * @param {ExternalAsset} asset The asset to check.
    * @returns {boolean} `true` if the asset is selected, `false` otherwise.
    */
-  const isSelected = (asset) => selectedResources.some((r) => r.url === asset.downloadURL);
+  const isSelected = (asset) => selectedURLs.has(asset.downloadURL);
 
   /**
    * The latest selection state the list box reported for each asset, keyed by download URL. The

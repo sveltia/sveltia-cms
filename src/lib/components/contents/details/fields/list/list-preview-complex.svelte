@@ -55,11 +55,31 @@
   const items = $derived(
     getSubtree(getValueMapSnapshot(entryDraft.current, locale), keyPath) ?? [],
   );
+  /**
+   * The variable type of each item, or `undefined` for a list without variable types. The `each`
+   * block below iterates over these primitives rather than over the items: the items are rebuilt
+   * from the snapshot on every update, and a keyed `each` block over them would rewrite the source
+   * of every item on every keystroke, which Svelte then walks through every nested preview.
+   * @type {(string | undefined)[]}
+   */
+  const itemTypes = $derived(items.map((item) => (hasVariableTypes ? item[typeKey] : undefined)));
+
+  /**
+   * Get the `each` block key that identifies the item at the given index. Object items carry a
+   * generated ID that follows the item as the list is reordered; primitives can only be keyed by
+   * their position.
+   * @param {number} index Target index.
+   * @returns {string | number} Key.
+   */
+  const getItemKey = (index) => {
+    const item = items[index];
+
+    return isObject(item) ? (item.__sc_item_id ?? index) : index;
+  };
 </script>
 
-{#each items as item, index (isObject(item) ? (item.__sc_item_id ?? index) : index)}
+{#each itemTypes as type, index (getItemKey(index))}
   <VisibilityObserver>
-    {@const type = hasVariableTypes ? item[typeKey] : undefined}
     {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
     {#if hasVariableTypes && !typeConfig}
       <!-- Unknown type: a warning is displayed in the editor -->

@@ -33,6 +33,8 @@
    * Start checking the status.
    */
   const startChecking = () => {
+    // The effect below can start the checks again, so don’t leave the previous timer running
+    window.clearInterval(timer);
     checkStatus();
 
     timer = window.setInterval(() => {

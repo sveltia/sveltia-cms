@@ -9,6 +9,7 @@
     getExternalAssetPath,
     hasFolderSupport,
     selectedCloudService,
+    selectedExternalAssetIdSet,
     selectedExternalAssets,
   } from '$lib/services/assets/external';
   import { externalAssetAvailability } from '$lib/services/assets/external/availability';
@@ -36,7 +37,7 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const selected = $derived(selectedExternalAssets.current.some((a) => a.id === asset.id));
+  const selected = $derived(selectedExternalAssetIdSet.current.has(asset.id));
   /**
    * Whether the asset is a file linked from an entry, which is checked for availability. The files
    * on a cloud storage service are listed by the service, so they always exist.

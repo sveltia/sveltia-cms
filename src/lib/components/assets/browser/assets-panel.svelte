@@ -98,12 +98,19 @@
   );
 
   /**
+   * Keys of the selected assets, built once per selection change so that each listed item can check
+   * its own selection without going through the whole selection.
+   */
+  const selectedAssetKeys = $derived(
+    new Set(selectedResources.flatMap(({ asset }) => (asset ? [getAssetKey(asset)] : []))),
+  );
+
+  /**
    * Check if the given asset is already selected.
    * @param {Asset} asset The asset to check.
    * @returns {boolean} `true` if the asset is selected, `false` otherwise.
    */
-  const isSelected = (asset) =>
-    selectedResources.some((r) => r.asset && getAssetKey(r.asset) === getAssetKey(asset));
+  const isSelected = (asset) => selectedAssetKeys.has(getAssetKey(asset));
 
   /**
    * Handle selection change of an asset.

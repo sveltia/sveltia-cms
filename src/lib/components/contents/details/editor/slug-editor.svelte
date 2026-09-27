@@ -90,6 +90,15 @@
   let text = $state('');
 
   /**
+   * Slugs taken by the other entries in this locale. Kept apart from the check below, which runs on
+   * every keystroke, so the collection’s entries aren’t walked again each time. It’s only read
+   * while the slug is edited, when the draft is there.
+   */
+  const takenSlugs = $derived(
+    getTakenSlugs(/** @type {EntryDraft} */ (entryDraft.current), [locale])[locale],
+  );
+
+  /**
    * What stops the slug being edited from being used, checked as it’s typed. An empty slug is
    * fine, as it makes the entry follow the slug template again.
    */
@@ -98,14 +107,11 @@
       return undefined;
     }
 
-    // The slug is only edited while the editor is rendered, when the draft is there
-    const draft = /** @type {EntryDraft} */ (entryDraft.current);
-
     return validateSlug({
       slug: text,
       required: false,
       pattern: slugOptions.pattern,
-      takenSlugs: getTakenSlugs(draft, [locale])[locale],
+      takenSlugs,
       locale,
     });
   });

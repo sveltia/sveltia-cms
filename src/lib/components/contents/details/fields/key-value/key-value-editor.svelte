@@ -109,8 +109,14 @@
     }
 
     if (!pairs.length && draft[valueStoreKey][locale][keyPath] !== null) {
-      // Enable validation
-      draft[valueStoreKey][locale][keyPath] = null;
+      const valueStore = draft[valueStoreKey][locale];
+      const _keyPath = keyPath;
+
+      // Enable validation. This runs from an effect, so the write is deferred like the one in
+      // `updateStore()`
+      queueMicrotask(() => {
+        valueStore[_keyPath] = null;
+      });
     }
   };
 
@@ -164,7 +170,21 @@
       return;
     }
 
-    savePairs({ draft, valueStoreKey, fieldConfig, keyPath, locale, pairs });
+    const args = {
+      draft,
+      valueStoreKey,
+      fieldConfig,
+      keyPath,
+      locale,
+      pairs: $state.snapshot(pairs),
+    };
+
+    // This runs from an effect, so defer the write to the draft like `<FieldEditor>` does: a write
+    // made while an effect is running makes Svelte walk the derived graph below the value map
+    // without memoizing, which takes exponentially longer with each level of nesting
+    queueMicrotask(() => {
+      savePairs(args);
+    });
   };
 
   watch(

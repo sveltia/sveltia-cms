@@ -28,6 +28,7 @@ import {
   renamingExternalSubfolder,
   resetExternalAssets,
   selectedCloudService,
+  selectedExternalAssetIdSet,
   selectedExternalAssets,
   selectedExternalDirPath,
 } from '.';
@@ -60,6 +61,18 @@ describe('assets/external', () => {
     cmsConfig.current = /** @type {any} */ ({});
     delete prefs.apiKeys;
     delete prefs.logins;
+  });
+
+  describe('selectedExternalAssetIdSet', () => {
+    it('should derive the IDs of the selected assets', () => {
+      selectedExternalAssets.current = [
+        /** @type {any} */ ({ id: 'a' }),
+        /** @type {any} */ ({ id: 'b' }),
+      ];
+      expect(selectedExternalAssetIdSet.current).toEqual(new Set(['a', 'b']));
+      selectedExternalAssets.current = [];
+      expect(selectedExternalAssetIdSet.current).toEqual(new Set());
+    });
   });
 
   describe('enabledCloudServices', () => {

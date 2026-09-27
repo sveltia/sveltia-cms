@@ -37,6 +37,11 @@
 
   /** @type {IndexedDB | null} */
   let uiSettingsDB = null;
+  /**
+   * Name of the database {@link uiSettingsDB} is created for.
+   * @type {string | undefined}
+   */
+  let uiSettingsDBName;
 
   /**
    * Restore the sidebar width from IndexedDB, or use the default width if not set.
@@ -46,7 +51,16 @@
 
     const { databaseName } = backend.current?.repository ?? {};
 
-    uiSettingsDB = databaseName ? new IndexedDB(databaseName, 'ui-settings') : null;
+    // The width is restored every time an overlay is closed. Reuse the instance for the same
+    // database, as each instance opens a connection of its own that’s never closed
+    if (!databaseName) {
+      uiSettingsDBName = undefined;
+      uiSettingsDB = null;
+    } else if (databaseName !== uiSettingsDBName) {
+      uiSettingsDBName = databaseName;
+      uiSettingsDB = new IndexedDB(databaseName, 'ui-settings');
+    }
+
     sidebarWidth = (await uiSettingsDB?.get(uiSettingsKey))?.sidebarWidth ?? 240;
   };
 
