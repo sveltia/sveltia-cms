@@ -524,6 +524,31 @@ describe('Google Translator Service', () => {
         expect(normalizeLanguage('zh_MO')).toBe('zh-TW'); // with underscore
       });
 
+      it('should map script codes to the matching Chinese variant', () => {
+        expect(normalizeLanguage('zh-Hant')).toBe('zh-TW');
+        expect(normalizeLanguage('zh-hant')).toBe('zh-TW');
+        expect(normalizeLanguage('zh_Hant_TW')).toBe('zh-TW');
+        expect(normalizeLanguage('zh-Hant-HK')).toBe('zh-TW');
+        expect(normalizeLanguage('zh-Hans')).toBe('zh-CN');
+        expect(normalizeLanguage('zh-Hans-SG')).toBe('zh-CN');
+        expect(normalizeLanguage('zh-SG')).toBe('zh-CN');
+      });
+
+      it('should match supported codes that have a script code', () => {
+        expect(normalizeLanguage('pa-Arab')).toBe('pa-Arab');
+        expect(normalizeLanguage('pa-arab')).toBe('pa-Arab');
+        expect(normalizeLanguage('ms-Arab')).toBe('ms-Arab');
+        expect(normalizeLanguage('mni-Mtei')).toBe('mni-Mtei');
+        expect(normalizeLanguage('mni-MTEI-IN')).toBe('mni-Mtei');
+        expect(normalizeLanguage('sr-Latn')).toBe('sr');
+      });
+
+      it('should map the Norwegian nb code to no', () => {
+        expect(normalizeLanguage('nb')).toBe('no');
+        expect(normalizeLanguage('nb-NO')).toBe('no');
+        expect(normalizeLanguage('no-NO')).toBe('no');
+      });
+
       it('should fallback to language code when region is not supported', () => {
         expect(normalizeLanguage('en-XX')).toBe('en');
         expect(normalizeLanguage('fr-YY')).toBe('fr');

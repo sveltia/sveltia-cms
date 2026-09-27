@@ -167,6 +167,23 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
 
       expect(url).toBe('https://pub-abc123.r2.dev/path/to/file.jpg');
     });
+
+    it('should strip trailing slashes from publicUrl and endpoint', () => {
+      expect(
+        buildObjectUrl({
+          bucket: 'my-bucket',
+          key: 'file.jpg',
+          publicUrl: 'https://cdn.example.com/',
+        }),
+      ).toBe('https://cdn.example.com/file.jpg');
+      expect(
+        buildObjectUrl({
+          bucket: 'my-bucket',
+          key: 'file.jpg',
+          endpoint: 'https://custom.endpoint.com//',
+        }),
+      ).toBe('https://custom.endpoint.com/my-bucket/file.jpg');
+    });
   });
 
   describe('parseS3Results', () => {
@@ -209,6 +226,24 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
         size: 2048,
         kind: 'video',
       });
+    });
+
+    it('should percent-encode the object key in asset URLs', () => {
+      const [result] = parseS3Results(
+        [
+          {
+            Key: 'images/photo #1?(a).jpg',
+            LastModified: '2025-01-01T00:00:00.000Z',
+            Size: 1,
+            ETag: '"abc"',
+          },
+        ],
+        { ...mockConfig, public_url: 'https://cdn.example.com/' },
+      );
+
+      expect(result.previewURL).toBe('https://cdn.example.com/images/photo%20%231%3F%28a%29.jpg');
+      expect(result.downloadURL).toBe(result.previewURL);
+      expect(result.fileName).toBe('photo #1?(a).jpg');
     });
 
     it('should strip prefix from description', () => {
@@ -400,8 +435,53 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       expect(signature).toContain('AWS4-HMAC-SHA256');
       expect(signature).toContain('Signature=');
     });
-  });
 
+    it('should RFC 3986-encode the canonical query string', async () => {
+      const { createHash, createHmac } = await import('node:crypto');
+      const host = 'my-bucket.s3.us-east-1.amazonaws.com';
+      const payloadHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+      const secretAccessKey = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY';
+      const headers = { Host: host, 'x-amz-date': '20250101T000000Z' };
+
+      const signature = await generateAwsSignature({
+        method: 'GET',
+        url: `https://${host}/?prefix=media%20(old)!/`,
+        headers,
+        payloadHash,
+        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+        secretAccessKey,
+        region: 'us-east-1',
+        service: 's3',
+        date: new Date('2025-01-01T00:00:00.000Z'),
+      });
+
+      const canonicalRequest = [
+        'GET',
+        '/',
+        'prefix=media%20%28old%29%21%2F',
+        `host:${host}\nx-amz-date:20250101T000000Z\n`,
+        'host;x-amz-date',
+        payloadHash,
+      ].join('\n');
+
+      const stringToSign = [
+        'AWS4-HMAC-SHA256',
+        '20250101T000000Z',
+        '20250101/us-east-1/s3/aws4_request',
+        createHash('sha256').update(canonicalRequest).digest('hex'),
+      ].join('\n');
+
+      const signingKey = ['20250101', 'us-east-1', 's3', 'aws4_request'].reduce(
+        (/** @type {string | Buffer} */ key, data) =>
+          createHmac('sha256', key).update(data).digest(),
+        `AWS4${secretAccessKey}`,
+      );
+
+      const expected = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
+
+      expect(signature).toContain(`Signature=${expected}`);
+    });
+  });
   describe('signedRequest', () => {
     it('should make a signed request', async () => {
       vi.mocked(fetch).mockResolvedValue(new Response('success', { status: 200 }));

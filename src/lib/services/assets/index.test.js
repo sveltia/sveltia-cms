@@ -1020,6 +1020,20 @@ describe('assets/index', () => {
       expect(result).toEqual([asset1, asset2]);
     });
 
+    it('should return the assets at the repository root for an empty directory path', () => {
+      const rootAsset = /** @type {any} */ ({ path: 'photo.jpg', name: 'photo.jpg' });
+      const nestedAsset = /** @type {any} */ ({ path: 'images/icon.png', name: 'icon.png' });
+
+      allAssets.current = [rootAsset, nestedAsset];
+
+      // `getPathInfo()` has no directory for a file at the root
+      getPathInfoMock.mockImplementation((/** @type {string} */ path) =>
+        path === 'photo.jpg' ? { dirname: undefined } : { dirname: 'images' },
+      );
+
+      expect(getAssetsByDirName('')).toEqual([rootAsset]);
+    });
+
     it('should return empty array when no assets match directory', () => {
       const asset = {
         path: 'assets/images/photo.jpg',
@@ -1554,8 +1568,8 @@ describe('assets/index', () => {
         },
       });
 
-      vi.mocked(createPath).mockReturnValue('my-post.md/images/photo.jpg');
-      vi.mocked(resolvePath).mockReturnValue('my-post.md/images/photo.jpg');
+      vi.mocked(createPath).mockReturnValue('images/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('images/photo.jpg');
 
       getAssetByRelativePathAndCollection({
         path: 'photo.jpg',
@@ -1563,7 +1577,8 @@ describe('assets/index', () => {
         collection: mockCollection,
       });
 
-      expect(createPath).toHaveBeenCalledWith(['my-post.md', 'images', 'photo.jpg']);
+      // The entry sits at the root, so there’s no entry folder to prepend
+      expect(createPath).toHaveBeenCalledWith(['', 'images', 'photo.jpg']);
     });
 
     it('should strip media_folder prefix from path when stored value includes it', async () => {

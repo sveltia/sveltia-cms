@@ -916,6 +916,67 @@ describe('hasAsset()', () => {
     expect(content.body).toBe('Here is an image: ![alt](new-image.jpg)');
   });
 
+  test('replaces the URL within the matched images only', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockReturnValue({ name: 'body', widget: 'markdown' });
+
+    // A link to the same file comes first, the new URL contains the old one, the image is used
+    // twice, its alt text holds the URL, and the new URL holds a replacement pattern
+    const value = '[Download](/a.png) ![/a.png](/a.png) ![alt](/a.png "Title") ![other](/b.png)';
+    const content = { body: value };
+
+    const args = {
+      assetURL: '/a.png',
+      newURL: '/img/$&/a.png',
+      collectionName: 'posts',
+      entry: {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: { en: { content: {}, slug: 'test', path: 'posts/test.md' } },
+      },
+      content,
+      keyPath: 'body',
+      value,
+      isIndexFile: false,
+    };
+
+    expect(hasAsset(args)).toBe(true);
+    // Running it again, as done for each collection the entry belongs to, changes nothing more
+    expect(hasAsset(args)).toBe(true);
+    expect(content.body).toBe(
+      '[Download](/a.png) ![/a.png](/img/$&/a.png) ![alt](/img/$&/a.png "Title") ![other](/b.png)',
+    );
+  });
+
+  test('leaves the markdown content alone without newURL', async () => {
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockReturnValue({ name: 'body', widget: 'markdown' });
+
+    const value = '![alt](/a.png)';
+    const content = { body: value };
+
+    const args = {
+      assetURL: '/a.png',
+      collectionName: 'posts',
+      entry: {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: { en: { content: {}, slug: 'test', path: 'posts/test.md' } },
+      },
+      content,
+      keyPath: 'body',
+      value,
+      isIndexFile: false,
+    };
+
+    expect(hasAsset(args)).toBe(true);
+    expect(content.body).toBe(value);
+  });
+
   test('handles markdown with multiple images', async () => {
     const { getField } = await import('$lib/services/contents/entry/fields');
     const { getMediaFieldSource } = await import('$lib/services/assets/info');

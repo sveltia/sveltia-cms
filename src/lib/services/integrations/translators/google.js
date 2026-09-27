@@ -46,32 +46,51 @@ const SUPPORTED_LANGUAGES = [
   .split(',');
 
 /**
- * Normalize a locale code to a supported language code.
- * @param {string} locale Locale code, e.g., 'en', 'fr-FR', 'zh-CN'.
- * @returns {string | undefined} Normalized language code, e.g., 'en', 'fr-FR', 'zh-CN'.
+ * Language codes that Google Cloud Translation API knows under a different code.
+ * @type {Record<string, string>}
+ */
+const LANGUAGE_ALIASES = {
+  // Norwegian written standard, which Google calls Norwegian
+  nb: 'no',
+};
+
+/**
+ * Normalize a locale code to a supported language code. A locale can have a script code, like
+ * `zh-Hant` or `pa-Arab`, and a region code, like `fr-FR`, in either case and separated with a
+ * hyphen or an underscore.
+ * @param {string} locale Locale code, e.g., 'en', 'fr-FR', 'zh-CN', 'zh-Hant'.
+ * @returns {string | undefined} Normalized language code, e.g., 'en', 'fr-FR', 'zh-CN', 'zh-TW'.
  */
 export const normalizeLanguage = (locale) => {
-  const normalizedLocale = locale.replace(
-    /^([a-z]{2,3})[-_]([a-z]{2,4})$/i,
-    (_match, lang, region) => `${lang.toLowerCase()}-${region.toUpperCase()}`,
-  );
+  const [language, ...parts] = locale.split(/[-_]/);
+  const lang = language.toLowerCase();
+  const scriptTag = parts.find((tag) => /^[a-z]{4}$/i.test(tag));
+  const regionTag = parts.find((tag) => /^(?:[a-z]{2}|\d{3})$/i.test(tag));
 
-  if (SUPPORTED_LANGUAGES.includes(normalizedLocale)) {
-    return normalizedLocale;
+  const script = scriptTag
+    ? `${scriptTag[0].toUpperCase()}${scriptTag.slice(1).toLowerCase()}`
+    : undefined;
+
+  const region = regionTag?.toUpperCase();
+
+  // Chinese: We should not fall back to `zh` for Traditional Chinese, because it’s Simplified
+  if (lang === 'zh') {
+    if (script === 'Hant' || (!script && ['TW', 'HK', 'MO'].includes(region ?? ''))) {
+      return 'zh-TW';
+    }
+
+    if (script === 'Hans' || (!script && ['CN', 'SG'].includes(region ?? ''))) {
+      return 'zh-CN';
+    }
   }
 
-  // Traditional Chinese variants: We should not fall back to `zh` because it’s Simplified Chinese
-  if (['zh-HK', 'zh-MO'].includes(normalizedLocale)) {
-    return 'zh-TW';
-  }
+  const candidates = [
+    script ? `${lang}-${script}` : undefined,
+    region ? `${lang}-${region}` : undefined,
+    LANGUAGE_ALIASES[lang] ?? lang,
+  ];
 
-  const [lang] = normalizedLocale.split('-');
-
-  if (SUPPORTED_LANGUAGES.includes(lang)) {
-    return lang;
-  }
-
-  return undefined;
+  return candidates.find((code) => !!code && SUPPORTED_LANGUAGES.includes(code));
 };
 
 /**

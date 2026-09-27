@@ -324,13 +324,18 @@ export const getInputValue = ({ currentValue, fieldConfig, timeZone }) => {
     return '';
   }
 
-  // If the current value is the standard format, return it as is
-  const value = dateOnly
-    ? currentValue.match(DATE_ONLY_MATCH_REGEX)?.groups?.date
-    : timeOnly
-      ? // Match both `YYYY-MM-DDTHH:mm(:ss)` and `HH:mm(:ss)` formats
-        currentValue.match(TIME_SUFFIX_MATCH_REGEX)?.groups?.time
-      : undefined;
+  // If the current value is the standard format, return it as is. A value in the custom format has
+  // to be parsed with it instead: a 12-hour time like `02:30 PM` starts with the same digits as
+  // `02:30` but means `14:30`
+  const value =
+    format && dayjs(currentValue, format, true).isValid()
+      ? undefined
+      : dateOnly
+        ? currentValue.match(DATE_ONLY_MATCH_REGEX)?.groups?.date
+        : timeOnly
+          ? // Match both `YYYY-MM-DDTHH:mm(:ss)` and `HH:mm(:ss)` formats
+            currentValue.match(TIME_SUFFIX_MATCH_REGEX)?.groups?.time
+          : undefined;
 
   if (value) {
     return value;

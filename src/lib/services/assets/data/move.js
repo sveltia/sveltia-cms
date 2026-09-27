@@ -131,6 +131,23 @@ export const collectEntryChanges = async ({ entry, savingEntries, changes }) => 
 };
 
 /**
+ * Get the new URL of a moved asset that has no public path, as in an entry-relative folder, by
+ * swapping the folder’s internal path for its public path.
+ * @param {object} args Arguments.
+ * @param {AssetFolderInfo} args._globalAssetFolder Global asset folder.
+ * @param {string} args.newPath New path for the asset.
+ * @param {Asset} args.asset Asset being moved.
+ * @returns {string} URL.
+ */
+const getFallbackURL = ({ _globalAssetFolder, newPath, asset }) => {
+  const { publicPath } =
+    getAssetFoldersByPath(asset.path).find(({ collectionName }) => collectionName !== undefined) ??
+    _globalAssetFolder;
+
+  return newPath.replace(asset.folder.internalPath ?? '', publicPath ?? '');
+};
+
+/**
  * Rewrite the references to the given asset in the entries that use it, so these point at the
  * asset’s new path.
  * @param {object} args Arguments.
@@ -156,9 +173,14 @@ export const collectEntryChangesFromAsset = async ({
     return;
   }
 
-  const { publicPath } =
-    getAssetFoldersByPath(asset.path).find(({ collectionName }) => collectionName !== undefined) ??
-    _globalAssetFolder;
+  // The new URL is worked out the same way as the current one, so that the public folder, the
+  // `encode_file_path` option and template tags are all dealt with alike. A move stays within the
+  // asset’s folder, so the folder still applies
+  const newURL =
+    getAssetPublicURL(
+      { ...asset, path: newPath, name: newPath.slice(newPath.lastIndexOf('/') + 1) },
+      { pathOnly: true, allowSpecial: true },
+    ) ?? getFallbackURL({ _globalAssetFolder, newPath, asset });
 
   const entries = usedEntries.map((entry) => {
     let copy = updatingEntryMap.get(entry.id);
@@ -174,7 +196,7 @@ export const collectEntryChangesFromAsset = async ({
   // The references are replaced in place
   await getEntriesByAssetURL(assetURL, {
     entries,
-    newURL: newPath.replace(asset.folder.internalPath ?? '', publicPath ?? ''),
+    newURL,
   });
 };
 

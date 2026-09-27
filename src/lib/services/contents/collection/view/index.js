@@ -27,6 +27,7 @@ import {
   currentView,
   entryListSettings,
   initSettings,
+  viewBeforeReorder,
 } from '$lib/services/contents/collection/view/settings';
 import { sortEntries } from '$lib/services/contents/collection/view/sort';
 import { getSortConfig } from '$lib/services/contents/collection/view/sort-keys';
@@ -81,12 +82,6 @@ export const reorderedEntries = createRawState([]);
  */
 export const reorderDirty = createRawState(false);
 
-/**
- * View snapshot taken when entering reorder mode, restored on exit so the user’s prior sort/filter/
- * grouping returns once they finish (or cancel) reordering. `undefined` while not in reorder mode.
- * @type {EntryListView | undefined}
- */
-let viewBeforeReorder;
 /**
  * How often {@link viewTime} is updated while a time-based view filter or group is applied. A
  * minute keeps the list close to the clock without recomputing it for nothing.
@@ -386,9 +381,9 @@ export const setReorderMode = (value) => {
     reorderDirty.current = false;
 
     // Restore the snapshot taken when entering reorder mode, if any.
-    if (viewBeforeReorder) {
-      currentView.current = viewBeforeReorder;
-      viewBeforeReorder = undefined;
+    if (viewBeforeReorder.current) {
+      currentView.current = viewBeforeReorder.current.view;
+      viewBeforeReorder.current = undefined;
     }
 
     reordering.current = false;
@@ -410,8 +405,9 @@ export const setReorderMode = (value) => {
   const view = currentView.current;
   const reorderGroup = getReorderGroupingConditions(selectedCollection.current);
 
-  // Snapshot so we can restore on exit.
-  viewBeforeReorder = view;
+  // Snapshot so we can restore on exit. The view settings save it in place of the reorder view, so
+  // the user’s own view is kept even if reordering is never finished
+  viewBeforeReorder.current = { collectionName: selectedCollection.current?.name, view };
 
   /** @type {Partial<EntryListView>} */
   const overrides = {};
@@ -497,7 +493,7 @@ createRootEffect(() => {
   // reordering. Discard any view snapshot first so it isn’t restored against the wrong collection,
   // which would otherwise corrupt the new collection’s persisted view via `entryListSettings`.
   untrack(() => {
-    viewBeforeReorder = undefined;
+    viewBeforeReorder.current = undefined;
 
     if (reordering.current) {
       setReorderMode(false);

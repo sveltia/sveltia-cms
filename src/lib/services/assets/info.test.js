@@ -1053,6 +1053,66 @@ describe('assets/info', () => {
       expect(result).toBe('/@assets/images/666-test/my-image.jpg');
     });
 
+    it('should keep the literal text around a template tag in a path segment', () => {
+      const templateAsset = {
+        ...mockAsset,
+        path: 'static/images/post-hello/a.jpg',
+        folder: {
+          ...mockAsset.folder,
+          internalPath: 'static/images/post-{{slug}}',
+          publicPath: '/images/post-{{slug}}',
+          hasTemplateTags: true,
+        },
+      };
+
+      expect(getAssetPublicURL(templateAsset, { pathOnly: true })).toBe('/images/post-hello/a.jpg');
+    });
+
+    it('should handle several template tags, repeated or with a transformation', () => {
+      const templateAsset = {
+        ...mockAsset,
+        path: 'static/2024-hello/hello/a.jpg',
+        folder: {
+          ...mockAsset.folder,
+          internalPath: 'static/{{year}}-{{slug | lower}}/{{slug | lower}}',
+          publicPath: '/{{slug | lower}}/{{year}}',
+          hasTemplateTags: true,
+        },
+      };
+
+      expect(getAssetPublicURL(templateAsset, { pathOnly: true })).toBe('/hello/2024/a.jpg');
+    });
+
+    it('should leave a tag only found in the public path as is', () => {
+      const templateAsset = {
+        ...mockAsset,
+        path: 'static/hello/a.jpg',
+        folder: {
+          ...mockAsset.folder,
+          internalPath: 'static/{{slug}}',
+          publicPath: '/{{locale}}/{{slug}}',
+          hasTemplateTags: true,
+        },
+      };
+
+      expect(getAssetPublicURL(templateAsset, { pathOnly: true })).toBe('/{{locale}}/hello/a.jpg');
+    });
+
+    it('should prefix the public path to an asset in a root media folder', () => {
+      const rootAsset = {
+        ...mockAsset,
+        path: 'photo.jpg',
+        name: 'photo.jpg',
+        folder: { ...mockAsset.folder, internalPath: '', publicPath: '/' },
+      };
+
+      expect(getAssetPublicURL(rootAsset, { pathOnly: true })).toBe('/photo.jpg');
+
+      rootAsset.folder = { ...rootAsset.folder, publicPath: '/uploads' };
+
+      expect(getAssetPublicURL(rootAsset, { pathOnly: true })).toBe('/uploads/photo.jpg');
+    });
+
     it('should encode file path when encoding is enabled', async () => {
       const { encodeFilePath } = await import('$lib/services/utils/file');
 

@@ -252,9 +252,21 @@ export const upload = async (files, options) => {
   formData.append('signature', signature);
   formData.append('expire', String(expire));
 
+  /**
+   * Files keyed by the form field name they are uploaded under, which is also the key of the
+   * response. The name is formatted, so it can differ from the original file name, and a file
+   * whose name is taken by an earlier file is renamed, otherwise the response would have one key
+   * for both.
+   * @type {Map<string, File>}
+   */
+  const fileMap = new Map();
+
   // Add all files to the same FormData
   files.forEach((file) => {
-    formData.append(formatFileName(file.name), file);
+    const fileName = formatFileName(file.name, { assetNamesInSameFolder: [...fileMap.keys()] });
+
+    fileMap.set(fileName, file);
+    formData.append(fileName, file);
   });
 
   const response = await fetch('https://upload.uploadcare.com/base/', {
@@ -272,7 +284,7 @@ export const upload = async (files, options) => {
   const uploadedFiles = Object.entries(data)
     .filter(([key]) => !key.startsWith('UPLOADCARE_'))
     .map(([fileName, uuid]) => {
-      const file = files.find((f) => f.name === fileName);
+      const file = fileMap.get(fileName);
       const mimeType = file?.type || 'application/octet-stream';
       const isImage = mimeType.startsWith('image/');
 

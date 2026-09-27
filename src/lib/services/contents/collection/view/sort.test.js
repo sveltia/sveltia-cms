@@ -11,6 +11,7 @@ import { getSortKeyGetter, MARKDOWN_FIELD_KEYS, sortEntries } from './sort';
 // Mock external dependencies
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
+  isCollectionIndexFile: vi.fn(),
 }));
 
 vi.mock('$lib/services/contents/collection/view/sort-keys', () => ({
@@ -34,7 +35,9 @@ vi.mock('$lib/services/utils/markdown', () => ({
   removeMarkdownSyntax: vi.fn(),
 }));
 
-const { getIndexFile } = await import('$lib/services/contents/collection/entries/index-file');
+const { getIndexFile, isCollectionIndexFile } =
+  await import('$lib/services/contents/collection/entries/index-file');
+
 const { getSortKeyType } = await import('$lib/services/contents/collection/view/sort-keys');
 const { getField, getPropertyValue } = await import('$lib/services/contents/entry/fields');
 const { getEntrySummary } = await import('$lib/services/contents/entry/summary');
@@ -117,6 +120,10 @@ describe('sortEntries', () => {
 
     // Default mock for getIndexFile - no index file
     vi.mocked(getIndexFile).mockReturnValue(null);
+    // Tell the index file by its slug unless a test says otherwise
+    vi.mocked(isCollectionIndexFile).mockImplementation(
+      (collection, entry) => entry.slug === getIndexFile(collection)?.name,
+    );
   });
 
   test('should not sort entries when no key provided', () => {
@@ -702,6 +709,48 @@ describe('sortEntries', () => {
 
     // entry-3 should be first (index file), then sorted A, B
     expect(result.map((e) => e.slug)).toEqual(['entry-3', 'entry-2', 'entry-1']);
+  });
+
+  test('should move the index file of this collection to top, not another one with its slug', () => {
+    const conditions = { key: 'title', order: 'ascending' };
+
+    // The inner collection’s index file carries the `_index` slug into the outer collection, and
+    // its title sorts first
+    const innerIndex = {
+      id: 'inner-index',
+      slug: '_index',
+      subPath: 'posts/_index',
+      locales: {
+        en: { path: 'content/posts/_index.md', slug: '_index', content: { title: 'A Posts' } },
+      },
+    };
+
+    const ownIndex = {
+      id: 'own-index',
+      slug: '_index',
+      subPath: '_index',
+      locales: {
+        en: { path: 'content/_index.md', slug: '_index', content: { title: 'Z Home' } },
+      },
+    };
+
+    vi.mocked(getIndexFile).mockReturnValue({ name: '_index' });
+    vi.mocked(isCollectionIndexFile).mockImplementation(
+      (_collection, entry) => entry.locales.en.path === 'content/_index.md',
+    );
+    vi.mocked(getField).mockReturnValue({ name: 'title', widget: 'string', label: 'Title' });
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+    vi.mocked(getPropertyValue).mockImplementation(({ entry }) => entry.locales.en.content.title);
+
+    const result = sortEntries([ownIndex, innerIndex, ...mockEntries], mockCollection, conditions);
+
+    expect(result.map((e) => e.id)).toEqual([
+      'own-index',
+      'inner-index',
+      'entry-2',
+      'entry-1',
+      'entry-3',
+    ]);
   });
 
   test('should handle empty entries array', () => {

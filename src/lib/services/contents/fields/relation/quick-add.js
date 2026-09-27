@@ -142,11 +142,16 @@ export const getPendingEntrySlugs = ({ draft, parentDraft }) => {
     ({ entry }) => entry.slug,
   );
 
-  const renamedSlug = renameIfNeeded(defaultLocaleSlug, pendingSlugs);
-
-  if (renamedSlug === defaultLocaleSlug) {
+  if (renameIfNeeded(defaultLocaleSlug, pendingSlugs) === defaultLocaleSlug) {
     return slugs;
   }
+
+  // The new slug has to be free among the saved entries as well, which the slug above was made
+  // unique against, but a renamed one wasn’t
+  const renamedSlug = renameIfNeeded(defaultLocaleSlug, [
+    ...pendingSlugs,
+    ...getEntriesByCollection(draft.collectionName).map(({ slug }) => slug),
+  ]);
 
   const renamedLocalizedSlugs = localizedSlugs
     ? { ...localizedSlugs, [draft.defaultLocale]: renamedSlug }

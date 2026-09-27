@@ -116,7 +116,9 @@ export const normalizeAssetFolder = ({
       return undefined;
     }
 
-    publicFolder = replaceTags(publicFolder, globalFolders);
+    // The tag is replaced with a leading slash, which has to be removed again from a global public
+    // folder starting with `@`, like `@assets/images`, the same way as the global folder itself
+    publicFolder = replaceTags(publicFolder, globalFolders).replace(/^\/@/, '@');
   }
 
   // Normalize `./` prefix: `./images` → `images`, `./` → ``, `.` → ``
@@ -132,7 +134,11 @@ export const normalizeAssetFolder = ({
     componentName,
     typedKeyPath,
     isIndexFile,
-    internalPath: stripSlashes(entryRelative ? (baseFolder ?? '') : mediaFolder),
+    internalPath: entryRelative
+      ? // A root collection folder can be written as `.`, `./` or `/`. The configuration passed to
+        // the parser still holds the raw value, which field-level folders are resolved against
+        stripSlashes(baseFolder ?? '').replace(/^\.$/, '')
+      : stripSlashes(mediaFolder),
     internalSubPath: entryRelative ? stripSlashes(mediaFolder) : undefined,
     publicPath:
       // Prefix the public path with `/` unless it’s empty or starting with `.` (entry-relative
@@ -232,7 +238,13 @@ export const handleFieldMediaFolders = ({ fieldMediaFolders, validCollections, g
       isIndexFile,
       mediaFolder: /** @type {string} */ (fieldConfig.media_folder),
       publicFolder: fieldConfig.public_folder,
-      baseFolder: collection && 'folder' in collection ? collection.folder : undefined,
+      // A relative folder is relative to the collection file, the same as a file-level folder, or
+      // else to the collection folder
+      baseFolder: collectionFile
+        ? getPathInfo(collectionFile.file).dirname
+        : collection && 'folder' in collection
+          ? collection.folder
+          : undefined,
       globalFolders,
     });
   });

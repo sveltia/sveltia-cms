@@ -370,13 +370,15 @@ export const replaceBlobURL = async ({
     assetFolderPaths: { resolvedInternalPath, resolvedPublicPath },
   } = getAssetSavingInfo({ draft, locale, slug, defaultLocaleSlug, folder, subfolderPath });
 
+  // Files already being saved to the same folder in this save
+  const savingAssetsInSameFolder = savingAssets.filter(
+    (f) => getPathInfo(f.path).dirname === (resolvedInternalPath || undefined),
+  );
+
   // The same file picked for another field or locale is saved once, as long as it goes to the same
   // place: the same folder, and the same subfolder in it
-  const dupFile = savingAssets.find(
-    (f) =>
-      f.sha === sha &&
-      (!folder.entryRelative || equal(f.folder, folder)) &&
-      getPathInfo(f.path).dirname === (resolvedInternalPath || undefined),
+  const dupFile = savingAssetsInSameFolder.find(
+    (f) => f.sha === sha && (!folder.entryRelative || equal(f.folder, folder)),
   );
 
   let fileName = '';
@@ -385,14 +387,24 @@ export const replaceBlobURL = async ({
   if (dupFile) {
     fileName = dupFile.name;
   } else {
-    fileName = formatFileName(file.name, replace ? {} : { assetNamesInSameFolder });
+    // A different file with the same name, e.g. two images pasted from the clipboard as
+    // `image.png`, may already be headed for this folder in the same save. It’s not in the asset
+    // store yet, so take its name into account too, or one file would overwrite the other. The
+    // code below runs without awaiting anything, so concurrent calls can’t pick the same name
+    fileName = formatFileName(
+      file.name,
+      replace
+        ? {}
+        : {
+            assetNamesInSameFolder: [
+              ...assetNamesInSameFolder,
+              ...savingAssetsInSameFolder.map((f) => f.name.normalize()),
+            ],
+          },
+    );
 
     const update = replace && assetNamesInSameFolder.includes(fileName);
     const assetPath = resolvedInternalPath ? `${resolvedInternalPath}/${fileName}` : fileName;
-
-    if (!update) {
-      assetNamesInSameFolder.push(fileName);
-    }
 
     changes.push({
       action: update ? 'update' : 'create',

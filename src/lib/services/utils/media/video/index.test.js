@@ -34,4 +34,12 @@ describe('formatDuration', () => {
     expect(formatDuration(86400)).toBe('00:00:00'); // 24 hours wraps to 00:00:00
     expect(formatDuration(90000)).toBe('01:00:00'); // 25 hours wraps to 01:00:00
   });
+
+  // A WebM file recorded with `MediaRecorder` reports an `Infinity` duration, which a `Date` can’t
+  // hold, so it’s shown as unknown rather than throwing a `RangeError`
+  test('should return a placeholder for a non-finite duration', () => {
+    expect(formatDuration(Infinity)).toBe('–');
+    expect(formatDuration(-Infinity)).toBe('–');
+    expect(formatDuration(NaN)).toBe('–');
+  });
 });

@@ -49,7 +49,13 @@ export const checkRepositoryAccess = async () => {
   const { repo } = repository;
   const { id, login, bot } = /** @type {User} */ (user.account);
   const baseURL = `/projects/${getProjectId()}`;
-  const url = bot ? `${baseURL}/service_accounts` : `${baseURL}/users?search=${login}`;
+
+  // The search matches the login anywhere in a user’s username, name or email, so a short login can
+  // match many users. Ask for the largest page GitLab allows, rather than the default of 20, so
+  // the user isn’t left out of the result
+  const url = bot
+    ? `${baseURL}/service_accounts?per_page=100`
+    : `${baseURL}/users?search=${encodeURIComponent(/** @type {string} */ (login))}&per_page=100`;
 
   const response = /** @type {Response} */ (
     await fetchAPI(url, {

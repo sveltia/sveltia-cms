@@ -87,12 +87,12 @@ export const getEntryThumbnail = async (collection, entry) => {
       return /** @type {ThumbnailCandidate[]} */ ([{ value }]);
     }
 
-    // Support a wildcard in the key path, e.g. `images.*.src`
+    // Support wildcards in the key path, e.g. `images.*.src` or `sections.*.images.*`
     if (name.includes('*')) {
       const regex = getOrCreate(
         thumbnailFieldRegexCache,
         name,
-        () => new RegExp(`^${escapeRegExp(name).replace('\\*', '.+')}$`),
+        () => new RegExp(`^${escapeRegExp(name).replaceAll('\\*', '.+')}$`),
       );
 
       return /** @type {string[]} */ (contentKeys)
@@ -244,7 +244,8 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
         .flatMap(({ content }) =>
           Object.entries(content ?? {}).map(([keyPath, value]) => {
             if (typeof value === 'string' && (relative ? isRelativePath(value) : true)) {
-              const widget = getField({ collectionName, keyPath, isIndexFile })?.widget ?? 'string';
+              const widget =
+                getField({ collectionName, fileName, keyPath, isIndexFile })?.widget ?? 'string';
 
               if (!MEDIA_FIELD_TYPES.includes(widget)) {
                 return undefined;

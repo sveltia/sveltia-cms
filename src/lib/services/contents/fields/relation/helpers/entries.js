@@ -97,7 +97,8 @@ export const processEntry = ({
     getFieldDisplayValue({
       ...getFieldArgs,
       keyPath,
-      valueMap: _locale ? locales[_locale].content : content,
+      // A multi-file entry can lack a locale’s file, including the default locale’s
+      valueMap: _locale ? (locales[_locale]?.content ?? {}) : content,
       locale: _locale ?? locale,
       pendingEntries,
     });

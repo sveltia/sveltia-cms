@@ -587,13 +587,16 @@ describe('assets/data/move', () => {
       expect(getEntriesByAssetURL).toHaveBeenCalledWith('blob:http://example.com/12345');
     });
 
-    it('should rewrite the references in a copy of each entry using the asset', async () => {
+    it('should rewrite the references in a copy of each entry, falling back to the folder paths', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
       const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
       const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
       const entry = { id: 'entry1', locales: { en: { content: { image: '/images/image.jpg' } } } };
 
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/images/image.jpg');
+      // The moved asset has no public URL, as in an entry-relative folder
+      vi.mocked(getAssetPublicURL).mockImplementation((_a, options) =>
+        options ? undefined : 'https://example.com/images/image.jpg',
+      );
       vi.mocked(getEntriesByAssetURL).mockResolvedValueOnce([entry]).mockResolvedValueOnce([]);
       // The collection folder’s public path is used over the global folder’s
       vi.mocked(getAssetFoldersByPath).mockReturnValue([
@@ -624,6 +627,43 @@ describe('assets/data/move', () => {
       );
     });
 
+    it('should derive the new URL from the moved asset the way the current URL is derived', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+
+      // `media_folder: public` with `public_folder: /`
+      const asset = {
+        path: 'public/photo.jpg',
+        name: 'photo.jpg',
+        folder: { internalPath: 'public' },
+      };
+
+      vi.mocked(getAssetPublicURL).mockImplementation(
+        (a, { pathOnly = false } = {}) =>
+          `${pathOnly ? '' : 'https://example.com'}/${a.path.replace('public/', '')}`,
+      );
+      vi.mocked(getEntriesByAssetURL).mockResolvedValue([entry]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+
+      await collectEntryChangesFromAsset({
+        _globalAssetFolder: { internalPath: 'public', publicPath: '/' },
+        newPath: 'public/2024/new.jpg',
+        asset,
+        updatingEntryMap: new Map(),
+      });
+
+      expect(getAssetPublicURL).toHaveBeenLastCalledWith(
+        { ...asset, path: 'public/2024/new.jpg', name: 'new.jpg' },
+        { pathOnly: true, allowSpecial: true },
+      );
+      expect(getEntriesByAssetURL).toHaveBeenLastCalledWith('https://example.com/photo.jpg', {
+        entries: [expect.objectContaining({ id: 'entry1' })],
+        newURL: '/2024/new.jpg',
+      });
+    });
+
     it('should reuse the copy of an entry using several of the moved assets', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
       const { getEntriesByAssetURL } = await import('$lib/services/contents/collection/entries');
@@ -631,7 +671,10 @@ describe('assets/data/move', () => {
       const entry = { id: 'entry1', locales: {} };
       const updatingEntryMap = new Map();
 
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/images/image.jpg');
+      // The moved asset has no public URL, as in an entry-relative folder
+      vi.mocked(getAssetPublicURL).mockImplementation((_a, options) =>
+        options ? undefined : 'https://example.com/images/image.jpg',
+      );
       vi.mocked(getEntriesByAssetURL).mockResolvedValue([entry]);
       vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
 
@@ -665,7 +708,10 @@ describe('assets/data/move', () => {
       const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
       const entry = { id: 'entry1', locales: {} };
 
-      vi.mocked(getAssetPublicURL).mockReturnValue('https://example.com/image.jpg');
+      // The moved asset has no public URL, as in an entry-relative folder
+      vi.mocked(getAssetPublicURL).mockImplementation((_a, options) =>
+        options ? undefined : 'https://example.com/image.jpg',
+      );
       vi.mocked(getEntriesByAssetURL).mockResolvedValue([entry]);
       vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
 

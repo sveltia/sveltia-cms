@@ -88,18 +88,12 @@ export const stripDraftPrefix = (title) => {
 };
 
 /**
- * Parse a merge request returned by the REST API.
+ * Convert a merge request returned by the REST API to a workflow pull request.
  * @param {Record<string, any>} item Merge request.
- * @returns {WorkflowPullRequest | undefined} Parsed merge request, or `undefined` if the merge
- * request is not managed by the CMS.
+ * @param {WorkflowStatus} status Status of the merge request.
+ * @returns {WorkflowPullRequest} Merge request.
  */
-export const parseMergeRequest = (item) => {
-  const status = getStatusFromLabels(item.labels ?? []);
-
-  if (!status) {
-    return undefined;
-  }
-
+const toMergeRequest = (item, status) => {
   const { name, username, id } = item.author ?? {};
 
   return {
@@ -115,6 +109,22 @@ export const parseMergeRequest = (item) => {
     author: username ? { name: name ?? username, email: '', id, login: username } : undefined,
     files: [],
   };
+};
+
+/**
+ * Parse a merge request returned by the REST API.
+ * @param {Record<string, any>} item Merge request.
+ * @returns {WorkflowPullRequest | undefined} Parsed merge request, or `undefined` if the merge
+ * request is not managed by the CMS.
+ */
+export const parseMergeRequest = (item) => {
+  const status = getStatusFromLabels(item.labels ?? []);
+
+  if (!status) {
+    return undefined;
+  }
+
+  return toMergeRequest(item, status);
 };
 
 /**
@@ -306,22 +316,27 @@ export const createPullRequest = async ({ branch, title, status }) => {
 };
 
 /**
- * Check whether the given branch has an open merge request. This is asked about a branch the CMS
- * doesn’t know a merge request for, so a positive answer means the merge request is one the load
- * skipped: it has lost its status label, or it sits beyond the number of merge requests fetched.
+ * Fetch the open merge request from the given branch, if any. This is asked about a branch the CMS
+ * doesn’t know a merge request for, so a merge request found is one the load skipped: it has lost
+ * its status label, or it sits beyond the number of merge requests fetched.
  * @param {string} branch Branch name.
- * @returns {Promise<boolean>} `true` if a merge request is open from the branch.
+ * @returns {Promise<Record<string, any> | undefined>} Merge request returned by the REST API, or
+ * `undefined` if none is open from the branch.
  * @see https://docs.gitlab.com/api/merge_requests/#list-project-merge-requests
  */
-const hasOpenMergeRequest = async (branch) => {
+const fetchOpenMergeRequest = async (branch) => {
   const items = /** @type {Record<string, any>[]} */ (
     await fetchAPI(
       `/projects/${getProjectId()}/merge_requests` +
-        `?state=opened&source_branch=${encodeURIComponent(branch)}&per_page=1`,
+        `?state=opened&source_branch=${encodeURIComponent(branch)}` +
+        `&per_page=${MAX_ITEMS.mergeRequests}`,
     )
   );
 
-  return !!items.length;
+  // A merge request from a fork can have a source branch of the same name, but it isn’t this branch
+  return items.find(
+    ({ source_project_id: sourceId, target_project_id: targetId }) => sourceId === targetId,
+  );
 };
 
 /**
@@ -333,17 +348,18 @@ const hasOpenMergeRequest = async (branch) => {
  * work into it — a merged one adds nothing, but a closed one brings back what was thrown away — so
  * the branch is deleted and created afresh from the configured branch. That only holds when no
  * merge request is open from it: one the load skipped is someone’s work in progress, and it’s
- * committed onto rather than wiped.
+ * committed onto rather than wiped, and handed back so it’s reused rather than opened again.
  * @param {FileChange[]} changes Changes to be committed.
  * @param {CommitOptions} options Commit options, with the workflow branch.
- * @returns {Promise<CommitResults>} Commit results.
+ * @returns {Promise<{ commit: CommitResults, openMergeRequest?: Record<string, any> }>} Commit
+ * results, along with the merge request open from the branch, if the commit went onto it.
  */
 const commitToNewBranch = async (changes, options) => {
   const { branch = '' } = options;
   const startBranch = repository.branch;
 
   try {
-    return await commitChanges(changes, { ...options, startBranch });
+    return { commit: await commitChanges(changes, { ...options, startBranch }) };
   } catch (/** @type {any} */ ex) {
     // GitLab rejects `start_branch` outright once the branch exists. Anything else is a real
     // failure
@@ -352,33 +368,15 @@ const commitToNewBranch = async (changes, options) => {
     }
   }
 
-  if (await hasOpenMergeRequest(branch)) {
-    return commitChanges(changes, options);
+  const openMergeRequest = await fetchOpenMergeRequest(branch);
+
+  if (openMergeRequest) {
+    return { commit: await commitChanges(changes, options), openMergeRequest };
   }
 
   await deleteBranch(branch);
 
-  return commitChanges(changes, { ...options, startBranch });
-};
-
-/**
- * Commit the given changes on the workflow branch, creating the branch and the merge request if
- * they don’t exist yet.
- * @param {WorkflowSaveOptions} args Arguments.
- * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
- * and the new or updated merge request.
- */
-export const savePullRequest = async ({ changes, options, branch, title, status, pullRequest }) => {
-  // The commit itself creates the workflow branch on the first save, so it doesn’t need a request
-  // of its own
-  const commit = pullRequest
-    ? await commitChanges(changes, { ...options, branch })
-    : await commitToNewBranch(changes, { ...options, branch });
-
-  return {
-    commit,
-    pullRequest: pullRequest ?? (await createPullRequest({ branch, title, status })),
-  };
+  return { commit: await commitChanges(changes, { ...options, startBranch }) };
 };
 
 /**
@@ -409,6 +407,38 @@ export const updateStatus = async (pullRequest, status) => {
   });
 
   return { ...pullRequest, status, updatedDate: new Date() };
+};
+
+/**
+ * Commit the given changes on the workflow branch, creating the branch and the merge request if
+ * they don’t exist yet.
+ * @param {WorkflowSaveOptions} args Arguments.
+ * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
+ * and the new or updated merge request.
+ */
+export const savePullRequest = async ({ changes, options, branch, title, status, pullRequest }) => {
+  if (pullRequest) {
+    return { commit: await commitChanges(changes, { ...options, branch }), pullRequest };
+  }
+
+  // The commit itself creates the workflow branch on the first save, so it doesn’t need a request
+  // of its own
+  const { commit, openMergeRequest } = await commitToNewBranch(changes, { ...options, branch });
+
+  if (!openMergeRequest) {
+    return { commit, pullRequest: await createPullRequest({ branch, title, status }) };
+  }
+
+  // The branch already has a merge request the load skipped, and GitLab refuses to open another one
+  // from the same branch, so the commit goes into that one. A merge request that still carries its
+  // status label keeps its status, like a known one does. One that has lost it is given the status
+  // asked for, which also puts it back on the board
+  const existing = parseMergeRequest(openMergeRequest);
+
+  return {
+    commit,
+    pullRequest: existing ?? (await updateStatus(toMergeRequest(openMergeRequest, status), status)),
+  };
 };
 
 /**

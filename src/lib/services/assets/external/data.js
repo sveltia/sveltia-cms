@@ -402,6 +402,8 @@ export const renameExternalFolder = async ({ path: dirPath }, newName) => {
   const fetchOptions = getFetchOptions(service);
   const assets = getExternalSubfolderAssets(dirPath);
   const folders = getExternalFolderTree(dirPath);
+  // Checked up front, as reloading the list lets go of a focused folder that is no longer there
+  const focused = focusedExternalSubfolder.current?.path === dirPath;
 
   externalAssetsToast.current = { show: true, status: 'info', message: 'renaming_folder' };
 
@@ -432,7 +434,7 @@ export const renameExternalFolder = async ({ path: dirPath }, newName) => {
   await loadExternalAssets(service);
 
   // Keep the Info pane on the folder under its new name
-  if (focusedExternalSubfolder.current?.path === dirPath) {
+  if (focused) {
     focusedExternalSubfolder.current = { name: newName, path: newDirPath };
   }
 

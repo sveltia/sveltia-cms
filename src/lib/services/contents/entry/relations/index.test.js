@@ -2,6 +2,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { fieldConfigCacheMap } from '$lib/services/contents/entry/fields';
 import {
   getEntryRelationValues,
   getReferencingRelationFields,
@@ -70,6 +71,110 @@ describe('resolveRelationKeyPath()', () => {
 
     expect(valuePattern?.test('blocks.0.tags.1')).toBe(true);
     expect(valuePattern?.test('blocks.0.tags')).toBe(false);
+  });
+});
+
+describe('resolveRelationKeyPath() with a single-subfield List field', () => {
+  const people = { name: 'people', widget: 'relation', collection: 'people' };
+
+  const posts = {
+    name: 'posts',
+    _type: 'entry',
+    fields: [
+      // Single subfield: items are stored at `authors.0`, `authors.1`, …
+      { name: 'authors', widget: 'list', field: { ...people, name: 'author' } },
+      {
+        name: 'editors',
+        widget: 'list',
+        field: { ...people, name: 'editor', multiple: true },
+      },
+      // Subfields: items are stored at `credits.0.person`, …
+      { name: 'credits', widget: 'list', fields: [{ ...people, name: 'person' }] },
+      // An Object field as the single subfield: its subfields are stored at `photos.0.owner`
+      {
+        name: 'photos',
+        widget: 'list',
+        field: {
+          name: 'photo',
+          widget: 'object',
+          fields: [
+            { ...people, name: 'owner' },
+            { name: 'tags', widget: 'list', field: { ...people, name: 'tag' } },
+          ],
+        },
+      },
+      {
+        name: 'blocks',
+        widget: 'list',
+        types: [
+          {
+            name: 'team',
+            widget: 'object',
+            fields: [{ name: 'members', widget: 'list', field: { ...people, name: 'member' } }],
+          },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    fieldConfigCacheMap.clear();
+    getCollection.mockImplementation((name) => (name === 'posts' ? posts : undefined));
+  });
+
+  /**
+   * Resolve a Relation field collected with the given typed key path.
+   * @param {string} typedKeyPath Typed key path.
+   * @param {object} [fieldConfig] Extra field options.
+   * @returns {{ keyPath: string, valuePattern: RegExp | undefined }} Result.
+   */
+  const resolve = (typedKeyPath, fieldConfig = {}) =>
+    resolveRelationKeyPath({
+      fieldConfig: { ...people, name: typedKeyPath.split('.').pop(), ...fieldConfig },
+      context: { collection: { name: 'posts' }, typedKeyPath },
+    });
+
+  test('matches the list items, which are stored without the subfield name', () => {
+    const { keyPath, valuePattern } = resolve('authors.*.author');
+
+    expect(keyPath).toBe('authors.*');
+    expect(valuePattern?.test('authors.0')).toBe(true);
+    expect(valuePattern?.test('authors.0.author')).toBe(false);
+  });
+
+  test('matches the values of a multi-value field', () => {
+    const { valuePattern } = resolve('editors.*.editor', { multiple: true });
+
+    expect(valuePattern?.test('editors.0.1')).toBe(true);
+    expect(valuePattern?.test('editors.0')).toBe(false);
+  });
+
+  test('keeps the subfield name in a list with subfields', () => {
+    const { keyPath, valuePattern } = resolve('credits.*.person');
+
+    expect(keyPath).toBe('credits.*.person');
+    expect(valuePattern?.test('credits.0.person')).toBe(true);
+  });
+
+  test('drops the name of an Object field that is the single subfield', () => {
+    expect(resolve('photos.*.photo.owner').keyPath).toBe('photos.*.owner');
+    expect(resolve('photos.*.photo.tags.*.tag').keyPath).toBe('photos.*.tags.*');
+  });
+
+  test('handles a single-subfield list within a variable type', () => {
+    expect(resolve('blocks.*<team>.members.*.member').keyPath).toBe('blocks.*.members.*');
+  });
+
+  test('finds the references in the content', () => {
+    const { keyPath, valuePattern } = resolve('authors.*.author');
+
+    expect(
+      getRelationValues({
+        content: { 'authors.0': 'jane', 'authors.1': 'john', title: 'Post' },
+        keyPath,
+        valuePattern,
+      }),
+    ).toEqual(['jane', 'john']);
   });
 });
 

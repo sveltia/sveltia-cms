@@ -302,6 +302,24 @@ describe('getDroppedImages()', () => {
     expect(images[0].file?.type).toBe('image/webp');
   });
 
+  test('names a downloaded SVG data URL image with the `svg` extension', async () => {
+    const src = 'data:image/svg+xml;base64,AAAA';
+    const blob = new Blob(['<svg></svg>'], { type: 'image/svg+xml' });
+
+    fetchMock.mockResolvedValue({
+      /**
+       * Get the body as a blob.
+       * @returns {Promise<Blob>} Blob.
+       */
+      blob: () => Promise.resolve(blob),
+    });
+
+    const images = await getDroppedImages(createDropEvent({ html: `<img src="${src}" alt="">` }));
+
+    expect(images[0].file?.name).toBe('20260912-103000.svg');
+    expect(images[0].file?.type).toBe('image/svg+xml');
+  });
+
   test('links a data URL of an unsupported type without downloading it', async () => {
     const src = 'data:image/x-icon;base64,AAAA';
     const images = await getDroppedImages(createDropEvent({ html: `<img src="${src}">` }));

@@ -161,6 +161,22 @@ describe('git/shared/repository', () => {
       expect(getRepoURL(restApiRoot, repoPath)).toBe(expected);
     });
 
+    it.each([
+      ['https://apigit.example.com/api/v4', 'https://apigit.example.com/owner/repo'],
+      ['https://api.example.com/api/v1', 'https://api.example.com/owner/repo'],
+      ['https://api.example.com', 'https://api.example.com/owner/repo'],
+      [
+        'https://git.example.com/apis/gitea/api/v1',
+        'https://git.example.com/apis/gitea/owner/repo',
+      ],
+      [
+        'https://example.com/api-gateway/gitea/api/v1',
+        'https://example.com/api-gateway/gitea/owner/repo',
+      ],
+    ])('should only strip a whole `/api` path segment from %s', (restApiRoot, expected) => {
+      expect(getRepoURL(restApiRoot, defaultRepoPath)).toBe(expected);
+    });
+
     it('should handle API URL with version numbers correctly', () => {
       const restApiRoot = 'https://github.example.com/api/v3';
       const expected = 'https://github.example.com/owner/repo';

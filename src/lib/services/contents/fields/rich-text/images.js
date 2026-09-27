@@ -167,8 +167,10 @@ export const getDroppedImages = async (event) => {
   if (SUPPORTED_IMAGE_TYPES.includes(type)) {
     try {
       const blob = await (await fetch(src)).blob();
+      // Drop the structured syntax suffix, e.g. `svg+xml` → `svg`
+      const extension = type.split('/')[1].replace(/\+.*$/, '');
 
-      file = new File([blob], getTimestampFileName(type.split('/')[1]), { type });
+      file = new File([blob], getTimestampFileName(extension), { type });
     } catch {
       return [];
     }

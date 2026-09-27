@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { initViewSettingsStorage } from '$lib/services/common/view';
 import { selectedCollection } from '$lib/services/contents/collection';
 
-import { currentView, entryListSettings, initSettings } from './settings';
+import { currentView, entryListSettings, initSettings, viewBeforeReorder } from './settings';
 
 // Real reactive boxes are used for the mocked state, so that the effect created by `initSettings`
 // reacts to changes made by the tests
@@ -39,6 +39,7 @@ describe('Test entryListSettings', () => {
     selectedCollection.current = undefined;
     currentView.current = { type: 'list' };
     entryListSettings.current = undefined;
+    viewBeforeReorder.current = undefined;
     await wait();
   });
 
@@ -67,6 +68,32 @@ describe('Test entryListSettings', () => {
     await wait();
 
     expect(entryListSettings.current).toEqual({ posts: { type: 'grid' } });
+  });
+
+  test('keeps the view from before reorder mode saved while reordering', async () => {
+    await initSettings(backendService);
+    await wait();
+
+    const view = { type: /** @type {const} */ ('list'), sort: { key: 'title' } };
+
+    selectedCollection.current = /** @type {any} */ ({ name: 'posts' });
+    currentView.current = view;
+    await wait();
+
+    // Reorder mode replaces the view, which must not overwrite the one the user goes back to, as
+    // the page can be reloaded or another collection selected before reordering is over
+    viewBeforeReorder.current = { collectionName: 'posts', view };
+    currentView.current = { type: 'list', sort: { key: '_manual', order: 'ascending' } };
+    await wait();
+
+    expect(entryListSettings.current).toEqual({ posts: view });
+
+    // Another collection’s view is saved as usual
+    selectedCollection.current = /** @type {any} */ ({ name: 'pages' });
+    currentView.current = { type: 'grid' };
+    await wait();
+
+    expect(entryListSettings.current).toEqual({ posts: view, pages: { type: 'grid' } });
   });
 
   test('does not save the view while no collection is selected', async () => {

@@ -108,6 +108,13 @@ export const formatFrontMatter = ({ content, _file }) => {
       head = formatTOML(content);
     } else if (format === 'json-frontmatter') {
       head = formatJSON(content);
+
+      // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
+      // delimiters, so the front matter block is the object itself rather than one wrapped in
+      // another pair of braces
+      if (sd === '{' && ed === '}') {
+        head = head.slice(1, -1).replace(/^\n/, '').replace(/\n$/, '');
+      }
     } else {
       return '';
     }

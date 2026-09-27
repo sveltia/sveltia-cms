@@ -2950,3 +2950,24 @@ describe('shouldUpdateValue', () => {
     );
   });
 });
+
+describe('Test getInputValue() with a 12-hour time-only format', () => {
+  /** @type {DateTimeField} */
+  const fieldConfig = { ...baseFieldConfig, date_format: false, time_format: 'hh:mm A' };
+
+  test('should parse a PM time with the format rather than reading its digits as is', () => {
+    expect(getInputValue({ currentValue: '02:30 PM', fieldConfig })).toBe('14:30');
+  });
+
+  test('should keep a stored PM time when the input value is written back', () => {
+    const currentValue = '02:30 PM';
+    const inputValue = getInputValue({ currentValue, fieldConfig });
+    const newValue = getCurrentValue({ inputValue, currentValue, fieldConfig });
+
+    expect(shouldUpdateValue({ newValue, currentValue, fieldConfig })).toBe(false);
+  });
+
+  test('should still read the time of a value in the standard format', () => {
+    expect(getInputValue({ currentValue: '14:30', fieldConfig })).toBe('14:30');
+  });
+});

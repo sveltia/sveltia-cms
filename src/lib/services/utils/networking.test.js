@@ -385,4 +385,87 @@ describe('sendRequest', () => {
       'Server responded with an error',
     );
   });
+
+  // A gateway typically answers a 502 with an HTML page rather than JSON
+  test('should retry on 502 with a non-JSON body', async () => {
+    const mockSuccessResponse = { data: 'success' };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockSuccessResponse),
+    });
+
+    const result = await sendRequest('https://api.example.com/data');
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(mockSuccessResponse);
+  });
+
+  test('should refresh the token on 401 with a non-JSON body', async () => {
+    const mockRefreshFunction = vi.fn().mockResolvedValue({ token: 'new-token' });
+    const mockSuccessResponse = { data: 'success' };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.resolve(mockSuccessResponse),
+    });
+
+    const result = await sendRequest(
+      'https://api.example.com/data',
+      { headers: { Authorization: 'token old-token' } },
+      { refreshAccessToken: mockRefreshFunction },
+    );
+
+    expect(mockRefreshFunction).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(mockSuccessResponse);
+  });
+
+  test('should report the status of an error response with a non-JSON body', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    });
+
+    await expect(sendRequest('https://api.example.com/data')).rejects.toMatchObject({
+      message: 'Server responded with an error',
+      cause: { status: 404 },
+    });
+  });
+
+  test('should report the status of a blob request error with a non-JSON body', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    });
+
+    await expect(
+      sendRequest('https://api.example.com/file', {}, { responseType: 'blob' }),
+    ).rejects.toMatchObject({
+      message: 'Server responded with an error',
+      cause: { status: 403 },
+    });
+  });
 });

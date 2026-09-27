@@ -171,15 +171,33 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
     // Images embedded in a Markdown body
     const sources = [...new Set([...value.matchAll(MARKDOWN_IMAGE_REGEX)].map(([, src]) => src))];
 
-    await Promise.all(
-      sources.map(async (src) => {
-        const blobURL = await copyAsset({ value: src, folder, typedKeyPath });
-
-        if (blobURL) {
-          valueMap[keyPath] = /** @type {string} */ (valueMap[keyPath]).replaceAll(src, blobURL);
-        }
-      }),
+    const blobURLs = new Map(
+      await Promise.all(
+        sources.map(
+          async (src) =>
+            /** @type {[string, string | undefined]} */ ([
+              src,
+              await copyAsset({ value: src, folder, typedKeyPath }),
+            ]),
+        ),
+      ),
     );
+
+    // Replace the source within each image only, once every copy is ready. A plain text replacement
+    // would also hit a source whose name contains another’s, e.g. `hero-image.png` for `image.png`,
+    // as well as the file name mentioned anywhere else in the text
+    valueMap[keyPath] = value.replace(MARKDOWN_IMAGE_REGEX, (image, src) => {
+      const blobURL = blobURLs.get(src);
+
+      if (!blobURL) {
+        return image;
+      }
+
+      // The source comes right after the first `](`, as the alt text is matched lazily
+      const start = image.indexOf('](') + 2;
+
+      return `${image.slice(0, start)}${blobURL}${image.slice(start + src.length)}`;
+    });
   };
 
   await Promise.all(

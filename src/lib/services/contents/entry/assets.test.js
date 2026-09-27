@@ -81,7 +81,7 @@ vi.mock('@sveltia/utils/file', () => ({
 
 vi.mock('@sveltia/utils/string', () => ({
   // eslint-disable-next-line jsdoc/require-jsdoc
-  escapeRegExp: (/** @type {string} */ str) => str,
+  escapeRegExp: (/** @type {string} */ str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
 }));
 
 // Import after mocking
@@ -292,6 +292,36 @@ describe('getAssociatedAssets', () => {
     expect(result).toEqual([]);
   });
 
+  test('looks up the fields of the given collection file', () => {
+    /** @type {Asset} */
+    const mockAsset = /** @type {any} */ ({ path: 'static/images/logo.png', name: 'logo.png' });
+
+    mockGetCollection.mockReturnValue({ name: 'settings', _type: 'file' });
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockImplementation(({ fileName }) =>
+      fileName === 'general' ? { widget: 'image' } : undefined,
+    );
+    mockGetAssetByPath.mockReturnValue(mockAsset);
+    mockGetAssetFoldersByPath.mockReturnValue([
+      { collectionName: 'settings', fileName: 'general', entryRelative: false },
+    ]);
+
+    const result = getAssociatedAssets({
+      entry: /** @type {any} */ ({
+        id: 'general',
+        slug: 'general',
+        locales: { _default: { path: 'data/general.yml', content: { logo: '/images/logo.png' } } },
+      }),
+      collectionName: 'settings',
+      fileName: 'general',
+    });
+
+    expect(mockGetField).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: 'settings', fileName: 'general', keyPath: 'logo' }),
+    );
+    expect(result).toEqual([mockAsset]);
+  });
+
   test('returns assets for image and file fields', () => {
     const mockCollection = { name: 'posts', _type: 'entry' };
 
@@ -327,6 +357,32 @@ describe('getAssociatedAssets', () => {
 
     expect(result).toHaveLength(1);
     expect(result).toContain(mockAsset);
+  });
+
+  test('handles multiple wildcards in thumbnail field name', async () => {
+    const mockCollection = /** @type {any} */ ({
+      name: 'posts',
+      _i18n: { defaultLocale: 'en' },
+      _thumbnailFieldNames: ['sections.*.images.*'],
+    });
+
+    const mockEntryLocal = /** @type {any} */ ({
+      locales: {
+        en: {
+          path: 'test.md',
+          content: { 'sections.0.title': 'Intro', 'sections.0.images.0': '/image1.jpg' },
+        },
+      },
+    });
+
+    mockGetMediaFieldURL.mockResolvedValue('https://example.com/image1.jpg');
+
+    const result = await getEntryThumbnail(mockCollection, mockEntryLocal);
+
+    expect(mockGetMediaFieldURL).toHaveBeenCalledWith(
+      expect.objectContaining({ value: '/image1.jpg', typedKeyPath: 'sections.0.images.0' }),
+    );
+    expect(result).toBe('https://example.com/image1.jpg');
   });
 
   test('handles wildcard in thumbnail field name', async () => {

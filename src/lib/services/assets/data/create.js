@@ -11,7 +11,7 @@ import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shar
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-import { formatFileName } from '$lib/services/utils/file';
+import { createPath, formatFileName } from '$lib/services/utils/file';
 
 /**
  * @import { Asset, CommitAction, CommitOptions, UploadingAssets } from '$lib/types/private';
@@ -56,7 +56,7 @@ export const createFileList = (uploadingAssets) => {
     return {
       action: /** @type {CommitAction} */ (replacedAsset ? 'update' : 'create'),
       name: fileName,
-      path: replacedAsset?.path ?? [dirPath, fileName].join('/'),
+      path: replacedAsset?.path ?? createPath([dirPath, fileName]),
       file,
     };
   });

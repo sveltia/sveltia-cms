@@ -17,7 +17,7 @@
 
   import EntryReorderListItem from '$lib/components/contents/list/entry-reorder-list-item.svelte';
   import { getGroupLabel } from '$lib/services/common/view';
-  import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+  import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
   import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder';
   import {
     entryGroups,
@@ -155,13 +155,11 @@
   onMount(() => {
     // Exclude the index file (e.g. Hugo `_index.md`) from reorder: it is always pinned to the top
     // of the list regardless of its `order` value, so dragging it has no effect.
-    const indexFileName = getIndexFile(collection)?.name;
-
     const initial = Object.fromEntries(
       entryGroups.current.map(({ name, entries }) => [
         name,
         sortEntriesByOrderField(
-          indexFileName ? entries.filter((entry) => entry.slug !== indexFileName) : entries,
+          entries.filter((entry) => !isCollectionIndexFile(collection, entry)),
           collection,
         ),
       ]),

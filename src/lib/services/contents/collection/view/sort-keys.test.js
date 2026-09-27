@@ -189,6 +189,23 @@ describe('Test getSortConfig()', async () => {
     });
   });
 
+  test('does not modify the configured sortable_fields', () => {
+    const simpleFields = ['title'];
+    const advancedFields = ['title'];
+
+    [{ sortable_fields: simpleFields }, { sortable_fields: { fields: advancedFields } }].forEach(
+      (options) => {
+        const collection = { ...collectionBase, ...options, summary: '{{title}}' };
+
+        getSortConfig({ collection, isCommitAuthorAvailable: true, isCommitDateAvailable: true });
+        getSortConfig({ collection, isCommitAuthorAvailable: true, isCommitDateAvailable: true });
+      },
+    );
+
+    expect(simpleFields).toEqual(['title']);
+    expect(advancedFields).toEqual(['title']);
+  });
+
   test('handles special sort keys', () => {
     expect(
       getSortConfig({

@@ -886,7 +886,7 @@ describe('config/folders/assets', () => {
           },
           context: {
             collection: { name: 'settings', files: [] },
-            collectionFile: { name: 'general' },
+            collectionFile: { name: 'general', file: 'config/general.yml' },
             typedKeyPath: 'fields.logo',
             isIndexFile: false,
           },
@@ -1242,7 +1242,7 @@ describe('config/folders/assets', () => {
           },
           context: {
             collection: { name: '_singletons', folder: 'pages' },
-            collectionFile: { name: 'about' },
+            collectionFile: { name: 'about', file: 'pages/about.md' },
             typedKeyPath: 'fields.gallery',
             isIndexFile: false,
           },
@@ -1781,6 +1781,38 @@ describe('config/folders/assets', () => {
       });
     });
 
+    it('should keep the `@` prefix of a global public folder substituted for a template tag', () => {
+      const result = normalizeAssetFolder({
+        collectionName: 'posts',
+        mediaFolder: '{{media_folder}}/posts',
+        publicFolder: '{{public_folder}}/posts',
+        baseFolder: 'content/posts',
+        globalFolders: {
+          globalMediaFolder: 'src/assets/images',
+          globalPublicFolder: '@assets/images',
+        },
+      });
+
+      expect(result?.internalPath).toBe('src/assets/images/posts');
+      expect(result?.publicPath).toBe('@assets/images/posts');
+    });
+
+    it.each(['.', './', '/'])(
+      'should treat the `%s` base folder as the root for an entry-relative media folder',
+      (baseFolder) => {
+        const result = normalizeAssetFolder({
+          collectionName: 'docs',
+          mediaFolder: 'images',
+          publicFolder: undefined,
+          baseFolder,
+          globalFolders,
+        });
+
+        expect(result?.internalPath).toBe('');
+        expect(result?.internalSubPath).toBe('images');
+      },
+    );
+
     it('should return undefined when media folder has template tags without global folders', () => {
       const result = normalizeAssetFolder({
         collectionName: 'posts',
@@ -1985,6 +2017,98 @@ describe('config/folders/assets', () => {
       expect(fieldFolder?.publicPath).toBe('/static/featured');
     });
 
+    it('should resolve a relative field-level media folder against the collection file', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified collection for testing
+        { name: 'settings', files: [] },
+      ]);
+      vi.mocked(getValidCollectionFiles).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static',
+        public_folder: '/assets',
+        collections: [],
+      };
+
+      const fieldMediaFolders = [
+        {
+          fieldConfig: { media_folder: 'images' },
+          context: {
+            collection: { name: 'settings', files: [] },
+            collectionFile: { name: 'general', file: 'content/settings/general.yml' },
+            typedKeyPath: 'logo',
+            isIndexFile: false,
+          },
+        },
+        {
+          fieldConfig: { media_folder: 'images' },
+          context: {
+            collection: { name: '_singletons', files: [] },
+            collectionFile: { name: 'about', file: '/content/pages/about.md' },
+            typedKeyPath: 'photo',
+            isIndexFile: false,
+          },
+        },
+      ];
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config, fieldMediaFolders);
+
+      expect(result.find((f) => f.typedKeyPath === 'logo')).toMatchObject({
+        collectionName: 'settings',
+        fileName: 'general',
+        internalPath: 'content/settings',
+        internalSubPath: 'images',
+        entryRelative: true,
+      });
+
+      expect(result.find((f) => f.typedKeyPath === 'photo')).toMatchObject({
+        collectionName: '_singletons',
+        fileName: 'about',
+        internalPath: 'content/pages',
+        internalSubPath: 'images',
+        entryRelative: true,
+      });
+    });
+
+    it('should treat a `.` collection folder as the root for a relative field-level folder', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified collection for testing
+        { name: 'docs', folder: '' },
+      ]);
+      vi.mocked(getValidCollectionFiles).mockReturnValue([]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static',
+        public_folder: '/assets',
+        collections: [],
+      };
+
+      // The parser context holds the raw collection, whose `folder` hasn’t been normalized
+      const fieldMediaFolders = [
+        {
+          fieldConfig: { media_folder: 'images' },
+          context: {
+            collection: { name: 'docs', folder: '.' },
+            collectionFile: undefined,
+            typedKeyPath: 'cover',
+            isIndexFile: false,
+          },
+        },
+      ];
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config, fieldMediaFolders);
+
+      expect(result.find((f) => f.typedKeyPath === 'cover')).toMatchObject({
+        internalPath: '',
+        internalSubPath: 'images',
+        entryRelative: true,
+      });
+    });
+
     it('should skip field-level media folders for invalid collections', () => {
       vi.mocked(getValidCollections).mockReturnValue([
         // @ts-ignore - simplified collection for testing
@@ -2058,7 +2182,7 @@ describe('config/folders/assets', () => {
           },
           context: {
             collection: { name: '_singletons', folder: 'pages' },
-            collectionFile: { name: 'about' },
+            collectionFile: { name: 'about', file: 'pages/about.md' },
             typedKeyPath: 'hero_image',
             isIndexFile: true,
           },
@@ -2182,7 +2306,7 @@ describe('config/folders/assets', () => {
           },
           context: {
             collection: { name: 'settings', files: [] },
-            collectionFile: { name: 'general' },
+            collectionFile: { name: 'general', file: 'config/general.yml' },
             typedKeyPath: 'logo',
             isIndexFile: false,
           },

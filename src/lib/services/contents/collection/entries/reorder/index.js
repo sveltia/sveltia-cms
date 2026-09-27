@@ -4,7 +4,7 @@ import {
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
-import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import {
   buildEntryUpdateChanges,
@@ -168,12 +168,14 @@ export const reorderEntries = async (collection, orderedEntries) => {
  * @returns {Entry[]} Entries in the desired display order, with the index file removed.
  */
 const computeRenumberedEntries = (collection, { excludeIds, updatedEntries } = {}) => {
-  const indexFileName = getIndexFile(collection)?.name;
-
   // The index file (e.g. Hugo `_index.md`) is always pinned to the top of the list by the sort
-  // pipeline regardless of its `order` value, so it should never participate in numbering.
+  // pipeline regardless of its `order` value, so it should never participate in numbering. It’s
+  // told by its path, as another collection’s index file within this folder has the same slug
   const remaining = getEntriesByCollection(collection.name)
-    .filter((entry) => entry.slug !== indexFileName && !(excludeIds && excludeIds.has(entry.id)))
+    .filter(
+      (entry) =>
+        !isCollectionIndexFile(collection, entry) && !(excludeIds && excludeIds.has(entry.id)),
+    )
     .map((entry) => updatedEntries?.get(entry.id) ?? entry);
 
   return sortEntriesByOrderField(remaining, collection);

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { formatFrontMatter } from '$lib/services/contents/file/format';
 import {
   detectFrontMatterFormat,
   parseEntryFile,
@@ -367,6 +368,82 @@ describe('Test parseFrontMatter()', () => {
     expect(result.title).toBe('Test Post');
     expect(result.published).toBe(true);
     expect(result.body).toBe('This is the content body.');
+  });
+
+  describe('JSON front matter round-trip', () => {
+    /**
+     * Parse the given text as JSON front matter with the given delimiters.
+     * @param {string} text File content.
+     * @param {[string, string]} delimiters Front matter delimiters.
+     * @returns {Record<string, any>} Parsed content.
+     */
+    const parseWith = (text, delimiters) =>
+      parseFrontMatter({
+        collection: /** @type {any} */ ({
+          name: 'posts',
+          _file: { format: 'json-frontmatter', fmDelimiters: delimiters },
+        }),
+        format: 'json-frontmatter',
+        text: text.trim(),
+      });
+
+    const content = {
+      title: 'Test Post',
+      author: { name: 'Jane', links: { site: 'https://example.com' } },
+      tags: ['a', 'b'],
+    };
+
+    test.each([
+      ['default', ['{', '}']],
+      ['custom', ['---', '---']],
+      ['custom brace-less', ['~~~', '~~~']],
+    ])('parses what the formatter writes with %s delimiters', (_label, delimiters) => {
+      const text = formatFrontMatter({
+        content: { ...content, body: 'Body text.' },
+        _file: /** @type {any} */ ({
+          format: 'json-frontmatter',
+          fmDelimiters: delimiters,
+        }),
+      });
+
+      expect(parseWith(text, /** @type {[string, string]} */ (delimiters))).toEqual({
+        ...content,
+        body: 'Body text.',
+      });
+    });
+
+    test('parses what the formatter writes without a body', () => {
+      const text = formatFrontMatter({
+        content: { ...content },
+        _file: /** @type {any} */ ({ format: 'json-frontmatter', fmDelimiters: ['{', '}'] }),
+      });
+
+      expect(parseWith(text, ['{', '}'])).toEqual({ ...content, body: undefined });
+    });
+
+    test('parses a file written with the braces doubled by an earlier version', () => {
+      const text = `{\n${JSON.stringify(content, null, 2)}\n}\n\nBody text.\n`;
+
+      expect(parseWith(text, ['{', '}'])).toEqual({ ...content, body: 'Body text.' });
+    });
+
+    test('parses a doubled-brace file without a body or indentation', () => {
+      const text = `{\n${JSON.stringify(content)}\n}\n`;
+
+      expect(parseWith(text, ['{', '}'])).toEqual({ ...content, body: undefined });
+    });
+
+    test('parses a Decap-style head without braces within custom delimiters', () => {
+      const text = '---\n"title": "Test Post"\n---\n\nBody text.';
+
+      expect(parseWith(text, ['---', '---'])).toEqual({ title: 'Test Post', body: 'Body text.' });
+    });
+
+    test('parses a full JSON object within custom delimiters', () => {
+      const text = '---\n{\n  "title": "Test Post"\n}\n---\n\nBody text.';
+
+      expect(parseWith(text, ['---', '---'])).toEqual({ title: 'Test Post', body: 'Body text.' });
+    });
   });
 
   test('handles content without front matter', async () => {

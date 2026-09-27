@@ -93,9 +93,13 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     _i18n: { i18nEnabled, canonicalSlug },
   } = collection;
 
-  let { keys, defaultKey, defaultOrder } = customSortableFields
+  const parsed = customSortableFields
     ? parseCustomSortableFields(customSortableFields)
     : getDefaultSortKeys(customIdField);
+
+  // Copy the keys, which can be the configured `sortable_fields` array itself, before adding any
+  let keys = [...parsed.keys];
+  let { defaultKey, defaultOrder } = parsed;
 
   // Special handling for summary field: if the collection has a summary template defined, we add
   // `_summary` as a special sort key, which uses the generated summary value

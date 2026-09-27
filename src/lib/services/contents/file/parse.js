@@ -61,6 +61,29 @@ export const detectFrontMatterFormat = (text) => {
 };
 
 /**
+ * Regular expression to match JSON front matter written by an earlier version of Sveltia CMS, which
+ * wrapped a complete JSON object in the `{` and `}` delimiters, doubling the braces. The object is
+ * followed by the closing delimiter on a line of its own, then by the end of the file or a blank
+ * line and the body. A line break inside a JSON value is always escaped, so this can’t match
+ * within the object.
+ */
+const DOUBLE_BRACE_JSON_FRONT_MATTER_REGEX =
+  /^\{\n(?<head>\{[\s\S]*?\})\n\}(?:\n\n(?<body>[\s\S]*))?$/;
+
+/**
+ * Parse the head of JSON front matter. Like Netlify/Decap CMS, the formatter strips the outer
+ * braces of the object when they double as the delimiters, so add them back if they are missing. A
+ * complete object, which can come within custom delimiters, is parsed as is.
+ * @param {string} head Front matter head.
+ * @returns {any} Parsed object.
+ */
+const parseJSONFrontMatterHead = (head) => {
+  const trimmedHead = head.trim();
+
+  return parseJSON(trimmedHead.startsWith('{') ? trimmedHead : `{${trimmedHead}}`);
+};
+
+/**
  * Cache for front matter regexes, keyed by `${sd}|${ed}` (escaped delimiter pair). Avoids
  * rebuilding the same regex for every entry in a collection (all entries share identical
  * delimiters).
@@ -103,7 +126,12 @@ export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, form
     () => new RegExp(`^${sd}\n(?:(?<head>[\\s\\S]*?))\n${ed}(?:\n(?<body>[\\s\\S]*))?$`, 's'),
   );
 
-  const { head, body } = text.match(regex)?.groups ?? {};
+  const { head, body } =
+    (format === 'json-frontmatter' && startDelimiter === '{' && endDelimiter === '}'
+      ? text.match(DOUBLE_BRACE_JSON_FRONT_MATTER_REGEX)?.groups
+      : undefined) ??
+    text.match(regex)?.groups ??
+    {};
 
   if (!head && !body) {
     // Support Markdown without a front matter block, particularly for VitePress
@@ -122,8 +150,7 @@ export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, form
   }
 
   if (format === 'json-frontmatter') {
-    // For JSON front matter, we need to add the braces back since the regex strips them
-    parsedHead = parseJSON(`{${head}}`);
+    parsedHead = parseJSONFrontMatterHead(head);
   }
 
   if (!parsedHead || typeof parsedHead !== 'object' || Array.isArray(parsedHead)) {

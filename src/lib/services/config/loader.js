@@ -196,7 +196,11 @@ export const verifyLinksAreSecure = (links) => {
 export const getConfigLinks = () => {
   const links = /** @type {HTMLLinkElement[]} */ ([
     ...document.querySelectorAll('link[rel="cms-config-url"]'),
-  ]).map(({ href, type }) => /** @type {ConfigLink} */ ({ href, type }));
+  ]).map(
+    // A link element without the `type` attribute has an empty `type`, which has to fall back to
+    // the default type like a missing one
+    ({ href, type }) => /** @type {ConfigLink} */ ({ href, type: type || undefined }),
+  );
 
   if (!links.length) {
     links.push(

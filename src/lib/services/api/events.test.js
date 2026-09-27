@@ -1114,6 +1114,44 @@ describe('events module', () => {
       expect(savingEntry.locales.ja.content).toBeDefined();
     });
 
+    it('should pass the default locale changes made by a preSave hook on to the next one', async () => {
+      /** @type {any[]} */
+      const receivedTitles = [];
+
+      const handlerA = vi.fn(async ({ entry }) => {
+        receivedTitles.push(entry.getIn(['data', 'title']));
+
+        return entry.setIn(['data', 'title'], 'From A');
+      });
+
+      const handlerB = vi.fn(async ({ entry }) => {
+        receivedTitles.push(entry.getIn(['data', 'title']));
+
+        return entry.setIn(['data', 'date'], '2026-01-01');
+      });
+
+      eventHookRegistry.add({ name: 'preSave', handler: handlerA });
+      eventHookRegistry.add({ name: 'preSave', handler: handlerB });
+
+      const savingEntry = {
+        slug: 'test-post',
+        locales: {
+          en: { content: { title: 'Original Title' }, path: 'posts/test-post.md' },
+        },
+      };
+
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: savingEntry,
+          collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+        }),
+      );
+
+      expect(receivedTitles).toEqual(['Original Title', 'From A']);
+      expect(savingEntry.locales.en.content).toEqual({ title: 'From A', date: '2026-01-01' });
+    });
+
     it('should handle preSave hook returning object with only data (no i18n)', async () => {
       const updatedData = { title: 'Updated Title', body: 'Updated content' };
 

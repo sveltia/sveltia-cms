@@ -338,21 +338,30 @@ export const hasAsset = ({
 
   // Search images in markdown body
   if (['richtext', 'markdown'].includes(fieldType)) {
-    const matches = [...value.matchAll(MARKDOWN_IMAGE_REGEX)];
+    let found = false;
 
-    if (matches.length) {
-      return matches
-        .map(([, src]) => {
-          const match = isMatch(src);
+    // Swap the URL within each matched image only, rather than its first occurrence in the text,
+    // which can be a link to the same file, the alt text, or the new URL written by a previous
+    // replacement. The new value is built from the original one, so doing this again, once for
+    // each collection the entry belongs to, gives the same result
+    const replaced = value.replace(MARKDOWN_IMAGE_REGEX, (image, /** @type {string} */ src) => {
+      if (!isMatch(src)) {
+        return image;
+      }
 
-          if (match && newURL) {
-            content[keyPath] = content[keyPath].replace(src, newURL);
-          }
+      found = true;
 
-          return match;
-        })
-        .some(Boolean);
+      // The source follows the first `](`, as the alt text is matched lazily
+      const index = image.indexOf('](') + 2;
+
+      return `${image.slice(0, index)}${newURL || src}${image.slice(index + src.length)}`;
+    });
+
+    if (found && newURL) {
+      content[keyPath] = replaced;
     }
+
+    return found;
   }
 
   return false;

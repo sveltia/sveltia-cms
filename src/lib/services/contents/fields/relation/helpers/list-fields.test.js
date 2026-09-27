@@ -103,6 +103,36 @@ describe('Test processSingleSubfieldList()', () => {
     result.forEach((option) => expect(option.value).toBe('123'));
   });
 
+  test('should not take a sibling field whose name starts with the list name as an item', () => {
+    // `photos_2` is a separate field, not the third item of the `photos` list
+    const content = {
+      'photos.0': 'a.jpg',
+      'photos.1': 'b.jpg',
+      photos_2: 'cover.jpg',
+    };
+
+    /** @type {TemplateStrings} */
+    const templates = {
+      _displayField: '{{photos.*}}',
+      _valueField: '{{photos.*}}',
+      _searchField: '{{photos.*}}',
+      allFieldNames: ['photos.*'],
+      hasListFields: true,
+    };
+
+    const result = processSingleSubfieldList({
+      baseFieldName: 'photos',
+      groupEntries: [['photos.*', { baseFieldName: 'photos' }]],
+      content,
+      templates,
+      allFieldNames: ['photos.*'],
+      context: { slug: 'test-slug', locale: 'en', getDisplayValue: vi.fn(() => '') },
+      fallbackContext: { content, locales: {}, defaultLocale: 'en', identifierField: 'title' },
+    });
+
+    expect(result.map(({ value }) => value)).toEqual(['a.jpg', 'b.jpg']);
+  });
+
   test('should handle list items with empty values', () => {
     const content = {
       'skills.0': '',

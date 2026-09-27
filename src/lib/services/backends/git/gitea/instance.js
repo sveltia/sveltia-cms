@@ -20,13 +20,14 @@ export const instance = { isForgejo: false };
 export const checkInstanceVersion = async () => {
   const { version: versionStr } = /** @type {{ version: string }} */ (await fetchAPI('/version'));
   const version = Number.parseFloat(versionStr);
-  // Forgejo version strings typically look like `13.0.3+gitea-1.22.0`. However, depending on the
-  // installation, the fork indicator may not be included (I’ve got `13.0.3` with Homebrew) so we
-  // just check the numeric major version number. Forgejo is now 1x.x.x while Gitea remains 1.x.x so
-  // it’s safe to assume anything above version 10 is Forgejo.
+  // Forgejo version strings typically look like `13.0.3+gitea-1.22.0`, while Gitea’s look like
+  // `1.24.0` or `1.27.0+dev-954-g1f3981a301`. However, depending on the installation, the fork
+  // indicator may not be included (I’ve got `13.0.3` with Homebrew) so the major version number is
+  // checked as well. Forgejo has used its own major versions since 7.0, while Gitea remains 1.x.x,
+  // so anything from version 2 on is Forgejo.
   // @see https://blog.gitea.com/tags/release
   // @see https://forgejo.org/releases/
-  const isForgejo = version > 10;
+  const isForgejo = /\+gitea-/.test(versionStr ?? '') || version >= 2;
   const name = isForgejo ? 'Forgejo' : 'Gitea';
   const minVersion = isForgejo ? MIN_FORGEJO_VERSION : MIN_GITEA_VERSION;
 

@@ -241,6 +241,15 @@ describe('config/loader', () => {
       expect(getConfigLinks()).toEqual([{ href: 'custom-config.yml', type: 'application/yaml' }]);
     });
 
+    test('should leave the type unset for a link element without the `type` attribute', () => {
+      // A real `HTMLLinkElement` reports a missing `type` attribute as an empty string
+      const mockLinks = [{ href: 'custom-config.yml', type: '' }];
+
+      document.querySelectorAll.mockReturnValue(mockLinks);
+
+      expect(getConfigLinks()).toEqual([{ href: 'custom-config.yml', type: undefined }]);
+    });
+
     test('should fall back to the file next to the admin page', () => {
       document.querySelectorAll.mockReturnValue([]);
 
@@ -518,6 +527,21 @@ describe('config/loader', () => {
       ];
 
       document.querySelectorAll.mockReturnValue(mockLinks);
+
+      fetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve('backend:\n  name: github'),
+      });
+
+      const result = await fetchCmsConfig();
+
+      expect(result).toEqual({ backend: { name: 'github' } });
+    });
+
+    test('should parse a link element without the `type` attribute as YAML', async () => {
+      // A real `HTMLLinkElement` reports a missing `type` attribute as an empty string
+      document.querySelectorAll.mockReturnValue([{ href: 'config.yml', type: '' }]);
 
       fetch.mockResolvedValue({
         ok: true,

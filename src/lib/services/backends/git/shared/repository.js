@@ -24,6 +24,13 @@ export const REPOSITORY_INFO_PLACEHOLDER = {
 };
 
 /**
+ * Regular expression matching the first path segment of a REST API root URL that is exactly `api`,
+ * along with everything after it. The origin is matched separately, so a host name starting with
+ * `api` is left alone, and so is a path segment that only starts with it, like `apis`.
+ */
+const API_PATH_REGEX = /^(?<origin>(?:[a-z][a-z\d+.-]*:)?\/\/[^/]*)?(?<path>.*?)\/api(?:\/.*)?$/i;
+
+/**
  * Get the base URL for the repository from the REST API root URL.
  * @param {string} restApiRoot REST API root URL. It can be `https://api.github.com`,
  * `https://github.example.com`, `https://gitlab.com/api/v3`, `https://example.com/gitea/api/v1`,
@@ -35,7 +42,7 @@ export const getRepoURL = (restApiRoot, repoPath) => {
   const baseURL =
     restApiRoot === 'https://api.github.com'
       ? 'https://github.com'
-      : restApiRoot.replace(/\/api(?:\/v\d+)?(?:\/.*)?/, '');
+      : restApiRoot.replace(API_PATH_REGEX, '$<origin>$<path>');
 
   return `${baseURL}/${repoPath}`;
 };

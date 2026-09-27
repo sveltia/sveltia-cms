@@ -177,7 +177,7 @@ export const processSingleSubfieldList = ({
   const regex = getOrCreate(
     singleSubfieldRegexCache,
     baseFieldName,
-    () => new RegExp(`^${escapeRegExp(baseFieldName)}.\\d+$`),
+    () => new RegExp(`^${escapeRegExp(baseFieldName)}\\.\\d+$`),
   );
 
   const items = collectIndexedValues(content, regex, LIST_KEY_PATH_MATCH_REGEX);
@@ -259,7 +259,7 @@ export const processComplexListField = ({
 
     // indexRegex subsumes the old filter-only `regex` (same semantics; `[0-9]+` ≡ `\d+` in JS
     // without the `u` flag), so one regex construction per call is saved.
-    return new RegExp(`^${escapedBase}.([0-9]+).${escapedSub}$`);
+    return new RegExp(`^${escapedBase}\\.([0-9]+)\\.${escapedSub}$`);
   });
 
   const listValues = collectIndexedValues(content, indexRegex);

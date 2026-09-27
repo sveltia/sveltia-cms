@@ -351,6 +351,32 @@ describe('Test processResource()', () => {
     expect(Object.keys(draft.files)).toHaveLength(0);
   });
 
+  test('should reuse the same file pending upload to another subfolder', async () => {
+    const pendingFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+    const mockFile = new File(['content'], 'photo.jpg', { type: 'image/jpeg' });
+    const folder = { name: 'uploads' };
+
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {
+        'blob:gallery': { file: pendingFile, folder, subfolderPath: 'gallery' },
+      },
+    };
+
+    // @ts-ignore - Simplified resource for testing
+    const resource = { file: mockFile, folder, credit: '' };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+    equalMock.mockReturnValue(true);
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig: {} });
+
+    expect(result.value).toBe('blob:gallery');
+    expect(result.invalidFileName).toBeUndefined();
+    expect(Object.keys(draft.files)).toEqual(['blob:gallery']);
+  });
+
   test('should transform file when transformations are configured', async () => {
     const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
     const transformedFile = new File(['transformed'], 'test.jpg', { type: 'image/jpeg' });

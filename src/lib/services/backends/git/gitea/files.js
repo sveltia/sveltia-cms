@@ -101,8 +101,18 @@ export const fetchFileList = async (lastHash) => {
  */
 export const parseFileContents = async (fetchingFiles, results) => {
   const entries = await Promise.all(
-    fetchingFiles.map(async ({ path, sha, size }) => {
-      const { content, encoding } = results[path] ?? {};
+    fetchingFiles.map(async ({ path, sha, size, type }) => {
+      const item = results[path];
+
+      // A text file the API returned nothing for is left without text and metadata, so it’s not
+      // cached as fetched: an empty text would stand in for its content until the file changes,
+      // and the entry would lose its content the next time it’s saved. It’s requested again on the
+      // next load instead. An asset’s content is never requested, so it’s complete as it is
+      if (!item && type !== 'asset') {
+        return [path, { sha, size: size ?? 0, text: undefined, meta: undefined }];
+      }
+
+      const { content, encoding } = item ?? {};
 
       const data = {
         sha,
@@ -120,6 +130,14 @@ export const parseFileContents = async (fetchingFiles, results) => {
 };
 
 /**
+ * Encode a file path for use in a URL path, segment by segment. `encodeURI` would leave `#` and `?`
+ * as they are, which end the path, so a file name containing them would be cut short.
+ * @param {string} path File path.
+ * @returns {string} Encoded path, with the slashes kept.
+ */
+const encodeFilePath = (path) => path.split('/').map(encodeURIComponent).join('/');
+
+/**
  * Fetch the text content of a single file with the raw endpoint, which returns it in full. The bulk
  * endpoints leave the content of an oversized blob empty, and keeping that would wipe the file the
  * next time the entry is saved.
@@ -132,11 +150,12 @@ const fetchRawFile = async (path) => {
   const { owner, repo, branch = '' } = repository;
 
   return /** @type {Promise<string>} */ (
-    // Use `encodeURI` instead of `encodeURIComponent` because slashes in the path should not be
-    // encoded but spaces and other characters should be.
-    fetchAPI(`/repos/${owner}/${repo}/raw/${encodeURI(path)}?ref=${encodeURIComponent(branch)}`, {
-      responseType: 'text',
-    })
+    fetchAPI(
+      `/repos/${owner}/${repo}/raw/${encodeFilePath(path)}?ref=${encodeURIComponent(branch)}`,
+      {
+        responseType: 'text',
+      },
+    )
   );
 };
 
@@ -270,7 +289,8 @@ export const fetchFileContents = async (fetchingFiles) => {
 
   // Read whatever the bulk endpoints won’t return from the raw endpoint, which has no size cap
   await runConcurrently(oversizedFiles, async ({ path }) => {
-    fileMap[path].text = await fetchRawFile(path);
+    // The bulk endpoints weren’t asked for the file, so its metadata is filled in with the text
+    Object.assign(fileMap[path], { text: await fetchRawFile(path), meta: {} });
     advanceProgress(1);
   });
 
@@ -315,9 +335,7 @@ export const fetchBlob = async (asset) => {
   const { path } = asset;
 
   return /** @type {Promise<Blob>} */ (
-    // Use `encodeURI` instead of `encodeURIComponent` because slashes in the path should not be
-    // encoded but spaces and other characters should be.
-    fetchAPI(`/repos/${owner}/${repo}/media/${branch}/${encodeURI(path)}`, {
+    fetchAPI(`/repos/${owner}/${repo}/media/${branch}/${encodeFilePath(path)}`, {
       responseType: 'blob',
     })
   );

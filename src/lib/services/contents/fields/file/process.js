@@ -225,6 +225,10 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
         allowSpecial: true,
         entry: draft.originalEntry,
       });
+    } else if (asset.blobURL) {
+      // A pending file listed by `getUnsavedAssets()` is referenced with its blob URL. It can’t be
+      // looked up by content, as it may be pending for a subfolder other than the selected one
+      value = asset.blobURL;
     } else if (asset.file) {
       value = await getExistingBlobURL({ draft, file: asset.file, folder: asset.folder });
     }

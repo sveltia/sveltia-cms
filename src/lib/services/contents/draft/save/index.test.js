@@ -11,7 +11,7 @@ import {
 } from '$lib/services/contents/collection/data';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
-import { deleteBackup } from '$lib/services/contents/draft/backup';
+import { deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { detectEntryConflict } from '$lib/services/contents/draft/save/conflict';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
@@ -135,6 +135,10 @@ describe('draft/save/index', () => {
     vi.mocked(callEventHooks).mockResolvedValue(undefined);
     contentUpdatesToast.current = /** @type {any} */ (undefined);
     vi.mocked(deleteBackup).mockResolvedValue(undefined);
+    // Same as the actual implementation: the file name, or the slug the entry had when opened
+    vi.mocked(getBackupSlug).mockImplementation(
+      ({ fileName, originalEntry }) => fileName ?? originalEntry?.slug ?? '',
+    );
   });
 
   describe('saveEntry', () => {
@@ -359,10 +363,30 @@ describe('draft/save/index', () => {
 
     it('should delete backup after successful save', async () => {
       mockDraft.isNew = false;
+      mockDraft.originalEntry = { id: 'test-id', slug: 'test-post', locales: {} };
 
       await saveEntry();
 
       expect(deleteBackup).toHaveBeenCalledWith('posts', 'test-post');
+    });
+
+    it('should delete the backup stored under the original slug after a rename', async () => {
+      mockDraft.isNew = false;
+      mockDraft.originalEntry = { id: 'test-id', slug: 'old-post', locales: {} };
+
+      await saveEntry();
+
+      // The backup was made under the slug the entry had when it was opened, not the new one
+      expect(deleteBackup).toHaveBeenCalledWith('posts', 'old-post');
+      expect(deleteBackup).not.toHaveBeenCalledWith('posts', 'test-post');
+    });
+
+    it('should delete the backup of a new file collection entry stored under the file name', async () => {
+      mockDraft.fileName = 'about';
+
+      await saveEntry();
+
+      expect(deleteBackup).toHaveBeenCalledWith('posts', 'about');
     });
 
     it('should delete backup before running the post-save hooks', async () => {
@@ -594,6 +618,40 @@ describe('draft/save/index', () => {
 
       expect(mockDraft.currentValues.en.order).toBe(7);
       expect(mockDraft.currentValues.ja.order).toBe(7);
+    });
+
+    it('should put a new entry after the entries added from its Relation field', async () => {
+      mockDraft.isNew = true;
+      vi.mocked(getOrderFieldKey).mockReturnValue('order');
+      vi.mocked(getEntriesByCollection).mockReturnValue([
+        { locales: { en: { content: { order: 5 } } } },
+      ]);
+
+      /**
+       * Create a pending entry, as added from a Relation field of the entry being edited.
+       * @param {string} collectionName Collection name.
+       * @param {number} [order] Order the entry was given when it was added.
+       * @returns {any} Pending entry.
+       */
+      const createPendingEntry = (collectionName, order) => ({
+        collectionName,
+        entry: { locales: { en: { content: { order } } } },
+        values: [],
+        changes: [],
+        savingAssets: [],
+      });
+
+      // Entries added to the same collection took the orders after the highest one, 6 and 7
+      mockDraft.pendingEntries = [
+        createPendingEntry('posts', 6),
+        createPendingEntry('tags'),
+        createPendingEntry('posts', 7),
+      ];
+
+      await saveEntry();
+
+      expect(mockDraft.currentValues.en.order).toBe(8);
+      expect(mockDraft.currentValues.ja.order).toBe(8);
     });
 
     it('should use the configured custom order key', async () => {

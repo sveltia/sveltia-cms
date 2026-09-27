@@ -7,7 +7,7 @@ import {
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
-import { deleteBackup } from '$lib/services/contents/draft/backup';
+import { deleteBackup, getBackupSlug } from '$lib/services/contents/draft/backup';
 import { getReferencedPendingEntries } from '$lib/services/contents/draft/pending-entries';
 import { buildEntryAssetMoveChanges } from '$lib/services/contents/draft/save/asset-move';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
@@ -102,7 +102,13 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
   }
 
   if (isNew && collection._type === 'entry') {
-    assignManualSortOrder(draft);
+    // The entries added to the same collection from a Relation field have already taken the orders
+    // after the highest one, so the new entry comes after them
+    assignManualSortOrder(
+      draft,
+      draft.pendingEntries.filter((pendingEntry) => pendingEntry.collectionName === collectionName)
+        .length,
+    );
   }
 
   const slugs = getSlugs({ draft });
@@ -179,9 +185,10 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
   // Delete the backup as soon as the changes are saved. A dev server that watches the content files
   // may reload the page right after they’re written, e.g. Eleventy, and a backup that outlives the
   // save would then offer to restore a draft that has already been saved. The changes are saved
-  // already, so a backup that can’t be deleted doesn’t fail the save
+  // already, so a backup that can’t be deleted doesn’t fail the save. The backup is stored under
+  // the slug the entry had when it was opened, which a rename leaves behind
   try {
-    await deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
+    await deleteBackup(collectionName, getBackupSlug(draft));
   } catch (ex) {
     // eslint-disable-next-line no-console
     console.error(ex);

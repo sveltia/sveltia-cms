@@ -449,6 +449,16 @@ describe('assets/external/data', () => {
 
     it('should rename a folder by moving its assets and placeholders, then reload', async () => {
       focusedExternalSubfolder.current = { name: '2024', path: '2024' };
+      // The service lists the files at their new paths once they’ve been moved, so nothing is left
+      // under the old folder when the list is reloaded
+      vi.mocked(service.browse).mockResolvedValueOnce({
+        assets: [
+          a,
+          { ...spring, id: '2025/spring.png', description: '2025/spring.png' },
+          { ...nested, id: '2025/summer/beach.png', description: '2025/summer/beach.png' },
+        ],
+        folders: ['2025/empty'],
+      });
 
       expect(await renameExternalFolder({ name: '2024', path: '2024' }, '2025')).toBe(true);
 

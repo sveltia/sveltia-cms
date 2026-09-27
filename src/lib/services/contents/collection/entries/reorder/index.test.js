@@ -21,6 +21,7 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
 
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(() => undefined),
+  isCollectionIndexFile: vi.fn(() => false),
 }));
 
 vi.mock('$lib/services/contents/draft/save/changes', () => ({
@@ -389,6 +390,35 @@ describe('buildRenumberChanges()', () => {
     expect(result.changes.length).toBeGreaterThan(0);
     // Crucially, no save was triggered.
     expect(saveChanges).not.toHaveBeenCalled();
+  });
+
+  test('leaves out the collection’s own index file only, not another one with the same slug', async () => {
+    const { getEntriesByCollection } = await import('$lib/services/contents/collection/entries');
+
+    const { getIndexFile, isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const collection = makeCollection({ _type: 'entry' });
+    const ownIndex = { ...makeEntry('own', { title: 'Home' }), slug: '_index' };
+    // Another collection’s index file within this collection’s folder carries the same slug
+    const innerIndex = { ...makeEntry('inner', { title: 'Posts', order: 3 }), slug: '_index' };
+
+    vi.mocked(getIndexFile).mockReturnValueOnce(/** @type {any} */ ({ name: '_index' }));
+    vi.mocked(isCollectionIndexFile).mockImplementation((_collection, entry) => entry.id === 'own');
+    vi.mocked(getEntriesByCollection).mockReturnValueOnce([
+      ownIndex,
+      makeEntry('a', { title: 'A', order: 1 }),
+      innerIndex,
+    ]);
+
+    const result = await buildRenumberChanges(collection);
+
+    expect(result.savingEntries.map((e) => [e.id, e.locales._default.content.order])).toEqual([
+      ['inner', 2],
+    ]);
+
+    vi.mocked(isCollectionIndexFile).mockReset();
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
   });
 
   test('reuses a caller-provided cacheDB instead of opening a new one', async () => {

@@ -1,9 +1,8 @@
-import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 
 import { suspendAutoDuplication } from '$lib/services/contents/draft';
+import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getSubtree } from '$lib/services/contents/entry/subtree';
-import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { DraftValueStoreKey, EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -30,12 +29,6 @@ export const updateObject = (obj, newProps) => {
 };
 
 /**
- * Cache of pre-compiled regexes keyed by field key path.
- * @type {Map<FieldKeyPath, RegExp>}
- */
-const itemListRegexCache = new Map();
-
-/**
  * Traverse the given object by decoding dot-notated key path.
  *
  * The object is a draft’s live content, not a snapshot of it, and the caller writes the manipulated
@@ -44,18 +37,12 @@ const itemListRegexCache = new Map();
  * @param {FieldKeyPath} keyPath Dot-notated field name.
  * @returns {[values: any, remainder: any]} Unflatten values and flatten remainder.
  */
-export const getItemList = (obj, keyPath) => {
-  const regex = getOrCreate(
-    itemListRegexCache,
-    keyPath,
-    () => new RegExp(`^${escapeRegExp(keyPath)}\\b(?!#)`),
-  );
-
-  return [
-    getSubtree(obj, keyPath, { live: true }) ?? [],
-    Object.fromEntries(Object.entries(obj).filter(([k]) => !regex.test(k))),
-  ];
-};
+export const getItemList = (obj, keyPath) => [
+  getSubtree(obj, keyPath, { live: true }) ?? [],
+  // Only the list itself and the key paths below it belong to the list, not a sibling whose name
+  // merely begins with the list’s, such as `tags-extra` for `tags`
+  Object.fromEntries(Object.entries(obj).filter(([k]) => !isKeyPathWithin(k, keyPath))),
+];
 
 /**
  * Update the value in a list field.

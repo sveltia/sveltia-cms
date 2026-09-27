@@ -119,6 +119,7 @@ const FETCH_BLOBS_QUERY = `
       repository {
         blobs(ref: $branch, paths: $paths) {
           nodes {
+            path
             rawTextBlob
           }
         }
@@ -139,7 +140,8 @@ const FETCH_BLOBS_QUERY = `
  * @param {string} query GraphQL query string.
  * @param {Record<string, any>} [variables] Any variable to be applied to the query, other than the
  * paths.
- * @returns {Promise<BlobItem[]>} Fetched blobs, in the same order as the given paths.
+ * @returns {Promise<BlobItem[]>} Fetched blobs, in the same order as the given paths. A path that
+ * isn’t on the branch is left out, so select the `path` to match a blob to its file.
  * @throws {Error} When a request for a single path fails.
  * @see https://docs.gitlab.com/api/graphql/#data-limits
  * @see https://gitlab.com/gitlab-org/gitlab/-/merge_requests/212456
@@ -177,7 +179,8 @@ export const fetchBlobBatch = async (paths, query, variables = {}) => {
  * @param {string} query GraphQL query string.
  * @param {Record<string, any>} [variables] Any variable to be applied to the query, other than the
  * paths.
- * @returns {Promise<BlobItem[]>} Fetched blobs, in the same order as the given paths.
+ * @returns {Promise<BlobItem[]>} Fetched blobs, in the same order as the given paths. A path that
+ * isn’t on the branch is left out, so select the `path` to match a blob to its file.
  * @see https://docs.gitlab.com/api/graphql/reference/#repositoryblob
  * @see https://docs.gitlab.com/api/graphql/reference/#tree
  * @see https://forum.gitlab.com/t/graphql-api-read-raw-file/35389
@@ -223,14 +226,17 @@ export const fetchBlobNodes = async (paths, query, variables = {}) => {
 /**
  * Fetch the blobs for the given file paths, and map them back to those paths.
  * @param {string[]} paths List of file paths to fetch.
- * @param {string} query GraphQL query string.
- * @returns {Promise<Record<string, BlobItem>>} Fetched blobs mapped by file path.
+ * @param {string} query GraphQL query string, which has to select the `path` of each blob.
+ * @returns {Promise<Record<string, BlobItem>>} Fetched blobs mapped by file path. A path missing
+ * from the branch has no blob.
  */
 export const fetchBlobs = async (paths, query) => {
   const blobs = await fetchBlobNodes(paths, query);
 
-  // Map the blobs back to their respective file paths
-  return Object.fromEntries(paths.map((path, index) => [path, blobs[index]]));
+  // Map the blobs back by their own paths rather than by position: GitLab leaves a path that isn’t
+  // on the branch out of the response, e.g. a file deleted by a push made during the load, which
+  // would otherwise give every later file the content of the one after it
+  return Object.fromEntries(blobs.map((blob) => [/** @type {string} */ (blob.path), blob]));
 };
 
 /**

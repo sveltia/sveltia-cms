@@ -2836,6 +2836,20 @@ describe('Test getFieldDisplayValue()', () => {
       expect(result).toBe('2,345.67');
     });
 
+    test('should return an empty string for an empty number field', () => {
+      // An empty Int/Float field is stored as `null`, a String-typed one as an empty string, and
+      // an optional field can be missing altogether
+      [{ intNumber: null, floatNumber: null }, { intNumber: '', floatNumber: '' }, {}].forEach(
+        (valueMap) => {
+          ['intNumber', 'floatNumber'].forEach((keyPath) => {
+            expect(
+              getFieldDisplayValue({ collectionName: 'posts', valueMap, keyPath, locale: 'en' }),
+            ).toBe('');
+          });
+        },
+      );
+    });
+
     test('should handle zero values for number fields', () => {
       const valueMap = {
         intNumber: 0,

@@ -82,18 +82,28 @@ export const sendRequest = async (
   /** @type {any} */
   let result;
 
-  try {
-    if (ok && responseType === 'blob') {
-      return response.blob();
-    }
+  if (ok) {
+    try {
+      if (responseType === 'blob') {
+        return await response.blob();
+      }
 
-    if (ok && responseType === 'text') {
-      return response.text();
-    }
+      if (responseType === 'text') {
+        return await response.text();
+      }
 
-    result = await response.json();
-  } catch (ex) {
-    throw new Error('Failed to parse the response', { cause: ex });
+      result = await response.json();
+    } catch (ex) {
+      throw new Error('Failed to parse the response', { cause: ex });
+    }
+  } else {
+    try {
+      result = await response.json();
+    } catch {
+      // An error response doesn’t always come with a JSON body, e.g. a gateway’s HTML error page,
+      // but its status still decides whether to retry, refresh the token or report the error
+      result = undefined;
+    }
   }
 
   // Return the parsed result for a successful response, but a GraphQL error is typically returned

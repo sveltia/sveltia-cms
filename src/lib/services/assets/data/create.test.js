@@ -38,6 +38,7 @@ vi.mock('$lib/services/integrations/media-libraries/default', () => ({
 }));
 
 vi.mock('$lib/services/utils/file', () => ({
+  createPath: vi.fn((/** @type {string[]} */ segments) => segments.filter(Boolean).join('/')),
   formatFileName: vi.fn((fileName) => fileName),
 }));
 
@@ -89,6 +90,7 @@ vi.mock('$lib/services/config', () => ({
 }));
 
 vi.mock('$lib/services/utils/file', () => ({
+  createPath: vi.fn((/** @type {string[]} */ segments) => segments.filter(Boolean).join('/')),
   formatFileName: vi.fn((fileName) => fileName),
 }));
 
@@ -164,6 +166,25 @@ describe('assets/data/create', () => {
 
       expect(getAssetsByDirName).toHaveBeenCalledWith('images/2024/summer');
       expect(result[0].path).toBe('images/2024/summer/test.jpg');
+    });
+
+    it('should save the files to a root media folder without a leading slash', async () => {
+      const { getAssetsByDirName } = await import('$lib/services/assets');
+      const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+
+      const result = createFileList({
+        files: [mockFile],
+        folder: {
+          internalPath: '',
+          collectionName: undefined,
+          publicPath: '/',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      });
+
+      expect(getAssetsByDirName).toHaveBeenCalledWith('');
+      expect(result[0].path).toBe('test.jpg');
     });
 
     it('should call getAssetsByDirName when folder has internalPath', async () => {
@@ -589,7 +610,7 @@ describe('assets/data/create', () => {
       const result = createFileList(uploadingAssets);
 
       expect(result).toHaveLength(1);
-      // When internalPath is undefined, join creates a path starting with /
+      // When internalPath is undefined, there’s no directory to save the file to
       expect(result[0].action).toBe('create');
       expect(result[0].name).toBe('test.jpg');
       expect(result[0].file).toBe(mockFile);

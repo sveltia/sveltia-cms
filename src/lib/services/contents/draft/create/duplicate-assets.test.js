@@ -275,6 +275,46 @@ describe('copyEntryRelativeAssets()', () => {
     );
   });
 
+  test('replaces only the image source whose name is contained in another', async () => {
+    currentValues = {
+      en: {
+        body: [
+          '![Hero](hero-image.png)',
+          '![Plain](image.png)',
+          'See image.png for details.',
+          '![Plain again](image.png "image.png")',
+        ].join('\n\n'),
+      },
+    };
+
+    // `image.png` is copied before `hero-image.png`, which contains its name
+    mockGetAssetBlob.mockImplementation(async (/** @type {Asset} */ { name }) => {
+      if (name === 'hero-image.png') {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 10);
+        });
+      }
+
+      return new Blob([name], { type: 'image/png' });
+    });
+
+    const files = await copyEntryRelativeAssets({ draft, currentValues });
+    const blobURLs = Object.keys(files);
+    const heroBlobURL = blobURLs.find((url) => files[url].file.name === 'hero-image.png');
+    const plainBlobURL = blobURLs.find((url) => files[url].file.name === 'image.png');
+
+    expect(blobURLs).toHaveLength(2);
+    expect(currentValues.en.body).toBe(
+      [
+        `![Hero](${heroBlobURL})`,
+        `![Plain](${plainBlobURL})`,
+        // Text outside an image is left alone
+        'See image.png for details.',
+        `![Plain again](${plainBlobURL} "image.png")`,
+      ].join('\n\n'),
+    );
+  });
+
   test('copies a file referenced from a File field', async () => {
     currentValues = { en: { attachment: 'doc.pdf' } };
 

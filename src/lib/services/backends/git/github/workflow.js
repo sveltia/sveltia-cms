@@ -33,6 +33,43 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  */
 
 /**
+ * Get the fields to read from a pull request node, as {@link toPullRequest} expects them.
+ * @returns {string} Field selection on the `PullRequest` type.
+ */
+const getPullRequestFields = () => `
+  id
+  number
+  title
+  url
+  isDraft
+  isCrossRepository
+  createdAt
+  updatedAt
+  headRefName
+  headRefOid
+  author {
+    login
+    avatarUrl
+    ... on User {
+      name
+      email
+      databaseId
+    }
+  }
+  labels(first: ${MAX_ITEMS.labels}) {
+    nodes {
+      name
+    }
+  }
+  files(first: ${MAX_ITEMS.files}) {
+    nodes {
+      path
+      changeType
+    }
+  }
+`;
+
+/**
  * Build the query to fetch the open pull requests along with their labels and changed file paths.
  * The status labels are matched by the API rather than by {@link parsePullRequest}, so the item cap
  * applies to the CMS’s own pull requests instead of the repository’s most recently updated ones,
@@ -51,41 +88,36 @@ const getFetchPullRequestsQuery = () => `
         orderBy: { field: UPDATED_AT, direction: DESC }
       ) {
         nodes {
-          id
-          number
-          title
-          url
-          isDraft
-          isCrossRepository
-          createdAt
-          updatedAt
-          headRefName
-          headRefOid
-          author {
-            login
-            avatarUrl
-            ... on User {
-              name
-              email
-              databaseId
-            }
-          }
-          labels(first: ${MAX_ITEMS.labels}) {
-            nodes {
-              name
-            }
-          }
-          files(first: ${MAX_ITEMS.files}) {
-            nodes {
-              path
-              changeType
-            }
-          }
+          ${getPullRequestFields()}
         }
       }
     }
   }
 `;
+
+/**
+ * Convert a pull request node returned by the GraphQL API to a workflow pull request.
+ * @param {Record<string, any>} node Pull request node.
+ * @param {WorkflowStatus} status Status of the pull request.
+ * @returns {WorkflowPullRequest} Pull request.
+ */
+const toPullRequest = (node, status) => {
+  const { login, name, email, databaseId } = node.author ?? {};
+
+  return {
+    number: node.number,
+    nodeId: node.id,
+    title: node.title,
+    url: node.url,
+    branch: node.headRefName,
+    headSHA: node.headRefOid,
+    status,
+    createdDate: new Date(node.createdAt),
+    updatedDate: new Date(node.updatedAt),
+    author: login ? { name: name ?? login, email: email ?? '', id: databaseId, login } : undefined,
+    files: parseFileNodes(node.files?.nodes ?? []),
+  };
+};
 
 /**
  * Parse a pull request node returned by the GraphQL API.
@@ -107,21 +139,7 @@ export const parsePullRequest = (node) => {
     return undefined;
   }
 
-  const { login, name, email, databaseId } = node.author ?? {};
-
-  return {
-    number: node.number,
-    nodeId: node.id,
-    title: node.title,
-    url: node.url,
-    branch: node.headRefName,
-    headSHA: node.headRefOid,
-    status,
-    createdDate: new Date(node.createdAt),
-    updatedDate: new Date(node.updatedAt),
-    author: login ? { name: name ?? login, email: email ?? '', id: databaseId, login } : undefined,
-    files: parseFileNodes(node.files?.nodes ?? []),
-  };
+  return toPullRequest(node, status);
 };
 
 /**
@@ -197,31 +215,64 @@ const CREATE_REF_MUTATION = `
   }
 `;
 
-const FETCH_OPEN_PULL_REQUEST_COUNT_QUERY = `
+/**
+ * Build the query to fetch the open pull requests from a branch of the given name. Pull requests
+ * from forks can use the same branch name, e.g. Open Authoring contributors editing the same entry,
+ * so fetch as many as allowed, or theirs could crowd out the one from this repository.
+ * @returns {string} GraphQL query.
+ */
+const getFetchOpenPullRequestsQuery = () => `
   query($owner: String!, $repo: String!, $branch: String!) {
     repository(owner: $owner, name: $repo) {
-      pullRequests(headRefName: $branch, states: OPEN, first: 1) {
-        totalCount
+      pullRequests(headRefName: $branch, states: OPEN, first: ${MAX_ITEMS.pullRequests}) {
+        nodes {
+          ${getPullRequestFields()}
+        }
       }
     }
   }
 `;
 
 /**
- * Check whether the given branch has an open pull request. This is asked about a branch the CMS
- * doesn’t know a pull request for, so a positive answer means the pull request is one the load
- * skipped: it has lost its status label, or it sits beyond the number of pull requests fetched.
- * @param {string} branch Branch name.
- * @returns {Promise<boolean>} `true` if a pull request is open from the branch.
+ * An open pull request found for a branch the CMS doesn’t know a pull request for.
+ * @typedef {object} OpenPullRequest
+ * @property {WorkflowPullRequest} pullRequest Pull request. Its status is read from the status
+ * label, or from the draft state when the label is gone.
+ * @property {boolean} labelled Whether the pull request carries a status label.
  */
-const hasOpenPullRequest = async (branch) => {
+
+/**
+ * Fetch the open pull request from the given branch, if any. This is asked about a branch the CMS
+ * doesn’t know a pull request for, so a pull request found is one the load skipped: it has lost its
+ * status label, or it sits beyond the number of pull requests fetched.
+ * @param {string} branch Branch name.
+ * @returns {Promise<OpenPullRequest | undefined>} Pull request, or `undefined` if none is open from
+ * the branch.
+ */
+const fetchOpenPullRequest = async (branch) => {
   const { owner, repo } = repository;
 
   const { repository: result } = /** @type {{ repository: Record<string, any> }} */ (
-    await fetchGraphQL(FETCH_OPEN_PULL_REQUEST_COUNT_QUERY, { owner, repo, branch })
+    await fetchGraphQL(getFetchOpenPullRequestsQuery(), { owner, repo, branch })
   );
 
-  return !!result?.pullRequests?.totalCount;
+  // A pull request from a fork can have a head branch of the same name, but it isn’t this branch
+  const node = (result?.pullRequests?.nodes ?? []).find(
+    (/** @type {Record<string, any>} */ { isCrossRepository }) => !isCrossRepository,
+  );
+
+  if (!node) {
+    return undefined;
+  }
+
+  const labelledStatus = getStatusFromLabels(
+    (node.labels?.nodes ?? []).map((/** @type {any} */ l) => l.name),
+  );
+
+  return {
+    pullRequest: toPullRequest(node, labelledStatus ?? (node.isDraft ? 'draft' : 'pending_review')),
+    labelled: !!labelledStatus,
+  };
 };
 
 /**
@@ -246,9 +297,10 @@ const resetBranch = async (branch, sha) => {
  * responds with HTTP 200, so the expected “already exists” case doesn’t show up in the browser
  * console as a failed request.
  * @param {string} branch Branch name.
- * @returns {Promise<string | undefined>} Git object ID the branch points at, or `undefined` if the
- * branch already existed and was kept as it was, in which case its head is unknown and has to be
- * looked up.
+ * @returns {Promise<{ headOid?: string, openPullRequest?: OpenPullRequest }>} Git object ID the
+ * branch points at, which is missing if the branch already existed and was kept as it was, in which
+ * case its head is unknown and has to be looked up. Along with it, the pull request open from the
+ * branch, if that’s why the branch was kept.
  * @see https://docs.github.com/en/graphql/reference/mutations#createref
  */
 export const createBranch = async (branch) => {
@@ -304,52 +356,22 @@ export const createBranch = async (branch) => {
     // committed onto rather than wiped, the way it was before. With Open Authoring a draft is a
     // branch without a pull request, so there’s no telling a leftover from a live one; the branch
     // is kept, and it shows up as a draft the next time the fork is listed
-    if (!openAuthoring.current && !(await hasOpenPullRequest(branch))) {
-      await resetBranch(branch, sha);
-
-      return sha;
+    if (openAuthoring.current) {
+      return {};
     }
 
-    return undefined;
+    const openPullRequest = await fetchOpenPullRequest(branch);
+
+    if (openPullRequest) {
+      return { openPullRequest };
+    }
+
+    await resetBranch(branch, sha);
+
+    return { headOid: sha };
   }
 
-  return sha;
-};
-
-/**
- * Commit the given changes on the workflow branch, creating the branch and the pull request if they
- * don’t exist yet.
- * @param {WorkflowSaveOptions} args Arguments.
- * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
- * and the new or updated pull request.
- */
-export const savePullRequest = async ({ changes, options, branch, title, status, pullRequest }) => {
-  const headOid = pullRequest ? undefined : await createBranch(branch);
-  const commit = await commitChanges(changes, { ...options, branch, headOid });
-
-  if (pullRequest) {
-    return { commit, pullRequest };
-  }
-
-  // With Open Authoring a draft is nothing but a branch in the contributor’s fork. The pull request
-  // is opened when they hand the entry over for review, so maintainers aren’t notified about work
-  // that isn’t ready for them. A removal has no review stages to move through, so its pull request
-  // is opened right away like it is in the regular flow
-  if (openAuthoring.current && status === 'draft') {
-    return {
-      commit,
-      pullRequest: {
-        title,
-        branch,
-        status,
-        createdDate: /** @type {Date} */ (commit.date),
-        updatedDate: /** @type {Date} */ (commit.date),
-        files: [],
-      },
-    };
-  }
-
-  return { commit, pullRequest: await createPullRequest({ branch, title, status }) };
+  return { headOid: sha };
 };
 
 /**
@@ -375,6 +397,55 @@ export const updateStatus = async (pullRequest, status) => {
   }
 
   return { ...pullRequest, status, updatedDate: new Date() };
+};
+
+/**
+ * Commit the given changes on the workflow branch, creating the branch and the pull request if they
+ * don’t exist yet.
+ * @param {WorkflowSaveOptions} args Arguments.
+ * @returns {Promise<{ commit: CommitResults, pullRequest: WorkflowPullRequest }>} Commit results
+ * and the new or updated pull request.
+ */
+export const savePullRequest = async ({ changes, options, branch, title, status, pullRequest }) => {
+  const { headOid, openPullRequest } = pullRequest ? {} : await createBranch(branch);
+  const commit = await commitChanges(changes, { ...options, branch, headOid });
+
+  if (pullRequest) {
+    return { commit, pullRequest };
+  }
+
+  // The branch already has a pull request the load skipped, and GitHub refuses to open another one
+  // from the same branch, so the commit goes into that one. A pull request that still carries its
+  // status label keeps its status, like a known one does. One that has lost it is given the status
+  // asked for, which also puts it back on the board
+  if (openPullRequest) {
+    return {
+      commit,
+      pullRequest: openPullRequest.labelled
+        ? openPullRequest.pullRequest
+        : await updateStatus(openPullRequest.pullRequest, status),
+    };
+  }
+
+  // With Open Authoring a draft is nothing but a branch in the contributor’s fork. The pull request
+  // is opened when they hand the entry over for review, so maintainers aren’t notified about work
+  // that isn’t ready for them. A removal has no review stages to move through, so its pull request
+  // is opened right away like it is in the regular flow
+  if (openAuthoring.current && status === 'draft') {
+    return {
+      commit,
+      pullRequest: {
+        title,
+        branch,
+        status,
+        createdDate: /** @type {Date} */ (commit.date),
+        updatedDate: /** @type {Date} */ (commit.date),
+        files: [],
+      },
+    };
+  }
+
+  return { commit, pullRequest: await createPullRequest({ branch, title, status }) };
 };
 
 /**

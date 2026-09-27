@@ -1,5 +1,5 @@
 // cspell:disable-next-line
-const FULL_REGEX_PATTERN = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuy]*))?$/;
+const FULL_REGEX_PATTERN = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuvy]*))?$/;
 /**
  * Regular expression to match the `g` (global) and `y` (sticky) flags.
  */

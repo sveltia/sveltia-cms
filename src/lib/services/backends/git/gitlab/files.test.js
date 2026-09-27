@@ -293,6 +293,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 100 }, (_, i) => ({
+                path: `file${i}.md`,
                 rawTextBlob: `content${i}`,
               })),
             },
@@ -305,6 +306,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 100 }, (_, i) => ({
+                path: `file${i + 100}.md`,
                 rawTextBlob: `content${i + 100}`,
               })),
             },
@@ -317,6 +319,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 50 }, (_, i) => ({
+                path: `file${i + 200}.md`,
                 rawTextBlob: `content${i + 200}`,
               })),
             },
@@ -339,8 +342,8 @@ describe('GitLab files service', () => {
       expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(100);
       expect(vi.mocked(fetchGraphQL).mock.calls[2][1]).toBeDefined();
       expect(vi.mocked(fetchGraphQL).mock.calls[2][1]?.paths).toHaveLength(50);
-      expect(result['file0.md']).toEqual({ rawTextBlob: 'content0' });
-      expect(result['file249.md']).toEqual({ rawTextBlob: 'content249' });
+      expect(result['file0.md']).toEqual({ path: 'file0.md', rawTextBlob: 'content0' });
+      expect(result['file249.md']).toEqual({ path: 'file249.md', rawTextBlob: 'content249' });
     });
 
     test('fetches blobs in batches of 20 for self-hosted instances', async () => {
@@ -354,6 +357,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 20 }, (_, i) => ({
+                path: `file${i}.md`,
                 rawTextBlob: `content${i}`,
               })),
             },
@@ -366,6 +370,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 20 }, (_, i) => ({
+                path: `file${i + 20}.md`,
                 rawTextBlob: `content${i + 20}`,
               })),
             },
@@ -378,6 +383,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 10 }, (_, i) => ({
+                path: `file${i + 40}.md`,
                 rawTextBlob: `content${i + 40}`,
               })),
             },
@@ -400,8 +406,8 @@ describe('GitLab files service', () => {
       expect(vi.mocked(fetchGraphQL).mock.calls[1][1]?.paths).toHaveLength(20);
       expect(vi.mocked(fetchGraphQL).mock.calls[2][1]).toBeDefined();
       expect(vi.mocked(fetchGraphQL).mock.calls[2][1]?.paths).toHaveLength(10);
-      expect(result['file0.md']).toEqual({ rawTextBlob: 'content0' });
-      expect(result['file49.md']).toEqual({ rawTextBlob: 'content49' });
+      expect(result['file0.md']).toEqual({ path: 'file0.md', rawTextBlob: 'content0' });
+      expect(result['file49.md']).toEqual({ path: 'file49.md', rawTextBlob: 'content49' });
     });
 
     test('fetches all paths in single batch when under 100 and returns Record', async () => {
@@ -415,6 +421,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 30 }, (_, i) => ({
+                path: `file${i}.md`,
                 rawTextBlob: `content${i}`,
               })),
             },
@@ -430,8 +437,32 @@ describe('GitLab files service', () => {
       expect(Object.keys(result)).toHaveLength(30);
       expect(vi.mocked(fetchGraphQL).mock.calls[0][1]).toBeDefined();
       expect(vi.mocked(fetchGraphQL).mock.calls[0][1]?.paths).toHaveLength(30);
-      expect(result['file0.md']).toEqual({ rawTextBlob: 'content0' });
-      expect(result['file29.md']).toEqual({ rawTextBlob: 'content29' });
+      expect(result['file0.md']).toEqual({ path: 'file0.md', rawTextBlob: 'content0' });
+      expect(result['file29.md']).toEqual({ path: 'file29.md', rawTextBlob: 'content29' });
+    });
+    test('maps the blobs by path, so a path the API skips doesn’t shift the others', async () => {
+      vi.mocked(repository).isSelfHosted = false;
+
+      // `b.md` was deleted by a push made while the files were being loaded, so GitLab leaves it
+      // out of the response rather than returning an empty node in its place
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        project: {
+          repository: {
+            blobs: {
+              nodes: [
+                { path: 'a.md', rawTextBlob: 'A' },
+                { path: 'c.md', rawTextBlob: 'C' },
+              ],
+            },
+          },
+        },
+      });
+
+      const result = await fetchBlobs(['a.md', 'b.md', 'c.md'], 'query { test }');
+
+      expect(result['a.md']?.rawTextBlob).toBe('A');
+      expect(result['b.md']).toBeUndefined();
+      expect(result['c.md']?.rawTextBlob).toBe('C');
     });
   });
 
@@ -445,7 +476,7 @@ describe('GitLab files service', () => {
         project: {
           repository: {
             blobs: {
-              nodes: [{ rawTextBlob: 'file content' }],
+              nodes: [{ path: 'file1.md', rawTextBlob: 'file content' }],
             },
           },
         },
@@ -463,6 +494,8 @@ describe('GitLab files service', () => {
         expect.stringContaining('query($fullPath: ID!, $branch: String!, $paths: [String!]!)'),
         { paths: ['file1.md'] },
       );
+      // The path is what the blobs are matched to the files by
+      expect(vi.mocked(fetchGraphQL).mock.calls[0][0]).toMatch(/nodes \{\s*path\s/);
       expect(result).toBeDefined();
       expect(result['file1.md']).toBeDefined();
       expect(result['file1.md'].text).toBe('file content');
@@ -500,6 +533,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 100 }, (_, i) => ({
+                path: `file${i}.md`,
                 rawTextBlob: `content${i}`,
               })),
             },
@@ -512,6 +546,7 @@ describe('GitLab files service', () => {
           repository: {
             blobs: {
               nodes: Array.from({ length: 50 }, (_, i) => ({
+                path: `file${i + 100}.md`,
                 rawTextBlob: `content${i + 100}`,
               })),
             },
@@ -558,7 +593,10 @@ describe('GitLab files service', () => {
         project: {
           repository: {
             blobs: {
-              nodes: [{ rawTextBlob: 'content1' }, { rawTextBlob: 'content2' }],
+              nodes: [
+                { path: 'file1.md', rawTextBlob: 'content1' },
+                { path: 'file2.md', rawTextBlob: 'content2' },
+              ],
             },
           },
         },

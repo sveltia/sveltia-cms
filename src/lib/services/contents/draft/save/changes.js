@@ -396,10 +396,12 @@ export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }
   }
 
   if (!isNew && originalLocales[locale]) {
+    // Delete the file where it is now. The path built for the disabled locale follows the new slug
+    // and folder, so it points elsewhere once the entry is renamed or moved in the same save
     return {
       action: 'delete',
-      slug,
-      path,
+      slug: originalEntry?.locales[locale]?.slug ?? slug,
+      path: /** @type {string} */ (previousPath),
       previousSha,
     };
   }

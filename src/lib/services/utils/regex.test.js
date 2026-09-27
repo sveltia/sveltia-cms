@@ -113,6 +113,16 @@ describe('Test getRegex()', () => {
     expect(result?.flags).toBe('dimsu');
   });
 
+  test('handles the unicodeSets (`v`) flag', () => {
+    const result = getRegex('/^\\p{Lu}/v');
+
+    expect(result).toBeInstanceOf(RegExp);
+    expect(result?.source).toBe('^\\p{Lu}');
+    expect(result?.flags).toBe('v');
+    expect(result?.test('Émile')).toBe(true);
+    expect(result?.test('émile')).toBe(false);
+  });
+
   // A global or sticky regex advances `lastIndex` on every `test()` call, so reusing it across a
   // list of values would match only some of them
   test('matches every value when the same regex is reused', () => {

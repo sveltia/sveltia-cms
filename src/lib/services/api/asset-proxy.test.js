@@ -169,6 +169,39 @@ describe('AssetProxy', () => {
       // Reset mock
       vi.mocked(assetsInfo.getAssetBlobURL).mockResolvedValueOnce('blob:https://example.com/12345');
     });
+
+    it('should keep the existing URL rather than reject when the blob cannot be retrieved', async () => {
+      const unhandled = vi.fn();
+
+      process.on('unhandledRejection', unhandled);
+
+      try {
+        // Drop any one-time value left queued by a previous test
+        vi.mocked(assetsInfo.getAssetBlobURL).mockReset();
+        vi.mocked(assetsInfo.getAssetBlobURL).mockRejectedValueOnce(
+          new Error('Failed to retrieve blob from file handle'),
+        );
+
+        /** @type {any} */
+        const mockAsset = {
+          name: 'test-image.jpg',
+          sha: 'abc123',
+          size: 1024,
+          kind: 'image',
+          folder: { collectionName: undefined, internalPath: 'assets', publicPath: '/assets' },
+        };
+
+        const proxy = new AssetProxy(mockAsset);
+
+        // eslint-disable-next-line no-promise-executor-return
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        expect(proxy.url).toBe('/assets/test-image.jpg');
+        expect(unhandled).not.toHaveBeenCalled();
+      } finally {
+        process.off('unhandledRejection', unhandled);
+      }
+    });
   });
 
   describe('toBase64()', () => {

@@ -104,6 +104,28 @@ describe('Gitea Instance Service', () => {
       await expect(checkInstanceVersion()).rejects.toThrow('Unsupported Forgejo version');
     });
 
+    test.each([
+      // Forgejo moved to its own major versions at 7.0; it reports them with a Gitea suffix
+      '7.0.14+gitea-1.21.11',
+      '9.1.0+gitea-1.22.0',
+      '10.0.3+gitea-1.22.0',
+      // Some installations leave the suffix out
+      '10.0.0',
+      '8.0.0',
+    ])('should reject older Forgejo version %s as Forgejo', async (version) => {
+      fetchAPIMock.mockResolvedValue({ version });
+
+      await expect(checkInstanceVersion()).rejects.toThrow('Unsupported Forgejo version');
+      expect(instance.isForgejo).toBe(true);
+    });
+
+    test('should detect a Gitea development build as Gitea', async () => {
+      fetchAPIMock.mockResolvedValue({ version: '1.27.0+dev-954-g1f3981a301' });
+
+      await expect(checkInstanceVersion()).resolves.toBeUndefined();
+      expect(instance.isForgejo).toBe(false);
+    });
+
     test('should handle edge case version numbers', async () => {
       const mockVersionResponse = {
         version: '1.24.0',

@@ -24,8 +24,12 @@ export class AssetProxy {
     this.fileObj = asset.file;
 
     (async () => {
-      // Replace the URL with the blob URL if available, otherwise keep the existing URL
-      this.url = (await getAssetBlobURL(asset)) ?? this.url;
+      try {
+        // Replace the URL with the blob URL if available, otherwise keep the existing URL
+        this.url = (await getAssetBlobURL(asset)) ?? this.url;
+      } catch {
+        // The blob can’t be retrieved, e.g. offline or the file is gone; keep the existing URL
+      }
     })();
   }
 

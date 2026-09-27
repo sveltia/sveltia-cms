@@ -494,16 +494,15 @@ This is the body content of the post.
     const _file = { format: 'json-frontmatter', extension: '.md', fmDelimiters: ['{', '}'] };
     const result = formatFrontMatter({ content, _file });
 
+    // The outer braces of the object double as the delimiters, like Netlify/Decap CMS
     expect(result).toBe(
       `{
-{
   "title": "My Post",
   "published": true,
   "tags": [
     "test",
     "vitest"
   ]
-}
 }
 
 This is the body content of the post.
@@ -788,8 +787,7 @@ describe('Test formatEntryFile()', () => {
 
     const result = await formatEntryFile({ content, _file });
 
-    expect(result).toContain('{');
-    expect(result).toContain('"title": "Test Post"');
+    expect(result).toBe('{\n  "title": "Test Post"\n}\n\nThis is the body content.\n');
     expect(result).toContain('This is the body content.');
   });
 

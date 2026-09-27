@@ -44,6 +44,7 @@ const {
   _entryListSettings,
   _currentView,
   _unpublishedEntries,
+  _viewBeforeReorder,
 } = await vi.hoisted(async () => {
   const { createRawState } = await import('$lib/services/utils/state.svelte');
 
@@ -66,6 +67,8 @@ const {
     _currentView: createRawState({ type: 'list' }),
     /** @type {{ current: any[] }} */
     _unpublishedEntries: createRawState([]),
+    /** @type {{ current: any }} */
+    _viewBeforeReorder: { current: undefined },
   };
 });
 
@@ -138,6 +141,7 @@ vi.mock('$lib/services/contents/collection/view/settings', () => ({
   currentView: _currentView,
   entryListSettings: _entryListSettings,
   initSettings: vi.fn(),
+  viewBeforeReorder: _viewBeforeReorder,
 }));
 
 // Only the store is mocked; `swapUnpublishedEntries` is a pure helper and is used as is
@@ -1772,6 +1776,23 @@ describe('collection/view/index', () => {
     // The snapshot is discarded first, so the previous collection’s view isn’t restored
     expect(currentView.current).not.toBe(view);
     expect(currentView.current.group).toBeNull();
+    expect(_viewBeforeReorder.current).toBeUndefined();
+  });
+
+  test('entering reorder mode shares the view snapshot with the collection name', () => {
+    const view = { type: /** @type {const} */ ('list'), sort: { key: 'title' } };
+
+    _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+    currentView.current = view;
+    setReorderMode(true);
+
+    // The settings save this view in place of the reorder view until the mode is exited
+    expect(_viewBeforeReorder.current).toEqual({ collectionName: 'posts', view });
+
+    setReorderMode(false);
+
+    expect(_viewBeforeReorder.current).toBeUndefined();
+    expect(currentView.current).toBe(view);
   });
 
   describe('time-based view', () => {

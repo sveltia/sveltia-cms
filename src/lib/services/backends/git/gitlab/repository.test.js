@@ -79,11 +79,27 @@ describe('GitLab repository service', () => {
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/projects/test-owner%2Ftest-repo/users?search=test-user',
+        '/projects/test-owner%2Ftest-repo/users?search=test-user&per_page=100',
         expect.objectContaining({
           headers: { Accept: 'application/json' },
           responseType: 'raw',
         }),
+      );
+    });
+
+    test('encodes the login in the search query', async () => {
+      Object.assign(repository, { owner: 'test-owner', repo: 'test-repo' });
+      Object.assign(mockUserAccount, { login: 'a+b&c' });
+
+      vi.mocked(fetchAPI).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue([{ id: 123 }]),
+      });
+
+      await expect(checkRepositoryAccess()).resolves.toBeUndefined();
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/test-owner%2Ftest-repo/users?search=a%2Bb%26c&per_page=100',
+        expect.anything(),
       );
     });
 
@@ -137,7 +153,7 @@ describe('GitLab repository service', () => {
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/projects/test-owner%2Ftest-repo/service_accounts',
+        '/projects/test-owner%2Ftest-repo/service_accounts?per_page=100',
         expect.objectContaining({
           headers: { Accept: 'application/json' },
           responseType: 'raw',

@@ -1,5 +1,5 @@
 import { sortItemsByKey } from '$lib/services/common/view';
-import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
@@ -128,15 +128,12 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
   // `sortItemsByKey()` computes the key once per entry, so there’s no need for a lookup table here
   sortItemsByKey(_entries, getSortKey, !dateFieldConfig && type === String, order);
 
-  const indexFileName = getIndexFile(collection)?.name;
+  // Index file should always be at the top. It’s told by its path rather than by its slug, because
+  // another collection’s index file within this collection’s folder carries the same slug
+  const index = _entries.findIndex((entry) => isCollectionIndexFile(collection, entry));
 
-  // Index file should always be at the top
-  if (indexFileName) {
-    const index = _entries.findIndex((entry) => entry.slug === indexFileName);
-
-    if (index > -1) {
-      _entries.unshift(_entries.splice(index, 1)[0]);
-    }
+  if (index > -1) {
+    _entries.unshift(_entries.splice(index, 1)[0]);
   }
 
   return _entries;

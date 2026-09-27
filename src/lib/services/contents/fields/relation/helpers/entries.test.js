@@ -101,6 +101,45 @@ describe('Test processEntry()', async () => {
       expect(result[0].value).toBe('john-doe');
       expect(result[0].searchValue).toBe('John Doe john@example.com');
     });
+
+    test('should not throw when the entry has no content in the default locale', () => {
+      // A multi-file i18n entry can exist in a non-default locale only
+      /** @type {Entry} */
+      const entry = {
+        id: 'author-1',
+        slug: 'jean',
+        subPath: 'jean',
+        locales: {
+          fr: { slug: 'jean', path: 'authors/fr/jean.md', content: { name: '' } },
+        },
+      };
+
+      const result = processEntry({
+        refEntry: entry,
+        content: { name: '' },
+        // @ts-ignore - Simplified mock collection for testing
+        collection: { _type: 'entry', name: 'authors' },
+        templates: {
+          _displayField: '{{name}}',
+          _valueField: '{{slug}}',
+          _searchField: '{{name}}',
+          allFieldNames: ['name', 'slug'],
+          hasListFields: false,
+        },
+        allFieldNames: ['name', 'slug'],
+        hasListFields: false,
+        collectionName: 'authors',
+        fileName: undefined,
+        locale: 'fr',
+        identifierField: 'title',
+        defaultLocale: 'en',
+      });
+
+      expect(result).toEqual([{ label: 'jean', value: 'jean', searchValue: 'jean' }]);
+      expect(getFieldDisplayValue).toHaveBeenCalledWith(
+        expect.objectContaining({ keyPath: 'name', locale: 'en', valueMap: {} }),
+      );
+    });
   });
 
   describe('Fallback section (lines 656-673) - when processListFields returns hasProcessedListFields=false', () => {

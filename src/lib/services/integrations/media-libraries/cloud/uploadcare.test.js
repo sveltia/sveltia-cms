@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config/state';
+import { formatFileName } from '$lib/services/utils/file';
 
 import uploadcareService, {
   deleteFiles,
@@ -1367,6 +1368,7 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
     });
 
     afterEach(() => {
+      vi.mocked(formatFileName).mockImplementation((name) => name);
       // Restore original crypto
       Object.defineProperty(globalThis, 'crypto', {
         value: originalCrypto,
@@ -1515,6 +1517,56 @@ describe('integrations/media-libraries/cloud/uploadcare', () => {
         fileName: 'unknown.bin',
         kind: 'other',
       });
+    });
+
+    it('should match a file whose name was changed by the formatting', async () => {
+      // A macOS file name is often in the decomposed (NFD) form, which the formatting normalizes
+      const originalName = 'cafe\u0301.jpg';
+      const formattedName = originalName.normalize();
+      const mockFile = new File(['image content'], originalName, { type: 'image/jpeg' });
+
+      vi.mocked(formatFileName).mockImplementationOnce((name) => name.normalize());
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ [formattedName]: 'nfc-uuid' }),
+        }),
+      );
+
+      const result = await upload([mockFile], { apiKey: mockSecretKey });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        id: 'nfc-uuid',
+        fileName: formattedName,
+        size: mockFile.size,
+        kind: 'image',
+        previewURL: 'https://ucarecdn.com/nfc-uuid/-/preview/400x400/',
+      });
+    });
+
+    it('should give files with the same name distinct form field names', async () => {
+      const mockFile1 = new File(['content 1'], 'photo.jpg', { type: 'image/jpeg' });
+      const mockFile2 = new File(['content 22'], 'photo.jpg', { type: 'image/png' });
+
+      vi.mocked(formatFileName).mockImplementation((name, { assetNamesInSameFolder = [] } = {}) =>
+        assetNamesInSameFolder.includes(name) ? name.replace('.', '-1.') : name,
+      );
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ 'photo.jpg': 'uuid-1', 'photo-1.jpg': 'uuid-2' }),
+        }),
+      );
+
+      const result = await upload([mockFile1, mockFile2], { apiKey: mockSecretKey });
+      const formData = /** @type {FormData} */ (vi.mocked(fetch).mock.calls[0]?.[1]?.body);
+
+      expect(formData.get('photo.jpg')).toBeInstanceOf(File);
+      expect(formData.get('photo-1.jpg')).toBeInstanceOf(File);
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({ id: 'uuid-1', size: mockFile1.size });
+      expect(result[1]).toMatchObject({ id: 'uuid-2', size: mockFile2.size });
     });
 
     it('should handle file size as 0 when file not found', async () => {

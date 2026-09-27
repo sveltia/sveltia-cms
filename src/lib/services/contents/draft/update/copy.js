@@ -71,6 +71,43 @@ export const getTurndownService = async () => {
 };
 
 /**
+ * Characters that have to be escaped for plain text to be read as such within HTML.
+ * @type {Record<string, string>}
+ */
+const HTML_ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
+/**
+ * Named HTML character references a translator may return, besides numeric ones.
+ * @type {Record<string, string>}
+ */
+const HTML_ENTITY_MAP = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+/**
+ * Escape plain text so that a translator taking HTML reads it as text rather than markup, e.g. a
+ * literal `<b>` or `&amp;`.
+ * @param {string} text Plain text.
+ * @returns {string} Escaped text.
+ */
+const escapeHTML = (text) => text.replace(/[&<>]/g, (char) => HTML_ESCAPE_MAP[char]);
+
+/**
+ * Decode the HTML character references in text returned by a translator taking HTML, which
+ * escapes special characters such as `&` and `"` in its output. Each reference is decoded once,
+ * so text escaped with {@link escapeHTML} comes back as it was. An unknown named reference is left
+ * as is.
+ * @param {string} text Text with character references.
+ * @returns {string} Decoded text.
+ */
+const decodeHTMLEntities = (text) =>
+  text.replace(/&(?:#(\d+)|#x([\da-f]+)|(amp|lt|gt|quot|apos));/gi, (ref, dec, hex, name) => {
+    if (name) {
+      return HTML_ENTITY_MAP[name.toLowerCase()];
+    }
+
+    const codePoint = dec ? Number(dec) : Number.parseInt(hex, 16);
+
+    return codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : ref;
+  });
+
+/**
  * Get a list of fields to be copied or translated from the source locale to the target locale.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -166,10 +203,16 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
   updateToast('info', 'translation.started', { count, sourceLanguage });
 
   try {
+    // A translator without Markdown support takes HTML, e.g. Google Translate with the `html`
+    // format and DeepL with HTML tag handling. A Markdown value is converted to HTML for it, and a
+    // plain text value is escaped, so that its special characters are read as text
     const translatedValues = await translate(
       Object.entries(copingFieldMap).map(([, { value, isMarkdown }]) =>
-        // Convert the value from Markdown to HTML if needed
-        isMarkdown && !markdownSupported ? /** @type {string} */ (parse(value)) : value,
+        markdownSupported
+          ? value
+          : isMarkdown
+            ? /** @type {string} */ (parse(value))
+            : escapeHTML(value),
       ),
       { apiKey, sourceLanguage, targetLanguage },
     );
@@ -182,10 +225,14 @@ export const translateFields = async ({ currentValues, options, copingFieldMap }
     Object.entries(copingFieldMap).forEach(([_keyPath, { isMarkdown }], index) => {
       const value = translatedValues[index];
 
-      // Convert the value back to Markdown if needed
-      currentValues[targetLanguage][_keyPath] =
-        // @ts-ignore Silence a false type error
-        isMarkdown && turndownService ? turndownService.turndown(value) : value;
+      // Convert the value back to Markdown or plain text if needed. The HTML comes back with its
+      // special characters as entities, which Turndown decodes for a Markdown value
+      currentValues[targetLanguage][_keyPath] = markdownSupported
+        ? value
+        : isMarkdown
+          ? // @ts-ignore Silence a false type error
+            /** @type {import('turndown')} */ (turndownService).turndown(value)
+          : decodeHTMLEntities(value);
     });
 
     updateToast('success', 'translation.complete', { count, sourceLanguage });

@@ -515,7 +515,14 @@ export const getFieldDisplayValue = ({
   if (fieldConfig?.widget === 'number') {
     const { value_type: valueType = 'int' } = /** @type {NumberField} */ (fieldConfig);
 
-    if (valueType === 'int' || valueType === 'float') {
+    // An empty field, stored as `null` or an empty string, or missing, is left empty rather than
+    // formatted as `0` or `NaN`
+    if (
+      (valueType === 'int' || valueType === 'float') &&
+      value !== null &&
+      value !== undefined &&
+      value !== ''
+    ) {
       const canonicalLocale = getCanonicalLocale(locale);
       let numberFormatter = numberFormatterCache.get(canonicalLocale);
 

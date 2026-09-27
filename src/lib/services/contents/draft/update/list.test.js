@@ -299,8 +299,26 @@ describe('draft/update/list', () => {
       expect(remainder).toEqual({ 'tags#metadata': 'should not match' });
     });
 
-    it('should reuse the cached regex when called twice with the same key path', () => {
-      // Calling getItemList twice with the same keyPath exercises the itemListRegexCache hit path.
+    it('should keep a sibling whose name starts with the list name and a non-word character', () => {
+      const obj = {
+        'tags.0': 'tag1',
+        tags: [],
+        'tags-extra': 'kept',
+        'tags-extra.0': 'kept too',
+        'tags:x': 'kept as well',
+      };
+
+      const [valueList, remainder] = getItemList(obj, 'tags');
+
+      expect(valueList).toEqual(['tag1']);
+      expect(remainder).toEqual({
+        'tags-extra': 'kept',
+        'tags-extra.0': 'kept too',
+        'tags:x': 'kept as well',
+      });
+    });
+
+    it('should return the same result when called twice with the same key path', () => {
       const obj = { 'items.0': 'a', 'items.1': 'b', other: 'x' };
       const [list1] = getItemList(obj, 'items');
       const [list2] = getItemList(obj, 'items');

@@ -229,6 +229,10 @@ describe('getPendingEntrySlugs', () => {
     /** @type {any} */ ({ collectionName: 'tags', defaultLocale: 'en' })
   );
 
+  beforeEach(() => {
+    vi.mocked(getEntriesByCollection).mockReturnValue([]);
+  });
+
   it('returns the slugs as they are when nothing pending takes them', () => {
     const slugs = {
       defaultLocaleSlug: 'svelte',
@@ -270,6 +274,26 @@ describe('getPendingEntrySlugs', () => {
       localizedSlugs: undefined,
       canonicalSlug: undefined,
     });
+  });
+
+  it('does not rename the slug to one taken by a saved entry', () => {
+    vi.mocked(getSlugs).mockReturnValue({
+      defaultLocaleSlug: 'svelte',
+      localizedSlugs: undefined,
+      canonicalSlug: undefined,
+    });
+    vi.mocked(getCanonicalSlug).mockReturnValue(undefined);
+    vi.mocked(getEntriesByCollection).mockReturnValue([
+      /** @type {Entry} */ ({ id: 'saved', slug: 'svelte-1', subPath: 'svelte-1', locales: {} }),
+    ]);
+
+    expect(
+      getPendingEntrySlugs({
+        draft,
+        parentDraft: createParentDraft({ pendingEntries: [createPending('svelte')] }),
+      }).defaultLocaleSlug,
+    ).toBe('svelte-2');
+    expect(getEntriesByCollection).toHaveBeenCalledWith('tags');
   });
 
   it('renames the localized and canonical slugs along with the default one', () => {

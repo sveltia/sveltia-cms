@@ -3,18 +3,20 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import { collectors } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { getField } from '$lib/services/contents/entry/fields';
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers';
 
 /**
  * @import {
  * CollectedRelationField,
+ * ConfigParserContext,
  * Entry,
  * FlattenedEntryContent,
  * InternalLocaleCode,
  * ResolvedRelationField,
  * } from '$lib/types/private';
- * @import { FieldKeyPath, RelationField } from '$lib/types/public';
+ * @import { FieldKeyPath, ListFieldWithSubField, RelationField } from '$lib/types/public';
  */
 
 /**
@@ -26,6 +28,57 @@ import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers'
 const isNullish = (value) => value === undefined || value === null;
 
 /**
+ * Drop the subfield names of single-subfield List fields from the given typed key path. The parser
+ * records the subfield name after the list item wildcard, e.g. `authors.*.author`, but the item
+ * value is stored directly under the item index, e.g. `authors.0`.
+ * @param {ConfigParserContext} context Field parser context.
+ * @returns {string} Typed key path in the shape of the flattened content, e.g. `authors.*`.
+ */
+const getContentTypedKeyPath = ({
+  collection,
+  collectionFile,
+  componentName,
+  isIndexFile,
+  typedKeyPath = '',
+}) => {
+  const segments = typedKeyPath.split('.');
+
+  if (!segments.includes('*')) {
+    return typedKeyPath;
+  }
+
+  const getFieldArgs = {
+    collectionName: /** @type {string} */ (collection?.name),
+    fileName: collectionFile?.name,
+    componentName,
+    isIndexFile,
+  };
+
+  /** @type {string[]} */
+  const contentSegments = [];
+
+  for (let index = 0; index < segments.length; index += 1) {
+    const segment = segments[index];
+
+    if (segment === '*' && contentSegments.length) {
+      const listField = getField({ ...getFieldArgs, keyPath: contentSegments.join('.') });
+      const { field: subField } = /** @type {ListFieldWithSubField} */ (listField ?? {});
+
+      contentSegments.push(segment);
+
+      if (listField?.widget === 'list' && subField?.name === segments[index + 1]) {
+        // Skip the subfield name
+        index += 1;
+      }
+    } else {
+      contentSegments.push(segment);
+    }
+  }
+
+  return contentSegments.join('.');
+};
+
+/**
  * Resolve the key path of a Relation field within an entry’s flattened content, from the parser
  * context recorded while the config was parsed.
  * @param {CollectedRelationField} collected Collected Relation field.
@@ -35,7 +88,7 @@ const isNullish = (value) => value === undefined || value === null;
 export const resolveRelationKeyPath = ({ fieldConfig, context }) => {
   // The `typedKeyPath` may carry type annotations like `blocks.*<image>.src`; strip them. A `*`
   // stands for a list item index and is kept, because the field then occurs once per list item
-  const keyPath = (context.typedKeyPath ?? '').replace(/<[^>]+>/g, '') || fieldConfig.name;
+  const keyPath = getContentTypedKeyPath(context).replace(/<[^>]+>/g, '') || fieldConfig.name;
 
   if (!keyPath.includes('*')) {
     return { keyPath, valuePattern: undefined };

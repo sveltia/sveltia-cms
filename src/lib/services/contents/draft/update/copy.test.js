@@ -699,5 +699,69 @@ describe('draft/update/copy', () => {
       expect(mockTurndown).toHaveBeenCalledWith('<h1>Japanese Title</h1>');
       expect(currentValues.ja.body).toBe('# Japanese Title');
     });
+
+    it('should send plain text as HTML and decode the result when the translator takes HTML', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+
+      // What an HTML-format translator such as Google or DeepL hands back: special characters as
+      // entities, including those it has added itself
+      const mockTranslate = vi
+        .fn()
+        .mockResolvedValue([
+          'Q&amp;A &lt;b&gt; &quot;x&quot; &#39;y&#39; &apos;z&apos; &#x263A; &#9731; &amp;amp; &copy; &#x110000;',
+        ]);
+
+      prefs.apiKeys = { google: 'test-api-key' };
+
+      translator.current = {
+        serviceId: 'google',
+        markdownSupported: false,
+        translate: mockTranslate,
+      };
+
+      const currentValues = { en: { title: '' }, ja: { title: '' } };
+
+      await translateFields({
+        currentValues,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja' },
+        copingFieldMap: { title: { value: 'Q&A <b> &amp; "x"', isMarkdown: false } },
+      });
+
+      // The plain text is escaped, so its `<b>` and `&amp;` are sent as text rather than markup
+      expect(mockTranslate).toHaveBeenCalledWith(
+        ['Q&amp;A &lt;b&gt; &amp;amp; "x"'],
+        expect.any(Object),
+      );
+      // Each entity is decoded exactly once; an unknown or invalid one is left as is
+      expect(currentValues.ja.title).toBe(
+        "Q&A <b> \"x\" 'y' 'z' \u263A \u2603 &amp; &copy; &#x110000;",
+      );
+    });
+
+    it('should leave plain text alone when the translator supports Markdown', async () => {
+      const { translator } = await import('$lib/services/integrations/translators');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+      const mockTranslate = vi.fn().mockResolvedValue(['Q&amp;A']);
+
+      prefs.apiKeys = { openai: 'test-api-key' };
+
+      translator.current = {
+        serviceId: 'openai',
+        markdownSupported: true,
+        translate: mockTranslate,
+      };
+
+      const currentValues = { en: { title: '' }, ja: { title: '' } };
+
+      await translateFields({
+        currentValues,
+        options: { sourceLanguage: 'en', targetLanguage: 'ja' },
+        copingFieldMap: { title: { value: 'Q&amp;A', isMarkdown: false } },
+      });
+
+      expect(mockTranslate).toHaveBeenCalledWith(['Q&amp;A'], expect.any(Object));
+      expect(currentValues.ja.title).toBe('Q&amp;A');
+    });
   });
 });

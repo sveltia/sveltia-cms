@@ -252,7 +252,7 @@ describe('GitHub Editorial Workflow service', () => {
       mockBase();
       vi.mocked(fetchGraphQL).mockResolvedValueOnce({ createRef: { ref: { name: 'x' } } });
 
-      await expect(createBranch('cms/posts/hello')).resolves.toBe('abc');
+      await expect(createBranch('cms/posts/hello')).resolves.toEqual({ headOid: 'abc' });
 
       expect(fetchGraphQL).toHaveBeenLastCalledWith(expect.stringContaining('createRef'), {
         input: {
@@ -273,25 +273,25 @@ describe('GitHub Editorial Workflow service', () => {
     });
 
     /**
-     * Mock the base query, then the open pull request count for an existing branch.
-     * @param {number} totalCount Number of open pull requests from the branch.
+     * Mock the base query, then the open pull requests from an existing branch.
+     * @param {any[]} nodes Pull request nodes.
      */
-    const mockExisting = (totalCount) => {
+    const mockExisting = (nodes) => {
       vi.mocked(fetchGraphQL)
         .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
         .mockRejectedValueOnce(alreadyExists)
-        .mockResolvedValueOnce({ repository: { pullRequests: { totalCount } } });
+        .mockResolvedValueOnce({ repository: { pullRequests: { nodes } } });
     };
 
     test('resets an existing reference that has no open pull request', async () => {
-      mockExisting(0);
+      mockExisting([]);
       vi.mocked(fetchAPI).mockResolvedValueOnce({});
 
       // The branch is left behind by an earlier pull request for the same entry — one merged
       // without deleting the branch, or closed on GitHub rather than discarded in the CMS. Starting
       // from it as it stands would carry that work into the new pull request, so it starts over
       // from the configured branch instead, and the head is known like a fresh branch’s
-      await expect(createBranch('cms/posts/hello')).resolves.toBe('abc');
+      await expect(createBranch('cms/posts/hello')).resolves.toEqual({ headOid: 'abc' });
 
       expect(fetchGraphQL).toHaveBeenLastCalledWith(expect.stringContaining('pullRequests'), {
         owner: 'owner',
@@ -308,13 +308,85 @@ describe('GitHub Editorial Workflow service', () => {
     });
 
     test('keeps an existing reference that has an open pull request', async () => {
-      mockExisting(1);
+      mockExisting([createNode()]);
 
       // The load didn’t pick the pull request up — its label is gone, or it’s beyond the number
-      // fetched — but it’s someone’s work in progress, which is committed onto rather than wiped
-      await expect(createBranch('cms/posts/hello')).resolves.toBeUndefined();
+      // fetched — but it’s someone’s work in progress, which is committed onto rather than wiped.
+      // The pull request is handed back, as GitHub won’t open another one from the branch
+      await expect(createBranch('cms/posts/hello')).resolves.toEqual({
+        openPullRequest: {
+          pullRequest: expect.objectContaining({ number: 1, nodeId: 'PR_1', status: 'draft' }),
+          labelled: true,
+        },
+      });
 
       expect(fetchAPI).not.toHaveBeenCalled();
+    });
+
+    test('reads the status of an open pull request without a label from its draft state', async () => {
+      mockExisting([createNode({ isDraft: false, labels: { nodes: [{ name: 'other' }] } })]);
+
+      await expect(createBranch('cms/posts/hello')).resolves.toEqual({
+        openPullRequest: {
+          pullRequest: expect.objectContaining({ number: 1, status: 'pending_review' }),
+          labelled: false,
+        },
+      });
+
+      mockExisting([createNode({ labels: undefined })]);
+
+      await expect(createBranch('cms/posts/hello')).resolves.toEqual({
+        openPullRequest: {
+          pullRequest: expect.objectContaining({ number: 1, status: 'draft' }),
+          labelled: false,
+        },
+      });
+    });
+
+    test('resets an existing reference whose only open pull request comes from a fork', async () => {
+      // A contributor’s fork can have a branch of the same name, but its pull request isn’t this
+      // branch’s
+      mockExisting([createNode({ isCrossRepository: true })]);
+      vi.mocked(fetchAPI).mockResolvedValueOnce({});
+
+      await expect(createBranch('cms/posts/hello')).resolves.toEqual({ headOid: 'abc' });
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/owner/repo/git/refs/heads/cms/posts/hello',
+        expect.objectContaining({ method: 'PATCH' }),
+      );
+    });
+
+    test('keeps an existing reference whose own pull request comes after ones from forks', async () => {
+      // Open Authoring contributors editing the same entry use the same branch name, so their pull
+      // requests can come first; the lookup has to reach past them rather than reset the branch
+      mockExisting([
+        createNode({ id: 'PR_2', number: 2, isCrossRepository: true }),
+        createNode({ id: 'PR_3', number: 3, isCrossRepository: true }),
+        createNode(),
+      ]);
+
+      await expect(createBranch('cms/posts/hello')).resolves.toEqual({
+        openPullRequest: {
+          pullRequest: expect.objectContaining({ number: 1 }),
+          labelled: true,
+        },
+      });
+
+      expect(fetchGraphQL).toHaveBeenLastCalledWith(
+        expect.stringContaining('first: 100'),
+        expect.anything(),
+      );
+      expect(fetchAPI).not.toHaveBeenCalled();
+    });
+
+    test('resets an existing reference when the repository can’t be read back', async () => {
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
+        .mockRejectedValueOnce(alreadyExists)
+        .mockResolvedValueOnce({ repository: null });
+      vi.mocked(fetchAPI).mockResolvedValueOnce({});
+
+      await expect(createBranch('cms/posts/hello')).resolves.toEqual({ headOid: 'abc' });
     });
 
     test('keeps an existing reference with Open Authoring', async () => {
@@ -323,7 +395,7 @@ describe('GitHub Editorial Workflow service', () => {
       vi.mocked(fetchGraphQL).mockRejectedValueOnce(alreadyExists);
 
       // A draft is a branch without a pull request, so a leftover can’t be told from a live one
-      await expect(createBranch('cms/posts/hello')).resolves.toBeUndefined();
+      await expect(createBranch('cms/posts/hello')).resolves.toEqual({});
 
       // The base query and the mutation, but no pull request lookup
       expect(fetchGraphQL).toHaveBeenCalledTimes(2);
@@ -409,10 +481,10 @@ describe('GitHub Editorial Workflow service', () => {
             cause: { status: 200, message: 'already exists' },
           }),
         )
-        .mockResolvedValueOnce({ repository: { pullRequests: { totalCount: 0 } } });
+        .mockResolvedValueOnce({ repository: { pullRequests: { nodes: [] } } });
       vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
 
-      await savePullRequest(args).catch(() => undefined);
+      await savePullRequest(args);
 
       // A branch left by an interrupted save, or by a pull request closed outside the CMS, is
       // reset to the base head, so the commit knows where it goes without looking the head up
@@ -427,15 +499,57 @@ describe('GitHub Editorial Workflow service', () => {
             cause: { status: 200, message: 'already exists' },
           }),
         )
-        .mockResolvedValueOnce({ repository: { pullRequests: { totalCount: 1 } } });
+        .mockResolvedValueOnce({ repository: { pullRequests: { nodes: [createNode()] } } });
       vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
 
-      await savePullRequest(args).catch(() => undefined);
+      const result = await savePullRequest({ ...args, status: 'draft' });
 
       expect(commitChanges).toHaveBeenCalledWith(
         [],
         expect.objectContaining({ headOid: undefined }),
       );
+
+      // GitHub refuses to open a second pull request from the same branch, so the commit goes into
+      // the one that’s open, which keeps its status
+      expect(fetchAPI).not.toHaveBeenCalled();
+      expect(result.pullRequest).toEqual(
+        expect.objectContaining({ number: 1, nodeId: 'PR_1', status: 'draft' }),
+      );
+    });
+
+    test('puts an open pull request that has lost its label back on the board', async () => {
+      vi.mocked(fetchGraphQL)
+        .mockResolvedValueOnce({ fork: { id: 'R_1' }, base: { ref: { target: { oid: 'abc' } } } })
+        .mockRejectedValueOnce(
+          new Error('Server responded with an error', {
+            cause: { status: 200, message: 'already exists' },
+          }),
+        )
+        .mockResolvedValueOnce({
+          repository: {
+            pullRequests: {
+              nodes: [createNode({ isDraft: false, labels: { nodes: [{ name: 'other' }] } })],
+            },
+          },
+        });
+      vi.mocked(commitChanges).mockResolvedValue({ sha: 'def', files: {} });
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ labels: [{ name: 'other' }] })
+        .mockResolvedValueOnce({});
+
+      const result = await savePullRequest({ ...args, status: 'draft' });
+
+      // Labelled with the status asked for, keeping the other label, and turned into a draft
+      expect(fetchAPI).toHaveBeenLastCalledWith('/repos/owner/repo/issues/1', {
+        method: 'PATCH',
+        body: { labels: ['other', 'sveltia-cms/draft'] },
+      });
+      expect(fetchGraphQL).toHaveBeenLastCalledWith(
+        expect.stringContaining('convertPullRequestToDraft'),
+        { input: { pullRequestId: 'PR_1' } },
+      );
+      expect(fetchAPI).not.toHaveBeenCalledWith('/repos/owner/repo/pulls', expect.anything());
+      expect(result.pullRequest).toEqual(expect.objectContaining({ number: 1, status: 'draft' }));
     });
 
     test('reuses an existing pull request without creating a branch', async () => {
@@ -586,9 +700,9 @@ describe('GitHub Editorial Workflow service', () => {
           fork: { id: 'R_fork' },
           base: { ref: { target: { oid: 'upstream-head' } } },
         });
-        await expect(createBranch('cms/contributor/repo/posts/hello')).resolves.toBe(
-          'upstream-head',
-        );
+        await expect(createBranch('cms/contributor/repo/posts/hello')).resolves.toEqual({
+          headOid: 'upstream-head',
+        });
 
         // Only the fork is named explicitly; the configured repository comes from the shared
         // GraphQL variables

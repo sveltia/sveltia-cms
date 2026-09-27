@@ -478,7 +478,7 @@ describe('GitLab Editorial Workflow service', () => {
       expect(fetchAPI).toHaveBeenNthCalledWith(
         1,
         `/projects/${PROJECT_ID}/merge_requests` +
-          '?state=opened&source_branch=cms%2Fposts%2Fhello&per_page=1',
+          '?state=opened&source_branch=cms%2Fposts%2Fhello&per_page=100',
       );
       expect(fetchAPI).toHaveBeenNthCalledWith(
         2,
@@ -494,18 +494,19 @@ describe('GitLab Editorial Workflow service', () => {
       expect(result.pullRequest.number).toBe(5);
     });
 
+    /** The merge request open from the branch, which the load skipped. */
+    const openItem = createItem({ iid: 7, source_project_id: 1, target_project_id: 1 });
+
     test('commits onto the branch when it has an open merge request the load missed', async () => {
       vi.mocked(commitChanges)
         .mockRejectedValueOnce(branchExists)
         .mockResolvedValueOnce({ sha: 'def', files: {} });
-      vi.mocked(fetchAPI)
-        .mockResolvedValueOnce([{ iid: 7 }])
-        .mockResolvedValueOnce(createdMergeRequest);
+      vi.mocked(fetchAPI).mockResolvedValueOnce([openItem]);
 
-      await savePullRequest(args);
+      const result = await savePullRequest({ ...args, status: 'draft' });
 
-      // The merge request has lost its label, or sits beyond the number fetched, but it’s
-      // someone’s work in progress, which is committed onto rather than wiped
+      // The merge request sits beyond the number fetched, but it’s someone’s work in progress,
+      // which is committed onto rather than wiped
       expect(fetchAPI).not.toHaveBeenCalledWith(expect.anything(), {
         method: 'DELETE',
         responseType: 'raw',
@@ -514,6 +515,55 @@ describe('GitLab Editorial Workflow service', () => {
         commitType: 'create',
         branch: 'cms/posts/hello',
       });
+
+      // GitLab refuses to open a second merge request from the same branch, so the commit goes
+      // into the one that’s open, which keeps its status
+      expect(fetchAPI).toHaveBeenCalledTimes(1);
+      expect(result.pullRequest).toEqual(
+        expect.objectContaining({ number: 7, title: 'Create Post “hello”', status: 'draft' }),
+      );
+    });
+
+    test('puts an open merge request that has lost its label back on the board', async () => {
+      vi.mocked(commitChanges)
+        .mockRejectedValueOnce(branchExists)
+        .mockResolvedValueOnce({ sha: 'def', files: {} });
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce([{ ...openItem, title: 'Create Post “hello”', labels: ['bug'] }])
+        .mockResolvedValueOnce({});
+
+      const result = await savePullRequest({ ...args, status: 'draft' });
+
+      // Labelled and marked as a draft again, rather than opened a second time
+      expect(fetchAPI).toHaveBeenCalledTimes(2);
+      expect(fetchAPI).toHaveBeenLastCalledWith(`/projects/${PROJECT_ID}/merge_requests/7`, {
+        method: 'PUT',
+        body: expect.objectContaining({
+          title: 'Draft: Create Post “hello”',
+          add_labels: 'sveltia-cms/draft',
+        }),
+      });
+      expect(result.pullRequest).toEqual(expect.objectContaining({ number: 7, status: 'draft' }));
+    });
+
+    test('starts over when the only open merge request comes from a fork', async () => {
+      vi.mocked(commitChanges)
+        .mockRejectedValueOnce(branchExists)
+        .mockResolvedValueOnce({ sha: 'def', files: {} });
+      vi.mocked(fetchAPI)
+        // A fork can have a branch of the same name, but its merge request isn’t this branch’s
+        .mockResolvedValueOnce([{ ...openItem, source_project_id: 2 }])
+        .mockResolvedValueOnce(new Response())
+        .mockResolvedValueOnce(createdMergeRequest);
+
+      const result = await savePullRequest(args);
+
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
+        { method: 'DELETE', responseType: 'raw' },
+      );
+      expect(result.pullRequest.number).toBe(5);
     });
 
     test('rethrows a commit failure that isn’t about the branch existing', async () => {

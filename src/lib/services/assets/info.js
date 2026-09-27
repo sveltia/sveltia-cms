@@ -368,6 +368,65 @@ export const revokeAssetBlobURLIfNeeded = ({ blobURL }) => {
 };
 
 /**
+ * Convert the path of an asset stored in a folder with template tags, like
+ * `/assets/images/{{slug}}`, to its public path. Each tag in the internal path captures the text it
+ * stands for, which then fills the same tag in the public path. A tag can share a path segment with
+ * literal text, as in `post-{{slug}}`, and appear more than once.
+ * @param {object} args Arguments.
+ * @param {string} args.path Asset path, e.g. `static/images/post-hello/photo.jpg`.
+ * @param {string} args.internalPath Folder’s internal path, e.g. `static/images/post-{{slug}}`.
+ * @param {string} args.publicPath Folder’s public path, e.g. `/images/post-{{slug}}`.
+ * @returns {string} Public path, e.g. `/images/post-hello/photo.jpg`.
+ */
+const replaceTemplatePath = ({ path, internalPath, publicPath }) => {
+  /**
+   * Capture group names by tag. A tag, like `{{slug | upper}}`, isn’t always a valid group name.
+   * @type {Map<string, string>}
+   */
+  const groupNames = new Map();
+
+  const regex = createPathRegEx(internalPath, (segment) => {
+    const pattern = segment
+      .split(TEMPLATE_TAG_REGEX)
+      .map((part, index) => {
+        // The odd parts are the tag names captured by the split
+        if (index % 2 === 0) {
+          return escapeRegExp(part);
+        }
+
+        const tag = part.trim();
+        const groupName = groupNames.get(tag);
+
+        if (groupName) {
+          // The same text again
+          return `\\k<${groupName}>`;
+        }
+
+        const newGroupName = `tag${groupNames.size}`;
+
+        groupNames.set(tag, newGroupName);
+
+        return `(?<${newGroupName}>[^/]+?)`;
+      })
+      .join('');
+
+    // A tag at the end of the segment takes everything up to the next slash
+    return `${pattern}(?=\\/|$)`;
+  });
+
+  return path.replace(regex, (...args) => {
+    /** @type {Record<string, string>} */
+    const groups = args.at(-1);
+
+    return publicPath.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, (tag, name) => {
+      const groupName = groupNames.get(name.trim());
+
+      return groupName ? groups[groupName] : tag;
+    });
+  });
+};
+
+/**
  * Get the public URL for the given asset.
  * @param {Asset} asset Asset file, such as an image.
  * @param {object} [options] Options.
@@ -431,20 +490,15 @@ export const getAssetPublicURL = (
   const { _baseURL: baseURL = '', output: { encode_file_path: encodingEnabled = false } = {} } =
     /** @type {InternalCmsConfig} */ (cmsConfig.current);
 
-  let path = hasTemplateTags
-    ? asset.path.replace(
-        // Deal with template tags like `/assets/images/{{slug}}`
-        createPathRegEx(asset.folder.internalPath ?? '', (segment) => {
-          const tag = segment.match(TEMPLATE_TAG_REGEX)?.[1];
+  const internalPath = asset.folder.internalPath ?? '';
+  const publicBasePath = publicPath === '/' ? '' : (publicPath ?? '');
 
-          return tag ? `(?<${tag}>[^/]+)` : escapeRegExp(segment);
-        }),
-        publicPath?.replaceAll(TEMPLATE_TAG_REPLACE_REGEX, '$<$1>') ?? '',
-      )
-    : asset.path.replace(
-        asset.folder.internalPath ?? '',
-        publicPath === '/' ? '' : (publicPath ?? ''),
-      );
+  let path = hasTemplateTags
+    ? replaceTemplatePath({ path: asset.path, internalPath, publicPath: publicBasePath })
+    : internalPath
+      ? asset.path.replace(internalPath, publicBasePath)
+      : // An asset in a root media folder has no folder path to swap for the public path
+        `${publicBasePath}/${asset.path}`;
 
   if (encodingEnabled) {
     path = encodeFilePath(path);

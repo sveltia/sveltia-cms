@@ -91,14 +91,16 @@ export const callEventHooks = async ({
 
   const { slug, locales } = entry;
   const otherLocales = Object.keys(locales).filter((locale) => locale !== defaultLocale);
-  // A multi-file i18n entry can be missing its default locale file, in which case any locale
-  // stands in rather than the destructuring throwing
-  const { content, path } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {};
   const associatedAssets = getAssociatedAssets({ entry, collectionName, fileName });
 
   // We need to use a for loop here to call handlers sequentially
   // eslint-disable-next-line no-restricted-syntax
   for (const hook of hooks) {
+    // Read the content on every iteration, so a hook sees the changes made by the previous ones. A
+    // multi-file i18n entry can be missing its default locale file, in which case any locale stands
+    // in rather than the destructuring throwing
+    const { content, path } = locales[defaultLocale] ?? Object.values(locales)[0] ?? {};
+
     // eslint-disable-next-line no-await-in-loop
     const updatedMap = await hook.handler({
       author: { login, name },

@@ -225,21 +225,36 @@ describe('Gitea Files Service', () => {
     test('should handle files without content', async () => {
       // @ts-ignore - Type compatibility in test
       const fetchingFiles = [
-        { path: 'file1.md', sha: 'abc123', size: 0, type: 'entry', name: 'file1.md' },
+        { path: 'file1.md', sha: 'abc123', size: undefined, type: 'entry', name: 'file1.md' },
       ];
 
       const results = { 'file1.md': null };
       // @ts-ignore - Type compatibility in test
       const result = await parseFileContents(fetchingFiles, results);
 
+      // Neither text nor metadata, so the file isn’t cached as fetched and is requested again
       expect(result).toEqual({
         'file1.md': {
           sha: 'abc123',
           size: 0,
-          text: '',
-          meta: {},
+          text: undefined,
+          meta: undefined,
         },
       });
+    });
+
+    test('should keep the empty content of an empty file', async () => {
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'file1.md', sha: 'abc123', size: 0, type: 'entry', name: 'file1.md' },
+      ];
+
+      const result = await parseFileContents(fetchingFiles, {
+        'file1.md': { path: 'file1.md', content: '', encoding: 'base64' },
+      });
+
+      expect(result).toEqual({ 'file1.md': { sha: 'abc123', size: 0, text: '', meta: {} } });
     });
 
     test('should handle files with non-base64 encoding', async () => {
@@ -287,7 +302,7 @@ describe('Gitea Files Service', () => {
       });
     });
 
-    test('should leave a file that the API didn’t return empty', async () => {
+    test('should leave a file that the API didn’t return to be fetched again', async () => {
       /** @type {BaseFileListItem[]} */
       const fetchingFiles = [
         // @ts-ignore - Type compatibility in test
@@ -296,9 +311,23 @@ describe('Gitea Files Service', () => {
 
       const result = await parseFileContents(fetchingFiles, {});
 
+      // An empty text with metadata would be cached as the file’s content for good, and the entry
+      // would lose its content the next time it’s saved
       expect(result).toEqual({
-        'file1.md': { sha: 'abc123', size: 100, text: '', meta: {} },
+        'file1.md': { sha: 'abc123', size: 100, text: undefined, meta: undefined },
       });
+    });
+
+    test('should mark an asset, whose content is never requested, as fetched', async () => {
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'img.png', sha: 'abc123', size: 100, type: 'asset', name: 'img.png' },
+      ];
+
+      const result = await parseFileContents(fetchingFiles, {});
+
+      expect(result).toEqual({ 'img.png': { sha: 'abc123', size: 100, text: '', meta: {} } });
     });
   });
 
@@ -527,8 +556,32 @@ describe('Gitea Files Service', () => {
       );
 
       expect(result['content/small.md'].text).toBe('Content of small.md');
-      expect(result['content/large.md'].text).toBe('Complete content of large.md');
+      expect(result['content/large.md']).toEqual({
+        sha: 'sha2',
+        size: 2000,
+        text: 'Complete content of large.md',
+        meta: {},
+      });
       expect(progressValues).toContain(100);
+    });
+
+    test('should encode the path of an oversized blob segment by segment', async () => {
+      /** @type {BaseFileListItem[]} */
+      const fetchingFiles = [
+        // @ts-ignore - Type compatibility in test
+        { path: 'content/c#/a?b.md', sha: 'sha1', size: 2000, type: 'entry', name: 'a?b.md' },
+      ];
+
+      vi.mocked(fetchAPI).mockImplementation(async (path) =>
+        path === '/settings/api' ? { default_max_blob_size: 1000 } : 'Content',
+      );
+
+      await fetchFileContents(fetchingFiles);
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/raw/content/c%23/a%3Fb.md?ref=main',
+        { responseType: 'text' },
+      );
     });
 
     test('should keep a batch within the item limit the instance reports', async () => {
@@ -729,7 +782,30 @@ describe('Gitea Files Service', () => {
       await fetchBlob(mockAsset);
 
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/repos/test-owner/test-repo/media/main/images/photo%20with%20spaces%20&%20symbols.jpg',
+        '/repos/test-owner/test-repo/media/main/images/photo%20with%20spaces%20%26%20symbols.jpg',
+        { responseType: 'blob' },
+      );
+    });
+
+    test('should encode characters that would otherwise end the path', async () => {
+      /** @type {Asset} */
+      const mockAsset = {
+        path: 'images/photo #1?.jpg',
+        sha: 'abc123',
+        size: 1024,
+        name: 'photo #1?.jpg',
+        kind: 'image',
+        // @ts-ignore - Type compatibility in test
+        folder: 'images',
+      };
+
+      vi.mocked(fetchAPI).mockResolvedValue(new Blob([]));
+
+      await fetchBlob(mockAsset);
+
+      // Left as is, `#` would start a fragment and `?` a query, cutting the path short
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/media/main/images/photo%20%231%3F.jpg',
         { responseType: 'blob' },
       );
     });

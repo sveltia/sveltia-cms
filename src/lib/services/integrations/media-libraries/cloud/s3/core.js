@@ -48,6 +48,20 @@ import { parseXml, toArray } from '$lib/services/utils/xml';
  */
 
 /**
+ * Percent-encode a string as RFC 3986 requires. Unlike `encodeURIComponent()`, the characters
+ * `!'()*` are encoded as well, because Signature Version 4 requires every character other than the
+ * unreserved ones to be encoded in the canonical URI and query string.
+ * @param {string} str String to encode.
+ * @returns {string} Encoded string.
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+ */
+const encodeRfc3986 = (str) =>
+  encodeURIComponent(str).replace(
+    /[!'()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+
+/**
  * Generate AWS Signature Version 4.
  * @param {object} params Parameters.
  * @param {string} params.method HTTP method.
@@ -81,7 +95,7 @@ export const generateAwsSignature = async ({
 
   const canonicalQueryString = [...urlObj.searchParams.entries()]
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .map(([k, v]) => `${encodeRfc3986(k)}=${encodeRfc3986(v)}`)
     .join('&');
 
   const canonicalHeaders = Object.entries(headers)
@@ -190,11 +204,11 @@ export const signedRequest = async ({
  */
 export const buildObjectUrl = ({ bucket, key, endpoint, region, forcePathStyle, publicUrl }) => {
   if (publicUrl) {
-    return `${publicUrl}/${key}`;
+    return `${publicUrl.replace(/\/+$/, '')}/${key}`;
   }
 
   if (endpoint) {
-    return `${endpoint}/${bucket}/${key}`;
+    return `${endpoint.replace(/\/+$/, '')}/${bucket}/${key}`;
   }
 
   if (forcePathStyle) {
@@ -235,13 +249,7 @@ export const isS3ObjectUrl = (config, url) => {
  * @returns {string} Encoded key.
  * @see https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
  */
-export const encodeKey = (key) =>
-  encodeKeyPath(key, (part) =>
-    encodeURIComponent(part).replace(
-      /[!'()*]/g,
-      (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
-    ),
-  );
+export const encodeKey = (key) => encodeKeyPath(key, encodeRfc3986);
 
 /**
  * Build the API endpoint URL of an object, which is where the object is read, written and deleted.
@@ -299,7 +307,15 @@ export const parseS3Results = (objects, config) => {
     const key = obj.Key;
     const fileName = key.split('/').pop() || key;
     const displayKey = getRelativeKey(config, key);
-    const baseUrl = buildObjectUrl({ bucket, key, endpoint, region, forcePathStyle, publicUrl });
+
+    const baseUrl = buildObjectUrl({
+      bucket,
+      key: encodeKey(key),
+      endpoint,
+      region,
+      forcePathStyle,
+      publicUrl,
+    });
 
     return {
       id: key,

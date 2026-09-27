@@ -847,6 +847,41 @@ describe('draft/save/changes', () => {
       expect(result?.action).toBe('delete');
     });
 
+    it('should delete the original file of a removed locale when the entry is renamed', async () => {
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _file: { format: 'yaml-frontmatter' },
+        },
+        isNew: false,
+        originalLocales: { ja: true },
+        currentLocales: { ja: false },
+        originalEntry: {
+          locales: {
+            ja: { slug: 'old-post', path: 'posts/ja/old-post.md' },
+          },
+        },
+        collectionFile: undefined,
+      };
+
+      // A disabled locale only gets a path, built from the new slug
+      const savingEntry = { locales: { ja: { path: 'posts/ja/new-post.md' } } };
+
+      const result = await getMultiFileChange({
+        draft,
+        savingEntry,
+        cacheDB: undefined,
+        locale: 'ja',
+      });
+
+      expect(result).toEqual({
+        action: 'delete',
+        slug: 'old-post',
+        path: 'posts/ja/old-post.md',
+        previousSha: undefined,
+      });
+    });
+
     it('should return undefined for unchanged locale', async () => {
       const draft = {
         collection: {
