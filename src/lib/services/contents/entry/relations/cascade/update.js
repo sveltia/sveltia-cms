@@ -4,8 +4,7 @@ import {
   getReferencingRelationFields,
   getRelationKeyPaths,
 } from '$lib/services/contents/entry/relations';
-import { getCandidateEntries } from '$lib/services/contents/entry/relations/cascade';
-import { getOrCreate } from '$lib/services/utils/cache';
+import { collectCascadeTargets } from '$lib/services/contents/entry/relations/cascade';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -20,6 +19,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * ResolvedRelationField,
  * } from '$lib/types/private';
  * @import { RelationField } from '$lib/types/public';
+ * @import { CascadeContentUpdater } from '$lib/services/contents/entry/relations/cascade';
  */
 
 /**
@@ -120,77 +120,6 @@ export const replaceReferences = ({ content, relation, replacements }) => {
 };
 
 /**
- * Update every entry referencing the renamed entry through the given Relation field, collecting the
- * results into the shared target map so that an entry referencing the renamed entry through more
- * than one field is only written once.
- * @param {object} args Arguments.
- * @param {ResolvedRelationField} args.relation Relation field to update.
- * @param {Entry} args.originalEntry Entry as it was before the save.
- * @param {Entry} args.renamedEntry Entry from {@link createRenamedEntry}.
- * @param {Map<string, CascadeTarget>} args.targets Cascade targets, keyed by entry ID.
- */
-const collectCascadeTargets = ({ relation, originalEntry, renamedEntry, targets }) => {
-  const { fieldConfig, sourceCollection, sourceCollectionFile } = relation;
-  const { allLocales } = sourceCollectionFile?._i18n ?? sourceCollection._i18n;
-
-  // Relation values can vary by the locale of the entry holding the field, e.g. when the
-  // `value_field` template contains `{{locale}}`, so each locale gets its own map. Building them
-  // up front means a field whose values don’t depend on the entry’s identity — a `value_field`
-  // pointing at a content field, most commonly — is skipped without touching a single entry
-  /** @type {Map<InternalLocaleCode, Map<any, any>>} */
-  const replacementCache = new Map(
-    allLocales.map((locale) => [
-      locale,
-      getReplacementMap({ fieldConfig, originalEntry, renamedEntry, locale }),
-    ]),
-  );
-
-  if (![...replacementCache.values()].some(({ size }) => size > 0)) {
-    return;
-  }
-
-  getCandidateEntries({ relation, excludeIds: new Set([originalEntry.id]) }).forEach(
-    (sourceEntry) => {
-      // Pick up any update another Relation field has already made to the same entry
-      const entry = targets.get(sourceEntry.id)?.entry ?? sourceEntry;
-      /** @type {Entry['locales']} */
-      const updatedLocales = {};
-
-      Object.entries(entry.locales).forEach(([locale, localizedEntry]) => {
-        const { content } = localizedEntry;
-
-        if (!content) {
-          return;
-        }
-
-        // A locale that’s no longer configured can still exist in an entry loaded earlier
-        const replacements = getOrCreate(replacementCache, locale, () =>
-          getReplacementMap({ fieldConfig, originalEntry, renamedEntry, locale }),
-        );
-
-        if (!replacements.size) {
-          return;
-        }
-
-        const updatedContent = replaceReferences({ content, relation, replacements });
-
-        if (updatedContent) {
-          updatedLocales[locale] = { ...localizedEntry, content: updatedContent };
-        }
-      });
-
-      if (Object.keys(updatedLocales).length) {
-        targets.set(sourceEntry.id, {
-          entry: { ...entry, locales: { ...entry.locales, ...updatedLocales } },
-          collection: sourceCollection,
-          collectionFile: sourceCollectionFile,
-        });
-      }
-    },
-  );
-};
-
-/**
  * Build the file changes that keep Relation field references pointing at an entry whose slug has
  * been edited, the way a database cascades an update of a referenced key to the rows referencing
  * it. Nothing is written for an entry whose references still resolve, so a save that doesn’t rename
@@ -244,7 +173,28 @@ export const buildCascadeChanges = async ({
   const targets = new Map();
 
   relations.forEach((relation) => {
-    collectCascadeTargets({ relation, originalEntry, renamedEntry, targets });
+    const { fieldConfig } = relation;
+
+    collectCascadeTargets({
+      relation,
+      excludeIds: new Set([originalEntry.id]),
+      targets,
+      /**
+       * Get the values identifying the renamed entry that change in the given locale.
+       * @param {InternalLocaleCode} locale Locale of the entries holding the field.
+       * @returns {Map<any, any>} Map of old value to new value.
+       */
+      getLocaleValues: (locale) =>
+        getReplacementMap({ fieldConfig, originalEntry, renamedEntry, locale }),
+      /**
+       * Get the function that replaces the outdated references in an entry’s content.
+       * @returns {CascadeContentUpdater<Map<any, any>>} Content updater.
+       */
+      getContentUpdater:
+        () =>
+        ({ content, values: replacements }) =>
+          replaceReferences({ content, relation, replacements }),
+    });
   });
 
   return buildTargetChanges({ targets: [...targets.values()], cacheDB });

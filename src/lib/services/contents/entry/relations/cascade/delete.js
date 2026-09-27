@@ -14,8 +14,7 @@ import {
   getReferencingRelationFields,
   getRelationKeyPaths,
 } from '$lib/services/contents/entry/relations';
-import { getCandidateEntries } from '$lib/services/contents/entry/relations/cascade';
-import { getOrCreate } from '$lib/services/utils/cache';
+import { collectCascadeTargets } from '$lib/services/contents/entry/relations/cascade';
 import { getPublishedVersion } from '$lib/services/workflow';
 
 /**
@@ -33,6 +32,7 @@ import { getPublishedVersion } from '$lib/services/workflow';
  * ResolvedRelationField,
  * } from '$lib/types/private';
  * @import { FieldKeyPath, RelationField } from '$lib/types/public';
+ * @import { CascadeContentUpdater } from '$lib/services/contents/entry/relations/cascade';
  */
 
 /**
@@ -141,74 +141,51 @@ export const getBlockers = ({ draft, entry, relation, locale, content, fieldKeyP
  */
 const collectDeleteTargets = ({ relation, entries, deletedIds, targets, blockers }) => {
   const { fieldConfig, sourceCollection, sourceCollectionFile } = relation;
-  const { allLocales } = sourceCollectionFile?._i18n ?? sourceCollection._i18n;
 
-  // Relation values can vary by the locale of the entry holding the field, e.g. when the
-  // `value_field` template contains `{{locale}}`, so each locale gets its own set
-  /** @type {Map<InternalLocaleCode, Set<any>>} */
-  const valueCache = new Map(
-    allLocales.map((locale) => [locale, getDeletedValues({ fieldConfig, entries, locale })]),
-  );
-
-  if (![...valueCache.values()].some(({ size }) => size > 0)) {
-    return;
-  }
-
-  getCandidateEntries({ relation, excludeIds: deletedIds }).forEach((sourceEntry) => {
-    // Pick up any update another Relation field has already made to the same entry
-    const entry = targets.get(sourceEntry.id)?.entry ?? sourceEntry;
-    /** @type {Entry['locales']} */
-    const updatedLocales = {};
-
-    const draft = createSyntheticDraft({
-      collection: sourceCollection,
-      collectionFile: sourceCollectionFile,
-      isIndexFile: isCollectionIndexFile(sourceCollection, sourceEntry),
-    });
-
-    Object.entries(entry.locales).forEach(([locale, localizedEntry]) => {
-      const { content } = localizedEntry;
-
-      if (!content) {
-        return;
-      }
-
-      // A locale that’s no longer configured can still exist in an entry loaded earlier
-      const values = getOrCreate(valueCache, locale, () =>
-        getDeletedValues({ fieldConfig, entries, locale }),
-      );
-
-      if (!values.size) {
-        return;
-      }
-
-      const result = removeReferences({ content, relation, values });
-
-      if (!result) {
-        return;
-      }
-
-      updatedLocales[locale] = { ...localizedEntry, content: result.content };
-
-      blockers.push(
-        ...getBlockers({
-          draft,
-          entry: sourceEntry,
-          relation,
-          locale,
-          content: result.content,
-          fieldKeyPaths: result.fieldKeyPaths,
-        }),
-      );
-    });
-
-    if (Object.keys(updatedLocales).length) {
-      targets.set(sourceEntry.id, {
-        entry: { ...entry, locales: { ...entry.locales, ...updatedLocales } },
+  collectCascadeTargets({
+    relation,
+    excludeIds: deletedIds,
+    targets,
+    /**
+     * Get the values identifying the entries being deleted in the given locale.
+     * @param {InternalLocaleCode} locale Locale of the entries holding the field.
+     * @returns {Set<any>} Stored values.
+     */
+    getLocaleValues: (locale) => getDeletedValues({ fieldConfig, entries, locale }),
+    /**
+     * Get the function that removes the references to the deleted entries from an entry’s content
+     * and notes every field the removal would leave invalid.
+     * @param {Entry} sourceEntry Entry holding the field.
+     * @returns {CascadeContentUpdater<Set<any>>} Content updater.
+     */
+    getContentUpdater: (sourceEntry) => {
+      const draft = createSyntheticDraft({
         collection: sourceCollection,
         collectionFile: sourceCollectionFile,
+        isIndexFile: isCollectionIndexFile(sourceCollection, sourceEntry),
       });
-    }
+
+      return ({ locale, content, values }) => {
+        const result = removeReferences({ content, relation, values });
+
+        if (!result) {
+          return undefined;
+        }
+
+        blockers.push(
+          ...getBlockers({
+            draft,
+            entry: sourceEntry,
+            relation,
+            locale,
+            content: result.content,
+            fieldKeyPaths: result.fieldKeyPaths,
+          }),
+        );
+
+        return result.content;
+      };
+    },
   });
 };
 

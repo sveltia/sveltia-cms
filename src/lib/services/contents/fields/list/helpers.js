@@ -1,14 +1,7 @@
-import { replaceTemplateTags } from '$lib/services/common/template';
-import { processNestedTemplates } from '$lib/services/common/template/nested';
-import { parseTransformations } from '$lib/services/common/transformations';
-import {
-  getField,
-  getFieldDisplayValue,
-  getVisibleFieldDisplayValue,
-} from '$lib/services/contents/entry/fields';
+import { formatSummary as formatObjectSummary } from '$lib/services/contents/fields/object/helpers';
 
 /**
- * @import { FlattenedEntryContent, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
+ * @import { FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
  * @import { FieldKeyPath, ListField } from '$lib/types/public';
  */
 
@@ -54,92 +47,5 @@ export const getListFieldInfo = (field) => {
  * @param {number} args.index List index.
  * @returns {string} Formatted summary.
  */
-export const formatSummary = ({
-  collectionName,
-  fileName,
-  keyPath,
-  valueMap,
-  isIndexFile = false,
-  locale,
-  summaryTemplate,
-  hasSingleSubField,
-  index,
-}) => {
-  /** @type {GetFieldArgs} */
-  const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap, isIndexFile };
-  const keyPathWithIndex = `${keyPath}.${index}`;
-
-  if (!summaryTemplate) {
-    if (hasSingleSubField) {
-      return valueMap[keyPathWithIndex];
-    }
-
-    return getVisibleFieldDisplayValue({
-      valueMap,
-      locale,
-      keyPath: keyPathWithIndex,
-      keyPathPrefix: `${keyPathWithIndex}.`,
-      getFieldArgs,
-    });
-  }
-
-  /**
-   * Get field value by tag for nested template processing.
-   * @param {string} innerTag Inner tag to process.
-   * @returns {string} Field value.
-   */
-  const getFieldValue = (innerTag) => {
-    const { value: innerFieldTag } = parseTransformations(innerTag);
-    const innerFieldName = innerFieldTag.replace(/^fields\./, '');
-    const innerKeyPath = `${keyPathWithIndex}.${innerFieldName}`;
-
-    if (hasSingleSubField) {
-      const listFieldConfig = /** @type {ListField} */ (getField({ ...getFieldArgs, keyPath }));
-
-      if (!('field' in listFieldConfig) || listFieldConfig.field.name !== innerFieldName) {
-        return '';
-      }
-    }
-
-    return getFieldDisplayValue({
-      ...getFieldArgs,
-      keyPath: hasSingleSubField ? keyPathWithIndex : innerKeyPath,
-      locale,
-    });
-  };
-
-  /**
-   * Replacer function for template tags in the summary template. It extracts the field value based
-   * on the placeholder, applies any transformations, and returns the display value to replace the
-   * tag.
-   * @param {string} _match The entire matched template tag, e.g. `{{fields.slug | upper}}`. Unused
-   * in the function but required by the `replace` method.
-   * @param {string} placeholder The content inside the template tag, e.g. `fields.slug | upper`.
-   * @returns {string} The display value to replace the template tag in the summary.
-   */
-  const replacer = (_match, placeholder) => {
-    const { value: tag, transformations: parsedTransformations } =
-      parseTransformations(placeholder);
-
-    const fieldName = tag.replace(/^fields\./, '');
-    const _keyPath = `${keyPathWithIndex}.${fieldName}`;
-
-    if (hasSingleSubField) {
-      // For single-field lists, check if the requested field name matches the actual field name
-      const listFieldConfig = /** @type {ListField} */ (getField({ ...getFieldArgs, keyPath }));
-
-      if (!('field' in listFieldConfig) || listFieldConfig.field.name !== fieldName) {
-        return '';
-      }
-    }
-
-    return getFieldDisplayValue({
-      ...getFieldArgs,
-      keyPath: hasSingleSubField ? keyPathWithIndex : _keyPath,
-      locale,
-      transformations: processNestedTemplates(parsedTransformations, getFieldValue),
-    });
-  };
-
-  return replaceTemplateTags(summaryTemplate, replacer);
-};
+export const formatSummary = ({ index, ...args }) =>
+  formatObjectSummary({ ...args, itemKeyPath: `${args.keyPath}.${index}` });

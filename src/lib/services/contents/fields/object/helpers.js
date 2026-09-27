@@ -1,63 +1,97 @@
 import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { parseTransformations } from '$lib/services/common/transformations';
 import {
+  getField,
   getFieldDisplayValue,
   getVisibleFieldDisplayValue,
 } from '$lib/services/contents/entry/fields';
 
 /**
- * @import { FlattenedEntryContent, GetFieldArgs, InternalLocaleCode } from '$lib/types/private';
- * @import { FieldKeyPath } from '$lib/types/public';
+ * @import {
+ * FlattenedEntryContent,
+ * GetFieldArgs,
+ * InternalLocaleCode,
+ * StringTransformation,
+ * } from '$lib/types/private';
+ * @import { FieldKeyPath, ListField } from '$lib/types/public';
  */
 
 /**
- * Format the summary template of an Object field.
+ * Format the summary template of an Object field, or of a List field item when `itemKeyPath` is
+ * given.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @param {FieldKeyPath} args.keyPath Field key path.
+ * @param {FieldKeyPath} [args.itemKeyPath] Key path of the value to summarize, e.g. `images.0` for
+ * the first item of a List field. Defaults to `keyPath`.
  * @param {FlattenedEntryContent} args.valueMap Entry content.
  * @param {boolean} [args.isIndexFile] Whether the corresponding entry is the collection’s special
  * index file used specifically in Hugo.
  * @param {InternalLocaleCode} args.locale Locale code.
  * @param {string} [args.summaryTemplate] Summary template, e.g. `{{fields.slug}}`.
+ * @param {boolean} [args.hasSingleSubField] Whether the field is a List field with a single `field`
+ * instead of multiple `fields`, so the item is the value itself.
  * @returns {string} Formatted summary.
  */
 export const formatSummary = ({
   collectionName,
   fileName,
   keyPath,
+  itemKeyPath = keyPath,
   valueMap,
   isIndexFile = false,
   locale,
   summaryTemplate,
+  hasSingleSubField = false,
 }) => {
   /** @type {GetFieldArgs} */
   const getFieldArgs = { collectionName, fileName, keyPath: '', valueMap, isIndexFile };
 
   if (!summaryTemplate) {
+    if (hasSingleSubField) {
+      return valueMap[itemKeyPath];
+    }
+
     return getVisibleFieldDisplayValue({
       valueMap,
       locale,
-      keyPath,
-      keyPathPrefix: `${keyPath}.`,
+      keyPath: itemKeyPath,
+      keyPathPrefix: `${itemKeyPath}.`,
       getFieldArgs,
     });
   }
 
   /**
-   * Get field value by tag for nested template processing.
-   * @param {string} innerTag Inner tag to process.
-   * @returns {string} Field value.
+   * Get the display value of the subfield a template tag refers to.
+   * @param {string} tag Template tag without transformations, e.g. `fields.slug`.
+   * @param {StringTransformation[]} [parsedTransformations] Transformations to apply, which may
+   * contain nested template tags. Omitted for a nested tag, which can’t have transformations.
+   * @returns {string} Display value.
    */
-  const getFieldValue = (innerTag) => {
-    const { value: innerFieldTag } = parseTransformations(innerTag);
+  const getDisplayValue = (tag, parsedTransformations) => {
+    const fieldName = stripFieldTagPrefix(tag);
+
+    if (hasSingleSubField) {
+      // For single-field lists, check if the requested field name matches the actual field name
+      const listFieldConfig = /** @type {ListField} */ (getField({ ...getFieldArgs, keyPath }));
+
+      if (!('field' in listFieldConfig) || listFieldConfig.field.name !== fieldName) {
+        return '';
+      }
+    }
 
     return getFieldDisplayValue({
       ...getFieldArgs,
-      keyPath: `${keyPath}.${innerFieldTag.replace(/^fields\./, '')}`,
+      keyPath: hasSingleSubField ? itemKeyPath : `${itemKeyPath}.${fieldName}`,
       locale,
+      transformations: parsedTransformations
+        ? processNestedTemplates(parsedTransformations, (innerTag) =>
+            getDisplayValue(parseTransformations(innerTag).value),
+          )
+        : undefined,
     });
   };
 
@@ -71,15 +105,9 @@ export const formatSummary = ({
    * @returns {string} The display value to replace the template tag.
    */
   const replacer = (_match, placeholder) => {
-    const { value: tag, transformations: parsedTransformations } =
-      parseTransformations(placeholder);
+    const { value: tag, transformations } = parseTransformations(placeholder);
 
-    return getFieldDisplayValue({
-      ...getFieldArgs,
-      keyPath: `${keyPath}.${tag.replace(/^fields\./, '')}`,
-      locale,
-      transformations: processNestedTemplates(parsedTransformations, getFieldValue),
-    });
+    return getDisplayValue(tag, transformations);
   };
 
   return replaceTemplateTags(summaryTemplate, replacer);
