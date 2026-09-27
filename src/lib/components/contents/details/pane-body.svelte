@@ -1,3 +1,13 @@
+<script module>
+  /**
+   * Content area the user is scrolling, with the mouse wheel or a touch. Only its scroll events
+   * are synced to the other pane: the other pane’s own scroll events come from being synced, and
+   * syncing them back would make the panes chase each other.
+   * @type {HTMLElement | undefined}
+   */
+  let scrollSource;
+</script>
+
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, EmptyState } from '@sveltia/ui';
@@ -6,6 +16,10 @@
 
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
+  import {
+    customPreviewStyleRegistry,
+    customPreviewTemplateRegistry,
+  } from '$lib/services/api/registries';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
@@ -98,8 +112,38 @@
     });
   };
 
+  /**
+   * Mark this pane as the one the user is scrolling. The wheel and touch events come before the
+   * pane is scrolled, so the sync waits for the scroll events that follow.
+   */
+  const markScrollSource = () => {
+    scrollSource = thisPaneContentArea;
+  };
+
+  /**
+   * Sync the other pane once this pane has been scrolled by the user.
+   */
+  const onScroll = () => {
+    if (scrollSource === thisPaneContentArea) {
+      syncScrollPosition();
+    }
+  };
+
+  /**
+   * Element receiving the scroll events of this pane’s content area: the area itself, or the
+   * preview iframe’s document, whose root element doesn’t get the events of its own scrolling.
+   * @type {HTMLElement | Document | undefined}
+   */
+  let scrollEventTarget;
+
   /** @type {AddEventListenerOptions} */
   const eventOptions = { capture: true, passive: true };
+  /**
+   * Options for the scroll listener, which isn’t capturing: scroll events don’t bubble, and
+   * capturing would also get those of a field scrolled within the pane, e.g. a text area.
+   * @type {AddEventListenerOptions}
+   */
+  const scrollEventOptions = { passive: true };
   /** Counter to ignore an outdated initialization once a newer one has started. */
   let initCount = 0;
 
@@ -140,11 +184,17 @@
 
     if (thisPaneContentArea) {
       // Remove previous event listeners if they exist
-      thisPaneContentArea.removeEventListener('wheel', syncScrollPosition, eventOptions);
-      thisPaneContentArea.removeEventListener('touchmove', syncScrollPosition, eventOptions);
+      thisPaneContentArea.removeEventListener('wheel', markScrollSource, eventOptions);
+      thisPaneContentArea.removeEventListener('touchstart', markScrollSource, eventOptions);
+      scrollEventTarget?.removeEventListener('scroll', onScroll, scrollEventOptions);
     }
 
-    const iframe = mode === 'preview' ? await findPreviewIframe() : null;
+    // The preview is only rendered in an iframe with a custom preview stylesheet or template. Don’t
+    // wait for one otherwise, as the other pane can’t follow this one until it’s set up
+    const iframe =
+      mode === 'preview' && (customPreviewStyleRegistry.size || customPreviewTemplateRegistry.size)
+        ? await findPreviewIframe()
+        : null;
 
     if (iframe) {
       // Wait for the content to be loaded in the iframe
@@ -163,10 +213,12 @@
     }
 
     if (thisPaneContentArea) {
+      scrollEventTarget = iframe ? thisPaneContentArea.ownerDocument : thisPaneContentArea;
       thisPaneContentArea.scrollTop = 0;
       // Add event listeners manually to use passive mode
-      thisPaneContentArea.addEventListener('wheel', syncScrollPosition, eventOptions);
-      thisPaneContentArea.addEventListener('touchmove', syncScrollPosition, eventOptions);
+      thisPaneContentArea.addEventListener('wheel', markScrollSource, eventOptions);
+      thisPaneContentArea.addEventListener('touchstart', markScrollSource, eventOptions);
+      scrollEventTarget.addEventListener('scroll', onScroll, scrollEventOptions);
     }
   };
 
@@ -178,6 +230,14 @@
     // The initialization writes `thisPaneContentArea`, which it also reads, so it’s left out of
     // the dependencies to keep the effect from running again on its own account
     untrack(() => initializeScrollSync());
+  });
+
+  // Forget this pane once it’s gone, so the module-level reference doesn’t keep the DOM of a closed
+  // editor from being garbage-collected
+  $effect(() => () => {
+    if (scrollSource === thisPaneContentArea) {
+      scrollSource = undefined;
+    }
   });
 </script>
 

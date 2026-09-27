@@ -1,7 +1,10 @@
 import { afterEach, beforeAll, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { customPreviewStyleRegistry } from '$lib/services/api/registries';
+import {
+  customPreviewStyleRegistry,
+  customPreviewTemplateRegistry,
+} from '$lib/services/api/registries';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { createRawState } from '$lib/services/utils/state.svelte';
 import { initTestConfig } from '$lib/test/config';
@@ -67,21 +70,41 @@ const createThatPane = () => {
 };
 
 /**
- * Scroll the given content area with the wheel, and wait for the next frame.
+ * Scroll the given content area, and wait for the next frame. The scroll event is fired even if
+ * the position doesn’t change, so a test can scroll to where the area already is.
  * @param {HTMLElement} area Content area.
- * @param {number} [scrollTop] Position to scroll to first.
+ * @param {object} [options] Options.
+ * @param {number} [options.scrollTop] Position to scroll to.
+ * @param {Event} [options.event] User event preceding the scroll, which makes the area the one
+ * the user is scrolling. Default: a `wheel` event.
  * @returns {Promise<void>}
  */
-const wheel = async (area, scrollTop) => {
+const scroll = async (
+  area,
+  { scrollTop, event = new WheelEvent('wheel', { bubbles: true }) } = {},
+) => {
+  area.dispatchEvent(event);
+
   if (scrollTop !== undefined) {
     area.scrollTop = scrollTop;
   }
 
-  area.dispatchEvent(new WheelEvent('wheel', { bubbles: true }));
+  // The root element of the preview iframe’s document gets no scroll events; its document does
+  (area === area.ownerDocument.documentElement ? area.ownerDocument : area).dispatchEvent(
+    new Event('scroll'),
+  );
   await new Promise((resolve) => {
     window.requestAnimationFrame(() => setTimeout(resolve, 20));
   });
 };
+
+/**
+ * Scroll the given content area with the wheel, and wait for the next frame.
+ * @param {HTMLElement} area Content area.
+ * @param {number} [scrollTop] Position to scroll to.
+ * @returns {Promise<void>}
+ */
+const wheel = (area, scrollTop) => scroll(area, { scrollTop });
 
 describe('PaneBody', () => {
   beforeAll(async () => {
@@ -98,6 +121,7 @@ describe('PaneBody', () => {
 
   afterEach(() => {
     customPreviewStyleRegistry.clear();
+    customPreviewTemplateRegistry.clear();
   });
 
   test('shows the editor for the locale', async () => {
@@ -199,6 +223,68 @@ describe('PaneBody', () => {
     } finally {
       thatPane.remove();
     }
+  });
+
+  test('syncs the position the pane has been scrolled to, after a touch', async () => {
+    entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+
+    const thatPane = createThatPane();
+    const { props } = await renderPane({ mode: 'edit', locale: 'en' });
+
+    try {
+      await expect.poll(() => props.thisPaneContentArea).toBeDefined();
+
+      const area = /** @type {HTMLElement} */ (props.thisPaneContentArea);
+
+      props.thatPaneContentArea = thatPane;
+      area.style.height = '100px';
+      area.insertAdjacentHTML('beforeend', '<div style="height: 1000px"></div>');
+
+      // The wheel event comes before the pane is scrolled, and the sync waits for the scroll, so
+      // the other pane gets the new position rather than the one before it
+      await scroll(area, {
+        scrollTop: area.scrollHeight,
+        event: new TouchEvent('touchstart', { bubbles: true }),
+      });
+      expect(thatPane.scrollTop).toBe(thatPane.scrollHeight - thatPane.clientHeight);
+    } finally {
+      thatPane.remove();
+    }
+  });
+
+  test('ignores the scrolling of a pane the user isn’t scrolling', async () => {
+    entryEditorSettings.current = { ...entryEditorSettings.current, syncScrolling: true };
+
+    const thatPane = createThatPane();
+    const { props } = await renderPane({ mode: 'edit', locale: 'en' });
+
+    try {
+      await expect.poll(() => props.thisPaneContentArea).toBeDefined();
+
+      const area = /** @type {HTMLElement} */ (props.thisPaneContentArea);
+
+      props.thatPaneContentArea = thatPane;
+      area.style.height = '100px';
+      area.insertAdjacentHTML('beforeend', '<div style="height: 1000px"></div>');
+
+      // A pane scrolled by the sync of the other pane doesn’t sync it back
+      thatPane.dispatchEvent(new WheelEvent('wheel', { bubbles: true }));
+      await scroll(area, { scrollTop: area.scrollHeight, event: new Event('focus') });
+      expect(thatPane.scrollTop).toBe(0);
+    } finally {
+      thatPane.remove();
+    }
+  });
+
+  test('listens to the preview itself when the custom template is for another collection', async () => {
+    customPreviewTemplateRegistry.set('pages', () => null);
+
+    const { props } = await renderPane({ mode: 'preview', locale: 'en' });
+
+    // The preview isn’t rendered in an iframe, which is looked for in vain for a moment
+    await expect.poll(() => props.thisPaneContentArea).toBeDefined();
+    expect(props.thisPaneContentArea?.ownerDocument).toBe(document);
+    expect(props.thisPaneContentArea?.querySelector('iframe')).toBeNull();
   });
 
   test('listens to the preview iframe when a custom stylesheet is used', async () => {
