@@ -11,6 +11,7 @@ import {
   getCollectionFilesByEntry,
   getValidCollectionFiles,
   isValidCollectionFile,
+  resolveCollectionAndFile,
 } from '$lib/services/contents/collection/files';
 
 // Mock dependencies
@@ -236,6 +237,50 @@ describe('getCollectionFile()', () => {
     const result = getCollectionFile('test-collection', 'non-existent-file');
 
     expect(result).toBeUndefined();
+  });
+});
+
+describe('resolveCollectionAndFile()', () => {
+  const collectionFile = { name: 'about', file: 'content/about.md' };
+  const fileCollection = { name: 'pages', _type: 'file', _fileMap: { about: collectionFile } };
+  const entryCollection = { name: 'posts', _type: 'entry', folder: 'content/posts' };
+
+  test('returns the collection alone when no file name is given', () => {
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (entryCollection));
+
+    expect(resolveCollectionAndFile('posts', undefined)).toEqual({
+      collection: entryCollection,
+      collectionFile: undefined,
+    });
+    expect(getCollection).toHaveBeenCalledWith('posts');
+  });
+
+  test('returns the collection and its file when a file name is given', () => {
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (fileCollection));
+
+    expect(resolveCollectionAndFile('pages', 'about')).toEqual({
+      collection: fileCollection,
+      collectionFile,
+    });
+  });
+
+  test('returns undefined for a non-existent collection', () => {
+    vi.mocked(getCollection).mockReturnValue(undefined);
+
+    expect(resolveCollectionAndFile('non-existent', undefined)).toBeUndefined();
+    expect(resolveCollectionAndFile('non-existent', 'about')).toBeUndefined();
+  });
+
+  test('returns undefined for a non-existent file', () => {
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (fileCollection));
+
+    expect(resolveCollectionAndFile('pages', 'contact')).toBeUndefined();
+  });
+
+  test('returns undefined when a file name is given for an entry collection', () => {
+    vi.mocked(getCollection).mockReturnValue(/** @type {any} */ (entryCollection));
+
+    expect(resolveCollectionAndFile('posts', 'about')).toBeUndefined();
   });
 });
 

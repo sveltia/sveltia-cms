@@ -31,10 +31,6 @@ vi.mock('$lib/services/contents/collection', () => ({
   ),
 }));
 
-vi.mock('$lib/services/contents/collection/files', () => ({
-  getCollectionFile: vi.fn(),
-}));
-
 vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
   getIndexFile: vi.fn(),
 }));
@@ -1442,19 +1438,15 @@ describe('Test prepareEntry()', () => {
   /** @type {any} */
   let getCollection;
   /** @type {any} */
-  let getCollectionFile;
-  /** @type {any} */
   let parseEntryFile;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     const collectionModule = await import('$lib/services/contents/collection');
-    const collectionFilesModule = await import('$lib/services/contents/collection/files');
     const parseModule = await import('$lib/services/contents/file/parse');
 
     getCollection = collectionModule.getCollection;
-    getCollectionFile = collectionFilesModule.getCollectionFile;
     parseEntryFile = parseModule.parseEntryFile;
   });
 
@@ -1531,7 +1523,6 @@ describe('Test prepareEntry()', () => {
         canonicalSlug: { key: undefined },
       },
     });
-    getCollectionFile.mockReturnValue(undefined);
 
     const file = /** @type {BaseEntryListItem} */ ({
       name: 'test.md',
@@ -1686,7 +1677,8 @@ describe('Test prepareEntry()', () => {
 
   test('skips when isMultiFileStructure is true but locale is undefined (line 409-410)', async () => {
     parseEntryFile.mockResolvedValue({ title: 'Test' });
-    getCollection.mockReturnValue({
+
+    const collection = {
       name: 'posts',
       fields: [],
       _file: {
@@ -1707,8 +1699,9 @@ describe('Test prepareEntry()', () => {
         },
         canonicalSlug: { key: undefined },
       },
-    });
-    getCollectionFile.mockReturnValue({
+    };
+
+    const collectionFile = {
       name: 'test',
       file: 'posts/test.md',
       fields: [],
@@ -1730,7 +1723,9 @@ describe('Test prepareEntry()', () => {
         },
         canonicalSlug: { key: undefined },
       },
-    });
+    };
+
+    getCollection.mockReturnValue({ ...collection, _fileMap: { test: collectionFile } });
 
     // File collection with multi-file i18n where filePathMap has empty string locale key
     const file = /** @type {BaseEntryListItem} */ ({
@@ -2023,8 +2018,10 @@ describe('Test prepareEntry()', () => {
       },
     };
 
-    getCollection.mockReturnValue(mockCollectionFile);
-    getCollectionFile.mockReturnValue(mockCollectionFile);
+    getCollection.mockReturnValue({
+      ...mockCollectionFile,
+      _fileMap: { members: mockCollectionFile },
+    });
 
     const file = /** @type {BaseEntryListItem} */ ({
       name: 'members.md',
@@ -2296,8 +2293,6 @@ describe('Test prepareEntries()', () => {
   /** @type {any} */
   let getCollection;
   /** @type {any} */
-  let getCollectionFile;
-  /** @type {any} */
   let parseEntryFile;
 
   beforeEach(async () => {
@@ -2305,12 +2300,10 @@ describe('Test prepareEntries()', () => {
 
     const cryptoModule = await import('@sveltia/utils/crypto');
     const collectionModule = await import('$lib/services/contents/collection');
-    const collectionFilesModule = await import('$lib/services/contents/collection/files');
     const parseModule = await import('$lib/services/contents/file/parse');
 
     generateUUID = cryptoModule.generateUUID;
     getCollection = collectionModule.getCollection;
-    getCollectionFile = collectionFilesModule.getCollectionFile;
     parseEntryFile = parseModule.parseEntryFile;
   });
 
@@ -2503,7 +2496,6 @@ describe('Test prepareEntries()', () => {
 
     // Use the mocked versions
     vi.mocked(getCollection).mockReturnValue(undefined);
-    vi.mocked(getCollectionFile).mockReturnValue(undefined);
     vi.mocked(parseEntryFile).mockResolvedValue({ title: 'Test' });
 
     // This simulates what would happen if prepareEntry created an entry but didn't set slug or

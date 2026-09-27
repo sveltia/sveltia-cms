@@ -3,9 +3,8 @@ import { isObject } from '@sveltia/utils/object';
 import { escapeRegExp } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 
-import { getCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
-import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { resolveCollectionAndFile } from '$lib/services/contents/collection/files';
 import { getNestedIndexFileName } from '$lib/services/contents/collection/nested';
 import { hasRootField } from '$lib/services/contents/entry/fields';
 import { parseEntryFile } from '$lib/services/contents/file/parse';
@@ -432,14 +431,13 @@ export const prepareEntry = async ({ file, entries, entryMap, errors }) => {
     folder: { collectionName, fileName },
   } = file;
 
-  const collection = getCollection(collectionName);
+  const resolved = resolveCollectionAndFile(collectionName, fileName);
 
-  const collectionFile =
-    collection && fileName ? getCollectionFile(collection, fileName) : undefined;
-
-  if (!collection || (fileName && !collectionFile)) {
+  if (!resolved) {
     return;
   }
+
+  const { collection, collectionFile } = resolved;
 
   const {
     fields = [],

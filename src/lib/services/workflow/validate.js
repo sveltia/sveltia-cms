@@ -1,5 +1,4 @@
-import { getCollection } from '$lib/services/contents/collection';
-import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { resolveCollectionAndFile } from '$lib/services/contents/collection/files';
 import { buildDraft } from '$lib/services/contents/draft/create';
 import { validateDraft, validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
@@ -37,14 +36,13 @@ export const validateWorkflowEntry = ({ entry, draft }) => {
   }
 
   const { collectionName, fileName } = entry.workflow;
-  const collection = getCollection(collectionName);
+  const resolved = resolveCollectionAndFile(collectionName, fileName);
 
-  const collectionFile =
-    collection && fileName ? getCollectionFile(collection, fileName) : undefined;
-
-  if (!collection || (fileName && !collectionFile)) {
+  if (!resolved) {
     return true;
   }
+
+  const { collection, collectionFile } = resolved;
 
   return validateDraft({ draft: buildDraft({ collection, collectionFile, originalEntry: entry }) })
     .valid;

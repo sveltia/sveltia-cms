@@ -1,5 +1,4 @@
-import { getCollection } from '$lib/services/contents/collection';
-import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { resolveCollectionAndFile } from '$lib/services/contents/collection/files';
 import { isAutoDuplicationEnabled } from '$lib/services/contents/draft';
 import { revalidateField } from '$lib/services/contents/draft/validate/fields';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -95,14 +94,13 @@ export const copyDefaultLocaleValue = ({
  */
 export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getValueMap }) => {
   const { collectionName, fileName, isIndexFile } = draft;
-  const collection = getCollection(collectionName);
+  const resolved = resolveCollectionAndFile(collectionName, fileName);
 
-  const collectionFile =
-    collection && fileName ? getCollectionFile(collection, fileName) : undefined;
-
-  if (!collection || (fileName && !collectionFile)) {
+  if (!resolved) {
     return undefined;
   }
+
+  const { collection, collectionFile } = resolved;
 
   const {
     defaultLocale,

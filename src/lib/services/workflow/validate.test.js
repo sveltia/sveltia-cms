@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getCollection } from '$lib/services/contents/collection';
-import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { buildDraft } from '$lib/services/contents/draft/create';
 import { validateDraft, validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
@@ -12,7 +11,6 @@ import {
 } from '$lib/services/workflow/validate';
 
 vi.mock('$lib/services/contents/collection');
-vi.mock('$lib/services/contents/collection/files');
 vi.mock('$lib/services/contents/draft/create');
 vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/fields');
@@ -103,14 +101,20 @@ describe('workflow/validate', () => {
       /** @type {any} */
       const collectionFile = { name: 'about', file: 'content/about.md' };
       /** @type {any} */
-      const fileEntry = { ...entry, workflow: { ...entry.workflow, fileName: 'about' } };
+      const fileCollection = { name: 'pages', _type: 'file', _fileMap: { about: collectionFile } };
 
-      vi.mocked(getCollectionFile).mockReturnValue(collectionFile);
+      /** @type {any} */
+      const fileEntry = {
+        ...entry,
+        workflow: { ...entry.workflow, collectionName: 'pages', fileName: 'about' },
+      };
+
+      vi.mocked(getCollection).mockReturnValue(fileCollection);
 
       expect(validateWorkflowEntry({ entry: fileEntry })).toBe(true);
 
       expect(buildDraft).toHaveBeenCalledWith({
-        collection,
+        collection: fileCollection,
         collectionFile,
         originalEntry: fileEntry,
       });
@@ -127,7 +131,9 @@ describe('workflow/validate', () => {
       /** @type {any} */
       const fileEntry = { ...entry, workflow: { ...entry.workflow, fileName: 'about' } };
 
-      vi.mocked(getCollectionFile).mockReturnValue(undefined);
+      vi.mocked(getCollection).mockReturnValue(
+        /** @type {any} */ ({ name: 'pages', _type: 'file', _fileMap: {} }),
+      );
 
       expect(validateWorkflowEntry({ entry: fileEntry })).toBe(true);
       expect(buildDraft).not.toHaveBeenCalled();

@@ -49,6 +49,31 @@ export const getCollectionFile = (collection, fileName) => {
 };
 
 /**
+ * Look up a collection and, if a file name is given, one of its files.
+ * @param {string} collectionName Collection name.
+ * @param {string | undefined} fileName File name. Given only for a file/singleton collection.
+ * @returns {{ collection: InternalCollection, collectionFile: InternalCollectionFile | undefined }
+ * | undefined} Collection and collection file, the latter `undefined` when no file name is given.
+ * `undefined` when the collection is not found, or a file name is given but the file is not found,
+ * which includes the case where the collection is an entry collection.
+ */
+export const resolveCollectionAndFile = (collectionName, fileName) => {
+  const collection = getCollection(collectionName);
+
+  if (!collection) {
+    return undefined;
+  }
+
+  const collectionFile = fileName ? getCollectionFile(collection, fileName) : undefined;
+
+  if (fileName && !collectionFile) {
+    return undefined;
+  }
+
+  return { collection, collectionFile };
+};
+
+/**
  * Get a human-readable label for a collection file. If the file has a `label` property, it is used;
  * otherwise, the `name` property is used.
  * @param {InternalCollectionFile} file Collection file.

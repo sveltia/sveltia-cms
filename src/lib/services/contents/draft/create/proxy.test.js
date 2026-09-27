@@ -4,17 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { copyDefaultLocaleValue, createProxy, getValueMapVersion } from './proxy.svelte.js';
 
-const { getCollection, getCollectionFile, getField, revalidateField, isAutoDuplicationEnabled } =
+const { resolveCollectionAndFile, getField, revalidateField, isAutoDuplicationEnabled } =
   vi.hoisted(() => ({
-    getCollection: vi.fn(),
-    getCollectionFile: vi.fn(),
+    resolveCollectionAndFile: vi.fn(),
     getField: vi.fn(),
     revalidateField: vi.fn(),
     isAutoDuplicationEnabled: vi.fn(() => true),
   }));
 
-vi.mock('$lib/services/contents/collection', () => ({ getCollection }));
-vi.mock('$lib/services/contents/collection/files', () => ({ getCollectionFile }));
+vi.mock('$lib/services/contents/collection/files', () => ({ resolveCollectionAndFile }));
 vi.mock('$lib/services/contents/draft', () => ({ isAutoDuplicationEnabled }));
 vi.mock('$lib/services/contents/entry/fields', () => ({ getField }));
 vi.mock('$lib/services/contents/draft/validate/fields', () => ({ revalidateField }));
@@ -45,11 +43,13 @@ const createDraft = ({ locales = ['en', 'ja'], fileName = undefined, values = {}
 
 describe('contents/draft/create/proxy.svelte', () => {
   beforeEach(() => {
-    getCollection.mockReturnValue({
-      name: 'posts',
-      _i18n: { defaultLocale: 'en', canonicalSlug: { key: 'translationKey' } },
+    resolveCollectionAndFile.mockReturnValue({
+      collection: {
+        name: 'posts',
+        _i18n: { defaultLocale: 'en', canonicalSlug: { key: 'translationKey' } },
+      },
+      collectionFile: undefined,
     });
-    getCollectionFile.mockReturnValue(undefined);
     getField.mockReturnValue(undefined);
     isAutoDuplicationEnabled.mockReturnValue(true);
   });
@@ -214,17 +214,21 @@ describe('contents/draft/create/proxy.svelte', () => {
 
   describe('createProxy', () => {
     it('should return undefined if collection not found', () => {
-      getCollection.mockReturnValue(undefined);
+      resolveCollectionAndFile.mockReturnValue(undefined);
 
       const draft = { collectionName: 'nonexistent', fileName: undefined, isIndexFile: false };
 
       expect(createProxy({ draft, locale: 'en', target: {} })).toBeUndefined();
+      expect(resolveCollectionAndFile).toHaveBeenCalledWith('nonexistent', undefined);
     });
 
     it('should return undefined if collection file not found when fileName is provided', () => {
+      resolveCollectionAndFile.mockReturnValue(undefined);
+
       const draft = { collectionName: 'posts', fileName: 'about', isIndexFile: false };
 
       expect(createProxy({ draft, locale: 'en', target: {} })).toBeUndefined();
+      expect(resolveCollectionAndFile).toHaveBeenCalledWith('posts', 'about');
     });
 
     it('should hold the initial values and reflect updates', () => {
@@ -358,13 +362,15 @@ describe('contents/draft/create/proxy.svelte', () => {
     });
 
     it('should use the collection file’s i18n config when available', () => {
-      getCollection.mockReturnValue({
-        name: 'pages',
-        _i18n: { defaultLocale: 'en', canonicalSlug: { key: 'id' } },
-      });
-      getCollectionFile.mockReturnValue({
-        name: 'about',
-        _i18n: { defaultLocale: 'fr', canonicalSlug: { key: 'customKey' } },
+      resolveCollectionAndFile.mockReturnValue({
+        collection: {
+          name: 'pages',
+          _i18n: { defaultLocale: 'en', canonicalSlug: { key: 'id' } },
+        },
+        collectionFile: {
+          name: 'about',
+          _i18n: { defaultLocale: 'fr', canonicalSlug: { key: 'customKey' } },
+        },
       });
       getField.mockReturnValue({ widget: 'string', i18n: 'duplicate' });
 

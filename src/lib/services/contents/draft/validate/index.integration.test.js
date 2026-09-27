@@ -48,6 +48,12 @@ vi.mock('$lib/services/contents/draft/backup', () => ({
   restoreBackupIfNeeded: vi.fn(),
 }));
 
+// Load the collection files module before anything else imports it. It imports `getCollection` from
+// the collection module, which imports it back, so if the mocked collection module loaded first,
+// the files module would bind to the original `getCollection` pulled in by `importOriginal()` and
+// `resolveCollectionAndFile()` wouldn’t find the collection mocked above.
+await import('$lib/services/contents/collection/files');
+
 const { fieldConfigCacheMap } = await import('$lib/services/contents/entry/fields');
 const { createDraft } = await import('$lib/services/contents/draft/create');
 const { EntryDraftState } = await import('$lib/services/contents/draft/state.svelte');
