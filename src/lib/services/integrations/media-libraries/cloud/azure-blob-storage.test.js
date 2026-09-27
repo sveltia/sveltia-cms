@@ -40,6 +40,8 @@ const {
 vi.mock('$lib/services/config/state', () => ({
   cmsConfig: { current: undefined },
 }));
+// Skip the waits between requests, which `shared/object-storage.test.js` covers
+vi.mock('@sveltia/utils/misc', () => ({ sleep: vi.fn() }));
 
 global.fetch = vi.fn();
 

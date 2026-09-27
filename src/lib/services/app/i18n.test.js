@@ -1,25 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Load the module graph, including the locale files globbed in development, while the file is
+// collected, so that it doesn’t count against the first test’s timeout
+import './i18n.js';
+
 // Simplified locale data used by the locale module mocks
-const mockEnData = { hello: 'Hello', world: 'World' };
-const mockJaData = { hello: 'こんにちは', world: '世界' };
+const mockEnData = vi.hoisted(() => ({ hello: 'Hello', world: 'World' }));
+const mockJaData = vi.hoisted(() => ({ hello: 'こんにちは', world: '世界' }));
 // Sveltia UI strings for the default locale, statically imported from the package in production
-const mockDefaultComponentStrings = { button: 'Button (bundled)' };
+const mockDefaultComponentStrings = vi.hoisted(() => ({ button: 'Button (bundled)' }));
 
 /** @type {Record<string, Record<string, string> | undefined>} */
-const mockComponentStrings = {
+const mockComponentStrings = vi.hoisted(() => ({
   'en-CA': { button: 'Button' },
   'en-GB': { button: 'Button (UK)' },
   'en-US': { button: 'Button (US)' },
   ja: { button: 'ボタン' },
-};
+}));
 
 // Mock all dependencies first
-const mockAddMessages = vi.fn();
-const mockInit = vi.fn();
-const mockRegister = vi.fn();
-const mockGetLocaleFromNavigator = vi.fn();
-const mockGetPathInfo = vi.fn();
+const mockAddMessages = vi.hoisted(() => vi.fn());
+const mockInit = vi.hoisted(() => vi.fn());
+const mockRegister = vi.hoisted(() => vi.fn());
+const mockGetLocaleFromNavigator = vi.hoisted(() => vi.fn());
+const mockGetPathInfo = vi.hoisted(() => vi.fn());
 
 vi.mock('$lib/locales/en-CA.yaml', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/en-GB.yaml', () => ({ default: mockEnData }));
@@ -73,7 +77,7 @@ vi.mock('@sveltia/utils/file', () => ({
   getPathInfo: mockGetPathInfo,
 }));
 
-const mockLocalStorage = { get: vi.fn(), set: vi.fn(), delete: vi.fn() };
+const mockLocalStorage = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() }));
 
 vi.mock('@sveltia/utils/storage', () => ({
   LocalStorage: mockLocalStorage,
@@ -81,7 +85,9 @@ vi.mock('@sveltia/utils/storage', () => ({
 
 // Locale matching the browser’s language settings, which lives in the preferences service so that
 // the language preference can be applied there
-const mockNavigatorLocale = { current: /** @type {string | undefined} */ (undefined) };
+const mockNavigatorLocale = vi.hoisted(() => ({
+  current: /** @type {string | undefined} */ (undefined),
+}));
 
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   navigatorLocale: mockNavigatorLocale,

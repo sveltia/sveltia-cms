@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { parseCmsConfig } from '.';
+
 /**
  * @import { ConfigParserCollectors } from '$lib/types/private';
  */
@@ -50,7 +52,7 @@ vi.mock('@sveltia/i18n', () => ({
 }));
 
 const mockGetStore = vi.fn();
-const mockIsObject = vi.fn();
+const mockIsObject = vi.hoisted(() => vi.fn());
 
 vi.mock('@sveltia/utils/object', () => ({
   isObject: mockIsObject,
@@ -85,13 +87,13 @@ vi.mock('$lib/services/config/deprecations', () => ({
   warnDeprecation: vi.fn(),
 }));
 
-const mockParseFields = vi.fn();
+const mockParseFields = vi.hoisted(() => vi.fn());
 
 vi.mock('$lib/services/config/parser/fields', () => ({
   parseFields: mockParseFields,
 }));
 
-const mockCustomComponentRegistry = new Map();
+const mockCustomComponentRegistry = vi.hoisted(() => new Map());
 
 vi.mock('$lib/services/api/registries', () => ({
   customComponentRegistry: mockCustomComponentRegistry,
@@ -133,8 +135,7 @@ describe('Config Parser', () => {
   });
 
   describe('parseCmsConfig', () => {
-    it('should parse a minimal valid config', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should parse a minimal valid config', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -156,8 +157,7 @@ describe('Config Parser', () => {
       expect(collectors.errors.size).toBe(0);
     });
 
-    it('should collect errors for an unsafe slug replacement', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should collect errors for an unsafe slug replacement', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -180,8 +180,7 @@ describe('Config Parser', () => {
       expect([...collectors.errors]).toEqual(['Unsafe replacement: /']);
     });
 
-    it('should collect errors for a site URL that is not a URL', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should collect errors for a site URL that is not a URL', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -206,8 +205,7 @@ describe('Config Parser', () => {
       expect([...collectors.errors]).toEqual(['Invalid URL in site_url: example.com']);
     });
 
-    it('should accept site URLs that are URLs, or empty', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should accept site URLs that are URLs, or empty', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -231,8 +229,7 @@ describe('Config Parser', () => {
       expect(collectors.errors.size).toBe(0);
     });
 
-    it('should collect errors for a default locale that is not listed', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should collect errors for a default locale that is not listed', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -255,8 +252,7 @@ describe('Config Parser', () => {
       expect([...collectors.errors]).toEqual(['Unknown default locale: de']);
     });
 
-    it('should parse fields for registered custom editor components', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should parse fields for registered custom editor components', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -286,8 +282,7 @@ describe('Config Parser', () => {
       );
     });
 
-    it('should collect errors for missing backend', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should collect errors for missing backend', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -307,8 +302,7 @@ describe('Config Parser', () => {
       expect(collectors.errors.size).toBeGreaterThan(0);
     });
 
-    it('should collect warnings for editorial_workflow on unsupported backends', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should collect warnings for editorial_workflow on unsupported backends', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -333,8 +327,7 @@ describe('Config Parser', () => {
       expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(true);
     });
 
-    it('should collect warnings for collection-level editorial_workflow on unsupported backends', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should collect warnings for collection-level editorial_workflow on unsupported backends', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -359,8 +352,7 @@ describe('Config Parser', () => {
       expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(true);
     });
 
-    it('should not warn about editorial_workflow when no collection uses it', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should not warn about editorial_workflow when no collection uses it', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
@@ -385,8 +377,7 @@ describe('Config Parser', () => {
       expect(warningArray.some((w) => w.includes('Editorial workflow'))).toBe(false);
     });
 
-    it('should collect errors for no collections', async () => {
-      const { parseCmsConfig } = await import('.');
+    it('should collect errors for no collections', () => {
       const collectors = createCollectors();
 
       /** @type {any} */
