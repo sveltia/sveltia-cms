@@ -297,9 +297,12 @@
     });
 
     window.requestAnimationFrame(() => {
+      const key = CSS.escape(keyPath);
+
+      // The path editor isn’t a field, so it’s marked with a validation key instead of a key path
       const targetField = document.querySelector(
         `.content-editor .pane[data-mode="edit"][data-locale="${CSS.escape(locale)}"] ` +
-          `.field[data-key-path="${CSS.escape(keyPath)}"]`,
+          `.field:is([data-key-path="${key}"], [data-validation-key="${key}"])`,
       );
 
       if (targetField) {

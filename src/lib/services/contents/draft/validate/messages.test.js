@@ -6,7 +6,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { getField } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 
-import { getFieldValidationMessages, getInvalidFields } from './messages';
+import {
+  getFieldValidationMessages,
+  getInvalidFields,
+  getPathValidationMessages,
+} from './messages';
 
 /** @type {(key: string, opts?: any) => string} */
 const t = vi.hoisted(
@@ -278,6 +282,25 @@ describe('getFieldValidationMessages', () => {
 
       expect(messages).toEqual(['validation.value_missing', 'validation.type_mismatch.email']);
     });
+  });
+});
+
+describe('getPathValidationMessages', () => {
+  it('returns nothing without an error', () => {
+    expect(getPathValidationMessages(undefined)).toEqual([]);
+    expect(getPathValidationMessages({ valid: true })).toEqual([]);
+  });
+
+  it('returns a message for each error', () => {
+    expect(getPathValidationMessages({ valid: false, patternMismatch: true })).toEqual([
+      'edit_path_error.invalid',
+    ]);
+    expect(getPathValidationMessages({ valid: false, customError: true })).toEqual([
+      'edit_path_error.recursive',
+    ]);
+    expect(
+      getPathValidationMessages({ valid: false, customError: true, duplicateError: true }),
+    ).toEqual(['edit_path_error.recursive', 'edit_path_error.duplicate']);
   });
 });
 

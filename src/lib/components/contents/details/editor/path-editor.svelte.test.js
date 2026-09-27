@@ -231,6 +231,8 @@ describe('PathEditor', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent('error The entry cannot be moved into one of its own subfolders.');
+    // The validation panel finds the editor by its validation key
+    expect(document.querySelector('.field[data-validation-key="_path"]')).not.toBeNull();
 
     draft.validities._default._path = { valid: false, duplicateError: true };
     await expect

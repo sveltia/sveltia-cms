@@ -200,4 +200,65 @@ describe('ValidationPanel', () => {
     await slugButton.click();
     expect(entryEditorSettings.current?.sidebarPanel).toBe('slug');
   });
+
+  test('lists a parent folder error in the default locale only', async () => {
+    const onSelectField = vi.fn();
+
+    const draft = createMockDraft({
+      fields,
+      i18n,
+      values: {
+        en: { title: 'Hello', body: 'long enough, yes', note: '' },
+        fr: { title: 'Bonjour', body: 'assez long, oui', note: '' },
+      },
+      // A relative segment would let the entry escape the collection folder
+      draft: { currentPath: '../x' },
+    });
+
+    // The folder is only validated in a nested collection with the path editor
+    Object.assign(/** @type {any} */ (draft.collection), {
+      nested: { depth: 3 },
+      meta: { path: { widget: 'string' } },
+    });
+
+    await renderWithDraft(ValidationPanel, { draft, props: { onSelectField } });
+
+    const panel = page.getByRole('group', { name: 'Validation' });
+
+    await panel.getByRole('button', { name: 'Validate' }).click();
+
+    const english = panel.getByRole('group').nth(0);
+    const french = panel.getByRole('group').nth(1);
+    const pathButton = english.getByRole('button', { name: /Parent Folder/ });
+
+    await expect
+      .element(pathButton)
+      .toMatchTextContent(
+        /Parent Folder.*The path cannot contain relative segments such as “\.\.”\./,
+      );
+    // The folder is chosen for the whole entry in the default locale’s pane
+    await expect.element(french.getByText('No errors found.')).toBeInTheDocument();
+    expect(french.getByRole('button').elements()).toHaveLength(0);
+
+    await pathButton.click();
+    expect(onSelectField).toHaveBeenCalledExactlyOnceWith({ locale: 'en', keyPath: '_path' });
+  });
+
+  test('reports no errors once the invalid field is gone', async () => {
+    const draft = createMockDraft({
+      collectionName: 'pages',
+      fields,
+      values: { _default: { title: '', body: 'long enough text' } },
+    });
+
+    await renderWithDraft(ValidationPanel, { draft });
+    await page.getByRole('button', { name: 'Validate' }).click();
+    await expect.element(page.getByRole('button', { name: /Title/ })).toBeVisible();
+
+    // The messages are kept until the next validation, but the field isn’t listed any more
+    delete draft.currentValues._default.title;
+
+    await expect.element(page.getByText('No errors found.')).toBeInTheDocument();
+    expect(page.getByRole('button', { name: /Title/ }).elements()).toHaveLength(0);
+  });
 });

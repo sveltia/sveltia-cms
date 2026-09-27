@@ -153,6 +153,32 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
 };
 
 /**
+ * Get the human-readable validation error messages for the folder chosen with the entry path
+ * editor, which is validated as `_path` rather than as a field, so it has no stored messages.
+ * @param {EntryValidityState | undefined} validity Validity state of the path.
+ * @returns {string[]} List of translated error message strings, one per violated constraint.
+ * @see validatePath
+ */
+export const getPathValidationMessages = (validity) => {
+  /** @type {string[]} */
+  const messages = [];
+
+  if (validity?.patternMismatch) {
+    messages.push(_('edit_path_error.invalid'));
+  }
+
+  if (validity?.customError) {
+    messages.push(_('edit_path_error.recursive'));
+  }
+
+  if (validity?.duplicateError) {
+    messages.push(_('edit_path_error.duplicate'));
+  }
+
+  return messages;
+};
+
+/**
  * Get the fields that have validation error messages in the given locale, in the order the fields
  * were validated. That includes the fields of rich text editor components, stored in
  * `extraValues`, and a multi-value field whose list itself is invalid, whose key path, e.g.

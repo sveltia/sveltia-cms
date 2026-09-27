@@ -399,6 +399,62 @@ describe('ContentDetailsOverlay', () => {
     expect(editorSecondPane.current).toBeNull();
   });
 
+  test('highlights the path editor on request', async () => {
+    // A nested collection with the path editor, and a folder to choose from
+    await initTestConfig({
+      i18n: {
+        structure: /** @type {const} */ ('multiple_folders'),
+        locales: ['en', 'fr', 'de'],
+        default_locale: 'en',
+      },
+      collections: [
+        {
+          name: 'guides',
+          label: 'Guides',
+          folder: 'content/guides',
+          i18n: true,
+          nested: { depth: 3 },
+          meta: { path: { widget: 'string', index_file: 'index' } },
+          fields,
+        },
+      ],
+    });
+    // With the `multiple_folders` structure, each locale is stored in a folder of its own
+    setEntries(
+      ['docs', 'docs/start'].map((dirPath) => {
+        const slug = `${dirPath}/index`;
+
+        return createMockEntry({
+          slug,
+          folder: 'content/guides',
+          entry: {
+            locales: Object.fromEntries(
+              ['en', 'fr', 'de'].map((locale) => [
+                locale,
+                { slug, path: `content/guides/${locale}/${slug}.md`, content: { title: dirPath } },
+              ]),
+            ),
+          },
+        });
+      }),
+    );
+
+    await renderOverlay(createDraft({ collection: getCollection('guides'), currentPath: 'docs' }));
+
+    const button = page
+      .getByRole('group', { name: 'Edit \u2068English\u2069 Content' })
+      .getByRole('button', { name: 'Parent Folder' });
+
+    await expect.element(button).toBeInTheDocument();
+
+    // The path editor isn’t a field, but the validation panel lists its error as `_path`
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'en', keyPath: '_path' } },
+      window.location.origin,
+    );
+    await expect.element(button).toHaveFocus();
+  });
+
   test('highlights the field named in the history state', async () => {
     window.history.replaceState({ highlight: { locale: 'de', keyPath: 'body' } }, '');
 

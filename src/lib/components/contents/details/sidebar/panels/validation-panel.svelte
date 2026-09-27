@@ -7,13 +7,16 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { validateEntry } from '$lib/services/contents/draft/validate';
   import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
-  import { getInvalidFields } from '$lib/services/contents/draft/validate/messages';
+  import {
+    getInvalidFields,
+    getPathValidationMessages,
+  } from '$lib/services/contents/draft/validate/messages';
   import { expandInvalidFields, highlightEditorField } from '$lib/services/contents/editor/fields';
   import { showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
-   * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
+   * @import { EntryDraft, EntryValidityState, InternalLocaleCode } from '$lib/types/private';
    */
 
   /**
@@ -42,13 +45,29 @@
   let validating = $state(false);
 
   /**
-   * List the fields that have validation errors in the given locale.
+   * List the validation errors in the given locale: the slug, the folder chosen with the path
+   * editor and the fields. The folder is entry-wide and chosen in the default locale’s pane, so
+   * its error is only listed for the default locale, even though every locale has its validity.
    * @param {InternalLocaleCode} locale Locale code.
-   * @returns {ReturnType<typeof getInvalidFields>} Invalid fields.
+   * @returns {{
+   * slugValidity: EntryValidityState | undefined,
+   * pathMessages: string[],
+   * invalidFields: ReturnType<typeof getInvalidFields>,
+   * }} Invalid slug validity, if any, path error messages and invalid fields.
    */
-  const listInvalidFields = (locale) =>
+  const listErrors = (locale) => {
     // The results are only shown while the draft is there
-    getInvalidFields({ draft: /** @type {EntryDraft} */ (entryDraft.current), locale });
+    const draft = /** @type {EntryDraft} */ (entryDraft.current);
+    const { _slug: slugValidity, _path: pathValidity } = draft.validities[locale];
+
+    return {
+      slugValidity: slugValidity?.valid === false ? slugValidity : undefined,
+      pathMessages: getPathValidationMessages(
+        locale === draft.defaultLocale ? pathValidity : undefined,
+      ),
+      invalidFields: getInvalidFields({ draft, locale }),
+    };
+  };
 
   /**
    * Validate the entry on demand, so what’s left to do can be checked without attempting a save.
@@ -92,13 +111,13 @@
   {#if hasResults}
     {#each Object.keys(validationMessages) as locale (locale)}
       {@const label = getLocaleLabel(locale)}
+      {@const { slugValidity, pathMessages, invalidFields } = listErrors(locale)}
       <section class="locale" role="group">
         {#if label}
           <h4>{label}</h4>
         {/if}
-        {#if Object.values(validities[locale]).some((v) => v.valid === false)}
-          {@const slugValidity = validities[locale]._slug}
-          {#if slugValidity?.valid === false}
+        {#if slugValidity || pathMessages.length || invalidFields.length}
+          {#if slugValidity}
             <!-- The slug is edited in the Slug panel rather than in the editor -->
             <Button
               class="ref"
@@ -113,7 +132,23 @@
               </ValidationError>
             </Button>
           {/if}
-          {#each listInvalidFields(locale) as { keyPath, label: fieldLabel, messages } (keyPath)}
+          {#if pathMessages.length}
+            <Button
+              class="ref"
+              variant="ghost"
+              onclick={() => {
+                onSelectField({ locale, keyPath: '_path' });
+              }}
+            >
+              <span class="summary">{_('entry_parent_folder')}</span>
+              {#each pathMessages as message, index (index)}
+                <ValidationError live="off">
+                  {message}
+                </ValidationError>
+              {/each}
+            </Button>
+          {/if}
+          {#each invalidFields as { keyPath, label: fieldLabel, messages } (keyPath)}
             <Button
               class="ref"
               variant="ghost"

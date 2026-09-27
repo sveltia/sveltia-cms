@@ -22,6 +22,7 @@
     getParentFolderTree,
   } from '$lib/services/contents/collection/nested/tree';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { getPathValidationMessages } from '$lib/services/contents/draft/validate/messages';
   import { createPath } from '$lib/services/utils/file';
   import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
@@ -200,21 +201,13 @@
 <!-- A collection whose entries all sit at the top level has no folder to choose and, in the
 `subfolders` mode, no way to make one, which leaves nothing for the field to do -->
 {#if entryDraft.current && config && (hasFolderChoice || canCreateFolder)}
-  <FieldEditorGroup>
+  <FieldEditorGroup data-validation-key="_path">
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{_('entry_parent_folder')}</h4>
     </header>
     {#if invalid}
       <ValidationError id="{fieldId}-error">
-        {#if validity?.patternMismatch}
-          {_('edit_path_error.invalid')}
-        {/if}
-        {#if validity?.customError}
-          {_('edit_path_error.recursive')}
-        {/if}
-        {#if validity?.duplicateError}
-          {_('edit_path_error.duplicate')}
-        {/if}
+        {getPathValidationMessages(validity).join(' ')}
       </ValidationError>
     {/if}
     <div role="none" class="field-wrapper">
