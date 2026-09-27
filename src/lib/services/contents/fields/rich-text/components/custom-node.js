@@ -247,6 +247,17 @@ export const createCustomNodeClass = (componentDef) => {
       wrapper = /** @type {HTMLElement} */ (component.getElement());
 
       window.requestAnimationFrame(() => {
+        // Lexical inserts the element as soon as it’s created, so one that’s still detached won’t
+        // ever be rendered, e.g. an element exported to copy the node to the clipboard, or a node
+        // removed right after it was created
+        const root = wrapper.isConnected ? wrapper.closest('[data-lexical-editor]') : null;
+
+        if (!root) {
+          cleanup();
+
+          return;
+        }
+
         // Focus the wrapper if the parent field is editable. This is necessary because `i18n:
         // duplicate` field is rendered as a read-only textbox in non-default locales, which may
         // steal focus from the wrapper of the default locale
@@ -258,20 +269,19 @@ export const createCustomNodeClass = (componentDef) => {
         wrapper.closest('.field')?.addEventListener('Unmount', cleanup, { once: true });
 
         // Clean up when the Lexical node is removed directly (e.g. keyboard Delete, undo) without
-        // going through onChange. Lexical has no destroyDOM() hook, so watch the DOM.
-        const { parentElement } = wrapper;
+        // going through onChange. Lexical has no destroyDOM() hook, so watch the DOM. The whole
+        // editor is watched rather than the parent element: an inline component sits in a
+        // paragraph, which can be removed along with it while its own children stay untouched.
+        // A component left mounted would keep writing its field values to the draft, where they
+        // would fail validation with no field to show the errors in
+        const observer = new MutationObserver(() => {
+          if (!wrapper.isConnected) {
+            cleanup();
+            observer.disconnect();
+          }
+        });
 
-        /* v8 ignore next */
-        if (parentElement) {
-          const observer = new MutationObserver(() => {
-            if (!wrapper.isConnected) {
-              cleanup();
-              observer.disconnect();
-            }
-          });
-
-          observer.observe(parentElement, { childList: true });
-        }
+        observer.observe(root, { childList: true, subtree: true });
       });
 
       return wrapper;

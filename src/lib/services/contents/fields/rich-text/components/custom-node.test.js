@@ -1363,6 +1363,10 @@ describe('createCustomNodeClass', () => {
             return mockParentField;
           }
 
+          if (selector === '[data-lexical-editor]') {
+            return { nodeType: 1 };
+          }
+
           return null;
         }),
         addEventListener: vi.fn(),
@@ -1413,6 +1417,10 @@ describe('createCustomNodeClass', () => {
             return mockField; // Return field for cleanup listener
           }
 
+          if (selector === '[data-lexical-editor]') {
+            return { nodeType: 1 };
+          }
+
           return null;
         }),
         addEventListener: vi.fn(),
@@ -1451,29 +1459,30 @@ describe('createCustomNodeClass', () => {
 
       vi.clearAllMocks();
 
+      const root = { nodeType: 1 };
+
+      const wrapper = {
+        closest: vi.fn((selector) => (selector === '[data-lexical-editor]' ? root : null)),
+        addEventListener: vi.fn(),
+        isConnected: true,
+        focus: vi.fn(),
+      };
+
       let capturedComponent;
 
       vi.mocked(mount).mockImplementation(() => {
-        capturedComponent = {
-          getElement: vi.fn(() => ({
-            closest: vi.fn(() => null),
-            addEventListener: vi.fn(),
-            parentElement: { nodeType: 1 },
-            isConnected: false, // already disconnected when observer fires
-            focus: vi.fn(),
-          })),
-          destroy: vi.fn(),
-        };
+        capturedComponent = { getElement: vi.fn(() => wrapper), destroy: vi.fn() };
 
         return capturedComponent;
       });
 
       let observerCallback;
+      const mockObserverInstance = { observe: vi.fn(), disconnect: vi.fn() };
 
       globalThis.MutationObserver = vi.fn(function MockMutationObserver(callback) {
         observerCallback = callback;
-        this.observe = vi.fn();
-        this.disconnect = vi.fn();
+        this.observe = mockObserverInstance.observe;
+        this.disconnect = mockObserverInstance.disconnect;
       });
 
       const CustomNode = createCustomNodeClass(mockComponentDef);
@@ -1481,11 +1490,20 @@ describe('createCustomNodeClass', () => {
 
       node.createDOM();
 
+      // The whole editor is watched, so that the removal of an inline component’s paragraph is
+      // noticed as well
+      expect(mockObserverInstance.observe).toHaveBeenCalledWith(root, {
+        childList: true,
+        subtree: true,
+      });
+      expect(unmount).not.toHaveBeenCalled();
+
       // Fire the MutationObserver callback — wrapper is not connected
-      expect(observerCallback).toBeDefined();
+      wrapper.isConnected = false;
       observerCallback();
 
       expect(unmount).toHaveBeenCalledWith(capturedComponent);
+      expect(mockObserverInstance.disconnect).toHaveBeenCalled();
     });
 
     it('should not call cleanup when the wrapper is still connected', async () => {
@@ -1495,9 +1513,10 @@ describe('createCustomNodeClass', () => {
 
       vi.mocked(mount).mockImplementation(() => ({
         getElement: vi.fn(() => ({
-          closest: vi.fn(() => null),
+          closest: vi.fn((selector) =>
+            selector === '[data-lexical-editor]' ? { nodeType: 1 } : null,
+          ),
           addEventListener: vi.fn(),
-          parentElement: { nodeType: 1 },
           isConnected: true, // still in the DOM
           focus: vi.fn(),
         })),
@@ -1524,6 +1543,41 @@ describe('createCustomNodeClass', () => {
 
       expect(unmount).not.toHaveBeenCalled();
       expect(mockObserverInstance.disconnect).not.toHaveBeenCalled();
+    });
+
+    it('should call cleanup right away when the wrapper is not in the document', async () => {
+      const { mount, unmount } = await import('svelte');
+
+      vi.clearAllMocks();
+
+      let capturedComponent;
+
+      vi.mocked(mount).mockImplementation(() => {
+        capturedComponent = {
+          getElement: vi.fn(() => ({
+            closest: vi.fn(() => null),
+            addEventListener: vi.fn(),
+            isConnected: false, // e.g. exported to copy the node to the clipboard
+            focus: vi.fn(),
+          })),
+          destroy: vi.fn(),
+        };
+
+        return capturedComponent;
+      });
+
+      globalThis.MutationObserver = vi.fn(function MockMutationObserver() {
+        this.observe = vi.fn();
+        this.disconnect = vi.fn();
+      });
+
+      const CustomNode = createCustomNodeClass(mockComponentDef);
+      const node = new CustomNode({ title: 'Test' });
+
+      node.createDOM();
+
+      expect(unmount).toHaveBeenCalledWith(capturedComponent);
+      expect(globalThis.MutationObserver).not.toHaveBeenCalled();
     });
   });
 

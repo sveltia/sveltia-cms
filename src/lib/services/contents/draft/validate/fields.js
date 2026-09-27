@@ -564,6 +564,14 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
       const [prefix] = keyPath.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
       const componentName = prefix ? valueMap[`${prefix}__sc_component_name`] : undefined;
 
+      // A value left behind by a rich text editor component that has since been removed has
+      // nothing to be validated against. Without the component name, its field would be looked up
+      // among the entry’s own fields instead, e.g. an image’s `title` as the entry title, and fail
+      // validation with no field to show the error in
+      if (prefix && !componentName) {
+        return;
+      }
+
       const fieldConfig = getField({
         ...getFieldArgs,
         keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix

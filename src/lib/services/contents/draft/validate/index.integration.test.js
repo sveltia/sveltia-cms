@@ -131,4 +131,18 @@ describe('contents/draft/validate (integration)', () => {
     expect(validateEntry({ enforceRequired: false })).toBe(false);
     expect(entryDraft.current.validities._default.code.patternMismatch).toBe(true);
   });
+
+  it('should ignore a value left behind by a removed rich text editor component', () => {
+    // A component that wasn’t unmounted along with its node could write an emptied field back to
+    // the draft after its values were cleaned up, without the component name. The field must not
+    // be looked up among the entry’s own fields, where `code` would be taken for the required
+    // entry field and block the save with an error no field shows
+    const { currentValues, extraValues } = entryDraft.current;
+
+    Object.assign(currentValues._default, { code: '123', price: 5, 'tags.0': 'a', 'tags.1': 'b' });
+    extraValues._default['body:c94:code'] = '';
+
+    expect(validateEntry()).toBe(true);
+    expect(entryDraft.current.validities._default['body:c94:code']).toBeUndefined();
+  });
 });
