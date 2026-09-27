@@ -257,7 +257,7 @@ describe('Test applyTransformations()', () => {
           { method: 'truncate', args: { max: '10' } },
         ],
       }),
-    ).toBe('long tit…');
+    ).toBe('long title…');
   });
 
   test('applies a single transformation', () => {

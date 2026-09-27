@@ -625,7 +625,7 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       expect(signature).toBeDefined();
       expect(typeof signature).toBe('string');
       expect(signature.length).toBeGreaterThan(0);
-      expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(ArrayBuffer));
+      expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(Uint8Array));
     });
 
     it('should sort parameters alphabetically', async () => {
@@ -1486,7 +1486,7 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
 
       await upload([mockFile], { apiKey: mockApiSecret });
 
-      expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(ArrayBuffer));
+      expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(Uint8Array));
 
       const fetchCall = vi.mocked(fetch).mock.calls[0];
 
