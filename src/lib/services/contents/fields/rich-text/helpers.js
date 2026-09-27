@@ -15,7 +15,9 @@ import { getOrCreate } from '$lib/services/utils/cache';
 /**
  * Sanitization options for DOMPurify to allow `blob` URLs for images, which are commonly used for
  * local previews of uploaded images. Also allow `iframe` tags with strict sandboxing for embedded
- * media previews.
+ * media previews. A `style` element is removed, because the preview is part of the CMS page, so its
+ * rules would apply to the whole app, e.g. to hide the real UI behind a fake one. So is a `form`,
+ * which could send what a user types in the preview to another site.
  * @see https://github.com/cure53/DOMPurify/issues/549
  * @see https://github.com/cure53/DOMPurify#control-permitted-attribute-values.
  * @see https://github.com/cure53/DOMPurify/wiki/Default-TAGs-ATTRIBUTEs-allow-list-&-blocklist
@@ -24,6 +26,7 @@ export const SANITIZE_OPTIONS = {
   ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   ADD_TAGS: ['iframe'],
   ADD_ATTR: ['allow', 'allowfullscreen', 'referrerpolicy', 'sandbox'],
+  FORBID_TAGS: ['style', 'form'],
 };
 
 /**

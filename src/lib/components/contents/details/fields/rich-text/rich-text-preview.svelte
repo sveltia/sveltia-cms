@@ -433,6 +433,10 @@
   }
 
   div {
+    /* Make the preview the containing block of any positioned element in the content, so an element
+       with `position: fixed` from an inline style can’t cover the rest of the app */
+    translate: 0;
+
     :global {
       [data-component-key] {
         display: contents;

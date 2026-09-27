@@ -122,6 +122,27 @@ describe('RichTextPreview', () => {
     expect(raw.querySelector('p')).toHaveAttribute('onclick');
   });
 
+  test('keeps the content within the preview', async () => {
+    const preview = await renderPreview(
+      '<style>body { display: none; }</style>\n\n' +
+        '<div class="cover" style="position: fixed; inset: 0">Sign in again</div>',
+    );
+
+    await expect.poll(() => preview.querySelector('.cover')).not.toBeNull();
+    expect(preview.querySelector('style')).toBeNull();
+    expect(getComputedStyle(document.body).display).not.toBe('none');
+
+    // An element with `position: fixed` is positioned within the preview, not the window
+    const { top, height } = /** @type {HTMLElement} */ (
+      preview.querySelector('.cover')
+    ).getBoundingClientRect();
+
+    const box = preview.getBoundingClientRect();
+
+    expect(top).toBe(box.top);
+    expect(height).toBe(box.height);
+  });
+
   test('renders an image with its resolved URL', async () => {
     const preview = await renderPreview('![Photo](https://example.com/photo.png)');
 

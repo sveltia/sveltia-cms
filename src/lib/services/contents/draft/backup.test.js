@@ -40,7 +40,11 @@ vi.mock('$lib/services/backends', () => ({
 }));
 
 const mockPrefs = vi.hoisted(() => ({ useDraftBackup: /** @type {boolean | undefined} */ (true) }));
+const { mockCreateInertSVG } = vi.hoisted(() => ({ mockCreateInertSVG: vi.fn() }));
 
+vi.mock('$lib/services/utils/media/image/svg', () => ({
+  createInertSVG: mockCreateInertSVG,
+}));
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: mockPrefs,
 }));
@@ -1084,6 +1088,64 @@ describe('draft/backup', () => {
       await restoreBackupIfNeeded({ draft: createRestoreDraft() });
 
       expect(mockBackupDB.get).toHaveBeenCalledWith(['posts', 'my-post']);
+    });
+
+    it('should give a restored SVG image the URL of a wrapper that cannot run scripts', async () => {
+      const svg = new File(['<svg><script>alert(1)</script></svg>'], 'a.svg', {
+        type: 'image/svg+xml',
+      });
+
+      const unused = new File(['<svg/>'], 'b.svg', { type: 'image/svg+xml' });
+      const png = new File(['png'], 'c.png', { type: 'image/png' });
+      const wrappers = new Map([svg, unused].map((file) => [file, new Blob([`<${file.name}>`])]));
+      const urls = new Map([...wrappers.values(), png].map((blob, i) => [blob, `blob:x/${i}`]));
+
+      const createObjectURL = vi
+        .spyOn(URL, 'createObjectURL')
+        .mockImplementation((blob) => /** @type {string} */ (urls.get(blob)));
+
+      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+      mockCreateInertSVG.mockImplementation(async (file) => wrappers.get(file));
+      mockBackupDB.get.mockResolvedValue({
+        timestamp: new Date(),
+        cmsConfigVersion: 'v1.0.0',
+        collectionName: 'posts',
+        slug: 'my-post',
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: {
+          en: { image: 'blob:http://localhost/old1', photo: 'blob:http://localhost/old3' },
+        },
+        files: {
+          'blob:http://localhost/old1': { file: svg },
+          'blob:http://localhost/old2': { file: unused },
+          'blob:http://localhost/old3': { file: png },
+        },
+      });
+
+      const draft = createRestoreDraft();
+
+      try {
+        const promise = restoreBackupIfNeeded({ draft });
+
+        await vi.waitFor(() => expect(restoreDialogState.current?.resolve).toBeDefined());
+        restoreDialogState.current.resolve(true);
+        await promise;
+
+        // The SVG image points to its wrapper, while the file itself is what gets saved
+        expect(createObjectURL).not.toHaveBeenCalledWith(svg);
+        expect(draft.currentValues.en).toEqual({ image: 'blob:x/0', photo: 'blob:x/2' });
+        expect(draft.files).toEqual({
+          'blob:x/0': { file: svg },
+          'blob:x/2': { file: png },
+        });
+        // The wrapper of the file no value refers to is released
+        expect(revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:x/1');
+      } finally {
+        createObjectURL.mockRestore();
+        revokeObjectURL.mockRestore();
+      }
     });
 
     it('should show restore dialog and restore backup when user confirms', async () => {

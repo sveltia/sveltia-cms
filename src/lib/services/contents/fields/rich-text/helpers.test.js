@@ -875,6 +875,22 @@ describe('splitMarkdownBlocks', () => {
   });
 });
 
+describe('SANITIZE_OPTIONS style and form removal', () => {
+  it('should remove style elements and forms, which would reach beyond the preview', () => {
+    const sanitized = sanitizeRichTextHTML(
+      '<style>body { display: none; }</style><p style="color: red">Hi</p>' +
+        '<svg><style>*{}</style></svg>' +
+        '<form action="https://example.com/"><input name="token"></form>',
+    );
+
+    expect(sanitized).not.toContain('<style');
+    expect(sanitized).not.toContain('<form');
+    expect(sanitized).not.toContain('example.com');
+    // An inline style only applies to its own element, so it’s kept
+    expect(sanitized).toContain('<p style="color: red">Hi</p>');
+  });
+});
+
 describe('SANITIZE_OPTIONS iframe security (XSS prevention)', () => {
   it('should remove iframes with javascript: scheme', () => {
     // Testing XSS prevention - javascript: URL in test payload

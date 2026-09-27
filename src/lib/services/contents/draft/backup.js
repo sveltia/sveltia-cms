@@ -10,6 +10,7 @@ import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { updateObject } from '$lib/services/contents/draft/update/list';
 import { hasChildKeys, indexContent } from '$lib/services/contents/entry/content-index';
 import { prefs } from '$lib/services/user/prefs.svelte';
+import { createInertSVG } from '$lib/services/utils/media/image/svg';
 import { createDeepState, createRootEffect, getSnapshot } from '$lib/services/utils/state.svelte';
 
 /**
@@ -152,14 +153,38 @@ export const saveBackup = async (draft) => {
 };
 
 /**
+ * Create the URLs of the SVG images in a draft backup ahead of restoring it. The URLs have the CMS
+ * origin and end up in the preview, where they can be opened in a new tab, so they point to
+ * wrappers that can’t run any script, like the URLs of the images loaded from the repository. The
+ * wrappers take time to make, while the backup is restored in one go.
+ * @param {EntryDraftBackup} backup Backup to restore.
+ * @returns {Promise<Map<File, string>>} Blob URL of each SVG file.
+ */
+const createInertImageURLs = async ({ files }) => {
+  const svgFiles = new Set(
+    Object.values(files).flatMap(({ file }) => (file?.type === 'image/svg+xml' ? [file] : [])),
+  );
+
+  return new Map(
+    await Promise.all(
+      [...svgFiles].map(
+        async (file) =>
+          /** @type {[File, string]} */ ([file, URL.createObjectURL(await createInertSVG(file))]),
+      ),
+    ),
+  );
+};
+
+/**
  * Restore a draft backup to the given entry draft.
  * @param {object} args Arguments.
  * @param {EntryDraftBackup} args.backup Backup to restore.
  * @param {EntryDraft} args.draft Entry draft to restore the backup to.
+ * @param {Map<File, string>} [args.fileURLs] Blob URLs already created for some of the files, e.g.
+ * with {@link createInertImageURLs}. The others are created as they’re found.
  */
-export const restoreBackup = ({ backup, draft }) => {
+export const restoreBackup = ({ backup, draft, fileURLs = new Map() }) => {
   const { currentLocales, currentSlugs, currentValues, files, pendingEntries = [] } = backup;
-  const fileURLs = new Map();
 
   suspendAutoDuplication(() => {
     draft.currentLocales = currentLocales;
@@ -195,17 +220,15 @@ export const restoreBackup = ({ backup, draft }) => {
               return;
             }
 
-            let newURL = '';
+            let newURL = fileURLs.get(file);
 
-            if (fileURLs.has(file)) {
-              newURL = fileURLs.get(file);
-            } else {
+            if (!newURL) {
               // Regenerate a blob URL
               newURL = URL.createObjectURL(file);
-
-              draft.files[newURL] = cache;
               fileURLs.set(file, newURL);
             }
+
+            draft.files[newURL] ??= cache;
 
             value = value.replaceAll(blobURL, newURL);
           });
@@ -285,7 +308,16 @@ export const restoreBackupIfNeeded = async ({ draft }) => {
   }
 
   if (doRestore) {
-    restoreBackup({ backup, draft });
+    const svgURLs = await createInertImageURLs(backup);
+
+    restoreBackup({ backup, draft, fileURLs: new Map(svgURLs) });
+
+    // Release the URLs of the files no restored value refers to
+    svgURLs.forEach((url) => {
+      if (!(url in draft.files)) {
+        URL.revokeObjectURL(url);
+      }
+    });
     draft.interacted = true;
   } else {
     await deleteBackup(collectionName, slug);

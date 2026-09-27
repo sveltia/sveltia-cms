@@ -22,6 +22,26 @@ describe('TextPreview', () => {
     expect(container.querySelector('[role="figure"]')).toHaveClass('markdown');
   });
 
+  test('keeps the Markdown within the preview', async () => {
+    const { container } = await render(TextPreview, {
+      name: 'README.md',
+      text:
+        '<style>body { display: none; }</style>\n\n' +
+        '<form action="https://example.com/"><input name="token"></form>\n\n' +
+        '<div class="cover" style="position: fixed; inset: 0">Sign in again</div>',
+    });
+
+    await expect.poll(() => container.querySelector('.cover')).not.toBeNull();
+    expect(container.querySelector('style, form')).toBeNull();
+
+    // An element with `position: fixed` is positioned within the preview, not the window
+    const cover = /** @type {HTMLElement} */ (container.querySelector('.cover'));
+    const box = /** @type {HTMLElement} */ (container.querySelector('.markdown'));
+
+    expect(cover.getBoundingClientRect().top).toBe(box.getBoundingClientRect().top);
+    expect(cover.getBoundingClientRect().height).toBe(box.getBoundingClientRect().height);
+  });
+
   test('shows any other text as is', async () => {
     const { container } = await render(TextPreview, { name: 'data.yml', text: 'key: <value>' });
 

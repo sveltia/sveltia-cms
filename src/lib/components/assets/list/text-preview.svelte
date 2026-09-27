@@ -13,6 +13,12 @@
    * @property {string} name File name, used to detect Markdown.
    */
 
+  /**
+   * Options for {@link sanitize}. A `style` element would apply to the whole app, and a `form`
+   * could send what the user types to another site.
+   */
+  const SANITIZE_OPTIONS = { FORBID_TAGS: ['style', 'form'] };
+
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -25,7 +31,7 @@
 {#if name.endsWith('.md')}
   {#await parse(text, { breaks: true, async: true }) then rawHTML}
     <div role="figure" class="markdown">
-      {@html sanitize(rawHTML)}
+      {@html sanitize(rawHTML, SANITIZE_OPTIONS)}
     </div>
   {:catch}
     <pre role="figure">{text}</pre>
@@ -35,6 +41,12 @@
 {/if}
 
 <style>
+  .markdown {
+    /* Make the preview the containing block of any positioned element in the content, so an element
+       with `position: fixed` from an inline style can’t cover the rest of the app */
+    translate: 0;
+  }
+
   pre,
   .markdown {
     display: block;
