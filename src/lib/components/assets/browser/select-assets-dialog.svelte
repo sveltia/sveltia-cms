@@ -668,6 +668,7 @@
         <InternalAssetsPanel
           {accept}
           {multiple}
+          {kind}
           {selectFolder}
           assets={selectFolder ? [] : panelAssets}
           bind:selectedResources

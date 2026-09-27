@@ -118,7 +118,14 @@ describe('InternalAssetsPanel', () => {
 
   test('lists the assets in the saved view type within a drop zone', async () => {
     const onDrop = vi.fn();
-    const props = $state({ assets, selectedResources: [], onDrop });
+
+    const props = $state({
+      assets,
+      kind: /** @type {'image'} */ ('image'),
+      selectedResources: [],
+      onDrop,
+    });
+
     const { container } = await render(InternalAssetsPanel, props);
     const listbox = page.getByRole('listbox', { name: 'Available Images' });
 

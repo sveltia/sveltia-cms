@@ -1549,6 +1549,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: Available Images
+  available_files: Available Files
 
   # URL entry option
   enter_url: Enter URL

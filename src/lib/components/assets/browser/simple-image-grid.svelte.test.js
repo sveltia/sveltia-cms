@@ -26,6 +26,12 @@ describe('SimpleImageGrid', () => {
     expect(listbox.getByRole('option').elements()).toHaveLength(2);
   });
 
+  test('takes another accessible name', async () => {
+    await render(SimpleImageGrid, { ariaLabel: 'Available Files', children });
+
+    await expect.element(page.getByRole('listbox', { name: 'Available Files' })).toBeVisible();
+  });
+
   test('applies the view type and allows multiple selection', async () => {
     const { container } = await render(SimpleImageGrid, {
       viewType: 'list',

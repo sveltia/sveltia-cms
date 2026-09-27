@@ -567,6 +567,8 @@ describe('SelectAssetsDialog', () => {
     const { onSelect } = await renderDialog({ kind: undefined });
     const dialog = page.getByRole('dialog', { name: 'Select File' });
 
+    // Files of any kind are listed
+    await expect.element(dialog.getByRole('listbox', { name: 'Available Files' })).toBeVisible();
     await sleep(150);
     await dialog.getByRole('option', { name: 'Enter URL' }).click();
     await expect.element(dialog.getByText('Enter URL of the file:')).toBeInTheDocument();

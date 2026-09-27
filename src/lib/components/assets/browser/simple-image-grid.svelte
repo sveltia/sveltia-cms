@@ -11,6 +11,7 @@
    * @property {string} [viewType] View type.
    * @property {string} [gridId] The `id` attribute of the inner listbox.
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
+   * @property {string} [ariaLabel] Accessible name of the list. Defaults to “Available Images”.
    * @property {(detail: { value: string }) => void} [onChange] Custom `change` event handler.
    * @property {Snippet} [children] Slot content.
    */
@@ -21,6 +22,7 @@
     viewType = 'grid',
     gridId = undefined,
     multiple = false,
+    ariaLabel = undefined,
     onChange = undefined,
     children = undefined,
     /* eslint-enable prefer-const */
@@ -32,7 +34,7 @@
     id={gridId}
     class={viewType}
     {multiple}
-    ariaLabel={_('assets_dialog.available_images')}
+    ariaLabel={ariaLabel ?? _('assets_dialog.available_images')}
     onChange={(event) => {
       onChange?.(event.detail);
     }}

@@ -14,12 +14,20 @@
   import { env } from '$lib/services/user/env.svelte';
 
   /**
-   * @import { Asset, AssetSubfolder, SelectedResource, ViewType } from '$lib/types/private';
+   * @import {
+   * Asset,
+   * AssetSubfolder,
+   * MediaLibraryAssetKind,
+   * SelectedResource,
+   * ViewType,
+   * } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
+   * @property {MediaLibraryAssetKind} [kind] Kind of the assets being picked, which names the
+   * list: images, or files of any kind if `undefined`.
    * @property {Asset[]} [assets] Asset list.
    * @property {ViewType} [viewType] View type.
    * @property {string} [searchTerms] Search terms for filtering assets.
@@ -44,6 +52,7 @@
   let {
     /* eslint-disable prefer-const */
     multiple = false,
+    kind = undefined,
     assets = [],
     viewType = 'grid',
     searchTerms = '',
@@ -147,11 +156,16 @@
     {/if}
     <!-- An empty list box would only be a stop for the Tab key, with nothing to move through -->
     {#if filteredAssets.length}
-      <SimpleImageGrid {multiple} {gridId} {viewType}>
+      <SimpleImageGrid
+        {multiple}
+        {gridId}
+        {viewType}
+        ariaLabel={_(`assets_dialog.available_${kind === 'image' ? 'images' : 'files'}`)}
+      >
         <InfiniteScroll items={filteredAssets} itemKey="key">
           {#snippet renderItem(/** @type {Asset & { relPath: string, key: string }} */ asset)}
             {#await sleep() then}
-              {@const { kind, unsaved, key, relPath } = asset}
+              {@const { kind: assetKind, unsaved, key, relPath } = asset}
               <SimpleImageGridItem
                 value={key}
                 ariaLabel={relPath}
@@ -165,7 +179,13 @@
                 {#if viewType === 'grid' && unsaved}
                   <div role="none" class="unsaved">{_('assets_dialog.unsaved')}</div>
                 {/if}
-                <AssetPreview {kind} {asset} alt={relPath} variant="tile" {checkerboard} />
+                <AssetPreview
+                  kind={assetKind}
+                  {asset}
+                  alt={relPath}
+                  variant="tile"
+                  {checkerboard}
+                />
                 {#if !env.isSmallScreen || viewType === 'list'}
                   <AssetPath path={relPath}>
                     {#if viewType === 'list' && unsaved}

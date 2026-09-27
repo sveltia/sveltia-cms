@@ -60,6 +60,16 @@ describe('AssetsPanel', () => {
     ).toHaveTextContent('Unsaved');
   });
 
+  test('names the list after the kind of assets being picked', async () => {
+    const props = $state({ assets, kind: /** @type {'image' | undefined} */ ('image') });
+
+    await render(AssetsPanel, props);
+    await expect.element(page.getByRole('listbox', { name: 'Available Images' })).toBeVisible();
+
+    props.kind = undefined;
+    await expect.element(page.getByRole('listbox', { name: 'Available Files' })).toBeVisible();
+  });
+
   test('lists the subfolders ahead of the assets, opening one on a click', async () => {
     const onOpenSubfolder = vi.fn();
 
@@ -90,7 +100,7 @@ describe('AssetsPanel', () => {
     // Nothing to select in the folders, so the selection of assets is left alone
     expect(
       page
-        .getByRole('listbox', { name: 'Available Images' })
+        .getByRole('listbox', { name: 'Available Files' })
         .getByRole('option', { selected: true })
         .elements(),
     ).toHaveLength(0);

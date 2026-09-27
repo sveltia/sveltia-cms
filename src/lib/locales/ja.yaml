@@ -1461,6 +1461,7 @@ assets_dialog:
 
   # Stock photo panels
   available_images: 利用可能な画像
+  available_files: 利用可能なファイル
 
   # URL entry option
   enter_url: URL を入力

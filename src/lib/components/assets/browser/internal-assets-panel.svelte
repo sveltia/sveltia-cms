@@ -8,12 +8,19 @@
   import { selectAssetsView } from '$lib/services/contents/editor';
 
   /**
-   * @import { Asset, AssetSubfolder, SelectedResource } from '$lib/types/private';
+   * @import {
+   * Asset,
+   * AssetSubfolder,
+   * MediaLibraryAssetKind,
+   * SelectedResource,
+   * } from '$lib/types/private';
    */
 
   /**
    * @typedef {object} Props
    * @property {boolean} [multiple] Whether to allow selecting multiple assets.
+   * @property {MediaLibraryAssetKind} [kind] Kind of the assets being picked: images, or files of
+   * any kind if `undefined`.
    * @property {boolean} [selectFolder] Whether a folder is being selected instead of files, which
    * takes no dropped files and lists subfolders only.
    * @property {string | undefined} [accept] Accepted file type specifiers.
@@ -40,6 +47,7 @@
   let {
     /* eslint-disable prefer-const */
     multiple = false,
+    kind = undefined,
     selectFolder = false,
     accept = undefined,
     assets = [],
@@ -75,6 +83,7 @@
     <div role="none" class="panel">
       <AssetsPanel
         {multiple}
+        {kind}
         {assets}
         viewType={selectAssetsView.current?.type}
         {searchTerms}
