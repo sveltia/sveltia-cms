@@ -5,6 +5,10 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Load the Svelte runtime while the file is collected, so that the cold load doesn’t count against
+// the first test’s timeout; each test still imports a fresh copy of the module under test
+import 'svelte';
+
 const mockLocalStorage = {
   get: vi.fn(),
   set: vi.fn(),
