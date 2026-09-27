@@ -1,6 +1,8 @@
-import { _ } from '@sveltia/i18n';
-
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import {
+  createLocalizedError,
+  NOT_COLLABORATOR_ERROR_MESSAGE,
+} from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
@@ -70,17 +72,15 @@ export const checkRepositoryAccess = async () => {
     const { permissions } = await getRepositoryInfo();
 
     if (!permissions?.pull) {
-      throw new Error('Not a collaborator of the repository', {
-        cause: new Error(_('repository_no_access', { values: { repo } })),
-      });
+      throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
     }
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Not a collaborator')) {
+    if (error instanceof Error && error.message === NOT_COLLABORATOR_ERROR_MESSAGE) {
       throw error;
     }
 
-    throw new Error('Failed to check repository access', {
-      cause: new Error(_('repository_not_found', { values: { repo } })),
+    throw createLocalizedError('Failed to check repository access', 'repository_not_found', {
+      repo,
     });
   }
 };

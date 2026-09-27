@@ -1,5 +1,4 @@
-import { _ } from '@sveltia/i18n';
-
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { prefs } from '$lib/services/user/prefs.svelte';
 
 /**
@@ -123,14 +122,16 @@ export const applyDefaultBranch = (repository, { found, branch, getBaseURLs }) =
   const { repo, repoURL = '' } = repository;
 
   if (!found) {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(_('repository_not_found', { values: { repo } })),
-    });
+    throw createLocalizedError(
+      'Failed to retrieve the default branch name.',
+      'repository_not_found',
+      { repo },
+    );
   }
 
   if (!branch) {
-    throw new Error('Failed to retrieve the default branch name.', {
-      cause: new Error(_('repository_empty', { values: { repo } })),
+    throw createLocalizedError('Failed to retrieve the default branch name.', 'repository_empty', {
+      repo,
     });
   }
 

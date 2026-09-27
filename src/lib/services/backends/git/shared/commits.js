@@ -1,3 +1,4 @@
+import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { cmsConfig } from '$lib/services/config';
 import { getCollectionLabel } from '$lib/services/contents/collection';
 import { user } from '$lib/services/user/account.svelte';
@@ -142,4 +143,27 @@ export const dedupeFileCommits = (commits) => {
   });
 
   return [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
+};
+
+/**
+ * Fetch the commit history of each of the given files with a separate request, keeping only a few
+ * requests in flight at a time so a long list doesn’t trigger a Too Many Requests error, then merge
+ * the histories into one list.
+ * @param {string[]} paths File paths to fetch commit history for.
+ * @param {(path: string) => Promise<any[]>} fetchHistory Function to fetch the raw commit list of a
+ * file from the backend’s API.
+ * @param {(commit: any) => FileCommit} parseCommit Function to convert a raw commit to a
+ * {@link FileCommit}.
+ * @returns {Promise<FileCommit[]>} Unique commits, newest first.
+ */
+export const fetchPerPathCommits = async (paths, fetchHistory, parseCommit) => {
+  /** @type {any[][]} */
+  const results = [];
+
+  // Store the results by index so they come out in the same order as the paths
+  await runConcurrently([...paths.entries()], async ([index, path]) => {
+    results[index] = await fetchHistory(path);
+  });
+
+  return dedupeFileCommits(results.flat().map(parseCommit));
 };

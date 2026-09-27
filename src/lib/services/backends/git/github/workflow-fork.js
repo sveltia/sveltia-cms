@@ -1,5 +1,3 @@
-import { _ } from '@sveltia/i18n';
-
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import {
@@ -16,6 +14,7 @@ import {
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { getBranchPrefix } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
@@ -319,9 +318,10 @@ const FETCH_PULL_REQUEST_STATE_QUERY = `
  */
 export const updateForkStatus = async (pullRequest, status) => {
   if (status === 'pending_publish') {
-    throw new Error('Cannot mark an entry ready to publish as an Open Authoring contributor', {
-      cause: new Error(_('open_authoring.publish_unsupported')),
-    });
+    throw createLocalizedError(
+      'Cannot mark an entry ready to publish as an Open Authoring contributor',
+      'open_authoring.publish_unsupported',
+    );
   }
 
   const { nodeId, branch, title } = pullRequest;

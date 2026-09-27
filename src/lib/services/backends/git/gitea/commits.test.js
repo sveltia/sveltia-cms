@@ -27,7 +27,7 @@ vi.mock('@sveltia/utils/file', () => ({
 }));
 
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
-  dedupeFileCommits: /** @type {any} */ (await importOriginal()).dedupeFileCommits,
+  fetchPerPathCommits: /** @type {any} */ (await importOriginal()).fetchPerPathCommits,
   createCommitMessage: createCommitMessageMock,
 }));
 

@@ -1,9 +1,12 @@
-import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
 
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
+import {
+  createCommitMessage,
+  fetchPerPathCommits,
+} from '$lib/services/backends/git/shared/commits';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
 
@@ -38,8 +41,9 @@ export const fetchLastCommit = async () => {
 
     return { hash, message };
   } catch {
-    throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(_('branch_not_found', { values: { repo, branch } })),
+    throw createLocalizedError('Failed to retrieve the last commit hash.', 'branch_not_found', {
+      repo,
+      branch,
     });
   }
 };
@@ -102,27 +106,23 @@ export const commitChanges = async (changes, options) => {
 export const fetchFileCommits = async (paths) => {
   const { owner, repo, branch } = repository;
 
-  const results = await Promise.all(
-    paths.map(
-      (path) =>
-        /** @type {Promise<any[]>} */ (
-          fetchAPI(
-            `/repos/${owner}/${repo}/commits` +
-              `?sha=${encodeURIComponent(branch ?? '')}` +
-              `&path=${encodeURIComponent(path)}&limit=100`,
-          )
-        ),
-    ),
-  );
-
-  return dedupeFileCommits(
-    results.flat().map((commit) => ({
+  return fetchPerPathCommits(
+    paths,
+    (path) =>
+      /** @type {Promise<any[]>} */ (
+        fetchAPI(
+          `/repos/${owner}/${repo}/commits` +
+            `?sha=${encodeURIComponent(branch ?? '')}` +
+            `&path=${encodeURIComponent(path)}&limit=100`,
+        )
+      ),
+    (commit) => ({
       sha: commit.sha,
       authorName: commit.commit?.author?.name ?? '',
       authorEmail: commit.commit?.author?.email,
       authorAvatarURL: commit.author?.avatar_url,
       authorLogin: commit.author?.login,
       date: new Date(commit.commit?.author?.date ?? commit.created),
-    })),
+    }),
   );
 };

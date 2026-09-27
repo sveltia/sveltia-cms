@@ -4,6 +4,7 @@ import { LocalStorage } from '@sveltia/utils/storage';
 
 import { goto, parseLocation } from '$lib/services/app/navigation';
 import { backend, backendName, selectBackend } from '$lib/services/backends';
+import { NOT_COLLABORATOR_ERROR_MESSAGE } from '$lib/services/backends/git/shared/errors';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { startRemoteChangePolling, stopRemoteChangePolling } from '$lib/services/backends/poll';
 import { cmsConfig } from '$lib/services/config';
@@ -80,7 +81,7 @@ const clearIntegrationCredentials = () => {
 const clearUserCacheIfNeeded = async (error) => {
   const isAuthError =
     typeof (/** @type {any} */ (error?.cause)?.status) === 'number' ||
-    error?.message === 'Not a collaborator of the repository';
+    error?.message === NOT_COLLABORATOR_ERROR_MESSAGE;
 
   if (isAuthError) {
     await clearUserCache();

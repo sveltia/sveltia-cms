@@ -1,6 +1,8 @@
-import { _ } from '@sveltia/i18n';
-
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
+import {
+  createLocalizedError,
+  NOT_COLLABORATOR_ERROR_MESSAGE,
+} from '$lib/services/backends/git/shared/errors';
 import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
@@ -48,9 +50,7 @@ export const checkRepositoryAccess = async () => {
   );
 
   if (!ok) {
-    throw new Error('Not a collaborator of the repository', {
-      cause: new Error(_('repository_no_access', { values: { repo } })),
-    });
+    throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
   }
 };
 

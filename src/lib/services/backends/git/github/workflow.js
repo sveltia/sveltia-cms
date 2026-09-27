@@ -1,5 +1,3 @@
-import { _ } from '@sveltia/i18n';
-
 import { commitChanges } from '$lib/services/backends/git/github/commits';
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import {
@@ -19,6 +17,7 @@ import {
 } from '$lib/services/backends/git/github/workflow-fork';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
@@ -316,20 +315,19 @@ export const createBranch = async (branch) => {
   );
 
   if (!fork) {
-    throw new Error('Failed to create the branch.', {
-      cause: new Error(_('repository_not_found', { values: { repo: forkRepo } })),
+    throw createLocalizedError('Failed to create the branch.', 'repository_not_found', {
+      repo: forkRepo,
     });
   }
 
   if (!base) {
-    throw new Error('Failed to create the branch.', {
-      cause: new Error(_('repository_not_found', { values: { repo } })),
-    });
+    throw createLocalizedError('Failed to create the branch.', 'repository_not_found', { repo });
   }
 
   if (!base.ref) {
-    throw new Error('Failed to create the branch.', {
-      cause: new Error(_('branch_not_found', { values: { repo, branch: repository.branch } })),
+    throw createLocalizedError('Failed to create the branch.', 'branch_not_found', {
+      repo,
+      branch: repository.branch,
     });
   }
 
@@ -456,9 +454,10 @@ export const savePullRequest = async ({ changes, options, branch, title, status,
  */
 export const publish = async (pullRequest) => {
   if (openAuthoring.current) {
-    throw new Error('Cannot publish as an Open Authoring contributor', {
-      cause: new Error(_('open_authoring.publish_unsupported')),
-    });
+    throw createLocalizedError(
+      'Cannot publish as an Open Authoring contributor',
+      'open_authoring.publish_unsupported',
+    );
   }
 
   const { owner, repo } = repository;

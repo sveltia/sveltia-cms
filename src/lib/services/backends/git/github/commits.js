@@ -1,4 +1,3 @@
-import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
 
 import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
@@ -6,6 +5,7 @@ import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -60,14 +60,15 @@ export const fetchLastCommit = async (branchName) => {
   );
 
   if (!result.repository) {
-    throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(_('repository_not_found', { values: { repo } })),
+    throw createLocalizedError('Failed to retrieve the last commit hash.', 'repository_not_found', {
+      repo,
     });
   }
 
   if (!result.repository.ref) {
-    throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(_('branch_not_found', { values: { repo, branch } })),
+    throw createLocalizedError('Failed to retrieve the last commit hash.', 'branch_not_found', {
+      repo,
+      branch,
     });
   }
 
@@ -239,9 +240,10 @@ const createCommit = async ({
     const head = onWorkflowBranch ? undefined : await fetchLastCommit().catch(() => undefined);
 
     if (head && head.hash !== expectedHeadOid) {
-      throw new Error('The branch has moved since the site data was loaded.', {
-        cause: new Error(_('save_conflict.branch_moved')),
-      });
+      throw createLocalizedError(
+        'The branch has moved since the site data was loaded.',
+        'save_conflict.branch_moved',
+      );
     }
 
     throw ex;
@@ -264,9 +266,10 @@ export const commitChanges = async (changes, options) => {
   // doesn’t go through Editorial Workflow has nowhere to land. Fail here with an explanation rather
   // than letting the API reject the commit with a bare permission error
   if (openAuthoring.current && !options.branch) {
-    throw new Error('Cannot commit directly to the configured repository', {
-      cause: new Error(_('open_authoring.direct_commit_unsupported')),
-    });
+    throw createLocalizedError(
+      'Cannot commit directly to the configured repository',
+      'open_authoring.direct_commit_unsupported',
+    );
   }
 
   // A workflow branch lives in the contributor’s fork with Open Authoring, while the configured

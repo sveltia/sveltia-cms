@@ -1,9 +1,13 @@
-import { _ } from '@sveltia/i18n';
 import { encodeBase64 } from '@sveltia/utils/file';
 
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
+import {
+  createCommitMessage,
+  fetchPerPathCommits,
+} from '$lib/services/backends/git/shared/commits';
+import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { getGitHash } from '$lib/services/utils/file';
 
 /**
@@ -55,16 +59,17 @@ export const fetchLastCommit = async () => {
   );
 
   if (!result.project) {
-    throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(_('repository_not_found', { values: { repo } })),
+    throw createLocalizedError('Failed to retrieve the last commit hash.', 'repository_not_found', {
+      repo,
     });
   }
 
   const { lastCommit } = result.project.repository.tree ?? {};
 
   if (!lastCommit) {
-    throw new Error('Failed to retrieve the last commit hash.', {
-      cause: new Error(_('branch_not_found', { values: { repo, branch } })),
+    throw createLocalizedError('Failed to retrieve the last commit hash.', 'branch_not_found', {
+      repo,
+      branch,
     });
   }
 
@@ -153,28 +158,24 @@ export const fetchFileCommits = async (paths) => {
   const { branch } = repository;
   const projectId = getProjectId();
 
-  const results = await Promise.all(
-    paths.map(
-      (path) =>
-        /** @type {Promise<any[]>} */ (
-          fetchAPI(
-            `/projects/${projectId}/repository/commits` +
-              `?ref_name=${encodeURIComponent(branch ?? '')}` +
-              `&path=${encodeURIComponent(path)}&per_page=100`,
-          )
-        ),
-    ),
-  );
-
   /** @type {FileCommit[]} */
-  const commitList = dedupeFileCommits(
-    results.flat().map((commit) => ({
+  const commitList = await fetchPerPathCommits(
+    paths,
+    (path) =>
+      /** @type {Promise<any[]>} */ (
+        fetchAPI(
+          `/projects/${projectId}/repository/commits` +
+            `?ref_name=${encodeURIComponent(branch ?? '')}` +
+            `&path=${encodeURIComponent(path)}&per_page=100`,
+        )
+      ),
+    (commit) => ({
       sha: commit.id,
       authorName: commit.author_name,
       authorEmail: commit.author_email,
       authorAvatarURL: undefined,
       date: new Date(commit.committed_date),
-    })),
+    }),
   );
 
   // Resolve avatar URLs for unique author emails via the GitLab Avatar API
@@ -184,13 +185,11 @@ export const fetchFileCommits = async (paths) => {
   );
 
   /** @type {Map<string, string | undefined>} */
-  const avatarMap = new Map(
-    await Promise.all(
-      uniqueEmails.map(
-        async (email) => /** @type {const} */ ([email, await fetchAvatarURL(email)]),
-      ),
-    ),
-  );
+  const avatarMap = new Map();
+
+  await runConcurrently(uniqueEmails, async (email) => {
+    avatarMap.set(email, await fetchAvatarURL(email));
+  });
 
   commitList.forEach((commit) => {
     commit.authorAvatarURL = avatarMap.get(/** @type {string} */ (commit.authorEmail));

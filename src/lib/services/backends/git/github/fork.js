@@ -3,6 +3,7 @@ import { sleep } from '@sveltia/utils/misc';
 
 import { fetchDefaultBranchName, repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { cmsConfig } from '$lib/services/config';
 import { user } from '$lib/services/user/account.svelte';
 import {
@@ -180,9 +181,11 @@ export const fetchRepositoryAccess = async () => {
   // A rate limit or an outage leaves the question unanswered. Reading that as “no write access”
   // would send a maintainer down the fork path over something passing, and offer to create a copy
   // of a repository they can already write to, so make the failure visible instead
-  throw new Error('Failed to check the repository permission.', {
-    cause: new Error(_('open_authoring.permission_check_failed', { values: { repo: repoPath } })),
-  });
+  throw createLocalizedError(
+    'Failed to check the repository permission.',
+    'open_authoring.permission_check_failed',
+    { repo: repoPath },
+  );
 };
 
 /**
@@ -292,9 +295,13 @@ export const waitForFork = async ({ owner, repo }, attemptsLeft = FORK_POLL.atte
   }
 
   if (attemptsLeft <= 1) {
-    throw new Error('Timed out waiting for the fork to be created.', {
-      cause: new Error(_('open_authoring.fork_failed', { values: { repo: `${owner}/${repo}` } })),
-    });
+    throw createLocalizedError(
+      'Timed out waiting for the fork to be created.',
+      'open_authoring.fork_failed',
+      {
+        repo: `${owner}/${repo}`,
+      },
+    );
   }
 
   await sleep(FORK_POLL.interval);
@@ -320,8 +327,8 @@ export const createFork = async () => {
     // eslint-disable-next-line no-console
     console.error('Failed to fork the repository.', ex);
 
-    throw new Error('Failed to fork the repository.', {
-      cause: new Error(_('open_authoring.fork_failed', { values: { repo: `${owner}/${repo}` } })),
+    throw createLocalizedError('Failed to fork the repository.', 'open_authoring.fork_failed', {
+      repo: `${owner}/${repo}`,
     });
   }
 
@@ -407,15 +414,18 @@ const setUpOpenAuthoring = async () => {
   // Forking is turned off by default on a private repository, and can be turned off on a public
   // one. Say so rather than letting the fork request fail with nothing to act on
   if (!allowForking) {
-    throw new Error('The repository does not allow forking', {
-      cause: new Error(_('open_authoring.forking_disabled', { values: { repo: repoPath } })),
-    });
+    throw createLocalizedError(
+      'The repository does not allow forking',
+      'open_authoring.forking_disabled',
+      { repo: repoPath },
+    );
   }
 
   if (!(await requestForkPermission(repoPath))) {
-    throw new Error('Permission to fork the repository was declined', {
-      cause: new Error(_('open_authoring.fork_declined')),
-    });
+    throw createLocalizedError(
+      'Permission to fork the repository was declined',
+      'open_authoring.fork_declined',
+    );
   }
 
   forkedRepository.current = await createFork();
