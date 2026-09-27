@@ -90,6 +90,15 @@ describe('ListEditorSimple', () => {
     await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-required', 'true');
   });
 
+  test('leaves the stored value alone until the items are edited', async () => {
+    const { draft } = await renderEditor(['a', 'b']);
+
+    expect(getInputValues()).toEqual(['a', 'b']);
+    // Rewriting the value would add the list placeholder, which the loaded content doesn’t have,
+    // so opening the entry would count as a change
+    expect(draft.currentValues._default).toEqual({ 'tags.0': 'a', 'tags.1': 'b' });
+  });
+
   test('stores the edited items, skipping blank ones', async () => {
     const { draft } = await renderEditor(['a', 'b']);
 

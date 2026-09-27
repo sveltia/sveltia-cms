@@ -116,21 +116,21 @@
   };
 
   /**
-   * Write the rows to the draft.
+   * Write the rows to the draft, unless they already hold the stored value. Rewriting an unchanged
+   * value isn’t harmless: it adds the placeholder of a non-empty list, which the loaded content
+   * doesn’t have, so merely opening an entry would count as a change.
    */
   const updateValue = () => {
     const draft = entryDraft.current;
+    const value = getStoredValue();
 
-    /* v8 ignore next 10 -- the editor is only rendered while the draft is there */
-    if (draft) {
-      updateNonPrimitiveValue({
-        draft,
-        valueStoreKey,
-        locale,
-        keyPath,
-        i18n,
-        value: getStoredValue(),
-      });
+    /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
+    if (!draft) {
+      return;
+    }
+
+    if (!equal(value, currentValue ?? [])) {
+      updateNonPrimitiveValue({ draft, valueStoreKey, locale, keyPath, i18n, value });
     }
   };
 
