@@ -321,6 +321,30 @@ test.describe('existing Markdown', () => {
       .toBe(`${FRONT_MATTER}Some _italic_ text. More.\n`);
   });
 
+  test('shows the language of each code block', async ({ cms, page }) => {
+    await cms.open();
+    await cms.seed({
+      ...MONOLINGUAL_FILES,
+      [RICH_POST_PATH]: `${FRONT_MATTER}${['```js', 'const x = 1;', '```', '', '```txt', 'hello', '```', ''].join('\n')}`,
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Rich Post/ }).click();
+
+    const field = page
+      .getByRole('group', { name: 'Content Editor' })
+      .getByRole('group', { name: /Body.*Field/ });
+
+    const body = field.getByRole('textbox', { name: 'Body' });
+    const language = field.getByRole('combobox', { name: 'Language' });
+
+    // A block labelled with an alias shows the language it stands for, and a block in a language
+    // that isn’t listed shows plain text rather than the language of the block selected before
+    await body.getByText('const x = 1;').click();
+    await expect(language).toHaveText(/JavaScript/);
+    await body.getByText('hello').click();
+    await expect(language).toHaveText(/Plain Text/);
+  });
+
   test('keeps a change made with a keyboard shortcut right before saving', async ({
     cms,
     page,

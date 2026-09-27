@@ -22,7 +22,7 @@ const API_KEY = `AIza${'0'.repeat(35)}`;
 
 /**
  * Answer the Google Cloud Translation API requests with a fake translation, which tags each text
- * with the target language, and keep the requests to check them.
+ * with the target language, e.g. `AR: `, and keep the requests to check them.
  * @param {Page} page Page.
  * @returns {Promise<{ q: string[], source: string, target: string, apiKey: string | null }[]>}
  * Requests received so far.
@@ -50,7 +50,7 @@ const mockTranslator = async (page) => {
         data: {
           translations: q.map((/** @type {string} */ text) => ({
             // Tag the text within the HTML the CMS sends for a Markdown field
-            translatedText: text.replace(/^(<p[^>]*>)?/, `$1[${target}] `),
+            translatedText: text.replace(/^(<p[^>]*>)?/, `$1${target.toUpperCase()}: `),
           })),
         },
       },
@@ -120,9 +120,7 @@ test('translates one field, asking for the API key first', async ({ cms, page })
 
   await dialog.getByRole('textbox', { name: 'API Key' }).fill(API_KEY);
   await expect(page.getByRole('status').filter({ hasText: /Field translated from/ })).toBeVisible();
-  await expect(field.getByRole('textbox', { name: 'Body' })).toHaveText(
-    '[fr] Follow the lanterns.',
-  );
+  await expect(field.getByRole('textbox', { name: 'Body' })).toHaveText('FR: Follow the lanterns.');
   // The other fields are left alone
   await expect(french.getByRole('textbox', { name: 'Title' })).toHaveValue('');
 
@@ -156,11 +154,9 @@ test('translates every empty field of a locale at once', async ({ cms, page }) =
     page.getByRole('status').filter({ hasText: /2 fields translated from/ }),
   ).toBeVisible();
   await expect(arabic.getByRole('textbox', { name: 'Title' })).toHaveValue('أسواق الليل');
-  await expect(arabic.getByRole('textbox', { name: 'Summary' })).toHaveValue(
-    '[ar] Eat after dark.',
-  );
+  await expect(arabic.getByRole('textbox', { name: 'Summary' })).toHaveValue('AR: Eat after dark.');
   await expect(arabic.getByRole('textbox', { name: 'Body' })).toHaveText(
-    '[ar] Follow the lanterns.',
+    'AR: Follow the lanterns.',
   );
   expect(requests.map(({ q, target }) => ({ q, target }))).toEqual([
     {
@@ -179,8 +175,8 @@ test('translates every empty field of a locale at once', async ({ cms, page }) =
   // The field that isn’t localized isn’t translated
   expect((await cms.readRepo())['content/articles/night-markets.ar.md']).toBe(
     markdown(
-      { title: 'أسواق الليل', date: '2026-05-01', tags: ['food'], summary: '[ar] Eat after dark.' },
-      '[ar] Follow the **lanterns**.',
+      { title: 'أسواق الليل', date: '2026-05-01', tags: ['food'], summary: 'AR: Eat after dark.' },
+      'AR: Follow the **lanterns**.',
     ),
   );
 });

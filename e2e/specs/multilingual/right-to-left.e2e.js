@@ -43,11 +43,7 @@ test('lays out the Arabic fields and preview right to left', async ({ page }) =>
   await expect(preview.getByText('ابدأ بالسوق المغطى.')).toHaveAttribute('dir', 'auto');
 });
 
-test('lays out the Arabic rich text editor left to right (known issue)', async ({ page }) => {
-  // Known issue: Sveltia UI’s `TextEditor` only applies its `dir` attribute to the Markdown source
-  // text area, not to the rich text editor, which is left to right in every locale. Its paragraphs
-  // take the direction of their own text, but an empty editor, a list or a mix of scripts is laid
-  // out left to right. Once it’s fixed, expect the editor’s `dir` attribute to be `rtl`
+test('lays out the Arabic rich text editor right to left', async ({ page }) => {
   await openEntry(page, 'Articles', /Lyon/);
 
   const arabic = await showLocale(page, 1, 'Arabic');
@@ -55,10 +51,34 @@ test('lays out the Arabic rich text editor left to right (known issue)', async (
   const body = field.getByRole('textbox', { name: 'Body' });
 
   await expect(body).toHaveText('ابدأ بالسوق المغطى.');
-  expect(await body.evaluate((element) => getComputedStyle(element).direction)).toBe('ltr');
+  await expect(body).toHaveAttribute('dir', 'rtl');
+  // A new paragraph follows the editor, although it has no text to take a direction from. Put the
+  // caret at the end, as a click would split the paragraph; the End key doesn’t move it on macOS
+  await body.evaluate((element) => {
+    /** @type {HTMLElement} */ (element).focus();
+    window.getSelection()?.selectAllChildren(element);
+    window.getSelection()?.collapseToEnd();
+  });
+  await page.keyboard.press('Enter');
+  await expect(body.locator('p')).toHaveCount(2);
+  await expect(body.locator('p').nth(1)).toHaveText('');
+  expect(
+    await body
+      .locator('p')
+      .nth(1)
+      .evaluate((element) => getComputedStyle(element).direction),
+  ).toBe('rtl');
 
+  // So does the Markdown source
   await field.getByRole('button', { name: 'Edit in Markdown' }).click();
   await expect(field.getByRole('textbox', { name: 'Body' })).toHaveAttribute('dir', 'rtl');
+
+  // The English editor is left to right
+  await expect(
+    getEditPane(page, 'English')
+      .getByRole('group', { name: /Body.*Field/ })
+      .getByRole('textbox', { name: 'Body' }),
+  ).toHaveAttribute('dir', 'ltr');
 });
 
 test('gives a localized slug in Arabic script to the Arabic file', async ({ cms, page }) => {

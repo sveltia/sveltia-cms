@@ -7,7 +7,7 @@ test.use({ config: MULTILINGUAL_CONFIG });
 
 /**
  * Bodies in the style the rich text editor writes, and in one it reads fine but writes in another
- * style, as `rich-text.e2e.js` of the monolingual site checks.
+ * style, as `rich-text.e2e.js` of the monolingual site checks in the default locale.
  */
 const BODIES = {
   canonical: { fr: '_Commencez_ par les halles.', ar: '_ابدأ_ بالسوق المغطى.' },
@@ -46,25 +46,29 @@ const seedBody = async (cms, locale, body) => {
     await expect(getEditor(page).getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 
-  test(`counts showing the ${localeName} body in another style as a change (known issue)`, async ({
+  test(`keeps the ${localeName} body in another style unchanged until it’s edited`, async ({
     cms,
     page,
   }) => {
-    // Known issue: the editor writes the Markdown back in its own style as soon as it shows it, in
-    // any locale, so the entry counts as changed once the locale is shown in a pane. A locale that
-    // isn’t shown isn’t converted. Once it’s fixed, the Save button stays disabled after the locale
-    // is shown: wait a second, as in the test above, and expect it to be disabled instead
+    const path = `content/articles/lyon.${locale}.md`;
+
     await seedBody(cms, /** @type {'fr' | 'ar'} */ (locale), BODIES.other[locale]);
     await openEntry(page, 'Articles', /Lyon/);
 
+    const pane = await showLocale(page, 1, localeName);
     const save = getEditor(page).getByRole('button', { name: 'Save' });
 
+    // Showing the body in the editor, which writes it in its own style, doesn’t count as a change.
+    // The Save button is enabled for a moment while the editor converts the body, so wait longer
+    // than that takes
+    await expect(pane.getByRole('textbox', { name: 'Body' }).locator('em')).toBeVisible();
     await page.waitForTimeout(1000);
     await expect(save).toBeDisabled();
 
-    const pane = await showLocale(page, 1, localeName);
-
-    await expect(pane.getByRole('textbox', { name: 'Body' }).locator('em')).toBeVisible();
-    await expect(save).toBeEnabled();
+    // Saving another field leaves the body as it was
+    await pane.getByRole('textbox', { name: 'Summary' }).fill('Résumé');
+    await save.click();
+    await expect(page.getByRole('status').filter({ hasText: 'Entry saved.' })).toBeVisible();
+    expect((await cms.readRepo())[path]).toContain(`\n\n${BODIES.other[locale]}\n`);
   });
 });
