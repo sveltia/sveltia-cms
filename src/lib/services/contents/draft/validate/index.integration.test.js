@@ -124,6 +124,36 @@ describe('contents/draft/validate (integration)', () => {
     expect(entryDraft.current.validities._default.tags.rangeUnderflow).toBe(true);
   });
 
+  it('should hold a list without subfields to its item count when only its items are stored', () => {
+    // A list loaded from a file is stored as `tags.0`, `tags.1`, etc. with no `tags` key, and its
+    // items have no field config of their own, so the list itself has to be checked from an item
+    const { currentValues } = entryDraft.current;
+
+    delete currentValues._default.tags;
+    currentValues._default['tags.0'] = 'one';
+
+    expect(validateEntry()).toBe(false);
+    expect(entryDraft.current.validities._default.tags.rangeUnderflow).toBe(true);
+    // Worded for a list, with the list’s own `min`
+    expect(entryDraft.current.validationMessages._default.tags).toEqual([
+      'validation.range_underflow.add',
+    ]);
+
+    // Too many items
+    currentValues._default['tags.1'] = 'two';
+    currentValues._default['tags.2'] = 'three';
+    currentValues._default['tags.3'] = 'four';
+
+    expect(validateEntry()).toBe(false);
+    expect(entryDraft.current.validities._default.tags.rangeOverflow).toBe(true);
+
+    // Within the range
+    delete currentValues._default['tags.3'];
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.tags.valid).toBe(true);
+  });
+
   it('should still reject an error that isn’t about the field being empty', () => {
     // Two digits: short of `minlength` and no match for the pattern, with a value present
     entryDraft.current.currentValues._default.code = '12';

@@ -572,12 +572,33 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
         return;
       }
 
-      const fieldConfig = getField({
-        ...getFieldArgs,
-        keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
-        valueMap,
-        componentName,
-      });
+      /**
+       * Get the configuration of a field in the value map.
+       * @param {FieldKeyPath} _keyPath Key path, which may have a component name prefix.
+       * @returns {Field | undefined} Field configuration.
+       */
+      const getConfig = (_keyPath) =>
+        getField({
+          ...getFieldArgs,
+          keyPath: _keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+          valueMap,
+          componentName,
+        });
+
+      const listKeyPath = LIST_KEY_PATH_REGEX.test(keyPath)
+        ? keyPath.replace(LIST_KEY_PATH_REGEX, '')
+        : undefined;
+
+      const listFieldConfig = listKeyPath === undefined ? undefined : getConfig(listKeyPath);
+
+      // An item of a List field without subfields has no config of its own, so the list stands in
+      // for it: the list is validated as a whole, while the items, plain strings, are left alone
+      const fieldConfig =
+        getConfig(keyPath) ??
+        (listFieldConfig?.widget === 'list' &&
+        !getListFieldInfo(/** @type {ListField} */ (listFieldConfig)).hasSubFields
+          ? listFieldConfig
+          : undefined);
 
       if (!fieldConfig) {
         return;
@@ -589,9 +610,7 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
       }
 
       // Validate a list itself before the items
-      if (LIST_KEY_PATH_REGEX.test(keyPath)) {
-        const listKeyPath = keyPath.replace(LIST_KEY_PATH_REGEX, '');
-
+      if (listKeyPath !== undefined) {
         const { valid: listValid, validateItems } = validateList({
           fieldConfig,
           validateArgs: {
@@ -615,14 +634,7 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
               validity: listValidity,
               // The item’s config is the subfield of a list with `field`, so the list’s own
               // config has to be used for the list’s messages, such as the minimum item count
-              fieldConfig: /** @type {Field} */ (
-                getField({
-                  ...getFieldArgs,
-                  keyPath: listKeyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''),
-                  valueMap,
-                  componentName,
-                })
-              ),
+              fieldConfig: /** @type {Field} */ (listFieldConfig),
             });
           }
         }
