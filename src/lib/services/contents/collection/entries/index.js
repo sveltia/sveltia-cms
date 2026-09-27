@@ -286,7 +286,9 @@ export const getEntriesByCollection = (collectionName) => {
  * @property {Asset} [asset] Asset without a URL to compare values with, as in an entry-relative
  * folder. A value refers to it when it resolves to the asset, which doesn’t require the asset to
  * have been loaded, unlike a blob URL.
- * @property {string} [newURL] New URL to replace the references with.
+ * @property {string | ((src: string) => string | undefined)} [newURL] New URL to replace the
+ * references with, or a function returning it from the reference being replaced, for a reference
+ * whose form depends on the entry holding it, like a path relative to the entry.
  */
 
 /**
@@ -378,10 +380,17 @@ const getMatchingTargets = (matcher, src, { entry, collectionName, fileName }) =
  * Get the new URL to replace a reference to the given targets with.
  * @param {AssetReferenceMatcher} matcher Matcher.
  * @param {number[]} indexes Indexes of the targets referred to.
+ * @param {string} src Reference being replaced.
  * @returns {string | undefined} New URL, if any.
  */
-const getNewURL = (matcher, indexes) =>
-  indexes.map((index) => matcher.targets[index].newURL).find(Boolean);
+const getNewURL = (matcher, indexes, src) =>
+  indexes
+    .map((index) => {
+      const { newURL } = matcher.targets[index];
+
+      return typeof newURL === 'function' ? newURL(src) : newURL;
+    })
+    .find(Boolean);
 
 /**
  * Check if the given value may refer to any of the targets, from its text alone. A value refers to
@@ -437,7 +446,7 @@ const matchField = ({
 
   if (MEDIA_FIELD_TYPES.includes(fieldType)) {
     const matched = getMatchingTargets(matcher, value, context);
-    const newURL = getNewURL(matcher, matched);
+    const newURL = getNewURL(matcher, matched, value);
 
     matched.forEach((index) => indexes.add(index));
 
@@ -463,7 +472,7 @@ const matchField = ({
         return image;
       }
 
-      const newURL = getNewURL(matcher, matched);
+      const newURL = getNewURL(matcher, matched, src);
 
       matched.forEach((index) => indexes.add(index));
       replacing ||= !!newURL;

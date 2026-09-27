@@ -713,6 +713,65 @@ describe('assets/data/move', () => {
       );
     });
 
+    it('should swap the file name in a reference relative to the entry when renaming', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/contents/collection/entries');
+      const entry = { id: 'entry1', locales: {} };
+
+      const asset = {
+        path: 'content/posts/hello/my photo.png',
+        name: 'my photo.png',
+        folder: { internalPath: 'content/posts', entryRelative: true },
+      };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
+
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { publicPath: '/images' },
+        movingAssets: [{ asset, path: 'content/posts/hello/new photo.png' }],
+        updatingEntryMap: new Map(),
+      });
+
+      const [[{ newURL }]] = vi.mocked(getEntriesByAssets).mock.lastCall;
+
+      // The rest of the reference is kept as the entry has it, and an encoded name stays encoded
+      expect(newURL('my photo.png')).toBe('new photo.png');
+      expect(newURL('./my photo.png')).toBe('./new photo.png');
+      expect(newURL('images/my%20photo.png')).toBe('images/new%20photo.png');
+      // A reference that doesn’t end with the name is left alone
+      expect(newURL('other.png')).toBeUndefined();
+      expect(newURL('not-my photo.png')).toBeUndefined();
+    });
+
+    it('should fall back to the folder paths when an entry-relative asset changes folders', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/contents/collection/entries');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+
+      const asset = {
+        path: 'content/posts/hello/photo.png',
+        name: 'photo.png',
+        folder: { internalPath: 'content/posts', entryRelative: true },
+      };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { publicPath: '/images' },
+        movingAssets: [{ asset, path: 'content/posts/hello/sub/photo.png' }],
+        updatingEntryMap: new Map(),
+      });
+
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ asset, newURL: '/images/hello/sub/photo.png' }],
+        { entries: [expect.objectContaining({ id: 'entry1' })] },
+      );
+    });
+
     it('should fall back to the global folder without a public path', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
       const { getEntriesByAssets } = await import('$lib/services/contents/collection/entries');

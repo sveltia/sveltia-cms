@@ -2449,6 +2449,29 @@ describe('getEntriesByAssets()', () => {
     });
   });
 
+  test('replaces a reference with the URL a function returns for it', async () => {
+    const { getMediaFieldSource } = await setup();
+    const asset = { path: 'posts/a/photo.jpg', name: 'photo.jpg' };
+    const content = { cover: './photo.jpg', body: '![p](photo.jpg) ![q](sub/photo.jpg)' };
+    const a = createEntry('a', content);
+
+    vi.mocked(getMediaFieldSource).mockImplementation(({ value }) =>
+      value.endsWith('photo.jpg') ? { asset } : undefined,
+    );
+
+    /**
+     * Rename the photo, except in a subfolder.
+     * @param {string} src Reference.
+     * @returns {string | undefined} New reference.
+     */
+    const newURL = (src) => (src.startsWith('sub/') ? undefined : src.replace('photo', 'image'));
+
+    await getEntriesByAssets([{ asset, newURL }], { entries: [a] });
+
+    // A reference the function gives no URL for is left alone
+    expect(content).toEqual({ cover: './image.jpg', body: '![p](image.jpg) ![q](sub/photo.jpg)' });
+  });
+
   test('leaves the references to a target without a new URL alone', async () => {
     await setup();
 

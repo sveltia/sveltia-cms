@@ -149,6 +149,26 @@ const getFallbackURL = ({ _globalAssetFolder, newPath, asset }) => {
 };
 
 /**
+ * Get a function that rewrites a reference to a renamed asset that has no public path, as in an
+ * entry-relative folder. Such a reference is relative to the entry holding it, so only its file
+ * name is swapped, leaving the rest — `./`, `../` or a subfolder — as the entry has it. A file name
+ * encoded in the reference, as with the `encode_file_path` option, is replaced in the same form.
+ * @param {string} oldName Current file name.
+ * @param {string} newName New file name.
+ * @returns {(src: string) => string | undefined} Function returning the new reference, or
+ * `undefined` if the reference doesn’t end with the file name.
+ */
+const getRenamedReference = (oldName, newName) => (src) => {
+  const [from, to] =
+    [
+      [oldName, newName],
+      [encodeURI(oldName), encodeURI(newName)],
+    ].find(([name]) => src === name || src.endsWith(`/${name}`)) ?? [];
+
+  return from === undefined ? undefined : `${src.slice(0, -from.length)}${to}`;
+};
+
+/**
  * Rewrite the references to the given assets in the entries that use them, so these point at the
  * assets’ new paths. The entries are searched once for all the assets, however many there are.
  * @param {object} args Arguments.
@@ -193,11 +213,18 @@ export const collectEntryChangesFromAssets = async ({
     // The new URL is worked out the same way as the current one, so that the public folder, the
     // `encode_file_path` option and template tags are all dealt with alike. A move stays within the
     // asset’s folder, so the folder still applies
+    const newName = newPath.slice(newPath.lastIndexOf('/') + 1);
+
     const newURL =
       getAssetPublicURL(
-        { ...asset, path: newPath, name: newPath.slice(newPath.lastIndexOf('/') + 1) },
+        { ...asset, path: newPath, name: newName },
         { pathOnly: true, allowSpecial: true },
-      ) ?? getFallbackURL({ _globalAssetFolder, newPath, asset });
+      ) ??
+      // A rename can be applied to a reference relative to the entry holding it
+      (asset.folder.entryRelative &&
+      newPath.slice(0, -newName.length) === asset.path.slice(0, -asset.name.length)
+        ? getRenamedReference(asset.name, newName)
+        : getFallbackURL({ _globalAssetFolder, newPath, asset }));
 
     replacingTargets.push({ ...targets[index], newURL });
     usedEntries[index].forEach((entry) => updatingEntries.add(entry));
