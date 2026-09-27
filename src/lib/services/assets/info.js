@@ -87,13 +87,14 @@ const cacheAssetBlobURL = async (asset, blob) => {
 };
 
 /**
- * Give the asset an object URL for the given downloaded blob, and remember the blob so that later
- * callers can have it without reading the URL back.
+ * Give the asset an object URL for the given downloaded or saved blob, and remember the blob so
+ * that later callers can have it without reading the URL back, which for an SVG image would give
+ * them the wrapper instead of the file.
  * @param {Asset} asset Asset.
  * @param {Blob} blob Blob.
  * @returns {Promise<Blob>} The same blob.
  */
-const cacheAssetBlob = async (asset, blob) => {
+export const cacheAssetBlob = async (asset, blob) => {
   await cacheAssetBlobURL(asset, blob);
 
   if (asset.blobURL) {

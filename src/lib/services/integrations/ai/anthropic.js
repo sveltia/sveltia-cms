@@ -21,7 +21,9 @@ const headers = {
 export const apiLabel = 'Anthropic API';
 export const developerURL = 'https://docs.claude.com/en/api/overview';
 export const apiKeyURL = 'https://platform.claude.com/settings/keys';
-export const apiKeyPattern = /sk-ant-api03-[a-zA-Z0-9-_]{80,}/;
+// Anchored, so a key for another service entered while this one is selected isn’t accepted and sent
+// to the wrong API
+export const apiKeyPattern = /^sk-ant-api03-[a-zA-Z0-9-_]{80,}$/;
 
 /**
  * Send a message to the Anthropic Messages API and return the response text.

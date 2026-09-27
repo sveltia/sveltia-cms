@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets';
+import { getAssetBlob } from '$lib/services/assets/info';
 import { backend } from '$lib/services/backends';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
@@ -71,6 +72,12 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
 
 vi.mock('$lib/services/utils/file', () => ({
   getBlob: vi.fn(() => ({ size: 1024 })),
+}));
+
+const { mockCreateInertSVG } = vi.hoisted(() => ({ mockCreateInertSVG: vi.fn() }));
+
+vi.mock('$lib/services/utils/media/image/svg', () => ({
+  createInertSVG: mockCreateInertSVG,
 }));
 
 vi.mock('@sveltia/utils/storage');
@@ -813,6 +820,34 @@ describe('save', () => {
         blobURL: mockBlobURL,
       });
       expect(URL.createObjectURL).toHaveBeenCalled();
+    });
+
+    test('should give a saved SVG image the URL of a wrapper that cannot run scripts', async () => {
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>';
+      const file = new File([svg], 'diagram.svg', { type: 'image/svg+xml' });
+      const wrapper = new Blob(['<svg>wrapper</svg>'], { type: 'image/svg+xml' });
+
+      mockCreateInertSVG.mockResolvedValue(wrapper);
+      mockCommitChanges.mockResolvedValue({
+        sha: 'commit456',
+        date: new Date('2023-01-01T12:00:00Z'),
+        files: { 'images/diagram.svg': { sha: 'file123', file } },
+      });
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://localhost/wrapper');
+
+      const result = await saveChanges({
+        changes: [{ action: 'create', path: 'images/diagram.svg', data: file }],
+        // @ts-ignore - Minimal test object
+        savingAssets: [{ path: 'images/diagram.svg', name: 'diagram.svg' }],
+        options: { commitType: 'create' },
+      });
+
+      expect(mockCreateInertSVG).toHaveBeenCalledWith(file);
+      expect(URL.createObjectURL).toHaveBeenCalledWith(wrapper);
+      expect(URL.createObjectURL).not.toHaveBeenCalledWith(file);
+      expect(result.savedAssets[0].blobURL).toBe('blob:http://localhost/wrapper');
+      // Reading the asset gives the file itself, not the wrapper behind its URL
+      await expect(getAssetBlob(result.savedAssets[0])).resolves.toBe(file);
     });
 
     test('should handle asset changes with missing file in commit results', async () => {

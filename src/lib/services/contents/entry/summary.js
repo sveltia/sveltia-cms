@@ -73,7 +73,12 @@ export const sanitizeEntrySummary = (str, { allowMarkdown = false } = {}) => {
     str = parseEntities(str);
   }
 
-  str = sanitize(str, { ALLOWED_TAGS: allowMarkdown ? ['strong', 'em', 'code'] : [] });
+  // Attributes are dropped, so an entry value cannot restyle the app with `style`, e.g. a title
+  // wrapped in `<strong style="position: fixed; inset: 0">` covering the whole page
+  str = sanitize(str, {
+    ALLOWED_TAGS: allowMarkdown ? ['strong', 'em', 'code'] : [],
+    ALLOWED_ATTR: [],
+  });
 
   if (!allowMarkdown) {
     str = parseEntities(str);

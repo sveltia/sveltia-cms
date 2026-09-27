@@ -14,7 +14,9 @@ const endpoint = 'https://api.deepseek.com/chat/completions';
 export const apiLabel = 'DeepSeek API';
 export const developerURL = 'https://api-docs.deepseek.com/';
 export const apiKeyURL = 'https://platform.deepseek.com/api_keys';
-export const apiKeyPattern = /sk-[a-zA-Z0-9]{32,}/;
+// Anchored, so a key for another service entered while this one is selected isn’t accepted and sent
+// to the wrong API
+export const apiKeyPattern = /^sk-[a-zA-Z0-9]{32,}$/;
 
 /**
  * Send a message to the DeepSeek Chat Completions API and return the response text.

@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { apiKeyPattern as anthropicKeyPattern } from './anthropic.js';
 import { chatCompletions, messages, responses } from './api.js';
+import { apiKeyPattern as deepseekKeyPattern } from './deepseek.js';
+import { apiKeyPattern as googleKeyPattern } from './google.js';
+import { apiKeyPattern as mistralKeyPattern } from './mistral.js';
+import { apiKeyPattern as openaiKeyPattern } from './openai.js';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -520,6 +525,40 @@ describe('AI API Utilities', () => {
           'Responses API error: 500 Server Error',
         );
       });
+    });
+  });
+});
+
+describe('API key patterns', () => {
+  // A key is saved as soon as it matches the selected service’s pattern, so a pattern that also
+  // matched another service’s key would send that key to the wrong API
+  const keys = {
+    anthropic: `sk-ant-api03-${'aB3_-x'.repeat(15)}AA`,
+    deepseek: `sk-${'0123456789abcdef'.repeat(2)}`,
+    google: `AIza${'SyAbCdEfGh'.repeat(3)}IjKlM`,
+    mistral: 'abcdefghijklmnopqrstuvwxyz123456',
+    openai: `sk-proj-${'aB3_-x'.repeat(10)}`,
+  };
+
+  const patterns = {
+    anthropic: anthropicKeyPattern,
+    deepseek: deepseekKeyPattern,
+    google: googleKeyPattern,
+    mistral: mistralKeyPattern,
+    openai: openaiKeyPattern,
+  };
+
+  it.each(Object.keys(patterns))('should accept only a %s key', (service) => {
+    Object.entries(keys).forEach(([keyService, key]) => {
+      expect(patterns[/** @type {keyof typeof patterns} */ (service)].test(key)).toBe(
+        keyService === service,
+      );
+    });
+  });
+
+  it('should not accept a key with extra text around it', () => {
+    Object.entries(keys).forEach(([service, key]) => {
+      expect(patterns[/** @type {keyof typeof patterns} */ (service)].test(`x ${key}`)).toBe(false);
     });
   });
 });

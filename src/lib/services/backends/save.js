@@ -1,4 +1,5 @@
 import { allAssets } from '$lib/services/assets';
+import { cacheAssetBlob } from '$lib/services/assets/info';
 import { backend } from '$lib/services/backends';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
@@ -172,12 +173,28 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
       (entry) => /** @type {Entry} */ ({ ...entry, commitAuthor, commitDate }),
     );
 
-    const savedAssets = savingAssets.map((asset) => {
-      const { sha, file } = files[asset.path] ?? {};
-      const blobURL = file ? URL.createObjectURL(file) : undefined;
+    const savedAssets = await Promise.all(
+      savingAssets.map(async (asset) => {
+        const { sha, file } = files[asset.path] ?? {};
 
-      return /** @type {Asset} */ ({ ...asset, sha, blobURL, commitAuthor, commitDate });
-    });
+        const savedAsset = /** @type {Asset} */ ({
+          ...asset,
+          sha,
+          blobURL: undefined,
+          commitAuthor,
+          commitDate,
+        });
+
+        // The URL has the CMS origin and can be opened in a new tab from a preview, so an SVG image
+        // gets the URL of a wrapper that can’t run any script, like an asset loaded from the
+        // repository does. The file is remembered with it, so reading the asset gives the file
+        if (file) {
+          await cacheAssetBlob(savedAsset, file);
+        }
+
+        return savedAsset;
+      }),
+    );
 
     await updateCache({ changes, commit });
     updateStores({ changes, savedEntries, savedAssets });

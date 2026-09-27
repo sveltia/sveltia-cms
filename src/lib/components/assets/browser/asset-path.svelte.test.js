@@ -15,6 +15,18 @@ describe('AssetPath', () => {
     expect(name.querySelectorAll('wbr')).toHaveLength(3);
   });
 
+  test('strips markup and attributes from the file name', async () => {
+    const { container } = await render(AssetPath, {
+      path: 'images/<img src=x onerror=alert(1)><wbr style="position:fixed;inset:0">a.png',
+    });
+
+    const name = /** @type {HTMLElement} */ (container.querySelector('.name'));
+
+    expect(name.querySelector('img')).toBeNull();
+    expect(name.querySelector('strong [style]')).toBeNull();
+    expect(name.querySelector('strong')?.innerHTML).toBe('<wbr>a.<wbr>png');
+  });
+
   test('falls back to the caption', async () => {
     const { container } = await render(AssetPath, { caption: 'Untitled' });
 

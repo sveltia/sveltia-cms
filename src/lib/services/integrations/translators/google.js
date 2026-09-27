@@ -7,7 +7,9 @@ const serviceLabel = 'Google Cloud Translation';
 const apiLabel = 'Cloud Translation API';
 const developerURL = 'https://console.cloud.google.com/apis/library/translate.googleapis.com';
 const apiKeyURL = 'https://console.cloud.google.com/apis/api/translate.googleapis.com/credentials';
-const apiKeyPattern = /AIza[0-9A-Za-z-_]{35}/;
+// Anchored, so a key for another service entered while this one is selected isn’t accepted and sent
+// to the wrong API
+const apiKeyPattern = /^AIza[0-9A-Za-z-_]{35}$/;
 
 /**
  * Supported source/target languages for Google Cloud Translation API.

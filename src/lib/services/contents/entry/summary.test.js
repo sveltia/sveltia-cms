@@ -507,6 +507,16 @@ describe('Test sanitizeEntrySummary()', () => {
     expect(result).toBe('<strong>Safe</strong>');
   });
 
+  test('should strip attributes from allowed Markdown tags', () => {
+    const input =
+      '<strong style="position: fixed; inset: 0" class="x" id="y">A</strong> ' +
+      '&lt;em style=&quot;display: block&quot;&gt;B&lt;/em&gt;';
+
+    const result = sanitizeEntrySummary(input, { allowMarkdown: true });
+
+    expect(result).toBe('<strong>A</strong> <em>B</em>');
+  });
+
   test('should trim whitespace', () => {
     const input = '  Test content  ';
     const result = sanitizeEntrySummary(input);
