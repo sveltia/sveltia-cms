@@ -12,6 +12,7 @@
    */
 
   const entryDraft = getEntryDraftContext();
+  const id = $props.id();
 
   /** @type {EntryBacklink[]} */
   const backlinks = $derived.by(() => {
@@ -53,9 +54,9 @@
 
 <PanelContainer title={_('entry_sidebar.backlinks.title')}>
   {#if backlinks.length > 0}
-    {#each groupedEntries as { collectionLabel, items } (collectionLabel)}
-      <section class="collection" role="group">
-        <h4>{collectionLabel}</h4>
+    {#each groupedEntries as { collectionLabel, items }, index (collectionLabel)}
+      <section class="collection" role="group" aria-labelledby="{id}-{index}-label">
+        <h4 id="{id}-{index}-label">{collectionLabel}</h4>
         {#each items as ref (ref.entry.id)}
           <Button
             class="ref"

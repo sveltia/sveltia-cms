@@ -58,7 +58,7 @@ describe('BacklinksPanel', () => {
     });
 
     const panel = page.getByRole('group', { name: 'Backlinks' });
-    const group = panel.getByRole('group');
+    const group = panel.getByRole('group', { name: 'Posts' });
 
     await expect.element(group.getByRole('heading', { level: 4 })).toHaveTextContent('Posts');
     expect(
