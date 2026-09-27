@@ -10,7 +10,6 @@
   import { _ } from '@sveltia/i18n';
   import { AlertDialog, Button, Icon, Listbox, Option, SearchBar } from '@sveltia/ui';
   import { isObject } from '@sveltia/utils/object';
-  import { untrack } from 'svelte';
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { loadModule } from '$lib/services/app/dependencies';
@@ -21,6 +20,7 @@
     roundCoordinates,
   } from '$lib/services/contents/fields/map/helpers';
   import { toFixed } from '$lib/services/utils/number';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import Leaflet from 'leaflet';
@@ -318,30 +318,26 @@
     currentValue = '';
   };
 
-  $effect(() => {
-    void draw;
-    void currentValue;
-
-    untrack(() => {
+  watch(
+    () => [draw, currentValue],
+    () => {
       setInputValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void inputValue;
-
-    untrack(() => {
+  watch(
+    () => inputValue,
+    () => {
       setCurrentValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void searchQuery;
-
-    untrack(() => {
+  watch(
+    () => searchQuery,
+    () => {
       searchLocation();
-    });
-  });
+    },
+  );
 </script>
 
 <div role="none" class="toolbar">

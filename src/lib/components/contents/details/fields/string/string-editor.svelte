@@ -6,18 +6,18 @@
 -->
 <script>
   import { TextInput } from '@sveltia/ui';
-  import { getContext } from 'svelte';
 
   import CharacterCounter from '$lib/components/contents/details/fields/string/character-counter.svelte';
+  import { setExtraHint } from '$lib/services/contents/editor/extra-hint.svelte';
   import {
     getStringFieldValue,
     getStringInputValue,
   } from '$lib/services/contents/fields/string/helpers';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { syncValues } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { StringField } from '$lib/types/public';
    */
 
@@ -40,9 +40,6 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /** @type {FieldEditorContext} */
-  const { extraHint } = getContext('field-editor') ?? {};
-
   let inputValue = $state('');
 
   const {
@@ -51,49 +48,21 @@
     use_emoji_autocomplete: useEmojiAutocomplete = type === 'text',
   } = $derived(fieldConfig);
 
-  /**
-   * Update {@link inputValue} based on {@link currentValue}.
-   */
-  const setInputValue = () => {
-    const newValue = getStringInputValue({ currentValue, fieldConfig });
-
-    // Avoid a cycle dependency & infinite loop
-    if (inputValue !== newValue) {
-      inputValue = newValue;
-    }
-  };
-
-  /**
-   * Update {@link currentValue} based on {@link inputValue}.
-   */
-  const setCurrentValue = () => {
-    const newValue = getStringFieldValue({ inputValue, fieldConfig });
-
-    // Avoid a cycle dependency & infinite loop
-    if (currentValue !== newValue) {
-      currentValue = newValue;
-    }
-  };
-
-  watch(
+  // Sync `inputValue` with `currentValue` in both directions
+  syncValues(
     () => currentValue,
-    () => {
-      setInputValue();
+    (value) => {
+      currentValue = value;
     },
-  );
-
-  watch(
     () => inputValue,
-    () => {
-      setCurrentValue();
+    (input) => {
+      inputValue = input;
     },
+    (value) => getStringInputValue({ currentValue: value, fieldConfig }),
+    (input) => getStringFieldValue({ inputValue: input, fieldConfig }),
   );
 
-  $effect(() => {
-    if (extraHint) {
-      extraHint.current = CharacterCounter;
-    }
-  });
+  setExtraHint(CharacterCounter);
 </script>
 
 <TextInput

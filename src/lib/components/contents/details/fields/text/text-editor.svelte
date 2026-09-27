@@ -6,14 +6,14 @@
 -->
 <script>
   import { TextArea } from '@sveltia/ui';
-  import { getContext } from 'svelte';
 
   import CharacterCounter from '$lib/components/contents/details/fields/string/character-counter.svelte';
+  import { setExtraHint } from '$lib/services/contents/editor/extra-hint.svelte';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { syncValues } from '$lib/services/utils/state.svelte';
 
   /**
-   * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
+   * @import { FieldEditorProps } from '$lib/types/private';
    * @import { TextField } from '$lib/types/public';
    */
 
@@ -22,9 +22,6 @@
    * @property {TextField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
    */
-
-  /** @type {FieldEditorContext} */
-  const { extraHint } = getContext('field-editor') ?? {};
 
   /** @type {FieldEditorProps & Props} */
   let {
@@ -43,47 +40,20 @@
 
   const { use_emoji_autocomplete: useEmojiAutocomplete = true } = $derived(fieldConfig);
 
-  /**
-   * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
-   */
-  const setInputValue = () => {
-    const newValue = typeof currentValue === 'string' ? currentValue : '';
-
-    if (inputValue !== newValue) {
-      inputValue = newValue;
-    }
-  };
-
-  /**
-   * Update {@link currentValue} based on {@link inputValue} while avoiding a cycle dependency.
-   */
-  const setCurrentValue = () => {
-    const newValue = inputValue;
-
-    if (currentValue !== newValue) {
-      currentValue = newValue;
-    }
-  };
-
-  watch(
+  // Sync `inputValue` with `currentValue` in both directions
+  syncValues(
     () => currentValue,
-    () => {
-      setInputValue();
+    (value) => {
+      currentValue = value;
     },
-  );
-
-  watch(
     () => inputValue,
-    () => {
-      setCurrentValue();
+    (input) => {
+      inputValue = input;
     },
+    (value) => (typeof value === 'string' ? value : ''),
   );
 
-  $effect(() => {
-    if (extraHint) {
-      extraHint.current = CharacterCounter;
-    }
-  });
+  setExtraHint(CharacterCounter);
 </script>
 
 <TextArea

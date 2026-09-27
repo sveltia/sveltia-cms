@@ -176,3 +176,59 @@ export const watch = (getDependencies, fn) => {
     return untrack(fn);
   });
 };
+
+/**
+ * Keep a field value and the value of its input in sync in both directions, like a bindable prop
+ * and the local state bound to an input widget. A change to either side is converted and written to
+ * the other side, but only if the converted value is different, so that the other side’s watcher
+ * doesn’t set off an infinite loop. Each side is watched with {@link watch}, so the converters can
+ * read other state, e.g. the field configuration, without being rerun on changes to it. The
+ * arguments are positional because an arrow function in an object literal would need a JSDoc
+ * comment of its own at every call site.
+ * @template V, I
+ * @param {() => V} getValue Function returning the field value.
+ * @param {(value: V) => void} setValue Function updating the field value.
+ * @param {() => I} getInput Function returning the input value.
+ * @param {(input: I) => void} setInput Function updating the input value.
+ * @param {(value: V) => I} [toInput] Function converting a field value to an input value. Defaults
+ * to returning the value as is.
+ * @param {(input: I) => V} [toValue] Function converting an input value to a field value. Defaults
+ * to returning the value as is.
+ * @returns {{ updateInput: () => void, updateValue: () => void }} Functions to sync the input
+ * value with the field value and vice versa on demand, e.g. when the input loses focus.
+ */
+export const syncValues = (
+  getValue,
+  setValue,
+  getInput,
+  setInput,
+  toInput = (value) => /** @type {I} */ (/** @type {unknown} */ (value)),
+  toValue = (input) => /** @type {V} */ (/** @type {unknown} */ (input)),
+) => {
+  /**
+   * Update the input value based on the field value.
+   */
+  const updateInput = () => {
+    const input = toInput(getValue());
+
+    if (getInput() !== input) {
+      setInput(input);
+    }
+  };
+
+  /**
+   * Update the field value based on the input value.
+   */
+  const updateValue = () => {
+    const value = toValue(getInput());
+
+    if (getValue() !== value) {
+      setValue(value);
+    }
+  };
+
+  watch(getValue, updateInput);
+  watch(getInput, updateValue);
+
+  return { updateInput, updateValue };
+};

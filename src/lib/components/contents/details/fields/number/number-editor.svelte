@@ -11,7 +11,7 @@
     getNumberFieldValue,
     getNumberInputValue,
   } from '$lib/services/contents/fields/number/helpers';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { syncValues } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -41,43 +41,19 @@
 
   const { min, max, step = 1 } = $derived(fieldConfig);
 
-  /**
-   * Update {@link inputValue} based on {@link currentValue}.
-   */
-  const setInputValue = () => {
-    const newValue = getNumberInputValue({ currentValue, fieldConfig });
-
-    // Avoid a cycle dependency & infinite loop
-    if (inputValue !== newValue) {
-      inputValue = newValue;
-    }
-  };
-
-  /**
-   * Update {@link currentValue} based on {@link inputValue}. Cast the value according to the
-   * `value_type` configuration.
-   */
-  const setCurrentValue = () => {
-    const newValue = getNumberFieldValue({ inputValue, fieldConfig });
-
-    // Avoid a cycle dependency & infinite loop
-    if (currentValue !== newValue) {
-      currentValue = newValue;
-    }
-  };
-
-  watch(
+  // Sync `inputValue` with `currentValue` in both directions, casting the value according to the
+  // `value_type` configuration
+  const { updateInput } = syncValues(
     () => currentValue,
-    () => {
-      setInputValue();
+    (value) => {
+      currentValue = value;
     },
-  );
-
-  watch(
     () => inputValue,
-    () => {
-      setCurrentValue();
+    (input) => {
+      inputValue = input;
     },
+    (value) => getNumberInputValue({ currentValue: value, fieldConfig }),
+    (input) => getNumberFieldValue({ inputValue: input, fieldConfig }),
   );
 </script>
 
@@ -93,6 +69,6 @@
   aria-errormessage="{fieldId}-error"
   onblur={() => {
     // Ensure synchronization on blur
-    setInputValue();
+    updateInput();
   }}
 />

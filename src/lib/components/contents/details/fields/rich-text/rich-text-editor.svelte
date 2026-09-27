@@ -41,7 +41,7 @@
   } from '$lib/services/contents/fields/rich-text/images';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-  import { watch } from '$lib/services/utils/state.svelte';
+  import { syncValues, watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { ImageEntry } from '$lib/services/contents/fields/rich-text/images';
@@ -265,15 +265,10 @@
   };
 
   /**
-   * Update {@link inputValue} based on {@link currentValue} while avoiding a cycle dependency.
+   * Remove the extra values of the components that are no longer present in the editor, shortly
+   * after {@link currentValue} has changed.
    */
-  const setInputValue = () => {
-    const newValue = typeof currentValue === 'string' ? currentValue : '';
-
-    if (inputValue !== newValue) {
-      inputValue = newValue;
-    }
-
+  const scheduleExtraValueCleanup = () => {
     // Skip cleanup when used as a nested component editor
     const draft = entryDraft.current;
 
@@ -299,28 +294,24 @@
     }, 500);
   };
 
-  /**
-   * Update {@link currentValue} based on {@link inputValue} while avoiding a cycle dependency.
-   */
-  const setCurrentValue = () => {
-    const newValue = inputValue;
+  // Sync `inputValue` with `currentValue` in both directions
+  syncValues(
+    () => currentValue,
+    (value) => {
+      currentValue = value;
+    },
+    () => inputValue,
+    (input) => {
+      inputValue = input;
+    },
+    (value) => (typeof value === 'string' ? value : ''),
+  );
 
-    if (currentValue !== newValue) {
-      currentValue = newValue;
-    }
-  };
-
+  // Registered after the sync above, so it runs right after the input value has been updated
   watch(
     () => currentValue,
     () => {
-      setInputValue();
-    },
-  );
-
-  watch(
-    () => inputValue,
-    () => {
-      setCurrentValue();
+      scheduleExtraValueCleanup();
     },
   );
 

@@ -10,6 +10,7 @@ import {
   createStableDerivedState,
   createState,
   getSnapshot,
+  syncValues,
   watch,
 } from './state.svelte.js';
 
@@ -235,6 +236,100 @@ describe('watch()', () => {
     dependency.current = 2;
     await wait();
     expect(log).toEqual(['run 1 a', 'cleanup', 'run 2 b']);
+
+    stop();
+  });
+});
+
+describe('syncValues()', () => {
+  it('should sync the input value with the field value and vice versa', async () => {
+    const value = createRawState(/** @type {string | undefined} */ (undefined));
+    const input = createRawState('');
+    /** @type {string[]} */
+    const writes = [];
+    /** @type {{ updateInput: () => void, updateValue: () => void } | undefined} */
+    let sync;
+
+    const stop = createRootEffect(() => {
+      sync = syncValues(
+        () => value.current,
+        (newValue) => {
+          writes.push(`value ${newValue}`);
+          value.current = newValue;
+        },
+        () => input.current,
+        (newInput) => {
+          writes.push(`input ${newInput}`);
+          input.current = newInput;
+        },
+        (newValue) => newValue ?? '',
+        (newInput) => newInput.trim(),
+      );
+    });
+
+    await wait();
+    // Both sides are synced on the first run: the converted value `''` equals the input, so it’s
+    // not written, but the converted input `''` differs from the `undefined` value, so it is
+    expect(writes).toEqual(['value ']);
+    expect(value.current).toBe('');
+    writes.length = 0;
+
+    value.current = 'a';
+    await wait();
+    expect(input.current).toBe('a');
+    // The input watcher then converts `a` back to `a`, which is equal, so it’s not written again
+    expect(writes).toEqual(['input a']);
+
+    writes.length = 0;
+    input.current = ' b ';
+    await wait();
+    expect(value.current).toBe('b');
+    // The value watcher then converts `b` to `b`, which is different from ` b `, so the input is
+    // normalized
+    expect(writes).toEqual(['value b', 'input b']);
+
+    writes.length = 0;
+    input.current = 'b';
+    await wait();
+    // Equal on both sides, so nothing is written
+    expect(writes).toEqual([]);
+
+    // The returned functions sync on demand
+    input.current = 'c';
+    sync?.updateInput();
+    expect(input.current).toBe('b');
+    input.current = 'c';
+    sync?.updateValue();
+    expect(value.current).toBe('c');
+    sync?.updateValue();
+    expect(writes).toEqual(['input b', 'value c']);
+
+    stop();
+  });
+
+  it('should pass the values as is without converters', async () => {
+    const value = createRawState('a');
+    const input = createRawState('');
+
+    const stop = createRootEffect(() => {
+      syncValues(
+        () => value.current,
+        (newValue) => {
+          value.current = newValue;
+        },
+        () => input.current,
+        (newInput) => {
+          input.current = newInput;
+        },
+      );
+    });
+
+    await wait();
+    expect(input.current).toBe('a');
+
+    input.current = 'b';
+    await wait();
+    expect(value.current).toBe('b');
 
     stop();
   });
