@@ -24,6 +24,7 @@ import {
   getExternalSubfolderAssets,
   getSharedMediaLibraryOptions,
   loadExternalAssets,
+  prepareExternalUploads,
   renameExternalAsset,
   renameExternalFolder,
   uploadExternalAssets,
@@ -252,6 +253,31 @@ describe('assets/external/data', () => {
 
       expect(externalAssets.current).toBeUndefined();
       expect(externalAssetsError.current).toBeUndefined();
+    });
+  });
+
+  describe('prepareExternalUploads', () => {
+    it('should process the files with the given options and sort out the rejected ones', async () => {
+      const valid = new File(['x'], 'ok.png', { type: 'image/png' });
+      const oversized = new File(['x'], 'big.png', { type: 'image/png' });
+      const invalid = new File(['x'], 'bad.png', { type: 'image/png' });
+      const options = { max_file_size: 1 };
+
+      vi.mocked(processFile).mockImplementation(async (f) => ({
+        file: f,
+        originalFile: undefined,
+        oversized: f === oversized,
+        invalid: f === invalid,
+      }));
+
+      const result = await prepareExternalUploads([valid, oversized, invalid], options);
+
+      expect(processFile).toHaveBeenCalledWith(valid, options);
+      expect(result).toEqual({
+        validFiles: [valid],
+        oversizedFileNames: ['big.png'],
+        invalidFileNames: ['bad.png'],
+      });
     });
   });
 

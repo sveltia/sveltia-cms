@@ -4,7 +4,7 @@
 -->
 <script>
   import CreateSubfolderDialog from '$lib/components/assets/list/create-subfolder-dialog.svelte';
-  import { browsedDirPath } from '$lib/services/assets/subfolders';
+  import { browsedDirPath, getTakenNames } from '$lib/services/assets/subfolders';
   import {
     listedAssets,
     listedSubfolders,
@@ -12,10 +12,12 @@
   } from '$lib/services/assets/view';
 
   /** Names already taken in the directory, by a subfolder or a file. */
-  const takenNames = $derived([
-    ...listedSubfolders.current.map((subfolder) => subfolder.name),
-    ...listedAssets.current.map((asset) => asset.name),
-  ]);
+  const takenNames = $derived(
+    getTakenNames({
+      subfolders: listedSubfolders.current,
+      fileNames: listedAssets.current.map(({ name }) => name),
+    }),
+  );
 </script>
 
 <CreateSubfolderDialog

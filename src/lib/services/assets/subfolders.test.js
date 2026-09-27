@@ -5,9 +5,11 @@ import {
   canBrowseSubfolders,
   formatSubfolderName,
   getDirName,
+  getFolderBreadcrumbItems,
   getRelativePath,
   getSubfolderPath,
   getSubfolders,
+  getTakenNames,
   getUploadDirPath,
   resolveAssetFolderPath,
   selectedSubfolderPath,
@@ -319,6 +321,60 @@ describe('assets/subfolders', () => {
       const assets = ['static/imagesets/photo.jpg'].map(createAsset);
 
       expect(getSubfolders({ dirPath: 'static/images', assets })).toEqual([]);
+    });
+  });
+
+  describe('getTakenNames', () => {
+    const subfolders = [
+      { name: 'archive', path: 'images/archive' },
+      { name: '2024', path: 'images/2024' },
+    ];
+
+    const fileNames = ['hero.png', 'logo.svg'];
+
+    it('should list the subfolder and file names', () => {
+      expect(getTakenNames({ subfolders, fileNames })).toEqual([
+        'archive',
+        '2024',
+        'hero.png',
+        'logo.svg',
+      ]);
+    });
+
+    it('should leave out the subfolder being renamed', () => {
+      expect(getTakenNames({ subfolders, fileNames, exclude: '2024' })).toEqual([
+        'archive',
+        'hero.png',
+        'logo.svg',
+      ]);
+    });
+  });
+
+  describe('getFolderBreadcrumbItems', () => {
+    it('should return no item at the root', () => {
+      const onBrowse = vi.fn();
+
+      expect(
+        getFolderBreadcrumbItems({ rootLabel: 'Media', subfolderNames: [], onBrowse }),
+      ).toEqual([]);
+    });
+
+    it('should lead each ancestor back to itself, ending with the subfolder being browsed', () => {
+      const onBrowse = vi.fn();
+
+      const items = getFolderBreadcrumbItems({
+        rootLabel: 'Media',
+        subfolderNames: ['2024', 'summer', 'beach'],
+        onBrowse,
+      });
+
+      expect(items.map(({ label }) => label)).toEqual(['Media', '2024', 'summer', 'beach']);
+      expect(items.at(-1)).toEqual({ label: 'beach' });
+
+      items[0].onClick?.();
+      expect(onBrowse).toHaveBeenLastCalledWith({ depth: 0, path: '' });
+      items[2].onClick?.();
+      expect(onBrowse).toHaveBeenLastCalledWith({ depth: 2, path: '2024/summer' });
     });
   });
 

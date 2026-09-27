@@ -214,6 +214,26 @@ export const loadExternalAssets = async (service) => {
 };
 
 /**
+ * Validate and transform files before they are uploaded to a cloud storage service, and sort out
+ * the ones that can’t be uploaded, so the caller can tell the user.
+ * @param {File[]} files Files to be uploaded.
+ * @param {SharedMediaLibraryOptions} options Media library options, which include the file size
+ * limit and the transformations to apply.
+ * @returns {Promise<{ validFiles: File[], oversizedFileNames: string[], invalidFileNames: string[]
+ * }>} Files that can be uploaded, and the names of the files that were rejected.
+ */
+export const prepareExternalUploads = async (files, options) => {
+  const processed = await Promise.all(files.map((file) => processFile(file, options)));
+  const { validFiles, oversizedFiles, invalidFiles } = partitionProcessedFiles(processed);
+
+  return {
+    validFiles,
+    oversizedFileNames: oversizedFiles.map(({ name }) => name),
+    invalidFileNames: invalidFiles.map(({ name }) => name),
+  };
+};
+
+/**
  * Upload files to the selected cloud storage service, or replace an existing asset with a file.
  * Files are validated and transformed according to the shared media library options first, and
  * any rejected file is reported back so the caller can tell the user.
@@ -225,11 +245,11 @@ export const loadExternalAssets = async (service) => {
  */
 export const uploadExternalAssets = async (files, { originalAsset } = {}) => {
   const service = selectedCloudService.current;
-  const sharedOptions = getSharedMediaLibraryOptions();
-  const processed = await Promise.all(files.map((file) => processFile(file, sharedOptions)));
-  const { validFiles, oversizedFiles, invalidFiles } = partitionProcessedFiles(processed);
-  const oversizedFileNames = oversizedFiles.map(({ name }) => name);
-  const invalidFileNames = invalidFiles.map(({ name }) => name);
+
+  const { validFiles, oversizedFileNames, invalidFileNames } = await prepareExternalUploads(
+    files,
+    getSharedMediaLibraryOptions(),
+  );
 
   if (service && validFiles.length) {
     externalAssetsToast.current = {

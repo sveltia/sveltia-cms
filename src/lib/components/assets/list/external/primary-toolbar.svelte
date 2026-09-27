@@ -16,8 +16,8 @@
     focusedExternalAsset,
     getExternalAssetPath,
     selectedCloudService,
-    selectedExternalAssets,
     selectedExternalDirPath,
+    selectedOrFocusedExternalAssets,
   } from '$lib/services/assets/external';
   import { deleteExternalAssets, fetchExternalAssetBlob } from '$lib/services/assets/external/data';
   import { browsingExternalFolders } from '$lib/services/assets/external/view';
@@ -39,11 +39,7 @@
       ? selectedExternalDirPath.current.split('/')
       : [],
   );
-  const assets = $derived.by(() => {
-    if (selectedExternalAssets.current.length) return [...selectedExternalAssets.current];
-    if (asset) return [asset];
-    return [];
-  });
+  const assets = $derived(selectedOrFocusedExternalAssets.current);
 </script>
 
 <PrimaryToolbar

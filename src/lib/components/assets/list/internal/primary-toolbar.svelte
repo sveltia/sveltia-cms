@@ -10,7 +10,7 @@
   import PreviewAssetButton from '$lib/components/assets/list/preview-asset-button.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
-  import { focusedAsset, selectedAssets } from '$lib/services/assets';
+  import { focusedAsset, selectedOrFocusedAssets } from '$lib/services/assets';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
@@ -37,11 +37,7 @@
   );
   const asset = $derived(focusedAsset.current);
 
-  const assets = $derived.by(() => {
-    if (selectedAssets.current.length) return [...selectedAssets.current];
-    if (asset) return [asset];
-    return [];
-  });
+  const assets = $derived(selectedOrFocusedAssets.current);
 
   // Uploading to the media library commits straight to the configured branch rather than going
   // through review, so it’s not something an Open Authoring contributor can do. An asset attached

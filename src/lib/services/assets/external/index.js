@@ -169,6 +169,18 @@ export const selectedExternalAssetIdSet = createDerivedState(
 export const focusedExternalAsset = createRawState();
 
 /**
+ * Assets the toolbar actions operate on: the selected assets, or else the focused asset, if any.
+ * @type {{ readonly current: ExternalAsset[] }}
+ */
+export const selectedOrFocusedExternalAssets = createDerivedState(() => {
+  if (selectedExternalAssets.current.length) {
+    return [...selectedExternalAssets.current];
+  }
+
+  return focusedExternalAsset.current ? [focusedExternalAsset.current] : [];
+});
+
+/**
  * ID of the asset whose details are shown in the overlay, taken from the URL. The asset itself is
  * looked up in {@link externalAssets} once the list is loaded.
  * @type {{ current: string | undefined }}

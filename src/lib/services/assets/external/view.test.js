@@ -19,6 +19,9 @@ import {
   externalAssetSortKeys,
   externalAssetViewGroups,
   filterExternalAssets,
+  getExternalAssetsInDir,
+  getExternalFolderLabel,
+  getExternalSubfolders,
   getGroupValue,
   getSortValue,
   groupExternalAssets,
@@ -262,6 +265,36 @@ describe('assets/external/view', () => {
       externalAssetSearchTerms.current = 'hero';
 
       expect(listedExternalAssets.current).toEqual([hero2, hero]);
+    });
+  });
+
+  describe('getExternalSubfolders', () => {
+    it('should list the subfolders read off the asset paths and the empty folders', () => {
+      expect(getExternalSubfolders({ dirPath: '', assets, folders: ['archive'] })).toEqual([
+        { name: 'archive', path: 'archive' },
+        { name: 'docs', path: 'docs' },
+        { name: 'images', path: 'images' },
+      ]);
+      expect(
+        getExternalSubfolders({ dirPath: 'images', assets, folders: ['images/empty'] }),
+      ).toEqual([{ name: 'empty', path: 'images/empty' }]);
+      expect(getExternalSubfolders({ dirPath: 'docs', assets, folders: [] })).toEqual([]);
+    });
+  });
+
+  describe('getExternalAssetsInDir', () => {
+    it('should only return the assets right in the folder', () => {
+      expect(getExternalAssetsInDir({ dirPath: 'images', assets })).toEqual([hero2, hero]);
+      expect(getExternalAssetsInDir({ dirPath: '', assets })).toEqual([]);
+    });
+  });
+
+  describe('getExternalFolderLabel', () => {
+    it('should return the folder path, or the service name at the root', () => {
+      expect(getExternalFolderLabel({ dirPath: 'images/2024', serviceLabel: 'Amazon S3' })).toBe(
+        '/images/2024',
+      );
+      expect(getExternalFolderLabel({ dirPath: '', serviceLabel: 'Amazon S3' })).toBe('Amazon S3');
     });
   });
 

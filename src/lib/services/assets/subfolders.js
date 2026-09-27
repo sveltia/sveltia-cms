@@ -9,7 +9,13 @@ import { createPath, sanitizeFileName } from '$lib/services/utils/file';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Asset, AssetFolderInfo, AssetSubfolder, UploadingAssets } from '$lib/types/private';
+ * @import {
+ * Asset,
+ * AssetFolderInfo,
+ * AssetSubfolder,
+ * BreadcrumbItem,
+ * UploadingAssets,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -173,6 +179,50 @@ export const listSubfolders = ({ dirPath, paths }) => {
   });
 
   return [...names].sort(compare).map((name) => ({ name, path: createPath([dirPath, name]) }));
+};
+
+/**
+ * Get the names already taken in a directory, by a subfolder or a file, which a new or renamed
+ * subfolder can’t be given.
+ * @param {object} args Arguments.
+ * @param {AssetSubfolder[]} args.subfolders Subfolders of the directory.
+ * @param {string[]} args.fileNames Names of the files right in the directory.
+ * @param {string} [args.exclude] Name of the subfolder being renamed, which it can keep.
+ * @returns {string[]} Names.
+ */
+export const getTakenNames = ({ subfolders, fileNames, exclude = undefined }) => [
+  ...subfolders.map(({ name }) => name).filter((name) => name !== exclude),
+  ...fileNames,
+];
+
+/**
+ * Get the breadcrumb trail of the subfolder being browsed, from the location root down. Each
+ * ancestor leads back to itself; the last item is the subfolder being browsed.
+ * @param {object} args Arguments.
+ * @param {string} args.rootLabel Label of the location root, e.g. the asset folder or the cloud
+ * storage service.
+ * @param {string[]} args.subfolderNames Names of the subfolders leading to the one being browsed,
+ * from the location root down. Empty at the root.
+ * @param {(ancestor: { depth: number, path: string }) => void} args.onBrowse Called when an
+ * ancestor is selected, with how many subfolder names to keep, `0` being the root, and its path
+ * relative to the root, which is an empty string for the root.
+ * @returns {BreadcrumbItem[]} Items. Empty at the root, where there is no trail to show.
+ */
+export const getFolderBreadcrumbItems = ({ rootLabel, subfolderNames, onBrowse }) => {
+  if (!subfolderNames.length) {
+    return [];
+  }
+
+  return [
+    ...[rootLabel, ...subfolderNames.slice(0, -1)].map((label, depth) => ({
+      label,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      onClick: () => {
+        onBrowse({ depth, path: subfolderNames.slice(0, depth).join('/') });
+      },
+    })),
+    { label: /** @type {string} */ (subfolderNames.at(-1)) },
+  ];
 };
 
 /**

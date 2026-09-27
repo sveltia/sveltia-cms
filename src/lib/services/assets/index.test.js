@@ -28,6 +28,7 @@ import {
   renamingAsset,
   selectedAssetPathSet,
   selectedAssets,
+  selectedOrFocusedAssets,
   uploadingAssets,
 } from '.';
 
@@ -113,6 +114,20 @@ describe('assets/index', () => {
       expect(selectedAssetPathSet.current).toEqual(new Set(['a.jpg', 'b.jpg']));
       selectedAssets.current = [];
       expect(selectedAssetPathSet.current).toEqual(new Set());
+    });
+
+    it('should derive selectedOrFocusedAssets from the selection, or else the focused asset', () => {
+      const a = /** @type {any} */ ({ path: 'a.jpg' });
+      const b = /** @type {any} */ ({ path: 'b.jpg' });
+
+      expect(selectedOrFocusedAssets.current).toEqual([]);
+      focusedAsset.current = a;
+      expect(selectedOrFocusedAssets.current).toEqual([a]);
+      selectedAssets.current = [b];
+      expect(selectedOrFocusedAssets.current).toEqual([b]);
+      expect(selectedOrFocusedAssets.current).not.toBe(selectedAssets.current);
+      selectedAssets.current = [];
+      focusedAsset.current = undefined;
     });
 
     it('should initialize focusedAsset as undefined', () => {

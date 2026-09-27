@@ -121,6 +121,18 @@ export const selectedAssetPathSet = createDerivedState(
 export const focusedAsset = createRawState();
 
 /**
+ * Assets the toolbar actions operate on: the selected assets, or else the focused asset, if any.
+ * @type {{ readonly current: Asset[] }}
+ */
+export const selectedOrFocusedAssets = createDerivedState(() => {
+  if (selectedAssets.current.length) {
+    return [...selectedAssets.current];
+  }
+
+  return focusedAsset.current ? [focusedAsset.current] : [];
+});
+
+/**
  * Asset to be displayed in `<AssetDetailsOverlay>`.
  * @type {{ current: Asset | undefined }}
  */

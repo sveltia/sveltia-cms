@@ -3,8 +3,8 @@
   import { untrack } from 'svelte';
 
   import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
+  import PickerBreadcrumb from '$lib/components/assets/browser/picker-breadcrumb.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import Breadcrumb from '$lib/components/common/breadcrumb.svelte';
   import { selectAssetsView } from '$lib/services/contents/editor';
 
   /**
@@ -60,9 +60,6 @@
   /** @type {DropZone | undefined} */
   let dropZone = $state();
 
-  /** Names of the subfolders leading to the one being browsed, from the folder root down. */
-  const subfolderNames = $derived(subfolderPath ? subfolderPath.split('/') : []);
-
   $effect(() => {
     if (!selectedResources.length) {
       untrack(() => {
@@ -74,22 +71,7 @@
 
 <DropZone bind:this={dropZone} disabled={selectFolder} {multiple} {accept} {onDrop}>
   <div role="none" class="wrapper">
-    {#if subfolderNames.length}
-      <!-- Each ancestor leads back to itself, like the breadcrumb of the Asset Library -->
-      <Breadcrumb
-        class="picker-breadcrumb"
-        items={[
-          ...[folderLabel, ...subfolderNames.slice(0, -1)].map((label, depth) => ({
-            label,
-            // eslint-disable-next-line jsdoc/require-jsdoc
-            onClick: () => {
-              onNavigate?.(subfolderNames.slice(0, depth).join('/'));
-            },
-          })),
-          { label: /** @type {string} */ (subfolderNames.at(-1)) },
-        ]}
-      />
-    {/if}
+    <PickerBreadcrumb rootLabel={folderLabel} path={subfolderPath} {onNavigate} />
     <div role="none" class="panel">
       <AssetsPanel
         {multiple}
@@ -115,15 +97,6 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-  }
-
-  :global(.picker-breadcrumb) {
-    flex: none;
-    padding: 0 8px 8px;
-
-    :global(.current) {
-      font-weight: var(--sui-font-weight-bold);
-    }
   }
 
   .panel {

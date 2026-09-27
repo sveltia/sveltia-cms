@@ -9,7 +9,7 @@
 
   import SubfolderNameDialog from '$lib/components/assets/list/subfolder-name-dialog.svelte';
   import { getSubfolderAssets, renameSubfolder } from '$lib/services/assets/data/subfolder';
-  import { getDirName, renamingSubfolder } from '$lib/services/assets/subfolders';
+  import { getDirName, getTakenNames, renamingSubfolder } from '$lib/services/assets/subfolders';
   import { listedAssets, listedSubfolders } from '$lib/services/assets/view';
   import { createPath } from '$lib/services/utils/file';
 
@@ -26,10 +26,13 @@
   const assetCount = $derived(subfolder ? getSubfolderAssets(subfolder.path).length : 0);
   /* v8 ignore stop */
   /** Names taken by the siblings of the folder, which it can’t take over. */
-  const takenNames = $derived([
-    ...listedSubfolders.current.map(({ name }) => name).filter((n) => n !== currentName),
-    ...listedAssets.current.map(({ name }) => name),
-  ]);
+  const takenNames = $derived(
+    getTakenNames({
+      subfolders: listedSubfolders.current,
+      fileNames: listedAssets.current.map(({ name }) => name),
+      exclude: currentName,
+    }),
+  );
 
   /**
    * Rename the folder.

@@ -15,10 +15,11 @@
   } from '$lib/services/assets/external';
   import {
     browsingExternalFolders,
+    getExternalAssetsInDir,
+    getExternalSubfolders,
     listedExternalAssets,
     listedExternalSubfolders,
   } from '$lib/services/assets/external/view';
-  import { getDirName, listSubfolders } from '$lib/services/assets/subfolders';
 
   /**
    * @import { MediaLibraryService } from '$lib/types/private';
@@ -40,14 +41,12 @@
       return {
         name,
         path,
-        folderCount: listSubfolders({
+        folderCount: getExternalSubfolders({
           dirPath: path,
-          paths: [
-            ...assets.map(({ description }) => description),
-            ...externalFolders.current.map((dirPath) => `${dirPath}/`),
-          ],
+          assets,
+          folders: externalFolders.current,
         }).length,
-        assetCount: assets.filter(({ description }) => getDirName(description) === path).length,
+        assetCount: getExternalAssetsInDir({ dirPath: path, assets }).length,
       };
     }
 

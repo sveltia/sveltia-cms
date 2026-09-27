@@ -10,6 +10,7 @@
   import { onMount } from 'svelte';
 
   import AssetPath from '$lib/components/assets/browser/asset-path.svelte';
+  import PickerBreadcrumb from '$lib/components/assets/browser/picker-breadcrumb.svelte';
   import SimpleImageGridItem from '$lib/components/assets/browser/simple-image-grid-item.svelte';
   import SimpleImageGrid from '$lib/components/assets/browser/simple-image-grid.svelte';
   import SubfolderStrip from '$lib/components/assets/browser/subfolder-strip.svelte';
@@ -18,11 +19,17 @@
   import CloudServiceAuth from '$lib/components/assets/shared/cloud-service-auth.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
-  import Breadcrumb from '$lib/components/common/breadcrumb.svelte';
   import { getFetchOptions } from '$lib/services/assets/external';
-  import { fetchExternalAssetBlob } from '$lib/services/assets/external/data';
-  import { partitionProcessedFiles, processFile } from '$lib/services/assets/process';
-  import { getDirName, getRelativePath, listSubfolders } from '$lib/services/assets/subfolders';
+  import {
+    fetchExternalAssetBlob,
+    prepareExternalUploads,
+  } from '$lib/services/assets/external/data';
+  import {
+    getExternalAssetsInDir,
+    getExternalFolderLabel,
+    getExternalSubfolders,
+  } from '$lib/services/assets/external/view';
+  import { getRelativePath, getTakenNames } from '$lib/services/assets/subfolders';
   import { cmsConfig } from '$lib/services/config';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { env } from '$lib/services/user/env.svelte';
@@ -142,31 +149,17 @@
   const panelAssets = $derived.by(() => {
     const assets = listedAssets ?? [];
 
-    return browsing
-      ? assets.filter(({ description }) => getDirName(description) === dirPath)
-      : assets;
+    return browsing ? getExternalAssetsInDir({ dirPath, assets }) : assets;
   });
   const subfolders = $derived(
-    browsing
-      ? listSubfolders({
-          dirPath,
-          paths: [
-            ...(listedAssets ?? []).map(({ description }) => description),
-            // An empty folder is given with a trailing slash, as it has no file to be read off
-            ...folders.map((path) => `${path}/`),
-          ],
-        })
-      : [],
+    browsing ? getExternalSubfolders({ dirPath, assets: listedAssets ?? [], folders }) : [],
   );
-  /** Names of the folders leading to the one being browsed, from the service root down. */
-  const subfolderNames = $derived(dirPath ? dirPath.split('/') : []);
   /** Names already taken in the folder being browsed, which a new folder can’t be given. */
-  const takenNames = $derived([
-    ...subfolders.map(({ name }) => name),
-    ...panelAssets.map(({ fileName }) => fileName),
-  ]);
+  const takenNames = $derived(
+    getTakenNames({ subfolders, fileNames: panelAssets.map(({ fileName }) => fileName) }),
+  );
   /** The folder being browsed, named after the service at the root. */
-  const folderLabel = $derived(dirPath ? `/${dirPath}` : serviceLabel);
+  const folderLabel = $derived(getExternalFolderLabel({ dirPath, serviceLabel }));
 
   /**
    * Search or list assets from the external media library.
@@ -234,12 +227,11 @@
       return;
     }
 
-    const processed = await Promise.all(files.map((f) => processFile(f, allMediaLibraryOptions)));
-    const { validFiles, oversizedFiles, invalidFiles } = partitionProcessedFiles(processed);
+    const prepared = await prepareExternalUploads(files, allMediaLibraryOptions);
 
-    files = validFiles;
-    oversizedFileNames = oversizedFiles.map(({ name }) => name);
-    invalidFileNames = invalidFiles.map(({ name }) => name);
+    files = prepared.validFiles;
+    oversizedFileNames = prepared.oversizedFileNames;
+    invalidFileNames = prepared.invalidFileNames;
 
     if (oversizedFileNames.length || invalidFileNames.length) {
       showRejectedFilesAlert = true;
@@ -379,20 +371,13 @@
 </script>
 
 {#snippet breadcrumb()}
-  {#if browsing && subfolderNames.length}
-    <!-- Each ancestor leads back to itself, like the breadcrumb of the Asset Library -->
-    <Breadcrumb
-      class="picker-breadcrumb"
-      items={[
-        ...[serviceLabel, ...subfolderNames.slice(0, -1)].map((label, depth) => ({
-          label,
-          // eslint-disable-next-line jsdoc/require-jsdoc
-          onClick: () => {
-            dirPath = subfolderNames.slice(0, depth).join('/');
-          },
-        })),
-        { label: /** @type {string} */ (subfolderNames.at(-1)) },
-      ]}
+  {#if browsing}
+    <PickerBreadcrumb
+      rootLabel={serviceLabel}
+      path={dirPath}
+      onNavigate={(path) => {
+        dirPath = path;
+      }}
     />
   {/if}
 {/snippet}
@@ -514,15 +499,6 @@
 {/if}
 
 <style>
-  :global(.picker-breadcrumb) {
-    flex: none;
-    padding: 0 8px 8px;
-
-    :global(.current) {
-      font-weight: var(--sui-font-weight-bold);
-    }
-  }
-
   .grid-wrapper {
     overflow-y: auto;
     height: 100%;

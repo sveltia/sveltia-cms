@@ -16,6 +16,7 @@
     listedExternalAssets,
     listedExternalSubfolders,
   } from '$lib/services/assets/external/view';
+  import { getTakenNames } from '$lib/services/assets/subfolders';
 
   let open = $state(false);
 
@@ -26,10 +27,13 @@
   const assetCount = $derived(subfolder ? getExternalSubfolderAssets(subfolder.path).length : 0);
   /* v8 ignore stop */
   /** Names taken by the siblings of the folder, which it can’t take over. */
-  const takenNames = $derived([
-    ...listedExternalSubfolders.current.map(({ name }) => name).filter((n) => n !== currentName),
-    ...listedExternalAssets.current.map(({ fileName }) => fileName),
-  ]);
+  const takenNames = $derived(
+    getTakenNames({
+      subfolders: listedExternalSubfolders.current,
+      fileNames: listedExternalAssets.current.map(({ fileName }) => fileName),
+      exclude: currentName,
+    }),
+  );
 
   $effect(() => {
     if (subfolder) {

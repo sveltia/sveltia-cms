@@ -15,9 +15,11 @@
   } from '$lib/services/assets/external';
   import { createExternalFolder } from '$lib/services/assets/external/data';
   import {
+    getExternalFolderLabel,
     listedExternalAssets,
     listedExternalSubfolders,
   } from '$lib/services/assets/external/view';
+  import { getTakenNames } from '$lib/services/assets/subfolders';
 
   /**
    * @import { MediaLibraryService } from '$lib/types/private';
@@ -26,13 +28,18 @@
   /** The component is only rendered while a service is selected. */
   const service = $derived(/** @type {MediaLibraryService} */ (selectedCloudService.current));
   /** Names already taken in the folder being browsed, which a new folder can’t be given. */
-  const takenNames = $derived([
-    ...listedExternalSubfolders.current.map(({ name }) => name),
-    ...listedExternalAssets.current.map(({ fileName }) => fileName),
-  ]);
+  const takenNames = $derived(
+    getTakenNames({
+      subfolders: listedExternalSubfolders.current,
+      fileNames: listedExternalAssets.current.map(({ fileName }) => fileName),
+    }),
+  );
   /** The folder being browsed, named after the service at the root. */
   const folderLabel = $derived(
-    selectedExternalDirPath.current ? `/${selectedExternalDirPath.current}` : service.serviceLabel,
+    getExternalFolderLabel({
+      dirPath: selectedExternalDirPath.current,
+      serviceLabel: service.serviceLabel,
+    }),
   );
 </script>
 

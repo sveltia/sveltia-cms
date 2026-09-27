@@ -11,6 +11,7 @@
   import Breadcrumb from '$lib/components/common/breadcrumb.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
+  import { getFolderBreadcrumbItems } from '$lib/services/assets/subfolders';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -43,15 +44,19 @@
 
   /** The subfolder being browsed is the title; at the root, the location itself is. */
   const title = $derived(subfolderNames.at(-1) ?? rootLabel);
-  /** Ancestor folders of the subfolder being browsed, each leading back to itself. */
+  /** Trail of the subfolder being browsed, each ancestor leading back to itself. */
   const breadcrumbs = $derived(
-    subfolderNames.length
-      ? [rootLabel, ...subfolderNames.slice(0, -1)].map((label, depth) => ({
-          label,
-          // eslint-disable-next-line jsdoc/require-jsdoc
-          onClick: () => onBrowse(depth, false),
-        }))
-      : [],
+    getFolderBreadcrumbItems({
+      rootLabel,
+      subfolderNames,
+      /**
+       * Browse the ancestor selected in the breadcrumb.
+       * @param {{ depth: number }} ancestor Ancestor.
+       */
+      onBrowse: ({ depth }) => {
+        onBrowse(depth, false);
+      },
+    }),
   );
 </script>
 
@@ -70,7 +75,7 @@
   {/if}
   <h2 role="none">
     {#if !env.isSmallScreen && breadcrumbs.length}
-      <Breadcrumb items={[...breadcrumbs, { label: title }]} />
+      <Breadcrumb items={breadcrumbs} />
     {:else}
       <bdi>{title}</bdi>
     {/if}

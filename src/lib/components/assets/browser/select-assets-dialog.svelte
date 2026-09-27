@@ -26,6 +26,7 @@
     getDirName,
     getRelativePath,
     getSubfolders,
+    getTakenNames,
   } from '$lib/services/assets/subfolders';
   import { selectAssetsView, showContentOverlay } from '$lib/services/contents/editor';
   import { checkDuplicates } from '$lib/services/contents/fields/file/duplicates.svelte';
@@ -228,10 +229,9 @@
     browsingSubfolders ? getSubfolders({ dirPath: browsedPath, assets: listedAssets }) : [],
   );
   /** Names already taken in the browsed directory, which a new folder can’t be given. */
-  const takenNames = $derived([
-    ...subfolders.map(({ name }) => name),
-    ...panelAssets.map(({ name }) => name),
-  ]);
+  const takenNames = $derived(
+    getTakenNames({ subfolders, fileNames: panelAssets.map(({ name }) => name) }),
+  );
   /** Label of the selected folder, at the start of the breadcrumb. */
   const selectedFolderLabel = $derived(
     selectedFolder?.label || _(`assets_dialog.folder.${libraryName.replace('default-', '')}`),

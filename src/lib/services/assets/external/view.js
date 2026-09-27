@@ -174,6 +174,50 @@ export const searchExternalAssets = (assets, terms) => {
 };
 
 /**
+ * List the immediate subfolders of a folder on a cloud storage service with folder support, read
+ * off the paths of the files below it and the empty folders kept by a placeholder.
+ * @param {object} args Arguments.
+ * @param {string} args.dirPath Folder path relative to the configured prefix. An empty string for
+ * the root.
+ * @param {ExternalAsset[]} args.assets Assets on the service, whose `description` is the file path.
+ * @param {string[]} args.folders Paths of the empty folders on the service.
+ * @returns {AssetSubfolder[]} Subfolders, sorted by name.
+ */
+export const getExternalSubfolders = ({ dirPath, assets, folders }) =>
+  listSubfolders({
+    dirPath,
+    paths: [
+      ...assets.map(({ description }) => description),
+      // An empty folder is given with a trailing slash, as it has no file to be read off
+      ...folders.map((path) => `${path}/`),
+    ],
+  });
+
+/**
+ * Get the assets right in a folder on a cloud storage service with folder support, leaving out the
+ * ones in its subfolders.
+ * @param {object} args Arguments.
+ * @param {string} args.dirPath Folder path relative to the configured prefix. An empty string for
+ * the root.
+ * @param {ExternalAsset[]} args.assets Assets on the service, whose `description` is the file path.
+ * @returns {ExternalAsset[]} Assets in the folder.
+ */
+export const getExternalAssetsInDir = ({ dirPath, assets }) =>
+  assets.filter(({ description }) => getDirName(description) === dirPath);
+
+/**
+ * Get the label of a folder on a cloud storage service, which is the folder path, or the service
+ * name at the root.
+ * @param {object} args Arguments.
+ * @param {string} args.dirPath Folder path relative to the configured prefix. An empty string for
+ * the root.
+ * @param {string} args.serviceLabel Service name.
+ * @returns {string} Label, e.g. `/images/2024` or `Amazon S3`.
+ */
+export const getExternalFolderLabel = ({ dirPath, serviceLabel }) =>
+  dirPath ? `/${dirPath}` : serviceLabel;
+
+/**
  * Whether the selected cloud storage service is being browsed folder by folder: it has folder
  * support, and nothing is being searched for. A search looks through the whole service instead,
  * listing the matches with their paths.
@@ -193,13 +237,10 @@ export const listedExternalSubfolders = createDerivedState(() => {
     return [];
   }
 
-  return listSubfolders({
+  return getExternalSubfolders({
     dirPath: selectedExternalDirPath.current,
-    paths: [
-      ...(externalAssets.current ?? []).map(({ description }) => description),
-      // An empty folder is given with a trailing slash, as it has no file to be read off
-      ...externalFolders.current.map((dirPath) => `${dirPath}/`),
-    ],
+    assets: externalAssets.current ?? [],
+    folders: externalFolders.current,
   });
 });
 
@@ -215,9 +256,7 @@ export const listedExternalAssets = createDerivedState(() => {
   let assets = externalAssets.current ?? [];
 
   if (browsingExternalFolders.current) {
-    const dirPath = selectedExternalDirPath.current;
-
-    assets = assets.filter(({ description }) => getDirName(description) === dirPath);
+    assets = getExternalAssetsInDir({ dirPath: selectedExternalDirPath.current, assets });
   }
 
   assets = sortExternalAssets(assets, sort);
