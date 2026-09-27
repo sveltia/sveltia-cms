@@ -1,3 +1,4 @@
+import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -183,28 +184,75 @@ describe('KeyValueEditor', () => {
     await expect.poll(() => getStoredPairs(draft)).toEqual({ size: 'L' });
   });
 
-  test('stores a placeholder for an empty field, so it can be validated', async () => {
+  test('offers a blank row for an empty field, storing a placeholder so it can be validated', async () => {
     const { draft } = await renderEditor({});
 
-    expect(getRows()).toEqual([]);
+    // Like a simple List field, there’s always somewhere to type
+    expect(getRows()).toEqual([['', '']]);
+    await expect
+      .element(page.getByRole('button', { name: 'Remove' }))
+      .toHaveAttribute('aria-disabled', 'true');
     await expect.poll(() => draft.currentValues._default.meta).toBe(null);
+    expect(getStoredPairs(draft)).toEqual({});
+
+    // The blank row is stored once its key is filled in
+    await page.getByRole('textbox', { name: 'Key' }).fill('color');
+    await expect.poll(() => getStoredPairs(draft)).toEqual({ color: '' });
+    expect(draft.currentValues._default.meta).toBeUndefined();
+  });
+
+  test('leaves the blank pair of a required field’s default value alone', async () => {
+    const { draft } = await renderEditor({ '': '' });
+
+    expect(getRows()).toEqual([['', '']]);
+    // Give the editor time to write to the draft, which it mustn’t, or opening an entry would
+    // count as a change
+    await sleep(100);
+    expect(draft.currentValues._default).toEqual({ 'meta.': '' });
+  });
+
+  test('leaves a blank row once the last pair is removed', async () => {
+    const { draft } = await renderEditor({ color: 'red' });
+
+    await page.getByRole('button', { name: 'Remove' }).click();
+
+    await expect.poll(getRows).toEqual([['', '']]);
+    await expect.poll(() => getStoredPairs(draft)).toEqual({});
+    await expect.poll(() => draft.currentValues._default.meta).toBe(null);
+  });
+
+  test('offers no blank row where the keys follow the default locale', async () => {
+    await renderEditor({}, { config: { i18n: 'duplicate_keys' }, locale: 'fr' });
+
+    await expect.element(page.getByRole('button', { name: /Add\W+meta/ })).toBeVisible();
+    expect(getRows()).toEqual([]);
   });
 
   test('names the Add button after the singular label', async () => {
     await renderEditor({}, { config: { label: 'Settings', label_singular: 'Setting' } });
 
     await page.getByRole('button', { name: /Add\W+Setting\W*$/ }).click();
-    await expect.element(page.getByRole('textbox', { name: 'Key' })).toHaveFocus();
+    await expect.element(page.getByRole('textbox', { name: 'Key' }).nth(1)).toHaveFocus();
   });
 
   test('hides the Add button at the maximum, showing it again once a pair is removed', async () => {
-    await renderEditor({ color: 'red' }, { config: { max: 1 } });
+    await renderEditor({ color: 'red', size: 'L' }, { config: { max: 2 } });
 
-    await expect.element(page.getByRole('textbox', { name: 'Key' })).toBeVisible();
+    await expect.element(page.getByRole('textbox', { name: 'Key' }).nth(1)).toBeVisible();
     expect(page.getByRole('button', { name: /Add\W+meta/ }).elements()).toHaveLength(0);
 
-    await page.getByRole('button', { name: 'Remove' }).click();
+    await page.getByRole('button', { name: 'Remove' }).nth(1).click();
     await expect.element(page.getByRole('button', { name: /Add\W+meta/ })).toBeVisible();
+  });
+
+  test('keeps the blank row of a field limited to one pair without an Add button', async () => {
+    await renderEditor({ color: 'red' }, { config: { max: 1 } });
+
+    await page.getByRole('button', { name: 'Remove' }).click();
+
+    // The blank row takes the place of the removed pair, like the row of a simple List field
+    await expect.poll(getRows).toEqual([['', '']]);
+    expect(page.getByRole('button', { name: /Add\W+meta/ }).elements()).toHaveLength(0);
   });
 
   test('moves on to the next row, or adds one, with the Enter key in a value field', async () => {

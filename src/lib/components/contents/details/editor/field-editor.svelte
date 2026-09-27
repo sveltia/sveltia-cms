@@ -9,7 +9,13 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { CustomEditor, editors } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
+  import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import {
+    canClearField,
+    CLEARABLE_FIELD_TYPES,
+    clearField,
+  } from '$lib/services/contents/draft/update/clear';
   import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
@@ -172,7 +178,27 @@
   /* v8 ignore stop */
   const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
   const canTranslate = $derived(i18nEnabled && isFieldTranslatable(i18n));
-  const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
+  // A field without an `i18n` option of its own is duplicated along with an ancestor using the
+  // `duplicate` strategy, so it’s shown read-only in the other locales like the ancestor, rather
+  // than leaving an empty List item or Object field there. A rich text editor component’s subfield
+  // isn’t part of the entry’s fields, so it only has its own option
+  const canDuplicate = $derived(
+    i18nEnabled &&
+      (inEditorComponent
+        ? i18n === 'duplicate'
+        : isDuplicatedField({
+            fieldConfig,
+            getFieldArgs: {
+              // The editor is only rendered while the draft is there
+              collectionName: /** @type {string} */ (entryDraft.current?.collectionName),
+              fileName: entryDraft.current?.fileName,
+              isIndexFile: entryDraft.current?.isIndexFile,
+              keyPath,
+              valueMap,
+            },
+          })),
+  );
   // KeyValue field only: the keys are mirrored from the default locale, the values are editable
   const canDuplicateKeys = $derived(i18nEnabled && i18n === 'duplicate_keys');
   const canEdit = $derived(
@@ -184,7 +210,6 @@
   );
   const canCopy = $derived(!inEditorComponent && canTranslate && otherLocales.length);
   const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));
-  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({ valueMap, keyPath, isList, isCustomFieldType: !!customFieldType }),
@@ -205,8 +230,19 @@
     // The `readonly` option defaults to `true` for the UUID field type, which can be unlocked
     (readonlyOption ?? fieldType === 'uuid') ||
       pendingDeletion ||
-      (i18n === 'duplicate' && locale !== defaultLocale) ||
+      (canDuplicate && locale !== defaultLocale) ||
       fieldType === 'compute',
+  );
+  // The fields with multiple inputs can be cleared at once, unless their keys follow the default
+  // locale, as with a KeyValue field using the `duplicate_keys` i18n strategy
+  const canClear = $derived(
+    !inEditorComponent &&
+      !readonly &&
+      CLEARABLE_FIELD_TYPES.includes(fieldType) &&
+      !(canDuplicateKeys && locale !== defaultLocale),
+  );
+  const isClearDisabled = $derived(
+    !canClear || !canClearField({ valueMap, fieldConfig, keyPath, locale, defaultLocale }),
   );
   const invalid = $derived(validity?.valid === false);
   const editorProps = $derived({
@@ -257,7 +293,7 @@
       {#if canCopy && ['richtext', 'markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
         <TranslateButton size="small" {locale} {otherLocales} {keyPath} />
       {/if}
-      {#if canCopy || canRevert}
+      {#if canCopy || canRevert || canClear}
         <MenuButton
           variant="ghost"
           size="small"
@@ -284,6 +320,20 @@
                   });
                 }}
               />
+              {#if canClear}
+                <MenuItem
+                  label={_('clear')}
+                  disabled={isClearDisabled}
+                  onclick={() => {
+                    clearField({
+                      draft: /** @type {EntryDraft} */ (entryDraft.current),
+                      fieldConfig,
+                      keyPath,
+                      locale,
+                    });
+                  }}
+                />
+              {/if}
             </Menu>
           {/snippet}
         </MenuButton>

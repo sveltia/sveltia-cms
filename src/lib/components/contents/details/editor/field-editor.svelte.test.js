@@ -1,9 +1,10 @@
 import { sleep } from '@sveltia/utils/misc';
 import { createElement } from 'react';
-import { describe, expect, test, vi } from 'vitest';
+import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
+import { initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import FieldEditor from './field-editor.svelte';
@@ -148,6 +149,67 @@ describe('FieldEditor', () => {
 
     await expect.poll(() => draft.currentValues.en.title).toBe('Hello');
     await expect.element(page.getByRole('textbox')).toHaveValue('Hello');
+  });
+
+  test('clears a field with multiple inputs from the field options', async () => {
+    const { draft } = await renderEditor({
+      fieldConfig: { name: 'tags', widget: 'list' },
+      values: { 'tags.0': 'a', 'tags.1': 'b' },
+    });
+
+    const optionsButton = page.getByRole('button', { name: 'Show Field Options' });
+
+    await optionsButton.click();
+    await page.getByRole('menuitem', { name: 'Clear' }).click();
+    await expect.poll(() => draft.currentValues.en).toEqual({ tags: [] });
+    await expect.element(page.getByRole('textbox')).toHaveValue('');
+
+    // There’s nothing left to clear, but the change can be reverted
+    await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
+    await optionsButton.click();
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Clear' }))
+      .toHaveAttribute('aria-disabled', 'true');
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Revert Changes' }))
+      .toHaveAttribute('aria-disabled', 'false');
+  });
+
+  test('clears a KeyValue field, leaving a blank row', async () => {
+    const { draft } = await renderEditor({
+      fieldConfig: { name: 'meta', widget: 'keyvalue' },
+      values: { 'meta.a': '1', 'meta.b': '2' },
+    });
+
+    await page.getByRole('button', { name: 'Show Field Options' }).click();
+    await page.getByRole('menuitem', { name: 'Clear' }).click();
+
+    await expect.poll(() => draft.currentValues.en).toEqual({ meta: null });
+    await expect.element(page.getByRole('textbox', { name: 'Key' })).toHaveValue('');
+    await expect.element(page.getByRole('textbox', { name: 'Value' })).toHaveValue('');
+  });
+
+  test('offers to clear a field with multiple inputs only', async () => {
+    await renderEditor({
+      fieldConfig: { name: 'title', widget: 'string' },
+      values: { title: 'Hi' },
+    });
+
+    await page.getByRole('button', { name: 'Show Field Options' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Revert Changes' })).toBeVisible();
+    expect(page.getByRole('menuitem', { name: 'Clear' }).elements()).toHaveLength(0);
+  });
+
+  test('doesn’t offer to clear a KeyValue field whose keys follow the default locale', async () => {
+    await renderEditor({
+      fieldConfig: { name: 'meta', widget: 'keyvalue', i18n: 'duplicate_keys' },
+      locale: 'ja',
+      i18nEnabled: true,
+    });
+
+    await page.getByRole('button', { name: 'Show Field Options' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Revert Changes' })).toBeVisible();
+    expect(page.getByRole('menuitem', { name: 'Clear' }).elements()).toHaveLength(0);
   });
 
   test('renders nothing for a hidden field or a non-translatable field in another locale', async () => {
@@ -390,5 +452,95 @@ describe('FieldEditor', () => {
     await expect
       .element(page.getByRole('menuitem', { name: 'Revert Changes' }))
       .toHaveAttribute('aria-disabled', 'false');
+  });
+});
+
+describe('FieldEditor (nested in a duplicated field)', () => {
+  /** @type {Field} */
+  const venueField = {
+    name: 'venue',
+    widget: 'object',
+    i18n: 'duplicate',
+    fields: [
+      { name: 'name', widget: 'string' },
+      { name: 'note', widget: 'string', i18n: true },
+    ],
+  };
+
+  beforeAll(async () => {
+    // The ancestors of a subfield are looked up in the configuration
+    await initTestConfig({
+      i18n: { structure: 'multiple_files', locales: ['en', 'ja'], default_locale: 'en' },
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          i18n: true,
+          fields: [venueField],
+        },
+      ],
+    });
+  });
+
+  /**
+   * Render the editor of a subfield of the Venue field in Japanese.
+   * @param {Field} fieldConfig Subfield configuration.
+   * @returns {Promise<void>}
+   */
+  const renderSubField = async (fieldConfig) => {
+    const draft = createMockDraft({
+      fields: [venueField],
+      i18n: { i18nEnabled: true, defaultLocale: 'en', allLocales: ['en', 'ja'] },
+      values: {
+        en: { 'venue.name': 'Hall', 'venue.note': 'Big' },
+        ja: { 'venue.name': 'Hall', 'venue.note': '大' },
+      },
+    });
+
+    const keyPath = `venue.${fieldConfig.name}`;
+
+    await renderWithDraft(FieldEditor, {
+      draft,
+      props: { locale: 'ja', keyPath, typedKeyPath: keyPath, fieldConfig },
+    });
+  };
+
+  test('shows a subfield duplicated along with its ancestor read-only in another locale', async () => {
+    await renderSubField(venueField.fields[0]);
+
+    // Rather than hiding it, which would leave the Object field empty there
+    await expect.element(page.getByRole('textbox')).toHaveValue('Hall');
+    await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-readonly', 'true');
+    expect(page.getByRole('button', { name: 'Show Field Options' }).elements()).toHaveLength(0);
+  });
+
+  test('locks a duplicated subfield of a rich text editor component in another locale', async () => {
+    const draft = createMockDraft({
+      fields: [venueField],
+      i18n: { i18nEnabled: true, defaultLocale: 'en', allLocales: ['en', 'ja'] },
+      values: { en: {}, ja: {} },
+    });
+
+    // A component’s subfield isn’t one of the entry’s fields, so only its own option counts
+    await renderWithDraft(FieldEditor, {
+      draft,
+      props: {
+        locale: 'ja',
+        keyPath: 'caption',
+        typedKeyPath: 'caption',
+        fieldConfig: { name: 'caption', widget: 'string', i18n: 'duplicate' },
+        context: 'rich-text-editor-component',
+      },
+    });
+
+    await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-readonly', 'true');
+  });
+
+  test('lets a subfield with its own translatable option be edited in another locale', async () => {
+    await renderSubField(venueField.fields[1]);
+
+    await expect.element(page.getByRole('textbox')).toHaveValue('大');
+    await expect.element(page.getByRole('textbox')).not.toHaveAttribute('aria-readonly', 'true');
   });
 });

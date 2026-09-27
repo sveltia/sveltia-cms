@@ -1,6 +1,9 @@
 <!--
   @component
   Implement the editor for a KeyValue field compatible with Static CMS.
+
+  Like a simple List field, the editor always offers a row to type into: a field without pairs shows
+  one blank row, which isn’t stored until its key is filled in.
   @see https://staticjscms.netlify.app/docs/widget-keyvalue
   @see https://sveltiacms.app/en/docs/fields/keyvalue
 -->
@@ -15,7 +18,6 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getPairs,
@@ -84,6 +86,22 @@
   /** @type {('empty' | 'duplicate' | undefined)[]} */
   let validations = $state([]);
 
+  // Removing the blank row offered for an empty field would just bring it back
+  const isOnlyBlankRow = $derived(pairs.length === 1 && !pairs[0][0] && !pairs[0][1]);
+
+  /**
+   * Add a blank row if there are no pairs, so there’s always somewhere to type, unless the keys
+   * can’t be edited, in which case there’s nothing to type into.
+   */
+  const ensureBlankRow = () => {
+    if (!pairs.length && !keysReadonly) {
+      pairs.push(['', '']);
+      pairIds.push(nextPairId);
+      nextPairId += 1;
+      edited.push(false);
+    }
+  };
+
   /**
    * Update the {@link pairs} whenever the current values are changed.
    */
@@ -115,7 +133,10 @@
       edited = updatedPairs.map(() => false);
     }
 
-    if (!pairs.length && draft[valueStoreKey][locale][keyPath] !== null) {
+    ensureBlankRow();
+
+    // A blank row isn’t stored, so the field holds nothing until a key is filled in
+    if (!updatedPairs.length && draft[valueStoreKey][locale][keyPath] !== null) {
       const valueStore = draft[valueStoreKey][locale];
       const _keyPath = keyPath;
 
@@ -131,21 +152,6 @@
    * Add an empty pair to the {@link pairs} array.
    */
   const addPair = () => {
-    const draft = entryDraft.current;
-
-    /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
-    if (!draft) {
-      return;
-    }
-
-    forEachTargetLocale(
-      { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
-      (content) => {
-        // Remove `null` added for validation
-        delete content[keyPath];
-      },
-    );
-
     pairs.push(['', '']);
     pairIds.push(nextPairId);
     nextPairId += 1;
@@ -166,6 +172,7 @@
     pairs.splice(index, 1);
     pairIds.splice(index, 1);
     edited.splice(index, 1);
+    ensureBlankRow();
   };
 
   /**
@@ -206,7 +213,23 @@
 
     validations = validatePairs({ pairs, edited });
 
-    if (!draft || validations.some(Boolean) || pairs.some(([key]) => !key.trim())) {
+    const keyedPairs = pairs.filter(([key]) => key.trim());
+
+    if (!draft || validations.some(Boolean)) {
+      return;
+    }
+
+    if (keyedPairs.length) {
+      // Wait until every row has a key before saving
+      if (keyedPairs.length !== pairs.length) {
+        return;
+      }
+    } else if (
+      // With no key in any row, the field holds no pairs, which only has to be saved when the last
+      // pair has just been removed, leaving a blank row that isn’t stored. A blank pair stored as
+      // the default value of a required field is left alone, so opening an entry changes nothing
+      !getPairs({ draft, valueStoreKey, keyPath, locale }).some(([key]) => key.trim())
+    ) {
       return;
     }
 
@@ -216,7 +239,7 @@
       fieldConfig,
       keyPath,
       locale,
-      pairs: $state.snapshot(pairs),
+      pairs: $state.snapshot(keyedPairs),
     };
 
     // This runs from an effect, so defer the write to the draft like `<FieldEditor>` does: a write
@@ -334,6 +357,7 @@
                 size="small"
                 iconic
                 aria-label={_('remove')}
+                disabled={isOnlyBlankRow}
                 onclick={() => {
                   removePair(index);
                 }}

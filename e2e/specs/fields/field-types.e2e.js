@@ -50,7 +50,7 @@ test('creates an event with every field type filled in', async ({ cms, page }) =
 
   const metadata = editor.getByRole('group', { name: /Metadata/ });
 
-  await metadata.getByRole('button', { name: /Add.*Metadata/ }).click();
+  // The empty field offers a blank row to type into
   await metadata.getByRole('textbox', { name: 'Key' }).fill('capacity');
   await metadata.getByRole('textbox', { name: 'Value' }).fill('120');
 

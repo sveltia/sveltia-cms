@@ -82,6 +82,7 @@
     typedKeyPath,
     fieldConfig,
     required = true,
+    readonly = false,
     summaryId,
     /* eslint-enable prefer-const */
   } = $props();
@@ -129,7 +130,10 @@
   /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
   const defaultLocale = $derived(entryDraft.current?.defaultLocale);
-  const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
+  // The items can’t be added, removed or reordered in a read-only field, which includes a field
+  // duplicated from the default locale, whether with its own `duplicate` strategy or along with an
+  // ancestor’s, in another locale. Changing them there would change the default locale as well
+  const isLocked = $derived(readonly || (locale !== defaultLocale && i18n === 'duplicate'));
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   /** @type {Record<string, any>[]} */
@@ -161,7 +165,7 @@
     locale === defaultLocale ||
       allSubFields.some(({ i18n: subI18n }) => isFieldTranslatable(subI18n)),
   );
-  const isAddDisabled = $derived(isDuplicateField || !hasEditableSubFields);
+  const isAddDisabled = $derived(isLocked || !hasEditableSubFields);
 
   /**
    * @type {HTMLElement | undefined}
@@ -554,7 +558,7 @@
                 <ReorderControls
                   {index}
                   itemCount={items.length}
-                  disabled={isDuplicateField || items.length < 2}
+                  disabled={isLocked || items.length < 2}
                   icon="drag_handle"
                   onGrab={() => sorter.grab(index)}
                   onRelease={sorter.release}
@@ -593,6 +597,7 @@
                   size="small"
                   iconic
                   aria-label={_('remove')}
+                  disabled={isLocked}
                   onclick={() => removeItem(index)}
                 >
                   {#snippet startIcon()}

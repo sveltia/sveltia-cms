@@ -61,6 +61,29 @@ test('removes a list item', async ({ cms, page }) => {
     .toBe(STAR_PARTY.replace('  - name: John Smith\n    role: Astronomer\n', ''));
 });
 
+test('clears a list from the field options', async ({ cms, page }) => {
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const sections = editor.getByRole('group', { name: /Sections.*Field/ });
+
+  await cms.chooseMenuItem(
+    sections.getByRole('button', { name: 'Show Field Options' }).first(),
+    page.getByRole('menuitem', { name: 'Clear' }),
+  );
+  await expect(sections.getByText('0 Sections')).toBeVisible();
+  await editor.getByRole('button', { name: 'Save' }).click();
+
+  // The optional field is left out once empty
+  await expect
+    .poll(() => readStarParty(cms))
+    .toBe(
+      STAR_PARTY.replace(
+        'sections:\n  - type: text\n    body: Bring warm clothes.\n' +
+          '  - type: quote\n    quote: The sky is the limit.\n    author: Someone\n',
+        '',
+      ),
+    );
+});
+
 test('shows the summary of collapsed items', async ({ page }) => {
   const speakers = page
     .getByRole('group', { name: 'Content Editor' })

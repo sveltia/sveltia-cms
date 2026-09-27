@@ -596,6 +596,23 @@ describe('ListEditorComplex (more)', () => {
 
     await expect.element(page.getByRole('button', { name: /Add\W+Author/ })).toBeDisabled();
     await expect.element(page.getByRole('button', { name: 'List Item Options' })).toBeDisabled();
+    // Removing the item would remove it from the default locale as well
+    await expect.element(page.getByRole('button', { name: 'Remove' })).toBeDisabled();
+  });
+
+  test('locks the items of a read-only field', async () => {
+    // e.g. a List field duplicated in another locale along with its Object field
+    await renderEditor(
+      authorsField,
+      { 'authors.0.name': 'Melvin', 'authors.1.name': 'Elsie' },
+      {
+        readonly: true,
+      },
+    );
+
+    await expect.element(page.getByRole('button', { name: /Add\W+Author/ })).toBeDisabled();
+    await expect.element(page.getByRole('button', { name: 'Remove' }).nth(0)).toBeDisabled();
+    await expect.element(page.getByRole('button', { name: 'Reorder Item' }).nth(0)).toBeDisabled();
   });
 
   test('writes a change to every locale for a duplicated field', async () => {
