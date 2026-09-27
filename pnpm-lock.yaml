@@ -30,11 +30,11 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))
       '@sveltia/ui':
-        specifier: ^0.77.1
-        version: 0.77.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)
+        specifier: ^0.77.2
+        version: 0.77.2(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)
       '@sveltia/utils':
-        specifier: ^0.12.1
-        version: 0.12.1
+        specifier: ^0.12.2
+        version: 0.12.2
       create-react-class:
         specifier: ^15.7.0
         version: 15.7.0
@@ -1243,13 +1243,13 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.77.1':
-    resolution: {integrity: sha512-azN9/Cng8lAmI7JRvaZ/Orm+DyknAO57DOHPobyLf6+4CXvVcB5WoslWzk+AZYMZqgvuQSir6ENw7P6rW92Gyg==}
+  '@sveltia/ui@0.77.2':
+    resolution: {integrity: sha512-vf8qaziKK40PHzzeIMFLaglZBUt1l59bUG6QZAYzin0DGR257EWbvV6CslrNV/aZ4qacedu4JKeuKTjvgrJQgw==}
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/utils@0.12.1':
-    resolution: {integrity: sha512-aWUo49kLpEDZHEssAhIo7GUnbSlEdiwrR8WiQQm+YwA6dkFkk49jM/ERph6SW5dMdjC/NV+4luv/O+IBhd5qug==}
+  '@sveltia/utils@0.12.2':
+    resolution: {integrity: sha512-FCxwrx2RABXaWgCQuqHdCT0DgDOIjxb/5a/1+V0glpYiA6cxMaPVcOvcuZece1/4qQpvsL/5TAwdODa8zdumLg==}
 
   '@testing-library/svelte-core@1.1.3':
     resolution: {integrity: sha512-KkMAvXeWorxN2Yn0kdC1lfoAItxpoj4uOWzxK5leDrNxonLvS5nwBFvztrroyTszQ0Wf/EU6iLT8JhY5qcn22g==}
@@ -2214,8 +2214,8 @@ packages:
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9
 
-  eslint-plugin-n@18.3.0:
-    resolution: {integrity: sha512-cPVguuDe6DrIPb/qUXHf8P89MaVTUmiYWwpt5gX5AILsvRIiZAxMFXcFR6QHYBksqKJpjfUBlL/RleCJUWcD7w==}
+  eslint-plugin-n@18.4.0:
+    resolution: {integrity: sha512-TEm6Nqn9+l7EWfJXOL6pmrEdpiM2ZTgo4fNMRDvBTM70jeQ7x3X3Akcx+sRCIRfpcSVwMypH3ZAA33PLyNKmYw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
     peerDependencies:
       eslint: '>=8.57.1'
@@ -2815,6 +2815,10 @@ packages:
 
   js-yaml@4.3.2:
     resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
+    hasBin: true
+
+  js-yaml@5.4.2:
+    resolution: {integrity: sha512-m+aqu+LwO1O6sIopafj8HUVl5aawITwZQe/yHpMCKjaWBaA/d07B/QdMb3529REftiU+RMMHL3Vlsw3hON7vWg==}
     hasBin: true
 
   jsdoc-type-pratt-parser@9.2.2:
@@ -5002,7 +5006,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.57.1(@typescript-eslint/types@8.70.1)
 
-  '@sveltia/ui@0.77.1(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)':
+  '@sveltia/ui@0.77.2(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.51.0(typescript@6.0.3)
       '@lexical/dragon': 0.51.0(typescript@6.0.3)
@@ -5018,13 +5022,13 @@ snapshots:
       '@shikijs/langs': 4.4.3
       '@shikijs/themes': 4.4.3
       '@sveltia/i18n': 1.4.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))
-      '@sveltia/utils': 0.12.1
+      '@sveltia/utils': 0.12.2
       lexical: 0.51.0(typescript@6.0.3)
       svelte: 5.57.1(@typescript-eslint/types@8.70.1)
     transitivePeerDependencies:
       - typescript
 
-  '@sveltia/utils@0.12.1':
+  '@sveltia/utils@0.12.2':
     dependencies:
       base32-encode: 2.0.0
 
@@ -5999,7 +6003,7 @@ snapshots:
       eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.70.1(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint-import-resolver-typescript@4.4.5)(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)
       eslint-plugin-import-x: 4.17.1(@typescript-eslint/utils@8.70.1(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint-import-resolver-node@0.3.10(supports-color@10.2.2))(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.5(supports-color@10.2.2))
-      eslint-plugin-n: 18.3.0(eslint@9.39.5(supports-color@10.2.2))(typescript@6.0.3)
+      eslint-plugin-n: 18.4.0(eslint@9.39.5(supports-color@10.2.2))(typescript@6.0.3)
       eslint-plugin-react: 7.37.5(eslint@9.39.5(supports-color@10.2.2))
       eslint-plugin-react-hooks: 7.1.1(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)
       get-tsconfig: 4.14.3
@@ -6168,7 +6172,7 @@ snapshots:
       safe-regex-test: 1.1.0
       string.prototype.includes: 2.0.1
 
-  eslint-plugin-n@18.3.0(eslint@9.39.5(supports-color@10.2.2))(typescript@6.0.3):
+  eslint-plugin-n@18.4.0(eslint@9.39.5(supports-color@10.2.2))(typescript@6.0.3):
     dependencies:
       '@eslint-community/eslint-utils': 4.10.1(eslint@9.39.5(supports-color@10.2.2))
       enhanced-resolve: 5.25.1
@@ -6178,6 +6182,7 @@ snapshots:
       globals: 15.15.0
       globrex: 0.1.2
       ignore: 5.3.2
+      js-yaml: 5.4.2
       semver: 7.8.5
     optionalDependencies:
       typescript: 6.0.3
@@ -6814,6 +6819,10 @@ snapshots:
   js-tokens@9.0.1: {}
 
   js-yaml@4.3.2:
+    dependencies:
+      argparse: 2.0.1
+
+  js-yaml@5.4.2:
     dependencies:
       argparse: 2.0.1
 
