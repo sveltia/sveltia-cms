@@ -64,6 +64,15 @@
   };
 </script>
 
+{#snippet optionMenu()}
+  <Menu>
+    <MenuItem label={_('entry')} onclick={() => openEditor()} />
+    <MenuItem label={indexFileLabel} onclick={() => openEditor(true)} />
+  </Menu>
+{/snippet}
+
+<!-- A plain `Button` opens a popup on click whenever it’s given one, even an empty one, which
+would take the focus and make the content editor inert while it closes -->
 <ButtonComponent
   variant="primary"
   iconic={!label}
@@ -72,16 +81,9 @@
   aria-label={_('create_new_entry')}
   {keyShortcuts}
   onclick={() => openEditor()}
+  popup={hasOptions ? optionMenu : undefined}
 >
   {#snippet startIcon()}
     <Icon name="edit" />
-  {/snippet}
-  {#snippet popup()}
-    {#if hasOptions}
-      <Menu>
-        <MenuItem label={_('entry')} onclick={() => openEditor()} />
-        <MenuItem label={indexFileLabel} onclick={() => openEditor(true)} />
-      </Menu>
-    {/if}
   {/snippet}
 </ButtonComponent>

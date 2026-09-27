@@ -46,6 +46,8 @@ describe('CreateEntryButton', () => {
     await button.click();
     await expect.poll(() => window.location.hash).toBe('#/collections/posts/new');
     expect(window.history.state?.index).toBe(false);
+    // Without options, no popup opens to take the focus and make the editor inert
+    expect(document.querySelector('dialog[open]')).toBeNull();
   });
 
   test('starts the entry in the folder being browsed', async () => {
