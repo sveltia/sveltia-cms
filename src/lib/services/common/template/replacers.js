@@ -11,6 +11,7 @@ import {
 import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getOrCreate } from '$lib/services/utils/cache';
 import { sanitizePath } from '$lib/services/utils/file';
 
 /**
@@ -47,11 +48,7 @@ const getRandomValue = ({ randomValues }, key, generate) => {
     return generate();
   }
 
-  if (!randomValues.has(key)) {
-    randomValues.set(key, generate());
-  }
-
-  return /** @type {string} */ (randomValues.get(key));
+  return getOrCreate(randomValues, key, generate);
 };
 
 /**

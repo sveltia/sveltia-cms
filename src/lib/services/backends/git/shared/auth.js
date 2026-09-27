@@ -8,6 +8,7 @@ import {
   apiConfig as sharedApiConfig,
 } from '$lib/services/backends/git/shared/api';
 import { cmsConfig } from '$lib/services/config';
+import { USER_STORAGE_KEY } from '$lib/services/user/constants';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -263,7 +264,7 @@ export const initClientSideAuth = async ({ backendName, clientId, authURL, scope
 
   // Store the user info only with the backend name, so the automatic sign-in flow that triggers
   // `finishClientSideAuth` below will work
-  await LocalStorage.set('sveltia-cms.user', { backendName });
+  await LocalStorage.set(USER_STORAGE_KEY, { backendName });
 
   // Check if the popup was closed while we were doing async operations
   if (popup.closed) {

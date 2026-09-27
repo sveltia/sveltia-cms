@@ -13,6 +13,7 @@ import { buildRenumberChanges } from '$lib/services/contents/collection/entries/
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
 import {
   buildCascadeDeleteChanges,
+  EMPTY_CASCADE_DELETE_PLAN,
   planCascadeDelete,
 } from '$lib/services/contents/entry/relations/cascade/delete';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
@@ -61,7 +62,7 @@ export const deleteEntries = async (entries, assets = []) => {
 
   const { targets, blockers } = collection
     ? planCascadeDelete({ collection, entries })
-    : { targets: [], blockers: [] };
+    : EMPTY_CASCADE_DELETE_PLAN;
 
   if (blockers.length) {
     throw new Error('Cannot delete entries that other entries require', { cause: blockers });

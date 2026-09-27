@@ -1,4 +1,4 @@
-import { getPathInfo } from '@sveltia/utils/file';
+import { decodeFilePath, getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { flatten } from 'flat';
 
@@ -20,7 +20,7 @@ import { isCollectionIndexFile } from '$lib/services/contents/collection/entries
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-import { createPath, decodeFilePath, resolvePath } from '$lib/services/utils/file';
+import { createPath, resolvePath } from '$lib/services/utils/file';
 import {
   createDerivedState,
   createRawState,

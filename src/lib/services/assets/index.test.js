@@ -594,13 +594,13 @@ describe('assets/index', () => {
   describe('getAssetByPath', () => {
     /**
      * @type {import('vitest').MockedFunction<typeof
-     * import('$lib/services/utils/file').decodeFilePath
+     * import('@sveltia/utils/file').decodeFilePath
      * >}
      */
     let decodeFilePathMock;
 
     beforeEach(async () => {
-      const { decodeFilePath } = await import('$lib/services/utils/file');
+      const { decodeFilePath } = await import('@sveltia/utils/file');
 
       decodeFilePathMock = vi.mocked(decodeFilePath);
       decodeFilePathMock.mockImplementation((path) => path); // Default passthrough

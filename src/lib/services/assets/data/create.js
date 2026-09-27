@@ -68,7 +68,7 @@ export const createFileList = (uploadingAssets) => {
  * @param {object} args Arguments.
  * @param {number} args.count The number of files that were updated.
  */
-export const updatedStores = ({ count }) => {
+export const updateStores = ({ count }) => {
   const _focusedAsset = focusedAsset.current;
   const _overlaidAsset = overlaidAsset.current;
 
@@ -116,5 +116,5 @@ export const saveAssets = async (uploadingAssets, options) => {
     options,
   });
 
-  updatedStores({ count: files.length });
+  updateStores({ count: files.length });
 };

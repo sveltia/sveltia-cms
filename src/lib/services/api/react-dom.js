@@ -1,88 +1,49 @@
+import { createLazyModule } from '$lib/services/api/lazy-module';
 import { loadChunk } from '$lib/services/app/dependencies';
-import { createRawState } from '$lib/services/utils/state.svelte';
+
+/**
+ * @import { LazyModule } from '$lib/services/api/lazy-module';
+ */
 
 /**
  * @typedef {{ createRoot: typeof import('react-dom/client').createRoot }} ReactDomModule
  */
 
 /**
- * The `react-dom` chunk once loaded.
- * @type {ReactDomModule | undefined}
+ * Loader for `react-dom`. Only the Netlify/Decap CMS-compatible API renders React components —
+ * custom field types, preview templates and editor component previews — so the library is kept out
+ * of the main bundle and fetched as a separate chunk when one of those is registered or used.
+ * @type {LazyModule<ReactDomModule>}
  */
-let reactDom;
-/**
- * Pending load, shared between callers.
- * @type {Promise<ReactDomModule> | undefined}
- */
-let loadPromise;
+const reactDom = createLazyModule({
+  /**
+   * Fetch the library chunk.
+   * @returns {Promise<ReactDomModule>} The module.
+   */
+  loader: () => loadChunk('react-dom'),
+  notLoadedMessage: 'react-dom is not loaded yet. Call `loadReactDom()` first.',
+});
 
 /**
  * Whether `react-dom` has been loaded. Components that mount a React root synchronously can depend
  * on this to know when they can render.
- * @type {{ current: boolean }}
  */
-export const reactDomLoaded = createRawState(false);
-
+export const reactDomLoaded = reactDom.loaded;
 /**
- * Load `react-dom`. Only the Netlify/Decap CMS-compatible API renders React components — custom
- * field types, preview templates and editor component previews — so the library is kept out of the
- * main bundle and fetched as a separate chunk when one of those is registered or used. Calling this
- * again returns the same promise.
- * @returns {Promise<ReactDomModule>} The module.
+ * Load `react-dom`. Calling this again returns the same promise.
  */
-export const loadReactDom = async () => {
-  loadPromise ??= (async () => {
-    /** @type {ReactDomModule} */
-    let module;
-
-    try {
-      module = await loadChunk('react-dom');
-    } catch (error) {
-      // Let a later call try again, e.g. once the network is back
-      loadPromise = undefined;
-      throw error;
-    }
-
-    reactDom = module;
-    reactDomLoaded.current = true;
-
-    return module;
-  })();
-
-  return loadPromise;
-};
-
+export const loadReactDom = reactDom.load;
 /**
  * Start loading `react-dom` in the background, so that it’s ready by the time a component needs it.
- * A failure is left for the eventual {@link loadReactDom} call to report, where it can be handled,
- * rather than surfacing as an unhandled rejection at registration time.
+ * A failure is left for the eventual {@link loadReactDom} call to report.
  */
-export const preloadReactDom = () => {
-  loadReactDom().catch(() => {
-    // Reported when the library is actually needed
-  });
-};
-
+export const preloadReactDom = reactDom.preload;
 /**
  * Get the loaded `react-dom` module. The caller is responsible for awaiting {@link loadReactDom}
  * first.
- * @returns {ReactDomModule} The module.
- * @throws {Error} If the library hasn’t been loaded yet.
  */
-export const getReactDom = () => {
-  if (!reactDom) {
-    throw new Error('react-dom is not loaded yet. Call `loadReactDom()` first.');
-  }
-
-  return /** @type {ReactDomModule} */ (reactDom);
-};
-
-/* v8 ignore next */
+export const getReactDom = reactDom.get;
 /**
  * Forget the loaded module. Used in tests.
  */
-export const _resetReactDom = () => {
-  reactDom = undefined;
-  loadPromise = undefined;
-  reactDomLoaded.current = false;
-};
+export const _resetReactDom = reactDom.reset;

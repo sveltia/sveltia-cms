@@ -1,20 +1,10 @@
-import {
-  apiKeyPattern,
-  apiKeyURL,
-  apiLabel,
-  complete,
-  developerURL,
-} from '$lib/services/integrations/ai/google';
+import * as ai from '$lib/services/integrations/ai/google';
 
-import { availability, createAiTranslate } from './shared.js';
+import { createAiTranslationService } from './shared.js';
 
 /**
  * @import { TranslationService } from '$lib/types/private';
  */
-
-const serviceId = 'google-ai';
-const serviceLabel = 'Google Gemini';
-const model = 'gemini-3.5-flash-lite';
 
 /**
  * Translation service using Google Gemini Flash-Lite. Supports markdown content and preserves
@@ -23,14 +13,10 @@ const model = 'gemini-3.5-flash-lite';
  * @see https://ai.google.dev/gemini-api/docs/models/gemini
  * @see https://ai.google.dev/api/generate-content
  */
-export default {
-  serviceId,
-  serviceLabel,
-  apiLabel,
-  developerURL,
-  apiKeyURL,
-  apiKeyPattern,
-  markdownSupported: true,
-  availability,
-  translate: createAiTranslate(complete, model, apiLabel, { responseFormat: 'application/json' }),
-};
+export default createAiTranslationService({
+  ai,
+  serviceId: 'google-ai',
+  serviceLabel: 'Google Gemini',
+  model: 'gemini-3.5-flash-lite',
+  extraOptions: { responseFormat: 'application/json' },
+});

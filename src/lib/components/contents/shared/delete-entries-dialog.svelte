@@ -13,16 +13,16 @@
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries, listedUnpublishedEntries } from '$lib/services/contents/collection/view';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
-  import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
+  import {
+    EMPTY_CASCADE_DELETE_PLAN,
+    planCascadeDelete,
+  } from '$lib/services/contents/entry/relations/cascade/delete';
   import { isWorkflowEnabled } from '$lib/services/workflow';
   import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
 
   /**
-   * @import { Asset, CascadeDeletePlan, Entry, UnpublishedEntry } from '$lib/types/private';
+   * @import { Asset, Entry, UnpublishedEntry } from '$lib/types/private';
    */
-
-  /** @type {CascadeDeletePlan} */
-  const EMPTY_PLAN = { targets: [], blockers: [] };
 
   /**
    * @typedef {object} Props
@@ -66,7 +66,7 @@
 
     return open && collection && publishedEntries.length
       ? planCascadeDelete({ collection, entries: publishedEntries })
-      : EMPTY_PLAN;
+      : EMPTY_CASCADE_DELETE_PLAN;
   });
 
   const associatedAssets = $derived.by(() => {

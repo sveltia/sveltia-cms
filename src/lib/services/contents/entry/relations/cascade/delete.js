@@ -232,6 +232,12 @@ export const getDeletedVersions = (entries) => {
 };
 
 /**
+ * Plan with nothing to update and nothing blocking the deletion.
+ * @type {CascadeDeletePlan}
+ */
+export const EMPTY_CASCADE_DELETE_PLAN = { targets: [], blockers: [] };
+
+/**
  * Work out what deleting the given entries means for the entries referencing them through Relation
  * fields, the way a database cascades a delete to the rows referencing the deleted key: each
  * reference is removed, unless doing so would leave the referencing field in breach of its own

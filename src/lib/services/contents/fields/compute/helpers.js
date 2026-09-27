@@ -5,6 +5,7 @@ import { replaceTemplateTags } from '$lib/services/common/template';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
 import { getListFormatter } from '$lib/services/contents/i18n';
+import { getOrCreate } from '$lib/services/utils/cache';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**
@@ -181,13 +182,7 @@ const getUuids = ({ valueTemplate, keyPath, valueMap }) => {
     return extractedUuids;
   }
 
-  let cache = generatedUuidMap.get(valueMap);
-
-  if (!cache) {
-    cache = new Map();
-    generatedUuidMap.set(valueMap, cache);
-  }
-
+  const cache = getOrCreate(generatedUuidMap, valueMap, () => new Map());
   let generatedUuids = cache.get(keyPath);
 
   if (generatedUuids?.length !== uuidTags.length) {

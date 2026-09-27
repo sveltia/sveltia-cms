@@ -11,7 +11,7 @@ import EditAssetDialog from './edit-asset-dialog.svelte';
 
 vi.mock('$lib/services/assets/data/create', () => ({
   createFileList: vi.fn(),
-  updatedStores: vi.fn(),
+  updateStores: vi.fn(),
   saveAssets: vi.fn(),
 }));
 

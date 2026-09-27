@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createFileList, saveAssets, updatedStores } from './create.js';
+import { createFileList, saveAssets, updateStores } from './create.js';
 
 // Mock dependencies
 vi.mock('$lib/services/assets', () => ({
@@ -634,14 +634,14 @@ describe('assets/data/create', () => {
     });
   });
 
-  describe('updatedStores', () => {
+  describe('updateStores', () => {
     it('should update toast with save count', async () => {
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
       const { skipCIConfigured } = await import('$lib/services/backends/git/shared/integration');
 
       /** @type {any} */ (skipCIConfigured).current = false;
 
-      updatedStores({ count: 3 });
+      updateStores({ count: 3 });
 
       expect(assetUpdatesToast.current).toEqual({
         saved: true,
@@ -660,7 +660,7 @@ describe('assets/data/create', () => {
       /** @type {any} */ (skipCIConfigured).current = true;
       /** @type {any} */ (skipCIEnabled).current = false;
 
-      updatedStores({ count: 1 });
+      updateStores({ count: 1 });
 
       expect(assetUpdatesToast.current).toEqual(
         expect.objectContaining({ saved: true, published: true, count: 1 }),
@@ -676,7 +676,7 @@ describe('assets/data/create', () => {
       /** @type {any} */ (skipCIConfigured).current = true;
       /** @type {any} */ (skipCIEnabled).current = true;
 
-      updatedStores({ count: 1 });
+      updateStores({ count: 1 });
 
       expect(assetUpdatesToast.current).toEqual(
         expect.objectContaining({ saved: true, published: false, count: 1 }),
@@ -703,7 +703,7 @@ describe('assets/data/create', () => {
       focusedAsset.current = /** @type {any} */ (oldAsset);
       vi.mocked(getAssetByInternalPath).mockReturnValue(/** @type {any} */ (newAsset));
 
-      updatedStores({ count: 1 });
+      updateStores({ count: 1 });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/old.jpg');
       expect(focusedAsset.current).toEqual(newAsset);
@@ -729,7 +729,7 @@ describe('assets/data/create', () => {
       overlaidAsset.current = /** @type {any} */ (oldAsset);
       vi.mocked(getAssetByInternalPath).mockReturnValue(/** @type {any} */ (newAsset));
 
-      updatedStores({ count: 1 });
+      updateStores({ count: 1 });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/old.jpg');
       expect(overlaidAsset.current).toEqual(newAsset);
@@ -767,7 +767,7 @@ describe('assets/data/create', () => {
         (path) => /** @type {any} */ (path === '/images/focused.jpg' ? newFocused : newOverlaid),
       );
 
-      updatedStores({ count: 2 });
+      updateStores({ count: 2 });
 
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/focused.jpg');
       expect(getAssetByInternalPath).toHaveBeenCalledWith('/images/overlaid.jpg');

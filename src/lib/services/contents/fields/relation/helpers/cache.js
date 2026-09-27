@@ -1,3 +1,5 @@
+import { getOrCreate } from '$lib/services/utils/cache';
+
 /**
  * @import { RelationOption } from '$lib/types/private';
  */
@@ -14,25 +16,19 @@ const optionLabelMapCache = new WeakMap();
  * @param {RelationOption[]} options Relation options.
  * @returns {Map<any, string>} Option labels keyed by option value.
  */
-export const getOptionLabelMap = (options) => {
-  const cachedLabelMap = optionLabelMapCache.get(options);
+export const getOptionLabelMap = (options) =>
+  getOrCreate(optionLabelMapCache, options, () => {
+    /** @type {Map<any, string>} */
+    const labelMap = new Map();
 
-  if (cachedLabelMap) {
-    return cachedLabelMap;
-  }
+    options.forEach(({ value, label }) => {
+      if (!labelMap.has(value)) {
+        labelMap.set(value, label);
+      }
+    });
 
-  const labelMap = new Map();
-
-  options.forEach(({ value, label }) => {
-    if (!labelMap.has(value)) {
-      labelMap.set(value, label);
-    }
+    return labelMap;
   });
-
-  optionLabelMapCache.set(options, labelMap);
-
-  return labelMap;
-};
 
 /**
  * `WeakMap` used to assign stable numeric identities to objects for cheap cache key building,
@@ -47,11 +43,11 @@ let nextObjectId = 0;
  * @param {object} obj Object.
  * @returns {number} Numeric identity.
  */
-export const getObjectId = (obj) => {
-  if (!objectIdentityMap.has(obj)) {
-    objectIdentityMap.set(obj, nextObjectId);
-    nextObjectId += 1;
-  }
+export const getObjectId = (obj) =>
+  getOrCreate(objectIdentityMap, obj, () => {
+    const id = nextObjectId;
 
-  return /** @type {number} */ (objectIdentityMap.get(obj));
-};
+    nextObjectId += 1;
+
+    return id;
+  });

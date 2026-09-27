@@ -5,6 +5,7 @@ import { escapeRegExp } from '@sveltia/utils/string';
 import sanitize from 'sanitize-filename';
 
 import { slugify } from '$lib/services/common/slug';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * Create a regular expression that matches the given path.
@@ -49,13 +50,6 @@ export const encodeFilePath = (path) => {
 };
 
 /**
- * Encode the given (partial) file path or file name. We can use {@link decodeURIComponent} as is.
- * @param {string} path Original path.
- * @returns {string} Decoded path.
- */
-export const decodeFilePath = (path) => decodeURIComponent(path);
-
-/**
  * @type {Map<string, Intl.NumberFormat>}
  */
 const fileSizeFormatterCache = new Map();
@@ -67,12 +61,12 @@ const fileSizeFormatterCache = new Map();
  */
 export const formatSize = (size) => {
   const locale = appLocale.current;
-  let formatter = fileSizeFormatterCache.get(locale);
 
-  if (!formatter) {
-    formatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
-    fileSizeFormatterCache.set(locale, formatter);
-  }
+  const formatter = getOrCreate(
+    fileSizeFormatterCache,
+    locale,
+    () => new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }),
+  );
 
   const kb = 1000;
   const mb = kb * 1000;

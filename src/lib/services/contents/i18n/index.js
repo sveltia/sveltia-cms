@@ -1,6 +1,7 @@
 import { locale as appLocale, isRTL } from '@sveltia/i18n';
 
 import { fillLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { InternalI18nOptions, InternalLocaleCode, } from '$lib/types/private';
@@ -78,18 +79,13 @@ export const getLocaleLabel = (
     return undefined;
   }
 
-  let formatter;
-
-  if (displayLocale) {
-    formatter = displayNamesCache.get(displayLocale);
-
-    if (!formatter) {
-      formatter = new Intl.DisplayNames(displayLocale, formatterOptions);
-      displayNamesCache.set(displayLocale, formatter);
-    }
-  } else {
-    formatter = new Intl.DisplayNames(undefined, formatterOptions);
-  }
+  const formatter = displayLocale
+    ? getOrCreate(
+        displayNamesCache,
+        displayLocale,
+        () => new Intl.DisplayNames(displayLocale, formatterOptions),
+      )
+    : new Intl.DisplayNames(undefined, formatterOptions);
 
   try {
     const label = formatter.of(canonicalLocale);
@@ -130,14 +126,12 @@ export const getListFormatter = (locale, options = {}) => {
   });
 
   const cacheKey = `${locale}|${effectiveOptions.style}|${effectiveOptions.type}`;
-  let formatter = listFormatterCache.get(cacheKey);
 
-  if (!formatter) {
-    formatter = new Intl.ListFormat(getCanonicalLocale(locale), effectiveOptions);
-    listFormatterCache.set(cacheKey, formatter);
-  }
-
-  return formatter;
+  return getOrCreate(
+    listFormatterCache,
+    cacheKey,
+    () => new Intl.ListFormat(getCanonicalLocale(locale), effectiveOptions),
+  );
 };
 
 /**

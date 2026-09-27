@@ -1,5 +1,6 @@
 import { createCustomNodeClass } from '$lib/services/contents/fields/rich-text/components/custom-node';
 import { createTransformer } from '$lib/services/contents/fields/rich-text/components/transformers';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import { LexicalNode } from 'lexical';
@@ -54,13 +55,9 @@ export class EditorComponent {
    * `CMS.registerEditorComponent()` API.
    */
   constructor(componentDef) {
-    const { id } = componentDef;
-    const cache = featureCacheMap.get(id);
-    const features = cache ?? createLexicalNodeFeatures(componentDef);
-
-    if (!cache) {
-      featureCacheMap.set(id, features);
-    }
+    const features = getOrCreate(featureCacheMap, componentDef.id, () =>
+      createLexicalNodeFeatures(componentDef),
+    );
 
     Object.assign(this, { ...componentDef, ...features });
   }

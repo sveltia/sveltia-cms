@@ -14,6 +14,7 @@ import { getCollectionFilesByEntry } from '$lib/services/contents/collection/fil
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getOrCreate } from '$lib/services/utils/cache';
 import { getRegex } from '$lib/services/utils/regex';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
@@ -80,30 +81,26 @@ const filterConditionCache = new WeakMap();
  * @returns {EntryFilterCondition | undefined} Condition, or `undefined` if the collection is not an
  * entry collection or defines no usable filter.
  */
-const getFilterCondition = (collection) => {
-  if (!filterConditionCache.has(collection)) {
+const getFilterCondition = (collection) =>
+  getOrCreate(filterConditionCache, collection, () => {
     const { filter } = collection._type === 'entry' ? collection : {};
     const field = filter?.field;
 
-    filterConditionCache.set(
-      collection,
-      field === undefined
-        ? undefined
-        : {
-            field,
-            pattern: getRegex(filter?.pattern),
-            values:
-              filter?.value === undefined
-                ? []
-                : Array.isArray(filter.value)
-                  ? filter.value
-                  : [filter.value],
-          },
-    );
-  }
+    if (field === undefined) {
+      return undefined;
+    }
 
-  return filterConditionCache.get(collection);
-};
+    return {
+      field,
+      pattern: getRegex(filter?.pattern),
+      values:
+        filter?.value === undefined
+          ? []
+          : Array.isArray(filter.value)
+            ? filter.value
+            : [filter.value],
+    };
+  });
 
 /**
  * Check if the given entry passes the given collection’s `filter` option. An entry that doesn’t is

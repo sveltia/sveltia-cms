@@ -1,3 +1,5 @@
+import { getOrCreate } from '$lib/services/utils/cache';
+
 /**
  * @typedef {Map<string, string>} NormalizedValueCache
  */
@@ -16,16 +18,8 @@ const persistentCaches = new WeakMap();
  * @param {object} owner Object the values belong to.
  * @returns {NormalizedValueCache} Cache.
  */
-export const getNormalizedValueCache = (owner) => {
-  let cache = persistentCaches.get(owner);
-
-  if (!cache) {
-    cache = new Map();
-    persistentCaches.set(owner, cache);
-  }
-
-  return cache;
-};
+export const getNormalizedValueCache = (owner) =>
+  getOrCreate(persistentCaches, owner, () => new Map());
 
 /**
  * Normalize the given string for search value comparison. Since `transliterate` is slow, we only

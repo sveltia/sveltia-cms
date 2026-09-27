@@ -47,7 +47,10 @@
   import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { canUpdateSlug } from '$lib/services/contents/editor/slug';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
-  import { planCascadeDelete } from '$lib/services/contents/entry/relations/cascade/delete';
+  import {
+    EMPTY_CASCADE_DELETE_PLAN,
+    planCascadeDelete,
+  } from '$lib/services/contents/entry/relations/cascade/delete';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -71,12 +74,9 @@
   } from '$lib/services/workflow/save';
 
   /**
-   * @import { CascadeDeletePlan, UnpublishedEntry, UpdateToastState } from '$lib/types/private';
+   * @import { UnpublishedEntry, UpdateToastState } from '$lib/types/private';
    * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
    */
-
-  /** @type {CascadeDeletePlan} */
-  const EMPTY_PLAN = { targets: [], blockers: [] };
 
   /**
    * @typedef {object} Props
@@ -233,7 +233,7 @@
   const cascadePlan = $derived(
     showDeleteDialog && collection && originalEntry && !discardsDraft
       ? planCascadeDelete({ collection, collectionFile, entries: [originalEntry] })
-      : EMPTY_PLAN,
+      : EMPTY_CASCADE_DELETE_PLAN,
   );
 
   // Keep the deploy state fresh while the editor is open, so a build that finishes in the

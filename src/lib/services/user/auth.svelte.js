@@ -12,6 +12,7 @@ import { resetDeployments } from '$lib/services/deployments';
 import { resetPageLiveness } from '$lib/services/deployments/ping';
 import { initDeployments } from '$lib/services/deployments/resolve';
 import { user } from '$lib/services/user/account.svelte';
+import { USER_STORAGE_KEY } from '$lib/services/user/constants';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import {
   publishingBranches,
@@ -52,7 +53,7 @@ export const auth = $state({
  * Netlify/Decap CMS, which may also hold a token, are removed as well.
  */
 const clearUserCache = async () => {
-  await LocalStorage.set('sveltia-cms.user', {});
+  await LocalStorage.set(USER_STORAGE_KEY, {});
   await LocalStorage.delete('decap-cms-user');
   await LocalStorage.delete('netlify-cms-user');
   user.account = undefined;
@@ -162,7 +163,7 @@ export const parseMagicLink = () => {
  */
 export const getUserCache = async () => {
   const userCache =
-    (await LocalStorage.get('sveltia-cms.user')) ||
+    (await LocalStorage.get(USER_STORAGE_KEY)) ||
     (await LocalStorage.get('decap-cms-user')) ||
     (await LocalStorage.get('netlify-cms-user'));
 

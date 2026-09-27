@@ -50,6 +50,7 @@ vi.mock('$lib/services/contents/collection/entries', () => ({
 }));
 
 vi.mock('$lib/services/contents/entry/relations/cascade/delete', () => ({
+  EMPTY_CASCADE_DELETE_PLAN: { targets: [], blockers: [] },
   planCascadeDelete: vi.fn(() => ({ targets: [], blockers: [] })),
   buildCascadeDeleteChanges: vi.fn().mockResolvedValue({ changes: [], savingEntries: [] }),
 }));
