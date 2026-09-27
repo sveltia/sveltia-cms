@@ -1,10 +1,15 @@
+import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { externalAssetAvailability } from '$lib/services/assets/external/availability';
-import { getExternalAssetDetails } from '$lib/services/assets/external/details';
 import {
+  getExternalAssetDetails,
+  getExternalAssetUsedEntries,
+} from '$lib/services/assets/external/details';
+import {
+  createMockEntry,
   createMockExternalAsset,
   createMockImageFile,
   initTestConfig,
@@ -16,7 +21,11 @@ import InfoPanel from './info-panel.svelte';
 vi.mock('$lib/services/assets/external/details', async (importOriginal) => {
   const actual = /** @type {any} */ (await importOriginal());
 
-  return { ...actual, getExternalAssetDetails: vi.fn(actual.getExternalAssetDetails) };
+  return {
+    ...actual,
+    getExternalAssetDetails: vi.fn(actual.getExternalAssetDetails),
+    getExternalAssetUsedEntries: vi.fn(actual.getExternalAssetUsedEntries),
+  };
 });
 
 /**
@@ -126,6 +135,45 @@ describe('InfoPanel', () => {
     await expect.poll(() => getSections(other)['Used in']).toBe('None');
     expect(getSections(other).Duration).toBe('–');
     expect(getSections(other).Dimensions).toBe('–');
+  });
+
+  test('ignores the details of an asset focused earlier that arrive late', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(getExternalAssetDetails)
+      .mockReturnValueOnce(/** @type {any} */ (promise))
+      .mockResolvedValueOnce({ dimensions: { width: 4, height: 3 } });
+
+    const first = createMockExternalAsset({ fileName: 'first.png' });
+    const second = createMockExternalAsset({ fileName: 'second.png' });
+    const { container, rerender } = await render(InfoPanel, { asset: first });
+
+    await rerender({ asset: second });
+    await expect.poll(() => getSections(container).Dimensions).toBe('4×3');
+
+    resolve({ dimensions: { width: 1280, height: 720 } });
+    await sleep(50);
+
+    expect(getSections(container).Dimensions).toBe('4×3');
+  });
+
+  test('ignores the used entries of an asset focused earlier that arrive late', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(getExternalAssetUsedEntries).mockReturnValueOnce(/** @type {any} */ (promise));
+
+    const first = createMockExternalAsset({ fileName: 'first.pdf' });
+    const second = createMockExternalAsset({ fileName: 'second.pdf' });
+    const { container, rerender } = await render(InfoPanel, { asset: first });
+
+    await expect.poll(() => vi.mocked(getExternalAssetUsedEntries).mock.calls.length).toBe(1);
+    await rerender({ asset: second });
+    await expect.poll(() => getSections(container)['Used in']).toBe('None');
+
+    resolve([createMockEntry({ slug: 'stale', content: { _default: { title: 'Stale' } } })]);
+    await sleep(50);
+
+    expect(getSections(container)['Used in']).toBe('None');
   });
 
   test('tells that a linked file couldn’t be loaded', async () => {

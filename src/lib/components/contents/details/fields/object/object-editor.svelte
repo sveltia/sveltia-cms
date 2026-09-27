@@ -323,7 +323,7 @@
           typedKeyPath:
             hasVariableTypes && type
               ? `${typedKeyPath}<${type}>.${subField.name}`
-              : `${keyPath}.${subField.name}`,
+              : `${typedKeyPath}.${subField.name}`,
         })}
         expanded={parentExpanded}
         {unknownType}

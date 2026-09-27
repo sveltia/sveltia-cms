@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { parseLocation } from '$lib/services/app/navigation';
 import { searchMode, searchTerms } from '$lib/services/search';
 
 import QuickSearchBar from './quick-search-bar.svelte';
@@ -37,6 +38,18 @@ describe('QuickSearchBar', () => {
     await page.getByRole('button', { name: 'Clear' }).click();
     await expect.poll(() => searchTerms.current).toBe('');
     await expect.poll(() => window.location.hash).toBe('#/collections');
+  });
+
+  test('keeps the special characters of the search terms in the URL', async () => {
+    searchMode.current = 'contents';
+
+    await render(QuickSearchBar, {});
+
+    await page.getByRole('searchbox').fill('50% off?#1');
+
+    await expect.poll(() => searchTerms.current).toBe('50% off?#1');
+    await expect.poll(() => window.location.hash).toBe('#/search/50%25%20off%3F%231');
+    expect(parseLocation().path).toBe('/search/50% off?#1');
   });
 
   test('restores the current search terms', async () => {

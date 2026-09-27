@@ -165,6 +165,13 @@ describe('AssetList', () => {
     await expect.element(cdn.getByRole('row', { name: 'a.png' })).toBeInTheDocument();
     await expect.element(docs.getByRole('row', { name: 'b.pdf' })).toBeInTheDocument();
     expect(page.getByRole('rowgroup').elements()).toHaveLength(2);
+    // The rows are numbered across the groups, as they make up one grid
+    await expect
+      .element(cdn.getByRole('row', { name: 'a.png' }))
+      .toHaveAttribute('aria-rowindex', '1');
+    await expect
+      .element(docs.getByRole('row', { name: 'b.pdf' }))
+      .toHaveAttribute('aria-rowindex', '2');
   });
 
   test('offers to upload when the service is empty', async () => {

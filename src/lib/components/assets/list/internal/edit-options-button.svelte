@@ -40,11 +40,27 @@
   const { publicURL, repoBlobURL } = $derived(details);
 
   /**
+   * Asset the details were last requested for. The menu stays mounted while the focus moves from
+   * one asset to another, so a slow lookup for an asset focused earlier must not overwrite the
+   * details of the one focused now.
+   * @type {Asset | undefined}
+   */
+  let requestedAsset;
+
+  /**
    * Update the properties above.
    */
   const updateProps = async () => {
+    const _asset = asset;
+
+    requestedAsset = _asset;
+
     try {
-      details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
+      const _details = _asset ? await getAssetDetails(_asset) : { ...defaultAssetDetails };
+
+      if (requestedAsset === _asset) {
+        details = _details;
+      }
     } catch (/** @type {any} */ ex) {
       // The file couldn’t be downloaded, so the public URL is unknown
       // eslint-disable-next-line no-console

@@ -101,6 +101,32 @@ describe('ContentsPage', () => {
     expect(selectedCollection.current?.name).toBe('pages');
   });
 
+  test('shows the entry list toolbar for a collection holding only drafts', async () => {
+    setEntries([]);
+    unpublishedEntries.current = [
+      /** @type {any} */ ({
+        ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
+        workflow: {
+          status: 'draft',
+          collectionName: 'posts',
+          pullRequest: { number: 1, branch: 'cms/posts/draft' },
+        },
+      }),
+    ];
+    window.location.hash = '#/collections/posts';
+
+    try {
+      await render(ContentsPage);
+
+      const area = page.getByRole('main', { name: '\u2068Posts\u2069 Collection' });
+
+      await expect.element(area.getByRole('row', { name: 'Draft' })).toBeVisible();
+      await expect.element(area.getByRole('toolbar', { name: 'Entry List' })).toBeInTheDocument();
+    } finally {
+      unpublishedEntries.current = [];
+    }
+  });
+
   test('redirects the index to the first collection on a large screen', async () => {
     window.location.hash = '#/collections';
 

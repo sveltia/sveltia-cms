@@ -74,7 +74,12 @@
    */
   const removeValue = (value) => {
     updateList(({ valueList }) => {
-      valueList.splice(valueList.indexOf(value), 1);
+      const index = valueList.indexOf(value);
+
+      // A duplicated locale may not have the value; `-1` would remove its last value instead
+      if (index > -1) {
+        valueList.splice(index, 1);
+      }
     });
   };
 </script>

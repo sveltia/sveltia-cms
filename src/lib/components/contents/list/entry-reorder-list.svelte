@@ -40,11 +40,15 @@
   /** @type {Props} */
   const { collection, viewType } = $props();
 
+  // The entry lists, and the entries in them, are kept raw rather than deeply proxied by `$state`:
+  // they’re published to `reorderedEntries`, and the saved entries end up in the entry store, where
+  // the content editor clones them with `structuredClone()`, which throws on a proxy. Each change
+  // therefore replaces the object rather than mutating it
   /**
-   * Mutable per-group entry lists maintained during reorder mode.
+   * Per-group entry lists maintained during reorder mode.
    * @type {{ [groupName: string]: Entry[] }}
    */
-  let reorderGroups = $state({});
+  let reorderGroups = $state.raw({});
 
   /**
    * The group name and entry order as they were when the current drag started, so that an abandoned
@@ -52,13 +56,13 @@
    * while no drag is in progress.
    * @type {{ name: string, entries: Entry[] } | undefined}
    */
-  let dragOrigin = $state();
+  let dragOrigin = $state.raw();
 
   /**
    * The entry currently being dragged.
    * @type {Entry | undefined}
    */
-  let draggedEntry = $state();
+  let draggedEntry = $state.raw();
 
   /**
    * Sync the flattened ordered entries back to the shared store so the toolbar Save button can read
@@ -108,7 +112,9 @@
     if (from === to) return;
 
     /* v8 ignore next -- every group has been snapshotted on mount */
-    reorderGroups[groupName] = moveListItem(reorderGroups[groupName] ?? [], from, to);
+    const list = reorderGroups[groupName] ?? [];
+
+    reorderGroups = { ...reorderGroups, [groupName]: moveListItem(list, from, to) };
     reorderDirty.current = true;
     publishOrder();
   };
@@ -132,7 +138,7 @@
           publishOrder();
         }
       } else {
-        reorderGroups[name] = entries;
+        reorderGroups = { ...reorderGroups, [name]: entries };
       }
     }
 
@@ -217,7 +223,7 @@
                 });
 
                 if (to !== undefined) {
-                  reorderGroups[name] = moveListItem(list, from, to);
+                  reorderGroups = { ...reorderGroups, [name]: moveListItem(list, from, to) };
                 }
               }
 

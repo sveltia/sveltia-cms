@@ -37,23 +37,13 @@
 
   /** @type {Blob | undefined} */
   let assetBlob = undefined;
-
   /**
-   * Check if the file data can be copied to clipboard. Since OSes usually support only one item,
-   * enable the menu only when one file is selected.
-   * @returns {Promise<boolean>} Result.
+   * Assets the details were last requested for. The menu stays mounted while the focus moves from
+   * one asset to another, so a slow lookup for an asset focused earlier must not overwrite the
+   * details of the one focused now.
+   * @type {Asset[] | undefined}
    */
-  const checkCanCopyFileData = async () => {
-    assetBlob = undefined;
-
-    if (assets.length !== 1) {
-      return false;
-    }
-
-    assetBlob = await getAssetBlob(assets[0]);
-
-    return canCopyFileData(assetBlob.type);
-  };
+  let requestedAssets;
 
   const items = $derived([
     {
@@ -91,9 +81,28 @@
   ]);
 
   $effect(() => {
+    const _assets = assets;
+
+    requestedAssets = _assets;
+    // Don’t copy the data of the assets selected before while the new ones are being looked up
+    assetBlob = undefined;
+    canCopyData = false;
+
     (async () => {
-      assetsDetailList = await Promise.all(assets.map(getAssetDetails));
-      canCopyData = await checkCanCopyFileData();
+      const [detailList, blob] = await Promise.all([
+        Promise.all(_assets.map(getAssetDetails)),
+        // Since OSes usually support only one item, the data can be copied only when one file is
+        // selected. The data may not be available, e.g. for a file that can’t be downloaded
+        _assets.length === 1 ? getAssetBlob(_assets[0]).catch(() => undefined) : undefined,
+      ]);
+
+      if (requestedAssets !== _assets) {
+        return;
+      }
+
+      assetsDetailList = detailList;
+      assetBlob = blob;
+      canCopyData = !!blob && canCopyFileData(blob.type);
     })();
   });
 </script>

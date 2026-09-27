@@ -7,12 +7,8 @@ import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import CopyMenuItems from './copy-menu-items.svelte';
 
-vi.mock('$lib/services/contents/draft/update/copy', () => ({
-  getTurndownService: vi.fn(),
-  getCopyingFieldMap: vi.fn(),
-  updateToast: vi.fn(),
-  translateFields: vi.fn(),
-  copyFields: vi.fn(),
+vi.mock('$lib/services/contents/draft/update/copy', async (importOriginal) => ({
+  ...(await importOriginal()),
   copyFromLocale: vi.fn(),
 }));
 
@@ -82,6 +78,31 @@ describe('CopyMenuItems', () => {
     await expect
       .element(page.getByRole('menuitem', { name: 'Copy from \u2068German\u2069' }))
       .toBeDisabled();
+  });
+
+  test('offers to copy a List field, whose value is stored under its items', async () => {
+    const draft = createMockDraft({
+      fields: [{ name: 'tags', widget: 'list' }],
+      i18n,
+      values: {
+        en: { 'tags.0': 'apple', 'tags.1': 'banana' },
+        fr: { 'tags.0': 'apple', 'tags.1': 'banana' },
+        de: { 'tags.0': 'Apfel' },
+      },
+    });
+
+    await renderWithDraft(CopyMenuItems, {
+      draft,
+      props: { locale: 'de', otherLocales: ['en', 'fr'], keyPath: 'tags' },
+    });
+
+    await expect.poll(() => page.getByRole('menuitem').elements().length).toBe(2);
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Copy from \u2068English\u2069' }))
+      .toBeEnabled();
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Copy from \u2068French\u2069' }))
+      .toBeEnabled();
   });
 
   test('disables copying from or to a disabled locale', async () => {

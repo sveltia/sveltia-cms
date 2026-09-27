@@ -67,6 +67,27 @@ describe('ObjectPreview', () => {
     expect(container.querySelector('[role="group"]')).not.toHaveAttribute('aria-labelledby');
   });
 
+  test('passes the typed key path on to the subfields', async () => {
+    const { container } = await renderWithDraft(ObjectPreview, {
+      draft: createMockDraft({
+        fields: [authorField],
+        values: { _default: { 'author.name': 'M' } },
+      }),
+      props: {
+        locale: '_default',
+        keyPath: 'author',
+        typedKeyPath: 'posts.*.author',
+        fieldConfig: authorField,
+        currentValue: undefined,
+      },
+    });
+
+    expect(container.querySelector('section')).toHaveAttribute(
+      'data-typed-key-path',
+      'posts.*.author.name',
+    );
+  });
+
   test('previews the subfields of the selected type under its label', async () => {
     await renderPreview(blockField, { 'block.type': 'hero', 'block.heading': 'Welcome' });
 

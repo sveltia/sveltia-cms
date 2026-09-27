@@ -36,7 +36,8 @@ describe('ListEditor', () => {
   test('renders a simple list as text inputs within a group', async () => {
     await renderEditor({ name: 'tags', widget: 'list' }, { 'tags.0': 'a', 'tags.1': 'b' });
 
-    expect(page.getByRole('group').element().getAttribute('aria-labelledby')).toMatch(/-summary$/);
+    // There is no item count to label the list with
+    expect(page.getByRole('group').element()).not.toHaveAttribute('aria-labelledby');
     expect(page.getByRole('textbox', { name: 'Item Value' }).elements()).toHaveLength(2);
   });
 
@@ -47,6 +48,8 @@ describe('ListEditor', () => {
     );
 
     expect(page.getByRole('textbox', { name: 'Item Value' }).elements()).toHaveLength(0);
+    // The list is labelled with the item count
+    await expect.element(page.getByRole('group', { name: '1 authors' })).toBeVisible();
     // The list itself and the item are both expandable
     expect(page.getByRole('button', { name: 'Collapse' }).elements()).toHaveLength(2);
   });

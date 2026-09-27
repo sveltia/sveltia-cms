@@ -44,22 +44,41 @@
   const unavailable = $derived(externalAssetAvailability.current[asset.id] === false);
 
   /**
+   * Asset the details were last requested for. The panel stays mounted while the focus moves from
+   * one asset to another, so a slow lookup for an asset focused earlier must not overwrite the
+   * details of the one focused now.
+   * @type {ExternalAsset | undefined}
+   */
+  let requestedAsset;
+
+  /**
    * Update the properties above.
    * @param {ExternalAsset} _asset Asset to look up. Passed rather than read from the prop, because
    * the prop is gone once the panel is destroyed, e.g. when the Info pane is hidden by a window
    * resize, while this is still awaiting the service.
    */
   const updateProps = async (_asset) => {
+    requestedAsset = _asset;
     details = {};
     usedEntries = undefined;
 
     try {
-      details = await getExternalAssetDetails(_asset);
+      const _details = await getExternalAssetDetails(_asset);
+
+      if (requestedAsset !== _asset) {
+        return;
+      }
+
+      details = _details;
     } catch {
       // The file could not be loaded; leave the media info out
     }
 
-    usedEntries = await getExternalAssetUsedEntries(_asset);
+    const _usedEntries = await getExternalAssetUsedEntries(_asset);
+
+    if (requestedAsset === _asset) {
+      usedEntries = _usedEntries;
+    }
   };
 
   $effect(() => {

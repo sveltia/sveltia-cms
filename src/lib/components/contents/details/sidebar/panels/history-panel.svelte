@@ -53,33 +53,35 @@
         {@const commitURL = backend.current?.repository?.commitBaseURL
           ? `${backend.current.repository.commitBaseURL}/${commit.sha}`
           : undefined}
-        <Button
-          class="ref"
-          variant="ghost"
-          role="link"
-          disabled={!commitURL}
-          onclick={() => {
-            // The button is disabled without a URL
-            openNewTab(/** @type {string} */ (commitURL));
-          }}
-        >
-          {#if commit.authorAvatarURL}
-            <img
-              class="avatar"
-              src={commit.authorAvatarURL}
-              alt=""
-              width="24"
-              height="24"
-              loading="lazy"
-            />
-          {:else}
-            <span class="avatar placeholder" aria-hidden="true"></span>
-          {/if}
-          <span class="details">
-            <span class="author"><bdi>{commit.authorName}</bdi></span>
-            <span class="date">{formatDate(commit.date, appLocale.current)}</span>
-          </span>
-        </Button>
+        <div role="listitem">
+          <Button
+            class="ref"
+            variant="ghost"
+            role="link"
+            disabled={!commitURL}
+            onclick={() => {
+              // The button is disabled without a URL
+              openNewTab(/** @type {string} */ (commitURL));
+            }}
+          >
+            {#if commit.authorAvatarURL}
+              <img
+                class="avatar"
+                src={commit.authorAvatarURL}
+                alt=""
+                width="24"
+                height="24"
+                loading="lazy"
+              />
+            {:else}
+              <span class="avatar placeholder" aria-hidden="true"></span>
+            {/if}
+            <span class="details">
+              <span class="author"><bdi>{commit.authorName}</bdi></span>
+              <span class="date">{formatDate(commit.date, appLocale.current)}</span>
+            </span>
+          </Button>
+        </div>
       {/each}
     </div>
   {:else}

@@ -298,21 +298,34 @@
   const isSelected = (asset) => selectedResources.some((r) => r.url === asset.downloadURL);
 
   /**
+   * The latest selection state the list box reported for each asset, keyed by download URL. The
+   * resource of a selected asset is only ready after an `await`, by which time the asset may have
+   * been deselected: the list box reports the asset that loses a single selection after the one
+   * that gets it, if it comes later in the list, and the user can move on while a file downloads.
+   * @type {Map<string, boolean>}
+   */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  const requestedSelection = new Map();
+
+  /**
    * Handle selection change of an asset.
    * @param {ExternalAsset} asset The asset whose selection changed.
    * @param {boolean} selected `true` if the asset is now selected, `false` otherwise.
    */
   const onSelectionChange = async (asset, selected) => {
-    const otherResources = selectedResources.filter((r) => r.url !== asset.downloadURL);
+    const { downloadURL } = asset;
+
+    requestedSelection.set(downloadURL, selected);
 
     if (selected) {
       const resource = await getResource(asset);
 
-      if (resource) {
-        selectedResources = [...otherResources, resource];
+      // Read the selection again, as it may have changed during the `await`
+      if (resource && requestedSelection.get(downloadURL)) {
+        selectedResources = [...selectedResources.filter((r) => r.url !== downloadURL), resource];
       }
     } else {
-      selectedResources = otherResources;
+      selectedResources = selectedResources.filter((r) => r.url !== downloadURL);
     }
   };
 

@@ -122,8 +122,10 @@
 
 <svelte:body
   onmousedown={(event) => {
-    if (/** @type {HTMLElement | null} */ (event.target)?.matches('a')) {
-      const link = /** @type {HTMLAnchorElement} */ (event.target);
+    // The press can land on an element within the link, e.g. `<strong>` in a Markdown field hint
+    const link = /** @type {HTMLElement | null} */ (event.target)?.closest('a');
+
+    if (link) {
       const { origin, pathname } = link;
 
       // Open external links and links to different paths in a new tab

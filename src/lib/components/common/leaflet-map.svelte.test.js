@@ -57,4 +57,62 @@ describe('LeafletMap', () => {
       page.getByRole('application').element().querySelector('.leaflet-marker-icon'),
     ).toBeNull();
   });
+
+  test('moves the marker when the coordinates change', async () => {
+    const onReady = vi.fn();
+
+    const { rerender } = await render(LeafletMap, {
+      coordinates: { latitude: 35.6895, longitude: 139.6917 },
+      onReady,
+    });
+
+    await vi.waitFor(() => expect(onReady).toHaveBeenCalledOnce());
+
+    const { map } = onReady.mock.calls[0][0];
+    const element = page.getByRole('application').element();
+
+    await rerender({ coordinates: { latitude: 51.5074, longitude: -0.1278 } });
+
+    await expect
+      .element(page.getByRole('application'))
+      .toHaveAccessibleName('Map showing latitude 51.507, longitude -0.128');
+    await vi.waitFor(() => expect(map.getCenter().lat).toBeCloseTo(51.5074, 3));
+    expect(map.getCenter().lng).toBeCloseTo(-0.1278, 3);
+    expect(element.querySelectorAll('.leaflet-marker-icon')).toHaveLength(1);
+
+    // The same location again leaves the map where the user has moved it
+    map.setView([0, 0], 5);
+    await rerender({ coordinates: { latitude: 51.5074, longitude: -0.1278 } });
+    expect(map.getZoom()).toBe(5);
+
+    await rerender({ coordinates: undefined });
+    await vi.waitFor(() => expect(element.querySelector('.leaflet-marker-icon')).toBeNull());
+  });
+
+  test('doesn’t create the map once destroyed while Leaflet is loading', async () => {
+    const onReady = vi.fn();
+    const { loadModule } = await import('$lib/services/app/dependencies');
+    /**
+     * Resolve the pending import of Leaflet.
+     * @type {(value: any) => void}
+     */
+    let resolve = () => {};
+
+    vi.mocked(loadModule).mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        }),
+    );
+
+    const { unmount } = await render(LeafletMap, { coordinates: undefined, onReady });
+
+    unmount();
+    resolve(await import('leaflet/dist/leaflet-src.esm.js'));
+    await new Promise((r) => {
+      setTimeout(r, 100);
+    });
+
+    expect(onReady).not.toHaveBeenCalled();
+  });
 });

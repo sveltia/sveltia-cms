@@ -167,6 +167,20 @@ describe('ObjectEditor', () => {
     await expect.element(page.getByRole('checkbox', { name: /Add\W+author/ })).toBeVisible();
   });
 
+  test('passes the typed key path on to the subfields', async () => {
+    const { container } = await renderEditor(
+      authorField,
+      { 'author.name': 'Melvin' },
+      { props: { typedKeyPath: 'posts.*.author' } },
+    );
+
+    // The typed key path locates a field-level media folder, so a list index must not end up in it
+    expect(container.querySelector('[data-key-path="author.name"]')).toHaveAttribute(
+      'data-typed-key-path',
+      'posts.*.author.name',
+    );
+  });
+
   test('picks a type for an object with variable types', async () => {
     const { draft } = await renderEditor(blockField, {});
 

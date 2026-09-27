@@ -57,7 +57,7 @@ describe('HistoryPanel', () => {
       error: false,
     });
 
-    const links = panel.getByRole('list').getByRole('link');
+    const links = panel.getByRole('list').getByRole('listitem').getByRole('link');
 
     await expect.poll(() => links.elements().length).toBe(2);
     expect(links.elements().map((el) => el.textContent?.replace(/\s+/g, ' ').trim())).toEqual([

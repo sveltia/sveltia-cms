@@ -30,7 +30,9 @@
     searchTerms.current = terms;
 
     if (terms) {
-      goto(`/search/${terms}`, { replaceState: searching });
+      // Encode the terms, or a `?` or `#` would cut them short in the URL, and a stray `%` would
+      // make the path impossible to decode
+      goto(`/search/${encodeURIComponent(terms)}`, { replaceState: searching });
     } else if (hadTerms && searching) {
       goBack('/collections');
     }

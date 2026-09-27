@@ -239,6 +239,26 @@ describe('FileEditorItem', () => {
     await expect.element(page.getByRole('textbox')).toHaveTextContent('');
   });
 
+  test('shows the saved path once an unsaved file is reverted', async () => {
+    const file = await createMockImageFile({ name: 'new photo.png' });
+    const blobURL = URL.createObjectURL(file);
+
+    const { props } = await renderItem(
+      blobURL,
+      {},
+      { files: { [blobURL]: { file, folder: globalAssetFolder.current } } },
+    );
+
+    await expect
+      .element(page.getByRole('textbox'))
+      .toHaveTextContent('/static/uploads/new photo.png');
+    await expect.element(page.getByRole('button', { name: 'Rename' })).toBeVisible();
+
+    props.value = '/uploads/photo.png';
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('/uploads/photo.png');
+    expect(page.getByRole('button', { name: 'Rename' }).elements()).toHaveLength(0);
+  });
+
   test('offers the reorder controls in a list', async () => {
     const onMove = vi.fn();
 

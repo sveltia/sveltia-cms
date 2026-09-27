@@ -287,6 +287,9 @@
       return;
     }
 
+    // Dropped files are added, not taken as a replacement for the file last replaced
+    replaceMode = false;
+
     if (isDefaultLibraryAvailable) {
       const replace = await checkDuplicates({ files, listedAssets });
 
@@ -389,6 +392,8 @@
     onFilePaste={selectFolder
       ? undefined
       : (file) => {
+          // A pasted file is added, not taken as a replacement for the file last replaced
+          replaceMode = false;
           onResourcesSelect([{ file, folder: targetFolder }]);
         }}
   />

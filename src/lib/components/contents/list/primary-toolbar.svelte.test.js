@@ -6,6 +6,7 @@ import { getCollection, selectedCollection } from '$lib/services/contents/collec
 import { selectedEntries } from '$lib/services/contents/collection/entries';
 import { reordering, setReorderMode } from '$lib/services/contents/collection/view';
 import { env } from '$lib/services/user/env.svelte';
+import { unpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
@@ -184,6 +185,32 @@ describe('PrimaryToolbar', () => {
 
     await expect.element(page.getByRole('status')).toBeVisible();
     expect(page.getByRole('button', { name: 'Create' }).elements()).toHaveLength(0);
+  });
+
+  test('offers the floating button on a small screen when only drafts are listed', async () => {
+    env.isSmallScreen = true;
+    setEntries([]);
+    selectedCollection.current = getCollection('posts');
+
+    try {
+      // The entry list shows the drafts rather than its empty state with a Create button
+      unpublishedEntries.current = [
+        /** @type {any} */ ({
+          ...createMockEntry({ slug: 'draft', content: { _default: { title: 'Draft' } } }),
+          workflow: {
+            status: 'draft',
+            collectionName: 'posts',
+            pullRequest: { number: 1, branch: 'cms/posts/draft' },
+          },
+        }),
+      ];
+
+      await render(PrimaryToolbar, {});
+
+      await expect.element(page.getByRole('button', { name: 'Create New Entry' })).toBeVisible();
+    } finally {
+      unpublishedEntries.current = [];
+    }
   });
 
   test('renders nothing without a collection', async () => {

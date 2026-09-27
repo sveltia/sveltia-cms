@@ -212,10 +212,9 @@
    * Update properties when value changes.
    */
   const updateProps = async () => {
-    // Restore `file` after a draft backup is restored
-    if (value?.startsWith('blob:') && entryDraft.current) {
-      file = entryDraft.current.files[value]?.file;
-    }
+    // Restore `file` after a draft backup is restored, and drop it once the value is no longer an
+    // unsaved file, e.g. after the changes are reverted, so its name isn’t shown for another value
+    file = value?.startsWith('blob:') ? entryDraft.current?.files[value]?.file : undefined;
 
     // A folder has no preview
     if (isFolder) {

@@ -70,7 +70,7 @@
             keyPath={subFieldKeyPath}
             typedKeyPath={hasVariableTypes && typeConfig?.name
               ? `${typedKeyPath}<${typeConfig.name}>.${subField.name}`
-              : subFieldKeyPath}
+              : `${typedKeyPath}.${subField.name}`}
             {locale}
             fieldConfig={subField}
           />

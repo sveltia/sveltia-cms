@@ -672,4 +672,56 @@ describe('FileEditor', () => {
       .poll(() => draft.currentValues._default['images.0'])
       .toBe('/static/uploads/photo.png');
   });
+
+  test('adds a file dropped or pasted after one of multiple files is replaced', async () => {
+    const { draft, container } = await renderEditor(
+      { name: 'images', multiple: true },
+      ['/static/uploads/a.png', '/static/uploads/b.png'],
+      { 'images.0': '/static/uploads/a.png', 'images.1': '/static/uploads/b.png' },
+      { keyPath: 'images', typedKeyPath: 'images', fieldId: 'images' },
+    );
+
+    await page.getByRole('button', { name: 'Replace Image' }).nth(1).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+    await expect
+      .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
+      .toBe(1);
+    await sleep(150);
+    await page
+      .elementLocator(
+        /** @type {HTMLElement} */ (document.querySelector('#select-assets-grid [role="option"]')),
+      )
+      .click();
+    await dialog.getByRole('button', { name: 'Insert' }).click();
+
+    await expect
+      .poll(() => draft.currentValues._default['images.1'])
+      .toBe('/static/uploads/photo.png');
+
+    // A dropped file is added to the list instead of replacing the same item again
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createDropEvent([await createMockImageFile({ name: 'c.png' })]),
+    );
+    await expect.poll(() => draft.currentValues._default['images.2']).toMatch(/^blob:/);
+    expect(draft.currentValues._default['images.1']).toBe('/static/uploads/photo.png');
+
+    // So is a pasted one, after the Replace dialog is dismissed
+    await page.getByRole('button', { name: 'Replace Image' }).nth(0).click();
+    await expect.element(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect.element(dialog).not.toBeInTheDocument();
+
+    vi.spyOn(navigator.clipboard, 'read').mockResolvedValue([
+      /** @type {any} */ ({
+        types: ['image/png'],
+        getType: vi.fn().mockResolvedValue(await createMockImageFile()),
+      }),
+    ]);
+
+    await page.getByRole('button', { name: 'Paste Image' }).click();
+    await expect.poll(() => draft.currentValues._default['images.3']).toMatch(/^blob:/);
+    expect(draft.currentValues._default['images.0']).toBe('/static/uploads/a.png');
+  });
 });

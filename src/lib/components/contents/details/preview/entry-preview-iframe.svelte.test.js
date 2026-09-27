@@ -61,6 +61,39 @@ describe('EntryPreviewIframe', () => {
     ).toEqual(['https://example.com/a.css', 'https://example.com/b.css']);
   });
 
+  test('tears down the content mounted in the frame when it’s unmounted', async () => {
+    const teardown = vi.fn();
+
+    const { container, unmount } = await renderWithDraft(EntryPreviewIframe, {
+      draft: createMockDraft(),
+      props: {
+        locale: 'en',
+        styleURLs: [],
+        children: createRawSnippet(() => ({
+          /**
+           * Render the content.
+           * @returns {string} HTML.
+           */
+          render: () => '<p class="preview-content">Hello</p>',
+          /**
+           * Set up the content.
+           * @returns {() => void} Teardown.
+           */
+          setup: () => teardown,
+        })),
+      },
+    });
+
+    await expect
+      .poll(() => getDocument(container)?.querySelector('.preview-content')?.textContent)
+      .toBe('Hello');
+    expect(teardown).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(teardown).toHaveBeenCalledOnce();
+  });
+
   test('renders a React component, updating it with the props', async () => {
     /**
      * A component.

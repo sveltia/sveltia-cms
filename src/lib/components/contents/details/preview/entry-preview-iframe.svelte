@@ -8,7 +8,7 @@
   import { _ } from '@sveltia/i18n';
   import { Placeholder } from '@sveltia/ui';
   import { createElement } from 'react';
-  import { mount } from 'svelte';
+  import { mount, unmount } from 'svelte';
 
   import { loadReactDom } from '$lib/services/api/react-dom';
   import {
@@ -65,6 +65,12 @@
    * @type {Root | undefined}
    */
   let reactRoot = $state();
+  /**
+   * Svelte placeholder mounted inside the iframe. It’s outside the component tree, so it has to be
+   * unmounted explicitly, or its effects would keep running after the iframe is gone.
+   * @type {Record<string, any> | undefined}
+   */
+  let placeholder;
 
   /**
    * Generate the HTML content for the iframe.
@@ -96,7 +102,7 @@
       return;
     }
 
-    mount(Placeholder, {
+    placeholder = mount(Placeholder, {
       target,
       context: createEntryDraftMountContext(entryDraft),
       props: { children },
@@ -208,6 +214,10 @@
   // Cleanup on unmount
   $effect(() => () => {
     reactRoot?.unmount();
+
+    if (placeholder) {
+      unmount(placeholder);
+    }
   });
 </script>
 

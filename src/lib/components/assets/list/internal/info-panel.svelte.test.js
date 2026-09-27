@@ -1,3 +1,4 @@
+import { sleep } from '@sveltia/utils/misc';
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -135,6 +136,24 @@ describe('InfoPanel', () => {
     expect(error).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Failed to retrieve blob' }),
     );
+  });
+
+  test('ignores the details of an asset focused earlier that arrive late', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(getAssetDetails).mockReturnValueOnce(/** @type {any} */ (promise));
+
+    const first = createMockAsset({ name: 'first.txt' });
+    const second = createMockAsset({ name: 'second.txt' });
+    const { container, rerender } = await render(InfoPanel, { asset: first });
+
+    await rerender({ asset: second });
+    await expect.poll(() => getSections(container)['Public URL']).toMatch(/second\.txt$/);
+
+    resolve({ ...(await getAssetDetails(first)), publicURL: 'https://example.com/first.txt' });
+    await sleep(50);
+
+    expect(getSections(container)['Public URL']).toMatch(/second\.txt$/);
   });
 
   test('falls back to the extension and the author’s email', async () => {

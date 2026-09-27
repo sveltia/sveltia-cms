@@ -107,6 +107,24 @@ describe('LocaleSwitcher', () => {
     await expect.element(group.getByRole('radio', { name: 'German (error)' })).toHaveClass('error');
   });
 
+  test('lists a locale without content once the entry has been validated', async () => {
+    // Validation only covers the locales with content, so a disabled locale that has never had any
+    // has no validity
+    await renderSwitcher({
+      draftProps: {
+        currentLocales: { en: true, fr: true, de: false },
+        validities: { en: {}, fr: { title: { valid: false } } },
+      },
+    });
+
+    const group = page.getByRole('radiogroup');
+
+    await expect
+      .element(group.getByRole('radio', { name: 'German (disabled)' }))
+      .toBeInTheDocument();
+    await expect.element(group.getByRole('radio', { name: 'French (error)' })).toHaveClass('error');
+  });
+
   test('uses a drop-down on a small screen', async () => {
     env.isSmallScreen = true;
 

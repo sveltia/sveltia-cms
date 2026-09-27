@@ -90,6 +90,21 @@ describe('EntryReorderList', () => {
     await expect.poll(getTitles).toEqual(['B', 'A', 'C']);
   });
 
+  test('publishes the entries themselves rather than reactive proxies of them', async () => {
+    await render(EntryReorderList, {
+      collection: /** @type {any} */ (getCollection('posts')),
+      viewType: 'list',
+    });
+
+    await expect.poll(getTitles).toEqual(['A', 'B', 'C']);
+    await page.getByRole('row').nth(0).getByRole('button', { name: 'Move Down' }).click();
+    await expect.poll(getTitles).toEqual(['B', 'A', 'C']);
+
+    // The saved entries end up in the entry store, where the content editor clones them, and a
+    // proxy can’t be cloned
+    expect(() => structuredClone(reorderedEntries.current)).not.toThrow();
+  });
+
   /**
    * Drag a row over another, then drop or cancel.
    * @param {Element} source Row being dragged.
@@ -135,6 +150,7 @@ describe('EntryReorderList', () => {
     drag(rows[0], rows[2]);
     await expect.poll(getTitles).toEqual(['B', 'C', 'A']);
     expect(reorderDirty.current).toBe(true);
+    expect(() => structuredClone(reorderedEntries.current)).not.toThrow();
   });
 
   test('puts the entries back when the drag is cancelled or dropped elsewhere', async () => {

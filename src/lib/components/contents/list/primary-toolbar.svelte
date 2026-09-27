@@ -21,6 +21,7 @@
   import {
     collectionState,
     listedEntries,
+    listedUnpublishedEntries,
     reordering,
     setReorderMode,
   } from '$lib/services/contents/collection/view';
@@ -66,6 +67,11 @@
     creationDisabled,
   } = $derived(collectionState.current);
   const deleteDisabled = $derived(!selectedEntries.current.length || !canDelete);
+  // The empty entry list offers a Create button of its own, so the floating one is only needed once
+  // the list has entries, including unpublished ones, which can be the only ones in the collection
+  const hasEntries = $derived(
+    !!(listedEntries.current.length || listedUnpublishedEntries.current.length),
+  );
 </script>
 
 {#if selectedCollection.current}
@@ -118,7 +124,7 @@
         />
       {/if}
       <FloatingActionButtonWrapper>
-        {#if !env.isSmallScreen || (listedEntries.current.length && !creationDisabled)}
+        {#if !env.isSmallScreen || (hasEntries && !creationDisabled)}
           <CreateEntryButton
             collectionName={name}
             label={env.isSmallScreen ? undefined : _('create')}

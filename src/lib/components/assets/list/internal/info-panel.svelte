@@ -42,12 +42,31 @@
   const canPreview = $derived(isMediaKind(kind) || path.endsWith('.pdf'));
 
   /**
+   * Asset the details were last requested for. The panel stays mounted while the focus moves from
+   * one asset to another, so a slow lookup for an asset focused earlier must not overwrite the
+   * details of the one focused now.
+   * @type {Asset | undefined}
+   */
+  let requestedAsset;
+
+  /**
    * Update the properties above.
    */
   const updateProps = async () => {
+    const _asset = asset;
+
+    requestedAsset = _asset;
+
     try {
-      details = asset ? await getAssetDetails(asset) : { ...defaultAssetDetails };
-      details.usedEntries = asset ? await getAssetUsedEntries(asset) : [];
+      const _details = _asset ? await getAssetDetails(_asset) : { ...defaultAssetDetails };
+
+      if (requestedAsset !== _asset) {
+        return;
+      }
+
+      details = _details;
+      // A late result lands on the object replaced since, so it needs no check
+      details.usedEntries = _asset ? await getAssetUsedEntries(_asset) : [];
     } catch (/** @type {any} */ ex) {
       // The file couldn’t be downloaded, so only the basic info is shown
       // eslint-disable-next-line no-console

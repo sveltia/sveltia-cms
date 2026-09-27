@@ -1,11 +1,18 @@
 import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { getAssetDetails } from '$lib/services/assets/details';
 import { createMockAsset, initTestConfig } from '$lib/test/config';
 
 import CopyAssetsButton from './copy-assets-button.svelte';
+
+vi.mock('$lib/services/assets/details', async (importOriginal) => {
+  const actual = /** @type {any} */ (await importOriginal());
+
+  return { ...actual, getAssetDetails: vi.fn(actual.getAssetDetails) };
+});
 
 const textAsset = createMockAsset({
   name: 'notes.txt',
@@ -127,5 +134,47 @@ describe('CopyAssetsButton', () => {
   test('is disabled without assets', async () => {
     await render(CopyAssetsButton, {});
     await expect.element(page.getByRole('button', { name: 'Copy' })).toBeDisabled();
+  });
+
+  test('ignores the details of an asset focused earlier that arrive late', async () => {
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(getAssetDetails).mockReturnValueOnce(/** @type {any} */ (promise));
+
+    const { rerender } = await render(CopyAssetsButton, { assets: [textAsset] });
+
+    await rerender({ assets: [zipAsset] });
+    resolve({ publicURL: 'https://example.com/uploads/notes.txt' });
+    await sleep(50);
+    await openMenu();
+    await page.getByRole('menuitem', { name: 'Public URL' }).click();
+    expect(writeText).toHaveBeenLastCalledWith('https://example.com/uploads/archive.zip');
+  });
+
+  test('can’t copy the data of an asset focused earlier while another is looked up', async () => {
+    const { rerender } = await render(CopyAssetsButton, { assets: [textAsset] });
+
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'File Data' })).toBeEnabled();
+    await userEvent.keyboard('{Escape}');
+
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(getAssetDetails).mockReturnValueOnce(/** @type {any} */ (promise));
+    await rerender({ assets: [createMockAsset({ name: 'other.txt', file: textAsset.file })] });
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'File Data' })).toBeDisabled();
+
+    resolve({ publicURL: 'https://example.com/uploads/other.txt' });
+    await expect.element(page.getByRole('menuitem', { name: 'File Data' })).toBeEnabled();
+  });
+
+  test('can’t copy the data of a file that can’t be downloaded', async () => {
+    // The test backend can’t download a file that isn’t held in memory
+    await render(CopyAssetsButton, { assets: [createMockAsset({ name: 'lost.txt' })] });
+    await openMenu();
+
+    await expect.element(page.getByRole('menuitem', { name: 'Public URL' })).toBeEnabled();
+    await expect.element(page.getByRole('menuitem', { name: 'File Data' })).toBeDisabled();
   });
 });

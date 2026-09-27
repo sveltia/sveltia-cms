@@ -149,7 +149,7 @@
     label = '',
     comment = '',
     hint = '',
-    readonly: readonlyOption = false,
+    readonly: readonlyOption,
   } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const required = $derived(isFieldRequired({ fieldConfig, locale }));
   const multiple = $derived(isFieldMultiple(fieldConfig));
@@ -253,11 +253,11 @@
   // for a duplicated locale, this hides the options that would change the content
   const pendingDeletion = $derived(isPendingDeletion(entryDraft.current?.originalEntry));
   const readonly = $derived(
-    readonlyOption ||
+    // The `readonly` option defaults to `true` for the UUID field type, which can be unlocked
+    (readonlyOption ?? fieldType === 'uuid') ||
       pendingDeletion ||
       (i18n === 'duplicate' && locale !== defaultLocale) ||
-      fieldType === 'compute' ||
-      fieldType === 'uuid',
+      fieldType === 'compute',
   );
   const invalid = $derived(validity?.valid === false);
   const editorProps = $derived({

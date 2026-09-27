@@ -91,6 +91,51 @@ describe('ExternalAssetsPanel', () => {
     await expect
       .poll(() => props.selectedResources)
       .toEqual([{ url: 'https://cdn.example.com/images/b.png', credit: undefined }]);
+
+    // An earlier asset replaces it too, although the list box reports it selected before it
+    // reports the later one deselected, while the resource is still being prepared
+    await getOption('images/a.png').click();
+    await expect.element(getOption('images/b.png')).toHaveAttribute('aria-selected', 'false');
+    await sleep(50);
+    expect(props.selectedResources).toEqual([
+      { url: 'https://cdn.example.com/images/a.png', credit: undefined },
+    ]);
+  });
+
+  test('leaves out an asset deselected before its resource is ready', async () => {
+    const props = $state({
+      multiple: true,
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(assets) }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    await waitForList(2);
+
+    await getOption('images/b.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([{ url: 'https://cdn.example.com/images/b.png', credit: undefined }]);
+
+    const option = /** @type {HTMLElement} */ (getOption('images/a.png').element());
+
+    // Both clicks are handled before the resource of the first one is ready
+    option.click();
+    option.click();
+    await expect.element(getOption('images/a.png')).toHaveAttribute('aria-selected', 'false');
+    await sleep(50);
+    expect(props.selectedResources).toEqual([
+      { url: 'https://cdn.example.com/images/b.png', credit: undefined },
+    ]);
+
+    // Another asset is added to the selection once its resource is ready
+    await getOption('images/a.png').click();
+    await expect
+      .poll(() => props.selectedResources)
+      .toEqual([
+        { url: 'https://cdn.example.com/images/b.png', credit: undefined },
+        { url: 'https://cdn.example.com/images/a.png', credit: undefined },
+      ]);
   });
 
   test('downloads the selected file when hotlinking is not allowed', async () => {

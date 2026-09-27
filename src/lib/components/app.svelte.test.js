@@ -123,6 +123,19 @@ describe('App', () => {
       expect(internal.target).toBe('');
       internal.remove();
 
+      // The press can land on an element within the link
+      const nested = document.createElement('a');
+      const strong = document.createElement('strong');
+
+      nested.href = 'https://example.com/guide';
+      strong.textContent = 'Guide';
+      nested.appendChild(strong);
+      document.body.appendChild(nested);
+      strong.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      expect(nested.target).toBe('_blank');
+      expect(nested.rel).toBe('noopener noreferrer');
+      nested.remove();
+
       // Anything else is left alone
       document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
       expect(link.target).toBe('_blank');

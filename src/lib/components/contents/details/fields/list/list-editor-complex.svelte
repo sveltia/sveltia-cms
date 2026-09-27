@@ -59,6 +59,7 @@
    * @typedef {object} Props
    * @property {ComplexListField} fieldConfig Field configuration.
    * @property {Record<string, any>[]} currentValue Field value.
+   * @property {string} [summaryId] ID for the item count, which labels the list.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -75,6 +76,7 @@
     keyPath,
     typedKeyPath,
     fieldConfig,
+    summaryId,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -485,7 +487,7 @@
         <ExpandIcon expanded={parentExpanded} />
       {/snippet}
     </Button>
-    <div role="none" class="summary" id="object-{fieldId}-summary">
+    <div role="none" class="summary" id={summaryId}>
       {items.length}
       {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
     </div>

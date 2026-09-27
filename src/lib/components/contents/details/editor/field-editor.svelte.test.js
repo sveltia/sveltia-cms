@@ -178,6 +178,24 @@ describe('FieldEditor', () => {
     expect(page.getByRole('button', { name: 'Show Field Options' }).elements()).toHaveLength(0);
   });
 
+  test('locks a UUID field unless the `readonly` option unlocks it', async () => {
+    await renderEditor({
+      fieldConfig: { name: 'id', widget: 'uuid' },
+      values: { id: 'abc' },
+    });
+
+    await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-readonly', 'true');
+
+    const { container } = await renderEditor({
+      fieldConfig: { name: 'key', widget: 'uuid', readonly: false },
+      values: { key: 'def' },
+    });
+
+    await expect
+      .element(/** @type {HTMLElement} */ (container.querySelector('[role="textbox"], input')))
+      .not.toHaveAttribute('aria-readonly', 'true');
+  });
+
   test('compares against nothing in a locale that was enabled later', async () => {
     // The original values only cover the locales enabled when the draft was created
     const draft = { originalValues: { en: {} } };

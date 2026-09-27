@@ -77,7 +77,8 @@
       {#each listedLocales as locale (locale)}
         {@const label = getLocaleLabel(locale) ?? locale}
         {@const disabled = !entryDraft.current?.currentLocales[locale]}
-        {@const hasError = Object.values(validities[locale]).some(({ valid }) => !valid)}
+        <!-- A locale without content, e.g. a disabled one, is left out of the validation -->
+        {@const hasError = Object.values(validities[locale] ?? {}).some(({ valid }) => !valid)}
         <OptionComponent
           {variant}
           {size}
