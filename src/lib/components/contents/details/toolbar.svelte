@@ -178,7 +178,10 @@
   // There’s only something to put in the second pane when another locale can be edited alongside
   // the first one, or when the entry has a preview
   const canShowSecondPane = $derived((i18nEnabled && allLocales.length > 1) || canPreview);
-  /* v8 ignore start -- only read while the draft is there, as the preview is on by default */
+  // Whether the preview is shown in the second pane, which is all the pane shows for an entry with
+  // a single locale, so there’s nothing to sync the scrolling with otherwise
+  const previewShown = $derived(canPreview && !!entryEditorSettings.current?.showPreview);
+  /* v8 ignore start -- only read while the draft is there, and the preview is hidden */
   const hasSingleLocale = $derived(
     Object.keys(entryDraft.current?.currentValues ?? {}).length === 1,
   );
@@ -697,7 +700,7 @@
           <MenuItemCheckbox
             label={_('sync_scrolling')}
             checked={entryEditorSettings.current?.syncScrolling}
-            disabled={!showSecondPane || (!canPreview && hasSingleLocale)}
+            disabled={!showSecondPane || (!previewShown && hasSingleLocale)}
             onChange={() => {
               entryEditorSettings.current = {
                 ...entryEditorSettings.current,

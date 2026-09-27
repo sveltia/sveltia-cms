@@ -957,6 +957,18 @@ describe('Toolbar', () => {
       .toBeDisabled();
   });
 
+  test('has nothing to sync once the preview of a single locale is hidden', async () => {
+    await renderExisting();
+
+    const syncScrolling = (await openMenu()).getByRole('menuitemcheckbox', {
+      name: 'Sync Scrolling',
+    });
+
+    await expect.element(syncScrolling).toBeEnabled();
+    entryEditorSettings.current = { ...entryEditorSettings.current, showPreview: false };
+    await expect.element(syncScrolling).toBeDisabled();
+  });
+
   test('reports the result of copying from another locale', async () => {
     await renderExisting();
 

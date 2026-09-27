@@ -160,6 +160,8 @@ test.describe('panes', () => {
     await expect(previewPane).toBeHidden();
     await menuButton.click();
     await expect(showPreview).not.toBeChecked();
+    // The preview is all the second pane shows for a single locale, so there’s nothing to sync
+    await expect(syncScrolling).toBeDisabled();
     await page.keyboard.press('Escape');
 
     await cms.chooseMenuItem(menuButton, showPreview);
