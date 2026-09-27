@@ -145,7 +145,7 @@ describe('KeyValueEditor', () => {
   test('adds a pair and saves it once the key is filled in', async () => {
     const { draft } = await renderEditor({ color: 'red' });
 
-    await page.getByRole('button', { name: 'Add' }).click();
+    await page.getByRole('button', { name: /Add\W+meta/ }).click();
     await expect.poll(getRows).toEqual([
       ['color', 'red'],
       ['', ''],
@@ -190,14 +190,21 @@ describe('KeyValueEditor', () => {
     await expect.poll(() => draft.currentValues._default.meta).toBe(null);
   });
 
+  test('names the Add button after the singular label', async () => {
+    await renderEditor({}, { config: { label: 'Settings', label_singular: 'Setting' } });
+
+    await page.getByRole('button', { name: /Add\W+Setting\W*$/ }).click();
+    await expect.element(page.getByRole('textbox', { name: 'Key' })).toHaveFocus();
+  });
+
   test('hides the Add button at the maximum, showing it again once a pair is removed', async () => {
     await renderEditor({ color: 'red' }, { config: { max: 1 } });
 
     await expect.element(page.getByRole('textbox', { name: 'Key' })).toBeVisible();
-    expect(page.getByRole('button', { name: 'Add' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: /Add\W+meta/ }).elements()).toHaveLength(0);
 
     await page.getByRole('button', { name: 'Remove' }).click();
-    await expect.element(page.getByRole('button', { name: 'Add' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: /Add\W+meta/ })).toBeVisible();
   });
 
   test('moves on to the next row, or adds one, with the Enter key in a value field', async () => {
@@ -317,7 +324,7 @@ describe('KeyValueEditor', () => {
       .toHaveAttribute('aria-readonly', 'true');
     expect(page.getByRole('button', { name: 'Remove' }).elements()).toHaveLength(0);
     await expect
-      .element(page.getByRole('button', { name: 'Add' }))
+      .element(page.getByRole('button', { name: /Add\W+meta/ }))
       .toHaveAttribute('aria-disabled', 'true');
   });
 });

@@ -656,6 +656,8 @@
  * @property {Record<string, string>} [default] Default key-value pairs.
  * @property {string} [key_label] Label for the key column. Default: Key.
  * @property {string} [value_label] Label for the value column. Default: Value.
+ * @property {string} [label_singular] Label to be displayed on the Add button. Default: `label`
+ * field value.
  * @property {boolean} [root] Whether to save the field value at the top-level of the data file
  * without the field name. If the `single_file` i18n structure is enabled, the key-value pairs will
  * still be saved under locale keys. Default: `false`. See the

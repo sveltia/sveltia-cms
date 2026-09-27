@@ -13,6 +13,7 @@
 
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
+  import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
@@ -361,12 +362,12 @@
 {/if}
 
 {#if pairs.length < max}
-  <div role="none">
-    <Button
-      label={_('add')}
-      variant="tertiary"
+  <div role="none" class="toolbar">
+    <AddItemButton
       disabled={keysReadonly}
-      onclick={() => {
+      {fieldConfig}
+      items={pairs}
+      addItem={() => {
         addPair();
       }}
     />
@@ -374,7 +375,22 @@
 {/if}
 
 <style>
+  .toolbar {
+    display: flex;
+    align-items: center;
+    margin-block-start: 8px;
+
+    &:first-child {
+      margin-block-start: 0;
+    }
+  }
+
   table {
+    /* Space the cells like the items of a List field. The outer spacing is cancelled out by the
+      negative margins, which the stretched width makes up for */
+    margin: -4px;
+    border-collapse: separate;
+    border-spacing: 4px;
     width: -moz-available;
     width: -webkit-fill-available;
     width: stretch;
