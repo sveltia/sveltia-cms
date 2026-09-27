@@ -53,6 +53,10 @@
     getRestoredPanes,
     savePaneState,
   } from '$lib/services/contents/editor/panes';
+  import {
+    afterPendingFieldUpdates,
+    awaitPendingFieldUpdates,
+  } from '$lib/services/contents/editor/pending';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
@@ -210,10 +214,12 @@
    * Swap the panes.
    */
   const swapPanes = () => {
-    [editorFirstPane.current, editorSecondPane.current] = [
-      editorSecondPane.current,
-      editorFirstPane.current,
-    ];
+    afterPendingFieldUpdates(() => {
+      [editorFirstPane.current, editorSecondPane.current] = [
+        editorSecondPane.current,
+        editorFirstPane.current,
+      ];
+    });
   };
 
   /**
@@ -231,6 +237,9 @@
    * @param {InternalLocaleCode} locale Locale code.
    */
   const ensureEditPaneVisible = async (locale) => {
+    // The panes are about to change, so let what was just typed reach the draft first
+    await awaitPendingFieldUpdates();
+
     const panes = getPanesEditingLocale({
       firstPane: editorFirstPane.current,
       secondPane: editorSecondPane.current,

@@ -13,6 +13,7 @@ import RichTextEditor from './rich-text-editor.svelte';
 vi.mock('$lib/services/contents/editor/pending', () => ({
   trackPendingFieldUpdate: vi.fn(),
   awaitPendingFieldUpdates: vi.fn(),
+  afterPendingFieldUpdates: vi.fn(async (fn) => fn()),
 }));
 
 /**

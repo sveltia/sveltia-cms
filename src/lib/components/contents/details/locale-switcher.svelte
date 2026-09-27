@@ -3,6 +3,7 @@
   import { Divider, Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { afterPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -93,11 +94,13 @@
           class={hasError ? 'error' : ''}
           data-mode="edit"
           onSelect={() => {
-            thisPane.current = { mode: 'edit', locale };
+            afterPendingFieldUpdates(() => {
+              thisPane.current = { mode: 'edit', locale };
 
-            if (thatPane.current?.mode === 'preview') {
-              thatPane.current = { mode: 'preview', locale };
-            }
+              if (thatPane.current?.mode === 'preview') {
+                thatPane.current = { mode: 'preview', locale };
+              }
+            });
           }}
         >
           {#snippet startIcon()}
@@ -121,10 +124,12 @@
           selected={thisPane.current?.mode === 'preview'}
           data-mode="preview"
           onSelect={() => {
-            thisPane.current = {
-              mode: 'preview',
-              locale: /** @type {EntryEditorPane} */ (thatPane.current).locale,
-            };
+            // Read the locale now: the other pane may change while the updates land
+            const { locale } = /** @type {EntryEditorPane} */ (thatPane.current);
+
+            afterPendingFieldUpdates(() => {
+              thisPane.current = { mode: 'preview', locale };
+            });
           }}
         />
       {/if}

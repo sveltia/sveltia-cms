@@ -2,6 +2,8 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon } from '@sveltia/ui';
 
+  import { afterPendingFieldUpdates } from '$lib/services/contents/editor/pending';
+
   /**
    * @import { EntryEditorPane } from '$lib/types/private';
    */
@@ -25,10 +27,13 @@
   aria-label={_('preview')}
   pressed={thisPane.current?.mode === 'preview'}
   onclick={() => {
-    thisPane.current = {
-      mode: thisPane.current?.mode === 'preview' ? 'edit' : 'preview',
-      locale: thisPane.current?.locale ?? '',
-    };
+    // The preview replaces the field editors, which would drop an update still in flight
+    afterPendingFieldUpdates(() => {
+      thisPane.current = {
+        mode: thisPane.current?.mode === 'preview' ? 'edit' : 'preview',
+        locale: thisPane.current?.locale ?? '',
+      };
+    });
   }}
 >
   {#snippet startIcon()}

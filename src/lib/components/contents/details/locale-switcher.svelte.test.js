@@ -2,6 +2,7 @@ import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { env } from '$lib/services/user/env.svelte';
 import { createRawState } from '$lib/services/utils/state.svelte';
@@ -69,6 +70,28 @@ describe('LocaleSwitcher', () => {
     expect(thisPane.current).toEqual({ mode: 'edit', locale: 'fr' });
     // The preview pane follows
     expect(thatPane.current).toEqual({ mode: 'preview', locale: 'fr' });
+  });
+
+  test('waits for a field update in flight before switching', async () => {
+    const { thisPane } = await renderSwitcher();
+    /** @type {any} */
+    let settle;
+
+    // A rich text editor converting what was just typed in English
+    trackPendingFieldUpdate(
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+    );
+
+    await sleep(150);
+    await page.getByRole('radio', { name: 'French' }).click();
+    // The update would otherwise be written to the French content the pane now shows
+    await sleep(50);
+    expect(thisPane.current).toEqual({ mode: 'edit', locale: 'en' });
+
+    settle();
+    await expect.poll(() => thisPane.current).toEqual({ mode: 'edit', locale: 'fr' });
   });
 
   test('leaves out the locale edited in the other pane, offering the preview instead', async () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  afterPendingFieldUpdates,
   awaitPendingFieldUpdates,
   fieldUpdatePending,
   trackPendingFieldUpdate,
@@ -70,5 +71,31 @@ describe('editor/pending', () => {
 
     await awaitPendingFieldUpdates();
     expect(secondDone).toBe(true);
+  });
+
+  it('runs a function once the tracked updates have settled', async () => {
+    /** @type {any} */
+    let resolve;
+    /** @type {string[]} */
+    const calls = [];
+
+    trackPendingFieldUpdate(
+      new Promise((_resolve) => {
+        resolve = _resolve;
+      }).then(() => {
+        calls.push('update');
+      }),
+    );
+
+    const running = afterPendingFieldUpdates(() => {
+      calls.push('fn');
+    });
+
+    await Promise.resolve();
+    expect(calls).toEqual([]);
+
+    resolve();
+    await running;
+    expect(calls).toEqual(['update', 'fn']);
   });
 });

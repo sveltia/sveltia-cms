@@ -45,3 +45,15 @@ export const awaitPendingFieldUpdates = async () => {
     await Promise.allSettled(pendingFieldUpdates);
   }
 };
+
+/**
+ * Run the given function once all in-flight field editor updates have reached the entry draft. Use
+ * it to change the locale or the mode of an editor pane: the field editors in the pane are reused
+ * for the new locale, so an update still in flight, e.g. a rich text editor converting what was
+ * just typed, would be written to the new locale, and lost for the one it was made in.
+ * @param {() => void} fn Function to run.
+ */
+export const afterPendingFieldUpdates = async (fn) => {
+  await awaitPendingFieldUpdates();
+  fn();
+};
