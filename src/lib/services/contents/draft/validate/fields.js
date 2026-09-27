@@ -64,6 +64,12 @@ import { getRegex } from '$lib/services/utils/regex';
  */
 
 /**
+ * Regular expression matching the item index of a List field within a key path when a subfield
+ * follows, e.g. `.0` in `speakers.0.name`. What comes before the match is the list’s key path.
+ */
+const LIST_ITEM_SUBFIELD_REGEX = /\.\d+(?=\.)/g;
+
+/**
  * Default validity state for a field.
  * @type {EntryValidityState}
  */
@@ -586,6 +592,57 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
           componentName,
         });
 
+      /**
+       * Validate a List field itself, e.g. its item count, and compute its messages. The list is
+       * validated only once, however many of its items are in the value map.
+       * @param {object} args Arguments.
+       * @param {FieldKeyPath} args.listKeyPath Key path of the list.
+       * @param {Field} args.fieldConfig Configuration to validate the list with: the list’s own, or
+       * the item’s for a list with `field`.
+       * @param {Field} args.listFieldConfig The list’s own configuration, for the messages.
+       * @returns {boolean} Whether the list’s items have to be validated too.
+       */
+      const validateListItself = ({ listKeyPath, fieldConfig, listFieldConfig }) => {
+        const { valid: listValid, validateItems } = validateList({
+          fieldConfig,
+          validateArgs: { ...validateArgs, keyPath: listKeyPath, value: '', componentName },
+        });
+
+        if (!listValid) {
+          valid = false;
+        }
+
+        // Compute messages for the list field itself (only on first item iteration)
+        if (!(listKeyPath in validationMessages[locale])) {
+          const listValidity = validities[locale][listKeyPath];
+
+          if (listValidity) {
+            validationMessages[locale][listKeyPath] = getFieldValidationMessages({
+              validity: listValidity,
+              fieldConfig: listFieldConfig,
+            });
+          }
+        }
+
+        return validateItems;
+      };
+
+      // The items of a List field with subfields or types are flattened to their own subfields,
+      // e.g. `speakers.0.name`, so no key path stands for such a list. Validate each list the value
+      // is in through the path of its items, or its item count would never be checked
+      [...keyPath.matchAll(LIST_ITEM_SUBFIELD_REGEX)].forEach(({ index }) => {
+        const ancestorKeyPath = keyPath.slice(0, index);
+        const ancestorConfig = getConfig(ancestorKeyPath);
+
+        if (ancestorConfig?.widget === 'list') {
+          validateListItself({
+            listKeyPath: ancestorKeyPath,
+            fieldConfig: ancestorConfig,
+            listFieldConfig: ancestorConfig,
+          });
+        }
+      });
+
       const listKeyPath = LIST_KEY_PATH_REGEX.test(keyPath)
         ? keyPath.replace(LIST_KEY_PATH_REGEX, '')
         : undefined;
@@ -610,39 +667,18 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
         return;
       }
 
-      // Validate a list itself before the items
-      if (listKeyPath !== undefined) {
-        const { valid: listValid, validateItems } = validateList({
+      // Validate a list itself before the items. The item’s config is the subfield of a list with
+      // `field`, so the list’s own config has to be used for the list’s messages, such as the
+      // minimum item count
+      if (
+        listKeyPath !== undefined &&
+        !validateListItself({
+          listKeyPath,
           fieldConfig,
-          validateArgs: {
-            ...validateArgs,
-            keyPath: listKeyPath,
-            value: '',
-            componentName,
-          },
-        });
-
-        if (!listValid) {
-          valid = false;
-        }
-
-        // Compute messages for the list field itself (only on first item iteration)
-        if (!(listKeyPath in validationMessages[locale])) {
-          const listValidity = validities[locale][listKeyPath];
-
-          if (listValidity) {
-            validationMessages[locale][listKeyPath] = getFieldValidationMessages({
-              validity: listValidity,
-              // The item’s config is the subfield of a list with `field`, so the list’s own
-              // config has to be used for the list’s messages, such as the minimum item count
-              fieldConfig: /** @type {Field} */ (listFieldConfig),
-            });
-          }
-        }
-
-        if (!validateItems) {
-          return;
-        }
+          listFieldConfig: /** @type {Field} */ (listFieldConfig),
+        })
+      ) {
+        return;
       }
 
       if (!validateField({ ...validateArgs, keyPath, value, componentName })) {

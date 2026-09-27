@@ -16,6 +16,25 @@ const collection = {
     // Optional, but carrying the same kind of constraints
     { name: 'note', widget: 'string', required: false, minlength: 3, pattern: ['^\\d+$', 'D'] },
     { name: 'extras', widget: 'list', required: false, min: 2 },
+    // Lists whose items are objects, stored as their subfields, e.g. `speakers.0.name`
+    {
+      name: 'speakers',
+      widget: 'list',
+      required: false,
+      min: 2,
+      max: 3,
+      fields: [
+        { name: 'name', widget: 'string' },
+        { name: 'links', widget: 'list', required: false, max: 1, fields: [{ name: 'url' }] },
+      ],
+    },
+    {
+      name: 'blocks',
+      widget: 'list',
+      required: false,
+      max: 1,
+      types: [{ name: 'text', widget: 'object', fields: [{ name: 'body', widget: 'string' }] }],
+    },
   ],
   _i18n: {
     structureMap: {},
@@ -158,6 +177,65 @@ describe('contents/draft/validate (integration)', () => {
 
     validateEntry();
     expect(entryDraft.current.validities._default.tags.valid).toBe(true);
+  });
+
+  it('should hold a list with subfields to its item count when only its items are stored', () => {
+    // A list of objects loaded from a file is stored as its items’ subfields, e.g.
+    // `speakers.0.name`, with no key path for the list itself, so the list has to be checked from
+    // its items
+    const { currentValues } = entryDraft.current;
+    const values = currentValues._default;
+
+    delete values.speakers;
+    values['speakers.0.name'] = 'Ana';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.speakers.rangeUnderflow).toBe(true);
+    expect(entryDraft.current.validationMessages._default.speakers).toEqual([
+      'validation.range_underflow.add',
+    ]);
+
+    // Too many items
+    values['speakers.1.name'] = 'Ben';
+    values['speakers.2.name'] = 'Cai';
+    values['speakers.3.name'] = 'Dee';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.speakers.rangeOverflow).toBe(true);
+
+    // Within the range
+    delete values['speakers.3.name'];
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.speakers.valid).toBe(true);
+
+    // A list nested in an item is checked too
+    values['speakers.0.links.0.url'] = 'https://a.example';
+    values['speakers.0.links.1.url'] = 'https://b.example';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.speakers.valid).toBe(true);
+    expect(entryDraft.current.validities._default['speakers.0.links'].rangeOverflow).toBe(true);
+
+    // A value left over from a list that’s no longer in the config has nothing to be checked
+    // against
+    values['removed.0.name'] = 'Eve';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.removed).toBeUndefined();
+  });
+
+  it('should hold a list with types to its item count when only its items are stored', () => {
+    const values = entryDraft.current.currentValues._default;
+
+    delete values.blocks;
+    values['blocks.0.type'] = 'text';
+    values['blocks.0.body'] = 'One';
+    values['blocks.1.type'] = 'text';
+    values['blocks.1.body'] = 'Two';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.blocks.rangeOverflow).toBe(true);
   });
 
   it('should still reject an error that isn’t about the field being empty', () => {
