@@ -68,6 +68,12 @@ Build output: `package/dist/sveltia-cms.js` (IIFE), `package/dist/sveltia-cms.mj
 
 `.github/workflows/tests.yml` runs on every push: Check, Test (three unit test shards, three component test shards and the end-to-end tests, the latter two with Chromium), Build in parallel, using `.nvmrc` Node version and pnpm. A PR must pass ESLint, Prettier, all tests, Svelte compiler checks, the production build, and the unused-imports check.
 
+## Workflow
+
+- Fix a bug a test turns up, and cover it with a test that fails without the fix; don’t work around it in the test. When the fix needs a product decision, pin the current behaviour with a “(known issue)” test (see `e2e/README.md`) and raise it instead.
+- Before committing a change, review it with `/code-review --fix` and repeat until it reports no findings.
+- Run the end-to-end tests on a port of your own, e.g. `E2E_PORT=4181 pnpm test:e2e`, when another worktree may be running them: the run fails rather than share a busy port.
+
 ## Conventions
 
 - Style: Airbnb JS guide + project overrides in `eslint.config.js`. Single quotes in JS, double quotes in YAML/CSS. 100-char line length. Trailing commas always. Import order (builtin → external → internal → `$lib`) is enforced by ESLint.
