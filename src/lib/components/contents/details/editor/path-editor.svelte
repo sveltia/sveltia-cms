@@ -19,6 +19,7 @@
   import {
     addFolderToTree,
     findNestedTreeNode,
+    getMaxParentFolderDepth,
     getParentFolderTree,
   } from '$lib/services/contents/collection/nested/tree';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -95,6 +96,16 @@
    */
   const canCreateFolder = $derived(
     !!collection && getNestedConfig(collection)?.subfolders === false,
+  );
+
+  /**
+   * Whether the selected folder has room for another one below it. An entry filed in a folder
+   * deeper than the collection’s `nested.depth` allows wouldn’t be part of the collection.
+   */
+  const hasRoomForFolder = $derived(
+    !!collection &&
+      selectedPath.split('/').filter(Boolean).length <
+        getMaxParentFolderDepth({ collection, entries: [] }),
   );
 
   let newFolderDialogOpen = $state(false);
@@ -248,7 +259,7 @@
           variant="ghost"
           iconic
           class="new-parent-folder-button"
-          disabled={!isDefaultLocale}
+          disabled={!isDefaultLocale || !hasRoomForFolder}
           aria-label={_('new_parent_folder')}
           onclick={() => {
             newFolderName = '';

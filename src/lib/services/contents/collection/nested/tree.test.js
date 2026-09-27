@@ -6,6 +6,7 @@ import { isEntryCollection } from '$lib/services/contents/collection';
 import {
   addFolderToTree,
   findNestedTreeNode,
+  getMaxParentFolderDepth,
   getNestedTree,
   getParentFolderTree,
 } from '$lib/services/contents/collection/nested/tree';
@@ -276,6 +277,85 @@ describe('getParentFolderTree()', () => {
     expect(getParentFolderTree({ collection, entries }).map(({ path }) => path)).toEqual([
       'docs',
       'guides',
+    ]);
+  });
+});
+
+describe('getMaxParentFolderDepth()', () => {
+  const pages = {
+    name: 'pages',
+    folder: 'content/pages',
+    nested: { depth: 4 },
+    meta: { path: { index_file: 'index' } },
+  };
+
+  const entries = [
+    entry('about/index'),
+    entry('about/team/index'),
+    entry('about/team/alumni/index'),
+    entry('contact/index'),
+  ];
+
+  test('leaves room for the file of an entry that’s a file', () => {
+    const docs = { name: 'docs', folder: 'content/docs', nested: { depth: 2, subfolders: false } };
+
+    expect(getMaxParentFolderDepth({ collection: docs, entries })).toBe(1);
+  });
+
+  test('leaves room for the folder and the index file of a new entry in the subfolders mode', () => {
+    expect(getMaxParentFolderDepth({ collection: pages, entries })).toBe(2);
+  });
+
+  test('leaves room for the pages below an entry being moved', () => {
+    expect(getMaxParentFolderDepth({ collection: pages, entries, ownFolderPath: 'about' })).toBe(0);
+    expect(
+      getMaxParentFolderDepth({ collection: pages, entries, ownFolderPath: 'about/team' }),
+    ).toBe(1);
+    expect(getMaxParentFolderDepth({ collection: pages, entries, ownFolderPath: 'contact' })).toBe(
+      2,
+    );
+  });
+
+  test('sets no limit without a depth', () => {
+    expect(
+      getMaxParentFolderDepth({
+        collection: { ...pages, nested: {} },
+        entries,
+        ownFolderPath: 'about',
+      }),
+    ).toBe(Infinity);
+    expect(
+      getMaxParentFolderDepth({ collection: { name: 'posts', folder: 'content/posts' }, entries }),
+    ).toBe(Infinity);
+  });
+});
+
+describe('getParentFolderTree() with a depth', () => {
+  test('leaves out a folder an entry filed in would be too deep in', () => {
+    // @see https://decapcms.org/docs/collection-nested/
+    const collection = {
+      name: 'pages',
+      folder: 'content/pages',
+      nested: { depth: 4 },
+      meta: { path: { index_file: 'index' } },
+    };
+
+    const entries = [
+      entry('about/index', 'About'),
+      entry('about/team/index', 'Team'),
+      entry('about/team/alumni/index', 'Alumni'),
+    ];
+
+    expect(getParentFolderTree({ collection, entries })).toEqual([
+      {
+        path: 'about',
+        label: 'About',
+        children: [{ path: 'about/team', label: 'Team', children: [] }],
+      },
+    ]);
+    // The team page takes the alumni page along, which leaves room for nothing but the top level
+    expect(getParentFolderTree({ collection, entries, excludePath: 'about/team' })).toEqual([
+      { path: 'about', label: 'About', children: [] },
     ]);
   });
 });

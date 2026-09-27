@@ -18,7 +18,7 @@ const pagesCollection = {
   name: 'pages',
   label: 'Pages',
   folder: 'content/pages',
-  nested: { depth: 3 },
+  nested: { depth: 4 },
   meta: { path: { widget: 'string', index_file: 'index' } },
   fields: [{ name: 'title', widget: 'string' }],
 };
@@ -292,6 +292,18 @@ describe('PathEditor', () => {
     await expect
       .element(page.getByRole('button', { name: 'Parent Folder' }))
       .toHaveTextContent('folder api-reference expand_more');
+  });
+
+  test('creates no folder deeper than the collection’s depth', async () => {
+    const draft = createMockDraft({
+      collectionName: 'docs',
+      draft: { collection: getCollection('docs'), currentPath: 'guides/advanced' },
+    });
+
+    await renderWithDraft(PathEditor, { draft, props: { locale: '_default' } });
+
+    // An entry in a new folder here would be 4 levels down, beyond the depth of 3
+    await expect.element(page.getByRole('button', { name: 'New Folder' })).toBeDisabled();
   });
 
   test('describes the folder in the locale, where it can’t be changed', async () => {

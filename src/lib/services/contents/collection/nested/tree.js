@@ -28,6 +28,12 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * @returns {string} Parent path, or an empty string if the folder is at the top level.
  */
 const getParentPath = (path) => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '');
+/**
+ * Count the segments of a path.
+ * @param {string} path Path relative to the collection folder, e.g. `about/team`.
+ * @returns {number} Number of segments, `0` for the collection folder itself.
+ */
+const countSegments = (path) => (path ? path.split('/').length : 0);
 
 /**
  * Rate how well an entry represents the folder it’s stored in, so a folder that holds more than one
@@ -130,11 +136,20 @@ const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate, locale })
  * @param {Entry[]} args.entries Entries in the collection.
  * @param {boolean} args.pruneLeaves Whether to leave out a folder that has no subfolder of its own.
  * @param {string} [args.excludePath] Folder to leave out along with everything below it.
+ * @param {number} [args.maxDepth] Number of path segments a folder can have at most. A deeper one
+ * is left out along with everything below it.
  * @param {InternalLocaleCode} [args.locale] Locale to label the folders in.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label. An empty array if the collection
  * is not a nested collection or has no folder to show.
  */
-const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) => {
+const buildTree = ({
+  collection,
+  entries,
+  pruneLeaves,
+  excludePath,
+  maxDepth = Infinity,
+  locale,
+}) => {
   const config = getNestedConfig(collection);
 
   if (!config) {
@@ -163,7 +178,9 @@ const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) =>
       .filter(
         (path) =>
           // A leaf folder in the `subfolders` mode is an entry, not a container
-          (!pruneLeaves || !subfolders || !!childPaths.get(path)?.length) && path !== excludePath,
+          (!pruneLeaves || !subfolders || !!childPaths.get(path)?.length) &&
+          path !== excludePath &&
+          countSegments(path) <= maxDepth,
       )
       .map((path) => ({
         path,
@@ -198,21 +215,65 @@ export const getNestedTree = ({ collection, entries }) =>
   buildTree({ collection, entries, pruneLeaves: true });
 
 /**
- * Build the folder tree offered by the entry path editor, which lists every folder an entry can be
- * filed in. Unlike the sidebar tree, a folder that holds nothing but its own entry is included,
- * because an entry can be filed below any other entry.
+ * Get the number of path segments a folder offered by the entry path editor can have at most, so an
+ * entry filed in it stays within the collection’s `nested.depth`. Anything deeper isn’t part of the
+ * collection, so an entry saved there would vanish from the CMS as soon as it’s saved. An entry
+ * takes one segment below its folder as a file, or two in the `subfolders` mode, where it’s a
+ * folder of its own holding an index file. An existing entry takes the pages below it along, so
+ * they need room too.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection.
  * @param {Entry[]} args.entries Entries in the collection.
- * @param {string} [args.excludePath] Folder to leave out along with everything below it, so an
- * entry can’t be filed within itself.
+ * @param {string} [args.ownFolderPath] Folder of the entry being moved, in the `subfolders` mode.
+ * @returns {number} Maximum number of segments, `Infinity` if the depth is unlimited.
+ */
+export const getMaxParentFolderDepth = ({ collection, entries, ownFolderPath }) => {
+  const depth = getNestedConfig(collection)?.depth ?? Infinity;
+
+  if (!getSharedEntryFileName(collection)) {
+    return depth - 1;
+  }
+
+  if (!ownFolderPath) {
+    return depth - 2;
+  }
+
+  const baseDepth = countSegments(getParentPath(ownFolderPath));
+
+  const height = Math.max(
+    2,
+    ...entries
+      .filter(({ subPath }) => subPath.startsWith(`${ownFolderPath}/`))
+      .map(({ subPath }) => countSegments(subPath) - baseDepth),
+  );
+
+  return depth - height;
+};
+
+/**
+ * Build the folder tree offered by the entry path editor, which lists every folder an entry can be
+ * filed in. Unlike the sidebar tree, a folder that holds nothing but its own entry is included,
+ * because an entry can be filed below any other entry. A folder too deep for the entry to stay
+ * within the collection’s depth is left out; see {@link getMaxParentFolderDepth}.
+ * @param {object} args Arguments.
+ * @param {InternalCollection} args.collection Collection.
+ * @param {Entry[]} args.entries Entries in the collection.
+ * @param {string} [args.excludePath] Folder of the entry being moved, in the `subfolders` mode.
+ * It’s left out along with everything below it, so an entry can’t be filed within itself.
  * @param {InternalLocaleCode} [args.locale] Locale to label the folders in, which is the locale of
  * the pane showing the tree. A folder is labelled with its entry’s summary, so with localized
  * content each pane names the folders in its own language.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label.
  */
 export const getParentFolderTree = ({ collection, entries, excludePath, locale }) =>
-  buildTree({ collection, entries, pruneLeaves: false, excludePath, locale });
+  buildTree({
+    collection,
+    entries,
+    pruneLeaves: false,
+    excludePath,
+    maxDepth: getMaxParentFolderDepth({ collection, entries, ownFolderPath: excludePath }),
+    locale,
+  });
 
 /**
  * Add a folder that holds no entry yet to a tree, creating any missing folders above it, so that it
