@@ -96,6 +96,15 @@
    * @type {(() => void) | undefined}
    */
   let settlePendingUpdate;
+  /**
+   * Whether the editor has yet to write back a value set from outside, e.g. the body of the entry
+   * being opened. The editor converts the Markdown and writes it back in its own style, e.g.
+   * `*text*` as `_text_`, which isn’t a change made by the user, so it’s not written to the draft:
+   * the entry would otherwise count as changed as soon as it’s opened, and saving any field would
+   * rewrite the body. It’s reset once the editor has written the value back, or as soon as the user
+   * interacts with the editor, as the value written back then may include the user’s change.
+   */
+  let awaitingReexport = false;
 
   const {
     // Field type-specific options
@@ -298,10 +307,17 @@
   syncValues(
     () => currentValue,
     (value) => {
+      if (awaitingReexport) {
+        awaitingReexport = false;
+
+        return;
+      }
+
       currentValue = value;
     },
     () => inputValue,
     (input) => {
+      awaitingReexport = true;
       inputValue = input;
     },
     (value) => (typeof value === 'string' ? value : ''),
@@ -357,7 +373,25 @@
   const onUpdate = async () => {
     await tick();
     settlePendingUpdate?.();
+    // The value set from outside has been written back, if the editor changed it at all
+    awaitingReexport = false;
   };
+
+  /**
+   * Stop waiting for the editor to write back a value set from outside once the user interacts with
+   * the editor, e.g. by typing, pasting, dropping a file or clicking a toolbar button: the value
+   * written back next may be the user’s change, which must reach the draft. In the Markdown mode, a
+   * value isn’t converted, so nothing is written back but the user’s change.
+   */
+  const onUserInteraction = () => {
+    awaitingReexport = false;
+  };
+
+  /**
+   * Events that tell a user’s interaction with the editor, caught in the capture phase before the
+   * editor handles them.
+   */
+  const USER_INTERACTION_EVENTS = ['beforeinput', 'keydown', 'paste', 'drop', 'pointerdown'];
 
   /**
    * Root element of the Lexical editor whose updates are being listened to.
@@ -412,12 +446,18 @@
 
     // The `Update` event is dispatched on the editor’s root element without bubbling, so it can
     // only be caught in the capture phase
+    USER_INTERACTION_EVENTS.forEach((type) => {
+      target.addEventListener(type, onUserInteraction, true);
+    });
     target.addEventListener('beforeinput', registerPendingUpdate, true);
     target.addEventListener('Update', onUpdate, true);
     observer.observe(target, { subtree: true, childList: true });
     listenToEditorUpdates();
 
     return () => {
+      USER_INTERACTION_EVENTS.forEach((type) => {
+        target.removeEventListener(type, onUserInteraction, true);
+      });
       target.removeEventListener('beforeinput', registerPendingUpdate, true);
       target.removeEventListener('Update', onUpdate, true);
       observer.disconnect();

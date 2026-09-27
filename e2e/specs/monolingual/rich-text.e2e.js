@@ -313,11 +313,7 @@ test.describe('existing Markdown', () => {
   };
 
   Object.entries(OTHER_STYLES).forEach(([name, body]) => {
-    test(`counts loading ${name} as a change (known issue)`, async ({ cms, page }) => {
-      // Known issue: the editor writes the Markdown back in its own style as soon as it loads it,
-      // so the entry counts as changed before the user does anything, and saving any field rewrites
-      // the body. Once it’s fixed, the Save button stays disabled: wait a second, as in the test
-      // above, and expect it to be disabled instead
+    test(`keeps ${name} unchanged when another field is saved`, async ({ cms, page }) => {
       await cms.open();
       await cms.seed({ ...MONOLINGUAL_FILES, [RICH_POST_PATH]: `${FRONT_MATTER}${body}\n` });
       await cms.signIn();
@@ -326,8 +322,42 @@ test.describe('existing Markdown', () => {
       const editor = page.getByRole('group', { name: 'Content Editor' });
 
       await expect(editor.getByRole('textbox', { name: 'Title' }).first()).toHaveValue('Rich Post');
-      await expect(editor.getByRole('button', { name: 'Save' })).toBeEnabled();
+      // Loading the body in the editor doesn’t count as a change, although the editor writes the
+      // Markdown in its own style. The Save button starts disabled, and would only be enabled once
+      // the editor has converted the body, a moment later. There’s nothing to wait for when that
+      // doesn’t happen, so wait longer than the conversion takes
+      await page.waitForTimeout(1000);
+      await expect(editor.getByRole('button', { name: 'Save' })).toBeDisabled();
+
+      await editor.getByRole('textbox', { name: 'Title' }).first().fill('Rich Post, Revised');
+      await editor.getByRole('button', { name: 'Save' }).click();
+
+      await expect
+        .poll(async () => (await cms.readRepo())[RICH_POST_PATH])
+        .toBe(`${FRONT_MATTER.replace('Rich Post', 'Rich Post, Revised')}${body}\n`);
     });
+  });
+
+  test('writes the body in the editor’s style once it’s edited', async ({ cms, page }) => {
+    await cms.open();
+    await cms.seed({
+      ...MONOLINGUAL_FILES,
+      [RICH_POST_PATH]: `${FRONT_MATTER}Some *italic* text.\n`,
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Rich Post/ }).click();
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const body = editor.getByRole('textbox', { name: 'Body' });
+
+    await expect(body).toContainText('Some italic text.');
+    await moveCaretToEnd(body);
+    await page.keyboard.type(' More.');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[RICH_POST_PATH])
+      .toBe(`${FRONT_MATTER}Some _italic_ text. More.\n`);
   });
 
   test('keeps a change made with a keyboard shortcut right before saving', async ({

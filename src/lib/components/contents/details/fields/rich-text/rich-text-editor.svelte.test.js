@@ -179,6 +179,32 @@ describe('RichTextEditor', () => {
     expect(props.currentValue).toBe('**Hello**');
   });
 
+  test('doesn’t write back a value in another style when it’s loaded', async () => {
+    const { props } = await renderEditor('Some *italic* text.');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Some italic text.');
+    // Wait for the editor to write the value back, in its own style
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
+    await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
+    expect(props.currentValue).toBe('Some *italic* text.');
+
+    // A change made by the user is written, in the editor’s style
+    await editor.click();
+    await userEvent.keyboard('{End}!');
+    await expect.poll(() => props.currentValue).toBe('Some _italic_ text.!');
+  });
+
+  test('writes a change typed in the Markdown mode', async () => {
+    const { props } = await renderEditor('Hello', { modes: ['raw'] });
+    const source = page.getByRole('textbox');
+
+    await expect.element(source).toHaveValue('Hello');
+    await source.click();
+    await userEvent.keyboard('{End}!');
+    await expect.poll(() => props.currentValue).toBe('Hello!');
+  });
+
   test('inserts a dropped image', async () => {
     await initTestConfig({
       collections: [
