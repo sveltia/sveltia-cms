@@ -1,6 +1,8 @@
 import { test as base, expect } from '@playwright/test';
 import { stringify } from 'yaml';
 
+import { MockGitHub } from './github.js';
+
 /**
  * @import { Page } from '@playwright/test';
  */
@@ -34,6 +36,15 @@ export const BASE_CONFIG = {
       ],
     },
   ],
+};
+
+/**
+ * CMS config for a GitHub repository, which the `github` fixture mocks. Use it with
+ * `test.use({ config: GITHUB_CONFIG })` and the `github` fixture in the test.
+ */
+export const GITHUB_CONFIG = {
+  ...BASE_CONFIG,
+  backend: { name: 'github', repo: 'sveltia/e2e-site', branch: 'main' },
 };
 
 /**
@@ -176,7 +187,7 @@ class CMS {
 }
 
 /**
- * @typedef {{ config: object | string, cms: CMS }} TestFixtures
+ * @typedef {{ config: object | string, cms: CMS, github: MockGitHub }} TestFixtures
  * @typedef {{ adminPath: string }} WorkerFixtures
  */
 
@@ -199,6 +210,16 @@ export const test = base.extend({
     );
 
     await use(new CMS(page, adminPath));
+  },
+  // A test that asks for this fixture signs in to a mocked GitHub repository when the page opens
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  github: async ({ page }, use) => {
+    const github = new MockGitHub();
+
+    await github.install(page);
+    await use(github);
+
+    expect(github.unhandled, 'Requests the GitHub mock couldn’t answer').toEqual([]);
   },
 });
 

@@ -24,6 +24,8 @@ The server listens on port 4180 and is started for each run. If the port is busy
 - Every test answers the request for `config.yml` with its own config: `BASE_CONFIG` from `fixtures/test.js` by default, or another one set with `test.use({ config })`, either as an object or a YAML string.
 - The config uses the `test-repo` backend, which keeps the repository files in the origin private file system (OPFS). Each test runs in a fresh browser context, so it starts with an empty repository.
 - The `cms` fixture opens the admin page (`open()`), writes files to the repository before sign-in (`seed()`), signs in (`signIn()`) and reads the files back (`readRepo()` for text, `readRepoFile()` for a binary file), so a test can check what a Save actually wrote.
+- To test a Git backend, use `GITHUB_CONFIG` and ask for the `github` fixture: a `MockGitHub` from `fixtures/github.js` answers the GitHub REST and GraphQL requests from an in-memory repository and stores a session, so the CMS signs in on its own when the page opens. Commit to it as a colleague with `github.commit(files)`, read the branch with `github.readFile(path)`, and check the commits the CMS sent in `github.received`. `github.beforeCommit` runs once when the CMS next commits, to move the branch under it. A request the mock can’t answer fails the test and is listed in the error; teach the mock to answer it.
+- The CMS checks the repository for changes every minute, and when the window gets the focus back at least 10 seconds after the last check. Call `page.clock.install()` before opening the page, then `page.clock.fastForward()`, rather than waiting.
 - `createPNG()` from `fixtures/files.js` makes a real image to upload, which the CMS can decode for its thumbnail.
 
 ## Writing tests
