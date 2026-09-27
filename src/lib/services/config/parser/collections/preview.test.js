@@ -135,7 +135,7 @@ describe('checkPreviewPath', () => {
       expect(addMessage).toHaveBeenCalledWith({
         type: 'warning',
         strKey: 'preview_path_field_not_found',
-        values: { name: 'fields.slug' },
+        values: { option: 'preview_path', name: 'fields.slug' },
         context,
         collectors,
       });
@@ -163,7 +163,7 @@ describe('checkPreviewPath', () => {
       expect(addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           strKey: 'preview_path_field_not_found',
-          values: { name: 'fields.author.email' },
+          values: { option: 'preview_path', name: 'fields.author.email' },
         }),
       );
     });

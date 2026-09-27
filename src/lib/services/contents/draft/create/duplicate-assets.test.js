@@ -53,6 +53,7 @@ vi.mock('$lib/services/contents/entry/fields', () => ({
 
 vi.mock('$lib/services/contents/fields', () => ({
   MEDIA_FIELD_TYPES: ['file', 'image'],
+  RICH_TEXT_FIELD_TYPES: ['richtext', 'markdown'],
 }));
 
 vi.mock('$lib/services/contents/fields/file/helpers', () => ({

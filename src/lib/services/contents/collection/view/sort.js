@@ -4,6 +4,7 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getDate } from '$lib/services/contents/fields/date-time/helpers';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
 
@@ -118,9 +119,7 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
   // Check if the field is a Markdown-enabled field: we use both the field config and a hardcoded
   // key list to determine this, as some fields may be text fields that contain Markdown syntax.
   const isMarkdownField =
-    fieldConfig?.widget === 'richtext' ||
-    fieldConfig?.widget === 'markdown' ||
-    MARKDOWN_FIELD_KEYS.includes(key);
+    RICH_TEXT_FIELD_TYPES.includes(fieldConfig?.widget ?? '') || MARKDOWN_FIELD_KEYS.includes(key);
 
   const getSortKey = getSortKeyGetter({
     key: resolvedKey,

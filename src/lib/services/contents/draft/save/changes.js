@@ -13,6 +13,7 @@ import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
 import { getField } from '$lib/services/contents/entry/fields';
+import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
@@ -133,8 +134,7 @@ const replaceBlobURLs = async ({
     keyPath,
     content,
     // Enable encoding for markdown fields to support embedded images
-    encodingEnabled:
-      field?.widget === 'richtext' || field?.widget === 'markdown' ? true : encodingEnabled,
+    encodingEnabled: RICH_TEXT_FIELD_TYPES.includes(field?.widget ?? '') || encodingEnabled,
   };
 
   // Replace blob URLs in File/Image fields with asset paths

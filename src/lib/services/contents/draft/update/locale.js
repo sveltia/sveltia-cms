@@ -5,8 +5,14 @@ import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
+import { TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getDuplicateKeysFieldKeyPaths } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getPairsFromContent, setPairs } from '$lib/services/contents/fields/key-value/pairs';
+import {
+  isFieldI18nDisabled,
+  isFieldLocalized,
+  isFieldTranslatable,
+} from '$lib/services/contents/i18n/fields';
 
 /**
  * @import { EntryDraft, FlattenedEntryContent, InternalLocaleCode } from '$lib/types/private';
@@ -78,16 +84,13 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
     // Reset the field value to the default value or an empty string if the field is a text-like
     // field type and i18n is enabled, because the content would likely be translated by the user.
     // Otherwise, the content would be copied from the default locale.
-    if (
-      ['text', 'string', 'richtext', 'markdown'].includes(fieldType) &&
-      [true, 'translate'].includes(i18n)
-    ) {
+    if (TEXT_FIELD_TYPES.includes(fieldType) && isFieldTranslatable(i18n)) {
       newContent[keyPath] = content[keyPath] ?? '';
     }
 
     // Support special case for the Hidden field with `default` value set to `{{locale}}`: if the
     // field value is `{{locale}}`, replace it with the target locale
-    if (fieldType === 'hidden' && [true, 'translate'].includes(i18n)) {
+    if (fieldType === 'hidden' && isFieldTranslatable(i18n)) {
       const { default: defaultValue } = /** @type {HiddenField} */ (field);
 
       if (defaultValue === '{{locale}}') {
@@ -99,17 +102,14 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
     // default locale, otherwise the subfields will not be saved in the current locale
     if (
       fieldType === 'object' &&
-      [true, 'translate', 'duplicate'].includes(i18n) &&
+      isFieldLocalized(i18n) &&
       defaultLocaleContent[keyPath] !== null
     ) {
       delete newContent[keyPath];
     }
 
     // Remove the field if i18n is disabled
-    if (
-      [false, 'none'].includes(i18n) ||
-      noI18nFieldKeys.some((key) => isKeyPathWithin(keyPath, key))
-    ) {
+    if (isFieldI18nDisabled(i18n) || noI18nFieldKeys.some((key) => isKeyPathWithin(keyPath, key))) {
       delete newContent[keyPath];
       noI18nFieldKeys.push(keyPath);
     }

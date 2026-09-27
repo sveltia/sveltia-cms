@@ -6,6 +6,7 @@ import dayjsUTC from 'dayjs/plugin/utc';
 
 import { backend } from '$lib/services/backends';
 import { fillTemplate } from '$lib/services/common/template';
+import { DATE_TIME_TEMPLATE_REGEX } from '$lib/services/common/template/constants';
 import { cmsConfig } from '$lib/services/config';
 import { allEntryFolders, getEntryFoldersByPath } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
@@ -32,11 +33,6 @@ import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/he
 dayjs.extend(dayjsCustomParseFormat);
 dayjs.extend(dayjsLocalizedFormat);
 dayjs.extend(dayjsUTC);
-
-/**
- * Regular expression to match date and time template placeholders in entry file path templates.
- */
-const DATE_TIME_TEMPLATE_REGEX = /{{(?:year|month|day|hour|minute|second)}}/;
 
 /**
  * Cache of {@link getEntryFolders} results, dropped whenever `allEntryFolders` changes. The lookup

@@ -4,6 +4,7 @@ import { loadModule } from '$lib/services/app/dependencies';
 import { copyFromLocaleToast, translatorApiKeyDialogState } from '$lib/services/contents/editor';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
+import { RICH_TEXT_FIELD_TYPES, TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { translator } from '$lib/services/integrations/translators';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -131,7 +132,7 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           (keyPath && !isKeyPathWithin(_keyPath, keyPath)) ||
           typeof value !== 'string' ||
           !value ||
-          !['richtext', 'markdown', 'text', 'string', 'list'].includes(fieldType) ||
+          ![...TEXT_FIELD_TYPES, 'list'].includes(fieldType) ||
           // prettier-ignore
           (fieldType === 'list' &&
           getListFieldInfo(/** @type {ListField} */ (field)).hasSubFields) ||
@@ -142,7 +143,7 @@ export const getCopyingFieldMap = ({ draft, options }) => {
           return null;
         }
 
-        const isMarkdown = fieldType === 'richtext' || fieldType === 'markdown';
+        const isMarkdown = RICH_TEXT_FIELD_TYPES.includes(fieldType);
 
         return [_keyPath, { value, isMarkdown }];
       })

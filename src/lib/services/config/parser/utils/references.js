@@ -1,4 +1,9 @@
-import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import {
+  DEFAULT_TRANSFORMATION_REGEX,
+  FIELD_TAG_PREFIX_REGEX,
+  TEMPLATE_TAG_REPLACE_REGEX,
+} from '$lib/services/common/template/constants';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { findFields, hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
@@ -7,16 +12,6 @@ import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
  * @import { Field } from '$lib/types/public';
  */
-
-/**
- * Pattern matching the prefix that marks a template tag as an explicit reference to an entry field.
- */
-const FIELD_TAG_PREFIX_REGEX = /^fields\./;
-/**
- * Pattern matching a `default` transformation, which supplies a value of its own when the tag
- * resolves to nothing, so an undefined field is no longer a problem.
- */
-const DEFAULT_TRANSFORMATION_REGEX = /\|\s*default\s*\(/;
 
 /**
  * Check that the fields an option refers to are defined, and report each one that isn’t. The
@@ -31,6 +26,10 @@ const DEFAULT_TRANSFORMATION_REGEX = /\|\s*default\s*\(/;
  * special while `fields.slug` is the field of that name.
  * @param {boolean} [args.prefixedOnly] Whether only the tags with the explicit `fields.` prefix
  * refer to fields, as in a template whose bare tags mean something else.
+ * @param {'error' | 'warning'} [args.type] Type of the message reported for a missing field.
+ * Defaults to an error.
+ * @param {string} [args.strKey] Key of the message reported for a missing field. The message can
+ * use the `option` and `name` values.
  * @param {Field[]} args.fields Fields the option can refer to.
  * @param {ConfigParserContext} args.context Context.
  * @param {ConfigParserCollectors} args.collectors Collectors.
@@ -41,6 +40,8 @@ export const checkFieldReferences = ({
   keyPaths,
   specialTags = [],
   prefixedOnly = false,
+  type,
+  strKey = 'option_field_not_found',
   fields,
   context,
   collectors,
@@ -73,9 +74,10 @@ export const checkFieldReferences = ({
   }
 
   references.forEach((keyPath) => {
-    if (!hasField(fields, keyPath.replace(FIELD_TAG_PREFIX_REGEX, ''))) {
+    if (!hasField(fields, stripFieldTagPrefix(keyPath))) {
       addMessage({
-        strKey: 'option_field_not_found',
+        type,
+        strKey,
         values: { option, name: keyPath },
         context,
         collectors,
@@ -103,7 +105,7 @@ export const checkThumbnailField = ({ thumbnail, fields, context, collectors }) 
 
   // A name shared by the subfields of several variable types resolves to each of them, and the
   // runtime looks the field up per item type, so any Image or File field among them will do
-  const fieldTypes = findFields(fields, thumbnail.replace(FIELD_TAG_PREFIX_REGEX, '')).map(
+  const fieldTypes = findFields(fields, stripFieldTagPrefix(thumbnail)).map(
     ({ widget: fieldType = 'string' }) => fieldType,
   );
 

@@ -63,6 +63,18 @@ export const STRING_VALUE_FIELD_TYPES = SIMPLE_VALUE_FIELD_TYPES.filter(
 export const MEDIA_FIELD_TYPES = ['file', 'image'];
 
 /**
+ * List of field types that hold Markdown text, which can embed images.
+ * @type {string[]}
+ */
+export const RICH_TEXT_FIELD_TYPES = ['richtext', 'markdown'];
+
+/**
+ * List of field types that hold free text, which can be translated.
+ * @type {string[]}
+ */
+export const TEXT_FIELD_TYPES = ['text', 'string', ...RICH_TEXT_FIELD_TYPES];
+
+/**
  * List of field types that support the `multiple` option.
  * @type {string[]}
  */

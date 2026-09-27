@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { checkMultipleDefault } from '$lib/services/config/parser/utils/defaults';
 import { getCanonicalSlugKey, hasField } from '$lib/services/config/parser/utils/fields';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
@@ -88,7 +89,7 @@ const checkFieldReference = ({
 
   keyPaths.forEach((keyPath) => {
     // The `fields.` prefix is supported for compatibility with other config options
-    const key = keyPath.replace(/^fields\./, '');
+    const key = stripFieldTagPrefix(keyPath);
 
     if (key !== canonicalSlugKey && !hasField(fields, key)) {
       addMessage({ strKey, context, collectors, values: { field: keyPath } });
@@ -118,7 +119,7 @@ const checkFieldReferences = ({ fieldConfig, fields, canonicalSlugKey, context, 
       const field = isObject(filter) ? filter.field : undefined;
 
       if (typeof field === 'string' && field && field !== 'slug') {
-        const key = field.replace(/^fields\./, '');
+        const key = stripFieldTagPrefix(field);
 
         if (key !== canonicalSlugKey && !hasField(fields, key)) {
           addMessage({

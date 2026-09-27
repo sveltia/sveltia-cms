@@ -10,6 +10,7 @@ import { getField, LIST_KEY_PATH_REGEX } from '$lib/services/contents/entry/fiel
 import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
+import { isFieldLocalized, isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 
 /**
@@ -67,7 +68,7 @@ export const duplicateDraft = async (entryDraft) => {
       const fieldConfig = getField({ ...getFieldArgs, keyPath });
 
       if (fieldConfig?.widget === 'uuid') {
-        if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
+        if (locale === defaultLocale || isFieldTranslatable(fieldConfig?.i18n)) {
           valueMap[keyPath] = getInitialUuidValue(/** @type {UuidField} */ (fieldConfig));
         }
       }
@@ -79,10 +80,7 @@ export const duplicateDraft = async (entryDraft) => {
         fieldConfig?.widget === 'compute' &&
         hasUuidTag(/** @type {ComputeField} */ (fieldConfig).value)
       ) {
-        if (
-          locale === defaultLocale ||
-          [true, 'translate', 'duplicate'].includes(fieldConfig?.i18n ?? false)
-        ) {
+        if (locale === defaultLocale || isFieldLocalized(fieldConfig?.i18n)) {
           valueMap[keyPath] = '';
         }
       }
@@ -98,7 +96,7 @@ export const duplicateDraft = async (entryDraft) => {
           }
         }
 
-        if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
+        if (locale === defaultLocale || isFieldTranslatable(fieldConfig?.i18n)) {
           Object.assign(
             valueMap,
             getHiddenFieldDefaultValueMap({

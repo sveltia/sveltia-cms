@@ -18,6 +18,7 @@ import { validateNumberField } from '$lib/services/contents/fields/number/valida
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { isOptionValue } from '$lib/services/contents/fields/select/helpers';
 import { validateStringField } from '$lib/services/contents/fields/string/validate';
+import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
 import { getRegex } from '$lib/services/utils/regex';
 
 /**
@@ -355,7 +356,7 @@ export const validateAnyField = (args) => {
   if (
     !componentName && // Don’t skip validation if the field is within a rich text editor component
     locale !== defaultLocale &&
-    (!i18nEnabled || i18n === false || i18n === 'none' || i18n === 'duplicate')
+    (!i18nEnabled || isFieldI18nDisabled(i18n) || i18n === 'duplicate')
   ) {
     return undefined;
   }

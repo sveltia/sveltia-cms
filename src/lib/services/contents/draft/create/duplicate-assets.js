@@ -4,7 +4,7 @@ import { createDisplayBlobURL, getAssetBlob } from '$lib/services/assets/info';
 import { MARKDOWN_IMAGE_REGEX } from '$lib/services/contents/collection/entries';
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
-import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
+import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import {
   getAssetLibraryFolderMap,
   getDefaultAssetFolder,
@@ -26,7 +26,7 @@ import {
  * Field types whose value can reference an asset.
  * @type {string[]}
  */
-const ASSET_FIELD_TYPES = [...MEDIA_FIELD_TYPES, 'markdown', 'richtext'];
+const ASSET_FIELD_TYPES = [...MEDIA_FIELD_TYPES, ...RICH_TEXT_FIELD_TYPES];
 
 /**
  * Copy the original entry’s own assets into a duplicate of the entry. Assets stored at an

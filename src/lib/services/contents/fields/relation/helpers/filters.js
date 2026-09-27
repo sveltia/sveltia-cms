@@ -1,5 +1,6 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { stripIndexFileName } from '$lib/services/contents/collection/nested';
 import { getOrCreate } from '$lib/services/utils/cache';
 
@@ -133,7 +134,7 @@ export const filterAndPrepareEntries = ({
           // `fields.fieldName` strips the prefix so a field literally named `slug` can be
           // targeted via `fields.slug` without ambiguity.
           const isEntrySlug = field === 'slug';
-          const fieldKey = field.replace(/^fields\./, '');
+          const fieldKey = stripFieldTagPrefix(field);
 
           // Match the slug in the same shape a reference to the entry uses
           const fieldValue = isEntrySlug

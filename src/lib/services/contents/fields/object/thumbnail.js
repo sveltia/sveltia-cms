@@ -4,6 +4,7 @@ import {
   getMediaKindFromPath,
   getMediaKindFromType,
 } from '$lib/services/assets/kinds';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
@@ -62,10 +63,7 @@ export const getObjectThumbnail = ({
     return undefined;
   }
 
-  const [subFieldName, ...nestedFieldNames] = thumbnailFieldName
-    .replace(/^fields\./, '')
-    .split('.');
-
+  const [subFieldName, ...nestedFieldNames] = stripFieldTagPrefix(thumbnailFieldName).split('.');
   const getFieldArgs = { collectionName, fileName, componentName, valueMap, isIndexFile };
 
   // The single subfield of a list item is stored at the item key path itself, so the option has to

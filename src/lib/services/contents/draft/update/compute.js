@@ -3,6 +3,7 @@ import { getComputedValue } from '$lib/services/contents/fields/compute/helpers'
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
+import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
 
 /**
  * @import {
@@ -242,8 +243,7 @@ export const collectComponentComputeFields = (valueMap, getIndex) => {
  * @returns {boolean} Result.
  */
 const isLocaleTarget = ({ fieldConfig, locale, defaultLocale, i18nEnabled }) =>
-  locale === defaultLocale ||
-  (i18nEnabled && [true, 'translate', 'duplicate'].includes(fieldConfig.i18n ?? false));
+  locale === defaultLocale || (i18nEnabled && isFieldLocalized(fieldConfig.i18n));
 
 /**
  * Resolve every Compute field in the given locale’s content and write the results back. The content

@@ -1,5 +1,6 @@
 import { fillTemplate } from '$lib/services/common/template';
 import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
 
@@ -190,10 +191,10 @@ const getLocalizingKeyPaths = (collection) => {
 
   [...template.matchAll(/{{((?:fields\.)?.+?)( \| localize)?}}/g)].forEach(([, tag, localize]) => {
     if (localize) {
-      keyPaths.add(tag.replace(/^fields\./, ''));
+      keyPaths.add(stripFieldTagPrefix(tag));
     } else if (localized) {
       // Leave out the transformations, e.g. `upper` in `{{title | upper}}`
-      const [keyPath] = tag.replace(/^fields\./, '').split(' | ');
+      const [keyPath] = stripFieldTagPrefix(tag).split(' | ');
 
       if (!NON_FIELD_TAGS.includes(keyPath)) {
         keyPaths.add(keyPath);

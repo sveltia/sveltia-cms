@@ -9,6 +9,7 @@ import {
   handleUuidTag,
 } from '$lib/services/common/template/handlers';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
@@ -106,7 +107,7 @@ export const replaceTemplateTag = (tag, context) => {
   }
 
   // Handle field values
-  return content[tag.replace(/^fields\./, '')];
+  return content[stripFieldTagPrefix(tag)];
 };
 
 /**

@@ -1,6 +1,7 @@
 import { flatten } from 'flat';
 
 import { replaceTemplateTags } from '$lib/services/common/template';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 
 /**
@@ -30,7 +31,7 @@ export const formatComponentSummary = ({ template, values, fields, locale }) => 
 
   const result = replaceTemplateTags(template, (__, placeholder) => {
     const { value: tag, transformations } = parseTransformations(placeholder);
-    const fieldName = tag.replace(/^fields\./, '');
+    const fieldName = stripFieldTagPrefix(tag);
     let value = flatValues[fieldName];
 
     if (value === undefined || value === null) {

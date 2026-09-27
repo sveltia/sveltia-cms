@@ -1,6 +1,7 @@
 import { unique } from '@sveltia/utils/array';
 
 import { replaceTemplateTags } from '$lib/services/common/template';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { normalizeFieldName } from '$lib/services/contents/fields/relation/helpers/field-names';
 
@@ -54,7 +55,7 @@ export const getFieldReplacement = (fieldName, context, fallbackContext) => {
     return locale;
   }
 
-  const keyPath = fieldName.replace(/^fields\./, '');
+  const keyPath = stripFieldTagPrefix(fieldName);
 
   return (
     getDisplayValue(keyPath) ||

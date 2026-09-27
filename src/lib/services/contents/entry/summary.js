@@ -7,6 +7,7 @@ import { parseEntities } from 'parse-entities';
 
 import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
+import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { allEntries } from '$lib/services/contents';
 import {
@@ -198,7 +199,7 @@ export const replace = (placeholder, context) => {
   } = context;
 
   const { value: tag, transformations: parsedTransformations } = parseTransformations(placeholder);
-  const keyPath = tag.replace(/^fields\./, '');
+  const keyPath = stripFieldTagPrefix(tag);
   const getFieldArgs = { collectionName, valueMap, keyPath };
   let value = replaceSub(tag, replaceSubContext);
 

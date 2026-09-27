@@ -1,4 +1,5 @@
 import { GET_DEFAULT_VALUE_MAP_FUNCTIONS } from '$lib/services/contents/fields/defaults';
+import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
 
 /**
  * @import {
@@ -27,7 +28,7 @@ export const populateDefaultValue = ({
   const { widget: fieldType = 'string', default: defaultValue, i18n = false } = fieldConfig;
 
   // For non-default locales, only set the default value if the field is i18n-enabled
-  if (locale !== defaultLocale && [false, 'none'].includes(i18n)) {
+  if (locale !== defaultLocale && isFieldI18nDisabled(i18n)) {
     return;
   }
 

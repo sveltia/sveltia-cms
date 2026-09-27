@@ -13,7 +13,7 @@ import {
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
-import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
+import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { getRegex } from '$lib/services/utils/regex';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
@@ -449,7 +449,7 @@ const matchField = ({
   }
 
   // Search images in markdown body
-  if (['richtext', 'markdown'].includes(fieldType)) {
+  if (RICH_TEXT_FIELD_TYPES.includes(fieldType)) {
     let replacing = false;
 
     // Swap the URL within each matched image only, rather than its first occurrence in the text,
