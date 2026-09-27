@@ -116,6 +116,18 @@ describe('assets/external/data', () => {
 
       expect(getSharedMediaLibraryOptions()).toEqual({ max_file_size: 1024 });
     });
+
+    it('should merge the field-level `all` options into the global ones', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: { all: { max_file_size: 1024, transformations: { raster_image: {} } } },
+      });
+
+      expect(
+        getSharedMediaLibraryOptions(
+          /** @type {any} */ ({ media_libraries: { all: { max_file_size: 2048 } } }),
+        ),
+      ).toEqual({ max_file_size: 2048, transformations: { raster_image: {} } });
+    });
   });
 
   describe('fetchExternalAssetBlob', () => {

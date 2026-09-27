@@ -354,6 +354,35 @@ describe('ExternalAssetsPanel', () => {
     expect(dialog.element().textContent).toContain('exceeds the maximum size');
   });
 
+  test('keeps the global size limit when the field has shared options of its own', async () => {
+    const upload = vi.fn(async (/** @type {File[]} */ files) =>
+      files.map((file) => createMockExternalAsset({ fileName: file.name })),
+    );
+
+    const props = $state({
+      multiple: true,
+      fieldConfig: /** @type {any} */ ({
+        name: 'image',
+        widget: 'image',
+        media_libraries: { all: { transformations: {} } },
+      }),
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(assets), upload }),
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    const { component } = await render(ExternalAssetsPanel, props);
+
+    await waitForList(2);
+
+    const valid = await createMockImageFile({ name: 'c.png' });
+    const oversized = new File([new Uint8Array(2000)], 'big.txt', { type: 'text/plain' });
+
+    await component.uploadFiles([valid, oversized]);
+
+    expect(upload).toHaveBeenCalledWith([valid], expect.anything());
+    await expect.element(page.getByRole('alertdialog', { name: 'Large File' })).toBeInTheDocument();
+  });
+
   test('uploads a file of any size while the list is still loading', async () => {
     // No size limit is configured
     await initTestConfig();

@@ -18,7 +18,7 @@ import { createDeepState, createRawState } from '$lib/services/utils/state.svelt
 
 /**
  * @import { AssetSubfolder, ExternalAsset, MediaLibraryService } from '$lib/types/private';
- * @import { SharedMediaLibraryOptions } from '$lib/types/public';
+ * @import { MediaField, SharedMediaLibraryOptions } from '$lib/types/public';
  */
 
 /**
@@ -38,10 +38,15 @@ export const uploadingExternalAssets = createRawState({ files: [] });
 
 /**
  * Get the options shared by all the media libraries, which include the file size limit and
- * transformations applied before uploading.
+ * transformations applied before uploading. The field-level options, if any, are merged into the
+ * global ones, as with `getMediaLibraryOptions()` in the media library integrations.
+ * @param {MediaField} [fieldConfig] Configuration of the field the files are selected for.
  * @returns {SharedMediaLibraryOptions} Options.
  */
-export const getSharedMediaLibraryOptions = () => cmsConfig.current?.media_libraries?.all ?? {};
+export const getSharedMediaLibraryOptions = (fieldConfig) => ({
+  ...cmsConfig.current?.media_libraries?.all,
+  ...fieldConfig?.media_libraries?.all,
+});
 
 /**
  * Show the toast reporting an error.

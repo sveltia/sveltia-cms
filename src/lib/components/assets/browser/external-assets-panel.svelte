@@ -22,6 +22,7 @@
   import { getFetchOptions } from '$lib/services/assets/external';
   import {
     fetchExternalAssetBlob,
+    getSharedMediaLibraryOptions,
     prepareExternalUploads,
   } from '$lib/services/assets/external/data';
   import {
@@ -30,7 +31,6 @@
     getExternalSubfolders,
   } from '$lib/services/assets/external/view';
   import { getRelativePath, getTakenNames } from '$lib/services/assets/subfolders';
-  import { cmsConfig } from '$lib/services/config';
   import { selectAssetsView } from '$lib/services/contents/editor';
   import { env } from '$lib/services/user/env.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
@@ -88,9 +88,7 @@
   // view relies on the description to show asset information.
   const viewType = $derived(serviceId === 'picsum' ? 'grid' : selectAssetsView.current?.type);
   const isStockAssets = $derived(serviceType === 'stock_assets');
-  const allMediaLibraryOptions = $derived(
-    fieldConfig?.media_libraries?.all ?? cmsConfig.current?.media_libraries?.all ?? {},
-  );
+  const allMediaLibraryOptions = $derived(getSharedMediaLibraryOptions(fieldConfig));
   /* v8 ignore start -- only read to report a file exceeding the configured size */
   const maxSize = $derived(
     /** @type {number} */ (allMediaLibraryOptions.max_file_size ?? Infinity),
