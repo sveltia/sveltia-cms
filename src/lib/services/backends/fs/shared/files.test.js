@@ -1707,6 +1707,36 @@ describe('saveFile', () => {
     await expect(saveFile({ rootDirHandle, path: 'post.md', data: 'hello' })).rejects.toBe(error);
   });
 
+  test('should remove the temp file and fail if it cannot be written', async () => {
+    const error = new DOMException('Disk full', 'QuotaExceededError');
+    const children = new Map();
+
+    rootDirHandle = createMockDirectoryHandle('root', children);
+
+    /** @type {MockedFunction<any>} */ (rootDirHandle.getFileHandle).mockImplementation(
+      async (/** @type {string} */ name) => {
+        const handle = createMockFileHandle(name);
+
+        handle.createWritable = vi.fn().mockResolvedValue({
+          write: vi.fn().mockRejectedValue(error),
+          close: vi.fn().mockRejectedValue(new TypeError('Stream errored')),
+        });
+        children.set(name, handle);
+
+        return handle;
+      },
+    );
+
+    await expect(saveFile({ rootDirHandle, path: 'post.md', data: 'hello' })).rejects.toBe(error);
+
+    const [tempName, tempHandle] = [...children.entries()][0];
+
+    expect(tempName).toMatch(/^\.sveltia-tmp-/);
+    // The file isn’t renamed, and nothing is left behind
+    expect(tempHandle.move).not.toHaveBeenCalled();
+    expect(rootDirHandle.removeEntry).toHaveBeenCalledWith(tempName);
+  });
+
   test('should write File object to file', async () => {
     const mockFileHandle = createMockFileHandle('test.txt');
 
@@ -2321,6 +2351,51 @@ describe('scanDir', () => {
     expect(fileHandles).toHaveLength(1);
     expect(fileHandles[0].handle).toBe(gitignoreFile);
     expect(fileHandles[0].path).toBe('.gitignore');
+  });
+
+  test('should delete temp files left behind by an unfinished save', async () => {
+    const dirHandle = createMockDirectoryHandle('test');
+    const now = Date.now();
+    const staleTempFile = createMockFileHandle('.sveltia-tmp-stale');
+    const freshTempFile = createMockFileHandle('.sveltia-tmp-fresh');
+    const goneTempFile = createMockFileHandle('.sveltia-tmp-gone');
+    const hiddenFile = createMockFileHandle('.hidden');
+    const tempDir = createMockDirectoryHandle('.sveltia-tmp-dir');
+
+    staleTempFile.getFile = vi
+      .fn()
+      .mockResolvedValue(new File([''], staleTempFile.name, { lastModified: now - 60 * 1000 }));
+    // A save in progress, e.g. in another tab
+    freshTempFile.getFile = vi
+      .fn()
+      .mockResolvedValue(new File([''], freshTempFile.name, { lastModified: now - 59 * 1000 }));
+    // Renamed by the save in progress in the meantime
+    goneTempFile.getFile = vi.fn().mockRejectedValue(new DOMException('Gone', 'NotFoundError'));
+
+    // @ts-ignore - Mock async iterator
+    dirHandle.entries = vi.fn(() => ({
+      [Symbol.asyncIterator]: async function* () {
+        yield ['.sveltia-tmp-stale', staleTempFile];
+        yield ['.sveltia-tmp-fresh', freshTempFile];
+        yield ['.sveltia-tmp-gone', goneTempFile];
+        yield ['.hidden', hiddenFile];
+        yield ['.sveltia-tmp-dir', tempDir];
+      },
+    }));
+
+    await scanDir(dirHandle, {
+      rootDirHandle,
+      scanningPaths: [''],
+      scanningPathsRegEx: [/.*/],
+      fileHandles,
+      pathRegexCache: new Map(),
+    });
+
+    expect(dirHandle.removeEntry).toHaveBeenCalledTimes(1);
+    expect(dirHandle.removeEntry).toHaveBeenCalledWith('.sveltia-tmp-stale');
+    expect(hiddenFile.getFile).not.toHaveBeenCalled();
+    // The temp files are never listed
+    expect(fileHandles).toHaveLength(0);
   });
 
   test('should handle directory matching scanning path', async () => {

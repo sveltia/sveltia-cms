@@ -365,6 +365,47 @@ describe('draft/save/index', () => {
       expect(deleteBackup).toHaveBeenCalledWith('posts', 'test-post');
     });
 
+    it('should delete backup before running the post-save hooks', async () => {
+      /** @type {string[]} */
+      const calls = [];
+
+      vi.mocked(deleteBackup).mockImplementation(async () => {
+        calls.push('deleteBackup');
+      });
+      vi.mocked(callEventHooks).mockImplementation(async () => {
+        calls.push('callEventHooks');
+      });
+
+      await saveEntry();
+
+      expect(calls[0]).toBe('deleteBackup');
+      expect(calls).toContain('callEventHooks');
+    });
+
+    it('should complete the save even if the backup cannot be deleted', async () => {
+      const error = new DOMException('Store missing', 'NotFoundError');
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      vi.mocked(deleteBackup).mockRejectedValue(error);
+
+      try {
+        await expect(saveEntry()).resolves.toBeDefined();
+        expect(callEventHooks).toHaveBeenCalled();
+        expect(contentUpdatesToast.current.saved).toBe(true);
+        expect(consoleError).toHaveBeenCalledWith(error);
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
+    it('should keep backup if save fails', async () => {
+      vi.mocked(saveChanges).mockRejectedValue(new Error('Save failed'));
+
+      await expect(saveEntry()).rejects.toThrow('saving_failed');
+
+      expect(deleteBackup).not.toHaveBeenCalled();
+    });
+
     it('should delete backup for new entry with empty slug', async () => {
       mockDraft.isNew = true;
 

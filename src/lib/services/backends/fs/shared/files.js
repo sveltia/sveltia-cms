@@ -91,6 +91,17 @@ const processFiles = async (items, task) => {
  */
 const RENAME_ATTEMPTS = 3;
 const RENAME_RETRY_DELAY = 150;
+/**
+ * Name prefix of the temporary file a new or updated file is written to before it’s renamed to its
+ * final name. See {@link saveFile}.
+ */
+const TEMP_FILE_PREFIX = '.sveltia-tmp-';
+/**
+ * How old a temporary file has to be, in milliseconds, before it’s considered left behind by a save
+ * that never finished, e.g. because a dev server reloaded the page in the middle of it. A younger
+ * one may belong to a save in progress in another tab.
+ */
+const STALE_TEMP_FILE_AGE = 60 * 1000;
 
 /**
  * Get a file or directory handle at the given path.
@@ -194,6 +205,26 @@ export const getPathRegex = (path) => {
 };
 
 /**
+ * Delete a temporary file left behind by a save that never finished. When the page is reloaded in
+ * the middle of a save, e.g. by a dev server that watches the content files, the temporary file
+ * isn’t renamed to its final name, and nothing else would ever remove it. The content isn’t lost,
+ * because the draft backup is only deleted once the save is complete.
+ * @param {FileSystemDirectoryHandle} dirHandle Directory containing the file.
+ * @param {FileSystemFileHandle} fileHandle Temporary file handle.
+ */
+export const deleteStaleTempFile = async (dirHandle, fileHandle) => {
+  try {
+    const { lastModified } = await fileHandle.getFile();
+
+    if (Date.now() - lastModified >= STALE_TEMP_FILE_AGE) {
+      await dirHandle.removeEntry(fileHandle.name);
+    }
+  } catch {
+    // The file may have been renamed or removed in the meantime, e.g. by a save in another tab
+  }
+};
+
+/**
  * Retrieve all the files under the given directory recursively.
  * @param {FileSystemDirectoryHandle} dirHandle Directory handle.
  * @param {object} context Context object.
@@ -210,6 +241,10 @@ export const scanDir = async (dirHandle, context, currentPath = '') => {
   for await (const [name, handle] of dirHandle.entries()) {
     // Skip hidden files and directories, except for Git configuration files
     if (name.startsWith('.') && !GIT_CONFIG_FILE_REGEX.test(name)) {
+      if (handle.kind === 'file' && name.startsWith(TEMP_FILE_PREFIX)) {
+        await deleteStaleTempFile(dirHandle, /** @type {FileSystemFileHandle} */ (handle));
+      }
+
       continue;
     }
 
@@ -587,7 +622,7 @@ export const saveFile = async ({ rootDirHandle, fileHandle, path, data }) => {
     // supported. If the `move` method is supported, we have to write directly to the final path.
     if (canMoveFile()) {
       const { dirname, basename } = getPathInfo(stripSlashes(path));
-      const tempPath = `${dirname ? `${dirname}/` : ''}.sveltia-tmp-${crypto.randomUUID()}`;
+      const tempPath = `${dirname ? `${dirname}/` : ''}${TEMP_FILE_PREFIX}${crypto.randomUUID()}`;
 
       fileHandle = await getFileHandle(rootDirHandle, tempPath);
       pendingRename = { dirname, basename };
@@ -596,24 +631,27 @@ export const saveFile = async ({ rootDirHandle, fileHandle, path, data }) => {
     }
   }
 
-  await writeFile(fileHandle, data);
+  if (!pendingRename) {
+    await writeFile(fileHandle, data);
 
-  if (pendingRename) {
-    const { dirname, basename } = pendingRename;
-    const dirHandle = await getDirectoryHandle(rootDirHandle, dirname);
+    return fileHandle.getFile();
+  }
 
+  const { dirname, basename } = pendingRename;
+  const dirHandle = await getDirectoryHandle(rootDirHandle, dirname);
+
+  try {
+    await writeFile(fileHandle, data);
+    await renameFile(fileHandle, dirHandle, basename);
+  } catch (ex) {
+    // Don’t leave the temporary file behind; the error is reported to the user, who can retry
     try {
-      await renameFile(fileHandle, dirHandle, basename);
-    } catch (ex) {
-      // Don’t leave the temporary file behind; the error is reported to the user, who can retry
-      try {
-        await dirHandle.removeEntry(fileHandle.name);
-      } catch {
-        //
-      }
-
-      throw ex;
+      await dirHandle.removeEntry(fileHandle.name);
+    } catch {
+      //
     }
+
+    throw ex;
   }
 
   return fileHandle.getFile();

@@ -176,6 +176,17 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
     throw new Error('saving_failed', { cause: ex.cause ?? ex });
   }
 
+  // Delete the backup as soon as the changes are saved. A dev server that watches the content files
+  // may reload the page right after they’re written, e.g. Eleventy, and a backup that outlives the
+  // save would then offer to restore a draft that has already been saved. The changes are saved
+  // already, so a backup that can’t be deleted doesn’t fail the save
+  try {
+    await deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+  }
+
   await callEventHooks({
     type: 'postSave',
     entry: savingEntry,
@@ -200,7 +211,6 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
     skipCI,
     count: 1 + cascadeEntries.length + movedEntries.length + pendingEntries.length,
   });
-  deleteBackup(collectionName, isNew ? '' : defaultLocaleSlug);
 
   if (originalEntry) {
     clearEntryHistoryCache(originalEntry.id);
