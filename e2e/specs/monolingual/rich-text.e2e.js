@@ -1,5 +1,6 @@
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { createPNG } from '../../fixtures/files.js';
+import { selectText } from '../../fixtures/rich-text.js';
 import { expect, test } from '../../fixtures/test.js';
 
 /**
@@ -78,46 +79,6 @@ const moveCaretToEnd = async (textbox) => {
     window.getSelection()?.selectAllChildren(element);
     window.getSelection()?.collapseToEnd();
   });
-};
-
-/**
- * Select a piece of text in a rich text editor. The editor picks up a selection made with the mouse
- * a moment later, when the browser fires `selectionchange`, so a shortcut pressed right after a
- * double-click can find nothing selected. Set the selection and fire the event instead, then wait
- * for the editor to have handled it.
- * @param {Locator} textbox Editor.
- * @param {string} text Text to select. Its first occurrence within a single text node is used.
- * @throws {Error} If the text isn’t found.
- */
-const selectText = async (textbox, text) => {
-  await textbox.evaluate(async (element, _text) => {
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-    const range = document.createRange();
-    let found = false;
-
-    for (let node = walker.nextNode(); node && !found; node = walker.nextNode()) {
-      const index = node.textContent?.indexOf(_text) ?? -1;
-
-      if (index > -1) {
-        range.setStart(node, index);
-        range.setEnd(node, index + _text.length);
-        found = true;
-      }
-    }
-
-    // Selecting nothing would make a test that expects no change pass for the wrong reason
-    if (!found) {
-      throw new Error(`Text not found in the editor: ${_text}`);
-    }
-
-    /** @type {HTMLElement} */ (element).focus();
-    window.getSelection()?.removeAllRanges();
-    window.getSelection()?.addRange(range);
-    document.dispatchEvent(new Event('selectionchange'));
-    await new Promise((resolve) => {
-      requestAnimationFrame(resolve);
-    });
-  }, text);
 };
 
 /**
@@ -366,8 +327,8 @@ test.describe('existing Markdown', () => {
   }) => {
     // The editor converts the content to Markdown 100 ms after a change, so a save right after a
     // change has to wait for it. The Save button is clicked with a dispatched event, which comes
-    // within 100 ms even on a busy runner, unlike a Playwright click, or the Accel+S shortcut,
-    // which Sveltia UI ignores now and then right after another shortcut in a test
+    // within 100 ms even on a busy runner, unlike a Playwright click. The Accel+S shortcut is
+    // tested in `editor/shortcuts.e2e.js`
     await cms.open();
     await cms.seed(MONOLINGUAL_FILES);
     await cms.signIn();
