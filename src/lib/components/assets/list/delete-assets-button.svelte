@@ -57,9 +57,9 @@
   const Component = $derived(useButton ? Button : MenuItem);
   const blocked = $derived(!!plan?.blockers.length);
 
-  // Work out the plan whenever the dialog opens. The lookup is asynchronous — an asset without a
-  // public path is matched by its blob URL, which may have to be created first — so the dialog
-  // starts without a plan, and the Delete button waits for it
+  // Work out the plan whenever the dialog opens. The lookup is asynchronous, so the dialog starts
+  // without a plan, and the Delete button waits for it. The deletion then reuses the plan, unless
+  // the entries have changed in the meantime
   $effect(() => {
     if (!showDialog || !planDeletion) {
       return;

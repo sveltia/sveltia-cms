@@ -2,6 +2,7 @@ import { _ } from '@sveltia/i18n';
 import { compare } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
+import { getOrCreate } from '$lib/services/utils/cache';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { getRegex } from '$lib/services/utils/regex';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
@@ -131,8 +132,12 @@ export const getGroupLabel = (name) => (name === OTHER_GROUP_NAME ? _('other') :
  */
 export const buildGroupMap = (items, pattern, getValue) => {
   const regex = getRegex(pattern);
-  /** @type {Record<string, T[]>} */
-  const groups = {};
+  /**
+   * Groups by key. A `Map` rather than a plain object, as a value like `constructor` or `__proto__`
+   * would otherwise hit an inherited property.
+   * @type {Map<string, T[]>}
+   */
+  const groups = new Map();
 
   items.forEach((item) => {
     const value = getValue(item);
@@ -144,11 +149,10 @@ export const buildGroupMap = (items, pattern, getValue) => {
           ? (String(value).match(regex)?.[0] ?? OTHER_GROUP_NAME)
           : String(value);
 
-    if (!(key in groups)) groups[key] = [];
-    groups[key].push(item);
+    getOrCreate(groups, key, () => []).push(item);
   });
 
-  return Object.entries(groups).sort(([a], [b]) => compare(getGroupLabel(a), getGroupLabel(b)));
+  return [...groups].sort(([a], [b]) => compare(getGroupLabel(a), getGroupLabel(b)));
 };
 
 /**

@@ -9,8 +9,8 @@
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button, Icon } from '@sveltia/ui';
 
-  import Image from '$lib/components/assets/shared/image.svelte';
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
+  import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
   import DeployStatusBadge from '$lib/components/workflow/deploy-status-badge.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { allEntries } from '$lib/services/contents';
@@ -19,7 +19,6 @@
     getCollectionFile,
     getCollectionFileLabel,
   } from '$lib/services/contents/collection/files';
-  import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { deployments, productionSHA } from '$lib/services/deployments';
   import { hasPublishedVersion } from '$lib/services/workflow';
@@ -147,11 +146,7 @@ a merged one -->
     }}
   >
     {#if collection?._type === 'entry'}
-      {#await getEntryThumbnail(collection, entry) then src}
-        {#if src}
-          <Image {src} variant="icon" cover />
-        {/if}
-      {/await}
+      <EntryThumbnail {collection} {entry} variant="icon" />
     {/if}
     <span role="none" class="text">
       <span role="none" class="collection"><bdi>{collectionLabel}</bdi></span>

@@ -1412,6 +1412,140 @@ describe('Test getOptions()', async () => {
         expect(getReferencedOptionLabel(args)).toBe('jane-doe');
       });
 
+      test('should reuse the options while the pending entries stay the same', () => {
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          display_fields: ['name.first'],
+        };
+
+        vi.mocked(getFieldDisplayValue).mockImplementation(
+          ({ keyPath, valueMap }) => valueMap?.[keyPath] || 'display-value',
+        );
+
+        /**
+         * Create a pending member entry.
+         * @param {string} slug Entry slug.
+         * @param {string} firstName First name.
+         * @returns {PendingEntry} Pending entry.
+         */
+        const createPendingMember = (slug, firstName) => ({
+          collectionName: 'members',
+          entry: {
+            id: slug,
+            slug,
+            subPath: slug,
+            locales: { _default: { ...localizedEntryProps, content: { 'name.first': firstName } } },
+          },
+          changes: [],
+          savingAssets: [],
+          values: [slug],
+        });
+
+        /** @type {PendingEntry[]} */
+        const pendingEntries = [createPendingMember('jane-doe', 'Jane')];
+        const args = { fieldConfig, keyPath: 'author', locale, pendingEntries };
+
+        expect(getReferencedOptionLabel({ ...args, valueMap: { author: 'jane-doe' } })).toBe(
+          'Jane',
+        );
+
+        const callCount = vi.mocked(getFieldDisplayValue).mock.calls.length;
+        const cacheSize = optionCacheMap.size;
+
+        // Another label, e.g. that of the next referenced entry in a nested Relation field, is
+        // resolved with the same options instead of building them again
+        expect(getReferencedOptionLabel({ ...args, valueMap: { author: 'jane-doe' } })).toBe(
+          'Jane',
+        );
+        expect(getReferencedOptionLabel({ ...args, valueMap: { author: 'nonexistent' } })).toBe(
+          'nonexistent',
+        );
+        expect(getFieldDisplayValue).toHaveBeenCalledTimes(callCount);
+        expect(optionCacheMap.size).toBe(cacheSize);
+
+        // An entry added to the same array is picked up
+        pendingEntries.push(createPendingMember('john-doe', 'John'));
+
+        expect(getReferencedOptionLabel({ ...args, valueMap: { author: 'john-doe' } })).toBe(
+          'John',
+        );
+        expect(optionCacheMap.size).toBe(cacheSize + 1);
+
+        // Pending entries of another collection leave the saved entries as they are
+        expect(
+          getReferencedOptionLabel({
+            ...args,
+            valueMap: { author: 'jane-doe' },
+            pendingEntries: [
+              { ...createPendingMember('jane-doe', 'Jane'), collectionName: 'tags' },
+            ],
+          }),
+        ).toBe('jane-doe');
+
+        // Another draft’s pending entries are told apart from these
+        expect(
+          getReferencedOptionLabel({
+            ...args,
+            valueMap: { author: 'jim-doe' },
+            pendingEntries: [createPendingMember('jim-doe', 'Jim')],
+          }),
+        ).toBe('Jim');
+      });
+
+      test('should not recurse infinitely when the label refers to the field itself', () => {
+        // A self-referencing Relation field, e.g. `parent` in a `members` collection, whose
+        // display fields include the field itself to show a breadcrumb
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          name: 'parent',
+          collection: 'members',
+          display_fields: ['{{name.first}}', '{{parent}}'],
+        };
+
+        /** @type {Entry[]} */
+        const entries = [
+          {
+            id: 'a',
+            slug: 'a',
+            subPath: 'a',
+            locales: { _default: { ...localizedEntryProps, content: { 'name.first': 'Ann' } } },
+          },
+          {
+            id: 'b',
+            slug: 'b',
+            subPath: 'b',
+            locales: {
+              _default: { ...localizedEntryProps, content: { 'name.first': 'Bob', parent: 'a' } },
+            },
+          },
+        ];
+
+        vi.mocked(getEntriesByCollection).mockReturnValue(entries);
+        // Resolve the `parent` field the way `getFieldDisplayValue()` does for a Relation field
+        vi.mocked(getFieldDisplayValue).mockImplementation(({ keyPath, valueMap = {} }) =>
+          keyPath === 'parent'
+            ? getReferencedOptionLabel({ fieldConfig, valueMap, keyPath, locale })
+            : (valueMap[keyPath] ?? ''),
+        );
+
+        // The nested reference falls back to the stored value; an empty one to the entry summary
+        expect(getOptions({ locale, fieldConfig, refEntries: entries })).toEqual([
+          { label: 'Ann summary', value: 'a', searchValue: 'Ann summary' },
+          { label: 'Bob a', value: 'b', searchValue: 'Bob a' },
+        ]);
+        expect(
+          getReferencedOptionLabel({
+            fieldConfig,
+            valueMap: { parent: 'b' },
+            keyPath: 'parent',
+            locale,
+          }),
+        ).toBe('Bob a');
+      });
+
       test('should handle undefined values', () => {
         /** @type {RelationField} */
         const fieldConfig = {

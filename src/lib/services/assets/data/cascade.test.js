@@ -3,18 +3,24 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
-  getReferenceURLs,
+  _resetAssetDeletionPlan,
+  getReferenceTargets,
   planAssetDeletion,
   removeAssetReferences,
   removeMarkdownImages,
 } from '$lib/services/assets/data/cascade';
 
-vi.mock('$lib/services/assets/details', () => ({
-  getAssetReferenceURL: vi.fn(async (asset) => `/${asset.path}`),
+vi.mock('$lib/services/assets', () => ({
+  allAssets: { current: [] },
 }));
 
 vi.mock('$lib/services/assets/info', () => ({
-  getMediaFieldURL: vi.fn(async () => undefined),
+  getAssetPublicURL: vi.fn((asset) => `/${asset.path}`),
+  getMediaFieldSource: vi.fn(() => undefined),
+}));
+
+vi.mock('$lib/services/contents', () => ({
+  allEntries: { current: [] },
 }));
 
 vi.mock('$lib/services/config', () => ({
@@ -23,6 +29,7 @@ vi.mock('$lib/services/config', () => ({
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getAssetReferences: vi.fn(async () => []),
+  getComparableAssetURL: vi.fn((url) => url.replace('https://example.com', '')),
   MARKDOWN_IMAGE_REGEX: /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g,
 }));
 
@@ -48,9 +55,10 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummary: vi.fn((collection, entry) => entry.locales._default?.content?.title ?? ''),
 }));
 
-const { getAssetReferenceURL } = await import('$lib/services/assets/details');
-const { getMediaFieldURL } = await import('$lib/services/assets/info');
+const { allAssets } = await import('$lib/services/assets');
+const { getAssetPublicURL, getMediaFieldSource } = await import('$lib/services/assets/info');
 const { cmsConfig } = await import('$lib/services/config');
+const { allEntries } = await import('$lib/services/contents');
 const { getAssetReferences } = await import('$lib/services/contents/collection/entries');
 
 const { isCollectionIndexFile } =
@@ -110,42 +118,48 @@ const createReference = (entry, keyPath, fieldConfig, props = {}) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   cmsConfig.current = {};
-  getAssetReferenceURL.mockImplementation(async (asset) => `/${asset.path}`);
-  getMediaFieldURL.mockResolvedValue(undefined);
+  _resetAssetDeletionPlan();
+  getAssetPublicURL.mockImplementation((asset) => `/${asset.path}`);
+  getMediaFieldSource.mockReturnValue(undefined);
   getAssetReferences.mockResolvedValue([]);
   isCollectionIndexFile.mockReturnValue(false);
   validateAnyField.mockReturnValue({ valid: true });
 });
 
-describe('getReferenceURLs()', () => {
-  test('returns the public path of each asset', async () => {
-    expect(await getReferenceURLs([createAsset('a.png'), createAsset('b.png')])).toEqual([
-      '/static/uploads/a.png',
-      '/static/uploads/b.png',
+describe('getReferenceTargets()', () => {
+  test('returns the public path of each asset', () => {
+    expect(getReferenceTargets([createAsset('a.png'), createAsset('b.png')])).toEqual([
+      { url: '/static/uploads/a.png' },
+      { url: '/static/uploads/b.png' },
+    ]);
+    expect(getAssetPublicURL).toHaveBeenCalledWith(createAsset('a.png'), {
+      allowSpecial: true,
+      pathOnly: true,
+    });
+  });
+
+  test('drops the site’s base URL, as a stored value does', () => {
+    getAssetPublicURL.mockReturnValueOnce('https://example.com/uploads/a.png');
+
+    expect(getReferenceTargets([createAsset('a.png')])).toEqual([{ url: '/uploads/a.png' }]);
+  });
+
+  test('lists a URL shared by several assets once', () => {
+    getAssetPublicURL.mockReturnValue('/uploads/a.png');
+
+    expect(getReferenceTargets([createAsset('a.png'), createAsset('b.png')])).toEqual([
+      { url: '/uploads/a.png' },
     ]);
   });
 
-  test('drops the site’s base URL, as a stored value does', async () => {
-    cmsConfig.current = { _baseURL: 'https://example.com' };
-    getAssetReferenceURL.mockResolvedValueOnce('https://example.com/uploads/a.png');
+  test('matches an asset without a public path by the asset itself, without loading it', () => {
+    const asset = createAsset('b.png');
 
-    expect(await getReferenceURLs([createAsset('a.png')])).toEqual(['/uploads/a.png']);
-  });
+    getAssetPublicURL.mockImplementation((a) => (a === asset ? undefined : `/${a.path}`));
 
-  test('leaves a blob URL alone', async () => {
-    cmsConfig.current = { _baseURL: 'https://example.com' };
-    getAssetReferenceURL.mockResolvedValueOnce('blob:https://example.com/abc');
-
-    expect(await getReferenceURLs([createAsset('a.png')])).toEqual([
-      'blob:https://example.com/abc',
-    ]);
-  });
-
-  test('skips an asset that can’t be located', async () => {
-    getAssetReferenceURL.mockResolvedValueOnce(undefined);
-
-    expect(await getReferenceURLs([createAsset('a.png'), createAsset('b.png')])).toEqual([
-      '/static/uploads/b.png',
+    expect(getReferenceTargets([createAsset('a.png'), asset])).toEqual([
+      { url: '/static/uploads/a.png' },
+      { asset },
     ]);
   });
 });
@@ -239,27 +253,41 @@ describe('removeMarkdownImages()', () => {
     expect(
       await removeMarkdownImages({ ...baseArgs, value, urls: new Set(['/uploads/a.png']) }),
     ).toBe(value);
-    expect(getMediaFieldURL).not.toHaveBeenCalled();
+    expect(getMediaFieldSource).not.toHaveBeenCalled();
   });
 
-  test('matches an asset without a public path by its blob URL', async () => {
-    getMediaFieldURL.mockImplementation(async ({ value }) =>
-      value === 'a.png' ? 'blob:https://example.com/abc' : undefined,
+  test('matches an asset without a public path by the asset its images resolve to', async () => {
+    getMediaFieldSource.mockImplementation(({ value }) =>
+      value === 'a.png' ? { asset: { path: 'content/posts/a/a.png' } } : { url: value },
     );
 
     expect(
       await removeMarkdownImages({
         ...baseArgs,
         value: '![a](a.png) ![b](b.png)',
-        urls: new Set(['blob:https://example.com/abc']),
+        urls: new Set(),
+        paths: new Set(['content/posts/a/a.png']),
       }),
     ).toBe(' ![b](b.png)');
-    expect(getMediaFieldURL).toHaveBeenCalledWith({
+    expect(getMediaFieldSource).toHaveBeenCalledWith({
       entry,
       collectionName: 'posts',
       fileName: undefined,
       value: 'a.png',
     });
+  });
+
+  test('leaves an image alone that resolves to nothing', async () => {
+    const value = '![a](a.png)';
+
+    expect(
+      await removeMarkdownImages({
+        ...baseArgs,
+        value,
+        urls: new Set(),
+        paths: new Set(['content/posts/a/a.png']),
+      }),
+    ).toBe(value);
   });
 });
 
@@ -352,13 +380,17 @@ describe('planAssetDeletion()', () => {
 
   test('does nothing when no entry uses the assets', async () => {
     expect(await planAssetDeletion([asset])).toEqual({ targets: [], blockers: [] });
-    expect(getAssetReferences).toHaveBeenCalledWith('/static/uploads/a.png');
+    expect(getAssetReferences).toHaveBeenCalledWith([{ url: '/static/uploads/a.png' }]);
   });
 
-  test('looks each asset up once', async () => {
+  test('looks every asset up in one pass over the entries', async () => {
     await planAssetDeletion([asset, createAsset('b.png')]);
 
-    expect(getAssetReferences).toHaveBeenCalledTimes(2);
+    expect(getAssetReferences).toHaveBeenCalledOnce();
+    expect(getAssetReferences).toHaveBeenCalledWith([
+      { url: '/static/uploads/a.png' },
+      { url: '/static/uploads/b.png' },
+    ]);
   });
 
   test('rewrites the entries using the assets', async () => {
@@ -389,11 +421,10 @@ describe('planAssetDeletion()', () => {
       'gallery.0': '/static/uploads/b.png',
     });
 
-    getAssetReferences.mockImplementation(async (url) =>
-      url === '/static/uploads/a.png'
-        ? [createReference(post, 'image', imageField)]
-        : [createReference(post, 'gallery.0', galleryField)],
-    );
+    getAssetReferences.mockResolvedValue([
+      createReference(post, 'image', imageField),
+      createReference(post, 'gallery.0', galleryField),
+    ]);
 
     const { targets } = await planAssetDeletion([asset, createAsset('b.png')]);
 
@@ -509,5 +540,74 @@ describe('planAssetDeletion()', () => {
       collectionFile,
       isIndexFile: true,
     });
+  });
+});
+
+describe('planAssetDeletion() with assets without a public path', () => {
+  test('removes the images resolving to the assets, without loading them', async () => {
+    const asset = { name: 'a.png', path: 'content/posts/a/a.png', sha: 'a' };
+    const post = createPost('a', { body: 'Hi ![a](a.png) ![b](b.png)' });
+
+    getAssetPublicURL.mockReturnValue(undefined);
+    getMediaFieldSource.mockImplementation(({ value }) =>
+      value === 'a.png' ? { asset } : undefined,
+    );
+    getAssetReferences.mockResolvedValue([createReference(post, 'body', bodyField)]);
+
+    const { targets } = await planAssetDeletion([asset]);
+
+    expect(getAssetReferences).toHaveBeenCalledWith([{ asset }]);
+    expect(targets[0].entry.locales._default.content).toEqual({ body: 'Hi  ![b](b.png)' });
+  });
+});
+
+describe('planAssetDeletion() reuse', () => {
+  const asset = createAsset('a.png');
+
+  test('hands out the same plan again while nothing has changed', async () => {
+    const plan = planAssetDeletion([asset]);
+
+    // The selection may be a new list of the same assets, as for a folder
+    expect(planAssetDeletion([createAsset('a.png')])).toBe(plan);
+    await plan;
+    expect(getAssetReferences).toHaveBeenCalledOnce();
+  });
+
+  test('works the plan out again once anything it depends on has changed', async () => {
+    const plan = planAssetDeletion([asset]);
+    const otherPlan = planAssetDeletion([asset, createAsset('b.png')]);
+
+    expect(otherPlan).not.toBe(plan);
+
+    allEntries.current = [];
+    expect(planAssetDeletion([asset, createAsset('b.png')])).not.toBe(otherPlan);
+
+    const plan3 = planAssetDeletion([asset]);
+
+    allAssets.current = [];
+    expect(planAssetDeletion([asset])).not.toBe(plan3);
+
+    const plan4 = planAssetDeletion([asset]);
+
+    cmsConfig.current = {};
+    expect(planAssetDeletion([asset])).not.toBe(plan4);
+  });
+
+  test('doesn’t hand out a failed plan again', async () => {
+    getAssetReferences.mockRejectedValueOnce(new Error('Failed'));
+
+    await expect(planAssetDeletion([asset])).rejects.toThrow('Failed');
+    expect(await planAssetDeletion([asset])).toEqual({ targets: [], blockers: [] });
+    expect(getAssetReferences).toHaveBeenCalledTimes(2);
+  });
+
+  test('keeps a newer plan when an older one fails', async () => {
+    getAssetReferences.mockRejectedValueOnce(new Error('Failed'));
+
+    const failing = planAssetDeletion([asset]);
+    const plan = planAssetDeletion([createAsset('b.png')]);
+
+    await expect(failing).rejects.toThrow('Failed');
+    expect(planAssetDeletion([createAsset('b.png')])).toBe(plan);
   });
 });

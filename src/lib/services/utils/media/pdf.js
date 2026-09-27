@@ -57,9 +57,17 @@ export const renderPDF = async (
   const url = URL.createObjectURL(blob);
   const canvas = new OffscreenCanvas(512, 512);
   const context = /** @type {OffscreenCanvasRenderingContext2D} */ (canvas.getContext('2d'));
+  // Without a `worker` option, every document gets a Web Worker of its own, which is only
+  // terminated when the loading task is destroyed. A thumbnail is rendered once, so the task has to
+  // be destroyed right after, or each PDF would leave a worker thread running for the rest of the
+  // session, holding the parsed document in memory
+  /** @type {import('pdfjs-dist').PDFDocumentLoadingTask | undefined} */
+  let loadingTask;
 
   try {
-    const pdfDocument = await pdfjs.getDocument({ ...PDFJS_GET_DOC_OPTIONS, url }).promise;
+    loadingTask = pdfjs.getDocument({ ...PDFJS_GET_DOC_OPTIONS, url });
+
+    const pdfDocument = await loadingTask.promise;
     const pdfPage = await pdfDocument.getPage(1);
     const viewport = pdfPage.getViewport({ scale: 1 });
 
@@ -74,10 +82,17 @@ export const renderPDF = async (
       canvasContext: context,
       viewport: scale === 1 ? viewport : pdfPage.getViewport({ scale }),
     }).promise;
-
-    URL.revokeObjectURL(url);
   } catch {
     throw new Error('Failed to render PDF');
+  } finally {
+    URL.revokeObjectURL(url);
+
+    try {
+      await loadingTask?.destroy();
+    } catch {
+      // The page has been rendered onto the canvas, or the rendering has already failed, so a
+      // failure to clean up changes nothing for the caller
+    }
   }
 
   return exportCanvasAsBlob(canvas, { format, quality });

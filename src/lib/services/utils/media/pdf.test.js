@@ -67,6 +67,7 @@ describe('renderPDF', () => {
     const mockPDFJS = {
       GlobalWorkerOptions: { workerSrc: '' },
       getDocument: vi.fn(() => ({
+        destroy: vi.fn(() => Promise.resolve()),
         promise: Promise.resolve({
           getPage: vi.fn(() =>
             Promise.resolve({
@@ -109,6 +110,7 @@ describe('renderPDF', () => {
     const mockPDFJS = {
       GlobalWorkerOptions: { workerSrc: '' },
       getDocument: vi.fn(() => ({
+        destroy: vi.fn(() => Promise.resolve()),
         promise: Promise.resolve({
           getPage: vi.fn(() =>
             Promise.resolve({
@@ -195,11 +197,13 @@ describe('renderPDF', () => {
       default: {
         GlobalWorkerOptions: { workerSrc: '' },
         getDocument: vi.fn(() => ({
+          destroy: vi.fn(() => Promise.resolve()),
           promise: Promise.reject(new Error('Invalid PDF document')),
         })),
       },
       GlobalWorkerOptions: { workerSrc: '' },
       getDocument: vi.fn(() => ({
+        destroy: vi.fn(() => Promise.resolve()),
         promise: Promise.reject(new Error('Invalid PDF document')),
       })),
     }));
@@ -233,6 +237,7 @@ describe('renderPDF', () => {
       default: {
         GlobalWorkerOptions: { workerSrc: '' },
         getDocument: vi.fn(() => ({
+          destroy: vi.fn(() => Promise.resolve()),
           promise: Promise.resolve({
             getPage: vi.fn(() =>
               Promise.resolve({
@@ -247,6 +252,7 @@ describe('renderPDF', () => {
       },
       GlobalWorkerOptions: { workerSrc: '' },
       getDocument: vi.fn(() => ({
+        destroy: vi.fn(() => Promise.resolve()),
         promise: Promise.resolve({
           getPage: vi.fn(() =>
             Promise.resolve({
@@ -265,5 +271,80 @@ describe('renderPDF', () => {
 
     // Should throw "Failed to render PDF" when rendering fails
     await expect(renderPDF(mockBlob)).rejects.toThrow('Failed to render PDF');
+  });
+
+  describe('cleanup', () => {
+    /**
+     * Import a fresh `renderPDF` with a mocked PDF.js whose `getDocument()` is the given function.
+     * @param {(...args: any[]) => any} getDocument `getDocument()` implementation.
+     * @returns {Promise<typeof import('./pdf').renderPDF>} `renderPDF`.
+     */
+    const importWithPDFJS = async (getDocument) => {
+      vi.resetModules();
+      vi.doMock('$lib/services/app/dependencies', () => ({
+        getUnpkgURL: vi.fn((pkg) => `https://unpkg.com/${pkg}`),
+      }));
+      vi.doMock('$lib/services/utils/media/image/encode', () => ({
+        exportCanvasAsBlob: vi.fn(async () => new Blob(['png'], { type: 'image/png' })),
+      }));
+      vi.doMock('$lib/services/utils/media/image/resize', () => ({
+        resizeCanvas: vi.fn(() => ({ scale: 1, width: 800, height: 600 })),
+      }));
+      vi.doMock('https://unpkg.com/pdfjs-dist/build/pdf.min.mjs', () => ({
+        GlobalWorkerOptions: { workerSrc: '' },
+        getDocument: vi.fn(getDocument),
+      }));
+
+      return (await import('./pdf')).renderPDF;
+    };
+
+    const page = {
+      getViewport: vi.fn(() => ({ width: 800, height: 600 })),
+      render: vi.fn(() => ({ promise: Promise.resolve() })),
+    };
+
+    test('destroys the loading task after a successful render', async () => {
+      const destroy = vi.fn(() => Promise.resolve());
+
+      const renderPDF = await importWithPDFJS(() => ({
+        promise: Promise.resolve({ getPage: vi.fn(async () => page) }),
+        destroy,
+      }));
+
+      await expect(renderPDF(new Blob(['pdf']))).resolves.toBeInstanceOf(Blob);
+      expect(destroy).toHaveBeenCalledOnce();
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    });
+
+    test('destroys the loading task and revokes the URL when the document fails to load', async () => {
+      const destroy = vi.fn(() => Promise.resolve());
+
+      const renderPDF = await importWithPDFJS(() => ({
+        promise: Promise.reject(new Error('Invalid PDF')),
+        destroy,
+      }));
+
+      await expect(renderPDF(new Blob(['pdf']))).rejects.toThrow('Failed to render PDF');
+      expect(destroy).toHaveBeenCalledOnce();
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    });
+
+    test('ignores a failure to destroy the loading task', async () => {
+      const renderPDF = await importWithPDFJS(() => ({
+        promise: Promise.resolve({ getPage: vi.fn(async () => page) }),
+        destroy: vi.fn(() => Promise.reject(new Error('Worker gone'))),
+      }));
+
+      await expect(renderPDF(new Blob(['pdf']))).resolves.toBeInstanceOf(Blob);
+    });
+
+    test('revokes the URL when the loading task cannot be created', async () => {
+      const renderPDF = await importWithPDFJS(() => {
+        throw new Error('Bad parameters');
+      });
+
+      await expect(renderPDF(new Blob(['pdf']))).rejects.toThrow('Failed to render PDF');
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    });
   });
 });

@@ -114,12 +114,12 @@ export const cacheAssetBlob = async (asset, blob) => {
 const downloadOnce = (key, download) => shareInFlight(pendingAssetBlobs, key, download);
 
 /**
- * Download the given asset from the backend.
+ * Download the given asset from the backend, without caching it.
  * @param {Asset} asset Asset.
  * @returns {Promise<Blob>} Blob.
  * @throws {Error} When the blob cannot be retrieved.
  */
-const fetchAssetBlob = async (asset) => {
+const downloadAssetBlob = async (asset) => {
   const { name } = asset;
   const blob = await backend.current?.fetchBlob?.(asset);
 
@@ -128,8 +128,16 @@ const fetchAssetBlob = async (asset) => {
   }
 
   // Override the MIME type as it can be `application/octet-stream`
-  return cacheAssetBlob(asset, new Blob([blob], { type: mime.getType(name) ?? blob.type }));
+  return new Blob([blob], { type: mime.getType(name) ?? blob.type });
 };
+
+/**
+ * Download the given asset from the backend, and cache it on the asset.
+ * @param {Asset} asset Asset.
+ * @returns {Promise<Blob>} Blob.
+ * @throws {Error} When the blob cannot be retrieved.
+ */
+const fetchAssetBlob = async (asset) => cacheAssetBlob(asset, await downloadAssetBlob(asset));
 
 /**
  * Get the blob for the given asset, from wherever it’s available: the file it was created from, the
@@ -165,6 +173,44 @@ export const getAssetBlob = async (asset) => {
   }
 
   return downloadOnce(path, () => fetchAssetBlob(asset));
+};
+
+/**
+ * Get the blob of the given asset to generate a thumbnail from. Unlike {@link getAssetBlob}, this
+ * doesn’t cache the full-size file on the asset: the thumbnail is all that’s kept, so an asset grid
+ * or an entry list showing hundreds of images doesn’t hold every original in memory as well. A blob
+ * that’s already at hand — the unsaved file, the one behind the asset’s object URL, or a download
+ * another caller has started — is used as is.
+ * @param {Asset} asset Asset.
+ * @returns {Promise<Blob>} Blob.
+ * @throws {Error} When the blob cannot be retrieved.
+ */
+const getThumbnailSourceBlob = async (asset) => {
+  const { file, handle, blobURL, path } = asset;
+
+  if (file) {
+    return file;
+  }
+
+  if (blobURL) {
+    return getAssetBlob(asset);
+  }
+
+  const pending = pendingAssetBlobs.get(path);
+
+  if (pending) {
+    return pending;
+  }
+
+  if (handle) {
+    try {
+      return await handle.getFile();
+    } catch {
+      throw new Error('Failed to retrieve blob from file handle');
+    }
+  }
+
+  return downloadAssetBlob(asset);
 };
 
 /**
@@ -222,7 +268,7 @@ const resolveThumbnailBlob = async (asset, isPDF) => {
   let thumbnailBlob = await thumbnailDB?.get(asset.sha);
 
   if (!thumbnailBlob) {
-    const blob = await getAssetBlob(asset);
+    const blob = await getThumbnailSourceBlob(asset);
     const transform = isPDF ? renderPDF : transformImage;
 
     thumbnailBlob = await transform(blob, THUMBNAIL_TRANSFORM_OPTIONS);

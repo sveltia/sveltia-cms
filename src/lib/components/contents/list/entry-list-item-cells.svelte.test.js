@@ -118,4 +118,19 @@ describe('EntryListItemCells', () => {
     expect(other.querySelector('.image img')).toBeNull();
     expect(other.querySelector('.icon.home')).toBeNull();
   });
+
+  test('shows the thumbnail as an icon in the list view', async () => {
+    const { container } = await render(EntryListItemCells, {
+      collection: /** @type {any} */ (getCollection('pages')),
+      entry: createMockEntry({
+        slug: 'about',
+        folder: 'content/pages',
+        content: { _default: { title: 'About', image: TEST_IMAGE_URL } },
+      }),
+      viewType: 'list',
+    });
+
+    await expect.poll(() => container.querySelector('.image .preview')).not.toBeNull();
+    expect(container.querySelector('.image .preview')).toHaveClass('icon');
+  });
 });

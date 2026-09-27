@@ -19,6 +19,7 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
 
 /**
  * @import {
+ * Asset,
  * AssetReference,
  * Entry,
  * EntryFolderInfo,
@@ -271,6 +272,210 @@ export const getEntriesByCollection = (collectionName) => {
 };
 
 /**
+ * @typedef {object} AssetReferenceTarget
+ * @property {string} [url] Asset’s public, external or blob URL. A value holding the URL as is
+ * refers to the asset, except for a blob URL, which a value can only refer to through the asset it
+ * resolves to. Required unless {@link AssetReferenceTarget.asset} is given.
+ * @property {Asset} [asset] Asset without a URL to compare values with, as in an entry-relative
+ * folder. A value refers to it when it resolves to the asset, which doesn’t require the asset to
+ * have been loaded, unlike a blob URL.
+ * @property {string} [newURL] New URL to replace the references with.
+ */
+
+/**
+ * @typedef {object} AssetReferenceMatcher
+ * @property {AssetReferenceTarget[]} targets Targets, in the order given.
+ * @property {Map<string, number[]>} byURL Indexes of the targets whose URL a value is compared
+ * with as is.
+ * @property {Map<string, number[]>} byBlobURL Indexes of the targets whose blob URL is compared
+ * with that of the asset a value resolves to.
+ * @property {Map<string, number[]>} byPath Indexes of the targets whose asset’s path is compared
+ * with that of the asset a value resolves to.
+ * @property {boolean} resolves Whether a value has to be resolved to an asset for any target,
+ * which rules out telling a value that can’t refer to the assets from its text alone.
+ */
+
+/**
+ * Get the given asset URL in the form it’s stored in a field value, without the site’s base URL.
+ * @param {string} url Asset’s public, external or blob URL.
+ * @returns {string} URL to compare values with.
+ */
+export const getComparableAssetURL = (url) => {
+  const baseURL = cmsConfig.current?._baseURL;
+
+  return baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
+};
+
+/**
+ * Index the given targets, so that a value can be compared with all of them at once.
+ * @param {AssetReferenceTarget[]} targets Targets, whose URLs are already comparable, as returned
+ * by {@link getComparableAssetURL}.
+ * @returns {AssetReferenceMatcher} Matcher.
+ */
+const createMatcher = (targets) => {
+  /** @type {AssetReferenceMatcher} */
+  const matcher = {
+    targets,
+    byURL: new Map(),
+    byBlobURL: new Map(),
+    byPath: new Map(),
+    resolves: false,
+  };
+
+  targets.forEach(({ url, asset }, index) => {
+    const [map, key] = asset
+      ? [matcher.byPath, asset.path]
+      : /** @type {string} */ (url).startsWith('blob:')
+        ? [matcher.byBlobURL, /** @type {string} */ (url)]
+        : [matcher.byURL, /** @type {string} */ (url)];
+
+    map.set(key, [...(map.get(key) ?? []), index]);
+  });
+
+  matcher.resolves = !!(matcher.byBlobURL.size || matcher.byPath.size);
+
+  return matcher;
+};
+
+/**
+ * Get the targets the given field value or image source refers to.
+ * @param {AssetReferenceMatcher} matcher Matcher.
+ * @param {string} src Field value or image source found in it.
+ * @param {object} context Context to resolve the value to an asset with.
+ * @param {Entry} context.entry Entry.
+ * @param {string} context.collectionName Collection name.
+ * @param {string} [context.fileName] Collection file name.
+ * @returns {number[]} Indexes of the targets.
+ */
+const getMatchingTargets = (matcher, src, { entry, collectionName, fileName }) => {
+  const indexes = matcher.byURL.get(src) ?? [];
+
+  if (!matcher.resolves) {
+    return indexes;
+  }
+
+  // Resolve the value to its asset without loading it. The asset’s blob URL is created once and
+  // kept on the asset object, so only the asset being looked up can hold the given one — and
+  // there’s no need to download every other asset the entries reference just to compare URLs
+  const { url, asset } = getMediaFieldSource({ entry, collectionName, fileName, value: src }) ?? {};
+  const blobURL = url ?? asset?.blobURL;
+
+  return [
+    ...indexes,
+    ...((blobURL !== undefined && matcher.byBlobURL.get(blobURL)) || []),
+    ...((asset && matcher.byPath.get(asset.path)) || []),
+  ];
+};
+
+/**
+ * Get the new URL to replace a reference to the given targets with.
+ * @param {AssetReferenceMatcher} matcher Matcher.
+ * @param {number[]} indexes Indexes of the targets referred to.
+ * @returns {string | undefined} New URL, if any.
+ */
+const getNewURL = (matcher, indexes) =>
+  indexes.map((index) => matcher.targets[index].newURL).find(Boolean);
+
+/**
+ * Check if the given value may refer to any of the targets, from its text alone. A value refers to
+ * a target either as a whole, in a media field, or as the source of an image in Markdown, so a
+ * value that’s neither can be skipped before the costly field lookup.
+ * @param {AssetReferenceMatcher} matcher Matcher, which must not need to resolve values.
+ * @param {string} value Field value.
+ * @returns {boolean} Result.
+ */
+const mayReferToTargets = (matcher, value) =>
+  matcher.byURL.has(value) ||
+  (value.includes('![') &&
+    [...value.matchAll(MARKDOWN_IMAGE_REGEX)].some(([, src]) => matcher.byURL.has(src)));
+
+/**
+ * Find the targets the given field refers to, and replace the references if the targets have a new
+ * URL.
+ * @param {object} args Arguments.
+ * @param {AssetReferenceMatcher} args.matcher Matcher.
+ * @param {string} args.collectionName Collection name.
+ * @param {Entry} args.entry Entry.
+ * @param {FlattenedEntryContent} args.content Value map for the collection. This will be modified
+ * if a reference is replaced.
+ * @param {FieldKeyPath} args.keyPath Key path of the value in the collection.
+ * @param {string} args.value Value of the field.
+ * @param {boolean} args.isIndexFile Whether the corresponding entry is the collection’s special
+ * index file used specifically in Hugo.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file. File collection only.
+ * @returns {{ indexes: Set<number>, field?: Field }} Indexes of the targets found, and the field
+ * config, unless the field isn’t configured.
+ */
+const matchField = ({
+  matcher,
+  collectionName,
+  entry,
+  content,
+  keyPath,
+  value,
+  isIndexFile,
+  collectionFile,
+}) => {
+  /** @type {Set<number>} */
+  const indexes = new Set();
+  const fileName = collectionFile?.name;
+  const field = getField({ collectionName, fileName, valueMap: content, keyPath, isIndexFile });
+
+  if (!field) {
+    return { indexes };
+  }
+
+  const { widget: fieldType = 'string' } = field;
+  const context = { entry, collectionName, fileName };
+
+  if (MEDIA_FIELD_TYPES.includes(fieldType)) {
+    const matched = getMatchingTargets(matcher, value, context);
+    const newURL = getNewURL(matcher, matched);
+
+    matched.forEach((index) => indexes.add(index));
+
+    if (newURL) {
+      content[keyPath] = newURL;
+    }
+
+    return { indexes, field };
+  }
+
+  // Search images in markdown body
+  if (['richtext', 'markdown'].includes(fieldType)) {
+    let replacing = false;
+
+    // Swap the URL within each matched image only, rather than its first occurrence in the text,
+    // which can be a link to the same file, the alt text, or the new URL written by a previous
+    // replacement. The new value is built from the original one, so doing this again, once for
+    // each collection the entry belongs to, gives the same result
+    const replaced = value.replace(MARKDOWN_IMAGE_REGEX, (image, /** @type {string} */ src) => {
+      const matched = getMatchingTargets(matcher, src, context);
+
+      if (!matched.length) {
+        return image;
+      }
+
+      const newURL = getNewURL(matcher, matched);
+
+      matched.forEach((index) => indexes.add(index));
+      replacing ||= !!newURL;
+
+      // The source follows the first `](`, as the alt text is matched lazily
+      const index = image.indexOf('](') + 2;
+
+      return `${image.slice(0, index)}${newURL || src}${image.slice(index + src.length)}`;
+    });
+
+    if (replacing) {
+      content[keyPath] = replaced;
+    }
+  }
+
+  return { indexes, field };
+};
+
+/**
  * Check if the field contains the asset.
  * @param {object} args Arguments.
  * @param {string} args.assetURL Asset’s public or blob URL.
@@ -286,182 +491,98 @@ export const getEntriesByCollection = (collectionName) => {
  * @param {InternalCollectionFile} [args.collectionFile] Collection file. File collection only.
  * @returns {boolean} Result.
  */
-export const hasAsset = ({
-  assetURL,
-  newURL,
-  collectionName,
-  entry,
-  content,
-  keyPath,
-  value,
-  isIndexFile,
-  collectionFile,
-}) => {
-  const fileName = collectionFile?.name;
-  const field = getField({ collectionName, fileName, valueMap: content, keyPath, isIndexFile });
-
-  if (!field) {
-    return false;
-  }
-
-  const isBlobURL = assetURL.startsWith('blob:');
-  const { widget: fieldType = 'string' } = field;
-
-  /**
-   * Check whether the given field value points to the asset.
-   * @param {string} src Field value or image source found in it.
-   * @returns {boolean} Result.
-   */
-  const isMatch = (src) => {
-    if (!isBlobURL) {
-      return src === assetURL;
-    }
-
-    // Resolve the value to its asset without loading it. The asset’s blob URL is created once and
-    // kept on the asset object, so only the asset being looked up can hold the given one — and
-    // there’s no need to download every other asset the entries reference just to compare URLs
-    const { url, asset } =
-      getMediaFieldSource({ entry, collectionName, fileName, value: src }) ?? {};
-
-    return (url ?? asset?.blobURL) === assetURL;
-  };
-
-  if (MEDIA_FIELD_TYPES.includes(fieldType)) {
-    const match = isMatch(value);
-
-    if (match && newURL) {
-      content[keyPath] = newURL;
-    }
-
-    return match;
-  }
-
-  // Search images in markdown body
-  if (['richtext', 'markdown'].includes(fieldType)) {
-    let found = false;
-
-    // Swap the URL within each matched image only, rather than its first occurrence in the text,
-    // which can be a link to the same file, the alt text, or the new URL written by a previous
-    // replacement. The new value is built from the original one, so doing this again, once for
-    // each collection the entry belongs to, gives the same result
-    const replaced = value.replace(MARKDOWN_IMAGE_REGEX, (image, /** @type {string} */ src) => {
-      if (!isMatch(src)) {
-        return image;
-      }
-
-      found = true;
-
-      // The source follows the first `](`, as the alt text is matched lazily
-      const index = image.indexOf('](') + 2;
-
-      return `${image.slice(0, index)}${newURL || src}${image.slice(index + src.length)}`;
-    });
-
-    if (found && newURL) {
-      content[keyPath] = replaced;
-    }
-
-    return found;
-  }
-
-  return false;
-};
+export const hasAsset = ({ assetURL, newURL, ...args }) =>
+  matchField({ matcher: createMatcher([{ url: assetURL, newURL }]), ...args }).indexes.size > 0;
 
 /**
- * Walk the given entries looking for the given asset, calling back for each field holding it.
- * @param {string} url Asset’s public or blob URL.
+ * Walk the given entries once looking for all the given targets, calling back for each field
+ * holding any of them. However many targets are given, each value is looked at once, so looking up
+ * the assets of a whole folder costs about the same as looking up one.
+ * @param {AssetReferenceTarget[]} targets Targets.
  * @param {object} options Options.
  * @param {Entry[]} options.entries Entries to be searched.
- * @param {string} [options.newURL] New URL to replace the found URL with, in place.
- * @param {boolean} [options.every] Whether to report every field holding the asset. Otherwise the
- * search of an entry stops at the first field, unless the URL is being replaced.
+ * @param {boolean} [options.every] Whether to report every field holding a target. Otherwise the
+ * search of an entry stops once every target has been found in it, unless the references are
+ * being replaced.
  * @param {(reference: AssetReference) => void} [options.onMatch] Called for each field found.
- * @returns {boolean[]} Whether each entry holds the asset, in the order given.
+ * @returns {Entry[][]} Entries holding each target, in the order of the targets, each list in the
+ * order given.
  */
-const findAssetReferences = (url, { entries, newURL = '', every = false, onMatch }) => {
-  const baseURL = cmsConfig.current?._baseURL;
-  const assetURL = baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url;
-  const isBlobURL = assetURL.startsWith('blob:');
-  const exhaustive = !!newURL || every;
+const findAssetReferences = (targets, { entries, every = false, onMatch }) => {
+  const matcher = createMatcher(
+    targets.map((target) =>
+      target.url === undefined ? target : { ...target, url: getComparableAssetURL(target.url) },
+    ),
+  );
 
-  return entries.map((entry) => {
+  const exhaustive = every || targets.some(({ newURL }) => !!newURL);
+  /** @type {Entry[][]} */
+  const results = targets.map(() => []);
+
+  entries.forEach((entry) => {
     const { locales } = entry;
     /** @type {InternalCollection[] | undefined} */
     let collections;
-    let found = false;
+    /** @type {Set<number>} */
+    const found = new Set();
+    /**
+     * Check whether the rest of the entry can be skipped.
+     * @returns {boolean} Result.
+     */
+    const isDone = () => !exhaustive && found.size === targets.length;
 
     for (const [locale, { content }] of Object.entries(locales)) {
       for (const [keyPath, value] of Object.entries(content)) {
         if (typeof value !== 'string' || !value) continue;
-        // Pre-filter: skip values that can’t possibly contain the asset URL, avoiding the
-        // expensive getField() call for the vast majority of fields.
-        if (!isBlobURL && !value.includes(assetURL)) continue;
+        // Pre-filter: skip values that can’t possibly refer to the targets, avoiding the expensive
+        // getField() call for the vast majority of fields.
+        if (!matcher.resolves && !mayReferToTargets(matcher, value)) continue;
 
         // Resolved only once a value passes the pre-filter, as most entries have none that does
         collections ??= getAssociatedCollections(entry);
 
         for (const collection of collections) {
           const isIndexFile = isCollectionIndexFile(collection, entry);
-
-          const hasAssetArgs = {
-            assetURL,
-            newURL,
-            collectionName: collection.name,
-            entry,
-            content,
-            keyPath,
-            value,
-            isIndexFile,
-          };
-
+          const matchArgs = { matcher, collectionName: collection.name, entry, content, keyPath };
           const collectionFiles = getCollectionFilesByEntry(collection, entry);
           /** @type {(InternalCollectionFile | undefined)[]} */
           const files = collectionFiles.length ? collectionFiles : [undefined];
 
           const matches = files.map((collectionFile) =>
-            hasAsset({ ...hasAssetArgs, collectionFile }),
+            matchField({ ...matchArgs, value, isIndexFile, collectionFile }),
           );
 
-          matches.forEach((matched, index) => {
-            if (!matched || !onMatch) {
-              return;
+          matches.forEach(({ indexes, field }, index) => {
+            indexes.forEach((i) => found.add(i));
+
+            if (indexes.size && onMatch) {
+              onMatch({
+                entry,
+                collection,
+                collectionFile: files[index],
+                locale,
+                keyPath,
+                // The field is known to be configured, as nothing matches otherwise
+                fieldConfig: /** @type {Field} */ (field),
+              });
             }
-
-            const collectionFile = files[index];
-
-            onMatch({
-              entry,
-              collection,
-              collectionFile,
-              locale,
-              keyPath,
-              // The field is known to be configured, as `hasAsset()` bails out otherwise
-              fieldConfig: /** @type {Field} */ (
-                getField({
-                  collectionName: collection.name,
-                  fileName: collectionFile?.name,
-                  valueMap: content,
-                  keyPath,
-                  isIndexFile,
-                })
-              ),
-            });
           });
 
-          if (matches.includes(true)) {
-            found = true;
-            if (!exhaustive) break;
-          }
+          if (isDone()) break;
         }
 
-        if (found && !exhaustive) break;
+        if (isDone()) break;
       }
 
-      if (found && !exhaustive) break;
+      if (isDone()) break;
     }
 
-    return found;
+    found.forEach((index) => {
+      results[index].push(entry);
+    });
   });
+
+  return results;
 };
 
 /**
@@ -475,21 +596,30 @@ const findAssetReferences = (url, { entries, newURL = '', every = false, onMatch
 export const getEntriesByAssetURL = async (
   url,
   { entries = allEntries.current, newURL = '' } = {},
-) => {
-  const results = findAssetReferences(url, { entries, newURL });
-
-  return entries.filter((_entry, index) => results[index]);
-};
+) => findAssetReferences([{ url, newURL }], { entries })[0];
 
 /**
- * Find every field holding the given asset in the given entries.
- * @param {string} url Asset’s public or blob URL.
+ * Find the entries holding each of the given targets, and replace the references to the targets
+ * that have a new URL, in one pass over the entries.
+ * @param {AssetReferenceTarget[]} targets Targets.
+ * @param {object} [options] Options.
+ * @param {Entry[]} [options.entries] Entries to be searched.
+ * @returns {Promise<Entry[][]>} Found (and replaced) entries for each target, in the order of the
+ * targets.
+ */
+export const getEntriesByAssets = async (targets, { entries = allEntries.current } = {}) =>
+  findAssetReferences(targets, { entries });
+
+/**
+ * Find every field holding any of the given targets in the given entries, in one pass over them.
+ * @param {AssetReferenceTarget[]} targets Targets.
  * @param {object} [options] Options.
  * @param {Entry[]} [options.entries] Entries to be searched.
  * @returns {Promise<AssetReference[]>} References, in the order found. An entry that belongs to
- * more than one collection is reported once per collection the field resolves in.
+ * more than one collection is reported once per collection the field resolves in, and a field
+ * holding several of the targets is reported once.
  */
-export const getAssetReferences = async (url, { entries = allEntries.current } = {}) => {
+export const getAssetReferences = async (targets, { entries = allEntries.current } = {}) => {
   /** @type {AssetReference[]} */
   const references = [];
 
@@ -501,7 +631,7 @@ export const getAssetReferences = async (url, { entries = allEntries.current } =
     references.push(reference);
   };
 
-  findAssetReferences(url, { entries, every: true, onMatch });
+  findAssetReferences(targets, { entries, every: true, onMatch });
 
   return references;
 };

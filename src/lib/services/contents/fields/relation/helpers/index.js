@@ -45,23 +45,62 @@ export const optionCacheMap = new Map();
  * this is generous headroom; eviction is least-recently-used, keeping the hot ones cached.
  */
 const MAX_OPTION_CACHE_SIZE = 100;
+/**
+ * Cache keys of the option sets being built. A label template can refer to another Relation field
+ * of the referenced entry, which resolves its own options; if that field leads back to the one
+ * being built, e.g. a `parent` field showing the parent’s `parent`, the same options would be
+ * requested again before they are cached, recursing until the stack overflows.
+ * @type {Set<string>}
+ */
+const optionsInProgress = new Set();
+/**
+ * Cache of the saved entries merged with the pending ones by {@link withPendingEntries}, keyed by
+ * the saved entry list, then by the pending entry list. A nested Relation field resolves a label
+ * for each entry its parent field references, and a new merged array on each call would give the
+ * option cache a new key every time, building the whole option list again for every label.
+ * @type {WeakMap<Entry[], WeakMap<PendingEntry[], { count: number, entries: Entry[] }>>}
+ */
+const mergedEntriesCache = new WeakMap();
 
 /**
  * Add the entries pending on the draft being edited that belong to the given collection to the
  * given saved entries, so a reference to one of them resolves before they are saved. The saved
  * entries are returned as they are when there’s nothing to add, keeping their identity for the
- * option cache.
+ * option cache; otherwise the merged list is kept as long as the pending entries stay the same.
  * @param {Entry[]} entries Saved entries.
  * @param {string} collectionName Collection name.
  * @param {PendingEntry[]} [pendingEntries] Pending entries of any collection.
  * @returns {Entry[]} Entries.
  */
 const withPendingEntries = (entries, collectionName, pendingEntries = []) => {
+  if (!pendingEntries.length) {
+    return entries;
+  }
+
+  let pendingCache = mergedEntriesCache.get(entries);
+
+  if (!pendingCache) {
+    pendingCache = new WeakMap();
+    mergedEntriesCache.set(entries, pendingCache);
+  }
+
+  const cached = pendingCache.get(pendingEntries);
+
+  // The pending entries are held in a reactive array that grows in place, so the count tells a
+  // change apart, as they are only ever added while the draft is edited
+  if (cached?.count === pendingEntries.length) {
+    return cached.entries;
+  }
+
   const pending = pendingEntries
     .filter((pendingEntry) => pendingEntry.collectionName === collectionName)
     .map(({ entry }) => entry);
 
-  return pending.length ? [...entries, ...pending] : entries;
+  const merged = pending.length ? [...entries, ...pending] : entries;
+
+  pendingCache.set(pendingEntries, { count: pendingEntries.length, entries: merged });
+
+  return merged;
 };
 
 /**
@@ -183,17 +222,30 @@ export const getOptions = ({
   // tell them apart; the count does, as they are only ever added while the draft is edited
   const cacheKey = `${locale}|${ids}|${pendingEntries?.length ?? 0}|${resolvedKey}`;
 
+  // The options are requested again while being built: no option is available at this level, so
+  // a reference is shown with its stored value
+  if (optionsInProgress.has(cacheKey)) {
+    return [];
+  }
+
   return getOrCreateBounded(
     optionCacheMap,
     cacheKey,
-    () =>
-      buildOptions({
-        locale,
-        fieldConfig,
-        refEntries,
-        entryFilters: resolvedFilters,
-        pendingEntries,
-      }).sort((a, b) => compare(a.label, b.label)),
+    () => {
+      optionsInProgress.add(cacheKey);
+
+      try {
+        return buildOptions({
+          locale,
+          fieldConfig,
+          refEntries,
+          entryFilters: resolvedFilters,
+          pendingEntries,
+        }).sort((a, b) => compare(a.label, b.label));
+      } finally {
+        optionsInProgress.delete(cacheKey);
+      }
+    },
     MAX_OPTION_CACHE_SIZE,
   );
 };

@@ -9,6 +9,8 @@ import {
   canCreateIndexFile,
   countCollectionEntries,
   getAssetReferences,
+  getComparableAssetURL,
+  getEntriesByAssets,
   getEntriesByAssetURL,
   getEntriesByCollection,
   getListedCollections,
@@ -2170,7 +2172,7 @@ describe('getAssetReferences()', () => {
       },
     };
 
-    const references = await getAssetReferences('a.jpg', { entries: [entry] });
+    const references = await getAssetReferences([{ url: 'a.jpg' }], { entries: [entry] });
 
     expect(references).toEqual([
       {
@@ -2191,7 +2193,7 @@ describe('getAssetReferences()', () => {
 
     const entry = { id: '1', slug: 'test', subPath: 'test', locales: { en: { content: {} } } };
 
-    expect(await getAssetReferences('a.jpg', { entries: [entry] })).toEqual([]);
+    expect(await getAssetReferences([{ url: 'a.jpg' }], { entries: [entry] })).toEqual([]);
   });
 
   test('reports the collection file the field belongs to', async () => {
@@ -2207,7 +2209,7 @@ describe('getAssetReferences()', () => {
       locales: { en: { content: { logo: 'a.jpg' } } },
     };
 
-    const references = await getAssetReferences('a.jpg', { entries: [entry] });
+    const references = await getAssetReferences([{ url: 'a.jpg' }], { entries: [entry] });
 
     expect(references).toEqual([expect.objectContaining({ collectionFile, keyPath: 'logo' })]);
   });
@@ -2219,7 +2221,224 @@ describe('getAssetReferences()', () => {
       { id: '1', slug: 'test', subPath: 'test', locales: { en: { content: { cover: 'a.jpg' } } } },
     ];
 
-    expect(await getAssetReferences('a.jpg')).toHaveLength(1);
+    expect(await getAssetReferences([{ url: 'a.jpg' }])).toHaveLength(1);
     allEntries.current = undefined;
+  });
+});
+
+describe('getComparableAssetURL()', () => {
+  test('drops the site’s base URL, as a stored value does', () => {
+    cmsConfig.current = { _baseURL: 'https://example.com' };
+    expect(getComparableAssetURL('https://example.com/uploads/a.jpg')).toBe('/uploads/a.jpg');
+    // A blob URL is left alone, even when it’s on the same origin
+    expect(getComparableAssetURL('blob:https://example.com/abc')).toBe(
+      'blob:https://example.com/abc',
+    );
+  });
+
+  test('leaves the URL alone without a base URL', () => {
+    cmsConfig.current = undefined;
+    expect(getComparableAssetURL('/uploads/a.jpg')).toBe('/uploads/a.jpg');
+  });
+});
+
+describe('getEntriesByAssets()', () => {
+  /**
+   * Set the mocks up for a `posts` entry collection whose fields are Image fields, except `body`,
+   * which is a Markdown field.
+   * @returns {Promise<{ getField: any, getMediaFieldSource: any }>} Mocks.
+   */
+  const setup = async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+    const { getMediaFieldSource } = await import('$lib/services/assets/info');
+
+    cmsConfig.current = { _baseURL: 'https://example.com' };
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts', _type: 'entry' }]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockImplementation(({ keyPath }) => ({
+      name: keyPath,
+      widget: keyPath === 'body' ? 'markdown' : 'image',
+    }));
+
+    return { getField, getMediaFieldSource };
+  };
+
+  /**
+   * Create an entry.
+   * @param {string} id ID.
+   * @param {Record<string, any>} content Content.
+   * @returns {object} Entry.
+   */
+  const createEntry = (id, content) => ({
+    id,
+    slug: id,
+    subPath: id,
+    locales: { en: { slug: id, path: `posts/${id}/index.md`, content } },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('finds the entries holding each target in one pass', async () => {
+    const { getField } = await setup();
+    const a = createEntry('a', { cover: '/uploads/1.jpg', thumb: '/uploads/2.jpg' });
+    const b = createEntry('b', { cover: '/uploads/2.jpg', title: 'Nothing here' });
+    const c = createEntry('c', { body: 'Hi ![one](/uploads/1.jpg "One")' });
+
+    const results = await getEntriesByAssets(
+      [
+        { url: 'https://example.com/uploads/1.jpg' },
+        { url: '/uploads/2.jpg' },
+        { url: '/uploads/3.jpg' },
+      ],
+      { entries: [a, b, c] },
+    );
+
+    expect(results).toEqual([[a, c], [a, b], []]);
+    // Each value that can refer to a target is looked at once, however many targets there are
+    expect(getField).toHaveBeenCalledTimes(4);
+  });
+
+  test('stops searching an entry once every target has been found in it', async () => {
+    const { getField } = await setup();
+    const a = createEntry('a', { cover: '/uploads/1.jpg', thumb: '/uploads/1.jpg' });
+
+    expect(await getEntriesByAssets([{ url: '/uploads/1.jpg' }], { entries: [a] })).toEqual([[a]]);
+    expect(getField).toHaveBeenCalledTimes(1);
+  });
+
+  test('reports an entry for every target sharing a URL', async () => {
+    await setup();
+
+    const a = createEntry('a', { cover: '/uploads/1.jpg' });
+    const targets = [{ url: '/uploads/1.jpg' }, { url: '/uploads/1.jpg' }];
+
+    expect(await getEntriesByAssets(targets, { entries: [a] })).toEqual([[a], [a]]);
+  });
+
+  test('matches an asset without a URL by the asset its references resolve to', async () => {
+    const { getMediaFieldSource } = await setup();
+    // The asset has never been loaded, so it has no blob URL to compare with
+    const asset = { path: 'posts/a/photo.jpg', name: 'photo.jpg' };
+    const a = createEntry('a', { cover: 'photo.jpg', body: '![p](photo.jpg) and ![o](other.jpg)' });
+    const b = createEntry('b', { cover: 'photo.jpg' });
+
+    vi.mocked(getMediaFieldSource).mockImplementation(({ entry, value }) =>
+      entry.id === 'a' && value === 'photo.jpg' ? { asset: { ...asset } } : undefined,
+    );
+
+    expect(await getEntriesByAssets([{ asset }], { entries: [a, b] })).toEqual([[a]]);
+    expect(getMediaFieldSource).toHaveBeenCalledWith({
+      entry: a,
+      collectionName: 'posts',
+      fileName: undefined,
+      value: 'photo.jpg',
+    });
+  });
+
+  test('replaces the references to each target with its own new URL', async () => {
+    const { getMediaFieldSource } = await setup();
+    const asset = { path: 'posts/a/photo.jpg', name: 'photo.jpg' };
+
+    const content = {
+      cover: 'photo.jpg',
+      thumb: '/uploads/1.jpg',
+      other: '/uploads/9.jpg',
+      body: '[link](photo.jpg) ![p](photo.jpg) ![one](/uploads/1.jpg) ![o](other.jpg)',
+    };
+
+    const a = createEntry('a', content);
+
+    vi.mocked(getMediaFieldSource).mockImplementation(({ value }) =>
+      value === 'photo.jpg' ? { asset } : { url: value },
+    );
+
+    const results = await getEntriesByAssets(
+      [
+        { asset, newURL: 'images/photo.jpg' },
+        { url: '/uploads/1.jpg', newURL: '/media/1.jpg' },
+      ],
+      { entries: [a] },
+    );
+
+    expect(results).toEqual([[a], [a]]);
+    expect(content).toEqual({
+      cover: 'images/photo.jpg',
+      thumb: '/media/1.jpg',
+      other: '/uploads/9.jpg',
+      body: '[link](photo.jpg) ![p](images/photo.jpg) ![one](/media/1.jpg) ![o](other.jpg)',
+    });
+  });
+
+  test('leaves the references to a target without a new URL alone', async () => {
+    await setup();
+
+    const content = {
+      cover: '/uploads/1.jpg',
+      body: '![one](/uploads/1.jpg) ![two](/uploads/2.jpg)',
+    };
+
+    const a = createEntry('a', content);
+
+    await getEntriesByAssets(
+      [{ url: '/uploads/1.jpg' }, { url: '/uploads/2.jpg', newURL: '/media/2.jpg' }],
+      { entries: [a] },
+    );
+
+    expect(content).toEqual({
+      cover: '/uploads/1.jpg',
+      body: '![one](/uploads/1.jpg) ![two](/media/2.jpg)',
+    });
+  });
+
+  test('searches the loaded entries by default', async () => {
+    await setup();
+
+    allEntries.current = [createEntry('a', { cover: '/uploads/1.jpg' })];
+    expect(await getEntriesByAssets([{ url: '/uploads/1.jpg' }])).toEqual([allEntries.current]);
+    allEntries.current = undefined;
+  });
+});
+
+describe('getAssetReferences() with several targets', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('reports a field holding several of the targets once', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    cmsConfig.current = { _baseURL: '' };
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts', _type: 'entry' }]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockReturnValue({ name: 'body', widget: 'markdown' });
+
+    const entry = {
+      id: '1',
+      slug: 'test',
+      subPath: 'test',
+      locales: { en: { content: { body: '![a](a.jpg) ![b](b.jpg)', title: 'a.jpg' } } },
+    };
+
+    const references = await getAssetReferences([{ url: 'a.jpg' }, { url: 'b.jpg' }], {
+      entries: [entry],
+    });
+
+    expect(references).toEqual([expect.objectContaining({ locale: 'en', keyPath: 'body' })]);
   });
 });

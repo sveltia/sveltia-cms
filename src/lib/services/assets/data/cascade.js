@@ -1,8 +1,10 @@
-import { getAssetReferenceURL } from '$lib/services/assets/details';
-import { getMediaFieldURL } from '$lib/services/assets/info';
+import { allAssets } from '$lib/services/assets';
+import { getAssetPublicURL, getMediaFieldSource } from '$lib/services/assets/info';
 import { cmsConfig } from '$lib/services/config';
+import { allEntries } from '$lib/services/contents';
 import {
   getAssetReferences,
+  getComparableAssetURL,
   MARKDOWN_IMAGE_REGEX,
 } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -29,24 +31,41 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { Field, FieldKeyPath } from '$lib/types/public';
+ * @import { AssetReferenceTarget } from '$lib/services/contents/collection/entries';
  */
 
 /**
- * Get the URLs the given assets are referenced by, in the form the references are matched in: the
- * site’s base URL is dropped from a public URL, as it is from a stored value.
+ * Get what the references to the given assets are matched by: the public path of an asset that has
+ * one, in the form it’s stored in a field value — without the site’s base URL — or else the asset
+ * itself, as in an entry-relative folder, which a value refers to when it resolves to the asset.
+ * The asset is matched without being loaded, unlike by its blob URL.
  * @param {Asset[]} assets Assets.
- * @returns {Promise<string[]>} URLs, without the assets that can’t be located.
+ * @returns {AssetReferenceTarget[]} Targets, without duplicate URLs.
  */
-export const getReferenceURLs = async (assets) => {
-  const baseURL = cmsConfig.current?._baseURL;
+export const getReferenceTargets = (assets) => {
+  /** @type {AssetReferenceTarget[]} */
+  const targets = [];
+  /** @type {Set<string>} */
+  const urls = new Set();
 
-  return (await Promise.all(assets.map((asset) => getAssetReferenceURL(asset)))).flatMap((url) => {
-    if (!url) {
-      return [];
+  assets.forEach((asset) => {
+    const url = getAssetPublicURL(asset, { allowSpecial: true, pathOnly: true });
+
+    if (url === undefined) {
+      targets.push({ asset });
+
+      return;
     }
 
-    return [baseURL && !url.startsWith('blob:') ? url.replace(baseURL, '') : url];
+    const comparableURL = getComparableAssetURL(url);
+
+    if (!urls.has(comparableURL)) {
+      urls.add(comparableURL);
+      targets.push({ url: comparableURL });
+    }
   });
+
+  return targets;
 };
 
 /**
@@ -95,32 +114,37 @@ const cutMarkup = (text, index, length) => {
  * @param {object} args Arguments.
  * @param {string} args.value Markdown.
  * @param {Set<string>} args.urls URLs of the deleted assets.
+ * @param {Set<string>} [args.paths] Paths of the deleted assets without a URL, as in an
+ * entry-relative folder, which an image points at when its source resolves to the asset.
  * @param {Entry} args.entry Entry holding the field.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] Collection file name.
- * @returns {Promise<string>} Markdown without the images.
+ * @returns {string} Markdown without the images.
  */
-export const removeMarkdownImages = async ({ value, urls, entry, collectionName, fileName }) => {
-  // An asset without a public path, as in an entry-relative folder, is matched by blob URL, which
-  // means resolving each image’s path the way the editor does to display it
-  const hasBlobURL = [...urls].some((url) => url.startsWith('blob:'));
+export const removeMarkdownImages = ({
+  value,
+  urls,
+  paths = new Set(),
+  entry,
+  collectionName,
+  fileName,
+}) => {
   const matches = [...value.matchAll(MARKDOWN_IMAGE_REGEX)];
 
-  const stale = await Promise.all(
-    matches.map(async ([, src]) => {
-      if (urls.has(src)) {
-        return true;
-      }
+  const stale = matches.map(([, src]) => {
+    if (urls.has(src)) {
+      return true;
+    }
 
-      if (!hasBlobURL) {
-        return false;
-      }
+    if (!paths.size) {
+      return false;
+    }
 
-      const blobURL = await getMediaFieldURL({ entry, collectionName, fileName, value: src });
+    // Resolve the image’s path the way the editor does to display it, without loading the asset
+    const path = getMediaFieldSource({ entry, collectionName, fileName, value: src })?.asset?.path;
 
-      return !!blobURL && urls.has(blobURL);
-    }),
-  );
+    return path !== undefined && paths.has(path);
+  });
 
   // Cut from the end, so the positions of the earlier matches stay valid
   return matches.reduceRight(
@@ -137,54 +161,51 @@ export const removeMarkdownImages = async ({ value, urls, entry, collectionName,
  * @param {FlattenedEntryContent} args.content Flattened entry content. Not modified.
  * @param {AssetReference[]} args.references References to remove, all in this content.
  * @param {Set<string>} args.urls URLs of the deleted assets.
- * @returns {Promise<{ content: FlattenedEntryContent, fields: Map<FieldKeyPath, Field> }>}
+ * @param {Set<string>} [args.paths] Paths of the deleted assets without a URL.
+ * @returns {{ content: FlattenedEntryContent, fields: Map<FieldKeyPath, Field> }}
  * Updated content and the fields that lost a reference, keyed by key path — the field itself
  * rather than an item within it, which is what the validator looks at.
  */
-export const removeAssetReferences = async ({ content, references, urls }) => {
+export const removeAssetReferences = ({ content, references, urls, paths = new Set() }) => {
   const updatedContent = { ...content };
   /** @type {Map<FieldKeyPath, Field>} */
   const fields = new Map();
   /** @type {Map<FieldKeyPath, Set<FieldKeyPath>>} */
   const staleListItems = new Map();
 
-  await Promise.all(
-    references.map(async ({ entry, collection, collectionFile, keyPath, fieldConfig }) => {
-      const { widget: fieldType = 'string' } = fieldConfig;
+  references.forEach(({ entry, collection, collectionFile, keyPath, fieldConfig }) => {
+    const { widget: fieldType = 'string' } = fieldConfig;
 
-      if (!MEDIA_FIELD_TYPES.includes(fieldType)) {
-        // The reference is an image embedded in a Markdown or rich text field
-        updatedContent[keyPath] = await removeMarkdownImages({
-          value: content[keyPath],
-          urls,
-          entry,
-          collectionName: collection.name,
-          fileName: collectionFile?.name,
-        });
+    if (!MEDIA_FIELD_TYPES.includes(fieldType)) {
+      // The reference is an image embedded in a Markdown or rich text field
+      updatedContent[keyPath] = removeMarkdownImages({
+        value: content[keyPath],
+        urls,
+        paths,
+        entry,
+        collectionName: collection.name,
+        fileName: collectionFile?.name,
+      });
 
-        fields.set(keyPath, fieldConfig);
-
-        return;
-      }
-
-      if (isFieldMultiple(fieldConfig)) {
-        // The items are removed together once every reference is known, as the rest have to be
-        // renumbered
-        const listKeyPath = keyPath.replace(ITEM_INDEX_SUFFIX_REGEX, '');
-
-        staleListItems.set(
-          listKeyPath,
-          (staleListItems.get(listKeyPath) ?? new Set()).add(keyPath),
-        );
-        fields.set(listKeyPath, fieldConfig);
-
-        return;
-      }
-
-      updatedContent[keyPath] = '';
       fields.set(keyPath, fieldConfig);
-    }),
-  );
+
+      return;
+    }
+
+    if (isFieldMultiple(fieldConfig)) {
+      // The items are removed together once every reference is known, as the rest have to be
+      // renumbered
+      const listKeyPath = keyPath.replace(ITEM_INDEX_SUFFIX_REGEX, '');
+
+      staleListItems.set(listKeyPath, (staleListItems.get(listKeyPath) ?? new Set()).add(keyPath));
+      fields.set(listKeyPath, fieldConfig);
+
+      return;
+    }
+
+    updatedContent[keyPath] = '';
+    fields.set(keyPath, fieldConfig);
+  });
 
   staleListItems.forEach((staleKeys, listKeyPath) => {
     /**
@@ -201,17 +222,28 @@ export const removeAssetReferences = async ({ content, references, urls }) => {
 };
 
 /**
- * Work out what deleting the given assets means for the entries using them: each reference is
- * removed, unless doing so would leave the field in breach of its own validation rules — a
- * `required` Image field with nothing left, a multi-file field with fewer than `min` files, a body
- * with nothing but the image — in which case the deletion is reported as blocked, so the entries
- * stay valid. See the counterpart for entries, `planCascadeDelete()`.
+ * Work out what deleting the given assets means for the entries using them. The uncached
+ * implementation of {@link planAssetDeletion}.
  * @param {Asset[]} assets Assets being deleted.
  * @returns {Promise<CascadeDeletePlan>} Plan.
  */
-export const planAssetDeletion = async (assets) => {
-  const urls = new Set(await getReferenceURLs(assets));
-  const references = (await Promise.all([...urls].map((url) => getAssetReferences(url)))).flat();
+const createAssetDeletionPlan = async (assets) => {
+  const referenceTargets = getReferenceTargets(assets);
+  /** @type {Set<string>} */
+  const urls = new Set();
+  /** @type {Set<string>} */
+  const paths = new Set();
+
+  referenceTargets.forEach(({ url, asset }) => {
+    if (asset) {
+      paths.add(asset.path);
+    } else {
+      urls.add(/** @type {string} */ (url));
+    }
+  });
+
+  // One pass over the entries finds the references to every asset, however many there are
+  const references = await getAssetReferences(referenceTargets);
   /** @type {Map<string, AssetReference[]>} */
   const referencesByEntry = new Map();
 
@@ -221,62 +253,121 @@ export const planAssetDeletion = async (assets) => {
     getOrCreate(referencesByEntry, id, () => []).push(reference);
   });
 
-  const results = await Promise.all(
-    [...referencesByEntry.values()].map(async (entryReferences) => {
-      // An entry belonging to several collections is written once, under the first collection its
-      // fields resolve in, the way any save writes it under the collection it’s edited in
-      const [{ entry, collection, collectionFile }] = entryReferences;
+  const results = [...referencesByEntry.values()].map((entryReferences) => {
+    // An entry belonging to several collections is written once, under the first collection its
+    // fields resolve in, the way any save writes it under the collection it’s edited in
+    const [{ entry, collection, collectionFile }] = entryReferences;
 
-      const draft = createSyntheticDraft({
-        collection,
-        collectionFile,
-        isIndexFile: isCollectionIndexFile(collection, entry),
+    const draft = createSyntheticDraft({
+      collection,
+      collectionFile,
+      isIndexFile: isCollectionIndexFile(collection, entry),
+    });
+
+    /** @type {Map<InternalLocaleCode, AssetReference[]>} */
+    const referencesByLocale = new Map();
+
+    entryReferences
+      .filter((r) => r.collection === collection && r.collectionFile === collectionFile)
+      .forEach((reference) => {
+        const { locale } = reference;
+
+        getOrCreate(referencesByLocale, locale, () => []).push(reference);
       });
 
-      /** @type {Map<InternalLocaleCode, AssetReference[]>} */
-      const referencesByLocale = new Map();
+    /** @type {Entry['locales']} */
+    const updatedLocales = {};
+    /** @type {CascadeDeleteBlocker[]} */
+    const blockers = [];
 
-      entryReferences
-        .filter((r) => r.collection === collection && r.collectionFile === collectionFile)
-        .forEach((reference) => {
-          const { locale } = reference;
+    referencesByLocale.forEach((localeReferences, locale) => {
+      const localizedEntry = entry.locales[locale];
 
-          getOrCreate(referencesByLocale, locale, () => []).push(reference);
-        });
+      const { content, fields } = removeAssetReferences({
+        content: localizedEntry.content,
+        references: localeReferences,
+        urls,
+        paths,
+      });
 
-      /** @type {Entry['locales']} */
-      const updatedLocales = {};
-      /** @type {CascadeDeleteBlocker[]} */
-      const blockers = [];
+      updatedLocales[locale] = { ...localizedEntry, content };
+      blockers.push(...getFieldBlockers({ draft, entry, collection, locale, content, fields }));
+    });
 
-      await Promise.all(
-        [...referencesByLocale].map(async ([locale, localeReferences]) => {
-          const localizedEntry = entry.locales[locale];
+    /** @type {CascadeTarget} */
+    const target = {
+      entry: { ...entry, locales: { ...entry.locales, ...updatedLocales } },
+      collection,
+      collectionFile,
+    };
 
-          const { content, fields } = await removeAssetReferences({
-            content: localizedEntry.content,
-            references: localeReferences,
-            urls,
-          });
-
-          updatedLocales[locale] = { ...localizedEntry, content };
-          blockers.push(...getFieldBlockers({ draft, entry, collection, locale, content, fields }));
-        }),
-      );
-
-      /** @type {CascadeTarget} */
-      const target = {
-        entry: { ...entry, locales: { ...entry.locales, ...updatedLocales } },
-        collection,
-        collectionFile,
-      };
-
-      return { target, blockers };
-    }),
-  );
+    return { target, blockers };
+  });
 
   return {
     targets: results.map(({ target }) => target),
     blockers: dedupeBlockers(results.flatMap(({ blockers }) => blockers)),
   };
+};
+
+/**
+ * The last plan worked out, along with what it was worked out from.
+ * @type {{
+ * key: string,
+ * entries: Entry[],
+ * assets: Asset[],
+ * config: object | undefined,
+ * plan: Promise<CascadeDeletePlan>,
+ * } | undefined}
+ */
+let lastPlan = undefined;
+
+/* v8 ignore next */
+/**
+ * Reset {@link lastPlan} for tests.
+ */
+export const _resetAssetDeletionPlan = () => {
+  lastPlan = undefined;
+};
+
+/**
+ * Work out what deleting the given assets means for the entries using them: each reference is
+ * removed, unless doing so would leave the field in breach of its own validation rules — a
+ * `required` Image field with nothing left, a multi-file field with fewer than `min` files, a body
+ * with nothing but the image — in which case the deletion is reported as blocked, so the entries
+ * stay valid. See the counterpart for entries, `planCascadeDelete()`.
+ *
+ * The confirmation dialog works the plan out before the deletion does, so the last plan is kept and
+ * handed out again for the same assets, as long as the entries, the assets and the configuration it
+ * was worked out from haven’t been replaced since, which any change to them does.
+ * @param {Asset[]} assets Assets being deleted.
+ * @returns {Promise<CascadeDeletePlan>} Plan.
+ */
+export const planAssetDeletion = (assets) => {
+  const key = assets.map(({ path }) => path).join('\n');
+  const { current: entries } = allEntries;
+  const { current: allAssetList } = allAssets;
+  const { current: config } = cmsConfig;
+
+  if (
+    lastPlan?.key === key &&
+    lastPlan.entries === entries &&
+    lastPlan.assets === allAssetList &&
+    lastPlan.config === config
+  ) {
+    return lastPlan.plan;
+  }
+
+  const plan = createAssetDeletionPlan(assets);
+
+  lastPlan = { key, entries, assets: allAssetList, config, plan };
+
+  // Don’t hand out a failed plan again; the next call tries anew
+  plan.catch(() => {
+    if (lastPlan?.plan === plan) {
+      lastPlan = undefined;
+    }
+  });
+
+  return plan;
 };

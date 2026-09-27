@@ -638,6 +638,109 @@ describe('assets/info', () => {
       expect(result).toBe(undefined);
     });
 
+    describe('thumbnail source', () => {
+      /** @type {any} */
+      let transformImageMock;
+      const thumbnailBlob = new Blob(['thumbnail'], { type: 'image/webp' });
+
+      beforeEach(async () => {
+        const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+        mockIndexedDB.get.mockResolvedValue(undefined);
+        transformImageMock = vi.mocked(transformImage);
+        transformImageMock.mockClear();
+        transformImageMock.mockResolvedValue(thumbnailBlob);
+      });
+
+      it('should not cache a downloaded original on the asset', async () => {
+        const asset = { ...mockAsset };
+
+        mockBackend.fetchBlob.mockResolvedValue(new Blob(['data']));
+
+        await getAssetThumbnailURL(asset);
+
+        const [[source]] = transformImageMock.mock.calls;
+
+        // The MIME type is still derived from the file name
+        expect(source.type).toBe('image/jpeg');
+        expect(asset.blobURL).toBeUndefined();
+        // The only object URL is the thumbnail’s own
+        expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+        expect(URL.createObjectURL).toHaveBeenCalledWith(thumbnailBlob);
+      });
+
+      it('should not cache a file read from a handle on the asset', async () => {
+        const file = new File(['data'], 'test.jpg', { type: 'image/jpeg' });
+        const asset = { ...mockAsset, handle: { getFile: vi.fn(async () => file) } };
+
+        await getAssetThumbnailURL(asset);
+
+        expect(transformImageMock).toHaveBeenCalledWith(file, expect.any(Object));
+        expect(asset.blobURL).toBeUndefined();
+      });
+
+      it('should not create an object URL for an unsaved file', async () => {
+        const file = new File(['data'], 'test.jpg', { type: 'image/jpeg' });
+        const asset = { ...mockAsset, file };
+
+        await getAssetThumbnailURL(asset);
+
+        expect(transformImageMock).toHaveBeenCalledWith(file, expect.any(Object));
+        expect(asset.blobURL).toBeUndefined();
+      });
+
+      it('should read the blob behind an existing object URL', async () => {
+        const asset = { ...mockAsset, blobURL: 'blob:existing' };
+
+        await getAssetThumbnailURL(asset);
+
+        expect(global.fetch).toHaveBeenCalledWith('blob:existing');
+        expect(transformImageMock).toHaveBeenCalledWith(mockBlob, expect.any(Object));
+        expect(mockBackend.fetchBlob).not.toHaveBeenCalled();
+      });
+
+      it('should join a download already in flight rather than start another', async () => {
+        const asset = { ...mockAsset };
+        /** @type {any} */
+        let resolveDownload;
+
+        mockBackend.fetchBlob.mockReturnValue(
+          new Promise((resolve) => {
+            resolveDownload = resolve;
+          }),
+        );
+
+        // A caller that wants the full-size file starts the download first
+        const blobPromise = getAssetBlob(asset);
+        const urlPromise = getAssetThumbnailURL(asset);
+
+        resolveDownload(new Blob(['data']));
+        await Promise.all([blobPromise, urlPromise]);
+
+        expect(mockBackend.fetchBlob).toHaveBeenCalledTimes(1);
+        expect(transformImageMock).toHaveBeenCalledWith(await blobPromise, expect.any(Object));
+      });
+
+      it('should reject when the handle cannot be read', async () => {
+        const asset = {
+          ...mockAsset,
+          handle: { getFile: vi.fn(async () => Promise.reject(new Error('NotFoundError'))) },
+        };
+
+        await expect(getAssetThumbnailURL(asset)).rejects.toThrow(
+          'Failed to retrieve blob from file handle',
+        );
+      });
+
+      it('should reject when the backend returns no blob', async () => {
+        mockBackend.fetchBlob.mockResolvedValue(null);
+
+        await expect(getAssetThumbnailURL({ ...mockAsset })).rejects.toThrow(
+          'Failed to retrieve blob',
+        );
+      });
+    });
+
     describe('hasCachedThumbnail', () => {
       it('should report a thumbnail in the cache', async () => {
         mockIndexedDB.get.mockResolvedValue(new Blob(['cached'], { type: 'image/webp' }));

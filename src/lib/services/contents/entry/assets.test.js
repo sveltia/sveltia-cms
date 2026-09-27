@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 /**
  * @import { Asset, Entry, InternalEntryCollection } from '$lib/types/private';
@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 const {
   mockGetMediaFieldURL,
   mockGetMediaFieldSource,
+  mockRevokeBlobURLIfNeeded,
   mockGetCollection,
   mockIsCollectionIndexFile,
   mockGetField,
@@ -21,6 +22,7 @@ const {
 } = vi.hoisted(() => ({
   mockGetMediaFieldURL: vi.fn(),
   mockGetMediaFieldSource: vi.fn(),
+  mockRevokeBlobURLIfNeeded: vi.fn(),
   mockGetCollection: vi.fn(),
   mockIsCollectionIndexFile: vi.fn(),
   mockGetField: vi.fn(),
@@ -53,6 +55,7 @@ vi.mock('$lib/services/assets/folders', () => ({
 vi.mock('$lib/services/assets/info', () => ({
   getMediaFieldSource: mockGetMediaFieldSource,
   getMediaFieldURL: mockGetMediaFieldURL,
+  revokeBlobURLIfNeeded: mockRevokeBlobURLIfNeeded,
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -85,7 +88,8 @@ vi.mock('@sveltia/utils/string', () => ({
 }));
 
 // Import after mocking
-const { getEntryThumbnail, getAssociatedAssets, isThumbnailPath } = await import('./assets');
+const { getEntryThumbnail, getAssociatedAssets, isThumbnailPath, loadEntryThumbnail } =
+  await import('./assets');
 
 describe('isThumbnailPath', () => {
   test('returns true for a path starting with a slash', () => {
@@ -237,7 +241,136 @@ describe('getEntryThumbnail', () => {
       typedKeyPath: 'image',
       thumbnail: true,
     });
-    expect(result).toBe('https://example.com/thumbnails/test.jpg');
+    expect(result).toEqual({ src: 'https://example.com/thumbnails/test.jpg', owned: false });
+  });
+});
+
+describe('loadEntryThumbnail', () => {
+  const collection = /** @type {any} */ ({
+    name: 'posts',
+    _i18n: { defaultLocale: 'en' },
+    _thumbnailFieldNames: ['image'],
+  });
+
+  const entry = /** @type {any} */ ({
+    locales: { en: { slug: 'a', path: 'a.md', content: { image: '/images/a.jpg' } } },
+  });
+
+  const asset = /** @type {any} */ ({ path: 'static/images/a.jpg', name: 'a.jpg', kind: 'image' });
+
+  /**
+   * Wait for the pending promise callbacks to run.
+   * @returns {Promise<void>}
+   */
+  const settle = () =>
+    new Promise((resolve) => {
+      setTimeout(resolve);
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetMediaFieldSource.mockReturnValue({ asset });
+  });
+
+  afterEach(() => {
+    mockGetMediaFieldSource.mockReset();
+    mockGetMediaFieldURL.mockReset();
+  });
+
+  test('marks an object URL made for an asset as owned', async () => {
+    mockGetMediaFieldURL.mockResolvedValue('blob:thumb');
+
+    expect(await getEntryThumbnail(collection, entry)).toEqual({ src: 'blob:thumb', owned: true });
+  });
+
+  test('marks the public URL of an asset as not owned', async () => {
+    mockGetMediaFieldURL.mockResolvedValue('/images/a.jpg');
+
+    expect(await getEntryThumbnail(collection, entry)).toEqual({
+      src: '/images/a.jpg',
+      owned: false,
+    });
+  });
+
+  test('hands out the thumbnail, then releases it', async () => {
+    const onLoad = vi.fn();
+
+    mockGetMediaFieldURL.mockResolvedValue('blob:thumb');
+
+    const release = loadEntryThumbnail(collection, entry, onLoad);
+
+    await settle();
+    expect(onLoad).toHaveBeenCalledExactlyOnceWith('blob:thumb');
+
+    release();
+    expect(onLoad).toHaveBeenLastCalledWith(undefined);
+    expect(mockRevokeBlobURLIfNeeded).toHaveBeenCalledExactlyOnceWith('blob:thumb');
+  });
+
+  test('does not revoke a URL it does not own', async () => {
+    const onLoad = vi.fn();
+
+    mockGetMediaFieldSource.mockReturnValue({ url: 'https://example.com/a.jpg' });
+    mockGetMediaFieldURL.mockResolvedValue('https://example.com/a.jpg');
+
+    const release = loadEntryThumbnail(collection, entry, onLoad);
+
+    await settle();
+    release();
+    expect(onLoad).toHaveBeenLastCalledWith(undefined);
+    expect(mockRevokeBlobURLIfNeeded).not.toHaveBeenCalled();
+  });
+
+  test('releases an owned thumbnail that arrives after the release', async () => {
+    const onLoad = vi.fn();
+
+    mockGetMediaFieldURL.mockResolvedValue('blob:late');
+
+    loadEntryThumbnail(collection, entry, onLoad)();
+    await settle();
+
+    expect(onLoad).not.toHaveBeenCalled();
+    expect(mockRevokeBlobURLIfNeeded).toHaveBeenCalledExactlyOnceWith('blob:late');
+  });
+
+  test('ignores a late thumbnail it does not own, or no thumbnail at all', async () => {
+    const onLoad = vi.fn();
+
+    mockGetMediaFieldSource.mockReturnValue({ url: 'https://example.com/a.jpg' });
+    mockGetMediaFieldURL.mockResolvedValue('https://example.com/a.jpg');
+    loadEntryThumbnail(collection, entry, onLoad)();
+
+    mockGetMediaFieldURL.mockResolvedValue(undefined);
+    loadEntryThumbnail(collection, entry, onLoad)();
+    await settle();
+
+    expect(onLoad).not.toHaveBeenCalled();
+    expect(mockRevokeBlobURLIfNeeded).not.toHaveBeenCalled();
+  });
+
+  test('leaves an entry without a thumbnail alone', async () => {
+    const onLoad = vi.fn();
+
+    mockGetMediaFieldURL.mockResolvedValue(undefined);
+
+    const release = loadEntryThumbnail(collection, entry, onLoad);
+
+    await settle();
+    release();
+    expect(onLoad).not.toHaveBeenCalled();
+    expect(mockRevokeBlobURLIfNeeded).not.toHaveBeenCalled();
+  });
+
+  test('leaves the entry without a thumbnail when it cannot be loaded', async () => {
+    const onLoad = vi.fn();
+
+    mockGetMediaFieldURL.mockRejectedValue(new Error('Failed to retrieve blob'));
+
+    const release = loadEntryThumbnail(collection, entry, onLoad);
+
+    await settle();
+    release();
+    expect(onLoad).not.toHaveBeenCalled();
   });
 });
 
@@ -382,7 +515,7 @@ describe('getAssociatedAssets', () => {
     expect(mockGetMediaFieldURL).toHaveBeenCalledWith(
       expect.objectContaining({ value: '/image1.jpg', typedKeyPath: 'sections.0.images.0' }),
     );
-    expect(result).toBe('https://example.com/image1.jpg');
+    expect(result).toEqual({ src: 'https://example.com/image1.jpg', owned: false });
   });
 
   test('handles wildcard in thumbnail field name', async () => {
@@ -408,7 +541,7 @@ describe('getAssociatedAssets', () => {
 
     const result = await getEntryThumbnail(mockCollection, mockEntryLocal);
 
-    expect(result).toBe('https://example.com/image1.jpg');
+    expect(result).toEqual({ src: 'https://example.com/image1.jpg', owned: false });
   });
 
   test('handles multiple thumbnail candidates and returns first available URL', async () => {
@@ -440,7 +573,7 @@ describe('getAssociatedAssets', () => {
 
     const result = await getEntryThumbnail(mockCollection, mockEntryLocal);
 
-    expect(result).toBe('https://example.com/test.jpg');
+    expect(result).toEqual({ src: 'https://example.com/test.jpg', owned: false });
   });
 
   test('skips a file without a thumbnail, like a document, for the next candidate', async () => {
@@ -465,7 +598,7 @@ describe('getAssociatedAssets', () => {
 
     const result = await getEntryThumbnail(mockCollection, mockEntryLocal);
 
-    expect(result).toBe('https://example.com/test.jpg');
+    expect(result).toEqual({ src: 'https://example.com/test.jpg', owned: false });
     // The document isn’t shown as its own thumbnail
     expect(mockGetMediaFieldURL).toHaveBeenCalledOnce();
   });
@@ -491,7 +624,7 @@ describe('getAssociatedAssets', () => {
 
     const result = await getEntryThumbnail(collection, entry);
 
-    expect(result).toBe('blob:hello');
+    expect(result).toEqual({ src: 'blob:hello', owned: true });
     expect(mockFillEntryPathTemplate).toHaveBeenCalledWith({
       pathTemplate: '/images/thumbnails/{{slug}}.webp',
       dateFieldName: 'date',
@@ -527,7 +660,10 @@ describe('getAssociatedAssets', () => {
     mockFillEntryPathTemplate.mockReturnValue('/images/konnichiwa.webp');
     mockGetMediaFieldURL.mockResolvedValue('blob:konnichiwa');
 
-    expect(await getEntryThumbnail(collection, entry)).toBe('blob:konnichiwa');
+    expect(await getEntryThumbnail(collection, entry)).toEqual({
+      src: 'blob:konnichiwa',
+      owned: true,
+    });
     expect(mockFillEntryPathTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ locale: 'ja', slug: 'konnichiwa', fields: [{ name: 'title' }] }),
     );
@@ -547,7 +683,7 @@ describe('getAssociatedAssets', () => {
     mockFillEntryPathTemplate.mockReturnValue(undefined);
     mockGetMediaFieldURL.mockResolvedValue('blob:a');
 
-    expect(await getEntryThumbnail(collection, entry)).toBe('blob:a');
+    expect(await getEntryThumbnail(collection, entry)).toEqual({ src: 'blob:a', owned: true });
     expect(mockGetMediaFieldURL).toHaveBeenCalledTimes(1);
     expect(mockGetMediaFieldURL).toHaveBeenCalledWith(
       expect.objectContaining({ value: '/images/a.jpg', typedKeyPath: 'image' }),

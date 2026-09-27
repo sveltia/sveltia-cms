@@ -10,6 +10,7 @@ import {
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 
@@ -113,6 +114,18 @@ export const fetchFileList = async () => {
     .map(({ path, sha }) => ({ path, sha, size: 0, name: getPathInfo(path).basename }));
 };
 
+/**
+ * Number of blob batches requested at the same time on GitLab.com. Each batch is a heavy query, so
+ * this is kept well below the general limit on requests in flight.
+ */
+export const BLOB_CONCURRENCY = 4;
+
+/**
+ * Number of blob batches requested at the same time on a self-hosted instance, which typically runs
+ * on less powerful hardware and is more likely to time out under load.
+ */
+export const SELF_HOSTED_BLOB_CONCURRENCY = 2;
+
 const FETCH_BLOBS_QUERY = `
   query($fullPath: ID!, $branch: String!, $paths: [String!]!) {
     project(fullPath: $fullPath) {
@@ -193,12 +206,10 @@ export const fetchBlobNodes = async (paths, query, variables = {}) => {
 
   const { isSelfHosted = false } = repository;
   const batchSize = isSelfHosted ? 20 : 100;
-  const fetchingPaths = [...paths];
-  /** @type {BlobItem[]} */
-  const blobs = [];
+  const concurrency = isSelfHosted ? SELF_HOSTED_BLOB_CONCURRENCY : BLOB_CONCURRENCY;
 
   // Fetch all the text contents with the GraphQL API. Pagination would fail if `paths` becomes too
-  // long, so we just use a fixed number of paths to iterate. The complexity score of this query is
+  // long, so we just use a fixed number of paths per request. The complexity score of this query is
   // 15 + (2 * node size) so 100 paths = 215 complexity, giving the following conditions:
   // 1. The max number of records is 100
   // 2. The max query complexity is 250 or 300
@@ -210,17 +221,26 @@ export const fetchBlobNodes = async (paths, query, variables = {}) => {
   // Only the first two conditions can be satisfied by a fixed count; the size of a blob is unknown
   // until it’s fetched, so {@link fetchBlobBatch} handles the third one by splitting a batch that
   // turns out to be too large.
-  for (;;) {
-    const currentPaths = fetchingPaths.splice(0, batchSize);
+  const batches = Array.from({ length: Math.ceil(paths.length / batchSize) }, (_, index) => ({
+    index,
+    paths: paths.slice(index * batchSize, (index + 1) * batchSize),
+  }));
 
-    blobs.push(...(await fetchBlobBatch(currentPaths, query, variables)));
+  /** @type {BlobItem[][]} */
+  const results = Array(batches.length);
 
-    if (!fetchingPaths.length) {
-      break;
-    }
-  }
+  // The batches are independent, so a few of them are requested at once rather than one after
+  // another; a large repository needs dozens of them, and each is a full round trip
+  await runConcurrently(
+    batches,
+    async ({ index, paths: batchPaths }) => {
+      results[index] = await fetchBlobBatch(batchPaths, query, variables);
+    },
+    { concurrency },
+  );
 
-  return blobs;
+  // Keep the order of the given paths, although callers match a blob to its file by path
+  return results.flat();
 };
 
 /**

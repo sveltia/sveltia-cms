@@ -6,6 +6,7 @@ import { getAssetKind } from '$lib/services/assets/kinds';
 import { hasSkipCIMarker } from '$lib/services/backends/git/shared/commits';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { reconcileAssets, reconcileEntries } from '$lib/services/backends/git/shared/reconcile';
+import { mergeEntries, planEntryReparse } from '$lib/services/backends/git/shared/reparse';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
@@ -57,6 +58,21 @@ import { createRawState } from '$lib/services/utils/state.svelte';
  * backend that doesn’t track commits.
  */
 export const repositoryHead = createRawState('');
+
+/**
+ * What the entries in the store were last parsed for: the repository database name and the CMS
+ * configuration hash. A fetch made for the same ones can keep the entries whose files haven’t
+ * changed instead of parsing everything again; anything else, such as a configuration change, which
+ * can change how every file is parsed, calls for a full parse.
+ * @type {string | undefined}
+ */
+let lastParseKey;
+/**
+ * Get the key identifying what the entries are parsed for.
+ * @param {string | undefined} databaseName Repository database name.
+ * @returns {string} Key.
+ */
+const getParseKey = (databaseName) => `${databaseName}\n${cmsConfigVersion.current}`;
 
 /**
  * Get the file list from the meta database or fetch it if not cached.
@@ -454,10 +470,35 @@ const loadContents = async ({
 };
 
 /**
+ * Parse the entry files into entries. On a fetch made after the initial load, only the files that
+ * have changed are parsed, and the entries already in the store are kept for the rest.
+ * @param {object} args Arguments.
+ * @param {BaseEntryListItem[]} args.entryFiles Entry files, completed with their text.
+ * @param {Set<string>} [args.changedPaths] Paths of the files whose content differs from what was
+ * fetched last time. Every file is parsed if omitted.
+ * @returns {Promise<{ entries: Entry[], errors: Error[] }>} Parsed entries, and errors encountered
+ * while parsing them.
+ */
+const parseEntryFiles = async ({ entryFiles, changedPaths }) => {
+  const previous = allEntries.current;
+
+  if (!changedPaths || !previous.length) {
+    return prepareEntries(entryFiles);
+  }
+
+  const { reusedEntries, dirtyFiles } = planEntryReparse({ entryFiles, previous, changedPaths });
+  const { entries: parsedEntries, errors } = await prepareEntries(dirtyFiles);
+
+  return { entries: mergeEntries({ entryFiles, reusedEntries, parsedEntries }), errors };
+};
+
+/**
  * Parse the entry, asset and config files in the file list.
  * @param {object} args Arguments.
  * @param {BaseFileList} args.fileList Repository’s file list.
  * @param {RepositoryContentsMap} args.fetchedFileMap Map of fetched file metadata and content.
+ * @param {Set<string>} [args.changedPaths] Paths of the files whose content differs from what was
+ * fetched last time, given to parse only those entry files again. Every file is parsed if omitted.
  * @returns {Promise<{ entries: Entry[], errors: Error[], assets: Asset[], configFiles:
  * BaseConfigListItem[] }>} Parsed entries, errors encountered while parsing them, assets and config
  * files.
@@ -465,12 +506,14 @@ const loadContents = async ({
 const parseFiles = async ({
   fileList: { entryFiles, assetFiles, configFiles },
   fetchedFileMap,
+  changedPaths,
 }) => {
-  const { entries, errors } = await prepareEntries(
-    entryFiles.map(
+  const { entries, errors } = await parseEntryFiles({
+    entryFiles: entryFiles.map(
       (fileInfo) => /** @type {BaseEntryListItem} */ (parseFileInfo({ fileInfo, fetchedFileMap })),
     ),
-  );
+    changedPaths,
+  });
 
   const assets = assetFiles.map((fileInfo) =>
     parseAssetFileInfo(
@@ -578,6 +621,11 @@ export const fetchAndParseFiles = async ({
 
   log(`Started: ${service} ${owner}/${repo}`);
 
+  // A fetch made after the initial load, for the same repository and configuration, only parses the
+  // entry files that have changed. The key is taken now, as the configuration could change while
+  // the files are on their way
+  const parseKey = getParseKey(databaseName);
+  const incremental = !!repositoryHead.current && lastParseKey === parseKey;
   const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
   const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
 
@@ -618,6 +666,7 @@ export const fetchAndParseFiles = async ({
   // Skip fetching files if no files found
   if (!fileList.count) {
     updateStores({ entries: [], assets: [], configFiles: [] });
+    lastParseKey = parseKey;
     repositoryHead.current = lastCommitHash;
     log('The site data is ready: no files to load');
 
@@ -632,10 +681,15 @@ export const fetchAndParseFiles = async ({
     log,
   });
 
-  const { entries, errors, assets, configFiles } = await parseFiles({ fileList, fetchedFileMap });
+  const { entries, errors, assets, configFiles } = await parseFiles({
+    fileList,
+    fetchedFileMap,
+    changedPaths: incremental ? changedPaths : undefined,
+  });
 
   log(`Parsed ${entries.length} entries (${errors.length} errors)`);
   updateStores({ entries, assets, configFiles, errors, changedPaths });
+  lastParseKey = parseKey;
   // Recorded once the stores reflect the commit, so a check made in the meantime still sees the
   // previous head and knows the data isn’t there yet
   repositoryHead.current = lastCommitHash;

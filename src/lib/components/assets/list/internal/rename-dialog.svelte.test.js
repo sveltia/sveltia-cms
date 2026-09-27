@@ -14,7 +14,7 @@ vi.mock('$lib/services/assets/data/move', () => ({
   getDraftBaseProps: vi.fn(),
   addSavingEntryData: vi.fn(),
   collectEntryChanges: vi.fn(),
-  collectEntryChangesFromAsset: vi.fn(),
+  collectEntryChangesFromAssets: vi.fn(),
   updateStores: vi.fn(),
   moveAssets: vi.fn(),
 }));

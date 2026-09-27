@@ -35,6 +35,9 @@ vi.mock('$lib/services/contents', () => ({
   entryParseErrors: { current: [] },
 }));
 vi.mock('$lib/services/contents/file/process');
+// No collection uses a multi-file i18n structure, so each entry is made of a single file
+vi.mock('$lib/services/contents/collection', () => ({ getCollection: vi.fn() }));
+vi.mock('$lib/services/contents/collection/files', () => ({ getCollectionFile: vi.fn() }));
 vi.mock('$lib/services/deployments/publish');
 vi.mock('$lib/services/utils/logging');
 
@@ -1006,6 +1009,156 @@ describe('git/shared/fetch', () => {
       expect(allEntries.current[0]).toBe(oldEntry);
       expect(allEntries.current[1]).toEqual({ ...newChangedEntry, id: 'b' });
       expect(allAssets.current[0]).toBe(oldAsset);
+    });
+
+    describe('incremental parse on a later fetch', () => {
+      const fileA = {
+        path: 'posts/a.md',
+        name: 'a.md',
+        sha: 'sha1',
+        size: 10,
+        type: 'entry',
+        folder: { collectionName: 'posts' },
+      };
+
+      const fileB = {
+        path: 'posts/b.md',
+        name: 'b.md',
+        sha: 'sha2-new',
+        size: 10,
+        type: 'entry',
+        folder: { collectionName: 'posts' },
+      };
+
+      const oldEntryA = { id: 'a', locales: { _default: { path: 'posts/a.md' } } };
+      const oldEntryB = { id: 'b', locales: { _default: { path: 'posts/b.md' } } };
+      const newEntryA = { id: 'a2', locales: { _default: { path: 'posts/a.md' } } };
+      const newEntryB = { id: 'b2', locales: { _default: { path: 'posts/b.md' } } };
+
+      /**
+       * Run a fetch with the given repository.
+       * @param {object} [repository] Repository.
+       * @returns {Promise<void>} Result.
+       */
+      const run = (repository = mockRepository) =>
+        fetchAndParseFiles({
+          repository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+        });
+
+      /**
+       * Load the site data for the first time, which records what the entries are parsed for, then
+       * set things up for a later fetch in which `b.md` has changed.
+       */
+      const loadThenPush = async () => {
+        vi.mocked(createFileList).mockReturnValue({
+          count: 1,
+          entryFiles: [fileA],
+          assetFiles: [],
+          configFiles: [],
+          allFiles: [fileA],
+        });
+        mockCacheDB.entries.mockResolvedValue([]);
+        mockFetchFileContents.mockResolvedValue({});
+        await run();
+        vi.mocked(prepareEntries).mockClear();
+
+        repositoryHead.current = 'old-head';
+        allEntries.current = [oldEntryA, oldEntryB];
+        vi.mocked(createFileList).mockReturnValue({
+          count: 2,
+          entryFiles: [fileA, fileB],
+          assetFiles: [],
+          configFiles: [],
+          allFiles: [fileA, fileB],
+        });
+        mockCacheDB.entries.mockResolvedValue([
+          ['posts/a.md', { sha: 'sha1', size: 10, text: 'a', meta: {} }],
+          ['posts/b.md', { sha: 'sha2-old', size: 10, text: 'b', meta: {} }],
+        ]);
+        mockFetchFileContents.mockResolvedValue({
+          'posts/b.md': { sha: 'sha2-new', size: 10, text: 'b2', meta: {} },
+        });
+      };
+
+      it('should only parse the changed files, keeping the other entries as they are', async () => {
+        await loadThenPush();
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryB],
+          errors: [new Error('b')],
+        });
+
+        await run();
+
+        expect(prepareEntries).toHaveBeenCalledOnce();
+        expect(vi.mocked(prepareEntries).mock.calls[0][0].map(({ path }) => path)).toEqual([
+          'posts/b.md',
+        ]);
+        expect(allEntries.current).toHaveLength(2);
+        expect(allEntries.current[0]).toBe(oldEntryA);
+        expect(allEntries.current[1]).toEqual({ ...newEntryB, id: 'b' });
+        expect(entryParseErrors.current).toEqual([new Error('b')]);
+      });
+
+      it('should parse every file again once the configuration has changed', async () => {
+        await loadThenPush();
+        cmsConfigVersion.current = 'config-hash-2';
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryA, newEntryB],
+          errors: [],
+        });
+
+        await run();
+
+        expect(vi.mocked(prepareEntries).mock.calls[0][0].map(({ path }) => path)).toEqual([
+          'posts/a.md',
+          'posts/b.md',
+        ]);
+        expect(allEntries.current[0]).toBe(oldEntryA);
+        expect(allEntries.current[1]).toEqual({ ...newEntryB, id: 'b' });
+      });
+
+      it('should parse every file for another repository', async () => {
+        await loadThenPush();
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryA, newEntryB],
+          errors: [],
+        });
+
+        await run({ ...mockRepository, databaseName: 'other-db' });
+
+        expect(vi.mocked(prepareEntries).mock.calls[0][0]).toHaveLength(2);
+      });
+
+      it('should parse every file on a fresh start, such as after signing in again', async () => {
+        await loadThenPush();
+        repositoryHead.current = '';
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryA, newEntryB],
+          errors: [],
+        });
+
+        await run();
+
+        expect(vi.mocked(prepareEntries).mock.calls[0][0]).toHaveLength(2);
+      });
+
+      it('should parse every file when the store holds no entries', async () => {
+        await loadThenPush();
+        allEntries.current = [];
+        vi.mocked(prepareEntries).mockResolvedValue({
+          entries: [newEntryA, newEntryB],
+          errors: [],
+        });
+
+        await run();
+
+        expect(vi.mocked(prepareEntries).mock.calls[0][0]).toHaveLength(2);
+        expect(allEntries.current).toEqual([newEntryA, newEntryB]);
+      });
     });
 
     it('should fetch and process entries, assets, and config files', async () => {

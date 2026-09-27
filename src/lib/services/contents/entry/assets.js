@@ -4,7 +4,11 @@ import { escapeRegExp } from '@sveltia/utils/string';
 
 import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
-import { getMediaFieldSource, getMediaFieldURL } from '$lib/services/assets/info';
+import {
+  getMediaFieldSource,
+  getMediaFieldURL,
+  revokeBlobURLIfNeeded,
+} from '$lib/services/assets/info';
 import { canCreateThumbnail } from '$lib/services/assets/kinds';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
@@ -42,10 +46,20 @@ const thumbnailFieldRegexCache = new Map();
 export const isThumbnailPath = (name) => name.startsWith('/');
 
 /**
- * Get the given entry’s thumbnail URL.
+ * An entry’s thumbnail.
+ * @typedef {object} EntryThumbnail
+ * @property {string} src Image URL.
+ * @property {boolean} owned Whether `src` is an object URL created for this thumbnail alone, which
+ * the caller has to release once it’s no longer displayed. A URL found in a field value or the
+ * asset’s public URL is not.
+ */
+
+/**
+ * Get the given entry’s thumbnail.
  * @param {InternalEntryCollection} collection Entry’s collection.
  * @param {Entry} entry Entry.
- * @returns {Promise<string | undefined>} URL.
+ * @returns {Promise<EntryThumbnail | undefined>} Thumbnail. Use {@link loadEntryThumbnail} to
+ * display it, which releases the object URL for you.
  */
 export const getEntryThumbnail = async (collection, entry) => {
   const {
@@ -111,18 +125,76 @@ export const getEntryThumbnail = async (collection, entry) => {
 
     // Skip a file without a thumbnail, like a document, rather than show it as a broken image, and
     // try the next candidate instead
-    const url =
+    const src =
       value && (!asset || canCreateThumbnail(asset))
         ? // eslint-disable-next-line no-await-in-loop
           await getMediaFieldURL({ ...args, thumbnail: true })
         : undefined;
 
-    if (url) {
-      return url;
+    if (src) {
+      // For an asset, `getMediaFieldURL()` returns either a thumbnail object URL of its own, or the
+      // asset’s public URL. For anything else, it returns the field value as is
+      return { src, owned: !!asset && src.startsWith('blob:') };
     }
   }
 
   return undefined;
+};
+
+/**
+ * Load the given entry’s thumbnail for display, and release it once it’s no longer needed. Every
+ * thumbnail comes with an object URL of its own, so an entry list that renders its rows again, or
+ * is left, would otherwise keep a thumbnail in memory for each time it was shown. Call it from an
+ * effect and return the result, so the thumbnail is released when the effect reruns or is
+ * destroyed:
+ * `$effect(() => loadEntryThumbnail(collection, entry, (src) => { thumbnail = src; }))`.
+ * @param {InternalEntryCollection} collection Entry’s collection.
+ * @param {Entry} entry Entry.
+ * @param {(src: string | undefined) => void} onLoad Function called with the thumbnail URL once
+ * it’s loaded, and with `undefined` when it’s released, so the image stops pointing at it. It’s not
+ * called for an entry without a thumbnail, or when the thumbnail can’t be loaded.
+ * @returns {() => void} Function to release the thumbnail.
+ */
+export const loadEntryThumbnail = (collection, entry, onLoad) => {
+  let released = false;
+  /** @type {EntryThumbnail | undefined} */
+  let thumbnail;
+
+  getEntryThumbnail(collection, entry).then(
+    (result) => {
+      if (released) {
+        // Nothing displays a thumbnail that arrives too late, so let it go right away
+        if (result?.owned) {
+          revokeBlobURLIfNeeded(result.src);
+        }
+
+        return;
+      }
+
+      thumbnail = result;
+
+      if (result) {
+        onLoad(result.src);
+      }
+    },
+    () => {
+      // A missing or undecodable image just leaves the entry without a thumbnail
+    },
+  );
+
+  return () => {
+    released = true;
+
+    if (thumbnail) {
+      onLoad(undefined);
+
+      // The revocation waits for the next frame and skips a URL an element still displays, so an
+      // image being removed along with the row doesn’t lose its source midway
+      if (thumbnail.owned) {
+        revokeBlobURLIfNeeded(thumbnail.src);
+      }
+    }
+  };
 };
 
 /**

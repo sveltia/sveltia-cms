@@ -88,6 +88,17 @@ describe('Test buildGroupMap()', () => {
     ]);
   });
 
+  test('groups items whose value is the name of an object prototype property', () => {
+    const items = [{ v: 'constructor' }, { v: 'toString' }, { v: '__proto__' }, { v: 'toString' }];
+    const result = buildGroupMap(items, undefined, (item) => item.v);
+
+    expect(result).toEqual([
+      ['__proto__', [items[2]]],
+      ['constructor', [items[0]]],
+      ['toString', [items[1], items[3]]],
+    ]);
+  });
+
   test('groups items by numeric value (coerced to string)', () => {
     const items = [{ v: 1 }, { v: 2 }, { v: 1 }];
     const result = buildGroupMap(items, undefined, (item) => item.v);

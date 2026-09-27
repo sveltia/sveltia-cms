@@ -1128,6 +1128,63 @@ describe('getInputValue', () => {
 });
 
 describe('getDateTimeFieldDisplayValue', () => {
+  test('should format the same way as the `Date` locale methods', () => {
+    /** @type {Intl.DateTimeFormatOptions} */
+    const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    /** @type {Intl.DateTimeFormatOptions} */
+    const timeOptions = { hour: '2-digit', minute: '2-digit' };
+
+    expect(
+      getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: baseFieldConfig,
+        currentValue: '2023-12-25T14:30:00',
+      }),
+    ).toBe(
+      new Date('2023-12-25T14:30:00').toLocaleString('en', { ...dateOptions, ...timeOptions }),
+    );
+    expect(
+      getDateTimeFieldDisplayValue({
+        locale: 'ja',
+        fieldConfig: { ...baseFieldConfig, time_format: false },
+        currentValue: '2023-12-25',
+      }),
+    ).toBe(new Date('2023-12-25').toLocaleDateString('ja', { ...dateOptions, timeZone: 'UTC' }));
+    expect(
+      getDateTimeFieldDisplayValue({
+        locale: 'en',
+        fieldConfig: { ...baseFieldConfig, date_format: false, picker_utc: true },
+        currentValue: '14:30',
+      }),
+    ).toBe(
+      new Date(`${new Date().toJSON().split('T')[0]}T14:30`).toLocaleTimeString('en', {
+        ...timeOptions,
+        timeZone: 'UTC',
+      }),
+    );
+  });
+
+  test('should reuse the formatter for the same locale and options', () => {
+    const spy = vi.spyOn(Intl, 'DateTimeFormat');
+    const args = { locale: 'fr', fieldConfig: { ...baseFieldConfig, picker_utc: true } };
+    const first = getDateTimeFieldDisplayValue({ ...args, currentValue: '2023-12-25T14:30:00Z' });
+    const second = getDateTimeFieldDisplayValue({ ...args, currentValue: '2024-01-02T03:04:00Z' });
+
+    expect(first).not.toBe(second);
+    expect(second).toBe(
+      new Date('2024-01-02T03:04:00Z').toLocaleString('fr', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC',
+      }),
+    );
+    // Created once for the first value, then reused
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
   test('should return empty string for empty value', () => {
     const result = getDateTimeFieldDisplayValue({
       locale: 'en',

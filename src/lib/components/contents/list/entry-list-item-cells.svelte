@@ -7,14 +7,13 @@
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Checkbox, GridCell, Icon, TruncatedText } from '@sveltia/ui';
 
-  import Image from '$lib/components/assets/shared/image.svelte';
+  import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
   import StatusBadge from '$lib/components/workflow/status-badge.svelte';
   import { selectedEntryIdSet } from '$lib/services/contents/collection/entries';
   import {
     getIndexFile,
     isCollectionIndexFile,
   } from '$lib/services/contents/collection/entries/index-file';
-  import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { env } from '$lib/services/user/env.svelte';
 
@@ -72,11 +71,7 @@
 {/if}
 {#if collection._thumbnailFieldNames.length}
   <GridCell class="image">
-    {#await getEntryThumbnail(collection, entry) then src}
-      {#if src}
-        <Image {src} variant={viewType === 'list' ? 'icon' : 'tile'} cover />
-      {/if}
-    {/await}
+    <EntryThumbnail {collection} {entry} variant={viewType === 'list' ? 'icon' : 'tile'} />
   </GridCell>
 {/if}
 <GridCell class="title">
