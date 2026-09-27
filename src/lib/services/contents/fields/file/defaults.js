@@ -29,12 +29,11 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
   /** @type {Record<string, any>} */
   const content = {};
 
+  // An empty list is kept, like that of a List field, so an optional field without files is still
+  // written out as an empty value
   if (multiple && Array.isArray(value)) {
     value = value.map((val) => val.trim()).filter((val) => val !== '');
-
-    if (value.length) {
-      Object.assign(content, getSubtreeEntries(keyPath, value));
-    }
+    Object.assign(content, getSubtreeEntries(keyPath, value));
   }
 
   if (!multiple && typeof value === 'string') {

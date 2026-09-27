@@ -140,7 +140,7 @@ describe('Test getDefaultValueMap()', () => {
       defaultLocale: '_default',
     });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ attachments: [] });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
   });
 
@@ -190,7 +190,7 @@ describe('Test getDefaultValueMap()', () => {
       defaultLocale: '_default',
     });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ attachments: [] });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
   });
 
@@ -345,7 +345,7 @@ describe('Test getDefaultValueMap()', () => {
       dynamicValue,
     });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ attachments: [] });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
   });
 
@@ -472,7 +472,7 @@ describe('Test getDefaultValueMap()', () => {
       defaultLocale: '_default',
     });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ attachments: [] });
     expect(isMultipleMock).toHaveBeenCalledWith(fieldConfig);
   });
 });
