@@ -25,8 +25,9 @@ ignorePaths:
   - src/**/*.test.js
   - e2e/**/*.e2e.js
   - src/lib/locales/*.yaml
-  - '!src/lib/locales/en-*.yaml'
   - .claude/**
+  # Non-English locales; negative globs are not supported, so match everything but `en-*.yaml`
+  - src/lib/locales/{[^e]*,e[^n]*}.yaml
 words:
   - analyzing
   - appinstalled
