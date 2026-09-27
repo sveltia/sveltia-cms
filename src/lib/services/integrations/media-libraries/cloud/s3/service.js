@@ -1,18 +1,6 @@
 import { ObjectStorageService } from '$lib/services/integrations/media-libraries/cloud/shared/service';
 
-import {
-  browseS3Objects,
-  createS3Folder,
-  deleteS3Folder,
-  deleteS3Objects,
-  isS3ObjectUrl,
-  listS3Objects,
-  moveS3Object,
-  renameS3Object,
-  replaceS3Object,
-  searchS3Objects,
-  uploadToS3,
-} from './core';
+import { isS3ObjectUrl, s3Operations } from './core';
 
 /**
  * @import { S3Config } from '$lib/types/private';
@@ -59,18 +47,7 @@ export class S3CompatibleService extends ObjectStorageService {
        */
       isConfigured: (config) => !!(config.access_key_id && config.bucket && config[requiredOption]),
       isConfigURL: isS3ObjectUrl,
-      operations: {
-        list: listS3Objects,
-        browse: browseS3Objects,
-        search: searchS3Objects,
-        upload: uploadToS3,
-        delete: deleteS3Objects,
-        rename: renameS3Object,
-        replace: replaceS3Object,
-        move: moveS3Object,
-        createFolder: createS3Folder,
-        deleteFolder: deleteS3Folder,
-      },
+      operations: s3Operations,
     });
 
     this.requiredOption = requiredOption;

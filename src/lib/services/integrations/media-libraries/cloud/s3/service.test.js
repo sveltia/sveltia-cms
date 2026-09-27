@@ -2,19 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config/state';
 
-import {
-  browseS3Objects,
-  createS3Folder,
-  deleteS3Folder,
-  deleteS3Objects,
-  isS3ObjectUrl,
-  listS3Objects,
-  moveS3Object,
-  renameS3Object,
-  replaceS3Object,
-  searchS3Objects,
-  uploadToS3,
-} from './core';
+import { isS3ObjectUrl, s3Operations } from './core';
 import { S3CompatibleService } from './service';
 
 /**
@@ -27,18 +15,33 @@ vi.mock('$lib/services/config/state', () => ({
 }));
 
 vi.mock('./core', () => ({
-  browseS3Objects: vi.fn(),
-  createS3Folder: vi.fn(),
-  deleteS3Folder: vi.fn(),
-  moveS3Object: vi.fn(),
-  listS3Objects: vi.fn(),
-  searchS3Objects: vi.fn(),
-  uploadToS3: vi.fn(),
-  deleteS3Objects: vi.fn(),
-  renameS3Object: vi.fn(),
-  replaceS3Object: vi.fn(),
+  s3Operations: {
+    list: vi.fn(),
+    browse: vi.fn(),
+    search: vi.fn(),
+    upload: vi.fn(),
+    delete: vi.fn(),
+    rename: vi.fn(),
+    replace: vi.fn(),
+    move: vi.fn(),
+    createFolder: vi.fn(),
+    deleteFolder: vi.fn(),
+  },
   isS3ObjectUrl: vi.fn(() => true),
 }));
+
+const {
+  list: listS3Objects,
+  browse: browseS3Objects,
+  search: searchS3Objects,
+  upload: uploadToS3,
+  delete: deleteS3Objects,
+  rename: renameS3Object,
+  replace: replaceS3Object,
+  move: moveS3Object,
+  createFolder: createS3Folder,
+  deleteFolder: deleteS3Folder,
+} = s3Operations;
 
 describe('integrations/media-libraries/cloud/s3/service', () => {
   const mockAccessKeyId = 'AKIAIOSFODNN7EXAMPLE';

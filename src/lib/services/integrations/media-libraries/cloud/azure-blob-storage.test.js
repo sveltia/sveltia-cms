@@ -6,32 +6,35 @@ import { cmsConfig } from '$lib/services/config/state';
 
 import azureBlobStorage, {
   browse,
-  browseBlobs,
   buildContainerUrl,
   buildRequestUrl,
   createEmptyFolder,
   createFolder,
-  deleteBlobs,
   deleteFiles,
   deleteFolder,
   getLibraryOptions,
   isAssetURL,
   isEnabled,
   list,
-  listBlobs,
   move,
   moveBlob,
   parseBlobResults,
   removeFolder,
   rename,
-  renameBlob,
   replace,
-  replaceBlob,
   search,
-  searchBlobs,
   upload,
-  uploadBlobs,
 } from './azure-blob-storage';
+
+const {
+  list: listBlobs,
+  browse: browseBlobs,
+  search: searchBlobs,
+  upload: uploadBlobs,
+  delete: deleteBlobs,
+  rename: renameBlob,
+  replace: replaceBlob,
+} = azureBlobStorage.operations;
 
 // Mock dependencies
 vi.mock('$lib/services/config/state', () => ({
@@ -429,10 +432,10 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
         async () => new Response(buildListXml([sampleBlob], 'marker-1'), { status: 200 }),
       );
 
-      const assets = await listBlobs(config, { apiKey: token }, { maxPages: 2 });
+      const assets = await listBlobs(config, { apiKey: token });
 
-      expect(assets).toHaveLength(2);
-      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(assets).toHaveLength(10);
+      expect(fetch).toHaveBeenCalledTimes(10);
     });
 
     it('should reject when the SAS token is missing', async () => {

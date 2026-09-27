@@ -2,7 +2,9 @@ import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  assertResponseOK,
   browseObjects,
+  createObjectStorageOperations,
   deleteObjects,
   fetchListing,
   getRenamedPath,
@@ -247,6 +249,90 @@ describe('integrations/media-libraries/cloud/shared/object-storage', () => {
       const asset = /** @type {ExternalAsset} */ ({ id: 'uploads/a.jpg' });
 
       expect(getRenamedPath(config, asset, 'b.jpg')).toBe('b.jpg');
+    });
+  });
+
+  describe('assertResponseOK', () => {
+    it('should resolve when the response is OK', async () => {
+      await expect(
+        assertResponseOK(new Response('ok', { status: 200 }), 'Failed'),
+      ).resolves.toBeUndefined();
+    });
+
+    it('should throw with the response body appended to the message', async () => {
+      await expect(
+        assertResponseOK(new Response('Access Denied', { status: 403 }), 'Failed to list objects'),
+      ).rejects.toThrow(new Error('Failed to list objects: Access Denied'));
+    });
+
+    it('should throw on a 404 response unless it’s allowed', async () => {
+      await expect(
+        assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed'),
+      ).rejects.toThrow('Failed: Not Found');
+      await expect(
+        assertResponseOK(new Response('Not Found', { status: 404 }), 'Failed', {
+          allowNotFound: true,
+        }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('createObjectStorageOperations', () => {
+    const move = vi.fn(async (/** @type {ExternalAsset} */ asset) => asset);
+    const createFolder = vi.fn(async () => undefined);
+    const deleteFolder = vi.fn(async () => undefined);
+
+    const operations = createObjectStorageOperations(provider, {
+      move,
+      createFolder,
+      deleteFolder,
+    });
+
+    it('should bind the provider to the shared operations', async () => {
+      expect((await operations.list(config, options)).map(({ id }) => id)).toEqual([
+        'uploads/photo.jpg',
+        'uploads/notes.txt',
+        'uploads/2024/beach.png',
+      ]);
+      expect((await operations.browse(config, options)).folders).toEqual(['2024', '2024/summer']);
+      expect((await operations.search('beach', config, options)).map(({ id }) => id)).toEqual([
+        'uploads/2024/beach.png',
+      ]);
+      expect(
+        await operations.upload([new File(['a'], 'a.jpg')], config, { ...options, dirPath: '' }),
+      ).toHaveLength(1);
+      await operations.delete([/** @type {ExternalAsset} */ ({ id: 'uploads/a.jpg' })], config, {
+        ...options,
+      });
+      expect(provider.deleteObject).toHaveBeenCalledWith({
+        key: 'uploads/a.jpg',
+        config,
+        credential: 'secret',
+      });
+      expect(
+        (
+          await operations.replace(
+            /** @type {ExternalAsset} */ ({ id: 'uploads/a.jpg' }),
+            new File(['a'], 'new.jpg'),
+            config,
+            options,
+          )
+        ).id,
+      ).toBe('uploads/a.jpg');
+    });
+
+    it('should rename a file by moving it within its folder', async () => {
+      const asset = /** @type {ExternalAsset} */ ({ id: 'uploads/2024/a.jpg' });
+
+      await operations.rename(asset, 'b.jpg', config, options);
+
+      expect(move).toHaveBeenCalledWith(asset, '2024/b.jpg', config, options);
+    });
+
+    it('should pass the service-specific operations through', () => {
+      expect(operations.move).toBe(move);
+      expect(operations.createFolder).toBe(createFolder);
+      expect(operations.deleteFolder).toBe(deleteFolder);
     });
   });
 });

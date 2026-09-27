@@ -8,13 +8,9 @@ import {
   getRelativeKey,
 } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
 import {
-  browseObjects,
+  assertResponseOK,
+  createObjectStorageOperations,
   deleteObjects,
-  getRenamedPath,
-  listObjects,
-  replaceObject,
-  searchObjects,
-  uploadObjects,
 } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
 import { parseXml, toArray } from '$lib/services/utils/xml';
@@ -22,13 +18,15 @@ import { parseXml, toArray } from '$lib/services/utils/xml';
 /**
  * @import {
  * ExternalAsset,
- * ExternalFolderListing,
  * MediaLibraryFetchOptions,
  * S3Config,
  * } from '$lib/types/private';
  * @import {
  * ObjectStorageProvider,
  * } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
+ * @import {
+ * ObjectStorageOperations,
+ * } from '$lib/services/integrations/media-libraries/cloud/shared/service';
  */
 
 /**
@@ -359,11 +357,7 @@ const listS3Page = async ({ config, credential: secretAccessKey, prefix, cursor 
 
   const response = await signedRequest({ method: 'GET', url, config, secretAccessKey });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to list objects: ${errorText}`);
-  }
+  await assertResponseOK(response, 'Failed to list objects');
 
   /** @type {any} */
   const data = parseXml(await response.text());
@@ -399,11 +393,7 @@ const putS3Object = async ({ key, file, config, credential: secretAccessKey }) =
     },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to upload file ${file.name}: ${errorText}`);
-  }
+  await assertResponseOK(response, `Failed to upload file ${file.name}`);
 
   return {
     Key: key,
@@ -415,7 +405,11 @@ const putS3Object = async ({ key, file, config, credential: secretAccessKey }) =
 };
 
 /**
- * Delete a single object from S3-compatible storage.
+ * Delete a single object from S3-compatible storage. Objects are deleted one by one, as the
+ * multi-object delete API requires a `Content-MD5` header, which some S3-compatible services don’t
+ * support. The bucket’s CORS policy must allow the `DELETE` method, in addition to the `GET` and
+ * `PUT` methods needed for listing and uploading; otherwise the browser blocks the request at the
+ * preflight stage.
  * @param {object} params Parameters.
  * @param {string} params.key Object key.
  * @param {S3Config} params.config S3 configuration.
@@ -431,11 +425,7 @@ const deleteS3Object = async ({ key, config, credential: secretAccessKey }) => {
     secretAccessKey,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to delete object ${key}: ${errorText}`);
-  }
+  await assertResponseOK(response, `Failed to delete object ${key}`);
 };
 
 /**
@@ -461,58 +451,6 @@ const provider = {
   putObject: putS3Object,
   deleteObject: deleteS3Object,
 };
-
-/**
- * List objects from S3-compatible storage.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @param {object} [params] Additional parameters.
- * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10.
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const listS3Objects = async (config, options, params = {}) =>
-  listObjects(provider, config, options, params);
-
-/**
- * List the files and the empty folders under the configured prefix on S3-compatible storage.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @returns {Promise<ExternalFolderListing>} Files and folders.
- */
-export const browseS3Objects = async (config, options) => browseObjects(provider, config, options);
-
-/**
- * Search objects in S3-compatible storage.
- * @param {string} query Search query.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const searchS3Objects = async (query, config, options) =>
-  searchObjects(provider, query, config, options);
-
-/**
- * Upload files to S3-compatible storage.
- * @param {File[]} files Files to upload.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @returns {Promise<ExternalAsset[]>} Uploaded assets.
- */
-export const uploadToS3 = async (files, config, options) =>
-  uploadObjects(provider, files, config, options);
-
-/**
- * Delete objects from S3-compatible storage, one by one, as the multi-object delete API requires a
- * `Content-MD5` header, which some S3-compatible services don’t support. The bucket’s CORS policy
- * must allow the `DELETE` method, in addition to the `GET` and `PUT` methods needed for listing and
- * uploading; otherwise the browser blocks the request at the preflight stage.
- * @param {ExternalAsset[]} assets Assets to delete. The `id` of each asset is the object key.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @returns {Promise<void>}
- */
-export const deleteS3Objects = async (assets, config, options) =>
-  deleteObjects(provider, assets, config, options);
 
 /**
  * Move an object on S3-compatible storage to another path. S3 has no move operation, so the object
@@ -545,11 +483,7 @@ export const moveS3Object = async (asset, newPath, config, options) => {
     },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to copy object ${key}: ${errorText}`);
-  }
+  await assertResponseOK(response, `Failed to copy object ${key}`);
 
   await deleteS3Object({ key, config, credential: secretAccessKey });
 
@@ -558,17 +492,6 @@ export const moveS3Object = async (asset, newPath, config, options) => {
     config,
   )[0];
 };
-
-/**
- * Rename an object on S3-compatible storage, keeping it in its folder.
- * @param {ExternalAsset} asset Asset to rename. Its `id` is the object key.
- * @param {string} newName New file name, without a directory.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @returns {Promise<ExternalAsset>} Renamed asset.
- */
-export const renameS3Object = async (asset, newName, config, options) =>
-  moveS3Object(asset, getRenamedPath(config, asset, newName), config, options);
 
 /**
  * Create an empty folder on S3-compatible storage by putting a zero-byte placeholder object at the
@@ -590,11 +513,7 @@ export const createS3Folder = async (dirPath, config, options) => {
     extraHeaders: { 'Content-Type': 'application/x-directory', ...getAclHeader(config) },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to create folder ${key}: ${errorText}`);
-  }
+  await assertResponseOK(response, `Failed to create folder ${key}`);
 
   return undefined;
 };
@@ -608,20 +527,19 @@ export const createS3Folder = async (dirPath, config, options) => {
  * @returns {Promise<void>}
  */
 export const deleteS3Folder = async (dirPath, config, options) =>
-  deleteS3Objects(
+  deleteObjects(
+    provider,
     [/** @type {ExternalAsset} */ ({ id: getFolderKey(config, dirPath) })],
     config,
     options,
   );
 
 /**
- * Replace an object on S3-compatible storage with a new file, keeping the object key so that the
- * URL stays the same.
- * @param {ExternalAsset} asset Asset to replace. Its `id` is the object key.
- * @param {File} file New file.
- * @param {S3Config} config S3 configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (apiKey contains secret access key).
- * @returns {Promise<ExternalAsset>} Replaced asset.
+ * Operations of an S3-compatible object storage service.
+ * @type {ObjectStorageOperations<S3Config>}
  */
-export const replaceS3Object = async (asset, file, config, options) =>
-  replaceObject(provider, asset, file, config, options);
+export const s3Operations = createObjectStorageOperations(provider, {
+  move: moveS3Object,
+  createFolder: createS3Folder,
+  deleteFolder: deleteS3Folder,
+});

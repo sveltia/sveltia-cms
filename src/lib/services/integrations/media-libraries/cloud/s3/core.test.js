@@ -1,24 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  browseS3Objects,
   buildObjectApiUrl,
   buildObjectUrl,
   createS3Folder,
   deleteS3Folder,
-  deleteS3Objects,
   encodeKey,
   generateAwsSignature,
   isS3ObjectUrl,
-  listS3Objects,
   moveS3Object,
   parseS3Results,
-  renameS3Object,
-  replaceS3Object,
-  searchS3Objects,
+  s3Operations,
   signedRequest,
-  uploadToS3,
 } from './core';
+
+const {
+  list: listS3Objects,
+  browse: browseS3Objects,
+  search: searchS3Objects,
+  upload: uploadToS3,
+  delete: deleteS3Objects,
+  rename: renameS3Object,
+  replace: replaceS3Object,
+} = s3Operations;
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable no-cond-assign */

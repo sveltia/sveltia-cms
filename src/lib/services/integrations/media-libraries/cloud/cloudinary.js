@@ -5,6 +5,7 @@ import { sleep } from '@sveltia/utils/misc';
 import { isObject } from '@sveltia/utils/object';
 
 import { cmsConfig } from '$lib/services/config/state';
+import { assertResponseOK } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import { findLibraryOptions } from '$lib/services/integrations/media-libraries/options';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
@@ -379,11 +380,7 @@ export const fetchResources = async (options, { maxPages = 10, expression } = {}
 
     const response = await fetch(`${endpoint}?${params}`, { headers });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      return Promise.reject(new Error(`Failed to fetch resources: ${errorText}`));
-    }
+    await assertResponseOK(response, 'Failed to fetch resources');
 
     /** @type {CloudinaryListResponse} */
     const data = await response.json();
@@ -492,11 +489,7 @@ export const upload = async (files, options) => {
       body: formData,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      throw new Error(`Failed to upload file ${file.name}: ${errorText}`);
-    }
+    await assertResponseOK(response, `Failed to upload file ${file.name}`);
 
     /** @type {CloudinaryResource} */
     const data = await response.json();

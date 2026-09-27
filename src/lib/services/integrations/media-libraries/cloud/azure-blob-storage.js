@@ -6,13 +6,8 @@ import {
   getRelativeKey,
 } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
 import {
-  browseObjects,
-  deleteObjects,
-  getRenamedPath,
-  listObjects,
-  replaceObject,
-  searchObjects,
-  uploadObjects,
+  assertResponseOK,
+  createObjectStorageOperations,
 } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
 import { ObjectStorageService } from '$lib/services/integrations/media-libraries/cloud/shared/service';
 import { parseXml, toArray } from '$lib/services/utils/xml';
@@ -20,7 +15,6 @@ import { parseXml, toArray } from '$lib/services/utils/xml';
 /**
  * @import {
  * ExternalAsset,
- * ExternalFolderListing,
  * MediaLibraryFetchOptions,
  * } from '$lib/types/private';
  * @import { AzureMediaLibrary, CmsConfig, MediaField } from '$lib/types/public';
@@ -168,11 +162,7 @@ const listBlobPage = async ({ config, credential: token, prefix, cursor: marker 
   const url = buildContainerUrl(config);
   const response = await fetch(buildRequestUrl({ url, token, searchParams }));
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to list blobs: ${errorText}`);
-  }
+  await assertResponseOK(response, 'Failed to list blobs');
 
   /** @type {any} */
   const data = parseXml(await response.text());
@@ -205,11 +195,7 @@ const putBlob = async ({ key, file, config, credential: token }) => {
     body: fileContent,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to upload file ${file.name}: ${errorText}`);
-  }
+  await assertResponseOK(response, `Failed to upload file ${file.name}`);
 
   return {
     Name: key,
@@ -222,7 +208,9 @@ const putBlob = async ({ key, file, config, credential: token }) => {
 };
 
 /**
- * Delete a single blob from the configured container.
+ * Delete a single blob from the configured container. The account’s CORS rules must allow the
+ * `DELETE` method, in addition to the `GET` and `PUT` methods needed for listing and uploading;
+ * otherwise the browser blocks the request at the preflight stage.
  * @param {object} params Parameters.
  * @param {string} params.key Blob name.
  * @param {AzureMediaLibrary} params.config Azure Blob Storage configuration.
@@ -233,11 +221,7 @@ const putBlob = async ({ key, file, config, credential: token }) => {
 const deleteBlob = async ({ key, config, credential: token }) => {
   const response = await fetch(buildBlobRequestUrl(config, key, token), { method: 'DELETE' });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to delete blob ${key}: ${errorText}`);
-  }
+  await assertResponseOK(response, `Failed to delete blob ${key}`);
 };
 
 /**
@@ -257,57 +241,6 @@ const provider = {
   putObject: putBlob,
   deleteObject: deleteBlob,
 };
-
-/**
- * List blobs in the configured container.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
- * @param {object} [params] Additional parameters.
- * @param {number} [params.maxPages] Maximum number of pages to fetch. Default: 10.
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const listBlobs = async (config, options, params = {}) =>
-  listObjects(provider, config, options, params);
-
-/**
- * List the files and the empty folders under the configured prefix in the container.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
- * @returns {Promise<ExternalFolderListing>} Files and folders.
- */
-export const browseBlobs = async (config, options) => browseObjects(provider, config, options);
-
-/**
- * Search blobs in the configured container.
- * @param {string} query Search query.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
- * @returns {Promise<ExternalAsset[]>} Assets.
- */
-export const searchBlobs = async (query, config, options) =>
-  searchObjects(provider, query, config, options);
-
-/**
- * Upload files to the configured container as block blobs.
- * @param {File[]} files Files to upload.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
- * @returns {Promise<ExternalAsset[]>} Uploaded assets.
- */
-export const uploadBlobs = async (files, config, options) =>
-  uploadObjects(provider, files, config, options);
-
-/**
- * Delete blobs from the configured container. The account’s CORS rules must allow the `DELETE`
- * method, in addition to the `GET` and `PUT` methods needed for listing and uploading; otherwise
- * the browser blocks the request at the preflight stage.
- * @param {ExternalAsset[]} assets Assets to delete. The `id` of each asset is the blob name.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
- * @returns {Promise<void>}
- */
-export const deleteBlobs = async (assets, config, options) =>
-  deleteObjects(provider, assets, config, options);
 
 /**
  * Move a blob in the configured container to another path. The Blob service has no move operation,
@@ -336,11 +269,7 @@ export const moveBlob = async (asset, newPath, config, options) => {
     },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to copy blob ${key}: ${errorText}`);
-  }
+  await assertResponseOK(response, `Failed to copy blob ${key}`);
 
   // With a SAS token issued for a service version older than 2020-04-08, the request is handled as
   // an asynchronous `Copy Blob` operation instead. Never remove the source while the copy is still
@@ -367,17 +296,6 @@ export const moveBlob = async (asset, newPath, config, options) => {
 };
 
 /**
- * Rename a blob in the configured container, keeping it in its folder.
- * @param {ExternalAsset} asset Asset to rename. Its `id` is the blob name.
- * @param {string} newName New file name, without a directory.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
- * @returns {Promise<ExternalAsset>} Renamed asset.
- */
-export const renameBlob = async (asset, newName, config, options) =>
-  moveBlob(asset, getRenamedPath(config, asset, newName), config, options);
-
-/**
  * Create an empty folder in the configured container by putting a zero-byte placeholder blob at
  * the folder name, the way Azure Storage Explorer creates a virtual directory.
  * @param {string} dirPath Folder path relative to the configured prefix.
@@ -394,11 +312,7 @@ export const createFolder = async (dirPath, config, options) => {
     headers: { 'x-ms-blob-type': 'BlockBlob', 'Content-Type': 'application/x-directory' },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to create folder ${key}: ${errorText}`);
-  }
+  await assertResponseOK(response, `Failed to create folder ${key}`);
 
   return undefined;
 };
@@ -416,26 +330,10 @@ export const deleteFolder = async (dirPath, config, options) => {
   const key = getFolderKey(config, dirPath);
   const response = await fetch(buildBlobRequestUrl(config, key, token), { method: 'DELETE' });
 
-  if (!response.ok && response.status !== 404) {
-    const errorText = await response.text();
-
-    throw new Error(`Failed to delete folder ${key}: ${errorText}`);
-  }
+  await assertResponseOK(response, `Failed to delete folder ${key}`, { allowNotFound: true });
 
   return undefined;
 };
-
-/**
- * Replace a blob in the configured container with a new file, keeping the blob name so that the
- * URL stays the same.
- * @param {ExternalAsset} asset Asset to replace. Its `id` is the blob name.
- * @param {File} file New file.
- * @param {AzureMediaLibrary} config Azure Blob Storage configuration.
- * @param {MediaLibraryFetchOptions} options Fetch options (`apiKey` contains the SAS token).
- * @returns {Promise<ExternalAsset>} Replaced asset.
- */
-export const replaceBlob = async (asset, file, config, options) =>
-  replaceObject(provider, asset, file, config, options);
 
 /**
  * Whether the given URL points to a blob in the configured container, through either the public
@@ -472,18 +370,11 @@ const azureBlobStorage = new ObjectStorageService({
   isConfigured: ({ container, account_name: accountName, endpoint }) =>
     !!(container && (accountName || endpoint)),
   isConfigURL: isBlobUrl,
-  operations: {
-    list: listBlobs,
-    browse: browseBlobs,
-    search: searchBlobs,
-    upload: uploadBlobs,
-    delete: deleteBlobs,
-    rename: renameBlob,
-    replace: replaceBlob,
+  operations: createObjectStorageOperations(provider, {
     move: moveBlob,
     createFolder,
     deleteFolder,
-  },
+  }),
 });
 
 /**
