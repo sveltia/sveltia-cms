@@ -14,6 +14,7 @@ import { nestedFilterPath } from '$lib/services/contents/collection/nested';
 import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
 import { saveEntry } from '$lib/services/contents/draft/save';
 import { copyFromLocaleToast } from '$lib/services/contents/editor';
+import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { sidebarSheetPanel } from '$lib/services/contents/editor/sidebar';
 import { deployPollTimedOut } from '$lib/services/deployments';
@@ -177,6 +178,38 @@ describe('Toolbar', () => {
     await expect.element(save).toBeDisabled();
     draft.currentValues._default.title = 'Hi';
     await expect.element(save).toBeEnabled();
+  });
+
+  test('can be saved while a change is on its way to the draft', async () => {
+    const { draft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+    const { promise, resolve } = Promise.withResolvers();
+
+    await expect.element(save).toBeDisabled();
+    // A rich text editor writes a change to the draft a moment after it’s made
+    trackPendingFieldUpdate(promise);
+    await expect.element(save).toBeEnabled();
+    await save.click();
+    draft.currentValues._default.title = 'Hi';
+    resolve(undefined);
+
+    await vi.waitFor(() =>
+      expect(saveEntry).toHaveBeenCalledWith({ draft, skipCI: undefined, overwrite: false }),
+    );
+  });
+
+  test('doesn’t save once a pending change turns out to change nothing', async () => {
+    await renderExisting();
+
+    const save = page.getByRole('button', { name: 'Save' });
+    const { promise, resolve } = Promise.withResolvers();
+
+    trackPendingFieldUpdate(promise);
+    await save.click();
+    resolve(undefined);
+
+    await expect.element(save).toBeDisabled();
+    expect(saveEntry).not.toHaveBeenCalled();
   });
 
   test('reports the fields that failed validation', async () => {

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { awaitPendingFieldUpdates, trackPendingFieldUpdate } from './pending.js';
+import {
+  awaitPendingFieldUpdates,
+  fieldUpdatePending,
+  trackPendingFieldUpdate,
+} from './pending.js';
 
 describe('editor/pending', () => {
   it('resolves immediately when nothing is pending', async () => {
@@ -24,10 +28,12 @@ describe('editor/pending', () => {
 
     await Promise.resolve();
     expect(done).toBe(false);
+    expect(fieldUpdatePending.current).toBe(true);
 
     resolve();
     await waiting;
     expect(done).toBe(true);
+    expect(fieldUpdatePending.current).toBe(false);
   });
 
   it('tolerates a rejected update', async () => {

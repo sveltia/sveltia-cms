@@ -41,6 +41,10 @@
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { validateDraft } from '$lib/services/contents/draft/validate';
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
+  import {
+    awaitPendingFieldUpdates,
+    fieldUpdatePending,
+  } from '$lib/services/contents/editor/pending';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { canUpdateSlug } from '$lib/services/contents/editor/slug';
@@ -183,7 +187,8 @@
   // control group is locked meanwhile rather than just the button that started it
   const busy = $derived(saving || deleting || duplicating);
   const controlsDisabled = $derived(disabled || busy);
-  const modified = $derived(isNew || entryDraft.modified);
+  // A change still on its way to the draft counts, so a save can be started right after it
+  const modified = $derived(isNew || entryDraft.modified || fieldUpdatePending.current);
   const associatedAssets = $derived(
     collectionName && originalEntry
       ? getEntryRelativeAssets({ entry: originalEntry, collectionName, fileName })
@@ -381,6 +386,14 @@
     saving = true;
 
     try {
+      // A change still on its way to the draft enabled the button, but may turn out to change
+      // nothing, e.g. a trailing space typed in a rich text editor
+      await awaitPendingFieldUpdates();
+
+      if (!isNew && !entryDraft.modified) {
+        return;
+      }
+
       const savedEntry = await saveEntry({ draft, skipCI, overwrite });
       const savedDraft = /** @type {UnpublishedEntry} */ (savedEntry);
 
