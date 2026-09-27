@@ -6,6 +6,7 @@
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
   import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 
   /**
    * @import { InternalLocaleCode, TypedFieldKeyPath } from '$lib/types/private';
@@ -46,7 +47,7 @@
     (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
   );
   /* v8 ignore stop */
-  const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
+  const canTranslate = $derived(i18nEnabled && isFieldTranslatable(i18n));
   const canDuplicate = $derived(i18nEnabled && (i18n === 'duplicate' || i18n === 'duplicate_keys'));
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(

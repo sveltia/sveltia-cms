@@ -23,6 +23,7 @@
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getInitialExpanderState,
+    isExpanded,
     syncExpanderStates,
   } from '$lib/services/contents/editor/fields';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
@@ -106,9 +107,7 @@
     fieldContext === 'rich-text-editor-component' || locale === defaultLocale || i18n !== false,
   );
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
-  const parentExpanded = $derived(
-    entryDraft.current?.expanderStates?._[parentExpandedKeyPath] ?? true,
-  );
+  const parentExpanded = $derived(isExpanded(entryDraft.current, parentExpandedKeyPath));
   const hasVariableTypes = $derived(Array.isArray(types));
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
   /* v8 ignore start -- only read for an object with variable types */

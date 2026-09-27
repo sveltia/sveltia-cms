@@ -6,6 +6,7 @@ import { env } from '$lib/services/user/env.svelte';
 
 import {
   canShowMobileSignInDialog,
+  createOneOffNotice,
   getState,
   setState,
   showMobileSignInDialog,
@@ -209,6 +210,38 @@ describe('onboarding', () => {
       await setState('dismissed', true);
       await expect(getState('dismissed')).resolves.toBe(true);
       expect(mockIndexedDBSet).toHaveBeenCalledWith('onboarding', { dismissed: true });
+    });
+  });
+
+  describe('createOneOffNotice', () => {
+    it('should be hidden initially', () => {
+      expect(createOneOffNotice('testNotice').show.current).toBe(false);
+    });
+
+    it('should show the notice unless it has been dismissed', async () => {
+      const notice = createOneOffNotice('testNotice');
+
+      await notice.showIfNeeded();
+      expect(notice.show.current).toBe(true);
+
+      mockOnboardingState = { testNotice: true };
+      await notice.showIfNeeded();
+      expect(notice.show.current).toBe(false);
+    });
+
+    it('should hide the notice and remember the dismissal', async () => {
+      const notice = createOneOffNotice('testNotice');
+
+      await notice.showIfNeeded();
+      notice.hide();
+      expect(notice.show.current).toBe(false);
+
+      await vi.waitFor(() => {
+        expect(mockOnboardingState).toEqual({ testNotice: true });
+      });
+
+      await notice.showIfNeeded();
+      expect(notice.show.current).toBe(false);
     });
   });
 });

@@ -1,12 +1,13 @@
 import { flatten } from 'flat';
 
 import { suspendAutoDuplication } from '$lib/services/contents/draft';
+import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getSubtree } from '$lib/services/contents/entry/subtree';
 
 /**
  * @import { DraftValueStoreKey, EntryDraft, InternalLocaleCode } from '$lib/types/private';
- * @import { FieldKeyPath } from '$lib/types/public';
+ * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -84,6 +85,32 @@ export const updateListField = ({
         ...expanderStateListRemainder,
       });
     }
+  });
+};
+
+/**
+ * Update the value in a list field for every locale the update has to be written to: the given
+ * locale, or every locale if the field has the `duplicate` i18n strategy. See
+ * {@link forEachTargetLocale} and {@link updateListField}.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.locale Locale being edited.
+ * @param {Field['i18n']} args.i18n Field-level `i18n` option.
+ * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
+ * @param {FieldKeyPath} args.keyPath Dot-notated field name.
+ * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) => void } args.manipulate A
+ * function to manipulate the list. See {@link updateListField}.
+ */
+export const updateListFieldForLocales = ({
+  draft,
+  locale,
+  i18n,
+  valueStoreKey = 'currentValues',
+  keyPath,
+  manipulate,
+}) => {
+  forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (_valueMap, _locale) => {
+    updateListField({ draft, locale: _locale, valueStoreKey, keyPath, manipulate });
   });
 };
 

@@ -3,8 +3,6 @@
   import { Alert, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
   import { escapeRegExp } from '@sveltia/utils/string';
   import equal from 'fast-deep-equal';
-  import { sanitize } from 'isomorphic-dompurify';
-  import { parseInline } from 'marked';
   import { getContext, setContext } from 'svelte';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
@@ -27,7 +25,9 @@
     isFieldRequired,
   } from '$lib/services/contents/entry/fields';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
   import { createRawState } from '$lib/services/utils/state.svelte';
+  import { sanitizeInlineMarkdown } from '$lib/services/utils/string';
   import { isPendingDeletion } from '$lib/services/workflow';
 
   /**
@@ -67,14 +67,6 @@
 
   const entryDraft = getEntryDraftContext();
 
-  /**
-   * Options for {@link sanitize}.
-   */
-  const SANITIZE_OPTIONS = {
-    ALLOWED_TAGS: ['strong', 'em', 'del', 'code', 'a', 'br'],
-    ALLOWED_ATTR: ['href'],
-  };
-
   /** @type {Props} */
   let {
     /* eslint-disable prefer-const */
@@ -91,12 +83,15 @@
   const fieldId = $props.id();
 
   /**
-   * Parse the given string as Markdown and sanitize the result to only allow certain tags.
+   * Parse the given string as Markdown and sanitize the result to only allow certain tags. A
+   * literal `\n` is turned into a line break.
    * @param {string} str Original string.
    * @returns {string} Sanitized string.
    */
   const _sanitize = (str) =>
-    sanitize(/** @type {string} */ (parseInline(str.replaceAll('\\n', '<br>'))), SANITIZE_OPTIONS);
+    sanitizeInlineMarkdown(str.replaceAll('\\n', '<br>'), {
+      allowedTags: ['strong', 'em', 'del', 'code', 'a', 'br'],
+    });
 
   /**
    * Write a value coming from the widget editor back to the entry draft.
@@ -182,7 +177,7 @@
   );
   /* v8 ignore stop */
   const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
-  const canTranslate = $derived(i18nEnabled && (i18n === true || i18n === 'translate'));
+  const canTranslate = $derived(i18nEnabled && isFieldTranslatable(i18n));
   const canDuplicate = $derived(i18nEnabled && i18n === 'duplicate');
   // KeyValue field only: the keys are mirrored from the default locale, the values are editable
   const canDuplicateKeys = $derived(i18nEnabled && i18n === 'duplicate_keys');

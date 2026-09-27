@@ -3,8 +3,7 @@
   import { getContext } from 'svelte';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { updateListField } from '$lib/services/contents/draft/update/list';
-  import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
+  import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
 
   /**
    * @import { FieldEditorContext, SelectFieldSelectorProps } from '$lib/types/private';
@@ -41,20 +40,15 @@
   /**
    * Update the value for the list.
    * @param {(arg: { valueList: any[], expanderStateList: any[] }) => void} manipulate See
-   * {@link updateListField}.
+   * {@link updateListFieldForLocales}.
    */
   const updateList = (manipulate) => {
     const draft = entryDraft.current;
 
     // Avoid an error while navigating pages
-    /* v8 ignore next 8 */
+    /* v8 ignore next 3 */
     if (draft) {
-      forEachTargetLocale(
-        { valueStore: draft[valueStoreKey], locale, i18n },
-        (_valueMap, _locale) => {
-          updateListField({ draft, locale: _locale, valueStoreKey, keyPath, manipulate });
-        },
-      );
+      updateListFieldForLocales({ draft, locale, i18n, valueStoreKey, keyPath, manipulate });
     }
   };
 

@@ -1,3 +1,5 @@
+import { isObject } from '@sveltia/utils/object';
+
 import { formatSummary as formatObjectSummary } from '$lib/services/contents/fields/object/helpers';
 
 /**
@@ -49,3 +51,38 @@ export const getListFieldInfo = (field) => {
  */
 export const formatSummary = ({ index, ...args }) =>
   formatObjectSummary({ ...args, itemKeyPath: `${args.keyPath}.${index}` });
+
+/**
+ * Get the `each` block key that identifies a List field item. Object items carry a generated ID
+ * that follows the item as the list is reordered; primitives can only be keyed by their position.
+ * @param {any[]} items List items.
+ * @param {number} index Target index.
+ * @returns {string | number} Key.
+ */
+export const getListItemKey = (items, index) => {
+  const item = items[index];
+
+  return isObject(item) ? (item.__sc_item_id ?? index) : index;
+};
+
+/**
+ * Tag the object items of a List field before they are added, removed or reordered, so that each
+ * item remembers its original key path, which is used to revert changes correctly once the items
+ * have shifted. Tags that are already set are kept, and primitive items are left alone.
+ * @param {any[]} valueList List items, which are mutated in place.
+ * @param {FieldKeyPath} keyPath Key path of the List field.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.assignIds] Whether to also give each item a unique ID, so that a keyed
+ * `each` block keeps following each item rather than its position.
+ */
+export const tagListItems = (valueList, keyPath, { assignIds = false } = {}) => {
+  valueList.forEach((item, index) => {
+    if (isObject(item)) {
+      if (assignIds) {
+        item.__sc_item_id ??= crypto.randomUUID();
+      }
+
+      item.__sc_item_original_key_path ??= `${keyPath}.${index}`;
+    }
+  });
+};

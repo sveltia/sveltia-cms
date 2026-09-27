@@ -11,8 +11,9 @@
   import { Button, EmptyState, SecretInput, TextInput } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
 
+  import { saveApiKey } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
-  import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
+  import { getServiceDescription, LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
   /**
    * @import { MediaLibraryService } from '$lib/types/private';
@@ -59,18 +60,11 @@
   {/if}
   <p role="alert">
     {#if isStockAssets}
-      {@html sanitize(
-        _('prefs.media.stock_photos.description', {
-          values: {
-            service: serviceLabel,
-            homeHref: `href="${developerURL}"`,
-            apiKeyHref: `href="${apiKeyURL}"`,
-          },
-        })
-          // Remove invisible characters used for link detection in the locale string
-          .replace(/[\u2068\u2069]/g, ''),
-        LINK_SANITIZE_OPTIONS,
-      )}
+      {@html getServiceDescription('prefs.media.stock_photos.description', {
+        service: serviceLabel,
+        developerURL,
+        apiKeyURL,
+      })}
     {/if}
     {#if serviceType === 'cloud_storage'}
       {@html sanitize(
@@ -99,11 +93,9 @@
           values: { service: serviceLabel },
         })}
         oninput={(event) => {
-          const _value = /** @type {HTMLInputElement} */ (event.target).value.trim();
+          const { value } = /** @type {HTMLInputElement} */ (event.target);
 
-          if (apiKeyPattern?.test(_value)) {
-            prefs.apiKeys ??= {};
-            prefs.apiKeys[serviceId] = _value;
+          if (saveApiKey(serviceId, value, apiKeyPattern) !== undefined) {
             onAuth?.();
           }
         }}

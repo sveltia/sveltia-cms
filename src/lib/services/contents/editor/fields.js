@@ -78,6 +78,16 @@ export const getInitialExpanderState = ({ draft, key, locale, collapsed = false 
 };
 
 /**
+ * Check whether the object/list expander at the given key path is expanded, which it is until it’s
+ * collapsed.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
+ * @param {string} key Key path of the expander, e.g. `authors.0` for a list item or `details#` for
+ * an Object field or a List field itself.
+ * @returns {boolean} Result.
+ */
+export const isExpanded = (draft, key) => draft?.expanderStates?._[key] ?? true;
+
+/**
  * Sync the field object/list expander states between locales.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.

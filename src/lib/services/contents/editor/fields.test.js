@@ -8,6 +8,7 @@ import {
   syncExpanderStates as _syncExpanderStates,
   getExpanderKeys,
   highlightEditorField,
+  isExpanded,
 } from './fields.js';
 
 /**
@@ -123,6 +124,23 @@ describe('editor/fields', () => {
       expect(typeof syncExpanderStates).toBe('function');
       expect(typeof getExpanderKeys).toBe('function');
       expect(typeof expandInvalidFields).toBe('function');
+    });
+  });
+
+  describe('isExpanded', () => {
+    it('should return the stored state', () => {
+      const draft = { expanderStates: { _: { 'authors.0': false, 'details#': true } } };
+
+      expect(isExpanded(/** @type {any} */ (draft), 'authors.0')).toBe(false);
+      expect(isExpanded(/** @type {any} */ (draft), 'details#')).toBe(true);
+    });
+
+    it('should default to expanded when no state is stored', () => {
+      expect(isExpanded(/** @type {any} */ ({ expanderStates: { _: {} } }), 'authors.1')).toBe(
+        true,
+      );
+      expect(isExpanded(/** @type {any} */ ({}), 'authors.1')).toBe(true);
+      expect(isExpanded(undefined, 'authors.1')).toBe(true);
     });
   });
 

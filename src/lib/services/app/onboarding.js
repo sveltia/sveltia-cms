@@ -79,3 +79,37 @@ export const setState = async (name, value) => {
 
   await uiSettingsDB.set('onboarding', { ...onboardingState, [name]: value });
 };
+
+/**
+ * @typedef {object} OneOffNotice
+ * @property {{ current: boolean }} show Whether the notice is shown.
+ * @property {() => Promise<void>} showIfNeeded Show the notice unless it has been dismissed.
+ * @property {() => void} hide Hide the notice and remember it, so it doesn’t come back.
+ */
+
+/**
+ * Create the state of a one-off notice, such as an infobar, that stays hidden once dismissed. The
+ * dismissal is stored in the UI settings database under the given name.
+ * @param {string} name State name to store the dismissal under.
+ * @returns {OneOffNotice} Notice state.
+ */
+export const createOneOffNotice = (name) => {
+  const show = createRawState(false);
+
+  return {
+    show,
+    /**
+     * Show the notice unless it has been dismissed.
+     */
+    showIfNeeded: async () => {
+      show.current = !(await getState(name));
+    },
+    /**
+     * Hide the notice and remember it, so it doesn’t come back.
+     */
+    hide: () => {
+      show.current = false;
+      setState(name, true);
+    },
+  };
+};

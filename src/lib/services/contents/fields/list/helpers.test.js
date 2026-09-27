@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
-import { formatSummary, getListFieldInfo } from './helpers';
+import { formatSummary, getListFieldInfo, getListItemKey, tagListItems } from './helpers';
 
 vi.mock('$lib/services/config');
 
@@ -679,5 +679,50 @@ describe('Test getListFieldInfo()', () => {
       hasVariableTypes: true,
       hasSubFields: true,
     });
+  });
+});
+
+describe('Test getListItemKey()', () => {
+  test('uses the generated ID of an object item', () => {
+    expect(getListItemKey([{ __sc_item_id: 'abc' }], 0)).toBe('abc');
+  });
+
+  test('falls back to the index for an object item without an ID', () => {
+    expect(getListItemKey([{}, { title: 'b' }], 1)).toBe(1);
+  });
+
+  test('uses the index for a primitive or missing item', () => {
+    expect(getListItemKey(['a', 'b'], 1)).toBe(1);
+    expect(getListItemKey([], 2)).toBe(2);
+  });
+});
+
+describe('Test tagListItems()', () => {
+  test('records the original key path of every object item, keeping existing tags', () => {
+    const list = [{ a: 1 }, 'text', { b: 2, __sc_item_original_key_path: 'items.5' }];
+
+    tagListItems(list, 'items');
+
+    expect(list).toEqual([
+      { a: 1, __sc_item_original_key_path: 'items.0' },
+      'text',
+      { b: 2, __sc_item_original_key_path: 'items.5' },
+    ]);
+  });
+
+  test('also assigns IDs when requested, keeping existing ones', () => {
+    /** @type {any[]} */
+    const list = [{ a: 1 }, { b: 2, __sc_item_id: 'existing' }, 3];
+
+    tagListItems(list, 'items', { assignIds: true });
+
+    expect(list[0].__sc_item_id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(list[0].__sc_item_original_key_path).toBe('items.0');
+    expect(list[1]).toEqual({
+      b: 2,
+      __sc_item_id: 'existing',
+      __sc_item_original_key_path: 'items.1',
+    });
+    expect(list[2]).toBe(3);
   });
 });

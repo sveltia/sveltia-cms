@@ -3,6 +3,7 @@
   import { SecretInput } from '@sveltia/ui';
   import { onMount } from 'svelte';
 
+  import { setApiKey } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
 
   /**
@@ -43,8 +44,7 @@
     const apiKey = value.trim();
     const invalid = !!apiKey && !!apiKeyPattern && !apiKeyPattern.test(apiKey);
 
-    prefs.apiKeys ??= {};
-    prefs.apiKeys[serviceId] = invalid ? '' : apiKey;
+    setApiKey(serviceId, invalid ? '' : apiKey);
 
     onChange?.({
       message: invalid

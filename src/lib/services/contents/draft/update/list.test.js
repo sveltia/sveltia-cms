@@ -7,6 +7,7 @@ import {
   moveMultiValueItem as _moveMultiValueItem,
   removeMultiValueItem as _removeMultiValueItem,
   updateListField as _updateListField,
+  updateListFieldForLocales as _updateListFieldForLocales,
   getItemList,
   updateObject,
 } from './list';
@@ -20,6 +21,10 @@ vi.mock('$lib/services/contents/draft', () => ({ suspendAutoDuplication }));
 describe('draft/update/list', () => {
   let mockEntryDraft;
   const updateListField = (args) => _updateListField({ draft: mockEntryDraft, ...args });
+
+  const updateListFieldForLocales = (args) =>
+    _updateListFieldForLocales({ draft: mockEntryDraft, ...args });
+
   const moveMultiValueItem = (args) => _moveMultiValueItem({ draft: mockEntryDraft, ...args });
   const removeMultiValueItem = (args) => _removeMultiValueItem({ draft: mockEntryDraft, ...args });
   const addMultiValueItems = (args) => _addMultiValueItems({ draft: mockEntryDraft, ...args });
@@ -173,6 +178,65 @@ describe('draft/update/list', () => {
       });
 
       expect(suspendAutoDuplication).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('updateListFieldForLocales', () => {
+    beforeEach(() => {
+      mockEntryDraft.currentValues.ja = { 'tags.0': 'タグ1' };
+    });
+
+    it('should only update the given locale for a field without the duplicate strategy', () => {
+      updateListFieldForLocales({
+        locale: 'ja',
+        i18n: true,
+        keyPath: 'tags',
+        manipulate: ({ valueList }) => {
+          valueList.push('タグ2');
+        },
+      });
+
+      expect(mockEntryDraft.currentValues.ja).toEqual({ 'tags.0': 'タグ1', 'tags.1': 'タグ2' });
+      expect(mockEntryDraft.currentValues.en['tags.3']).toBeUndefined();
+      // The expander states are only manipulated with the default locale
+      expect(mockEntryDraft.expanderStates._).toEqual({
+        'tags.0': true,
+        'tags.1': false,
+        'tags.2': true,
+      });
+    });
+
+    it('should update every locale for a field with the duplicate strategy', () => {
+      updateListFieldForLocales({
+        locale: 'en',
+        i18n: 'duplicate',
+        keyPath: 'tags',
+        manipulate: ({ valueList, expanderStateList }) => {
+          valueList.splice(0, 1);
+          expanderStateList.splice(0, 1);
+        },
+      });
+
+      expect(mockEntryDraft.currentValues.en).toEqual({ 'tags.0': 'tag2', 'tags.1': 'tag3' });
+      expect(mockEntryDraft.currentValues.ja).toEqual({ tags: [] });
+      expect(mockEntryDraft.expanderStates._).toEqual({ 'tags.0': false, 'tags.1': true });
+    });
+
+    it('should use the given value store', () => {
+      mockEntryDraft.extraValues = { en: { 'tags.0': 'extra' } };
+
+      updateListFieldForLocales({
+        locale: 'en',
+        i18n: false,
+        valueStoreKey: 'extraValues',
+        keyPath: 'tags',
+        manipulate: ({ valueList }) => {
+          valueList.push('extra2');
+        },
+      });
+
+      expect(mockEntryDraft.extraValues.en).toEqual({ 'tags.0': 'extra', 'tags.1': 'extra2' });
+      expect(mockEntryDraft.currentValues.en['tags.3']).toBeUndefined();
     });
   });
 

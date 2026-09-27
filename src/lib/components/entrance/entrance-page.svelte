@@ -1,8 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Progressbar } from '@sveltia/ui';
-  import { sanitize } from 'isomorphic-dompurify';
-  import { marked } from 'marked';
 
   import SignIn from '$lib/components/entrance/sign-in.svelte';
   import { appLogoURL, appTitle, DEFAULT_APP_TITLE } from '$lib/services/app/branding';
@@ -13,14 +11,7 @@
   import { user } from '$lib/services/user/account.svelte';
   import { auth } from '$lib/services/user/auth.svelte';
   import { prefs, prefsError } from '$lib/services/user/prefs.svelte';
-
-  /**
-   * Options for {@link sanitize}.
-   */
-  const SANITIZE_OPTIONS = {
-    ALLOWED_TAGS: ['a', 'code'],
-    ALLOWED_ATTR: ['href'],
-  };
+  import { sanitizeInlineMarkdown } from '$lib/services/utils/string';
 
   $effect(() => {
     if (cmsConfigLoaded.current) {
@@ -30,7 +21,7 @@
 </script>
 
 {#snippet parseMarkdown(/** @type {string} */ str)}
-  {@html sanitize(/** @type {string} */ (marked.parseInline(str)), SANITIZE_OPTIONS)}
+  {@html sanitizeInlineMarkdown(str, { allowedTags: ['a', 'code'] })}
 {/snippet}
 
 <div role="none" class="container">

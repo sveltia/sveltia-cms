@@ -6,14 +6,13 @@
 -->
 <script>
   import { VisibilityObserver } from '@sveltia/ui';
-  import { isObject } from '@sveltia/utils/object';
 
   import Subsection from '$lib/components/contents/details/fields/object/subsection.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getSubtree } from '$lib/services/contents/entry/subtree';
-  import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
+  import { getListFieldInfo, getListItemKey } from '$lib/services/contents/fields/list/helpers';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -63,22 +62,9 @@
    * @type {(string | undefined)[]}
    */
   const itemTypes = $derived(items.map((item) => (hasVariableTypes ? item[typeKey] : undefined)));
-
-  /**
-   * Get the `each` block key that identifies the item at the given index. Object items carry a
-   * generated ID that follows the item as the list is reordered; primitives can only be keyed by
-   * their position.
-   * @param {number} index Target index.
-   * @returns {string | number} Key.
-   */
-  const getItemKey = (index) => {
-    const item = items[index];
-
-    return isObject(item) ? (item.__sc_item_id ?? index) : index;
-  };
 </script>
 
-{#each itemTypes as type, index (getItemKey(index))}
+{#each itemTypes as type, index (getListItemKey(items, index))}
   <VisibilityObserver>
     {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
     {#if hasVariableTypes && !typeConfig}

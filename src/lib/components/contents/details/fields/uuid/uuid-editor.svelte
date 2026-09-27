@@ -11,6 +11,7 @@
   import { warnDeprecation } from '$lib/services/config/deprecations';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getInitialValue } from '$lib/services/contents/fields/uuid/helpers';
+  import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -44,7 +45,7 @@
   // i18n-duplicate the value
   onMount(() => {
     if (!currentValue) {
-      if (locale === defaultLocale || [true, 'translate'].includes(fieldConfig?.i18n ?? false)) {
+      if (locale === defaultLocale || isFieldTranslatable(fieldConfig?.i18n)) {
         currentValue = getInitialValue(fieldConfig);
       }
     }
