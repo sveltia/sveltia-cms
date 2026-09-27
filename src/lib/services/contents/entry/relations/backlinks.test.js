@@ -308,6 +308,51 @@ describe('getBacklinks()', () => {
     ]);
   });
 
+  test('sorts the backlinks by summary within each collection', () => {
+    getCollection.mockImplementation((name) =>
+      name === 'posts'
+        ? postsCollection
+        : { name: 'pages', label: 'Pages', _i18n: { defaultLocale: '_default' } },
+    );
+
+    collectors.relationFields = new Set([
+      {
+        fieldConfig: { widget: 'relation', name: 'tag', label: 'Tag', collection: 'tags' },
+        context: { collection: { name: 'posts' }, typedKeyPath: 'tag' },
+      },
+      {
+        fieldConfig: { widget: 'relation', name: 'topic', label: 'Topic', collection: 'tags' },
+        context: { collection: { name: 'pages' }, typedKeyPath: 'topic' },
+      },
+      {
+        fieldConfig: { widget: 'relation', name: 'topic', label: 'Topic', collection: 'tags' },
+        context: { collection: { name: 'posts' }, typedKeyPath: 'topic' },
+      },
+    ]);
+
+    getEntriesByCollection.mockImplementation((name) =>
+      name === 'posts'
+        ? [
+            createPost('post-10', { tag: 'travel' }),
+            createPost('post-b', { topic: 'travel' }),
+            createPost('post-2', { tag: 'travel' }),
+          ]
+        : [createPost('page-b', { topic: 'travel' }), createPost('page-a', { topic: 'travel' })],
+    );
+    getEntrySummary.mockImplementation((_collection, { id }) => id);
+
+    const result = getBacklinks({ collectionName: 'tags', entry: targetEntry });
+
+    // The numbers are compared as such, and the collections stay in the order they were found
+    expect(result.map(({ summary }) => summary)).toEqual([
+      'post-2',
+      'post-10',
+      'post-b',
+      'page-a',
+      'page-b',
+    ]);
+  });
+
   test('lists an entry once even if several of its Relation fields reference the target', () => {
     collectors.relationFields = new Set([
       {

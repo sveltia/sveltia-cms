@@ -109,9 +109,7 @@ test.describe('Backlinks panel', () => {
 
     const posts = panel.getByRole('group', { name: 'Posts' });
 
-    // The entries are listed in the order they were loaded
-    await expect(posts.getByRole('button')).toHaveCount(2);
-    await expect(posts.getByRole('button', { name: /First Light/ })).toBeVisible();
+    await expect(posts.getByRole('button')).toHaveText([/First Light/, /Talking to Jane/]);
     await posts.getByRole('button', { name: /Talking to Jane/ }).click();
     await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Talking to Jane');
   });
