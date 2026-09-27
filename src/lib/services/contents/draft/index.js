@@ -1,6 +1,8 @@
 import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
+import { isPairOrderModified } from '$lib/services/contents/fields/key-value/order';
+
 /**
  * Regex to match internal properties added to list items, which should be excluded from output.
  */
@@ -192,6 +194,8 @@ export const isDraftModified = (draft) => {
     // Moving an entry with the path editor is a change of its own, with no field to go with it
     stripSlashes(originalPath ?? '') !== stripSlashes(currentPath ?? '') ||
     // Internal properties are excluded from the value comparison
-    areValuesModified(originalValues, currentValues)
+    areValuesModified(originalValues, currentValues) ||
+    // Reordering the pairs of a KeyValue field changes no value, only the order they are saved in
+    isPairOrderModified({ draft, isRealKey })
   );
 };

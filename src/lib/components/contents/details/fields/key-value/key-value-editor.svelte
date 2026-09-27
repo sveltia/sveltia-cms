@@ -8,8 +8,10 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { getContext } from 'svelte';
+  import { getContext, tick } from 'svelte';
+  import { flip } from 'svelte/animate';
 
+  import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
@@ -20,6 +22,8 @@
     validatePairs,
   } from '$lib/services/contents/fields/key-value/helpers';
   import { getDirection } from '$lib/services/contents/i18n';
+  import { focusReorderControl, moveListItem } from '$lib/services/utils/drag-sorting';
+  import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -72,6 +76,8 @@
   let nextPairId = 0;
   /** @type {HTMLTableRowElement[]} */
   const rowElements = $state([]);
+  /** @type {HTMLTableSectionElement | undefined} */
+  let tableBody = $state();
   /** @type {boolean[]} */
   let edited = $state([]);
   /** @type {('empty' | 'duplicate' | undefined)[]} */
@@ -162,6 +168,36 @@
   };
 
   /**
+   * Move a pair to another position in {@link pairs}. The pairs are saved in the new order.
+   * @param {number} from Source index.
+   * @param {number} to Destination index.
+   * @param {string} [action] `data-action` of the reorder control that triggered the move, so the
+   * focus can be restored to the matching control on the row once it has moved.
+   */
+  const movePair = async (from, to, action = 'reorder') => {
+    pairs = moveListItem(pairs, from, to);
+    pairIds = moveListItem(pairIds, from, to);
+    edited = moveListItem(edited, from, to);
+
+    await tick();
+    focusReorderControl({ listElement: tableBody, index: to, action });
+  };
+
+  const sorter = createDragSorter({
+    /**
+     * Get the number of pairs.
+     * @returns {number} Pair count.
+     */
+    getItemCount: () => pairs.length,
+    /**
+     * Get the table body, whose rows are the pairs.
+     * @returns {HTMLTableSectionElement | undefined} Element.
+     */
+    getListElement: () => tableBody,
+    onMove: movePair,
+  });
+
+  /**
    * Update the draft store whenever the {@link pairs} is updated.
    */
   const updateStore = () => {
@@ -209,6 +245,9 @@
   <table>
     <thead>
       <tr>
+        {#if !keysReadonly}
+          <th scope="col" class="reorder" aria-label={_('reorder')}></th>
+        {/if}
         <th scope="col" class="key">{keyLabel}</th>
         <th scope="col" class="value">{valueLabel}</th>
         {#if !keysReadonly}
@@ -216,15 +255,40 @@
         {/if}
       </tr>
     </thead>
-    <tbody>
-      {#each pairs as pair, index (pairIds[index])}
-        <tr bind:this={rowElements[index]}>
+    <tbody
+      bind:this={tableBody}
+      ondragovercapture={sorter.onDragOver}
+      ondropcapture={sorter.onDrop}
+    >
+      {#each sorter.displayOrder as index (pairIds[index])}
+        <tr
+          bind:this={rowElements[index]}
+          class:dragging={sorter.dragIndex === index}
+          draggable={sorter.grabbedIndex === index}
+          ondragstart={(event) => sorter.onDragStart(index, event, pairs[index][0])}
+          ondragend={sorter.onDragEnd}
+          animate:flip={{ duration: 200 }}
+        >
+          {#if !keysReadonly}
+            <td class="reorder">
+              <div role="none">
+                <ReorderControls
+                  {index}
+                  itemCount={pairs.length}
+                  disabled={pairs.length < 2}
+                  onGrab={() => sorter.grab(index)}
+                  onRelease={sorter.release}
+                  onMove={(to, action) => movePair(index, to, action)}
+                />
+              </div>
+            </td>
+          {/if}
           <td class="key">
             <TextInput
               dir="ltr"
               readonly={keysReadonly}
               flex
-              bind:value={pair[0]}
+              bind:value={pairs[index][0]}
               invalid={!!validations[index]}
               ariaLabel={keyLabel}
               aria-errormessage={validations[index] ? `${fieldId}-kv-error` : undefined}
@@ -246,7 +310,7 @@
               dir={getDirection(locale)}
               {readonly}
               flex
-              bind:value={pair[1]}
+              bind:value={pairs[index][1]}
               ariaLabel={valueLabel}
               onkeydown={(event) => {
                 // Move focus or add a new pair with Enter key
@@ -337,5 +401,19 @@
   td {
     padding: 0;
     vertical-align: middle;
+
+    &.reorder div {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  tr {
+    /* The dragged row is left as a faint placeholder marking the gap it would drop into, like the
+      items of a List field */
+
+    &.dragging {
+      opacity: 0.25;
+    }
   }
 </style>

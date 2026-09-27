@@ -166,3 +166,59 @@ test('refuses to save a list of objects with more items than its maximum', async
     .poll(async () => (await cms.readRepo())[STAR_PARTY_PATH])
     .toContain('title: Star Party!\n');
 });
+
+/**
+ * Get the Star Party event file with the given metadata pairs. The file includes the value of the
+ * compute field, which the CMS otherwise adds on opening the entry, so opening it changes nothing.
+ * @param {string} pairs Metadata pairs in YAML.
+ * @returns {string} File content.
+ */
+const getStarPartyWithMetadata = (pairs) =>
+  FIELD_TYPES_FILES[STAR_PARTY_PATH].replace(
+    'country: ca\n',
+    `country: ca\nmetadata:\n${pairs}slug_preview: Star Party (Canada)\n`,
+  );
+
+test('reorders key-value pairs, saving them in the new order', async ({ cms, page }) => {
+  // The file was edited outside the CMS
+  await cms.seed({
+    [STAR_PARTY_PATH]: getStarPartyWithMetadata(
+      "  capacity: '120'\n  dress_code: casual\n  parking: free\n",
+    ),
+  });
+  // The test backend signs in again on its own
+  await page.reload();
+  await page.getByRole('row', { name: /Star Party/ }).click();
+
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const metadata = editor.getByRole('group', { name: /Metadata/ });
+  const saveButton = editor.getByRole('button', { name: 'Save' });
+
+  await expect(editor.getByRole('group', { name: /Notes/ })).toBeVisible();
+  await expect(saveButton).toBeDisabled();
+
+  await metadata.getByRole('button', { name: 'Reorder Item' }).first().focus();
+  await page.keyboard.press('End');
+  await expect
+    .poll(() =>
+      metadata
+        .getByRole('textbox', { name: 'Key' })
+        .evaluateAll((inputs) => inputs.map((input) => /** @type {any} */ (input).value)),
+    )
+    .toEqual(['dress_code', 'parking', 'capacity']);
+  // Only the order has changed, which is a change of its own
+  await expect(saveButton).toBeEnabled();
+
+  // Moving the pair back undoes the change
+  await metadata.getByRole('button', { name: 'Reorder Item' }).last().focus();
+  await page.keyboard.press('Home');
+  await expect(saveButton).toBeDisabled();
+
+  await metadata.getByRole('button', { name: 'Reorder Item' }).nth(1).focus();
+  await page.keyboard.press('ArrowDown');
+  await saveButton.click();
+
+  await expect
+    .poll(async () => (await cms.readRepo())[STAR_PARTY_PATH])
+    .toBe(getStarPartyWithMetadata("  capacity: '120'\n  parking: free\n  dress_code: casual\n"));
+});

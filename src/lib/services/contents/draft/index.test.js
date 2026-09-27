@@ -1,6 +1,8 @@
 // @ts-nocheck
 import { describe, expect, it, vi } from 'vitest';
 
+import { isPairOrderModified } from '$lib/services/contents/fields/key-value/order';
+
 import {
   filterRealValues,
   isAutoDuplicationEnabled,
@@ -8,6 +10,10 @@ import {
   revokeDraftFileURLs,
   suspendAutoDuplication,
 } from '.';
+
+vi.mock('$lib/services/contents/fields/key-value/order', () => ({
+  isPairOrderModified: vi.fn(() => false),
+}));
 
 describe('draft/index', () => {
   describe('filterRealValues', () => {
@@ -154,6 +160,22 @@ describe('draft/index', () => {
       };
 
       expect(isDraftModified(draft)).toBe(false);
+    });
+
+    it('should return true when the pairs of a KeyValue field are reordered', () => {
+      vi.mocked(isPairOrderModified).mockReturnValueOnce(true);
+
+      const draft = {
+        originalLocales: { en: true },
+        currentLocales: { en: true },
+        originalSlugs: { en: 'test' },
+        currentSlugs: { en: 'test' },
+        originalValues: { en: { 'meta.a': '1', 'meta.b': '2' } },
+        currentValues: { en: { 'meta.b': '2', 'meta.a': '1' } },
+      };
+
+      expect(isDraftModified(draft)).toBe(true);
+      expect(isPairOrderModified).toHaveBeenCalledWith({ draft, isRealKey: expect.any(Function) });
     });
 
     it('should return true when the entry path is modified', () => {

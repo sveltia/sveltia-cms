@@ -1,6 +1,8 @@
-import { describe, expect, test } from 'vitest';
+import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
+import { initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import KeyValueEditor from './key-value-editor.svelte';
@@ -8,6 +10,24 @@ import KeyValueEditor from './key-value-editor.svelte';
 /**
  * @import { KeyValueField } from '$lib/types/public';
  */
+
+vi.mock('$lib/services/user/env.svelte', async () => {
+  const { createState } = await import('$lib/services/utils/state.svelte');
+
+  return { env: createState({ hasMouse: true }), initUserEnvDetection: vi.fn() };
+});
+
+beforeAll(async () => {
+  await initTestConfig({
+    collections: [
+      {
+        name: 'posts',
+        folder: 'content/posts',
+        fields: [{ name: 'meta', widget: 'keyvalue' }],
+      },
+    ],
+  });
+});
 
 /**
  * Render the editor within a draft.
@@ -34,6 +54,12 @@ const renderEditor = async (pairs, { config = {}, readonly = false, locale = '_d
     i18n,
     values: i18n ? { en: { ...values }, fr: { ...values } } : { _default: values },
   });
+
+  // Wrap the value map like the app does, which keeps track of the order the pairs are stored in:
+  // a `$state` proxy keeps a key deleted and written again in its old position
+  if (!i18n) {
+    draft.currentValues._default = createProxy({ draft, locale: '_default', target: values });
+  }
 
   await renderWithDraft(KeyValueEditor, {
     draft,
@@ -63,6 +89,13 @@ const getStoredPairs = (draft) =>
       .filter(([key]) => key.startsWith('meta.'))
       .map(([key, value]) => [key.replace('meta.', ''), value]),
   );
+
+/**
+ * Get the stored keys in the order they are stored in, which is the order they are saved in.
+ * @param {any} draft Draft.
+ * @returns {string[]} Keys.
+ */
+const getStoredKeys = (draft) => Object.keys(getStoredPairs(draft));
 
 /**
  * Get the values of the inputs in each row.
@@ -193,6 +226,66 @@ describe('KeyValueEditor', () => {
     expect(getStoredPairs(draft)).toEqual({ color: 'red', size: 'L' });
   });
 
+  test('reorders a pair with the keyboard', async () => {
+    const { draft } = await renderEditor({ color: 'red', size: 'L', shape: 'round' });
+
+    await page.getByRole('button', { name: 'Reorder Item' }).nth(2).element().focus();
+    await userEvent.keyboard('{Home}');
+
+    await expect.poll(getRows).toEqual([
+      ['shape', 'round'],
+      ['color', 'red'],
+      ['size', 'L'],
+    ]);
+    await expect.poll(() => getStoredKeys(draft)).toEqual(['shape', 'color', 'size']);
+    await expect.element(page.getByRole('button', { name: 'Reorder Item' }).nth(0)).toHaveFocus();
+  });
+
+  test('reorders a pair by dragging', async () => {
+    const { draft } = await renderEditor({ color: 'red', size: 'L' });
+    const [first, second] = page.getByRole('row').elements().slice(1);
+    const dataTransfer = new DataTransfer();
+    // Grab the row with the handle, then drag it below the other row
+    const handle = page.getByRole('button', { name: 'Reorder Item' }).nth(0);
+
+    handle.element().dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    await expect.poll(() => first.getAttribute('draggable')).toBe('true');
+
+    first.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }));
+    expect(dataTransfer.getData('text/plain')).toBe('color');
+    await expect.poll(() => first.classList.contains('dragging')).toBe(true);
+
+    const { bottom } = second.getBoundingClientRect();
+
+    second.dispatchEvent(
+      new DragEvent('dragover', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer,
+        clientY: bottom - 1,
+      }),
+    );
+    second.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    first.dispatchEvent(new DragEvent('dragend', { bubbles: true }));
+
+    await expect.poll(() => getStoredKeys(draft)).toEqual(['size', 'color']);
+    await expect.poll(() => first.getAttribute('draggable')).toBe('false');
+
+    // Releasing the handle without dragging
+    handle.element().dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    await expect.poll(() => second.getAttribute('draggable')).toBe('true');
+    handle.element().dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+    await expect.poll(() => second.getAttribute('draggable')).toBe('false');
+  });
+
+  test('disables reordering with a single pair', async () => {
+    await renderEditor({ color: 'red' });
+
+    await expect
+      .element(page.getByRole('button', { name: 'Reorder Item' }))
+      .toHaveAttribute('aria-disabled', 'true');
+  });
+
   test('follows an external change to the pairs', async () => {
     const { draft } = await renderEditor({ color: 'red' });
 
@@ -212,6 +305,8 @@ describe('KeyValueEditor', () => {
     await expect
       .element(page.getByRole('textbox', { name: 'Value' }))
       .not.toHaveAttribute('aria-readonly', 'true');
+    // The order is mirrored from the default locale as well
+    expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(0);
   });
 
   test('locks the keys when read-only', async () => {
