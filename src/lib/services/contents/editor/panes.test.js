@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   getDefaultPanes,
+  getLocaleContentLabel,
   getPanesEditingLocale,
   getPaneSizes,
   getPaneStateKey,
@@ -14,7 +15,13 @@ import { entryEditorSettings } from '$lib/services/contents/editor/settings';
  * @import { EntryEditorPane } from '$lib/types/private';
  */
 
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key, { values } = {}) => (values ? `${key}(${values.locale})` : key)),
+}));
 vi.mock('$lib/services/contents/editor', () => ({ MIN_PANE_SIZE: 30 }));
+vi.mock('$lib/services/contents/i18n', () => ({
+  getLocaleLabel: vi.fn((locale) => (locale === 'en' ? 'English' : undefined)),
+}));
 vi.mock('$lib/services/contents/editor/settings', () => ({
   entryEditorSettings: { current: undefined },
 }));
@@ -25,6 +32,30 @@ const editEn = { mode: 'edit', locale: 'en' };
 const editFr = { mode: 'edit', locale: 'fr' };
 /** @type {EntryEditorPane} */
 const previewEn = { mode: 'preview', locale: 'en' };
+
+describe('getLocaleContentLabel()', () => {
+  test('names the locale', () => {
+    expect(getLocaleContentLabel('edit_x_locale', 'en')).toBe('edit_x_locale(English)');
+    expect(getLocaleContentLabel('content_options_x_locale', 'en')).toBe(
+      'content_options_x_locale(English)',
+    );
+  });
+
+  test('falls back to the locale code for a locale without a name', () => {
+    expect(getLocaleContentLabel('preview_x_locale', 'x-custom')).toBe(
+      'preview_x_locale(x-custom)',
+    );
+  });
+
+  test('leaves out the internal locale key of a monolingual entry', () => {
+    expect(getLocaleContentLabel('edit_x_locale', '_default')).toBe('edit_content');
+    expect(getLocaleContentLabel('preview_x_locale', '_default')).toBe('preview_content');
+    expect(getLocaleContentLabel('show_content_options_x_locale', '_default')).toBe(
+      'show_content_options',
+    );
+    expect(getLocaleContentLabel('content_options_x_locale', '_default')).toBe('content_options');
+  });
+});
 
 describe('getPaneStateKey()', () => {
   test('uses the collection name', () => {

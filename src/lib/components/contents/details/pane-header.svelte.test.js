@@ -68,15 +68,18 @@ const renderHeader = async ({
 
 /**
  * Open the content options menu.
- * @param {string} [locale] Locale label.
+ * @param {string | null} [locale] Locale label, or `null` for a monolingual entry, whose content
+ * has no locale to name.
  * @returns {Promise<import('vitest/browser').Locator>} Menu.
  */
 const openMenu = async (locale = 'English') => {
-  await page.getByRole('button', { name: `Show \u2068${locale}\u2069 Content Options` }).click();
+  const name = locale ? `\u2068${locale}\u2069 Content Options` : 'Content Options';
+
+  await page.getByRole('button', { name: `Show ${name}`, exact: true }).click();
   // A Sveltia UI menu starts handling clicks 100 ms after it’s opened
   await sleep(150);
 
-  return page.getByRole('menu', { name: `\u2068${locale}\u2069 Content Options` });
+  return page.getByRole('menu', { name, exact: true });
 };
 
 describe('PaneHeader', () => {
@@ -281,7 +284,7 @@ describe('PaneHeader', () => {
       thisPane: createRawState(/** @type {any} */ ({ mode: 'edit', locale: '_default' })),
     });
 
-    const menu = await openMenu('_default');
+    const menu = await openMenu(null);
 
     await expect.element(menu.getByRole('menuitem', { name: 'View on Live Site' })).toBeVisible();
   });
@@ -321,7 +324,7 @@ describe('PaneHeader', () => {
       thisPane: createRawState(/** @type {any} */ ({ mode: 'edit', locale: '_default' })),
     });
 
-    const menu = await openMenu('_default');
+    const menu = await openMenu(null);
 
     await expect.element(menu.getByRole('menuitem', { name: 'View on Live Site' })).toBeVisible();
   });
@@ -360,7 +363,7 @@ describe('PaneHeader', () => {
     expect(page.getByRole('radiogroup').elements()).toHaveLength(0);
     expect(page.getByRole('button', { name: /Translate/ }).elements()).toHaveLength(0);
 
-    const menu = await openMenu('_default');
+    const menu = await openMenu(null);
 
     expect(
       menu
@@ -408,7 +411,7 @@ describe('PaneHeader', () => {
       },
     });
 
-    const menu = await openMenu('_default');
+    const menu = await openMenu(null);
 
     expect(menu.element().querySelectorAll('[role="separator"]')).toHaveLength(0);
   });

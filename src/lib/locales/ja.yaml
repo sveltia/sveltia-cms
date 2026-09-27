@@ -1062,6 +1062,9 @@ swap_panes: ペインを入れ替える
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: '{$locale} コンテンツを編集'
 preview_x_locale: '{$locale} コンテンツをプレビュー'
+# The content of a monolingual entry, which has no locale to name
+edit_content: コンテンツを編集
+preview_content: コンテンツをプレビュー
 
 # Preview iframe labels
 content_preview: コンテンツプレビュー
@@ -1070,6 +1073,8 @@ content_preview: コンテンツプレビュー
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: '{$locale} コンテンツのオプションを表示'
 content_options_x_locale: '{$locale} コンテンツのオプション'
+show_content_options: コンテンツのオプションを表示
+content_options: コンテンツのオプション
 
 # Field container labels
 # {$field} is the field’s display label

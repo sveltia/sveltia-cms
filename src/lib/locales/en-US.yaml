@@ -1114,6 +1114,9 @@ swap_panes: Swap Panes
 # {$locale} is the localized language name for the current content pane, e.g., English
 edit_x_locale: Edit {$locale} Content
 preview_x_locale: Preview {$locale} Content
+# The content of a monolingual entry, which has no locale to name
+edit_content: Edit Content
+preview_content: Preview Content
 
 # Preview iframe labels
 content_preview: Content Preview
@@ -1122,6 +1125,8 @@ content_preview: Content Preview
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Show {$locale} Content Options
 content_options_x_locale: '{$locale} Content Options'
+show_content_options: Show Content Options
+content_options: Content Options
 
 # Field container labels
 # {$field} is the field’s display label

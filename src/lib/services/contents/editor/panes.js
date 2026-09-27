@@ -1,12 +1,39 @@
+import { _ } from '@sveltia/i18n';
 import { untrack } from 'svelte';
 
 import { MIN_PANE_SIZE } from '$lib/services/contents/editor';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+import { getLocaleLabel } from '$lib/services/contents/i18n';
+import { DEFAULT_LOCALE_KEY } from '$lib/services/contents/i18n/config/constants';
 
 /**
  * @import { EntryEditorPane, InternalCollection, InternalCollectionFile, InternalLocaleCode }
  * from '$lib/types/private';
  */
+
+/**
+ * I18n keys of the strings naming a locale’s content in the editor, e.g. “Edit English Content”,
+ * mapped to the keys of the same strings without the locale, for the content of a monolingual
+ * entry, e.g. “Edit Content”.
+ */
+const LOCALE_CONTENT_KEYS = {
+  edit_x_locale: 'edit_content',
+  preview_x_locale: 'preview_content',
+  show_content_options_x_locale: 'show_content_options',
+  content_options_x_locale: 'content_options',
+};
+
+/**
+ * Localize a string naming a locale’s content in the editor. The content of a monolingual entry
+ * has no locale to name, so the string without it is used rather than the internal locale key.
+ * @param {keyof LOCALE_CONTENT_KEYS} key I18n key of the string with the locale.
+ * @param {InternalLocaleCode} locale Locale code.
+ * @returns {string} Localized string.
+ */
+export const getLocaleContentLabel = (key, locale) =>
+  locale === DEFAULT_LOCALE_KEY
+    ? _(LOCALE_CONTENT_KEYS[key])
+    : _(key, { values: { locale: getLocaleLabel(locale) ?? locale } });
 
 /**
  * Get the key under which the pane state of the given collection or collection file is saved.

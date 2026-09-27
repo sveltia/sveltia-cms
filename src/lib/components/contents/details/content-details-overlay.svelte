@@ -46,6 +46,7 @@
   import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/fields';
   import {
     getDefaultPanes,
+    getLocaleContentLabel,
     getPanesEditingLocale,
     getPaneSizes,
     getPaneStateKey,
@@ -53,7 +54,6 @@
     savePaneState,
   } from '$lib/services/contents/editor/panes';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
-  import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
@@ -467,9 +467,10 @@
   <div class="pane-wrapper">
     <Group
       class="pane"
-      ariaLabel={_(mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale', {
-        values: { locale: getLocaleLabel(locale) ?? locale },
-      })}
+      ariaLabel={getLocaleContentLabel(
+        mode === 'edit' ? 'edit_x_locale' : 'preview_x_locale',
+        locale,
+      )}
       data-locale={locale}
       data-mode={mode}
     >

@@ -14,6 +14,7 @@
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getLocaleContentLabel } from '$lib/services/contents/editor/panes';
   import { getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -125,7 +126,8 @@
     {/if}
     <Spacer flex />
     {#if thisPane.current?.mode === 'edit'}
-      {@const localeLabel = getLocaleLabel(thisPane.current.locale) ?? thisPane.current.locale}
+      {@const paneLocale = thisPane.current.locale}
+      {@const localeLabel = getLocaleLabel(paneLocale) ?? paneLocale}
       {#if canCopy}
         <TranslateButton locale={thisPane.current.locale} {otherLocales} />
       {/if}
@@ -134,10 +136,10 @@
         iconic
         disabled={pendingDeletion}
         popupPosition="bottom-right"
-        aria-label={_('show_content_options_x_locale', { values: { locale: localeLabel } })}
+        aria-label={getLocaleContentLabel('show_content_options_x_locale', paneLocale)}
       >
         {#snippet popup()}
-          <Menu ariaLabel={_('content_options_x_locale', { values: { locale: localeLabel } })}>
+          <Menu ariaLabel={getLocaleContentLabel('content_options_x_locale', paneLocale)}>
             {#if canCopy && thisPane.current?.locale}
               <CopyMenuItems locale={thisPane.current.locale} {otherLocales} submenu />
             {/if}
