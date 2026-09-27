@@ -151,18 +151,23 @@
       return [];
     }
 
-    return _editorComponents
-      .filter((name) =>
-        allowNestedComponents === 'exclude_self' ? !parentComponentNames.includes(name) : true,
-      )
-      .map((name) =>
-        getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
-      )
-      .filter((def) => !!def)
-      .map(
-        (def) =>
-          /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
-      );
+    return (
+      _editorComponents
+        .map((name) =>
+          getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
+        )
+        .filter((def) => !!def)
+        // Compare the definition IDs, because the parent component names are the IDs, which are
+        // prefixed for custom components, e.g. `x-youtube`
+        .filter(
+          (def) =>
+            allowNestedComponents !== 'exclude_self' || !parentComponentNames.includes(def.id),
+        )
+        .map(
+          (def) =>
+            /** @type {import('@sveltia/ui').TextEditorComponent} */ (new EditorComponent(def)),
+        )
+    );
   });
   const imageComponent = $derived(
     components.find(({ id }) => id === 'image' || id === 'linked-image'),

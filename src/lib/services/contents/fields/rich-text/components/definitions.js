@@ -117,17 +117,47 @@ export const getBuiltInComponentDefs = () => {
 };
 
 /**
+ * Resolve a custom component name, which is either the name registered with the
+ * `CMS.registerEditorComponent()` API, like `youtube`, or the ID of its definition returned by
+ * {@link getComponentDef}, like `x-youtube`. The latter is stored as the `__sc_component_name`
+ * value of a component in an entry draft, and passed to the fields within the component.
+ * @param {string | undefined} name Component name or ID.
+ * @returns {string | undefined} Name registered with the API, or `undefined` if the name doesn’t
+ * belong to a custom component, e.g. a built-in component name.
+ */
+export const getCustomComponentName = (name) => {
+  if (!name) {
+    return undefined;
+  }
+
+  if (customComponentRegistry.has(name)) {
+    return name;
+  }
+
+  const unprefixedName = name.replace(/^x-/, '');
+
+  return unprefixedName !== name && customComponentRegistry.has(unprefixedName)
+    ? unprefixedName
+    : undefined;
+};
+
+/**
  * Get a component definition.
- * @param {string} name Component name.
+ * @param {string} name Component name. For a custom component, this can be either the name
+ * registered with the API or the prefixed ID of its definition. See {@link getCustomComponentName}.
  * @returns {EditorComponentDefinition | undefined} Definition.
  */
 export const getComponentDef = (name) => {
-  const customComponentDef = customComponentRegistry.get(name);
+  const customComponentName = getCustomComponentName(name);
 
-  if (customComponentDef) {
+  if (customComponentName) {
     // Add a prefix to the component ID to avoid conflicts with built-in components and Lexical’s
     // built-in node types, such as `code`.
-    return { ...customComponentDef, id: `x-${name}` };
+    const customComponentDef = /** @type {EditorComponentDefinition} */ (
+      customComponentRegistry.get(customComponentName)
+    );
+
+    return { ...customComponentDef, id: `x-${customComponentName}` };
   }
 
   return getBuiltInComponentDefs().find(({ id }) => id === name);

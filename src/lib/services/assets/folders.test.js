@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { customComponentRegistry } from '$lib/services/api/registries';
+
 import {
   allAssetFolders,
   canCreateAsset,
@@ -275,12 +277,21 @@ describe('assets/folders', () => {
       ];
 
       allAssetFolders.current = mockFolders;
+      customComponentRegistry.set('custom-editor', /** @type {any} */ ({ fields: [] }));
 
-      const result = getAssetFolder({
-        componentName: 'custom-editor',
-      });
+      try {
+        const result = getAssetFolder({
+          componentName: 'custom-editor',
+        });
 
-      expect(result).toEqual(mockFolders[0]);
+        expect(result).toEqual(mockFolders[0]);
+        // The fields within a custom component get the prefixed component ID
+        expect(getAssetFolder({ componentName: 'x-custom-editor' })).toEqual(mockFolders[0]);
+        // An unknown component doesn’t match
+        expect(getAssetFolder({ componentName: 'x-unknown' })).toBeUndefined();
+      } finally {
+        customComponentRegistry.delete('custom-editor');
+      }
     });
 
     it('should normalize typed key paths before matching', () => {

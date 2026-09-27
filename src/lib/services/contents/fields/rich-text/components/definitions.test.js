@@ -8,6 +8,7 @@ import { customComponentRegistry } from '$lib/services/api/registries.js';
 import {
   getBuiltInComponentDefs,
   getComponentDef,
+  getCustomComponentName,
   IMAGE_COMPONENT,
   LINKED_IMAGE_COMPONENT,
 } from './definitions.js';
@@ -334,6 +335,39 @@ describe('definitions', () => {
     });
   });
 
+  describe('getCustomComponentName', () => {
+    it('should return undefined for an empty name', () => {
+      expect(getCustomComponentName(undefined)).toBeUndefined();
+      expect(getCustomComponentName('')).toBeUndefined();
+    });
+
+    it('should resolve a registered name as is', () => {
+      customComponentRegistry.set('youtube', { id: 'youtube', fields: [] });
+
+      expect(getCustomComponentName('youtube')).toBe('youtube');
+    });
+
+    it('should resolve a prefixed ID to the registered name', () => {
+      customComponentRegistry.set('youtube', { id: 'youtube', fields: [] });
+
+      expect(getCustomComponentName('x-youtube')).toBe('youtube');
+    });
+
+    it('should prefer a name registered with the prefix', () => {
+      customComponentRegistry.set('x-youtube', { id: 'x-youtube', fields: [] });
+
+      expect(getCustomComponentName('x-youtube')).toBe('x-youtube');
+      expect(getCustomComponentName('x-x-youtube')).toBe('x-youtube');
+      expect(getCustomComponentName('youtube')).toBeUndefined();
+    });
+
+    it('should return undefined for a built-in or unknown component', () => {
+      expect(getCustomComponentName('image')).toBeUndefined();
+      expect(getCustomComponentName('x-image')).toBeUndefined();
+      expect(getCustomComponentName('x-unknown')).toBeUndefined();
+    });
+  });
+
   describe('getComponentDef', () => {
     it('should return built-in image component by id', () => {
       const imageDef = getComponentDef('image');
@@ -399,6 +433,32 @@ describe('definitions', () => {
       expect(result?.pattern).toEqual(/custom-image/);
       expect(result?.toBlock).toBe(customImageComponent.toBlock);
       expect(result?.toPreview).toBe(customImageComponent.toPreview);
+    });
+
+    it('should return custom component by prefixed id', () => {
+      const customComponent = {
+        id: 'youtube',
+        label: 'YouTube',
+        fields: [{ name: 'id', label: 'ID', required: true }],
+        pattern: /youtube/,
+        toBlock: () => 'youtube',
+      };
+
+      customComponentRegistry.set('youtube', customComponent);
+
+      const result = getComponentDef('x-youtube');
+
+      expect(result?.id).toBe('x-youtube');
+      expect(result?.label).toBe('YouTube');
+      expect(result?.fields).toBe(customComponent.fields);
+      // Resolving the ID again gives the same definition
+      expect(getComponentDef(/** @type {string} */ (result?.id))?.id).toBe('x-youtube');
+    });
+
+    it('should not strip the prefix from a built-in or unknown component', () => {
+      expect(getComponentDef('x-image')).toBeUndefined();
+      expect(getComponentDef('x-linked-image')).toBeUndefined();
+      expect(getComponentDef('x-non-existent')).toBeUndefined();
     });
 
     it('should return undefined for non-existent component', () => {

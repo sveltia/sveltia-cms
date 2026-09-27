@@ -2,6 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
+import { getCustomComponentName } from '$lib/services/contents/fields/rich-text/components/definitions';
 import {
   getLocaleFolderPattern,
   hasLocalePlaceholder,
@@ -75,8 +76,12 @@ export const getAssetFolder = (cond) => {
 
     // If the condition has a `componentName`, it is a field-level media folder for a custom editor
     // component. In that case, the `collectionName` and `fileName` are not relevant for the match.
+    // The folder is registered with the component name, while the fields within the component get
+    // the prefixed component ID, e.g. `x-youtube`, so resolve it first
     if ('componentName' in cond) {
-      return folder.componentName === cond.componentName;
+      return (
+        folder.componentName === (getCustomComponentName(cond.componentName) ?? cond.componentName)
+      );
     }
 
     return (

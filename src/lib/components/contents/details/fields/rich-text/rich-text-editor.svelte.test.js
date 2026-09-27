@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { customComponentRegistry } from '$lib/services/api/registries';
 import { globalAssetFolder } from '$lib/services/assets/folders';
 import { cmsConfig } from '$lib/services/config';
 import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
@@ -265,7 +266,12 @@ describe('RichTextEditor', () => {
       {},
       {
         collectionName: 'nested-self',
-        context: { fieldContext: 'rich-text-editor-component', parentComponentNames: ['image'] },
+        // The parent component name is the definition ID, which is `linked-image` for an image
+        // while linked images are enabled
+        context: {
+          fieldContext: 'rich-text-editor-component',
+          parentComponentNames: ['linked-image'],
+        },
         props: { keyPath: 'body:c1:content', typedKeyPath: 'body:c1:content' },
       },
     );
@@ -289,6 +295,53 @@ describe('RichTextEditor', () => {
       .element()
       .dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
     await expect.poll(() => editor.element().textContent).toBe('Hi');
+  });
+
+  test('leaves the current custom component out of the nested ones', async () => {
+    customComponentRegistry.set('youtube', {
+      id: 'youtube',
+      label: 'YouTube',
+      // Show a toolbar button instead of an item in the Insert menu
+      trigger: 'button',
+      fields: [{ name: 'id', label: 'ID' }],
+      pattern: /^youtube (\S+)$/,
+      // eslint-disable-next-line jsdoc/require-jsdoc
+      toBlock: ({ id }) => `youtube ${id}`,
+    });
+
+    try {
+      await initTestConfig({
+        collections: [
+          {
+            name: 'nested-self-custom',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'body', widget: 'richtext', allow_nested_components: 'exclude_self' }],
+          },
+        ],
+      });
+
+      await renderEditor(
+        'Hi',
+        {},
+        {
+          collectionName: 'nested-self-custom',
+          // The parent component name is the prefixed definition ID
+          context: {
+            fieldContext: 'rich-text-editor-component',
+            parentComponentNames: ['x-youtube'],
+          },
+          props: { keyPath: 'body:c1:content', typedKeyPath: 'body:c1:content' },
+        },
+      );
+
+      await expect.element(page.getByRole('button', { name: 'Bold' })).toBeVisible();
+      // The image component is still offered
+      await expect.element(page.getByRole('button', { name: /Image/ })).toBeVisible();
+      expect(page.getByRole('button', { name: /YouTube/ }).elements()).toHaveLength(0);
+    } finally {
+      customComponentRegistry.delete('youtube');
+    }
   });
 
   test('cleans up the values of removed components', async () => {
