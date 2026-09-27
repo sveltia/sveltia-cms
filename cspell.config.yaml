@@ -24,6 +24,7 @@ ignorePaths:
   - package/**
   - src/**/*.test.js
   - e2e/**/*.e2e.js
+  - e2e/fixtures/configs/**
   - src/lib/locales/*.yaml
   - .claude/**
   # Non-English locales; negative globs are not supported, so match everything but `en-*.yaml`
