@@ -147,13 +147,38 @@ describe('RichTextEditor', () => {
     expect(trackPendingFieldUpdate).toHaveBeenCalledTimes(1);
   });
 
+  test('counts a change made while the content is being loaded as the user’s', async () => {
+    await renderEditor('Hello');
+
+    const editor = page.getByRole('textbox');
+
+    // Loading the content registers an update that isn’t a change made by the user
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
+
+    const [[promise, options]] = vi.mocked(trackPendingFieldUpdate).mock.calls;
+
+    expect(options).toEqual({ userChange: false });
+
+    // The user starts typing before the editor has written the value back: the same update now
+    // carries the user’s change, once however many changes follow
+    editor.element().dispatchEvent(new InputEvent('beforeinput', { bubbles: true }));
+    editor.element().dispatchEvent(new InputEvent('beforeinput', { bubbles: true }));
+    expect(vi.mocked(trackPendingFieldUpdate).mock.calls).toEqual([
+      [promise, { userChange: false }],
+      [promise],
+    ]);
+    await expect(promise).resolves.toBeUndefined();
+  });
+
   test('tracks a pending update for a change that doesn’t fire `beforeinput`', async () => {
     const { props } = await renderEditor('Hello');
     const editor = page.getByRole('textbox');
 
     await expect.poll(() => editor.element().textContent).toBe('Hello');
-    // Loading the content changes the editor too; wait for that update to be settled
+    // Loading the content changes the editor too; wait for that update to be settled. It isn’t a
+    // change made by the user, so it doesn’t make the entry count as changed meanwhile
     await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
+    expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][1]).toEqual({ userChange: false });
     await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
     vi.mocked(trackPendingFieldUpdate).mockClear();
 
@@ -176,6 +201,7 @@ describe('RichTextEditor', () => {
 
     // A save waits for the update, which is settled once the Markdown is written back
     await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
+    expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][1]).toEqual({ userChange: true });
     await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
     expect(props.currentValue).toBe('**Hello**');
   });

@@ -1,7 +1,7 @@
 import { MULTILINGUAL_CONFIG, MULTILINGUAL_FILES } from '../../fixtures/configs/multilingual.js';
 import { expect, test } from '../../fixtures/test.js';
 
-import { getEditor, openEntry, showLocale } from './helpers.js';
+import { getEditor, openEntry, showLocale, watchSaveButton } from './helpers.js';
 
 test.use({ config: MULTILINGUAL_CONFIG });
 
@@ -55,15 +55,16 @@ const seedBody = async (cms, locale, body) => {
     await seedBody(cms, /** @type {'fr' | 'ar'} */ (locale), BODIES.other[locale]);
     await openEntry(page, 'Articles', /Lyon/);
 
+    const saveButtonEnabled = await watchSaveButton(page);
     const pane = await showLocale(page, 1, localeName);
     const save = getEditor(page).getByRole('button', { name: 'Save' });
 
-    // Showing the body in the editor, which writes it in its own style, doesn’t count as a change.
-    // The Save button is enabled for a moment while the editor converts the body, so wait longer
-    // than that takes
+    // Showing the body in the editor, which writes it in its own style, doesn’t count as a change,
+    // not even for the moment the editor takes to convert it. There’s nothing to wait for when the
+    // button stays disabled, so wait longer than the conversion takes
     await expect(pane.getByRole('textbox', { name: 'Body' }).locator('em')).toBeVisible();
     await page.waitForTimeout(1000);
-    await expect(save).toBeDisabled();
+    expect(await saveButtonEnabled()).toBe(false);
 
     // Saving another field leaves the body as it was
     await pane.getByRole('textbox', { name: 'Summary' }).fill('Résumé');

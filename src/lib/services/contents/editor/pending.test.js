@@ -37,6 +37,38 @@ describe('editor/pending', () => {
     expect(fieldUpdatePending.current).toBe(false);
   });
 
+  it('only counts an update carrying a change made by the user', async () => {
+    /** @type {any} */
+    let resolve;
+
+    const promise = new Promise((_resolve) => {
+      resolve = _resolve;
+    });
+
+    // An editor converting a value it was given, e.g. the body of the entry being opened
+    trackPendingFieldUpdate(promise, { userChange: false });
+
+    let done = false;
+
+    const waiting = awaitPendingFieldUpdates().then(() => {
+      done = true;
+    });
+
+    await Promise.resolve();
+    // A save still waits for it, but the entry doesn’t count as changed
+    expect(done).toBe(false);
+    expect(fieldUpdatePending.current).toBe(false);
+
+    // The user makes a change while it’s in flight
+    trackPendingFieldUpdate(promise);
+    expect(fieldUpdatePending.current).toBe(true);
+
+    resolve();
+    await waiting;
+    expect(done).toBe(true);
+    expect(fieldUpdatePending.current).toBe(false);
+  });
+
   it('tolerates a rejected update', async () => {
     const promise = Promise.reject(new Error('editor gone'));
 

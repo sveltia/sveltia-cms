@@ -339,31 +339,60 @@
   });
 
   /**
-   * Register a pending update when the user is about to change the content, or has just changed it.
-   * The editor converts the content to Markdown with a short delay, so a save right after a change
-   * would otherwise validate and write the previous value.
+   * The update registered with {@link trackPendingFieldUpdate}, while it’s pending.
+   * @type {Promise<void> | undefined}
    */
-  const registerPendingUpdate = () => {
-    if (settlePendingUpdate) {
+  let pendingUpdate;
+  /**
+   * Whether {@link pendingUpdate} carries a change made by the user.
+   */
+  let pendingUserChange = false;
+
+  /**
+   * Register a pending update when the content is about to change, or has just changed. The editor
+   * converts the content to Markdown with a short delay, so a save right after a change would
+   * otherwise validate and write the previous value.
+   * @param {object} [options] Options.
+   * @param {boolean} [options.userChange] Whether the change is made by the user. The editor also
+   * changes when it loads a value set from outside, e.g. the body of the entry being opened, which
+   * a save has to wait for too, but which isn’t a change to the entry.
+   */
+  const registerPendingUpdate = ({ userChange = true } = {}) => {
+    if (pendingUpdate) {
+      // The user has made a change while the editor was converting a value set from outside
+      if (userChange && !pendingUserChange) {
+        pendingUserChange = true;
+        trackPendingFieldUpdate(pendingUpdate);
+      }
+
       return;
     }
 
-    trackPendingFieldUpdate(
-      new Promise((resolve) => {
-        // The editor doesn’t write the value back when the Markdown is unchanged, e.g. when a
-        // trailing space is typed, so give up after a while rather than blocking a save forever
-        const timeout = window.setTimeout(() => settlePendingUpdate?.(), 1000);
+    pendingUpdate = new Promise((resolve) => {
+      // The editor doesn’t write the value back when the Markdown is unchanged, e.g. when a
+      // trailing space is typed, so give up after a while rather than blocking a save forever
+      const timeout = window.setTimeout(() => settlePendingUpdate?.(), 1000);
 
-        /**
-         * Settle the update and forget it, so the next change registers a new one.
-         */
-        settlePendingUpdate = () => {
-          window.clearTimeout(timeout);
-          settlePendingUpdate = undefined;
-          resolve();
-        };
-      }),
-    );
+      /**
+       * Settle the update and forget it, so the next change registers a new one.
+       */
+      settlePendingUpdate = () => {
+        window.clearTimeout(timeout);
+        settlePendingUpdate = undefined;
+        pendingUpdate = undefined;
+        resolve();
+      };
+    });
+
+    pendingUserChange = userChange;
+    trackPendingFieldUpdate(pendingUpdate, { userChange });
+  };
+
+  /**
+   * Register a pending update when the user is about to change the content.
+   */
+  const onBeforeInput = () => {
+    registerPendingUpdate();
   };
 
   /**
@@ -429,7 +458,8 @@
     unregisterUpdateListener = editor.registerUpdateListener(({ dirtyElements, dirtyLeaves }) => {
       // An update that only moves the selection doesn’t change the content
       if (dirtyElements.size || dirtyLeaves.size) {
-        registerPendingUpdate();
+        // Loading a value set from outside isn’t a change made by the user
+        registerPendingUpdate({ userChange: !awaitingReexport });
       }
     });
   };
@@ -449,7 +479,7 @@
     USER_INTERACTION_EVENTS.forEach((type) => {
       target.addEventListener(type, onUserInteraction, true);
     });
-    target.addEventListener('beforeinput', registerPendingUpdate, true);
+    target.addEventListener('beforeinput', onBeforeInput, true);
     target.addEventListener('Update', onUpdate, true);
     observer.observe(target, { subtree: true, childList: true });
     listenToEditorUpdates();
@@ -458,7 +488,7 @@
       USER_INTERACTION_EVENTS.forEach((type) => {
         target.removeEventListener(type, onUserInteraction, true);
       });
-      target.removeEventListener('beforeinput', registerPendingUpdate, true);
+      target.removeEventListener('beforeinput', onBeforeInput, true);
       target.removeEventListener('Update', onUpdate, true);
       observer.disconnect();
       unregisterUpdateListener?.();

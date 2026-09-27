@@ -70,3 +70,40 @@ export const save = async (page) => {
   await getEditor(page).getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Entry saved.' })).toBeVisible();
 };
+
+/**
+ * Start recording whether the Save button of the content editor is ever enabled. The button can be
+ * enabled for a moment only, which an assertion made afterwards can’t tell, so watch it from the
+ * page, including a button rendered later, once an entry is opened.
+ * @param {Page} page Page.
+ * @returns {Promise<() => Promise<boolean>>} Function telling whether the button has been enabled
+ * since.
+ */
+export const watchSaveButton = async (page) => {
+  await page.evaluate(() => {
+    /** @type {any} */ (window).saveButtonEnabled = false;
+
+    /**
+     * Record whether a Save button is enabled.
+     */
+    const check = () => {
+      const enabled = [...document.querySelectorAll('button')].some(
+        (button) => button.textContent?.trim() === 'Save' && !button.disabled,
+      );
+
+      if (enabled) {
+        /** @type {any} */ (window).saveButtonEnabled = true;
+      }
+    };
+
+    check();
+    new MutationObserver(check).observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['disabled'],
+    });
+  });
+
+  return () => page.evaluate(() => /** @type {any} */ (window).saveButtonEnabled);
+};

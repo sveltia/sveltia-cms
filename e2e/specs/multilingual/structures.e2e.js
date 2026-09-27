@@ -5,7 +5,7 @@ import {
 } from '../../fixtures/configs/multilingual.js';
 import { expect, test } from '../../fixtures/test.js';
 
-import { getEditor, getEditPane, openEntry, save, showLocale } from './helpers.js';
+import { getEditor, getEditPane, openEntry, save, showLocale, watchSaveButton } from './helpers.js';
 
 test.use({ config: MULTILINGUAL_CONFIG });
 
@@ -90,14 +90,17 @@ test.describe('multiple files', () => {
   });
 
   test('opens an article without counting it as changed', async ({ page }) => {
+    const saveButtonEnabled = await watchSaveButton(page);
+
     await openEntry(page, 'Articles', /Lyon/);
     await expect(getEditPane(page, 'English').getByRole('textbox', { name: 'Title' })).toHaveValue(
       'A Weekend in Lyon',
     );
-    // A List field used to write its items back as soon as it was shown, which made the entry
-    // count as changed. There’s nothing to wait for when that doesn’t happen, so wait a moment
+    // A List field used to write its items back as soon as it was shown, and the rich text editor
+    // loading the body enabled the Save button for a moment, both as if the entry had changed.
+    // There’s nothing to wait for when that doesn’t happen, so wait a moment
     await page.waitForTimeout(1000);
-    await expect(getEditor(page).getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(await saveButtonEnabled()).toBe(false);
   });
 
   test('copies a duplicated field to every locale, and keeps the others where they are', async ({
