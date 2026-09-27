@@ -12,6 +12,7 @@ import { deleteSubtree, isPlaceholder } from '$lib/services/contents/entry/subtr
 import { STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { alignPairOrder } from '$lib/services/contents/fields/key-value/pairs';
+import { hasRequiredSingleItem } from '$lib/services/contents/fields/list/defaults';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
 
@@ -351,7 +352,14 @@ const normalizeField = (args) => {
 
   const occupied = keyPath in content || hasChildKeys(index, keyPath);
 
-  if (!occupied || !reconcileValue(args)) {
+  if (
+    !occupied ||
+    !reconcileValue(args) ||
+    // A required single-item list saved without its item gets one, like a new entry does
+    (field.widget === 'list' &&
+      hasRequiredSingleItem({ fieldConfig: /** @type {ListField} */ (field), locale }) &&
+      !getItemIndexes(index, keyPath).length)
+  ) {
     if (!fillDefaults) {
       return;
     }

@@ -1,6 +1,12 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
-import { formatSummary, getListFieldInfo, getListItemKey, tagListItems } from './helpers';
+import {
+  formatSummary,
+  getListFieldInfo,
+  getListItemKey,
+  isSingleItemList,
+  tagListItems,
+} from './helpers';
 
 vi.mock('$lib/services/config');
 
@@ -679,6 +685,22 @@ describe('Test getListFieldInfo()', () => {
       hasVariableTypes: true,
       hasSubFields: true,
     });
+  });
+});
+
+describe('Test isSingleItemList()', () => {
+  test('should be true for a list limited to one item holding no more than that', () => {
+    /** @type {any} */
+    const fieldConfig = { name: 'author', widget: 'list', max: 1, fields: [] };
+
+    expect(isSingleItemList({ fieldConfig, itemCount: 0 })).toBe(true);
+    expect(isSingleItemList({ fieldConfig, itemCount: 1 })).toBe(true);
+    // More items than the limit, e.g. from a file edited outside the CMS
+    expect(isSingleItemList({ fieldConfig, itemCount: 2 })).toBe(false);
+    expect(isSingleItemList({ fieldConfig: { ...fieldConfig, max: 2 }, itemCount: 1 })).toBe(false);
+    expect(
+      isSingleItemList({ fieldConfig: { ...fieldConfig, max: undefined }, itemCount: 1 }),
+    ).toBe(false);
   });
 });
 

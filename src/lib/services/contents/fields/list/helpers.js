@@ -34,6 +34,20 @@ export const getListFieldInfo = (field) => {
 };
 
 /**
+ * Check whether the editor should show a List field as a single item rather than as a list. That’s
+ * the case for a field limited to one item with `max: 1`, as a developer may store a single object
+ * in an array, so the user doesn’t need to see an item count, a list toggle or reorder controls. A
+ * field holding more items than that, e.g. edited outside the CMS, is shown as a list, so the extra
+ * items can be removed.
+ * @param {object} args Arguments.
+ * @param {ListField} args.fieldConfig Field configuration.
+ * @param {number} args.itemCount Number of items the field holds.
+ * @returns {boolean} Result.
+ */
+export const isSingleItemList = ({ fieldConfig, itemCount }) =>
+  fieldConfig.max === 1 && itemCount <= 1;
+
+/**
  * Format the summary template of a List field.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.

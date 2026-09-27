@@ -848,6 +848,41 @@ describe('contents/draft/create/normalize', () => {
       expect(Object.keys(contentMap.en)).toEqual(Object.keys(en));
     });
 
+    it('should give a required single-item list saved without its item one', () => {
+      const fields = [
+        {
+          name: 'author',
+          widget: 'list',
+          max: 1,
+          fields: [{ name: 'name', default: 'Anonymous' }],
+        },
+        {
+          name: 'sponsor',
+          widget: 'list',
+          max: 1,
+          required: false,
+          fields: [{ name: 'name', default: 'Acme' }],
+        },
+      ];
+
+      expect(
+        normalizeContentMap({
+          fields,
+          contentMap: { en: { author: [], sponsor: [] } },
+          defaultLocale: 'en',
+        }),
+      ).toEqual({ en: { author: [], 'author.0.name': 'Anonymous', sponsor: [] } });
+
+      // An item that’s there is left alone
+      expect(
+        normalizeContentMap({
+          fields,
+          contentMap: { en: { 'author.0.name': 'Melvin' } },
+          defaultLocale: 'en',
+        }),
+      ).toEqual({ en: { 'author.0.name': 'Melvin', sponsor: [] } });
+    });
+
     it('should handle a missing default locale', () => {
       const fields = [{ name: 'title', widget: 'string', i18n: true }];
       const contentMap = { ja: {} };

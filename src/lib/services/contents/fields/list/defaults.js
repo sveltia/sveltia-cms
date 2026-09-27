@@ -1,10 +1,11 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { isFieldRequired } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
 
 /**
- * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
+ * @import { GetDefaultValueMapFuncArgs, InternalLocaleCode } from '$lib/types/private';
  * @import {
  * Field,
  * FieldKeyPath,
@@ -48,12 +49,28 @@ const populateMissingSubfields = ({ content, itemKeyPath, fields, funcArgs }) =>
 };
 
 /**
+ * Check whether a List field is to hold its one item from the start. A required field limited to
+ * one item with `max: 1` can’t do without it, so the item is there for the user to fill in, like
+ * the subfields of an Object field, rather than having to be added first. That doesn’t apply to a
+ * list with variable types, as the user has to choose the type of the item, nor to a list without
+ * subfields, whose editor always shows an input anyway.
+ * @param {object} args Arguments.
+ * @param {ListField} args.fieldConfig Field configuration.
+ * @param {InternalLocaleCode} args.locale Locale.
+ * @returns {boolean} Result.
+ */
+export const hasRequiredSingleItem = ({ fieldConfig, locale }) =>
+  fieldConfig.max === 1 &&
+  ('fields' in fieldConfig || 'field' in fieldConfig) &&
+  isFieldRequired({ fieldConfig, locale });
+
+/**
  * Get the default value map for a List field.
  * @param {GetDefaultValueMapFuncArgs} args Arguments.
  * @returns {Record<FieldKeyPath, any>} Default value map.
  */
 export const getDefaultValueMap = (args) => {
-  const { fieldConfig, keyPath, dynamicValue } = args;
+  const { fieldConfig, keyPath, dynamicValue, locale, defaultLocale, populateDefault } = args;
   const { default: defaultValue } = /** @type {ListField} */ (fieldConfig);
   const { field: subfield } = /** @type {ListFieldWithSubField} */ (fieldConfig);
   const { fields } = /** @type {ListFieldWithSubFields} */ (fieldConfig);
@@ -73,9 +90,29 @@ export const getDefaultValueMap = (args) => {
 
   const isArray = Array.isArray(value) && !!value.length;
 
-  // Always return the main array, even if empty
   if (!isArray) {
-    return getSubtreeEntries(keyPath, []);
+    // Always return the main array, even if empty
+    const content = getSubtreeEntries(keyPath, []);
+
+    // Give a required single-item list its item, with the default values of the subfields
+    if (hasRequiredSingleItem({ fieldConfig: /** @type {ListField} */ (fieldConfig), locale })) {
+      const itemKeyPath = `${keyPath}.0`;
+
+      if (subfield) {
+        populateDefault?.({
+          content,
+          keyPath: itemKeyPath,
+          fieldConfig: subfield,
+          locale,
+          defaultLocale,
+          dynamicValues: {},
+        });
+      } else {
+        populateMissingSubfields({ content, itemKeyPath, fields, funcArgs: args });
+      }
+    }
+
+    return content;
   }
 
   // A simple List field holds scalars only, so drop any object that snuck into the default. A list

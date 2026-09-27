@@ -39,6 +39,7 @@
     formatSummary,
     getListFieldInfo,
     getListItemKey,
+    isSingleItemList,
     tagListItems,
   } from '$lib/services/contents/fields/list/helpers';
   import { getUnknownTypeMessage } from '$lib/services/contents/fields/object/helpers';
@@ -80,6 +81,7 @@
     keyPath,
     typedKeyPath,
     fieldConfig,
+    required = true,
     summaryId,
     /* eslint-enable prefer-const */
   } = $props();
@@ -130,9 +132,17 @@
   const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
-  const parentExpanded = $derived(isExpanded(entryDraft.current, parentExpandedKeyPath));
   /** @type {Record<string, any>[]} */
   const items = $derived(getSubtree(valueMap, keyPath) ?? []);
+  // A list limited to one item is shown like an Object field: no item count, list toggle or reorder
+  // controls, and no way to remove the item if it’s required. A list with variable types keeps the
+  // Remove button though, as that’s the only way to choose another type for the item
+  const singleItem = $derived(isSingleItemList({ fieldConfig, itemCount: items.length }));
+  const canRemoveItem = $derived(allowRemove && !(singleItem && required && !hasVariableTypes));
+  // The single item can’t be collapsed along with the list, as there is no toggle to expand it
+  const parentExpanded = $derived(
+    singleItem || isExpanded(entryDraft.current, parentExpandedKeyPath),
+  );
   const itemExpanderStates = $derived(
     items.map((_item, index) => {
       const key = `${keyPath}.${index}`;
@@ -430,53 +440,65 @@
   {/if}
 {/snippet}
 
-<div role="none" class="toolbar top">
-  <div role="none" class="label">
-    <Button
-      iconic
-      disabled={!items.length}
-      aria-label={parentExpanded ? _('collapse') : _('expand')}
-      aria-expanded={parentExpanded}
-      aria-controls="list-{fieldId}-item-list"
-      onclick={() => {
-        updateExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
-      }}
-    >
-      {#snippet startIcon()}
-        <ExpandIcon expanded={parentExpanded} />
-      {/snippet}
-    </Button>
-    <div role="none" class="summary" id={summaryId}>
-      {items.length}
-      {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
+{#if singleItem}
+  <!-- There is no item count to label the list with, so label it with the field name instead -->
+  <div role="none" id={summaryId} hidden>{labelSingular || label || fieldName}</div>
+{/if}
+{#if !singleItem || !items.length}
+  <div role="none" class="toolbar top" class:single={singleItem}>
+    {#if !singleItem}
+      <div role="none" class="label">
+        <Button
+          iconic
+          disabled={!items.length}
+          aria-label={parentExpanded ? _('collapse') : _('expand')}
+          aria-expanded={parentExpanded}
+          aria-controls="list-{fieldId}-item-list"
+          onclick={() => {
+            updateExpanderStates({ [parentExpandedKeyPath]: !parentExpanded });
+          }}
+        >
+          {#snippet startIcon()}
+            <ExpandIcon expanded={parentExpanded} />
+          {/snippet}
+        </Button>
+        <div role="none" class="summary" id={summaryId}>
+          {items.length}
+          {(items.length === 1 ? labelSingular : undefined) || label || fieldName}
+        </div>
+      </div>
+    {/if}
+    <div role="none" class="actions">
+      {#if allowAdd && (addToTop || !items.length || !parentExpanded)}
+        <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
+      {/if}
+      {#if parentExpanded && items.length > 1}
+        <Button
+          variant="tertiary"
+          size="small"
+          label={_('expand_all')}
+          disabled={itemExpanderStates.every(([, value]) => value)}
+          onclick={() => {
+            updateExpanderStates(
+              Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])),
+            );
+          }}
+        />
+        <Button
+          variant="tertiary"
+          size="small"
+          label={_('collapse_all')}
+          disabled={itemExpanderStates.every(([, value]) => !value)}
+          onclick={() => {
+            updateExpanderStates(
+              Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])),
+            );
+          }}
+        />
+      {/if}
     </div>
   </div>
-  <div role="none" class="actions">
-    {#if allowAdd && (addToTop || !items.length || !parentExpanded)}
-      <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
-    {/if}
-    {#if parentExpanded && items.length > 1}
-      <Button
-        variant="tertiary"
-        size="small"
-        label={_('expand_all')}
-        disabled={itemExpanderStates.every(([, value]) => value)}
-        onclick={() => {
-          updateExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])));
-        }}
-      />
-      <Button
-        variant="tertiary"
-        size="small"
-        label={_('collapse_all')}
-        disabled={itemExpanderStates.every(([, value]) => !value)}
-        onclick={() => {
-          updateExpanderStates(Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])));
-        }}
-      />
-    {/if}
-  </div>
-</div>
+{/if}
 <div
   role="none"
   id="list-{fieldId}-item-list"
@@ -528,7 +550,7 @@
               : undefined}
           >
             {#snippet centerContent()}
-              {#if allowReorder}
+              {#if allowReorder && !singleItem}
                 <ReorderControls
                   {index}
                   itemCount={items.length}
@@ -565,7 +587,7 @@
                   {/snippet}
                 </MenuButton>
               {/if}
-              {#if allowRemove}
+              {#if canRemoveItem}
                 <Button
                   variant="ghost"
                   size="small"
@@ -637,6 +659,11 @@
         margin-block: 8px;
         margin-inline-start: auto;
       }
+    }
+
+    &.single > div.actions {
+      /* With no item count on the left, the Add button goes where the item would be */
+      margin-inline-start: 0;
     }
   }
 

@@ -46,10 +46,11 @@ const sectionsField = {
  * Render the editor within a draft.
  * @param {ComplexListField} fieldConfig Field configuration.
  * @param {Record<string, any>} values Flattened values.
+ * @param {Record<string, any>} [props] Any other props, e.g. `required`.
  * @returns {Promise<{ draft: any, container: HTMLElement, entryDraft: any }>} Draft, container
  * and draft state.
  */
-const renderEditor = async (fieldConfig, values) => {
+const renderEditor = async (fieldConfig, values, props = {}) => {
   const draft = createMockDraft({ fields: [fieldConfig], values: { _default: values } });
 
   const { container, entryDraft } = await renderWithDraft(ListEditorComplex, {
@@ -61,6 +62,7 @@ const renderEditor = async (fieldConfig, values) => {
       fieldId: fieldConfig.name,
       fieldLabel: fieldConfig.label ?? fieldConfig.name,
       fieldConfig,
+      ...props,
     },
   });
 
@@ -800,5 +802,70 @@ describe('ListEditorComplex (more)', () => {
     // The summary defaults to the first field
     await expect.element(page.getByText('/static/uploads/photo.png')).toBeInTheDocument();
     expect(container.querySelector('.item-body .summary img')).toBeNull();
+  });
+});
+
+describe('ListEditorComplex (single item)', () => {
+  /** @type {ComplexListField} */
+  const authorField = { ...authorsField, max: 1 };
+
+  test('shows a required item without the list controls', async () => {
+    const { container } = await renderEditor(authorField, { 'authors.0.name': 'Melvin' });
+
+    await expect.element(page.getByRole('textbox').nth(0)).toHaveValue('Melvin');
+    // No item count, list toggle, reorder controls or Remove button; only the item’s own toggle
+    expect(page.getByText('1 Author').elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: 'Collapse' }).elements()).toHaveLength(1);
+    expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: 'Remove' }).elements()).toHaveLength(0);
+    // The list is labelled with the field name instead of the item count
+    expect(container.querySelector('[hidden]')?.textContent).toBe('Author');
+  });
+
+  test('keeps the item open when the list would start minimized', async () => {
+    const { container } = await renderEditor(
+      { ...authorField, minimize_collapsed: true },
+      { 'authors.0.name': 'Melvin' },
+    );
+
+    await expect.element(page.getByRole('textbox').nth(0)).toBeVisible();
+    expect(container.querySelector('.item-list.collapsed')).toBeNull();
+  });
+
+  test('lets an optional item be removed and added again', async () => {
+    const { draft } = await renderEditor(
+      authorField,
+      { 'authors.0.name': 'Melvin' },
+      { required: false },
+    );
+
+    await page.getByRole('button', { name: 'Remove' }).click();
+    await expect.poll(() => getStoredItems(draft, 'authors')).toEqual([]);
+    // The empty list shows the Add button alone, still without an item count
+    expect(page.getByText('0 Authors').elements()).toHaveLength(0);
+
+    await page.getByRole('button', { name: /Add\W+Author/ }).click();
+    await expect
+      .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
+      .toEqual(['Anonymous']);
+    await expect
+      .poll(() => page.getByRole('button', { name: /Add\W+Author/ }).elements())
+      .toHaveLength(0);
+  });
+
+  test('lets the item of a list with variable types be removed to choose another type', async () => {
+    await renderEditor({ ...sectionsField, max: 1 }, { 'sections.0.type': 'hero' });
+
+    await expect.element(page.getByRole('button', { name: 'Remove' })).toBeVisible();
+    expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(0);
+  });
+
+  test('shows the list controls for more items than the limit', async () => {
+    await renderEditor(authorField, { 'authors.0.name': 'Melvin', 'authors.1.name': 'Elsie' });
+
+    // The extra item has to be removable
+    await expect.element(page.getByText('2 Authors')).toBeVisible();
+    expect(page.getByRole('button', { name: 'Remove' }).elements()).toHaveLength(2);
+    expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(2);
   });
 });

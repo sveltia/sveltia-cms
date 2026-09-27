@@ -132,6 +132,21 @@ describe('ListEditorSimple', () => {
     expect(getInputValues()).toEqual(['a', 'b']);
   });
 
+  test('shows a list limited to one item as a single input', async () => {
+    await renderEditor(['a'], { config: { max: 1 } });
+
+    await expect.element(page.getByRole('textbox')).toHaveValue('a');
+    // Neither reordering nor removing can do anything with the one row, and there’s no room to add
+    expect(page.getByRole('button').elements()).toHaveLength(0);
+  });
+
+  test('shows the item controls for more items than a limit of one', async () => {
+    await renderEditor(['a', 'b'], { config: { max: 1 } });
+
+    await expect.element(page.getByRole('textbox').nth(1)).toHaveValue('b');
+    expect(page.getByRole('button', { name: 'Remove' }).elements()).toHaveLength(2);
+  });
+
   test('removes an item', async () => {
     const { draft } = await renderEditor(['a', 'b', 'c']);
 
