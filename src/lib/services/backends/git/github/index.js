@@ -1,5 +1,3 @@
-import { stripSlashes } from '@sveltia/utils/string';
-
 import {
   normalizeGraphQLBaseURL,
   normalizeRestBaseURL,
@@ -28,12 +26,12 @@ import { fetchBlob, fetchFiles } from '$lib/services/backends/git/github/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/github/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/github/status';
 import workflow from '$lib/services/backends/git/github/workflow';
-import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
-import { initRepositoryInfo } from '$lib/services/backends/git/shared/repository';
+import { graphqlVars } from '$lib/services/backends/git/shared/api';
+import { initGitBackend } from '$lib/services/backends/git/shared/init';
 import { cmsConfig } from '$lib/services/config';
 
 /**
- * @import { ApiEndpointConfig, BackendService, RepositoryInfo } from '$lib/types/private';
+ * @import { BackendService, RepositoryInfo } from '$lib/types/private';
  */
 
 /**
@@ -68,9 +66,8 @@ export const init = () => {
   } = backend;
 
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
-  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
 
-  initRepositoryInfo(repository, {
+  initGitBackend(repository, {
     service: BACKEND_NAME,
     label: BACKEND_LABEL,
     owner,
@@ -80,20 +77,17 @@ export const init = () => {
     defaultApiRoot: DEFAULT_API_ROOT,
     getTokenPageURL,
     getBaseURLs,
-  });
-
-  Object.assign(
-    apiConfig,
-    /** @type {ApiEndpointConfig} */ ({
+    authRoot,
+    authPath,
+    tokenPath: '/access_token',
+    api: {
       clientId,
       authScope: `${authScope},user`,
-      authURL,
-      tokenURL: authURL.replace('/authorize', '/access_token'),
       restBaseURL: normalizeRestBaseURL(restApiRoot),
       graphqlBaseURL: normalizeGraphQLBaseURL(graphqlApiRoot),
       includeCredentials,
-    }),
-  );
+    },
+  });
 
   Object.assign(graphqlVars, { owner, repo, branch });
 

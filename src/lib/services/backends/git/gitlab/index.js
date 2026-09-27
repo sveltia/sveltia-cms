@@ -18,12 +18,12 @@ import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitlab/repository';
 import { checkStatus, STATUS_DASHBOARD_URL } from '$lib/services/backends/git/gitlab/status';
 import workflow from '$lib/services/backends/git/gitlab/workflow';
-import { apiConfig, graphqlVars } from '$lib/services/backends/git/shared/api';
-import { initRepositoryInfo } from '$lib/services/backends/git/shared/repository';
+import { graphqlVars } from '$lib/services/backends/git/shared/api';
+import { initGitBackend } from '$lib/services/backends/git/shared/init';
 import { cmsConfig } from '$lib/services/config';
 
 /**
- * @import { ApiEndpointConfig, BackendService, RepositoryInfo } from '$lib/types/private';
+ * @import { BackendService, RepositoryInfo } from '$lib/types/private';
  */
 
 const REPO_PATH_REGEX = /(?<owner>.+)\/(?<repo>[^/]+)$/;
@@ -62,9 +62,8 @@ export const init = () => {
    */
   const { owner, repo } = /** @type {string} */ (projectPath).match(REPO_PATH_REGEX)?.groups ?? {};
   const repoPath = `${owner}/${repo}`;
-  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
 
-  initRepositoryInfo(repository, {
+  initGitBackend(repository, {
     service: BACKEND_NAME,
     label: BACKEND_LABEL,
     owner,
@@ -74,21 +73,18 @@ export const init = () => {
     defaultApiRoot: DEFAULT_API_ROOT,
     getTokenPageURL,
     getBaseURLs,
-  });
-
-  Object.assign(
-    apiConfig,
-    /** @type {ApiEndpointConfig} */ ({
+    authRoot,
+    authPath,
+    tokenPath: '/token',
+    api: {
       clientId,
       authScope: 'api',
-      authURL,
-      tokenURL: authURL.replace('/authorize', '/token'),
       authScheme: 'Bearer',
       restBaseURL: stripSlashes(restApiRoot),
       graphqlBaseURL: stripSlashes(graphqlApiRoot),
       includeCredentials,
-    }),
-  );
+    },
+  });
 
   Object.assign(graphqlVars, {
     fullPath: repoPath,

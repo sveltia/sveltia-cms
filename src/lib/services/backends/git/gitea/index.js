@@ -15,12 +15,11 @@ import {
 } from '$lib/services/backends/git/gitea/constants';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitea/files';
 import { getBaseURLs, repository } from '$lib/services/backends/git/gitea/repository';
-import { apiConfig } from '$lib/services/backends/git/shared/api';
-import { initRepositoryInfo } from '$lib/services/backends/git/shared/repository';
+import { initGitBackend } from '$lib/services/backends/git/shared/init';
 import { cmsConfig } from '$lib/services/config';
 
 /**
- * @import { ApiEndpointConfig, BackendService, RepositoryInfo } from '$lib/types/private';
+ * @import { BackendService, RepositoryInfo } from '$lib/types/private';
  */
 
 /**
@@ -47,9 +46,8 @@ export const init = () => {
   } = backend;
 
   const [owner, repo] = /** @type {string} */ (projectPath).split('/');
-  const authURL = `${stripSlashes(authRoot)}/${stripSlashes(authPath)}`;
 
-  initRepositoryInfo(repository, {
+  initGitBackend(repository, {
     service: BACKEND_NAME,
     label: BACKEND_LABEL,
     owner,
@@ -59,19 +57,16 @@ export const init = () => {
     defaultApiRoot: DEFAULT_API_ROOT,
     getTokenPageURL,
     getBaseURLs,
-  });
-
-  Object.assign(
-    apiConfig,
-    /** @type {ApiEndpointConfig} */ ({
+    authRoot,
+    authPath,
+    tokenPath: '/access_token',
+    api: {
       clientId,
       authScope: 'read:repository,write:repository,read:user',
-      authURL,
-      tokenURL: authURL.replace('/authorize', '/access_token'),
       restBaseURL: stripSlashes(restApiRoot),
       includeCredentials,
-    }),
-  );
+    },
+  });
 
   return repository;
 };
