@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { getKeyValueField, getPairsFromContent, setPairs } from './pairs';
+import { alignPairOrder, getKeyValueField, getPairsFromContent, setPairs } from './pairs';
 
 /**
  * @import { Field } from '$lib/types/public';
@@ -86,6 +86,56 @@ describe('Test setPairs()', () => {
     setPairs(content, 'metadata', [['a', '1']]);
 
     expect(content).toEqual({ metadata: {}, 'metadata.a': '1' });
+  });
+});
+
+describe('Test alignPairOrder()', () => {
+  test('should put the pairs in the reference order, keeping their values', () => {
+    const content = { title: 'Salut', 'metadata.b': 'deux', 'metadata.a': 'un' };
+
+    alignPairOrder({
+      content,
+      referenceContent: { 'metadata.a': '1', 'metadata.b': '2' },
+      keyPath: 'metadata',
+    });
+
+    expect(Object.entries(content)).toEqual([
+      ['title', 'Salut'],
+      ['metadata.a', 'un'],
+      ['metadata.b', 'deux'],
+    ]);
+  });
+
+  test('should put the keys the reference lacks last, adding none of its own', () => {
+    const content = { 'metadata.c': 'trois', 'metadata.b': 'deux' };
+
+    alignPairOrder({
+      content,
+      referenceContent: { 'metadata.a': '1', 'metadata.b': '2', 'metadata.c': '3' },
+      keyPath: 'metadata',
+    });
+    expect(Object.entries(content)).toEqual([
+      ['metadata.b', 'deux'],
+      ['metadata.c', 'trois'],
+    ]);
+
+    alignPairOrder({ content, referenceContent: { 'metadata.c': '3' }, keyPath: 'metadata' });
+    expect(Object.entries(content)).toEqual([
+      ['metadata.c', 'trois'],
+      ['metadata.b', 'deux'],
+    ]);
+  });
+
+  test('should leave the content alone if the order is already right', () => {
+    const content = { 'metadata.a': 'un', title: 'Salut', 'metadata.b': 'deux' };
+
+    alignPairOrder({
+      content,
+      referenceContent: { 'metadata.a': '1', 'metadata.b': '2' },
+      keyPath: 'metadata',
+    });
+
+    expect(Object.keys(content)).toEqual(['metadata.a', 'title', 'metadata.b']);
   });
 });
 

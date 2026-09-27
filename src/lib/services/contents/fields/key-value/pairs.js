@@ -80,3 +80,33 @@ export const setPairs = (content, keyPath, pairs) => {
     content[`${keyPath}.${key}`] = value;
   });
 };
+
+/**
+ * Put the key-value pairs stored in the given flattened content in the same order as those in the
+ * reference content, e.g. the default locale’s. The pairs whose key the reference doesn’t hold go
+ * last, in their current order. Only the order changes: no pair is added, removed or given another
+ * value.
+ * @param {object} args Arguments.
+ * @param {FlattenedEntryContent} args.content Flattened content for a locale, modified in place.
+ * @param {FlattenedEntryContent} args.referenceContent Flattened content to take the order from.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ */
+export const alignPairOrder = ({ content, referenceContent, keyPath }) => {
+  const pairs = getPairsFromContent(content, keyPath);
+  const keys = pairs.map(([key]) => key);
+
+  const referenceKeys = getPairsFromContent(referenceContent, keyPath)
+    .map(([key]) => key)
+    .filter((key) => keys.includes(key));
+
+  const orderedKeys = [...referenceKeys, ...keys.filter((key) => !referenceKeys.includes(key))];
+
+  // Leave the content alone if the order is already right
+  if (orderedKeys.some((key, index) => key !== keys[index])) {
+    setPairs(
+      content,
+      keyPath,
+      orderedKeys.map((key) => /** @type {[string, string]} */ (pairs[keys.indexOf(key)])),
+    );
+  }
+};

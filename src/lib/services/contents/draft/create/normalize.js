@@ -11,6 +11,7 @@ import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { deleteSubtree, isPlaceholder } from '$lib/services/contents/entry/subtree';
 import { STRING_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { syncDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
+import { alignPairOrder } from '$lib/services/contents/fields/key-value/pairs';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
 
@@ -43,6 +44,8 @@ import { getLocalizedRelationValue } from '$lib/services/contents/fields/relatio
  * @property {FlattenedEntryContent} [defaultLocaleContent] Already normalized content for the
  * default locale, used as the source for fields with the `duplicate` i18n strategy.
  * @property {boolean} [fillDefaults] Whether to fill in the values missing from the content.
+ * @property {Field['i18n']} [inheritedI18n] `i18n` option of the nearest ancestor field that has
+ * one, which applies to a field without the option of its own.
  */
 
 /**
@@ -326,7 +329,8 @@ const getVariableTypeFields = ({ field, content, keyPath }) => {
  */
 const normalizeField = (args) => {
   const { field, keyPath, content, index, locale, defaultLocale, defaultLocaleContent } = args;
-  const { fillDefaults = true } = args;
+  const { fillDefaults = true, inheritedI18n } = args;
+  const i18n = field.i18n ?? inheritedI18n;
 
   // A `duplicate_keys` KeyValue field mirrors the default locale’s keys, so line its pairs up with
   // them whether or not the locale holds any, keeping the values it does have
@@ -384,6 +388,17 @@ const normalizeField = (args) => {
 
   const { widget: fieldType = 'string' } = field;
 
+  // A duplicated KeyValue field holds the default locale’s pairs, and its editor writes them to the
+  // other locales in that order as soon as it’s rendered. Put them in that order now, so merely
+  // opening an entry whose locales list the pairs in different orders doesn’t count as a change
+  if (fieldType === 'keyvalue') {
+    if (locale !== defaultLocale && i18n === 'duplicate' && defaultLocaleContent) {
+      alignPairOrder({ content, referenceContent: defaultLocaleContent, keyPath });
+    }
+
+    return;
+  }
+
   if (fieldType === 'object') {
     // A `null` value means the optional Object field is collapsed, so it has no sub-values to fill
     if (content[keyPath] === null) {
@@ -394,7 +409,12 @@ const normalizeField = (args) => {
     const fields = subFields ?? getVariableTypeFields({ field, content, keyPath });
 
     fields?.forEach((subField) => {
-      normalizeField({ ...args, field: subField, keyPath: `${keyPath}.${subField.name}` });
+      normalizeField({
+        ...args,
+        field: subField,
+        keyPath: `${keyPath}.${subField.name}`,
+        inheritedI18n: i18n,
+      });
     });
 
     return;
@@ -419,7 +439,7 @@ const normalizeField = (args) => {
     // A single-subfield List field stores the item itself at the item key path, so hand the item
     // over to the sub-field as-is; it recurses further only if the sub-field is an Object or List
     if (subField) {
-      normalizeField({ ...args, field: subField, keyPath: itemKeyPath });
+      normalizeField({ ...args, field: subField, keyPath: itemKeyPath, inheritedI18n: i18n });
 
       return;
     }
@@ -431,7 +451,12 @@ const normalizeField = (args) => {
     const fields = subFields ?? getVariableTypeFields({ field, content, keyPath: itemKeyPath });
 
     fields?.forEach((itemField) => {
-      normalizeField({ ...args, field: itemField, keyPath: `${itemKeyPath}.${itemField.name}` });
+      normalizeField({
+        ...args,
+        field: itemField,
+        keyPath: `${itemKeyPath}.${itemField.name}`,
+        inheritedI18n: i18n,
+      });
     });
   });
 };
