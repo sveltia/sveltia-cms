@@ -1,3 +1,7 @@
+import { isObject } from '@sveltia/utils/object';
+import equal from 'fast-deep-equal';
+
+import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
@@ -44,6 +48,63 @@ export const resolveOriginalKeyPath = (valueMap, keyPath) => {
   }
 
   return undefined;
+};
+
+/**
+ * Collect the values stored at the given key path and under it, keyed by their path relative to it.
+ * Internal props, missing values and empty object/array placeholders are left out: an Object or
+ * List field may or may not have a placeholder at its own key path, depending on how the value
+ * map was built, while the actual values are always flattened to their own key paths.
+ * @param {Record<string, any>} valueMap Flat value map for a locale.
+ * @param {FieldKeyPath} keyPath Field key path.
+ * @returns {Record<string, any>} Values keyed by their relative key path; the field’s own value, if
+ * any, is keyed by an empty string.
+ */
+const getFieldValues = (valueMap, keyPath) => {
+  const prefix = `${keyPath}.`;
+  /** @type {Record<string, any>} */
+  const values = {};
+
+  // Walk the keys rather than `Object.entries()`, because this runs for every field editor on every
+  // change, and only the values under the key path are needed
+  Object.keys(valueMap).forEach((_keyPath) => {
+    if (
+      (_keyPath === keyPath || _keyPath.startsWith(prefix)) &&
+      !INTERNAL_PROP_REGEX.test(_keyPath)
+    ) {
+      const value = valueMap[_keyPath];
+
+      if (
+        value !== undefined &&
+        !((isObject(value) || Array.isArray(value)) && !Object.keys(value).length)
+      ) {
+        values[_keyPath.slice(prefix.length)] = value;
+      }
+    }
+  });
+
+  return values;
+};
+
+/**
+ * Check if the given field has been changed from its original value, so its changes can be
+ * reverted. The field’s own value and all the values under it are compared, because a List,
+ * Object, KeyValue or custom field stores its value under its child key paths.
+ * @param {object} args Arguments.
+ * @param {Record<string, any>} args.currentValueMap Current flat value map for the locale.
+ * @param {Record<string, any>} args.originalValueMap Original flat value map for the locale.
+ * @param {FieldKeyPath} args.keyPath Field key path.
+ * @returns {boolean} Whether the field has been changed.
+ */
+export const isFieldChanged = ({ currentValueMap, originalValueMap, keyPath }) => {
+  // For fields inside list items, use the original key path if the item was reordered
+  const originalKeyPath =
+    resolveOriginalKeyPath(currentValueMap, keyPath)?.originalKeyPath ?? keyPath;
+
+  return !equal(
+    getFieldValues(currentValueMap, keyPath),
+    getFieldValues(originalValueMap, originalKeyPath),
+  );
 };
 
 /**

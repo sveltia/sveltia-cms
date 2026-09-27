@@ -5,6 +5,7 @@ import { getField } from '$lib/services/contents/entry/fields';
 
 import {
   revertChanges as _revertChanges,
+  isFieldChanged,
   resolveOriginalKeyPath,
   revertFields,
   revertLocale,
@@ -838,6 +839,131 @@ describe('draft/update/revert', () => {
         currentPrefix: 'sections.0.items.1',
         originalPrefix: 'sections.0.items.0',
       });
+    });
+  });
+
+  describe('isFieldChanged', () => {
+    it('should compare the value of a simple field', () => {
+      expect(
+        isFieldChanged({
+          currentValueMap: { title: 'Hello', body: 'New' },
+          originalValueMap: { title: 'Hello', body: 'Old' },
+          keyPath: 'title',
+        }),
+      ).toBe(false);
+      expect(
+        isFieldChanged({
+          currentValueMap: { title: 'Hi' },
+          originalValueMap: { title: 'Hello' },
+          keyPath: 'title',
+        }),
+      ).toBe(true);
+      expect(
+        isFieldChanged({ currentValueMap: { title: '' }, originalValueMap: {}, keyPath: 'title' }),
+      ).toBe(true);
+    });
+
+    it('should treat a missing value and an undefined value alike', () => {
+      expect(
+        isFieldChanged({
+          currentValueMap: { title: undefined },
+          originalValueMap: {},
+          keyPath: 'title',
+        }),
+      ).toBe(false);
+    });
+
+    it('should compare the subfields of an object field', () => {
+      const originalValueMap = { 'author.name': 'Alice', 'author.email': 'a@example.com' };
+
+      expect(
+        isFieldChanged({
+          currentValueMap: { ...originalValueMap },
+          originalValueMap,
+          keyPath: 'author',
+        }),
+      ).toBe(false);
+      expect(
+        isFieldChanged({
+          currentValueMap: { ...originalValueMap, 'author.name': 'Bob' },
+          originalValueMap,
+          keyPath: 'author',
+        }),
+      ).toBe(true);
+      expect(
+        isFieldChanged({
+          currentValueMap: { 'author.name': 'Alice' },
+          originalValueMap,
+          keyPath: 'author',
+        }),
+      ).toBe(true);
+    });
+
+    it('should not match a sibling field sharing the key path as a prefix', () => {
+      expect(
+        isFieldChanged({
+          currentValueMap: { author: 'Alice', authors: 'Bob' },
+          originalValueMap: { author: 'Alice', authors: 'Carol' },
+          keyPath: 'author',
+        }),
+      ).toBe(false);
+    });
+
+    it('should ignore empty placeholders and internal props', () => {
+      expect(
+        isFieldChanged({
+          currentValueMap: {
+            author: {},
+            'author.name': 'Alice',
+            'author.tags': [],
+            'author.links.0.__sc_item_id': 'abc',
+          },
+          originalValueMap: { 'author.name': 'Alice' },
+          keyPath: 'author',
+        }),
+      ).toBe(false);
+    });
+
+    it('should compare the items of a list field', () => {
+      expect(
+        isFieldChanged({
+          currentValueMap: { tags: [], 'tags.0': 'a', 'tags.1': 'b' },
+          originalValueMap: { 'tags.0': 'a', 'tags.1': 'b' },
+          keyPath: 'tags',
+        }),
+      ).toBe(false);
+      expect(
+        isFieldChanged({
+          currentValueMap: { 'tags.0': 'b', 'tags.1': 'a' },
+          originalValueMap: { 'tags.0': 'a', 'tags.1': 'b' },
+          keyPath: 'tags',
+        }),
+      ).toBe(true);
+    });
+
+    it('should compare a field inside a reordered list item with its original value', () => {
+      const originalValueMap = {
+        'items.0.author.name': 'Alice',
+        'items.1.author.name': 'Bob',
+      };
+
+      const currentValueMap = {
+        'items.0.author.name': 'Bob',
+        'items.0.__sc_item_original_key_path': 'items.1',
+        'items.1.author.name': 'Alice',
+        'items.1.__sc_item_original_key_path': 'items.0',
+      };
+
+      expect(isFieldChanged({ currentValueMap, originalValueMap, keyPath: 'items.0.author' })).toBe(
+        false,
+      );
+      expect(
+        isFieldChanged({
+          currentValueMap: { ...currentValueMap, 'items.1.author.name': 'Carol' },
+          originalValueMap,
+          keyPath: 'items.1.author',
+        }),
+      ).toBe(true);
     });
   });
 

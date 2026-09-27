@@ -316,6 +316,38 @@ describe('FieldEditor', () => {
       .toHaveAttribute('aria-disabled', 'false');
   });
 
+  test('compares the subfields of an object field to tell whether it has changed', async () => {
+    const { draft } = await renderEditor({
+      fieldConfig: {
+        name: 'author',
+        widget: 'object',
+        label: 'Author',
+        fields: [{ name: 'name', widget: 'string', label: 'Name' }],
+      },
+      values: { 'author.name': 'Alice' },
+    });
+
+    const optionsButton = page
+      .getByRole('group', { name: /“.Author.” Field/ })
+      .getByRole('button', { name: 'Show Field Options' })
+      .first();
+
+    await optionsButton.click();
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Revert Changes' }))
+      .toHaveAttribute('aria-disabled', 'true');
+    await userEvent.keyboard('{Escape}');
+
+    await page.getByRole('textbox').fill('Bob');
+    await expect.poll(() => draft.currentValues.en['author.name']).toBe('Bob');
+    await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
+    await optionsButton.click();
+    await page.getByRole('menuitem', { name: 'Revert Changes' }).click();
+
+    await expect.poll(() => draft.currentValues.en['author.name']).toBe('Alice');
+    await expect.element(page.getByRole('textbox')).toHaveValue('Alice');
+  });
+
   test('renders a custom field type with its own control', async () => {
     const control = vi.fn(({ value, forID }) =>
       createElement('input', { id: forID, value: value ?? '', readOnly: true }),

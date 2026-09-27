@@ -1,8 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Alert, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
-  import { escapeRegExp } from '@sveltia/utils/string';
-  import equal from 'fast-deep-equal';
   import { getContext, setContext } from 'svelte';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
@@ -11,12 +9,8 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { CustomEditor, editors } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
-  import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import {
-    resolveOriginalKeyPath,
-    revertChanges,
-  } from '$lib/services/contents/draft/update/revert';
+  import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
     getCurrentValue,
@@ -190,58 +184,18 @@
   );
   const canCopy = $derived(!inEditorComponent && canTranslate && otherLocales.length);
   const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));
-  const keyPathRegex = $derived(new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+$`));
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({ valueMap, keyPath, isList, isCustomFieldType: !!customFieldType }),
   );
-  const originalValue = $derived.by(() => {
-    if (isList) {
-      return Object.entries(originalValues?.[locale] ?? {})
-        .filter(([_keyPath]) => keyPathRegex.test(_keyPath))
-        .map(([, val]) => val)
-        .filter((val) => val !== undefined);
-    }
-
-    // For fields inside list items, use the original key path if the item was reordered
-    const originalKeyPath = resolveOriginalKeyPath(valueMap, keyPath)?.originalKeyPath ?? keyPath;
-    const originalMap = originalValues?.[locale] ?? {};
-
-    // A custom field type may hold an object, which is stored under its child key paths, so it has
-    // to be assembled the same way as the current value for the two to compare equal
-    if (customFieldType) {
-      return getCurrentValue({
-        valueMap: originalMap,
-        keyPath: originalKeyPath,
-        isList,
-        isCustomFieldType: true,
-      });
-    }
-
-    return originalMap[originalKeyPath];
-  });
-  const isRevertDisabled = $derived.by(() => {
-    if (fieldType === 'list') {
-      // For list fields, compare all flat entries under the keyPath prefix, because `currentValue`
-      // and `originalValue` may not capture complex (nested) list items correctly
-      const currentMap = valueMap;
-      const originalMap = originalValues?.[locale] ?? {};
-      const keyPathPrefix = `${keyPath}.`;
-
-      const currentEntries = Object.entries(currentMap)
-        .filter(([k]) => k.startsWith(keyPathPrefix) && !INTERNAL_PROP_REGEX.test(k))
-        .sort(([a], [b]) => a.localeCompare(b));
-
-      const originalEntries = Object.entries(originalMap)
-        .filter(([k]) => k.startsWith(keyPathPrefix) && !INTERNAL_PROP_REGEX.test(k))
-        .sort(([a], [b]) => a.localeCompare(b));
-
-      return equal(currentEntries, originalEntries);
-    }
-
-    return equal(currentValue, originalValue);
-  });
+  const isRevertDisabled = $derived(
+    !isFieldChanged({
+      currentValueMap: valueMap,
+      originalValueMap: originalValues?.[locale] ?? {},
+      keyPath,
+    }),
+  );
   const validity = $derived(entryDraft.current?.validities[locale][keyPath]);
   const fieldLabel = $derived(label || fieldName);
   // An entry awaiting deletion is shown for reference only. Unlike `readonly`, which is also set
