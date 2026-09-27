@@ -26,11 +26,12 @@ const VERSION_KEY = Symbol('valueMapVersion');
 export const getValueMapVersion = (valueMap) => /** @type {any} */ (valueMap)?.[VERSION_KEY];
 
 /**
- * Check if the given field’s value is duplicated from the default locale to the other locales,
- * because the field itself or one of its ancestors, such as the List or Object field it belongs to,
- * has the `duplicate` i18n strategy. A duplicated List or Object field holds the same items and
- * values in every locale, whether or not its subfields have an `i18n` option of their own, the way
- * `normalizeContentMap()` copies it when an entry is loaded.
+ * Check if the given field’s value is duplicated from the default locale to the other locales. That
+ * is the case when the field has the `duplicate` i18n strategy, or, if the field has no `i18n`
+ * option of its own, when the nearest ancestor that has one, such as the List or Object field it
+ * belongs to, has the `duplicate` strategy. A duplicated List or Object field then holds the same
+ * items and values in every locale, the way `normalizeContentMap()` copies it when an entry is
+ * loaded, while a subfield explicitly made translatable keeps a value of its own in each locale.
  * @param {object} args Arguments.
  * @param {Field} args.fieldConfig Field configuration.
  * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
@@ -38,21 +39,26 @@ export const getValueMapVersion = (valueMap) => /** @type {any} */ (valueMap)?.[
  * @returns {boolean} Whether the value is duplicated.
  */
 export const isDuplicatedField = ({ fieldConfig, getFieldArgs }) => {
-  if (fieldConfig.i18n === 'duplicate') {
-    return true;
+  if (fieldConfig.i18n !== undefined) {
+    return fieldConfig.i18n === 'duplicate';
   }
 
   const segments = getFieldArgs.keyPath.split('.');
 
-  // Look at the ancestors ending with a field name, e.g. `items` for `items.0.name`, skipping the
-  // list item indexes, which aren’t fields of their own
-  return segments.some(
-    (segment, index) =>
-      index < segments.length - 1 &&
-      !/^\d+$/.test(segment) &&
-      getField({ ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') })?.i18n ===
-        'duplicate',
-  );
+  // Look at the ancestors from the nearest one, skipping the list item indexes, which aren’t fields
+  // of their own, e.g. `items` for `items.0.name`
+  for (let index = segments.length - 2; index >= 0; index -= 1) {
+    if (!/^\d+$/.test(segments[index])) {
+      const { i18n } =
+        getField({ ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') }) ?? {};
+
+      if (i18n !== undefined) {
+        return i18n === 'duplicate';
+      }
+    }
+  }
+
+  return false;
 };
 
 /**

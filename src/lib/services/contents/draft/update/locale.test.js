@@ -126,47 +126,57 @@ describe('draft/update/locale', () => {
       /** @type {string[]} */
       const visited = [];
 
-      vi.mocked(isDuplicatedField).mockReturnValue(true);
-      forEachTargetLocale(
-        {
-          valueStore,
-          locale: 'en',
-          i18n: undefined,
-          draft: /** @type {any} */ (draft),
-          keyPath: 'meta.tags',
-        },
-        (_valueMap, _locale) => {
-          visited.push(_locale);
-        },
-      );
+      /**
+       * Run the function for the given field.
+       * @param {object} args Arguments.
+       * @param {Record<string, any>} [args.store] Value store.
+       * @param {any} [args.i18n] `i18n` option given by the caller.
+       */
+      const run = ({ store = valueStore, i18n = false } = {}) => {
+        visited.length = 0;
+        forEachTargetLocale(
+          {
+            valueStore: store,
+            locale: 'en',
+            i18n,
+            draft: /** @type {any} */ (draft),
+            keyPath: 'meta.tags',
+          },
+          (_valueMap, _locale) => {
+            visited.push(_locale);
+          },
+        );
+      };
 
+      vi.mocked(isDuplicatedField).mockReturnValue(true);
+
+      // The field configuration is looked up, so the `false` the caller defaulted to is ignored
+      const tagsField = { name: 'tags', widget: 'list' };
+
+      vi.mocked(getField).mockReturnValue(/** @type {any} */ (tagsField));
+      run();
       expect(visited).toEqual(['en', 'ja', 'fr']);
       expect(isDuplicatedField).toHaveBeenCalledWith({
-        fieldConfig: { i18n: undefined },
+        fieldConfig: tagsField,
         getFieldArgs: {
           collectionName: 'posts',
           fileName: undefined,
           isIndexFile: false,
           keyPath: 'meta.tags',
+          valueMap: valueStore.en,
         },
       });
 
-      // Another value store, e.g. the rich text editor components’ values, isn’t looked up
-      vi.mocked(isDuplicatedField).mockClear();
-      visited.length = 0;
-      forEachTargetLocale(
-        {
-          valueStore: { en: {}, ja: {} },
-          locale: 'en',
-          i18n: undefined,
-          draft: /** @type {any} */ (draft),
-          keyPath: 'meta.tags',
-        },
-        (_valueMap, _locale) => {
-          visited.push(_locale);
-        },
+      // The given `i18n` is used if the field can’t be found
+      vi.mocked(getField).mockReturnValue(undefined);
+      run({ i18n: true });
+      expect(isDuplicatedField).toHaveBeenLastCalledWith(
+        expect.objectContaining({ fieldConfig: { i18n: true } }),
       );
 
+      // Another value store, e.g. the rich text editor components’ values, isn’t looked up
+      vi.mocked(isDuplicatedField).mockClear();
+      run({ store: { en: {}, ja: {} } });
       expect(visited).toEqual(['en']);
       expect(isDuplicatedField).not.toHaveBeenCalled();
       vi.mocked(isDuplicatedField).mockReset();

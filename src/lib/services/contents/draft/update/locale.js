@@ -43,6 +43,29 @@ import {
  * to run for each target locale, taking that locale’s content and the locale code.
  */
 export const forEachTargetLocale = ({ valueStore, locale, i18n, draft, keyPath }, callback) => {
+  /**
+   * Check if the field is nested in a duplicated List or Object field.
+   * @param {EntryDraft} _draft Entry draft.
+   * @param {FieldKeyPath} _keyPath Key path of the field.
+   * @returns {boolean} Result.
+   */
+  const isNestedInDuplicatedField = (_draft, _keyPath) => {
+    const getFieldArgs = {
+      collectionName: _draft.collectionName,
+      fileName: _draft.fileName,
+      isIndexFile: _draft.isIndexFile,
+      keyPath: _keyPath,
+      valueMap: valueStore?.[locale],
+    };
+
+    // Look up the configuration rather than relying on the given `i18n`, which the caller may have
+    // defaulted to `false` for a field without the option, which would hide the ancestor’s strategy
+    return isDuplicatedField({
+      fieldConfig: getField(getFieldArgs) ?? /** @type {Field} */ ({ i18n }),
+      getFieldArgs,
+    });
+  };
+
   const duplicated =
     i18n === 'duplicate' ||
     // The field configuration can only be looked up for the entry’s own values, not for those of a
@@ -50,15 +73,7 @@ export const forEachTargetLocale = ({ valueStore, locale, i18n, draft, keyPath }
     (!!draft &&
       !!keyPath &&
       valueStore === draft.currentValues &&
-      isDuplicatedField({
-        fieldConfig: /** @type {Field} */ ({ i18n }),
-        getFieldArgs: {
-          collectionName: draft.collectionName,
-          fileName: draft.fileName,
-          isIndexFile: draft.isIndexFile,
-          keyPath,
-        },
-      }));
+      isNestedInDuplicatedField(draft, keyPath));
 
   suspendAutoDuplication(() => {
     Object.entries(valueStore ?? {}).forEach(([_locale, valueMap]) => {

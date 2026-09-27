@@ -512,6 +512,9 @@ describe('contents/draft/create/proxy.svelte', () => {
     const fields = {
       title: { name: 'title', widget: 'string', i18n: true },
       meta: { name: 'meta', widget: 'object', i18n: 'duplicate' },
+      'meta.caption': { name: 'caption', widget: 'string', i18n: true },
+      'meta.box': { name: 'box', widget: 'object', i18n: true },
+      'meta.box.note': { name: 'note', widget: 'string' },
       'meta.tags': { name: 'tags', widget: 'list' },
       'meta.tags.0.label': { name: 'label', widget: 'string' },
       blocks: { name: 'blocks', widget: 'list', i18n: true },
@@ -536,6 +539,11 @@ describe('contents/draft/create/proxy.svelte', () => {
     it('should detect the field’s own duplicate strategy', () => {
       expect(check('meta')).toBe(true);
       expect(check('title')).toBe(false);
+    });
+
+    it('should let an explicit `i18n` option of the field or a nearer ancestor win', () => {
+      expect(check('meta.caption')).toBe(false);
+      expect(check('meta.box.note')).toBe(false);
     });
 
     it('should detect a duplicated ancestor, skipping the list item indexes', () => {

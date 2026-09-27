@@ -17,6 +17,15 @@ const fields = {
   uid_plain: { name: 'uid_plain', widget: 'uuid' },
   uid_prefixed: { name: 'uid_prefixed', widget: 'uuid', prefix: 'post-' },
   'items.0.id': { name: 'id', widget: 'uuid', i18n: 'duplicate' },
+  blocks: { name: 'blocks', widget: 'list', i18n: 'duplicate' },
+  meta: { name: 'meta', widget: 'object', i18n: 'duplicate' },
+  'meta.id': { name: 'id', widget: 'uuid' },
+  'blocks.0.meta.id': { name: 'id', widget: 'uuid' },
+  'blocks.1.meta.id': { name: 'id', widget: 'uuid' },
+  'blocks.0.id': { name: 'id', widget: 'uuid' },
+  'blocks.1.id': { name: 'id', widget: 'uuid' },
+  'blocks.0.name': { name: 'name', widget: 'string' },
+  'blocks.0.ref': { name: 'ref', widget: 'uuid', i18n: true },
 };
 
 const UUID_REGEX = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/;
@@ -72,6 +81,45 @@ describe('fillUuidValues()', () => {
       keyPath: 'items.0.id',
       valueMap: contentMap.ja,
     });
+  });
+
+  test('copies a UUID nested in a duplicated field to the items the locale has', () => {
+    /** @type {Record<string, Record<string, any>>} */
+    const contentMap = {
+      en: { 'blocks.0.id': '', 'blocks.0.name': 'a', 'blocks.0.ref': '', 'blocks.1.id': '' },
+      // The subfields without an `i18n` option of their own aren’t among the locale’s defaults,
+      // and the second item isn’t there at all
+      ja: { 'blocks.0.name': 'a', 'blocks.0.ref': '' },
+    };
+
+    fillUuidValues({ contentMap, defaultLocale: 'en', getFieldArgs });
+
+    const { en, ja } = contentMap;
+
+    expect(en['blocks.0.id']).toMatch(UUID_REGEX);
+    expect(en['blocks.1.id']).toMatch(UUID_REGEX);
+    expect(ja['blocks.0.id']).toBe(en['blocks.0.id']);
+    expect('blocks.1.id' in ja).toBe(false);
+    // A subfield explicitly made translatable gets a UUID of its own
+    expect(ja['blocks.0.ref']).toMatch(UUID_REGEX);
+    expect(ja['blocks.0.ref']).not.toBe(en['blocks.0.ref']);
+  });
+
+  test('copies a UUID nested in a duplicated object, which the locale has no keys of', () => {
+    /** @type {Record<string, Record<string, any>>} */
+    const contentMap = {
+      en: { 'meta.id': '', 'blocks.0.meta.id': '', 'blocks.1.meta.id': '' },
+      ja: { 'blocks.0.name': 'a' },
+    };
+
+    fillUuidValues({ contentMap, defaultLocale: 'en', getFieldArgs });
+
+    const { en, ja } = contentMap;
+
+    expect(ja['meta.id']).toBe(en['meta.id']);
+    // An object in a list item is only there if the item is
+    expect(ja['blocks.0.meta.id']).toBe(en['blocks.0.meta.id']);
+    expect('blocks.1.meta.id' in ja).toBe(false);
   });
 
   test('keeps a value that is already there', () => {
