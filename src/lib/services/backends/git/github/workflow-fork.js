@@ -16,6 +16,7 @@ import {
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { getBranchPrefix } from '$lib/services/workflow/branch';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -255,13 +256,11 @@ export const fetchForkBranchFileList = async (pullRequest) => {
   const { owner, repo, branch: baseBranch } = repository;
   // A comparison across repositories identifies the head branch by the fork’s owner
   const { owner: headOwner } = getWorkflowRepository();
-  const head = `${headOwner}:${pullRequest.branch}`;
+  const base = encodePath(/** @type {string} */ (baseBranch));
+  const head = `${encodeURIComponent(headOwner)}:${encodePath(pullRequest.branch)}`;
 
   const { files = [] } = /** @type {{ files?: Record<string, any>[] }} */ (
-    await fetchAPI(
-      `/repos/${owner}/${repo}/compare/${encodeURI(`${baseBranch}...${head}`)}` +
-        `?per_page=${MAX_ITEMS.files}`,
-    )
+    await fetchAPI(`/repos/${owner}/${repo}/compare/${base}...${head}?per_page=${MAX_ITEMS.files}`)
   );
 
   pullRequest.files = parseRestFiles(files);

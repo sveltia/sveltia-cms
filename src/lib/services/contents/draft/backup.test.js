@@ -20,6 +20,10 @@ vi.mock('@sveltia/utils/object', () => ({
 
 const { toRaw } = await import('@sveltia/utils/object');
 
+vi.mock('$lib/services/assets/info', () => ({
+  // The real helper wraps an SVG image; the URL is all that matters here
+  createDisplayBlobURL: vi.fn(async (/** @type {Blob} */ blob) => URL.createObjectURL(blob)),
+}));
 vi.mock('$lib/services/config', () => ({
   cmsConfigVersion: { current: undefined },
 }));
@@ -40,11 +44,7 @@ vi.mock('$lib/services/backends', () => ({
 }));
 
 const mockPrefs = vi.hoisted(() => ({ useDraftBackup: /** @type {boolean | undefined} */ (true) }));
-const { mockCreateInertSVG } = vi.hoisted(() => ({ mockCreateInertSVG: vi.fn() }));
 
-vi.mock('$lib/services/utils/media/image/svg', () => ({
-  createInertSVG: mockCreateInertSVG,
-}));
 vi.mock('$lib/services/user/prefs.svelte', () => ({
   prefs: mockPrefs,
 }));
@@ -581,7 +581,7 @@ describe('draft/backup', () => {
       createObjectURL.mockRestore();
     });
 
-    it('should restore backup to entry draft without errors', () => {
+    it('should restore backup to entry draft without errors', async () => {
       const backup = {
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -593,12 +593,10 @@ describe('draft/backup', () => {
         files: {},
       };
 
-      expect(() => {
-        restoreBackup({ backup, draft: updatedDraft });
-      }).not.toThrow();
+      await expect(restoreBackup({ backup, draft: updatedDraft })).resolves.toBeUndefined();
     });
 
-    it('should restore the pending entries, or none for an older backup', () => {
+    it('should restore the pending entries, or none for an older backup', async () => {
       const pendingEntry = {
         collectionName: 'tags',
         entry: { id: 'new', slug: 'svelte', subPath: 'svelte', locales: {} },
@@ -619,15 +617,18 @@ describe('draft/backup', () => {
       };
 
       updatedDraft = createMockDraft({ pendingEntries: [] });
-      restoreBackup({ backup: { ...backup, pendingEntries: [pendingEntry] }, draft: updatedDraft });
+      await restoreBackup({
+        backup: { ...backup, pendingEntries: [pendingEntry] },
+        draft: updatedDraft,
+      });
       expect(updatedDraft.pendingEntries).toEqual([pendingEntry]);
 
       updatedDraft = createMockDraft({ pendingEntries: [] });
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
       expect(updatedDraft.pendingEntries).toEqual([]);
     });
 
-    it('should update currentLocales and currentSlugs from backup', () => {
+    it('should update currentLocales and currentSlugs from backup', async () => {
       const backup = {
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -641,13 +642,13 @@ describe('draft/backup', () => {
 
       updatedDraft = createMockDraft();
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       expect(updatedDraft.currentLocales).toEqual({ en: true, fr: false });
       expect(updatedDraft.currentSlugs).toEqual({ en: 'restored-post' });
     });
 
-    it('should handle backup with blob URLs in values', () => {
+    it('should handle backup with blob URLs in values', async () => {
       const testFile = new File(['file content'], 'image.png', { type: 'image/png' });
 
       const backup = {
@@ -661,7 +662,7 @@ describe('draft/backup', () => {
         files: { 'blob:http://localhost/abc123': { file: testFile, folder: undefined } },
       };
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       // The old blob URL is dead once the page has been reloaded, so the file gets a new one, and
       // the value and the draft’s file map are updated to match
@@ -672,7 +673,31 @@ describe('draft/backup', () => {
       });
     });
 
-    it('should handle blob URL where value is already in fileURLs cache', () => {
+    it('should create the blob URLs for display, keeping the files for the upload', async () => {
+      const { createDisplayBlobURL } = await import('$lib/services/assets/info');
+      const svgFile = new File(['<svg><script/></svg>'], 'image.svg', { type: 'image/svg+xml' });
+
+      const backup = {
+        timestamp: new Date(),
+        cmsConfigVersion: 'v1.0.0',
+        collectionName: 'posts',
+        slug: 'my-post',
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { image: 'blob:http://localhost/abc123' } },
+        files: { 'blob:http://localhost/abc123': { file: svgFile, folder: undefined } },
+      };
+
+      await restoreBackup({ backup, draft: updatedDraft });
+
+      // The file can be an SVG image copied from the repository, which must not run script on the
+      // CMS origin if its URL is opened in a new tab
+      expect(createDisplayBlobURL).toHaveBeenCalledExactlyOnceWith(svgFile);
+      expect(updatedDraft.currentValues.en.image).toBe('blob:http://localhost/restored-1');
+      expect(updatedDraft.files['blob:http://localhost/restored-1'].file).toBe(svgFile);
+    });
+
+    it('should handle blob URL where value is already in fileURLs cache', async () => {
       const sharedFile = new File(['shared'], 'shared.txt');
 
       const backup = {
@@ -694,7 +719,7 @@ describe('draft/backup', () => {
         },
       };
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       // One file, one new URL, however many values refer to it
       expect(createObjectURL).toHaveBeenCalledOnce();
@@ -705,7 +730,7 @@ describe('draft/backup', () => {
       expect(Object.keys(updatedDraft.files)).toEqual(['blob:http://localhost/restored-1']);
     });
 
-    it('should skip blob URLs whose cache entry has no file property (legacy format)', () => {
+    it('should skip blob URLs whose cache entry has no file property (legacy format)', async () => {
       const testFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
 
       const backup = {
@@ -723,13 +748,13 @@ describe('draft/backup', () => {
       /** @type {any} */
       updatedDraft = createMockDraft();
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       // Legacy format is no longer migrated — the blob URL is skipped entirely
       expect(Object.keys(updatedDraft.files)).toHaveLength(0);
     });
 
-    it('should skip blob URLs that have no matching file in cache', () => {
+    it('should skip blob URLs that have no matching file in cache', async () => {
       const backup = {
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -741,12 +766,10 @@ describe('draft/backup', () => {
         files: {}, // No file for the blob URL
       };
 
-      expect(() => {
-        restoreBackup({ backup, draft: updatedDraft });
-      }).not.toThrow();
+      await expect(restoreBackup({ backup, draft: updatedDraft })).resolves.toBeUndefined();
     });
 
-    it('should handle multiple blob URLs in same content string', () => {
+    it('should handle multiple blob URLs in same content string', async () => {
       const file1 = new File(['test1'], 'test1.txt');
       const file2 = new File(['test2'], 'test2.txt');
 
@@ -768,7 +791,7 @@ describe('draft/backup', () => {
         },
       };
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       expect(updatedDraft.currentValues.en.content).toBe(
         'Image1: blob:http://localhost/restored-1 Image2: blob:http://localhost/restored-2',
@@ -779,7 +802,7 @@ describe('draft/backup', () => {
       });
     });
 
-    it('should replace existing locale values when locale already has content', () => {
+    it('should replace existing locale values when locale already has content', async () => {
       const backup = {
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -798,7 +821,7 @@ describe('draft/backup', () => {
         originalValues: { en: { title: 'Original' } },
       });
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       // The content is updated in place, as the draft holds a proxy around it
       expect(updatedDraft.currentValues.en).toBe(existingLocaleContent);
@@ -806,7 +829,7 @@ describe('draft/backup', () => {
     });
 
     // https://github.com/sveltia/sveltia-cms/issues/985
-    it('should drop the stale keys of shifted list items', () => {
+    it('should drop the stale keys of shifted list items', async () => {
       // The entry as loaded from the file: three items, the first with the longest nested list
       const loadedContent = {
         'releases.0.version': '3',
@@ -845,13 +868,13 @@ describe('draft/backup', () => {
         originalValues: { en: structuredClone(loadedContent) },
       });
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       // Neither `releases.0.features.1`/`.2` nor the third item survive the restoration
       expect(updatedDraft.currentValues.en).toEqual(backup.currentValues.en);
     });
 
-    it('should create proxy for locale that does not yet have content', () => {
+    it('should create proxy for locale that does not yet have content', async () => {
       const backup = {
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -869,12 +892,10 @@ describe('draft/backup', () => {
         originalValues: {},
       });
 
-      expect(() => {
-        restoreBackup({ backup, draft: updatedDraft });
-      }).not.toThrow();
+      await expect(restoreBackup({ backup, draft: updatedDraft })).resolves.toBeUndefined();
     });
 
-    it('should initialize originalValues for locales that previously had none', () => {
+    it('should initialize originalValues for locales that previously had none', async () => {
       const backup = {
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -891,12 +912,10 @@ describe('draft/backup', () => {
         originalValues: { en: {} }, // fr has no originalValues
       });
 
-      expect(() => {
-        restoreBackup({ backup, draft: updatedDraft });
-      }).not.toThrow();
+      await expect(restoreBackup({ backup, draft: updatedDraft })).resolves.toBeUndefined();
     });
 
-    it('should handle file collection with fileName', () => {
+    it('should handle file collection with fileName', async () => {
       const backup = {
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -908,12 +927,10 @@ describe('draft/backup', () => {
         files: {},
       };
 
-      expect(() => {
-        restoreBackup({ backup, draft: updatedDraft });
-      }).not.toThrow();
+      await expect(restoreBackup({ backup, draft: updatedDraft })).resolves.toBeUndefined();
     });
 
-    it('should skip non-string values in currentValues during restore', () => {
+    it('should skip non-string values in currentValues during restore', async () => {
       const backup = {
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -932,12 +949,10 @@ describe('draft/backup', () => {
         files: {},
       };
 
-      expect(() => {
-        restoreBackup({ backup, draft: updatedDraft });
-      }).not.toThrow();
+      await expect(restoreBackup({ backup, draft: updatedDraft })).resolves.toBeUndefined();
     });
 
-    it('replaces a null optional object field with an empty object when child values exist', () => {
+    it('replaces a null optional object field with an empty object when child values exist', async () => {
       const backup = {
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -958,7 +973,7 @@ describe('draft/backup', () => {
 
       updatedDraft = createMockDraft();
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       expect(updatedDraft.currentValues.en.author).toEqual({});
       expect(updatedDraft.currentValues.en['author.name']).toBe('Alice');
@@ -987,7 +1002,7 @@ describe('draft/backup', () => {
         originalEntry: { locales: { en: { content: { title: 'Old Title', order: 7 } } } },
       });
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       // The restored order should use the live value (7), not the stale backup value (3)
       expect(updatedDraft.currentValues.en.order).toBe(7);
@@ -1018,7 +1033,7 @@ describe('draft/backup', () => {
         originalValues: { en: {} },
       });
 
-      restoreBackup({ backup, draft: updatedDraft });
+      await restoreBackup({ backup, draft: updatedDraft });
 
       const capturedValueMap = backup.currentValues.en;
 
@@ -1028,11 +1043,11 @@ describe('draft/backup', () => {
   });
 
   describe('stores', () => {
-    it('should initialize restoreDialogState with show: false', () => {
+    it('should initialize restoreDialogState with show: false', async () => {
       expect(restoreDialogState.current).toEqual({ show: false });
     });
 
-    it('should initialize backupToastState with default state', () => {
+    it('should initialize backupToastState with default state', async () => {
       expect(backupToastState.current).toEqual({
         saved: false,
         restored: false,
@@ -1090,23 +1105,21 @@ describe('draft/backup', () => {
       expect(mockBackupDB.get).toHaveBeenCalledWith(['posts', 'my-post']);
     });
 
-    it('should give a restored SVG image the URL of a wrapper that cannot run scripts', async () => {
+    it('should create display URLs only for the files a restored value refers to', async () => {
+      const { createDisplayBlobURL } = await import('$lib/services/assets/info');
+
       const svg = new File(['<svg><script>alert(1)</script></svg>'], 'a.svg', {
         type: 'image/svg+xml',
       });
 
       const unused = new File(['<svg/>'], 'b.svg', { type: 'image/svg+xml' });
       const png = new File(['png'], 'c.png', { type: 'image/png' });
-      const wrappers = new Map([svg, unused].map((file) => [file, new Blob([`<${file.name}>`])]));
-      const urls = new Map([...wrappers.values(), png].map((blob, i) => [blob, `blob:x/${i}`]));
+      const urls = new Map([svg, unused, png].map((file, i) => [file, `blob:x/${i}`]));
 
       const createObjectURL = vi
         .spyOn(URL, 'createObjectURL')
-        .mockImplementation((blob) => /** @type {string} */ (urls.get(blob)));
+        .mockImplementation((blob) => /** @type {string} */ (urls.get(/** @type {File} */ (blob))));
 
-      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-
-      mockCreateInertSVG.mockImplementation(async (file) => wrappers.get(file));
       mockBackupDB.get.mockResolvedValue({
         timestamp: new Date(),
         cmsConfigVersion: 'v1.0.0',
@@ -1133,18 +1146,20 @@ describe('draft/backup', () => {
         restoreDialogState.current.resolve(true);
         await promise;
 
-        // The SVG image points to its wrapper, while the file itself is what gets saved
-        expect(createObjectURL).not.toHaveBeenCalledWith(svg);
+        // The helper makes an SVG image’s URL point to a wrapper that can’t run script, see
+        // `getDisplayBlob()`, while the file itself is what gets saved. A file no value refers to
+        // gets no URL at all, so there’s nothing to release
+        expect(createDisplayBlobURL).toHaveBeenCalledTimes(2);
+        expect(createDisplayBlobURL).toHaveBeenCalledWith(svg);
+        expect(createDisplayBlobURL).toHaveBeenCalledWith(png);
+        expect(createDisplayBlobURL).not.toHaveBeenCalledWith(unused);
         expect(draft.currentValues.en).toEqual({ image: 'blob:x/0', photo: 'blob:x/2' });
         expect(draft.files).toEqual({
           'blob:x/0': { file: svg },
           'blob:x/2': { file: png },
         });
-        // The wrapper of the file no value refers to is released
-        expect(revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:x/1');
       } finally {
         createObjectURL.mockRestore();
-        revokeObjectURL.mockRestore();
       }
     });
 

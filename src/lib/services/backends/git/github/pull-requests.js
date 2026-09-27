@@ -4,6 +4,7 @@ import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { getAllStatusLabels, getStatusLabel } from '$lib/services/workflow/labels';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -174,7 +175,7 @@ export const deleteBranch = async (branch) => {
   const { owner, repo } = getWorkflowRepository();
 
   try {
-    await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodeURI(branch)}`, {
+    await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodePath(branch)}`, {
       method: 'DELETE',
       responseType: 'raw',
     });

@@ -120,6 +120,17 @@ describe('GitLab Editorial Workflow service', () => {
       expect(parseMergeRequest(createItem({ labels: undefined }))).toBeUndefined();
     });
 
+    test('returns undefined for a merge request from a fork', () => {
+      // Its source branch lives in the fork, so reading, merging or deleting a branch of that name
+      // on the configured project would act on something else
+      expect(
+        parseMergeRequest(createItem({ source_project_id: 2, target_project_id: 1 })),
+      ).toBeUndefined();
+      expect(
+        parseMergeRequest(createItem({ source_project_id: 1, target_project_id: 1 })),
+      ).toBeDefined();
+    });
+
     test('picks up a merge request created with Netlify/Decap CMS', () => {
       expect(parseMergeRequest(createItem({ labels: ['decap-cms/pending_review'] }))?.status).toBe(
         'pending_review',
@@ -318,6 +329,21 @@ describe('GitLab Editorial Workflow service', () => {
       mockList({ 'sveltia-cms/draft': [createItem({ iid: 2, labels: ['bug'] })] });
 
       await expect(fetchPullRequests()).resolves.toEqual([]);
+    });
+
+    test('skips a merge request from a fork', async () => {
+      mockList({
+        'sveltia-cms/draft': [
+          createItem({ source_project_id: 1, target_project_id: 1 }),
+          createItem({ iid: 2, source_project_id: 2, target_project_id: 1 }),
+        ],
+      });
+
+      const result = await fetchPullRequests();
+
+      expect(result.map(({ number }) => number)).toEqual([1]);
+      // Nothing is read for the skipped one
+      expect(fetchAPI).not.toHaveBeenCalledWith(expect.stringContaining('/merge_requests/2/'));
     });
 
     test('merges the results, listing a merge request found twice only once', async () => {

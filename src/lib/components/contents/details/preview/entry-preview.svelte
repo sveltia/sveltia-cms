@@ -98,5 +98,7 @@
     --entry-preview-padding-inline: 16px;
     padding-block: var(--entry-preview-padding-block);
     padding-inline: var(--entry-preview-padding-inline);
+    /* Keep the content written by other users within the preview, even if it’s positioned */
+    contain: paint;
   }
 </style>

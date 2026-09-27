@@ -13,7 +13,6 @@ const {
   mockGetTypedKeyPath,
   mockGetAssetLibraryFolderMap,
   mockGetDefaultAssetFolder,
-  mockCreateInertSVG,
 } = vi.hoisted(() => ({
   mockGetAssetByPath: vi.fn(),
   mockGetAssetFoldersByPath: vi.fn(),
@@ -23,7 +22,6 @@ const {
   mockGetTypedKeyPath: vi.fn(),
   mockGetAssetLibraryFolderMap: vi.fn(),
   mockGetDefaultAssetFolder: vi.fn(),
-  mockCreateInertSVG: vi.fn(),
 }));
 
 vi.mock('$lib/services/assets', () => ({
@@ -36,6 +34,8 @@ vi.mock('$lib/services/assets/folders', () => ({
 
 vi.mock('$lib/services/assets/info', () => ({
   getAssetBlob: mockGetAssetBlob,
+  // The real helper wraps an SVG image; the URL is all that matters here
+  createDisplayBlobURL: vi.fn(async (/** @type {Blob} */ blob) => URL.createObjectURL(blob)),
 }));
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
@@ -58,10 +58,6 @@ vi.mock('$lib/services/contents/fields', () => ({
 vi.mock('$lib/services/contents/fields/file/helpers', () => ({
   getAssetLibraryFolderMap: mockGetAssetLibraryFolderMap,
   getDefaultAssetFolder: mockGetDefaultAssetFolder,
-}));
-
-vi.mock('$lib/services/utils/media/image/svg', () => ({
-  createInertSVG: mockCreateInertSVG,
 }));
 
 const { copyEntryRelativeAssets } = await import('./duplicate-assets');
@@ -182,13 +178,20 @@ beforeEach(() => {
   mockGetAssetBlob.mockImplementation(
     async (/** @type {Asset} */ { name }) => new Blob([name], { type: 'image/jpeg' }),
   );
-
-  mockCreateInertSVG.mockImplementation(
-    async () => new Blob(['<svg>wrapper</svg>'], { type: 'image/svg+xml' }),
-  );
 });
 
 describe('copyEntryRelativeAssets()', () => {
+  test('creates the blob URL for display, keeping the original file for the upload', async () => {
+    const { createDisplayBlobURL } = await import('$lib/services/assets/info');
+    const files = await copyEntryRelativeAssets({ draft, currentValues });
+    const [[blobURL, { file }]] = Object.entries(files);
+
+    // The copy can be an SVG image from the repository, which must not run script on the CMS
+    // origin if its URL is opened in a new tab
+    expect(createDisplayBlobURL).toHaveBeenCalledExactlyOnceWith(file);
+    expect(currentValues.en.image).toBe(blobURL);
+  });
+
   test('copies an image referenced from the entry and replaces the value with a blob URL', async () => {
     const files = await copyEntryRelativeAssets({ draft, currentValues });
     const [blobURL] = getCreatedBlobURLs();
@@ -414,7 +417,8 @@ describe('copyEntryRelativeAssets()', () => {
     expect(currentValues.en.image).toBe('blob:1');
   });
 
-  test('gives an SVG image the URL of a wrapper that cannot run scripts', async () => {
+  test('hands an SVG image to the display URL helper, keeping the original for the upload', async () => {
+    const { createDisplayBlobURL } = await import('$lib/services/assets/info');
     const svg = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>';
 
     currentValues = {
@@ -425,23 +429,15 @@ describe('copyEntryRelativeAssets()', () => {
 
     const files = await copyEntryRelativeAssets({ draft, currentValues });
     const { file } = files['blob:1'];
-    const [[wrapper]] = vi.mocked(URL.createObjectURL).mock.calls;
 
-    // The link, which the preview opens in a new tab, leads to the wrapper as well as the image
-    expect(currentValues.en.body).toBe('![Diagram](blob:1)\n\n[View full size](blob:1)');
-    expect(mockCreateInertSVG).toHaveBeenCalledWith(file);
-    expect(wrapper).not.toBe(file);
-    expect(await /** @type {Blob} */ (wrapper).text()).toBe('<svg>wrapper</svg>');
+    // Only the image is pointed at the blob URL. The link keeps its relative path, which never
+    // leads to a blob URL that could be opened in a new tab
+    expect(currentValues.en.body).toBe('![Diagram](blob:1)\n\n[View full size](diagram.svg)');
+    // The helper makes the URL point to a wrapper that can’t run script, see `getDisplayBlob()`
+    expect(createDisplayBlobURL).toHaveBeenCalledExactlyOnceWith(file);
     // The original file is still the one to be saved
     expect(file.type).toBe('image/svg+xml');
     expect(await file.text()).toBe(svg);
-  });
-
-  test('gives any other file the URL of the file itself', async () => {
-    const files = await copyEntryRelativeAssets({ draft, currentValues });
-
-    expect(mockCreateInertSVG).not.toHaveBeenCalled();
-    expect(vi.mocked(URL.createObjectURL).mock.calls[0][0]).toBe(files['blob:1'].file);
   });
 
   test('leaves the reference as is if the asset cannot be downloaded', async () => {

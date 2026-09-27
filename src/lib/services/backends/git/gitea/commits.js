@@ -4,6 +4,7 @@ import { encodeBase64 } from '@sveltia/utils/file';
 import { repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -32,7 +33,7 @@ export const fetchLastCommit = async () => {
     const {
       commit: { id: hash, message },
     } = /** @type {{ commit: { id: string, message: string }}} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/branches/${branch}`)
+      await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(String(branch))}`)
     );
 
     return { hash, message };

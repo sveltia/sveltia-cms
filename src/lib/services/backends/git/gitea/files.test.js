@@ -737,6 +737,67 @@ describe('Gitea Files Service', () => {
     });
   });
 
+  describe('branch name encoding', () => {
+    // Left as is, `#` would start a fragment and cut the request URL short
+    const branch = 'release#1';
+
+    /**
+     * Run the given function with the configured branch replaced.
+     * @param {() => Promise<any>} fn Function to run.
+     */
+    const withBranch = async (fn) => {
+      repository.branch = branch;
+
+      try {
+        await fn();
+      } finally {
+        repository.branch = 'main';
+      }
+    };
+
+    test('encodes the branch in the file list request', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({ tree: [], truncated: false });
+
+      await withBranch(() => fetchFileList());
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/git/trees/release%231?recursive=1&page=1',
+      );
+    });
+
+    test('encodes the branch in the bulk file contents request', async () => {
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce({ default_paging_num: 30 })
+        .mockResolvedValueOnce([]);
+
+      await withBranch(() =>
+        fetchFileContents([
+          // @ts-ignore - Type compatibility in test
+          { path: 'file1.md', sha: 'abc123', size: 100, type: 'entry', name: 'file1.md' },
+        ]),
+      );
+
+      expect(fetchAPI).toHaveBeenNthCalledWith(
+        2,
+        '/repos/test-owner/test-repo/file-contents?ref=release%231',
+        { method: 'POST', body: { files: ['file1.md'] } },
+      );
+    });
+
+    test('encodes the branch in the media request', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue(new Blob([]));
+
+      await withBranch(() =>
+        fetchBlob(/** @type {any} */ ({ path: 'images/photo.jpg', name: 'photo.jpg' })),
+      );
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/media/release%231/images/photo.jpg',
+        { responseType: 'blob' },
+      );
+    });
+  });
+
   describe('fetchBlob', () => {
     test('should fetch asset blob from API', async () => {
       /** @type {Asset} */

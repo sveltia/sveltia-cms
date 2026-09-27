@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allAssets } from '$lib/services/assets';
+import { createDisplayBlobURL } from '$lib/services/assets/info';
 
 import { processResource } from './process';
 
@@ -18,6 +19,7 @@ vi.mock('$lib/services/assets', () => ({
 }));
 
 vi.mock('$lib/services/assets/info', () => ({
+  createDisplayBlobURL: vi.fn(),
   getAssetPublicURL: vi.fn(),
   hasCachedThumbnail: vi.fn(async () => false),
 }));
@@ -63,6 +65,8 @@ describe('Test processResource()', () => {
 
     // Mock URL.createObjectURL
     global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+    // The real helper wraps an SVG image; the URL is all that matters here
+    vi.mocked(createDisplayBlobURL).mockImplementation(async (blob) => URL.createObjectURL(blob));
 
     const equal = (await import('fast-deep-equal')).default;
     const { sanitize } = await import('isomorphic-dompurify');
@@ -222,6 +226,8 @@ describe('Test processResource()', () => {
       folder: { name: 'uploads' },
       replace: false,
     });
+    // The URL is made for display, while the original file is kept for the upload
+    expect(createDisplayBlobURL).toHaveBeenCalledExactlyOnceWith(mockFile);
   });
 
   test('should reject a file the browser cannot decode', async () => {
@@ -1036,6 +1042,8 @@ describe('Test convertFileItemToAsset()', () => {
 
     // Mock URL.createObjectURL
     global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+    // The real helper wraps an SVG image; the URL is all that matters here
+    vi.mocked(createDisplayBlobURL).mockImplementation(async (blob) => URL.createObjectURL(blob));
   });
 
   test('should put the asset in the subfolder it was picked for', async () => {
@@ -1122,7 +1130,8 @@ describe('Test convertFileItemToAsset()', () => {
     });
 
     expect(result.blobURL).toBe('blob:mock-url');
-    expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockFile);
+    expect(result.file).toBe(mockFile);
+    expect(createDisplayBlobURL).toHaveBeenCalledExactlyOnceWith(mockFile);
   });
 
   test('should handle file without target folder path', async () => {
@@ -1192,6 +1201,8 @@ describe('Test getUnsavedAssets()', () => {
 
     // Mock URL.createObjectURL
     global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+    // The real helper wraps an SVG image; the URL is all that matters here
+    vi.mocked(createDisplayBlobURL).mockImplementation(async (blob) => URL.createObjectURL(blob));
   });
 
   test('should convert all files in draft to assets', async () => {

@@ -31,9 +31,19 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
  */
 
 /**
- * Regular expression to match `![alt](src "title")`.
+ * Regular expression to match `![alt](src "title")`, capturing the source. The alt text runs up to
+ * the first `](`, so it can contain brackets, and the source up to the first `)` or an optional
+ * double-quoted title, which can contain parentheses and escaped quotes.
+ *
+ * The pattern runs on untrusted Markdown, so it’s written to match in linear time. Every part can
+ * only be matched one way, and neither the alt text nor the source can contain `![`, so a failed
+ * match at one `![` doesn’t read the text after the next one again. A title is only looked for
+ * right after the source’s last non-space character, and it can’t contain an unescaped quote, so
+ * each quote is read as the start of a title at most once. An image nested in the alt text or
+ * source of an unclosed one is matched on its own instead.
  */
-export const MARKDOWN_IMAGE_REGEX = /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g;
+export const MARKDOWN_IMAGE_REGEX =
+  /!\[(?:[^\]\n!]|!(?!\[)|\](?!\())*\]\(((?:[^\n!)]|!(?!\[))+?)(?:(?<!\s)\s+"(?:[^"\\\n]|\\.)*")?\)/g;
 
 /**
  * Currently selected entries.

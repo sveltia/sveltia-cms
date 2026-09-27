@@ -82,6 +82,17 @@ describe('GitHub files service', () => {
       ]);
     });
 
+    test('encodes the branch name', async () => {
+      repository.branch = 'release#1';
+      vi.mocked(fetchAPI).mockResolvedValue({ tree: [] });
+
+      await fetchFileList();
+
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/test-owner/test-repo/git/trees/release%231?recursive=1',
+      );
+    });
+
     test('fetches file list with custom hash', async () => {
       const mockTree = { tree: [] };
       const customHash = 'custom-hash';

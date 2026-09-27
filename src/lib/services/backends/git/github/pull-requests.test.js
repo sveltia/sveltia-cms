@@ -241,6 +241,19 @@ describe('GitHub pull request helpers', () => {
       vi.mocked(fetchAPI).mockRejectedValue(new Error('Not found'));
       await expect(deleteBranch('cms/posts/hello')).resolves.toBeUndefined();
     });
+
+    test('encodes a branch name that would otherwise be cut short', async () => {
+      await deleteBranch('cms/posts/c#-tips');
+
+      // Left as is, `#` would start a fragment, and the request would delete `cms/posts/c` instead
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/repos/owner/repo/git/refs/heads/cms/posts/c%23-tips',
+        {
+          method: 'DELETE',
+          responseType: 'raw',
+        },
+      );
+    });
   });
 
   describe('updateLabels', () => {

@@ -4,20 +4,15 @@
   is shown as is.
 -->
 <script>
-  import { sanitize } from 'isomorphic-dompurify';
   import { parse } from 'marked';
+
+  import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/helpers';
 
   /**
    * @typedef {object} Props
    * @property {string} text File content.
    * @property {string} name File name, used to detect Markdown.
    */
-
-  /**
-   * Options for {@link sanitize}. A `style` element would apply to the whole app, and a `form`
-   * could send what the user types to another site.
-   */
-  const SANITIZE_OPTIONS = { FORBID_TAGS: ['style', 'form'] };
 
   /** @type {Props} */
   let {
@@ -31,7 +26,8 @@
 {#if name.endsWith('.md')}
   {#await parse(text, { breaks: true, async: true }) then rawHTML}
     <div role="figure" class="markdown">
-      {@html sanitize(rawHTML, SANITIZE_OPTIONS)}
+      <!-- Unlike in the entry preview, a file from the repository can’t embed frames -->
+      {@html sanitizeRichTextHTML(rawHTML, { ADD_TAGS: [] })}
     </div>
   {:catch}
     <pre role="figure">{text}</pre>

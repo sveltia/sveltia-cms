@@ -118,6 +118,13 @@ const toMergeRequest = (item, status) => {
  * request is not managed by the CMS.
  */
 export const parseMergeRequest = (item) => {
+  // A merge request from a fork has its source branch in the fork, while the branch is read,
+  // merged and deleted on the configured project, where a branch of the same name would be someone
+  // else’s. Skip it, like GitHub’s cross-repository pull requests
+  if (item.source_project_id !== item.target_project_id) {
+    return undefined;
+  }
+
   const status = getStatusFromLabels(item.labels ?? []);
 
   if (!status) {

@@ -65,7 +65,12 @@ export const openPopup = ({ authURL }) => {
  * @see https://sveltiacms.app/en/docs/backends
  */
 export const authorize = async ({ backendName, authURL, popup }) => {
-  popup ??= openPopup({ authURL });
+  const authPopup = popup ?? openPopup({ authURL });
+
+  // Without a popup, there’s no window the result could come from
+  if (!authPopup) {
+    throw createAbortError();
+  }
 
   return new Promise((resolve, reject) => {
     // Detaches the `message` listener below. Every exit path aborts it, including the one where the
@@ -80,7 +85,7 @@ export const authorize = async ({ backendName, authURL, popup }) => {
     const timer =
       backendName === 'github'
         ? setInterval(() => {
-            if (popup?.closed) {
+            if (authPopup.closed) {
               controller.abort();
               clearInterval(timer);
               reject(createAbortError());
@@ -89,13 +94,15 @@ export const authorize = async ({ backendName, authURL, popup }) => {
         : 0;
 
     /**
-     * Message event handler.
+     * Message event handler. Only messages from the popup itself are handled, so another window,
+     * even on the same origin, can neither take part in the handshake nor inject a token.
      * @param {object} args Arguments.
      * @param {string} args.origin Origin URL.
      * @param {string} args.data Passed data.
+     * @param {MessageEventSource | null} args.source Window that sent the message.
      */
-    const handler = ({ origin, data }) => {
-      if (origin !== new URL(authURL).origin || typeof data !== 'string') {
+    const handler = ({ origin, data, source }) => {
+      if (source !== authPopup || origin !== new URL(authURL).origin || typeof data !== 'string') {
         return;
       }
 
@@ -103,7 +110,7 @@ export const authorize = async ({ backendName, authURL, popup }) => {
 
       // First message
       if (data === `authorizing:${provider}`) {
-        popup?.postMessage(data, origin);
+        authPopup.postMessage(data, origin);
 
         return;
       }
@@ -143,7 +150,7 @@ export const authorize = async ({ backendName, authURL, popup }) => {
 
       controller.abort();
       clearInterval(timer);
-      popup?.close();
+      authPopup.close();
     };
 
     window.addEventListener('message', handler, { signal: controller.signal });
@@ -285,11 +292,17 @@ export const sendMessage = ({ provider = 'unknown', token, refreshToken, error, 
   const content = error ? { provider, error, errorCode } : { provider, token, refreshToken };
 
   /**
-   * Listener for messages from the window opener.
+   * Listener for messages from the window opener. The tokens are only sent back to the opener, and
+   * only when it’s on the same origin as this popup, so no other window holding a reference to the
+   * popup can obtain them by starting the handshake.
    * @param {MessageEvent} event Event.
    */
-  const onMessage = ({ data, origin }) => {
-    if (data === `authorizing:${provider}`) {
+  const onMessage = ({ data, origin, source }) => {
+    if (
+      source === window.opener &&
+      origin === window.location.origin &&
+      data === `authorizing:${provider}`
+    ) {
       window.opener?.postMessage(
         `authorization:${provider}:${_state}:${JSON.stringify(content)}`,
         origin,

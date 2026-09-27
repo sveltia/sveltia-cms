@@ -66,6 +66,16 @@ describe('EntryPreview', () => {
     await expect.element(document.getByText('World')).toBeInTheDocument();
   });
 
+  test('confines the field previews to the preview box', async () => {
+    await renderPreview();
+
+    const document = page.getByRole('document', { name: 'Content Preview' });
+
+    await expect.element(document).toBeInTheDocument();
+    // A positioned element in the content written by other users can’t cover the app
+    expect(getComputedStyle(document.element()).contain).toBe('paint');
+  });
+
   test('renders the preview in a frame with the custom styles', async () => {
     customPreviewStyleRegistry.add('https://example.com/preview.css');
 

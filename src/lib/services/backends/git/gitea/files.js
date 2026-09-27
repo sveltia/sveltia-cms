@@ -12,6 +12,7 @@ import {
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { dataLoadedProgress } from '$lib/services/contents';
 
 /**
@@ -65,7 +66,8 @@ const DEFAULT_MAX_BLOB_SIZE = 10485760;
  */
 export const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
-  const requestPath = `/repos/${owner}/${repo}/git/trees/${lastHash ?? branch}?recursive=1`;
+  const ref = encodePath(/** @type {string} */ (lastHash ?? branch));
+  const requestPath = `/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`;
   /** @type {PartialGitEntry[]} */
   const gitEntries = [];
   let page = 1;
@@ -130,14 +132,6 @@ export const parseFileContents = async (fetchingFiles, results) => {
 };
 
 /**
- * Encode a file path for use in a URL path, segment by segment. `encodeURI` would leave `#` and `?`
- * as they are, which end the path, so a file name containing them would be cut short.
- * @param {string} path File path.
- * @returns {string} Encoded path, with the slashes kept.
- */
-const encodeFilePath = (path) => path.split('/').map(encodeURIComponent).join('/');
-
-/**
  * Fetch the text content of a single file with the raw endpoint, which returns it in full. The bulk
  * endpoints leave the content of an oversized blob empty, and keeping that would wipe the file the
  * next time the entry is saved.
@@ -150,12 +144,9 @@ const fetchRawFile = async (path) => {
   const { owner, repo, branch = '' } = repository;
 
   return /** @type {Promise<string>} */ (
-    fetchAPI(
-      `/repos/${owner}/${repo}/raw/${encodeFilePath(path)}?ref=${encodeURIComponent(branch)}`,
-      {
-        responseType: 'text',
-      },
-    )
+    fetchAPI(`/repos/${owner}/${repo}/raw/${encodePath(path)}?ref=${encodeURIComponent(branch)}`, {
+      responseType: 'text',
+    })
   );
 };
 
@@ -215,7 +206,7 @@ export const fetchFileContents = async (fetchingFiles) => {
 
   const requestPath = isForgejo
     ? `/repos/${owner}/${repo}/git/blobs`
-    : `/repos/${owner}/${repo}/file-contents?ref=${branch}`;
+    : `/repos/${owner}/${repo}/file-contents?ref=${encodeURIComponent(String(branch))}`;
 
   // Forgejo uses `sha` as the identifier for files, while Gitea uses `path`. Each item in the
   // response carries the same field, which is how a result is matched to the file it was requested
@@ -335,7 +326,7 @@ export const fetchBlob = async (asset) => {
   const { path } = asset;
 
   return /** @type {Promise<Blob>} */ (
-    fetchAPI(`/repos/${owner}/${repo}/media/${branch}/${encodeFilePath(path)}`, {
+    fetchAPI(`/repos/${owner}/${repo}/media/${encodePath(String(branch))}/${encodePath(path)}`, {
       responseType: 'blob',
     })
   );

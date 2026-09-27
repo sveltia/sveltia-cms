@@ -2,7 +2,7 @@ import equal from 'fast-deep-equal';
 import { sanitize } from 'isomorphic-dompurify';
 
 import { allAssets } from '$lib/services/assets';
-import { getAssetPublicURL } from '$lib/services/assets/info';
+import { createDisplayBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { processFile } from '$lib/services/assets/process';
 import { getEntryAssetFolderPath } from '$lib/services/contents/draft/save/assets';
@@ -84,7 +84,7 @@ export const convertFileItemToAsset = async ({
     unsaved: true,
     replace: !!replace,
     file,
-    blobURL: blobURL ?? URL.createObjectURL(file),
+    blobURL: blobURL ?? (await createDisplayBlobURL(file)),
     name,
     // A provisional path. `listAssets` resolves it against the assets already in the folder,
     // because the final file name is only determined when the entry is saved.
@@ -210,8 +210,9 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
         oversizedFileName = file.name;
         file = undefined;
       } else {
-        // Set a temporary blob URL, which will be later replaced with the actual file path
-        value = URL.createObjectURL(file);
+        // Set a temporary blob URL, which will be later replaced with the actual file path. The URL
+        // is made for display, e.g. an SVG image can’t run script, while the file itself is cached
+        value = await createDisplayBlobURL(file);
         // Cache the file itself for later upload
         draft.files[value] = { file, folder, replace, subfolderPath };
       }

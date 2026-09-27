@@ -362,6 +362,20 @@ describe('GitHub Open Authoring workflow', () => {
     });
 
     describe('fetchForkBranchFileList', () => {
+      test('encodes the branch names in the comparison', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({ files: [] });
+
+        await fetchForkBranchFileList(
+          /** @type {any} */ ({ branch: 'cms/contributor/repo/posts/c#-tips' }),
+        );
+
+        // Left as is, `#` would start a fragment and cut the head branch short
+        expect(fetchAPI).toHaveBeenCalledWith(
+          '/repos/owner/repo/compare/main...contributor:cms/contributor/repo/posts/c%23-tips' +
+            '?per_page=100',
+        );
+      });
+
       test('compares the fork branch with the configured branch', async () => {
         vi.mocked(fetchAPI).mockResolvedValue({
           files: [

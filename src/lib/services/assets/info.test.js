@@ -16,11 +16,14 @@ import {
   _resetAssetBlobCache,
   _resetRevocationQueue,
   _resetThumbnailDB,
+  cacheAssetBlob,
+  createDisplayBlobURL,
   getAssetBaseURL,
   getAssetBlob,
   getAssetBlobURL,
   getAssetPublicURL,
   getAssetThumbnailURL,
+  getDisplayBlob,
   getFolderPublicPath,
   getMediaFieldSource,
   getMediaFieldURL,
@@ -390,6 +393,80 @@ describe('assets/info', () => {
 
       expect(await getAssetBlob(assetWithoutHandle)).toBeInstanceOf(Blob);
       expect(mockBackend.fetchBlob).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('getDisplayBlob', () => {
+    it('should wrap an SVG image, whatever the case and parameters of its type', async () => {
+      const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
+      const wrapper = new Blob(['<svg/>'], { type: 'image/svg+xml' });
+
+      vi.mocked(createInertSVG).mockResolvedValue(wrapper);
+
+      const svg = new Blob(['<svg><script/></svg>'], { type: 'image/svg+xml' });
+      const svgWithParams = new Blob(['<svg/>'], { type: 'Image/SVG+XML; charset=utf-8' });
+
+      expect(await getDisplayBlob(svg)).toBe(wrapper);
+      expect(createInertSVG).toHaveBeenCalledWith(svg);
+      expect(await getDisplayBlob(svgWithParams)).toBe(wrapper);
+    });
+
+    it.each([
+      'text/html',
+      'application/xhtml+xml',
+      'text/xml',
+      'application/xml',
+      'application/xslt+xml',
+    ])('should turn a %s document into plain text', async (type) => {
+      const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
+      const blob = new Blob(['<script>alert(1)</script>'], { type });
+      const result = await getDisplayBlob(blob);
+
+      expect(result).not.toBe(blob);
+      expect(result.type).toBe('text/plain');
+      expect(await result.text()).toBe('<script>alert(1)</script>');
+      expect(createInertSVG).not.toHaveBeenCalled();
+    });
+
+    it.each(['image/png', 'application/pdf', 'text/plain', 'video/mp4', ''])(
+      'should leave a %s file as is',
+      async (type) => {
+        const blob = new Blob(['data'], { type });
+
+        expect(await getDisplayBlob(blob)).toBe(blob);
+      },
+    );
+  });
+
+  describe('createDisplayBlobURL', () => {
+    it('should create the URL of the blob to be displayed', async () => {
+      const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
+      const wrapper = new Blob(['<svg/>'], { type: 'image/svg+xml' });
+      const file = new File(['<svg/>'], 'test.svg', { type: 'image/svg+xml' });
+
+      vi.mocked(createInertSVG).mockResolvedValue(wrapper);
+
+      expect(await createDisplayBlobURL(file)).toBe('blob:mock-url');
+      expect(global.URL.createObjectURL).toHaveBeenCalledExactlyOnceWith(wrapper);
+    });
+  });
+
+  describe('cacheAssetBlob', () => {
+    it('should give the asset the URL of the display blob, and keep the original', async () => {
+      const { createInertSVG } = await import('$lib/services/utils/media/image/svg');
+      const wrapper = new Blob(['<svg/>'], { type: 'image/svg+xml' });
+      const file = new File(['<svg><script/></svg>'], 'test.svg', { type: 'image/svg+xml' });
+      const svgAsset = { ...mockAsset, path: 'assets/images/test.svg', name: 'test.svg' };
+
+      vi.mocked(createInertSVG).mockResolvedValue(wrapper);
+      global.fetch = vi.fn();
+
+      expect(await cacheAssetBlob(svgAsset, file)).toBe(file);
+      expect(svgAsset.blobURL).toBe('blob:mock-url');
+      expect(global.URL.createObjectURL).toHaveBeenCalledExactlyOnceWith(wrapper);
+      // The original is read back, not the wrapper behind the URL
+      expect(await getAssetBlob(svgAsset)).toBe(file);
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 

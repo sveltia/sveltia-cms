@@ -307,6 +307,23 @@ describe('GitHub Editorial Workflow service', () => {
       );
     });
 
+    test('encodes the name of the reference it resets', async () => {
+      mockExisting([]);
+      vi.mocked(fetchAPI).mockResolvedValueOnce({});
+
+      await createBranch('cms/posts/c#-tips');
+
+      // Left as is, `#` would start a fragment, and the request would force-reset `cms/posts/c`,
+      // another entry’s branch, instead
+      expect(fetchAPI).toHaveBeenLastCalledWith(
+        '/repos/owner/repo/git/refs/heads/cms/posts/c%23-tips',
+        {
+          method: 'PATCH',
+          body: { sha: 'abc', force: true },
+        },
+      );
+    });
+
     test('keeps an existing reference that has an open pull request', async () => {
       mockExisting([createNode()]);
 

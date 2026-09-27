@@ -112,6 +112,77 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
 
     expect(matches).toHaveLength(0);
   });
+
+  test('matches images with an empty or bracketed alt text', () => {
+    const text = '![](empty.jpg) ![see [1]](note.jpg) ![a]b](odd.jpg)';
+    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
+
+    expect(matches.map(([image, src]) => [image, src])).toEqual([
+      ['![](empty.jpg)', 'empty.jpg'],
+      ['![see [1]](note.jpg)', 'note.jpg'],
+      ['![a]b](odd.jpg)', 'odd.jpg'],
+    ]);
+  });
+
+  test('matches the source up to the title or the first closing parenthesis', () => {
+    const text = [
+      '![a](a.jpg "Title (with parens)")',
+      '![b](b.jpg  "Escaped \\"quotes\\"")',
+      "![c](c.jpg 'not a title')",
+      '![d](d (1).jpg)',
+      '![e](my image.jpg)',
+      '![f](f.jpg\n"Title on the next line")',
+      '![g](g.jpg "Unclosed title)',
+    ].join(' ');
+
+    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
+
+    expect(matches.map(([, src]) => src)).toEqual([
+      'a.jpg',
+      'b.jpg',
+      "c.jpg 'not a title'",
+      'd (1',
+      'my image.jpg',
+      'f.jpg',
+      'g.jpg "Unclosed title',
+    ]);
+  });
+
+  test('matches an image within the alt text or source of an unclosed one', () => {
+    const text = '![unclosed ![inner](inner.jpg) ![a](unclosed ![b](b.jpg)';
+    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
+
+    expect(matches.map(([image, src]) => [image, src])).toEqual([
+      ['![inner](inner.jpg)', 'inner.jpg'],
+      ['![b](b.jpg)', 'b.jpg'],
+    ]);
+  });
+
+  test('does not match across lines or with an empty source', () => {
+    const text = '![a\n](a.jpg) ![b](b.jpg\n) ![c]()';
+    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
+
+    expect(matches).toHaveLength(0);
+  });
+
+  test.each([
+    ['unclosed images', '![a]('.repeat(20000)],
+    ['unclosed alt texts', '!['.repeat(20000)],
+    ['unclosed alt texts with a bracket at the end', `${'!['.repeat(20000)}]x`],
+    ['bracketed alt texts', '![a]'.repeat(20000)],
+    ['unclosed titles', `![a](x${' "'.repeat(20000)}`],
+    ['unclosed images with titles', '![a](x "'.repeat(20000)],
+    ['spaces before an unclosed title', `![a](x${' '.repeat(20000)}"${'a'.repeat(20000)}`],
+    ['escaped quotes', `![a](x "${'\\"'.repeat(20000)}`],
+  ])('matches in linear time: %s', (_label, text) => {
+    const start = performance.now();
+    const matches = [...text.matchAll(MARKDOWN_IMAGE_REGEX)];
+    const duration = performance.now() - start;
+
+    expect(matches).toHaveLength(0);
+    // The previous pattern took well over a minute with some of these inputs
+    expect(duration).toBeLessThan(200);
+  });
 });
 
 describe('getEntriesByCollection()', () => {

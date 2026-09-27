@@ -19,6 +19,7 @@ import {
 } from '$lib/services/backends/git/github/workflow-fork';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
 import { getAllStatusLabels, getStatusFromLabels } from '$lib/services/workflow/labels';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -284,7 +285,7 @@ const fetchOpenPullRequest = async (branch) => {
 const resetBranch = async (branch, sha) => {
   const { owner, repo } = repository;
 
-  await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodeURI(branch)}`, {
+  await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodePath(branch)}`, {
     method: 'PATCH',
     body: { sha, force: true },
   });

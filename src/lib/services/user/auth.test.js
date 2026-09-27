@@ -988,12 +988,23 @@ describe('auth service', () => {
       fetchError.cause = { status: 401 };
       mockBackend.fetchFiles.mockRejectedValue(fetchError);
 
+      Object.assign(mockPrefs, {
+        apiKeys: { deepl: 'deepl-key' },
+        logins: { cloud: 'user password' },
+      });
+
       await authModule.signInAutomatically();
 
       expect(auth.unauthenticated).toBe(true);
       // Should clear the cached token so the sign-in form is shown
       expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('decap-cms-user');
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('netlify-cms-user');
       expect(mockUser.account).toBeUndefined();
+      // An expired token is not an explicit sign-out, so the integration credentials are kept for
+      // the user signing in again
+      expect(mockPrefs.apiKeys).toEqual({ deepl: 'deepl-key' });
+      expect(mockPrefs.logins).toEqual({ cloud: 'user password' });
     });
 
     it('should handle fetch files failure with non-auth error', async () => {
@@ -1271,8 +1282,20 @@ describe('auth service', () => {
 
       mockRepositoryHead.current = 'abc123';
 
+      Object.assign(mockPrefs, {
+        theme: 'dark',
+        locale: 'ja',
+        apiKeys: { deepl: 'deepl-key', unsplash: 'unsplash-key' },
+        logins: { cloud: 'user password' },
+      });
+
       await authModule.signOut();
 
+      // Integration credentials are removed, while UI preferences are kept
+      expect(mockPrefs).toEqual({ theme: 'dark', locale: 'ja', apiKeys: {} });
+      // Legacy Netlify/Decap CMS user caches, which may hold a token, are removed as well
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('decap-cms-user');
+      expect(mockLocalStorage.delete).toHaveBeenCalledWith('netlify-cms-user');
       expect(mockStopRemoteChangePolling).toHaveBeenCalled();
       expect(mockRepositoryHead.current).toBe('');
       expect(mockBackend.signOut).toHaveBeenCalled();

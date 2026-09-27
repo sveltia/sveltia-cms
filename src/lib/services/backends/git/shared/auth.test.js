@@ -152,7 +152,11 @@ describe('git/shared/auth', () => {
       )?.[1];
 
       if (handler) {
-        handler({ data: 'authorizing:github', origin: 'https://localhost:3000' });
+        handler({
+          data: 'authorizing:github',
+          origin: 'https://localhost:3000',
+          source: mockWindow.opener,
+        });
       }
 
       expect(mockWindow.opener.postMessage).toHaveBeenCalledWith(
@@ -179,7 +183,11 @@ describe('git/shared/auth', () => {
       )?.[1];
 
       if (handler) {
-        handler({ data: 'authorizing:github', origin: 'https://localhost:3000' });
+        handler({
+          data: 'authorizing:github',
+          origin: 'https://localhost:3000',
+          source: mockWindow.opener,
+        });
       }
 
       expect(mockWindow.opener.postMessage).toHaveBeenCalledWith(
@@ -244,12 +252,13 @@ describe('git/shared/auth', () => {
       // Simulate receiving the authorization message
       messageHandler({
         data: 'authorizing:github',
-        origin: 'https://example.com',
+        origin: 'https://localhost:3000',
+        source: mockWindow.opener,
       });
 
       expect(mockWindow.opener.postMessage).toHaveBeenCalledWith(
         'authorization:github:success:{"provider":"github","token":"test-token"}',
-        'https://example.com',
+        'https://localhost:3000',
       );
     });
   });
@@ -271,12 +280,14 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       // Simulate the second message with success
       messageHandler({
         data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -299,11 +310,13 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       messageHandler({
         data: `authorization:github:error:${JSON.stringify({ error: 'Auth failed' })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       await expect(authPromise).rejects.toThrow('Authentication failed');
@@ -350,11 +363,13 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       messageHandler({
         data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -378,11 +393,13 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       messageHandler({
         data: 'authorization:github:success:invalid-json',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       await expect(authPromise).rejects.toThrow('Authentication failed');
@@ -402,11 +419,13 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:gitlab',
         origin: 'https://gitlab.com',
+        source: mockPopup,
       });
 
       messageHandler({
         data: `authorization:gitlab:success:${JSON.stringify({ token: 'gitlab-token' })}`,
         origin: 'https://gitlab.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -429,12 +448,14 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       // Send a message that won't match the regex pattern
       messageHandler({
         data: 'authorization:github:invalid-format',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       await expect(authPromise).rejects.toThrow('Authentication failed');
@@ -457,12 +478,14 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: { token: 'test' },
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       // Then send valid data
       messageHandler({
         data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -489,12 +512,14 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://evil.com',
+        source: mockPopup,
       });
 
       // Then send valid message from correct origin
       messageHandler({
         data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -518,12 +543,14 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       // Send a message with valid JSON that is not an object (e.g., array or primitive)
       messageHandler({
         data: `authorization:github:success:${JSON.stringify(['token'])}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       await expect(authPromise).rejects.toThrow('Authentication failed');
@@ -543,40 +570,16 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       messageHandler({
         data: `authorization:github:error:${JSON.stringify({ error: 'User denied', errorCode: 'access_denied' })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       await expect(authPromise).rejects.toThrow();
-    });
-
-    it('should handle popup being null', async () => {
-      mockWindow.open.mockReturnValue(null);
-
-      const authURL = 'https://github.com/login/oauth/authorize';
-      const backendName = 'github';
-      const authPromise = authorize({ backendName, authURL });
-
-      const messageHandler = mockWindow.addEventListener.mock.calls.find(
-        ([event]) => event === 'message',
-      )?.[1];
-
-      messageHandler({
-        data: 'authorizing:github',
-        origin: 'https://github.com',
-      });
-
-      messageHandler({
-        data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
-        origin: 'https://github.com',
-      });
-
-      const result = await authPromise;
-
-      expect(result).toEqual({ token: 'test-token' });
     });
   });
 
@@ -600,11 +603,13 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://api.netlify.com',
+        source: mockPopup,
       });
 
       messageHandler({
         data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
         origin: 'https://api.netlify.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -631,11 +636,13 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://api.netlify.com',
+        source: mockPopup,
       });
 
       messageHandler({
         data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
         origin: 'https://api.netlify.com',
+        source: mockPopup,
       });
 
       await authPromise;
@@ -663,11 +670,13 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://api.netlify.com',
+        source: mockPopup,
       });
 
       messageHandler({
         data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
         origin: 'https://api.netlify.com',
+        source: mockPopup,
       });
 
       await authPromise;
@@ -692,11 +701,13 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       messageHandler({
         data: `authorization:github:success:${JSON.stringify({ token: 'test-token' })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -742,11 +753,13 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:gitlab',
         origin: 'https://localhost:3000',
+        source: mockPopup,
       });
 
       messageHandler({
         data: `authorization:gitlab:success:${JSON.stringify({ token: 'test-token' })}`,
         origin: 'https://localhost:3000',
+        source: mockPopup,
       });
 
       await authPromise;
@@ -1074,6 +1087,7 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       messageHandler({
@@ -1082,6 +1096,7 @@ describe('git/shared/auth', () => {
           refreshToken: 'github-refresh-token',
         })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -1133,6 +1148,7 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:gitlab',
         origin: 'https://localhost:3000',
+        source: mockPopup,
       });
 
       messageHandler({
@@ -1141,6 +1157,7 @@ describe('git/shared/auth', () => {
           refreshToken: 'gitlab-refresh-token',
         })}`,
         origin: 'https://localhost:3000',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -1190,6 +1207,7 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:gitea',
         origin: 'https://localhost:3000',
+        source: mockPopup,
       });
 
       messageHandler({
@@ -1198,6 +1216,7 @@ describe('git/shared/auth', () => {
           refreshToken: 'gitea-refresh-token',
         })}`,
         origin: 'https://localhost:3000',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -1352,6 +1371,7 @@ describe('git/shared/auth', () => {
       messageHandler({
         data: 'authorizing:github',
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       messageHandler({
@@ -1360,6 +1380,7 @@ describe('git/shared/auth', () => {
           refreshToken: 'new-refresh-token',
         })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
@@ -1528,16 +1549,129 @@ describe('git/shared/auth', () => {
       vi.advanceTimersByTime(1000);
 
       // Complete auth normally so the promise resolves rather than hanging.
-      messageHandler({ data: 'authorizing:github', origin: 'https://github.com' });
+      messageHandler({
+        data: 'authorizing:github',
+        origin: 'https://github.com',
+        source: mockPopup,
+      });
       messageHandler({
         data: `authorization:github:success:${JSON.stringify({ token: 'ok' })}`,
         origin: 'https://github.com',
+        source: mockPopup,
       });
 
       const result = await authPromise;
 
       expect(result).toEqual({ token: 'ok' });
       vi.useRealTimers();
+    });
+  });
+
+  describe('sendMessage — sender validation', () => {
+    /** @type {any} */
+    let capturedHandler;
+
+    beforeEach(() => {
+      mockWindow.addEventListener = vi.fn((event, handler) => {
+        if (event === 'message') capturedHandler = handler;
+      });
+    });
+
+    it('should not send the token to a window other than the opener', () => {
+      sendMessage({ provider: 'gitlab', token: 'secret-token' });
+
+      capturedHandler({
+        data: 'authorizing:gitlab',
+        origin: 'https://localhost:3000',
+        source: { postMessage: vi.fn() },
+      });
+
+      expect(mockWindow.opener.postMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining('secret-token'),
+        expect.any(String),
+      );
+      expect(mockWindow.removeEventListener).not.toHaveBeenCalled();
+    });
+
+    it('should not send the token to the opener when the message comes from another origin', () => {
+      sendMessage({ provider: 'gitlab', token: 'secret-token' });
+
+      capturedHandler({
+        data: 'authorizing:gitlab',
+        origin: 'https://evil.example',
+        source: mockWindow.opener,
+      });
+
+      expect(mockWindow.opener.postMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining('secret-token'),
+        expect.any(String),
+      );
+    });
+
+    it('should send the token once the opener asks from the same origin', () => {
+      sendMessage({ provider: 'gitlab', token: 'secret-token' });
+
+      capturedHandler({
+        data: 'authorizing:gitlab',
+        origin: 'https://localhost:3000',
+        source: mockWindow.opener,
+      });
+
+      expect(mockWindow.opener.postMessage).toHaveBeenCalledWith(
+        'authorization:gitlab:success:{"provider":"gitlab","token":"secret-token"}',
+        'https://localhost:3000',
+      );
+      expect(mockWindow.removeEventListener).toHaveBeenCalledWith('message', capturedHandler);
+    });
+  });
+
+  describe('authorize — sender validation', () => {
+    it('should ignore messages that do not come from the popup', async () => {
+      mockWindow.open.mockReturnValue(mockPopup);
+
+      const authPromise = authorize({
+        backendName: 'gitlab',
+        authURL: 'https://localhost:3000/',
+      });
+
+      const messageHandler = mockWindow.addEventListener.mock.calls.find(
+        ([event]) => event === 'message',
+      )?.[1];
+
+      const otherWindow = { postMessage: vi.fn() };
+
+      // A same-origin window other than the popup can neither start the handshake nor inject a
+      // token
+      messageHandler({
+        data: 'authorizing:gitlab',
+        origin: 'https://localhost:3000',
+        source: otherWindow,
+      });
+      messageHandler({
+        data: `authorization:gitlab:success:${JSON.stringify({ token: 'forged-token' })}`,
+        origin: 'https://localhost:3000',
+        source: otherWindow,
+      });
+
+      expect(mockPopup.postMessage).not.toHaveBeenCalled();
+      expect(mockPopup.close).not.toHaveBeenCalled();
+
+      messageHandler({
+        data: `authorization:gitlab:success:${JSON.stringify({ token: 'real-token' })}`,
+        origin: 'https://localhost:3000',
+        source: mockPopup,
+      });
+
+      await expect(authPromise).resolves.toEqual({ token: 'real-token' });
+    });
+
+    it('should reject with an AbortError when there is no popup', async () => {
+      mockWindow.open.mockReturnValue(null);
+
+      await expect(
+        authorize({ backendName: 'github', authURL: 'https://api.netlify.com/auth' }),
+      ).rejects.toMatchObject({ name: 'AbortError' });
+      expect(mockWindow.addEventListener).not.toHaveBeenCalled();
     });
   });
 

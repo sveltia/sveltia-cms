@@ -15,9 +15,13 @@ import { getOrCreate } from '$lib/services/utils/cache';
 /**
  * Sanitization options for DOMPurify to allow `blob` URLs for images, which are commonly used for
  * local previews of uploaded images. Also allow `iframe` tags with strict sandboxing for embedded
- * media previews. A `style` element is removed, because the preview is part of the CMS page, so its
- * rules would apply to the whole app, e.g. to hide the real UI behind a fake one. So is a `form`,
- * which could send what a user types in the preview to another site.
+ * media previews.
+ *
+ * The preview is rendered in the app’s own document, so content written by other users must not be
+ * able to restyle or cover the app, e.g. with a fake sign-in form asking for an access token. A
+ * `<style>` element would apply to the whole app, and form controls could collect and send data, so
+ * they’re removed. Inline styles are kept, because the syntax highlighting relies on them, but
+ * filtered by {@link filterInlineStyle}.
  * @see https://github.com/cure53/DOMPurify/issues/549
  * @see https://github.com/cure53/DOMPurify#control-permitted-attribute-values.
  * @see https://github.com/cure53/DOMPurify/wiki/Default-TAGs-ATTRIBUTEs-allow-list-&-blocklist
@@ -26,7 +30,53 @@ export const SANITIZE_OPTIONS = {
   ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   ADD_TAGS: ['iframe'],
   ADD_ATTR: ['allow', 'allowfullscreen', 'referrerpolicy', 'sandbox'],
-  FORBID_TAGS: ['style', 'form'],
+  FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'option'],
+};
+
+/**
+ * CSS properties an element can keep in its inline style in the preview. These cover the output of
+ * the Shiki syntax highlighter (colors and font styles) and the sizing and alignment commonly used
+ * in content, e.g. `<img style="width: 50%">`. Anything else is dropped, including `position`,
+ * `inset`, `transform`, `z-index` and `background-image`, which could move content over the app or
+ * load a remote resource. The browser expands a shorthand like `background` into its individual
+ * properties when parsing the style, so only the harmless part of a shorthand is kept.
+ * `text-decoration` is also listed for a DOM implementation that doesn’t expand it; it can’t load
+ * anything either way.
+ */
+const ALLOWED_STYLE_PROPERTIES = [
+  'color',
+  'background-color',
+  'font-style',
+  'font-weight',
+  'text-decoration',
+  'text-decoration-line',
+  'text-decoration-style',
+  'text-decoration-color',
+  'text-decoration-thickness',
+  'text-align',
+  'width',
+  'height',
+  'max-width',
+  'max-height',
+];
+
+/**
+ * Remove any CSS property that’s not in {@link ALLOWED_STYLE_PROPERTIES} from the inline style of
+ * the given element, and remove the `style` attribute altogether if nothing is left.
+ * @param {HTMLElement} element Element with a `style` attribute.
+ */
+const filterInlineStyle = (element) => {
+  const { style } = element;
+
+  Array.from(style)
+    .filter((name) => !ALLOWED_STYLE_PROPERTIES.includes(name))
+    .forEach((name) => {
+      style.removeProperty(name);
+    });
+
+  if (!style.length) {
+    element.removeAttribute('style');
+  }
 };
 
 /**
@@ -167,6 +217,11 @@ export const sanitizeRichTextHTML = (html, options = {}) => {
     if (!validateIframe(iframe)) {
       iframe.remove();
     }
+  });
+
+  // Third pass: remove any CSS that could move content outside the preview
+  body.querySelectorAll('[style]').forEach((element) => {
+    filterInlineStyle(/** @type {HTMLElement} */ (element));
   });
 
   // Return the body’s HTML

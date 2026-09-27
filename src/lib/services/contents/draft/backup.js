@@ -2,6 +2,7 @@ import { getBlobRegex } from '@sveltia/utils/file';
 import { toRaw } from '@sveltia/utils/object';
 import { IndexedDB } from '@sveltia/utils/storage';
 
+import { createDisplayBlobURL } from '$lib/services/assets/info';
 import { backend } from '$lib/services/backends';
 import { cmsConfigVersion } from '$lib/services/config';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
@@ -10,7 +11,6 @@ import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { updateObject } from '$lib/services/contents/draft/update/list';
 import { hasChildKeys, indexContent } from '$lib/services/contents/entry/content-index';
 import { prefs } from '$lib/services/user/prefs.svelte';
-import { createInertSVG } from '$lib/services/utils/media/image/svg';
 import { createDeepState, createRootEffect, getSnapshot } from '$lib/services/utils/state.svelte';
 
 /**
@@ -153,23 +153,35 @@ export const saveBackup = async (draft) => {
 };
 
 /**
- * Create the URLs of the SVG images in a draft backup ahead of restoring it. The URLs have the CMS
- * origin and end up in the preview, where they can be opened in a new tab, so they point to
- * wrappers that can’t run any script, like the URLs of the images loaded from the repository. The
- * wrappers take time to make, while the backup is restored in one go.
+ * Create a new blob URL for every file referenced in the given backup. The old URLs are dead once
+ * the page has been reloaded. A file can be a copy of an asset in the repository, e.g. an SVG image
+ * copied when the entry was duplicated, so the URLs are made for display.
  * @param {EntryDraftBackup} backup Backup to restore.
- * @returns {Promise<Map<File, string>>} Blob URL of each SVG file.
+ * @returns {Promise<Map<File, string>>} New blob URLs keyed by file. A file referenced more than
+ * once gets one URL.
  */
-const createInertImageURLs = async ({ files }) => {
-  const svgFiles = new Set(
-    Object.values(files).flatMap(({ file }) => (file?.type === 'image/svg+xml' ? [file] : [])),
-  );
+const createFileURLs = async ({ currentValues, files }) => {
+  /** @type {Set<File>} */
+  const referencedFiles = new Set();
+
+  Object.values(currentValues).forEach((valueMap) => {
+    Object.values(valueMap).forEach((value) => {
+      if (typeof value === 'string') {
+        [...value.matchAll(getBlobRegex('g'))].forEach(([blobURL]) => {
+          const file = files[blobURL]?.file;
+
+          if (file) {
+            referencedFiles.add(file);
+          }
+        });
+      }
+    });
+  });
 
   return new Map(
     await Promise.all(
-      [...svgFiles].map(
-        async (file) =>
-          /** @type {[File, string]} */ ([file, URL.createObjectURL(await createInertSVG(file))]),
+      [...referencedFiles].map(
+        async (file) => /** @type {[File, string]} */ ([file, await createDisplayBlobURL(file)]),
       ),
     ),
   );
@@ -180,11 +192,11 @@ const createInertImageURLs = async ({ files }) => {
  * @param {object} args Arguments.
  * @param {EntryDraftBackup} args.backup Backup to restore.
  * @param {EntryDraft} args.draft Entry draft to restore the backup to.
- * @param {Map<File, string>} [args.fileURLs] Blob URLs already created for some of the files, e.g.
- * with {@link createInertImageURLs}. The others are created as they’re found.
  */
-export const restoreBackup = ({ backup, draft, fileURLs = new Map() }) => {
+export const restoreBackup = async ({ backup, draft }) => {
   const { currentLocales, currentSlugs, currentValues, files, pendingEntries = [] } = backup;
+  // Created up front, because the draft is updated in one go below
+  const fileURLs = await createFileURLs(backup);
 
   suspendAutoDuplication(() => {
     draft.currentLocales = currentLocales;
@@ -220,16 +232,10 @@ export const restoreBackup = ({ backup, draft, fileURLs = new Map() }) => {
               return;
             }
 
-            let newURL = fileURLs.get(file);
+            const newURL = /** @type {string} */ (fileURLs.get(file));
 
-            if (!newURL) {
-              // Regenerate a blob URL
-              newURL = URL.createObjectURL(file);
-              fileURLs.set(file, newURL);
-            }
-
+            // The first reference to the file decides its upload options
             draft.files[newURL] ??= cache;
-
             value = value.replaceAll(blobURL, newURL);
           });
 
@@ -308,16 +314,7 @@ export const restoreBackupIfNeeded = async ({ draft }) => {
   }
 
   if (doRestore) {
-    const svgURLs = await createInertImageURLs(backup);
-
-    restoreBackup({ backup, draft, fileURLs: new Map(svgURLs) });
-
-    // Release the URLs of the files no restored value refers to
-    svgURLs.forEach((url) => {
-      if (!(url in draft.files)) {
-        URL.revokeObjectURL(url);
-      }
-    });
+    await restoreBackup({ backup, draft });
     draft.interacted = true;
   } else {
     await deleteBackup(collectionName, slug);

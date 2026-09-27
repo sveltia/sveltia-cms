@@ -559,6 +559,31 @@ describe('sortEntries', () => {
     expect(result.map((e) => e.slug)).toEqual(['a-entry', 'b-entry', 'c-entry']);
   });
 
+  test('should only strip the markdown syntax of the beginning of a long value', () => {
+    const longTitle = `**A Title**${'x'.repeat(5000)}`;
+
+    const entries = [
+      {
+        id: '1',
+        sha: 'sha1',
+        slug: 'long-entry',
+        subPath: '',
+        locales: { en: { path: 'path1', slug: 'long-entry', content: { title: longTitle } } },
+      },
+    ];
+
+    vi.mocked(getField).mockReturnValue({ name: 'title', widget: 'markdown', label: 'Title' });
+    vi.mocked(getSortKeyType).mockReturnValue(String);
+    vi.mocked(getPropertyValue).mockImplementation(({ entry }) => entry.locales.en.content.title);
+    vi.mocked(removeMarkdownSyntax).mockImplementation((value) => value);
+
+    sortEntries(entries, mockCollection, { key: 'title', order: 'ascending' });
+
+    // Stripping a value crafted to be nested deeply takes time growing faster than its length, so
+    // a sort key is cut short first
+    expect(removeMarkdownSyntax).toHaveBeenCalledWith(longTitle.slice(0, 1000));
+  });
+
   test('should strip markdown syntax when sorting richtext fields', () => {
     const conditions = { key: 'title', order: 'ascending' };
 

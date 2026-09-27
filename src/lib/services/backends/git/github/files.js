@@ -17,6 +17,7 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -36,10 +37,11 @@ import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring'
  */
 export const fetchFileList = async (lastHash) => {
   const { owner, repo, branch } = repository;
+  const ref = encodePath(/** @type {string} */ (lastHash ?? branch));
 
   const result =
     /** @type {{ tree: { type: string, path: string, sha: string, size: number }[] }} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/git/trees/${lastHash ?? branch}?recursive=1`)
+      await fetchAPI(`/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`)
     );
 
   return result.tree

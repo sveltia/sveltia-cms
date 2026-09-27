@@ -269,4 +269,20 @@ describe('removeMarkdownSyntax', () => {
       'bold ~incomplete strikethrough',
     );
   });
+
+  test('should handle delimiter runs longer than three characters', () => {
+    expect(removeMarkdownSyntax('****bold****')).toBe('bold');
+    expect(removeMarkdownSyntax('~~~~strike~~~~')).toBe('strike');
+  });
+
+  test('should finish quickly with a long run of alternating delimiters', () => {
+    // A run of mixed delimiters with no closing run used to take minutes to process, because the
+    // delimiter could be any length and every length was tried against the rest of the string
+    const input = `${'*_'.repeat(20000)}${'a'.repeat(20000)}`;
+    const start = performance.now();
+
+    removeMarkdownSyntax(input);
+
+    expect(performance.now() - start).toBeLessThan(200);
+  });
 });

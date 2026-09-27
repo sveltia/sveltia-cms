@@ -13,6 +13,11 @@ import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
  */
 
 /**
+ * Maximum length of a Markdown value used as a sort key, before its syntax is removed.
+ */
+const MARKDOWN_SORT_KEY_LENGTH = 1000;
+
+/**
  * List of fields that may contain Markdown syntax and should be stripped before sorting. This
  * includes `title`, `summary`, and `description`, which are commonly used in entry collections.
  * @type {string[]}
@@ -63,7 +68,9 @@ export const getSortKeyGetter = ({
       const raw = getPropertyValue({ entry, locale, collectionName, key });
       const str = raw ? String(raw) : '';
 
-      return isMarkdownField ? removeMarkdownSyntax(str) : str;
+      // Only the beginning of a long Markdown value tells entries apart, and stripping the syntax
+      // takes time that grows faster than the length on a value crafted to be nested deeply
+      return isMarkdownField ? removeMarkdownSyntax(str.slice(0, MARKDOWN_SORT_KEY_LENGTH)) : str;
     };
   }
 

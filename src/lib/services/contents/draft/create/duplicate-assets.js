@@ -1,6 +1,6 @@
 import { getAssetByPath } from '$lib/services/assets';
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
-import { getAssetBlob } from '$lib/services/assets/info';
+import { createDisplayBlobURL, getAssetBlob } from '$lib/services/assets/info';
 import { MARKDOWN_IMAGE_REGEX } from '$lib/services/contents/collection/entries';
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
@@ -9,7 +9,6 @@ import {
   getAssetLibraryFolderMap,
   getDefaultAssetFolder,
 } from '$lib/services/contents/fields/file/helpers';
-import { createInertSVG } from '$lib/services/utils/media/image/svg';
 
 /**
  * @import {
@@ -103,15 +102,8 @@ export const copyEntryRelativeAssets = async ({ draft, currentValues }) => {
         }
 
         const file = new File([blob], asset.name, { type: blob.type });
-
-        // The URL has the CMS origin and ends up in the preview, where it can be opened in a new
-        // tab, either with a link in a Markdown body, which the copy replaces too, or with the
-        // browser’s “Open Image in New Tab” menu item. An SVG file from the repository could then
-        // run a script with access to the user’s token, so the URL points to a wrapper that can’t;
-        // the file itself is what gets saved
-        const blobURL = URL.createObjectURL(
-          file.type === 'image/svg+xml' ? await createInertSVG(file) : file,
-        );
+        // The file comes from the repository, so its URL must not let an SVG image run script
+        const blobURL = await createDisplayBlobURL(file);
 
         files[blobURL] = { file, folder, replace: false };
 

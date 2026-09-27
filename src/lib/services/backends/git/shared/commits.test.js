@@ -79,6 +79,57 @@ describe('git/shared/commits', () => {
       expect(message).toBe('Create Blog Post “my-post”');
     });
 
+    it('should insert values containing replacement patterns as they are', () => {
+      // `String.prototype.replaceAll()` would read `$&` as the matched text, `$'` as what follows
+      // it, and `$$` as a single `$`
+      const message = createCommitMessage([{ slug: "$&-$'-$$", path: 'content/posts/$&.md' }], {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe("Create Blog Post “$&-$'-$$”");
+
+      mockCmsConfig.backend.commit_messages = { uploadMedia: 'Upload {{path}}' };
+
+      expect(createCommitMessage([{ path: 'static/$`.jpg' }], { commitType: 'uploadMedia' })).toBe(
+        'Upload static/$`.jpg',
+      );
+    });
+
+    it('should not expand a placeholder found in an inserted value', () => {
+      mockCmsConfig.backend.commit_messages = { create: 'Create {{slug}} by {{author-login}}' };
+
+      const message = createCommitMessage(
+        [{ slug: '{{author-email}}', path: 'content/posts/a.md' }],
+        { commitType: 'create', collection: mockCollection },
+      );
+
+      expect(message).toBe('Create {{author-email}} by test-user');
+    });
+
+    it('should leave a placeholder without a value as it is', () => {
+      mockCmsConfig.backend.commit_messages = { uploadMedia: 'Upload {{path}} for {{slug}}' };
+
+      expect(createCommitMessage([{ path: 'static/a.jpg' }], { commitType: 'uploadMedia' })).toBe(
+        'Upload static/a.jpg for {{slug}}',
+      );
+    });
+
+    it('should insert values containing replacement patterns in the openAuthoring template', () => {
+      mockState.openAuthoring = true;
+      mockUser.login = '$&';
+      mockCmsConfig.backend.commit_messages = {
+        openAuthoring: '{{message}} (by {{author-login}})',
+      };
+
+      const message = createCommitMessage([{ slug: '$`', path: 'content/posts/a.md' }], {
+        commitType: 'create',
+        collection: mockCollection,
+      });
+
+      expect(message).toBe('Create Blog Post “$`” (by $&)');
+    });
+
     it('should create default update message', () => {
       const message = createCommitMessage(mockChanges, {
         commitType: 'update',
