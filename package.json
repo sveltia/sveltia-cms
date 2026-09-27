@@ -42,6 +42,8 @@
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "test:components": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project browser",
     "test:components:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage --project browser --coverage.include='src/lib/components/**/*.svelte' --coverage.thresholds.branches=98.4",
+    "test:e2e": "playwright test -c e2e/playwright.config.js",
+    "test:e2e:ui": "playwright test -c e2e/playwright.config.js --ui",
     "test:unit": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project unit",
     "test:unit:coverage": "NODE_OPTIONS=--no-experimental-webstorage vitest run --coverage --project unit",
     "test:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest"
@@ -82,6 +84,7 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@types/leaflet": "^1.9.22",

@@ -30,6 +30,11 @@ jobs:
           - name: Test (components 3/3)
             command: pnpm test --project browser --shard=3/3
             browser: true
+          # The end-to-end tests run against the production bundle, so they build it first
+          - name: Test (end-to-end)
+            command: pnpm build && pnpm test:e2e
+            browser: true
+            report: true
           - name: Build
             command: pnpm build
     steps:
@@ -63,3 +68,12 @@ jobs:
         run: pnpm exec playwright install-deps chromium-headless-shell
       - name: ${{ matrix.task.name }}
         run: ${{ matrix.task.command }}
+      # The report holds a trace of each failed test, retried or not, to step through what the page
+      # did
+      - name: Upload the end-to-end test report
+        if: ${{ matrix.task.report && failure() }}
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

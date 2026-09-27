@@ -1,4 +1,6 @@
 /coverage
+/playwright-report
+/test-results
 /package
 /.vite
 /.vitest

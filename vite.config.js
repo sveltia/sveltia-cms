@@ -128,6 +128,11 @@ const yamlToJS = () => ({
  */
 const COMPONENT_TESTS = 'src/lib/components/**/*.svelte.test.js';
 /**
+ * Files Vitest doesn’t run: the worktrees, and the end-to-end tests, which Playwright runs against
+ * the built bundle. See `e2e/playwright.config.js`.
+ */
+const TEST_EXCLUDE = [...defaultExclude, '.claude/**', 'e2e/**'];
+/**
  * Number of browser tabs the component tests run in parallel. Vitest defaults to one tab per core,
  * and a tab holds on to the memory of every file it has run — the whole suite costs about 600 MB
  * per tab on top of a gigabyte of browser — so on a machine with many cores the run alone takes
@@ -637,7 +642,7 @@ export default defineConfig({
     }),
   ],
   test: {
-    exclude: [...defaultExclude, '.claude/**'],
+    exclude: TEST_EXCLUDE,
     // Coverage is collected from the `unit` project only, see `test:unit:coverage` in
     // `package.json`. The component tests don’t add to it, and a module that both projects load
     // gets a different branch map from each, as Svelte compiles a `.svelte.js` file differently for
@@ -665,7 +670,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'unit',
-          exclude: [...defaultExclude, '.claude/**', COMPONENT_TESTS],
+          exclude: [...TEST_EXCLUDE, COMPONENT_TESTS],
         },
       },
       {

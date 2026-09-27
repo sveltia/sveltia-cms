@@ -1,5 +1,7 @@
 node_modules
 /package
+/playwright-report
+/test-results
 /.vite
 /.vitest
 pnpm-lock.yaml

@@ -1,0 +1,36 @@
+# End-to-end tests
+
+These tests drive the whole app in Chromium with [Playwright](https://playwright.dev/): they sign in, browse, edit and save as a user would, and check the files the CMS writes. The unit and component tests mock the services around the code they test, so they can’t catch a flow that breaks between modules.
+
+## Running
+
+```bash
+pnpm build      # the tests run against the production bundle in `package/dist`
+pnpm test:e2e
+pnpm test:e2e:ui  # Playwright’s UI mode, to watch and step through a test
+```
+
+To skip the build while working on a change, run the tests against the Vite dev server instead:
+
+```bash
+E2E_TARGET=dev pnpm test:e2e
+```
+
+The server listens on port 4180 and is started for each run. If the port is busy, e.g. because another worktree is running the tests at the same time, the run fails rather than test someone else’s server; set `E2E_PORT` to use another port.
+
+## How it works
+
+- `server.js` serves the admin page in `site/admin/` and the bundle under `/dist/`. With `E2E_TARGET=dev`, the dev server is used instead, with `VITE_SITE_URL` pointing at itself.
+- Every test answers the request for `config.yml` with its own config: `BASE_CONFIG` from `fixtures/test.js` by default, or another one set with `test.use({ config })`, either as an object or a YAML string.
+- The config uses the `test-repo` backend, which keeps the repository files in the origin private file system (OPFS). Each test runs in a fresh browser context, so it starts with an empty repository.
+- The `cms` fixture opens the admin page (`open()`), writes files to the repository before sign-in (`seed()`), signs in (`signIn()`) and reads the files back (`readRepo()`), so a test can check what a Save actually wrote.
+
+## Writing tests
+
+- Name the files `specs/*.e2e.js`. Vitest ignores the `e2e` folder.
+- Query by role and by the text a user sees, like the component tests do. Wait with web-first assertions (`await expect(locator).toBeVisible()`, `expect.poll()`), never with `waitForTimeout()`. The assertions retry for up to 5 seconds.
+- An interpolated value in a label comes wrapped in bidi isolates, so match such a name with a regular expression: `getByRole('main', { name: /Posts.*Collection/ })`.
+- Sveltia UI keeps closed dialogs and popups in the DOM with `inert`. Target the open one with `page.locator('dialog:not([inert])')`.
+- Open an entry by clicking its row. Navigating to its hash URL doesn’t open the editor after sign-in.
+- Give each uploaded file distinct content. The same file twice opens the conflict dialog, which then intercepts every click.
+- If an interaction seems to be lost, e.g. a `fill()` that leaves the field empty, check what had the focus at that moment before adding a wait. A test that types faster than a user can still points at a real problem: the first test here found the “Create New Entry” button opening an empty popup that made the editor inert for a moment.
