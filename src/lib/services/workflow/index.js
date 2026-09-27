@@ -1,6 +1,6 @@
 import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
-import { findEntryByPaths } from '$lib/services/contents';
+import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { isEntryBranch } from '$lib/services/workflow/branch';
 import { getPublishMode, isWorkflowConfigured } from '$lib/services/workflow/config';
@@ -274,4 +274,25 @@ export const hasPublishedVersion = (entry) => {
   }
 
   return !!getPublishedVersion(entry);
+};
+
+/**
+ * Check if the given unpublished entry has a published version, like {@link hasPublishedVersion},
+ * for use in a derived state. The entry can be published from another view, e.g. from the content
+ * editor while the Editorial Workflow page is open, so {@link allEntries} is read here to make the
+ * derived state depend on it. On its own, `hasPublishedVersion()` doesn’t always read the store: it
+ * returns early for a collection file.
+ * @param {UnpublishedEntry | undefined} entry Unpublished entry.
+ * @returns {boolean} `true` if a published version of the entry exists, `false` if it doesn’t or
+ * no entry is given.
+ */
+export const checkPublishedVersion = (entry) => {
+  if (!entry) {
+    return false;
+  }
+
+  // Create a dependency on the store
+  void allEntries.current;
+
+  return hasPublishedVersion(entry);
 };

@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { backend, backendName } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
+import { createDerivedState } from '$lib/services/utils/state.svelte';
 import {
+  checkPublishedVersion,
   getPublishedVersion,
   getUnpublishedEntriesByCollection,
   getUnpublishedEntry,
@@ -493,6 +495,47 @@ describe('hasPublishedVersion', () => {
     ];
 
     expect(hasPublishedVersion(entry)).toBe(true);
+  });
+});
+
+describe('checkPublishedVersion', () => {
+  beforeEach(() => {
+    allEntries.current = [];
+  });
+
+  test('is false without an entry', () => {
+    expect(checkPublishedVersion(undefined)).toBe(false);
+  });
+
+  test('tells whether the entry has a published version', () => {
+    const entry = createEntry({ collectionName: 'posts', subPath: 'hello' });
+
+    expect(checkPublishedVersion(entry)).toBe(false);
+
+    allEntries.current = [
+      /** @type {any} */ ({ id: 'p1', locales: { _default: { path: 'content/posts/hello.md' } } }),
+    ];
+
+    expect(checkPublishedVersion(entry)).toBe(true);
+  });
+
+  test('makes a derived state depend on the published entries', () => {
+    const entry = createEntry({ collectionName: 'settings', subPath: 'site' });
+    let count = 0;
+
+    entry.workflow.fileName = 'site';
+
+    const state = createDerivedState(() => {
+      count += 1;
+
+      return checkPublishedVersion(entry);
+    });
+
+    expect(state.current).toBe(true);
+    // A collection file doesn’t need the store to be looked up, but it’s read all the same
+    allEntries.current = [];
+    expect(state.current).toBe(true);
+    expect(count).toBe(2);
   });
 });
 

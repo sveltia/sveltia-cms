@@ -397,3 +397,17 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
 
   return assets;
 };
+
+/**
+ * Get the assets stored alongside the given entry, which are moved or removed with it. Only a
+ * collection whose asset folder is entry-relative stores assets with its entries.
+ * @param {object} args Arguments.
+ * @param {Entry} args.entry Entry.
+ * @param {string} args.collectionName Name of a collection that the entry belongs to.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @returns {Asset[]} Assets, or an empty list unless the collection stores them with the entry.
+ */
+export const getEntryRelativeAssets = ({ entry, collectionName, fileName }) =>
+  getAssetFolder({ collectionName, fileName })?.entryRelative
+    ? getAssociatedAssets({ entry, collectionName, fileName, relative: true })
+    : [];

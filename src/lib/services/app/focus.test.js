@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { keepFocusIn, rememberFocus } from './focus';
+import { focusOverlay, keepFocusIn, rememberFocus } from './focus';
 
 describe('rememberFocus', () => {
   afterEach(() => {
@@ -65,6 +65,30 @@ describe('rememberFocus', () => {
     opener.blur();
     restoreFocus();
     // Nothing else to focus on this page either
+    expect(document.activeElement).toBe(document.body);
+  });
+});
+
+describe('focusOverlay', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('focuses the overlay wrapper after the next tick', async () => {
+    document.body.innerHTML = '<div id="overlay"></div>';
+
+    const wrapper = /** @type {HTMLElement} */ (document.querySelector('#overlay'));
+    const getWrapper = vi.fn(() => wrapper);
+    const promise = focusOverlay(getWrapper);
+
+    expect(getWrapper).not.toHaveBeenCalled();
+    await promise;
+    expect(wrapper.tabIndex).toBe(0);
+    expect(document.activeElement).toBe(wrapper);
+  });
+
+  it('does nothing once the overlay is gone', async () => {
+    await focusOverlay(() => undefined);
     expect(document.activeElement).toBe(document.body);
   });
 });

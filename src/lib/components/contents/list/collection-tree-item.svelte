@@ -1,9 +1,10 @@
 <script>
-  import { _, locale as appLocale } from '@sveltia/i18n';
+  import { _ } from '@sveltia/i18n';
   import { Icon, TreeItem } from '@sveltia/ui';
   import { untrack } from 'svelte';
 
   import NestedTreeItem from '$lib/components/contents/list/nested-tree-item.svelte';
+  import { appNumberFormatter } from '$lib/services/app/i18n';
   import { goto } from '$lib/services/app/navigation';
   import { getCollection, selectedCollection } from '$lib/services/contents/collection';
   import {
@@ -33,7 +34,6 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const numberFormatter = $derived(Intl.NumberFormat(appLocale.current));
   const { name, label, icon } = $derived(collection);
   const isCurrentCollection = $derived(selectedCollection.current?.name === name);
 
@@ -102,7 +102,7 @@
   {/snippet}
   {#snippet endIcon()}
     <span class="count" aria-label="({_('x_entries', { values: { count: entryCount } })})">
-      {numberFormatter.format(entryCount)}
+      {appNumberFormatter.current.format(entryCount)}
     </span>
   {/snippet}
 </TreeItem>

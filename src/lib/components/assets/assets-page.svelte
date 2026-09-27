@@ -1,7 +1,5 @@
 <script>
-  import { _, locale as appLocale } from '@sveltia/i18n';
-  import { sleep } from '@sveltia/utils/misc';
-  import equal from 'fast-deep-equal';
+  import { _ } from '@sveltia/i18n';
   import { onMount, untrack } from 'svelte';
 
   import ExternalDetailsOverlay from '$lib/components/assets/list/external/details-overlay.svelte';
@@ -23,227 +21,36 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
   import SearchMainArea from '$lib/components/search/search-main-area.svelte';
-  import {
-    announcedPageStatus,
-    goto,
-    parseLocation,
-    updateContentFromHashChange,
-  } from '$lib/services/app/navigation';
-  import { allAssets, focusedAsset, overlaidAsset, selectedAssets } from '$lib/services/assets';
-  import {
-    enabledCloudServices,
-    EXTERNAL_LOCATION_PATH_PREFIX,
-    getCloudService,
-    getCloudServicePath,
-    hasAuthInfo,
-    overlaidExternalAssetId,
-    resetExternalAssets,
-    selectedCloudService,
-  } from '$lib/services/assets/external';
+  import { updateContentFromHashChange } from '$lib/services/app/navigation';
+  import { focusedAsset, selectedAssets } from '$lib/services/assets';
+  import { hasAuthInfo, selectedCloudService } from '$lib/services/assets/external';
   import { loadExternalAssets } from '$lib/services/assets/external/data';
+  import { LINKED_FILES_SERVICE_ID, linkedAssets } from '$lib/services/assets/external/linked';
   import {
-    LINKED_FILES_SERVICE_ID,
-    linkedAssets,
-    linkedFilesService,
-  } from '$lib/services/assets/external/linked';
-  import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
-  import { resolveAssetFolderPath, selectedSubfolderPath } from '$lib/services/assets/subfolders';
-  import {
-    assetGroups,
-    getFolderLabelByCollection,
-    listedAssets,
-    showAssetOverlay,
-  } from '$lib/services/assets/view';
+    ASSETS_ROUTE_REGEX,
+    discardAssetsNavigation,
+    getSelectedAssetFolderLabel,
+    resolveAssetsRoute,
+  } from '$lib/services/assets/navigation';
+  import { assetGroups, listedAssets, showAssetOverlay } from '$lib/services/assets/view';
   import { sortKeys } from '$lib/services/assets/view/sort-keys';
-  import { isSearchRoute } from '$lib/services/search/navigation';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
-   * @import { Asset, AssetFolderInfo } from '$lib/types/private';
+   * @import { Asset } from '$lib/types/private';
    */
-
-  const ROUTE_REGEX = /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
 
   let isIndexPage = $state(false);
   let isSearchPage = $state(false);
   let notFound = $state(false);
-  /** Counter to ignore an outdated navigation once a newer one has started. */
-  let navigationCount = 0;
 
-  // The label is only used for a repository folder, as a cloud storage service has an area of its
-  // own. `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized
-  // label
-  const selectedAssetFolderLabel = $derived(
-    appLocale.current && selectedAssetFolder.current
-      ? getFolderLabelByCollection(selectedAssetFolder.current)
-      : '',
-  );
-
-  /**
-   * Select a cloud storage service listed under External Locations, whose assets are shown in
-   * place of a repository folder, and optionally show the details of an asset on the service.
-   * @param {string} serviceId Service ID.
-   * @param {string} [assetId] ID of the asset to be shown in the details overlay.
-   */
-  const selectCloudService = (serviceId, assetId = '') => {
-    const service = getCloudService(serviceId);
-
-    selectedAssetFolder.current = undefined;
-
-    if (!service) {
-      selectedCloudService.current = undefined;
-      showAssetOverlay.current = false;
-      announcedPageStatus.current = _('asset_folder_not_found');
-      notFound = true;
-
-      return;
-    }
-
-    if (selectedCloudService.current !== service) {
-      resetExternalAssets();
-      selectedCloudService.current = service;
-    }
-
-    if (assetId) {
-      overlaidExternalAssetId.current = assetId;
-      showAssetOverlay.current = true;
-      announcedPageStatus.current = _('viewing_x_asset_details', {
-        values: { name: assetId.split('/').pop() },
-      });
-    } else {
-      overlaidExternalAssetId.current = undefined;
-      showAssetOverlay.current = false;
-      announcedPageStatus.current = _('viewing_x_external_location', {
-        values: { service: service.serviceLabel },
-      });
-    }
-  };
+  const selectedAssetFolderLabel = $derived(getSelectedAssetFolderLabel());
 
   /**
    * Navigate to the asset list or asset details page given the URL hash.
    */
-  const navigate = async () => {
-    const { path } = parseLocation();
-    const match = path.match(ROUTE_REGEX);
-
-    isIndexPage = false;
-    isSearchPage = false;
-    notFound = false;
-    navigationCount += 1;
-
-    const currentCount = navigationCount;
-
-    if (!match?.groups) {
-      showAssetOverlay.current = false;
-      // Check if it’s the search page, which has a different URL pattern (`#/search/{query}`)
-      isSearchPage = isSearchRoute(path);
-
-      return; // Different page
-    }
-
-    const { folderPath, fileName } = match.groups;
-
-    if (
-      folderPath?.startsWith(EXTERNAL_LOCATION_PATH_PREFIX) &&
-      folderPath !== `${EXTERNAL_LOCATION_PATH_PREFIX}all`
-    ) {
-      // The path is `-/{serviceId}` for the asset list, or `-/{serviceId}/{assetId}` for the asset
-      // details. An asset ID can contain slashes, and it doesn’t have to end with a file extension,
-      // so the ID is everything after the service ID, whether the regex has split it or not
-      const [serviceId, ...rest] = folderPath
-        .slice(EXTERNAL_LOCATION_PATH_PREFIX.length)
-        .split('/');
-
-      // Only drop a missing file name: an empty segment is significant, as in `https://`
-      selectCloudService(serviceId, [...rest, ...(fileName ? [fileName] : [])].join('/'));
-
-      return;
-    }
-
-    selectedCloudService.current = undefined;
-
-    if (!folderPath) {
-      if (env.isSmallScreen) {
-        // Show the asset folder list only
-        selectedAssetFolder.current = undefined;
-        showAssetOverlay.current = false;
-        announcedPageStatus.current = _('viewing_asset_folder_list');
-        isIndexPage = true;
-      } else if (allAssetFolders.current.length) {
-        // Select All Assets right away, because the redirect below takes effect asynchronously in a
-        // view transition, and the folder info panel would be rendered with no folder until then
-        selectedAssetFolder.current = /** @type {{ folder: AssetFolderInfo }} */ (
-          resolveAssetFolderPath('-/all')
-        ).folder;
-        selectedSubfolderPath.current = '';
-        // Redirect to All Assets
-        goto('/assets/-/all');
-      } else {
-        // No asset folder is configured, so redirect to the first external location, or to the
-        // files linked from entries if there is none either
-        goto(getCloudServicePath(enabledCloudServices.current[0] ?? linkedFilesService));
-      }
-
-      return;
-    }
-
-    // The path can also point at a subfolder of a configured folder. An internal path can be
-    // shared by multiple collections, files and fields, so the folder passed as history state
-    // takes precedence over the lookup by path
-    const { folder, subfolderPath = '' } =
-      resolveAssetFolderPath(folderPath, window.history.state?.folder) ?? {};
-
-    if (!folder && !fileName) {
-      selectedAssetFolder.current = undefined;
-      selectedSubfolderPath.current = '';
-      showAssetOverlay.current = false;
-      announcedPageStatus.current = _('asset_folder_not_found');
-      notFound = true;
-
-      return; // Not Found
-    }
-
-    if (!folder) {
-      // A folder path that comes with a file name doesn’t have to be a configured asset folder,
-      // because an asset can live in a subfolder of one. The asset itself is looked up by its full
-      // path below, so leave the resolution to that
-      selectedAssetFolder.current = undefined;
-      selectedSubfolderPath.current = '';
-    } else {
-      if (!equal(selectedAssetFolder.current, folder)) {
-        selectedAssetFolder.current = folder;
-      }
-
-      selectedSubfolderPath.current = subfolderPath;
-    }
-
-    if (!fileName) {
-      // Wait for `selectedAssetFolderLabel` to be updated
-      await sleep(100);
-
-      if (currentCount !== navigationCount) {
-        // The user has moved on in the meantime, and the newer navigation has taken over
-        return;
-      }
-
-      showAssetOverlay.current = false;
-      announcedPageStatus.current = _('viewing_x_asset_folder', {
-        values: {
-          folder: selectedAssetFolderLabel,
-          count: listedAssets.current.length,
-        },
-      });
-
-      return;
-    }
-
-    overlaidAsset.current = allAssets.current.find(
-      (asset) => asset.path === `${folderPath}/${fileName}`,
-    );
-    announcedPageStatus.current = overlaidAsset.current
-      ? _('viewing_x_asset_details', { values: { name: overlaidAsset.current.name } })
-      : _('file_not_found');
-    showAssetOverlay.current = true;
+  const navigate = () => {
+    ({ isIndexPage, isSearchPage, notFound } = resolveAssetsRoute());
   };
 
   // Fetch the assets on the selected cloud storage service once the user has provided the
@@ -270,7 +77,7 @@
 
     return () => {
       // Discard a navigation still in flight
-      navigationCount += 1;
+      discardAssetsNavigation();
       showAssetOverlay.current = false;
     };
   });
@@ -278,7 +85,7 @@
 
 <svelte:window
   onhashchange={(event) => {
-    updateContentFromHashChange(event, navigate, ROUTE_REGEX);
+    updateContentFromHashChange(event, navigate, ASSETS_ROUTE_REGEX);
   }}
 />
 

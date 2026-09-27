@@ -23,9 +23,7 @@
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
   import { goBack, goto, overlayTitle } from '$lib/services/app/navigation';
-  import { getAssetFolder } from '$lib/services/assets/folders';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
-  import { allEntries } from '$lib/services/contents';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import {
     contentUpdatesToast,
@@ -46,7 +44,7 @@
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { canUpdateSlug } from '$lib/services/contents/editor/slug';
-  import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
+  import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
   import {
     EMPTY_CASCADE_DELETE_PLAN,
     planCascadeDelete,
@@ -59,8 +57,8 @@
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import {
+    checkPublishedVersion,
     getUnpublishedEntryByDraft,
-    hasPublishedVersion,
     isPendingDeletion,
     isWorkflowEnabled,
     workflowEnabled,
@@ -187,8 +185,8 @@
   const controlsDisabled = $derived(disabled || busy);
   const modified = $derived(isNew || entryDraft.modified);
   const associatedAssets = $derived(
-    collectionName && originalEntry && getAssetFolder({ collectionName, fileName })?.entryRelative
-      ? getAssociatedAssets({ entry: originalEntry, collectionName, fileName, relative: true })
+    collectionName && originalEntry
+      ? getEntryRelativeAssets({ entry: originalEntry, collectionName, fileName })
       : [],
   );
   // Look the entry up in the store rather than using `originalEntry` directly, so the status button
@@ -204,10 +202,8 @@
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
   // the published version untouched, so it stays available even when deletion is disabled
   const canDelete = $derived(entryCollection?.delete !== false);
-  // `allEntries.current` is a dependency, because the entry can be published from another view
-  const publishedVersionExists = $derived(
-    !!unpublishedEntry && !!allEntries.current && hasPublishedVersion(unpublishedEntry),
-  );
+  // The entry can be published from another view, so the check depends on `allEntries`
+  const publishedVersionExists = $derived(checkPublishedVersion(unpublishedEntry));
   // Deleting an entry that was never published just throws the draft away; anything else takes an
   // entry off the site
   const discardsDraft = $derived(!!unpublishedEntry && !publishedVersionExists);

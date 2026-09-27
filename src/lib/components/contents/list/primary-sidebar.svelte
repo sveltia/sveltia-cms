@@ -1,5 +1,5 @@
 <script>
-  import { _, locale as appLocale } from '@sveltia/i18n';
+  import { _ } from '@sveltia/i18n';
   import { Divider, Icon, OptionGroup, Tree, TreeItem } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
 
@@ -7,6 +7,7 @@
   import SingletonTreeItem from '$lib/components/contents/list/singleton-tree-item.svelte';
   import PublishButton from '$lib/components/global/toolbar/items/publish-button.svelte';
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
+  import { appNumberFormatter } from '$lib/services/app/i18n';
   import { goto } from '$lib/services/app/navigation';
   import { cmsConfig } from '$lib/services/config';
   import { selectedCollection } from '$lib/services/contents/collection';
@@ -25,7 +26,6 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const numberFormatter = $derived(Intl.NumberFormat(appLocale.current));
   // @ts-ignore Dividers can be included in the collection list
   const collections = $derived(cmsConfig.current?.collections?.filter(({ hide }) => !hide) ?? []);
   const singletons = $derived(cmsConfig.current?.singletons ?? []);
@@ -100,7 +100,7 @@
             {/snippet}
             {#snippet endIcon()}
               <span class="count" aria-label="({_('x_entries', { values: { count } })})">
-                {numberFormatter.format(count)}
+                {appNumberFormatter.current.format(count)}
               </span>
             {/snippet}
           </TreeItem>

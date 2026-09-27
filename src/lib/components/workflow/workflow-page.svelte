@@ -5,10 +5,9 @@
   import PageContainer from '$lib/components/common/page-container.svelte';
   import WorkflowEntryCard from '$lib/components/workflow/workflow-entry-card.svelte';
   import { announcedPageStatus } from '$lib/services/app/navigation';
-  import { allEntries } from '$lib/services/contents';
   import { retainDeployPolling } from '$lib/services/deployments/poll';
   import {
-    hasPublishedVersion,
+    checkPublishedVersion,
     publishingBranches,
     unpublishedEntries,
     workflowDataReady,
@@ -109,10 +108,8 @@
     },
   }) => busyBranches.includes(branch) || publishingBranches.current.includes(branch);
 
-  // `allEntries.current` is a dependency, because the entry can be published from another view
-  const publishedVersionExists = $derived(
-    !!targetEntry && !!allEntries.current && hasPublishedVersion(targetEntry),
-  );
+  // The entry can be published from another view, so the check depends on `allEntries`
+  const publishedVersionExists = $derived(checkPublishedVersion(targetEntry));
   // For an entry awaiting deletion the two actions are reversed: the first one calls the removal
   // off, and the second one carries it out
   const targetIsDeletion = $derived(targetEntry?.workflow.status === 'pending_deletion');

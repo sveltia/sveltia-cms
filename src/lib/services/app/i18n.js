@@ -14,7 +14,11 @@ import defaultLocaleStrings from '$lib/locales/en-US.yaml';
 import { UNPKG_BASE_URL, version } from '$lib/services/app';
 import { PUBLISHED_LOCALE_LOADERS } from '$lib/services/app/published-locales';
 import { navigatorLocale, PREFS_STORAGE_KEY } from '$lib/services/user/prefs.svelte';
-import { createRawState, createRootEffect } from '$lib/services/utils/state.svelte';
+import {
+  createDerivedState,
+  createRawState,
+  createRootEffect,
+} from '$lib/services/utils/state.svelte';
 
 /**
  * Default application locale. This is the only locale bundled with the app; the strings for the
@@ -82,6 +86,13 @@ export const appLocaleLoading = createRawState();
  * @type {{ current: { locale: string } | undefined }}
  */
 export const appLocaleLoadError = createRawState();
+
+/**
+ * Number formatter for the application locale, used to show counts such as the number of entries
+ * or assets in a folder. It’s shared, so every row of a long list doesn’t create its own, and it’s
+ * replaced when the locale changes.
+ */
+export const appNumberFormatter = createDerivedState(() => Intl.NumberFormat(appLocale.current));
 
 /**
  * Whether the strings loaded for a locale are cached in the local storage. The cache saves a CDN

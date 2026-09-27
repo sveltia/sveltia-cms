@@ -1,3 +1,5 @@
+import { tick } from 'svelte';
+
 /**
  * Remember the element that has the focus as an overlay opens, and return a function that gives it
  * the focus back once the overlay has closed. Without this, closing the entry editor or the asset
@@ -25,6 +27,25 @@ export const rememberFocus = () => {
       container.focus();
     }
   };
+};
+
+/**
+ * Move the focus to an overlay once it has been opened, so a keyboard or screen reader user can
+ * start working with its content right away. The overlay wrapper is made focusable first.
+ * @param {() => HTMLElement | null | undefined} getWrapper Function returning the overlay wrapper.
+ * It’s called after the next tick, because the element may be unmounted in the meantime, e.g. if
+ * the overlay has been closed.
+ */
+export const focusOverlay = async (getWrapper) => {
+  // Wait until `inert` is updated
+  await tick();
+
+  const wrapper = getWrapper();
+
+  if (wrapper) {
+    wrapper.tabIndex = 0;
+    wrapper.focus();
+  }
 };
 
 /**

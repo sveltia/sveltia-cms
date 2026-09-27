@@ -22,7 +22,7 @@
   import SidebarSheet from '$lib/components/contents/details/sidebar/sidebar-sheet.svelte';
   import Sidebar from '$lib/components/contents/details/sidebar/sidebar.svelte';
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
-  import { rememberFocus } from '$lib/services/app/focus';
+  import { focusOverlay, rememberFocus } from '$lib/services/app/focus';
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
@@ -223,20 +223,6 @@
   const markInteracted = (event) => {
     if (event.isTrusted && entryDraft.current && !entryDraft.current.interacted) {
       entryDraft.current.interacted = true;
-    }
-  };
-
-  /**
-   * Move focus to the wrapper once the overlay is loaded.
-   */
-  const moveFocus = async () => {
-    // Wait until `inert` is updated
-    await tick();
-
-    /* v8 ignore next 4 -- the wrapper is bound as long as the overlay is mounted */
-    if (wrapper) {
-      wrapper.tabIndex = 0;
-      wrapper.focus();
     }
   };
 
@@ -463,7 +449,7 @@
         } else if (hidden) {
           hidden = false;
           await switchPanes();
-          await moveFocus();
+          await focusOverlay(() => wrapper);
           await highlightEditorFieldIfNeeded();
           resetBackupToastState();
         }

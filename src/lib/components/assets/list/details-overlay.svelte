@@ -12,10 +12,10 @@
 <script>
   import { _, isRTL } from '@sveltia/i18n';
   import { Button, Icon, Toolbar, TruncatedText } from '@sveltia/ui';
-  import { onMount, tick } from 'svelte';
+  import { onMount } from 'svelte';
 
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
-  import { rememberFocus } from '$lib/services/app/focus';
+  import { focusOverlay, rememberFocus } from '$lib/services/app/focus';
   import { showAssetOverlay } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
 
@@ -70,23 +70,9 @@
    */
   let touchStart;
 
-  /**
-   * Move focus to the wrapper once the overlay is loaded.
-   */
-  const moveFocus = async () => {
-    // Wait until `inert` is updated
-    await tick();
-
-    /* v8 ignore next 4 -- the overlay may have been closed in the meantime */
-    if (wrapper) {
-      wrapper.tabIndex = 0;
-      wrapper.focus();
-    }
-  };
-
   $effect(() => {
     if (showAssetOverlay.current) {
-      moveFocus();
+      focusOverlay(() => wrapper);
     }
   });
 

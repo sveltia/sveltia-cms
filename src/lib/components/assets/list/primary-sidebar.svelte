@@ -5,6 +5,7 @@
   import equal from 'fast-deep-equal';
 
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
+  import { appNumberFormatter } from '$lib/services/app/i18n';
   import { goto } from '$lib/services/app/navigation';
   import { allAssets, getAssetsByFolder } from '$lib/services/assets';
   import {
@@ -39,8 +40,6 @@
     isSearchPage = false,
     /* eslint-enable prefer-const */
   } = $props();
-
-  const numberFormatter = $derived(Intl.NumberFormat(appLocale.current));
 
   /* v8 ignore start -- the app locale is loaded before the sidebar is rendered */
   /**
@@ -183,7 +182,7 @@
                       internalPath !== undefined ? getAssetsByFolder(folder) : allAssets.current
                     ).length}
                     <span class="count" aria-label="({_('x_assets', { values: { count } })})">
-                      {numberFormatter.format(count)}
+                      {appNumberFormatter.current.format(count)}
                     </span>
                   {/await}
                 {/key}
@@ -218,7 +217,7 @@
             {#snippet endIcon()}
               {#if count !== undefined}
                 <span class="count" aria-label="({_('x_assets', { values: { count } })})">
-                  {numberFormatter.format(count)}
+                  {appNumberFormatter.current.format(count)}
                 </span>
               {/if}
             {/snippet}
@@ -240,7 +239,7 @@
           {/snippet}
           {#snippet endIcon()}
             <span class="count" aria-label="({_('x_assets', { values: { count: linkedCount } })})">
-              {numberFormatter.format(linkedCount)}
+              {appNumberFormatter.current.format(linkedCount)}
             </span>
           {/snippet}
         </Option>

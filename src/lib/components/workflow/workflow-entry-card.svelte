@@ -13,7 +13,6 @@
   import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
   import DeployStatusBadge from '$lib/components/workflow/deploy-status-badge.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { allEntries } from '$lib/services/contents';
   import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
   import {
     getCollectionFile,
@@ -21,7 +20,7 @@
   } from '$lib/services/contents/collection/files';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { deployments, productionSHA } from '$lib/services/deployments';
-  import { hasPublishedVersion } from '$lib/services/workflow';
+  import { checkPublishedVersion } from '$lib/services/workflow';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
@@ -94,8 +93,8 @@
       collection?.publish !== false,
   );
   // Deleting an entry that has a published version only throws away the pending changes.
-  // `allEntries.current` is a dependency, because the entry can be published from another view
-  const publishedVersionExists = $derived(!!allEntries.current && hasPublishedVersion(entry));
+  // The entry can be published from another view, so the check depends on `allEntries`
+  const publishedVersionExists = $derived(checkPublishedVersion(entry));
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
   // the published version untouched, so it stays available even when deletion is disabled
   const canDelete = $derived(

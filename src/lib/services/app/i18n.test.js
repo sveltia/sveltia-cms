@@ -44,6 +44,16 @@ vi.mock('$lib/services/app', () => ({
 const mockEffects = vi.hoisted(() => /** @type {(() => void)[]} */ ([]));
 
 vi.mock('$lib/services/utils/state.svelte', () => ({
+  // The value is computed on every read, which a real derived state only does after a change
+  createDerivedState: vi.fn((getter) => ({
+    /**
+     * Get the current value.
+     * @returns {any} Value.
+     */
+    get current() {
+      return getter();
+    },
+  })),
   createRawState: vi.fn((initialValue) => ({ current: initialValue })),
   createRootEffect: vi.fn((fn) => {
     mockEffects.push(fn);
@@ -902,6 +912,20 @@ describe('i18n', () => {
         _version: '1.2.3',
         ...remoteStrings.ja,
       });
+    });
+  });
+
+  describe('appNumberFormatter', () => {
+    it('should format numbers in the application locale', async () => {
+      const { locale } = await import('@sveltia/i18n');
+      const { appNumberFormatter } = await import('./i18n.js');
+
+      expect(appNumberFormatter.current.format(1234.5)).toBe('1,234.5');
+
+      /** @type {any} */ (locale).current = 'de';
+      expect(appNumberFormatter.current.format(1234.5)).toBe('1.234,5');
+
+      /** @type {any} */ (locale).current = 'en';
     });
   });
 });

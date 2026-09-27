@@ -88,8 +88,13 @@ vi.mock('@sveltia/utils/string', () => ({
 }));
 
 // Import after mocking
-const { getEntryThumbnail, getAssociatedAssets, isThumbnailPath, loadEntryThumbnail } =
-  await import('./assets');
+const {
+  getEntryThumbnail,
+  getAssociatedAssets,
+  getEntryRelativeAssets,
+  isThumbnailPath,
+  loadEntryThumbnail,
+} = await import('./assets');
 
 describe('isThumbnailPath', () => {
   test('returns true for a path starting with a slash', () => {
@@ -1570,5 +1575,70 @@ describe('getAssociatedAssets', () => {
 
     // Should not include the asset since the entry folder path is undefined
     expect(result).not.toContain(mockAsset);
+  });
+});
+
+describe('getEntryRelativeAssets', () => {
+  /** @type {Entry} */
+  const entry = {
+    id: 'hello',
+    slug: 'hello',
+    subPath: 'hello/index',
+    locales: {
+      _default: {
+        slug: 'hello',
+        path: 'content/posts/hello/index.md',
+        content: { title: 'Hello', image: 'cover.jpg' },
+      },
+    },
+  };
+
+  /** @type {Asset} */
+  const asset = /** @type {any} */ ({ path: 'content/posts/hello/cover.jpg', name: 'cover.jpg' });
+
+  beforeEach(() => {
+    mockAllAssets.current = [];
+    mockGetCollection.mockReturnValue({ name: 'posts', _type: 'entry' });
+    mockIsCollectionIndexFile.mockReturnValue(false);
+    mockGetField.mockReturnValue({ widget: 'image' });
+    mockGetAssetByPath.mockReturnValue(asset);
+    mockGetAssetFoldersByPath.mockReturnValue([
+      { collectionName: 'posts', fileName: undefined, entryRelative: true },
+    ]);
+    mockGetPathInfo.mockImplementation((path) => ({
+      dirname: path.split('/').slice(0, -1).join('/'),
+    }));
+  });
+
+  test('returns the assets stored alongside the entry', () => {
+    mockGetAssetFolder.mockReturnValue({ collectionName: 'posts', entryRelative: true });
+
+    expect(getEntryRelativeAssets({ entry, collectionName: 'posts' })).toEqual([asset]);
+    expect(mockGetAssetFolder).toHaveBeenCalledWith({
+      collectionName: 'posts',
+      fileName: undefined,
+    });
+    expect(mockGetField).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: 'posts', keyPath: 'image' }),
+    );
+  });
+
+  test('passes the collection file name on', () => {
+    mockGetAssetFolder.mockReturnValue(undefined);
+
+    expect(
+      getEntryRelativeAssets({ entry, collectionName: 'settings', fileName: 'general' }),
+    ).toEqual([]);
+    expect(mockGetAssetFolder).toHaveBeenCalledWith({
+      collectionName: 'settings',
+      fileName: 'general',
+    });
+  });
+
+  test('returns an empty list unless the asset folder is entry-relative', () => {
+    mockGetAssetFolder.mockReturnValue({ collectionName: 'posts', entryRelative: false });
+
+    expect(getEntryRelativeAssets({ entry, collectionName: 'posts' })).toEqual([]);
+    expect(mockGetCollection).not.toHaveBeenCalled();
   });
 });
