@@ -275,7 +275,7 @@
     </div>
   {/each}
 </div>
-{#if canEdit}
+{#if canEdit && items.length < max}
   <div role="none" class="toolbar">
     <AddItemButton {fieldConfig} {items} addItem={() => addItem(items.length)} />
   </div>

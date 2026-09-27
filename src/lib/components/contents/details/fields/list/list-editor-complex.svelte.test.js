@@ -356,12 +356,11 @@ describe('ListEditorComplex (more)', () => {
       .poll(() => getStoredItems(draft, 'authors').map(({ name }) => name))
       .toEqual(['Anonymous', 'Melvin']);
 
-    // The limit is reached
-    await expect.element(page.getByRole('button', { name: /Add\W+Author/ })).toBeDisabled();
-    await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
-    await page.getByRole('button', { name: 'List Item Options' }).nth(0).click();
-    await expect.element(page.getByRole('menuitem', { name: 'Duplicate' })).toBeDisabled();
-    await expect.element(page.getByRole('menuitem', { name: 'Add Item Below' })).toBeDisabled();
+    // The limit is reached, so the add button and the item options are gone
+    await expect
+      .poll(() => page.getByRole('button', { name: /Add\W+Author/ }).elements())
+      .toHaveLength(0);
+    expect(page.getByRole('button', { name: 'List Item Options' }).elements()).toHaveLength(0);
   });
 
   test('starts minimized when configured, expanding once an item is added', async () => {

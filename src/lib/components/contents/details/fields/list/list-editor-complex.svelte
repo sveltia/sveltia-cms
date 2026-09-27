@@ -453,7 +453,7 @@
 
 {#snippet addPositionItems(/** @type {number} */ insertIndex, /** @type {string} */ position)}
   {#if hasVariableTypes}
-    <MenuItem label={_(`add_item_${position}`)} disabled={hasMaxItems}>
+    <MenuItem label={_(`add_item_${position}`)}>
       <!-- eslint-disable-next-line no-shadow -->
       {#snippet items()}
         {#each variableTypes as { name, label: itemLabel } (name)}
@@ -465,11 +465,7 @@
       {/snippet}
     </MenuItem>
   {:else}
-    <MenuItem
-      label={_(`add_item_${position}`)}
-      disabled={hasMaxItems}
-      onclick={() => addItem({ index: insertIndex })}
-    />
+    <MenuItem label={_(`add_item_${position}`)} onclick={() => addItem({ index: insertIndex })} />
   {/if}
 {/snippet}
 
@@ -584,7 +580,7 @@
               {/if}
             {/snippet}
             {#snippet endContent()}
-              {#if allowAdd}
+              {#if allowAdd && !hasMaxItems}
                 <MenuButton
                   variant="ghost"
                   size="small"
@@ -598,7 +594,7 @@
                       {#if allowDuplicate}
                         <MenuItem
                           label={_('duplicate')}
-                          disabled={hasMaxItems || unknownType}
+                          disabled={unknownType}
                           onclick={() => addItem({ index: index + 1, dupIndex: index })}
                         />
                       {/if}
@@ -645,7 +641,7 @@
     </div>
   {/each}
 </div>
-{#if allowAdd && !addToTop && items.length && parentExpanded}
+{#if allowAdd && !addToTop && items.length && parentExpanded && !hasMaxItems}
   <div role="none" class="toolbar bottom add">
     <Spacer flex />
     <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />

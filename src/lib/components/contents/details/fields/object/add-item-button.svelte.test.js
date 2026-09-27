@@ -35,18 +35,32 @@ describe('AddItemButton', () => {
     await page.getByRole('button', { name: /Add\W+tags/ }).click();
   });
 
-  test('is disabled when the list is full or told so', async () => {
+  test('is hidden when the list is full, and disabled when told so', async () => {
     /** @type {ListField} */
     const fieldConfig = { name: 'tags', widget: 'list', max: 2 };
 
     await render(AddItemButton, { fieldConfig, items: ['a', 'b'] });
-    await expect.element(page.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
+    expect(page.getByRole('button').elements()).toHaveLength(0);
 
     await render(AddItemButton, { fieldConfig, items: ['a'], disabled: true });
-    await expect.element(page.getByRole('button').nth(1)).toHaveAttribute('aria-disabled', 'true');
+    await expect.element(page.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
 
     await render(AddItemButton, { fieldConfig, items: ['a'] });
-    await expect.element(page.getByRole('button').nth(2)).toHaveAttribute('aria-disabled', 'false');
+    await expect.element(page.getByRole('button').nth(1)).toHaveAttribute('aria-disabled', 'false');
+  });
+
+  test('is hidden when a list with variable types is full', async () => {
+    await render(AddItemButton, {
+      fieldConfig: {
+        name: 'sections',
+        widget: 'list',
+        max: 1,
+        types: [{ name: 'hero', fields: [] }],
+      },
+      items: [{ type: 'hero' }],
+    });
+
+    expect(page.getByRole('button').elements()).toHaveLength(0);
   });
 
   test('offers a menu of types for a list with variable types', async () => {

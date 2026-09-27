@@ -157,12 +157,14 @@ describe('KeyValueEditor', () => {
     await expect.poll(() => draft.currentValues._default.meta).toBe(null);
   });
 
-  test('does not add a pair beyond the maximum', async () => {
+  test('hides the Add button at the maximum, showing it again once a pair is removed', async () => {
     await renderEditor({ color: 'red' }, { config: { max: 1 } });
 
-    await expect
-      .element(page.getByRole('button', { name: 'Add' }))
-      .toHaveAttribute('aria-disabled', 'true');
+    await expect.element(page.getByRole('textbox', { name: 'Key' })).toBeVisible();
+    expect(page.getByRole('button', { name: 'Add' }).elements()).toHaveLength(0);
+
+    await page.getByRole('button', { name: 'Remove' }).click();
+    await expect.element(page.getByRole('button', { name: 'Add' })).toBeVisible();
   });
 
   test('moves on to the next row, or adds one, with the Enter key in a value field', async () => {

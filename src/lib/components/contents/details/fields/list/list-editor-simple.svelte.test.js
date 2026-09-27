@@ -116,9 +116,8 @@ describe('ListEditorSimple', () => {
   test('does not add an item beyond the maximum', async () => {
     await renderEditor(['a', 'b'], { config: { max: 2 } });
 
-    await expect
-      .element(page.getByRole('button', { name: /Add\W+tags/ }))
-      .toHaveAttribute('aria-disabled', 'true');
+    await expect.element(page.getByRole('textbox').nth(1)).toBeVisible();
+    expect(page.getByRole('button', { name: /Add\W+tags/ }).elements()).toHaveLength(0);
     await page.getByRole('textbox').nth(0).element().focus();
     await userEvent.keyboard('{Enter}');
     expect(getInputValues()).toEqual(['a', 'b']);

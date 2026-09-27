@@ -273,16 +273,18 @@
   </ValidationError>
 {/if}
 
-<div role="none">
-  <Button
-    label={_('add')}
-    variant="tertiary"
-    disabled={keysReadonly || pairs.length >= max}
-    onclick={() => {
-      addPair();
-    }}
-  />
-</div>
+{#if pairs.length < max}
+  <div role="none">
+    <Button
+      label={_('add')}
+      variant="tertiary"
+      disabled={keysReadonly}
+      onclick={() => {
+        addPair();
+      }}
+    />
+  </div>
+{/if}
 
 <style>
   table {
