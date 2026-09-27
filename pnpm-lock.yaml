@@ -30,8 +30,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))
       '@sveltia/ui':
-        specifier: ^0.77.2
-        version: 0.77.2(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)
+        specifier: ^0.77.3
+        version: 0.77.3(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.2
         version: 0.12.2
@@ -1251,8 +1251,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.77.2':
-    resolution: {integrity: sha512-vf8qaziKK40PHzzeIMFLaglZBUt1l59bUG6QZAYzin0DGR257EWbvV6CslrNV/aZ4qacedu4JKeuKTjvgrJQgw==}
+  '@sveltia/ui@0.77.3':
+    resolution: {integrity: sha512-R9yqld2Kbjkx3y0UVcc6uPVsLRcbi1W7T0uvMjmQ0a3GjVnfxB8LopcX7DShhoCtpfaHKFeEgiTOPa5zDM4HAQ==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -4035,8 +4035,8 @@ packages:
     resolution: {integrity: sha512-OTIk8iR8/aCRWBqvxrzxR0hgxWpnYBblY1S5hDWBQfk/VFmJwzmJgQFN3WsoUKHISv2eAwe+PpbUzyL1CKTLXg==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  ws@8.21.3:
-    resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
+  ws@8.22.0:
+    resolution: {integrity: sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -5018,7 +5018,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.57.1(@typescript-eslint/types@8.70.1)
 
-  '@sveltia/ui@0.77.2(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)':
+  '@sveltia/ui@0.77.3(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.51.0(typescript@6.0.3)
       '@lexical/dragon': 0.51.0(typescript@6.0.3)
@@ -5289,7 +5289,7 @@ snapshots:
       sirv: 3.0.2
       tinyrainbow: 3.1.1
       vitest: 5.0.2(@types/node@26.6.3)(@vitest/browser-playwright@5.0.2)(@vitest/coverage-v8@5.0.2)(@vitest/ui@5.0.2)(happy-dom@20.14.5)(jsdom@30.1.1)(vite@8.3.1(@types/node@26.6.3)(yaml@2.9.1))
-      ws: 8.21.3
+      ws: 8.22.0
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -6569,7 +6569,7 @@ snapshots:
       buffer-image-size: 0.6.4
       entities: 7.0.1
       whatwg-mimetype: 3.0.0
-      ws: 8.21.3
+      ws: 8.22.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -8117,7 +8117,7 @@ snapshots:
     dependencies:
       signal-exit: 4.1.0
 
-  ws@8.21.3: {}
+  ws@8.22.0: {}
 
   xdg-basedir@5.1.0: {}
 
