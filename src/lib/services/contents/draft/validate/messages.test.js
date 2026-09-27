@@ -3,9 +3,10 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { getField } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 
-import { getFieldValidationMessages } from './messages';
+import { getFieldValidationMessages, getInvalidFields } from './messages';
 
 /** @type {(key: string, opts?: any) => string} */
 const t = vi.hoisted(
@@ -17,6 +18,7 @@ vi.mock('@sveltia/i18n', () => ({
 }));
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
+  getField: vi.fn(),
   isFieldMultiple: vi.fn(() => false),
 }));
 
@@ -276,5 +278,131 @@ describe('getFieldValidationMessages', () => {
 
       expect(messages).toEqual(['validation.value_missing', 'validation.type_mismatch.email']);
     });
+  });
+});
+
+describe('getInvalidFields', () => {
+  /**
+   * Build a draft with the given values and validation messages.
+   * @param {Record<string, any>} overrides
+   * @returns {any}
+   */
+  const createDraft = (overrides = {}) => ({
+    collectionName: 'posts',
+    fileName: undefined,
+    isIndexFile: false,
+    currentValues: {},
+    extraValues: {},
+    validationMessages: {},
+    ...overrides,
+  });
+
+  it('lists the fields with messages in order, skipping the valid ones', () => {
+    vi.mocked(getField).mockImplementation(
+      ({ keyPath }) =>
+        /** @type {any} */ ({
+          title: { name: 'title', widget: 'string', label: 'Title' },
+          tags: { name: 'tags', widget: 'list' },
+        })[keyPath.split('.')[0]],
+    );
+
+    const currentValues = { en: { title: '', 'tags.0': 'a', 'tags.1': 'b', note: '' } };
+
+    const draft = createDraft({
+      currentValues,
+      validationMessages: {
+        en: {
+          title: ['Required'],
+          // List-level validity is keyed by the list, whose values are stored as items
+          tags: ['Too many'],
+          'tags.0': [],
+          'tags.1': ['Too long'],
+          note: [],
+        },
+      },
+    });
+
+    expect(getInvalidFields({ draft, locale: 'en' })).toEqual([
+      { keyPath: 'title', label: 'Title', messages: ['Required'] },
+      { keyPath: 'tags', label: 'tags', messages: ['Too many'] },
+      { keyPath: 'tags.1', label: 'tags', messages: ['Too long'] },
+    ]);
+    expect(getField).toHaveBeenCalledWith({
+      collectionName: 'posts',
+      fileName: undefined,
+      isIndexFile: false,
+      componentName: undefined,
+      keyPath: 'tags',
+      valueMap: currentValues.en,
+    });
+  });
+
+  it('looks up a rich text editor component field in the component definition', () => {
+    vi.mocked(getField).mockImplementation(({ componentName, keyPath }) =>
+      componentName === 'youtube' && keyPath === 'id'
+        ? /** @type {any} */ ({ name: 'id', widget: 'string', label: 'Video ID' })
+        : undefined,
+    );
+
+    const extraValues = { en: { 'body:c40:__sc_component_name': 'youtube', 'body:c40:id': '' } };
+
+    const draft = createDraft({
+      fileName: 'about',
+      isIndexFile: true,
+      currentValues: { en: { body: '' } },
+      extraValues,
+      validationMessages: { en: { body: [], 'body:c40:id': ['Required'] } },
+    });
+
+    expect(getInvalidFields({ draft, locale: 'en' })).toEqual([
+      { keyPath: 'body:c40:id', label: 'Video ID', messages: ['Required'] },
+    ]);
+    expect(getField).toHaveBeenCalledExactlyOnceWith({
+      collectionName: 'posts',
+      fileName: 'about',
+      isIndexFile: true,
+      componentName: 'youtube',
+      keyPath: 'id',
+      valueMap: extraValues.en,
+    });
+  });
+
+  it('gives an empty label to a field that cannot be found', () => {
+    vi.mocked(getField).mockReturnValue(undefined);
+
+    const draft = createDraft({
+      currentValues: { en: { stray: 'x' } },
+      extraValues: { en: { 'body:c1:x': '' } },
+      validationMessages: { en: { stray: ['Invalid'], 'body:c1:x': ['Invalid'] } },
+    });
+
+    expect(getInvalidFields({ draft, locale: 'en' })).toEqual([
+      { keyPath: 'stray', label: '', messages: ['Invalid'] },
+      { keyPath: 'body:c1:x', label: '', messages: ['Invalid'] },
+    ]);
+    // The component name is missing
+    expect(getField).toHaveBeenLastCalledWith(
+      expect.objectContaining({ componentName: undefined, keyPath: 'x' }),
+    );
+  });
+
+  it('skips a field removed since the validation', () => {
+    vi.mocked(getField).mockReturnValue({ name: 'f', widget: 'string' });
+
+    const draft = createDraft({
+      // A list item and a rich text editor component have been removed
+      currentValues: { en: { 'tags.0': 'a' } },
+      validationMessages: {
+        en: { tags: ['Too few'], 'tags.1': ['Invalid'], 'body:c1:src': ['Required'] },
+      },
+    });
+
+    expect(getInvalidFields({ draft, locale: 'en' })).toEqual([
+      { keyPath: 'tags', label: 'f', messages: ['Too few'] },
+    ]);
+  });
+
+  it('returns nothing for a locale without messages', () => {
+    expect(getInvalidFields({ draft: createDraft(), locale: 'fr' })).toEqual([]);
   });
 });

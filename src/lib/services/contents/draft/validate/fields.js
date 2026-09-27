@@ -613,7 +613,16 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
           if (listValidity) {
             validationMessages[locale][listKeyPath] = getFieldValidationMessages({
               validity: listValidity,
-              fieldConfig,
+              // The item’s config is the subfield of a list with `field`, so the list’s own
+              // config has to be used for the list’s messages, such as the minimum item count
+              fieldConfig: /** @type {Field} */ (
+                getField({
+                  ...getFieldArgs,
+                  keyPath: listKeyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''),
+                  valueMap,
+                  componentName,
+                })
+              ),
             });
           }
         }

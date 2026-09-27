@@ -7,14 +7,13 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { validateEntry } from '$lib/services/contents/draft/validate';
   import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
+  import { getInvalidFields } from '$lib/services/contents/draft/validate/messages';
   import { expandInvalidFields, highlightEditorField } from '$lib/services/contents/editor/fields';
   import { showSidebarPanel } from '$lib/services/contents/editor/sidebar';
-  import { getField } from '$lib/services/contents/entry/fields';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
   /**
-   * @import { EntryDraft } from '$lib/types/private';
-   * @import { VisibleField } from '$lib/types/public';
+   * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
    */
 
   /**
@@ -32,16 +31,24 @@
 
   const entryDraft = getEntryDraftContext();
 
-  const { validationMessages, collectionName, fileName, currentValues, isIndexFile, validities } =
-    $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
+  const { validationMessages, validities } = $derived(
+    /** @type {EntryDraft} */ (entryDraft.current ?? {}),
+  );
 
   const hasResults = $derived(
     Object.values(validities ?? {}).some((map) => !!Object.keys(map).length),
   );
 
-  const getFieldArgs = $derived({ collectionName, fileName, currentValues, isIndexFile });
-
   let validating = $state(false);
+
+  /**
+   * List the fields that have validation errors in the given locale.
+   * @param {InternalLocaleCode} locale Locale code.
+   * @returns {ReturnType<typeof getInvalidFields>} Invalid fields.
+   */
+  const listInvalidFields = (locale) =>
+    // The results are only shown while the draft is there
+    getInvalidFields({ draft: /** @type {EntryDraft} */ (entryDraft.current), locale });
 
   /**
    * Validate the entry on demand, so what’s left to do can be checked without attempting a save.
@@ -83,8 +90,7 @@
     />
   {/snippet}
   {#if hasResults}
-    {#each Object.entries(validationMessages) as [locale, messagesByKey] (locale)}
-      {@const valueMap = currentValues?.[locale]}
+    {#each Object.keys(validationMessages) as locale (locale)}
       {@const label = getLocaleLabel(locale)}
       <section class="locale" role="group">
         {#if label}
@@ -107,27 +113,21 @@
               </ValidationError>
             </Button>
           {/if}
-          {#each Object.keys(valueMap) as keyPath (keyPath)}
-            {@const field = getField({ ...getFieldArgs, valueMap, keyPath })}
-            {@const messages = messagesByKey[keyPath] ?? []}
-            {#if messages.length}
-              <Button
-                class="ref"
-                variant="ghost"
-                onclick={() => {
-                  onSelectField({ locale, keyPath });
-                }}
-              >
-                <span class="summary">
-                  {/** @type {VisibleField} */ (field)?.label || field?.name}
-                </span>
-                {#each messages as message, index (index)}
-                  <ValidationError live="off">
-                    {message}
-                  </ValidationError>
-                {/each}
-              </Button>
-            {/if}
+          {#each listInvalidFields(locale) as { keyPath, label: fieldLabel, messages } (keyPath)}
+            <Button
+              class="ref"
+              variant="ghost"
+              onclick={() => {
+                onSelectField({ locale, keyPath });
+              }}
+            >
+              <span class="summary">{fieldLabel}</span>
+              {#each messages as message, index (index)}
+                <ValidationError live="off">
+                  {message}
+                </ValidationError>
+              {/each}
+            </Button>
           {/each}
         {:else}
           <div class="empty">{_('entry_sidebar.validation.no_errors_found')}</div>

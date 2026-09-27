@@ -468,6 +468,33 @@ describe('draft/validate/fields', () => {
       expect(result).toBeDefined();
     });
 
+    it('should compute the list’s own messages with the list config, not the subfield config', async () => {
+      // A list with `field` stores its items as `tags.0`, whose config is the subfield, which has
+      // no `min`, so the list’s messages have to be computed with the list’s own config
+      mockEntryDraft.currentValues = { en: { 'tags.0': 'a' } };
+
+      const listConfig = { name: 'tags', widget: 'list', min: 3, field: { name: 'tag' } };
+      const subfieldConfig = { name: 'tag', widget: 'string' };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        keyPath === 'tags' ? listConfig : subfieldConfig,
+      );
+
+      const { getFieldValidationMessages } =
+        await import('$lib/services/contents/draft/validate/messages');
+
+      validateFields('currentValues');
+
+      expect(getFieldValidationMessages).toHaveBeenCalledWith({
+        validity: expect.any(Object),
+        fieldConfig: listConfig,
+      });
+      expect(getFieldValidationMessages).toHaveBeenLastCalledWith({
+        validity: expect.any(Object),
+        fieldConfig: subfieldConfig,
+      });
+    });
+
     it('should skip validationMessages for list parent when its validity is absent', () => {
       // When the value map only contains list item keys (no parent key), validateAnyField for
       // the parent returns undefined (getField returns undefined for it), so

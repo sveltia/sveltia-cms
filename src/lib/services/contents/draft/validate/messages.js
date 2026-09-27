@@ -1,18 +1,21 @@
 import { _ } from '@sveltia/i18n';
 
-import { isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { getField, isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getFormattedDateTime } from '$lib/services/contents/fields/date-time/validate';
+import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 
 /**
- * @import { EntryValidityState } from '$lib/types/private';
+ * @import { EntryDraft, EntryValidityState, InternalLocaleCode } from '$lib/types/private';
  * @import {
  * DateTimeField,
  * DateTimeInputType,
  * Field,
+ * FieldKeyPath,
  * MinMaxValueField,
  * StringField,
  * TextField,
+ * VisibleField,
  * } from '$lib/types/public';
  */
 
@@ -147,4 +150,57 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
   }
 
   return messages;
+};
+
+/**
+ * Get the fields that have validation error messages in the given locale, in the order the fields
+ * were validated. That includes the fields of rich text editor components, stored in
+ * `extraValues`, and a multi-value field whose list itself is invalid, whose key path, e.g.
+ * `tags`, only holds messages while the values are stored under `tags.0`, `tags.1`, etc.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.locale Locale code.
+ * @returns {{ keyPath: FieldKeyPath, label: string, messages: string[] }[]} Invalid fields, with
+ * the label of each field or its name if the label is not defined, or an empty string if the field
+ * cannot be found.
+ */
+export const getInvalidFields = ({ draft, locale }) => {
+  const { collectionName, fileName, isIndexFile, currentValues, extraValues } = draft;
+  const currentValueMap = currentValues[locale] ?? {};
+  const extraValueMap = extraValues[locale] ?? {};
+
+  return (
+    Object.entries(draft.validationMessages[locale] ?? {})
+      .filter(([, messages]) => !!messages.length)
+      .map(([keyPath, messages]) => {
+        const [prefix] = keyPath.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
+        const valueMap = prefix ? extraValueMap : currentValueMap;
+
+        return { keyPath, messages, prefix, valueMap };
+      })
+      // The messages are kept until the next validation, so skip a field removed since then, e.g. a
+      // list item or a rich text editor component. A list is kept as long as it has an item, which
+      // is stored under `tags.0`, etc. while the list itself is validated as `tags`
+      .filter(
+        ({ keyPath, valueMap }) =>
+          keyPath in valueMap || Object.keys(valueMap).some((key) => key.startsWith(`${keyPath}.`)),
+      )
+      .map(({ keyPath, messages, prefix, valueMap }) => {
+        const field = getField({
+          collectionName,
+          fileName,
+          isIndexFile,
+          // A rich text editor component field is looked up in the component definition
+          componentName: prefix ? extraValueMap[`${prefix}__sc_component_name`] : undefined,
+          keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+          valueMap,
+        });
+
+        return {
+          keyPath,
+          label: /** @type {VisibleField | undefined} */ (field)?.label || field?.name || '',
+          messages,
+        };
+      })
+  );
 };

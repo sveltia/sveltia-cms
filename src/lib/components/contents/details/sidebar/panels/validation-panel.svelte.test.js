@@ -14,6 +14,13 @@ const fields = [
   { name: 'note', widget: 'string', required: false },
 ];
 
+// A rich text field whose components hold their own fields, and a list with a subfield, whose items
+// are stored under `tags.0`, `tags.1`, etc. while the list itself is validated as `tags`
+const noteFields = [
+  { name: 'body', label: 'Body', widget: 'richtext' },
+  { name: 'tags', label: 'Tags', widget: 'list', min: 3, field: { name: 'tag', widget: 'string' } },
+];
+
 const i18n = {
   i18nEnabled: true,
   allLocales: ['en', 'fr'],
@@ -34,6 +41,7 @@ describe('ValidationPanel', () => {
       collections: [
         { name: 'posts', label: 'Posts', folder: 'content/posts', i18n: true, fields },
         { name: 'pages', label: 'Pages', folder: 'content/pages', fields },
+        { name: 'notes', label: 'Notes', folder: 'content/notes', fields: noteFields },
       ],
     });
   });
@@ -96,6 +104,54 @@ describe('ValidationPanel', () => {
 
     expect(onSelectField).toHaveBeenCalledExactlyOnceWith({ locale: '_default', keyPath: 'title' });
     expect(postMessage).not.toHaveBeenCalled();
+  });
+
+  test('lists a list error and a rich text editor component field error', async () => {
+    const draft = createMockDraft({
+      collectionName: 'notes',
+      fields: noteFields,
+      values: { _default: { body: 'Some text', 'tags.0': 'a' } },
+      draft: {
+        extraValues: {
+          // The Source field of the built-in Image component is required
+          _default: { 'body:c40:__sc_component_name': 'image', 'body:c40:src': '' },
+        },
+      },
+    });
+
+    await renderWithDraft(ValidationPanel, { draft });
+
+    const panel = page.getByRole('group', { name: 'Validation' });
+
+    await panel.getByRole('button', { name: 'Validate' }).click();
+    await expect.element(panel.getByRole('button', { name: /Source/ })).toBeVisible();
+
+    const items = panel
+      .getByRole('group')
+      .getByRole('button')
+      .elements()
+      .map((el) => el.textContent?.replace(/\s+/g, ' ').trim());
+
+    expect(items).toEqual([
+      // The list itself is invalid, while its items are stored under `tags.0`, etc.
+      'Tags error You must add at least 3 items.',
+      // A field of the Image component, stored in `extraValues`
+      'Source error This field is required.',
+    ]);
+
+    // Clicking an error highlights the field, whether it’s a list or a component field
+    const postMessage = vi.spyOn(window, 'postMessage');
+
+    await panel.getByRole('button', { name: /Tags/ }).click();
+    expect(postMessage).toHaveBeenLastCalledWith(
+      { type: 'highlight-editor-field', payload: { locale: '_default', keyPath: 'tags' } },
+      window.location.origin,
+    );
+    await panel.getByRole('button', { name: /Source/ }).click();
+    expect(postMessage).toHaveBeenLastCalledWith(
+      { type: 'highlight-editor-field', payload: { locale: '_default', keyPath: 'body:c40:src' } },
+      window.location.origin,
+    );
   });
 
   test('has nothing to validate without a draft', async () => {
