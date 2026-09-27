@@ -620,6 +620,7 @@ describe('Toolbar', () => {
     await expect
       .element(page.getByRole('alert'))
       .toHaveTextContent('error Error Couldn’t delete the entry. Please try again.');
+    await waitForToastsToHide();
   });
 
   test('reports a failure to save without a cause', async () => {
@@ -840,6 +841,8 @@ describe('Toolbar', () => {
     await expect
       .poll(getShownToastText)
       .toBe('check_circle Success Field copied from \u2068xx\u2069.');
+    await waitForToastsToHide();
+    expect(copyFromLocaleToast.current.show).toBe(false);
   });
 
   test('reports an unexpected error', async () => {
