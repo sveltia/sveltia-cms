@@ -143,6 +143,36 @@ class CMS {
       return files;
     }, TEST_REPO_DIR_NAME);
   }
+
+  /**
+   * Read a binary file in the test repository, e.g. an uploaded image, which {@link readRepo}
+   * can’t return intact as text.
+   * @param {string} path File path, e.g. `static/images/photo.png`.
+   * @returns {Promise<Buffer | undefined>} File content, or `undefined` if the file doesn’t exist.
+   */
+  async readRepoFile(path) {
+    const bytes = await this.page.evaluate(
+      async ({ rootDirName, segments }) => {
+        try {
+          const fileName = /** @type {string} */ (segments.pop());
+
+          const dir = await segments.reduce(
+            async (parent, segment) => (await parent).getDirectoryHandle(segment),
+            (await navigator.storage.getDirectory()).getDirectoryHandle(rootDirName),
+          );
+
+          const file = await (await dir.getFileHandle(fileName)).getFile();
+
+          return [...new Uint8Array(await file.arrayBuffer())];
+        } catch {
+          return undefined;
+        }
+      },
+      { rootDirName: TEST_REPO_DIR_NAME, segments: path.split('/') },
+    );
+
+    return bytes ? Buffer.from(bytes) : undefined;
+  }
 }
 
 /**

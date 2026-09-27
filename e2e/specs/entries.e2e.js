@@ -46,3 +46,18 @@ test('updates an entry', async ({ cms, page }) => {
     .poll(async () => (await cms.readRepo())['content/posts/first-post.md'])
     .toBe('---\ntitle: First Post\n---\n\nHello again!\n');
 });
+
+test('deletes an entry', async ({ cms, page }) => {
+  await page.getByRole('row', { name: /First Post/ }).click();
+  await page.getByRole('button', { name: 'Show Editor Options' }).click();
+  await page.getByRole('menuitem', { name: 'Delete Entry' }).click();
+  await page
+    .getByRole('alertdialog', { name: 'Delete Entry' })
+    .getByRole('button', { name: 'Delete' })
+    .click();
+
+  await expect
+    .poll(async () => Object.keys(await cms.readRepo()))
+    .toEqual(['content/posts/second-post.md']);
+  await expect(page.getByRole('group', { name: 'Entry List' }).getByRole('row')).toHaveCount(1);
+});
