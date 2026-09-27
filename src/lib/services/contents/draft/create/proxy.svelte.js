@@ -26,6 +26,36 @@ const VERSION_KEY = Symbol('valueMapVersion');
 export const getValueMapVersion = (valueMap) => /** @type {any} */ (valueMap)?.[VERSION_KEY];
 
 /**
+ * Check if the given field’s value is duplicated from the default locale to the other locales,
+ * because the field itself or one of its ancestors, such as the List or Object field it belongs to,
+ * has the `duplicate` i18n strategy. A duplicated List or Object field holds the same items and
+ * values in every locale, whether or not its subfields have an `i18n` option of their own, the way
+ * `normalizeContentMap()` copies it when an entry is loaded.
+ * @param {object} args Arguments.
+ * @param {Field} args.fieldConfig Field configuration.
+ * @param {GetFieldArgs} args.getFieldArgs Arguments for the `getField` function, including the key
+ * path of the field.
+ * @returns {boolean} Whether the value is duplicated.
+ */
+export const isDuplicatedField = ({ fieldConfig, getFieldArgs }) => {
+  if (fieldConfig.i18n === 'duplicate') {
+    return true;
+  }
+
+  const segments = getFieldArgs.keyPath.split('.');
+
+  // Look at the ancestors ending with a field name, e.g. `items` for `items.0.name`, skipping the
+  // list item indexes, which aren’t fields of their own
+  return segments.some(
+    (segment, index) =>
+      index < segments.length - 1 &&
+      !/^\d+$/.test(segment) &&
+      getField({ ...getFieldArgs, keyPath: segments.slice(0, index + 1).join('.') })?.i18n ===
+        'duplicate',
+  );
+};
+
+/**
  * Copy the default locale value to other locales if the field’s i18n strategy is `duplicate`.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft.
@@ -110,12 +140,13 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
   /**
    * Check if auto-duplication should be performed for the given field.
    * @param {Field} fieldConfig Field configuration.
+   * @param {GetFieldArgs} getFieldArgs Arguments for the `getField` function.
    * @returns {boolean} True if auto-duplication should be performed.
    */
-  const shouldAutoDuplicate = (fieldConfig) =>
+  const shouldAutoDuplicate = (fieldConfig, getFieldArgs) =>
     isAutoDuplicationEnabled() &&
-    fieldConfig.i18n === 'duplicate' &&
-    sourceLanguage === defaultLocale;
+    sourceLanguage === defaultLocale &&
+    isDuplicatedField({ fieldConfig, getFieldArgs });
 
   /**
    * Get field configuration for the given key path.
@@ -187,7 +218,7 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
       revalidateField({ draft, locale: sourceLanguage, keyPath, value, valueMap });
 
       // Copy value to other locales
-      if (shouldAutoDuplicate(fieldConfig)) {
+      if (shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
         copyDefaultLocaleValue({ draft, getFieldArgs, fieldConfig, sourceLanguage, value });
       }
 
@@ -201,14 +232,14 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
         version += 1;
       }
 
-      const { fieldConfig } = getFieldInfo(obj, keyPath);
+      const { fieldConfig, getFieldArgs } = getFieldInfo(obj, keyPath);
 
       if (!fieldConfig) {
         return true;
       }
 
       // Remove the property from other locales
-      if (shouldAutoDuplicate(fieldConfig)) {
+      if (shouldAutoDuplicate(fieldConfig, getFieldArgs)) {
         Object.entries(draft.currentValues).forEach(([targetLanguage, content]) => {
           if (targetLanguage !== sourceLanguage && keyPath in content) {
             delete content[keyPath];

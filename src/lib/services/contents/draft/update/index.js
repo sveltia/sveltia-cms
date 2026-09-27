@@ -20,7 +20,10 @@ import { setSubtree } from '$lib/services/contents/entry/subtree';
 export const updateNonPrimitiveValue = ({ draft, valueStoreKey, locale, keyPath, i18n, value }) => {
   // Drop the existing subtree and write the new value in its place. The placeholder `setSubtree()`
   // writes also keeps validation running when there are no items at all
-  forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (valueMap) => {
-    setSubtree(valueMap, keyPath, value);
-  });
+  forEachTargetLocale(
+    { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
+    (valueMap) => {
+      setSubtree(valueMap, keyPath, value);
+    },
+  );
 };

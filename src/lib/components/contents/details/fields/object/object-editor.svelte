@@ -156,9 +156,12 @@
       }
 
       if (_type) {
-        forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (_valueMap) => {
-          _valueMap[typeKeyPath] = _type;
-        });
+        forEachTargetLocale(
+          { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
+          (_valueMap) => {
+            _valueMap[typeKeyPath] = _type;
+          },
+        );
 
         // Wait until `subFields` is updated
         await tick();
@@ -181,13 +184,16 @@
               keyPathPrefix: keyPath,
             });
 
-      forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (_valueMap) => {
-        // Apply the new values through the Proxy
-        Object.assign(_valueMap, toRaw({ ...newValueMap, ..._valueMap }));
+      forEachTargetLocale(
+        { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
+        (_valueMap) => {
+          // Apply the new values through the Proxy
+          Object.assign(_valueMap, toRaw({ ...newValueMap, ..._valueMap }));
 
-        // Disable validation
-        delete _valueMap[keyPath];
-      });
+          // Disable validation
+          delete _valueMap[keyPath];
+        },
+      );
     });
 
   /**
@@ -195,7 +201,14 @@
    */
   const removeFields = () => {
     forEachTargetLocale(
-      { valueStore: entryDraft.current?.[valueStoreKey], locale, i18n },
+      {
+        valueStore: entryDraft.current?.[valueStoreKey],
+        locale,
+        i18n,
+        // The Remove button is only offered while the draft is there
+        draft: /** @type {EntryDraft} */ (entryDraft.current),
+        keyPath,
+      },
       (_valueMap) => {
         // Assign `null` before deleting each property, so the draft proxy can revalidate the field.
         // The value map is the draft’s live map, which is mutated right below, so its key paths

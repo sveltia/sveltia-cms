@@ -109,9 +109,12 @@ export const updateListFieldForLocales = ({
   keyPath,
   manipulate,
 }) => {
-  forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (_valueMap, _locale) => {
-    updateListField({ draft, locale: _locale, valueStoreKey, keyPath, manipulate });
-  });
+  forEachTargetLocale(
+    { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
+    (_valueMap, _locale) => {
+      updateListField({ draft, locale: _locale, valueStoreKey, keyPath, manipulate });
+    },
+  );
 };
 
 /**

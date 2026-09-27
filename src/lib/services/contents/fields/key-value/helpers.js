@@ -60,7 +60,7 @@ export const savePairs = ({
   const { i18n } = fieldConfig;
   const valueStore = draft[valueStoreKey];
 
-  forEachTargetLocale({ valueStore, locale, i18n }, (content) => {
+  forEachTargetLocale({ valueStore, locale, i18n, draft, keyPath }, (content) => {
     setPairs(content, keyPath, pairs);
   });
 

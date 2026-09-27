@@ -2,7 +2,12 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { copyDefaultLocaleValue, createProxy, getValueMapVersion } from './proxy.svelte.js';
+import {
+  copyDefaultLocaleValue,
+  createProxy,
+  getValueMapVersion,
+  isDuplicatedField,
+} from './proxy.svelte.js';
 
 const { resolveCollectionAndFile, getField, revalidateField, isAutoDuplicationEnabled } =
   vi.hoisted(() => ({
@@ -302,6 +307,35 @@ describe('contents/draft/create/proxy.svelte', () => {
       expect(draft.currentValues.ja.title).toBe('Title');
     });
 
+    it('should duplicate the subfield values of a duplicated List or Object field', () => {
+      /** @type {Record<string, any>} */
+      const fields = {
+        items: { name: 'items', widget: 'list', i18n: 'duplicate' },
+        'items.0.name': { name: 'name', widget: 'string' },
+        'items.0.id': { name: 'id', widget: 'uuid' },
+      };
+
+      getField.mockImplementation(({ keyPath }) => fields[keyPath]);
+
+      // The list item exists in every locale, as the list update adds it to each of them
+      const draft = createDraft({
+        values: {
+          en: { 'items.0.name': '', 'items.0.id': '' },
+          ja: { 'items.0.name': '', 'items.0.id': '' },
+        },
+      });
+
+      draft.currentValues.en['items.0.name'] = 'first';
+      draft.currentValues.en['items.0.id'] = 'abc';
+
+      expect(draft.currentValues.ja['items.0.name']).toBe('first');
+      expect(draft.currentValues.ja['items.0.id']).toBe('abc');
+
+      delete draft.currentValues.en['items.0.id'];
+
+      expect('items.0.id' in draft.currentValues.ja).toBe(false);
+    });
+
     it('should not duplicate values when auto-duplication is suspended', () => {
       getField.mockReturnValue({ widget: 'string', i18n: 'duplicate' });
       isAutoDuplicationEnabled.mockReturnValue(false);
@@ -470,6 +504,45 @@ describe('contents/draft/create/proxy.svelte', () => {
 
       expect(draft.currentValues.en.other).toBeUndefined();
       expect(draft.currentValues.ja.other).toBe('x');
+    });
+  });
+
+  describe('isDuplicatedField', () => {
+    /** @type {Record<string, any>} */
+    const fields = {
+      title: { name: 'title', widget: 'string', i18n: true },
+      meta: { name: 'meta', widget: 'object', i18n: 'duplicate' },
+      'meta.tags': { name: 'tags', widget: 'list' },
+      'meta.tags.0.label': { name: 'label', widget: 'string' },
+      blocks: { name: 'blocks', widget: 'list', i18n: true },
+      'blocks.0.text': { name: 'text', widget: 'string' },
+    };
+
+    beforeEach(() => {
+      getField.mockImplementation(({ keyPath }) => fields[keyPath]);
+    });
+
+    /**
+     * Check the field at the given key path.
+     * @param {string} keyPath Key path.
+     * @returns {boolean} Result.
+     */
+    const check = (keyPath) =>
+      isDuplicatedField({
+        fieldConfig: fields[keyPath],
+        getFieldArgs: { collectionName: 'posts', keyPath },
+      });
+
+    it('should detect the field’s own duplicate strategy', () => {
+      expect(check('meta')).toBe(true);
+      expect(check('title')).toBe(false);
+    });
+
+    it('should detect a duplicated ancestor, skipping the list item indexes', () => {
+      expect(check('meta.tags')).toBe(true);
+      expect(check('meta.tags.0.label')).toBe(true);
+      expect(check('blocks.0.text')).toBe(false);
+      expect(getField).not.toHaveBeenCalledWith(expect.objectContaining({ keyPath: 'blocks.0' }));
     });
   });
 });

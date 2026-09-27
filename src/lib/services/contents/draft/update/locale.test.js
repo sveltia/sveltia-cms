@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
+import { createProxy, isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
 
@@ -113,6 +113,63 @@ describe('draft/update/locale', () => {
       });
 
       expect(visited).toEqual(['en', 'ja', 'fr']);
+    });
+
+    it('should visit every locale for a field in a duplicated List or Object field', () => {
+      const draft = {
+        collectionName: 'posts',
+        fileName: undefined,
+        isIndexFile: false,
+        currentValues: valueStore,
+      };
+
+      /** @type {string[]} */
+      const visited = [];
+
+      vi.mocked(isDuplicatedField).mockReturnValue(true);
+      forEachTargetLocale(
+        {
+          valueStore,
+          locale: 'en',
+          i18n: undefined,
+          draft: /** @type {any} */ (draft),
+          keyPath: 'meta.tags',
+        },
+        (_valueMap, _locale) => {
+          visited.push(_locale);
+        },
+      );
+
+      expect(visited).toEqual(['en', 'ja', 'fr']);
+      expect(isDuplicatedField).toHaveBeenCalledWith({
+        fieldConfig: { i18n: undefined },
+        getFieldArgs: {
+          collectionName: 'posts',
+          fileName: undefined,
+          isIndexFile: false,
+          keyPath: 'meta.tags',
+        },
+      });
+
+      // Another value store, e.g. the rich text editor components’ values, isn’t looked up
+      vi.mocked(isDuplicatedField).mockClear();
+      visited.length = 0;
+      forEachTargetLocale(
+        {
+          valueStore: { en: {}, ja: {} },
+          locale: 'en',
+          i18n: undefined,
+          draft: /** @type {any} */ (draft),
+          keyPath: 'meta.tags',
+        },
+        (_valueMap, _locale) => {
+          visited.push(_locale);
+        },
+      );
+
+      expect(visited).toEqual(['en']);
+      expect(isDuplicatedField).not.toHaveBeenCalled();
+      vi.mocked(isDuplicatedField).mockReset();
     });
 
     it('should hand the callback that locale’s own content', () => {

@@ -131,10 +131,13 @@
       return;
     }
 
-    forEachTargetLocale({ valueStore: draft[valueStoreKey], locale, i18n }, (content) => {
-      // Remove `null` added for validation
-      delete content[keyPath];
-    });
+    forEachTargetLocale(
+      { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
+      (content) => {
+        // Remove `null` added for validation
+        delete content[keyPath];
+      },
+    );
 
     pairs.push(['', '']);
     pairIds.push(nextPairId);

@@ -1,7 +1,7 @@
 import { toRaw } from '@sveltia/utils/object';
 
 import { suspendAutoDuplication } from '$lib/services/contents/draft';
-import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
+import { createProxy, isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
@@ -28,18 +28,41 @@ import {
  * The draft proxy duplicates a `duplicate` field on its own whenever a value is assigned, which
  * would write every value twice here, so the callback runs with that suspended. Suspensions nest,
  * so a caller whose operation is wider than this loop can still suspend around the whole thing.
+ *
+ * A field nested in a List or Object field with the `duplicate` strategy is duplicated along with
+ * it, even without the strategy of its own. Pass the draft and the key path to have that taken into
+ * account, so that a list item or object added to such a field reaches every locale.
  * @param {object} args Arguments.
  * @param {Record<InternalLocaleCode, FlattenedEntryContent> | undefined} args.valueStore Value
  * store to update, e.g. `draft.currentValues`, keyed by locale.
  * @param {InternalLocaleCode} args.locale Locale being edited.
  * @param {Field['i18n']} args.i18n Field i18n configuration.
+ * @param {EntryDraft} [args.draft] Entry draft the value store belongs to.
+ * @param {FieldKeyPath} [args.keyPath] Key path of the field being updated.
  * @param {(valueMap: FlattenedEntryContent, locale: InternalLocaleCode) => void} callback Function
  * to run for each target locale, taking that locale’s content and the locale code.
  */
-export const forEachTargetLocale = ({ valueStore, locale, i18n }, callback) => {
+export const forEachTargetLocale = ({ valueStore, locale, i18n, draft, keyPath }, callback) => {
+  const duplicated =
+    i18n === 'duplicate' ||
+    // The field configuration can only be looked up for the entry’s own values, not for those of a
+    // rich text editor component, which live in another value store
+    (!!draft &&
+      !!keyPath &&
+      valueStore === draft.currentValues &&
+      isDuplicatedField({
+        fieldConfig: /** @type {Field} */ ({ i18n }),
+        getFieldArgs: {
+          collectionName: draft.collectionName,
+          fileName: draft.fileName,
+          isIndexFile: draft.isIndexFile,
+          keyPath,
+        },
+      }));
+
   suspendAutoDuplication(() => {
     Object.entries(valueStore ?? {}).forEach(([_locale, valueMap]) => {
-      if (_locale === locale || i18n === 'duplicate') {
+      if (_locale === locale || duplicated) {
         callback(valueMap, _locale);
       }
     });
