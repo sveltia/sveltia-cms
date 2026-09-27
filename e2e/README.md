@@ -37,7 +37,8 @@ The server listens on port 4180 and is started for each run. If the port is busy
 - Sveltia UI keeps closed dialogs and popups in the DOM with `inert`. Target the open one with `page.locator('dialog:not([inert])')`.
 - Choose a menu item with `cms.chooseMenuItem(button, item)`. A Sveltia UI menu ignores input for 100 ms after it opens, so a click on an item right after the menu opens is lost.
 - A short `select` or `relation` field is shown as a radio group, a `number` field as a spinbutton and a `boolean` field as a switch. A radio’s label is its accessible name, not its text content.
-- The rich text editor of a `markdown` or `richtext` field can’t be filled in: click it and type with `page.keyboard.type()`.
+- The rich text editor of a `markdown` or `richtext` field can’t be filled in: click it and type with `page.keyboard.type()`. The End key doesn’t move the caret on macOS, so set the selection in `evaluate()` to put the caret at the end. After formatting with the toolbar or a menu, wait for the change to show in the preview before saving: the editor converts the content to Markdown a moment later (a known issue pinned in `rich-text.e2e.js`).
+- Pin a known bug with a test that asserts the current behaviour, named with “(known issue)” and commented with the issue and what to expect once it’s fixed. The test fails when the bug is fixed, telling you to update it. Don’t use `test.fail()`: it also passes when the test breaks for an unrelated reason, e.g. a renamed button.
 - The `{{year}}`, `{{month}}` and `{{day}}` slug tags come from the time of saving, so pin the clock with `page.clock.install({ time })` in a test that checks a file name.
 - Optional fields missing from a file are written as empty values when the file is saved, unless `output.omit_empty_optional_fields` is on.
 - Open an entry by clicking its row. Navigating to its hash URL doesn’t open the editor after sign-in.
