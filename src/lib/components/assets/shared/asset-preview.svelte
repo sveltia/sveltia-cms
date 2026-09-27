@@ -99,6 +99,11 @@
    * @see https://github.com/sveltia/sveltia-cms/issues/1006
    */
   let currentAsset = undefined;
+  /**
+   * Whether the component has been destroyed. A URL lookup that finishes afterwards releases what
+   * it created, as the cleanup below has already run, and reads nothing reactive.
+   */
+  let destroyed = false;
 
   /**
    * Remember an object URL this preview created, so that it can be released later.
@@ -140,14 +145,26 @@
     }
 
     const previousSrc = src;
+    // Read up front, as a derived can’t be read once the component has been destroyed
+    const thumbnail = isThumbnail;
 
     try {
-      src = isThumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset);
+      const url = thumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset);
+
+      // The preview was removed while the URL was being looked up. Release it as the cleanup does,
+      // which skips a URL another element is displaying
+      if (destroyed) {
+        revokeBlobURLIfNeeded(url);
+
+        return;
+      }
+
+      src = url;
     } catch {
       hasError = true;
     }
 
-    if (isThumbnail) {
+    if (thumbnail) {
       ownURL(src);
     }
 
@@ -227,7 +244,16 @@
     // grid would otherwise pay for a blurred backdrop it never shows.
     if (blurBackground && asset && !blurImageURL) {
       (async () => {
-        blurImageURL = await getAssetThumbnailURL(asset, { cacheOnly: true });
+        const url = await getAssetThumbnailURL(asset, { cacheOnly: true });
+
+        // The preview was removed while the thumbnail was being looked up
+        if (destroyed) {
+          revokeBlobURLIfNeeded(url);
+
+          return;
+        }
+
+        blurImageURL = url;
         ownURL(blurImageURL);
       })();
     }
@@ -281,6 +307,8 @@
   onMount(() => {
     // Clean up
     return () => {
+      destroyed = true;
+
       if (currentAsset) {
         revokeAssetBlobURLIfNeeded(currentAsset);
       }

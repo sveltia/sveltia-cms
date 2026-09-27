@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
 import { createMockAsset } from '$lib/test/config';
@@ -103,5 +103,56 @@ describe('AssetPreview', () => {
     });
 
     await expect.poll(() => container.querySelector('.blur img')?.getAttribute('src')).toBe(src);
+  });
+
+  test('releases a thumbnail made after the preview has been removed', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    const file = new File([PNG_BYTES], 'late.png', { type: 'image/png' });
+    const asset = createMockAsset({ name: 'late.png', file, asset: { unsaved: true } });
+
+    const { unmount } = await render(AssetPreview, {
+      kind: 'image',
+      asset,
+      variant: 'tile',
+      loading: 'eager',
+    });
+
+    // Removed while the thumbnail is still being made
+    unmount();
+
+    await vi.waitFor(() => {
+      const urls = createObjectURL.mock.results.map(({ value }) => value);
+
+      expect(urls).not.toHaveLength(0);
+      expect(revokeObjectURL.mock.calls.map(([url]) => url)).toEqual(expect.arrayContaining(urls));
+    });
+
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
+  });
+
+  test('blurs an asset behind itself, unless it’s removed before the lookup ends', async () => {
+    const file = new File([PNG_BYTES], 'blur.png', { type: 'image/png' });
+    const asset = createMockAsset({ name: 'blur.png', file, asset: { unsaved: true } });
+
+    const props = {
+      kind: /** @type {'image'} */ ('image'),
+      asset,
+      loading: /** @type {'eager'} */ ('eager'),
+      blurBackground: true,
+    };
+
+    const { container } = await render(AssetPreview, props);
+
+    await expect
+      .poll(() => container.querySelector('.blur img')?.getAttribute('src'))
+      .toMatch(/^blob:/);
+
+    const removed = await render(AssetPreview, props);
+
+    removed.unmount();
+    // Nothing is left to show the backdrop in
+    expect(removed.container.querySelector('.blur')).toBeNull();
   });
 });
