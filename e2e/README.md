@@ -26,6 +26,7 @@ The server listens on port 4180 and is started for each run. If the port is busy
 - The `cms` fixture opens the admin page (`open()`), writes files to the repository before sign-in (`seed()`), signs in (`signIn()`) and reads the files back (`readRepo()` for text, `readRepoFile()` for a binary file), so a test can check what a Save actually wrote.
 - To test a Git backend, use `GITHUB_CONFIG` and ask for the `github` fixture: a `MockGitHub` from `fixtures/github.js` answers the GitHub REST and GraphQL requests from an in-memory repository and stores a session, so the CMS signs in on its own when the page opens. Commit to it as a colleague with `github.commit(files)`, read the branch with `github.readFile(path)`, and check the commits the CMS sent in `github.received`. `github.beforeCommit` runs once when the CMS next commits, to move the branch under it. A request the mock can’t answer fails the test and is listed in the error; teach the mock to answer it.
 - The CMS checks the repository for changes every minute, and when the window gets the focus back at least 10 seconds after the last check. Call `page.clock.install()` before opening the page, then `page.clock.fastForward()`, rather than waiting.
+- `fixtures/configs/` holds larger configs with matching repository files to seed, e.g. `MONOLINGUAL_CONFIG` and `MONOLINGUAL_FILES`: a magazine site with most field types, a JSON collection referred to by a relation field, a file collection and a singleton. Their specs are in a folder of the same name under `specs/`.
 - `createPNG()` from `fixtures/files.js` makes a real image to upload, which the CMS can decode for its thumbnail.
 
 ## Writing tests
@@ -34,6 +35,11 @@ The server listens on port 4180 and is started for each run. If the port is busy
 - Query by role and by the text a user sees, like the component tests do. Wait with web-first assertions (`await expect(locator).toBeVisible()`, `expect.poll()`), never with `waitForTimeout()`. The assertions retry for up to 5 seconds.
 - An interpolated value in a label comes wrapped in bidi isolates, so match such a name with a regular expression: `getByRole('main', { name: /Posts.*Collection/ })`.
 - Sveltia UI keeps closed dialogs and popups in the DOM with `inert`. Target the open one with `page.locator('dialog:not([inert])')`.
+- Choose a menu item with `cms.chooseMenuItem(button, item)`. A Sveltia UI menu ignores input for 100 ms after it opens, so a click on an item right after the menu opens is lost.
+- A short `select` or `relation` field is shown as a radio group, a `number` field as a spinbutton and a `boolean` field as a switch. A radio’s label is its accessible name, not its text content.
+- The rich text editor of a `markdown` or `richtext` field can’t be filled in: click it and type with `page.keyboard.type()`.
+- The `{{year}}`, `{{month}}` and `{{day}}` slug tags come from the time of saving, so pin the clock with `page.clock.install({ time })` in a test that checks a file name.
+- Optional fields missing from a file are written as empty values when the file is saved, unless `output.omit_empty_optional_fields` is on.
 - Open an entry by clicking its row. Navigating to its hash URL doesn’t open the editor after sign-in.
 - Upload a file with `setInputFiles()` on the hidden `input[type="file"]` inside the field group; a synthetic `drop` is ignored. Give each uploaded file distinct content, e.g. another `createPNG()` colour. The same file twice opens the conflict dialog, which then intercepts every click.
 - With i18n, the second pane shows the preview until a locale is picked from its “Switch Locale” radio group.

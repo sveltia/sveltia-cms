@@ -4,7 +4,7 @@ import { stringify } from 'yaml';
 import { MockGitHub } from './github.js';
 
 /**
- * @import { Page } from '@playwright/test';
+ * @import { Locator, Page } from '@playwright/test';
  */
 
 /**
@@ -110,6 +110,20 @@ class CMS {
   async signIn() {
     await this.page.getByRole('button', { name: 'Work with Test Repository' }).click();
     await expect(this.page.getByRole('button', { name: 'Show Account Menu' })).toBeVisible();
+  }
+
+  /**
+   * Open a menu and choose one of its items.
+   * @param {Locator} button Button that opens the menu.
+   * @param {Locator} item Menu item.
+   */
+  async chooseMenuItem(button, item) {
+    await button.click();
+    await expect(item).toBeVisible();
+    // A Sveltia UI menu ignores input for 100 ms after it opens, so the click that opened it can’t
+    // choose an item by accident. A user never clicks that fast, but a test does
+    await this.page.waitForTimeout(150);
+    await item.click();
   }
 
   /**
