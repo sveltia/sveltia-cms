@@ -30,8 +30,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))
       '@sveltia/ui':
-        specifier: ^0.77.3
-        version: 0.77.3(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)
+        specifier: ^0.78.0
+        version: 0.78.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.2
         version: 0.12.2
@@ -226,12 +226,12 @@ packages:
   '@altano/repository-tools@2.1.1':
     resolution: {integrity: sha512-YFVhwoSjwkERQoopw3lX/TaPIDud0m6ac/Z51FoQ3YEPf0OaxFxpofbcHO0E2mTJ0lvmuRArIMUP9Pz2jpTMhg==}
 
-  '@asamuzakjp/css-color@7.1.0':
-    resolution: {integrity: sha512-s6vMrO4hds+skR2OMmdwSORZiiEbqhAjd56W/0gc/x4PYpTibh/ey5Oy9ywkZ+ycX9EgTcJruhE1T/KkbU7LNA==}
+  '@asamuzakjp/css-color@7.1.2':
+    resolution: {integrity: sha512-99DHAnXDB5z6EEK+9GMpVI7Mw4oxj97dY5bpOzMnjADQWxI8rN6TvTduuFLUhUMlS7/CfVZ06tcZsus6cltnNw==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
-  '@asamuzakjp/dom-selector@9.2.1':
-    resolution: {integrity: sha512-NT4s3yZLjovPpliRpTvdsdzyPjqRqiCZj9MxnarBihbaY5MbAG7DWAJcrLlhmC7xKTNCXsTELcqB8YsqpLnUFQ==}
+  '@asamuzakjp/dom-selector@9.2.2':
+    resolution: {integrity: sha512-lSWTBMjAcmu2xn5yEDU7jh6QDV+C8GEKtdJ4pIQhXh26RkKQ7S3FuQlt+zZkUbTdJ4d3XyV1kPI/G0zWXxqaqw==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
   '@babel/code-frame@7.29.7':
@@ -1251,8 +1251,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.77.3':
-    resolution: {integrity: sha512-R9yqld2Kbjkx3y0UVcc6uPVsLRcbi1W7T0uvMjmQ0a3GjVnfxB8LopcX7DShhoCtpfaHKFeEgiTOPa5zDM4HAQ==}
+  '@sveltia/ui@0.78.0':
+    resolution: {integrity: sha512-exQVp4BSVqu2eXpEThUIXuBJfr8KpBKN5YgoTEisK6p5dxlXTcKRTaZ76k2n0TlGi/6gi6lQpTo50KZGsy/XQQ==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -1520,12 +1520,12 @@ packages:
       '@vitest/browser':
         optional: true
 
-  '@vitest/istanbul-lib-coverage@1.0.1':
-    resolution: {integrity: sha512-k3DJZ8LhMBK9NS4SclF1ASD3OgXEWDorbIcPTRDK0/Zae6fRvu+fJRxtFdLfHsa9Y24beCdPnoNZ4LviTNstfA==}
+  '@vitest/istanbul-lib-coverage@1.0.2':
+    resolution: {integrity: sha512-9J/JMwOf9AoJhAywhrn7ScKTL38hsWQP/qPG60OtaAFcQ5OXPwKsxZFlbnuCKmZ61m8/lGgHYnFpdyQZUvG/iA==}
     engines: {node: '>=22'}
 
-  '@vitest/istanbul-lib-report@1.0.1':
-    resolution: {integrity: sha512-1EOLRfsTMnyAr3+kEAsP4o9dhaDlGPpD7H5iLBBeq//YpNB1VIahkPhB+eRp9N2Dkfw8oySROjE3yf9XDeaIkQ==}
+  '@vitest/istanbul-lib-report@1.0.2':
+    resolution: {integrity: sha512-gUsfXZJbzPamoIY5TvHFiMMoXESBrUMo+xqaj+rYrWI69+EnvRlYBlP96ZnHPY4vX8kyUpgAnFUCg5wZG/HkDQ==}
     engines: {node: '>=22'}
 
   '@vitest/mocker@5.0.2':
@@ -1573,8 +1573,8 @@ packages:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
     engines: {node: '>=8'}
 
-  ansi-regex@6.3.0:
-    resolution: {integrity: sha512-WpDfL7NO6j7tH88IDBNVdUJxDh9nmCteAVW9dsep846XdwF4naCBK+/tGLX3KJgcpgMRXCFlTM2hKGoK9FsdrQ==}
+  ansi-regex@6.4.0:
+    resolution: {integrity: sha512-KzTVk2tCWAHtYrvvvaP8bJKJq2pVinhLcGEQdtLIYPbmNGNyYe8QwNaTUYQp2J7/vIsUKt5QCqAfUkYyG9DkOw==}
     engines: {node: '>=12'}
 
   ansi-styles@4.3.0:
@@ -1745,8 +1745,8 @@ packages:
     resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
-  chalk@6.0.0:
-    resolution: {integrity: sha512-2uNTXIuTTxk7ciZgAU1BQcgnchcG0xXnrs6jzkQfj9SsRa9M2s5zE8WT96hS6KmG4MzWHSrvH43DF1m4XRkrFg==}
+  chalk@6.0.1:
+    resolution: {integrity: sha512-/Ce6KNm3vIbWdMlNna6RVIZ/ICQxnJxCicet5LBKK9ZffBkqzDw0xh9EiKSljdRtiIQ1S1z4YgcscUUGzNCWrA==}
     engines: {node: '>=22'}
 
   change-case@5.4.4:
@@ -4101,7 +4101,7 @@ snapshots:
 
   '@altano/repository-tools@2.1.1': {}
 
-  '@asamuzakjp/css-color@7.1.0':
+  '@asamuzakjp/css-color@7.1.2':
     dependencies:
       '@csstools/css-calc': 3.4.1(@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)
       '@csstools/css-color-parser': 4.2.4(@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)
@@ -4109,7 +4109,7 @@ snapshots:
       '@csstools/css-tokenizer': 4.0.2
       lru-cache: 11.5.3
 
-  '@asamuzakjp/dom-selector@9.2.1':
+  '@asamuzakjp/dom-selector@9.2.2':
     dependencies:
       bidi-js: 1.1.0
       css-tree: 3.2.1
@@ -5018,7 +5018,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.57.1(@typescript-eslint/types@8.70.1)
 
-  '@sveltia/ui@0.77.3(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)':
+  '@sveltia/ui@0.78.0(svelte@5.57.1(@typescript-eslint/types@8.70.1))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.51.0(typescript@6.0.3)
       '@lexical/dragon': 0.51.0(typescript@6.0.3)
@@ -5299,8 +5299,8 @@ snapshots:
   '@vitest/coverage-v8@5.0.2(@vitest/browser@5.0.2)(vitest@5.0.2)':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
-      '@vitest/istanbul-lib-coverage': 1.0.1
-      '@vitest/istanbul-lib-report': 1.0.1
+      '@vitest/istanbul-lib-coverage': 1.0.2
+      '@vitest/istanbul-lib-report': 1.0.2
       ast-v8-to-istanbul: 1.0.7
       magicast: 0.5.5
       obug: 2.2.1
@@ -5310,11 +5310,11 @@ snapshots:
     optionalDependencies:
       '@vitest/browser': 5.0.2(vite@8.3.1(@types/node@26.6.3)(yaml@2.9.1))(vitest@5.0.2)
 
-  '@vitest/istanbul-lib-coverage@1.0.1': {}
+  '@vitest/istanbul-lib-coverage@1.0.2': {}
 
-  '@vitest/istanbul-lib-report@1.0.1':
+  '@vitest/istanbul-lib-report@1.0.2':
     dependencies:
-      '@vitest/istanbul-lib-coverage': 1.0.1
+      '@vitest/istanbul-lib-coverage': 1.0.2
 
   '@vitest/mocker@5.0.2(vite@8.3.1(@types/node@26.6.3)(yaml@2.9.1))':
     dependencies:
@@ -5369,7 +5369,7 @@ snapshots:
 
   ansi-regex@5.0.1: {}
 
-  ansi-regex@6.3.0: {}
+  ansi-regex@6.4.0: {}
 
   ansi-styles@4.3.0:
     dependencies:
@@ -5559,7 +5559,7 @@ snapshots:
 
   chalk@5.6.2: {}
 
-  chalk@6.0.0: {}
+  chalk@6.0.1: {}
 
   change-case@5.4.4: {}
 
@@ -5703,8 +5703,8 @@ snapshots:
       '@cspell/cspell-worker': 10.3.4
       '@cspell/dynamic-import': 10.3.4
       '@cspell/url': 10.3.4
-      ansi-regex: 6.3.0
-      chalk: 6.0.0
+      ansi-regex: 6.4.0
+      chalk: 6.0.1
       chalk-template: 1.1.3
       commander: 15.0.0
       cspell-config-lib: 10.3.4
@@ -6845,8 +6845,8 @@ snapshots:
 
   jsdom@30.1.1:
     dependencies:
-      '@asamuzakjp/css-color': 7.1.0
-      '@asamuzakjp/dom-selector': 9.2.1
+      '@asamuzakjp/css-color': 7.1.2
+      '@asamuzakjp/dom-selector': 9.2.2
       '@bramus/specificity': 2.4.2
       '@csstools/css-syntax-patches-for-csstree': 1.1.14(css-tree@3.2.1)
       '@exodus/bytes': 1.16.0
@@ -7648,7 +7648,7 @@ snapshots:
 
   strip-ansi@7.2.0:
     dependencies:
-      ansi-regex: 6.3.0
+      ansi-regex: 6.4.0
 
   strip-bom@3.0.0: {}
 
