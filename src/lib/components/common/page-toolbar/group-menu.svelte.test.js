@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -35,7 +34,6 @@ describe('GroupMenu', () => {
     });
 
     await page.getByRole('button', { name: 'Group' }).click();
-    await sleep(150);
 
     const items = page.getByRole('menu', { name: 'Grouping Options' }).getByRole('menuitemradio');
 
@@ -51,7 +49,6 @@ describe('GroupMenu', () => {
 
     await waitForMenuToClose();
     await page.getByRole('button', { name: 'Group' }).click();
-    await sleep(150);
     await page
       .elementLocator(/** @type {HTMLElement} */ (document.querySelector('dialog.popup.open')))
       .getByRole('menuitemradio', { name: 'Ungrouped' })
@@ -75,7 +72,6 @@ describe('GroupMenu', () => {
     });
 
     await page.getByRole('button', { name: 'Group' }).click();
-    await sleep(150);
 
     const items = page.getByRole('menu', { name: 'Grouping Options' }).getByRole('menuitemradio');
 
@@ -112,7 +108,6 @@ describe('GroupMenu', () => {
      */
     const openMenu = async () => {
       await page.getByRole('button', { name: 'Group' }).click();
-      await sleep(150);
 
       return page.elementLocator(
         /** @type {HTMLElement} */ (document.querySelector('dialog.popup.open')),
@@ -169,7 +164,6 @@ describe('GroupMenu', () => {
     });
 
     await page.getByRole('button', { name: 'Group' }).click();
-    await sleep(150);
 
     const items = page.getByRole('menu', { name: 'Grouping Options' }).getByRole('menuitem');
 
@@ -182,7 +176,6 @@ describe('GroupMenu', () => {
 
     await render(GroupMenu, { currentView, 'aria-controls': 'entry-list' });
     await page.getByRole('button', { name: 'Group' }).click();
-    await sleep(150);
     expect(page.getByRole('menuitemradio').elements()).toHaveLength(1);
   });
 });

@@ -45,8 +45,6 @@ const getAssetOptions = () =>
  */
 const waitForList = async (count) => {
   await expect.poll(() => getAssetOptions().elements().length).toBe(count);
-  // A Sveltia UI list box starts handling clicks 100 ms after it’s mounted
-  await sleep(150);
 };
 
 describe('ExternalAssetsPanel', () => {

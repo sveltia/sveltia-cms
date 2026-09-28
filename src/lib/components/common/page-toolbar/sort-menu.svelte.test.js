@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -34,7 +33,6 @@ describe('SortMenu', () => {
     });
 
     await page.getByRole('button', { name: 'Sort' }).click();
-    await sleep(150);
 
     const menu = page.getByRole('menu', { name: 'Sorting Options' });
 
@@ -78,7 +76,6 @@ describe('SortMenu', () => {
     });
 
     await page.getByRole('button', { name: 'Sort' }).click();
-    await sleep(150);
     await expect
       .element(page.getByRole('menuitemradio', { name: '\u2068Published\u2069, old to new' }))
       .toBeVisible();
@@ -97,7 +94,6 @@ describe('SortMenu', () => {
     });
 
     await page.getByRole('button', { name: 'Sort' }).click();
-    await sleep(150);
 
     const menu = page.getByRole('menu', { name: 'Sorting Options' });
 
@@ -109,7 +105,6 @@ describe('SortMenu', () => {
     // Nothing to sort by
     await render(SortMenu, { currentView, 'aria-controls': 'entry-list' });
     await page.getByRole('button', { name: 'Sort' }).nth(1).click();
-    await sleep(150);
     expect(page.getByRole('menuitemradio').elements()).toHaveLength(0);
   });
 });

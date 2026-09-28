@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -79,8 +78,6 @@ describe('PrimarySidebar', () => {
 
   test('navigates to a collection', async () => {
     await render(PrimarySidebar, {});
-    // A Sveltia UI tree starts handling clicks 100 ms after it’s mounted
-    await sleep(150);
     await page.getByRole('treeitem', { name: 'Posts' }).click();
 
     await expect.poll(() => window.location.hash).toBe('#/collections/posts');
@@ -126,7 +123,6 @@ describe('PrimarySidebar', () => {
       expect(tree.element().querySelectorAll('[role="separator"]')).toHaveLength(0);
       expect(tree.getByRole('treeitem').elements()).toHaveLength(1);
 
-      await sleep(150);
       await item.click();
       await expect.poll(() => window.location.hash).toBe('#/collections/_singletons');
     } finally {

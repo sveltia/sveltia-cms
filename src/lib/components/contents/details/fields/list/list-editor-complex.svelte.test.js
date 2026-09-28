@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -421,7 +420,6 @@ describe('ListEditorComplex (more)', () => {
     await renderEditor({ ...authorsField, allow_duplicate: false }, { 'authors.0.name': 'Melvin' });
 
     await page.getByRole('button', { name: 'List Item Options' }).click();
-    await sleep(150);
     expect(page.getByRole('menuitem', { name: 'Duplicate' }).elements()).toHaveLength(0);
     await expect.element(page.getByRole('menuitem', { name: 'Add Item Above' })).toBeVisible();
   });

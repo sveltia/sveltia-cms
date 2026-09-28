@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -74,7 +73,6 @@ describe('TranslateButton', () => {
     await renderButton({ locale: 'de', otherLocales: ['en', 'fr'] });
 
     await page.getByRole('button', { name: 'Translate' }).click();
-    await sleep(150);
 
     const menu = page.getByRole('menu', { name: 'Translation Options' });
 

@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -93,7 +92,6 @@ describe('AssetPicker', () => {
     await expect
       .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
       .toBe(1);
-    await sleep(150);
     await page
       .elementLocator(
         /** @type {HTMLElement} */ (document.querySelector('#select-assets-grid [role="option"]')),
@@ -113,7 +111,6 @@ describe('AssetPicker', () => {
     const promise = component.pick({ multiple: true });
     const dialog = page.getByRole('dialog', { name: 'Select File' });
 
-    await sleep(150);
     await dialog.getByRole('option', { name: 'Enter URL' }).click();
     await dialog.getByRole('textbox').fill('https://example.com/doc.pdf');
     await dialog.getByRole('button', { name: 'Insert' }).click();
@@ -195,7 +192,6 @@ describe('AssetPicker', () => {
     await expect
       .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
       .toBe(1);
-    await sleep(150);
     await page
       .elementLocator(
         /** @type {HTMLElement} */ (document.querySelector('#select-assets-grid [role="option"]')),

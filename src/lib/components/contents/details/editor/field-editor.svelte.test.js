@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { createElement } from 'react';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
@@ -364,7 +363,6 @@ describe('FieldEditor', () => {
     const parent = page.getByRole('menuitem', { name: 'Copy from…' });
 
     await expect.element(parent).toBeInTheDocument();
-    await sleep(150);
     await parent.click();
     await expect.element(page.getByRole('menuitem', { name: 'English' })).toBeInTheDocument();
   });

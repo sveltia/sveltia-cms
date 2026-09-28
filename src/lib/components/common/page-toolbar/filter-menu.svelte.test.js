@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -13,11 +12,10 @@ const filters = [
 ];
 
 /**
- * Open the menu. A Sveltia UI menu starts handling clicks 100 ms after it’s opened.
+ * Open the menu.
  */
 const openMenu = async () => {
   await page.getByRole('button', { name: 'Filter' }).click();
-  await sleep(150);
 };
 
 /**
@@ -181,7 +179,6 @@ describe('FilterMenu', () => {
 
     await render(FilterMenu, { currentView, 'aria-controls': 'entry-list' });
     await page.getByRole('button', { name: 'Filter' }).click();
-    await sleep(150);
     expect(page.getByRole('menuitemradio').elements()).toHaveLength(1);
   });
 });

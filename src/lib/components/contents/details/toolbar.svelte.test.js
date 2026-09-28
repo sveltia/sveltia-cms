@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -108,8 +107,6 @@ const getShownToastText = () =>
  */
 const openMenu = async () => {
   await page.getByRole('button', { name: 'Show Editor Options' }).click();
-  // A Sveltia UI menu starts handling clicks 100 ms after it’s opened
-  await sleep(150);
 
   return page.getByRole('menu', { name: 'Editor Options' });
 };
@@ -645,7 +642,6 @@ describe('Toolbar', () => {
     const { draft: anotherDraft } = await renderToolbar();
 
     await page.getByRole('button', { name: 'More Options' }).last().click();
-    await sleep(150);
     await page.getByRole('menuitem', { name: 'Save without Publishing' }).click();
     await vi.waitFor(() =>
       expect(saveEntry).toHaveBeenCalledWith({
@@ -759,7 +755,6 @@ describe('Toolbar', () => {
     vi.mocked(saveEntry).mockReturnValue(/** @type {any} */ (new Promise(() => {})));
     await renderToolbar();
     await page.getByRole('button', { name: 'More Options' }).last().click();
-    await sleep(150);
     await expect.element(page.getByRole('menuitem', { name: 'Save and Publish' })).toBeVisible();
     await userEvent.keyboard('{Escape}');
     await page.getByRole('button', { name: 'Save' }).last().click();

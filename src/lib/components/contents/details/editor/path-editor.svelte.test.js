@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -58,8 +57,6 @@ const getLabel = (element) => element.querySelector('.label')?.textContent?.trim
  */
 const openPicker = async () => {
   await page.getByRole('button', { name: 'Parent Folder' }).click();
-  // A Sveltia UI tree starts handling clicks 100 ms after it’s opened
-  await sleep(150);
 };
 
 /** @type {Collection} */

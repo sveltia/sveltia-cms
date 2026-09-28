@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -76,8 +75,6 @@ const openMenu = async (locale = 'English') => {
   const name = locale ? `\u2068${locale}\u2069 Content Options` : 'Content Options';
 
   await page.getByRole('button', { name: `Show ${name}`, exact: true }).click();
-  // A Sveltia UI menu starts handling clicks 100 ms after it’s opened
-  await sleep(150);
 
   return page.getByRole('menu', { name, exact: true });
 };

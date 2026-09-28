@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -141,7 +140,6 @@ describe('DetailsOverlay', () => {
     await expect.element(page.getByRole('menuitem', { name: 'Download' })).toBeVisible();
 
     // The copy options are a submenu there
-    await sleep(150);
     await page.getByRole('menuitem', { name: 'Copy' }).click();
     await expect.element(page.getByRole('menuitem', { name: 'Public URL' })).toBeVisible();
   });

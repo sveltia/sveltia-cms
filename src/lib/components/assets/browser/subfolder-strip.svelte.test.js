@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -50,9 +49,6 @@ const renderStrip = async (props = {}) => {
   }
 
   const { container } = await render(SubfolderStrip, _props);
-
-  // A Sveltia UI list box starts handling clicks and keys 100 ms after it’s mounted
-  await sleep(150);
 
   return { props: _props, container };
 };

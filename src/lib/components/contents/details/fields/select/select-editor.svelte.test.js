@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -44,8 +43,6 @@ const renderEditor = async ({
   });
 
   await renderWithDraft(SelectEditor, { draft, props });
-  // A Sveltia UI group starts handling clicks and keys 100 ms after it’s mounted
-  await sleep(150);
 
   return { props, draft };
 };

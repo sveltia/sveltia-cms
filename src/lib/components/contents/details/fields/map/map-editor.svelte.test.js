@@ -107,7 +107,6 @@ describe('MapEditor', () => {
     await expect.element(listbox.getByRole('option', { name: 'Tokyo, Japan' })).toBeInTheDocument();
     expect(searchLocations).toHaveBeenCalledWith('Tokyo');
 
-    await sleep(150);
     await listbox.getByRole('option', { name: 'Tokyo, Japan' }).click();
 
     await expect
@@ -240,7 +239,6 @@ describe('MapEditor', () => {
     const listbox = page.getByRole('listbox', { name: 'Search Results' });
 
     await expect.element(listbox.getByRole('option', { name: 'Tokyo, Japan' })).toBeInTheDocument();
-    await sleep(150);
     await listbox.getByRole('option', { name: 'Tokyo, Japan' }).click();
     await sleep(100);
     expect(props.currentValue).toBe(value);

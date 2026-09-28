@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -20,7 +19,6 @@ describe('SelectSingle', () => {
     });
 
     await render(SelectSingle, /** @type {any} */ (props));
-    await sleep(150);
 
     const group = page.getByRole('radiogroup');
 
@@ -43,7 +41,6 @@ describe('SelectSingle', () => {
         options: [],
       }),
     );
-    await sleep(150);
 
     await expect.element(page.getByRole('radio', { name: '(None)' })).toBeChecked();
     expect(page.getByRole('radio').elements()).toHaveLength(1);
@@ -62,7 +59,6 @@ describe('SelectSingle', () => {
     });
 
     await render(SelectSingle, /** @type {any} */ (props));
-    await sleep(150);
 
     expect(page.getByRole('radio').elements()).toHaveLength(3);
     await expect.element(page.getByRole('radio', { name: 'One' })).toBeInTheDocument();
@@ -86,7 +82,6 @@ describe('SelectSingle', () => {
     });
 
     await render(SelectSingle, /** @type {any} */ (props));
-    await sleep(150);
 
     expect(page.getByRole('radio').elements()).toHaveLength(3);
     await expect.element(page.getByRole('radio', { name: 'Not relevant' })).toBeChecked();
@@ -114,7 +109,6 @@ describe('SelectSingle', () => {
     });
 
     await render(SelectSingle, /** @type {any} */ (props));
-    await sleep(150);
 
     // `false` is a choice, not an empty value, so the empty option is still offered, and it’s
     // checked for the `null` value a new entry starts with
@@ -147,12 +141,10 @@ describe('SelectSingle', () => {
     await expect.element(select).toHaveTextContent('Yes');
 
     await select.click();
-    await sleep(150);
     await page.getByRole('option', { name: 'No' }).click();
     expect(props.currentValue).toBe(false);
 
     await select.click();
-    await sleep(150);
     await page.getByRole('option', { name: 'Not relevant' }).click();
     expect(props.currentValue).toBeNull();
   });
@@ -174,7 +166,6 @@ describe('SelectSingle', () => {
     await expect.element(select).toHaveAttribute('aria-invalid', 'true');
 
     await select.click();
-    await sleep(150);
     await page.getByRole('option', { name: 'd' }).click();
     expect(props.currentValue).toBe('d');
   });
@@ -189,7 +180,6 @@ describe('SelectSingle', () => {
     });
 
     await render(SelectSingle, /** @type {any} */ (props));
-    await sleep(150);
 
     await expect.element(page.getByRole('radiogroup')).toHaveAttribute('aria-readonly', 'true');
     await page.getByRole('radio', { name: 'Banana' }).click({ force: true });

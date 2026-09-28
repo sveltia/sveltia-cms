@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { createRawSnippet } from 'svelte';
 import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
@@ -12,8 +11,6 @@ import EditOptionsMenu from './edit-options-menu.svelte';
  */
 const openMenu = async () => {
   await page.getByRole('button', { name: 'Show Edit Options' }).click();
-  // A Sveltia UI menu starts handling clicks 100 ms after it’s opened
-  await sleep(150);
 };
 
 describe('EditOptionsMenu', () => {

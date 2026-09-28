@@ -65,7 +65,6 @@ describe('LocaleSwitcher', () => {
     ).toEqual(['English', 'French', 'German']);
     await expect.element(group.getByRole('radio', { name: 'English' })).toBeChecked();
 
-    await sleep(150);
     await group.getByRole('radio', { name: 'French' }).click();
     expect(thisPane.current).toEqual({ mode: 'edit', locale: 'fr' });
     // The preview pane follows
@@ -84,7 +83,6 @@ describe('LocaleSwitcher', () => {
       }),
     );
 
-    await sleep(150);
     await page.getByRole('radio', { name: 'French' }).click();
     // The update would otherwise be written to the French content the pane now shows
     await sleep(50);
@@ -109,7 +107,6 @@ describe('LocaleSwitcher', () => {
         .map((el) => el.textContent?.trim()),
     ).toEqual(['French', 'German', 'Preview']);
 
-    await sleep(150);
     await group.getByRole('radio', { name: 'Preview' }).click();
     expect(thisPane.current).toEqual({ mode: 'preview', locale: 'en' });
   });
@@ -162,7 +159,6 @@ describe('LocaleSwitcher', () => {
     expect(select.element().closest('.sui.select')).toHaveClass('error');
 
     await select.click();
-    await sleep(150);
 
     // Every locale is listed, as the other pane is hidden on a small screen
     const options = page.getByRole('option');

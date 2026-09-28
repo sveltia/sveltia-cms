@@ -34,8 +34,6 @@ const openMenu = async () => {
   // Wait for the previous popup to be unmounted
   await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
   await page.getByRole('button', { name: 'Show Edit Options' }).click();
-  // A Sveltia UI menu starts handling clicks 100 ms after it’s opened
-  await sleep(150);
 };
 
 describe('EditOptionsButton', () => {

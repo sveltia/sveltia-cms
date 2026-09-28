@@ -118,8 +118,6 @@ const waitForGrid = async (count) => {
   await expect
     .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
     .toBe(count);
-  // A Sveltia UI list box starts handling clicks 100 ms after it’s mounted
-  await sleep(150);
 };
 
 describe('SelectAssetsDialog', () => {
@@ -365,9 +363,6 @@ describe('SelectAssetsDialog', () => {
 
       const folder2024 = folders.getByRole('option', { name: '2024' });
 
-      // A Sveltia UI list box starts handling clicks and keys 100 ms after it’s mounted
-      await sleep(150);
-
       // A click selects a subfolder, and another click clears the selection
       await folder2024.click();
       await expect.element(folder2024).toHaveAttribute('aria-selected', 'true');
@@ -448,9 +443,7 @@ describe('SelectAssetsDialog', () => {
       const folder2024 = folders.getByRole('option', { name: '2024' });
       const folder2025 = folders.getByRole('option', { name: '2025' });
 
-      // A Sveltia UI list box starts handling clicks and keys 100 ms after it’s mounted
       await expect.element(folder2024).toBeVisible();
-      await sleep(150);
 
       // Without a selection, the folder being browsed is picked
       await expect
@@ -569,7 +562,6 @@ describe('SelectAssetsDialog', () => {
 
     // Files of any kind are listed
     await expect.element(dialog.getByRole('listbox', { name: 'Available Files' })).toBeVisible();
-    await sleep(150);
     await dialog.getByRole('option', { name: 'Enter URL' }).click();
     await expect.element(dialog.getByText('Enter URL of the file:')).toBeInTheDocument();
 
@@ -586,7 +578,6 @@ describe('SelectAssetsDialog', () => {
     const dialog = page.getByRole('dialog', { name: 'Select Image' });
 
     // The URL entry can be turned off
-    await sleep(150);
     expect(dialog.getByRole('option', { name: 'Enter URL' }).elements()).toHaveLength(0);
 
     props.canEnterURL = true;
@@ -606,7 +597,6 @@ describe('SelectAssetsDialog', () => {
     const { onSelect } = await renderDialog({}, { list });
     const dialog = page.getByRole('dialog');
 
-    await sleep(150);
     await dialog.getByRole('option', { name: 'Test Cloud' }).click();
     await waitForGrid(1);
     expect(list).toHaveBeenCalledWith(expect.objectContaining({ kind: 'image' }));
@@ -635,7 +625,6 @@ describe('SelectAssetsDialog', () => {
 
     // The button is for the repository folder until a cloud service is picked
     await expect.element(dialog.getByRole('button', { name: 'New Folder' })).toBeInTheDocument();
-    await sleep(150);
     await dialog.getByRole('option', { name: 'Test Cloud' }).click();
     await expect
       .element(page.getByRole('listbox', { name: 'Folders' }))
@@ -657,7 +646,6 @@ describe('SelectAssetsDialog', () => {
   test('shows the credit for a stock photo service', async () => {
     await renderDialog();
 
-    await sleep(150);
     await page.getByRole('option', { name: 'Lorem Picsum' }).click();
 
     await expect
@@ -671,7 +659,6 @@ describe('SelectAssetsDialog', () => {
     await initTestConfig({ media_libraries: { stock_assets: { providers: ['pexels'] } } });
     await renderDialog();
 
-    await sleep(150);
     await page.getByRole('option', { name: 'Pexels' }).click();
     await expect.element(page.getByRole('textbox', { name: /API Key/ })).toBeVisible();
     expect(page.getByRole('link', { name: /Photos provided by/ }).elements()).toHaveLength(0);
@@ -690,7 +677,6 @@ describe('SelectAssetsDialog', () => {
     try {
       await renderDialog();
 
-      await sleep(150);
       await page.getByRole('option', { name: 'Lorem Picsum' }).click();
       await expect
         .element(page.getByRole('option', { name: 'Lorem Picsum' }))
@@ -887,7 +873,6 @@ describe('SelectAssetsDialog', () => {
 
       const dialog = page.getByRole('dialog');
 
-      await sleep(150);
       await dialog.getByRole('option', { name: 'Cloudinary' }).click();
       expect(cloudinaryDialogOpen.current).toBe(true);
 

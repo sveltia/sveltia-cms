@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -29,7 +28,6 @@ describe('AccountButton', () => {
 
     // Closing the settings dialog returns the focus to the button
     env.isSmallScreen = false;
-    await sleep(150);
     await page.getByRole('menuitem', { name: 'Settings' }).click();
 
     const dialog = page.getByRole('dialog', { name: 'Settings' });

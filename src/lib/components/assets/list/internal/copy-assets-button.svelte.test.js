@@ -32,8 +32,6 @@ const openMenu = async () => {
   // Wait for the previous popup to be unmounted
   await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
   await page.getByRole('button', { name: 'Copy' }).click();
-  // A Sveltia UI menu starts handling clicks 100 ms after it’s opened
-  await sleep(150);
 };
 
 describe('CopyAssetsButton', () => {
@@ -123,7 +121,6 @@ describe('CopyAssetsButton', () => {
 
       await render(CopyAssetsButton, { assets: [pngAsset] });
       await page.getByRole('button', { name: 'Copy' }).nth(1).click();
-      await sleep(150);
       await page.getByRole('menuitem', { name: 'File Data' }).click();
       await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(2));
     } finally {

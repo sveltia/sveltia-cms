@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -262,8 +261,6 @@ describe('QuickAddDialog', () => {
     const title = dialog.getByRole('textbox', { name: 'Title' });
 
     await title.fill('Travel');
-    // A Sveltia UI group starts handling clicks 100 ms after it’s mounted
-    await sleep(150);
     await dialog.getByRole('radio', { name: 'French' }).click();
     await expect.element(title).toHaveValue('');
     await title.fill('Voyage');

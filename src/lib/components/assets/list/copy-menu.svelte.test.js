@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -17,7 +16,6 @@ describe('CopyMenu', () => {
   test('runs the copy action and confirms it', async () => {
     await render(CopyMenu, { items, count: 2 });
     await page.getByRole('button', { name: 'Copy' }).click();
-    await sleep(150);
 
     await expect.element(page.getByRole('menuitem', { name: 'File Data' })).toBeDisabled();
     await page.getByRole('menuitem', { name: 'Public URL' }).click();
@@ -43,7 +41,6 @@ describe('CopyMenu', () => {
       count: 1,
     });
     await page.getByRole('button', { name: 'Copy' }).click();
-    await sleep(150);
     await page.getByRole('menuitem', { name: 'Public URL' }).click();
 
     await expect

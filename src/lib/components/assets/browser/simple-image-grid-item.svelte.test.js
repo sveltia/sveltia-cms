@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { createRawSnippet } from 'svelte';
 import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
@@ -41,7 +40,6 @@ describe('SimpleImageGridItem', () => {
     // The check mark is only for multiple selection
     expect(container.querySelector('.check-background')).toBeNull();
 
-    await sleep(150);
     await option.click();
     await vi.waitFor(() => expect(onChange).toHaveBeenCalled());
   });

@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -168,7 +167,6 @@ describe('FileEditor', () => {
     await expect
       .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
       .toBe(1);
-    await sleep(150);
     await page
       .elementLocator(
         /** @type {HTMLElement} */ (document.querySelector('#select-assets-grid [role="option"]')),
@@ -208,8 +206,6 @@ describe('FileEditor', () => {
     const dialog = page.getByRole('dialog', { name: 'Select Folder' });
 
     await expect.element(dialog.getByRole('listbox', { name: 'Folders' })).toBeVisible();
-    // A Sveltia UI list box starts handling clicks 100 ms after it’s mounted
-    await sleep(150);
     await dialog
       .getByRole('listbox', { name: 'Folders' })
       .getByRole('option', { name: 'gallery' })
@@ -247,8 +243,6 @@ describe('FileEditor', () => {
     const folders = dialog.getByRole('listbox', { name: 'Folders' });
 
     await expect.element(folders).toBeVisible();
-    // A Sveltia UI list box starts handling clicks 100 ms after it’s mounted
-    await sleep(150);
     await folders.getByRole('option', { name: 'gallery' }).click();
     await folders.getByRole('option', { name: 'news' }).click();
     await dialog.getByRole('button', { name: 'Select' }).click();
@@ -389,7 +383,6 @@ describe('FileEditor', () => {
     await expect
       .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
       .toBe(1);
-    await sleep(150);
     await page
       .elementLocator(
         /** @type {HTMLElement} */ (document.querySelector('#select-assets-grid [role="option"]')),
@@ -469,12 +462,10 @@ describe('FileEditor', () => {
 
       const dialog = page.getByRole('dialog', { name: 'Select Image' });
 
-      await sleep(150);
       await dialog.getByRole('option', { name: 'Test Cloud' }).click();
       await expect
         .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
         .toBe(1);
-      await sleep(150);
       await page
         .elementLocator(
           /** @type {HTMLElement} */ (
@@ -627,7 +618,6 @@ describe('FileEditor', () => {
     await expect
       .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
       .toBe(1);
-    await sleep(150);
     await page
       .elementLocator(
         /** @type {HTMLElement} */ (document.querySelector('#select-assets-grid [role="option"]')),
@@ -688,7 +678,6 @@ describe('FileEditor', () => {
     await expect
       .poll(() => document.querySelectorAll('#select-assets-grid [role="option"]').length)
       .toBe(1);
-    await sleep(150);
     await page
       .elementLocator(
         /** @type {HTMLElement} */ (document.querySelector('#select-assets-grid [role="option"]')),

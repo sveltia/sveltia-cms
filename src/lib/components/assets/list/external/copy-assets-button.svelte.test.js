@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -33,8 +32,6 @@ const openMenu = async () => {
   // Wait for the previous popup to be unmounted
   await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
   await page.getByRole('button', { name: 'Copy' }).click();
-  // A Sveltia UI menu starts handling clicks 100 ms after it’s opened
-  await sleep(150);
 };
 
 describe('CopyAssetsButton', () => {
@@ -145,7 +142,6 @@ describe('CopyAssetsButton', () => {
         ],
       });
       await page.getByRole('button', { name: 'Copy' }).nth(1).click();
-      await sleep(150);
       await page.getByRole('menuitem', { name: 'File Data' }).click();
       await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(2));
     } finally {

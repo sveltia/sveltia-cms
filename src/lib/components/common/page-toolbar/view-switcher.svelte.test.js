@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -15,7 +14,6 @@ describe('ViewSwitcher', () => {
     const currentView = createRawState(/** @type {any} */ ({ type: 'list' }));
 
     await render(ViewSwitcher, { currentView, 'aria-controls': 'entry-list' });
-    await sleep(150);
 
     const group = page.getByRole('radiogroup', { name: 'Switch View' });
 

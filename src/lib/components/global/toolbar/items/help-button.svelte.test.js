@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -18,7 +17,6 @@ describe('HelpButton', () => {
     await expect.element(page.getByRole('menuitem', { name: 'Keyboard Shortcuts' })).toBeVisible();
 
     // Closing the shortcuts dialog returns the focus to the menu button
-    await sleep(150);
     await page.getByRole('menuitem', { name: 'Keyboard Shortcuts' }).click();
 
     const dialog = page.getByRole('dialog', { name: 'Keyboard Shortcuts' });

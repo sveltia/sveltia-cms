@@ -1,5 +1,4 @@
 import { Tree } from '@sveltia/ui';
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -27,7 +26,6 @@ describe('NestedTreeItem', () => {
     window.location.hash = '#/collections/posts/filter/docs/guides';
 
     await render(NestedTreeItem, { node, collectionName: 'posts' }, { wrapper: Tree });
-    await sleep(150);
 
     const docs = page.getByRole('treeitem', { name: 'Docs' });
     const guides = page.getByRole('treeitem', { name: 'Guides' });

@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -174,8 +173,6 @@ describe('PrimarySidebar', () => {
     window.location.hash = '#/assets';
 
     await render(PrimarySidebar);
-    // A Sveltia UI list box starts handling clicks 100 ms after it’s mounted
-    await sleep(150);
 
     await page.getByRole('option', { name: /^Posts/ }).click();
     await expect.poll(() => window.location.hash).toBe('#/assets/static/posts');
@@ -201,7 +198,6 @@ describe('PrimarySidebar', () => {
     window.location.hash = '#/assets/static/uploads/2024';
 
     await render(PrimarySidebar);
-    await sleep(150);
 
     // The folder is selected already, so this is a plain click rather than a selection
     await page.getByRole('option', { name: /^Global Assets/ }).click();

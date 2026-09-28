@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -81,8 +80,6 @@ describe('SubfolderListItem', () => {
       // Wait for the previous popup to be unmounted
       await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
       await row.getByRole('button', { name: 'Show Folder Options' }).click();
-      // A Sveltia UI menu starts handling clicks 100 ms after it’s opened
-      await sleep(150);
     };
 
     await openMenu();

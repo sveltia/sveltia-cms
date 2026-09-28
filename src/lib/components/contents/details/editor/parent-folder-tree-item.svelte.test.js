@@ -1,5 +1,4 @@
 import { Tree } from '@sveltia/ui';
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -41,7 +40,6 @@ describe('ParentFolderTreeItem', () => {
     expect(about.element().textContent).toContain('folder About');
     expect(about.element().querySelector('[role="group"]')).toBeNull();
 
-    await sleep(150);
     await about.getByText('About').click();
     expect(onSelectPath).toHaveBeenCalledWith('about');
   });

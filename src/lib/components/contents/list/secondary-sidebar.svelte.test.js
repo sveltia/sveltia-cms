@@ -100,7 +100,6 @@ describe('SecondarySidebar', () => {
     expect(uploadingAssets.current.folder?.internalPath).toBe('static/posts');
 
     // Selecting an asset opens its details
-    await sleep(150);
     await group.getByRole('option').click();
     await expect.poll(() => window.location.hash).toBe('#/assets/static/posts/a.png');
   });

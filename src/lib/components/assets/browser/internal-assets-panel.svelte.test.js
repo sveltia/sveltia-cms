@@ -1,5 +1,4 @@
 import { addMessages, locale } from '@sveltia/i18n';
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -133,7 +132,6 @@ describe('InternalAssetsPanel', () => {
     expect(listbox.element()).toHaveClass('list');
     await expect.poll(() => listbox.getByRole('option').elements().length).toBe(2);
 
-    await sleep(150);
     await page
       .elementLocator(
         /** @type {HTMLElement} */ (

@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -144,7 +143,6 @@ describe('AssetsPanel', () => {
 
     await render(AssetsPanel, props);
     await expect.poll(() => page.getByRole('option').elements().length).toBe(3);
-    await sleep(150);
 
     // The listed asset carries its relative path and key
     /**
@@ -173,7 +171,6 @@ describe('AssetsPanel', () => {
 
     await render(AssetsPanel, props);
     await expect.poll(() => page.getByRole('option').elements().length).toBe(3);
-    await sleep(150);
 
     /**
      * Get the URLs or paths of the selected resources.

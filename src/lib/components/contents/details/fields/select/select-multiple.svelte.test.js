@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -41,7 +40,6 @@ const renderControl = async (config, values, props = {}) => {
       ...props,
     },
   });
-  await sleep(150);
 
   return draft;
 };
@@ -72,7 +70,6 @@ describe('SelectMultiple', () => {
     );
 
     await page.getByRole('combobox').click();
-    await sleep(150);
     await page.getByRole('option', { name: 'd' }).click();
     expect(draft.currentValues._default).toEqual({ 'tags.0': 'a', 'tags.1': 'b', 'tags.2': 'd' });
 
@@ -115,7 +112,6 @@ describe('SelectMultiple', () => {
         options: fieldConfig.options.map((value) => ({ label: value, value, searchValue: value })),
       },
     });
-    await sleep(150);
 
     await page.getByRole('checkbox', { name: 'b' }).click();
     expect(draft.currentValues.en).toEqual({ 'tags.0': 'a' });

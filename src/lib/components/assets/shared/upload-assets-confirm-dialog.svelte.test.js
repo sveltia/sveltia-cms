@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -175,8 +174,6 @@ describe('UploadAssetsConfirmDialog', () => {
       );
 
       await expect.element(options.getByRole('radio', { name: 'Replace' })).toBeChecked();
-      // A Sveltia UI radio group starts handling clicks 100 ms after it’s mounted
-      await sleep(150);
       await options.getByRole('radio', { name: 'Keep Both' }).click();
       await expect.element(options.getByRole('radio', { name: 'Keep Both' })).toBeChecked();
       await dialog.getByRole('button', { name: 'Upload' }).click();

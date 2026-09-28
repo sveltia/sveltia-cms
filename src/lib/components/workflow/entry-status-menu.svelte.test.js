@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -48,8 +47,6 @@ describe('EntryStatusMenu', () => {
 
     await expect.element(button).toHaveTextContent('Status: \u2068Draft\u2069 arrow_drop_down');
     await button.click();
-    // A Sveltia UI menu starts handling clicks 100 ms after it’s opened
-    await sleep(150);
 
     const items = page.getByRole('menuitemradio');
 
@@ -90,7 +87,6 @@ describe('EntryStatusMenu', () => {
 
     await renderWithDraft(EntryStatusMenu, { draft: createMockDraft(), props: { entry } });
     await page.getByRole('button').click();
-    await sleep(150);
     await page.getByRole('menuitemradio', { name: 'Ready' }).click();
 
     expect(updateWorkflowStatus).not.toHaveBeenCalled();
@@ -108,7 +104,6 @@ describe('EntryStatusMenu', () => {
 
     await renderWithDraft(EntryStatusMenu, { draft: createMockDraft(), props: { entry } });
     await page.getByRole('button').click();
-    await sleep(150);
     await page.getByRole('menuitemradio', { name: 'In Review' }).click();
 
     await expect

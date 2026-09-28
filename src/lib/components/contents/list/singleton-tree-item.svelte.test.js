@@ -1,5 +1,4 @@
 import { Tree } from '@sveltia/ui';
-import { sleep } from '@sveltia/utils/misc';
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -18,8 +17,6 @@ describe('SingletonTreeItem', () => {
       { file: { name: 'about', label: 'About', icon: 'info', file: 'data/about.yml', fields: [] } },
       { wrapper: Tree },
     );
-
-    await sleep(150);
 
     const item = page.getByRole('treeitem', { name: 'About' });
 

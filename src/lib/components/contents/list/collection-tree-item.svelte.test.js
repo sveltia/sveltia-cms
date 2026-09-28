@@ -1,5 +1,4 @@
 import { Tree } from '@sveltia/ui';
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -70,7 +69,6 @@ describe('CollectionTreeItem', () => {
       { collection: /** @type {any} */ (getCollection('pages')) },
       { wrapper: Tree },
     );
-    await sleep(150);
 
     const item = page.getByRole('treeitem', { name: 'Pages' });
 

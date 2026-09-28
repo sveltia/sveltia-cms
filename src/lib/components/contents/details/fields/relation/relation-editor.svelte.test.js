@@ -1,4 +1,3 @@
-import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -97,8 +96,6 @@ describe('RelationEditor', () => {
       }),
       props,
     });
-    // A Sveltia UI group starts handling clicks 100 ms after it’s mounted
-    await sleep(150);
 
     expect(getRefEntries).toHaveBeenCalledWith(fieldConfig);
     expect(getOptions).toHaveBeenCalledWith({
@@ -131,7 +128,6 @@ describe('RelationEditor', () => {
       }),
       props: { ...props },
     });
-    await sleep(150);
     expect(getOptions).toHaveBeenLastCalledWith(expect.objectContaining({ currentSlug: 'shared' }));
   });
 
