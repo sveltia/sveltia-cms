@@ -62,9 +62,7 @@ test.describe('contents', () => {
     await expect(page.getByRole('searchbox', { name: 'Search for contents…' })).toHaveValue('');
   });
 
-  test('closes an entry opened from the results to its collection (known issue)', async ({
-    page,
-  }) => {
+  test('goes back to the results from an entry opened from them', async ({ cms, page }) => {
     const searchPage = await search(page, 'contents', 'light');
 
     await searchPage.getByRole('row', { name: /First Light/ }).tap();
@@ -74,12 +72,19 @@ test.describe('contents', () => {
     await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('First Light');
     await editor.getByRole('button', { name: 'Cancel Editing' }).click();
     await expect(editor).toBeHidden();
+    await expect(page).toHaveURL(/#\/search\/light$/);
+    await expect(searchPage.getByRole('row', { name: /First Light/ })).toBeVisible();
 
-    // KNOWN ISSUE: Cancel Editing goes to the entry’s collection unless the page before was that
-    // collection, so the search results the entry was opened from are lost. Once it goes back to
-    // them, expect `#/search/light` with the results here
-    await expect(page).toHaveURL(/#\/collections\/posts$/);
-    await expect(page.getByRole('main', { name: /Posts.*Collection/ })).toBeVisible();
+    // Saving goes back to the results too, and says so there
+    await searchPage.getByRole('row', { name: /First Light/ }).tap();
+    await editor.getByRole('textbox', { name: 'Title' }).fill('First Light, Again');
+    await editor.getByRole('button', { name: 'Save' }).click();
+    await expect(page).toHaveURL(/#\/search\/light$/);
+    await expect(page.getByRole('status').filter({ hasText: 'Entry saved.' })).toBeVisible();
+    await expect(searchPage.getByRole('row', { name: /First Light, Again/ })).toBeVisible();
+    await expect
+      .poll(async () => (await cms.readRepo())['content/posts/2026-01-first-light.md'])
+      .toMatch(/^title: First Light, Again$/m);
   });
 
   test('says when nothing matches', async ({ page }) => {
@@ -115,7 +120,7 @@ test.describe('assets', () => {
     await expect(page.getByRole('listbox', { name: 'Asset Folder List' })).toBeVisible();
   });
 
-  test('closes an asset opened from the results to its folder (known issue)', async ({ page }) => {
+  test('goes back to the results from an asset opened from them', async ({ page }) => {
     const searchPage = await search(page, 'assets', 'forest');
 
     await searchPage.getByRole('row', { name: 'forest.png' }).tap();
@@ -125,11 +130,7 @@ test.describe('assets', () => {
     await expect(assetEditor.getByRole('img', { name: 'forest.png' })).toBeVisible();
     await assetEditor.getByRole('button', { name: 'Cancel Editing' }).click();
     await expect(assetEditor).toBeHidden();
-
-    // KNOWN ISSUE: like the content editor, the asset editor goes back to the asset’s folder unless
-    // the page before was that folder, so the search results are lost. Once it goes back to them,
-    // expect `#/search/forest` with the results here
-    await expect(page).toHaveURL(/#\/assets\/static\/uploads$/);
-    await expect(page.getByRole('main', { name: /Global Assets.*Asset Folder/ })).toBeVisible();
+    await expect(page).toHaveURL(/#\/search\/forest$/);
+    await expect(searchPage.getByRole('row', { name: 'forest.png' })).toBeVisible();
   });
 });

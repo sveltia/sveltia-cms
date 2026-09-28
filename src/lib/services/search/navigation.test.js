@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { searchMode, searchTerms } from '$lib/services/search';
 
-import { isSearchRoute } from './navigation';
+import { isSearchResultsPath, isSearchRoute } from './navigation';
 
 describe('isSearchRoute', () => {
   beforeEach(() => {
@@ -201,5 +201,25 @@ describe('isSearchRoute', () => {
       expect(isSearchRoute('/search/new')).toBe(true);
       expect(isSearchRoute('/contents')).toBe(false);
     });
+  });
+});
+
+describe('isSearchResultsPath', () => {
+  beforeEach(() => {
+    searchMode.current = null;
+    searchTerms.current = '';
+  });
+
+  it('should tell the search results page from other pages', () => {
+    expect(isSearchResultsPath('/search/hello')).toBe(true);
+    expect(isSearchResultsPath('/search')).toBe(false);
+    expect(isSearchResultsPath('/collections/posts')).toBe(false);
+  });
+
+  it('should leave the search state alone', () => {
+    isSearchResultsPath('/search/hello');
+
+    expect(searchTerms.current).toBe('');
+    expect(searchMode.current).toBeNull();
   });
 });

@@ -18,6 +18,12 @@
     backPath = '/collections',
     /* eslint-enable prefer-const */
   } = $props();
+
+  /**
+   * Accept any previous page to go back to, as a dead link can be followed from anywhere.
+   * @returns {boolean} Always `true`.
+   */
+  const anyPage = () => true;
 </script>
 
 <EmptyState>
@@ -25,7 +31,7 @@
   <Button
     variant="primary"
     onclick={() => {
-      goBack(backPath, { anyPrevious: true });
+      goBack(backPath, { returnTo: anyPage });
     }}
   >
     {_('back')}

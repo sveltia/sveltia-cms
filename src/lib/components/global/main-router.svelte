@@ -9,6 +9,7 @@
   import ConfigPage from '$lib/components/config/config-page.svelte';
   import ContentsPage from '$lib/components/contents/contents-page.svelte';
   import TranslatorApiKeyDialog from '$lib/components/contents/details/editor/translator-api-key-dialog.svelte';
+  import ContentUpdatesToast from '$lib/components/contents/shared/content-updates-toast.svelte';
   import EntryParseErrorsToast from '$lib/components/contents/shared/entry-parse-errors-toast.svelte';
   import MobilePromoInfobar from '$lib/components/global/infobars/mobile-promo-infobar.svelte';
   import NewLanguageInfobar from '$lib/components/global/infobars/new-language-infobar.svelte';
@@ -155,6 +156,7 @@
 <UploadAssetsDialog />
 <UploadAssetsConfirmDialog />
 <AssetUpdatesToast />
+<ContentUpdatesToast />
 <TranslatorApiKeyDialog />
 <EntryParseErrorsToast />
 <CloudinaryIframe />

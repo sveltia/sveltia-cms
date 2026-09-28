@@ -832,7 +832,7 @@ describe('navigation', () => {
       );
     });
 
-    it('should use window.navigation.back() for any previous entry with `anyPrevious`', () => {
+    it('should use window.navigation.back() for a previous entry that `returnTo` accepts', () => {
       const mockNavigationBack = vi.fn();
       const mockStartViewTransition = vi.fn();
 
@@ -848,25 +848,29 @@ describe('navigation', () => {
 
       document.startViewTransition = mockStartViewTransition;
 
-      goBack('/default', { anyPrevious: true });
+      const returnTo = vi.fn((path) => path === '/assets');
+
+      goBack('/default', { returnTo });
+
+      expect(returnTo).toHaveBeenCalledWith('/assets');
 
       expect(window.history.pushState).not.toHaveBeenCalled();
       /** @type {any} */ (mockStartViewTransition).mock.calls[0][0].update();
       expect(mockNavigationBack).toHaveBeenCalled();
     });
 
-    it('should fall back to goto with `anyPrevious` when the previous entry is another document', () => {
+    it('should fall back to goto when `returnTo` rejects the previous entry', () => {
       Object.defineProperty(window, 'navigation', {
         value: {
           currentEntry: { index: 1 },
-          entries: vi.fn(() => [{ sameDocument: false, url: 'https://example.com/other' }]),
+          entries: vi.fn(() => [{ sameDocument: true, url: 'https://example.com/#/assets' }]),
           back: vi.fn(),
         },
         writable: true,
         configurable: true,
       });
 
-      goBack('/default', { anyPrevious: true });
+      goBack('/default', { returnTo: vi.fn((path) => path.startsWith('/search/')) });
 
       expect(window.history.pushState).toHaveBeenCalledWith(
         { from: 'https://example.com/#/collections' },

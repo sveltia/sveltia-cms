@@ -60,6 +60,7 @@
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { deployPollTimedOut } from '$lib/services/deployments';
   import { recheckDeployments, retainDeployPolling } from '$lib/services/deployments/poll';
+  import { isSearchResultsPath } from '$lib/services/search/navigation';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import {
@@ -270,13 +271,16 @@
   $effect(() => retainDeployPolling());
 
   /**
-   * Go back to the previous page. If the entry is a singleton file, go to the collections list.
-   * Otherwise, go to the collection entries list — the folder being browsed for a nested
-   * collection, so the user lands where they opened the entry from.
+   * Go back to the previous page: the search results if the entry was opened from them. Otherwise,
+   * if the entry is a singleton file, go to the collections list, or go to the collection entries
+   * list — the folder being browsed for a nested collection, so the user lands where they opened
+   * the entry from.
    */
   const _goBack = () => {
+    const options = { returnTo: isSearchResultsPath };
+
     if (collectionName === '_singletons') {
-      goBack('/collections');
+      goBack('/collections', options);
 
       return;
     }
@@ -287,6 +291,7 @@
       dirPath
         ? `/collections/${collectionName}/filter/${dirPath}`
         : `/collections/${collectionName}`,
+      options,
     );
   };
 

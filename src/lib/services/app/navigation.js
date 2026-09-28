@@ -322,20 +322,25 @@ export const redirectLegacyEntryLink = () => {
 /**
  * Go back to the previous page if possible, or navigate to the given fallback URL.
  * @param {string} path Fallback URL path. With the Navigation API, the previous page is only
- * returned to when it’s at this path, unless `anyPrevious` is set.
- * @param {GoToMethodOptions & { anyPrevious?: boolean }} [options] Options to be passed to
- * {@link goto}, and `anyPrevious` to return to the previous page wherever it is in the app, e.g.
- * from a dead link.
+ * returned to when it’s at this path, or when `returnTo` accepts its path.
+ * @param {GoToMethodOptions & { returnTo?: (path: string) => boolean }} [options] Options to be
+ * passed to {@link goto}, and `returnTo` to tell which other previous pages to return to, e.g. the
+ * search results an entry was opened from.
  */
-export const goBack = (path, { anyPrevious = false, ...options } = {}) => {
+export const goBack = (path, { returnTo, ...options } = {}) => {
   const transitionType = 'backwards';
 
   // Use the Navigation API if available, which is more reliable than `window.history`
   if (window.navigation?.currentEntry) {
     const { index } = window.navigation.currentEntry;
     const { sameDocument, url } = window.navigation.entries()[index - 1] ?? {};
+    const previousPath = url ? parseLocation(url).path : undefined;
 
-    if (sameDocument && url && (anyPrevious || parseLocation(url).path === path)) {
+    if (
+      sameDocument &&
+      previousPath !== undefined &&
+      (previousPath === path || returnTo?.(previousPath))
+    ) {
       startViewTransition(transitionType, () => {
         window.navigation.back();
       });

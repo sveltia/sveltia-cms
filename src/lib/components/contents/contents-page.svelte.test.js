@@ -5,10 +5,6 @@ import { render } from 'vitest-browser-svelte';
 import { announcedPageStatus, mainAreaTitle } from '$lib/services/app/navigation';
 import { backendName } from '$lib/services/backends';
 import { selectedCollection } from '$lib/services/contents/collection';
-import {
-  contentUpdatesToast,
-  UPDATE_TOAST_DEFAULT_STATE,
-} from '$lib/services/contents/collection/data';
 import { entryListSettings } from '$lib/services/contents/collection/view/settings';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
@@ -16,7 +12,6 @@ import { searchMode, searchTerms } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
 import { unpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
-import { waitForToastsToHide } from '$lib/test/toast';
 
 import ContentsPage from './contents-page.svelte';
 
@@ -67,7 +62,6 @@ describe('ContentsPage', () => {
     entryEditorSettings.current = { showPreview: true, showSecondPane: true };
     selectedCollection.current = undefined;
     showContentOverlay.current = false;
-    contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
     backendName.current = undefined;
   });
 
@@ -230,50 +224,4 @@ describe('ContentsPage', () => {
       .element(page.getByRole('grid', { name: 'Entries' }).getByRole('row', { name: /Hello/ }))
       .toBeInTheDocument();
   });
-
-  test('reports the content updates', async () => {
-    window.location.hash = '#/collections/posts';
-
-    await render(ContentsPage);
-
-    contentUpdatesToast.current = {
-      ...UPDATE_TOAST_DEFAULT_STATE,
-      count: 2,
-      saved: true,
-      published: true,
-    };
-    await expect
-      .element(page.getByRole('status'))
-      .toHaveTextContent('check_circle Success 2 entries saved and published.');
-    // The toast goes away on its own, resetting the state
-    await waitForToastsToHide();
-    expect(contentUpdatesToast.current.saved).toBe(false);
-
-    contentUpdatesToast.current = {
-      ...UPDATE_TOAST_DEFAULT_STATE,
-      count: 1,
-      deleted: true,
-      deletionPending: true,
-    };
-    await expect
-      .element(page.getByRole('status'))
-      .toHaveTextContent('check_circle Success Entry marked for deletion.');
-    await waitForToastsToHide();
-
-    contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, count: 1, discarded: true };
-    await expect
-      .element(page.getByRole('status'))
-      .toHaveTextContent('check_circle Success Changes discarded.');
-    await waitForToastsToHide();
-
-    contentUpdatesToast.current = {
-      ...UPDATE_TOAST_DEFAULT_STATE,
-      count: 1,
-      deletionCancelled: true,
-    };
-    await expect
-      .element(page.getByRole('status'))
-      .toHaveTextContent('check_circle Success Deletion cancelled.');
-    await waitForToastsToHide();
-  }, 40000);
 });

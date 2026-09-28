@@ -21,6 +21,7 @@
   import { isMediaKind } from '$lib/services/assets/kinds';
   import { browsedDirPath } from '$lib/services/assets/subfolders';
   import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
+  import { isSearchResultsPath } from '$lib/services/search/navigation';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
@@ -82,7 +83,7 @@
   title={name}
   contentKey={asset?.sha}
   onBack={() => {
-    goBack(backPath);
+    goBack(backPath, { returnTo: isSearchResultsPath });
   }}
   onPrevious={previous ? () => showAsset(previous, 'previous') : undefined}
   onNext={next ? () => showAsset(next, 'next') : undefined}
@@ -105,7 +106,7 @@
       buttonDescription={_('delete_assets', { values: { count: 1 } })}
       dialogDescription={_('confirm_deleting_this_asset')}
       onDelete={() => {
-        goBack(backPath);
+        goBack(backPath, { returnTo: isSearchResultsPath });
       }}
       {useButton}
     />
