@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { showAssetOverlay } from '$lib/services/assets/view';
-import { waitForRenameDialog } from '$lib/test/dialog';
+import { expectFileNameSelected } from '$lib/test/dialog';
 
 import RenameDialog from './rename-dialog.svelte';
 
@@ -44,7 +44,7 @@ describe('RenameDialog', () => {
       .toHaveTextContent('Enter a new name below. 2 entries using the asset will also be updated.');
     // Nothing has changed yet
     await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
-    await waitForRenameDialog(dialog.getByRole('textbox'), 'photo.png');
+    await expectFileNameSelected(dialog.getByRole('textbox'), 'photo.png');
 
     await dialog.getByRole('textbox').fill('picture.png');
     await dialog.getByRole('button', { name: 'Rename' }).click();
@@ -61,7 +61,7 @@ describe('RenameDialog', () => {
     const button = dialog.getByRole('button', { name: 'Rename' });
 
     // The input is filled in once the dialog is open
-    await waitForRenameDialog(textbox, 'photo.png');
+    await expectFileNameSelected(textbox, 'photo.png');
     await textbox.fill(' ');
     await expect.element(textbox).toHaveAttribute('aria-invalid', 'true');
     await expect.element(dialog.getByText('File name cannot be empty.')).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe('RenameDialog', () => {
 
     // Filling the input before the dialog has narrowed the initial selection to the file name would
     // replace that part alone, leaving the extension in place
-    await waitForRenameDialog(dialog.getByRole('textbox'), 'photo.png');
+    await expectFileNameSelected(dialog.getByRole('textbox'), 'photo.png');
     await dialog.getByRole('textbox').fill('photo.webp');
     await dialog.getByRole('button', { name: 'Rename' }).click();
 
@@ -100,7 +100,7 @@ describe('RenameDialog', () => {
 
     // Going back keeps the entered name
     await confirmation.getByRole('button', { name: 'Cancel' }).click();
-    await waitForRenameDialog(dialog.getByRole('textbox'), 'photo.webp');
+    await expectFileNameSelected(dialog.getByRole('textbox'), 'photo.webp');
     expect(onClose).not.toHaveBeenCalled();
 
     await dialog.getByRole('button', { name: 'Rename' }).click();
@@ -115,11 +115,25 @@ describe('RenameDialog', () => {
 
     const textbox = page.getByRole('dialog').getByRole('textbox');
 
-    // The dialog selects the whole input value, which is then narrowed to the file name
     await expect.element(textbox).toHaveFocus();
     await expect
       .poll(() => /** @type {HTMLInputElement} */ (textbox.element()).selectionEnd)
       .toBe('photo'.length);
+  });
+
+  test('leaves a selection made by the user alone', async () => {
+    await renderDialog();
+
+    const textbox = page.getByRole('dialog').getByRole('textbox');
+    const input = /** @type {HTMLInputElement} */ (textbox.element());
+
+    // A quick user selects the whole name and types over it as soon as the dialog opens, before
+    // the browser has reported the selection
+    await expect.element(textbox).toHaveValue('photo.png');
+    input.focus();
+    input.select();
+    await userEvent.keyboard('picture.png');
+    await expect.element(textbox).toHaveValue('picture.png');
   });
 
   test('closes along with the asset details overlay', async () => {

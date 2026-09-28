@@ -9,6 +9,7 @@
   import { _ } from '@sveltia/i18n';
   import { Dialog, TextInput } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
+  import { tick } from 'svelte';
 
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
   import { showAssetOverlay } from '$lib/services/assets/view';
@@ -44,8 +45,6 @@
   let confirmationOpen = $state(false);
   /** @type {HTMLInputElement | undefined} */
   let inputElement = $state();
-  /** Whether the file name has been auto-selected in the input field. */
-  let nameSelected = false;
   /** Whether to keep the entered name when the dialog is reopened from the confirmation dialog. */
   let keepName = false;
   let newName = $state('');
@@ -66,20 +65,22 @@
   const invalid = $derived(!!error);
 
   /**
-   * Narrow down the selection in the input field to the file name, excluding the extension, just
-   * like the macOS Finder and Windows File Explorer do. The Dialog component selects the entire
-   * value once the dialog is open, so this is called in response to that initial selection.
+   * Focus the input field, and select the file name, excluding the extension, just like the macOS
+   * Finder and Windows File Explorer do. This is done once, as soon as the dialog is shown, rather
+   * than in response to a `select` event, which arrives later: the selection would then be narrowed
+   * after the user had already selected the whole name and started typing over it.
    */
-  const selectFileName = () => {
-    if (nameSelected || !inputElement) {
+  const selectFileName = async () => {
+    // Wait for the dialog to become interactive
+    await tick();
+
+    /* v8 ignore next 3 -- the input is rendered along with the dialog */
+    if (!inputElement) {
       return;
     }
 
-    nameSelected = true;
-
-    const { filename } = getPathInfo(inputElement.value);
-
-    inputElement.setSelectionRange(0, filename.length);
+    inputElement.focus();
+    inputElement.setSelectionRange(0, getPathInfo(inputElement.value).filename.length);
   };
 
   // Reset the input whenever the dialog is opened, unless we’re coming back from the confirmation
@@ -90,7 +91,6 @@
       }
 
       keepName = false;
-      nameSelected = false;
     }
   });
 
@@ -122,6 +122,9 @@
       onClose?.();
     }
   }}
+  onOpen={() => {
+    selectFileName();
+  }}
 >
   <p>
     {_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
@@ -134,9 +137,6 @@
       flex
       {invalid}
       aria-errormessage="{componentId}-error"
-      onselect={() => {
-        selectFileName();
-      }}
     />
   </div>
   <div role="none" class="error" id="{componentId}-error">

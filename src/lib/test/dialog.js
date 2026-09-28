@@ -1,14 +1,13 @@
 import { expect } from 'vitest';
 
 /**
- * Wait for the rename dialog to be ready for typing: the dialog focuses its input and selects the
- * whole name once open, and the input narrows that first selection down to the file name. Typing
- * before then would replace the file name only, leaving the extension in place.
+ * Expect a rename input to have the focus, with the file name selected without the extension, as
+ * the Rename dialog and the file field’s Rename option do.
  * @param {import('vitest/browser').Locator} textbox The dialog’s input field.
  * @param {string} name The name shown in the field.
  * @returns {Promise<void>}
  */
-export const waitForRenameDialog = async (textbox, name) => {
+export const expectFileNameSelected = async (textbox, name) => {
   await expect.element(textbox).toHaveValue(name);
   await expect
     .poll(() => {

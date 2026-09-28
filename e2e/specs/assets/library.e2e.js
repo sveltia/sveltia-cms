@@ -29,26 +29,6 @@ const listedAssets = (page) =>
     .evaluateAll((rows) => rows.map((row) => row.getAttribute('aria-label') ?? ''));
 
 /**
- * Enter a new name in the Rename dialog. The dialog selects the name without the extension once it
- * opens, so a name typed before that would only replace part of it; wait for the selection first.
- * @param {Locator} dialog Rename dialog.
- * @param {string} name New file name, with the extension.
- */
-const enterNewName = async (dialog, name) => {
-  const textbox = dialog.getByRole('textbox');
-
-  await expect
-    .poll(() =>
-      textbox.evaluate(
-        (/** @type {HTMLInputElement} */ input) =>
-          input.selectionStart === 0 && input.selectionEnd === input.value.lastIndexOf('.'),
-      ),
-    )
-    .toBe(true);
-  await textbox.fill(name);
-};
-
-/**
  * Open an asset folder from the folder list.
  * @param {Page} page Page.
  * @param {RegExp} name Folder name, followed by the number of assets.
@@ -275,7 +255,7 @@ test('renames an asset and updates the entry using it', async ({ cms, page }) =>
   await expect(dialog).toContainText('An entry using the asset will also be updated.');
   await expect(dialog.getByRole('textbox')).toHaveValue('sunset.png');
   await expect(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
-  await enterNewName(dialog, 'dusk.png');
+  await dialog.getByRole('textbox').fill('dusk.png');
   await dialog.getByRole('button', { name: 'Rename' }).click();
 
   await expect
@@ -395,7 +375,7 @@ test('renames an asset next to an entry and updates its relative path', async ({
 
   const dialog = page.getByRole('dialog', { name: /Rename.*hero\.png/ });
 
-  await enterNewName(dialog, 'banner.png');
+  await dialog.getByRole('textbox').fill('banner.png');
   await dialog.getByRole('button', { name: 'Rename' }).click();
 
   await expect.poll(() => listedAssets(page)).toEqual(['banner.png']);

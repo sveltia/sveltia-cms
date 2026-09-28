@@ -225,17 +225,6 @@ test('renames an unsaved upload before saving', async ({ cms, page }) => {
   await uploadFiles(cover, [{ name: 'kite.png', buffer: kite }]);
   await cover.getByRole('button', { name: 'Rename' }).click();
   await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveValue('kite.png');
-  // The name without the extension is selected for editing, which a quick `fill()` could beat
-  await expect
-    .poll(() =>
-      cover
-        .getByRole('textbox', { name: 'Cover' })
-        .evaluate(
-          (/** @type {HTMLInputElement} */ input) =>
-            input.selectionStart === 0 && input.selectionEnd === 'kite'.length,
-        ),
-    )
-    .toBe(true);
   await cover.getByRole('textbox', { name: 'Cover' }).fill('sky.png');
   await cover.getByRole('button', { name: 'Done' }).click();
   await expect(cover.getByRole('textbox', { name: 'Cover' })).toHaveText(/sky\.png/);

@@ -10,7 +10,7 @@ import {
 } from '$lib/services/assets/external';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { createMockCloudService, createMockExternalAsset } from '$lib/test/config';
-import { waitForRenameDialog } from '$lib/test/dialog';
+import { expectFileNameSelected } from '$lib/test/dialog';
 
 import RenameDialog from './rename-dialog.svelte';
 
@@ -47,7 +47,7 @@ describe('RenameDialog', () => {
     const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
 
     await expect.element(dialog).toBeInTheDocument();
-    await waitForRenameDialog(dialog.getByRole('textbox'), 'a.png');
+    await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
 
     // The name of another asset in the same folder is rejected, but not one in another folder
     await dialog.getByRole('textbox').fill('b.png');
@@ -77,7 +77,7 @@ describe('RenameDialog', () => {
     const dialog = page.getByRole('dialog');
 
     // Wait for the current name to be filled in before replacing it
-    await waitForRenameDialog(dialog.getByRole('textbox'), 'a.png');
+    await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
     await dialog.getByRole('textbox').fill('d.png');
     await dialog.getByRole('button', { name: 'Rename' }).click();
 
