@@ -1,21 +1,18 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Menu, MenuButton, MenuItem, Spacer } from '@sveltia/ui';
+  import { Alert, Menu, MenuButton, Spacer } from '@sveltia/ui';
   import { getContext, setContext } from 'svelte';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import FieldEditorGroup from '$lib/components/contents/details/editor/field-editor-group.svelte';
+  import ResetMenuItems from '$lib/components/contents/details/editor/reset-menu-items.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { CustomEditor, editors } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import {
-    canClearField,
-    CLEARABLE_FIELD_TYPES,
-    clearField,
-  } from '$lib/services/contents/draft/update/clear';
+  import { canResetField, resetField } from '$lib/services/contents/draft/update/reset';
   import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import {
@@ -233,18 +230,30 @@
       (canDuplicate && locale !== defaultLocale) ||
       fieldType === 'compute',
   );
-  // The fields with multiple inputs can be cleared at once, unless their keys follow the default
-  // locale, as with a KeyValue field using the `duplicate_keys` i18n strategy
-  const canClear = $derived(
-    !inEditorComponent &&
-      !readonly &&
-      CLEARABLE_FIELD_TYPES.includes(fieldType) &&
-      !(canDuplicateKeys && locale !== defaultLocale),
+  // A field can be restored to its default value or cleared, unless it can’t be edited or its keys
+  // follow the default locale, as with a KeyValue field using the `duplicate_keys` i18n strategy
+  const canReset = $derived(
+    !inEditorComponent && !readonly && !(canDuplicateKeys && locale !== defaultLocale),
   );
-  const isClearDisabled = $derived(
-    !canClear || !canClearField({ valueMap, fieldConfig, keyPath, locale, defaultLocale }),
-  );
+  /**
+   * Whether restoring the default value or clearing the field would change anything. It takes
+   * going through the whole field, so it’s only checked as the menu opens rather than on every
+   * change.
+   */
+  let resetAvailability = $state({ restore: false, clear: false });
   const invalid = $derived(validity?.valid === false);
+
+  /**
+   * Check whether restoring the default value or clearing the field would change anything.
+   */
+  const updateResetAvailability = () => {
+    const args = { valueMap, fieldConfig, keyPath, locale, defaultLocale };
+
+    resetAvailability = {
+      restore: canResetField({ ...args, restore: true }),
+      clear: canResetField(args),
+    };
+  };
   const editorProps = $derived({
     locale,
     keyPath,
@@ -293,7 +302,7 @@
       {#if canCopy && ['richtext', 'markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
         <TranslateButton size="small" {locale} {otherLocales} {keyPath} />
       {/if}
-      {#if canCopy || canRevert || canClear}
+      {#if canCopy || canRevert || canReset}
         <MenuButton
           variant="ghost"
           size="small"
@@ -301,6 +310,8 @@
           disabled={pendingDeletion}
           popupPosition="bottom-right"
           aria-label={_('show_field_options')}
+          onclick={updateResetAvailability}
+          onkeydown={updateResetAvailability}
         >
           {#snippet popup()}
             <Menu ariaLabel={_('field_options')}>
@@ -309,31 +320,29 @@
               {/if}
               <!-- A field that can be copied from another locale can be reverted as well, so the
               menu always offers it -->
-              <MenuItem
-                label={_('revert_changes')}
-                disabled={isRevertDisabled}
-                onclick={() => {
-                  revertChanges({
-                    draft: /** @type {EntryDraft} */ (entryDraft.current),
-                    locale,
-                    keyPath,
-                  });
+              <ResetMenuItems
+                scope="field"
+                separator={!!canCopy}
+                available={{
+                  revert: !isRevertDisabled,
+                  ...(canReset ? resetAvailability : {}),
                 }}
-              />
-              {#if canClear}
-                <MenuItem
-                  label={_('clear')}
-                  disabled={isClearDisabled}
-                  onclick={() => {
-                    clearField({
-                      draft: /** @type {EntryDraft} */ (entryDraft.current),
+                onSelect={(action) => {
+                  const draft = /** @type {EntryDraft} */ (entryDraft.current);
+
+                  if (action === 'revert') {
+                    revertChanges({ draft, locale, keyPath });
+                  } else {
+                    resetField({
+                      draft,
                       fieldConfig,
                       keyPath,
                       locale,
+                      restore: action === 'restore',
                     });
-                  }}
-                />
-              {/if}
+                  }
+                }}
+              />
             </Menu>
           {/snippet}
         </MenuButton>

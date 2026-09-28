@@ -436,13 +436,16 @@ describe('contents/draft/create/proxy.svelte', () => {
       });
     });
 
-    it('should not revalidate when the field is unknown', () => {
+    it('should leave a value without a field of its own to the revalidation to tell', () => {
       const draft = createDraft();
 
-      draft.currentValues.en.unknown = 'Value';
+      // e.g. a KeyValue pair, which is validated as part of its field
+      draft.currentValues.en['metadata.size'] = 'L';
 
-      expect(draft.currentValues.en.unknown).toBe('Value');
-      expect(revalidateField).not.toHaveBeenCalled();
+      expect(draft.currentValues.en['metadata.size']).toBe('L');
+      expect(revalidateField).toHaveBeenCalledWith(
+        expect.objectContaining({ keyPath: 'metadata.size', value: 'L' }),
+      );
     });
 
     it('should use getValueMap function when provided', () => {

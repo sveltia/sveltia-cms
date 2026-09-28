@@ -19,6 +19,8 @@
 
   import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
+  import ResetDialog from '$lib/components/contents/details/editor/reset-dialog.svelte';
+  import ResetMenuItems from '$lib/components/contents/details/editor/reset-menu-items.svelte';
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
@@ -38,7 +40,7 @@
   import { saveEntry } from '$lib/services/contents/draft/save';
   import { describeConflict } from '$lib/services/contents/draft/save/conflict';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { revertChanges } from '$lib/services/contents/draft/update/revert';
+  import { canResetEntry } from '$lib/services/contents/draft/update/reset';
   import { validateDraft } from '$lib/services/contents/draft/validate';
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
   import {
@@ -78,6 +80,7 @@
   /**
    * @import { UnpublishedEntry, UpdateToastState } from '$lib/types/private';
    * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
+   * @import { ResetAction } from '$lib/services/contents/editor/reset';
    */
 
   /**
@@ -125,6 +128,27 @@
   let progressMessage = $state('');
   /** @type {MenuButton | undefined} */
   let menuButton = $state();
+  /**
+   * Whether restoring the default values or clearing the fields would change anything. It takes
+   * going through the whole entry, so it’s only checked as the menu opens rather than on every
+   * change.
+   */
+  let resetAvailability = $state({ restore: false, clear: false });
+  /** @type {ResetAction} */
+  let resetAction = $state('revert');
+  let showResetDialog = $state(false);
+
+  /**
+   * Check whether restoring the default values or clearing the fields would change anything.
+   */
+  const updateResetAvailability = () => {
+    const draft = entryDraft.current;
+
+    resetAvailability = {
+      restore: !!draft && canResetEntry({ draft, restore: true }),
+      clear: !!draft && canResetEntry({ draft }),
+    };
+  };
 
   const notFound = $derived(entryDraft.current === undefined);
   const isNew = $derived(entryDraft.current?.isNew ?? true);
@@ -564,6 +588,8 @@
     iconic
     popupPosition="bottom-right"
     aria-label={_('show_editor_options')}
+    onclick={updateResetAvailability}
+    onkeydown={updateResetAvailability}
     bind:this={menuButton}
   >
     {#snippet popup()}
@@ -653,14 +679,18 @@
             }}
           />
         {/if}
-        <MenuItem
-          label={_('revert_all_changes')}
-          disabled={!modified || pendingDeletion}
-          onclick={() => {
-            /* v8 ignore next 3 -- the menu is only offered while the draft is there */
-            if (entryDraft.current) {
-              revertChanges({ draft: entryDraft.current });
-            }
+        <!-- A small screen lists the sidebar panels above, ending with a separator of their own -->
+        <ResetMenuItems
+          scope="entry"
+          separator={!env.isSmallScreen || (!disabled && !isNew)}
+          available={{
+            revert: modified && !pendingDeletion,
+            restore: resetAvailability.restore && !pendingDeletion,
+            clear: resetAvailability.clear && !pendingDeletion,
+          }}
+          onSelect={(action) => {
+            resetAction = action;
+            showResetDialog = true;
           }}
         />
         {#if deployPollTimedOut.current}
@@ -740,6 +770,14 @@
     })}
   </Alert>
 </Toast>
+
+<ResetDialog
+  bind:open={showResetDialog}
+  action={resetAction}
+  onClose={() => {
+    menuButton?.focus();
+  }}
+/>
 
 <ConfirmationDialog
   bind:open={showReviewDialog}

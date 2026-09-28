@@ -11,6 +11,10 @@ import {
 import { MEDIA_FIELD_TYPES, MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { resolveCodeField } from '$lib/services/contents/fields/code/validate';
 import { validateDateTimeField } from '$lib/services/contents/fields/date-time/validate';
+import {
+  getKeyValueField,
+  PAIR_KEY_PATH_REGEX,
+} from '$lib/services/contents/fields/key-value/pairs';
 import { validateKeyValueField } from '$lib/services/contents/fields/key-value/validate';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { validateListField } from '$lib/services/contents/fields/list/validate';
@@ -339,7 +343,13 @@ export const validateAnyField = (args) => {
     isIndexFile,
   };
 
-  const fieldConfig = getField({ ...getFieldArgs });
+  const fieldConfig =
+    getField({ ...getFieldArgs }) ??
+    // A KeyValue pair is stored under an arbitrary key, e.g. `metadata.color`, that `getField()`
+    // can’t resolve. Without this, a KeyValue field holding pairs would never be validated, so its
+    // `min` and `max` options wouldn’t be checked, and a required one holding only a blank pair
+    // would pass
+    getKeyValueField({ ...getFieldArgs });
 
   if (!fieldConfig) {
     return undefined;
@@ -464,9 +474,14 @@ export const validateField = (args) => {
  */
 export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => {
   const { collectionName, fileName, isIndexFile, validities, validationMessages } = draft;
+  const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath, valueMap };
+  // A KeyValue pair is validated as part of its field, whose state is kept under the field’s own
+  // key path, where the editor shows it. See `validateFields()`
+  const keyValueField = getField(getFieldArgs) ? undefined : getKeyValueField(getFieldArgs);
+  const stateKeyPath = keyValueField ? keyPath.replace(PAIR_KEY_PATH_REGEX, '') : keyPath;
 
   // Nothing is shown for the field yet, so there is nothing to update
-  if (!validities?.[locale]?.[keyPath]) {
+  if (!validities?.[locale]?.[stateKeyPath]) {
     return;
   }
 
@@ -489,14 +504,12 @@ export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => 
     return;
   }
 
-  validities[locale][keyPath] = validity;
+  validities[locale][stateKeyPath] = validity;
 
   // The field is known to be configured, as `validateAnyField` bails out otherwise
-  const fieldConfig = /** @type {Field} */ (
-    getField({ collectionName, fileName, isIndexFile, keyPath, valueMap })
-  );
+  const fieldConfig = /** @type {Field} */ (keyValueField ?? getField(getFieldArgs));
 
-  validationMessages[locale][keyPath] = getFieldValidationMessages({ validity, fieldConfig });
+  validationMessages[locale][stateKeyPath] = getFieldValidationMessages({ validity, fieldConfig });
 };
 
 /**
@@ -627,6 +640,45 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
         return validateItems;
       };
 
+      /**
+       * Validate the KeyValue field the value belongs to, if it’s a pair. A pair is stored under an
+       * arbitrary key, e.g. `metadata.color`, that has no field configuration of its own, so the
+       * field is validated through its first pair and the result is recorded for the field, where
+       * the editor shows it. Without this, a KeyValue field holding pairs would never be validated.
+       */
+      const validateKeyValuePair = () => {
+        const keyValueField = getKeyValueField({
+          ...getFieldArgs,
+          keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''),
+          valueMap,
+          componentName,
+        });
+
+        const fieldKeyPath = keyPath.replace(PAIR_KEY_PATH_REGEX, '');
+
+        if (!keyValueField || fieldKeyPath in validities[locale]) {
+          return;
+        }
+
+        if (!validateField({ ...validateArgs, keyPath, value, componentName })) {
+          valid = false;
+        }
+
+        const validity = validities[locale][keyPath];
+
+        // A field that can’t be edited in the locale isn’t validated
+        if (!validity) {
+          return;
+        }
+
+        delete validities[locale][keyPath];
+        validities[locale][fieldKeyPath] = validity;
+        validationMessages[locale][fieldKeyPath] = getFieldValidationMessages({
+          validity,
+          fieldConfig: keyValueField,
+        });
+      };
+
       // The items of a List field with subfields or types are flattened to their own subfields,
       // e.g. `speakers.0.name`, so no key path stands for such a list. Validate each list the value
       // is in through the path of its items, or its item count would never be checked
@@ -659,6 +711,8 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
           : undefined);
 
       if (!fieldConfig) {
+        validateKeyValuePair();
+
         return;
       }
 

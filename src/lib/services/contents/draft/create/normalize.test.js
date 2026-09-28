@@ -883,6 +883,37 @@ describe('contents/draft/create/normalize', () => {
       ).toEqual({ en: { 'author.0.name': 'Melvin', sponsor: [] } });
     });
 
+    it('should give a required single-item list its item in another locale', () => {
+      const fields = [
+        {
+          name: 'author',
+          widget: 'list',
+          i18n: true,
+          max: 1,
+          fields: [{ name: 'name', i18n: true, default: 'Anonymous' }],
+        },
+        {
+          name: 'venue',
+          widget: 'list',
+          i18n: 'duplicate',
+          max: 1,
+          fields: [{ name: 'name', default: 'Hall' }],
+        },
+      ];
+
+      // A translated list gets its own item, while a duplicated one takes the default locale’s
+      expect(
+        normalizeContentMap({
+          fields,
+          contentMap: { en: { 'venue.0.name': 'Arena' }, fr: {} },
+          defaultLocale: 'en',
+        }),
+      ).toEqual({
+        en: { author: [], 'author.0.name': 'Anonymous', 'venue.0.name': 'Arena' },
+        fr: { author: [], 'author.0.name': 'Anonymous', 'venue.0.name': 'Arena' },
+      });
+    });
+
     it('should handle a missing default locale', () => {
       const fields = [{ name: 'title', widget: 'string', i18n: true }];
       const contentMap = { ja: {} };

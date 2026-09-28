@@ -120,6 +120,13 @@ test('reverts all changes', async ({ cms, page }) => {
 
   await cms.chooseMenuItem(menuButton, revert);
 
+  // Nothing is reverted until confirmed
+  const dialog = page.getByRole('alertdialog');
+
+  await expect(dialog).toContainText('revert all the changes made to this entry?');
+  await expect(title).toHaveValue('Last Light');
+  await dialog.getByRole('button', { name: 'Revert All Changes' }).click();
+
   await expect(title).toHaveValue('First Light');
   await expect(editor.getByRole('switch', { name: 'Draft' })).not.toBeChecked();
   await expect(tags).toHaveCount(2);

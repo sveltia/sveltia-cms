@@ -50,7 +50,11 @@ export const validateKeyValueField = ({
     return { skip: true, keyPath };
   }
 
-  const pairs = getPairsFromContent(getFieldArgs.valueMap ?? {}, _keyPath);
+  // A blank pair, like the one a required field gets as its default value, isn’t saved, so it
+  // doesn’t count. A pair with an empty key but a value, which a file can hold, still does
+  const pairs = getPairsFromContent(getFieldArgs.valueMap ?? {}, _keyPath).filter(
+    ([key, value]) => key.trim() || value,
+  );
 
   if (required && !pairs.length) {
     validity.valueMissing = true;

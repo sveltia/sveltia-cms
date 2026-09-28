@@ -163,6 +163,21 @@ describe('Test validatePairs()', () => {
 });
 
 describe('Test savePairs()', () => {
+  test('should store the placeholder of an empty field once the last pair is removed', () => {
+    const draft = { currentValues: { _default: { 'metadata.a': '1', title: 'Hi' } } };
+
+    savePairs({
+      // @ts-expect-error - Using minimal mock for testing
+      draft,
+      fieldConfig: { ...baseFieldConfig, i18n: undefined },
+      keyPath: 'metadata',
+      locale: '_default',
+      pairs: [],
+    });
+
+    expect(draft.currentValues._default).toEqual({ metadata: null, title: 'Hi' });
+  });
+
   test('should save pairs to entry draft', () => {
     const draft = {
       currentValues: {

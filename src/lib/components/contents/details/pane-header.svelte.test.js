@@ -128,16 +128,35 @@ describe('PaneHeader', () => {
         .getByRole('menuitem')
         .elements()
         .map((el) => el.textContent?.trim()),
-    ).toEqual(['Copy from \u2068French\u2069', 'Revert Changes', 'Disable \u2068English\u2069']);
+    ).toEqual([
+      'Copy from \u2068French\u2069',
+      'Revert Changes',
+      'Restore Default',
+      'Clear All',
+      'Disable \u2068English\u2069',
+    ]);
     await expect.element(menu.getByRole('menuitem', { name: 'Revert Changes' })).toBeDisabled();
+    // The title differs from its default value, which is empty
     // The default locale can’t be disabled
     await expect
       .element(menu.getByRole('menuitem', { name: 'Disable \u2068English\u2069' }))
       .toBeDisabled();
 
+    await expect.element(menu.getByRole('menuitem', { name: 'Restore Default' })).toBeEnabled();
+    await expect.element(menu.getByRole('menuitem', { name: 'Clear All' })).toBeEnabled();
+
     draft.currentValues.en.title = 'Hi';
     await expect.element(menu.getByRole('menuitem', { name: 'Revert Changes' })).toBeEnabled();
     await menu.getByRole('menuitem', { name: 'Revert Changes' }).click();
+
+    // The changes are only reverted once confirmed
+    const dialog = page.getByRole('alertdialog');
+
+    await expect
+      .element(dialog)
+      .toMatchTextContent('revert all the changes made to the \u2068English\u2069 content');
+    expect(draft.currentValues.en.title).toBe('Hi');
+    await dialog.getByRole('button', { name: 'Revert Changes' }).click();
     await expect.poll(() => draft.currentValues.en.title).toBe('Hello');
   });
 
@@ -193,7 +212,7 @@ describe('PaneHeader', () => {
     const menu = await openMenu();
 
     await expect.element(menu.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
-    expect(menu.element().querySelectorAll('[role="separator"]')).toHaveLength(2);
+    expect(menu.element().querySelectorAll('[role="separator"]')).toHaveLength(3);
   });
 
   test('offers the repository link in developer mode', async () => {
@@ -370,7 +389,9 @@ describe('PaneHeader', () => {
         .getByRole('menuitem')
         .elements()
         .map((el) => el.textContent?.trim()),
-    ).toEqual(['Revert Changes']);
+    ).toEqual(['Revert Changes', 'Restore Default', 'Clear All']);
+    // Nothing comes before them to separate them from
+    expect(menu.element().querySelectorAll('[role="separator"]')).toHaveLength(0);
   });
 
   test('offers the preview toggle with i18n on a medium screen', async () => {

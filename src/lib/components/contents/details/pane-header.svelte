@@ -4,6 +4,8 @@
   import equal from 'fast-deep-equal';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
+  import ResetDialog from '$lib/components/contents/details/editor/reset-dialog.svelte';
+  import ResetMenuItems from '$lib/components/contents/details/editor/reset-menu-items.svelte';
   import TranslateButton from '$lib/components/contents/details/editor/translate-button.svelte';
   import LocaleSwitcher from '$lib/components/contents/details/locale-switcher.svelte';
   import PreviewButton from '$lib/components/contents/details/preview-button.svelte';
@@ -12,7 +14,7 @@
   import { filterRealValues } from '$lib/services/contents/draft';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
-  import { revertChanges } from '$lib/services/contents/draft/update/revert';
+  import { canResetEntry } from '$lib/services/contents/draft/update/reset';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getLocaleContentLabel } from '$lib/services/contents/editor/panes';
   import { getEntryRepoBlobURL } from '$lib/services/contents/entry';
@@ -33,6 +35,7 @@
 
   /**
    * @import { EntryEditorPane } from '$lib/types/private';
+   * @import { ResetAction } from '$lib/services/contents/editor/reset';
    */
 
   /**
@@ -83,6 +86,36 @@
         filterRealValues(getValueMapSnapshot(entryDraft.current, thisPane.current.locale)),
       ),
   );
+  /**
+   * Whether restoring the default values or clearing the fields would change anything. It takes
+   * going through the whole locale, so it’s only checked as the menu opens rather than on every
+   * change.
+   */
+  let resetAvailability = $state({ restore: false, clear: false });
+  /** @type {ResetAction} */
+  let resetAction = $state('revert');
+  let showResetDialog = $state(false);
+  /** @type {MenuButton | undefined} */
+  let menuButton = $state();
+
+  /**
+   * Check whether restoring the default values or clearing the fields would change anything.
+   */
+  const updateResetAvailability = () => {
+    const draft = entryDraft.current;
+    const locale = thisPane.current?.locale;
+
+    /* v8 ignore next 3 -- the menu is only offered for an edit pane while the draft is there */
+    if (!draft || !locale) {
+      return;
+    }
+
+    resetAvailability = {
+      restore: canResetEntry({ draft, locale, restore: true }),
+      clear: canResetEntry({ draft, locale }),
+    };
+  };
+
   /* v8 ignore next -- the header is only rendered for a pane while the draft is there */
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
   // Look the entry up in the store rather than reading the draft, so the preview link follows the
@@ -137,20 +170,22 @@
         disabled={pendingDeletion}
         popupPosition="bottom-right"
         aria-label={getLocaleContentLabel('show_content_options_x_locale', paneLocale)}
+        onclick={updateResetAvailability}
+        onkeydown={updateResetAvailability}
+        bind:this={menuButton}
       >
         {#snippet popup()}
           <Menu ariaLabel={getLocaleContentLabel('content_options_x_locale', paneLocale)}>
             {#if canCopy && thisPane.current?.locale}
               <CopyMenuItems locale={thisPane.current.locale} {otherLocales} submenu />
             {/if}
-            <MenuItem
-              label={_('revert_changes')}
-              disabled={!canRevert}
-              onclick={() => {
-                /* v8 ignore next 3 -- the menu is only offered while the draft is there */
-                if (entryDraft.current) {
-                  revertChanges({ draft: entryDraft.current, locale: thisPane.current?.locale });
-                }
+            <ResetMenuItems
+              scope="locale"
+              separator={canCopy}
+              available={{ revert: !!canRevert, ...resetAvailability }}
+              onSelect={(action) => {
+                resetAction = action;
+                showResetDialog = true;
               }}
             />
             {#if !saveAllLocales && thisPane.current?.locale}
@@ -218,6 +253,15 @@
     {/if}
   </Toolbar>
 </div>
+
+<ResetDialog
+  bind:open={showResetDialog}
+  action={resetAction}
+  locale={thisPane.current?.locale}
+  onClose={() => {
+    menuButton?.focus();
+  }}
+/>
 
 <style>
   .header {

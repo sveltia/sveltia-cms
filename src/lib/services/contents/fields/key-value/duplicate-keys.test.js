@@ -157,7 +157,8 @@ describe('Test syncDuplicateKeys()', () => {
 
     syncDuplicateKeys({ valueStore, defaultLocale: 'en', keyPath: 'metadata' });
 
-    expect(valueStore.fr).toEqual({});
+    // The placeholder of an empty field is mirrored, so both locales are saved the same way
+    expect(valueStore.fr).toEqual({ metadata: null });
   });
 
   test('should do nothing when the default locale is missing from the store', () => {

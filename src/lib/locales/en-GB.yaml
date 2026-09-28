@@ -1195,9 +1195,20 @@ translate_from: Translate from…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: Translate from {$locale}
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
 revert_changes: Revert Changes
 revert_all_changes: Revert All Changes
+restore_default: Restore Default
+clear_all: Clear All
+confirm_reverting_changes: Are you sure you want to revert all the changes made to this entry?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Are you sure you want to revert all the changes made to the {$locale} content?
+confirm_restoring_defaults: Are you sure you want to restore the default values of all the fields in this entry? Your changes will be lost.
+confirm_restoring_defaults_x_locale: Are you sure you want to restore the default values of all the fields in the {$locale} content? Your changes will be lost.
+confirm_clearing_fields: Are you sure you want to clear all the fields in this entry? Your changes will be lost.
+confirm_clearing_fields_x_locale: Are you sure you want to clear all the fields in the {$locale} content? Your changes will be lost.
 
 # Slug editing
 edit_slug: Edit Slug

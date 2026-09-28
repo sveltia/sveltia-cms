@@ -18,7 +18,7 @@ const CONFIG = {
       extension: 'yml',
       i18n: true,
       fields: [
-        { name: 'title', label: 'Title', i18n: true },
+        { name: 'title', label: 'Title', i18n: true, required: false },
         { name: 'tags', label: 'Tags', widget: 'list', i18n: 'duplicate', required: false },
         {
           name: 'links',
@@ -117,4 +117,29 @@ test('clears the duplicated values in every locale', async ({ cms, page }) => {
       return [files['content/posts/hello.en.yml'], files['content/posts/hello.fr.yml']];
     })
     .toEqual([getPost('Hello', cleared), getPost('Bonjour', cleared)]);
+});
+
+test('clears the fields in a locale after confirmation', async ({ cms, page }) => {
+  const french = await showLocale(page, 1, 'French');
+
+  await cms.chooseMenuItem(
+    page.getByRole('button', { name: /Show.*French.*Content Options/ }),
+    page.getByRole('menuitem', { name: 'Clear All' }),
+  );
+
+  const dialog = page.getByRole('alertdialog');
+
+  await expect(dialog).toContainText('clear all the fields in the \u2068French\u2069 content');
+  await dialog.getByRole('button', { name: 'Clear All' }).click();
+  await expect(french.getByRole('textbox', { name: 'Title' })).toHaveValue('');
+  await getEditor(page).getByRole('button', { name: 'Save' }).click();
+
+  // Only the translatable field changes: the duplicated ones follow English
+  await expect
+    .poll(async () => {
+      const files = await cms.readRepo();
+
+      return [files['content/posts/hello.en.yml'], files['content/posts/hello.fr.yml']];
+    })
+    .toEqual([getPost('Hello', VALUES), getPost("''", VALUES)]);
 });

@@ -226,13 +226,14 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
 
       const { fieldConfig, getFieldArgs, valueMap } = getFieldInfo(obj, keyPath);
 
+      // Update the validity and validation message in real time if validation has already been
+      // performed. A value without a field of its own may be a KeyValue pair, which is validated
+      // as part of its field, so that’s left to `revalidateField()` to tell
+      revalidateField({ draft, locale: sourceLanguage, keyPath, value, valueMap });
+
       if (!fieldConfig) {
         return true;
       }
-
-      // Update the validity and validation message in real time if validation has already been
-      // performed
-      revalidateField({ draft, locale: sourceLanguage, keyPath, value, valueMap });
 
       // Copy value to other locales
       if (shouldAutoDuplicate(fieldConfig, getFieldArgs)) {

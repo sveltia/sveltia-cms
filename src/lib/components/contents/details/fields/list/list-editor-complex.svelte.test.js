@@ -877,6 +877,24 @@ describe('ListEditorComplex (single item)', () => {
     expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(0);
   });
 
+  test('locks the item in a locale whose values follow the default locale', async () => {
+    // The field editor makes a field duplicated from the default locale read-only there
+    await renderEditor(
+      authorField,
+      { 'authors.0.name': 'Melvin' },
+      { required: false, readonly: true },
+    );
+
+    // The optional item can’t be removed there, which would remove it from the default locale
+    await expect.element(page.getByRole('button', { name: 'Remove' })).toBeDisabled();
+  });
+
+  test('can’t add the item in a locale whose values follow the default locale', async () => {
+    await renderEditor(authorField, {}, { required: false, readonly: true });
+
+    await expect.element(page.getByRole('button', { name: /Add\W+Author/ })).toBeDisabled();
+  });
+
   test('shows the list controls for more items than the limit', async () => {
     await renderEditor(authorField, { 'authors.0.name': 'Melvin', 'authors.1.name': 'Elsie' });
 

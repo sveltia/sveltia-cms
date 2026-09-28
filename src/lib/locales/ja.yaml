@@ -1145,9 +1145,17 @@ translate_from: 他の言語から翻訳…
 # {$locale} is the localized language name of the source content being translated, e.g., English
 translate_from_x: '{$locale} から翻訳'
 
-# Revert changes
+# Revert changes, restore the default values or clear the fields
 revert_changes: 変更を取り消す
 revert_all_changes: すべての変更を取り消す
+restore_default: デフォルトに戻す
+clear_all: すべてクリア
+confirm_reverting_changes: このエントリーに加えたすべての変更を取り消してもよろしいですか？
+confirm_reverting_changes_x_locale: '{$locale}のコンテンツに加えたすべての変更を取り消してもよろしいですか？'
+confirm_restoring_defaults: このエントリーのすべてのフィールドをデフォルト値に戻してもよろしいですか？変更は失われます。
+confirm_restoring_defaults_x_locale: '{$locale}のコンテンツのすべてのフィールドをデフォルト値に戻してもよろしいですか？変更は失われます。'
+confirm_clearing_fields: このエントリーのすべてのフィールドをクリアしてもよろしいですか？変更は失われます。
+confirm_clearing_fields_x_locale: '{$locale}のコンテンツのすべてのフィールドをクリアしてもよろしいですか？変更は失われます。'
 
 # Slug editing
 edit_slug: スラッグを編集

@@ -123,6 +123,36 @@ describe('validateKeyValueField()', () => {
     expect(validity.valueMissing).toBe(true);
   });
 
+  test('doesn’t count a blank pair, but counts a pair with an empty key and a value', () => {
+    mockGetField.mockReturnValue({ widget: 'keyvalue' });
+
+    /**
+     * Validate the given value map as a required field.
+     * @param {Record<string, string>} valueMap Value map.
+     * @returns {EntryValidityState} Validity.
+     */
+    const validate = (valueMap) => {
+      const validity = freshValidity();
+
+      validateKeyValueField({
+        keyPath: 'meta.',
+        getFieldArgs: { ...baseGetFieldArgs, keyPath: 'meta', valueMap },
+        validity,
+        validities: { _default: {} },
+        locale: '_default',
+        required: true,
+        min: 0,
+        max: Infinity,
+      });
+
+      return validity;
+    };
+
+    // The blank pair of a required field’s default value, which isn’t saved
+    expect(validate({ 'meta.': '' }).valueMissing).toBe(true);
+    expect(validate({ 'meta.': 'value' }).valueMissing).toBe(false);
+  });
+
   test('treats a missing value map as having no pairs', async () => {
     mockGetField.mockReturnValue({ widget: 'keyvalue' });
 

@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 
-import { canClearField, clearField } from './clear';
+import { canResetEntry, canResetField, resetEntry, resetField } from './reset';
 
 /**
  * @import { EntryDraft, FlattenedEntryContent } from '$lib/types/private';
@@ -78,11 +78,11 @@ const createDraft = (currentValues, defaultLocale = 'en') =>
     })
   );
 
-describe('Test clearField()', () => {
+describe('Test resetField()', () => {
   test('should empty the subfields of an Object field, keeping the ones the user doesn’t enter', () => {
     const draft = createDraft({ en: { title: 'Hello', ...authorValues } });
 
-    clearField({ draft, fieldConfig: authorField, keyPath: 'author', locale: 'en' });
+    resetField({ draft, fieldConfig: authorField, keyPath: 'author', locale: 'en' });
 
     // The defaults aren’t applied, and a required List field limited to one item gets no item
     expect(draft.currentValues.en).toEqual({
@@ -110,13 +110,13 @@ describe('Test clearField()', () => {
       en: { tags: [], 'tags.0': 'a', 'tags.1': 'b', 'meta.a': '1', 'meta.b': '2', title: 'Hi' },
     });
 
-    clearField({
+    resetField({
       draft,
       fieldConfig: { name: 'tags', widget: 'list' },
       keyPath: 'tags',
       locale: 'en',
     });
-    clearField({
+    resetField({
       draft,
       fieldConfig: { name: 'meta', widget: 'keyvalue' },
       keyPath: 'meta',
@@ -142,11 +142,11 @@ describe('Test clearField()', () => {
       fr: { 'hero.type': 'unknown', 'hero.text': 'Levez les yeux.' },
     });
 
-    clearField({ draft, fieldConfig, keyPath: 'hero', locale: 'en' });
+    resetField({ draft, fieldConfig, keyPath: 'hero', locale: 'en' });
     expect(draft.currentValues.en).toEqual({ 'hero.type': 'quote', 'hero.text': '' });
 
     // An unknown type has no subfields to clear
-    clearField({
+    resetField({
       draft,
       fieldConfig: { ...fieldConfig, i18n: true },
       keyPath: 'hero',
@@ -161,7 +161,7 @@ describe('Test clearField()', () => {
   test('should leave a collapsed optional Object field alone', () => {
     const draft = createDraft({ en: { author: null } });
 
-    clearField({ draft, fieldConfig: authorField, keyPath: 'author', locale: 'en' });
+    resetField({ draft, fieldConfig: authorField, keyPath: 'author', locale: 'en' });
 
     expect(draft.currentValues.en).toEqual({ author: null });
   });
@@ -190,7 +190,7 @@ describe('Test clearField()', () => {
 
     const draft = createDraft({ en: { ...values }, fr: { ...values } });
 
-    clearField({ draft, fieldConfig, keyPath: 'author', locale: 'fr' });
+    resetField({ draft, fieldConfig, keyPath: 'author', locale: 'fr' });
 
     expect(draft.currentValues.fr).toEqual({ ...values, 'author.name': '' });
     // The default locale is left alone, as are the keys of a `duplicate_keys` KeyValue field
@@ -210,25 +210,25 @@ describe('Test clearField()', () => {
 
     const draft = createDraft({ en: { ...values }, fr: { ...values, 'labels.0': 'Â' } });
 
-    clearField({
+    resetField({
       draft,
       fieldConfig: { name: 'tags', widget: 'list', i18n: 'duplicate' },
       keyPath: 'tags',
       locale: 'en',
     });
-    clearField({
+    resetField({
       draft,
       fieldConfig: { name: 'meta', widget: 'keyvalue', i18n: 'duplicate' },
       keyPath: 'meta',
       locale: 'en',
     });
-    clearField({
+    resetField({
       draft,
       fieldConfig: { name: 'labels', widget: 'list', i18n: true },
       keyPath: 'labels',
       locale: 'en',
     });
-    clearField({
+    resetField({
       draft,
       fieldConfig: {
         name: 'author',
@@ -261,7 +261,7 @@ describe('Test clearField()', () => {
     const draft = createDraft({ en: { ...values }, fr: { ...values } });
 
     // The field has no `i18n` option of its own, but its Object field is duplicated
-    clearField({
+    resetField({
       draft,
       fieldConfig: { name: 'rooms', widget: 'list' },
       keyPath: 'venue.rooms',
@@ -273,14 +273,14 @@ describe('Test clearField()', () => {
   });
 });
 
-describe('Test canClearField()', () => {
+describe('Test canResetField()', () => {
   test('should tell whether the field holds anything to clear', () => {
     const args = { fieldConfig: authorField, keyPath: 'author', locale: 'en', defaultLocale: 'en' };
 
-    expect(canClearField({ ...args, valueMap: { title: 'Hello', ...authorValues } })).toBe(true);
+    expect(canResetField({ ...args, valueMap: { title: 'Hello', ...authorValues } })).toBe(true);
     // Only the values the user doesn’t enter, which are kept
     expect(
-      canClearField({
+      canResetField({
         ...args,
         valueMap: {
           'author.id': 'x',
@@ -304,9 +304,124 @@ describe('Test canClearField()', () => {
     const meta = { fieldConfig: { name: 'meta', widget: 'keyvalue' }, keyPath: 'meta' };
     const locales = { locale: 'en', defaultLocale: 'en' };
 
-    expect(canClearField({ ...list, ...locales, valueMap: { 'tags.0': '' } })).toBe(true);
-    expect(canClearField({ ...list, ...locales, valueMap: { tags: [] } })).toBe(false);
-    expect(canClearField({ ...meta, ...locales, valueMap: { 'meta.a': '' } })).toBe(true);
-    expect(canClearField({ ...meta, ...locales, valueMap: { meta: null } })).toBe(false);
+    expect(canResetField({ ...list, ...locales, valueMap: { 'tags.0': '' } })).toBe(true);
+    expect(canResetField({ ...list, ...locales, valueMap: { tags: [] } })).toBe(false);
+    expect(canResetField({ ...meta, ...locales, valueMap: { 'meta.a': '' } })).toBe(true);
+    expect(canResetField({ ...meta, ...locales, valueMap: { meta: null } })).toBe(false);
+  });
+});
+
+describe('Test resetField() for restoring', () => {
+  test('should restore the default values, keeping the ones the user doesn’t enter', () => {
+    const draft = createDraft({ en: { title: 'Hello', ...authorValues } });
+
+    resetField({ draft, fieldConfig: authorField, keyPath: 'author', locale: 'en', restore: true });
+
+    // A required List field limited to one item gets its item back
+    expect(draft.currentValues.en).toEqual({
+      title: 'Hello',
+      'author.id': '0b8b6c2e-5b52-4f4e-9d59-0f7b6a1c2d3e',
+      'author.kind': 'person',
+      'author.slug': 'melvin',
+      'author.code': 'M1',
+      'author.name': 'Anonymous',
+      'author.age': null,
+      'author.active': true,
+      'author.links': [],
+      'author.links.0.url': '',
+      'author.meta.': '',
+      'author.address.city': '',
+    });
+  });
+
+  test('should take the default value of the Object field as a whole into account', () => {
+    /** @type {Field} */
+    const fieldConfig = {
+      name: 'venue',
+      widget: 'object',
+      default: { name: 'Hall' },
+      fields: [
+        { name: 'name', widget: 'string', default: 'Room' },
+        { name: 'city', widget: 'string', default: 'Toronto' },
+      ],
+    };
+
+    const draft = createDraft({ en: { 'venue.name': 'Arena', 'venue.city': 'Ottawa' } });
+
+    resetField({ draft, fieldConfig, keyPath: 'venue', locale: 'en', restore: true });
+
+    expect(draft.currentValues.en).toEqual({ 'venue.name': 'Hall', 'venue.city': 'Toronto' });
+  });
+
+  test('should tell whether the field holds anything but the default values', () => {
+    /** @type {Field} */
+    const fieldConfig = { name: 'tags', widget: 'list', default: ['a'] };
+    const args = { fieldConfig, keyPath: 'tags', locale: 'en', defaultLocale: 'en', restore: true };
+
+    expect(canResetField({ ...args, valueMap: { tags: [], 'tags.0': 'b' } })).toBe(true);
+    expect(canResetField({ ...args, valueMap: { tags: [], 'tags.0': 'a' } })).toBe(false);
+  });
+});
+
+describe('Test resetEntry() and canResetEntry()', () => {
+  /** @type {Field[]} */
+  const fields = [
+    { name: 'title', widget: 'string', i18n: true, default: 'Untitled' },
+    { name: 'tags', widget: 'list', i18n: 'duplicate' },
+    { name: 'id', widget: 'uuid' },
+  ];
+
+  /**
+   * Create a draft of an English and French entry.
+   * @param {Record<string, boolean>} [currentLocales] Enabled locales.
+   * @returns {EntryDraft} Draft.
+   */
+  const createEntryDraft = (currentLocales = { en: true, fr: true }) =>
+    /** @type {EntryDraft} */ (
+      /** @type {unknown} */ ({
+        ...createDraft({
+          en: { title: 'Hello', 'tags.0': 'a', id: 'x' },
+          fr: { title: 'Bonjour', 'tags.0': 'a', id: 'x', 'title.__sc_item_id': 'y' },
+        }),
+        fields,
+        currentLocales,
+      })
+    );
+
+  test('should reset every field in every enabled locale', () => {
+    const draft = createEntryDraft();
+
+    expect(canResetEntry({ draft })).toBe(true);
+    resetEntry({ draft });
+
+    expect(draft.currentValues.en).toEqual({ title: '', tags: [], id: 'x' });
+    expect(draft.currentValues.fr).toMatchObject({ title: '', tags: [], id: 'x' });
+    expect(canResetEntry({ draft })).toBe(false);
+    expect(syncAllDuplicateKeys).toHaveBeenCalledOnce();
+
+    resetEntry({ draft, restore: true });
+    expect(draft.currentValues.en).toEqual({ title: 'Untitled', tags: [], id: 'x' });
+    // The translated field gets its default in French too, and the duplicated one follows English
+    expect(draft.currentValues.fr).toMatchObject({ title: 'Untitled', tags: [], id: 'x' });
+  });
+
+  test('should reset every field in a locale, leaving a disabled locale alone', () => {
+    const draft = createEntryDraft({ en: true, fr: false });
+
+    resetEntry({ draft });
+    // The duplicated field follows the default locale all the same
+    expect(draft.currentValues.fr).toMatchObject({ title: 'Bonjour', tags: [] });
+
+    vi.mocked(syncAllDuplicateKeys).mockClear();
+
+    const other = createEntryDraft();
+
+    expect(canResetEntry({ draft: other, locale: 'fr', restore: true })).toBe(true);
+    resetEntry({ draft: other, locale: 'fr', restore: true });
+
+    // Only the translatable field changes in another locale
+    expect(other.currentValues.fr).toMatchObject({ title: 'Untitled', 'tags.0': 'a' });
+    expect(other.currentValues.en).toEqual({ title: 'Hello', 'tags.0': 'a', id: 'x' });
+    expect(syncAllDuplicateKeys).not.toHaveBeenCalled();
   });
 });

@@ -192,9 +192,24 @@ const finalizeContent = ({
    * @param {Field} field Field configuration.
    */
   const copyKeyValueField = (keyPath, field) => {
-    const pairKeyPaths = Object.keys(unsortedMap).filter((_keyPath) =>
-      _keyPath.startsWith(`${keyPath}.`),
-    );
+    const prefix = `${keyPath}.`;
+
+    const pairKeyPaths = Object.keys(unsortedMap).filter((_keyPath) => {
+      if (!_keyPath.startsWith(prefix)) {
+        return false;
+      }
+
+      // A blank pair, like the one a required field gets as its default value, isn’t saved.
+      // Validation doesn’t count it either, so it can only be left in an optional field. A pair
+      // with an empty key but a value, which a file can hold, is kept as is
+      if (!_keyPath.slice(prefix.length).trim() && !unsortedMap[_keyPath]) {
+        delete unsortedMap[_keyPath];
+
+        return false;
+      }
+
+      return true;
+    });
 
     // The editor stores `null` at the field’s own key path while it holds no pairs. Copy it like
     // any other value so that `copyProperty()` can omit it if the field is optional

@@ -1397,6 +1397,22 @@ describe('Test serializeContent()', () => {
       expect(JSON.stringify(result)).not.toContain('*');
     });
 
+    test('leaves out a blank pair, keeping a pair with an empty key and a value', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['blank', 'labelled']);
+      getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'keyvalue' }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        // The blank pair of a required field’s default value, next to the one a file can hold
+        valueMap: { 'blank.': '', 'labelled.': 'value', 'labelled.a': '1' },
+      });
+
+      expect(result).toEqual({ blank: {}, labelled: { '': 'value', a: '1' } });
+    });
+
     test('serializes list with a keyvalue `field` as array', async () => {
       const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
 

@@ -62,6 +62,12 @@ export const savePairs = ({
 
   forEachTargetLocale({ valueStore, locale, i18n, draft, keyPath }, (content) => {
     setPairs(content, keyPath, pairs);
+
+    // Without pairs, store the placeholder the editor uses for an empty field right away rather
+    // than leaving it to the editor, so that the keys synced below take it along
+    if (!pairs.length) {
+      content[keyPath] = null;
+    }
   });
 
   // Keys edited in the default locale have to reach the other locales

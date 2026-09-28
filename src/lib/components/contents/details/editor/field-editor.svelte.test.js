@@ -189,15 +189,26 @@ describe('FieldEditor', () => {
     await expect.element(page.getByRole('textbox', { name: 'Value' })).toHaveValue('');
   });
 
-  test('offers to clear a field with multiple inputs only', async () => {
-    await renderEditor({
-      fieldConfig: { name: 'title', widget: 'string' },
+  test('restores the default value of a field from the field options', async () => {
+    const { draft } = await renderEditor({
+      fieldConfig: { name: 'title', widget: 'string', default: 'Untitled' },
       values: { title: 'Hi' },
     });
 
-    await page.getByRole('button', { name: 'Show Field Options' }).click();
-    await expect.element(page.getByRole('menuitem', { name: 'Revert Changes' })).toBeVisible();
-    expect(page.getByRole('menuitem', { name: 'Clear' }).elements()).toHaveLength(0);
+    const optionsButton = page.getByRole('button', { name: 'Show Field Options' });
+
+    await optionsButton.click();
+    // Every field can be cleared as well, with no separator above the items when nothing precedes
+    await expect.element(page.getByRole('menuitem', { name: 'Clear' })).toBeVisible();
+    expect(document.querySelectorAll('[role="menu"] [role="separator"]')).toHaveLength(0);
+    await page.getByRole('menuitem', { name: 'Restore Default' }).click();
+    await expect.poll(() => draft.currentValues.en.title).toBe('Untitled');
+
+    await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
+    await optionsButton.click();
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Restore Default' }))
+      .toHaveAttribute('aria-disabled', 'true');
   });
 
   test('doesn’t offer to clear a KeyValue field whose keys follow the default locale', async () => {

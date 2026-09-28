@@ -424,7 +424,14 @@ describe('Toolbar', () => {
         .getByRole('menuitem')
         .elements()
         .map((el) => el.textContent?.trim()),
-    ).toEqual(['Duplicate', 'Delete', 'Edit Slug', 'Revert All Changes']);
+    ).toEqual([
+      'Duplicate',
+      'Delete',
+      'Edit Slug',
+      'Revert All Changes',
+      'Restore Default',
+      'Clear All',
+    ]);
     await expect.element(menu.getByRole('menuitem', { name: 'Edit Slug' })).toBeEnabled();
     await expect.element(menu.getByRole('menuitem', { name: 'Revert All Changes' })).toBeDisabled();
     // A checked item has a check icon
@@ -562,7 +569,29 @@ describe('Toolbar', () => {
     const menu = await openMenu();
 
     await menu.getByRole('menuitem', { name: 'Revert All Changes' }).click();
+
+    // The changes are only reverted once confirmed
+    const dialog = page.getByRole('alertdialog');
+
+    await expect.element(dialog).toMatchTextContent('revert all the changes made to this entry?');
+    expect(draft.currentValues._default.title).toBe('Hi');
+    await dialog.getByRole('button', { name: 'Revert All Changes' }).click();
     await expect.poll(() => draft.currentValues._default.title).toBe('Hello');
+  });
+
+  test('restores the default values and clears the fields once confirmed', async () => {
+    const { draft } = await renderExisting();
+
+    await (await openMenu()).getByRole('menuitem', { name: 'Clear All' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Clear All' }).click();
+    await expect.poll(() => draft.currentValues._default.title).toBe('');
+
+    // Cancelling leaves the fields alone
+    await expect.poll(() => document.querySelector('dialog.popup')).toBeNull();
+    draft.currentValues._default.title = 'Hi';
+    await (await openMenu()).getByRole('menuitem', { name: 'Restore Default' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
+    expect(draft.currentValues._default.title).toBe('Hi');
   });
 
   test('toggles the panes', async () => {
@@ -594,7 +623,7 @@ describe('Toolbar', () => {
         .getByRole('menuitem')
         .elements()
         .map((el) => el.textContent?.trim()),
-    ).toEqual(['Edit Slug', 'Revert All Changes']);
+    ).toEqual(['Edit Slug', 'Revert All Changes', 'Restore Default', 'Clear All']);
     await expect.element(menu.getByRole('menuitem', { name: 'Edit Slug' })).toBeDisabled();
   });
 
@@ -1052,7 +1081,15 @@ describe('Toolbar', () => {
           .getByRole('menuitem')
           .elements()
           .map((el) => el.textContent?.trim()),
-      ).toEqual(['Duplicate', 'Discard', 'Delete', 'Edit Slug', 'Revert All Changes']);
+      ).toEqual([
+        'Duplicate',
+        'Discard',
+        'Delete',
+        'Edit Slug',
+        'Revert All Changes',
+        'Restore Default',
+        'Clear All',
+      ]);
     });
 
     test('offers to publish an entry that is ready', async () => {
@@ -1301,6 +1338,8 @@ describe('Toolbar', () => {
         'Delete',
         // The Slug panel above takes the place of the Edit Slug shortcut
         'Revert All Changes',
+        'Restore Default',
+        'Clear All',
       ]);
       // The pane options are for large screens
       expect(menu.getByRole('menuitemcheckbox').elements()).toHaveLength(0);

@@ -7,7 +7,10 @@ import {
   isFieldMultiple,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
-import { getPairsFromContent } from '$lib/services/contents/fields/key-value/pairs';
+import {
+  getKeyValueField,
+  getPairsFromContent,
+} from '$lib/services/contents/fields/key-value/pairs';
 
 import {
   validateFields as _validateFields,
@@ -612,6 +615,74 @@ describe('draft/validate/fields', () => {
     });
   });
 
+  describe('validateFields with KeyValue pairs', () => {
+    /** @type {any} */
+    const metadataField = { name: 'metadata', widget: 'keyvalue', max: 1 };
+
+    /**
+     * Mock the field lookups: a pair has no configuration of its own, but belongs to the field.
+     * @param {any} [keyValueField] KeyValue field configuration the pairs belong to.
+     */
+    const mockFields = (keyValueField = metadataField) => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        keyPath === 'metadata' ? metadataField : undefined,
+      );
+      vi.mocked(getKeyValueField).mockImplementation(({ keyPath }) =>
+        keyPath.startsWith('metadata.') ? keyValueField : undefined,
+      );
+    };
+
+    it('should validate the field through its pairs, recording the result for the field', async () => {
+      const { getFieldValidationMessages } =
+        await import('$lib/services/contents/draft/validate/messages');
+
+      vi.mocked(getFieldValidationMessages).mockReturnValue(['Too many pairs']);
+      mockEntryDraft.currentValues = { en: { 'metadata.a': '1', 'metadata.b': '2', other: 'x' } };
+      mockFields();
+      vi.mocked(getPairsFromContent).mockReturnValue([
+        ['a', '1'],
+        ['b', '2'],
+      ]);
+
+      const result = validateFields('currentValues');
+
+      expect(result.valid).toBe(false);
+      expect(result.validities.en.metadata.rangeOverflow).toBe(true);
+      expect(result.validities.en).not.toHaveProperty('metadata.a');
+      expect(result.validities.en).not.toHaveProperty('metadata.b');
+      expect(result.validationMessages.en.metadata).toEqual(['Too many pairs']);
+    });
+
+    it('should validate a field whose keys follow the default locale in another locale', () => {
+      // The values of a `duplicate_keys` field can be edited in any locale
+      mockEntryDraft.currentValues = {
+        en: { 'metadata.a': '1', 'metadata.b': '2' },
+        fr: { 'metadata.a': 'un', 'metadata.b': 'deux' },
+      };
+      mockEntryDraft.currentLocales = { en: true, fr: true };
+      mockFields({ ...metadataField, i18n: 'duplicate_keys' });
+      vi.mocked(getPairsFromContent).mockReturnValue([
+        ['a', 'un'],
+        ['b', 'deux'],
+      ]);
+
+      const result = validateFields('currentValues');
+
+      expect(result.validities.fr.metadata.rangeOverflow).toBe(true);
+    });
+
+    it('should skip a pair of a field that can’t be edited in the locale', () => {
+      mockEntryDraft.currentValues = { en: { 'metadata.a': '1' }, fr: { 'metadata.a': '1' } };
+      mockEntryDraft.currentLocales = { en: true, fr: true };
+      mockFields({ ...metadataField, i18n: false });
+      vi.mocked(getPairsFromContent).mockReturnValue([['a', '1']]);
+
+      const result = validateFields('currentValues');
+
+      expect(result.validities.fr).toEqual({});
+    });
+  });
+
   describe('validateFields with `enforceRequired: false`', () => {
     it('should leave an empty required field unmarked', () => {
       mockEntryDraft.currentValues = { en: { title: '' } };
@@ -876,6 +947,39 @@ describe('draft/validate/fields', () => {
         expect(mockEntryDraft.validities.en.title.valueMissing).toBe(true);
         expect(mockEntryDraft.validities.en.title.valid).toBe(false);
         expect(mockEntryDraft.validationMessages.en.title).toEqual(['This field is required']);
+      });
+
+      it('should update the state of the KeyValue field a pair belongs to', async () => {
+        const { getFieldValidationMessages } =
+          await import('$lib/services/contents/draft/validate/messages');
+
+        /** @type {any} */
+        const fieldConfig = { name: 'metadata', widget: 'keyvalue', required: true };
+
+        vi.mocked(getFieldValidationMessages).mockReturnValue([]);
+        // A pair has no configuration of its own, but belongs to the field
+        vi.mocked(getField).mockImplementation(({ keyPath }) =>
+          keyPath === 'metadata' ? fieldConfig : undefined,
+        );
+        vi.mocked(getKeyValueField).mockReturnValue(fieldConfig);
+        vi.mocked(isFieldRequired).mockReturnValue(true);
+        vi.mocked(getPairsFromContent).mockReturnValue([['size', 'L']]);
+
+        mockEntryDraft.validities.en.metadata = { valueMissing: true, valid: false };
+        mockEntryDraft.validationMessages.en.metadata = ['This field is required'];
+
+        // The key of the blank pair has just been filled in
+        revalidateField({
+          draft: mockEntryDraft,
+          locale: 'en',
+          keyPath: 'metadata.size',
+          value: 'L',
+          valueMap: { 'metadata.size': 'L' },
+        });
+
+        expect(mockEntryDraft.validities.en.metadata.valid).toBe(true);
+        expect(mockEntryDraft.validationMessages.en.metadata).toEqual([]);
+        expect(mockEntryDraft.validities.en).not.toHaveProperty('metadata.size');
       });
 
       it('should perform all the field validations, not just the required check', async () => {
@@ -1495,7 +1599,7 @@ describe('draft/validate/fields', () => {
 
       it('should validate keyvalue field with required validation', () => {
         const validities = { en: {} };
-        const pairs = [{ key: 'key1', value: 'value1' }];
+        const pairs = [['key1', 'value1']];
 
         mockEntryDraft.currentValues = { en: { metadata: { key1: 'value1' } } };
 
@@ -1579,7 +1683,7 @@ describe('draft/validate/fields', () => {
         vi.mocked(isFieldRequired).mockReturnValue(false);
 
         // Only 1 pair, but min is 3
-        vi.mocked(getPairsFromContent).mockReturnValue([{ key: 'key1', value: 'value1' }]);
+        vi.mocked(getPairsFromContent).mockReturnValue([['key1', 'value1']]);
 
         const result = validateAnyField(args);
 
@@ -1614,12 +1718,41 @@ describe('draft/validate/fields', () => {
 
         // 3 pairs but max is 2
         vi.mocked(getPairsFromContent).mockReturnValue([
-          { key: 'k1', value: 'v1' },
-          { key: 'k2', value: 'v2' },
-          { key: 'k3', value: 'v3' },
+          ['k1', 'v1'],
+          ['k2', 'v2'],
+          ['k3', 'v3'],
         ]);
 
         const result = validateAnyField(args);
+
+        expect(result?.rangeOverflow).toBe(true);
+      });
+
+      it('should resolve a KeyValue pair that getField can’t through its KeyValue field', () => {
+        const validities = { en: {} };
+        /** @type {any} */
+        const fieldConfig = { name: 'metadata', widget: 'keyvalue', required: false, max: 2 };
+
+        // A pair is stored under an arbitrary key, which only the KeyValue field lookup resolves
+        vi.mocked(getField).mockImplementation(({ keyPath }) =>
+          keyPath === 'metadata' ? fieldConfig : undefined,
+        );
+        vi.mocked(getKeyValueField).mockReturnValue(fieldConfig);
+        vi.mocked(isFieldRequired).mockReturnValue(false);
+        vi.mocked(getPairsFromContent).mockReturnValue([
+          ['k1', 'v1'],
+          ['k2', 'v2'],
+          ['k3', 'v3'],
+        ]);
+
+        const result = validateAnyField({
+          draft: mockEntryDraft,
+          validities,
+          locale: 'en',
+          keyPath: 'metadata.k1',
+          valueMap: { 'metadata.k1': 'v1', 'metadata.k2': 'v2', 'metadata.k3': 'v3' },
+          value: 'v1',
+        });
 
         expect(result?.rangeOverflow).toBe(true);
       });
