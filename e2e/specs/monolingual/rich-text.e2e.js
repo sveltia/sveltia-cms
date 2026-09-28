@@ -278,6 +278,8 @@ test.describe('existing Markdown', () => {
     'a dash thematic break': 'Before\n\n---\n\nAfter',
     'a list nested by 2 spaces': '- One\n  - Nested',
     'a short table delimiter row': '| A | B |\n| - | - |\n| 1 | 2 |',
+    // The editor gives the block a default language as it loads it
+    'a code block without a language': '```\ncode\n```',
   };
 
   Object.entries(OTHER_STYLES).forEach(([name, body]) => {
@@ -326,6 +328,44 @@ test.describe('existing Markdown', () => {
     await expect
       .poll(async () => (await cms.readRepo())[RICH_POST_PATH])
       .toBe(`${FRONT_MATTER}Some _italic_ text. More.\n`);
+  });
+
+  test('counts a change that’s undone as no change, keeping the body as it was', async ({
+    cms,
+    page,
+  }) => {
+    await cms.open();
+    await cms.seed({
+      ...MONOLINGUAL_FILES,
+      [RICH_POST_PATH]: `${FRONT_MATTER}Some *italic* text.\n`,
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Rich Post/ }).click();
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+    const body = editor.getByRole('textbox', { name: 'Body' });
+    const save = editor.getByRole('button', { name: 'Save' });
+    const preview = editor.getByRole('document', { name: 'Content Preview' });
+
+    await expect(body).toContainText('Some italic text.');
+    await moveCaretToEnd(body);
+    await page.keyboard.type('!');
+    // Wait for the change to reach the entry, which the preview shows
+    await expect(preview).toContainText('Some italic text.!');
+    await expect(save).toBeEnabled();
+
+    // Deleting the character brings the body back to what it was, although the editor would write
+    // it in its own style
+    await page.keyboard.press('Backspace');
+    await expect(preview).not.toContainText('text.!');
+    await expect(save).toBeDisabled();
+
+    await editor.getByRole('textbox', { name: 'Title' }).first().fill('Rich Post, Revised');
+    await save.click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())[RICH_POST_PATH])
+      .toBe(`${FRONT_MATTER.replace('Rich Post', 'Rich Post, Revised')}Some *italic* text.\n`);
   });
 
   test('shows the language of each code block', async ({ cms, page }) => {
