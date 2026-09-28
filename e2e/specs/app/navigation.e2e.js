@@ -21,7 +21,7 @@ test.describe('after signing in', () => {
     await cms.signIn();
   });
 
-  test('shows the Not Found page for an unknown URL, and leaves it', async ({ cms, page }) => {
+  test('shows the Not Found page for an unknown URL, and goes back', async ({ cms, page }) => {
     await expect(page.getByRole('main', { name: /Notes.*Collection/ })).toBeVisible();
 
     /**
@@ -40,11 +40,14 @@ test.describe('after signing in', () => {
     await openDeadLink('/collections-foo');
     await openDeadLink('/workflow/foo');
 
-    // The page before is another dead link, so the button opens the content library instead
+    // A dead link followed from the Asset Library leads back there, not to the content library
+    await page.getByRole('radio', { name: 'Assets' }).click();
+    await expect(page).toHaveURL(/#\/assets\/-\/all$/);
+    await openDeadLink('/nowhere');
     await getNotFoundPage(page).getByRole('button', { name: 'Back' }).click();
-    await expect(page).toHaveURL(/#\/collections\/notes$/);
-    await expect(page.getByRole('main', { name: /Notes.*Collection/ })).toBeVisible();
+    await expect(page).toHaveURL(/#\/assets\/-\/all$/);
     await expect(getNotFoundPage(page)).toBeHidden();
+    await expect(page.getByRole('radio', { name: 'Assets' })).toBeChecked();
   });
 
   test('creates an entry in the collection chosen from the Create menu', async ({ cms, page }) => {

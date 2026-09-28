@@ -832,6 +832,49 @@ describe('navigation', () => {
       );
     });
 
+    it('should use window.navigation.back() for any previous entry with `anyPrevious`', () => {
+      const mockNavigationBack = vi.fn();
+      const mockStartViewTransition = vi.fn();
+
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: 1 },
+          entries: vi.fn(() => [{ sameDocument: true, url: 'https://example.com/#/assets' }]),
+          back: mockNavigationBack,
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      document.startViewTransition = mockStartViewTransition;
+
+      goBack('/default', { anyPrevious: true });
+
+      expect(window.history.pushState).not.toHaveBeenCalled();
+      /** @type {any} */ (mockStartViewTransition).mock.calls[0][0].update();
+      expect(mockNavigationBack).toHaveBeenCalled();
+    });
+
+    it('should fall back to goto with `anyPrevious` when the previous entry is another document', () => {
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: 1 },
+          entries: vi.fn(() => [{ sameDocument: false, url: 'https://example.com/other' }]),
+          back: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      goBack('/default', { anyPrevious: true });
+
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { from: 'https://example.com/#/collections' },
+        '',
+        'https://example.com/#/default',
+      );
+    });
+
     it('should fall back to goto when the previous navigation entry is missing', () => {
       Object.defineProperty(window, 'navigation', {
         value: {

@@ -25,7 +25,7 @@
   <Button
     variant="primary"
     onclick={() => {
-      goBack(backPath);
+      goBack(backPath, { anyPrevious: true });
     }}
   >
     {_('back')}
