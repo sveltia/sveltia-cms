@@ -115,8 +115,8 @@ test('clears the fields in every locale', async ({ cms, page }) => {
   await expect
     .poll(() => readPost(cms))
     .toEqual([
-      getPost(["title: ''", 'tags: []', 'attrs: null']),
-      getPost(["title: ''", 'tags: []', 'attrs: null']),
+      getPost(["title: ''", 'tags: []', 'attrs: {}']),
+      getPost(["title: ''", 'tags: []', 'attrs: {}']),
     ]);
 });
 

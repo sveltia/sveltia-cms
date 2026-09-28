@@ -1397,6 +1397,25 @@ describe('Test serializeContent()', () => {
       expect(JSON.stringify(result)).not.toContain('*');
     });
 
+    test('saves a field without pairs as an empty object, whether it holds the placeholder', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['shown', 'unrendered']);
+      getField.mockImplementation(({ keyPath }) => ({ name: keyPath, widget: 'keyvalue' }));
+
+      // The editor stores the placeholder once it has been shown, which the other one never was
+      expect(serializeContent({ draft, locale: 'en', valueMap: { shown: null } })).toEqual({
+        shown: {},
+        unrendered: {},
+      });
+
+      // A value the file holds where an object is expected is left alone
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['shown']);
+      expect(serializeContent({ draft, locale: 'en', valueMap: { shown: 'text' } })).toEqual({
+        shown: 'text',
+      });
+    });
+
     test('leaves out a blank pair, keeping a pair with an empty key and a value', async () => {
       const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
 
@@ -1507,8 +1526,9 @@ describe('Test serializeContent()', () => {
       ]);
 
       expect(serializeContent({ draft, locale: 'en', valueMap: { ...valueMap } })).toEqual({
+        // The placeholder is saved as an empty object, like a field without one
         test_list: [
-          { title: 'First', pairs: null },
+          { title: 'First', pairs: {} },
           { title: 'Second', pairs: { foo: 'bar' } },
         ],
       });

@@ -211,9 +211,14 @@ const finalizeContent = ({
       return true;
     });
 
-    // The editor stores `null` at the field’s own key path while it holds no pairs. Copy it like
-    // any other value so that `copyProperty()` can omit it if the field is optional
-    if (keyPath in unsortedMap && !pairKeyPaths.length) {
+    // A field without pairs is saved as an empty object, just like a List field without items is
+    // saved as an empty array, whether or not it holds the `null` placeholder the editor stores to
+    // have the field validated. Whether it does depends on whether its editor has been shown, so
+    // it can’t make a difference to the output. `copyProperty()` still omits the empty object if
+    // the field is optional and the `omit_empty_optional_fields` output option is enabled
+    if (!pairKeyPaths.length) {
+      // Any other value, such as a string where the file doesn’t hold an object, is left as is
+      unsortedMap[keyPath] ??= {};
       copyProperty({ ...copyArgs, key: keyPath, field });
 
       return;
@@ -234,10 +239,12 @@ const finalizeContent = ({
   createKeyPathList(fields).forEach((keyPath) => {
     const field = getField({ ...getFieldArgs, keyPath });
 
-    if (keyPath in unsortedMap) {
-      copyProperty({ ...copyArgs, key: keyPath, field });
-    } else if (field?.widget === 'keyvalue' && !keyPath.includes('*')) {
+    // A KeyValue field is handled on its own, even if it holds a value at its own key path, which
+    // is the placeholder of an empty field
+    if (field?.widget === 'keyvalue' && !keyPath.includes('*')) {
       copyKeyValueField(keyPath, field);
+    } else if (keyPath in unsortedMap) {
+      copyProperty({ ...copyArgs, key: keyPath, field });
     } else {
       // Resolve the wildcards in the key path to the concrete key paths of the list items, e.g.
       // `list.*.title` → `list.0.title`, `list.1.title`. A KeyValue field has no value at its own
