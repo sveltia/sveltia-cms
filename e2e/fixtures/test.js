@@ -141,17 +141,13 @@ export class CMS {
   }
 
   /**
-   * Open a popup, e.g. a menu or a dropdown list, and wait until it takes the focus. A Sveltia UI
-   * popup moves the focus into its content 100 ms after it opens, e.g. to the search box of a
-   * dropdown list, so a key typed before then is lost. A user never types that fast, but a test
-   * does.
+   * Open a popup, e.g. a menu or a dropdown list, and wait until it’s shown.
    * @param {Locator} trigger Element that opens the popup, e.g. a button or a combobox.
    * @param {Locator} popup Popup, or an element in it.
    */
   async openPopup(trigger, popup) {
     await trigger.click();
     await expect(popup).toBeVisible();
-    await this.page.waitForTimeout(150);
   }
 
   /**
