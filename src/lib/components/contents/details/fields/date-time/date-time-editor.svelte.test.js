@@ -135,6 +135,29 @@ describe('DateTimeEditor', () => {
     expect(page.getByRole('button').elements()).toHaveLength(0);
   });
 
+  test('keeps the seconds of a read-only value the input can’t show', async () => {
+    const { props, container } = await renderEditor({
+      currentValue: '2024-01-15T10:30:07Z',
+      config: { output_utc: true },
+      readonly: true,
+    });
+
+    await expect.poll(() => getInput(container).value).not.toBe('');
+    expect(props.currentValue).toBe('2024-01-15T10:30:07Z');
+  });
+
+  test('shows a value set automatically on save as text', async () => {
+    const { container } = await renderEditor({
+      currentValue: '2024-01-15T10:30:07Z',
+      config: { auto_now: true, input_timezone: 'utc' },
+      readonly: true,
+    });
+
+    expect(container.querySelector('input')).toBeNull();
+    expect(page.getByRole('button').elements()).toHaveLength(0);
+    expect(container.querySelector('p')).toHaveTextContent('Jan 15, 2024, 10:30 AM — UTC');
+  });
+
   test('notes the time zone', async () => {
     const utc = await renderEditor({ config: { picker_utc: true } });
 

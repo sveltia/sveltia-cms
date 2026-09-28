@@ -1669,13 +1669,32 @@ describe('Day.js format tokens', () => {
       };
 
       const result = getCurrentValue({
-        inputValue: '2023-12-25T14:30:07',
+        inputValue: '2023-12-25T14:30',
         currentValue: '',
         fieldConfig,
       });
 
       // Seconds are not included in the input, so default to `00`
       expect(result).toBe('00');
+    });
+
+    test('should keep the seconds the input has, as it does with a `step` under 60', () => {
+      /** @type {DateTimeField} */
+      const fieldConfig = {
+        ...baseFieldConfig,
+        format: 'YYYY-MM-DD HH:mm:ss',
+      };
+
+      expect(
+        getCurrentValue({ inputValue: '2023-12-25T14:30:07', currentValue: '', fieldConfig }),
+      ).toBe('2023-12-25 14:30:07');
+      expect(
+        getCurrentValue({
+          inputValue: '14:30:07',
+          currentValue: '',
+          fieldConfig: { ...fieldConfig, type: 'time', format: 'HH:mm:ss' },
+        }),
+      ).toBe('14:30:07');
     });
 
     test('should handle s (1-digit seconds)', () => {
@@ -1686,7 +1705,7 @@ describe('Day.js format tokens', () => {
       };
 
       const result = getCurrentValue({
-        inputValue: '2023-12-25T14:30:07',
+        inputValue: '2023-12-25T14:30',
         currentValue: '',
         fieldConfig,
       });
@@ -1851,7 +1870,7 @@ describe('Day.js format tokens', () => {
       };
 
       const result = getCurrentValue({
-        inputValue: '2023-12-25T14:30:45',
+        inputValue: '2023-12-25T14:30',
         currentValue: '',
         fieldConfig,
       });
@@ -1897,7 +1916,7 @@ describe('Day.js format tokens', () => {
       };
 
       const result = getCurrentValue({
-        inputValue: '2023-12-25T14:30:45',
+        inputValue: '2023-12-25T14:30',
         currentValue: '',
         fieldConfig,
       });

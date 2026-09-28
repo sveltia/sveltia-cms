@@ -9,6 +9,8 @@
   import { _ } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
 
+  import DateTimePreview from '$lib/components/contents/details/fields/date-time/date-time-preview.svelte';
+  import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
   import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
   import {
     getCurrentDateTime,
@@ -37,6 +39,9 @@
   /** @type {FieldEditorProps & Props} */
   let {
     /* eslint-disable prefer-const */
+    locale,
+    keyPath,
+    typedKeyPath,
     fieldId,
     fieldConfig,
     currentValue = $bindable(),
@@ -75,6 +80,12 @@
    * Update {@link currentValue} based on {@link inputValue}.
    */
   const setCurrentValue = () => {
+    // A read-only field keeps its stored value as it is. The input drops the seconds with its
+    // default `step`, so writing it back would truncate a value like one set by `auto_now`
+    if (readonly) {
+      return;
+    }
+
     const newValue = getCurrentValue({ inputValue, currentValue, fieldConfig, timeZone });
 
     // Avoid a cycle dependency & infinite loop
@@ -116,46 +127,52 @@
   };
 </script>
 
-<div role="none">
-  <input
-    {...{ type, min, max, step }}
-    bind:value={inputValue}
-    {readonly}
-    aria-readonly={readonly}
-    aria-required={required}
-    aria-invalid={invalid}
-    aria-labelledby="{fieldId}-label"
-    aria-errormessage="{fieldId}-error"
-    onfocus={handleFocus}
-    onblur={handleBlur}
-  />
-  {#if !readonly}
-    <Button
-      variant="tertiary"
-      label={_(dateOnly ? 'today' : 'now')}
-      onclick={() => {
-        inputValue = getCurrentDateTime(fieldConfig, timeZone);
-      }}
+{#if readonly && isAutoNowField(fieldConfig)}
+  <!-- The value is set on save, so it’s shown as text like in the preview rather than an input.
+  The field is editable in a rich text editor component, where the option is ignored -->
+  <DateTimePreview {locale} {keyPath} {typedKeyPath} {fieldConfig} {currentValue} />
+{:else}
+  <div role="none">
+    <input
+      {...{ type, min, max, step }}
+      bind:value={inputValue}
+      {readonly}
+      aria-readonly={readonly}
+      aria-required={required}
+      aria-invalid={invalid}
+      aria-labelledby="{fieldId}-label"
+      aria-errormessage="{fieldId}-error"
+      onfocus={handleFocus}
+      onblur={handleBlur}
     />
-  {/if}
-  {#if !readonly && !required}
-    <Button
-      variant="tertiary"
-      label={_('clear')}
-      disabled={!currentValue}
-      onclick={() => {
-        currentValue = '';
-      }}
-    />
-  {/if}
-</div>
-
-{#if singleCustomTimeZone}
-  <div role="none" class="timezone">
-    {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig))}
+    {#if !readonly}
+      <Button
+        variant="tertiary"
+        label={_(dateOnly ? 'today' : 'now')}
+        onclick={() => {
+          inputValue = getCurrentDateTime(fieldConfig, timeZone);
+        }}
+      />
+    {/if}
+    {#if !readonly && !required}
+      <Button
+        variant="tertiary"
+        label={_('clear')}
+        disabled={!currentValue}
+        onclick={() => {
+          currentValue = '';
+        }}
+      />
+    {/if}
   </div>
-{:else if utc}
-  <div role="none" class="timezone">UTC</div>
+
+  {#if singleCustomTimeZone}
+    <div role="none" class="timezone">
+      {getTimeZoneLabel(singleCustomTimeZone, getDate(currentValue, fieldConfig))}
+    </div>
+  {:else if utc}
+    <div role="none" class="timezone">UTC</div>
+  {/if}
 {/if}
 
 <style>

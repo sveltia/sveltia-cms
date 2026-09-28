@@ -21,6 +21,7 @@
     isFieldMultiple,
     isFieldRequired,
   } from '$lib/services/contents/entry/fields';
+  import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
   import { createRawState } from '$lib/services/utils/state.svelte';
@@ -223,9 +224,15 @@
   // An entry awaiting deletion is shown for reference only. Unlike `readonly`, which is also set
   // for a duplicated locale, this hides the options that would change the content
   const pendingDeletion = $derived(isPendingDeletion(entryDraft.current?.originalEntry));
+  // A DateTime field with the `auto_now` option is set on save, so it can’t be edited, and it’s
+  // hidden while the entry is being created because it has no meaningful value until then. The
+  // option is ignored in a rich text editor component, whose values aren’t set on save
+  const autoNow = $derived(!inEditorComponent && isAutoNowField(fieldConfig));
+  const hidden = $derived(fieldType === 'compute' || (autoNow && !!entryDraft.current?.isNew));
   const readonly = $derived(
     // The `readonly` option defaults to `true` for the UUID field type, which can be unlocked
     (readonlyOption ?? fieldType === 'uuid') ||
+      autoNow ||
       pendingDeletion ||
       (canDuplicate && locale !== defaultLocale) ||
       fieldType === 'compute',
@@ -291,7 +298,7 @@
     data-field-type={fieldType}
     data-key-path={keyPath}
     data-typed-key-path={typedKeyPath}
-    hidden={fieldType === 'compute'}
+    {hidden}
   >
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{fieldLabel}</h4>

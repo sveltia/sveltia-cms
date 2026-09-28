@@ -10,6 +10,7 @@ import {
 } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES, MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { resolveCodeField } from '$lib/services/contents/fields/code/validate';
+import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
 import { validateDateTimeField } from '$lib/services/contents/fields/date-time/validate';
 import {
   getKeyValueField,
@@ -374,6 +375,12 @@ export const validateAnyField = (args) => {
     locale !== defaultLocale &&
     (!i18nEnabled || isFieldI18nDisabled(i18n) || i18n === 'duplicate')
   ) {
+    return undefined;
+  }
+
+  // A DateTime field set automatically on save can’t be edited, and may be empty until then. The
+  // option is ignored in a rich text editor component, whose values aren’t set on save
+  if (!componentName && isAutoNowField(fieldConfig)) {
     return undefined;
   }
 

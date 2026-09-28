@@ -21,6 +21,7 @@ import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
+import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 import { isWorkflowDraft } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
@@ -110,6 +111,10 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
         .length,
     );
   }
+
+  // Set the DateTime fields with the `auto_now` option at save time rather than when the draft was
+  // created, so the value tells when the entry was actually saved
+  assignAutoNowValues(draft);
 
   const slugs = getSlugs({ draft });
   const { defaultLocaleSlug } = slugs;

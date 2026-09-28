@@ -592,8 +592,23 @@
  * won’t include an explicit timezone indicator unless the format itself contains `Z`. Note that
  * `input_timezone: 'utc'` already implies UTC semantics, so `output_utc` has no additional effect
  * in that case. Default: `false`.
+ * @property {boolean | DateTimeAutoNowStage[]} [auto_now] Whether to set the field to the current
+ * date/time automatically when an entry is saved. `true` means both when an entry is created and
+ * whenever it’s updated, `false` means neither, and an array like `[create]` or `[update]` picks
+ * the stages. `create` also covers a value that hasn’t been set yet, such as one in a List item
+ * added to an existing entry. `[create]` suits a creation date, and `true` a last modified date.
+ * The value is formatted like the `{{now}}` default value, with seconds, but set at save time
+ * rather than when a draft is created. The field is shown as text, isn’t validated, and is hidden
+ * while an entry is being created. The value is shared by all locales. The option is ignored in a
+ * rich text editor component. Default: `false`.
  * @see https://decapcms.org/docs/widgets/#Datetime
  * @see https://sveltiacms.app/en/docs/fields/datetime
+ */
+
+/**
+ * Stage of an entry’s life at which a DateTime field is set to the current date/time: when the
+ * entry is first saved, or whenever it’s saved after that.
+ * @typedef {'create' | 'update'} DateTimeAutoNowStage
  */
 
 /**

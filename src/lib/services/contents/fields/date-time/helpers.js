@@ -70,6 +70,8 @@ const parseWithFormatFallback = ({ value, format, parseAsUTC }) => {
  * @param {boolean} [args.dateOnly] Whether the field is date-only.
  * @param {boolean} [args.timeOnly] Whether the field is time-only.
  * @param {boolean} [args.includeUTCSeconds] Whether to append UTC seconds/milliseconds.
+ * @param {boolean} [args.includeSeconds] Whether to include the actual seconds rather than
+ * truncating the time to the minute, as the input does with its default `step`.
  * @returns {string} Formatted display string.
  */
 const formatDateTimeValue = ({
@@ -79,11 +81,12 @@ const formatDateTimeValue = ({
   dateOnly,
   timeOnly,
   includeUTCSeconds = false,
+  includeSeconds = false,
 }) => {
   const tz = timeZone || (inputTimeZone === 'utc' ? 'UTC' : undefined);
-  const { year, month, day, hour, minute } = getDateTimeParts({ date, timeZone: tz });
+  const { year, month, day, hour, minute, second } = getDateTimeParts({ date, timeZone: tz });
   const dateStr = `${year}-${month}-${day}`;
-  const timeStr = `${hour}:${minute}`;
+  const timeStr = `${hour}:${minute}${includeSeconds ? `:${second}` : ''}`;
 
   if (dateOnly) {
     return dateStr;
@@ -94,7 +97,7 @@ const formatDateTimeValue = ({
   }
 
   if (includeUTCSeconds && tz === 'UTC') {
-    return `${dateStr}T${timeStr}:00.000Z`;
+    return `${dateStr}T${timeStr}${includeSeconds ? '' : ':00'}.000Z`;
   }
 
   return `${dateStr}T${timeStr}`;
@@ -191,17 +194,26 @@ export const shouldUpdateValue = ({ newValue, currentValue, fieldConfig }) => {
  * Get the current date/time.
  * @param {DateTimeField} fieldConfig Field configuration.
  * @param {string} [timeZone] IANA timezone name.
+ * @param {object} [options] Options.
+ * @param {Date} [options.date] Date to use instead of the current date/time.
+ * @param {boolean} [options.includeSeconds] Whether to include the seconds.
  * @returns {string} Current date/time in the ISO 8601 format.
  */
-export const getCurrentDateTime = (fieldConfig, timeZone) => {
+export const getCurrentDateTime = (
+  fieldConfig,
+  timeZone,
+  { date = undefined, includeSeconds = false } = {},
+) => {
   const { dateOnly, timeOnly, inputTimeZone } = parseDateTimeConfig(fieldConfig);
 
   return formatDateTimeValue({
+    date,
     timeZone,
     inputTimeZone,
     dateOnly,
     timeOnly,
     includeUTCSeconds: true,
+    includeSeconds,
   });
 };
 
@@ -225,7 +237,11 @@ export const getCurrentValue = ({ inputValue, currentValue, fieldConfig, timeZon
   } = parseDateTimeConfig(fieldConfig);
 
   const _outputUTC = outputUTC ?? configOutputUTC;
-  const inputFormat = dateOnly ? 'YYYY-MM-DD' : timeOnly ? 'HH:mm' : 'YYYY-MM-DDTHH:mm';
+  // Check for a seconds component. The input element omits it with the default `step` of 60,
+  // yielding `HH:mm` or `YYYY-MM-DDTHH:mm`
+  const hasSeconds = !!inputValue && TIME_WITH_SECONDS_REGEX.test(inputValue);
+  const timeFormat = hasSeconds ? 'HH:mm:ss' : 'HH:mm';
+  const inputFormat = dateOnly ? 'YYYY-MM-DD' : timeOnly ? timeFormat : `YYYY-MM-DDT${timeFormat}`;
 
   const effectiveTimeZone =
     inputTimeZone === 'utc'
@@ -275,9 +291,6 @@ export const getCurrentValue = ({ inputValue, currentValue, fieldConfig, timeZon
     return inputValue;
   }
 
-  // Check for a seconds component. The input element omits it with the default `step` of 60,
-  // yielding `HH:mm` or `YYYY-MM-DDTHH:mm`.
-  const hasSeconds = TIME_WITH_SECONDS_REGEX.test(inputValue);
   // Append seconds (and milliseconds) for data format & framework compatibility
   const timeSuffix = currentValue ? `:00${currentValue.endsWith('.000') ? '.000' : ''}` : ':00';
 
@@ -306,6 +319,34 @@ export const getCurrentValue = ({ inputValue, currentValue, fieldConfig, timeZon
   }
 
   return hasSeconds ? inputValue : `${inputValue}${timeSuffix}`;
+};
+
+/**
+ * Get the current date/time as a value to be stored in the given field, formatted the same way as
+ * the field’s input would store it. Used for the `{{now}}` default value and the `auto_now` option.
+ * @param {DateTimeField} fieldConfig Field configuration.
+ * @param {object} [options] Options.
+ * @param {Date} [options.date] Date to use instead of the current date/time.
+ * @param {boolean} [options.includeSeconds] Whether to keep the seconds, which the input drops
+ * with its default `step`. The `{{now}}` default value is filled in the input, so it doesn’t, while
+ * a timestamp set on save does.
+ * @returns {string} Current date/time.
+ */
+export const getCurrentStorableValue = (
+  fieldConfig,
+  { date = undefined, includeSeconds = false } = {},
+) => {
+  const { singleCustomTimeZone: timeZone, outputUTC } = parseDateTimeConfig(fieldConfig);
+
+  return /** @type {string} */ (
+    getCurrentValue({
+      inputValue: getCurrentDateTime(fieldConfig, timeZone, { date, includeSeconds }),
+      currentValue: '',
+      fieldConfig,
+      timeZone,
+      outputUTC,
+    })
+  );
 };
 
 /**

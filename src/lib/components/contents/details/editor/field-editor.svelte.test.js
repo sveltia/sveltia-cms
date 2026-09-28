@@ -325,6 +325,60 @@ describe('FieldEditor', () => {
     expect(container.querySelector('section')).toHaveAttribute('hidden');
   });
 
+  test('hides a DateTime field set automatically on save while the entry is new', async () => {
+    const { container } = await renderEditor({
+      fieldConfig: { name: 'updated', widget: 'datetime', auto_now: true },
+      values: { updated: '' },
+    });
+
+    expect(container.querySelector('section')).toHaveAttribute('hidden');
+  });
+
+  test('shows a DateTime field set automatically on save as text once saved', async () => {
+    const { container } = await renderEditor({
+      fieldConfig: {
+        name: 'created',
+        label: 'Created',
+        widget: 'datetime',
+        input_timezone: 'utc',
+        auto_now: ['create'],
+      },
+      values: { created: '2026-09-28T12:34:56Z' },
+      draft: { isNew: false },
+    });
+
+    const group = page.getByRole('group', { name: /“.Created.” Field/ });
+
+    await expect.element(group).toBeVisible();
+    await expect.element(group).toMatchTextContent('Sep 28, 2026, 12:34 PM — UTC');
+    expect(container.querySelector('input')).toBeNull();
+    // Nothing to fill in, so it isn’t marked as required
+    expect(container.querySelector('.required')).toBeNull();
+  });
+
+  test('ignores `auto_now` on a DateTime field in a rich text editor component', async () => {
+    const draft = createMockDraft({
+      fields: [{ name: 'body', widget: 'richtext' }],
+      i18n: { i18nEnabled: false, defaultLocale: 'en', allLocales: ['en'] },
+      values: { en: {} },
+    });
+
+    await renderWithDraft(FieldEditor, {
+      draft,
+      props: {
+        locale: 'en',
+        keyPath: 'published',
+        typedKeyPath: 'published',
+        fieldConfig: { name: 'published', label: 'Published', widget: 'datetime', auto_now: true },
+        context: 'rich-text-editor-component',
+      },
+    });
+
+    // The field isn’t set on save there, so it stays an editable input, shown even in a new entry
+    await expect.element(page.getByRole('textbox')).toBeVisible();
+    await expect.element(page.getByRole('textbox')).not.toHaveAttribute('aria-readonly', 'true');
+  });
+
   test('warns about an unsupported field type', async () => {
     await renderEditor({
       fieldConfig: /** @type {any} */ ({ name: 'stars', widget: 'rating' }),

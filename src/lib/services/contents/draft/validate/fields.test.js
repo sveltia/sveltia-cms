@@ -192,6 +192,47 @@ describe('draft/validate/fields', () => {
       expect(result.validities.en.title.valid).toBe(false);
     });
 
+    it('should skip validation for a DateTime field set automatically on save', () => {
+      mockEntryDraft.currentValues = { en: { updated: '' } };
+
+      vi.mocked(getField).mockReturnValue({
+        name: 'updated',
+        widget: 'datetime',
+        required: true,
+        auto_now: true,
+      });
+
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      const result = validateFields('currentValues');
+
+      expect(result.valid).toBe(true);
+      expect(result.validities.en.updated).toBeUndefined();
+    });
+
+    it('should validate a DateTime field with `auto_now` in a rich text editor component', () => {
+      vi.mocked(getField).mockReturnValue({
+        name: 'published',
+        widget: 'datetime',
+        required: true,
+        auto_now: true,
+      });
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+
+      const result = validateAnyField({
+        draft: mockEntryDraft,
+        validities: { en: {} },
+        locale: 'en',
+        keyPath: '_component.published',
+        componentName: '_component',
+        valueMap: { '_component.published': '' },
+        value: '',
+      });
+
+      // The option is ignored there, so the field is validated like any other
+      expect(result?.valueMissing).toBe(true);
+    });
+
     it('should skip validation for disabled locales', () => {
       mockEntryDraft.currentLocales = { en: true, ja: false };
       mockEntryDraft.currentValues = {

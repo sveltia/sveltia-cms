@@ -19,6 +19,7 @@ import { validateEntry } from '$lib/services/contents/draft/validate';
 import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
+import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
 import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
 import { isWorkflowDraft, unpublishedEntries } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
@@ -60,6 +61,7 @@ vi.mock('$lib/services/contents/draft/validate');
 vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/editor/pending');
 vi.mock('$lib/services/contents/entry/history');
+vi.mock('$lib/services/contents/fields/date-time/auto-now');
 vi.mock('$lib/services/deployments/publish');
 vi.mock('$lib/services/workflow', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
@@ -274,6 +276,33 @@ describe('draft/save/index', () => {
       expect(expandInvalidFields).toHaveBeenCalledWith({ draft: mockDraft });
       // Nothing is fetched for a draft that can’t be saved anyway
       expect(detectEntryConflict).not.toHaveBeenCalled();
+      // The draft isn’t touched either
+      expect(assignAutoNowValues).not.toHaveBeenCalled();
+    });
+
+    it('should set the auto-now DateTime fields before working out the changes', async () => {
+      const order = [];
+
+      vi.mocked(assignAutoNowValues).mockImplementation(() => {
+        order.push('autoNow');
+      });
+      vi.mocked(getSlugs).mockImplementation(() => {
+        order.push('slugs');
+
+        return { defaultLocaleSlug: 'test-post' };
+      });
+
+      await saveEntry();
+
+      expect(assignAutoNowValues).toHaveBeenCalledWith(mockDraft);
+      expect(order).toEqual(['autoNow', 'slugs']);
+    });
+
+    it('should not set the auto-now DateTime fields when refusing to save over a change', async () => {
+      vi.mocked(detectEntryConflict).mockResolvedValue({ type: 'modified', entry: { id: 'x' } });
+
+      await expect(saveEntry()).rejects.toThrow('save_conflict');
+      expect(assignAutoNowValues).not.toHaveBeenCalled();
     });
 
     it('should refuse to save over someone else’s change unless told to', async () => {
