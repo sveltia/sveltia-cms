@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { searchLocations } from '$lib/services/contents/fields/map/geocoding';
-
 import MapEditor from './map-editor.svelte';
+
+// Create the mock up front rather than importing the mocked module, so the test always holds the
+// mock function. Browser mode occasionally leaves a module mock unapplied on a loaded CI runner,
+// which handed the test the real function, failing every test before the map was even rendered
+const { searchLocations } = vi.hoisted(() => ({ searchLocations: vi.fn() }));
 
 vi.mock('$lib/services/app/dependencies', () => ({
   getUnpkgURL: vi.fn((name) => `https://unpkg.com/${name}`),
@@ -26,7 +29,7 @@ vi.mock('$lib/services/app/dependencies', () => ({
   getChunkURLs: vi.fn(() => []),
   loadChunk: vi.fn(),
 }));
-vi.mock('$lib/services/contents/fields/map/geocoding', () => ({ searchLocations: vi.fn() }));
+vi.mock('$lib/services/contents/fields/map/geocoding', () => ({ searchLocations }));
 
 /**
  * Render the editor.
