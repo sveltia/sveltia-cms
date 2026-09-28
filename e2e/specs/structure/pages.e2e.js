@@ -23,8 +23,6 @@ const chooseParentFolder = async (page, label) => {
 
   await page.getByRole('button', { name: 'Parent Folder' }).click();
   await expect(tree).toBeVisible();
-  // Like a menu, a Sveltia UI tree ignores clicks for 100 ms after it opens
-  await page.waitForTimeout(150);
   await tree.getByText(label, { exact: true }).click();
 };
 

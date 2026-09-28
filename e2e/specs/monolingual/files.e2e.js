@@ -59,9 +59,16 @@ test('edits the singleton’s fields of different types', async ({ cms, page }) 
   await editor.getByRole('switch', { name: 'Show Comments' }).click();
   await editor.getByRole('button', { name: 'Save' }).click();
 
-  // The number and the boolean keep their types in the JSON file
+  // The number and the boolean keep their types in the JSON file. It can be read while it’s being
+  // written, so keep polling until it parses
   await expect
-    .poll(async () => JSON.parse((await cms.readRepo())['data/settings.json']))
+    .poll(async () => {
+      try {
+        return JSON.parse((await cms.readRepo())['data/settings.json']);
+      } catch {
+        return undefined;
+      }
+    })
     .toEqual({
       site_name: 'Night Sky',
       accent_color: '#aa3300',

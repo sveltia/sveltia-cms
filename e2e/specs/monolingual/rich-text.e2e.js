@@ -193,13 +193,20 @@ test.describe('editing', () => {
 
     await markdownButton.click();
     await expect(markdownButton).toHaveAttribute('aria-pressed', 'true');
-    // The formatting tools don’t apply to the source
-    await expect(field.getByRole('button', { name: 'Bold' })).toBeDisabled();
 
     const source = field.getByRole('textbox', { name: 'Body' });
 
     await expect(source).toHaveValue('The observatory opens its doors.');
-    await source.fill('# Open House\n\nThe observatory opens its **doors**.');
+    await source.fill('# Open House\n\nThe observatory opens its doors.');
+
+    // The formatting tools edit the source too
+    await source.evaluate((/** @type {HTMLTextAreaElement} */ textarea) => {
+      const start = textarea.value.indexOf('doors');
+
+      textarea.setSelectionRange(start, start + 'doors'.length);
+    });
+    await field.getByRole('button', { name: 'Bold' }).click();
+    await expect(source).toHaveValue('# Open House\n\nThe observatory opens its **doors**.');
     await markdownButton.click();
 
     await expect(source.getByRole('heading')).toHaveText('Open House');

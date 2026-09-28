@@ -91,20 +91,9 @@
 
   let cleanupTimeout = 0;
   /**
-   * Function to settle the update registered with {@link trackPendingFieldUpdate}, while the user
-   * has changed the content but the editor hasn’t written the new value back yet.
-   * @type {(() => void) | undefined}
+   * Whether the editor has yet to write a change made by the user back to {@link inputValue}.
    */
-  let settlePendingUpdate;
-  /**
-   * Whether the editor has yet to write back a value set from outside, e.g. the body of the entry
-   * being opened. The editor converts the Markdown and writes it back in its own style, e.g.
-   * `*text*` as `_text_`, which isn’t a change made by the user, so it’s not written to the draft:
-   * the entry would otherwise count as changed as soon as it’s opened, and saving any field would
-   * rewrite the body. It’s reset once the editor has written the value back, or as soon as the user
-   * interacts with the editor, as the value written back then may include the user’s change.
-   */
-  let awaitingReexport = false;
+  let pending = $state(false);
 
   const {
     // Field type-specific options
@@ -307,17 +296,10 @@
   syncValues(
     () => currentValue,
     (value) => {
-      if (awaitingReexport) {
-        awaitingReexport = false;
-
-        return;
-      }
-
       currentValue = value;
     },
     () => inputValue,
     (input) => {
-      awaitingReexport = true;
       inputValue = input;
     },
     (value) => (typeof value === 'string' ? value : ''),
@@ -338,164 +320,24 @@
     window.clearTimeout(cleanupTimeout);
   });
 
-  /**
-   * The update registered with {@link trackPendingFieldUpdate}, while it’s pending.
-   * @type {Promise<void> | undefined}
-   */
-  let pendingUpdate;
-  /**
-   * Whether {@link pendingUpdate} carries a change made by the user.
-   */
-  let pendingUserChange = false;
-
-  /**
-   * Register a pending update when the content is about to change, or has just changed. The editor
-   * converts the content to Markdown with a short delay, so a save right after a change would
-   * otherwise validate and write the previous value.
-   * @param {object} [options] Options.
-   * @param {boolean} [options.userChange] Whether the change is made by the user. The editor also
-   * changes when it loads a value set from outside, e.g. the body of the entry being opened, which
-   * a save has to wait for too, but which isn’t a change to the entry.
-   */
-  const registerPendingUpdate = ({ userChange = true } = {}) => {
-    if (pendingUpdate) {
-      // The user has made a change while the editor was converting a value set from outside
-      if (userChange && !pendingUserChange) {
-        pendingUserChange = true;
-        trackPendingFieldUpdate(pendingUpdate);
-      }
-
-      return;
-    }
-
-    pendingUpdate = new Promise((resolve) => {
-      // The editor doesn’t write the value back when the Markdown is unchanged, e.g. when a
-      // trailing space is typed, so give up after a while rather than blocking a save forever
-      const timeout = window.setTimeout(() => settlePendingUpdate?.(), 1000);
-
-      /**
-       * Settle the update and forget it, so the next change registers a new one.
-       */
-      settlePendingUpdate = () => {
-        window.clearTimeout(timeout);
-        settlePendingUpdate = undefined;
-        pendingUpdate = undefined;
-        resolve();
-      };
-    });
-
-    pendingUserChange = userChange;
-    trackPendingFieldUpdate(pendingUpdate, { userChange });
-  };
-
-  /**
-   * Register a pending update when the user is about to change the content.
-   */
-  const onBeforeInput = () => {
-    registerPendingUpdate();
-  };
-
-  /**
-   * Settle the pending update once the editor has written the new value back. The value reaches
-   * {@link currentValue} through a few bindings and effects, so wait for them to be flushed first.
-   */
-  const onUpdate = async () => {
-    await tick();
-    settlePendingUpdate?.();
-    // The value set from outside has been written back, if the editor changed it at all
-    awaitingReexport = false;
-  };
-
-  /**
-   * Stop waiting for the editor to write back a value set from outside once the user interacts with
-   * the editor, e.g. by typing, pasting, dropping a file or clicking a toolbar button: the value
-   * written back next may be the user’s change, which must reach the draft. In the Markdown mode, a
-   * value isn’t converted, so nothing is written back but the user’s change.
-   */
-  const onUserInteraction = () => {
-    awaitingReexport = false;
-  };
-
-  /**
-   * Events that tell a user’s interaction with the editor, caught in the capture phase before the
-   * editor handles them.
-   */
-  const USER_INTERACTION_EVENTS = ['beforeinput', 'keydown', 'paste', 'drop', 'pointerdown'];
-
-  /**
-   * Root element of the Lexical editor whose updates are being listened to.
-   * @type {Element | undefined}
-   */
-  let editorRoot;
-  /**
-   * Function to stop listening to the updates of the editor at {@link editorRoot}.
-   * @type {(() => void) | undefined}
-   */
-  let unregisterUpdateListener;
-
-  /**
-   * Listen to the updates of the Lexical editor, to register a pending update when the content has
-   * changed in a way that doesn’t fire `beforeinput`: a toolbar button, a menu, a keyboard shortcut
-   * or a component. Lexical calls the listener as the change is made, and the editor writes the
-   * Markdown back a moment later, which settles the update. A change to the user interface of a
-   * component, e.g. collapsing it, doesn’t go through Lexical, so it doesn’t hold up a save. The
-   * editor’s root element is only there once the editor is rendered, and is replaced when the
-   * editor is reset, so this is called on every change to the wrapper’s DOM. The first root in the
-   * wrapper is this editor’s own; any other belongs to an editor nested in a component, which
-   * tracks its own updates.
-   */
-  const listenToEditorUpdates = () => {
-    const root = wrapper?.querySelector('[data-lexical-editor]') ?? undefined;
-    // Lexical attaches the editor to the root element once it’s rendered
-    const editor = root ? getNearestEditorFromDOMNode(root) : null;
-
-    if (!editor || root === editorRoot) {
-      return;
-    }
-
-    unregisterUpdateListener?.();
-    editorRoot = root;
-    unregisterUpdateListener = editor.registerUpdateListener(({ dirtyElements, dirtyLeaves }) => {
-      // An update that only moves the selection doesn’t change the content
-      if (dirtyElements.size || dirtyLeaves.size) {
-        // Loading a value set from outside isn’t a change made by the user
-        registerPendingUpdate({ userChange: !awaitingReexport });
-      }
-    });
-  };
-
+  // While the editor holds a change made by the user, register it as a pending update: the editor
+  // converts the content to Markdown with a short delay, so a save right after a change would
+  // otherwise validate and write the previous value
   $effect(() => {
-    // The wrapper is bound before the effects run, so it’s always there
-    /* v8 ignore next 3 */
-    if (!wrapper) {
+    if (!pending) {
       return undefined;
     }
 
-    const target = wrapper;
-    const observer = new MutationObserver(listenToEditorUpdates);
+    /** @type {PromiseWithResolvers<void>} */
+    const { promise, resolve } = Promise.withResolvers();
 
-    // The `Update` event is dispatched on the editor’s root element without bubbling, so it can
-    // only be caught in the capture phase
-    USER_INTERACTION_EVENTS.forEach((type) => {
-      target.addEventListener(type, onUserInteraction, true);
-    });
-    target.addEventListener('beforeinput', onBeforeInput, true);
-    target.addEventListener('Update', onUpdate, true);
-    observer.observe(target, { subtree: true, childList: true });
-    listenToEditorUpdates();
+    trackPendingFieldUpdate(promise);
 
-    return () => {
-      USER_INTERACTION_EVENTS.forEach((type) => {
-        target.removeEventListener(type, onUserInteraction, true);
-      });
-      target.removeEventListener('beforeinput', onBeforeInput, true);
-      target.removeEventListener('Update', onUpdate, true);
-      observer.disconnect();
-      unregisterUpdateListener?.();
-      unregisterUpdateListener = undefined;
-      editorRoot = undefined;
-      // Don’t hold up a save when the editor goes away
-      settlePendingUpdate?.();
+    // Settle once the value has reached `currentValue` through the bindings and effects, or when
+    // the editor goes away
+    return async () => {
+      await tick();
+      resolve();
     };
   });
 </script>
@@ -516,6 +358,7 @@
         {useEmojiAutocomplete}
         {useMarkdownShortcuts}
         bind:value={inputValue}
+        bind:pending
         flex
         {readonly}
         {required}

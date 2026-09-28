@@ -74,7 +74,6 @@ test('moves an entry to another folder', async ({ cms, page }) => {
 
   await editor.getByRole('button', { name: 'Parent Folder' }).click();
   await expect(tree).toBeVisible();
-  await page.waitForTimeout(150);
   await tree.getByText('guide', { exact: true }).click();
   await editor.getByRole('button', { name: 'Save' }).click();
 

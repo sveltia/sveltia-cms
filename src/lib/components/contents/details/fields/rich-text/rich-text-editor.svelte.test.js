@@ -114,78 +114,28 @@ describe('RichTextEditor', () => {
   });
 
   test('tracks a pending update while typing', async () => {
-    await renderEditor('Hello');
-
-    const editor = page.getByRole('textbox');
-
-    await expect.poll(() => editor.element().textContent).toBe('Hello');
-    await editor.click();
-    await userEvent.keyboard('!');
-
-    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
-
-    // The update is settled once the Markdown is written back
-    const promise = vi.mocked(trackPendingFieldUpdate).mock.calls[0][0];
-
-    await expect(promise).resolves.toBeUndefined();
-
-    // A change that doesn’t alter the Markdown is settled after a while
-    await new Promise((resolve) => {
-      setTimeout(resolve, 500);
-    });
-    vi.mocked(trackPendingFieldUpdate).mockClear();
-
-    const start = Date.now();
-
-    // A synthetic event doesn’t change the content, so nothing writes the value back and the
-    // update stays pending: a second change in the meantime isn’t tracked twice
-    editor.element().dispatchEvent(new InputEvent('beforeinput', { bubbles: true }));
-    editor.element().dispatchEvent(new InputEvent('beforeinput', { bubbles: true }));
-    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
-    await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
-    expect(Date.now() - start).toBeGreaterThanOrEqual(900);
-    expect(trackPendingFieldUpdate).toHaveBeenCalledTimes(1);
-  });
-
-  test('counts a change made while the content is being loaded as the user’s', async () => {
-    await renderEditor('Hello');
-
-    const editor = page.getByRole('textbox');
-
-    // Loading the content registers an update that isn’t a change made by the user
-    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
-
-    const [[promise, options]] = vi.mocked(trackPendingFieldUpdate).mock.calls;
-
-    expect(options).toEqual({ userChange: false });
-
-    // The user starts typing before the editor has written the value back: the same update now
-    // carries the user’s change, once however many changes follow
-    editor.element().dispatchEvent(new InputEvent('beforeinput', { bubbles: true }));
-    editor.element().dispatchEvent(new InputEvent('beforeinput', { bubbles: true }));
-    expect(vi.mocked(trackPendingFieldUpdate).mock.calls).toEqual([
-      [promise, { userChange: false }],
-      [promise],
-    ]);
-    await expect(promise).resolves.toBeUndefined();
-  });
-
-  test('tracks a pending update for a change that doesn’t fire `beforeinput`', async () => {
     const { props } = await renderEditor('Hello');
     const editor = page.getByRole('textbox');
 
     await expect.poll(() => editor.element().textContent).toBe('Hello');
-    // Loading the content changes the editor too; wait for that update to be settled. It isn’t a
-    // change made by the user, so it doesn’t make the entry count as changed meanwhile
-    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
-    expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][1]).toEqual({ userChange: false });
+    await editor.click();
+    await userEvent.keyboard('{End}!');
+
+    // A save waits for the update, which is settled once the Markdown is written back
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalledOnce());
     await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
-    vi.mocked(trackPendingFieldUpdate).mockClear();
+    expect(props.currentValue).toBe('Hello!');
+  });
+
+  test('tracks a pending update for a change made with the toolbar', async () => {
+    const { props } = await renderEditor('Hello');
+    const editor = page.getByRole('textbox');
+
+    await expect.poll(() => editor.element().textContent).toBe('Hello');
 
     // An attribute change on the editor’s root element doesn’t change the content
     props.invalid = true;
     await expect.poll(() => editor.element().getAttribute('aria-invalid')).toBe('true');
-    expect(trackPendingFieldUpdate).not.toHaveBeenCalled();
 
     // Select the text, and let the editor pick up the selection, then make it bold with the toolbar
     const range = document.createRange();
@@ -197,23 +147,24 @@ describe('RichTextEditor', () => {
     await new Promise((resolve) => {
       requestAnimationFrame(resolve);
     });
+    expect(trackPendingFieldUpdate).not.toHaveBeenCalled();
     await page.getByRole('button', { name: 'Bold' }).click();
 
-    // A save waits for the update, which is settled once the Markdown is written back
-    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
-    expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][1]).toEqual({ userChange: true });
+    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalledOnce());
     await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
     expect(props.currentValue).toBe('**Hello**');
   });
 
-  test('doesn’t write back a value in another style when it’s loaded', async () => {
+  test('neither tracks an update nor writes back a value in another style when it’s loaded', async () => {
     const { props } = await renderEditor('Some *italic* text.');
     const editor = page.getByRole('textbox');
 
     await expect.poll(() => editor.element().textContent).toBe('Some italic text.');
-    // Wait for the editor to write the value back, in its own style
-    await vi.waitFor(() => expect(trackPendingFieldUpdate).toHaveBeenCalled());
-    await expect(vi.mocked(trackPendingFieldUpdate).mock.calls[0][0]).resolves.toBeUndefined();
+    // Give the editor time to convert the content, which it would write as `_italic_`
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    expect(trackPendingFieldUpdate).not.toHaveBeenCalled();
     expect(props.currentValue).toBe('Some *italic* text.');
 
     // A change made by the user is written, in the editor’s style

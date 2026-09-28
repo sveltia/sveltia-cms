@@ -14,15 +14,12 @@ test.beforeEach(async ({ cms }) => {
 });
 
 /**
- * Select a panel in the Settings dialog. Like a list box, the tab list ignores input for a moment
- * after the dialog opens, so click the tab until it’s selected.
+ * Select a panel in the Settings dialog.
  * @param {Locator} tab Tab.
  */
 const selectTab = async (tab) => {
-  await expect(async () => {
-    await tab.click();
-    await expect(tab).toHaveAttribute('aria-selected', 'true', { timeout: 200 });
-  }).toPass();
+  await tab.click();
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
 };
 
 /**

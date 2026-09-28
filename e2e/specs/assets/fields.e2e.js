@@ -40,16 +40,12 @@ const getField = (editor, label) =>
   editor.getByRole('group', { name: `“\u2068${label}\u2069” Field` });
 
 /**
- * Select an option in a list box of the Select File dialog. A Sveltia UI list box ignores clicks
- * for 100 ms after it appears, which a test can click within, so click until the option is
- * selected.
+ * Select an option in a list box of the Select File dialog.
  * @param {Locator} option Option.
  */
 const selectOption = async (option) => {
-  await expect(async () => {
-    await option.click();
-    await expect(option).toHaveAttribute('aria-selected', 'true', { timeout: 200 });
-  }).toPass();
+  await option.click();
+  await expect(option).toHaveAttribute('aria-selected', 'true');
 };
 
 /**
