@@ -19,7 +19,9 @@ const baseURL = `http://127.0.0.1:${PORT}`;
 export default defineConfig({
   testDir: './specs',
   testMatch: '**/*.e2e.js',
-  outputDir: '../test-results',
+  // A folder for each port, as a run clears its folder first: runs on other ports in the same
+  // checkout would otherwise delete each other’s traces
+  outputDir: `../test-results/${PORT}`,
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
