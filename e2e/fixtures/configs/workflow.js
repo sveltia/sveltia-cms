@@ -43,3 +43,31 @@ export const openEntryPullRequest = (github, { slug, files, status = 'draft' }) 
     author: github.user,
   });
 };
+
+/**
+ * The same blog with Open Authoring turned on: a user who can’t write to the repository works on a
+ * fork of it instead. Set `github.canWrite` to `false` to sign in as such a contributor.
+ */
+export const OPEN_AUTHORING_CONFIG = {
+  ...WORKFLOW_CONFIG,
+  backend: { ...WORKFLOW_CONFIG.backend, open_authoring: true, auth_scope: 'public_repo' },
+};
+
+/**
+ * Save a post to a branch in the contributor’s fork the way the CMS does, on a
+ * `cms/{owner}/{repo}/posts/{slug}` branch. The fork has to exist. Like the CMS, this opens no pull
+ * request: the entry is a draft until the contributor sends it for review.
+ * @param {MockGitHub} github GitHub mock.
+ * @param {object} args Arguments.
+ * @param {string} args.slug Entry slug.
+ * @param {Record<string, string | null>} args.files Files to commit to the branch.
+ * @returns {string} Branch key in the mock, e.g. `mona:cms/mona/e2e-site/posts/{slug}`.
+ */
+export const saveForkDraft = (github, { slug, files }) => {
+  const branch = github.forkBranch(`cms/${github.user.login}/${github.repo}/posts/${slug}`);
+
+  github.createBranch(branch, github.head.oid);
+  github.commit(files, { branch, author: github.user, message: `Create Post “${slug}”` });
+
+  return branch;
+};

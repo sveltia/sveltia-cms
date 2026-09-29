@@ -73,10 +73,28 @@ const getBlobSHA = (content) =>
 const toBranchName = (ref) => ref.replace(/^refs\/heads\//, '');
 
 /**
+ * Split a key of {@link MockGitHub.refs} into the owner of the repository the branch is in and the
+ * branch name. A branch in the fork is keyed as `owner:branch`, which is also how a pull request
+ * from the fork names its head.
+ * @param {string} key Branch key, e.g. `main` or `mona:cms/mona/e2e-site/posts/hello`.
+ * @returns {{ owner: string | undefined, name: string }} Owner of the fork, if the branch is in
+ * one, and the branch name.
+ */
+const splitBranchKey = (key) => {
+  const index = key.indexOf(':');
+
+  return index === -1
+    ? { owner: undefined, name: key }
+    : { owner: key.slice(0, index), name: key.slice(index + 1) };
+};
+
+/**
  * A GitHub repository behind a mocked REST and GraphQL API, for the CMS to sign in to, load files
  * from and commit to. A test can commit to it as someone else with {@link MockGitHub.commit} to
  * simulate a colleague’s change, and check what the CMS committed in {@link MockGitHub.received}.
  * Branches and pull requests work as well, with labels and the draft state, for Editorial Workflow.
+ * For Open Authoring, the signed-in user can be denied write access with
+ * {@link MockGitHub.canWrite}, and given a fork with {@link MockGitHub.createFork}.
  */
 export class MockGitHub {
   owner = 'sveltia';
@@ -118,7 +136,30 @@ export class MockGitHub {
   commits = [];
 
   /**
-   * Head commit SHA keyed by branch name.
+   * Whether the signed-in user can write to the repository. A user who can’t is an Open Authoring
+   * contributor, who works on a fork.
+   */
+  canWrite = true;
+
+  /**
+   * Whether the repository allows forking.
+   */
+  allowForking = true;
+
+  /**
+   * The signed-in user’s fork of the repository, once {@link createFork} has made it.
+   * @type {{ owner: string, repo: string } | undefined}
+   */
+  fork = undefined;
+
+  /**
+   * GraphQL node ID of the fork.
+   */
+  forkId = 'R_e2e_fork';
+
+  /**
+   * Head commit SHA keyed by branch name. A branch in the fork is keyed as `owner:branch`, e.g.
+   * `mona:main`; see {@link forkBranch}.
    * @type {Map<string, string>}
    */
   refs = new Map();
@@ -162,6 +203,40 @@ export class MockGitHub {
    */
   get head() {
     return this.getHead(this.branch);
+  }
+
+  /**
+   * Fork the repository onto the signed-in user’s account, with a copy of the default branch. Like
+   * a fork on GitHub, it shares the commits and blobs of the repository, and only its branches are
+   * its own.
+   * @returns {{ owner: string, repo: string }} Fork.
+   */
+  createFork() {
+    this.fork = { owner: this.user.login, repo: this.repo };
+    this.refs.set(this.forkBranch(this.branch), this.head.oid);
+
+    return this.fork;
+  }
+
+  /**
+   * Get the key of a branch in the fork, for {@link refs}, {@link commit}, {@link readFile} and
+   * the `head` of a pull request.
+   * @param {string} branch Branch name.
+   * @returns {string} Key, e.g. `mona:main`.
+   */
+  forkBranch(branch) {
+    return `${this.user.login}:${branch}`;
+  }
+
+  /**
+   * Get the key of a branch in the repository of the given owner: the fork if it’s the signed-in
+   * user, the repository itself otherwise.
+   * @param {string | undefined} owner Repository owner.
+   * @param {string} branch Branch name.
+   * @returns {string} Key.
+   */
+  toBranchKey(owner, branch) {
+    return owner && owner !== this.owner ? `${owner}:${branch}` : branch;
   }
 
   /**
@@ -227,8 +302,8 @@ export class MockGitHub {
    * @param {object} [options] Options.
    * @param {string} [options.message] Commit message.
    * @param {MockUser} [options.author] Author, the colleague by default.
-   * @param {string} [options.branch] Branch, the default branch by default. It has to exist,
-   * except for the initial commit.
+   * @param {string} [options.branch] Branch, the default branch by default, or a fork branch key
+   * from {@link forkBranch}. It has to exist, except for the initial commit.
    * @returns {MockCommit} New commit.
    * @throws {Error} When the branch doesn’t exist.
    */
@@ -269,7 +344,8 @@ export class MockGitHub {
   /**
    * Get the content of a file on a branch.
    * @param {string} path File path.
-   * @param {string} [branch] Branch, the default branch by default.
+   * @param {string} [branch] Branch, the default branch by default, or a fork branch key from
+   * {@link forkBranch}.
    * @returns {string | undefined} File content, or `undefined` if the file or the branch doesn’t
    * exist.
    */
@@ -618,12 +694,46 @@ export class MockGitHub {
       return { status: 204 };
     }
 
+    if (method === 'GET' && pathname === repoPath) {
+      return {
+        json: {
+          full_name: `${this.owner}/${this.repo}`,
+          private: false,
+          fork: false,
+          owner: { login: this.owner, type: 'Organization' },
+          default_branch: this.branch,
+          allow_forking: this.allowForking,
+          permissions: { admin: false, maintain: false, push: this.canWrite, pull: true },
+        },
+      };
+    }
+
+    const forkPath = `/repos/${this.user.login}/${this.repo}`;
+
+    if (pathname === forkPath || pathname.startsWith(`${forkPath}/`)) {
+      return this.handleForkRequest(method, pathname.slice(forkPath.length + 1), body);
+    }
+
     if (!pathname.startsWith(`${repoPath}/`)) {
       return undefined;
     }
 
     const path = pathname.slice(repoPath.length + 1);
     const segments = path.split('/');
+
+    if (method === 'POST' && path === 'forks') {
+      if (!this.allowForking) {
+        return { status: 403, json: { message: 'Forking is disabled for this repository' } };
+      }
+
+      const { owner, repo } = this.fork ?? this.createFork();
+
+      return { status: 202, json: { full_name: `${owner}/${repo}`, fork: true } };
+    }
+
+    if (method === 'GET' && path.startsWith('compare/')) {
+      return this.handleCompareRequest(path.slice('compare/'.length));
+    }
 
     if (method === 'GET' && path.startsWith('git/trees/')) {
       const ref = decodeURIComponent(path.slice('git/trees/'.length));
@@ -680,6 +790,105 @@ export class MockGitHub {
     }
 
     return undefined;
+  }
+
+  /**
+   * Answer a request to the signed-in user’s fork. Like GitHub, answer 404 for a fork that doesn’t
+   * exist, which is how the CMS finds out it has to make one.
+   * @param {string} method HTTP method.
+   * @param {string} path URL path relative to the fork, e.g. `merge-upstream`, or an empty string
+   * for the fork itself.
+   * @param {Record<string, any> | null} body Request body.
+   * @returns {MockResponse | undefined} Response.
+   */
+  handleForkRequest(method, path, body) {
+    if (!this.fork) {
+      return { status: 404, json: { message: 'Not Found' } };
+    }
+
+    if (method === 'GET' && path === '') {
+      return {
+        json: {
+          full_name: `${this.fork.owner}/${this.fork.repo}`,
+          fork: true,
+          parent: { full_name: `${this.owner}/${this.repo}` },
+          owner: { login: this.fork.owner, type: 'User' },
+        },
+      };
+    }
+
+    // Fast-forward the fork’s copy of a branch to the repository’s
+    // @see https://docs.github.com/en/rest/branches/branches#sync-a-fork-branch-with-the-upstream-repository
+    if (method === 'POST' && path === 'merge-upstream') {
+      const forkBranch = this.forkBranch(body?.branch);
+      const current = this.refs.get(forkBranch);
+      const upstream = /** @type {string} */ (this.refs.get(body?.branch));
+
+      if (current === upstream) {
+        return { json: { merge_type: 'none', message: 'This branch is not behind the upstream' } };
+      }
+
+      if (!current || !this.getAncestors(upstream).some(({ oid }) => oid === current)) {
+        return { status: 409, json: { message: 'There are merge conflicts' } };
+      }
+
+      this.refs.set(forkBranch, upstream);
+
+      return {
+        json: { merge_type: 'fast-forward', message: 'Successfully fetched and fast-forwarded' },
+      };
+    }
+
+    if (path.startsWith('git/refs/heads/')) {
+      return this.handleRefRequest(
+        method,
+        this.forkBranch(decodeURIComponent(path.slice('git/refs/heads/'.length))),
+        body,
+      );
+    }
+
+    if (method === 'GET' && path.startsWith('git/blobs/')) {
+      const blob = this.blobs.get(path.slice('git/blobs/'.length));
+
+      return blob ? { json: blob } : undefined;
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Answer a request to compare two branches, possibly across repositories, with the files the head
+   * changes since the merge base, like GitHub’s “Files changed”.
+   * @param {string} range Encoded range, e.g. `main...mona:cms/mona/e2e-site/posts/hello`.
+   * @returns {MockResponse} Response.
+   * @see https://docs.github.com/en/rest/commits/commits#compare-two-commits
+   */
+  handleCompareRequest(range) {
+    const [base, head] = range.split('...').map((ref) => {
+      const { owner, name } = splitBranchKey(decodeURIComponent(ref));
+
+      return this.toBranchKey(owner, name);
+    });
+
+    if (!this.refs.has(base) || !this.refs.has(head)) {
+      return { status: 404, json: { message: 'Not Found' } };
+    }
+
+    const headCommit = this.getHead(head);
+    const mergeBase = this.getMergeBase(headCommit.oid, this.getHead(base).oid);
+    /** @type {Record<string, string>} */
+    const statuses = { ADDED: 'added', MODIFIED: 'modified', DELETED: 'removed' };
+
+    return {
+      json: {
+        files: MockGitHub.diffTrees(mergeBase.tree, headCommit.tree).map(
+          ({ path, changeType }) => ({
+            filename: path,
+            status: statuses[changeType],
+          }),
+        ),
+      },
+    };
   }
 
   /**
@@ -844,7 +1053,10 @@ export class MockGitHub {
       merged: state === 'merged',
       draft,
       html_url: `https://github.com/${this.owner}/${this.repo}/pull/${number}`,
-      head: { ref: pullRequest.head, sha: this.getPullRequestHead(pullRequest).oid },
+      head: {
+        ref: splitBranchKey(pullRequest.head).name,
+        sha: this.getPullRequestHead(pullRequest).oid,
+      },
       base: { ref: pullRequest.base },
       labels: labels.map((name) => ({ name })),
       user: { login: pullRequest.author.login, id: pullRequest.author.id },
@@ -859,18 +1071,23 @@ export class MockGitHub {
    * @returns {Record<string, any>} Node.
    */
   toPullRequestNode(pullRequest) {
-    const { number, nodeId, title, draft, labels, createdAt, updatedAt, author } = pullRequest;
+    const { number, nodeId, title, state, draft, labels, createdAt, updatedAt, author } =
+      pullRequest;
+
+    const { owner: headOwner, name: headRefName } = splitBranchKey(pullRequest.head);
 
     return {
       id: nodeId,
       number,
       title,
       url: `https://github.com/${this.owner}/${this.repo}/pull/${number}`,
+      state: state.toUpperCase(),
       isDraft: draft,
-      isCrossRepository: false,
+      isCrossRepository: !!headOwner,
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),
-      headRefName: pullRequest.head,
+      headRefName,
+      headRepositoryOwner: { login: headOwner ?? this.owner },
       headRefOid: this.getPullRequestHead(pullRequest).oid,
       author: {
         login: author.login,
@@ -924,16 +1141,85 @@ export class MockGitHub {
       return { data: { [mutation]: { pullRequest: { isDraft: pullRequest.draft } } } };
     }
 
+    // The state of a pull request, read before an Open Authoring contributor changes it
+    if (/node\(id:\s*\$id\)\s*\{\s*\.\.\.\s*on\s+PullRequest\b/.test(query)) {
+      const pullRequest = this.pullRequests.find(({ nodeId }) => nodeId === variables.id);
+
+      return {
+        data: {
+          node: pullRequest
+            ? { state: pullRequest.state.toUpperCase(), isDraft: pullRequest.draft }
+            : null,
+        },
+      };
+    }
+
     if (query.includes('defaultBranchRef')) {
       return { data: { repository: { defaultBranchRef: { name: this.branch } } } };
     }
 
-    // The repository to create a workflow branch in, and the head of the branch to start it from
-    if (/fork:\s*repository\(/.test(query)) {
+    // The fork the signed-in user owns, looked for when it isn’t found at the default name
+    if (query.includes('forks(')) {
+      const { fork } = this;
+
       return {
         data: {
-          fork: { id: this.repositoryId },
+          repository: {
+            forks: {
+              nodes: fork
+                ? [{ nameWithOwner: `${fork.owner}/${fork.repo}`, owner: { login: fork.owner } }]
+                : [],
+            },
+          },
+        },
+      };
+    }
+
+    // The Editorial Workflow branches in the fork
+    if (query.includes('refs(refPrefix:')) {
+      return { data: { repository: { refs: { nodes: this.findForkBranches(variables) } } } };
+    }
+
+    // The repository to create a workflow branch in, and the head of the branch to start it from
+    if (/fork:\s*repository\(/.test(query)) {
+      const { forkOwner, forkRepo } = variables;
+      const isFork = forkOwner === this.fork?.owner && forkRepo === this.fork?.repo;
+
+      return {
+        data: {
+          fork:
+            forkOwner === this.owner && forkRepo === this.repo
+              ? { id: this.repositoryId }
+              : isFork
+                ? { id: this.forkId }
+                : null,
           base: { ref: this.getRefNode(variables.branch, { oid: true }) },
+        },
+      };
+    }
+
+    // The pull requests opened from each fork branch, fetched in batches with an alias for each
+    const branchPullRequests = [
+      ...query.matchAll(
+        new RegExp(`(pr_\\d+):\\s*pullRequests\\(\\s*headRefName:\\s*${STRING}`, 'g'),
+      ),
+    ];
+
+    if (branchPullRequests.length) {
+      return {
+        data: {
+          repository: Object.fromEntries(
+            branchPullRequests.map(([, alias, name]) => [
+              alias,
+              {
+                nodes: this.pullRequests
+                  .filter(({ head }) => splitBranchKey(head).name === JSON.parse(name))
+                  .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+                  .slice(0, 2)
+                  .map((pullRequest) => this.toPullRequestNode(pullRequest)),
+              },
+            ]),
+          ),
         },
       };
     }
@@ -944,7 +1230,8 @@ export class MockGitHub {
       };
     }
 
-    const branch = toBranchName(variables.branch ?? this.branch);
+    // A query about the fork addresses its branches, which are keyed with its owner
+    const branch = this.toBranchKey(variables.owner, toBranchName(variables.branch ?? this.branch));
     /** @type {Record<string, any>} */
     const repository = {};
 
@@ -967,7 +1254,8 @@ export class MockGitHub {
     query
       .matchAll(new RegExp(`(\\w+_\\d+):\\s*object\\(expression:\\s*${STRING}\\)`, 'g'))
       .forEach(([, alias, expression]) => {
-        const [ref, ...rest] = JSON.parse(expression).split(':');
+        const [name, ...rest] = JSON.parse(expression).split(':');
+        const ref = this.toBranchKey(variables.owner, name);
         const sha = this.refs.has(ref) ? this.getHead(ref).tree.get(rest.join(':')) : undefined;
         const blob = sha ? this.blobs.get(sha) : undefined;
 
@@ -1019,7 +1307,7 @@ export class MockGitHub {
 
   /**
    * Get a GraphQL `Ref` node for a branch.
-   * @param {string} ref Branch name, qualified or not.
+   * @param {string} ref Branch name, qualified or not, or a fork branch key.
    * @param {object} fields Fields to include on the target commit.
    * @param {boolean} [fields.oid] Whether to include the commit SHA.
    * @param {boolean} [fields.history] Whether to include the latest commit as `history`.
@@ -1063,10 +1351,42 @@ export class MockGitHub {
             JSON.parse(labels).some((/** @type {string} */ label) =>
               pullRequest.labels.includes(label),
             )) &&
-          (!headRefName || pullRequest.head === headRefName),
+          (!headRefName || splitBranchKey(pullRequest.head).name === headRefName),
       )
       .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
       .map((pullRequest) => this.toPullRequestNode(pullRequest));
+  }
+
+  /**
+   * Find the Editorial Workflow branches in the fork, as the `refs` of a GraphQL `Repository`.
+   * @param {Record<string, any>} variables Query variables, with the fork’s `owner` and the
+   * qualified `prefix` of the branch names, e.g. `refs/heads/cms/mona/e2e-site/`.
+   * @returns {Record<string, any>[]} Ref nodes, named without the prefix, in alphabetical order
+   * like on GitHub.
+   */
+  findForkBranches({ owner, prefix }) {
+    const keyPrefix = this.toBranchKey(owner, toBranchName(prefix));
+
+    return [...this.refs.keys()]
+      .filter((key) => key.startsWith(keyPrefix))
+      .sort()
+      .map((key) => {
+        const { oid, message, date, author } = this.getHead(key);
+
+        return {
+          name: key.slice(keyPrefix.length),
+          target: {
+            oid,
+            message,
+            committedDate: date.toISOString(),
+            author: {
+              name: author.name,
+              email: author.email,
+              user: author.login ? { login: author.login, databaseId: author.id } : null,
+            },
+          },
+        };
+      });
   }
 
   /**
@@ -1098,7 +1418,10 @@ export class MockGitHub {
    * @param {Record<string, any>} input Mutation input.
    * @returns {Record<string, any>} Response body.
    */
-  createRef({ name, oid }) {
+  createRef({ repositoryId, name, oid }) {
+    const branch = toBranchName(name);
+    const key = repositoryId === this.forkId ? this.forkBranch(branch) : branch;
+
     if (!this.getCommit(oid)) {
       return {
         data: { createRef: null },
@@ -1106,7 +1429,7 @@ export class MockGitHub {
       };
     }
 
-    if (!this.createBranch(toBranchName(name), oid)) {
+    if (!this.createBranch(key, oid)) {
       return {
         data: { createRef: null },
         errors: [
@@ -1132,7 +1455,8 @@ export class MockGitHub {
     this.received.push(input);
 
     const { beforeCommit } = this;
-    const { branchName } = input.branch;
+    const [owner] = input.branch.repositoryNameWithOwner.split('/');
+    const branchName = this.toBranchKey(owner, input.branch.branchName);
 
     this.beforeCommit = undefined;
     beforeCommit?.();
