@@ -307,6 +307,43 @@ describe('config/index', () => {
       expect(config?._siteURL).toBe('https://example.com');
     });
 
+    it('should append manual config arrays to file config arrays like Decap CMS', async () => {
+      const { initCmsConfig } = await import('.');
+
+      const fileConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      /** @type {any} */
+      const manualConfig = {
+        collections: [
+          {
+            name: 'pages',
+            label: 'Pages',
+            folder: 'pages',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(fileConfig);
+
+      await initCmsConfig(manualConfig);
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      expect(config?.collections.map((/** @type {any} */ c) => c.name)).toEqual(['posts', 'pages']);
+    });
+
     it('should throw error when manual config is not an object', async () => {
       const { initCmsConfig } = await import('.');
 
