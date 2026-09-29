@@ -103,6 +103,14 @@ vi.mock('$lib/services/backends/poll', () => ({
 
 const mockRepositoryHead = vi.hoisted(() => ({ current: '' }));
 
+const mockLockedBranch = vi.hoisted(() => ({
+  current: /** @type {string | undefined} */ (undefined),
+}));
+
+vi.mock('$lib/services/backends/branch-access', () => ({
+  lockedBranch: mockLockedBranch,
+}));
+
 vi.mock('$lib/services/backends/git/shared/fetch', () => ({
   repositoryHead: mockRepositoryHead,
 }));
@@ -1281,6 +1289,7 @@ describe('auth service', () => {
       mockPublishingBranches.current = ['cms/posts/hello'];
 
       mockRepositoryHead.current = 'abc123';
+      mockLockedBranch.current = 'main';
 
       Object.assign(mockPrefs, {
         theme: 'dark',
@@ -1298,6 +1307,8 @@ describe('auth service', () => {
       expect(mockLocalStorage.delete).toHaveBeenCalledWith('netlify-cms-user');
       expect(mockStopRemoteChangePolling).toHaveBeenCalled();
       expect(mockRepositoryHead.current).toBe('');
+      // The next user may be allowed to push to the branch
+      expect(mockLockedBranch.current).toBeUndefined();
       expect(mockBackend.signOut).toHaveBeenCalled();
       expect(mockLocalStorage.set).toHaveBeenCalledWith('sveltia-cms.user', {});
       expect(mockBackendName.current).toEqual(undefined);

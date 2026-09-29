@@ -7,11 +7,10 @@
   import SubfolderListItem from '$lib/components/assets/list/internal/subfolder-list-item.svelte';
   import UploadAssetsButton from '$lib/components/assets/list/internal/upload-assets-button.svelte';
   import { focusedAsset, uploadingAssets } from '$lib/services/assets';
-  import { canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
+  import { assetsLocked, canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
   import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { assetGroups, listedAssets, listedSubfolders } from '$lib/services/assets/view';
   import { currentView } from '$lib/services/assets/view/settings';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { Asset } from '$lib/types/private';
@@ -21,9 +20,10 @@
   const folder = $derived(targetAssetFolder.current);
   const subfolderCount = $derived(listedSubfolders.current.length);
   // Uploading to the media library commits straight to the configured branch rather than going
-  // through review, so it’s not something an Open Authoring contributor can do. An asset attached
-  // to an entry is committed with that entry, so it’s unaffected
-  const uploadDisabled = $derived(openAuthoring.current || !canCreateAsset(folder));
+  // through review, so it’s not something an Open Authoring contributor or a user who can’t push to
+  // the branch can do. An asset attached to an entry is committed with that entry, so it’s
+  // unaffected
+  const uploadDisabled = $derived(assetsLocked.current || !canCreateAsset(folder));
 </script>
 
 <AssetListContainer

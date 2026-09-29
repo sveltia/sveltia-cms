@@ -16,13 +16,16 @@
   import { overlaidAsset } from '$lib/services/assets';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
-  import { hasReadonlyAsset, selectedAssetFolder } from '$lib/services/assets/folders';
+  import {
+    assetsLocked,
+    hasReadonlyAsset,
+    selectedAssetFolder,
+  } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { isMediaKind } from '$lib/services/assets/kinds';
   import { browsedDirPath } from '$lib/services/assets/subfolders';
   import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
   import { isSearchResultsPath } from '$lib/services/search/navigation';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { ViewTransitionType } from '$lib/services/app/navigation';
@@ -93,11 +96,12 @@
     <DownloadAssetsButton {assets} getName={(a) => a.name} getBlob={getAssetBlob} {useButton} />
     <!--
       Deleting a file from the media library commits straight to the configured branch rather than
-      going through review, so it’s not something an Open Authoring contributor can do
+      going through review, so it’s not something an Open Authoring contributor or a user who
+      can’t push to the branch can do
     -->
     <DeleteAssetsButton
       {assets}
-      disabled={openAuthoring.current || hasReadonlyAsset(assets)}
+      disabled={assetsLocked.current || hasReadonlyAsset(assets)}
       deleteAssets={(_assets) => {
         // Don’t wait for the commit; the list is updated optimistically
         deleteAssets(_assets);

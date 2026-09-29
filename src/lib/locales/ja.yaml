@@ -497,6 +497,7 @@ readonly_cms: CMS は読み取り専用モードです。コンテンツやア�
 readonly_collection: このコレクションは読み取り専用です。コンテンツを閲覧することはできますが、変更することはできません。
 readonly_entry: このエントリーは読み取り専用です。閲覧することはできますが、変更することはできません。
 readonly_asset_folder: このフォルダーは読み取り専用です。アセットを閲覧することはできますが、変更することはできません。
+readonly_branch: 「{$branch}」ブランチへのプッシュ権限がありません。このコンテンツを閲覧することはできますが、変更することはできません。
 readonly_reference: このエントリーは読み取り専用のため、参照を削除できません。
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: '以下の読み取り専用エントリーが現在の名前で参照しているため、このエントリーの名前を変更できません: {$entries}'

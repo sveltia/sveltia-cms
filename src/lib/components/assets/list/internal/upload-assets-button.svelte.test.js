@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { showUploadAssetsDialog } from '$lib/services/assets/view';
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { initTestConfig } from '$lib/test/config';
 
@@ -17,6 +18,7 @@ describe('UploadAssetsButton', () => {
   beforeEach(() => {
     selectedAssetFolder.current = undefined;
     forkedRepository.current = undefined;
+    lockedBranch.current = undefined;
     showUploadAssetsDialog.current = false;
   });
 
@@ -42,6 +44,13 @@ describe('UploadAssetsButton', () => {
 
   test('is disabled while contributing via a fork', async () => {
     forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });
+
+    await render(UploadAssetsButton, { label: 'Upload' });
+    await expect.element(page.getByRole('button', { name: 'Upload New Assets' })).toBeDisabled();
+  });
+
+  test('is disabled when the user can’t push to the branch', async () => {
+    lockedBranch.current = 'main';
 
     await render(UploadAssetsButton, { label: 'Upload' });
     await expect.element(page.getByRole('button', { name: 'Upload New Assets' })).toBeDisabled();

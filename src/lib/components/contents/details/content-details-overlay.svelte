@@ -25,7 +25,7 @@
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { focusOverlay, rememberFocus } from '$lib/services/app/focus';
   import { goto } from '$lib/services/app/navigation';
-  import { getReadonlyMessageKey, isDraftReadonly } from '$lib/services/config/readonly';
+  import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
   import {
@@ -526,7 +526,7 @@
         --sui-infobar-border-width="0 0 1px"
         --sui-infobar-message-justify-content="center"
       >
-        {_(getReadonlyMessageKey('entry'))}
+        {getReadonlyMessage('entry', { collection, collectionFile })}
       </Infobar>
     {/if}
     <Toolbar disabled={loading || (isNew && creationDisabled)} />
@@ -542,7 +542,7 @@
           {#if notFound}
             {_('entry_not_found')}
           {:else if collectionReadonly}
-            {_(getReadonlyMessageKey('collection'))}
+            {getReadonlyMessage('collection', { collection })}
           {:else if !canCreate}
             {_('creating_entries_disabled_by_admin')}
           {:else}

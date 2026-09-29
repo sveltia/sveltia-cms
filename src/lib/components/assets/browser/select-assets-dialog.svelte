@@ -20,6 +20,7 @@
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import CreateSubfolderDialog from '$lib/components/assets/list/create-subfolder-dialog.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import { assetsLocked } from '$lib/services/assets/folders';
   import { getFolderPublicPath } from '$lib/services/assets/info';
   import {
     canBrowseSubfolders,
@@ -54,7 +55,6 @@
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { createPath, getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import {
@@ -495,13 +495,13 @@
   {#if browsingSubfolders}
     <!--
       Creating a folder commits straight to the configured branch rather than going through
-      review, so it’s not something an Open Authoring contributor can do, nor anyone within a
-      read-only folder
+      review, so it’s not something an Open Authoring contributor or a user who can’t push to the
+      branch can do, nor anyone within a read-only folder
     -->
     <Button
       variant="ghost"
       iconic
-      disabled={openAuthoring.current || !!selectedFolder?.readonly}
+      disabled={assetsLocked.current || !!selectedFolder?.readonly}
       aria-label={_('new_folder')}
       onclick={() => {
         showNewFolderDialog = true;

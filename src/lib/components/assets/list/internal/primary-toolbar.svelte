@@ -15,6 +15,7 @@
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
+    assetsLocked,
     canCreateAsset,
     hasReadonlyAsset,
     selectedAssetFolder,
@@ -24,10 +25,10 @@
   import { canPreviewAsset } from '$lib/services/assets/kinds';
   import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
-  import { getReadonlyMessageKey } from '$lib/services/config/readonly';
+  import { lockedBranch } from '$lib/services/backends/branch-access';
+  import { getReadonlyMessage } from '$lib/services/config/readonly';
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   const folder = $derived(selectedAssetFolder.current);
   // `appLocale.current` is a key, because `getFolderLabelByCollection` can return a localized label
@@ -41,12 +42,16 @@
   const asset = $derived(focusedAsset.current);
 
   const assets = $derived(selectedOrFocusedAssets.current);
+  // The folder is read-only with the `readonly` option, or all the assets are because the user
+  // can’t push to the configured branch
+  const readonly = $derived(!!folder?.readonly || !!lockedBranch.current);
 
   // Uploading to the media library commits straight to the configured branch rather than going
-  // through review, so it’s not something an Open Authoring contributor can do. An asset attached
-  // to an entry is committed with that entry, so it’s unaffected
+  // through review, so it’s not something an Open Authoring contributor or a user who can’t push to
+  // the branch can do. An asset attached to an entry is committed with that entry, so it’s
+  // unaffected
   const uploadDisabled = $derived(
-    openAuthoring.current || !canCreateAsset(targetAssetFolder.current),
+    assetsLocked.current || !canCreateAsset(targetAssetFolder.current),
   );
 
   /**
@@ -69,13 +74,13 @@
   };
 </script>
 
-{#if folder?.readonly}
+{#if readonly}
   <Infobar
     dismissible={false}
     --sui-infobar-border-width="0 0 1px"
     --sui-infobar-message-justify-content="center"
   >
-    {_(getReadonlyMessageKey('asset_folder'))}
+    {getReadonlyMessage('asset_folder', { folder })}
   </Infobar>
 {/if}
 <PrimaryToolbar rootLabel={folderLabel} {subfolderNames} onBrowse={browseAncestor}>
@@ -88,11 +93,12 @@
     <DownloadAssetsButton {assets} getName={(a) => a.name} getBlob={getAssetBlob} />
     <!--
         Deleting a file from the media library commits straight to the configured branch rather
-        than going through review, so it’s not something an Open Authoring contributor can do
+        than going through review, so it’s not something an Open Authoring contributor or a user
+        who can’t push to the branch can do
       -->
     <DeleteAssetsButton
       {assets}
-      disabled={openAuthoring.current || hasReadonlyAsset(assets)}
+      disabled={assetsLocked.current || hasReadonlyAsset(assets)}
       deleteAssets={(_assets) => {
         // Don’t wait for the commit; the list is updated optimistically
         deleteAssets(_assets);

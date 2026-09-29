@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
 import {
@@ -107,6 +108,7 @@ describe('ContentDetailsOverlay', () => {
         { name: 'locked', label: 'Locked', folder: 'content/locked', create: false, fields },
         { name: 'limited', label: 'Limited', folder: 'content/limited', limit: 1, fields },
         { name: 'frozen', label: 'Frozen', folder: 'content/frozen', readonly: true, fields },
+        { name: 'plain', label: 'Plain', folder: 'content/plain', fields },
       ],
     });
     env.isSmallScreen = false;
@@ -119,6 +121,7 @@ describe('ContentDetailsOverlay', () => {
     entryEditorSettings.current = { showPreview: true, showSecondPane: true, syncScrolling: true };
     selectedCollection.current = getCollection('posts');
     prefs.devModeEnabled = false;
+    lockedBranch.current = undefined;
     window.history.replaceState(null, '');
   });
 
@@ -334,6 +337,59 @@ describe('ContentDetailsOverlay', () => {
         'info Information This entry is read-only. You can view it but cannot make any changes.',
       );
     await expect.element(page.getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
+    await expect
+      .element(page.getByRole('textbox', { name: 'Title' }))
+      .toHaveAttribute('aria-readonly', 'true');
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+  });
+
+  test('refuses to create an entry when the user can’t push to the branch', async () => {
+    selectedCollection.current = getCollection('plain');
+    lockedBranch.current = 'main';
+
+    await renderOverlay(
+      createMockDraft({
+        collectionName: 'plain',
+        fields,
+        draft: { collection: getCollection('plain') },
+      }),
+    );
+
+    await expect
+      .element(
+        page.getByText(
+          'You don’t have permission to push to the “\u2068main\u2069” branch. You can view this ' +
+            'content but cannot make any changes.',
+        ),
+      )
+      .toBeInTheDocument();
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+    expect(page.getByRole('status').elements()).toHaveLength(0);
+  });
+
+  test('shows an existing entry for reference when the user can’t push to the branch', async () => {
+    selectedCollection.current = getCollection('plain');
+    lockedBranch.current = 'main';
+
+    await renderOverlay(
+      createMockDraft({
+        collectionName: 'plain',
+        fields,
+        values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+        draft: {
+          collection: getCollection('plain'),
+          isNew: false,
+          originalEntry: createMockEntry({ slug: 'hello', folder: 'content/plain' }),
+        },
+      }),
+    );
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information You don’t have permission to push to the “\u2068main\u2069” branch. ' +
+          'You can view this content but cannot make any changes.',
+      );
     await expect
       .element(page.getByRole('textbox', { name: 'Title' }))
       .toHaveAttribute('aria-readonly', 'true');

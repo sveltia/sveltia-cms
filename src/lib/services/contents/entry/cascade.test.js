@@ -2,6 +2,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import {
   buildTargetChanges,
   compactList,
@@ -212,6 +213,19 @@ describe('getFieldBlockers()', () => {
     ]);
     expect(isEntryReadonly).toHaveBeenCalledWith(entry);
     expect(validateAnyField).not.toHaveBeenCalled();
+  });
+
+  test('ignores a branch the user can’t push to', () => {
+    lockedBranch.current = 'main';
+
+    try {
+      // Only a deletion made through Editorial Workflow gets this far, and it commits the rewrite
+      // to its own branch
+      expect(getFieldBlockers(baseArgs)).toEqual([]);
+      expect(validateAnyField).toHaveBeenCalled();
+    } finally {
+      lockedBranch.current = undefined;
+    }
   });
 
   test('falls back to the collection and field names', () => {

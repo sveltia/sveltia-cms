@@ -15,6 +15,7 @@ import {
   SELF_HOSTED_BLOB_CONCURRENCY,
 } from '$lib/services/backends/git/gitlab/files';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getProjectId,
@@ -723,10 +724,11 @@ describe('GitLab files service', () => {
 
       await fetchFiles();
 
-      // The access check is handed over so it can run alongside the branch and commit requests
+      // The access checks are handed over so they can run alongside the other requests
       expect(fetchAndParseFiles).toHaveBeenCalledWith({
         repository,
         checkAccess: checkRepositoryAccess,
+        checkBranchAccess,
         fetchDefaultBranchName,
         fetchLastCommit,
         fetchFileList,

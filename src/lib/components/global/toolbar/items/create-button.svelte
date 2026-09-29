@@ -4,6 +4,7 @@
   import { sleep } from '@sveltia/utils/misc';
 
   import { goto } from '$lib/services/app/navigation';
+  import { assetsLocked } from '$lib/services/assets/folders';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { isReadonly } from '$lib/services/config/readonly';
   import { getValidCollections } from '$lib/services/contents/collection';
@@ -11,7 +12,6 @@
     countCollectionEntries,
     getEntriesByCollection,
   } from '$lib/services/contents/collection/entries';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import { EntryCollection } from '$lib/types/public';
@@ -42,8 +42,9 @@
     }),
   );
   // The assets are uploaded to the global media folder, which is read-only along with the whole
-  // CMS
-  const assetsDisabled = $derived(openAuthoring.current || isReadonly());
+  // CMS. Uploading commits straight to the configured branch, so an Open Authoring contributor or a
+  // user who can’t push to the branch can’t do it either
+  const assetsDisabled = $derived(assetsLocked.current || isReadonly());
   // A menu with nothing to choose from isn’t worth opening, e.g. while the whole CMS is read-only
   const allDisabled = $derived(assetsDisabled && collectionItems.every(({ disabled }) => disabled));
 </script>

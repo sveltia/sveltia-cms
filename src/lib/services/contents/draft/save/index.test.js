@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { callEventHooks } from '$lib/services/api/events';
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
 import { getCollection } from '$lib/services/contents/collection';
@@ -189,6 +190,20 @@ describe('draft/save/index', () => {
       expect(validateEntry).not.toHaveBeenCalled();
       expect(saveChanges).not.toHaveBeenCalled();
       expect(saveWorkflowChanges).not.toHaveBeenCalled();
+    });
+
+    it('should refuse to save an entry to a branch the user can’t push to', async () => {
+      lockedBranch.current = 'main';
+
+      try {
+        const error = await saveEntry().catch((/** @type {Error} */ ex) => ex);
+
+        expect(error).toBeInstanceOf(Error);
+        expect(/** @type {Error} */ (error).cause).toEqual(new Error('readonly_branch'));
+        expect(saveChanges).not.toHaveBeenCalled();
+      } finally {
+        lockedBranch.current = undefined;
+      }
     });
 
     it('should decide on the workflow per draft', async () => {

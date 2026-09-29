@@ -4,6 +4,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getProjectId,
@@ -306,6 +307,7 @@ export const fetchFiles = async () => {
   await fetchAndParseFiles({
     repository,
     checkAccess: checkRepositoryAccess,
+    checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
     fetchFileList,

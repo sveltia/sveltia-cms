@@ -1,6 +1,6 @@
 import { _ } from '@sveltia/i18n';
 
-import { isReadonly } from '$lib/services/config/readonly';
+import { isConfigReadonly } from '$lib/services/config/readonly';
 import { buildTargetChanges } from '$lib/services/contents/entry/cascade';
 import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import {
@@ -205,10 +205,11 @@ export const buildCascadeChanges = async ({
     });
   });
 
-  // An entry can also be locked by another collection it belongs to
+  // An entry can also be locked by another collection it belongs to. Only the `readonly` option
+  // counts, as explained in `isEntryReadonly()`
   const readonlyTargets = [...targets.values()].filter(
     (target) =>
-      isReadonly({ collection: target.collection, collectionFile: target.collectionFile }) ||
+      isConfigReadonly({ collection: target.collection, collectionFile: target.collectionFile }) ||
       isEntryReadonly(target.entry),
   );
 

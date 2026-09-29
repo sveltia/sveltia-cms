@@ -3,9 +3,8 @@
 -->
 <script>
   import UploadButton from '$lib/components/assets/list/upload-button.svelte';
-  import { canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
+  import { assetsLocked, canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
-  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @typedef {object} Props
@@ -20,9 +19,10 @@
   } = $props();
 
   // Uploading to the media library commits straight to the configured branch rather than going
-  // through review, so it’s not something an Open Authoring contributor can do. An asset attached
-  // to an entry is committed with that entry, so it’s unaffected
-  const disabled = $derived(openAuthoring.current || !canCreateAsset(targetAssetFolder.current));
+  // through review, so it’s not something an Open Authoring contributor or a user who can’t push to
+  // the branch can do. An asset attached to an entry is committed with that entry, so it’s
+  // unaffected
+  const disabled = $derived(assetsLocked.current || !canCreateAsset(targetAssetFolder.current));
 </script>
 
 <UploadButton

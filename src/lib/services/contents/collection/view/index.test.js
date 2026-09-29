@@ -2,6 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config/state';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
@@ -1146,6 +1147,28 @@ describe('collection/view/index', () => {
       expect(collectionState.current.canReorder).toBe(false);
 
       forkedRepository.current = undefined;
+    });
+
+    test('blocks reordering when the user can’t push to the branch', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        reorder: true,
+        publish_mode: 'editorial_workflow',
+      });
+      await wait();
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.current = [];
+      await wait();
+      lockedBranch.current = 'main';
+
+      // The collection itself isn’t read-only, as it goes through Editorial Workflow, but
+      // reordering commits straight to the configured branch
+      expect(collectionState.current.canCreate).toBe(true);
+      expect(collectionState.current.canReorder).toBe(false);
+
+      lockedBranch.current = undefined;
     });
 
     test('blocks creating, deleting and reordering in a read-only collection', async () => {

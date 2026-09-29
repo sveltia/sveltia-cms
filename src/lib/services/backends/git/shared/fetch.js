@@ -593,6 +593,10 @@ const completeMetadata = async ({
  * repository, throwing if not. It only needs the signed-in user, so it runs at the same time as the
  * branch and commit requests below rather than before them, saving a round trip on every start.
  * Its error takes precedence over theirs, as a missing branch is usually a symptom of no access.
+ * @param {() => Promise<void>} [args.checkBranchAccess] Function to check whether the user can
+ * push to the branch, which is known once the head is resolved. It runs alongside the file list
+ * request, and the data is only shown once it’s done, so nothing appears editable that isn’t. It
+ * isn’t expected to throw.
  * @param {() => Promise<string>} args.fetchDefaultBranchName Function to fetch the repository’s
  * default branch name.
  * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit Function to fetch
@@ -610,6 +614,7 @@ const completeMetadata = async ({
 export const fetchAndParseFiles = async ({
   repository,
   checkAccess,
+  checkBranchAccess,
   fetchDefaultBranchName,
   fetchLastCommit,
   fetchFileList,
@@ -628,11 +633,9 @@ export const fetchAndParseFiles = async ({
   const incremental = !!repositoryHead.current && lastParseKey === parseKey;
   const metaDB = new IndexedDB(/** @type {string} */ (databaseName), 'meta');
   const cacheDB = new IndexedDB(/** @type {string} */ (databaseName), 'file-cache');
-
   // The access was verified when the data was first loaded; a later call only brings it up to date
-  const accessPromise =
-    checkAccess && !repositoryHead.current ? deferRejection(checkAccess()) : undefined;
-
+  const initialLoad = !repositoryHead.current;
+  const accessPromise = checkAccess && initialLoad ? deferRejection(checkAccess()) : undefined;
   // Start reading the databases right away, but only wait for them once the last commit is known,
   // so the reads — the file cache holds the text of every entry — overlap the network round trips
   // below instead of delaying them
@@ -646,6 +649,7 @@ export const fetchAndParseFiles = async ({
     log,
   });
 
+  const branchAccessPromise = checkBranchAccess && initialLoad ? checkBranchAccess() : undefined;
   const { metaEntries, cachedFileEntries } = await databaseEntriesPromise;
 
   log(`Read the file cache: ${cachedFileEntries.length} files`);
@@ -662,6 +666,7 @@ export const fetchAndParseFiles = async ({
   // What the message says is only what the author asked for. It’s the answer until the CI/CD
   // provider is asked about the commit, which `isLastCommitPublished` prefers once it has one
   setLastCommitPublishHint(!hasSkipCIMarker(message));
+  await branchAccessPromise;
 
   // Skip fetching files if no files found
   if (!fileList.count) {

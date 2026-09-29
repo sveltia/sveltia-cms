@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
+import { lockedBranch } from '$lib/services/backends/branch-access';
+import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
 import {
   allAssetFolders,
+  assetsLocked,
   canCreateAsset,
   getAssetFolder,
   getAssetFoldersByPath,
@@ -1978,6 +1981,29 @@ describe('assets/folders', () => {
       expect(result2).toHaveLength(1);
       expect(result1[0].internalPath).toBe('content/posts');
       expect(result2[0].internalPath).toBe('content/posts');
+    });
+  });
+
+  describe('assetsLocked', () => {
+    afterEach(() => {
+      forkedRepository.current = undefined;
+      lockedBranch.current = undefined;
+    });
+
+    it('should be false when the user can change the media library', () => {
+      expect(assetsLocked.current).toBe(false);
+    });
+
+    it('should be true for an Open Authoring contributor', () => {
+      forkedRepository.current = { owner: 'mona', repo: 'site' };
+
+      expect(assetsLocked.current).toBe(true);
+    });
+
+    it('should be true when the user can’t push to the branch', () => {
+      lockedBranch.current = 'main';
+
+      expect(assetsLocked.current).toBe(true);
     });
   });
 

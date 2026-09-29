@@ -1,9 +1,7 @@
-import { _ } from '@sveltia/i18n';
-
 import { callEventHooks } from '$lib/services/api/events';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
-import { getReadonlyMessageKey, isDraftReadonly } from '$lib/services/config/readonly';
+import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
@@ -145,7 +143,11 @@ const buildChanges = async ({ draft, slugs }) => {
 export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }) => {
   // The editor offers no way to save a read-only entry, but make sure nothing is written anyway
   if (isDraftReadonly(draft)) {
-    throw new Error('saving_failed', { cause: new Error(_(getReadonlyMessageKey('entry'))) });
+    const { collection, collectionFile } = draft;
+
+    throw new Error('saving_failed', {
+      cause: new Error(getReadonlyMessage('entry', { collection, collectionFile })),
+    });
   }
 
   const { isNew, collection, collectionName, fileName, originalEntry } = draft;

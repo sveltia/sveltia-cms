@@ -799,6 +799,33 @@ describe('git/shared/fetch', () => {
       expect(mockFetchFileList).toHaveBeenCalled();
     });
 
+    it('should check the branch access once the branch is known, before showing the data', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+      const checkBranchAccess = vi.fn(() => promise);
+
+      const run = fetchAndParseFiles({
+        repository: { ...mockRepository, branch: '' },
+        checkBranchAccess,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      // The check starts once the branch is resolved, and the file list isn’t held back by it…
+      await vi.waitFor(() => {
+        expect(mockFetchFileList).toHaveBeenCalled();
+      });
+      expect(mockFetchLastCommit).toHaveBeenCalledBefore(checkBranchAccess);
+      // …but the data isn’t shown until it’s done
+      expect(repositoryHead.current).toBe('');
+
+      resolve(undefined);
+      await run;
+
+      expect(repositoryHead.current).toBe('abc123');
+    });
+
     it('should report the access error when the branch request fails as well', async () => {
       mockFetchDefaultBranchName.mockRejectedValueOnce(new Error('Repository not found'));
 
@@ -953,6 +980,23 @@ describe('git/shared/fetch', () => {
       });
 
       expect(mockCheckAccess).not.toHaveBeenCalled();
+    });
+
+    it('should not repeat the branch access check on a later fetch', async () => {
+      const checkBranchAccess = vi.fn().mockResolvedValue(undefined);
+
+      repositoryHead.current = 'abc123';
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        checkBranchAccess,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(checkBranchAccess).not.toHaveBeenCalled();
     });
 
     it('should carry the unchanged entries and assets over on a later fetch', async () => {

@@ -14,7 +14,7 @@
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
-  import { getReadonlyMessageKey } from '$lib/services/config/readonly';
+  import { getReadonlyMessage } from '$lib/services/config/readonly';
   import { getCollectionLabel, selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
@@ -66,7 +66,7 @@
       --sui-infobar-border-width="0 0 1px"
       --sui-infobar-message-justify-content="center"
     >
-      {_(getReadonlyMessageKey('collection'))}
+      {getReadonlyMessage('collection', { collection: selectedCollection.current })}
     </Infobar>
   {/if}
   <Toolbar variant="primary" ariaLabel={_('collection')}>

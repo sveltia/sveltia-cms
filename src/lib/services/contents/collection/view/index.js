@@ -2,6 +2,7 @@ import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
 import { backend } from '$lib/services/backends';
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import { getGroupingKey } from '$lib/services/common/view';
 import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries } from '$lib/services/contents';
@@ -246,12 +247,14 @@ export const collectionState = createDerivedState(() => {
     const canDelete = !readonly && (_selectedCollection.delete ?? true);
 
     // Reordering writes the new order straight to the configured branch rather than going through
-    // review, so it’s not something an Open Authoring contributor can do. An entry collection
+    // review, even in a collection using Editorial Workflow, so it’s not something an Open
+    // Authoring contributor or a user who can’t push to the branch can do. An entry collection
     // storing all the entries in one file can always be reordered
     const canReorder =
       !readonly &&
       (!!_selectedCollection.reorder || isArrayFileCollection(_selectedCollection)) &&
-      !openAuthoring.current;
+      !openAuthoring.current &&
+      !lockedBranch.current;
 
     const quota = _selectedCollection?.limit ?? Infinity;
 

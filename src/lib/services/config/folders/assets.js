@@ -2,7 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { compare, stripSlashes } from '@sveltia/utils/string';
 
 import { hasTemplateTags } from '$lib/services/common/template';
-import { isReadonly } from '$lib/services/config/readonly';
+import { isConfigReadonly } from '$lib/services/config/readonly';
 import { getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/files';
 import { LOCALE_ROOT_FOLDER_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
@@ -320,7 +320,7 @@ export const isAssetFolderReadonly = ({ config, folder, validCollections }) => {
       ({ name }) => `assets:${name}` === collectionName,
     );
 
-    return isReadonly({ config, collection });
+    return isConfigReadonly({ config, collection });
   }
 
   const collection = validCollections.find(({ name }) => name === collectionName);
@@ -337,7 +337,7 @@ export const isAssetFolderReadonly = ({ config, folder, validCollections }) => {
       ? getValidCollectionFiles(files).find(({ name }) => name === fileName)
       : undefined;
 
-  return isReadonly({ config, collection, collectionFile });
+  return isConfigReadonly({ config, collection, collectionFile });
 };
 
 /**

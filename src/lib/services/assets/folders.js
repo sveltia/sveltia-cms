@@ -1,6 +1,7 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { getCustomComponentName } from '$lib/services/contents/fields/rich-text/components/definitions';
 import {
@@ -8,6 +9,7 @@ import {
   hasLocalePlaceholder,
 } from '$lib/services/contents/i18n/placeholder';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
+import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { Asset, AssetFolderInfo, TypedFieldKeyPath } from '$lib/types/private';
@@ -223,6 +225,16 @@ export const canCreateAsset = (assetFolder) =>
   !assetFolder.entryRelative &&
   !assetFolder.hasTemplateTags &&
   !assetFolder.readonly;
+
+/**
+ * Whether the media library can’t be changed. Uploading, replacing, renaming, moving and deleting
+ * assets, and creating folders, commit straight to the configured branch rather than going through
+ * review, which neither an Open Authoring contributor nor a user who can’t push to the branch can
+ * do. An asset attached to an entry is committed with that entry, so it’s unaffected.
+ */
+export const assetsLocked = createDerivedState(
+  () => openAuthoring.current || !!lockedBranch.current,
+);
 
 /**
  * Check if any of the given assets is stored in a read-only folder, in which case none of them can

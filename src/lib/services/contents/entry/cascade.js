@@ -1,6 +1,6 @@
 import { _ } from '@sveltia/i18n';
 
-import { isReadonly } from '$lib/services/config/readonly';
+import { isConfigReadonly } from '$lib/services/config/readonly';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { validateAnyField } from '$lib/services/contents/draft/validate/fields';
 import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
@@ -92,7 +92,8 @@ export const getFieldBlockers = ({
   content,
   fields,
 }) => {
-  const readonly = isReadonly({ collection, collectionFile }) || isEntryReadonly(entry);
+  // Only the `readonly` option counts, as explained in `isEntryReadonly()`
+  const readonly = isConfigReadonly({ collection, collectionFile }) || isEntryReadonly(entry);
 
   return [...fields].flatMap(([keyPath, fieldConfig]) => {
     /** @type {string[]} */

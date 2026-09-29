@@ -2,6 +2,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import {
   buildCascadeChanges,
   createRenamedEntry,
@@ -400,6 +401,23 @@ describe('buildCascadeChanges()', () => {
     await expect(buildCascadeChanges(baseArgs)).rejects.toThrow('cannot_rename_referenced_entry');
     expect(isEntryReadonly).toHaveBeenCalledWith(expect.objectContaining({ id: 'my-trip' }));
     expect(buildEntryUpdateChanges).not.toHaveBeenCalled();
+  });
+
+  test('rewrites a referencing entry on a branch the user can’t push to', async () => {
+    registerTagRelation();
+    getEntriesByCollection.mockReturnValue([
+      createPost('my-trip', { title: 'My Trip', tag: 'travel' }),
+    ]);
+    lockedBranch.current = 'main';
+
+    try {
+      // Only a rename made through Editorial Workflow gets this far, and it commits the rewrite to
+      // its own branch
+      await expect(buildCascadeChanges(baseArgs)).resolves.toBeDefined();
+      expect(buildEntryUpdateChanges).toHaveBeenCalled();
+    } finally {
+      lockedBranch.current = undefined;
+    }
   });
 
   test('rewrites one item of a multi-value field', async () => {

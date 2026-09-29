@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config/state';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
@@ -57,6 +58,20 @@ describe('Test isEntryReadonly()', () => {
     vi.mocked(getCollectionFilesByEntry).mockReturnValue([{ name: 'site', readonly: true }]);
 
     expect(isEntryReadonly(entry)).toBe(true);
+  });
+
+  test('ignores a branch the user can’t push to', () => {
+    cmsConfig.current = {};
+    lockedBranch.current = 'main';
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts' }]);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+
+    try {
+      // A rewrite made along with an Editorial Workflow change goes into its own branch
+      expect(isEntryReadonly(entry)).toBe(false);
+    } finally {
+      lockedBranch.current = undefined;
+    }
   });
 });
 

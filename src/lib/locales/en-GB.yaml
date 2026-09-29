@@ -507,6 +507,7 @@ readonly_cms: The CMS is in read-only mode. You can view content and assets but 
 readonly_collection: This collection is read-only. You can view its content but cannot make any changes.
 readonly_entry: This entry is read-only. You can view it but cannot make any changes.
 readonly_asset_folder: This folder is read-only. You can view its assets but cannot make any changes.
+readonly_branch: You don’t have permission to push to the “{$branch}” branch. You can view this content but cannot make any changes.
 readonly_reference: The entry is read-only, so the reference can’t be removed.
 # {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
 cannot_rename_referenced_entry: 'This entry can’t be renamed, because the following read-only entries refer to it by its current name: {$entries}.'

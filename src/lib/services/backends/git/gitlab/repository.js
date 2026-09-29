@@ -1,4 +1,5 @@
-import { fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
+import { lockedBranch } from '$lib/services/backends/branch-access';
+import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
 import {
   createLocalizedError,
   NOT_COLLABORATOR_ERROR_MESSAGE,
@@ -69,6 +70,36 @@ export const checkRepositoryAccess = async () => {
   if (!result.project?.userPermissions.pushCode) {
     throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
   }
+};
+
+/**
+ * Check if the user can push to the configured branch, and record it in {@link lockedBranch}. The
+ * Developer role is enough to sign in, but a protected branch may only allow Maintainers to push,
+ * in which case everything that commits to the branch directly is made read-only up front, rather
+ * than failing when the user saves. A failed request leaves the branch writable, as GitLab still
+ * refuses a push the user isn’t allowed to make.
+ * @see https://docs.gitlab.com/api/branches/#get-single-repository-branch
+ * @see https://docs.gitlab.com/user/project/repository/branches/protected/
+ */
+export const checkBranchAccess = async () => {
+  const { branch } = repository;
+  let canPush = true;
+
+  if (branch) {
+    try {
+      const result = /** @type {{ can_push?: boolean }} */ (
+        await fetchAPI(
+          `/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`,
+        )
+      );
+
+      canPush = result.can_push !== false;
+    } catch {
+      // Keep the branch writable, as said above
+    }
+  }
+
+  lockedBranch.current = canPush ? undefined : branch;
 };
 
 const FETCH_DEFAULT_BRANCH_NAME_QUERY = `

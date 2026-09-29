@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
 import { selectedEntries } from '$lib/services/contents/collection/entries';
 import { reordering, setReorderMode } from '$lib/services/contents/collection/view';
@@ -71,6 +72,7 @@ describe('PrimaryToolbar', () => {
   beforeEach(() => {
     env.isSmallScreen = false;
     forkedRepository.current = undefined;
+    lockedBranch.current = undefined;
     selectedEntries.current = [];
     setReorderMode(false);
     setEntries([
@@ -199,6 +201,21 @@ describe('PrimaryToolbar', () => {
         'info Information This collection is read-only. You can view its content but cannot make ' +
           'any changes.',
       );
+  });
+
+  test('explains when the collection is read-only because the user can’t push to the branch', async () => {
+    selectedCollection.current = getCollection('posts');
+    lockedBranch.current = 'main';
+
+    await render(PrimaryToolbar, {});
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information You don’t have permission to push to the “\u2068main\u2069” branch. ' +
+          'You can view this content but cannot make any changes.',
+      );
+    await expect.element(page.getByRole('button', { name: 'Create New Entry' })).toBeDisabled();
   });
 
   test('hides the entry actions for a file collection', async () => {

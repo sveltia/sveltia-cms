@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
   getProjectId,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
-import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
+import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
@@ -86,6 +88,58 @@ describe('GitLab repository service', () => {
       vi.mocked(fetchGraphQL).mockResolvedValue({ project: null });
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+    });
+  });
+
+  describe('checkBranchAccess', () => {
+    beforeEach(() => {
+      Object.assign(repository, { owner: 'test-owner', repo: 'test-repo', branch: 'release/1.0' });
+      lockedBranch.current = undefined;
+    });
+
+    test('leaves the branch writable when the user can push to it', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({ name: 'release/1.0', can_push: true });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(fetchAPI).toHaveBeenCalledWith(
+        '/projects/test-owner%2Ftest-repo/repository/branches/release%2F1.0',
+      );
+    });
+
+    test('locks the branch when the user can’t push to it', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({ name: 'release/1.0', can_push: false });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBe('release/1.0');
+    });
+
+    test('unlocks the branch when the user can push to it again', async () => {
+      lockedBranch.current = 'release/1.0';
+      vi.mocked(fetchAPI).mockResolvedValue({ name: 'release/1.0', can_push: true });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+    });
+
+    test('leaves the branch writable when the request fails', async () => {
+      lockedBranch.current = 'release/1.0';
+      vi.mocked(fetchAPI).mockRejectedValue(new Error('Not Found'));
+
+      await expect(checkBranchAccess()).resolves.toBeUndefined();
+      expect(lockedBranch.current).toBeUndefined();
+    });
+
+    test('leaves the branch writable when the branch is unknown', async () => {
+      Object.assign(repository, { branch: undefined });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(fetchAPI).not.toHaveBeenCalled();
     });
   });
 
