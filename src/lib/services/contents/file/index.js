@@ -76,6 +76,21 @@ export const FRONTMATTER_DELIMITER_MAP = {
 export const FRONTMATTER_FORMATS = ['yaml-frontmatter', 'toml-frontmatter', 'json-frontmatter'];
 
 /**
+ * File formats that come with a built-in parser and formatter. A custom format registered under one
+ * of these names can leave out either method and fall back to the built-in one.
+ * @type {FileFormat[]}
+ */
+export const BUILTIN_FILE_FORMATS = [
+  'yml',
+  'yaml',
+  'toml',
+  'json',
+  'frontmatter',
+  ...FRONTMATTER_FORMATS,
+  'raw',
+];
+
+/**
  * List of file formats that use TOML syntax and thus require special handling, such as native date
  * objects instead of strings for date/datetime fields.
  * @type {FileFormat[]}

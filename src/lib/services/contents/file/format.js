@@ -127,6 +127,8 @@ export const formatYAML = (
  * @param {Record<FieldKeyPath, string>} [args.comments] Comments to add before the keys, keyed by
  * field key path. YAML only.
  * @returns {string} Formatted front matter.
+ * @throws {Error} When the format is not a front matter format, or the content could not be
+ * formatted.
  */
 export const formatFrontMatter = ({ content, _file, comments }) => {
   const {
@@ -149,33 +151,26 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
     return `${body}\n`;
   }
 
-  try {
-    let head = '';
+  let head = '';
 
-    if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-      head = formatYAML(content, undefined, { quote: yamlQuote }, comments);
-    } else if (format === 'toml-frontmatter') {
-      head = formatTOML(content);
-    } else if (format === 'json-frontmatter') {
-      head = formatJSON(content);
+  if (format === 'frontmatter' || format === 'yaml-frontmatter') {
+    head = formatYAML(content, undefined, { quote: yamlQuote }, comments);
+  } else if (format === 'toml-frontmatter') {
+    head = formatTOML(content);
+  } else if (format === 'json-frontmatter') {
+    head = formatJSON(content);
 
-      // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
-      // delimiters, so the front matter block is the object itself rather than one wrapped in
-      // another pair of braces
-      if (sd === '{' && ed === '}') {
-        head = head.slice(1, -1).replace(/^\n/, '').replace(/\n$/, '');
-      }
-    } else {
-      return '';
+    // Like Netlify/Decap CMS, strip the outer braces of the object when they double as the
+    // delimiters, so the front matter block is the object itself rather than one wrapped in
+    // another pair of braces
+    if (sd === '{' && ed === '}') {
+      head = head.slice(1, -1).replace(/^\n/, '').replace(/\n$/, '');
     }
-
-    return `${sd}\n${head}\n${ed}\n${!bodyInline && body ? `\n${body}\n` : ''}`;
-  } catch (ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex);
+  } else {
+    throw new Error(`Unsupported front matter format: ${format}`);
   }
 
-  return '';
+  return `${sd}\n${head}\n${ed}\n${!bodyInline && body ? `\n${body}\n` : ''}`;
 };
 
 /**
@@ -188,21 +183,45 @@ export const formatFrontMatter = ({ content, _file, comments }) => {
  * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
  * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
  * @returns {Promise<string>} Formatted string.
+ * @throws {Error} When the format has no formatter, neither a custom one nor a built-in one, or the
+ * content could not be formatted. Writing an empty file instead would wipe the entry’s content.
  */
 export const formatEntryFile = async ({ content, _file, comments }) => {
   const { format, yamlQuote = false } = _file;
   const customFormatter = customFileFormatRegistry.get(format)?.formatter;
 
   if (customFormatter) {
-    return `${(await customFormatter(content)).trim()}\n`;
+    const output = await customFormatter(content);
+
+    if (typeof output !== 'string') {
+      throw new TypeError(
+        `The \`toFile\` method registered for the custom “${format}” format must return a string`,
+      );
+    }
+
+    return `${output.trim()}\n`;
   }
 
   if (format === 'raw') {
     return typeof content.body === 'string' ? `${content.body}\n` : '';
   }
 
+  const isYAML = /^ya?ml$/.test(format);
+
+  const isFrontMatter =
+    format === 'frontmatter' || FRONTMATTER_FORMATS.includes(/** @type {any} */ (format));
+
+  if (!isYAML && format !== 'toml' && format !== 'json' && !isFrontMatter) {
+    throw new Error(
+      customFileFormatRegistry.has(format)
+        ? `Entries in the custom “${format}” format can’t be saved, as no \`toFile\` method was ` +
+            'registered for it with `CMS.registerCustomFormat()`'
+        : `Entries in the unknown “${format}” format can’t be saved`,
+    );
+  }
+
   try {
-    if (/^ya?ml$/.test(format)) {
+    if (isYAML) {
       return `${formatYAML(content, undefined, { quote: yamlQuote }, comments)}\n`;
     }
 
@@ -213,16 +232,11 @@ export const formatEntryFile = async ({ content, _file, comments }) => {
     if (format === 'json') {
       return `${formatJSON(content)}\n`;
     }
-  } catch (ex) {
-    // eslint-disable-next-line no-console
-    console.error(ex);
 
-    return '';
-  }
-
-  if (format === 'frontmatter' || FRONTMATTER_FORMATS.includes(/** @type {any} */ (format))) {
     return formatFrontMatter({ content, _file, comments });
+  } catch (/** @type {any} */ ex) {
+    throw new Error(`The entry could not be formatted due to ${ex.name}: ${ex.message}`, {
+      cause: ex,
+    });
   }
-
-  return '';
 };

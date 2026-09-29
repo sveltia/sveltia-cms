@@ -214,17 +214,40 @@ describe('CMS.registerCustomFormat()', () => {
     expect(() => CMS.registerCustomFormat('test', '.test', { fromFile, toFile })).not.toThrow();
   });
 
-  test('registers format with only parser', () => {
+  test('registers format with only parser, warning that its entries can’t be saved', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const fromFile = () => {};
 
     expect(() => CMS.registerCustomFormat('test', '.test', { fromFile })).not.toThrow();
+    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(warnSpy).toHaveBeenCalledWith(
+      'The custom “test” format has no `toFile` method, so its entries can’t be saved',
+    );
+    warnSpy.mockRestore();
   });
 
-  test('registers format with only formatter', () => {
+  test('registers format with only formatter, warning that its entries can’t be loaded', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const toFile = () => {};
 
     // @ts-ignore
     expect(() => CMS.registerCustomFormat('test', '.test', { toFile })).not.toThrow();
+    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(warnSpy).toHaveBeenCalledWith(
+      'The custom “test” format has no `fromFile` method, so its entries can’t be loaded',
+    );
+    warnSpy.mockRestore();
+  });
+
+  test('does not warn about a missing method of a built-in format', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    CMS.registerCustomFormat('json', 'json', { fromFile: () => ({}) });
+    // @ts-ignore
+    CMS.registerCustomFormat('yaml-frontmatter', 'md', { toFile: () => '' });
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 
   test('throws TypeError if name is not a non-empty string', () => {

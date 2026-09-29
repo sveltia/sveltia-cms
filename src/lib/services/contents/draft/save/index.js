@@ -28,10 +28,13 @@ import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
 /**
  * @import {
+ * Asset,
  * ChangeResults,
  * CommitOptions,
  * Entry,
  * EntryDraft,
+ * EntrySlugVariants,
+ * FileChange,
  * InternalCollection,
  * } from '$lib/types/private';
  */
@@ -57,6 +60,68 @@ const updateStores = ({ useWorkflow, skipCI, count }) => {
   };
 
   setLastCommitPublishHint(published);
+};
+
+/**
+ * Work out the file changes for saving the entry draft, including those of the entries and assets
+ * the save takes along. An entry file that can’t be formatted, e.g. in a custom format registered
+ * without a formatter, fails the save rather than being written empty.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Draft to save.
+ * @param {EntrySlugVariants} args.slugs Entry slugs.
+ * @returns {Promise<{ savingEntry: Entry, changes: FileChange[], savingAssets: Asset[],
+ * cascadeEntries: Entry[], movedEntries: Entry[] }>} Saving entry, file changes, assets, and the
+ * other entries rewritten in the same commit.
+ * @throws {Error} A `saving_failed` error when the changes could not be worked out, with the
+ * original error as its `cause`, so the message can be shown to the user.
+ */
+const buildChanges = async ({ draft, slugs }) => {
+  const { collection, fileName, originalEntry } = draft;
+
+  try {
+    const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
+
+    // When the slug has been edited, the entries referencing this one through a Relation field have
+    // to be rewritten in the same commit, or they would be left pointing at an entry that no longer
+    // exists under that name
+    const { changes: cascadeChanges, savingEntries: cascadeEntries } = await buildCascadeChanges({
+      collection,
+      collectionFile: draft.collectionFile,
+      originalEntry,
+      savingEntry,
+    });
+
+    changes.push(...cascadeChanges);
+
+    // Moving an entry in a nested collection takes everything below it to the new location
+    const { changes: moveChanges, savingEntries: movedEntries } = await buildNestedMoveChanges({
+      collection,
+      originalEntry,
+      savingEntry,
+    });
+
+    changes.push(...moveChanges);
+
+    // Assets stored next to the entry belong to it, so they follow it to its new folder
+    const { changes: assetMoveChanges, savingAssets: movedAssets } =
+      await buildEntryAssetMoveChanges({
+        collection,
+        fileName,
+        originalEntry,
+        savingEntry,
+        changes,
+      });
+
+    changes.push(...assetMoveChanges);
+    savingAssets.push(...movedAssets);
+
+    return { savingEntry, changes, savingAssets, cascadeEntries, movedEntries };
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error(ex);
+
+    throw new Error('saving_failed', { cause: ex });
+  }
 };
 
 /**
@@ -118,36 +183,11 @@ export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }
 
   const slugs = getSlugs({ draft });
   const { defaultLocaleSlug } = slugs;
-  const { savingEntry, changes, savingAssets } = await createSavingEntryData({ draft, slugs });
 
-  // When the slug has been edited, the entries referencing this one through a Relation field have
-  // to be rewritten in the same commit, or they would be left pointing at an entry that no longer
-  // exists under that name
-  const { changes: cascadeChanges, savingEntries: cascadeEntries } = await buildCascadeChanges({
-    collection,
-    collectionFile: draft.collectionFile,
-    originalEntry,
-    savingEntry,
+  const { savingEntry, changes, savingAssets, cascadeEntries, movedEntries } = await buildChanges({
+    draft,
+    slugs,
   });
-
-  changes.push(...cascadeChanges);
-
-  // Moving an entry in a nested collection takes everything below it to the new location
-  const { changes: moveChanges, savingEntries: movedEntries } = await buildNestedMoveChanges({
-    collection,
-    originalEntry,
-    savingEntry,
-  });
-
-  changes.push(...moveChanges);
-
-  // Assets stored next to the entry belong to it, so they follow it to its new folder
-  const { changes: assetMoveChanges, savingAssets: movedAssets } = await buildEntryAssetMoveChanges(
-    { collection, fileName, originalEntry, savingEntry, changes },
-  );
-
-  changes.push(...assetMoveChanges);
-  savingAssets.push(...movedAssets);
 
   // The entries created from a Relation field go into the same commit as the entry referring to
   // them, so neither can end up without the other

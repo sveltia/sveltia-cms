@@ -1145,6 +1145,21 @@ describe('Test parseEntryFile()', () => {
     );
   });
 
+  test('throws a clear error for a custom format registered without a parser', async () => {
+    customFileFormatRegistry.set('csv', { formatter: vi.fn(), extension: 'csv' });
+    getCollection.mockReturnValue({ _file: { format: 'csv' } });
+    getCollectionFile.mockReturnValue({ _file: { format: 'csv' } });
+
+    try {
+      await expect(parseEntryFile({ ...entryBase, text: 'a,b' })).rejects.toThrow(
+        '/test/file.md could not be parsed, as no `fromFile` method was registered for the ' +
+          'custom “csv” format with `CMS.registerCustomFormat()`',
+      );
+    } finally {
+      customFileFormatRegistry.delete('csv');
+    }
+  });
+
   test('parses frontmatter with inline body (bodyField.inline = true)', async () => {
     const { getFrontMatterDelimiters } = await import('$lib/services/contents/file/config');
 

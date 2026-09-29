@@ -19,6 +19,7 @@ import {
 } from '$lib/services/api/registries';
 import { prefetchCmsConfig } from '$lib/services/config/loader';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
+import { BUILTIN_FILE_FORMATS } from '$lib/services/contents/file';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 import { renderRichText } from './rich-text';
@@ -117,7 +118,11 @@ const getFieldType = (name) => {
  * custom format will be used..
  * @param {string} extension File extension.
  * @param {{ fromFile?: FileParser, toFile?: FileFormatter }} methods Parser and/or formatter
- * methods. Async functions can be used.
+ * methods. Async functions can be used. Without `fromFile`, files in the format are parsed with the
+ * built-in parser for the format name, if any; without `toFile`, they are formatted likewise. If
+ * the format name isn’t a built-in one, such as `yaml` or `json`, omit neither: without `fromFile`,
+ * files in the format can’t be loaded, and without `toFile`, saving an entry fails with an error,
+ * leaving the file untouched. A warning is logged when either is missing.
  * @throws {TypeError} If `name` or `extension` is not a string, or if `methods` is not an object.
  * @throws {Error} If at least one of `fromFile` or `toFile` is not provided.
  * @see https://decapcms.org/docs/custom-formatters/
@@ -150,6 +155,23 @@ const registerCustomFormat = (name, extension, { fromFile, toFile } = {}) => {
 
   if (typeof toFile !== 'undefined' && typeof toFile !== 'function') {
     throw new TypeError('The `toFile` option for `CMS.registerCustomFormat()` must be a function');
+  }
+
+  // Without a built-in method to fall back to, the format can only go one way
+  if (!BUILTIN_FILE_FORMATS.includes(name)) {
+    if (!fromFile) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `The custom “${name}” format has no \`fromFile\` method, so its entries can’t be loaded`,
+      );
+    }
+
+    if (!toFile) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `The custom “${name}” format has no \`toFile\` method, so its entries can’t be saved`,
+      );
+    }
   }
 
   customFileFormatRegistry.set(name, { extension, parser: fromFile, formatter: toFile });

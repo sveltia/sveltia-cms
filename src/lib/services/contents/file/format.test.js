@@ -599,13 +599,14 @@ title: My Post
     );
   });
 
-  test('invalid format returns empty string', () => {
+  test('invalid format throws rather than returning an empty string', () => {
     const content = { ...baseContent };
     /** @type {import('$lib/types/private').FileConfig} */
     const _file = { format: /** @type {any} */ ('invalid-format'), extension: '.md' };
-    const result = formatFrontMatter({ content, _file });
 
-    expect(result).toBe('');
+    expect(() => formatFrontMatter({ content, _file })).toThrow(
+      'Unsupported front matter format: invalid-format',
+    );
   });
 
   test('body property is removed from content object', () => {
@@ -623,24 +624,7 @@ title: My Post
     });
   });
 
-  test('error handling in formatFrontMatter', () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    const _file = {
-      format: /** @type {any} */ ('invalid-type'),
-      extension: '.md',
-    };
-
-    const content = { title: 'Test' };
-    const result = formatFrontMatter({ content, _file });
-
-    expect(result).toBe('');
-    errorSpy.mockRestore();
-  });
-
-  test('error handling in formatFrontMatter with json-frontmatter (lines 106-108)', () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
+  test('formatting error in formatFrontMatter with json-frontmatter is thrown', () => {
     // Create a mock _file object that would trigger an error during formatting
     const _file = /** @type {any} */ ({
       format: 'json-frontmatter',
@@ -653,13 +637,8 @@ title: My Post
 
     circularObj.self = circularObj; // Create circular reference
 
-    const result = formatFrontMatter({ content: circularObj, _file });
-
-    // When an error occurs, formatFrontMatter returns empty string
-    expect(result).toBe('');
-    // Verify that console.error was called
-    expect(errorSpy).toHaveBeenCalled();
-    errorSpy.mockRestore();
+    // An empty string would be written as the file, wiping its content
+    expect(() => formatFrontMatter({ content: circularObj, _file })).toThrow(TypeError);
   });
 });
 
@@ -869,8 +848,7 @@ describe('Test formatEntryFile()', () => {
     customFileFormatRegistry.delete('customFormat');
   });
 
-  test('handles formatting errors gracefully', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  test('throws on a formatting error rather than returning an empty string', async () => {
     // Create content that will cause JSON.stringify to fail
     const circularRef = {};
 
@@ -882,15 +860,27 @@ describe('Test formatEntryFile()', () => {
       yamlQuote: false,
     });
 
-    const result = await formatEntryFile({ content: circularRef, _file });
+    const promise = formatEntryFile({ content: circularRef, _file });
 
-    expect(result).toBe('');
-    expect(consoleSpy).toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
+    await expect(promise).rejects.toThrow(
+      /^The entry could not be formatted due to TypeError: Converting circular structure/,
+    );
+    await expect(promise).rejects.toHaveProperty('cause', expect.any(TypeError));
   });
 
-  test('returns empty string for unknown format', async () => {
+  test('throws on a front matter formatting error', async () => {
+    const circularRef = /** @type {any} */ ({ title: 'Test' });
+
+    circularRef.self = circularRef;
+
+    const _file = /** @type {FileConfig} */ ({ format: 'json-frontmatter', extension: 'md' });
+
+    await expect(formatEntryFile({ content: circularRef, _file })).rejects.toThrow(
+      /^The entry could not be formatted due to TypeError/,
+    );
+  });
+
+  test('throws for unknown format rather than returning an empty string', async () => {
     const content = { title: 'Test' };
 
     const _file = /** @type {FileConfig} */ ({
@@ -899,9 +889,62 @@ describe('Test formatEntryFile()', () => {
       yamlQuote: false,
     });
 
-    const result = await formatEntryFile({ content, _file });
+    await expect(formatEntryFile({ content, _file })).rejects.toThrow(
+      'Entries in the unknown “unknown-format” format can’t be saved',
+    );
+  });
 
-    expect(result).toBe('');
+  test('throws for a custom format registered without a formatter', async () => {
+    const { customFileFormatRegistry } = await import('$lib/services/api/registries');
+
+    customFileFormatRegistry.set('csv', { parser: vi.fn(), extension: 'csv' });
+
+    const _file = /** @type {FileConfig} */ ({ format: 'csv', extension: 'csv' });
+
+    try {
+      await expect(formatEntryFile({ content: { title: 'Test' }, _file })).rejects.toThrow(
+        'Entries in the custom “csv” format can’t be saved, as no `toFile` method was registered ' +
+          'for it with `CMS.registerCustomFormat()`',
+      );
+    } finally {
+      customFileFormatRegistry.delete('csv');
+    }
+  });
+
+  test('uses the built-in formatter for a custom format with a built-in name', async () => {
+    const { customFileFormatRegistry } = await import('$lib/services/api/registries');
+
+    customFileFormatRegistry.set('json', { parser: vi.fn(), extension: 'json' });
+
+    const _file = /** @type {FileConfig} */ ({ format: 'json', extension: 'json' });
+
+    try {
+      expect(await formatEntryFile({ content: { title: 'Test' }, _file })).toBe(
+        '{\n  "title": "Test"\n}\n',
+      );
+    } finally {
+      customFileFormatRegistry.delete('json');
+    }
+  });
+
+  test('throws when a custom formatter does not return a string', async () => {
+    const { customFileFormatRegistry } = await import('$lib/services/api/registries');
+
+    customFileFormatRegistry.set('custom', {
+      // A formatter written in plain JavaScript can return anything
+      formatter: /** @type {any} */ (vi.fn()),
+      extension: 'txt',
+    });
+
+    const _file = /** @type {FileConfig} */ ({ format: 'custom', extension: 'txt' });
+
+    try {
+      await expect(formatEntryFile({ content: { title: 'Test' }, _file })).rejects.toThrow(
+        'The `toFile` method registered for the custom “custom” format must return a string',
+      );
+    } finally {
+      customFileFormatRegistry.delete('custom');
+    }
   });
 
   test('handles content without body property in frontmatter', async () => {

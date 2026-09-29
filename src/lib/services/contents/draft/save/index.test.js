@@ -351,6 +351,28 @@ describe('draft/save/index', () => {
       await expect(saveEntry()).rejects.toThrow('saving_failed');
     });
 
+    it('should fail without saving when an entry file cannot be formatted', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const formatError = new Error(
+        'Entries in the custom “csv” format can’t be saved, as no `toFile` method was registered ' +
+          'for it with `CMS.registerCustomFormat()`',
+      );
+
+      vi.mocked(createSavingEntryData).mockRejectedValue(formatError);
+
+      // The original error is the cause, so its message can be shown to the user
+      await expect(saveEntry()).rejects.toThrow(
+        expect.objectContaining({ message: 'saving_failed', cause: formatError }),
+      );
+      expect(errorSpy).toHaveBeenCalledWith(formatError);
+      expect(saveChanges).not.toHaveBeenCalled();
+      expect(callEventHooks).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'postSave' }),
+      );
+      errorSpy.mockRestore();
+    });
+
     it('should update toast with published status for git backend', async () => {
       await saveEntry();
 

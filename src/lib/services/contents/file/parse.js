@@ -233,5 +233,12 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
     throw new Error(`${path} could not be parsed due to ${ex.name}: ${ex.message}`);
   }
 
+  if (customFileFormatRegistry.has(format)) {
+    throw new Error(
+      `${path} could not be parsed, as no \`fromFile\` method was registered for the custom ` +
+        `“${format}” format with \`CMS.registerCustomFormat()\``,
+    );
+  }
+
   throw new Error(`${path} could not be parsed due to an unknown format: ${format}`);
 };
