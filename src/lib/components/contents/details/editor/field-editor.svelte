@@ -140,7 +140,6 @@
   const { name: fieldName, widget: fieldType = 'string', i18n = false } = $derived(fieldConfig);
   const {
     label = '',
-    comment = '',
     hint = '',
     readonly: readonlyOption,
   } = $derived(/** @type {VisibleField} */ (fieldConfig));
@@ -355,11 +354,6 @@
         </MenuButton>
       {/if}
     </header>
-    {#if !readonly && comment}
-      <div role="none" class="comment-wrapper">
-        <p class="comment">{@html _sanitize(comment)}</p>
-      </div>
-    {/if}
     {#if validity?.valid === false}
       <ValidationError id="{fieldId}-error">
         {entryDraft.current?.validationMessages[locale][keyPath]?.join(' ')}
@@ -476,20 +470,12 @@
     white-space: nowrap;
   }
 
-  .comment,
-  .hint {
-    margin-inline: var(--sui-focus-ring-width) !important;
-    font-size: var(--sui-font-size-small);
-    line-height: var(--sui-line-height-compact);
-  }
-
-  .comment {
-    margin-block: var(--sui-focus-ring-width) !important;
-  }
-
   .hint {
     flex: auto;
+    margin-inline: var(--sui-focus-ring-width) !important;
     margin-block: var(--sui-focus-ring-width) 0 !important;
+    font-size: var(--sui-font-size-small);
+    line-height: var(--sui-line-height-compact);
     color: var(--sui-tertiary-foreground-color);
   }
 

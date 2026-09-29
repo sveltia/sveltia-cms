@@ -2,7 +2,11 @@
 
 import { describe, expect, test, vi } from 'vitest';
 
-import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
+import {
+  buildSingleFileContent,
+  getFieldComments,
+  getSingleFileComments,
+} from '$lib/services/contents/draft/save/content';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 
 vi.mock('$lib/services/contents/draft/save/serialize', () => ({
@@ -92,5 +96,107 @@ describe('buildSingleFileContent()', () => {
     });
 
     expect(result).toEqual({ lang: ['en', 'fr'], fr: { title: 'French' } });
+  });
+});
+
+describe('getFieldComments()', () => {
+  test('collects the comments of the fields and the subfields of Object fields', () => {
+    expect(
+      getFieldComments([
+        { name: 'title', comment: 'Title' },
+        { name: 'draft', widget: 'boolean' },
+        { name: 'layout', widget: 'hidden', comment: 'Layout' },
+        {
+          name: 'seo',
+          widget: 'object',
+          comment: 'SEO',
+          fields: [
+            { name: 'description', comment: 'Description' },
+            { name: 'image', widget: 'object', fields: [{ name: 'alt', comment: 'Alt' }] },
+          ],
+        },
+      ]),
+    ).toEqual({
+      title: 'Title',
+      layout: 'Layout',
+      seo: 'SEO',
+      'seo.description': 'Description',
+      'seo.image.alt': 'Alt',
+    });
+  });
+
+  test('leaves out the subfields of a List field', () => {
+    expect(
+      getFieldComments([
+        {
+          name: 'links',
+          widget: 'list',
+          comment: 'Links',
+          fields: [{ name: 'url', comment: 'URL' }],
+        },
+      ]),
+    ).toEqual({ links: 'Links' });
+  });
+
+  test('ignores an empty or non-string comment', () => {
+    expect(
+      getFieldComments([
+        { name: 'a', comment: '' },
+        { name: 'b', comment: '  ' },
+        { name: 'c', comment: 1 },
+      ]),
+    ).toEqual({});
+  });
+
+  test('returns an empty map without fields', () => {
+    expect(getFieldComments()).toEqual({});
+  });
+
+  test('prefixes the key paths', () => {
+    expect(getFieldComments([{ name: 'title', comment: 'Title' }], 'en.')).toEqual({
+      'en.title': 'Title',
+    });
+  });
+});
+
+describe('getSingleFileComments()', () => {
+  const fields = [{ name: 'title', comment: 'Title' }];
+
+  test('keeps the fields at the root when i18n is disabled', () => {
+    const config = { _i18n: { i18nEnabled: false, allLocales: ['_default'] } };
+
+    expect(getSingleFileComments({ config, fields })).toEqual({ title: 'Title' });
+  });
+
+  test('nests the fields under each locale key for single-file i18n', () => {
+    const config = {
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: { i18nSingleFile: true },
+      },
+    };
+
+    expect(getSingleFileComments({ config, fields })).toEqual({
+      'en.title': 'Title',
+      'fr.title': 'Title',
+    });
+  });
+
+  test('keeps the default locale at the root for `single_file_default_root`', () => {
+    const config = {
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: { i18nSingleFileDefaultRoot: true },
+      },
+    };
+
+    expect(getSingleFileComments({ config, fields })).toEqual({
+      title: 'Title',
+      'fr.title': 'Title',
+    });
   });
 });

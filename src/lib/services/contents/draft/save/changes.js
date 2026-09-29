@@ -8,7 +8,11 @@ import { cmsConfig } from '$lib/services/config';
 import { isNestedCollection } from '$lib/services/contents/collection/nested';
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
-import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
+import {
+  buildSingleFileContent,
+  getFieldComments,
+  getSingleFileComments,
+} from '$lib/services/contents/draft/save/content';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
@@ -350,6 +354,7 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
     data: await formatEntryFile({
       content: buildSingleFileContent({ config, entry: savingEntry, draft }),
       _file,
+      comments: getSingleFileComments({ config, fields: draft.fields }),
     }),
   };
 };
@@ -391,6 +396,7 @@ export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }
       data: await formatEntryFile({
         content: serializeContent({ draft, locale, valueMap: content }),
         _file,
+        comments: getFieldComments(draft.fields),
       }),
     };
   }

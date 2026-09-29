@@ -7,7 +7,11 @@ import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
-import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
+import {
+  buildSingleFileContent,
+  getFieldComments,
+  getSingleFileComments,
+} from '$lib/services/contents/draft/save/content';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
 import { formatEntryFile } from '$lib/services/contents/file/format';
@@ -30,6 +34,8 @@ vi.mock('$lib/services/contents/draft/save/changes', () => ({
 
 vi.mock('$lib/services/contents/draft/save/content', () => ({
   buildSingleFileContent: vi.fn(() => ({ title: 'Single' })),
+  getFieldComments: vi.fn(() => ({})),
+  getSingleFileComments: vi.fn(() => ({})),
 }));
 
 vi.mock('$lib/services/contents/draft/save/serialize', () => ({
@@ -161,6 +167,7 @@ describe('buildNestedMoveChanges()', () => {
   });
 
   test('moves every entry below the folder', async () => {
+    vi.mocked(getSingleFileComments).mockReturnValue({ title: 'Title' });
     vi.mocked(getEntriesByCollection).mockReturnValue([
       entry('1', 'docs/_index'),
       entry('2', 'docs/intro/_index'),
@@ -197,6 +204,11 @@ describe('buildNestedMoveChanges()', () => {
       'guides/manual/intro/_index',
       'guides/manual/intro/deep/_index',
     ]);
+
+    // The field comments are written to the moved files as well
+    expect(vi.mocked(formatEntryFile)).toHaveBeenCalledWith(
+      expect.objectContaining({ comments: { title: 'Title' } }),
+    );
   });
 
   test('moves the entries up to the collection folder', async () => {
@@ -242,6 +254,7 @@ describe('buildNestedMoveChanges()', () => {
       },
     });
 
+    vi.mocked(getFieldComments).mockReturnValue({ title: 'Title' });
     vi.mocked(getEntriesByCollection).mockReturnValue([
       i18nEntry('1', 'docs/_index'),
       i18nEntry('2', 'docs/intro/_index'),
@@ -252,6 +265,10 @@ describe('buildNestedMoveChanges()', () => {
       originalEntry: i18nEntry('1', 'docs/_index'),
       savingEntry: i18nEntry('1', 'guides/_index'),
     });
+
+    expect(vi.mocked(formatEntryFile)).toHaveBeenCalledWith(
+      expect.objectContaining({ comments: { title: 'Title' } }),
+    );
 
     // The French file has no content, so it’s left out
     expect(changes).toEqual([

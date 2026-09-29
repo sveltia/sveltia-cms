@@ -80,13 +80,14 @@ describe('FieldEditor', () => {
     await expect.poll(() => draft.currentValues.en.title).toBe('Hi');
   });
 
-  test('marks an optional field and shows a comment', async () => {
+  test('marks an optional field without showing its comment', async () => {
     const { container } = await renderEditor({
       fieldConfig: { name: 'title', widget: 'string', required: false, comment: 'Optional' },
     });
 
     expect(container.querySelector('.required')).toBeNull();
-    expect(container.querySelector('.comment')).toHaveTextContent('Optional');
+    // Like Netlify/Decap CMS, a comment is written to the YAML file rather than shown in the UI
+    expect(container).not.toHaveTextContent('Optional');
     await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-required', 'false');
   });
 

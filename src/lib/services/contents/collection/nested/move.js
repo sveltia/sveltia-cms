@@ -8,7 +8,11 @@ import {
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
-import { buildSingleFileContent } from '$lib/services/contents/draft/save/content';
+import {
+  buildSingleFileContent,
+  getFieldComments,
+  getSingleFileComments,
+} from '$lib/services/contents/draft/save/content';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
@@ -192,6 +196,7 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
       formatEntryFile({
         content: buildSingleFileContent({ config: collection, entry: movedEntry, draft }),
         _file,
+        comments: getSingleFileComments({ config: collection, fields: draft.fields }),
       }),
     ]);
 
@@ -224,6 +229,7 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
         formatEntryFile({
           content: serializeContent({ draft, locale, valueMap: localizedEntry.content }),
           _file,
+          comments: getFieldComments(draft.fields),
         }),
       ]);
 

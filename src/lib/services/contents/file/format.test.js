@@ -341,6 +341,57 @@ image:
   });
 });
 
+describe('Test formatYAML() with comments', () => {
+  test('writes a comment before a top-level key, including the first one', () => {
+    expect(formatYAML({ title: 'Hello', draft: false }, {}, {}, { title: 'Title' })).toBe(
+      '# Title\ntitle: Hello\ndraft: false',
+    );
+  });
+
+  test('writes a comment before a key nested in a map', () => {
+    expect(
+      formatYAML(
+        { image: { src: 'a.jpg', alt: 'A' } },
+        {},
+        {},
+        {
+          image: 'Image',
+          'image.alt': 'Alt text',
+        },
+      ),
+    ).toBe('# Image\nimage:\n  src: a.jpg\n  # Alt text\n  alt: A');
+  });
+
+  test('splits a comment on an escaped or a real line break', () => {
+    // Netlify/Decap CMS documents `comment: 'line 1\nline 2'`, where YAML keeps the `\n` as is
+    expect(formatYAML({ a: 'a' }, {}, {}, { a: 'line 1\\nline 2\nline 3' })).toBe(
+      '# line 1\n# line 2\n# line 3\na: a',
+    );
+  });
+
+  test('leaves the items of a sequence alone', () => {
+    expect(
+      formatYAML(
+        { links: [{ url: 'https://example.com' }] },
+        {},
+        {},
+        {
+          links: 'Links',
+          'links.url': 'URL',
+        },
+      ),
+    ).toBe('# Links\nlinks:\n  - url: https://example.com');
+  });
+
+  test('ignores a comment for a key that is not there', () => {
+    expect(formatYAML({ title: 'Hello' }, {}, {}, { body: 'Body' })).toBe('title: Hello');
+  });
+
+  test('ignores the comments when the document is not a map', () => {
+    expect(formatYAML(/** @type {any} */ (['a', 'b']), {}, {}, { 0: 'First' })).toBe('- a\n- b');
+  });
+});
+
 describe('Test formatFrontMatter()', () => {
   const baseContent = {
     title: 'My Post',
@@ -1015,6 +1066,38 @@ title: Test Post
 description: This stays inline.
 ---
 `,
+    );
+  });
+});
+
+describe('Test formatEntryFile() with comments', () => {
+  const comments = { title: 'Page title' };
+
+  test('writes the comments to a YAML file', async () => {
+    const _file = /** @type {FileConfig} */ ({ format: 'yaml', extension: 'yml' });
+
+    expect(await formatEntryFile({ content: { title: 'Hello' }, _file, comments })).toBe(
+      '# Page title\ntitle: Hello\n',
+    );
+  });
+
+  test('writes the comments to YAML front matter', async () => {
+    const _file = /** @type {FileConfig} */ ({ format: 'yaml-frontmatter', extension: 'md' });
+
+    expect(
+      await formatEntryFile({ content: { title: 'Hello', body: 'Text' }, _file, comments }),
+    ).toBe('---\n# Page title\ntitle: Hello\n---\n\nText\n');
+  });
+
+  test('leaves the comments out of other formats, like Netlify/Decap CMS', async () => {
+    const toml = /** @type {FileConfig} */ ({ format: 'toml', extension: 'toml' });
+    const json = /** @type {FileConfig} */ ({ format: 'json', extension: 'json' });
+
+    expect(await formatEntryFile({ content: { title: 'Hello' }, _file: toml, comments })).toBe(
+      'title = "Hello"\n',
+    );
+    expect(await formatEntryFile({ content: { title: 'Hello' }, _file: json, comments })).toBe(
+      '{\n  "title": "Hello"\n}\n',
     );
   });
 });

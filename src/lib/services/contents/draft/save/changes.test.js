@@ -780,6 +780,7 @@ describe('draft/save/changes', () => {
           _type: 'entry',
           _file: { format: 'yaml-frontmatter' },
         },
+        fields: [{ name: 'title', widget: 'string', comment: 'Page title' }],
         isNew: true,
         originalLocales: {},
         currentLocales: { en: true },
@@ -807,6 +808,9 @@ describe('draft/save/changes', () => {
 
       expect(result?.action).toBe('create');
       expect(result?.slug).toBe('new-post');
+      expect(vi.mocked(formatEntryFile).mock.calls[0][0].comments).toEqual({
+        title: 'Page title',
+      });
     });
 
     it('should create delete change for removed locale', async () => {
@@ -1912,6 +1916,7 @@ describe('draft/save/changes', () => {
           _file: { format: 'yaml-frontmatter' },
           _i18n: {
             i18nEnabled: true,
+            allLocales: ['en', 'ja'],
             defaultLocale: 'en',
           },
         },
@@ -1965,6 +1970,7 @@ describe('draft/save/changes', () => {
           _file: { format: 'yaml-frontmatter' },
           _i18n: {
             i18nEnabled: true,
+            allLocales: ['en', 'ja'],
             defaultLocale: 'en',
           },
         },
@@ -2016,10 +2022,12 @@ describe('draft/save/changes', () => {
           _file: { format: 'yaml' },
           _i18n: {
             i18nEnabled: true,
+            allLocales: ['de', 'en'],
             defaultLocale: 'de',
             structureMap: { i18nSingleFileDefaultRoot: true },
           },
         },
+        fields: [{ name: 'title', widget: 'string', comment: 'Page title' }],
         isNew: true,
         originalSlugs: undefined,
         originalEntry: undefined,
@@ -2043,6 +2051,8 @@ describe('draft/save/changes', () => {
         content: 'Deutsche Version.',
         en: { title: 'About Us', content: 'English version.' },
       });
+      // The comments follow the same structure as the content
+      expect(formatArgs.comments).toEqual({ title: 'Page title', 'en.title': 'Page title' });
     });
 
     it('should omit non-default locales without content', async () => {
@@ -2058,6 +2068,7 @@ describe('draft/save/changes', () => {
           _file: { format: 'yaml' },
           _i18n: {
             i18nEnabled: true,
+            allLocales: ['en', 'fr'],
             defaultLocale: 'en',
             structureMap: { i18nSingleFileDefaultRoot: true },
           },
@@ -2096,6 +2107,7 @@ describe('draft/save/changes', () => {
           _file: { format: 'yaml' },
           _i18n: {
             i18nEnabled: true,
+            allLocales: ['en', 'fr'],
             defaultLocale: 'en',
             structureMap: { i18nSingleFileDefaultRoot: true },
           },

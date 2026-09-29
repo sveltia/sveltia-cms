@@ -1,13 +1,19 @@
 import { stringify as stringifyTOML } from 'smol-toml';
-import { stringify as stringifyYAML } from 'yaml';
+import { Document, isMap } from 'yaml';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
 import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
 
 /**
+ * @import { Scalar, ToStringOptions } from 'yaml';
  * @import { FileConfig, InternalLocaleCode } from '$lib/types/private';
- * @import { JsonFormatOptions, RawEntryContent, YamlFormatOptions } from '$lib/types/public';
+ * @import {
+ * FieldKeyPath,
+ * JsonFormatOptions,
+ * RawEntryContent,
+ * YamlFormatOptions,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -39,11 +45,45 @@ export const formatJSON = (obj, options = cmsConfig.current?.output?.json ?? {})
 export const formatTOML = (obj) => stringifyTOML(obj).trim();
 
 /**
+ * Add the given comments to the keys of a YAML map and the maps nested in it, like Netlify/Decap
+ * CMS does with the `comment` field option. Items of a sequence are left alone, as the comment
+ * belongs to the field rather than to each item.
+ * @param {any} node YAML node.
+ * @param {Record<FieldKeyPath, string>} comments Comments keyed by field key path.
+ * @param {string} [prefix] Key path of the node.
+ * @see https://decapcms.org/docs/configuration-options/#fields
+ */
+const addYAMLComments = (node, comments, prefix = '') => {
+  if (!isMap(node)) {
+    return;
+  }
+
+  node.items.forEach(({ key: _key, value }) => {
+    // A key created from an object is always a scalar
+    const key = /** @type {Scalar} */ (_key);
+    const keyPath = `${prefix}${key.value}`;
+    const comment = comments[keyPath];
+
+    if (comment) {
+      // A line break can be given as a real one or, like Netlify/Decap CMS, as an escaped `\n`
+      key.commentBefore = comment
+        .split(/\\n|\n/)
+        .map((line) => ` ${line}`)
+        .join('\n');
+    }
+
+    addYAMLComments(value, comments, `${keyPath}.`);
+  });
+};
+
+/**
  * Format the given object as a YAML document using a library.
  * @param {Record<string, any>} obj Object to be formatted.
  * @param {YamlFormatOptions} [options] Options.
  * @param {object} [legacyOptions] Deprecated collection-level options.
  * @param {boolean} [legacyOptions.quote] Quote option.
+ * @param {Record<FieldKeyPath, string>} [comments] Comments to add before the keys, keyed by field
+ * key path.
  * @returns {string} Formatted document.
  * @see https://eemeli.org/yaml/#tostring-options
  * @todo Remove `legacyOptions` prior to the 1.0 release.
@@ -52,11 +92,13 @@ export const formatYAML = (
   obj,
   options = cmsConfig.current?.output?.yaml ?? {},
   legacyOptions = {},
+  comments = {},
 ) => {
   const { indent_size: indent = 2, indent_sequences: indentSeq = true, quote = 'none' } = options;
   const { quote: legacyQuote = false } = legacyOptions;
 
-  return stringifyYAML(obj, null, {
+  /** @type {ToStringOptions} */
+  const toStringOptions = {
     indent,
     indentSeq,
     lineWidth: 0,
@@ -68,7 +110,13 @@ export const formatYAML = (
           ? 'QUOTE_SINGLE'
           : 'PLAIN',
     singleQuote: !(legacyQuote || quote === 'double'),
-  }).trim();
+  };
+
+  const doc = new Document(obj);
+
+  addYAMLComments(doc.contents, comments);
+
+  return doc.toString(toStringOptions).trim();
 };
 
 /**
@@ -76,9 +124,11 @@ export const formatYAML = (
  * @param {object} args Arguments.
  * @param {RawEntryContent} args.content Entry content.
  * @param {FileConfig} args._file File configuration.
+ * @param {Record<FieldKeyPath, string>} [args.comments] Comments to add before the keys, keyed by
+ * field key path. YAML only.
  * @returns {string} Formatted front matter.
  */
-export const formatFrontMatter = ({ content, _file }) => {
+export const formatFrontMatter = ({ content, _file, comments }) => {
   const {
     format,
     fmDelimiters,
@@ -103,7 +153,7 @@ export const formatFrontMatter = ({ content, _file }) => {
     let head = '';
 
     if (format === 'frontmatter' || format === 'yaml-frontmatter') {
-      head = formatYAML(content, undefined, { quote: yamlQuote });
+      head = formatYAML(content, undefined, { quote: yamlQuote }, comments);
     } else if (format === 'toml-frontmatter') {
       head = formatTOML(content);
     } else if (format === 'json-frontmatter') {
@@ -135,9 +185,11 @@ export const formatFrontMatter = ({ content, _file }) => {
  * object. Note that this method may modify the `content` (the `body` property will be removed if
  * exists) so it shouldn’t be a reference to an existing object.
  * @param {FileConfig} entry._file Entry file configuration.
+ * @param {Record<FieldKeyPath, string>} [entry.comments] Comments to add before the keys, keyed by
+ * field key path, from the `comment` field option. YAML only, like Netlify/Decap CMS.
  * @returns {Promise<string>} Formatted string.
  */
-export const formatEntryFile = async ({ content, _file }) => {
+export const formatEntryFile = async ({ content, _file, comments }) => {
   const { format, yamlQuote = false } = _file;
   const customFormatter = customFileFormatRegistry.get(format)?.formatter;
 
@@ -151,7 +203,7 @@ export const formatEntryFile = async ({ content, _file }) => {
 
   try {
     if (/^ya?ml$/.test(format)) {
-      return `${formatYAML(content, undefined, { quote: yamlQuote })}\n`;
+      return `${formatYAML(content, undefined, { quote: yamlQuote }, comments)}\n`;
     }
 
     if (format === 'toml') {
@@ -169,7 +221,7 @@ export const formatEntryFile = async ({ content, _file }) => {
   }
 
   if (format === 'frontmatter' || FRONTMATTER_FORMATS.includes(/** @type {any} */ (format))) {
-    return formatFrontMatter({ content, _file });
+    return formatFrontMatter({ content, _file, comments });
   }
 
   return '';

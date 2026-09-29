@@ -9,6 +9,7 @@ import {
   createSyntheticDraft,
   resolveCacheDB,
 } from '$lib/services/contents/entry/changes';
+import { formatEntryFile } from '$lib/services/contents/file/format';
 
 vi.mock('$lib/services/backends', () => ({ backend: { current: null } }));
 
@@ -127,6 +128,58 @@ describe('buildEntryUpdateChanges()', () => {
 
     expect(changes).toHaveLength(2);
     expect(changes.map(({ path }) => path)).toEqual(['en/a.md', 'fr/a.md']);
+  });
+
+  test('passes the field comments for a single-file entry', async () => {
+    const collection = {
+      name: 'posts',
+      _file,
+      _i18n: {
+        i18nEnabled: true,
+        allLocales: ['en', 'fr'],
+        defaultLocale: 'en',
+        structureMap: { i18nSingleFile: true },
+      },
+    };
+
+    const entry = {
+      slug: 'a',
+      locales: { en: { slug: 'a', path: 'content/a.md', content: { title: 'A' } } },
+    };
+
+    const draft = { fields: [{ name: 'title', comment: 'Title' }] };
+
+    await buildEntryUpdateChanges({ collection, entry, draft });
+
+    expect(vi.mocked(formatEntryFile).mock.calls[0][0].comments).toEqual({
+      'en.title': 'Title',
+      'fr.title': 'Title',
+    });
+  });
+
+  test('passes the field comments for each file of a multi-file entry', async () => {
+    const collection = {
+      name: 'posts',
+      _file,
+      _i18n: { i18nEnabled: true, allLocales: ['en', 'fr'], defaultLocale: 'en' },
+    };
+
+    const entry = {
+      slug: 'a',
+      locales: {
+        en: { slug: 'a', path: 'en/a.md', content: { title: 'A' } },
+        fr: { slug: 'a', path: 'fr/a.md', content: { title: 'B' } },
+      },
+    };
+
+    const draft = { fields: [{ name: 'title', comment: 'Title' }] };
+
+    await buildEntryUpdateChanges({ collection, entry, draft });
+
+    expect(vi.mocked(formatEntryFile).mock.calls.map(([{ comments }]) => comments)).toEqual([
+      { title: 'Title' },
+      { title: 'Title' },
+    ]);
   });
 
   test('uses the collection file’s own configuration', async () => {

@@ -299,6 +299,10 @@
  * @property {string} name Unique identifier for the field. It cannot include periods and spaces.
  * @property {string} [label] Label of the field to be displayed in the editor UI. Default: `name`
  * field value.
+ * @property {string} [comment] Comment to be written before the field in a YAML file or YAML front
+ * matter, for developers reading the file. It’s not displayed in the editor UI; use `hint` for
+ * that. A line break can be given as `\n`. The comment on a subfield of an Object field is written
+ * before the subfield, while the one on a subfield of a List field is ignored.
  */
 
 /**
@@ -336,7 +340,6 @@
 /**
  * Properties for a field that is visible in the editor UI.
  * @typedef {object} VisibleFieldProps
- * @property {string} [comment] Short description of the field to be displayed in the editor UI.
  * @property {string} [hint] Help message to be displayed below the input UI. Limited Markdown
  * formatting is supported: bold, italic, strikethrough and links.
  * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.

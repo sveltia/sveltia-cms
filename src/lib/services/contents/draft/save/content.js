@@ -2,7 +2,68 @@ import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 
 /**
  * @import { Entry, InternalCollection, InternalCollectionFile } from '$lib/types/private';
+ * @import { Field, FieldKeyPath } from '$lib/types/public';
  */
+
+/**
+ * Collect the `comment` option of the given fields, and of the subfields of Object fields, to be
+ * written before the keys in a YAML file, like Netlify/Decap CMS does. The subfields of a List
+ * field are left out, as the comment would have to be repeated on every item.
+ * @param {Field[]} [fields] Fields.
+ * @param {string} [prefix] Key path prefix, e.g. a locale key followed by a period.
+ * @returns {Record<FieldKeyPath, string>} Comments keyed by field key path.
+ * @see https://decapcms.org/docs/configuration-options/#fields
+ */
+export const getFieldComments = (fields = [], prefix = '') =>
+  Object.fromEntries(
+    fields.flatMap((field) => {
+      const { name, widget = 'string', comment } = field;
+      const keyPath = `${prefix}${name}`;
+      /** @type {[FieldKeyPath, string][]} */
+      const entries = typeof comment === 'string' && comment.trim() ? [[keyPath, comment]] : [];
+
+      if (widget === 'object' && 'fields' in field && Array.isArray(field.fields)) {
+        entries.push(...Object.entries(getFieldComments(field.fields, `${keyPath}.`)));
+      }
+
+      return entries;
+    }),
+  );
+
+/**
+ * Collect the field comments for a single-file entry, taking i18n single-file structures into
+ * account the same way as {@link buildSingleFileContent}: the fields of each locale are nested
+ * under its locale key, except for the default locale with `single_file_default_root`.
+ * @param {object} args Arguments.
+ * @param {InternalCollection | InternalCollectionFile} args.config Collection or collection file
+ * holding the i18n configuration.
+ * @param {Field[]} [args.fields] Fields of the entry.
+ * @returns {Record<FieldKeyPath, string>} Comments keyed by field key path.
+ */
+export const getSingleFileComments = ({ config, fields }) => {
+  const {
+    _i18n: {
+      i18nEnabled,
+      allLocales,
+      defaultLocale,
+      structureMap: { i18nSingleFileDefaultRoot } = {},
+    },
+  } = config;
+
+  if (!i18nEnabled) {
+    return getFieldComments(fields);
+  }
+
+  return Object.assign(
+    {},
+    ...allLocales.map((locale) =>
+      getFieldComments(
+        fields,
+        i18nSingleFileDefaultRoot && locale === defaultLocale ? '' : `${locale}.`,
+      ),
+    ),
+  );
+};
 
 /**
  * Build the file content for a single-file entry, taking i18n single-file structures into account.
