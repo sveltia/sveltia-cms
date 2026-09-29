@@ -23,7 +23,7 @@ vi.mock('@sveltia/i18n', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
-  isFieldMultiple: vi.fn(() => false),
+  isFieldMultiple: vi.fn((fieldConfig) => !!fieldConfig.multiple),
 }));
 
 vi.mock('$lib/services/contents/fields/date-time/config', () => ({
@@ -229,6 +229,30 @@ describe('getFieldValidationMessages', () => {
       );
 
       expect(messages).toEqual(['validation.range_overflow.select({"max":1})']);
+    });
+
+    it('returns the select message for a multiple-value Select or Relation field', () => {
+      ['select', 'relation'].forEach((widget) => {
+        const messages = getFieldValidationMessages(
+          args({
+            validity: { rangeOverflow: true },
+            fieldConfig: /** @type {any} */ ({ name: 'f', widget, multiple: true, max: 1 }),
+          }),
+        );
+
+        expect(messages).toEqual(['validation.range_overflow.select({"max":1})']);
+      });
+    });
+
+    it('returns the add message for a multiple-value File or Image field', () => {
+      const messages = getFieldValidationMessages(
+        args({
+          validity: { rangeOverflow: true },
+          fieldConfig: { name: 'f', widget: 'image', multiple: true, max: 2 },
+        }),
+      );
+
+      expect(messages).toEqual(['validation.range_overflow.add({"max":2})']);
     });
   });
 

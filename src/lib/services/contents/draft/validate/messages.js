@@ -1,6 +1,7 @@
 import { _ } from '@sveltia/i18n';
 
 import { getField, isFieldMultiple } from '$lib/services/contents/entry/fields';
+import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { getFormattedDateTime } from '$lib/services/contents/fields/date-time/validate';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
@@ -92,8 +93,12 @@ export const getFieldValidationMessages = ({ validity, fieldConfig }) => {
     ? parsedDateTimeConf
     : /** @type {MinMaxValueField} */ (fieldConfig);
 
+  // A multiple-value Select or Relation field has its options selected rather than items added, so
+  // it gets the `select` message
   const canAddMultiValue =
-    fieldType === 'list' || fieldType === 'keyvalue' || isFieldMultiple(fieldConfig);
+    fieldType === 'list' ||
+    fieldType === 'keyvalue' ||
+    (MEDIA_FIELD_TYPES.includes(fieldType) && isFieldMultiple(fieldConfig));
 
   if (validity.valueMissing) {
     messages.push(_('validation.value_missing'));
