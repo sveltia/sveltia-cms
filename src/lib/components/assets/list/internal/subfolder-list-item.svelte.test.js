@@ -103,6 +103,19 @@ describe('SubfolderListItem', () => {
     await expect.element(page.getByRole('menuitem', { name: 'Delete Folder' })).toBeDisabled();
   });
 
+  test('withholds renaming and deleting within a read-only folder', async () => {
+    selectedAssetFolder.current = /** @type {any} */ ({
+      ...globalAssetFolder.current,
+      readonly: true,
+    });
+
+    await render(SubfolderListItem, { subfolder, rowIndex: 0, viewType: 'grid' });
+
+    await page.getByRole('button', { name: 'Show Folder Options' }).click();
+    await expect.element(page.getByRole('menuitem', { name: 'Rename Folder' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Delete Folder' })).toBeDisabled();
+  });
+
   test('opens the folder on double click, carrying the asset folder as history state', async () => {
     focusedAsset.current = /** @type {any} */ ({ path: 'static/uploads/a.png' });
 

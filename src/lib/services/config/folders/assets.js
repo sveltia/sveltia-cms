@@ -2,6 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { compare, stripSlashes } from '@sveltia/utils/string';
 
 import { hasTemplateTags } from '$lib/services/common/template';
+import { isReadonly } from '$lib/services/config/readonly';
 import { getValidCollections } from '$lib/services/contents/collection';
 import { getValidCollectionFiles } from '$lib/services/contents/collection/files';
 import { LOCALE_ROOT_FOLDER_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
@@ -283,6 +284,44 @@ const addAssetCollections = ({ assetCollections, globalFolders }) => {
 };
 
 /**
+ * Check whether an asset folder is read-only, which is when the collection or collection file it
+ * belongs to is, or the whole CMS is. A folder that belongs to neither, like the global folder or a
+ * custom editor component’s folder, is only read-only along with the whole CMS.
+ * @param {object} args Arguments.
+ * @param {InternalCmsConfig} args.config CMS configuration.
+ * @param {AssetFolderInfo} args.folder Asset folder.
+ * @param {Collection[]} args.validCollections Valid collections.
+ * @returns {boolean} Result.
+ */
+export const isAssetFolderReadonly = ({ config, folder, validCollections }) => {
+  const { collectionName, fileName, isAssetCollection } = folder;
+
+  if (isAssetCollection) {
+    const collection = config.asset_collections?.find(
+      ({ name }) => `assets:${name}` === collectionName,
+    );
+
+    return isReadonly({ config, collection });
+  }
+
+  const collection = validCollections.find(({ name }) => name === collectionName);
+
+  const files =
+    collectionName === '_singletons'
+      ? config.singletons
+      : collection && 'files' in collection
+        ? collection.files
+        : undefined;
+
+  const collectionFile =
+    fileName && files
+      ? getValidCollectionFiles(files).find(({ name }) => name === fileName)
+      : undefined;
+
+  return isReadonly({ config, collection, collectionFile });
+};
+
+/**
  * Get all asset folders.
  * @param {InternalCmsConfig} config CMS configuration.
  * @param {CollectedMediaField[]} [fieldMediaFolders] Collected field-level media folders.
@@ -431,6 +470,11 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
       ? localeFolderNameMap.get(/** @type {string} */ (folder.collectionName))
       : undefined;
 
-    return localeFolderNames?.length ? { ...folder, localeFolderNames } : folder;
+    // Both properties are only added when they apply, like the other optional ones
+    return {
+      ...folder,
+      ...(localeFolderNames?.length ? { localeFolderNames } : {}),
+      ...(isAssetFolderReadonly({ config, folder, validCollections }) ? { readonly: true } : {}),
+    };
   });
 };

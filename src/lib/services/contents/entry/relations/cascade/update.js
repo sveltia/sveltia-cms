@@ -1,4 +1,8 @@
+import { _ } from '@sveltia/i18n';
+
+import { isReadonly } from '$lib/services/config/readonly';
 import { buildTargetChanges } from '$lib/services/contents/entry/cascade';
+import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import {
   getEntryRelationValues,
   getReferencingRelationFields,
@@ -129,6 +133,9 @@ export const replaceReferences = ({ content, relation, replacements }) => {
  * `value_field` is configured. A `value_field` pointing at a content field doesn’t depend on the
  * slug, so those references are left alone; one combining the slug with other fields, such as
  * `{{locale}}/{{slug}}`, is recomputed in full.
+ *
+ * A referencing entry that is read-only can’t be rewritten, so the rename is refused rather than
+ * leaving that entry pointing at an entry that no longer exists under that name.
  * @param {object} args Arguments.
  * @param {InternalCollection} args.collection Collection of the renamed entry.
  * @param {InternalCollectionFile} [args.collectionFile] Collection file of the renamed entry.
@@ -138,6 +145,7 @@ export const replaceReferences = ({ content, relation, replacements }) => {
  * @param {IndexedDB} [args.cacheDB] Pre-opened file-cache database to reuse.
  * @returns {Promise<{ changes: FileChange[], savingEntries: Entry[] }>} Collected changes and the
  * entries to be saved.
+ * @throws {Error} When a referencing entry is read-only, with a message naming the entries.
  */
 export const buildCascadeChanges = async ({
   collection,
@@ -196,6 +204,21 @@ export const buildCascadeChanges = async ({
           replaceReferences({ content, relation, replacements }),
     });
   });
+
+  // An entry can also be locked by another collection it belongs to
+  const readonlyTargets = [...targets.values()].filter(
+    (target) =>
+      isReadonly({ collection: target.collection, collectionFile: target.collectionFile }) ||
+      isEntryReadonly(target.entry),
+  );
+
+  if (readonlyTargets.length) {
+    const entries = readonlyTargets
+      .map((target) => getReadonlyEntryLabel(target.entry, target.collection))
+      .join(', ');
+
+    throw new Error(_('cannot_rename_referenced_entry', { values: { entries } }));
+  }
 
   return buildTargetChanges({ targets: [...targets.values()], cacheDB });
 };

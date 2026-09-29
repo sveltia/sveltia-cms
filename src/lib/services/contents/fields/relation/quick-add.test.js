@@ -145,6 +145,11 @@ describe('getCreatableCollection', () => {
     vi.mocked(getCollection).mockReturnValue({ ...tagCollection, create: false });
     expect(getCreatableCollection({ fieldConfig, draft })).toBeUndefined();
   });
+
+  it('returns nothing when the collection is read-only', () => {
+    vi.mocked(getCollection).mockReturnValue({ ...tagCollection, readonly: true });
+    expect(getCreatableCollection({ fieldConfig, draft })).toBeUndefined();
+  });
 });
 
 describe('hasCreationRoom', () => {

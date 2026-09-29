@@ -52,6 +52,7 @@ describe('WorkflowEntryCard', () => {
           files: [{ name: 'about', label: 'About Us', file: 'content/about.md', fields }],
         },
         { name: 'locked', label: 'Locked', folder: 'content/locked', delete: false, fields },
+        { name: 'frozen', label: 'Frozen', folder: 'content/frozen', readonly: true, fields },
       ],
     });
     setEntries([]);
@@ -205,6 +206,28 @@ describe('WorkflowEntryCard', () => {
     await expect
       .poll(() => page.getByRole('button', { name: 'Publish Entry' }).elements().length)
       .toBe(0);
+  });
+
+  test('only lets a read-only entry be opened', async () => {
+    await render(WorkflowEntryCard, {
+      entry: createEntry(
+        { collectionName: 'frozen', status: 'pending_publish' },
+        createMockEntry({
+          slug: 'hello',
+          folder: 'content/frozen',
+          content: { _default: { title: 'Hello' } },
+        }),
+      ),
+    });
+
+    const card = page.getByRole('listitem');
+
+    await expect.element(card).toHaveAttribute('draggable', 'false');
+    expect(card.getByRole('button', { name: 'Delete Entry' }).elements()).toHaveLength(0);
+    expect(card.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+
+    await card.getByRole('button', { name: 'Hello' }).click();
+    await expect.poll(() => window.location.hash).toBe('#/collections/frozen/entries/hello');
   });
 
   test('reports the production build for a merged entry, with nothing left to do', async () => {

@@ -50,6 +50,20 @@ describe('PrimaryToolbar', () => {
           label: 'Settings',
           files: [{ name: 'general', file: 'data/general.yml', fields: [{ name: 'x' }] }],
         },
+        {
+          name: 'frozen',
+          label: 'Frozen',
+          folder: 'content/frozen',
+          readonly: true,
+          reorder: true,
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+        {
+          name: 'frozen_settings',
+          label: 'Frozen Settings',
+          readonly: true,
+          files: [{ name: 'general', file: 'data/frozen.yml', fields: [{ name: 'x' }] }],
+        },
       ],
     });
   });
@@ -155,6 +169,35 @@ describe('PrimaryToolbar', () => {
       .element(page.getByRole('status'))
       .toHaveTextContent(
         'info Information Creating new entries in this collection is disabled by the administrator.',
+      );
+  });
+
+  test('explains when the collection is read-only, and disables the entry actions', async () => {
+    selectedCollection.current = getCollection('frozen');
+
+    await render(PrimaryToolbar, {});
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information This collection is read-only. You can view its content but cannot make ' +
+          'any changes.',
+      );
+    await expect.element(page.getByRole('button', { name: 'Create New Entry' })).toBeDisabled();
+    await expect.element(page.getByRole('button', { name: /^Delete/ })).toBeDisabled();
+    expect(page.getByRole('button', { name: 'Reorder Entries' }).elements()).toHaveLength(0);
+  });
+
+  test('explains when a file collection is read-only', async () => {
+    selectedCollection.current = getCollection('frozen_settings');
+
+    await render(PrimaryToolbar, {});
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information This collection is read-only. You can view its content but cannot make ' +
+          'any changes.',
       );
   });
 

@@ -1,3 +1,4 @@
+import { _ } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
 
 import { focusedAsset, getAssetByInternalPath, overlaidAsset } from '$lib/services/assets';
@@ -15,6 +16,7 @@ import { getCollectionFilesByEntry } from '$lib/services/contents/collection/fil
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
+import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 
 /**
  * @import {
@@ -178,6 +180,7 @@ const getRenamedReference = (oldName, newName) => (src) => {
  * entry ID. An entry using several of the moved assets is copied once and has every reference
  * replaced in that copy, so it’s saved once with all of them; a copy per asset would each hold a
  * single replacement and overwrite the others. The caller collects the changes from the copies.
+ * @throws {Error} When an entry using the assets is read-only, with a message naming the entries.
  */
 export const collectEntryChangesFromAssets = async ({
   _globalAssetFolder,
@@ -232,6 +235,20 @@ export const collectEntryChangesFromAssets = async ({
 
   if (!replacingTargets.length) {
     return;
+  }
+
+  // A read-only entry can’t be rewritten, and leaving it pointing at a file that’s no longer there
+  // would break it, so the move is refused
+  const readonlyEntries = [...updatingEntries].filter((entry) => isEntryReadonly(entry));
+
+  if (readonlyEntries.length) {
+    throw new Error(
+      _('cannot_move_referenced_asset', {
+        values: {
+          entries: readonlyEntries.map((entry) => getReadonlyEntryLabel(entry)).join(', '),
+        },
+      }),
+    );
   }
 
   const entries = [...updatingEntries].map((entry) => {

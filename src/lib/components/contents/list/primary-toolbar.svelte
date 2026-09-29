@@ -14,6 +14,7 @@
   import DeleteEntriesDialog from '$lib/components/contents/shared/delete-entries-dialog.svelte';
   import CreateEntryButton from '$lib/components/contents/toolbar/create-entry-button.svelte';
   import { goBack } from '$lib/services/app/navigation';
+  import { getReadonlyMessageKey } from '$lib/services/config/readonly';
   import { getCollectionLabel, selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
@@ -41,6 +42,7 @@
   const description = $derived(selectedCollection.current?.description);
   const {
     isEntryCollection,
+    readonly,
     canCreate,
     canDelete,
     canReorder,
@@ -58,6 +60,15 @@
 </script>
 
 {#if selectedCollection.current}
+  {#if readonly}
+    <Infobar
+      dismissible={false}
+      --sui-infobar-border-width="0 0 1px"
+      --sui-infobar-message-justify-content="center"
+    >
+      {_(getReadonlyMessageKey('collection'))}
+    </Infobar>
+  {/if}
   <Toolbar variant="primary" ariaLabel={_('collection')}>
     {#if env.isSmallScreen}
       <BackButton
@@ -117,7 +128,8 @@
       </FloatingActionButtonWrapper>
     {/if}
   </Toolbar>
-  {#if isEntryCollection && (creationDisabled || nearingQuota)}
+  <!-- The read-only message above already says nothing can be created -->
+  {#if !readonly && isEntryCollection && (creationDisabled || nearingQuota)}
     <Infobar
       dismissible={false}
       --sui-infobar-border-width="1px 0"

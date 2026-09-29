@@ -51,6 +51,10 @@ vi.mock('$lib/services/contents/entry/changes', () => ({
   resolveCacheDB: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn(() => false),
+}));
+
 vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummary: vi.fn((collection, entry) => entry.locales._default?.content?.title ?? ''),
 }));
@@ -540,6 +544,25 @@ describe('planAssetDeletion()', () => {
       collectionFile,
       isIndexFile: true,
     });
+  });
+});
+
+describe('planAssetDeletion() with read-only entries', () => {
+  const asset = createAsset('a.png');
+
+  test('blocks the deletion of an asset used by a read-only file', async () => {
+    const collectionFile = { name: 'general', readonly: true };
+    const post = createPost('general', { image: '/static/uploads/a.png' });
+
+    getAssetReferences.mockResolvedValue([
+      createReference(post, 'image', imageField, { collectionFile }),
+    ]);
+
+    const { blockers } = await planAssetDeletion([asset]);
+
+    expect(blockers).toEqual([
+      expect.objectContaining({ keyPath: 'image', messages: ['readonly_reference'] }),
+    ]);
   });
 });
 

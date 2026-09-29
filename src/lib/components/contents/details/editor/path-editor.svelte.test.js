@@ -303,6 +303,21 @@ describe('PathEditor', () => {
     await expect.element(page.getByRole('button', { name: 'New Folder' })).toBeDisabled();
   });
 
+  test('can’t move a read-only entry', async () => {
+    const draft = createMockDraft({
+      collectionName: 'docs',
+      draft: {
+        collection: { .../** @type {any} */ (getCollection('docs')), readonly: true },
+        currentPath: 'guides',
+      },
+    });
+
+    await renderWithDraft(PathEditor, { draft, props: { locale: '_default' } });
+
+    await expect.element(page.getByRole('button', { name: 'Parent Folder' })).toBeDisabled();
+    await expect.element(page.getByRole('button', { name: 'New Folder' })).toBeDisabled();
+  });
+
   test('describes the folder in the locale, where it can’t be changed', async () => {
     const draft = createMockDraft({
       collectionName: 'localized',

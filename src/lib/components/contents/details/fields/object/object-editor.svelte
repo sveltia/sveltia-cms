@@ -74,6 +74,7 @@
     fieldLabel,
     fieldConfig,
     required = true,
+    readonly = false,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -117,7 +118,9 @@
   const unknownType = $derived(hasVariableTypes && !typeConfig);
   const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
   const summaryTemplate = $derived(hasVariableTypes ? typeConfig?.summary || summary : summary);
-  const addButtonDisabled = $derived(locale !== defaultLocale && i18n === 'duplicate');
+  const addButtonDisabled = $derived(
+    readonly || (locale !== defaultLocale && i18n === 'duplicate'),
+  );
 
   /**
    * Initialize the expander state.

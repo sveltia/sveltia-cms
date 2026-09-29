@@ -251,6 +251,29 @@ describe('FieldEditor', () => {
     expect(page.getByRole('button', { name: 'Show Field Options' }).elements()).toHaveLength(0);
   });
 
+  test('locks every field of a read-only entry', async () => {
+    const fieldConfig = { name: 'title', widget: 'string', i18n: true };
+
+    const draft = createMockDraft({
+      fields: [fieldConfig],
+      i18n: { i18nEnabled: true, defaultLocale: 'en', allLocales: ['en', 'ja'] },
+      values: { en: { title: 'Hello' }, ja: {} },
+    });
+
+    // The collection is a static property of the draft, so the flag is set on the object itself
+    /** @type {any} */ (draft.collection).readonly = true;
+
+    await renderWithDraft(FieldEditor, {
+      draft,
+      props: { locale: 'en', keyPath: 'title', typedKeyPath: 'title', fieldConfig },
+    });
+
+    await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-readonly', 'true');
+    // Nothing can be translated, copied or reverted
+    expect(page.getByRole('button', { name: /Translate/ }).elements()).toHaveLength(0);
+    expect(page.getByRole('button', { name: 'Show Field Options' }).elements()).toHaveLength(0);
+  });
+
   test('locks a UUID field unless the `readonly` option unlocks it', async () => {
     await renderEditor({
       fieldConfig: { name: 'id', widget: 'uuid' },

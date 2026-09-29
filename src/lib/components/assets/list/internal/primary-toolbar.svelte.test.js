@@ -123,6 +123,38 @@ describe('PrimaryToolbar', () => {
     await expect.element(page.getByRole('button', { name: 'Copy' })).toBeEnabled();
   });
 
+  test('explains a read-only folder, and disables uploading and deleting', async () => {
+    selectedAssetFolder.current = /** @type {any} */ ({
+      collectionName: undefined,
+      internalPath: 'static/uploads',
+      publicPath: '/uploads',
+      entryRelative: false,
+      hasTemplateTags: false,
+      readonly: true,
+    });
+    // The asset is in the folder it was listed with
+    firstAsset.folder.readonly = true;
+
+    try {
+      await render(PrimaryToolbar);
+      focusedAsset.current = firstAsset;
+
+      await expect
+        .element(page.getByRole('status'))
+        .toHaveTextContent(
+          'info Information This folder is read-only. You can view its assets but cannot make ' +
+            'any changes.',
+        );
+      await expect.element(page.getByRole('button', { name: 'Upload New Assets' })).toBeDisabled();
+      await expect.element(page.getByRole('button', { name: 'Copy' })).toBeEnabled();
+      await expect
+        .element(page.getByRole('button', { name: 'Delete Selected Asset' }))
+        .toBeDisabled();
+    } finally {
+      delete firstAsset.folder.readonly;
+    }
+  });
+
   test('hides the upload button on a small screen while contributing via a fork', async () => {
     env.isSmallScreen = true;
     forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });

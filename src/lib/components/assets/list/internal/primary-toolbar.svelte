@@ -1,5 +1,6 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
+  import { Infobar } from '@sveltia/ui';
 
   import DeleteAssetsButton from '$lib/components/assets/list/delete-assets-button.svelte';
   import DownloadAssetsButton from '$lib/components/assets/list/download-assets-button.svelte';
@@ -15,6 +16,7 @@
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
     canCreateAsset,
+    hasReadonlyAsset,
     selectedAssetFolder,
     targetAssetFolder,
   } from '$lib/services/assets/folders';
@@ -22,6 +24,7 @@
   import { canPreviewAsset } from '$lib/services/assets/kinds';
   import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
+  import { getReadonlyMessageKey } from '$lib/services/config/readonly';
   import { env } from '$lib/services/user/env.svelte';
   import { createPath } from '$lib/services/utils/file';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -66,6 +69,15 @@
   };
 </script>
 
+{#if folder?.readonly}
+  <Infobar
+    dismissible={false}
+    --sui-infobar-border-width="0 0 1px"
+    --sui-infobar-message-justify-content="center"
+  >
+    {_(getReadonlyMessageKey('asset_folder'))}
+  </Infobar>
+{/if}
 <PrimaryToolbar rootLabel={folderLabel} {subfolderNames} onBrowse={browseAncestor}>
   {#snippet actions()}
     <PreviewAssetButton
@@ -80,7 +92,7 @@
       -->
     <DeleteAssetsButton
       {assets}
-      disabled={openAuthoring.current}
+      disabled={openAuthoring.current || hasReadonlyAsset(assets)}
       deleteAssets={(_assets) => {
         // Don’t wait for the commit; the list is updated optimistically
         deleteAssets(_assets);

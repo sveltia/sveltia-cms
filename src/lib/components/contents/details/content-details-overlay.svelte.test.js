@@ -106,6 +106,7 @@ describe('ContentDetailsOverlay', () => {
         { name: 'posts', label: 'Posts', folder: 'content/posts', i18n: true, fields },
         { name: 'locked', label: 'Locked', folder: 'content/locked', create: false, fields },
         { name: 'limited', label: 'Limited', folder: 'content/limited', limit: 1, fields },
+        { name: 'frozen', label: 'Frozen', folder: 'content/frozen', readonly: true, fields },
       ],
     });
     env.isSmallScreen = false;
@@ -286,6 +287,57 @@ describe('ContentDetailsOverlay', () => {
       )
       .toBeInTheDocument();
     await expect.element(page.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  test('refuses to create an entry in a read-only collection', async () => {
+    selectedCollection.current = getCollection('frozen');
+
+    await renderOverlay(
+      createMockDraft({
+        collectionName: 'frozen',
+        fields,
+        draft: { collection: getCollection('frozen') },
+      }),
+    );
+
+    await expect
+      .element(
+        page.getByText(
+          'This collection is read-only. You can view its content but cannot make any changes.',
+        ),
+      )
+      .toBeInTheDocument();
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+    // The message is given once, in place of the editor
+    expect(page.getByRole('status').elements()).toHaveLength(0);
+  });
+
+  test('shows an existing entry of a read-only collection for reference', async () => {
+    selectedCollection.current = getCollection('frozen');
+
+    await renderOverlay(
+      createMockDraft({
+        collectionName: 'frozen',
+        fields,
+        values: { _default: { title: 'Hello', body: '', 'author.name': 'Melvin' } },
+        draft: {
+          collection: getCollection('frozen'),
+          isNew: false,
+          originalEntry: createMockEntry({ slug: 'hello', folder: 'content/frozen' }),
+        },
+      }),
+    );
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information This entry is read-only. You can view it but cannot make any changes.',
+      );
+    await expect.element(page.getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
+    await expect
+      .element(page.getByRole('textbox', { name: 'Title' }))
+      .toHaveAttribute('aria-readonly', 'true');
+    expect(page.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
   });
 
   test('drops the draft when the overlay is closed', async () => {

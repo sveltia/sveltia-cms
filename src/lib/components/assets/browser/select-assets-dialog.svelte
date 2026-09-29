@@ -495,12 +495,13 @@
   {#if browsingSubfolders}
     <!--
       Creating a folder commits straight to the configured branch rather than going through
-      review, so it’s not something an Open Authoring contributor can do
+      review, so it’s not something an Open Authoring contributor can do, nor anyone within a
+      read-only folder
     -->
     <Button
       variant="ghost"
       iconic
-      disabled={openAuthoring.current}
+      disabled={openAuthoring.current || !!selectedFolder?.readonly}
       aria-label={_('new_folder')}
       onclick={() => {
         showNewFolderDialog = true;

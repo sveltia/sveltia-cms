@@ -29,6 +29,10 @@ vi.mock('$lib/services/contents/entry/changes', () => ({
   resolveCacheDB: vi.fn(() => undefined),
 }));
 
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn(() => false),
+}));
+
 vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummary: vi.fn((collection, entry) => entry.locales._default?.content?.title ?? ''),
 }));
@@ -179,6 +183,35 @@ describe('getFieldBlockers()', () => {
       },
     ]);
     expect(getFieldValidationMessages).toHaveBeenCalledWith({ validity, fieldConfig });
+  });
+
+  test('describes every field of a read-only entry, valid or not', () => {
+    const blockers = getFieldBlockers({
+      ...baseArgs,
+      collection: postsCollection,
+      collectionFile: { name: 'about', readonly: true },
+    });
+
+    expect(blockers).toEqual([
+      expect.objectContaining({ keyPath: 'tag', messages: ['readonly_reference'] }),
+    ]);
+    expect(validateAnyField).not.toHaveBeenCalled();
+
+    expect(
+      getFieldBlockers({ ...baseArgs, collection: { ...postsCollection, readonly: true } }),
+    ).toEqual([expect.objectContaining({ keyPath: 'tag', messages: ['readonly_reference'] })]);
+  });
+
+  test('describes every field of an entry locked by another collection it belongs to', async () => {
+    const { isEntryReadonly } = await import('$lib/services/contents/entry/readonly');
+
+    vi.mocked(isEntryReadonly).mockReturnValueOnce(true);
+
+    expect(getFieldBlockers(baseArgs)).toEqual([
+      expect.objectContaining({ keyPath: 'tag', messages: ['readonly_reference'] }),
+    ]);
+    expect(isEntryReadonly).toHaveBeenCalledWith(entry);
+    expect(validateAnyField).not.toHaveBeenCalled();
   });
 
   test('falls back to the collection and field names', () => {

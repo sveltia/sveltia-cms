@@ -10,7 +10,7 @@ import {
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { AssetFolderInfo, TypedFieldKeyPath } from '$lib/types/private';
+ * @import { Asset, AssetFolderInfo, TypedFieldKeyPath } from '$lib/types/private';
  */
 
 /**
@@ -213,9 +213,21 @@ export const getAssetFoldersByPath = (path, { matchSubFolders = true } = {}) => 
 
 /**
  * Check if asset creation is allowed in the folder. Can’t upload assets if collection assets are
- * saved at entry-relative paths or the asset folder contains template tags.
+ * saved at entry-relative paths, the asset folder contains template tags, or the folder is
+ * read-only.
  * @param {AssetFolderInfo | undefined} assetFolder Asset folder.
  * @returns {boolean} Result.
  */
 export const canCreateAsset = (assetFolder) =>
-  !!assetFolder && !assetFolder.entryRelative && !assetFolder.hasTemplateTags;
+  !!assetFolder &&
+  !assetFolder.entryRelative &&
+  !assetFolder.hasTemplateTags &&
+  !assetFolder.readonly;
+
+/**
+ * Check if any of the given assets is stored in a read-only folder, in which case none of them can
+ * be changed, renamed, replaced or deleted along with the others.
+ * @param {Asset[]} assets Assets.
+ * @returns {boolean} Result.
+ */
+export const hasReadonlyAsset = (assets) => assets.some(({ folder }) => !!folder?.readonly);

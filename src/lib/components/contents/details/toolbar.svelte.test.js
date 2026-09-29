@@ -551,6 +551,24 @@ describe('Toolbar', () => {
     });
   });
 
+  test('offers nothing that would change a read-only entry', async () => {
+    await renderExisting({ collection: { ...getCollection('posts'), readonly: true } });
+
+    const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+    expect(toolbar.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+
+    const menu = await openMenu();
+
+    expect(menu.getByRole('menuitem', { name: 'Duplicate' }).elements()).toHaveLength(0);
+    expect(menu.getByRole('menuitem', { name: 'Delete' }).elements()).toHaveLength(0);
+    await expect.element(menu.getByRole('menuitem', { name: 'Edit Slug' })).toBeDisabled();
+    // The view options are still there
+    await expect
+      .element(menu.getByRole('menuitemcheckbox', { name: 'Show Preview' }))
+      .toBeInTheDocument();
+  });
+
   test('opens the Slug panel', async () => {
     await renderExisting({ currentSlugs: { _default: 'hello' } });
     await (await openMenu()).getByRole('menuitem', { name: 'Edit Slug' }).click();
@@ -1304,6 +1322,28 @@ describe('Toolbar', () => {
       await expect.poll(() => contentUpdatesToast.current.deletionCancelled).toBe(true);
     });
 
+    test('offers no workflow action for a read-only entry', async () => {
+      setEntries([helloEntry]);
+      unpublishedEntries.current = [
+        {
+          ...unpublishedEntry,
+          workflow: { ...unpublishedEntry.workflow, status: 'pending_publish' },
+        },
+      ];
+
+      await renderExisting({ collection: { ...getCollection('posts'), readonly: true } });
+
+      const toolbar = page.getByRole('toolbar', { name: 'Primary' });
+
+      expect(toolbar.getByRole('button', { name: 'Save' }).elements()).toHaveLength(0);
+      expect(toolbar.getByRole('button', { name: /Status/ }).elements()).toHaveLength(0);
+      expect(toolbar.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
+
+      const menu = await openMenu();
+
+      expect(menu.getByRole('menuitem', { name: /Discard|Delete/ }).elements()).toHaveLength(0);
+    });
+
     test('moves the actions into the menu on a small screen', async () => {
       env.isSmallScreen = true;
       env.isLargeScreen = false;
@@ -1382,7 +1422,7 @@ describe('Toolbar', () => {
         .toBeInTheDocument();
       // A plain Save button, not the Publish split button the simple mode would offer
       await expect.element(toolbar.getByRole('button', { name: 'Save' })).toBeInTheDocument();
-      expect(toolbar.getByRole('button', { name: 'Publish' }).elements()).toHaveLength(0);
+      expect(toolbar.getByRole('button', { name: 'Publish Entry' }).elements()).toHaveLength(0);
 
       await (await openMenu()).getByRole('menuitem', { name: 'Discard Changes' }).click();
       await page.getByRole('alertdialog').getByRole('button', { name: 'Discard' }).click();

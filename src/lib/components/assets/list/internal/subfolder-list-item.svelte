@@ -50,7 +50,7 @@
 
 <!--
   Renaming or deleting a folder commits straight to the configured branch rather than going through
-  review, so neither is available to an Open Authoring contributor
+  review, so neither is available to an Open Authoring contributor, nor within a read-only folder
 -->
 <SubfolderListItem
   {subfolder}
@@ -69,5 +69,5 @@
   onDelete={() => {
     deletingSubfolder.current = subfolder;
   }}
-  actionsDisabled={openAuthoring.current}
+  actionsDisabled={openAuthoring.current || !!selectedAssetFolder.current?.readonly}
 />

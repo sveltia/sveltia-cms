@@ -2,6 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { cmsConfig } from '$lib/services/config/state';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { filterEntries, parseFilterConfig } from '$lib/services/contents/collection/view/filter';
@@ -1047,6 +1048,7 @@ describe('collection/view/index', () => {
 
       expect(collectionState.current).toEqual({
         isEntryCollection: false,
+        readonly: false,
         canCreate: false,
         canDelete: false,
         canReorder: false,
@@ -1065,6 +1067,7 @@ describe('collection/view/index', () => {
 
       expect(collectionState.current).toEqual({
         isEntryCollection: false,
+        readonly: false,
         canCreate: false,
         canDelete: false,
         canReorder: false,
@@ -1127,6 +1130,45 @@ describe('collection/view/index', () => {
       expect(collectionState.current.canReorder).toBe(false);
 
       forkedRepository.current = undefined;
+    });
+
+    test('blocks creating, deleting and reordering in a read-only collection', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        reorder: true,
+        readonly: true,
+      });
+      await wait();
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.current = [];
+      await wait();
+
+      const state = collectionState.current;
+
+      expect(state.readonly).toBe(true);
+      // `canCreate` still reflects the `create` option, while `creationDisabled` has the final say
+      expect(state.canCreate).toBe(true);
+      expect(state.creationDisabled).toBe(true);
+      expect(state.canDelete).toBe(false);
+      expect(state.canReorder).toBe(false);
+    });
+
+    test('treats every collection as read-only when the whole CMS is', async () => {
+      cmsConfig.current = /** @type {any} */ ({ readonly: true });
+      _selectedCollection.current = /** @type {any} */ ({ name: 'pages', _type: 'file' });
+      await wait();
+
+      expect(collectionState.current.readonly).toBe(true);
+
+      _selectedCollection.current = /** @type {any} */ ({ name: 'posts', _type: 'entry' });
+      await wait();
+
+      expect(collectionState.current.readonly).toBe(true);
+      expect(collectionState.current.creationDisabled).toBe(true);
+
+      cmsConfig.current = undefined;
     });
 
     test('defaults canCreate and canDelete to true when not set', async () => {

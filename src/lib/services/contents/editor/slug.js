@@ -2,6 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 
 import { getNewFolderName, slugify } from '$lib/services/common/slug';
+import { isDraftReadonly } from '$lib/services/config/readonly';
 import {
   getEntryDirPath,
   getSharedEntryFileName,
@@ -33,7 +34,7 @@ export const hasEntrySlug = (draft) =>
  * option has to allow it, and the entry has to be identified by a name of its own: an entry in a
  * nested collection that doesn’t store every entry as an index file is identified by its path
  * within the collection folder, which can’t be renamed without relocating the entry. An entry
- * awaiting deletion is read-only.
+ * awaiting deletion is read-only, and so is an entry in a read-only collection.
  * @param {EntryDraft | null | undefined} draft Entry draft.
  * @returns {boolean} Result.
  */
@@ -42,6 +43,7 @@ export const canUpdateSlug = (draft) => {
     !draft ||
     draft.isNew ||
     !hasEntrySlug(draft) ||
+    isDraftReadonly(draft) ||
     // Look the entry up in the store, as its status can be changed while the editor is open
     isPendingDeletion(getUnpublishedEntryByDraft(draft))
   ) {

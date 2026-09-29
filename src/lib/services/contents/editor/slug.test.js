@@ -110,6 +110,12 @@ describe('contents/editor/slug', () => {
       expect(canUpdateSlug(createDraft())).toBe(false);
     });
 
+    it('should be false for an entry in a read-only collection', () => {
+      expect(canUpdateSlug(createDraft({ collection: { _type: 'entry', readonly: true } }))).toBe(
+        false,
+      );
+    });
+
     it('should be false for an entry identified by its path in a nested collection', () => {
       vi.mocked(isNestedCollection).mockReturnValue(true);
       expect(canUpdateSlug(createDraft())).toBe(false);

@@ -85,6 +85,11 @@ vi.mock('$lib/services/contents/entry', () => ({
   getAssociatedCollections: vi.fn(),
 }));
 
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn(() => false),
+  getReadonlyEntryLabel: vi.fn((entry) => `Archive › ${entry.id}`),
+}));
+
 vi.mock('@sveltia/utils/file', () => ({
   getPathInfo: vi.fn(),
 }));
@@ -1038,6 +1043,30 @@ describe('assets/data/move', () => {
       expect(getAssociatedCollections).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'entry1' }),
       );
+    });
+
+    it('should refuse to move an asset a read-only entry uses', async () => {
+      const { getPathInfo } = await import('@sveltia/utils/file');
+      const { saveChanges } = await import('$lib/services/backends/save');
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/contents/collection/entries');
+      const { isEntryReadonly } = await import('$lib/services/contents/entry/readonly');
+      const { globalAssetFolder } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+      const asset = { path: 'old/a.jpg', sha: 'a', file: new File(['a'], 'a.jpg'), folder: {} };
+
+      globalAssetFolder.current = { publicPath: '/images' };
+      cmsConfig.current = /** @type {any} */ ({});
+      vi.mocked(getPathInfo).mockReturnValue({ basename: 'a.jpg' });
+      vi.mocked(getAssetPublicURL).mockImplementation((_asset) => `/${_asset.path}`);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
+      vi.mocked(isEntryReadonly).mockReturnValueOnce(true);
+
+      await expect(moveAssets('rename', [{ asset, path: 'old/b.jpg' }])).rejects.toThrow(
+        'cannot_move_referenced_asset',
+      );
+      expect(isEntryReadonly).toHaveBeenCalledWith(entry);
+      expect(saveChanges).not.toHaveBeenCalled();
     });
 
     it('should handle asset with existing file', async () => {

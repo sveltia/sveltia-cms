@@ -10,6 +10,7 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { CustomEditor, editors } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
+  import { isDraftReadonly } from '$lib/services/config/readonly';
   import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { canResetField, resetField } from '$lib/services/contents/draft/update/reset';
@@ -223,6 +224,10 @@
   // An entry awaiting deletion is shown for reference only. Unlike `readonly`, which is also set
   // for a duplicated locale, this hides the options that would change the content
   const pendingDeletion = $derived(isPendingDeletion(entryDraft.current?.originalEntry));
+  // An entry in a read-only collection, or a read-only collection file, is shown for reference only
+  // as well
+  const draftReadonly = $derived(isDraftReadonly(entryDraft.current));
+  const locked = $derived(pendingDeletion || draftReadonly);
   // A DateTime field with the `auto_now` option is set on save, so it can’t be edited, and it’s
   // hidden while the entry is being created because it has no meaningful value until then. The
   // option is ignored in a rich text editor component, whose values aren’t set on save
@@ -232,7 +237,7 @@
     // The `readonly` option defaults to `true` for the UUID field type, which can be unlocked
     (readonlyOption ?? fieldType === 'uuid') ||
       autoNow ||
-      pendingDeletion ||
+      locked ||
       (canDuplicate && locale !== defaultLocale) ||
       fieldType === 'compute',
   );
@@ -305,10 +310,11 @@
         <span class="required" aria-hidden="true">*</span>
       {/if}
       <Spacer flex />
-      {#if canCopy && ['richtext', 'markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
+      {#if canCopy && !draftReadonly && ['richtext', 'markdown', 'string', 'text', 'list', 'object'].includes(fieldType)}
         <TranslateButton size="small" {locale} {otherLocales} {keyPath} />
       {/if}
-      {#if canCopy || canRevert || canReset}
+      <!-- Every option in the menu edits the content, which a read-only entry doesn’t allow -->
+      {#if !draftReadonly && (canCopy || canRevert || canReset)}
         <MenuButton
           variant="ghost"
           size="small"

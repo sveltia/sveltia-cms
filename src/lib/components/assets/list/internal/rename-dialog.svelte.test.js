@@ -4,7 +4,9 @@ import { render } from 'vitest-browser-svelte';
 
 import { renamingAsset } from '$lib/services/assets';
 import { moveAssets } from '$lib/services/assets/data/move';
+import { getAssetUsedEntries } from '$lib/services/assets/details';
 import { showAssetOverlay } from '$lib/services/assets/view';
+import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
 import { expectFileNameSelected } from '$lib/test/dialog';
 
@@ -17,6 +19,17 @@ vi.mock('$lib/services/assets/data/move', () => ({
   collectEntryChangesFromAssets: vi.fn(),
   updateStores: vi.fn(),
   moveAssets: vi.fn(),
+}));
+
+vi.mock('$lib/services/assets/details', async (importOriginal) => {
+  const actual = /** @type {any} */ (await importOriginal());
+
+  return { ...actual, getAssetUsedEntries: vi.fn(actual.getAssetUsedEntries) };
+});
+
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn(() => false),
+  getReadonlyEntryLabel: vi.fn((entry) => `Archive › ${entry.slug}`),
 }));
 
 const assets = [createMockAsset({ name: 'a.png' }), createMockAsset({ name: 'b.png' })];
@@ -63,6 +76,32 @@ describe('RenameDialog', () => {
     // The details overlay of the asset stays open
     await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/c.png');
     await expect.poll(() => renamingAsset.current).toBeUndefined();
+  });
+
+  test('refuses to rename an asset a read-only entry uses', async () => {
+    const entry = /** @type {any} */ ({ id: 'old', slug: 'old-post', locales: {} });
+
+    vi.mocked(getAssetUsedEntries).mockResolvedValueOnce([entry]);
+    vi.mocked(isEntryReadonly).mockReturnValue(true);
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+      await expect
+        .element(dialog.getByRole('alert'))
+        .toHaveTextContent(
+          'This asset can’t be moved or renamed, because the following read-only entries use it: ' +
+            '\u2068Archive › old-post\u2069.',
+        );
+      await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
+      expect(isEntryReadonly).toHaveBeenCalledWith(entry);
+    } finally {
+      vi.mocked(isEntryReadonly).mockReturnValue(false);
+    }
   });
 
   test('leaves the URL alone when the asset isn’t shown', async () => {

@@ -51,6 +51,10 @@ vi.mock('$lib/services/contents/entry/changes', () => ({
   resolveCacheDB: vi.fn(() => undefined),
 }));
 
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn(() => false),
+}));
+
 vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummary: vi.fn((collection, entry) => entry.locales._default?.content?.title ?? ''),
 }));
@@ -527,6 +531,38 @@ describe('planCascadeDelete()', () => {
         messages: ['This field is required.'],
       }),
     ]);
+  });
+
+  test('reports every field of a read-only referencing entry, valid or not', () => {
+    registerTagRelation({ fieldConfig: { label: 'Tag' } });
+    getCollection.mockReturnValue({ ...postsCollection, readonly: true });
+    getEntriesByCollection.mockReturnValue([createPost('a', { title: 'Post A', tag: 'travel' })]);
+
+    const { blockers } = planCascadeDelete(baseArgs);
+
+    expect(blockers).toEqual([
+      expect.objectContaining({ keyPath: 'tag', messages: ['readonly_reference'] }),
+    ]);
+  });
+
+  test('reports a field of a read-only referencing file', () => {
+    getCollection.mockReturnValue({
+      name: 'config',
+      label: 'Config',
+      _type: 'file',
+      _i18n: { defaultLocale: '_default', allLocales: ['_default'] },
+    });
+    getCollectionFile.mockReturnValue({ name: 'general', fields: [], readonly: true });
+    registerTagRelation({
+      context: { collection: { name: 'config' }, collectionFile: { name: 'general' } },
+    });
+    getEntriesByCollection.mockReturnValue([
+      { ...createPost('general', { tag: 'travel' }), id: 'config-general' },
+    ]);
+
+    const { blockers } = planCascadeDelete(baseArgs);
+
+    expect(blockers).toEqual([expect.objectContaining({ messages: ['readonly_reference'] })]);
   });
 
   test('reports a field invalid in several locales once', () => {

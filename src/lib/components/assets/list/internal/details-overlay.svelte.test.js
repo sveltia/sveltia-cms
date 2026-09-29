@@ -190,6 +190,15 @@ describe('DetailsOverlay', () => {
     }
   });
 
+  test('can’t delete an asset in a read-only folder', async () => {
+    overlaidAsset.current = { ...zipAsset, folder: { ...zipAsset.folder, readonly: true } };
+
+    await render(DetailsOverlay);
+
+    await expect.element(page.getByRole('button', { name: 'Delete Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('button', { name: 'Download' })).toBeEnabled();
+  });
+
   test('goes back to the folder', async () => {
     overlaidAsset.current = imageAsset;
 

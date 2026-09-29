@@ -117,6 +117,18 @@ describe('EditOptionsButton', () => {
     await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
   });
 
+  test('disables the changes to an asset in a read-only folder', async () => {
+    await render(EditOptionsButton, {
+      asset: { ...textAsset, folder: { ...textAsset.folder, readonly: true } },
+    });
+    await openMenu();
+
+    await expect.element(page.getByRole('menuitem', { name: 'Edit Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Rename Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'Replace Asset' })).toBeDisabled();
+    await expect.element(page.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
+  });
+
   test('offers the repository link in developer mode', async () => {
     prefs.devModeEnabled = true;
 

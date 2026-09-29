@@ -53,6 +53,16 @@ describe('RenameDialog', () => {
     await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith('picture.png'));
   });
 
+  test('explains why the asset can’t be renamed, and refuses the rename', async () => {
+    await renderDialog({ blockedMessage: 'A read-only entry uses it.' });
+
+    const dialog = page.getByRole('dialog');
+
+    await expect.element(dialog.getByRole('alert')).toHaveTextContent('A read-only entry uses it.');
+    await expect.element(dialog.getByRole('textbox')).toBeDisabled();
+    await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
+  });
+
   test('validates the new name', async () => {
     await renderDialog();
 

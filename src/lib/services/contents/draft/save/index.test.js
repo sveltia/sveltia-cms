@@ -182,6 +182,15 @@ describe('draft/save/index', () => {
       expect(vi.mocked(setLastCommitPublishHint)).toHaveBeenCalledWith(false);
     });
 
+    it('should refuse to save a read-only entry', async () => {
+      mockDraft.collection.readonly = true;
+
+      await expect(saveEntry()).rejects.toThrow('saving_failed');
+      expect(validateEntry).not.toHaveBeenCalled();
+      expect(saveChanges).not.toHaveBeenCalled();
+      expect(saveWorkflowChanges).not.toHaveBeenCalled();
+    });
+
     it('should decide on the workflow per draft', async () => {
       // A collection can opt in or out of Editorial Workflow with its own `publish_mode` option,
       // and an entry that already has a pull request stays in it

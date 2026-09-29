@@ -739,6 +739,83 @@ describe('config/folders/assets', () => {
       });
     });
 
+    it('marks the folders of read-only collections, files and asset collections', () => {
+      const collections = [
+        { name: 'posts', folder: 'content/posts', media_folder: '/static/posts', readonly: true },
+        { name: 'pages', folder: 'content/pages', media_folder: '/static/pages' },
+        {
+          name: 'settings',
+          files: [
+            { name: 'site', file: 'data/site.yml', media_folder: '/static/site', readonly: true },
+            { name: 'menu', file: 'data/menu.yml', media_folder: '/static/menu' },
+          ],
+        },
+      ];
+
+      const singletons = [
+        { name: 'home', file: 'data/home.yml', media_folder: '/static/home', readonly: true },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+      vi.mocked(getValidCollectionFiles).mockImplementation((files) => /** @type {any} */ (files));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections,
+        singletons,
+        asset_collections: [
+          { name: 'logos', media_folder: 'static/logos', readonly: true },
+          { name: 'icons', media_folder: 'static/icons' },
+        ],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      expect(
+        Object.fromEntries(
+          result.map(({ collectionName, fileName, readonly }) => [
+            [collectionName ?? '-', fileName ?? '-'].join(':'),
+            !!readonly,
+          ]),
+        ),
+      ).toEqual({
+        '-:-': false,
+        'posts:-': true,
+        'pages:-': false,
+        'settings:site': true,
+        'settings:menu': false,
+        '_singletons:home': true,
+        'assets:logos:-': true,
+        'assets:icons:-': false,
+      });
+    });
+
+    it('marks every folder when the whole CMS is read-only', () => {
+      const collections = [
+        { name: 'pages', folder: 'content/pages', media_folder: '/static/pages' },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections,
+        readonly: true,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      // All Assets, the global folder and the collection folder
+      expect(result).toHaveLength(3);
+      expect(result.every(({ readonly }) => readonly === true)).toBe(true);
+    });
+
     it('should handle field-level media folders', () => {
       vi.mocked(getValidCollections).mockReturnValue([
         // @ts-ignore - simplified collection for testing

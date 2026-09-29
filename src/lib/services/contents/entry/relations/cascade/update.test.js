@@ -41,6 +41,11 @@ vi.mock('$lib/services/contents/entry/changes', () => ({
   resolveCacheDB: vi.fn(() => undefined),
 }));
 
+vi.mock('$lib/services/contents/entry/readonly', () => ({
+  isEntryReadonly: vi.fn(() => false),
+  getReadonlyEntryLabel: vi.fn((entry, collection) => `${collection.label} › ${entry.slug}`),
+}));
+
 vi.mock('$lib/services/contents/fields/relation/helpers', () => ({
   getEntryOptions: vi.fn(() => []),
 }));
@@ -369,6 +374,32 @@ describe('buildCascadeChanges()', () => {
     expect(changes).toEqual([
       { action: 'update', slug: 'my-trip', path: 'content/posts/my-trip.md', data: '' },
     ]);
+  });
+
+  test('refuses the rename when a referencing entry is read-only', async () => {
+    registerTagRelation();
+    getCollection.mockReturnValue({ ...postsCollection, readonly: true });
+    getEntriesByCollection.mockReturnValue([
+      createPost('my-trip', { title: 'My Trip', tag: 'travel' }),
+      createPost('food-review', { title: 'Food Review', tag: 'food' }),
+    ]);
+
+    await expect(buildCascadeChanges(baseArgs)).rejects.toThrow('cannot_rename_referenced_entry');
+    expect(buildEntryUpdateChanges).not.toHaveBeenCalled();
+  });
+
+  test('refuses the rename when another collection locks a referencing entry', async () => {
+    const { isEntryReadonly } = await import('$lib/services/contents/entry/readonly');
+
+    registerTagRelation();
+    getEntriesByCollection.mockReturnValue([
+      createPost('my-trip', { title: 'My Trip', tag: 'travel' }),
+    ]);
+    vi.mocked(isEntryReadonly).mockReturnValueOnce(true);
+
+    await expect(buildCascadeChanges(baseArgs)).rejects.toThrow('cannot_rename_referenced_entry');
+    expect(isEntryReadonly).toHaveBeenCalledWith(expect.objectContaining({ id: 'my-trip' }));
+    expect(buildEntryUpdateChanges).not.toHaveBeenCalled();
   });
 
   test('rewrites one item of a multi-value field', async () => {

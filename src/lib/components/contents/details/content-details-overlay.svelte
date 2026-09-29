@@ -6,6 +6,7 @@
     EmptyState,
     Group,
     Icon,
+    Infobar,
     ResizableHandle,
     ResizablePane,
     ResizablePaneGroup,
@@ -24,6 +25,7 @@
   import Toolbar from '$lib/components/contents/details/toolbar.svelte';
   import { focusOverlay, rememberFocus } from '$lib/services/app/focus';
   import { goto } from '$lib/services/app/navigation';
+  import { getReadonlyMessageKey, isDraftReadonly } from '$lib/services/config/readonly';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
   import {
@@ -126,7 +128,14 @@
   );
   /* v8 ignore stop */
   const paneStateKey = $derived(getPaneStateKey({ collection, collectionFile }));
-  const { canCreate, quota, creationDisabled } = $derived(collectionState.current);
+  const {
+    readonly: collectionReadonly,
+    canCreate,
+    quota,
+    creationDisabled,
+  } = $derived(collectionState.current);
+  // The entry can be viewed but not changed, which the editor says up front
+  const readonly = $derived(isDraftReadonly(entryDraft.current));
   const [firstPaneSize, secondPaneSize, minPaneSize] = $derived(
     getPaneSizes({ firstPane: editorFirstPane.current, secondPane: editorSecondPane.current }),
   );
@@ -510,6 +519,16 @@
   bind:this={wrapper}
 >
   {#key entryDraft.current?.id}
+    <!-- A new entry that can’t be created gets the message in place of the editor instead -->
+    {#if readonly && !loading && !(isNew && creationDisabled)}
+      <Infobar
+        dismissible={false}
+        --sui-infobar-border-width="0 0 1px"
+        --sui-infobar-message-justify-content="center"
+      >
+        {_(getReadonlyMessageKey('entry'))}
+      </Infobar>
+    {/if}
     <Toolbar disabled={loading || (isNew && creationDisabled)} />
     {#if loading}
       <EmptyState>
@@ -522,6 +541,8 @@
         <div role="none">
           {#if notFound}
             {_('entry_not_found')}
+          {:else if collectionReadonly}
+            {_(getReadonlyMessageKey('collection'))}
           {:else if !canCreate}
             {_('creating_entries_disabled_by_admin')}
           {:else}

@@ -15,7 +15,11 @@
     selectedCloudService,
   } from '$lib/services/assets/external';
   import { linkedAssets, linkedFilesService } from '$lib/services/assets/external/linked';
-  import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+  import {
+    allAssetFolders,
+    canCreateAsset,
+    selectedAssetFolder,
+  } from '$lib/services/assets/folders';
   import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';
@@ -98,13 +102,13 @@
       <OptionGroup label={_('asset_location.repository')}>
         {#each folders as folder, index ([folder.collectionName, folder.fileName, folder.internalPath].join(':'))}
           {#await sleep() then}
-            {@const { collectionName, fileName, internalPath, entryRelative, hasTemplateTags } =
-              folder}
+            {@const { collectionName, fileName, internalPath } = folder}
             {@const collection = collectionName ? getCollection(collectionName) : undefined}
             {@const collectionFile =
               collection && fileName ? getCollectionFile(collection, fileName) : undefined}
-            <!-- Can’t upload assets if collection assets are saved at entry-relative paths -->
-            {@const uploadDisabled = entryRelative || hasTemplateTags}
+            <!-- Can’t upload assets if collection assets are saved at entry-relative paths, or the
+            folder is read-only -->
+            {@const uploadDisabled = !canCreateAsset(folder)}
             {@const selected = equal(selectedAssetFolder.current, folder)}
             <Option
               selected={env.isSmallScreen || isSearchPage ? false : selected}

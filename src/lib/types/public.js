@@ -1338,6 +1338,9 @@
  * @property {string} [preview_path_date_field] Name of a top-level DateTime field used to fill the
  * date and time tags in `preview_path`. Default: the first DateTime field.
  * @property {EditorOptions} [editor] Editor view options.
+ * @property {boolean} [readonly] Whether to make the file read-only. Default: `false`. The file can
+ * be viewed but not edited, and its assets stored in a file-level media folder can’t be changed.
+ * It’s also read-only if the collection-level or global `readonly` option is `true`.
  * @see https://decapcms.org/docs/collection-file/
  * @see https://decapcms.org/docs/deploy-preview-links/
  * @see https://sveltiacms.app/en/docs/collections/files
@@ -1593,6 +1596,12 @@
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the collection
  * list.
+ * @property {boolean} [readonly] Whether to make the collection read-only. Default: `false`. Its
+ * entries or files can be viewed but not created, edited, duplicated, reordered, deleted or moved
+ * through the Editorial Workflow stages, and assets can’t be uploaded to, changed or deleted from
+ * its media folders. For an asset collection, assets can’t be uploaded to, changed or deleted
+ * from the folder. It’s also read-only if the global `readonly` option is `true`. For a file
+ * collection, each file can also be made read-only with its own `readonly` option.
  */
 
 /**
@@ -2140,6 +2149,10 @@
  * @property {OutputOptions} [output] Data output options. See the
  * [documentation](https://sveltiacms.app/en/docs/data-output#controlling-data-output) for details.
  * @property {FieldDefaults} [field_defaults] Default options for fields.
+ * @property {boolean} [readonly] Whether to make the whole CMS read-only, e.g. while the site is
+ * under maintenance. Default: `false`. All the collections, files and asset folders can be viewed
+ * but not changed, as if they all had the `readonly` option set to `true`. Collections and files
+ * can also be made read-only individually with their own `readonly` option.
  * @see https://decapcms.org/docs/configuration-options/
  * @see https://decapcms.org/docs/i18n/
  * @see https://sveltiacms.app/en/docs/i18n

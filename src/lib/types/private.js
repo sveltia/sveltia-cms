@@ -736,6 +736,9 @@
  * `/assets/images/{{slug}}`, which require special handling like `entryRelative`.
  * @property {string} [label] Label for the asset folder. Asset collections only.
  * @property {string} [icon] Icon for the asset folder. Asset collections only.
+ * @property {boolean} [readonly] Whether the folder is read-only, because the collection or
+ * collection file it belongs to is, or the whole CMS is. Assets can’t be uploaded to, changed or
+ * deleted from the folder then. Only set when `true`.
  * @property {boolean} [isAssetCollection] Whether the asset folder is for an asset collection.
  * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
  * @see https://sveltiacms.app/en/docs/media/internal#configuring-folder-paths

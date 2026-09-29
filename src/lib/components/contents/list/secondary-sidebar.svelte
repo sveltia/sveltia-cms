@@ -6,7 +6,7 @@
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { allAssets, isAssetInFolder, uploadingAssets } from '$lib/services/assets';
-  import { getAssetFolder } from '$lib/services/assets/folders';
+  import { canCreateAsset, getAssetFolder } from '$lib/services/assets/folders';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView } from '$lib/services/contents/collection/view/settings';
   import { env } from '$lib/services/user/env.svelte';
@@ -16,13 +16,12 @@
   const assets = $derived(
     folder ? allAssets.current.filter((asset) => isAssetInFolder(asset, folder)) : [],
   );
-  const { internalPath, entryRelative, hasTemplateTags } = $derived(
-    folder ?? { internalPath: undefined, entryRelative: false, hasTemplateTags: false },
-  );
-  // Can’t upload assets if collection assets are saved at entry-relative paths. An Open Authoring
-  // contributor can’t either: this uploads to the collection’s media folder, which is a commit
-  // straight to the configured branch rather than something that goes through review
-  const uploadDisabled = $derived(entryRelative || hasTemplateTags || openAuthoring.current);
+  const internalPath = $derived(folder?.internalPath);
+  // Can’t upload assets if collection assets are saved at entry-relative paths, or the folder is
+  // read-only. An Open Authoring contributor can’t either: this uploads to the collection’s media
+  // folder, which is a commit straight to the configured branch rather than something that goes
+  // through review
+  const uploadDisabled = $derived(!canCreateAsset(folder) || openAuthoring.current);
 </script>
 
 {#if internalPath !== undefined && env.isLargeScreen && currentView.current.showMedia}

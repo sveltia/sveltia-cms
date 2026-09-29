@@ -240,6 +240,12 @@ describe('ObjectEditor', () => {
     await expect.element(page.getByRole('checkbox', { name: /Add\W+Author/ })).toBeDisabled();
   });
 
+  test('can’t add or remove an object when read-only', async () => {
+    await renderEditor({ ...authorField, required: false }, {}, { props: { readonly: true } });
+
+    await expect.element(page.getByRole('checkbox', { name: /Add\W+Author/ })).toBeDisabled();
+  });
+
   test('copies the default locale values when adding an object in another locale', async () => {
     /** @type {ObjectField} */
     const field = {

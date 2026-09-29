@@ -7,6 +7,7 @@
   import ParentFolderTreeItem from '$lib/components/contents/details/editor/parent-folder-tree-item.svelte';
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { getNewFolderName, validateNewFolderName } from '$lib/services/common/slug';
+  import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import {
@@ -60,6 +61,8 @@
    * @see https://github.com/sveltia/sveltia-cms/issues/962
    */
   const isDefaultLocale = $derived(locale === collection?._i18n.defaultLocale);
+  /** Whether the entry can be moved, which a read-only entry can’t. */
+  const canMove = $derived(isDefaultLocale && !isDraftReadonly(entryDraft.current));
 
   /**
    * Name of the folder the entry occupies, which travels with it when the entry is filed elsewhere.
@@ -226,7 +229,7 @@
         bind:element={buttonElement}
         class="parent-folder-button"
         variant="tertiary"
-        disabled={!hasFolderChoice || !isDefaultLocale}
+        disabled={!hasFolderChoice || !canMove}
         aria-haspopup="tree"
         aria-invalid={invalid}
         aria-labelledby="{fieldId}-label"
@@ -259,7 +262,7 @@
           variant="ghost"
           iconic
           class="new-parent-folder-button"
-          disabled={!isDefaultLocale || !hasRoomForFolder}
+          disabled={!canMove || !hasRoomForFolder}
           aria-label={_('new_parent_folder')}
           onclick={() => {
             newFolderName = '';

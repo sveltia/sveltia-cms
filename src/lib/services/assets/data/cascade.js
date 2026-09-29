@@ -291,7 +291,9 @@ const createAssetDeletionPlan = async (assets) => {
       });
 
       updatedLocales[locale] = { ...localizedEntry, content };
-      blockers.push(...getFieldBlockers({ draft, entry, collection, locale, content, fields }));
+      blockers.push(
+        ...getFieldBlockers({ draft, entry, collection, collectionFile, locale, content, fields }),
+      );
     });
 
     /** @type {CascadeTarget} */

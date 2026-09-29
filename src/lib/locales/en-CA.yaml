@@ -502,6 +502,17 @@ creating_entries_nearing_quota: |
     one {{ This collection is nearing its limit of {$quota} entries. You can only create {$remaining} more entry. }}
     *   {{ This collection is nearing its limit of {$quota} entries. You can only create {$remaining} more entries. }}
 
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: The CMS is in read-only mode. You can view content and assets but cannot make any changes.
+readonly_collection: This collection is read-only. You can view its content but cannot make any changes.
+readonly_entry: This entry is read-only. You can view it but cannot make any changes.
+readonly_asset_folder: This folder is read-only. You can view its assets but cannot make any changes.
+readonly_reference: The entry is read-only, so the reference can’t be removed.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'This entry can’t be renamed, because the following read-only entries refer to it by its current name: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'This asset can’t be moved or renamed, because the following read-only entries use it: {$entries}.'
+
 # Navigation: back links and list labels
 back_to_collection: Back to Collection
 collection_list: Collection List

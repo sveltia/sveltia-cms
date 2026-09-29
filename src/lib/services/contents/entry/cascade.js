@@ -1,3 +1,6 @@
+import { _ } from '@sveltia/i18n';
+
+import { isReadonly } from '$lib/services/config/readonly';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { validateAnyField } from '$lib/services/contents/draft/validate/fields';
 import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
@@ -7,6 +10,7 @@ import {
   resolveCacheDB,
 } from '$lib/services/contents/entry/changes';
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
+import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
 /**
@@ -18,6 +22,7 @@ import { getEntrySummary } from '$lib/services/contents/entry/summary';
  * FileChange,
  * FlattenedEntryContent,
  * InternalCollection,
+ * InternalCollectionFile,
  * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { Field, FieldKeyPath } from '$lib/types/public';
@@ -61,34 +66,58 @@ export const compactList = ({ content, listKeyPath, isStale }) => {
 
 /**
  * Check the fields that lost a reference against their own validation rules, such as `required`
- * and `min`, the way a save of the entry would, and describe each one that no longer passes.
+ * and `min`, the way a save of the entry would, and describe each one that no longer passes. An
+ * entry that is read-only, because of its collection, its collection file or the whole CMS, can’t
+ * be rewritten at all, so every one of its fields is described instead. That includes an entry
+ * locked by another collection it also belongs to.
  * @param {object} args Arguments.
  * @param {any} args.draft Synthetic draft for the entry holding the fields, from
  * {@link createSyntheticDraft}.
  * @param {Entry} args.entry Entry holding the fields, as stored.
  * @param {InternalCollection} args.collection Collection the entry is edited under.
+ * @param {InternalCollectionFile} [args.collectionFile] Collection file, for file/singleton
+ * collections.
  * @param {InternalLocaleCode} args.locale Locale of the updated content.
  * @param {FlattenedEntryContent} args.content Updated content.
  * @param {Map<FieldKeyPath, Field>} args.fields Fields to check, keyed by key path — the field
  * itself rather than an item within it, which is what the validator looks at.
- * @returns {CascadeDeleteBlocker[]} Blockers, one per invalid field.
+ * @returns {CascadeDeleteBlocker[]} Blockers, one per invalid or read-only field.
  */
-export const getFieldBlockers = ({ draft, entry, collection, locale, content, fields }) =>
-  [...fields].flatMap(([keyPath, fieldConfig]) => {
-    const validity = validateAnyField({
-      draft,
-      locale,
-      keyPath,
-      value: content[keyPath],
-      valueMap: content,
-      // A fresh map, so the field is validated rather than skipped as already validated
-      validities: { [locale]: {} },
-    });
+export const getFieldBlockers = ({
+  draft,
+  entry,
+  collection,
+  collectionFile,
+  locale,
+  content,
+  fields,
+}) => {
+  const readonly = isReadonly({ collection, collectionFile }) || isEntryReadonly(entry);
 
-    // The validator declines a field it doesn’t validate in this locale, e.g. a non-i18n field in
-    // a non-default locale, in which case the field is fine by definition
-    if (!validity || validity.valid) {
-      return [];
+  return [...fields].flatMap(([keyPath, fieldConfig]) => {
+    /** @type {string[]} */
+    let messages;
+
+    if (readonly) {
+      messages = [_('readonly_reference')];
+    } else {
+      const validity = validateAnyField({
+        draft,
+        locale,
+        keyPath,
+        value: content[keyPath],
+        valueMap: content,
+        // A fresh map, so the field is validated rather than skipped as already validated
+        validities: { [locale]: {} },
+      });
+
+      // The validator declines a field it doesn’t validate in this locale, e.g. a non-i18n field
+      // in a non-default locale, in which case the field is fine by definition
+      if (!validity || validity.valid) {
+        return [];
+      }
+
+      messages = getFieldValidationMessages({ validity, fieldConfig });
     }
 
     const collectionName = collection.name;
@@ -102,10 +131,11 @@ export const getFieldBlockers = ({ draft, entry, collection, locale, content, fi
         summary: getEntrySummary(collection, entry),
         locale,
         keyPath,
-        messages: getFieldValidationMessages({ validity, fieldConfig }),
+        messages,
       }),
     ];
   });
+};
 
 /**
  * Report a field invalid in more than one locale once: the message is the same, and the editor

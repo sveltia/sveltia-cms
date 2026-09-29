@@ -16,7 +16,7 @@
   import { overlaidAsset } from '$lib/services/assets';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
-  import { selectedAssetFolder } from '$lib/services/assets/folders';
+  import { hasReadonlyAsset, selectedAssetFolder } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { isMediaKind } from '$lib/services/assets/kinds';
   import { browsedDirPath } from '$lib/services/assets/subfolders';
@@ -97,7 +97,7 @@
     -->
     <DeleteAssetsButton
       {assets}
-      disabled={openAuthoring.current}
+      disabled={openAuthoring.current || hasReadonlyAsset(assets)}
       deleteAssets={(_assets) => {
         // Don’t wait for the commit; the list is updated optimistically
         deleteAssets(_assets);

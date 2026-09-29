@@ -542,6 +542,27 @@ describe('draft/backup', () => {
 
       expect(mockBackupDB.put).not.toHaveBeenCalled();
     });
+
+    it('should not save backup for a read-only entry', async () => {
+      mockPrefs.useDraftBackup = true;
+      vi.mocked(isDraftModified).mockReturnValue(true);
+
+      const draft = {
+        collection: { name: 'posts', readonly: true },
+        collectionName: 'posts',
+        fileName: undefined,
+        originalEntry: { slug: 'my-post' },
+        currentLocales: { en: true },
+        currentSlugs: { en: 'my-post' },
+        currentValues: { en: { title: 'My Post' } },
+        files: {},
+        interacted: true,
+      };
+
+      await saveBackup(draft);
+
+      expect(mockBackupDB.put).not.toHaveBeenCalled();
+    });
   });
 
   describe('restoreBackup', () => {
@@ -1082,6 +1103,16 @@ describe('draft/backup', () => {
       mockPrefs.useDraftBackup = false;
 
       await restoreBackupIfNeeded({ draft: createRestoreDraft() });
+
+      expect(mockBackupDB.get).not.toHaveBeenCalled();
+    });
+
+    it('should leave the backup alone for a read-only entry', async () => {
+      mockPrefs.useDraftBackup = true;
+
+      await restoreBackupIfNeeded({
+        draft: createRestoreDraft({ collection: { name: 'posts', readonly: true } }),
+      });
 
       expect(mockBackupDB.get).not.toHaveBeenCalled();
     });

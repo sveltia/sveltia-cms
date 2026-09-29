@@ -476,6 +476,35 @@ describe('PaneHeader', () => {
     expect(page.getByRole('button', { name: /Content Options/ }).elements()).toHaveLength(0);
   });
 
+  test('only offers the links for a read-only entry', async () => {
+    await renderHeader({
+      draftProps: {
+        collection: { ...getCollection('posts'), readonly: true },
+        isNew: false,
+        originalEntry: createMockEntry({ slug: 'hello', content: { en: {}, fr: {} } }),
+      },
+    });
+
+    expect(page.getByRole('button', { name: /Translate/ }).elements()).toHaveLength(0);
+
+    const menu = await openMenu();
+
+    expect(menu.getByRole('menuitem').elements()).toHaveLength(1);
+    await expect.element(menu.getByRole('menuitem', { name: 'View on Live Site' })).toBeEnabled();
+    expect(menu.element().querySelectorAll('[role="separator"]')).toHaveLength(0);
+  });
+
+  test('offers no content options for a read-only entry without links', async () => {
+    await renderHeader({
+      draftProps: { collection: { ...getCollection('pages'), readonly: true } },
+    });
+
+    await expect.element(page.getByRole('toolbar')).toBeInTheDocument();
+    expect(
+      page.getByRole('button', { name: 'Show \u2068English\u2069 Content Options' }).elements(),
+    ).toHaveLength(0);
+  });
+
   test('disables the options for an entry awaiting deletion', async () => {
     await renderHeader({
       draftProps: {

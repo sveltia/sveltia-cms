@@ -274,6 +274,25 @@ describe('SelectAssetsDialog', () => {
       expect(dialog.getByRole('listbox', { name: 'Folders' }).elements()).toHaveLength(0);
     });
 
+    test('creates no folder within a read-only folder', async () => {
+      await renderDialog({
+        assetLibraryFolderMap: {
+          global: { folder: { ...globalAssetFolder.current, readonly: true }, enabled: true },
+        },
+      });
+
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+      await waitForGrid(2);
+      await dialog
+        .getByRole('listbox', { name: 'Folders' })
+        .getByRole('option', { name: '2024' })
+        .click();
+      await waitForGrid(1);
+
+      await expect.element(dialog.getByRole('button', { name: 'New Folder' })).toBeDisabled();
+    });
+
     test('creates a folder where the user is, and uploads there', async () => {
       vi.mocked(createSubfolder).mockResolvedValue(undefined);
 

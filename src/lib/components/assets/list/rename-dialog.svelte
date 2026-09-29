@@ -23,6 +23,8 @@
    * must not duplicate.
    * @property {number} [usedEntryCount] Number of entries using the asset, mentioned in the dialog
    * body because they will be updated as well.
+   * @property {string} [blockedMessage] Why the asset can’t be renamed, e.g. because a read-only
+   * entry uses it. The message is shown in place of the input, and the Rename button is disabled.
    * @property {(newName: string) => void} onRename Called with the new name once confirmed.
    * @property {() => void} [onClose] Called when the dialog is closed for good, as opposed to
    * while the extension change confirmation is shown.
@@ -35,6 +37,7 @@
     name,
     otherNames,
     usedEntryCount = 0,
+    blockedMessage = undefined,
     onRename,
     onClose = undefined,
     /* eslint-enable prefer-const */
@@ -108,7 +111,7 @@
   title={_('rename_x', { values: { name } })}
   bind:open
   okLabel={_('rename')}
-  okDisabled={trimmedName === name || invalid}
+  okDisabled={!!blockedMessage || trimmedName === name || invalid}
   onOk={() => {
     if (extensionChanged) {
       // Ask for confirmation before renaming
@@ -126,15 +129,20 @@
     selectFileName();
   }}
 >
-  <p>
-    {_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
-  </p>
+  {#if blockedMessage}
+    <p role="alert">{blockedMessage}</p>
+  {:else}
+    <p>
+      {_('enter_new_name_for_asset', { values: { count: usedEntryCount } })}
+    </p>
+  {/if}
   <div role="none">
     <TextInput
       dir="auto"
       bind:value={newName}
       bind:element={inputElement}
       flex
+      disabled={!!blockedMessage}
       {invalid}
       aria-errormessage="{componentId}-error"
     />

@@ -8,6 +8,7 @@ import {
   getAssetFolder,
   getAssetFoldersByPath,
   globalAssetFolder,
+  hasReadonlyAsset,
   selectedAssetFolder,
   targetAssetFolder,
 } from './folders';
@@ -1980,6 +1981,19 @@ describe('assets/folders', () => {
     });
   });
 
+  describe('hasReadonlyAsset', () => {
+    it('should tell whether any asset is in a read-only folder', () => {
+      const editable = { path: 'a.png', folder: { internalPath: 'images' } };
+      const readonly = { path: 'b.png', folder: { internalPath: 'logos', readonly: true } };
+
+      expect(hasReadonlyAsset([])).toBe(false);
+      expect(hasReadonlyAsset([/** @type {any} */ (editable)])).toBe(false);
+      expect(hasReadonlyAsset([/** @type {any} */ (editable), /** @type {any} */ (readonly)])).toBe(
+        true,
+      );
+    });
+  });
+
   describe('canCreateAsset', () => {
     it('should return true for valid folder', () => {
       const folder = {
@@ -1995,6 +2009,19 @@ describe('assets/folders', () => {
 
     it('should return false when folder is undefined', () => {
       expect(canCreateAsset(undefined)).toBe(false);
+    });
+
+    it('should return false when the folder is read-only', () => {
+      const folder = {
+        collectionName: 'posts',
+        internalPath: 'content/posts/images',
+        publicPath: '/images',
+        entryRelative: false,
+        hasTemplateTags: false,
+        readonly: true,
+      };
+
+      expect(canCreateAsset(folder)).toBe(false);
     });
 
     it('should return false when entryRelative is true', () => {

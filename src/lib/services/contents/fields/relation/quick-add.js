@@ -1,5 +1,6 @@
 import { unique } from '@sveltia/utils/array';
 
+import { isReadonly } from '$lib/services/config/readonly';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   countCollectionEntries,
@@ -41,7 +42,8 @@ const getPendingEntriesByCollection = (draft, collectionName) =>
  * Get the collection a Relation field can have a new entry created in, so the entry can be
  * referenced right away. That’s the referenced collection, provided it holds entries that can be
  * created: a file/singleton collection has a fixed set of files, and a reference to one of them
- * points at a list item within the file, so there is nothing to create there.
+ * points at a list item within the file, so there is nothing to create there. Nor can anything be
+ * created in a read-only collection.
  *
  * Nothing is offered while the entry being edited is saved through Editorial Workflow: the new
  * entry would go into the pull request along with it, but a pull request stands for a single entry
@@ -68,6 +70,7 @@ export const getCreatableCollection = ({
   if (
     collection?._type !== 'entry' ||
     collection.create === false ||
+    isReadonly({ collection }) ||
     isWorkflowEnabled(collection)
   ) {
     return undefined;

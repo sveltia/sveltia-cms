@@ -1,6 +1,9 @@
+import { _ } from '@sveltia/i18n';
+
 import { callEventHooks } from '$lib/services/api/events';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
+import { getReadonlyMessageKey, isDraftReadonly } from '$lib/services/config/readonly';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
@@ -133,10 +136,15 @@ const buildChanges = async ({ draft, slugs }) => {
  * since the draft was opened. Without it, such a save is refused with a `save_conflict` error whose
  * `cause` is the conflict found by {@link detectEntryConflict}, so the user can be asked first.
  * @returns {Promise<Entry>} Saved entry.
- * @throws {Error} When the entry could not be validated or saved, or would overwrite someone else’s
- * change.
+ * @throws {Error} When the entry is read-only, could not be validated or saved, or would overwrite
+ * someone else’s change.
  */
 export const saveEntry = async ({ draft, skipCI = undefined, overwrite = false }) => {
+  // The editor offers no way to save a read-only entry, but make sure nothing is written anyway
+  if (isDraftReadonly(draft)) {
+    throw new Error('saving_failed', { cause: new Error(_(getReadonlyMessageKey('entry'))) });
+  }
+
   const { isNew, collection, collectionName, fileName, originalEntry } = draft;
   // A collection can opt in or out of Editorial Workflow on its own, but an entry that already has
   // a pull request stays in it

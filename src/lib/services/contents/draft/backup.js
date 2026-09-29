@@ -5,6 +5,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { createDisplayBlobURL } from '$lib/services/assets/info';
 import { backend } from '$lib/services/backends';
 import { cmsConfigVersion } from '$lib/services/config';
+import { isDraftReadonly } from '$lib/services/config/readonly';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { isDraftModified, suspendAutoDuplication } from '$lib/services/contents/draft';
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
@@ -101,7 +102,7 @@ export const getBackupSlug = ({ fileName, originalEntry }) => fileName ?? origin
 export const saveBackup = async (draft) => {
   // Skip if the user hasn’t manually interacted with the editor, so that only programmatic changes,
   // e.g. Lexical markdown reformatting, don’t trigger a backup
-  if (!(prefs.useDraftBackup ?? true) || !draft.interacted) {
+  if (!(prefs.useDraftBackup ?? true) || !draft.interacted || isDraftReadonly(draft)) {
     return;
   }
 
@@ -289,7 +290,8 @@ export const restoreBackup = async ({ backup, draft }) => {
  * @param {EntryDraft} args.draft Entry draft to restore the backup to.
  */
 export const restoreBackupIfNeeded = async ({ draft }) => {
-  if (!(prefs.useDraftBackup ?? true)) {
+  // A read-only entry can’t be changed, so leave any backup alone until it can be edited again
+  if (!(prefs.useDraftBackup ?? true) || isDraftReadonly(draft)) {
     return;
   }
 

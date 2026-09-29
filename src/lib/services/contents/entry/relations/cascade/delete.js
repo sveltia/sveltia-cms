@@ -122,6 +122,7 @@ export const getBlockers = ({ draft, entry, relation, locale, content, fieldKeyP
     draft,
     entry,
     collection: relation.sourceCollection,
+    collectionFile: relation.sourceCollectionFile,
     locale,
     content,
     fields: new Map(fieldKeyPaths.map((keyPath) => [keyPath, relation.fieldConfig])),

@@ -26,6 +26,7 @@
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
   import { goBack, goto, overlayTitle } from '$lib/services/app/navigation';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
+  import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import {
     contentUpdatesToast,
@@ -246,6 +247,11 @@
   // An entry awaiting deletion is read-only: there’s nothing to save or move through the stages,
   // only the deletion itself to carry out or call off
   const pendingDeletion = $derived(isPendingDeletion(unpublishedEntry));
+  // An entry in a read-only collection, or a read-only collection file, can only be viewed: there’s
+  // nothing to save, move through the stages, publish, discard or delete
+  const readonly = $derived(isDraftReadonly(entryDraft.current));
+  // Neither kind of entry can have its content changed
+  const locked = $derived(pendingDeletion || readonly);
   // The menu item either throws the pull request away or deletes the entry outright, depending on
   // whether it has been published
   const discardItemStrings = $derived(
@@ -544,11 +550,12 @@
   {#if !env.isSmallScreen}
     {@render overflowButtons()}
   {/if}
-  {#if unpublishedEntry && !pendingDeletion}
+  {#if unpublishedEntry && !locked}
     <EntryStatusMenu entry={unpublishedEntry} disabled={controlsDisabled} />
   {/if}
-  {#if pendingDeletion}
-    <!-- Nothing to save: the entry is shown for reference until the deletion is carried out -->
+  {#if locked}
+    <!-- Nothing to save: the entry is read-only, or shown for reference until the deletion is
+    carried out -->
   {:else if skipCIConfigured.current && !useWorkflow}
     <SplitButton
       variant="primary"
@@ -584,7 +591,7 @@
       }}
     />
   {/if}
-  {#if unpublishedEntry}
+  {#if unpublishedEntry && !readonly}
     <PublishEntryButton entry={unpublishedEntry} disabled={controlsDisabled} {modified} />
   {/if}
   <MenuButton
@@ -618,6 +625,7 @@
         {/if}
         {#if !disabled && !isNew}
           {@const canDuplicate =
+            !readonly &&
             !collectionFile &&
             !isIndexFile &&
             entryCollection?.duplicate !== false &&
@@ -649,7 +657,7 @@
           {/if}
           <!-- A collection file is part of the collection definition, so it can only be
             discarded -->
-          {#if publishedVersionExists || (canDeleteEntry && !collectionFile)}
+          {#if !readonly && (publishedVersionExists || (canDeleteEntry && !collectionFile))}
             <MenuItem
               variant="ghost"
               disabled={controlsDisabled}
@@ -665,7 +673,7 @@
             />
           {/if}
         {/if}
-        {#if publishedVersionExists && canDeleteEntry && !collectionFile && !pendingDeletion}
+        {#if publishedVersionExists && canDeleteEntry && !collectionFile && !locked}
           <MenuItem
             label={_('delete')}
             onclick={() => {
@@ -689,9 +697,9 @@
           scope="entry"
           separator={!env.isSmallScreen || (!disabled && !isNew)}
           available={{
-            revert: modified && !pendingDeletion,
-            restore: resetAvailability.restore && !pendingDeletion,
-            clear: resetAvailability.clear && !pendingDeletion,
+            revert: modified && !locked,
+            restore: resetAvailability.restore && !locked,
+            clear: resetAvailability.clear && !locked,
           }}
           onSelect={(action) => {
             resetAction = action;
