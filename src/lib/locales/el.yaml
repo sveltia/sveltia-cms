@@ -477,13 +477,20 @@ entry_not_found: Η καταχώριση δεν βρέθηκε.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Η δημιουργία νέων καταχωρίσεων σε αυτή τη συλλογή έχει απενεργοποιηθεί από τον διαχειριστή.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Δεν μπορείτε να προσθέσετε νέες καταχωρίσεις σε αυτή τη συλλογή επειδή έφτασε το όριο των {$quota} καταχωρίσεων.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Δεν μπορείτε να προσθέσετε νέες καταχωρίσεις σε αυτή τη συλλογή επειδή έφτασε το όριο της {$quota} καταχώρισης. }}
+    *   {{ Δεν μπορείτε να προσθέσετε νέες καταχωρίσεις σε αυτή τη συλλογή επειδή έφτασε το όριο των {$quota} καταχωρίσεων. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Αυτή η συλλογή πλησιάζει το όριο των {$quota} καταχωρίσεων. Μπορείτε να δημιουργήσετε μόνο {$remaining} ακόμη καταχώριση. }}
-    *   {{ Αυτή η συλλογή πλησιάζει το όριο των {$quota} καταχωρίσεων. Μπορείτε να δημιουργήσετε μόνο {$remaining} ακόμη καταχωρίσεις. }}
+  .match $quota $remaining
+    one one {{ Αυτή η συλλογή πλησιάζει το όριο της {$quota} καταχώρισης. Μπορείτε να δημιουργήσετε μόνο {$remaining} ακόμη καταχώριση. }}
+    one *   {{ Αυτή η συλλογή πλησιάζει το όριο της {$quota} καταχώρισης. Μπορείτε να δημιουργήσετε μόνο {$remaining} ακόμη καταχωρίσεις. }}
+    *   one {{ Αυτή η συλλογή πλησιάζει το όριο των {$quota} καταχωρίσεων. Μπορείτε να δημιουργήσετε μόνο {$remaining} ακόμη καταχώριση. }}
+    *   *   {{ Αυτή η συλλογή πλησιάζει το όριο των {$quota} καταχωρίσεων. Μπορείτε να δημιουργήσετε μόνο {$remaining} ακόμη καταχωρίσεις. }}
 
 # Navigation: back links and list labels
 back_to_collection: Επιστροφή στη συλλογή

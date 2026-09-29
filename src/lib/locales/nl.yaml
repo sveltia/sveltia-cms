@@ -477,13 +477,20 @@ entry_not_found: Item niet gevonden.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Het aanmaken van nieuwe items in deze collectie is uitgeschakeld door de beheerder.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Je kunt geen nieuwe items toevoegen aan deze collectie, omdat de limiet van {$quota} items is bereikt.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Je kunt geen nieuwe items toevoegen aan deze collectie, omdat de limiet van {$quota} item is bereikt. }}
+    *   {{ Je kunt geen nieuwe items toevoegen aan deze collectie, omdat de limiet van {$quota} items is bereikt. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Deze collectie nadert de limiet van {$quota} items. Je kunt nog maar {$remaining} item aanmaken. }}
-    *   {{ Deze collectie nadert de limiet van {$quota} items. Je kunt nog maar {$remaining} items aanmaken. }}
+  .match $quota $remaining
+    one one {{ Deze collectie nadert de limiet van {$quota} item. Je kunt nog maar {$remaining} item aanmaken. }}
+    one *   {{ Deze collectie nadert de limiet van {$quota} item. Je kunt nog maar {$remaining} items aanmaken. }}
+    *   one {{ Deze collectie nadert de limiet van {$quota} items. Je kunt nog maar {$remaining} item aanmaken. }}
+    *   *   {{ Deze collectie nadert de limiet van {$quota} items. Je kunt nog maar {$remaining} items aanmaken. }}
 
 # Navigation: back links and list labels
 back_to_collection: Terug naar de collectie

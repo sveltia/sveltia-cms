@@ -481,15 +481,34 @@ entry_not_found: Nie znaleziono wpisu.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Tworzenie nowych wpisów w tej kolekcji zostało wyłączone przez administratora.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Nie możesz dodać nowych wpisów do tej kolekcji, ponieważ osiągnęła ona limit {$quota} wpisów.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one  {{ Nie możesz dodać nowych wpisów do tej kolekcji, ponieważ osiągnęła ona limit {$quota} wpisu. }}
+    few  {{ Nie możesz dodać nowych wpisów do tej kolekcji, ponieważ osiągnęła ona limit {$quota} wpisów. }}
+    many {{ Nie możesz dodać nowych wpisów do tej kolekcji, ponieważ osiągnęła ona limit {$quota} wpisów. }}
+    *    {{ Nie możesz dodać nowych wpisów do tej kolekcji, ponieważ osiągnęła ona limit {$quota} wpisów. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpis. }}
-    few  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisy. }}
-    many {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
-    *    {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+  .match $quota $remaining
+    one  one  {{ Ta kolekcja zbliża się do limitu {$quota} wpisu. Możesz utworzyć jeszcze tylko {$remaining} wpis. }}
+    one  few  {{ Ta kolekcja zbliża się do limitu {$quota} wpisu. Możesz utworzyć jeszcze tylko {$remaining} wpisy. }}
+    one  many {{ Ta kolekcja zbliża się do limitu {$quota} wpisu. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    one  *    {{ Ta kolekcja zbliża się do limitu {$quota} wpisu. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    few  one  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpis. }}
+    few  few  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisy. }}
+    few  many {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    few  *    {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    many one  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpis. }}
+    many few  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisy. }}
+    many many {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    many *    {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    *    one  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpis. }}
+    *    few  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisy. }}
+    *    many {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    *    *    {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
 
 # Navigation: back links and list labels
 back_to_collection: Powrót do kolekcji

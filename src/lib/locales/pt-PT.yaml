@@ -477,13 +477,20 @@ entry_not_found: Entrada não encontrada.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: A criação de novas entradas nesta coleção está desativada pelo administrador.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Não pode adicionar novas entradas a esta coleção porque atingiu o limite de {$quota} entradas.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Não pode adicionar novas entradas a esta coleção porque atingiu o limite de {$quota} entrada. }}
+    *   {{ Não pode adicionar novas entradas a esta coleção porque atingiu o limite de {$quota} entradas. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Esta coleção está a aproximar-se do limite de {$quota} entradas. Só pode criar mais {$remaining} entrada. }}
-    *   {{ Esta coleção está a aproximar-se do limite de {$quota} entradas. Só pode criar mais {$remaining} entradas. }}
+  .match $quota $remaining
+    one one {{ Esta coleção está a aproximar-se do limite de {$quota} entrada. Só pode criar mais {$remaining} entrada. }}
+    one *   {{ Esta coleção está a aproximar-se do limite de {$quota} entrada. Só pode criar mais {$remaining} entradas. }}
+    *   one {{ Esta coleção está a aproximar-se do limite de {$quota} entradas. Só pode criar mais {$remaining} entrada. }}
+    *   *   {{ Esta coleção está a aproximar-se do limite de {$quota} entradas. Só pode criar mais {$remaining} entradas. }}
 
 # Navigation: back links and list labels
 back_to_collection: Voltar à coleção

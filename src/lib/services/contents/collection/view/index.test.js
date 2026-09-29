@@ -1364,6 +1364,25 @@ describe('collection/view/index', () => {
       expect(collectionState.current.creationDisabled).toBe(true);
     });
 
+    test('canCreate is false when limit is 0', async () => {
+      const mockEntries = /** @type {any[]} */ ([{ id: '1', slug: 'a' }]);
+
+      vi.mocked(getEntriesByCollection).mockReturnValue(mockEntries);
+      _allEntries.current = mockEntries;
+      await wait();
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        limit: 0,
+      });
+      await wait();
+
+      const state = collectionState.current;
+
+      expect(state.canCreate).toBe(false);
+      expect(state.creationDisabled).toBe(true);
+    });
+
     test('creationDisabled is true when remaining is exactly 0 (quota reached)', async () => {
       const mockEntries = /** @type {any[]} */ ([
         { id: '1', slug: 'a' },

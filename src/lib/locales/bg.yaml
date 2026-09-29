@@ -477,13 +477,20 @@ entry_not_found: Записът не е намерен.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Създаването на нови записи в тази колекция е забранено от администратора.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Не можете да добавяте нови записи в тази колекция, защото тя достигна ограничението си от {$quota} записа.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Не можете да добавяте нови записи в тази колекция, защото тя достигна ограничението си от {$quota} запис. }}
+    *   {{ Не можете да добавяте нови записи в тази колекция, защото тя достигна ограничението си от {$quota} записа. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Тази колекция наближава ограничението си от {$quota} записа. Можете да създадете още само {$remaining} запис. }}
-    *   {{ Тази колекция наближава ограничението си от {$quota} записа. Можете да създадете още само {$remaining} записа. }}
+  .match $quota $remaining
+    one one {{ Тази колекция наближава ограничението си от {$quota} запис. Можете да създадете още само {$remaining} запис. }}
+    one *   {{ Тази колекция наближава ограничението си от {$quota} запис. Можете да създадете още само {$remaining} записа. }}
+    *   one {{ Тази колекция наближава ограничението си от {$quota} записа. Можете да създадете още само {$remaining} запис. }}
+    *   *   {{ Тази колекция наближава ограничението си от {$quota} записа. Можете да създадете още само {$remaining} записа. }}
 
 # Navigation: back links and list labels
 back_to_collection: Обратно към колекцията

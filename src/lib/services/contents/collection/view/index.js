@@ -52,7 +52,9 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
  * @property {boolean} isEntryCollection Whether the selected collection is an entry collection.
  * @property {boolean} readonly Whether the selected collection is read-only, because of its own or
  * the global `readonly` option. Nothing can be created, deleted or reordered in it then.
- * @property {boolean} canCreate Whether new entries can be created in the selected collection.
+ * @property {boolean} canCreate Whether new entries can be created in the selected collection. It’s
+ * `false` with the `create: false` option, and also with `limit: 0`, which forbids creating entries
+ * the same way rather than being a quota to reach.
  * @property {boolean} canDelete Whether entries can be deleted from the selected collection.
  * @property {boolean} canReorder Whether entries in the selected collection can be reordered.
  * @property {number} quota The maximum number of entries allowed in the selected collection.
@@ -243,7 +245,8 @@ export const collectionState = createDerivedState(() => {
   const readonly = !!_selectedCollection && isReadonly({ collection: _selectedCollection });
 
   if (_selectedCollection?._type === 'entry') {
-    const canCreate = _selectedCollection.create ?? true;
+    // `limit: 0` means no entries can ever be created, so it’s treated like `create: false`
+    const canCreate = (_selectedCollection.create ?? true) && _selectedCollection.limit !== 0;
     const canDelete = !readonly && (_selectedCollection.delete ?? true);
 
     // Reordering writes the new order straight to the configured branch rather than going through

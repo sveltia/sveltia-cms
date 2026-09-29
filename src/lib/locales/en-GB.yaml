@@ -494,13 +494,20 @@ entry_not_found: Entry not found.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Creating new entries in this collection is disabled by the administrator.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: You cannot add new entries to this collection because it has reached its limit of {$quota} entries.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ You cannot add new entries to this collection because it has reached its limit of {$quota} entry. }}
+    *   {{ You cannot add new entries to this collection because it has reached its limit of {$quota} entries. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ This collection is nearing its limit of {$quota} entries. You can only create {$remaining} more entry. }}
-    *   {{ This collection is nearing its limit of {$quota} entries. You can only create {$remaining} more entries. }}
+  .match $quota $remaining
+    one one {{ This collection is nearing its limit of {$quota} entry. You can only create {$remaining} more entry. }}
+    one *   {{ This collection is nearing its limit of {$quota} entry. You can only create {$remaining} more entries. }}
+    *   one {{ This collection is nearing its limit of {$quota} entries. You can only create {$remaining} more entry. }}
+    *   *   {{ This collection is nearing its limit of {$quota} entries. You can only create {$remaining} more entries. }}
 
 # Read-only restrictions set with the `readonly` option: advisory messages
 readonly_cms: The CMS is in read-only mode. You can view content and assets but cannot make any changes.

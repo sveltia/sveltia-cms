@@ -477,13 +477,20 @@ entry_not_found: Dokumentet blev ikke fundet.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Oprettelse af nye dokumenter i denne samling er deaktiveret af administratoren.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Du kan ikke tilføje nye dokumenter til denne samling da den har nået sin grænse på {$quota} dokumenter.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Du kan ikke tilføje nye dokumenter til denne samling da den har nået sin grænse på {$quota} dokument. }}
+    *   {{ Du kan ikke tilføje nye dokumenter til denne samling da den har nået sin grænse på {$quota} dokumenter. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Denne samling nærmer sig sin grænse på {$quota} dokumenter. Du kan kun oprette {$remaining} dokument mere. }}
-    *   {{ Denne samling nærmer sig sin grænse på {$quota} dokumenter. Du kan kun oprette {$remaining} dokumenter mere. }}
+  .match $quota $remaining
+    one one {{ Denne samling nærmer sig sin grænse på {$quota} dokument. Du kan kun oprette {$remaining} dokument mere. }}
+    one *   {{ Denne samling nærmer sig sin grænse på {$quota} dokument. Du kan kun oprette {$remaining} dokumenter mere. }}
+    *   one {{ Denne samling nærmer sig sin grænse på {$quota} dokumenter. Du kan kun oprette {$remaining} dokument mere. }}
+    *   *   {{ Denne samling nærmer sig sin grænse på {$quota} dokumenter. Du kan kun oprette {$remaining} dokumenter mere. }}
 
 # Navigation: back links and list labels
 back_to_collection: Tilbage til samlingen

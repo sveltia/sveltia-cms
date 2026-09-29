@@ -477,13 +477,20 @@ entry_not_found: Entrée introuvable.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: La création d’entrées dans cette collection est désactivée par l’administrateur.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Vous ne pouvez pas ajouter d’entrées à cette collection, car elle a atteint sa limite de {$quota} entrées.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Vous ne pouvez pas ajouter d’entrées à cette collection, car elle a atteint sa limite de {$quota} entrée. }}
+    *   {{ Vous ne pouvez pas ajouter d’entrées à cette collection, car elle a atteint sa limite de {$quota} entrées. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Cette collection approche de sa limite de {$quota} entrées. Vous ne pouvez plus créer que {$remaining} entrée supplémentaire. }}
-    *   {{ Cette collection approche de sa limite de {$quota} entrées. Vous ne pouvez plus créer que {$remaining} entrées supplémentaires. }}
+  .match $quota $remaining
+    one one {{ Cette collection approche de sa limite de {$quota} entrée. Vous ne pouvez plus créer que {$remaining} entrée supplémentaire. }}
+    one *   {{ Cette collection approche de sa limite de {$quota} entrée. Vous ne pouvez plus créer que {$remaining} entrées supplémentaires. }}
+    *   one {{ Cette collection approche de sa limite de {$quota} entrées. Vous ne pouvez plus créer que {$remaining} entrée supplémentaire. }}
+    *   *   {{ Cette collection approche de sa limite de {$quota} entrées. Vous ne pouvez plus créer que {$remaining} entrées supplémentaires. }}
 
 # Navigation: back links and list labels
 back_to_collection: Retour à la collection

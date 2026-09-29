@@ -657,7 +657,7 @@ describe('ContentDetailsOverlay', () => {
       await expect
         .element(
           page.getByText(
-            'You cannot add new entries to this collection because it has reached its limit of 1 entries.',
+            'You cannot add new entries to this collection because it has reached its limit of 1 entry.',
           ),
         )
         .toBeInTheDocument();

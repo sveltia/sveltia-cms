@@ -477,13 +477,20 @@ entry_not_found: Merkintää ei löytynyt.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Ylläpitäjä on poistanut käytöstä uusien merkintöjen luomisen tähän kokoelmaan.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Et voi lisätä uusia merkintöjä tähän kokoelmaan, koska sen enimmäismäärä {$quota} merkintää on saavutettu.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Et voi lisätä uusia merkintöjä tähän kokoelmaan, koska sen enimmäismäärä {$quota} merkintä on saavutettu. }}
+    *   {{ Et voi lisätä uusia merkintöjä tähän kokoelmaan, koska sen enimmäismäärä {$quota} merkintää on saavutettu. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintää. Voit luoda vielä {$remaining} merkinnän. }}
-    *   {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintää. Voit luoda vielä {$remaining} merkintää. }}
+  .match $quota $remaining
+    one one {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintä. Voit luoda vielä {$remaining} merkinnän. }}
+    one *   {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintä. Voit luoda vielä {$remaining} merkintää. }}
+    *   one {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintää. Voit luoda vielä {$remaining} merkinnän. }}
+    *   *   {{ Tämä kokoelma lähestyy enimmäismääräänsä {$quota} merkintää. Voit luoda vielä {$remaining} merkintää. }}
 
 # Navigation: back links and list labels
 back_to_collection: Takaisin kokoelmaan

@@ -477,13 +477,20 @@ entry_not_found: Eintrag nicht gefunden.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Das Anlegen neuer Einträge in dieser Sammlung wurde von der Administration deaktiviert.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: In dieser Sammlung können keine neuen Einträge angelegt werden, da die Obergrenze von {$quota} Einträgen erreicht ist.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ In dieser Sammlung können keine neuen Einträge angelegt werden, da die Obergrenze von {$quota} Eintrag erreicht ist. }}
+    *   {{ In dieser Sammlung können keine neuen Einträge angelegt werden, da die Obergrenze von {$quota} Einträgen erreicht ist. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Diese Sammlung nähert sich ihrer Obergrenze von {$quota} Einträgen. Es kann nur noch {$remaining} weiterer Eintrag angelegt werden. }}
-    *   {{ Diese Sammlung nähert sich ihrer Obergrenze von {$quota} Einträgen. Es können nur noch {$remaining} weitere Einträge angelegt werden. }}
+  .match $quota $remaining
+    one one {{ Diese Sammlung nähert sich ihrer Obergrenze von {$quota} Eintrag. Es kann nur noch {$remaining} weiterer Eintrag angelegt werden. }}
+    one *   {{ Diese Sammlung nähert sich ihrer Obergrenze von {$quota} Eintrag. Es können nur noch {$remaining} weitere Einträge angelegt werden. }}
+    *   one {{ Diese Sammlung nähert sich ihrer Obergrenze von {$quota} Einträgen. Es kann nur noch {$remaining} weiterer Eintrag angelegt werden. }}
+    *   *   {{ Diese Sammlung nähert sich ihrer Obergrenze von {$quota} Einträgen. Es können nur noch {$remaining} weitere Einträge angelegt werden. }}
 
 # Navigation: back links and list labels
 back_to_collection: Zurück zur Sammlung

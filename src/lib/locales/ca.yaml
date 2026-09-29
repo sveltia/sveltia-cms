@@ -477,13 +477,20 @@ entry_not_found: No s’ha trobat l’entrada.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: La creació d’entrades noves en aquesta col·lecció està desactivada per l’administrador.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: No podeu afegir entrades noves a aquesta col·lecció perquè ha arribat al seu límit de {$quota} entrades.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ No podeu afegir entrades noves a aquesta col·lecció perquè ha arribat al seu límit de {$quota} entrada. }}
+    *   {{ No podeu afegir entrades noves a aquesta col·lecció perquè ha arribat al seu límit de {$quota} entrades. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrada més. }}
-    *   {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrades més. }}
+  .match $quota $remaining
+    one one {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrada. Només podeu crear {$remaining} entrada més. }}
+    one *   {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrada. Només podeu crear {$remaining} entrades més. }}
+    *   one {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrada més. }}
+    *   *   {{ Aquesta col·lecció s’acosta al seu límit de {$quota} entrades. Només podeu crear {$remaining} entrades més. }}
 
 # Navigation: back links and list labels
 back_to_collection: Torna a la col·lecció

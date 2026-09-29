@@ -477,13 +477,20 @@ entry_not_found: Voce non trovata.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: La creazione di nuove voci in questa collezione è stata disabilitata dall’amministratore.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Non puoi aggiungere nuove voci a questa collezione perché ha raggiunto il suo limite di {$quota} voci.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Non puoi aggiungere nuove voci a questa collezione perché ha raggiunto il suo limite di {$quota} voce. }}
+    *   {{ Non puoi aggiungere nuove voci a questa collezione perché ha raggiunto il suo limite di {$quota} voci. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Questa collezione si sta avvicinando al limite di {$quota} voci. Puoi creare ancora {$remaining} sola voce. }}
-    *   {{ Questa collezione si sta avvicinando al limite di {$quota} voci. Puoi creare ancora {$remaining} voci. }}
+  .match $quota $remaining
+    one one {{ Questa collezione si sta avvicinando al limite di {$quota} voce. Puoi creare ancora {$remaining} sola voce. }}
+    one *   {{ Questa collezione si sta avvicinando al limite di {$quota} voce. Puoi creare ancora {$remaining} voci. }}
+    *   one {{ Questa collezione si sta avvicinando al limite di {$quota} voci. Puoi creare ancora {$remaining} sola voce. }}
+    *   *   {{ Questa collezione si sta avvicinando al limite di {$quota} voci. Puoi creare ancora {$remaining} voci. }}
 
 # Navigation: back links and list labels
 back_to_collection: Torna alla Collezione

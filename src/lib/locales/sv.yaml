@@ -477,13 +477,20 @@ entry_not_found: Posten hittades inte.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Skapande av nya poster är inaktiverat av administratören.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Du kan inte lägga till nya poster i denna samling eftersom den har nått sin gräns på {$quota} poster.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Du kan inte lägga till nya poster i denna samling eftersom den har nått sin gräns på {$quota} post. }}
+    *   {{ Du kan inte lägga till nya poster i denna samling eftersom den har nått sin gräns på {$quota} poster. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Denna samling närmar sig sin gräns på {$quota} poster. Du kan bara skapa {$remaining} fler post. }}
-    *   {{ Denna samling närmar sig sin gräns på {$quota} poster. Du kan bara skapa {$remaining} fler poster. }}
+  .match $quota $remaining
+    one one {{ Denna samling närmar sig sin gräns på {$quota} post. Du kan bara skapa {$remaining} fler post. }}
+    one *   {{ Denna samling närmar sig sin gräns på {$quota} post. Du kan bara skapa {$remaining} fler poster. }}
+    *   one {{ Denna samling närmar sig sin gräns på {$quota} poster. Du kan bara skapa {$remaining} fler post. }}
+    *   *   {{ Denna samling närmar sig sin gräns på {$quota} poster. Du kan bara skapa {$remaining} fler poster. }}
 
 # Navigation: back links and list labels
 back_to_collection: Tillbaka till samling

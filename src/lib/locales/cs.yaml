@@ -479,14 +479,26 @@ entry_not_found: Položka nebyla nalezena.
 # Entry creation restrictions: tooltip and advisory messages
 creating_entries_disabled_by_admin: Vytváření nových položek v této kolekci je zakázáno správcem.
 # {$quota} is the collection’s maximum entry count
-creating_entries_disabled_by_quota: Do této kolekce nelze přidat nové položky, protože dosáhla limitu {$quota} položek.
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Do této kolekce nelze přidat nové položky, protože dosáhla limitu {$quota} položky. }}
+    few {{ Do této kolekce nelze přidat nové položky, protože dosáhla limitu {$quota} položek. }}
+    *   {{ Do této kolekce nelze přidat nové položky, protože dosáhla limitu {$quota} položek. }}
 # {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
 creating_entries_nearing_quota: |
+  .input {$quota :integer}
   .input {$remaining :integer}
-  .match $remaining
-    one {{ Tato kolekce se blíží svému limitu {$quota} položek. Můžete vytvořit již pouze {$remaining} položku. }}
-    few {{ Tato kolekce se blíží svému limitu {$quota} položek. Můžete vytvořit již pouze {$remaining} položky. }}
-    *   {{ Tato kolekce se blíží svému limitu {$quota} položek. Můžete vytvořit již pouze {$remaining} položek. }}
+  .match $quota $remaining
+    one one {{ Tato kolekce se blíží svému limitu {$quota} položky. Můžete vytvořit již pouze {$remaining} položku. }}
+    one few {{ Tato kolekce se blíží svému limitu {$quota} položky. Můžete vytvořit již pouze {$remaining} položky. }}
+    one *   {{ Tato kolekce se blíží svému limitu {$quota} položky. Můžete vytvořit již pouze {$remaining} položek. }}
+    few one {{ Tato kolekce se blíží svému limitu {$quota} položek. Můžete vytvořit již pouze {$remaining} položku. }}
+    few few {{ Tato kolekce se blíží svému limitu {$quota} položek. Můžete vytvořit již pouze {$remaining} položky. }}
+    few *   {{ Tato kolekce se blíží svému limitu {$quota} položek. Můžete vytvořit již pouze {$remaining} položek. }}
+    *   one {{ Tato kolekce se blíží svému limitu {$quota} položek. Můžete vytvořit již pouze {$remaining} položku. }}
+    *   few {{ Tato kolekce se blíží svému limitu {$quota} položek. Můžete vytvořit již pouze {$remaining} položky. }}
+    *   *   {{ Tato kolekce se blíží svému limitu {$quota} položek. Můžete vytvořit již pouze {$remaining} položek. }}
 
 # Navigation: back links and list labels
 back_to_collection: Zpět do kolekce

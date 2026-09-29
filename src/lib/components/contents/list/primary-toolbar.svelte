@@ -68,6 +68,21 @@
     >
       {getReadonlyMessage('collection', { collection: selectedCollection.current })}
     </Infobar>
+  {:else if isEntryCollection && (creationDisabled || nearingQuota)}
+    <!-- Only when not read-only, as the read-only message already says nothing can be created -->
+    <Infobar
+      dismissible={false}
+      --sui-infobar-border-width="0 0 1px"
+      --sui-infobar-message-justify-content="center"
+    >
+      {#if !canCreate}
+        {_('creating_entries_disabled_by_admin')}
+      {:else if creationDisabled}
+        {_('creating_entries_disabled_by_quota', { values: { quota } })}
+      {:else}
+        {_('creating_entries_nearing_quota', { values: { quota, remaining } })}
+      {/if}
+    </Infobar>
   {/if}
   <Toolbar variant="primary" ariaLabel={_('collection')}>
     {#if env.isSmallScreen}
@@ -128,22 +143,6 @@
       </FloatingActionButtonWrapper>
     {/if}
   </Toolbar>
-  <!-- The read-only message above already says nothing can be created -->
-  {#if !readonly && isEntryCollection && (creationDisabled || nearingQuota)}
-    <Infobar
-      dismissible={false}
-      --sui-infobar-border-width="1px 0"
-      --sui-infobar-message-justify-content="center"
-    >
-      {#if !canCreate}
-        {_('creating_entries_disabled_by_admin')}
-      {:else if creationDisabled}
-        {_('creating_entries_disabled_by_quota', { values: { quota } })}
-      {:else}
-        {_('creating_entries_nearing_quota', { values: { quota, remaining } })}
-      {/if}
-    </Infobar>
-  {/if}
 {/if}
 
 <DeleteEntriesDialog bind:open={showDeleteDialog} />

@@ -47,6 +47,20 @@ describe('PrimaryToolbar', () => {
           fields: [{ name: 'title', widget: 'string' }],
         },
         {
+          name: 'single',
+          label: 'Single',
+          folder: 'content/single',
+          limit: 1,
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+        {
+          name: 'closed',
+          label: 'Closed',
+          folder: 'content/closed',
+          limit: 0,
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+        {
           name: 'settings',
           label: 'Settings',
           files: [{ name: 'general', file: 'data/general.yml', fields: [{ name: 'x' }] }],
@@ -140,7 +154,7 @@ describe('PrimaryToolbar', () => {
       .element(page.getByRole('status'))
       .toHaveTextContent(
         'info Information You cannot add new entries to this collection because it has reached its limit of ' +
-          '1 entries.',
+          '1 entry.',
       );
   });
 
@@ -162,6 +176,18 @@ describe('PrimaryToolbar', () => {
       .toBeVisible();
   });
 
+  test('warns about a limit of 1 entry in the singular', async () => {
+    selectedCollection.current = getCollection('single');
+
+    await render(PrimaryToolbar, {});
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information This collection is nearing its limit of 1 entry. You can only create 1 more entry.',
+      );
+  });
+
   test('explains when creation is disabled', async () => {
     selectedCollection.current = getCollection('locked');
 
@@ -172,6 +198,26 @@ describe('PrimaryToolbar', () => {
       .toHaveTextContent(
         'info Information Creating new entries in this collection is disabled by the administrator.',
       );
+  });
+
+  test('explains when creation is disabled with a limit of 0', async () => {
+    selectedCollection.current = getCollection('closed');
+
+    await render(PrimaryToolbar, {});
+
+    await expect
+      .element(page.getByRole('status'))
+      .toHaveTextContent(
+        'info Information Creating new entries in this collection is disabled by the administrator.',
+      );
+
+    // The message comes above the toolbar, like the read-only one
+    expect(
+      page
+        .getByRole('status')
+        .element()
+        .compareDocumentPosition(page.getByRole('toolbar', { name: 'Collection' }).element()),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   test('explains when the collection is read-only, and disables the entry actions', async () => {
