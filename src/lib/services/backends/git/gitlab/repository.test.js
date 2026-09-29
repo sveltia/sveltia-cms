@@ -4,37 +4,34 @@ import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
+  getProjectId,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
-import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-
-const { mockUserAccount } = vi.hoisted(() => ({
-  mockUserAccount: { id: 123, login: 'test-user', bot: false },
-}));
+import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/user/account.svelte', () => ({
-  user: {
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    get account() {
-      return mockUserAccount;
-    },
-  },
-}));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn(() => 'Translation message'),
 }));
+
 describe('GitLab repository service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    Object.assign(mockUserAccount, { id: 123, login: 'test-user', bot: false });
   });
 
   describe('repository object', () => {
     test('has expected structure', () => {
       expect(repository).toBeDefined();
       expect(typeof repository).toBe('object');
+    });
+  });
+
+  describe('getProjectId', () => {
+    test('returns the percent-encoded project path', () => {
+      Object.assign(repository, { owner: 'group/subgroup', repo: 'project' });
+
+      expect(getProjectId()).toBe('group%2Fsubgroup%2Fproject');
     });
   });
 
@@ -64,101 +61,31 @@ describe('GitLab repository service', () => {
   });
 
   describe('checkRepositoryAccess', () => {
-    test('succeeds when the user is an active collaborator', async () => {
-      Object.assign(repository, {
-        owner: 'test-owner',
-        repo: 'test-repo',
-      });
-
-      const mockResponse = {
-        ok: true,
-        json: vi.fn().mockResolvedValue([{ id: 123, state: 'active' }]),
-      };
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
-
-      await expect(checkRepositoryAccess()).resolves.toBeUndefined();
-      expect(fetchAPI).toHaveBeenCalledWith(
-        '/projects/test-owner%2Ftest-repo/users?search=test-user&per_page=100',
-        expect.objectContaining({
-          headers: { Accept: 'application/json' },
-          responseType: 'raw',
-        }),
-      );
-    });
-
-    test('encodes the login in the search query', async () => {
+    beforeEach(() => {
       Object.assign(repository, { owner: 'test-owner', repo: 'test-repo' });
-      Object.assign(mockUserAccount, { login: 'a+b&c' });
+    });
 
-      vi.mocked(fetchAPI).mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue([{ id: 123 }]),
+    test('succeeds when the user can push to the repository', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        project: { userPermissions: { pushCode: true } },
       });
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
-      expect(fetchAPI).toHaveBeenCalledWith(
-        '/projects/test-owner%2Ftest-repo/users?search=a%2Bb%26c&per_page=100',
-        expect.anything(),
-      );
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('pushCode'));
     });
 
-    test('throws error when the user is not an active collaborator', async () => {
-      Object.assign(repository, {
-        owner: 'test-owner',
-        repo: 'test-repo',
+    test('throws error when the user has a role lower than Developer', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        project: { userPermissions: { pushCode: false } },
       });
-
-      const mockResponse = {
-        ok: true,
-        json: vi.fn().mockResolvedValue([{ id: 456, state: 'active' }]),
-      };
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
     });
 
-    test('throws error when the access check request itself fails', async () => {
-      Object.assign(repository, {
-        owner: 'test-owner',
-        repo: 'test-repo',
-      });
-
-      const mockResponse = {
-        ok: false,
-        json: vi.fn(),
-      };
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+    test('throws error when the project is not visible to the user', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({ project: null });
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
-      expect(mockResponse.json).not.toHaveBeenCalled();
-    });
-
-    test('uses service account lookup for bot users', async () => {
-      Object.assign(repository, {
-        owner: 'test-owner',
-        repo: 'test-repo',
-      });
-
-      Object.assign(mockUserAccount, { id: 999, login: 'bot-user', bot: true });
-
-      const mockResponse = {
-        ok: true,
-        json: vi.fn().mockResolvedValue([{ id: 999 }]),
-      };
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
-
-      await expect(checkRepositoryAccess()).resolves.toBeUndefined();
-      expect(fetchAPI).toHaveBeenCalledWith(
-        '/projects/test-owner%2Ftest-repo/service_accounts?per_page=100',
-        expect.objectContaining({
-          headers: { Accept: 'application/json' },
-          responseType: 'raw',
-        }),
-      );
     });
   });
 

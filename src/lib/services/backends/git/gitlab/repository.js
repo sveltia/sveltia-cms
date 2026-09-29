@@ -1,4 +1,4 @@
-import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
+import { fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
 import {
   createLocalizedError,
   NOT_COLLABORATOR_ERROR_MESSAGE,
@@ -7,10 +7,9 @@ import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
-import { user } from '$lib/services/user/account.svelte';
 
 /**
- * @import { RepositoryBaseURLs, RepositoryInfo, User } from '$lib/types/private';
+ * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
  */
 
 /** @type {RepositoryInfo} */
@@ -41,34 +40,33 @@ export const getBaseURLs = (repoURL, branch) => ({
   commitBaseURL: `${repoURL}/-/commit`,
 });
 
+const FETCH_USER_PERMISSIONS_QUERY = `
+  query($fullPath: ID!) {
+    project(fullPath: $fullPath) {
+      userPermissions {
+        pushCode
+      }
+    }
+  }
+`;
+
 /**
- * Check if the user has access to the current repository.
- * @throws {Error} If the user is not a collaborator of the repository.
- * @see https://docs.gitlab.com/api/projects/#list-all-members-of-a-project
- * @see https://docs.gitlab.com/api/service_accounts/#list-all-project-service-accounts
+ * Check if the user has write access to the current repository, which takes the Developer role or
+ * higher, like Netlify/Decap CMS requires. The permission reflects the user’s effective role,
+ * however it’s granted: direct membership, a parent group, or a group invited to the project or to
+ * a parent group. It also works for service accounts, which the members API doesn’t return.
+ * @throws {Error} If the user can’t push to the repository.
+ * @see https://docs.gitlab.com/api/graphql/reference/#projectpermissions
+ * @see https://docs.gitlab.com/user/permissions/
  */
 export const checkRepositoryAccess = async () => {
   const { repo } = repository;
-  const { id, login, bot } = /** @type {User} */ (user.account);
-  const baseURL = `/projects/${getProjectId()}`;
 
-  // The search matches the login anywhere in a user’s username, name or email, so a short login can
-  // match many users. Ask for the largest page GitLab allows, rather than the default of 20, so
-  // the user isn’t left out of the result
-  const url = bot
-    ? `${baseURL}/service_accounts?per_page=100`
-    : `${baseURL}/users?search=${encodeURIComponent(/** @type {string} */ (login))}&per_page=100`;
-
-  const response = /** @type {Response} */ (
-    await fetchAPI(url, {
-      headers: { Accept: 'application/json' },
-      responseType: 'raw',
-    })
+  const result = /** @type {{ project: { userPermissions: { pushCode: boolean } } | null }} */ (
+    await fetchGraphQL(FETCH_USER_PERMISSIONS_QUERY)
   );
 
-  const users = response.ok ? /** @type {{ id: number }[]} */ (await response.json()) : [];
-
-  if (!users.some((u) => u.id === id)) {
+  if (!result.project?.userPermissions.pushCode) {
     throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
   }
 };
