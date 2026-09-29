@@ -239,6 +239,10 @@ export const getPreviewPath = ({
  * @param {string} [options.baseURL] Base URL to use instead of the site’s own, typically the deploy
  * preview URL reported by a CI/CD provider for an Editorial Workflow pull request. It takes
  * precedence over the `site_url` option, which may be unset.
+ * @param {boolean} [options.fallbackToRoot] Whether to link to the root of the site when the
+ * collection or collection file has no `preview_path` option, as Decap CMS does. It’s meant for a
+ * deploy preview, whose address changes with each pull request, so the CMS is the easiest place to
+ * find it; a link to the home page of the live site isn’t worth offering on every entry.
  * @returns {string | undefined} URL on the live site or the deploy preview.
  * @see https://decapcms.org/docs/deploy-preview-links/
  */
@@ -249,6 +253,15 @@ export const getEntryPreviewURL = (entry, locale, collection, collectionFile, op
 
   if (!showLinks || !baseURL) {
     return undefined;
+  }
+
+  const { preview_path: pathTemplate } =
+    collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
+
+  // Only a missing option falls back to the root: a `preview_path` that can’t be filled in for this
+  // entry still gives no link, as the page it names is somewhere else on the site
+  if (options.fallbackToRoot && !pathTemplate) {
+    return `${baseURL.replace(/\/$/, '')}/`;
   }
 
   const previewPath = getPreviewPath({

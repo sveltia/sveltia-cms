@@ -74,14 +74,18 @@ export const getEntryPreviewLink = ({
   /**
    * Compose the full URL for the entry with the given base.
    * @param {string} [baseURL] Base URL, or `undefined` to use the configured site URL.
+   * @param {boolean} [fallbackToRoot] Whether to link to the root of the site when the collection
+   * has no `preview_path` option.
    * @returns {string | undefined} URL.
    */
-  const compose = (baseURL) =>
-    getEntryPreviewURL(entry, locale, collection, collectionFile, { baseURL });
+  const compose = (baseURL, fallbackToRoot = false) =>
+    getEntryPreviewURL(entry, locale, collection, collectionFile, { baseURL, fallbackToRoot });
 
   if (pullRequest) {
     const deploy = pullRequest.headSHA ? deployMap[pullRequest.headSHA] : undefined;
-    const previewURL = deploy?.url ? compose(deploy.url) : undefined;
+    // Without a `preview_path`, the root of the deploy preview is still worth opening, like in
+    // Decap CMS: its address changes with each pull request, and the link carries the build state
+    const previewURL = deploy?.url ? compose(deploy.url, true) : undefined;
 
     if (deploy && previewURL) {
       return {

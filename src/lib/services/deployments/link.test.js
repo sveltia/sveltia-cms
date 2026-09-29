@@ -127,6 +127,20 @@ describe('Preview link composition', () => {
           pingable: true,
         });
       });
+
+      test('doesn’t link a published entry to the root of the live site', () => {
+        // A link to the home page on every entry isn’t worth offering, unlike a deploy preview
+        vi.mocked(getEntryPreviewURL).mockImplementation((_e, _l, _c, _f, options) =>
+          options?.fallbackToRoot ? 'https://example.com/' : undefined,
+        );
+
+        expect(
+          resolve({
+            productionSHA: 'abc',
+            deployments: { abc: { state: 'ready', url: 'https://example.com', checkedTime: 0 } },
+          }),
+        ).toBeUndefined();
+      });
     });
 
     describe('for an unpublished entry', () => {
@@ -153,6 +167,29 @@ describe('Preview link composition', () => {
           // The build is done, so all that’s left to confirm is that the page is being served
           pingable: true,
         });
+      });
+
+      test('asks for the root of the deploy preview when there’s no preview path', () => {
+        // Like Decap CMS, the deploy preview is linked even without a `preview_path` option, as its
+        // address changes with each pull request and the link carries the build state
+        vi.mocked(getEntryPreviewURL).mockImplementation((_e, _l, _c, _f, options) =>
+          options?.fallbackToRoot ? `${options.baseURL}/` : undefined,
+        );
+
+        expect(
+          resolve({
+            pullRequest: withSHA,
+            deployments: {
+              abc: { state: 'ready', url: 'https://preview.example.com', checkedTime: 0 },
+            },
+          }),
+        ).toEqual(
+          expect.objectContaining({
+            url: 'https://preview.example.com/',
+            state: 'ready',
+            isDeployPreview: true,
+          }),
+        );
       });
 
       test('marks a reported preview as worth checking for liveness', () => {

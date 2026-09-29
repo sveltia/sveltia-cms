@@ -729,6 +729,103 @@ describe('Test getEntryPreviewURL()', () => {
     expect(result).toBe('https://preview.example.com/posts/test-entry');
   });
 
+  test('links to the root of the site without preview_path when asked to', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = { current: { show_preview_links: true } };
+
+    const collectionWithoutPreviewPath = { ...mockCollection };
+
+    delete collectionWithoutPreviewPath.preview_path;
+
+    const result = getEntryPreviewURL(mockEntry, 'en', collectionWithoutPreviewPath, undefined, {
+      baseURL: 'https://preview.example.com/',
+      fallbackToRoot: true,
+    });
+
+    expect(result).toBe('https://preview.example.com/');
+  });
+
+  test('links to the root of the site without preview_path on the collection file', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = { current: { show_preview_links: true } };
+
+    const collectionFile = /** @type {InternalCollectionFile} */ ({
+      name: 'about',
+      file: 'content/about.md',
+      fields: [],
+      _file: { extension: 'md', format: 'yaml-frontmatter' },
+      _i18n: mockCollection._i18n,
+    });
+
+    const result = getEntryPreviewURL(mockEntry, 'en', mockCollection, collectionFile, {
+      baseURL: 'https://preview.example.com',
+      fallbackToRoot: true,
+    });
+
+    // The collection’s own `preview_path` doesn’t apply to its files
+    expect(result).toBe('https://preview.example.com/');
+  });
+
+  test('uses preview_path rather than the root when both are possible', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = { current: { show_preview_links: true } };
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockReturnValue('posts/test-entry');
+
+    const result = getEntryPreviewURL(mockEntry, 'en', mockCollection, undefined, {
+      baseURL: 'https://preview.example.com',
+      fallbackToRoot: true,
+    });
+
+    expect(result).toBe('https://preview.example.com/posts/test-entry');
+  });
+
+  test('gives no root link when preview_path cannot be filled in', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = { current: { show_preview_links: true } };
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+
+    const { fillTemplate } = await import('$lib/services/common/template');
+
+    vi.mocked(fillTemplate).mockImplementation(() => {
+      throw new Error('Unresolvable template tag');
+    });
+
+    const result = getEntryPreviewURL(mockEntry, 'en', mockCollection, undefined, {
+      baseURL: 'https://preview.example.com',
+      fallbackToRoot: true,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  test('ignores fallbackToRoot when show_preview_links is false', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = { current: { show_preview_links: false } };
+
+    const collectionWithoutPreviewPath = { ...mockCollection };
+
+    delete collectionWithoutPreviewPath.preview_path;
+
+    const result = getEntryPreviewURL(mockEntry, 'en', collectionWithoutPreviewPath, undefined, {
+      baseURL: 'https://preview.example.com',
+      fallbackToRoot: true,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
   test('ignores the base URL override when show_preview_links is false', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = {
