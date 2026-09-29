@@ -181,9 +181,9 @@
  * @typedef {object} UploadcareMediaLibrary
  * @property {Record<string, any>} [config] Options to be passed to Uploadcare, such as `multiple`.
  * The `publicKey` option is required. A field-level `config` is merged over the site-level one, so
- * the key can be set at either the site or field level. The
- * `cdnBase` option sets the CDN origin used in output URLs, which is `https://ucarecdn.com` by
- * default. See the [Uploadcare
+ * the key can be set at either the site or field level. The `cdnBase` option sets the CDN origin
+ * used in output URLs. Default: the origin of the file URL returned by Uploadcare, typically
+ * `https://ucarecdn.com`. See the [Uploadcare
  * documentation](https://uploadcare.com/docs/uploads/file-uploader-options/) for a full list of
  * available options. Some options, including `previewStep`, will be ignored in Sveltia CMS because
  * we use an API-based integration instead of Uploadcare’s deprecated jQuery File Uploader.
@@ -333,8 +333,8 @@
  * Field-level i18n option shared among most field types.
  * @typedef {object} FieldI18nProps
  * @property {boolean | 'duplicate' | 'translate' | 'none'} [i18n] Whether to enable the editor UI
- * in locales other than the default locale. Default: `false`, or the value of the parent field’s
- * option for a subfield. `duplicate` makes the field read-only in non-default locales and
+ * in locales other than the default locale. Default: `false`, or `duplicate` for a subfield of a
+ * field using `duplicate`. `duplicate` makes the field read-only in non-default locales and
  * automatically copies the default locale’s value to them. `translate` and `none` are aliases of
  * `true` and `false`, respectively. This option only works
  * when i18n is set up with the global and collection-level `i18n` option. See the
@@ -347,8 +347,8 @@
  * addition to the common ones.
  * @typedef {object} KeyValueFieldI18nProps
  * @property {boolean | 'duplicate' | 'duplicate_keys' | 'translate' | 'none'} [i18n] Whether to
- * enable the editor UI in locales other than the default locale. Default: `false`, or the value of
- * the parent field’s option for a subfield. `duplicate` makes the field read-only in non-default
+ * enable the editor UI in locales other than the default locale. Default: `false`, or `duplicate`
+ * for a subfield of a field using `duplicate`. `duplicate` makes the field read-only in non-default
  * locales and automatically copies the default locale’s key-value pairs to them. `duplicate_keys`
  * copies the keys only: the keys are read-only in non-default locales and kept in sync with the
  * default locale, while the values can be edited in each locale. `translate` and `none` are aliases
@@ -368,7 +368,9 @@
  * @typedef {object} VisibleFieldProps
  * @property {string} [hint] Help message to be displayed below the input UI. Limited Markdown
  * formatting is supported: bold, italic, strikethrough, inline code and links. A line break can be
- * given as `\n`. The hint is not displayed while the field is read-only.
+ * given as a literal backslash followed by `n`, e.g. `\n` in a plain or single-quoted YAML string;
+ * in JSON or a double-quoted string, the backslash itself has to be escaped. The hint is not
+ * displayed while the field is read-only.
  * @property {boolean} [preview] Whether to show the preview of the field. Default: `true`.
  * @property {boolean | LocaleCode[]} [required] Whether to make data input on the field required.
  * Default: `true`. This option also affects data output if the `omit_empty_optional_fields` global
@@ -470,7 +472,7 @@
  * @property {string} [label] Label of the type to be displayed in the editor UI. Default: `name`
  * field value.
  * @property {'object'} [widget] Field type. Only `object` is supported: another value is a
- * configuration error in a List field, and ignored in an Object field.
+ * configuration error.
  * @property {string} [summary] Template of a label to be displayed on a collapsed object.
  * @property {Field[]} [fields] Set of subfields. This option can be omitted; in that case, only the
  * `type` property will be saved.
@@ -575,7 +577,7 @@
  * tags, which support transformations like `{{fields.title | upper}}`, `{{index}}` is the position
  * of the item in a list, which is saved as a number when used alone, and `{{uuid}}`,
  * `{{uuid_short}}` and `{{uuid_shorter}}` generate a UUID, which is kept once the value is saved.
- * The field is always read-only.
+ * The field is always hidden in the editor, and its value can’t be edited.
  * @see https://github.com/sveltia/sveltia-cms/issues/111
  * @see https://github.com/sveltia/sveltia-cms/issues/122
  */
@@ -1922,9 +1924,9 @@
  * @property {string} [base_url] OAuth base URL origin. With authorization code grant, it’s required
  * when using an OAuth client other than Netlify, including [Sveltia CMS
  * Authenticator](https://github.com/sveltia/sveltia-cms-auth). With PKCE authorization, it’s the
- * origin of the GitLab instance, which is not inferred from `api_root`, so it’s required for a
- * self-hosted instance. Default: `https://api.netlify.com`, or `https://gitlab.com` when
- * `auth_type` is `pkce`.
+ * URL of the GitLab instance, including the subpath if it’s served under one, which is not inferred
+ * from `api_root`, so it’s required for a self-hosted instance. Default: `https://api.netlify.com`,
+ * or `https://gitlab.com` when `auth_type` is `pkce`.
  * @property {'' | 'pkce'} [auth_type] OAuth grant type. The default is an empty string, which is
  * authorization code grant. `pkce` is recommended for better security and easier setup. `implicit`
  * is not supported in Sveltia CMS.
@@ -1960,9 +1962,10 @@
  * by a slash, e.g. `owner/repo`.
  * @property {string} [api_root] REST API endpoint for the backend. Required when using a
  * self-hosted Gitea/Forgejo instance. Default: `https://gitea.com/api/v1`.
- * @property {string} [base_url] OAuth base URL origin, which is the origin of the Gitea/Forgejo
- * instance, as the backend always uses PKCE authorization without an OAuth client. It’s not
- * inferred from `api_root`, so it’s required when using a self-hosted instance or Codeberg.
+ * @property {string} [base_url] OAuth base URL, which is the URL of the Gitea/Forgejo instance,
+ * including the subpath if it’s served under one, as OAuth sign-in always uses PKCE authorization
+ * without an OAuth client. It’s not inferred from `api_root`, so it’s required when using a
+ * self-hosted instance or Codeberg.
  * Default: `https://gitea.com`.
  * @property {string} [auth_endpoint] OAuth base URL path. Default: `login/oauth/authorize`.
  * @property {string} [app_id] OAuth application ID. Required for OAuth sign-in; without one, users
