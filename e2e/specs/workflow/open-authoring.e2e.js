@@ -122,6 +122,83 @@ test.describe('as a contributor', () => {
     expect(github.fork).toBeUndefined();
   });
 
+  test('finds a fork under another name', async ({ cms, github, page }) => {
+    github.createFork({ repo: 'e2e-site-fork' });
+
+    await cms.open();
+    await expect(
+      page.getByText(/Your changes are saved to your fork .*mona\/e2e-site-fork/),
+    ).toBeVisible();
+    await saveSecondPost(page);
+
+    await expect
+      .poll(() => getWorkflowBranches(github))
+      .toEqual([github.forkBranch('cms/mona/e2e-site-fork/posts/second-post')]);
+    await expect(page.getByRole('alertdialog', { name: 'Fork Repository' })).toHaveCount(0);
+  });
+
+  test('doesn’t let a contributor upload to the media library', async ({ cms, github, page }) => {
+    github.createFork();
+
+    await cms.open();
+    await page.getByRole('button', { name: 'Create Entry or Assets' }).click();
+    await expect(page.getByRole('menuitem', { name: 'Assets' })).toBeDisabled();
+    await page.keyboard.press('Escape');
+    await page.getByRole('radio', { name: 'Assets' }).click();
+    await expect(page.getByRole('button', { name: 'Upload New Assets' }).first()).toBeDisabled();
+  });
+
+  test.describe('who can’t read the repository', () => {
+    test.beforeEach(({ github }) => {
+      github.canRead = false;
+    });
+
+    test('says they have no access', async ({ cms, github, page }) => {
+      await cms.open();
+
+      await expect(
+        page.getByText(/You don’t have access to the .*sveltia\/e2e-site.* repository/),
+      ).toBeVisible();
+      expect(github.fork).toBeUndefined();
+    });
+
+    test('points out a pending invitation', async ({ cms, github, page }) => {
+      github.invitations = ['sveltia/e2e-site'];
+
+      await cms.open();
+
+      await expect(
+        page.getByText(/You have a pending invitation to the .*sveltia\/e2e-site.* repository/),
+      ).toBeVisible();
+    });
+
+    test('points out a sign-in without access to private repositories', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      github.scopes = 'public_repo, read:user';
+
+      await cms.open();
+
+      await expect(
+        page.getByText(/Your sign-in doesn’t include access to private repositories/),
+      ).toBeVisible();
+    });
+  });
+
+  test('doesn’t take a rate limit for a lack of write access', async ({ cms, github, page }) => {
+    github.rateLimited = true;
+
+    await cms.open();
+
+    await expect(
+      page.getByText(/Couldn’t check your access to the .*sveltia\/e2e-site.* repository/),
+    ).toBeVisible();
+    await expect(page.getByRole('alertdialog', { name: 'Fork Repository' })).toHaveCount(0);
+    expect(github.fork).toBeUndefined();
+  });
+
   test.describe('with a fork', () => {
     test.beforeEach(({ github }) => {
       github.createFork();
@@ -165,6 +242,164 @@ test.describe('as a contributor', () => {
         /Published Entries/,
         /First Post/,
       ]);
+    });
+
+    test('starts a branch from the repository rather than a fork that has moved on', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      // The fork has a commit of its own, so it can’t be brought up to date
+      github.commit({ 'notes.md': 'Mine.' }, { branch: github.forkBranch('main') });
+      github.commit({ 'content/posts/third-post.md': post('Third Post', 'From Alex.') });
+
+      await cms.open();
+
+      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+        /First Post/,
+        /Third Post/,
+      ]);
+      expect(github.readFile('content/posts/third-post.md', github.forkBranch('main'))).toBe(
+        undefined,
+      );
+
+      await saveSecondPost(page);
+
+      const branch = github.forkBranch(SECOND_POST_BRANCH);
+
+      await expect
+        .poll(() => github.readFile('content/posts/second-post.md', branch))
+        .toBe(post('Second Post', 'Coming soon.'));
+      expect(github.readFile('content/posts/third-post.md', branch)).toBe(
+        post('Third Post', 'From Alex.'),
+      );
+      expect(github.readFile('notes.md', branch)).toBeUndefined();
+    });
+
+    test('saves again to the same branch in the fork', async ({ cms, github, page }) => {
+      await cms.open();
+      await saveSecondPost(page);
+
+      const branch = github.forkBranch(SECOND_POST_BRANCH);
+
+      await expect
+        .poll(() => github.readFile('content/posts/second-post.md', branch))
+        .toBe(post('Second Post', 'Coming soon.'));
+
+      const editor = await openEntry(page, 'Second Post');
+
+      await editor.getByRole('textbox', { name: 'Body' }).fill('Almost there.');
+      await editor.getByRole('button', { name: 'Save' }).click();
+      await page
+        .getByRole('alertdialog', { name: 'Send for Review' })
+        .getByRole('button', { name: 'Later' })
+        .click();
+
+      await expect
+        .poll(() => github.readFile('content/posts/second-post.md', branch))
+        .toBe(post('Second Post', 'Almost there.'));
+      expect(getWorkflowBranches(github)).toEqual([branch]);
+      expect(github.pullRequests).toEqual([]);
+    });
+
+    test('sends a new entry for review right after saving it', async ({ cms, github, page }) => {
+      await cms.open();
+      await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+      const editor = page.getByRole('group', { name: 'Content Editor' });
+
+      await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
+      await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
+      await editor.getByRole('button', { name: 'Save' }).click();
+      await page
+        .getByRole('alertdialog', { name: 'Send for Review' })
+        .getByRole('button', { name: 'Send for Review' })
+        .click();
+
+      await expect
+        .poll(() => github.pullRequests)
+        .toMatchObject([
+          { head: github.forkBranch(SECOND_POST_BRANCH), state: 'open', draft: false, labels: [] },
+        ]);
+      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+        /Unpublished Entries/,
+        /Second Post.*In Review/,
+        /Published Entries/,
+        /First Post/,
+      ]);
+    });
+
+    test('reopens a pull request closed on GitHub when the entry is sent for review again', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      const branch = saveForkDraft(github, {
+        slug: 'second-post',
+        files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+      });
+
+      const pullRequest = github.openPullRequest({
+        title: 'Create Post “second-post”',
+        head: branch,
+        author: github.user,
+      });
+
+      Object.assign(pullRequest, { state: 'closed', lastHead: github.refs.get(branch) });
+
+      await cms.open();
+      // A closed pull request leaves the entry a draft
+      await openEntry(page, 'Second Post');
+      await cms.chooseMenuItem(
+        page.getByRole('button', { name: /Status: .*Draft/ }),
+        page.getByRole('menuitemradio', { name: 'In Review' }),
+      );
+
+      await expect.poll(() => pullRequest.state).toBe('open');
+      expect(pullRequest.draft).toBe(false);
+      expect(github.pullRequests).toHaveLength(1);
+    });
+
+    test('treats a branch changed after its pull request was merged as a new draft', async ({
+      cms,
+      github,
+      page,
+    }) => {
+      const branch = saveForkDraft(github, {
+        slug: 'second-post',
+        files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+      });
+
+      github.mergePullRequest(
+        github.openPullRequest({
+          title: 'Create Post “second-post”',
+          head: branch,
+          author: github.user,
+        }),
+      );
+      github.commit(
+        { 'content/posts/second-post.md': post('Second Post', 'Now with more.') },
+        { branch, author: github.user },
+      );
+
+      await cms.open();
+
+      // The published entry has a draft again, which stands in for it
+      await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+        /First Post/,
+        /Second Post.*Draft/,
+      ]);
+      await openEntry(page, 'Second Post');
+      await cms.chooseMenuItem(
+        page.getByRole('button', { name: /Status: .*Draft/ }),
+        page.getByRole('menuitemradio', { name: 'In Review' }),
+      );
+
+      // A new pull request, rather than an attempt to reopen the merged one
+      await expect
+        .poll(() => github.pullRequests.map(({ state }) => state))
+        .toEqual(['merged', 'open']);
+      expect(github.refs.has(branch)).toBe(true);
     });
 
     test('sends a draft for review with a pull request from the fork', async ({

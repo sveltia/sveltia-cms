@@ -47,6 +47,7 @@ import { createHash } from 'crypto';
  * @typedef {object} MockResponse
  * @property {number} [status] HTTP status, 200 by default.
  * @property {any} [json] Response body.
+ * @property {Record<string, string>} [headers] Response headers.
  */
 
 /**
@@ -142,6 +143,30 @@ export class MockGitHub {
   canWrite = true;
 
   /**
+   * Whether the signed-in user can read the repository. The repository is private, then, for
+   * someone who can’t.
+   */
+  canRead = true;
+
+  /**
+   * Whether the API rate limit is exhausted, so the repository can’t be read for now.
+   */
+  rateLimited = false;
+
+  /**
+   * The OAuth scopes of the sign-in, as GitHub reports them in the `X-OAuth-Scopes` header, e.g.
+   * `public_repo`. The header is left out when it’s `undefined`, like for a fine-grained token.
+   * @type {string | undefined}
+   */
+  scopes = undefined;
+
+  /**
+   * Repositories the signed-in user has been invited to and hasn’t accepted yet, as `owner/repo`.
+   * @type {string[]}
+   */
+  invitations = [];
+
+  /**
    * Whether the repository allows forking.
    */
   allowForking = true;
@@ -209,10 +234,13 @@ export class MockGitHub {
    * Fork the repository onto the signed-in user’s account, with a copy of the default branch. Like
    * a fork on GitHub, it shares the commits and blobs of the repository, and only its branches are
    * its own.
+   * @param {object} [options] Options.
+   * @param {string} [options.repo] Name of the fork, the repository’s own by default. A fork has
+   * another name when it was renamed, or when the user already had a repository of that name.
    * @returns {{ owner: string, repo: string }} Fork.
    */
-  createFork() {
-    this.fork = { owner: this.user.login, repo: this.repo };
+  createFork({ repo = this.repo } = {}) {
+    this.fork = { owner: this.user.login, repo };
     this.refs.set(this.forkBranch(this.branch), this.head.oid);
 
     return this.fork;
@@ -427,13 +455,14 @@ export class MockGitHub {
   }
 
   /**
-   * Get the head commit of a pull request. A closed pull request can have lost its branch, in which
-   * case the merge commit or the last commit known to it stands in.
+   * Get the head commit of a pull request. Like on GitHub, a pull request that has been closed or
+   * merged stays at the head it had then, even if its branch has moved on or is gone since.
    * @param {MockPullRequest} pullRequest Pull request.
    * @returns {MockCommit} Commit.
    */
   getPullRequestHead(pullRequest) {
-    return this.refs.has(pullRequest.head)
+    return this.refs.has(pullRequest.head) &&
+      (pullRequest.state === 'open' || !pullRequest.lastHead)
       ? this.getHead(pullRequest.head)
       : /** @type {MockCommit} */ (this.getCommit(/** @type {string} */ (pullRequest.lastHead)));
   }
@@ -662,7 +691,15 @@ export class MockGitHub {
       } else if (response.json instanceof Buffer) {
         await route.fulfill({ contentType: 'application/octet-stream', body: response.json });
       } else {
-        await route.fulfill({ status: response.status ?? 200, json: response.json });
+        await route.fulfill({
+          status: response.status ?? 200,
+          json: response.json,
+          // Like GitHub, let the page read the headers across origins
+          headers: response.headers && {
+            ...response.headers,
+            'access-control-expose-headers': Object.keys(response.headers).join(', '),
+          },
+        });
       }
 
       return;
@@ -694,7 +731,28 @@ export class MockGitHub {
       return { status: 204 };
     }
 
+    if (pathname === '/user/repository_invitations') {
+      return {
+        json: this.invitations.map((fullName) => ({ repository: { full_name: fullName } })),
+      };
+    }
+
     if (method === 'GET' && pathname === repoPath) {
+      const headers = this.scopes === undefined ? undefined : { 'x-oauth-scopes': this.scopes };
+
+      if (this.rateLimited) {
+        return {
+          status: 403,
+          json: { message: 'API rate limit exceeded' },
+          headers: { ...headers, 'x-ratelimit-remaining': '0' },
+        };
+      }
+
+      // GitHub hides a private repository from someone who can’t read it
+      if (!this.canRead) {
+        return { status: 404, json: { message: 'Not Found' }, headers };
+      }
+
       return {
         json: {
           full_name: `${this.owner}/${this.repo}`,
@@ -708,10 +766,15 @@ export class MockGitHub {
       };
     }
 
-    const forkPath = `/repos/${this.user.login}/${this.repo}`;
+    const forkPath = `/repos/${this.user.login}/${this.fork?.repo ?? this.repo}`;
 
     if (pathname === forkPath || pathname.startsWith(`${forkPath}/`)) {
       return this.handleForkRequest(method, pathname.slice(forkPath.length + 1), body);
+    }
+
+    // Where the CMS looks for a fork first, which isn’t there if the fork has another name
+    if (pathname === `/repos/${this.user.login}/${this.repo}`) {
+      return { status: 404, json: { message: 'Not Found' } };
     }
 
     if (!pathname.startsWith(`${repoPath}/`)) {
