@@ -183,6 +183,17 @@ export class MockGitHub {
   forkId = 'R_e2e_fork';
 
   /**
+   * How many times a newly requested fork answers 404 before it’s ready, as GitHub copies the
+   * repository in the background.
+   */
+  forkDelay = 0;
+
+  /**
+   * How many more requests for the fork answer 404 before it’s ready; see {@link forkDelay}.
+   */
+  forkPendingRequests = 0;
+
+  /**
    * Head commit SHA keyed by branch name. A branch in the fork is keyed as `owner:branch`, e.g.
    * `mona:main`; see {@link forkBranch}.
    * @type {Map<string, string>}
@@ -789,7 +800,12 @@ export class MockGitHub {
         return { status: 403, json: { message: 'Forking is disabled for this repository' } };
       }
 
-      const { owner, repo } = this.fork ?? this.createFork();
+      if (!this.fork) {
+        this.createFork();
+        this.forkPendingRequests = this.forkDelay;
+      }
+
+      const { owner, repo } = /** @type {{ owner: string, repo: string }} */ (this.fork);
 
       return { status: 202, json: { full_name: `${owner}/${repo}`, fork: true } };
     }
@@ -866,6 +882,12 @@ export class MockGitHub {
    */
   handleForkRequest(method, path, body) {
     if (!this.fork) {
+      return { status: 404, json: { message: 'Not Found' } };
+    }
+
+    if (this.forkPendingRequests > 0) {
+      this.forkPendingRequests -= 1;
+
       return { status: 404, json: { message: 'Not Found' } };
     }
 

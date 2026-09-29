@@ -1,4 +1,5 @@
 import { OPEN_AUTHORING_CONFIG, post, saveForkDraft } from '../../fixtures/configs/workflow.js';
+import { createPNG } from '../../fixtures/files.js';
 import { expect, test } from '../../fixtures/test.js';
 
 /**
@@ -91,6 +92,25 @@ test.describe('as a contributor', () => {
       /First Post/,
     ]);
     expect(github.fork).toEqual({ owner: 'mona', repo: 'e2e-site' });
+  });
+
+  test('waits for a new fork to be ready before using it', async ({ cms, github, page }) => {
+    // GitHub copies the repository in the background, so the fork isn’t there right away
+    github.forkDelay = 2;
+
+    await cms.open();
+    await page
+      .getByRole('alertdialog', { name: 'Fork Repository' })
+      .getByRole('button', { name: 'Fork' })
+      .click();
+
+    await expect(page.getByText(/Your changes are saved to your fork/)).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByRole('grid', { name: 'Entries' }).getByRole('row')).toHaveText([
+      /First Post/,
+    ]);
+    expect(github.forkPendingRequests).toBe(0);
   });
 
   test('stops when the contributor declines to fork the repository', async ({
@@ -202,6 +222,81 @@ test.describe('as a contributor', () => {
   test.describe('with a fork', () => {
     test.beforeEach(({ github }) => {
       github.createFork();
+    });
+
+    test.describe('with an image field', () => {
+      test.use({
+        config: {
+          ...OPEN_AUTHORING_CONFIG,
+          collections: [
+            {
+              ...OPEN_AUTHORING_CONFIG.collections[0],
+              fields: [
+                ...OPEN_AUTHORING_CONFIG.collections[0].fields,
+                { name: 'cover', label: 'Cover', widget: 'image', required: false },
+              ],
+            },
+          ],
+        },
+      });
+
+      test('saves an image attached to an entry to the fork', async ({ cms, github, page }) => {
+        const image = createPNG({ color: [0, 128, 255] });
+
+        await cms.open();
+        await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+        const editor = page.getByRole('group', { name: 'Content Editor' });
+
+        await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
+        await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
+        await editor
+          .getByRole('group', { name: '“\u2068Cover\u2069” Field' })
+          .locator('input[type="file"]')
+          .first()
+          .setInputFiles({ name: 'sunrise.png', mimeType: 'image/png', buffer: image });
+        await expect(editor.getByRole('button', { name: 'Remove Image' })).toBeVisible();
+        await editor.getByRole('button', { name: 'Save' }).click();
+        await page
+          .getByRole('alertdialog', { name: 'Send for Review' })
+          .getByRole('button', { name: 'Later' })
+          .click();
+
+        const branch = github.forkBranch(SECOND_POST_BRANCH);
+
+        await expect
+          .poll(() => github.readFile('content/posts/second-post.md', branch))
+          .toMatch(/cover: \/images\/sunrise\.png/);
+        expect(
+          github.blobs.get(github.getHead(branch).tree.get('static/images/sunrise.png') ?? ''),
+        ).toEqual(image);
+        expect(github.head.tree.has('static/images/sunrise.png')).toBe(false);
+
+        // The image is read back from the fork when the entry is opened again
+        await openEntry(page, 'Second Post');
+        await expect(editor.getByRole('button', { name: 'Remove Image' })).toBeVisible();
+      });
+    });
+
+    test.describe('with an `openAuthoring` commit message', () => {
+      test.use({
+        config: {
+          ...OPEN_AUTHORING_CONFIG,
+          backend: {
+            ...OPEN_AUTHORING_CONFIG.backend,
+            commit_messages: { openAuthoring: '{{message}} (from @{{author-login}})' },
+          },
+        },
+      });
+
+      test('wraps the message of a commit to the fork', async ({ cms, github, page }) => {
+        await cms.open();
+        await saveSecondPost(page);
+
+        await expect
+          .poll(() => github.getHead(github.forkBranch(SECOND_POST_BRANCH)).message)
+          .toBe('Create Post “second-post” (from @mona)');
+      });
     });
 
     test('brings the fork up to date with the repository', async ({ cms, github, page }) => {
