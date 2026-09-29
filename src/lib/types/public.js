@@ -281,7 +281,8 @@
  * @property {SharedMediaLibraryOptions} [all] Default options that apply to the default media
  * storage and to files uploaded to the cloud storage services, except for Cloudinary, which uses
  * its own widget. For the default media storage, these options can be overridden by the options in
- * `default.config`.
+ * `default.config` at the same level. Field-level `all` options take precedence over global
+ * `default.config` options.
  * @property {DefaultMediaLibrary | false} [default] Options for the default media storage. Set to
  * `false` to explicitly disable the default (internal) storage.
  * @property {CloudinaryMediaLibrary | false} [cloudinary] Options for the Cloudinary media storage.

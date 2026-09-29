@@ -593,6 +593,36 @@ describe('integrations/media-libraries', () => {
         });
       });
 
+      it('should let field-level all options override the site-level library config', () => {
+        cmsConfig.current = /** @type {any} */ ({
+          media_libraries: {
+            all: { slugify_filename: true, max_file_size: 500000, multiple: true },
+            default: { config: { slugify_filename: false, max_file_size: 400000 } },
+          },
+        });
+
+        const fieldConfig = /** @type {any} */ ({
+          media_libraries: {
+            all: { max_file_size: 300000, slugify_filename: true },
+            default: { config: { max_file_size: 200000 } },
+          },
+        });
+
+        expect(getMediaLibraryOptions({ libraryName: 'default', fieldConfig })).toEqual({
+          config: { slugify_filename: true, max_file_size: 200000, multiple: true },
+        });
+      });
+
+      it('should not enable a disabled default library with field-level all options', () => {
+        cmsConfig.current = /** @type {any} */ ({ media_libraries: { default: false } });
+
+        const fieldConfig = /** @type {any} */ ({
+          media_libraries: { all: { max_file_size: 300000 } },
+        });
+
+        expect(getMediaLibraryOptions({ libraryName: 'default', fieldConfig })).toBe(false);
+      });
+
       it('should apply all options when no library-specific config exists', async () => {
         cmsConfig.current = /** @type {any} */ ({
           media_libraries: {

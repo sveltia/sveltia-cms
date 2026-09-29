@@ -16,27 +16,6 @@ import { mergeLibraryOptions } from '$lib/services/integrations/media-libraries/
 export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
   const _cmsConfig = cmsConfig.current;
 
-  // `all` provides shared defaults merged into the `default` library’s `config`. Other libraries
-  // (e.g. Cloudinary) pass `config` directly to their SDK, so we must not pollute it.
-  const sharedConfig =
-    libraryName === 'default'
-      ? { ..._cmsConfig?.media_libraries?.all, ...fieldConfig?.media_libraries?.all }
-      : undefined;
-
-  // Merge shared options into the library config’s `config` property (default library only).
-  /**
-   * Merge shared (`all`) options into library-specific options.
-   * @param {Record<string, any> | null | undefined} opts Library-specific options.
-   * @returns {Record<string, any>} Merged options.
-   */
-  const withShared = (opts) => ({
-    ...opts,
-    ...(sharedConfig &&
-      Object.keys(sharedConfig).length > 0 && {
-        config: { ...sharedConfig, ...opts?.config },
-      }),
-  });
-
   /**
    * Find the library’s options in the field configuration.
    * @returns {Record<string, any> | false | undefined} Options, `false` if the library is
@@ -78,8 +57,31 @@ export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } 
     return _cmsConfig?.media_library?.name === libraryName ? _cmsConfig.media_library : undefined;
   };
 
+  const siteOptions = getSiteOptions();
+  const fieldOptions = getFieldOptions();
   // The field-level options are merged over the site-level ones
-  const opts = mergeLibraryOptions(getSiteOptions(), getFieldOptions());
+  const opts = mergeLibraryOptions(siteOptions, fieldOptions);
 
-  return opts === false ? false : withShared(opts);
+  if (opts === false) {
+    return false;
+  }
+
+  // `all` provides shared defaults merged into the `default` library’s `config`. Other libraries
+  // (e.g. Cloudinary) pass `config` directly to their SDK, so we must not pollute it. The layers
+  // are applied from the lowest priority: site-level `all`, site-level `config`, field-level `all`
+  // and field-level `config`, so a field-level option always wins over a site-level one.
+  if (libraryName !== 'default') {
+    return { ...opts };
+  }
+
+  const config = {
+    ..._cmsConfig?.media_libraries?.all,
+    ...(siteOptions ? siteOptions.config : undefined),
+    ...fieldConfig?.media_libraries?.all,
+    ...(fieldOptions ? fieldOptions.config : undefined),
+  };
+
+  return opts?.config !== undefined || Object.keys(config).length > 0
+    ? { ...opts, config }
+    : { ...opts };
 };
