@@ -113,8 +113,9 @@ describe('GitLab backend service', () => {
       expect(apiConfig).toEqual(
         expect.objectContaining({
           clientId: '',
-          authURL: 'https://gitlab.com/oauth/authorize',
-          tokenURL: 'https://gitlab.com/oauth/token',
+          // Signs in through Netlify by default, like Decap CMS
+          authURL: 'https://api.netlify.com/auth',
+          tokenURL: 'https://api.netlify.com/auth',
           authScheme: 'Bearer',
           restBaseURL: 'https://gitlab.com/api/v4',
           graphqlBaseURL: 'https://gitlab.com/api/graphql',
@@ -125,6 +126,28 @@ describe('GitLab backend service', () => {
         fullPath: 'owner/repo',
         branch: 'main',
       });
+    });
+
+    test('defaults the OAuth URLs to GitLab.com with PKCE authorization', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        backend: {
+          name: 'gitlab',
+          repo: 'owner/repo',
+          branch: 'main',
+          auth_type: 'pkce',
+          app_id: 'client-id',
+        },
+      });
+
+      init();
+
+      expect(apiConfig).toEqual(
+        expect.objectContaining({
+          clientId: 'client-id',
+          authURL: 'https://gitlab.com/oauth/authorize',
+          tokenURL: 'https://gitlab.com/oauth/token',
+        }),
+      );
     });
 
     test('initializes GitLab backend with custom configuration', () => {

@@ -12,6 +12,8 @@ import {
   DEFAULT_API_ROOT,
   DEFAULT_AUTH_PATH,
   DEFAULT_AUTH_ROOT,
+  DEFAULT_PKCE_AUTH_PATH,
+  DEFAULT_PKCE_AUTH_ROOT,
 } from '$lib/services/backends/git/gitlab/constants';
 import { fetchBranchHeadSHA, fetchDeployments } from '$lib/services/backends/git/gitlab/deployment';
 import { fetchBlob, fetchFiles } from '$lib/services/backends/git/gitlab/files';
@@ -43,8 +45,10 @@ export const init = () => {
   const {
     repo: projectPath,
     branch,
-    base_url: authRoot = DEFAULT_AUTH_ROOT,
-    auth_endpoint: authPath = DEFAULT_AUTH_PATH,
+    auth_type: authType = '',
+    // Like Decap CMS, sign in through Netlify unless the client-side PKCE flow is used
+    base_url: authRoot = authType === 'pkce' ? DEFAULT_PKCE_AUTH_ROOT : DEFAULT_AUTH_ROOT,
+    auth_endpoint: authPath = authType === 'pkce' ? DEFAULT_PKCE_AUTH_PATH : DEFAULT_AUTH_PATH,
     app_id: clientId = '',
     // https://HOSTNAME/api/v1 or https://HOSTNAME/PATH/api/v1
     api_root: restApiRoot = DEFAULT_API_ROOT,

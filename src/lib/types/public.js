@@ -1822,11 +1822,12 @@
  * from `api_root` option value.
  * @property {string} [base_url] OAuth base URL origin. Required when using an OAuth client other
  * than Netlify, including [Sveltia CMS Authenticator](https://github.com/sveltia/sveltia-cms-auth).
- * Default: `https://gitlab.com`.
+ * Default: `https://api.netlify.com`, or `https://gitlab.com` when `auth_type` is `pkce`.
  * @property {'' | 'pkce'} [auth_type] OAuth grant type. The default is an empty string, which is
  * authorization code grant. `pkce` is recommended for better security and easier setup. `implicit`
  * is not supported in Sveltia CMS.
- * @property {string} [auth_endpoint] OAuth base URL path. Default: `oauth/authorize`.
+ * @property {string} [auth_endpoint] OAuth base URL path. Default: `auth`, or `oauth/authorize`
+ * when `auth_type` is `pkce`.
  * @property {string} [app_id] OAuth application ID. Required when using PKCE authorization.
  * @property {string} [cms_label_prefix] Merge request label prefix used when writing Editorial
  * Workflow labels. Default: `sveltia-cms/`. When reading labels, the `sveltia-cms/`, `netlify-cms/`
