@@ -33,20 +33,17 @@ export const findLibraryOptions = (libraryName, config) => {
 };
 
 /**
- * Resolve a media library’s options for the given field. The field-level options are merged over
- * the site-level ones, so a field only needs to set the options it overrides: the top-level
- * properties are replaced, and those holding an object, such as `config`, are merged one level
- * deep. A field-level `false` disables the library for the field.
- * @template {keyof MediaLibraries} T
- * @param {T} libraryName Library name.
- * @param {MediaField} [fieldConfig] Field configuration.
- * @returns {MediaLibraries[T] | undefined} Options, `false` if the library is explicitly disabled,
- * or `undefined` if the library is not configured.
+ * Merge a media library’s field-level options over its site-level ones, so a field only needs to
+ * set the options it overrides: the top-level properties are replaced, and those holding an object,
+ * such as `config`, are merged one level deep. A field-level `false` disables the library for the
+ * field, while field-level options enable a library the site disables.
+ * @template {Record<string, any> | false | undefined} T
+ * @param {T} siteOptions Site-level options, `false` if the library is explicitly disabled, or
+ * `undefined` if the library is not configured.
+ * @param {T} fieldOptions Field-level options, in the same form.
+ * @returns {T} Merged options.
  */
-export const resolveLibraryOptions = (libraryName, fieldConfig) => {
-  const siteOptions = findLibraryOptions(libraryName, cmsConfig.current);
-  const fieldOptions = findLibraryOptions(libraryName, fieldConfig);
-
+export const mergeLibraryOptions = (siteOptions, fieldOptions) => {
   if (fieldOptions === undefined) {
     return siteOptions;
   }
@@ -59,12 +56,27 @@ export const resolveLibraryOptions = (libraryName, fieldConfig) => {
   const merged = { ...siteOptions, ...fieldOptions };
 
   Object.entries(fieldOptions).forEach(([key, value]) => {
-    const siteValue = /** @type {Record<string, any>} */ (siteOptions)[key];
-
-    if (isObject(value) && isObject(siteValue)) {
-      merged[key] = { ...siteValue, ...value };
+    if (isObject(value) && isObject(siteOptions[key])) {
+      merged[key] = { ...siteOptions[key], ...value };
     }
   });
 
-  return /** @type {MediaLibraries[T]} */ (merged);
+  return /** @type {T} */ (merged);
 };
+
+/**
+ * Resolve a media library’s options for the given field, with the field-level options merged over
+ * the site-level ones. See {@link mergeLibraryOptions} for details.
+ * @template {keyof MediaLibraries} T
+ * @param {T} libraryName Library name.
+ * @param {MediaField} [fieldConfig] Field configuration.
+ * @returns {MediaLibraries[T] | undefined} Options, `false` if the library is explicitly disabled,
+ * or `undefined` if the library is not configured.
+ */
+export const resolveLibraryOptions = (libraryName, fieldConfig) =>
+  /** @type {MediaLibraries[T] | undefined} */ (
+    mergeLibraryOptions(
+      /** @type {any} */ (findLibraryOptions(libraryName, cmsConfig.current)),
+      /** @type {any} */ (findLibraryOptions(libraryName, fieldConfig)),
+    )
+  );

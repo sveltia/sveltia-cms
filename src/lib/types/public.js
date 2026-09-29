@@ -421,11 +421,11 @@
  * as `media_libraries`; without a `name`, it applies to the library named in the global
  * `media_library` option. Use `media_libraries` instead to support multiple libraries.
  * @property {MediaLibraries} [media_libraries] Unified media storage option that supports multiple
- * libraries. The options of a cloud storage service, such as `cloudinary`, `uploadcare` or
- * `aws_s3`, are merged over the same library’s global options, one level deep, so a field only
- * needs to set what it overrides; `false` disables the service for the field. The `default` and
- * `stock_assets` options replace the global ones, while the `all` options are merged. Libraries
- * not defined here fall back to the global configuration.
+ * libraries. Each library’s options, including `all`, are merged over the same library’s global
+ * options, one level deep, so a field only needs to set what it overrides: nested objects such as
+ * `config` are merged key by key, while other values, including arrays, are replaced. `false`
+ * disables the library for the field. Libraries not defined here fall back to the global
+ * configuration.
  * @see https://decapcms.org/docs/widgets/#File
  * @see https://decapcms.org/docs/widgets/#Image
  * @see https://sveltiacms.app/en/docs/fields/file

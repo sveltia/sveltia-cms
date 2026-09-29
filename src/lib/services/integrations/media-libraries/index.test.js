@@ -56,7 +56,7 @@ describe('integrations/media-libraries', () => {
 
       const result = getMediaLibraryOptions({ libraryName: 'default', fieldConfig });
 
-      expect(result).toEqual({ config: { max_file_size: 500000 } });
+      expect(result).toEqual({ config: { max_file_size: 500000, slugify_filename: false } });
     });
 
     it('should return field-level media_library config when media_libraries not available', () => {
@@ -71,7 +71,7 @@ describe('integrations/media-libraries', () => {
 
       expect(result).toEqual({
         name: 'default',
-        config: { slugify_filename: true },
+        config: { max_file_size: 2048000, slugify_filename: true },
       });
     });
 
@@ -154,6 +154,7 @@ describe('integrations/media-libraries', () => {
       const result = getMediaLibraryOptions({ libraryName: 'default', fieldConfig });
 
       expect(result).toEqual({
+        name: 'default',
         config: { slugify_filename: true },
       });
     });
@@ -206,6 +207,7 @@ describe('integrations/media-libraries', () => {
       });
 
       expect(result).toEqual({
+        name: 'custom',
         config: { max_file_size: 400000 },
       });
     });
@@ -269,7 +271,7 @@ describe('integrations/media-libraries', () => {
 
       const result = getMediaLibraryOptions({ fieldConfig });
 
-      expect(result).toEqual({ config: { max_file_size: 500000 } });
+      expect(result).toEqual({ config: { max_file_size: 500000, slugify_filename: false } });
     });
 
     it('should work with no parameters provided', async () => {
@@ -349,6 +351,7 @@ describe('integrations/media-libraries', () => {
       });
 
       expect(result).toEqual({
+        name: 'custom',
         config: { max_file_size: 400000 },
       });
     });
@@ -392,11 +395,12 @@ describe('integrations/media-libraries', () => {
       const result = getMediaLibraryOptions({ libraryName: 'default', fieldConfig });
 
       expect(result).toEqual({
+        name: 'default',
         config: { max_file_size: 600000 },
       });
     });
 
-    it('should return empty object when field-level media_libraries entry is null', () => {
+    it('should fall back to the site config when the field-level media_libraries entry is null', () => {
       const fieldConfig = /** @type {any} */ ({
         media_libraries: {
           default: null,
@@ -405,7 +409,7 @@ describe('integrations/media-libraries', () => {
 
       const result = getMediaLibraryOptions({ libraryName: 'default', fieldConfig });
 
-      expect(result).toEqual({});
+      expect(result).toEqual({ config: { max_file_size: 2048000, slugify_filename: false } });
     });
 
     it('should return empty object when site-level media_libraries entry is null', async () => {
@@ -481,6 +485,61 @@ describe('integrations/media-libraries', () => {
       });
 
       expect(result).toEqual({ access_key_id: 'key', bucket: 'bucket', account_id: 'id' });
+    });
+
+    it('should merge the field-level default library options over the site-level ones', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: {
+          default: {
+            config: {
+              max_file_size: 2048000,
+              slugify_filename: true,
+              transformations: { raster_image: { format: 'webp' } },
+            },
+          },
+        },
+      });
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: {
+          default: {
+            config: {
+              max_file_size: 1000,
+              transformations: { svg: { optimize: true } },
+            },
+          },
+        },
+      });
+
+      expect(getMediaLibraryOptions({ fieldConfig })).toEqual({
+        config: {
+          max_file_size: 1000,
+          slugify_filename: true,
+          transformations: { svg: { optimize: true } },
+        },
+      });
+    });
+
+    it('should merge the field-level stock_assets options over the site-level ones', () => {
+      const fieldConfig = /** @type {any} */ ({ media_libraries: { stock_assets: {} } });
+
+      expect(getMediaLibraryOptions({ libraryName: 'stock_assets', fieldConfig })).toEqual({
+        providers: ['unsplash', 'pixabay'],
+      });
+    });
+
+    it('should use the field-level options when the site-level library is disabled', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: { stock_assets: false },
+      });
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: { stock_assets: { providers: ['pexels'] } },
+      });
+
+      expect(getMediaLibraryOptions({ libraryName: 'stock_assets', fieldConfig })).toEqual({
+        providers: ['pexels'],
+      });
     });
 
     describe('all (shared) option merging', () => {
@@ -560,6 +619,8 @@ describe('integrations/media-libraries', () => {
       });
 
       it('should apply field-level all options even without site-level all options', () => {
+        cmsConfig.current = /** @type {any} */ ({});
+
         const fieldConfig = /** @type {any} */ ({
           media_libraries: {
             all: { slugify_filename: true },
