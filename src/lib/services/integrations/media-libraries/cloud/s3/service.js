@@ -24,6 +24,11 @@ import { isS3ObjectUrl, s3Operations } from './core';
  * configuration from the library options, typically to add the service’s fixed API endpoint and
  * default public URL, or to fill in a default `access_key_id`. The result is also used to decide
  * whether the service is enabled. Default: the library options are used as is.
+ * @property {string} [objectAcl] Canned ACL sent in the `x-amz-acl` header when creating an object,
+ * for a service where objects are private by default, even in a public bucket, such as DigitalOcean
+ * Spaces and Scaleway. It can’t be set in the library options. Default: none, as Amazon S3 rejects
+ * ACLs on buckets created since April 2023, and services without per-object ACLs don’t implement
+ * the header.
  */
 
 /**
@@ -37,9 +42,21 @@ export class S3CompatibleService extends ObjectStorageService {
    * Initialize an `S3CompatibleService` instance with the given service definition.
    * @param {S3CompatibleServiceOptions} options Service definition.
    */
-  constructor({ requiredOption = 'region', ...definition }) {
+  constructor({
+    requiredOption = 'region',
+    objectAcl,
+    resolveConfig = (libOptions) => libOptions,
+    ...definition
+  }) {
     super({
       ...definition,
+      /**
+       * Resolve the configuration, replacing any `acl` in the library options with the service’s
+       * own object ACL.
+       * @param {S3MediaLibrary} libOptions Library options.
+       * @returns {S3Config} Resolved configuration.
+       */
+      resolveConfig: (libOptions) => ({ ...resolveConfig(libOptions), acl: objectAcl }),
       /**
        * Check if the access key ID, the bucket and the service-specific option are all set.
        * @param {S3Config} config Resolved configuration.

@@ -77,11 +77,10 @@ describe('integrations/media-libraries/cloud/s3/bunny-storage', () => {
   });
 
   describe('resolveConfig', () => {
-    it('should use path-style region endpoint and disable ACLs', () => {
+    it('should use path-style region endpoint', () => {
       expect(bunnyStorageService.resolveConfig(libOptions)).toEqual({
         ...libOptions,
         endpoint: 'https://de-s3.storage.bunnycdn.com',
-        acl: false,
       });
     });
 
@@ -93,7 +92,6 @@ describe('integrations/media-libraries/cloud/s3/bunny-storage', () => {
         ...options,
         access_key_id: 'my-zone',
         endpoint: 'https://de-s3.storage.bunnycdn.com',
-        acl: false,
       });
     });
 

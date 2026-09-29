@@ -266,11 +266,11 @@ export const buildObjectApiUrl = (config, key) => {
 };
 
 /**
- * Get the ACL header for a new object, unless the service doesn’t support per-object ACLs.
+ * Get the ACL header for a new object, if the service needs one to make it publicly readable.
  * @param {S3Config} config S3 configuration.
  * @returns {Record<string, string>} Header, or an empty object.
  */
-const getAclHeader = ({ acl }) => (acl !== false ? { 'x-amz-acl': acl ?? 'public-read' } : {});
+const getAclHeader = ({ acl }) => (acl ? { 'x-amz-acl': acl } : {});
 
 /**
  * Get the secret access key from the given fetch options.

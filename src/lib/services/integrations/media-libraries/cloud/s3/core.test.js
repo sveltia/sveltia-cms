@@ -914,10 +914,10 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
 
     const options = { apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' };
 
-    it('should create a folder by putting a placeholder object', async () => {
+    it('should create a folder by putting a placeholder object with the service’s ACL', async () => {
       vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
 
-      await createS3Folder('2024/summer', mockConfig, options);
+      await createS3Folder('2024/summer', { ...mockConfig, acl: 'public-read' }, options);
 
       expect(fetch).toHaveBeenCalledExactlyOnceWith(
         'https://test-bucket.s3.us-east-1.amazonaws.com/uploads/2024/summer/',
@@ -1150,9 +1150,13 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
 
       vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
 
-      await uploadToS3([mockFile], mockConfig, {
-        apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-      });
+      await uploadToS3(
+        [mockFile],
+        { ...mockConfig, acl: 'public-read' },
+        {
+          apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+        },
+      );
 
       expect(fetch).toHaveBeenCalledWith(
         expect.anything(),
@@ -1165,18 +1169,14 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
     });
 
-    it('should omit x-amz-acl header when acl is false', async () => {
+    it('should omit x-amz-acl header when the service sets no ACL', async () => {
       const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
 
       vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
 
-      await uploadToS3(
-        [mockFile],
-        { ...mockConfig, acl: false },
-        {
-          apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-        },
-      );
+      await uploadToS3([mockFile], mockConfig, {
+        apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+      });
 
       expect(fetch).toHaveBeenCalledWith(
         expect.anything(),
@@ -1333,7 +1333,12 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
     it('should copy the object to the new key and delete the original', async () => {
       vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
 
-      const result = await renameS3Object(asset, 'renamed.jpg', mockConfig, options);
+      const result = await renameS3Object(
+        asset,
+        'renamed.jpg',
+        { ...mockConfig, acl: 'public-read' },
+        options,
+      );
 
       expect(fetch).toHaveBeenCalledTimes(2);
       expect(fetch).toHaveBeenNthCalledWith(
@@ -1381,13 +1386,13 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       expect(result.id).toBe('renamed.jpg');
     });
 
-    it('should default the size to 0 and omit the ACL when unsupported', async () => {
+    it('should default the size to 0 and omit the ACL when the service sets none', async () => {
       vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
 
       const result = await renameS3Object(
         { ...asset, size: undefined },
         'renamed.jpg',
-        { ...mockConfig, acl: false },
+        mockConfig,
         options,
       );
 

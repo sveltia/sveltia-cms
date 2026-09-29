@@ -495,8 +495,9 @@
 
 /**
  * Resolved S3 configuration passed to core request helpers. Extends the public `S3MediaLibrary`
- * with internal fields that providers set in their `resolveConfig` functions.
- * @typedef {S3MediaLibrary & { acl?: string | false }} S3Config
+ * with internal fields that the service sets: `acl` is the canned ACL sent in the `x-amz-acl`
+ * header when creating an object, if the service needs one to make it publicly readable.
+ * @typedef {S3MediaLibrary & { acl?: string }} S3Config
  */
 
 /**

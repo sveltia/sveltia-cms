@@ -43,4 +43,10 @@ describe('integrations/media-libraries/cloud/s3/aws-s3', () => {
   it('should use the library options as the S3 config', () => {
     expect(awsS3.resolveConfig(libOptions)).toEqual(libOptions);
   });
+
+  it('should not send an ACL, even if one is set in the library options', () => {
+    const options = /** @type {any} */ ({ ...libOptions, acl: 'public-read' });
+
+    expect(awsS3.resolveConfig(options).acl).toBeUndefined();
+  });
 });

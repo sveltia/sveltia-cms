@@ -78,7 +78,7 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
 
     it('should require region by default and use library options as the config', () => {
       expect(service.requiredOption).toBe('region');
-      expect(service.resolveConfig(libOptions)).toBe(libOptions);
+      expect(service.resolveConfig(libOptions)).toEqual(libOptions);
     });
 
     it('should accept a custom required option and config resolver', () => {
@@ -91,7 +91,11 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
       });
 
       expect(custom.requiredOption).toBe('account_id');
-      expect(custom.resolveConfig).toBe(resolveConfig);
+      expect(custom.resolveConfig(libOptions)).toEqual({
+        ...libOptions,
+        endpoint: 'https://s3.test',
+      });
+      expect(resolveConfig).toHaveBeenCalledExactlyOnceWith(libOptions);
     });
   });
 
@@ -249,18 +253,23 @@ describe('integrations/media-libraries/cloud/s3/service', () => {
       const custom = new S3CompatibleService({
         ...definition,
         /**
-         * Add an endpoint and disable ACLs.
+         * Add an endpoint.
          * @param {S3MediaLibrary} options Library options.
          * @returns {S3Config} Resolved configuration.
          */
-        resolveConfig: (options) => ({ ...options, endpoint: 'https://s3.test', acl: false }),
+        resolveConfig: (options) => ({ ...options, endpoint: 'https://s3.test' }),
       });
 
       expect(custom.getConfig(fetchOptions)).toEqual({
         ...libOptions,
         endpoint: 'https://s3.test',
-        acl: false,
       });
+    });
+
+    it('should add the service’s object ACL to the config', () => {
+      const custom = new S3CompatibleService({ ...definition, objectAcl: 'public-read' });
+
+      expect(custom.getConfig(fetchOptions)).toEqual({ ...libOptions, acl: 'public-read' });
     });
 
     it('should throw with the service label when config is not available', () => {
