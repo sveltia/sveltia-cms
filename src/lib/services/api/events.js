@@ -60,7 +60,11 @@ export const callEventHooks = async ({
   collectionFile,
   isNew = false,
 }) => {
-  const { login = '', name = '' } = /** @type {User} */ (user.account);
+  const { login: _login, name: _name } = /** @type {User} */ (user.account);
+  // Not destructuring defaults, which only replace `undefined`: a GitHub user without a display
+  // name has a `null` name
+  const login = _login ?? '';
+  const name = _name ?? '';
   const collectionName = collection.name;
   const fileName = collectionFile?.name;
 

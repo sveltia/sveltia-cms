@@ -495,6 +495,31 @@ describe('events module', () => {
       });
     });
 
+    it('should pass empty strings when the user’s login or name is null', async () => {
+      const handler = vi.fn();
+
+      eventHookRegistry.add({ name: 'preSave', handler });
+
+      // A GitHub user without a display name has a `null` name
+      /** @type {any} */ (mockUser).login = null;
+      /** @type {any} */ (mockUser).name = null;
+
+      await callEventHooks(
+        /** @type {any} */ ({
+          type: 'preSave',
+          entry: {
+            slug: 'test-post',
+            locales: { en: { content: { title: 'Test' }, path: 'posts/test-post.md' } },
+          },
+          collection: { name: 'posts', _i18n: { defaultLocale: 'en' } },
+          collectionFile: null,
+          isNew: true,
+        }),
+      );
+
+      expect(handler.mock.calls[0][0].author).toEqual({ login: '', name: '' });
+    });
+
     it('should include associated assets in the entry', async () => {
       const handler = vi.fn();
 
