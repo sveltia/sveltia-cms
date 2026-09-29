@@ -1005,12 +1005,21 @@
  */
 
 /**
+ * Select field option with a label.
+ * @typedef {object} SelectFieldOption
+ * @property {string} label Label shown in the UI.
+ * @property {SelectFieldValue} value Value saved in the entry.
+ */
+
+/**
  * Select field properties.
  * @typedef {object} SelectFieldProps
  * @property {'select'} widget Field type.
- * @property {SelectFieldValue | SelectFieldValue[]} [default] Default value that matches one of the
- * options. When `multiple` is `true`, it should be an array of valid values.
- * @property {SelectFieldValue[] | { label: string, value: SelectFieldValue }[]} options Options.
+ * @property {SelectFieldValue | SelectFieldOption | (SelectFieldValue | SelectFieldOption)[]}
+ * [default] Default value that matches one of the options. An option object with the `label` and
+ * `value` properties can also be given, in which case its `value` is used. When `multiple` is
+ * `true`, it should be an array of valid values.
+ * @property {SelectFieldValue[] | SelectFieldOption[]} options Options.
  * @see https://decapcms.org/docs/widgets/#Select
  * @see https://sveltiacms.app/en/docs/fields/select
  */

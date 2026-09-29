@@ -47,8 +47,11 @@ export const parseSelectFieldConfig = ({ config, context, collectors }) => {
     return;
   }
 
+  // A default can be given as an option object, whose `value` is what gets saved
   /** @type {any[]} */ (Array.isArray(defaultValue) ? defaultValue : [defaultValue]).forEach(
-    (value) => {
+    (option) => {
+      const value = isObject(option) ? option.value : option;
+
       if (!values.includes(value)) {
         addMessage({
           strKey: 'select_field_invalid_default',

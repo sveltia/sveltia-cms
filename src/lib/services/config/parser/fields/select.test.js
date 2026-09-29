@@ -81,6 +81,28 @@ describe('parseSelectFieldConfig', () => {
     expectMessages([]);
   });
 
+  test('accepts a default given as an option object, as documented by Decap CMS', () => {
+    check({ options: [{ label: 'A', value: 'a' }], default: { label: 'A', value: 'a' } });
+    check({
+      options: [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+      ],
+      default: [{ label: 'A', value: 'a' }, 'b'],
+      multiple: true,
+    });
+    expectMessages([]);
+  });
+
+  test('reports a default option object whose value is not among the options', () => {
+    check({ options: ['a', 'b'], default: { label: 'C', value: 'c' } });
+    check({ options: [1, 2], default: [{ label: 'One', value: '1' }], multiple: true });
+    expectMessages([
+      { strKey: 'select_field_invalid_default', values: { value: 'c' } },
+      { strKey: 'select_field_invalid_default', values: { value: '1' } },
+    ]);
+  });
+
   test('reports a default whose shape does not match the multiple option', () => {
     check({ options: ['a', 'b'], default: ['a'] });
     check({ options: ['a', 'b'], default: ['a'], multiple: false });

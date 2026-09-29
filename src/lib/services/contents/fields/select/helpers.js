@@ -6,7 +6,12 @@ import { getOrCreateBounded } from '$lib/services/utils/cache';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
- * @import { FieldKeyPath, SelectField, SelectFieldValue } from '$lib/types/public';
+ * @import {
+ * FieldKeyPath,
+ * SelectField,
+ * SelectFieldOption,
+ * SelectFieldValue,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -95,6 +100,16 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
 };
 
 /**
+ * Get the value of a Select field option, which is either a plain value or an object with the
+ * `label` and `value` properties. A `default` option can be given in either form too, as
+ * documented by Decap CMS.
+ * @param {SelectFieldValue | SelectFieldOption | undefined} option Option or default value.
+ * `undefined` is passed through.
+ * @returns {SelectFieldValue | undefined} Value.
+ */
+export const getOptionValue = (option) => (isObject(option) ? option.value : option);
+
+/**
  * Check whether a value is one of the options of a Select field. `null`, `false` and an empty
  * string can be valid choices, so this tells a selected option apart from a missing value.
  * @param {object} args Arguments.
@@ -103,7 +118,7 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
  * @returns {boolean} Whether the value is one of the options.
  */
 export const isOptionValue = ({ fieldConfig, value }) =>
-  fieldConfig.options.some((option) => (isObject(option) ? option.value : option) === value);
+  fieldConfig.options.some((option) => getOptionValue(option) === value);
 
 /**
  * Get the labels to be shown in the preview of a Select field. A value is shown by its label if

@@ -1,6 +1,4 @@
-import { isObject } from '@sveltia/utils/object';
-
-import { getEmptyOptionValue } from '$lib/services/contents/fields/select/helpers';
+import { getEmptyOptionValue, getOptionValue } from '$lib/services/contents/fields/select/helpers';
 
 /**
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';
@@ -18,8 +16,13 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
   // A Relation field has no `options`, so its value is always a string
   const [firstOption] = /** @type {SelectField} */ (config).options ?? [];
 
+  // A default can be given as an option object, whose `value` is what gets saved
   const value =
-    dynamicValue !== undefined ? dynamicValue.split(/,\s*/).map((val) => val.trim()) : defaultValue;
+    dynamicValue !== undefined
+      ? dynamicValue.split(/,\s*/).map((val) => val.trim())
+      : Array.isArray(defaultValue)
+        ? defaultValue.map(getOptionValue)
+        : getOptionValue(defaultValue);
 
   const isArray = Array.isArray(value) && !!value.length;
 
@@ -32,10 +35,7 @@ export const getDefaultValueMap = ({ fieldConfig, keyPath, dynamicValue }) => {
     }
 
     return {
-      [keyPath]:
-        value !== undefined
-          ? value
-          : getEmptyOptionValue(isObject(firstOption) ? firstOption.value : firstOption),
+      [keyPath]: value !== undefined ? value : getEmptyOptionValue(getOptionValue(firstOption)),
     };
   }
 

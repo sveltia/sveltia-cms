@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   getEmptyOptionValue,
   getOptionLabel,
+  getOptionValue,
   getOptionValueType,
   getPreviewLabels,
   isOptionValue,
@@ -254,6 +255,17 @@ describe('Test getPreviewLabels()', () => {
         currentValue: 'apple',
       }),
     ).toEqual([]);
+  });
+});
+
+describe('getOptionValue', () => {
+  test('should return the value of a labeled option or a plain value as is', () => {
+    expect(getOptionValue({ label: 'Yes', value: true })).toBe(true);
+    expect(getOptionValue({ label: 'None', value: null })).toBeNull();
+    expect(getOptionValue('a')).toBe('a');
+    expect(getOptionValue(0)).toBe(0);
+    expect(getOptionValue(null)).toBeNull();
+    expect(getOptionValue(undefined)).toBeUndefined();
   });
 });
 
