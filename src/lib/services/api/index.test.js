@@ -349,6 +349,15 @@ describe('CMS.registerCustomFormat()', () => {
     ).toThrow('The `toFile` option for `CMS.registerCustomFormat()` must be a function');
   });
 
+  test('throws TypeError if the only method provided is not a function', () => {
+    // @ts-ignore
+    expect(() => CMS.registerCustomFormat('test', '.test', { fromFile: 'invalid' })).toThrow(
+      'The `fromFile` option for `CMS.registerCustomFormat()` must be a function',
+    );
+    // @ts-ignore
+    expect(() => CMS.registerCustomFormat('test', '.test', { toFile: 123 })).toThrow(TypeError);
+  });
+
   test('accepts async functions as parser/formatter', () => {
     const asyncFromFile = async () => {};
     const asyncToFile = async () => {};

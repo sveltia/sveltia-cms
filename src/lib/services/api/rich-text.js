@@ -15,17 +15,17 @@ import RichTextPreview from '$lib/components/contents/details/fields/rich-text/r
  * intended for an editor component `toPreview()` that returns an `HTMLElement`, so the verbatim
  * value of a nested RichText or Markdown field can be rendered recursively.
  * @param {HTMLElement} target The element to render the preview into. The content is rendered
- * asynchronously, so the element can still be detached from the document.
+ * asynchronously, and the element doesn’t have to be attached to the document yet.
  * @param {string} value Markdown string.
  * @param {RenderRichTextOptions} [options] Options.
  * @returns {() => void} Function to remove the rendered preview and destroy any editor component
  * previews within it. Call it when the target element is no longer needed, e.g. when the element
  * preview receives an `Unmount` event.
  * @throws {TypeError} If `target` is not an element, `value` is not a string, or `fieldConfig` is
- * not an object.
+ * given but not an object.
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
-export const renderRichText = (target, value, { fieldConfig } = {}) => {
+const renderRichText = (target, value, { fieldConfig } = {}) => {
   if (!(target instanceof Element)) {
     throw new TypeError('The `target` option for `CMS.renderRichText()` must be an element');
   }
@@ -61,3 +61,7 @@ export const renderRichText = (target, value, { fieldConfig } = {}) => {
     unmount(component);
   };
 };
+
+// Export the function this way instead of `export const` to prevent the annotations from being
+// stripped in the generated `rich-text.d.ts` file
+export { renderRichText };
