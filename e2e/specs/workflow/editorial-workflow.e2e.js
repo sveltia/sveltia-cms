@@ -548,7 +548,7 @@ test.describe('with an image field', () => {
     await editor.getByRole('textbox', { name: 'Title' }).fill('Second Post');
     await editor.getByRole('textbox', { name: 'Body' }).fill('Coming soon.');
     await editor
-      .getByRole('group', { name: '“⁨Cover⁩” Field' })
+      .getByRole('group', { name: '“\u2068Cover\u2069” Field' })
       .locator('input[type="file"]')
       .first()
       .setInputFiles({ name: 'sunrise.png', mimeType: 'image/png', buffer: image });

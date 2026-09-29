@@ -63,7 +63,7 @@ const createNote = async (page, title) => {
  * @returns {Promise<Locator>} Field group.
  */
 const uploadCover = async (editor, buffer) => {
-  const cover = editor.getByRole('group', { name: '“⁨Cover⁩” Field' });
+  const cover = editor.getByRole('group', { name: '“\u2068Cover\u2069” Field' });
 
   await cover
     .locator('input[type="file"]')
