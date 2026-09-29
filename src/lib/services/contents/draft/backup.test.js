@@ -458,6 +458,7 @@ describe('draft/backup', () => {
             file,
             folder: proxify({ internalPath: 'img' }),
             replace: false,
+            subfolderPath: 'products',
           }),
         }),
         interacted: true,
@@ -486,6 +487,8 @@ describe('draft/backup', () => {
         file,
         folder: { internalPath: 'img' },
         replace: false,
+        // Picked while browsing a subfolder in the asset picker, so it’s saved there on restore
+        subfolderPath: 'products',
       });
     });
 

@@ -129,12 +129,13 @@ export const saveBackup = async (draft) => {
       currentSlugs: /** @type {LocaleSlugMap} */ (toRaw(currentSlugs)),
       currentValues: /** @type {LocaleContentMap} */ (toRaw(currentValues)),
       files: Object.fromEntries(
-        Object.entries(files).map(([blobURL, { file, folder, replace }]) => [
+        Object.entries(files).map(([blobURL, { file, folder, replace, subfolderPath }]) => [
           blobURL,
           {
             file,
             folder: folder ? /** @type {AssetFolderInfo} */ (toRaw(folder)) : folder,
             replace,
+            subfolderPath,
           },
         ]),
       ),
