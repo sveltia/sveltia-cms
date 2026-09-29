@@ -84,11 +84,11 @@ describe('GitHub repository service', () => {
       expect(result).toBe('https://github.example.com/api/graphql');
     });
 
-    test('replaces /api/v3 with /graphql', () => {
+    test('replaces /api/v3 with /api/graphql', () => {
       const url = 'https://github.example.com/api/v3';
       const result = normalizeGraphQLBaseURL(url);
 
-      expect(result).toBe('https://github.example.com/graphql');
+      expect(result).toBe('https://github.example.com/api/graphql');
     });
 
     test('adds /graphql when URL ends with /api', () => {
@@ -137,7 +137,7 @@ describe('GitHub repository service', () => {
       const url = 'https://github.example.com/api/v3/';
       const result = normalizeGraphQLBaseURL(url);
 
-      expect(result).toBe('https://github.example.com/graphql');
+      expect(result).toBe('https://github.example.com/api/graphql');
     });
   });
 });

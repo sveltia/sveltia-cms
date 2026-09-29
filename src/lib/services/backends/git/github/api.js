@@ -52,7 +52,7 @@ export const normalizeGraphQLBaseURL = (url) => {
 
   if (url.endsWith('/api/v3')) {
     // Replace the REST API v3 endpoint with the GraphQL endpoint
-    return url.replace('/api/v3', '/graphql');
+    return url.replace(/\/v3$/, '/graphql');
   }
 
   if (url.endsWith('/api')) {
