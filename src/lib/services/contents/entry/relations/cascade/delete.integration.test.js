@@ -225,7 +225,7 @@ describe('planCascadeDelete() (integration)', () => {
       expect.objectContaining({
         fieldLabel: 'Tags',
         keyPath: 'tags',
-        messages: ['validation.range_underflow.add'],
+        messages: ['validation.range_underflow.select'],
       }),
     ]);
   });
