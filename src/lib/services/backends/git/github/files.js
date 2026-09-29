@@ -9,6 +9,7 @@ import {
 } from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   repository,
@@ -18,7 +19,7 @@ import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { encodePath } from '$lib/services/backends/git/shared/url';
-import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
+import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 /**
  * @import {
@@ -253,6 +254,8 @@ export const fetchFiles = async () => {
   await fetchAndParseFiles({
     repository,
     checkAccess: openAuthoring ? undefined : checkRepositoryAccess,
+    // A contributor’s changes go to their fork, so the branch they can’t push to doesn’t matter
+    checkBranchAccess: forkedRepository.current ? undefined : checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
     fetchFileList,

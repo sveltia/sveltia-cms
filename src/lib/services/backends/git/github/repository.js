@@ -1,3 +1,4 @@
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
 import {
   createLocalizedError,
@@ -57,6 +58,50 @@ export const checkRepositoryAccess = async () => {
   if (!permissions?.push) {
     throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
   }
+};
+
+const FETCH_BRANCH_ACCESS_QUERY = `
+  query($owner: String!, $repo: String!, $qualifiedName: String!) {
+    repository(owner: $owner, name: $repo) {
+      ref(qualifiedName: $qualifiedName) {
+        refUpdateRule {
+          viewerCanPush
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Check if the user can push to the configured branch, and record it in {@link lockedBranch}. Write
+ * access is enough to sign in, but a protected branch may require a pull request or only allow some
+ * people to push, in which case everything that commits to the branch directly is made read-only up
+ * front, rather than failing when the user saves. The rule is `null` for a branch that isn’t
+ * protected. A failed request leaves the branch writable, as GitHub still refuses a push the user
+ * isn’t allowed to make.
+ *
+ * Whether the user can merge a pull request into the branch isn’t told: a branch that requires a
+ * pull request can’t be pushed to, but its pull requests can still be merged, so the Publish button
+ * is left to GitHub to allow or refuse.
+ * @see https://docs.github.com/en/graphql/reference/objects#refupdaterule
+ */
+export const checkBranchAccess = async () => {
+  const { branch } = repository;
+  let canPush = true;
+
+  if (branch) {
+    try {
+      const result = /** @type {{ repository?: { ref?: { refUpdateRule?: any } } }} */ (
+        await fetchGraphQL(FETCH_BRANCH_ACCESS_QUERY, { qualifiedName: `refs/heads/${branch}` })
+      );
+
+      canPush = result.repository?.ref?.refUpdateRule?.viewerCanPush !== false;
+    } catch {
+      // Keep the branch writable, as said above
+    }
+  }
+
+  lockedBranch.current = canPush ? undefined : branch;
 };
 
 const FETCH_DEFAULT_BRANCH_NAME_QUERY = `

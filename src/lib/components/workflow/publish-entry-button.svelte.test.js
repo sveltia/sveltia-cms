@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { publishingBranches } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { publishWorkflowEntry } from '$lib/services/workflow/save';
@@ -28,9 +29,10 @@ vi.mock('$lib/services/workflow/validate', () => ({ canPublish: vi.fn(() => true
  * Build an unpublished entry.
  * @param {string} status Workflow status.
  * @param {string} [slug] Entry slug.
+ * @param {Record<string, any>} [pullRequest] Pull request properties to override.
  * @returns {any} Entry.
  */
-const createEntry = (status, slug = 'hello') => ({
+const createEntry = (status, slug = 'hello', pullRequest = {}) => ({
   id: `posts/${slug}`,
   slug,
   subPath: slug,
@@ -38,7 +40,7 @@ const createEntry = (status, slug = 'hello') => ({
   workflow: {
     status,
     collectionName: 'posts',
-    pullRequest: { number: 1, branch: `cms/posts/${slug}` },
+    pullRequest: { number: 1, branch: `cms/posts/${slug}`, ...pullRequest },
   },
 });
 
@@ -57,6 +59,7 @@ describe('PublishEntryButton', () => {
 
   beforeEach(() => {
     forkedRepository.current = undefined;
+    mergeLockedBranch.current = undefined;
     publishingBranches.current = [];
     vi.mocked(canPublish).mockReturnValue(true);
     window.location.hash = '#/collections/posts/entries/hello';
@@ -226,6 +229,35 @@ describe('PublishEntryButton', () => {
 
   test('is hidden for an Open Authoring contributor', async () => {
     forkedRepository.current = /** @type {any} */ ({ owner: 'me', repo: 'site' });
+
+    const { container } = await renderWithDraft(PublishEntryButton, {
+      draft: createMockDraft(),
+      props: { entry: createEntry('pending_publish') },
+    });
+
+    expect(container.querySelector('button')).toBeNull();
+  });
+
+  test('is hidden for a user who can’t merge the pull request', async () => {
+    const { container } = await renderWithDraft(PublishEntryButton, {
+      draft: createMockDraft(),
+      props: { entry: createEntry('pending_publish', 'hello', { canMerge: false }) },
+    });
+
+    expect(container.querySelector('button')).toBeNull();
+  });
+
+  test('is shown for a user who can merge the pull request', async () => {
+    await renderWithDraft(PublishEntryButton, {
+      draft: createMockDraft(),
+      props: { entry: createEntry('pending_publish', 'hello', { canMerge: true }) },
+    });
+
+    await expect.element(page.getByRole('button', { name: 'Publish Entry' })).toBeVisible();
+  });
+
+  test('is hidden when the configured branch doesn’t let the user merge into it', async () => {
+    mergeLockedBranch.current = 'main';
 
     const { container } = await renderWithDraft(PublishEntryButton, {
       draft: createMockDraft(),

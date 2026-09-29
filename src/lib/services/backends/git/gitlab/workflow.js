@@ -3,7 +3,7 @@ import { sleep } from '@sveltia/utils/misc';
 import { commitChanges } from '$lib/services/backends/git/gitlab/commits';
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
-import { fetchAPI } from '$lib/services/backends/git/shared/api';
+import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { isSquashMergeEnabled } from '$lib/services/backends/git/shared/workflow';
 import {
@@ -88,6 +88,16 @@ export const stripDraftPrefix = (title) => {
 };
 
 /**
+ * Get whether the signed-in user can merge the given merge request. A single merge request, like
+ * the one returned when it’s created, comes with the answer, while a list doesn’t.
+ * @param {Record<string, any>} item Merge request returned by the REST API.
+ * @returns {boolean | undefined} Result, or `undefined` if the merge request doesn’t tell.
+ * @see https://docs.gitlab.com/api/merge_requests/#get-single-mr
+ */
+const getCanMerge = (item) =>
+  typeof item.user?.can_merge === 'boolean' ? item.user.can_merge : undefined;
+
+/**
  * Convert a merge request returned by the REST API to a workflow pull request.
  * @param {Record<string, any>} item Merge request.
  * @param {WorkflowStatus} status Status of the merge request.
@@ -108,6 +118,7 @@ const toMergeRequest = (item, status) => {
     updatedDate: new Date(item.updated_at),
     author: username ? { name: name ?? username, email: '', id, login: username } : undefined,
     files: [],
+    canMerge: getCanMerge(item),
   };
 };
 
@@ -172,6 +183,62 @@ const FETCH_BLOBS_QUERY = `
     }
   }
 `;
+
+const FETCH_MERGE_PERMISSIONS_QUERY = `
+  query($fullPath: ID!, $iids: [String!]) {
+    project(fullPath: $fullPath) {
+      mergeRequests(iids: $iids, first: 100) {
+        nodes {
+          iid
+          userPermissions {
+            canMerge
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Find out whether the signed-in user can merge each of the given merge requests, and set their
+ * `canMerge` property in place. A protected branch may let a Developer push to the workflow
+ * branches, but not merge into the configured branch. The merge request list doesn’t tell, so the
+ * permissions are asked for all at once. A failed request leaves them unknown, as GitLab still
+ * refuses a merge the user isn’t allowed to make.
+ * @param {WorkflowPullRequest[]} mergeRequests Merge requests to complete.
+ * @see https://docs.gitlab.com/api/graphql/reference/#mergerequestpermissions
+ */
+export const fetchMergePermissions = async (mergeRequests) => {
+  /** @type {Map<string, WorkflowPullRequest>} */
+  const iidMap = new Map(mergeRequests.map((mr) => [String(mr.number), mr]));
+  const iids = [...iidMap.keys()];
+  /** @type {string[][]} */
+  const chunks = [];
+
+  // The query returns up to 100 merge requests at a time
+  for (let index = 0; index < iids.length; index += MAX_ITEMS.mergeRequests) {
+    chunks.push(iids.slice(index, index + MAX_ITEMS.mergeRequests));
+  }
+
+  await runConcurrently(chunks, async (chunk) => {
+    try {
+      const result =
+        /** @type {{ project?: { mergeRequests?: { nodes: Record<string, any>[] } } }} */ (
+          await fetchGraphQL(FETCH_MERGE_PERMISSIONS_QUERY, { iids: chunk })
+        );
+
+      result.project?.mergeRequests?.nodes.forEach(({ iid, userPermissions }) => {
+        const mergeRequest = iidMap.get(String(iid));
+
+        if (mergeRequest && typeof userPermissions?.canMerge === 'boolean') {
+          mergeRequest.canMerge = userPermissions.canMerge;
+        }
+      });
+    } catch {
+      // Keep the permissions unknown, as said above
+    }
+  });
+};
 
 /**
  * Fetch the content of the files changed in the given merge request, and populate the
@@ -253,10 +320,13 @@ export const fetchPullRequests = async () => {
     (a, b) => b.updatedDate.getTime() - a.updatedDate.getTime(),
   );
 
-  await runConcurrently(mergeRequests, async (mergeRequest) => {
-    await fetchMergeRequestFileList(mergeRequest);
-    await fetchMergeRequestFileContents(mergeRequest);
-  });
+  await Promise.all([
+    fetchMergePermissions(mergeRequests),
+    runConcurrently(mergeRequests, async (mergeRequest) => {
+      await fetchMergeRequestFileList(mergeRequest);
+      await fetchMergeRequestFileContents(mergeRequest);
+    }),
+  ]);
 
   return mergeRequests;
 };
@@ -319,6 +389,7 @@ export const createPullRequest = async ({ branch, title, status }) => {
     createdDate: new Date(result.created_at),
     updatedDate: new Date(result.updated_at),
     files: [],
+    canMerge: getCanMerge(result),
   };
 };
 

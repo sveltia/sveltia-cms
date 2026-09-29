@@ -9,7 +9,7 @@
   import { goBack } from '$lib/services/app/navigation';
   import { getCollection } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { publishingBranches } from '$lib/services/workflow';
+  import { canMergePullRequest, publishingBranches } from '$lib/services/workflow';
   import { getPublishDialogStrings } from '$lib/services/workflow/dialogs';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import { publishWorkflowEntry } from '$lib/services/workflow/save';
@@ -53,9 +53,11 @@
   );
   // The collection’s `publish` option can hide the control, so an editor can move an entry through
   // the review stages but leave the actual publishing to someone else. An Open Authoring
-  // contributor can’t merge a pull request on the configured repository, so they never see it
+  // contributor can’t merge a pull request on the configured repository, and neither can a user who
+  // can push to the entry’s branch but not merge into the configured branch, so they never see it
   const visible = $derived(
     !openAuthoring.current &&
+      canMergePullRequest(entry.workflow.pullRequest) &&
       (entry.workflow.status === 'pending_publish' || deletion) &&
       getCollection(entry.workflow.collectionName)?.publish !== false,
   );

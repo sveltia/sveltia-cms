@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { backend, backendName } from '$lib/services/backends';
+import { mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 import {
+  canMergePullRequest,
   checkPublishedVersion,
   getPublishedVersion,
   getUnpublishedEntriesByCollection,
@@ -592,5 +594,28 @@ describe('mergeUnpublishedEntries', () => {
     expect(
       mergeUnpublishedEntries([published], [draft]).map((/** @type {any} */ { id }) => id),
     ).toEqual(['a-draft']);
+  });
+});
+
+describe('Test canMergePullRequest()', () => {
+  const pullRequest = /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello' });
+
+  test('lets the user merge when nothing says otherwise', () => {
+    expect(canMergePullRequest(pullRequest)).toBe(true);
+    expect(canMergePullRequest({ ...pullRequest, canMerge: true })).toBe(true);
+  });
+
+  test('refuses a pull request the user can’t merge', () => {
+    expect(canMergePullRequest({ ...pullRequest, canMerge: false })).toBe(false);
+  });
+
+  test('refuses every pull request when the user can’t merge into the branch', () => {
+    mergeLockedBranch.current = 'main';
+
+    try {
+      expect(canMergePullRequest({ ...pullRequest, canMerge: true })).toBe(false);
+    } finally {
+      mergeLockedBranch.current = undefined;
+    }
   });
 });

@@ -5,6 +5,7 @@ import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import { checkInstanceVersion, instance } from '$lib/services/backends/git/gitea/instance';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   repository,
@@ -308,6 +309,7 @@ export const fetchFiles = async () => {
   await fetchAndParseFiles({
     repository,
     checkAccess,
+    checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
     fetchFileList,

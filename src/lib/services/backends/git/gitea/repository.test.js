@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { REPOSITORY_INFO_PLACEHOLDER } from '$lib/services/backends/git/shared/repository';
 
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
@@ -161,6 +163,62 @@ describe('Gitea Repository Service', () => {
       fetchAPIMock.mockRejectedValue(collaboratorError);
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+    });
+  });
+
+  describe('checkBranchAccess', () => {
+    beforeEach(() => {
+      Object.assign(repository, { owner: 'test-owner', repo: 'test-repo', branch: 'release/1.0' });
+    });
+
+    afterEach(() => {
+      lockedBranch.current = undefined;
+      mergeLockedBranch.current = undefined;
+    });
+
+    test('leaves the branch writable when the user can push and merge', async () => {
+      fetchAPIMock.mockResolvedValue({ user_can_push: true, user_can_merge: true });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(mergeLockedBranch.current).toBeUndefined();
+      expect(fetchAPIMock).toHaveBeenCalledWith('/repos/test-owner/test-repo/branches/release/1.0');
+    });
+
+    test('locks what the user can’t do on the branch', async () => {
+      fetchAPIMock.mockResolvedValue({ user_can_push: false, user_can_merge: true });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBe('release/1.0');
+      expect(mergeLockedBranch.current).toBeUndefined();
+
+      fetchAPIMock.mockResolvedValue({ user_can_push: true, user_can_merge: false });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(mergeLockedBranch.current).toBe('release/1.0');
+    });
+
+    test('leaves the branch writable when the request fails', async () => {
+      lockedBranch.current = 'release/1.0';
+      mergeLockedBranch.current = 'release/1.0';
+      fetchAPIMock.mockRejectedValue(new Error('Not Found'));
+
+      await expect(checkBranchAccess()).resolves.toBeUndefined();
+      expect(lockedBranch.current).toBeUndefined();
+      expect(mergeLockedBranch.current).toBeUndefined();
+    });
+
+    test('leaves the branch writable when the branch is unknown', async () => {
+      Object.assign(repository, { branch: undefined });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(fetchAPIMock).not.toHaveBeenCalled();
     });
   });
 

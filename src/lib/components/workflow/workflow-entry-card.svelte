@@ -21,7 +21,7 @@
   } from '$lib/services/contents/collection/files';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { deployments, productionSHA } from '$lib/services/deployments';
-  import { checkPublishedVersion } from '$lib/services/workflow';
+  import { canMergePullRequest, checkPublishedVersion } from '$lib/services/workflow';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
@@ -89,11 +89,13 @@
   );
   // The entry can only be published from the last column, and the collection’s `publish` option can
   // hide the control altogether. An Open Authoring contributor can’t merge a pull request on the
-  // configured repository, so they never get the control
+  // configured repository, and neither can a user who can push to the entry’s branch but not merge
+  // into the configured branch, so they never get the control
   const canPublish = $derived(
     !deploying &&
       !readonly &&
       !openAuthoring.current &&
+      canMergePullRequest(pullRequest) &&
       (status === 'pending_publish' || deletion) &&
       collection?.publish !== false,
   );

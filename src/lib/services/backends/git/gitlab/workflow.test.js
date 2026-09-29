@@ -283,8 +283,11 @@ describe('GitLab Editorial Workflow service', () => {
     /**
      * Mock the REST API, returning the given merge requests for each status label.
      * @param {Record<string, any[]>} byLabel Merge request items keyed by status label.
+     * @param {object} [options] Options.
+     * @param {any} [options.permissions] Result of the merge permission query, or the error it
+     * throws.
      */
-    const mockList = (byLabel) => {
+    const mockList = (byLabel, { permissions = {} } = {}) => {
       vi.mocked(fetchAPI).mockImplementation(async (path) => {
         if (path.includes('/diffs')) {
           return [{ new_path: 'content/posts/hello.md' }];
@@ -295,16 +298,31 @@ describe('GitLab Editorial Workflow service', () => {
         return byLabel[decodeURIComponent(label ?? '')] ?? [];
       });
 
-      vi.mocked(fetchGraphQL).mockResolvedValue({
-        project: {
-          repository: {
-            blobs: {
-              nodes: [
-                { path: 'content/posts/hello.md', oid: 'sha1', size: '7', rawTextBlob: '# Hello' },
-              ],
+      vi.mocked(fetchGraphQL).mockImplementation(async (query) => {
+        if (query.includes('userPermissions')) {
+          if (permissions instanceof Error) {
+            throw permissions;
+          }
+
+          return permissions;
+        }
+
+        return {
+          project: {
+            repository: {
+              blobs: {
+                nodes: [
+                  {
+                    path: 'content/posts/hello.md',
+                    oid: 'sha1',
+                    size: '7',
+                    rawTextBlob: '# Hello',
+                  },
+                ],
+              },
             },
           },
-        },
+        };
       });
     };
 
@@ -358,6 +376,66 @@ describe('GitLab Editorial Workflow service', () => {
 
       // Sorted by the last update, newest first
       expect(result.map(({ number }) => number)).toEqual([2, 1]);
+    });
+
+    test('asks whether the user can merge each merge request, all at once', async () => {
+      mockList(
+        {
+          'sveltia-cms/pending_publish': [
+            createItem(),
+            createItem({ iid: 2 }),
+            createItem({ iid: 3 }),
+          ],
+        },
+        {
+          permissions: {
+            project: {
+              mergeRequests: {
+                nodes: [
+                  { iid: '1', userPermissions: { canMerge: true } },
+                  { iid: '2', userPermissions: { canMerge: false } },
+                  // A merge request the query didn’t match is left alone
+                  { iid: '9', userPermissions: { canMerge: false } },
+                ],
+              },
+            },
+          },
+        },
+      );
+
+      const result = await fetchPullRequests();
+      const canMerge = Object.fromEntries(result.map((mr) => [mr.number, mr.canMerge]));
+
+      expect(canMerge).toEqual({ 1: true, 2: false, 3: undefined });
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('canMerge'), {
+        iids: ['1', '2', '3'],
+      });
+    });
+
+    test('asks about 100 merge requests at a time', async () => {
+      const items = Array.from({ length: 150 }, (_, index) => createItem({ iid: index + 1 }));
+
+      mockList({ 'sveltia-cms/draft': items.slice(0, 100), 'decap-cms/draft': items.slice(100) });
+
+      await fetchPullRequests();
+
+      const calls = vi
+        .mocked(fetchGraphQL)
+        .mock.calls.filter(([query]) => query.includes('userPermissions'));
+
+      expect(calls.map(([, variables]) => variables?.iids.length)).toEqual([100, 50]);
+    });
+
+    test('leaves the permissions unknown when the query fails', async () => {
+      mockList(
+        { 'sveltia-cms/pending_publish': [createItem()] },
+        { permissions: new Error('Field doesn’t exist') },
+      );
+
+      const [mergeRequest] = await fetchPullRequests();
+
+      expect(mergeRequest.canMerge).toBeUndefined();
+      expect(mergeRequest.files[0].text).toBe('# Hello');
     });
   });
 
@@ -416,6 +494,24 @@ describe('GitLab Editorial Workflow service', () => {
           files: [],
         }),
       );
+    });
+
+    test('tells whether the user can merge the new merge request', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({
+        id: 900,
+        iid: 5,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+        user: { can_merge: false },
+      });
+
+      const result = await createPullRequest({
+        branch: 'cms/posts/hello',
+        title: 'Create Post “hello”',
+        status: 'draft',
+      });
+
+      expect(result.canMerge).toBe(false);
     });
   });
 

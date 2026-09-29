@@ -1,4 +1,5 @@
 import { backend } from '$lib/services/backends';
+import { mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
@@ -7,7 +8,7 @@ import { getPublishMode, isWorkflowConfigured } from '$lib/services/workflow/con
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { Entry, UnpublishedEntry } from '$lib/types/private';
+ * @import { Entry, UnpublishedEntry, WorkflowPullRequest } from '$lib/types/private';
  * @import { Collection } from '$lib/types/public';
  */
 
@@ -179,6 +180,17 @@ export const isWorkflowDraft = ({ collection, collectionName, fileName, original
  */
 export const isPendingDeletion = (entry) =>
   /** @type {UnpublishedEntry | undefined} */ (entry)?.workflow?.status === 'pending_deletion';
+
+/**
+ * Check whether the signed-in user can merge the given pull request, which is what publishing an
+ * unpublished entry does. A protected branch may let a user push to the workflow branches, but not
+ * merge into the configured branch. When the backend doesn’t tell, the merge is left to it to allow
+ * or refuse.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @returns {boolean} Result.
+ */
+export const canMergePullRequest = (pullRequest) =>
+  pullRequest.canMerge !== false && !mergeLockedBranch.current;
 
 /**
  * Replace each published entry that has an open pull request with its unpublished version, so a

@@ -19,6 +19,7 @@ import {
   isOpenAuthoringConfigured,
 } from '$lib/services/backends/git/github/fork';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   repository,
@@ -27,7 +28,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { MAX_CONCURRENT_REQUESTS } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
-import { openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
+import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/github/commits');
@@ -36,6 +37,7 @@ vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/fetch');
 vi.mock('$lib/services/workflow/open-authoring', () => ({
+  forkedRepository: { current: undefined },
   openAuthoringInitialized: { current: false },
 }));
 
@@ -466,6 +468,7 @@ describe('GitHub files service', () => {
       expect(fetchAndParseFiles).toHaveBeenCalledWith({
         repository,
         checkAccess: checkRepositoryAccess,
+        checkBranchAccess,
         fetchDefaultBranchName,
         fetchLastCommit,
         fetchFileList,
@@ -488,6 +491,23 @@ describe('GitHub files service', () => {
       expect(fetchAndParseFiles).toHaveBeenCalledWith(
         expect.objectContaining({ checkAccess: undefined }),
       );
+    });
+
+    test('skips the branch check for a contributor, whose changes go to their fork', async () => {
+      vi.mocked(isOpenAuthoringConfigured).mockReturnValue(true);
+      vi.mocked(fetchAndParseFiles).mockResolvedValue();
+      openAuthoringInitialized.current = true;
+      forkedRepository.current = { owner: 'mona', repo: 'site' };
+
+      try {
+        await fetchFiles();
+
+        expect(fetchAndParseFiles).toHaveBeenCalledWith(
+          expect.objectContaining({ checkBranchAccess: undefined }),
+        );
+      } finally {
+        forkedRepository.current = undefined;
+      }
     });
 
     test('leaves the fork alone once it has been set up', async () => {

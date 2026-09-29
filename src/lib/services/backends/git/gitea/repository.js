@@ -1,3 +1,4 @@
+import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
   createLocalizedError,
@@ -7,6 +8,7 @@ import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -92,6 +94,36 @@ export const checkRepositoryAccess = async () => {
       repo,
     });
   }
+};
+
+/**
+ * Check if the user can push to and merge into the configured branch, and record it in
+ * {@link lockedBranch} and {@link mergeLockedBranch}. Write access is enough to sign in, but a
+ * protected branch may only allow some users to push or merge, in which case everything that would
+ * fail is made read-only or hidden up front. A failed request leaves the branch writable, as
+ * Gitea/Forgejo still refuses a push or merge the user isn’t allowed to make.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetBranch
+ */
+export const checkBranchAccess = async () => {
+  const { owner, repo, branch } = repository;
+  let canPush = true;
+  let canMerge = true;
+
+  if (branch) {
+    try {
+      const result = /** @type {{ user_can_push?: boolean, user_can_merge?: boolean }} */ (
+        await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(branch)}`)
+      );
+
+      canPush = result.user_can_push !== false;
+      canMerge = result.user_can_merge !== false;
+    } catch {
+      // Keep the branch writable, as said above
+    }
+  }
+
+  lockedBranch.current = canPush ? undefined : branch;
+  mergeLockedBranch.current = canMerge ? undefined : branch;
 };
 
 /**

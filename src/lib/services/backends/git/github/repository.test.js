@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { lockedBranch } from '$lib/services/backends/branch-access';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
@@ -97,6 +99,61 @@ describe('GitHub repository service', () => {
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
       expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkBranchAccess', () => {
+    beforeEach(() => {
+      Object.assign(repository, { owner: 'test-owner', repo: 'test-repo', branch: 'main' });
+      lockedBranch.current = undefined;
+    });
+
+    test('leaves a branch without protection writable', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({ repository: { ref: { refUpdateRule: null } } });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(fetchGraphQL).toHaveBeenCalledWith(expect.stringContaining('viewerCanPush'), {
+        qualifiedName: 'refs/heads/main',
+      });
+    });
+
+    test('leaves a protected branch writable when the user can push to it', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: { ref: { refUpdateRule: { viewerCanPush: true } } },
+      });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+    });
+
+    test('locks a protected branch the user can’t push to', async () => {
+      vi.mocked(fetchGraphQL).mockResolvedValue({
+        repository: { ref: { refUpdateRule: { viewerCanPush: false } } },
+      });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBe('main');
+    });
+
+    test('leaves the branch writable when the query fails', async () => {
+      lockedBranch.current = 'main';
+      vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Something went wrong'));
+
+      await expect(checkBranchAccess()).resolves.toBeUndefined();
+      expect(lockedBranch.current).toBeUndefined();
+    });
+
+    test('leaves the branch writable when the branch is unknown', async () => {
+      Object.assign(repository, { branch: undefined });
+
+      await checkBranchAccess();
+
+      expect(lockedBranch.current).toBeUndefined();
+      expect(fetchGraphQL).not.toHaveBeenCalled();
     });
   });
 

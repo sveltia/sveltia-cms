@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { deployments, productionSHA } from '$lib/services/deployments';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries, TEST_IMAGE_URL } from '$lib/test/config';
@@ -59,6 +60,7 @@ describe('WorkflowEntryCard', () => {
     deployments.current = {};
     productionSHA.current = '';
     forkedRepository.current = undefined;
+    mergeLockedBranch.current = undefined;
     window.location.hash = '#/workflow';
   });
 
@@ -206,6 +208,44 @@ describe('WorkflowEntryCard', () => {
     await expect
       .poll(() => page.getByRole('button', { name: 'Publish Entry' }).elements().length)
       .toBe(0);
+  });
+
+  test('hides the publish action from a user who can’t merge the pull request', async () => {
+    const { pullRequest } = createEntry().workflow;
+
+    const { rerender } = await render(WorkflowEntryCard, {
+      entry: createEntry({
+        status: 'pending_publish',
+        pullRequest: { ...pullRequest, canMerge: true },
+      }),
+    });
+
+    await expect.element(page.getByRole('button', { name: 'Publish Entry' })).toBeInTheDocument();
+
+    await rerender({
+      entry: createEntry({
+        status: 'pending_publish',
+        pullRequest: { ...pullRequest, canMerge: false },
+      }),
+    });
+    await expect
+      .poll(() => page.getByRole('button', { name: 'Publish Entry' }).elements().length)
+      .toBe(0);
+    // Discarding the changes doesn’t merge anything, so it stays available
+    await expect.element(page.getByRole('button', { name: 'Delete Entry' })).toBeInTheDocument();
+  });
+
+  test('hides the publish action when the configured branch can’t be merged into', async () => {
+    await render(WorkflowEntryCard, { entry: createEntry({ status: 'pending_deletion' }) });
+
+    await expect.element(page.getByRole('button', { name: 'Delete Entry' })).toBeInTheDocument();
+
+    // Publishing a pending deletion is what removes the entry, so the Delete action goes
+    mergeLockedBranch.current = 'main';
+    await expect
+      .poll(() => page.getByRole('button', { name: 'Delete Entry' }).elements().length)
+      .toBe(0);
+    await expect.element(page.getByRole('button', { name: 'Cancel Deletion' })).toBeInTheDocument();
   });
 
   test('only lets a read-only entry be opened', async () => {

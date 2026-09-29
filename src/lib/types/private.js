@@ -407,6 +407,9 @@
  * @property {string} [headSHA] Git object ID (SHA-1 hash) of the head commit on the pull request’s
  * branch. It’s used to look up the deploy preview created for the pull request.
  * @property {WorkflowFile[]} files Files changed in the pull request.
+ * @property {boolean} [canMerge] Whether the signed-in user can merge the pull request, which
+ * decides whether the entry can be published. `undefined` when the backend doesn’t tell, in which
+ * case the merge is offered and left to the backend to allow or refuse.
  */
 
 /**

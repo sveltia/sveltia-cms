@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import { checkInstanceVersion, instance } from '$lib/services/backends/git/gitea/instance';
 import {
+  checkBranchAccess,
   checkRepositoryAccess,
   fetchDefaultBranchName,
   repository,
@@ -48,6 +49,7 @@ vi.mock('$lib/services/backends/git/gitea/repository', () => ({
     repo: 'test-repo',
     branch: 'main',
   },
+  checkBranchAccess: vi.fn(),
   checkRepositoryAccess: vi.fn(),
   fetchDefaultBranchName: vi.fn(),
 }));
@@ -693,6 +695,7 @@ describe('Gitea Files Service', () => {
       expect(fetchAndParseFiles).toHaveBeenCalledWith({
         repository,
         checkAccess: expect.any(Function),
+        checkBranchAccess,
         fetchDefaultBranchName,
         fetchLastCommit,
         fetchFileList,

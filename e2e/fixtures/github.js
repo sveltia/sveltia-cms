@@ -149,6 +149,14 @@ export class MockGitHub {
   canRead = true;
 
   /**
+   * The protection rule on the configured branch as it applies to the signed-in user, e.g.
+   * `{ viewerCanPush: false }` for a branch that requires a pull request. `null` for a branch that
+   * isn’t protected.
+   * @type {{ viewerCanPush: boolean } | null}
+   */
+  branchRule = null;
+
+  /**
    * Whether the API rate limit is exhausted, so the repository can’t be read for now.
    */
   rateLimited = false;
@@ -1237,6 +1245,10 @@ export class MockGitHub {
 
     if (query.includes('defaultBranchRef')) {
       return { data: { repository: { defaultBranchRef: { name: this.branch } } } };
+    }
+
+    if (query.includes('refUpdateRule')) {
+      return { data: { repository: { ref: { refUpdateRule: this.branchRule } } } };
     }
 
     // The fork the signed-in user owns, looked for when it isn’t found at the default name
