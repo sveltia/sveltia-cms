@@ -8,7 +8,11 @@ import {
   isFieldRequired,
   LIST_KEY_PATH_REGEX,
 } from '$lib/services/contents/entry/fields';
-import { MEDIA_FIELD_TYPES, MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import {
+  MEDIA_FIELD_TYPES,
+  MIN_MAX_VALUE_FIELD_TYPES,
+  MULTI_VALUE_FIELD_TYPES,
+} from '$lib/services/contents/fields';
 import { resolveCodeField } from '$lib/services/contents/fields/code/validate';
 import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
 import { validateDateTimeField } from '$lib/services/contents/fields/date-time/validate';
@@ -168,6 +172,28 @@ const validateScalarField = ({ value, required, validation, validity, selected =
 };
 
 /**
+ * Get the value of a media field to validate. The stored value can be a blob URL, whose original
+ * file name is validated instead.
+ * @param {object} args Arguments.
+ * @param {string} args.fieldType Field type.
+ * @param {any} args.value Field value.
+ * @param {EntryDraft['files']} args.files Files attached to the draft.
+ * @returns {any} Value to validate.
+ */
+const resolveMediaValue = ({ fieldType, value, files }) => {
+  if (
+    MEDIA_FIELD_TYPES.includes(fieldType) &&
+    typeof value === 'string' &&
+    value.startsWith('blob:')
+  ) {
+    // The stored `value` is a blob URL; get the original file name
+    return files[value]?.file?.name;
+  }
+
+  return value;
+};
+
+/**
  * Arguments for the functions that prepare an aggregate or special field for validation.
  * @typedef {object} PrepareFieldArgs
  * @property {FieldKeyPath} keyPath Field key path.
@@ -175,6 +201,7 @@ const validateScalarField = ({ value, required, validation, validity, selected =
  * @property {FlattenedEntryContent} valueMap Entry values.
  * @property {Field} fieldConfig Field configuration.
  * @property {GetFieldArgs} getFieldArgs Arguments to get the field configuration.
+ * @property {EntryDraft['files']} files Files attached to the draft.
  * @property {EntryValidityState} validity Validity state to update.
  * @property {LocaleValidityMap} validities Validity state of all the fields.
  * @property {LocaleCode} locale Current locale.
@@ -203,6 +230,7 @@ const prepareListField = ({
   value,
   valueMap,
   fieldConfig,
+  files,
   validity,
   validities,
   locale,
@@ -222,25 +250,26 @@ const prepareListField = ({
     max,
   });
 
-  // Like Decap CMS, test the pattern of a List field without subfields, or a multiple Select or
-  // Relation field, against its items joined with commas, e.g. `a,b,c`, rather than against each
-  // item. The other fields prepared here are multiple File/Image fields and custom fields taking an
-  // array, which are left alone
+  // Like Decap CMS, test the pattern of a List field without subfields, or a multiple File, Image,
+  // Relation or Select field, against its items joined with commas, e.g. `a,b,c`, rather than
+  // against each item. A custom field taking an array, also prepared here, is left alone
   // @ts-ignore A List field with subfields doesn’t have the `pattern` option
-  const { widget, pattern: validation } = fieldConfig;
+  const { widget: fieldType = 'string', pattern: validation } = fieldConfig;
 
   if (
     !skip &&
     !empty &&
     Array.isArray(validation) &&
-    (widget === 'list'
+    (fieldType === 'list'
       ? !getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields
-      : widget === 'relation' || widget === 'select')
+      : MULTI_VALUE_FIELD_TYPES.includes(fieldType))
   ) {
     validatePattern({
       // Like Decap’s Immutable `List.join()`, this converts a number to a string and `null` to an
-      // empty string
-      value: getListItems({ keyPath, value, valueMap }).join(','),
+      // empty string. A file just uploaded is tested by its name, as in a single File/Image field
+      value: getListItems({ keyPath, value, valueMap })
+        .map((item) => resolveMediaValue({ fieldType, value: item, files }))
+        .join(','),
       validation,
       validity,
     });
@@ -328,28 +357,6 @@ const PREPARE_FIELD_FUNCTIONS = {
   object: prepareObjectField,
   keyvalue: prepareKeyValueField,
   code: prepareCodeField,
-};
-
-/**
- * Get the value of a media field to validate. The stored value can be a blob URL, whose original
- * file name is validated instead.
- * @param {object} args Arguments.
- * @param {string} args.fieldType Field type.
- * @param {any} args.value Field value.
- * @param {EntryDraft['files']} args.files Files attached to the draft.
- * @returns {any} Value to validate.
- */
-const resolveMediaValue = ({ fieldType, value, files }) => {
-  if (
-    MEDIA_FIELD_TYPES.includes(fieldType) &&
-    typeof value === 'string' &&
-    value.startsWith('blob:')
-  ) {
-    // The stored `value` is a blob URL; get the original file name
-    return files[value]?.file?.name;
-  }
-
-  return value;
 };
 
 /**
@@ -448,6 +455,7 @@ export const validateAnyField = (args) => {
       valueMap,
       fieldConfig,
       getFieldArgs,
+      files,
       validity,
       validities,
       locale,

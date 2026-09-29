@@ -74,6 +74,15 @@ const collection = {
       collection: 'products',
       pattern: ['^[a-z-]+(,[a-z-]+)+$', 'Two slugs or more'],
     },
+    // A multiple Image field tested against its paths joined with commas, a file just uploaded by
+    // its name: JPEG images only
+    {
+      name: 'photos',
+      widget: 'image',
+      required: false,
+      multiple: true,
+      pattern: ['^[^,]+\\.jpg(,[^,]+\\.jpg)*$', 'JPEG only'],
+    },
   ],
   _i18n: {
     structureMap: {},
@@ -539,6 +548,27 @@ describe('contents/draft/validate (integration)', () => {
     values['related.1'] = 'Bar';
 
     expect(entryDraft.current.validities._default.related.patternMismatch).toBe(true);
+  });
+
+  it('should test the pattern of a multiple Image field against its paths joined', () => {
+    const { currentValues, files } = entryDraft.current;
+    const values = currentValues._default;
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.photos.valid).toBe(true);
+
+    // A file just uploaded is stored as a blob URL, tested by its name
+    values['photos.0'] = '/uploads/a.jpg';
+    values['photos.1'] = 'blob:https://example.com/1';
+    files['blob:https://example.com/1'] = { file: new File([], 'b.jpg') };
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.photos.valid).toBe(true);
+
+    values['photos.2'] = '/uploads/c.png';
+
+    expect(entryDraft.current.validities._default.photos.patternMismatch).toBe(true);
+    expect(entryDraft.current.validationMessages._default.photos).toEqual(['JPEG only']);
   });
 
   it('should still reject an error that isn’t about the field being empty', () => {

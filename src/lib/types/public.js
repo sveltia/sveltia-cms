@@ -447,14 +447,14 @@
  */
 
 /**
- * Validation options for a field showing multiple options.
- * @typedef {object} MultiOptionFieldValidationProps
+ * Validation options for a field that can take multiple values.
+ * @typedef {object} MultiValueFieldValidationProps
  * @property {[string | RegExp, string]} [pattern] Validation format. The first argument is a
  * regular expression matching pattern for a valid input value, and the second argument is an error
- * message to be displayed when the input value does not match the pattern. If `multiple` is `true`,
- * like Decap CMS, the pattern is tested against all the selected values joined with commas, e.g.
- * `foo,bar,baz`, rather than against each value, and not at all while nothing is selected. Numbers
- * are tested as strings.
+ * message to be displayed when the input value does not match the pattern. If the field takes
+ * multiple values, like Decap CMS, the pattern is tested against all the values joined with commas,
+ * e.g. `foo,bar,baz`, rather than against each value, and not at all while the field is empty.
+ * Numbers are tested as strings, and a file just uploaded is tested by its name.
  */
 
 /**
@@ -679,8 +679,8 @@
 
 /**
  * File field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & MediaFieldProps &
- * FileFieldProps} FileField
+ * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
+ * MediaFieldProps & FileFieldProps} FileField
  */
 
 /**
@@ -710,8 +710,8 @@
 
 /**
  * Image field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & MediaFieldProps &
- * ImageFieldProps} ImageField
+ * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
+ * MediaFieldProps & ImageFieldProps} ImageField
  */
 
 /**
@@ -1066,7 +1066,7 @@
 
 /**
  * Relation field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & MultiOptionFieldValidationProps &
+ * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
  * RelationFieldProps & MultiOptionFieldProps} RelationField
  */
 
@@ -1099,7 +1099,7 @@
 
 /**
  * Select field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & MultiOptionFieldValidationProps &
+ * @typedef {CommonFieldProps & VisibleFieldProps & MultiValueFieldValidationProps &
  * SelectFieldProps & MultiOptionFieldProps} SelectField
  */
 
