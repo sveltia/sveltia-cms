@@ -241,6 +241,25 @@ describe('integrations/media-libraries', () => {
       });
     });
 
+    it('should use a site-level media_library config without a name for the default library', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_library: { config: { max_file_size: 1000, slugify_filename: true } },
+      });
+
+      expect(getMediaLibraryOptions()).toEqual({
+        config: { max_file_size: 1000, slugify_filename: true },
+      });
+      expect(getMediaLibraryOptions({ libraryName: 'stock_assets' })).toEqual({});
+
+      const fieldConfig = /** @type {any} */ ({
+        media_libraries: { default: { config: { max_file_size: 500 } } },
+      });
+
+      expect(getMediaLibraryOptions({ fieldConfig })).toEqual({
+        config: { max_file_size: 500, slugify_filename: true },
+      });
+    });
+
     it('should not match site media_library when names do not match', async () => {
       cmsConfig.current = /** @type {any} */ ({
         media_library: {

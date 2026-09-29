@@ -1997,7 +1997,7 @@
 /**
  * Global media storage options.
  * @typedef {object} GlobalMediaLibraryOptions
- * @property {MediaLibraryName} name Library name.
+ * @property {MediaLibraryName} [name] Library name. Default: `default`, the internal media storage.
  */
 
 /**

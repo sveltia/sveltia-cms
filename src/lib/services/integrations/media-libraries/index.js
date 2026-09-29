@@ -15,6 +15,8 @@ import { mergeLibraryOptions } from '$lib/services/integrations/media-libraries/
  */
 export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } = {}) => {
   const _cmsConfig = cmsConfig.current;
+  // The legacy `media_library` option without a name configures the default library
+  const siteLibName = _cmsConfig?.media_library?.name ?? 'default';
 
   /**
    * Find the library’s options in the field configuration.
@@ -31,7 +33,6 @@ export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } 
 
     // `media_library` (legacy), which applies to the site-level library if it has no name
     const fieldLib = fieldConfig?.media_library;
-    const siteLibName = _cmsConfig?.media_library?.name ?? 'default';
 
     return fieldLib &&
       siteLibName === libraryName &&
@@ -54,7 +55,9 @@ export const getMediaLibraryOptions = ({ libraryName = 'default', fieldConfig } 
     }
 
     // `media_library` (legacy)
-    return _cmsConfig?.media_library?.name === libraryName ? _cmsConfig.media_library : undefined;
+    return _cmsConfig?.media_library && siteLibName === libraryName
+      ? _cmsConfig.media_library
+      : undefined;
   };
 
   const siteOptions = getSiteOptions();
