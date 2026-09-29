@@ -36,6 +36,11 @@ const collection = {
       ],
     },
     {
+      name: 'author',
+      widget: 'object',
+      fields: [{ name: 'name', widget: 'string', required: false }],
+    },
+    {
       name: 'blocks',
       widget: 'list',
       required: false,
@@ -90,6 +95,7 @@ vi.mock('$lib/services/contents/draft/backup', () => ({
 await import('$lib/services/contents/collection/files');
 
 const { fieldConfigCacheMap } = await import('$lib/services/contents/entry/fields');
+const { cmsConfig } = await import('$lib/services/config');
 const { setSubtree } = await import('$lib/services/contents/entry/subtree');
 const { createDraft } = await import('$lib/services/contents/draft/create');
 const { EntryDraftState } = await import('$lib/services/contents/draft/state.svelte');
@@ -107,6 +113,7 @@ describe('contents/draft/validate (integration)', () => {
   const validateEntry = (options = {}) => _validateEntry({ draft: entryDraft.current, ...options });
 
   beforeEach(() => {
+    cmsConfig.current.publish_mode = 'editorial_workflow';
     fieldConfigCacheMap.clear();
     entryDraft = new EntryDraftState();
     createDraft({ entryDraft, collection });
@@ -334,6 +341,39 @@ describe('contents/draft/validate (integration)', () => {
     delete values['speakers.3.name'];
 
     expect(entryDraft.current.validities._default.speakers.valid).toBe(true);
+  });
+
+  it('should no longer report a required object missing once the editor adds it', () => {
+    // Without Editorial Workflow, so an empty required field is marked as the user edits
+    cmsConfig.current.publish_mode = undefined;
+
+    const values = entryDraft.current.currentValues._default;
+
+    // Removed in the editor: the subfields go, and `null` is stored for the object itself
+    Object.keys(values)
+      .filter((key) => key.startsWith('author.'))
+      .forEach((key) => {
+        delete values[key];
+      });
+    values.author = null;
+
+    expect(validateEntry()).toBe(false);
+    expect(entryDraft.current.validities._default.author.valueMissing).toBe(true);
+
+    // Added back: the subfields are written, then the `null` is deleted, which leaves the object
+    // with no value of its own
+    values['author.name'] = '';
+    delete values.author;
+
+    expect(entryDraft.current.validities._default.author.valueMissing).toBe(false);
+    expect(entryDraft.current.validationMessages._default.author).toEqual([]);
+
+    // Gone altogether, with neither a value nor subfields left
+    delete values['author.name'];
+    values.author = null;
+    delete values.author;
+
+    expect(entryDraft.current.validities._default.author.valueMissing).toBe(true);
   });
 
   it('should hold a list with subfields to its item count when only its items are stored', () => {

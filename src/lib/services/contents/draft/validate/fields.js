@@ -249,8 +249,14 @@ const prepareListField = ({
  * @param {PrepareFieldArgs} args Arguments.
  * @returns {PreparedField} Result.
  */
-const prepareObjectField = ({ keyPath, value, validity, required }) => {
-  const empty = !value;
+const prepareObjectField = ({ keyPath, value, valueMap, validity, required }) => {
+  // An Object field holding subfields may have no value at its own key path, e.g. right after the
+  // editor adds the subfields and deletes the `null` it stored while the object was removed, so
+  // the subfields tell whether it’s there
+  const empty =
+    value === undefined
+      ? !Object.keys(valueMap).some((key) => key.startsWith(`${keyPath}.`))
+      : !value;
 
   if (required && empty) {
     validity.valueMissing = true;
