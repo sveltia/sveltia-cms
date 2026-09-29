@@ -122,8 +122,8 @@ export const copyDefaultLocaleValue = ({
 
 /**
  * Create a Proxy holding a locale’s field values, which revalidates a field as its value is written
- * and automatically copies the value to the other locales if the field’s i18n strategy is
- * `duplicate`.
+ * or deleted, and automatically copies the value to the other locales if the field’s i18n strategy
+ * is `duplicate`.
  *
  * The values live in a deeply reactive `$state` object behind the proxy, so a component reading a
  * single value only depends on that value. The proxy also counts its writes; see
@@ -250,7 +250,13 @@ export const createProxy = ({ draft, locale: sourceLanguage, target = {}, getVal
         version += 1;
       }
 
-      const { fieldConfig, getFieldArgs } = getFieldInfo(obj, keyPath);
+      const { fieldConfig, getFieldArgs, valueMap } = getFieldInfo(obj, keyPath);
+
+      // Update the validity and validation message in real time as well, e.g. when the last item of
+      // a List field is removed, which leaves the list with fewer items than it had
+      if (keyPath !== canonicalSlugKey) {
+        revalidateField({ draft, locale: sourceLanguage, keyPath, value: undefined, valueMap });
+      }
 
       if (!fieldConfig) {
         return true;

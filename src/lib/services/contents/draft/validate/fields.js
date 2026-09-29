@@ -73,6 +73,12 @@ import { getRegex } from '$lib/services/utils/regex';
  * follows, e.g. `.0` in `speakers.0.name`. What comes before the match is the list’s key path.
  */
 const LIST_ITEM_SUBFIELD_REGEX = /\.\d+(?=\.)/g;
+/**
+ * Regular expression matching the item index of a List field within a key path, whether a subfield
+ * follows or not, e.g. `.0` in `speakers.0.name` and `.3` in `tags.3`. What comes before the match
+ * is the list’s key path.
+ */
+const LIST_ITEM_INDEX_REGEX = /\.\d+(?=\.|$)/g;
 
 /**
  * Default validity state for a field.
@@ -499,49 +505,18 @@ export const validateField = (args) => {
 };
 
 /**
- * Re-validate a single field right after its value has been updated, so the error state and message
- * shown for the field reflect what the user has just typed. This is a no-op until the entry has
- * been validated once, which normally happens on a save attempt, because no error is displayed
- * before that.
+ * Re-validate a single field, if it has been validated already, and update its validity state and
+ * validation messages.
  * @param {object} args Arguments.
  * @param {EntryDraft} args.draft Entry draft, modified in place.
- * @param {LocaleCode} args.locale Locale of the updated field.
- * @param {FieldKeyPath} args.keyPath Key path of the updated field.
- * @param {any} args.value Updated field value.
+ * @param {LocaleCode} args.locale Locale of the field.
+ * @param {FieldKeyPath} args.keyPath Key path of the field.
+ * @param {any} args.value Field value.
  * @param {FlattenedEntryContent} args.valueMap Entry values for the locale.
  */
-export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => {
+const revalidateSingleField = ({ draft, locale, keyPath, value, valueMap }) => {
   const { collectionName, fileName, isIndexFile, validities, validationMessages } = draft;
   const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath, valueMap };
-
-  const listKeyPath = LIST_KEY_PATH_REGEX.test(keyPath)
-    ? keyPath.replace(LIST_KEY_PATH_REGEX, '')
-    : undefined;
-
-  const listFieldConfig =
-    listKeyPath === undefined ? undefined : getField({ ...getFieldArgs, keyPath: listKeyPath });
-
-  // An item of a List field without subfields, or a value of a field taking multiple values, isn’t
-  // validated on its own: the field is validated as a whole, and its state is kept under the
-  // field’s own key path. See `validateFields()`
-  if (
-    listFieldConfig &&
-    (isFieldMultiple(listFieldConfig) ||
-      (listFieldConfig.widget === 'list' &&
-        !getListFieldInfo(/** @type {ListField} */ (listFieldConfig)).hasSubFields))
-  ) {
-    // Like `validateFields()`, count the items from the value map rather than from the value
-    revalidateField({
-      draft,
-      locale,
-      keyPath: /** @type {string} */ (listKeyPath),
-      value: '',
-      valueMap,
-    });
-
-    return;
-  }
-
   // A KeyValue pair is validated as part of its field, whose state is kept under the field’s own
   // key path, where the editor shows it. See `validateFields()`
   const keyValueField = getField(getFieldArgs) ? undefined : getKeyValueField(getFieldArgs);
@@ -577,6 +552,47 @@ export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => 
   const fieldConfig = /** @type {Field} */ (keyValueField ?? getField(getFieldArgs));
 
   validationMessages[locale][stateKeyPath] = getFieldValidationMessages({ validity, fieldConfig });
+};
+
+/**
+ * Re-validate a single field right after its value has been updated or deleted, so the error state
+ * and message shown for the field reflect what the user has just done. The List fields the value is
+ * an item of, or is in an item of, are re-validated as well, since their item count may have
+ * changed, e.g. `tags` for `tags.3` and `speakers` for `speakers.0.name`. This is a no-op until the
+ * entry has been validated once, which normally happens on a save attempt, because no error is
+ * displayed before that.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft, modified in place.
+ * @param {LocaleCode} args.locale Locale of the updated field.
+ * @param {FieldKeyPath} args.keyPath Key path of the updated field.
+ * @param {any} args.value Updated field value, or `undefined` if the value has been deleted.
+ * @param {FlattenedEntryContent} args.valueMap Entry values for the locale.
+ */
+export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => {
+  const { collectionName, fileName, isIndexFile } = draft;
+
+  revalidateSingleField({ draft, locale, keyPath, value, valueMap });
+
+  [...keyPath.matchAll(LIST_ITEM_INDEX_REGEX)].forEach(({ index }) => {
+    const listKeyPath = keyPath.slice(0, index);
+    const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath: listKeyPath, valueMap };
+    const listFieldConfig = getField(getFieldArgs);
+
+    // A multiple-value Select or Relation field stores its values like a List field without
+    // subfields, e.g. `categories.0`, and keeps its validity state under its own key path
+    if (
+      listFieldConfig &&
+      (listFieldConfig.widget === 'list' || isFieldMultiple(listFieldConfig))
+    ) {
+      revalidateSingleField({
+        draft,
+        locale,
+        keyPath: listKeyPath,
+        value: valueMap[listKeyPath],
+        valueMap,
+      });
+    }
+  });
 };
 
 /**

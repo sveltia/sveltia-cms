@@ -436,6 +436,33 @@ describe('contents/draft/create/proxy.svelte', () => {
       });
     });
 
+    it('should revalidate a deleted field in real time', () => {
+      const draft = createDraft({ values: { en: { 'tags.0': 'a', 'tags.1': 'b' }, ja: {} } });
+
+      // e.g. the last item of a List field without subfields, which has no field of its own; the
+      // revalidation tells the list from the item’s key path
+      delete draft.currentValues.en['tags.1'];
+
+      expect(draft.currentValues.en['tags.1']).toBeUndefined();
+      expect(revalidateField).toHaveBeenCalledOnce();
+      expect(revalidateField).toHaveBeenCalledWith({
+        draft,
+        locale: 'en',
+        keyPath: 'tags.1',
+        value: undefined,
+        valueMap: draft.currentValues.en,
+      });
+    });
+
+    it('should skip revalidation for the deleted canonical slug field', () => {
+      const draft = createDraft({ values: { en: { translationKey: 'abc' }, ja: {} } });
+
+      delete draft.currentValues.en.translationKey;
+
+      expect(draft.currentValues.en.translationKey).toBeUndefined();
+      expect(revalidateField).not.toHaveBeenCalled();
+    });
+
     it('should leave a value without a field of its own to the revalidation to tell', () => {
       const draft = createDraft();
 

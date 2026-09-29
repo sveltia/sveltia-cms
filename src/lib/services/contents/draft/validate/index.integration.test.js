@@ -90,6 +90,7 @@ vi.mock('$lib/services/contents/draft/backup', () => ({
 await import('$lib/services/contents/collection/files');
 
 const { fieldConfigCacheMap } = await import('$lib/services/contents/entry/fields');
+const { setSubtree } = await import('$lib/services/contents/entry/subtree');
 const { createDraft } = await import('$lib/services/contents/draft/create');
 const { EntryDraftState } = await import('$lib/services/contents/draft/state.svelte');
 const { validateEntry: _validateEntry } = await import('$lib/services/contents/draft/validate');
@@ -237,6 +238,102 @@ describe('contents/draft/validate (integration)', () => {
     expect(entryDraft.current.validities._default.colors.valid).toBe(true);
     expect(entryDraft.current.validationMessages._default.colors).toEqual([]);
     expect(entryDraft.current.validities._default).not.toHaveProperty('colors.0');
+  });
+
+  it('should update the item count of a list without subfields as soon as an item is deleted', () => {
+    const { currentValues } = entryDraft.current;
+    const values = currentValues._default;
+
+    delete values.tags;
+    Object.assign(values, { 'tags.0': 'a', 'tags.1': 'b', 'tags.2': 'c', 'tags.3': 'd' });
+
+    expect(validateEntry()).toBe(false);
+    expect(entryDraft.current.validities._default.tags.rangeOverflow).toBe(true);
+
+    // Removing the last item only deletes its key path, with nothing written that would trigger
+    // the revalidation, yet the error has to go without another save attempt
+    delete values['tags.3'];
+
+    expect(entryDraft.current.validities._default.tags.rangeOverflow).toBe(false);
+    expect(entryDraft.current.validities._default.tags.valid).toBe(true);
+    expect(entryDraft.current.validationMessages._default.tags).toEqual([]);
+
+    // And back below the minimum
+    delete values['tags.2'];
+    delete values['tags.1'];
+
+    expect(entryDraft.current.validities._default.tags.rangeUnderflow).toBe(true);
+    expect(entryDraft.current.validationMessages._default.tags).toEqual([
+      'validation.range_underflow.add',
+    ]);
+  });
+
+  it('should update the item count of a list without subfields as the editor rewrites it', () => {
+    // The editor replaces the whole list, writing the placeholder before the items, so the list
+    // has to be revalidated from its items as well, not only from the placeholder, which would
+    // count no items at all
+    const values = entryDraft.current.currentValues._default;
+
+    setSubtree(values, 'tags', ['a', 'b', 'c', 'd']);
+
+    expect(validateEntry()).toBe(false);
+    expect(entryDraft.current.validities._default.tags.rangeOverflow).toBe(true);
+
+    setSubtree(values, 'tags', ['a']);
+
+    expect(entryDraft.current.validities._default.tags.rangeOverflow).toBe(false);
+    expect(entryDraft.current.validities._default.tags.rangeUnderflow).toBe(true);
+
+    setSubtree(values, 'tags', ['a', 'b', 'c', 'd', 'e']);
+
+    expect(entryDraft.current.validities._default.tags.rangeUnderflow).toBe(false);
+    expect(entryDraft.current.validities._default.tags.rangeOverflow).toBe(true);
+
+    setSubtree(values, 'tags', ['a', 'b']);
+
+    expect(entryDraft.current.validities._default.tags.valid).toBe(true);
+  });
+
+  it('should update the value count of a multiple-value field as soon as a value is deleted', () => {
+    const values = entryDraft.current.currentValues._default;
+
+    Object.assign(values, { 'colors.0': 'red', 'colors.1': 'green' });
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.colors.rangeOverflow).toBe(true);
+
+    // Nothing written after the deletion
+    delete values['colors.1'];
+
+    expect(entryDraft.current.validities._default.colors.valid).toBe(true);
+  });
+
+  it('should update the item count of a list with subfields as soon as an item is deleted', () => {
+    const values = entryDraft.current.currentValues._default;
+
+    delete values.speakers;
+    Object.assign(values, {
+      'speakers.0.name': 'Ana',
+      'speakers.0.links.0.url': 'a',
+      'speakers.0.links.1.url': 'b',
+      'speakers.1.name': 'Bo',
+      'speakers.2.name': 'Cy',
+      'speakers.3.name': 'Di',
+    });
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.speakers.rangeOverflow).toBe(true);
+    expect(entryDraft.current.validities._default['speakers.0.links'].rangeOverflow).toBe(true);
+
+    // Both the list the item belongs to and the list it’s nested in are revalidated
+    delete values['speakers.0.links.1.url'];
+
+    expect(entryDraft.current.validities._default['speakers.0.links'].valid).toBe(true);
+    expect(entryDraft.current.validities._default.speakers.rangeOverflow).toBe(true);
+
+    delete values['speakers.3.name'];
+
+    expect(entryDraft.current.validities._default.speakers.valid).toBe(true);
   });
 
   it('should hold a list with subfields to its item count when only its items are stored', () => {
