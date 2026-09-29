@@ -1238,7 +1238,10 @@
  * the front matter type.
  * @property {BodyFieldOptions} [body_field] Body field options for front matter formats.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
- * @property {string} [preview_path] Preview URL path template.
+ * @property {string} [preview_path] Preview URL path template, appended to the site URL or the
+ * deploy preview URL to link to the entry. Without it, a published entry has no link, while an
+ * unpublished Editorial Workflow entry links to the root of its deploy preview. See the
+ * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
  * @property {FieldKeyPath} [preview_path_date_field] Date field name used for `preview_path`.
  * @property {EditorOptions} [editor] Editor view options.
  * @see https://decapcms.org/docs/collection-file/
@@ -1526,7 +1529,10 @@
  * format. Default: depends on the front matter type.
  * @property {BodyFieldOptions} [body_field] Body field options for front matter formats.
  * @property {I18nOptions | boolean} [i18n] I18n options. Default: `false`.
- * @property {string} [preview_path] Preview URL path template.
+ * @property {string} [preview_path] Preview URL path template, appended to the site URL or the
+ * deploy preview URL to link to the entry. Without it, a published entry has no link, while an
+ * unpublished Editorial Workflow entry links to the root of its deploy preview. See the
+ * [documentation](https://sveltiacms.app/en/docs/workflows/deploy-previews) for details.
  * @property {string} [preview_path_date_field] Date field name used for `preview_path`.
  * @property {EditorOptions} [editor] Editor view options.
  * @property {boolean} [yaml_quote] Whether to double-quote all the strings values if the YAML
