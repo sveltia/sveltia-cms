@@ -144,6 +144,41 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
     });
   });
 
+  describe('getCloudConfig with a field configuration', () => {
+    it('should merge the field-level config over the site-level one', () => {
+      const fieldConfig = /** @type {any} */ ({
+        widget: 'image',
+        media_libraries: { cloudinary: { config: { cloud_name: 'field-cloud' } } },
+      });
+
+      expect(getCloudConfig(fieldConfig)).toEqual({
+        cloudName: 'field-cloud',
+        apiKey: mockApiKey,
+      });
+    });
+
+    it('should inherit the site-level credentials', () => {
+      const fieldConfig = /** @type {any} */ ({
+        widget: 'image',
+        media_libraries: { cloudinary: { output_filename_only: true } },
+      });
+
+      expect(getCloudConfig(fieldConfig)).toEqual({
+        cloudName: mockCloudName,
+        apiKey: mockApiKey,
+      });
+    });
+
+    it('should return empty object when the field disables Cloudinary', () => {
+      const fieldConfig = /** @type {any} */ ({
+        widget: 'image',
+        media_libraries: { cloudinary: false },
+      });
+
+      expect(getCloudConfig(fieldConfig)).toEqual({});
+    });
+  });
+
   describe('getLibraryOptions', () => {
     it('should return cloudinary library options from media_libraries', () => {
       const options = getLibraryOptions();
@@ -294,6 +329,26 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       // Field config should override site config for cloud_name
       expect(merged.config?.cloud_name).toBe('field-cloud');
       expect(merged.config?.use_transformations).toBe(false);
+    });
+
+    it('should inherit the site-level credentials in a field-level `media_libraries` option', () => {
+      const fieldConfig = /** @type {any} */ ({
+        widget: 'image',
+        media_libraries: { cloudinary: { config: { multiple: true } } },
+      });
+
+      expect(getMergedLibraryOptions(fieldConfig)).toEqual({
+        config: { cloud_name: mockCloudName, api_key: mockApiKey, multiple: true },
+      });
+    });
+
+    it('should return empty options when the field disables Cloudinary', () => {
+      const fieldConfig = /** @type {any} */ ({
+        widget: 'image',
+        media_libraries: { cloudinary: false },
+      });
+
+      expect(getMergedLibraryOptions(fieldConfig)).toEqual({ config: {} });
     });
 
     it('should handle undefined site config', () => {
@@ -520,6 +575,38 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       ).toBe(true);
     });
 
+    it('should inherit the site-level credentials when the field-level config has none', () => {
+      expect(
+        isEnabled(
+          /** @type {any} */ ({
+            widget: 'image',
+            media_libraries: { cloudinary: { config: { default_transformations: [] } } },
+          }),
+        ),
+      ).toBe(true);
+    });
+
+    it('should inherit the site-level credentials in a legacy field-level option', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_library: {
+          name: 'cloudinary',
+          config: { cloud_name: mockCloudName, api_key: mockApiKey },
+        },
+      });
+
+      expect(
+        isEnabled(
+          /** @type {any} */ ({ widget: 'image', media_library: { config: { multiple: true } } }),
+        ),
+      ).toBe(true);
+    });
+
+    it('should return false when the field disables Cloudinary', () => {
+      expect(
+        isEnabled(/** @type {any} */ ({ widget: 'image', media_libraries: { cloudinary: false } })),
+      ).toBe(false);
+    });
+
     it('should return false when field-level config has missing credentials', () => {
       cmsConfig.current = /** @type {any} */ ({});
 
@@ -698,6 +785,44 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
         size: 12345,
         kind: 'image',
       });
+    });
+
+    it('should keep the site-level options the field-level options don’t override', () => {
+      cmsConfig.current = /** @type {any} */ ({
+        media_libraries: {
+          cloudinary: {
+            use_transformations: false,
+            config: { cloud_name: mockCloudName, api_key: mockApiKey },
+          },
+        },
+      });
+
+      const fieldConfig = /** @type {any} */ ({
+        widget: 'image',
+        media_libraries: {
+          cloudinary: { config: { default_transformations: [[{ width: 400 }]] } },
+        },
+      });
+
+      const [result] = parseResults(
+        [
+          {
+            asset_id: 'asset-123',
+            filename: 'image',
+            format: 'jpg',
+            resource_type: 'image',
+            type: 'upload',
+            secure_url: 'https://res.cloudinary.com/test-cloud/image/upload/v1/image.jpg',
+            bytes: 12345,
+            created_at: '2025-01-01T00:00:00Z',
+          },
+        ],
+        { fieldConfig },
+      );
+
+      expect(result.downloadURL).toBe(
+        'https://res.cloudinary.com/test-cloud/image/upload/v1/image.jpg',
+      );
     });
 
     it('should parse video resources correctly', () => {
@@ -906,6 +1031,24 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
   });
 
   describe('list', () => {
+    it('should fetch resources from the cloud set in the field-level options', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({ ok: true, json: vi.fn().mockResolvedValue({ resources: [] }) }),
+      );
+
+      const fieldConfig = /** @type {any} */ ({
+        widget: 'image',
+        media_libraries: { cloudinary: { config: { cloud_name: 'field-cloud' } } },
+      });
+
+      await list({ apiKey: mockApiSecret, fieldConfig });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('https://api.cloudinary.com/v1_1/field-cloud/resources/search'),
+        expect.anything(),
+      );
+    });
+
     it('should fetch resources successfully', async () => {
       const mockResponse = {
         resources: [
@@ -1356,6 +1499,35 @@ describe('integrations/media-libraries/cloud/cloudinary', () => {
       expect(results).toHaveLength(1);
       expect(results[0].id).toBe('asset-uploaded-test');
       expect(results[0].fileName).toBe('test.jpg');
+    });
+
+    it('should upload to the cloud set in the field-level options', async () => {
+      const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        /** @type {any} */ ({
+          ok: true,
+          json: vi.fn().mockResolvedValue({
+            asset_id: 'asset-uploaded-test',
+            resource_type: 'image',
+            secure_url: 'https://res.cloudinary.com/field-cloud/image/upload/v1/test.jpg',
+            bytes: 7,
+            created_at: '2025-01-01T00:00:00Z',
+          }),
+        }),
+      );
+
+      const fieldConfig = /** @type {any} */ ({
+        widget: 'image',
+        media_libraries: { cloudinary: { config: { cloud_name: 'field-cloud' } } },
+      });
+
+      await upload([mockFile], { apiKey: mockApiSecret, fieldConfig });
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://api.cloudinary.com/v1_1/field-cloud/auto/upload',
+        expect.anything(),
+      );
     });
 
     it('should upload multiple files successfully', async () => {

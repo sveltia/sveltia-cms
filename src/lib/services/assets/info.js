@@ -631,7 +631,7 @@ export const getFolderPublicPath = ({ folder, subfolderPath }) => {
  * @returns {string | undefined} Base URL or undefined if not applicable.
  */
 export const getAssetBaseURL = (fieldConfig) => {
-  if (allCloudStorageServices.cloudinary?.isEnabled?.()) {
+  if (allCloudStorageServices.cloudinary?.isEnabled?.(fieldConfig)) {
     const options = getMergedLibraryOptions(fieldConfig);
 
     if (options.output_filename_only && options.config?.cloud_name) {

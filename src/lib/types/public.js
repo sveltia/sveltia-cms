@@ -159,9 +159,8 @@
  * URL. Default: `true`.
  * @property {Record<string, any>} [config] Options to be passed to the Cloudinary Media Library
  * widget, such as `multiple`, `max_files`, `default_transformations` and `folder`. The `cloud_name`
- * and `api_key` options are required, and they are only read from the site-level
- * `media_libraries.cloudinary` or `media_library` option; field-level options are merged over the
- * site-level ones. See the [Cloudinary
+ * and `api_key` options are required. A field-level `config` is merged over the site-level one, so
+ * the credentials only need to be set at the site level. See the [Cloudinary
  * documentation](https://cloudinary.com/documentation/media_library_widget#2_set_the_configuration_options)
  * for a full list of available options. The `multiple` option is overridden by the field’s own
  * `multiple` option, and `max_files` by the field’s `max` option. Default `max_files`: `20`.
@@ -181,13 +180,15 @@
  * Options for the [Uploadcare media storage](https://sveltiacms.app/en/docs/media/uploadcare).
  * @typedef {object} UploadcareMediaLibrary
  * @property {Record<string, any>} [config] Options to be passed to Uploadcare, such as `multiple`.
- * The `publicKey` option is required, and can be set at either the site or field level. The
+ * The `publicKey` option is required. A field-level `config` is merged over the site-level one, so
+ * the key can be set at either the site or field level. The
  * `cdnBase` option sets the CDN origin used in output URLs, which is `https://ucarecdn.com` by
  * default. See the [Uploadcare
  * documentation](https://uploadcare.com/docs/uploads/file-uploader-options/) for a full list of
  * available options. Some options, including `previewStep`, will be ignored in Sveltia CMS because
  * we use an API-based integration instead of Uploadcare’s deprecated jQuery File Uploader.
- * @property {UploadcareMediaLibrarySettings} [settings] Integration settings.
+ * @property {UploadcareMediaLibrarySettings} [settings] Integration settings. Field-level settings
+ * are merged over the site-level ones.
  */
 
 /**
@@ -416,11 +417,15 @@
  * @property {string} [public_folder] Public media folder path for the field. Default:
  * `media_folder` option value.
  * @property {MediaLibrary & FieldMediaLibraryOptions} [media_library] Legacy media storage option
- * that allows only one library. This overrides the global `media_library` option. Use
- * `media_libraries` instead to support multiple libraries.
+ * that allows only one library. It overrides the global options of the same library in the same way
+ * as `media_libraries`; without a `name`, it applies to the library named in the global
+ * `media_library` option. Use `media_libraries` instead to support multiple libraries.
  * @property {MediaLibraries} [media_libraries] Unified media storage option that supports multiple
- * libraries. Each library defined here overrides the same library in the global `media_libraries`
- * option, while the others fall back to the global configuration. The `all` options are merged.
+ * libraries. The options of a cloud storage service, such as `cloudinary`, `uploadcare` or
+ * `aws_s3`, are merged over the same library’s global options, one level deep, so a field only
+ * needs to set what it overrides; `false` disables the service for the field. The `default` and
+ * `stock_assets` options replace the global ones, while the `all` options are merged. Libraries
+ * not defined here fall back to the global configuration.
  * @see https://decapcms.org/docs/widgets/#File
  * @see https://decapcms.org/docs/widgets/#Image
  * @see https://sveltiacms.app/en/docs/fields/file

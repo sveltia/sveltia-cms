@@ -2824,6 +2824,10 @@ describe('assets/info', () => {
       const result = getAssetBaseURL(fieldConfig);
 
       expect(result).toBe('https://res.cloudinary.com/my-cloud');
+      // @ts-ignore
+      expect(cloudStorageModule.allCloudStorageServices.cloudinary.isEnabled).toHaveBeenCalledWith(
+        fieldConfig,
+      );
     });
 
     it('should return undefined when Cloudinary is not enabled', () => {

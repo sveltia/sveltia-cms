@@ -6,7 +6,10 @@ import { isObject } from '@sveltia/utils/object';
 
 import { cmsConfig } from '$lib/services/config/state';
 import { assertResponseOK } from '$lib/services/integrations/media-libraries/cloud/shared/object-storage';
-import { findLibraryOptions } from '$lib/services/integrations/media-libraries/options';
+import {
+  findLibraryOptions,
+  resolveLibraryOptions,
+} from '$lib/services/integrations/media-libraries/options';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -104,22 +107,8 @@ export const CONFIG_PROPS = [
  * @returns {CloudinaryMediaLibrary | false | undefined} Configuration object, or `false` if
  * explicitly disabled.
  */
-export const getLibraryOptions = (config = cmsConfig.current) => {
-  const options = findLibraryOptions('cloudinary', config);
-
-  if (options !== undefined) {
-    return options;
-  }
-
-  // A field-level legacy `media_library` without a name inherits the site-level library
-  const { media_library: fieldOptions } = config ?? {};
-
-  return fieldOptions &&
-    !fieldOptions.name &&
-    cmsConfig.current?.media_library?.name === 'cloudinary'
-    ? /** @type {CloudinaryMediaLibrary} */ (fieldOptions)
-    : undefined;
-};
+export const getLibraryOptions = (config = cmsConfig.current) =>
+  findLibraryOptions('cloudinary', config);
 
 /**
  * @type {Map<string, CloudinaryMediaLibrary>}
@@ -140,17 +129,11 @@ export const getMergedLibraryOptions = (fieldConfig) => {
     return cache;
   }
 
-  const siteOptions = getLibraryOptions() || { config: {} };
-  const fieldOptions = getLibraryOptions(fieldConfig) || { config: {} };
+  const resolved = /** @type {CloudinaryMediaLibrary} */ (
+    resolveLibraryOptions('cloudinary', fieldConfig) || {}
+  );
 
-  const options = {
-    ...siteOptions,
-    ...fieldOptions,
-    config: {
-      ...siteOptions.config,
-      ...fieldOptions.config,
-    },
-  };
+  const options = { ...resolved, config: { ...resolved.config } };
 
   optionCacheMap.set(cacheKey, options);
 
@@ -158,11 +141,12 @@ export const getMergedLibraryOptions = (fieldConfig) => {
 };
 
 /**
- * Get Cloudinary configuration from site config.
+ * Get Cloudinary configuration from the site config, with the given field config merged.
+ * @param {MediaField} [fieldConfig] Field configuration.
  * @returns {{ cloudName?: string; apiKey?: string }} Cloudinary configuration.
  */
-export const getCloudConfig = () => {
-  const options = getLibraryOptions();
+export const getCloudConfig = (fieldConfig) => {
+  const options = resolveLibraryOptions('cloudinary', fieldConfig);
   const { cloud_name: cloudName, api_key: apiKey } = (options ? options.config : undefined) ?? {};
 
   return { cloudName, apiKey };
@@ -174,8 +158,7 @@ export const getCloudConfig = () => {
  * @returns {boolean} True if enabled, false otherwise.
  */
 export const isEnabled = (fieldConfig) => {
-  const options = getLibraryOptions(fieldConfig) ?? getLibraryOptions();
-  const { cloud_name: cloudName, api_key: apiKey } = (options ? options.config : undefined) ?? {};
+  const { cloudName, apiKey } = getCloudConfig(fieldConfig);
 
   return !!(cloudName && apiKey);
 };
@@ -276,7 +259,7 @@ export const parseResults = (results, { fieldConfig } = {}) => {
     output_filename_only: fileNameOnly = false,
     use_transformations: useTransformations = true,
     config: { default_transformations: defaultTransformations = [] } = {},
-  } = (getLibraryOptions(fieldConfig) ?? getLibraryOptions()) || {};
+  } = resolveLibraryOptions('cloudinary', fieldConfig) || {};
 
   const transformation = /** @type {Record<string, any>[][]} */ (defaultTransformations)?.[0]?.[0];
   const hasTransformation = useTransformations && isObject(transformation);
@@ -332,7 +315,8 @@ export const generateAuthHeader = (apiKey, apiSecret) => {
  * @see https://cloudinary.com/documentation/admin_api#search_for_resources
  */
 export const fetchResources = async (options, { maxPages = 10, expression } = {}) => {
-  const { cloudName, apiKey } = getCloudConfig();
+  const { kind, fieldConfig, apiKey: apiSecret } = options;
+  const { cloudName, apiKey } = getCloudConfig(fieldConfig);
 
   if (!cloudName) {
     return Promise.reject(new Error('Cloudinary cloud name is not configured'));
@@ -341,8 +325,6 @@ export const fetchResources = async (options, { maxPages = 10, expression } = {}
   if (!apiKey) {
     return Promise.reject(new Error('Cloudinary API key is not configured'));
   }
-
-  const { kind, fieldConfig, apiKey: apiSecret } = options;
 
   if (!apiSecret) {
     return Promise.reject(new Error('Cloudinary API secret is not provided'));
@@ -448,7 +430,8 @@ export const upload = async (files, options) => {
     return [];
   }
 
-  const { cloudName, apiKey } = getCloudConfig();
+  const { fieldConfig, apiKey: apiSecret } = options;
+  const { cloudName, apiKey } = getCloudConfig(fieldConfig);
 
   if (!cloudName) {
     return Promise.reject(new Error('Cloudinary cloud name is not configured'));
@@ -457,8 +440,6 @@ export const upload = async (files, options) => {
   if (!apiKey) {
     return Promise.reject(new Error('Cloudinary API key is not configured'));
   }
-
-  const { fieldConfig, apiKey: apiSecret } = options;
 
   if (!apiSecret) {
     return Promise.reject(new Error('Cloudinary API secret is not provided'));

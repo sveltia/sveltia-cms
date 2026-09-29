@@ -96,6 +96,27 @@ describe('integrations/media-libraries/cloud/shared/service', () => {
     expect(isEnabled()).toBe(false);
   });
 
+  it('should merge the field-level options over the site-level ones', async () => {
+    const { isEnabled, list } = service;
+
+    const fieldConfig = /** @type {any} */ ({
+      widget: 'image',
+      media_libraries: { azure_blob_storage: { container: 'field' } },
+    });
+
+    cmsConfig.current = /** @type {any} */ ({
+      media_libraries: { azure_blob_storage: { account_name: 'account' } },
+    });
+    expect(isEnabled()).toBe(false);
+    expect(isEnabled(fieldConfig)).toBe(true);
+
+    await list({ ...fetchOptions, fieldConfig });
+    expect(operations.list).toHaveBeenCalledWith(
+      { account_name: 'account', container: 'field' },
+      { ...fetchOptions, fieldConfig },
+    );
+  });
+
   it('should pass the library options through the config resolver', () => {
     const resolveConfig = vi.fn((options) => ({ ...options, endpoint: 'https://test' }));
     const custom = new ObjectStorageService({ ...service, resolveConfig });
