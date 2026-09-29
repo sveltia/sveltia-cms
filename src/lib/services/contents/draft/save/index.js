@@ -135,6 +135,9 @@ const buildChanges = async ({ draft, slugs }) => {
  * @param {boolean} [args.overwrite] Whether to save even if someone else has changed the entry
  * since the draft was opened. Without it, such a save is refused with a `save_conflict` error whose
  * `cause` is the conflict found by {@link detectEntryConflict}, so the user can be asked first.
+ * An entry stored in a file with the other entries of the collection is still refused if its item
+ * has changed, as it’s told by its position, and the item at the position may now be another entry
+ * that has moved there.
  * @returns {Promise<Entry>} Saved entry.
  * @throws {Error} When the entry is read-only, could not be validated or saved, or would overwrite
  * someone else’s change.

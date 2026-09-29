@@ -108,6 +108,26 @@ describe('reconcileEntries', () => {
       })[0],
     ).toBe(next);
   });
+  test('tells apart the entries stored in one file by their position', () => {
+    const previous = [
+      { ...makeEntry('old-0', { _default: 'data.json' }), arrayIndex: 0 },
+      { ...makeEntry('old-1', { _default: 'data.json' }), arrayIndex: 1 },
+    ];
+
+    const next = [
+      { ...makeEntry('new-0', { _default: 'data.json' }), arrayIndex: 0 },
+      { ...makeEntry('new-1', { _default: 'data.json' }), arrayIndex: 1 },
+      { ...makeEntry('new-2', { _default: 'data.json' }), arrayIndex: 2 },
+    ];
+
+    const result = reconcileEntries({
+      entries: next,
+      previous,
+      changedPaths: new Set(['data.json']),
+    });
+
+    expect(result).toEqual([{ ...next[0], id: 'old-0' }, { ...next[1], id: 'old-1' }, next[2]]);
+  });
 });
 
 describe('reconcileAssets', () => {

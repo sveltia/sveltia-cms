@@ -193,6 +193,7 @@ describe('buildEntryAssetMoveChanges()', () => {
       collection: {
         ...collection,
         folder: 'content/pages',
+        fields: [],
         nested: { subfolders: true },
         meta: { path: { index_file: '_index' } },
         _file: { subPath: undefined },

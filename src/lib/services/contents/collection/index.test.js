@@ -11,6 +11,7 @@ import {
   getSingletonCollection,
   getThumbnailFieldNames,
   getValidCollections,
+  isArrayFileCollection,
   isEntryCollection,
   isFileCollection,
   isSingletonCollection,
@@ -70,10 +71,20 @@ describe('isEntryCollection()', () => {
     expect(isEntryCollection(collection)).toBe(false);
   });
 
-  test('returns false for collection without folder', () => {
+  test('returns true for collection with the file option', () => {
+    const collection = {
+      name: 'members',
+      file: 'data/members.json',
+      fields: [{ name: 'title', widget: 'string' }],
+    };
+
+    expect(isEntryCollection(collection)).toBe(true);
+  });
+
+  test('returns false for collection without fields', () => {
     const collection = {
       name: 'invalid',
-      fields: [{ name: 'title', widget: 'string' }],
+      folder: 'content/posts',
     };
 
     expect(isEntryCollection(collection)).toBe(false);
@@ -107,6 +118,21 @@ describe('isFileCollection()', () => {
     };
 
     expect(isFileCollection(collection)).toBe(false);
+  });
+});
+
+describe('isArrayFileCollection()', () => {
+  test('returns true for an entry collection storing the entries in one file', () => {
+    expect(isArrayFileCollection({ _type: 'entry', _file: { arrayFile: true } })).toBe(true);
+  });
+
+  test('returns false for an entry collection storing the entries in a folder', () => {
+    expect(isArrayFileCollection({ _type: 'entry', _file: {} })).toBe(false);
+  });
+
+  test('returns false for a file collection or no collection', () => {
+    expect(isArrayFileCollection({ _type: 'file', _file: { arrayFile: true } })).toBe(false);
+    expect(isArrayFileCollection(undefined)).toBe(false);
   });
 });
 
@@ -259,8 +285,8 @@ describe('getValidCollections()', () => {
       },
       {
         name: 'invalid',
-        // No folder or files
-        fields: [{ name: 'title', widget: 'string' }],
+        // No fields or files
+        folder: 'content/invalid',
       },
     ];
 
@@ -554,11 +580,12 @@ describe('getThumbnailFieldNames()', () => {
     expect(getThumbnailFieldNames(collection)).toEqual(['featured', 'attachment']);
   });
 
-  test('returns empty array when folder collection has no fields (line 166)', () => {
-    // thumbnail defaults to true, fields is undefined → reaches `return []` at line 166
+  test('returns empty array when folder collection has no fields', () => {
+    // thumbnail defaults to true, fields is empty → reaches the last `return []`
     const collection = {
       name: 'posts',
       folder: 'content/posts',
+      fields: [],
     };
 
     expect(getThumbnailFieldNames(collection)).toEqual([]);
@@ -826,6 +853,24 @@ describe('getCollection()', () => {
     const result = getCollection('posts');
 
     expect(result?.folder).toBe('content/posts');
+  });
+
+  test('strips leading/trailing slashes from entry collection file path', () => {
+    const collections = [
+      {
+        name: 'members',
+        file: '/data/members.json/',
+        fields: [{ name: 'title', widget: 'string' }],
+      },
+    ];
+
+    cmsConfig.current = /** @type {any} */ ({ collections });
+
+    const result = getCollection('members');
+
+    expect(result?._type).toBe('entry');
+    expect(result?.file).toBe('data/members.json');
+    expect(result?.folder).toBeUndefined();
   });
 
   test('handles file collection with slash-padded file paths', () => {

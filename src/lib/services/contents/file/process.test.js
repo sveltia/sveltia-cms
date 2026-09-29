@@ -3,11 +3,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  arrayFileItems,
+  createArrayItemEntry,
   extractPathInfo,
   getSlug,
   isIndexFile,
   normalizeDefaultRootContent,
   parseFileContent,
+  prepareArrayFileEntries,
   prepareEntries,
   prepareEntry,
   processI18nMultiFileEntry,
@@ -2586,5 +2589,275 @@ describe('Test prepareEntries()', () => {
     expect(filtered[1].slug).toBe('other-post');
     // Check that all entries got UUIDs
     expect(filtered.every((entry) => entry.id === 'generated-uuid')).toBe(true);
+  });
+});
+
+describe('Test array file entries', () => {
+  const path = 'data/posts.json';
+
+  /**
+   * Create an entry collection storing all the entries in one file.
+   * @param {object} [options] Options.
+   * @param {boolean} [options.i18nEnabled] Whether i18n is enabled.
+   * @param {boolean} [options.defaultRoot] Whether `single_file_default_root` is used.
+   * @param {boolean} [options.arrayFile] Whether the collection stores all the entries in one file.
+   * @returns {any} Collection.
+   */
+  const createCollection = ({
+    i18nEnabled = false,
+    defaultRoot = false,
+    arrayFile = true,
+  } = {}) => ({
+    name: 'posts',
+    _type: 'entry',
+    fields: [{ name: 'title' }],
+    _file: {
+      arrayFile,
+      fullPathRegEx: /^posts\/(?<subPath>.+)\.md$/,
+      subPath: undefined,
+      extension: 'md',
+    },
+    _i18n: {
+      i18nEnabled,
+      allLocales: i18nEnabled ? ['en', 'fr'] : ['_default'],
+      defaultLocale: i18nEnabled ? 'en' : '_default',
+      structureMap: {
+        i18nSingleFile: i18nEnabled && !defaultRoot,
+        i18nSingleFileDefaultRoot: defaultRoot,
+        i18nMultiFile: false,
+        i18nMultiFolder: false,
+        i18nMultiRootFolder: false,
+      },
+      canonicalSlug: { key: undefined },
+    },
+  });
+
+  /** @type {any} */
+  let getCollection;
+  /** @type {any} */
+  let parseEntryFile;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    arrayFileItems.clear();
+
+    getCollection = (await import('$lib/services/contents/collection')).getCollection;
+    parseEntryFile = (await import('$lib/services/contents/file/parse')).parseEntryFile;
+  });
+
+  describe('createArrayItemEntry()', () => {
+    test('creates an entry from an item without i18n', () => {
+      const meta = { commitAuthor: { name: 'Alice' } };
+
+      expect(
+        createArrayItemEntry({
+          collection: createCollection(),
+          item: { title: 'A' },
+          index: 2,
+          path,
+          // @ts-ignore
+          meta,
+        }),
+      ).toEqual({
+        id: '',
+        slug: '2',
+        subPath: '2',
+        arrayIndex: 2,
+        commitAuthor: { name: 'Alice' },
+        locales: { _default: { slug: '2', path, content: { title: 'A' } } },
+      });
+    });
+
+    test('creates an entry from an item with the single_file structure', () => {
+      const entry = createArrayItemEntry({
+        collection: createCollection({ i18nEnabled: true }),
+        item: { en: { title: 'A' }, fr: { title: 'B' } },
+        index: 0,
+        path,
+      });
+
+      expect(entry?.slug).toBe('0');
+      expect(entry?.arrayIndex).toBe(0);
+      expect(entry?.locales).toEqual({
+        en: { slug: '0', path, content: { title: 'A' } },
+        fr: { slug: '0', path, content: { title: 'B' } },
+      });
+    });
+
+    test('creates an entry from an item with the single_file_default_root structure', () => {
+      const entry = createArrayItemEntry({
+        collection: createCollection({ i18nEnabled: true, defaultRoot: true }),
+        item: { title: 'A', fr: { title: 'B' } },
+        index: 1,
+        path,
+      });
+
+      expect(entry?.locales).toEqual({
+        en: { slug: '1', path, content: { title: 'A' } },
+        fr: { slug: '1', path, content: { title: 'B' } },
+      });
+    });
+
+    test('returns undefined for an invalid item', () => {
+      expect(
+        createArrayItemEntry({ collection: createCollection(), item: 'text', index: 0, path }),
+      ).toBeUndefined();
+      expect(
+        createArrayItemEntry({
+          collection: createCollection({ i18nEnabled: true, defaultRoot: true }),
+          item: 'text',
+          index: 0,
+          path,
+        }),
+      ).toBeUndefined();
+    });
+
+    test('returns undefined for an item without any locale content', () => {
+      expect(
+        createArrayItemEntry({
+          collection: createCollection({ i18nEnabled: true }),
+          item: { de: { title: 'A' } },
+          index: 0,
+          path,
+        }),
+      ).toBeUndefined();
+    });
+  });
+
+  describe('prepareArrayFileEntries()', () => {
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'posts.json',
+      path,
+      sha: 'abc',
+      size: 10,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    test('creates an entry for each valid item', () => {
+      const entries = /** @type {Entry[]} */ ([]);
+      const errors = /** @type {Error[]} */ ([]);
+      const rawContent = [{ title: 'A' }, 'junk', { title: 'C' }];
+
+      prepareArrayFileEntries({
+        collection: createCollection(),
+        file: { ...file, meta: { commitDate: new Date(0) } },
+        rawContent,
+        entries,
+        errors,
+      });
+
+      expect(entries.map(({ slug, arrayIndex }) => [slug, arrayIndex])).toEqual([
+        ['0', 0],
+        ['2', 2],
+      ]);
+      expect(entries[0].commitDate).toEqual(new Date(0));
+      expect(errors).toHaveLength(0);
+      expect(arrayFileItems.get(path)).toBe(rawContent);
+    });
+
+    test('reports a file that doesn’t contain an array', () => {
+      const entries = /** @type {Entry[]} */ ([]);
+      const errors = /** @type {Error[]} */ ([]);
+
+      prepareArrayFileEntries({
+        collection: createCollection(),
+        file,
+        rawContent: { title: 'A' },
+        entries,
+        errors,
+      });
+
+      expect(entries).toHaveLength(0);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain('doesn’t contain an array');
+      expect(arrayFileItems.has(path)).toBe(true);
+      expect(arrayFileItems.get(path)).toBeNull();
+    });
+  });
+
+  describe('prepareEntry()', () => {
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'posts.json',
+      path,
+      sha: 'abc',
+      size: 10,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    test('prepares the entries of an array file', async () => {
+      const entries = /** @type {Entry[]} */ ([]);
+      const errors = /** @type {Error[]} */ ([]);
+
+      parseEntryFile.mockResolvedValue([{ title: 'A' }, { title: 'B' }]);
+      getCollection.mockReturnValue(createCollection());
+
+      await prepareEntry({ file, entries, entryMap: new Map(), errors });
+
+      expect(entries.map(({ slug }) => slug)).toEqual(['0', '1']);
+      expect(arrayFileItems.get(path)).toEqual([{ title: 'A' }, { title: 'B' }]);
+    });
+
+    test('prepares a regular entry of an entry collection', async () => {
+      const entries = /** @type {Entry[]} */ ([]);
+
+      parseEntryFile.mockResolvedValue({ title: 'A' });
+      getCollection.mockReturnValue(createCollection({ arrayFile: false }));
+
+      await prepareEntry({
+        file: { ...file, path: 'posts/hello.md' },
+        entries,
+        entryMap: new Map(),
+        errors: [],
+      });
+
+      expect(entries).toHaveLength(1);
+      expect(entries[0].slug).toBe('hello');
+      expect(arrayFileItems.size).toBe(0);
+    });
+
+    test('marks an array file that can’t be parsed', async () => {
+      const errors = /** @type {Error[]} */ ([]);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      parseEntryFile.mockRejectedValue(new Error('Parsing failed'));
+      getCollection.mockReturnValue(createCollection());
+
+      await prepareEntry({ file, entries: [], entryMap: new Map(), errors });
+
+      expect(errors).toHaveLength(1);
+      expect(arrayFileItems.has(path)).toBe(true);
+      expect(arrayFileItems.get(path)).toBeNull();
+
+      consoleSpy.mockRestore();
+    });
+
+    test('doesn’t mark another file that can’t be parsed', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      parseEntryFile.mockRejectedValue(new Error('Parsing failed'));
+
+      // Regular entry collection
+      getCollection.mockReturnValue(createCollection({ arrayFile: false }));
+      await prepareEntry({ file, entries: [], entryMap: new Map(), errors: [] });
+
+      // File collection
+      getCollection.mockReturnValue({
+        name: 'pages',
+        _type: 'file',
+        _fileMap: { about: { name: 'about', _file: {}, _i18n: {} } },
+      });
+      await prepareEntry({
+        file: { ...file, folder: { collectionName: 'pages', fileName: 'about' } },
+        entries: [],
+        entryMap: new Map(),
+        errors: [],
+      });
+
+      expect(arrayFileItems.size).toBe(0);
+
+      consoleSpy.mockRestore();
+    });
   });
 });

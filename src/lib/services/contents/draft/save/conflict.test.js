@@ -31,7 +31,7 @@ describe('compareWithStore', () => {
   test('reports a deleted entry', () => {
     allEntries.current = [];
 
-    expect(compareWithStore(makeEntry('a', 'A'))).toEqual({ type: 'deleted' });
+    expect(compareWithStore(makeEntry('a', 'A'))).toEqual({ type: 'deleted', canOverwrite: true });
   });
 
   test('reports a modified entry along with its current version', () => {
@@ -39,7 +39,11 @@ describe('compareWithStore', () => {
 
     allEntries.current = [current];
 
-    expect(compareWithStore(makeEntry('a', 'A'))).toEqual({ type: 'modified', entry: current });
+    expect(compareWithStore(makeEntry('a', 'A'))).toEqual({
+      type: 'modified',
+      entry: current,
+      canOverwrite: true,
+    });
   });
 
   test('reports a locale file added as a change', () => {
@@ -48,7 +52,27 @@ describe('compareWithStore', () => {
     current.locales.fr = { slug: 'a', path: 'fr/a.md', content: { title: 'A (fr)' } };
     allEntries.current = [current];
 
-    expect(compareWithStore(makeEntry('a', 'A'))).toEqual({ type: 'modified', entry: current });
+    expect(compareWithStore(makeEntry('a', 'A'))).toEqual({
+      type: 'modified',
+      entry: current,
+      canOverwrite: true,
+    });
+  });
+
+  test('reports that an entry stored in a file with the other entries can’t be overwritten', () => {
+    allEntries.current = [makeEntry('a', 'B', { arrayIndex: 1 })];
+
+    expect(compareWithStore(makeEntry('a', 'A', { arrayIndex: 1 }))).toMatchObject({
+      type: 'modified',
+      canOverwrite: false,
+    });
+
+    allEntries.current = [];
+
+    expect(compareWithStore(makeEntry('a', 'A', { arrayIndex: 1 }))).toEqual({
+      type: 'deleted',
+      canOverwrite: false,
+    });
   });
 
   test('reports nothing when the content is the same, whatever the object', () => {
@@ -83,7 +107,7 @@ describe('detectEntryConflict', () => {
 
     expect(
       await detectEntryConflict(/** @type {any} */ ({ isNew: false, originalEntry: original })),
-    ).toEqual({ type: 'modified', entry: current });
+    ).toEqual({ type: 'modified', entry: current, canOverwrite: true });
   });
 
   test('compares against what’s known when the check fails', async () => {
@@ -114,8 +138,18 @@ describe('detectEntryConflict', () => {
 });
 
 describe('describeConflict', () => {
+  test('asks for a reload when the entry can’t be saved over the change', () => {
+    expect(describeConflict({ type: 'deleted', canOverwrite: false }).warning).toBe(
+      'save_conflict.reload_warning',
+    );
+    expect(
+      describeConflict({ type: 'modified', entry: makeEntry('a', 'A'), canOverwrite: false })
+        .warning,
+    ).toBe('save_conflict.reload_warning');
+  });
+
   test('describes a deletion', () => {
-    expect(describeConflict({ type: 'deleted' })).toEqual({
+    expect(describeConflict({ type: 'deleted', canOverwrite: true })).toEqual({
       description: 'save_conflict.deleted',
       warning: 'save_conflict.recreate_warning',
     });
@@ -129,7 +163,7 @@ describe('describeConflict', () => {
       commitDate,
     });
 
-    expect(describeConflict({ type: 'modified', entry }, 'en-US')).toEqual({
+    expect(describeConflict({ type: 'modified', entry, canOverwrite: true }, 'en-US')).toEqual({
       description: `save_conflict.modified_by:${JSON.stringify({
         name: 'Alex',
         date: `${commitDate.toISOString()}@en-US`,
@@ -145,6 +179,7 @@ describe('describeConflict', () => {
       describeConflict(
         {
           type: 'modified',
+          canOverwrite: true,
           entry: makeEntry('a', 'A', { commitAuthor: { login: 'alex' }, commitDate }),
         },
         'en-US',
@@ -155,6 +190,7 @@ describe('describeConflict', () => {
       describeConflict(
         {
           type: 'modified',
+          canOverwrite: true,
           entry: makeEntry('a', 'A', { commitAuthor: { email: 'alex@example.com' }, commitDate }),
         },
         'en-US',
@@ -163,7 +199,9 @@ describe('describeConflict', () => {
   });
 
   test('describes a change without naming anyone when the author isn’t known', () => {
-    expect(describeConflict({ type: 'modified', entry: makeEntry('a', 'A') })).toEqual({
+    expect(
+      describeConflict({ type: 'modified', entry: makeEntry('a', 'A'), canOverwrite: true }),
+    ).toEqual({
       description: 'save_conflict.modified',
       warning: 'save_conflict.overwrite_warning',
     });
@@ -173,6 +211,7 @@ describe('describeConflict', () => {
       describeConflict({
         type: 'modified',
         entry: makeEntry('a', 'A', { commitAuthor: { name: 'Alex' } }),
+        canOverwrite: true,
       }).description,
     ).toBe('save_conflict.modified');
   });

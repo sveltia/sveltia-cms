@@ -4,6 +4,7 @@ import { backend } from '$lib/services/backends';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
 import { allEntries } from '$lib/services/contents';
+import { combineArrayFileChanges, createArrayFileEntries } from '$lib/services/contents/file/array';
 import { productionSHA } from '$lib/services/deployments';
 import { user } from '$lib/services/user/account.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -103,13 +104,27 @@ export const updateCache = async ({ changes, commit }) => {
  * @param {FileChange[]} args.changes Committed changes.
  * @param {Entry[]} args.savedEntries Entries that have been saved.
  * @param {Asset[]} args.savedAssets Assets that have been saved.
+ * @param {Entry[]} [args.arrayFileEntries] All the entries in the files storing all the entries of
+ * an entry collection that have been rewritten, which replace the entries previously in the files.
  */
-export const updateStores = ({ changes, savedEntries, savedAssets }) => {
-  const savedEntryIds = new Set(savedEntries.map((e) => e.id));
+export const updateStores = ({ changes, savedEntries, savedAssets, arrayFileEntries = [] }) => {
+  const savedEntryIds = new Set([...savedEntries, ...arrayFileEntries].map((e) => e.id));
+
+  const arrayFilePaths = new Set(
+    arrayFileEntries.flatMap((e) => Object.values(e.locales).map(({ path }) => path)),
+  );
 
   allEntries.current = [
-    ...allEntries.current.filter((e) => !savedEntryIds.has(e.id)),
-    ...savedEntries,
+    ...allEntries.current.filter(
+      (e) =>
+        !savedEntryIds.has(e.id) &&
+        !(
+          e.arrayIndex !== undefined &&
+          Object.values(e.locales).some(({ path }) => arrayFilePaths.has(path))
+        ),
+    ),
+    ...savedEntries.filter((e) => !arrayFileEntries.includes(e)),
+    ...arrayFileEntries,
   ];
 
   const excludingPaths = new Set(savedAssets.map((a) => a.path));
@@ -134,7 +149,9 @@ export const updateStores = ({ changes, savedEntries, savedAssets }) => {
  * The repository is checked for someone else’s commits first, so that the commit is made on top of
  * the branch as it is rather than as it was when the site data was loaded — GitHub rejects a commit
  * made against a head that has moved. The check is a nicety here: if it fails, the commit is
- * attempted anyway, and the backend has the last word.
+ * attempted anyway, and the backend has the last word. It also brings the files storing all the
+ * entries of an entry collection up to date, so the changes to them are applied to the items as
+ * they are now, and combined into one change for each file.
  * @param {object} args Arguments.
  * @param {FileChange[]} args.changes Changes to be committed.
  * @param {Entry[]} [args.savingEntries] Entries to be saved.
@@ -154,23 +171,38 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
   }
 
   return suspendChecksWhile(async () => {
+    // A check for remote changes made from here on would replace the items the changes are applied
+    // to, and the entries the saved ones are matched up with
+    const { changes: combinedChanges, arrayFileUpdates } = await combineArrayFileChanges(changes);
+
     /** @type {CommitResults} */
     const commit = {
-      ...(await commitChanges(changes, options)),
+      ...(await commitChanges(combinedChanges, options)),
       author: getCommitAuthor(),
     };
 
     if (prefs.devModeEnabled) {
       // eslint-disable-next-line no-console
-      console.debug('Commit changes:', changes);
+      console.debug('Commit changes:', combinedChanges);
       // eslint-disable-next-line no-console
       console.debug('Commit results:', commit);
     }
 
     const { files, author: commitAuthor, date: commitDate } = commit;
 
+    const { entries: arrayFileEntries, savedEntries: savedArrayFileEntries } =
+      createArrayFileEntries({
+        arrayFileUpdates,
+        savingEntries,
+        meta: { commitAuthor, commitDate },
+      });
+
+    // An entry stored in a file with the other entries of the collection is replaced with the one
+    // made from the file as it has been saved, which knows its position in the array
     const savedEntries = savingEntries.map(
-      (entry) => /** @type {Entry} */ ({ ...entry, commitAuthor, commitDate }),
+      (entry) =>
+        savedArrayFileEntries.get(entry) ??
+        /** @type {Entry} */ ({ ...entry, commitAuthor, commitDate }),
     );
 
     const savedAssets = await Promise.all(
@@ -196,8 +228,8 @@ export const saveChanges = async ({ changes, savingEntries = [], savingAssets = 
       }),
     );
 
-    await updateCache({ changes, commit });
-    updateStores({ changes, savedEntries, savedAssets });
+    await updateCache({ changes: combinedChanges, commit });
+    updateStores({ changes: combinedChanges, savedEntries, savedAssets, arrayFileEntries });
     // The site is rebuilt from this commit, so the deploy state the UI reports is now about the
     // user’s own change. Editorial Workflow commits don’t come through here; they land on a
     // workflow branch and are tracked by the pull request instead

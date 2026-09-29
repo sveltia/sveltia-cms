@@ -2,6 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 
 import { fillTemplate } from '$lib/services/common/template';
+import { isArrayFileCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
   getEntryDirPath,
@@ -179,6 +180,13 @@ export const createEntryPath = ({ draft, locale, slug }) => {
     const { _i18n, file } = collectionFile;
 
     return getLocalePath({ _i18n, locale, path: stripSlashes(file) });
+  }
+
+  // All the entries are stored in one file, which holds all the translations
+  if (isArrayFileCollection(collection)) {
+    return /** @type {string} */ (
+      /** @type {InternalEntryCollection} */ (collection)._file.fullPath
+    );
   }
 
   const entryCollection = /** @type {InternalEntryCollection} */ (collection);

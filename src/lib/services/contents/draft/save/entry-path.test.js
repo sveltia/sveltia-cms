@@ -17,6 +17,7 @@ vi.mock('$lib/services/contents/collection', () => ({
   isEntryCollection: vi.fn(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
   ),
+  isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
 }));
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
@@ -268,6 +269,31 @@ describe('contents/draft/save/entry-path', () => {
         path: 'about.md',
       });
       expect(result).toBeDefined();
+    });
+
+    it('should return the file path for a collection storing the entries in one file', () => {
+      const _i18n = {
+        defaultLocale: 'en',
+        structure: 'single_file',
+        omitDefaultLocaleFromFilePath: false,
+        omitDefaultLocaleFromPreviewPath: false,
+      };
+
+      const draft = {
+        collection: {
+          file: 'data/members.json',
+          _file: { arrayFile: true, fullPath: 'data/members.json' },
+          _i18n,
+        },
+        collectionFile: undefined,
+        originalEntry: undefined,
+        currentValues: {},
+        isIndexFile: false,
+      };
+
+      expect(createEntryPath({ draft, locale: 'en', slug: 'jane' })).toBe('data/members.json');
+      expect(createEntryPath({ draft, locale: 'fr', slug: 'jane' })).toBe('data/members.json');
+      expect(mockGetLocalePath).not.toHaveBeenCalled();
     });
 
     it('should return existing path when slug matches original entry', async () => {

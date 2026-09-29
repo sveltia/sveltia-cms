@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   addFolderIfNeeded,
   getAllAssetFolders,
+  getCollectionBaseFolder,
   hasTags,
   iterateFiles,
   normalizeAssetFolder,
@@ -29,6 +30,35 @@ describe('config/folders/assets', () => {
   });
 
   describe('getAllAssetFolders', () => {
+    it('resolves a relative media folder against the file storing all the entries', () => {
+      const collections = [
+        {
+          name: 'members',
+          file: 'data/team/members.json',
+          media_folder: 'photos',
+          public_folder: '/photos',
+        },
+      ];
+
+      vi.mocked(getValidCollections).mockReturnValue(/** @type {any} */ (collections));
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        media_folder: 'static/images',
+        public_folder: '/images',
+        collections,
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getAllAssetFolders(config);
+
+      expect(result.find(({ collectionName }) => collectionName === 'members')).toMatchObject({
+        internalPath: 'data/team',
+        internalSubPath: 'photos',
+        entryRelative: true,
+      });
+    });
+
     it('records the locale folder names on entry-relative folders only', () => {
       const collections = [
         // Entry-relative: the assets sit beside the entry, so they can be below a locale folder
@@ -1541,6 +1571,31 @@ describe('config/folders/assets', () => {
         icon: undefined,
         isAssetCollection: true,
       });
+    });
+  });
+
+  describe('getCollectionBaseFolder', () => {
+    it('should return the folder of an entry collection', () => {
+      // @ts-ignore - simplified collection for testing
+      expect(getCollectionBaseFolder({ name: 'posts', folder: 'content/posts' })).toBe(
+        'content/posts',
+      );
+    });
+
+    it('should return the folder of the file storing all the entries', () => {
+      // @ts-ignore - simplified collection for testing
+      expect(getCollectionBaseFolder({ name: 'members', file: 'data/team/members.json' })).toBe(
+        'data/team',
+      );
+    });
+
+    it('should return undefined for a file collection or a singleton collection', () => {
+      // @ts-ignore - simplified collection for testing
+      expect(getCollectionBaseFolder({ name: 'settings', files: [] })).toBeUndefined();
+      // @ts-ignore - simplified collection for testing
+      expect(getCollectionBaseFolder({ name: 'posts', folder: undefined })).toBeUndefined();
+      // @ts-ignore - simplified collection for testing
+      expect(getCollectionBaseFolder({ name: 'members', file: 123 })).toBeUndefined();
     });
   });
 

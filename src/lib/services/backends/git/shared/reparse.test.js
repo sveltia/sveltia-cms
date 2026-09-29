@@ -263,5 +263,19 @@ describe('git/shared/reparse', () => {
       expect(entries).toEqual([entryB, entryA, entryC]);
       expect(entries[1]).toBe(entryA);
     });
+
+    test('lists all the entries parsed from one file storing several entries', () => {
+      const entryA = createEntry('a', { _default: 'data.json' });
+      const entryB = createEntry('b', { _default: 'data.json' });
+      const entryC = createEntry('c', { _default: 'posts/c.md' });
+
+      const entries = mergeEntries({
+        entryFiles: [createFile('data.json'), createFile('posts/c.md')],
+        reusedEntries: new Map(),
+        parsedEntries: [entryA, entryB, entryC],
+      });
+
+      expect(entries).toEqual([entryA, entryB, entryC]);
+    });
   });
 });

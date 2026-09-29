@@ -855,23 +855,41 @@
   {discardDialogStrings.message}
 </ConfirmationDialog>
 
-<ConfirmationDialog
-  bind:open={showConflictDialog}
-  title={_('save_conflict.title')}
-  okLabel={_('save_conflict.save_anyway')}
-  onOk={async () => {
-    await save({ skipCI: saveConflict?.skipCI, overwrite: true });
-  }}
-  onClose={() => {
-    menuButton?.focus();
-  }}
->
+{#snippet conflictDescription()}
   {#if saveConflict}
     {@const { description, warning } = describeConflict(saveConflict.conflict, appLocale.current)}
     {description}
     {warning}
   {/if}
-</ConfirmationDialog>
+{/snippet}
+
+<!-- An entry stored in a file with the other entries can’t be saved over the change, so the dialog
+only tells what happened -->
+{#if saveConflict?.conflict.canOverwrite === false}
+  <AlertDialog
+    bind:open={showConflictDialog}
+    title={_('save_conflict.title')}
+    onClose={() => {
+      menuButton?.focus();
+    }}
+  >
+    {@render conflictDescription()}
+  </AlertDialog>
+{:else}
+  <ConfirmationDialog
+    bind:open={showConflictDialog}
+    title={_('save_conflict.title')}
+    okLabel={_('save_conflict.save_anyway')}
+    onOk={async () => {
+      await save({ skipCI: saveConflict?.skipCI, overwrite: true });
+    }}
+    onClose={() => {
+      menuButton?.focus();
+    }}
+  >
+    {@render conflictDescription()}
+  </ConfirmationDialog>
+{/if}
 
 <!-- Shown while the request is in flight. The result is reported by the content library page,
 because this toast goes away with the editor once the deletion has completed -->

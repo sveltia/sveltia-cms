@@ -2,7 +2,7 @@ import { _ } from '@sveltia/i18n';
 import { unique } from '@sveltia/utils/array';
 
 import { allEntries } from '$lib/services/contents';
-import { selectedCollection } from '$lib/services/contents/collection';
+import { isArrayFileCollection, selectedCollection } from '$lib/services/contents/collection';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { parseCustomSortableFields } from '$lib/services/contents/collection/view/utils';
 import { getField } from '$lib/services/contents/entry/fields';
@@ -109,8 +109,11 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
 
   const hasCommitAuthorKey = keys.includes('commit_author');
   const hasCommitDateKey = keys.includes('commit_date');
+  // An entry stored in a file with the other entries of the collection carries the file’s last
+  // commit, which is about whichever entry was changed last, so it doesn’t tell the entries apart
+  const isArrayFile = isArrayFileCollection(collection);
 
-  if (isCommitAuthorAvailable) {
+  if (isCommitAuthorAvailable && !isArrayFile) {
     if (!keys.includes('author') && !hasCommitAuthorKey) {
       keys.push('commit_author');
     }
@@ -118,7 +121,7 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     keys = keys.filter((key) => key !== 'commit_author');
   }
 
-  if (isCommitDateAvailable) {
+  if (isCommitDateAvailable && !isArrayFile) {
     if (!keys.includes('date') && !hasCommitDateKey) {
       keys.push('commit_date');
     }
@@ -140,7 +143,9 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
   // in `sortable_fields` — to avoid showing two equivalent options.
   const orderKey = getOrderFieldKey(collection);
 
-  if (orderKey) {
+  // An entry collection storing all the entries in one file keeps them in the order of the array,
+  // so the manual order is always available there
+  if (orderKey || isArrayFileCollection(collection)) {
     keys = keys.filter((key) => key !== orderKey);
 
     if (!keys.includes('_manual')) {
@@ -235,7 +240,7 @@ export const sortKeys = createDerivedState(() => {
   const collection = selectedCollection.current;
 
   // Disable sorting for file/singleton collection
-  if (!collection || !('folder' in collection)) {
+  if (collection?._type !== 'entry') {
     return [];
   }
 

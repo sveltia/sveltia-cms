@@ -1326,10 +1326,18 @@ save_conflict:
   overwrite_warning: 今保存すると、その変更は失われます。
   # Follows `deleted`
   recreate_warning: 今保存すると、エントリーが再作成されます。
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: このエントリーは他のエントリーと同じファイルに保存されているため、変更を上書きして保存することはできません。編集をキャンセルしてから、リストからエントリーを開き直して編集してください。
   # OK button label
   save_anyway: このまま保存
   # Error shown when the repository was updated between the check above and the commit itself
   branch_moved: 保存中に他のユーザーがリポジトリを更新しました。再度お試しください。
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: 同じファイルに保存されているエントリーが他のユーザーによって変更されました。再度お試しください。
+  # {$path} is the file path
+  array_file_invalid: '{$path} ファイルには有効なエントリーのリストが含まれていないため、更新できません。'
 
 # Notice shown in the entry editor when someone else has changed or deleted the entry in the
 # repository while the user has it open. The change itself is described with the `save_conflict`
@@ -1696,12 +1704,22 @@ config:
     invalid_asset_collection_name: アセットコレクション名 `{$name}` は無効です。特殊文字を含めることはできません。
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: アセットコレクション名は一意でなければなりませんが、`{$name}` が複数回使用されています。
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: コレクションは `folder`、`files`、`divider` オプションのいずれかを定義する必要があります。
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: コレクションは `folder`、`files`、`divider` オプションを同時に持つことはできません。
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: コレクションは `folder`、`file`、`files`、`divider` オプションのいずれかを定義する必要があります。
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: コレクションは `folder`、`file`、`files`、`divider` オプションのうち複数を同時に持つことはできません。
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: 拡張子 `{$extension}` は `{$format}` 形式と一致しません。
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: '`file` オプション `{$file}` は無効です。`\{\{locale\}\}` プレースホルダーを含まない JSON ファイルのパスである必要があります。'
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: '`file` オプションを持つコレクションでは `{$prop}` オプションはサポートされていません。'
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: '`file` オプションを持つコレクションでは、オープンオーサリングを含む編集ワークフローはサポートされていません。コレクションの `publish_mode` オプションを `simple` に設定してください。'
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: '`file` オプションを持つコレクションでは、`{$prop}` オプションに `\{\{slug\}\}` タグを含めることはできません。エントリーのスラッグはその位置であり、エントリーの並べ替えや削除で変わるためです。代わりに一意の値を持つフィールドを使用してください。'
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: スラッグテンプレート `{$slug}` は無効です。スラッシュを含めることはできません。エントリーをサブフォルダーに整理するには、`slug` の代わりに `path` オプションを使用してください。
     # {$name} is the field name from the configuration; Don’t localize `identifier_field`
@@ -1830,6 +1848,11 @@ config:
     # Don’t localize `file`
     relation_field_missing_file_name: ファイルコレクションへの参照には `file` オプションを定義する必要があります。
     relation_field_invalid_value_field: 参照されている値フィールド `{$field}` は無効であるか定義されていません。
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: '`{$collection}` コレクションへの参照では `\{\{slug\}\}` の値を保存できません。`file` オプションを持つコレクションのエントリーのスラッグはその位置であり、エントリーの並べ替えや削除で変わるためです。代わりに `value_field` オプションに一意の値を持つフィールドを指定してください。'
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: '`file` オプションを持つコレクションは、編集ワークフローを使用する `{$collection}` コレクションへの参照を持つことができません。そのコレクションで名前が変更または削除されたエントリーへの参照を、ファイル内で更新できないためです。'
     relation_field_invalid_display_field: 参照されている表示フィールド `{$field}` は無効であるか定義されていません。
     relation_field_invalid_search_field: 参照されている検索フィールド `{$field}` は無効であるか定義されていません。
     relation_field_invalid_filter_field: 参照されているフィルターフィールド `{$field}` は無効であるか定義されていません。

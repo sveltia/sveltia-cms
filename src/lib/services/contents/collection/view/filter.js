@@ -86,7 +86,7 @@ export const viewFilters = createDerivedState(() => {
   const collection = selectedCollection.current;
 
   // Disable filters for file/singleton collection
-  if (!collection || !('folder' in collection)) {
+  if (collection?._type !== 'entry') {
     return [];
   }
 

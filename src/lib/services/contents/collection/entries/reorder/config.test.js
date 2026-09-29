@@ -17,6 +17,10 @@ describe('getOrderFieldKey()', () => {
     expect(getOrderFieldKey({ reorder: { key: 'priority' } })).toBe('priority');
   });
 
+  test('returns undefined for a collection storing the entries in one file', () => {
+    expect(getOrderFieldKey({ reorder: true, file: 'data/members.json' })).toBeUndefined();
+  });
+
   test('falls back to the default key when reorder.key is empty', () => {
     expect(getOrderFieldKey({ reorder: { key: '' } })).toBe('order');
   });

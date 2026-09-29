@@ -300,6 +300,7 @@ describe('Toolbar', () => {
           cause: {
             type: 'modified',
             entry: { ...helloEntry, commitAuthor: { name: 'Alex' }, commitDate },
+            canOverwrite: true,
           },
         }),
       )
@@ -331,7 +332,7 @@ describe('Toolbar', () => {
 
   test('says when the entry was deleted by someone else, and leaves it when cancelled', async () => {
     vi.mocked(saveEntry).mockRejectedValue(
-      new Error('save_conflict', { cause: { type: 'deleted' } }),
+      new Error('save_conflict', { cause: { type: 'deleted', canOverwrite: true } }),
     );
 
     const { draft, entryDraft } = await renderExisting();
@@ -350,6 +351,40 @@ describe('Toolbar', () => {
     );
 
     await dialog.getByRole('button', { name: 'Cancel' }).click();
+
+    await expect.element(dialog).not.toBeInTheDocument();
+    expect(saveEntry).toHaveBeenCalledOnce();
+    // Still editing
+    expect(entryDraft.current).toBe(draft);
+  });
+
+  test('only tells what happened when the entry can’t be saved over the change', async () => {
+    // An entry stored in a file with the other entries is told by its position
+    vi.mocked(saveEntry).mockRejectedValue(
+      new Error('save_conflict', {
+        cause: { type: 'modified', entry: helloEntry, canOverwrite: false },
+      }),
+    );
+
+    const { draft, entryDraft } = await renderExisting();
+    const save = page.getByRole('button', { name: 'Save' });
+
+    draft.currentValues._default.title = 'Hi';
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Entry Changed by Someone Else' });
+
+    await expect.element(dialog).toBeInTheDocument();
+    expect(dialog.element().textContent?.replace(/\s+/g, ' ')).toContain(
+      'This entry has been changed in the repository after you opened it. As the entry is ' +
+        'stored in the same file as other entries, it can’t be saved over the change.',
+    );
+    await expect
+      .element(dialog.getByRole('button', { name: 'Save Anyway' }))
+      .not.toBeInTheDocument();
+
+    await dialog.getByRole('button', { name: 'OK' }).click();
 
     await expect.element(dialog).not.toBeInTheDocument();
     expect(saveEntry).toHaveBeenCalledOnce();

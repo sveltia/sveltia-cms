@@ -64,6 +64,7 @@ describe('contents/draft/create/index', () => {
       _type: 'entry',
       name: 'pages',
       folder: 'content/pages',
+      fields: [],
       nested: {},
       meta: metaPath ? { path: { widget: 'string' } } : undefined,
     });

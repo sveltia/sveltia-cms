@@ -17,6 +17,9 @@ import { formatDate } from '$lib/services/utils/date';
  * else since the draft was opened.
  * @property {Entry} [entry] The entry as it is on the branch now, with the commit author and date
  * when known. Only for a modified entry.
+ * @property {boolean} canOverwrite Whether the entry can be saved over the change. An entry stored
+ * in a file with the other entries of the collection can’t, as it’s told by its position, and the
+ * item at the position may now be another entry that has moved there.
  */
 
 /**
@@ -27,15 +30,16 @@ import { formatDate } from '$lib/services/utils/date';
  */
 export const compareWithStore = (originalEntry) => {
   const current = allEntries.current.find(({ id }) => id === originalEntry.id);
+  const canOverwrite = originalEntry.arrayIndex === undefined;
 
   if (!current) {
-    return { type: 'deleted' };
+    return { type: 'deleted', canOverwrite };
   }
 
   // The parsed content is compared rather than the file, so a commit that rewrote the file without
   // changing what it says doesn’t count. A locale file added or removed does
   if (!equal(current.locales, originalEntry.locales)) {
-    return { type: 'modified', entry: current };
+    return { type: 'modified', entry: current, canOverwrite };
   }
 
   return undefined;
@@ -76,11 +80,11 @@ export const detectEntryConflict = async (draft) => {
  * @param {string} [locale] Locale to format the date in.
  * @returns {{ description: string, warning: string }} What happened, and what saving would do.
  */
-export const describeConflict = ({ type, entry }, locale) => {
+export const describeConflict = ({ type, entry, canOverwrite }, locale) => {
   if (type === 'deleted') {
     return {
       description: _('save_conflict.deleted'),
-      warning: _('save_conflict.recreate_warning'),
+      warning: _(canOverwrite ? 'save_conflict.recreate_warning' : 'save_conflict.reload_warning'),
     };
   }
 
@@ -96,6 +100,6 @@ export const describeConflict = ({ type, entry }, locale) => {
             values: { name, date: formatDate(commitDate, locale) },
           })
         : _('save_conflict.modified'),
-    warning: _('save_conflict.overwrite_warning'),
+    warning: _(canOverwrite ? 'save_conflict.overwrite_warning' : 'save_conflict.reload_warning'),
   };
 };

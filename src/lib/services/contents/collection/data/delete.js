@@ -10,7 +10,7 @@ import {
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { buildRenumberChanges } from '$lib/services/contents/collection/entries/reorder';
-import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
+import { getArrayItemTarget, getPreviousSha } from '$lib/services/contents/draft/save/changes';
 import {
   buildCascadeDeleteChanges,
   EMPTY_CASCADE_DELETE_PLAN,
@@ -73,7 +73,8 @@ export const deleteEntries = async (entries, assets = []) => {
   const action = 'delete';
 
   const ids = await Promise.all(
-    entries.map(async ({ id, locales, slug }) => {
+    entries.map(async (entry) => {
+      const { id, locales, slug } = entry;
       // Remove duplicate paths for single file i18n
       const paths = /** @type {string[]} */ (unique(Object.values(locales).map((l) => l.path)));
 
@@ -81,7 +82,8 @@ export const deleteEntries = async (entries, assets = []) => {
         paths.map(async (path) => {
           const previousSha = await getPreviousSha({ cacheDB, previousPath: path });
 
-          changes.push({ action, slug, path, previousSha });
+          // An entry stored in a file with the other entries is removed from the array instead
+          changes.push({ action, slug, path, previousSha, ...getArrayItemTarget(entry) });
         }),
       );
 

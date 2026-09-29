@@ -1056,6 +1056,78 @@ describe('Collections Parser', () => {
       expect(mockParseFields).toHaveBeenCalled();
     });
 
+    it('should parse entry collection storing all the entries in one file', async () => {
+      const { parseCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'members',
+          label: 'Members',
+          file: 'data/members.json',
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      };
+
+      parseCollection(context, collectors);
+
+      expect(mockParseFields).toHaveBeenCalled();
+      expect(mockParseCollectionFiles).not.toHaveBeenCalled();
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should validate the `file` option of an entry collection', async () => {
+      const { parseCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'members',
+          label: 'Members',
+          file: 'data/members.yaml',
+          fields: [],
+        },
+      };
+
+      parseCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strKey: 'invalid_collection_data_file',
+          values: { file: 'data/members.yaml' },
+        }),
+      );
+    });
+
+    it('should error when collection has conflicting options (file and folder)', async () => {
+      const { parseCollection } = await import('.');
+      const collectors = createCollectors();
+
+      /** @type {any} */
+      const context = {
+        cmsConfig: {},
+        collection: {
+          name: 'members',
+          file: 'data/members.json',
+          folder: 'content/members',
+          fields: [],
+        },
+      };
+
+      parseCollection(context, collectors);
+
+      expect(mockAddMessage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          strKey: 'invalid_collection_multiple_options',
+        }),
+      );
+      expect(mockParseFields).not.toHaveBeenCalled();
+    });
+
     it('should skip divider collections', async () => {
       const { parseCollection } = await import('.');
       const collectors = createCollectors();

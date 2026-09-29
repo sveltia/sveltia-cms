@@ -5,6 +5,7 @@ import { isObject } from '@sveltia/utils/object';
 
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseCollectionFiles } from '$lib/services/config/parser/collection-files';
+import { checkArrayFileOptions } from '$lib/services/config/parser/collections/array-file';
 import { checkCollectionFilter } from '$lib/services/config/parser/collections/filter';
 import { isFormatMismatch } from '$lib/services/config/parser/collections/format';
 import { checkIdentifierField } from '$lib/services/config/parser/collections/identifier';
@@ -93,6 +94,9 @@ export const parseEntryCollection = (context, collectors) => {
   if (!fields?.length) {
     addMessage({ strKey: 'collection_no_fields', context, collectors });
   }
+
+  // Validate the `file` option and the options that can’t go with it
+  checkArrayFileOptions(context, collectors);
 
   // The type of the `folder` option is checked against the JSON schema
   if (typeof folder === 'string' && hasLocalePlaceholder(folder)) {
@@ -206,12 +210,14 @@ export const parseCollection = ({ cmsConfig, collection }, collectors) => {
   const hasDivider = 'divider' in collection;
   const hasFiles = 'files' in collection;
   const hasFolder = 'folder' in collection;
+  const hasFile = 'file' in collection;
+  const optionCount = [hasDivider, hasFiles, hasFolder, hasFile].filter(Boolean).length;
 
   // Validate at least one option
-  if (!hasDivider && !hasFiles && !hasFolder) {
+  if (!optionCount) {
     addMessage({
       strKey: 'invalid_collection_no_options',
-      context: { cmsConfig, collection },
+      context: { cmsConfig, collection: /** @type {Collection} */ (collection) },
       collectors,
     });
 
@@ -219,7 +225,7 @@ export const parseCollection = ({ cmsConfig, collection }, collectors) => {
   }
 
   // Validate mutually exclusive options
-  if ((hasDivider && hasFiles) || (hasDivider && hasFolder) || (hasFiles && hasFolder)) {
+  if (optionCount > 1) {
     addMessage({
       strKey: 'invalid_collection_multiple_options',
       // @ts-ignore
@@ -236,7 +242,7 @@ export const parseCollection = ({ cmsConfig, collection }, collectors) => {
 
   if (hasFiles) {
     parseCollectionFiles({ cmsConfig, collection }, collectors);
-  } else if (hasFolder) {
+  } else if (hasFolder || hasFile) {
     parseEntryCollection({ cmsConfig, collection }, collectors);
   }
 };

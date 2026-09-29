@@ -69,7 +69,10 @@ export const refreshOpenedDraft = async (entryDraft) => {
 
   const conflict = compareWithStore(draft.originalEntry);
 
-  if (conflict?.type !== 'modified') {
+  // An entry stored in a file with the other entries of the collection is told by its position, and
+  // the item at the position may now be another entry that has moved there, which would silently
+  // take the place of the entry being viewed
+  if (conflict?.type !== 'modified' || !conflict.canOverwrite) {
     return;
   }
 

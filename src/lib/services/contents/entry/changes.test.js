@@ -4,6 +4,7 @@ import { IndexedDB } from '@sveltia/utils/storage';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { backend } from '$lib/services/backends';
+import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
 import {
   buildEntryUpdateChanges,
   createSyntheticDraft,
@@ -14,6 +15,11 @@ import { formatEntryFile } from '$lib/services/contents/file/format';
 vi.mock('$lib/services/backends', () => ({ backend: { current: null } }));
 
 vi.mock('$lib/services/contents/draft/save/changes', () => ({
+  getArrayItemTarget: vi.fn((entry) =>
+    entry.arrayIndex === undefined
+      ? {}
+      : { arrayItem: { index: entry.arrayIndex, locales: entry.locales } },
+  ),
   getPreviousSha: vi.fn(async ({ previousPath }) =>
     previousPath ? `sha:${previousPath}` : undefined,
   ),
@@ -106,6 +112,31 @@ describe('buildEntryUpdateChanges()', () => {
         data: 'formatted:{"title":"A"}',
       },
     ]);
+  });
+
+  test('targets the item of an entry stored in an array file', async () => {
+    const collection = {
+      name: 'members',
+      _file: { format: 'json', arrayFile: true },
+      _i18n: { i18nEnabled: false, defaultLocale: '_default' },
+    };
+
+    const entry = {
+      id: 'a',
+      slug: 'a',
+      arrayIndex: 2,
+      locales: { _default: { slug: 'a', path: 'data/members.json', content: { title: 'New' } } },
+    };
+
+    const [change] = await buildEntryUpdateChanges({ collection, entry, draft: {} });
+
+    // The item is looked up by `getArrayItemTarget()`, which reads the entry in the store
+    expect(getArrayItemTarget).toHaveBeenCalledWith(entry);
+    expect(change).toMatchObject({
+      action: 'update',
+      path: 'data/members.json',
+      arrayItem: { index: 2, locales: entry.locales },
+    });
   });
 
   test('produces one change per locale for multi-file i18n', async () => {

@@ -3,6 +3,16 @@
  */
 
 /**
+ * Get the key to match up an entry’s file with the same file of a previous entry. An entry
+ * collection can store all the entries in one file, where an entry is told by its position.
+ * @param {Entry} entry Entry.
+ * @param {string} path Path of one of the entry’s files.
+ * @returns {string} Key.
+ */
+const getFileKey = ({ arrayIndex }, path) =>
+  arrayIndex === undefined ? path : `${path}#${arrayIndex}`;
+
+/**
  * Carry the identity of the entries already in the store over to a freshly parsed list. An entry’s
  * `id` is made up when its files are parsed, so a second fetch would give every entry a new one,
  * and anything holding an ID — the editor’s draft, a selection in the list, a saved entry about to
@@ -24,7 +34,9 @@ export const reconcileEntries = ({ entries, previous, changedPaths }) => {
 
   /** @type {Map<string, Entry>} */
   const previousByPath = new Map(
-    previous.flatMap((entry) => Object.values(entry.locales).map(({ path }) => [path, entry])),
+    previous.flatMap((entry) =>
+      Object.values(entry.locales).map(({ path }) => [getFileKey(entry, path), entry]),
+    ),
   );
 
   // A previous entry stands in for one new entry only. Its files can end up in two entries, e.g.
@@ -35,7 +47,7 @@ export const reconcileEntries = ({ entries, previous, changedPaths }) => {
     const paths = Object.values(entry.locales).map(({ path }) => path);
 
     const match = paths
-      .map((path) => previousByPath.get(path))
+      .map((path) => previousByPath.get(getFileKey(entry, path)))
       .find((candidate) => !!candidate && !claimed.has(candidate));
 
     if (!match) {

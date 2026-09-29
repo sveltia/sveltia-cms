@@ -10,7 +10,7 @@ import {
   revokeBlobURLIfNeeded,
 } from '$lib/services/assets/info';
 import { canCreateThumbnail } from '$lib/services/assets/kinds';
-import { getCollection } from '$lib/services/contents/collection';
+import { getCollection, isArrayFileCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { fillEntryPathTemplate } from '$lib/services/contents/entry';
@@ -406,8 +406,11 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
  * @param {string} args.collectionName Name of a collection that the entry belongs to.
  * @param {string} [args.fileName] Collection file name. File/singleton collection only.
  * @returns {Asset[]} Assets, or an empty list unless the collection stores them with the entry.
+ * The entries of a collection storing all of them in one file share the folder of the file, and an
+ * asset there can be used by any of them, so none of the assets belongs to one entry alone.
  */
 export const getEntryRelativeAssets = ({ entry, collectionName, fileName }) =>
-  getAssetFolder({ collectionName, fileName })?.entryRelative
+  getAssetFolder({ collectionName, fileName })?.entryRelative &&
+  !isArrayFileCollection(getCollection(collectionName))
     ? getAssociatedAssets({ entry, collectionName, fileName, relative: true })
     : [];

@@ -156,20 +156,25 @@ export const planEntryReparse = ({ entryFiles, previous, changedPaths }) => {
  * @returns {Entry[]} Entries.
  */
 export const mergeEntries = ({ entryFiles, reusedEntries, parsedEntries }) => {
-  /** @type {Map<string, Entry>} */
-  const parsedByPath = new Map(
-    parsedEntries.flatMap((entry) => getEntryPaths(entry).map((path) => [path, entry])),
-  );
+  /** @type {Map<string, Entry[]>} */
+  const parsedByPath = new Map();
+
+  // A file storing all the entries of an entry collection makes more than one entry
+  parsedEntries.forEach((entry) => {
+    getEntryPaths(entry).forEach((path) => {
+      parsedByPath.set(path, [...(parsedByPath.get(path) ?? []), entry]);
+    });
+  });
 
   /** @type {Set<Entry>} */
   const entries = new Set();
 
   entryFiles.forEach(({ path }) => {
-    const entry = reusedEntries.get(path) ?? parsedByPath.get(path);
+    const reusedEntry = reusedEntries.get(path);
 
-    if (entry) {
+    (reusedEntry ? [reusedEntry] : (parsedByPath.get(path) ?? [])).forEach((entry) => {
       entries.add(entry);
-    }
+    });
   });
 
   return [...entries];

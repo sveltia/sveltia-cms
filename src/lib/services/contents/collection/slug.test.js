@@ -67,6 +67,15 @@ describe('contents/collection/slug', () => {
       });
     });
 
+    it('should make the slug uneditable for a collection storing the entries in one file', () => {
+      expect(
+        getSlugOptions({ file: 'data/members.json', slug: { editable: ['create', 'update'] } }),
+      ).toMatchObject({
+        template: '{{title}}',
+        editable: { create: false, update: false },
+      });
+    });
+
     it('should ignore the delete option', () => {
       expect(getSlugOptions({ delete: false }).editable).toEqual({ create: true, update: true });
     });

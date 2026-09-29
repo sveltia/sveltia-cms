@@ -37,7 +37,8 @@ vi.mock('@sveltia/utils/storage', () => ({
   IndexedDB: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/draft/save/changes', () => ({
+vi.mock('$lib/services/contents/draft/save/changes', async (importOriginal) => ({
+  getArrayItemTarget: /** @type {any} */ (await importOriginal()).getArrayItemTarget,
   getPreviousSha: vi.fn().mockResolvedValue('mock-sha-123'),
 }));
 
@@ -197,6 +198,27 @@ describe('Test deleteEntries()', () => {
         collection: { name: 'posts' },
       },
     });
+  });
+
+  test('targets the item of an entry stored in an array file', async () => {
+    const { saveChanges } = await import('$lib/services/backends/save');
+    const { selectedCollection } = await import('$lib/services/contents/collection');
+    const locales = { _default: { path: 'data/members.json', content: { name: 'Jane' } } };
+    const mockEntries = [{ id: '1', slug: 'jane', arrayIndex: 3, locales }];
+
+    selectedCollection.current = /** @type {any} */ ({ name: 'members' });
+
+    await deleteEntries(/** @type {any} */ (mockEntries));
+
+    expect(vi.mocked(saveChanges).mock.calls[0][0].changes).toEqual([
+      {
+        action: 'delete',
+        slug: 'jane',
+        path: 'data/members.json',
+        previousSha: 'mock-sha-123',
+        arrayItem: { index: 3, locales },
+      },
+    ]);
   });
 
   test('includes asset deletions in file changes', async () => {

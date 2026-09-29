@@ -96,13 +96,27 @@ export const getBackup = async (collectionName, slug = '') => {
 export const getBackupSlug = ({ fileName, originalEntry }) => fileName ?? originalEntry?.slug ?? '';
 
 /**
+ * Check if the given draft is for an existing entry stored in a file with the other entries of the
+ * collection. Its slug is its position in the array, which another entry can take after a reorder
+ * or a deletion, so a backup stored under it could be restored to the wrong entry.
+ * @param {EntryDraft} draft Draft.
+ * @returns {boolean} Result.
+ */
+const isArrayItemDraft = ({ originalEntry }) => originalEntry?.arrayIndex !== undefined;
+
+/**
  * Backup the entry draft to IndexedDB.
  * @param {EntryDraft} draft Draft.
  */
 export const saveBackup = async (draft) => {
   // Skip if the user hasn’t manually interacted with the editor, so that only programmatic changes,
   // e.g. Lexical markdown reformatting, don’t trigger a backup
-  if (!(prefs.useDraftBackup ?? true) || !draft.interacted || isDraftReadonly(draft)) {
+  if (
+    !(prefs.useDraftBackup ?? true) ||
+    !draft.interacted ||
+    isDraftReadonly(draft) ||
+    isArrayItemDraft(draft)
+  ) {
     return;
   }
 
@@ -303,7 +317,7 @@ export const restoreBackup = async ({ backup, draft }) => {
  */
 export const restoreBackupIfNeeded = async ({ draft }) => {
   // A read-only entry can’t be changed, so leave any backup alone until it can be edited again
-  if (!(prefs.useDraftBackup ?? true) || isDraftReadonly(draft)) {
+  if (!(prefs.useDraftBackup ?? true) || isDraftReadonly(draft) || isArrayItemDraft(draft)) {
     return;
   }
 

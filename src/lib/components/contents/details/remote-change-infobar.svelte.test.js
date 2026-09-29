@@ -112,6 +112,28 @@ describe('RemoteChangeInfobar', () => {
     );
   });
 
+  test('asks to open the entry again, rather than reloading it, when told by its position', async () => {
+    // An entry stored in a file with the other entries: another entry may have moved to its
+    // position, which a reload would load instead
+    const itemEntry = { ...helloEntry, arrayIndex: 2 };
+
+    setEntries([itemEntry]);
+    await renderInfobar({ originalEntry: itemEntry });
+    setEntries([{ ...changedEntry, arrayIndex: 2 }]);
+
+    const alert = page.getByRole('alert');
+
+    await expect
+      .element(alert)
+      .toHaveTextContent(
+        `warning Warning \u2068Alex\u2069 changed this entry on \u2068${formatDate(commitDate, 'en-US')}\u2069, ` +
+          'after you opened it. As the entry is stored in the same file as other entries, it can’t ' +
+          'be saved over the change. Cancel editing, then open the entry again from the list and ' +
+          'make your edits.',
+      );
+    expect(alert.getByRole('button', { name: 'Reload Entry' }).query()).toBeNull();
+  });
+
   test('says when the entry was deleted, with nothing to reload', async () => {
     await renderInfobar();
 

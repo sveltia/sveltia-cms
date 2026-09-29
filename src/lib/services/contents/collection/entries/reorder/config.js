@@ -16,7 +16,8 @@ const DEFAULT_ORDER_FIELD_KEY = 'order';
 export const getOrderFieldKey = (collection) => {
   const reorder = collection?.reorder;
 
-  if (!reorder) {
+  // An entry collection storing all the entries in one file keeps them in the order of the array
+  if (!reorder || typeof collection.file === 'string') {
     return undefined;
   }
 

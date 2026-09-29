@@ -1,4 +1,5 @@
 import { saveChanges } from '$lib/services/backends/save';
+import { isArrayFileCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
@@ -18,13 +19,19 @@ import {
  */
 
 /**
- * Sort entries by the collection’s `order` field. Entries lacking a valid numeric value are placed
+ * Sort entries by the collection’s `order` field, or by their position in the array for a
+ * collection storing all the entries in one file. Entries lacking a valid numeric value are placed
  * at the end while preserving their relative input order.
  * @param {Entry[]} entries Entries to sort.
  * @param {InternalEntryCollection} collection Entry collection.
  * @returns {Entry[]} New, sorted array.
  */
 export const sortEntriesByOrderField = (entries, collection) => {
+  // An entry collection storing all the entries in one file keeps them in the order of the array
+  if (isArrayFileCollection(collection)) {
+    return entries.toSorted((a, b) => (a.arrayIndex ?? 0) - (b.arrayIndex ?? 0));
+  }
+
   const orderKey = getOrderFieldKey(collection);
 
   if (!orderKey) {
@@ -124,6 +131,42 @@ const buildReorderChanges = async (collection, orderedEntries, { cacheDB } = {})
 };
 
 /**
+ * Build the change needed to reorder the entries of a collection storing all the entries in one
+ * file, which rewrites the file with the items in the new order.
+ * @param {InternalEntryCollection} collection Entry collection.
+ * @param {Entry[]} orderedEntries Entries in the desired display order.
+ * @returns {{ changes: FileChange[], savingEntries: Entry[] }} The change, if the order has
+ * changed, and the entries that have moved.
+ */
+const buildArrayFileReorderChanges = (collection, orderedEntries) => {
+  // The entries take the positions they occupy now, so an entry has moved if it doesn’t take its
+  // own position
+  const positions = orderedEntries
+    .map(({ arrayIndex }) => /** @type {number} */ (arrayIndex))
+    .sort((a, b) => a - b);
+
+  const savingEntries = orderedEntries.filter(
+    ({ arrayIndex }, index) => arrayIndex !== positions[index],
+  );
+
+  if (!savingEntries.length) {
+    return { changes: [], savingEntries: [] };
+  }
+
+  /** @type {FileChange} */
+  const change = {
+    action: 'update',
+    path: /** @type {string} */ (collection._file.fullPath),
+    arrayOrder: orderedEntries.map(({ arrayIndex, locales }) => ({
+      index: /** @type {number} */ (arrayIndex),
+      locales,
+    })),
+  };
+
+  return { changes: [change], savingEntries };
+};
+
+/**
  * Re-save entries in the given collection with updated order values. Entries whose order field
  * value is unchanged are skipped to avoid unnecessary commits. Files are written using the
  * collection’s configured format and i18n structure.
@@ -133,7 +176,9 @@ const buildReorderChanges = async (collection, orderedEntries, { cacheDB } = {})
  * @returns {Promise<number>} Number of entries actually updated.
  */
 export const reorderEntries = async (collection, orderedEntries) => {
-  const { changes, savingEntries } = await buildReorderChanges(collection, orderedEntries);
+  const { changes, savingEntries } = isArrayFileCollection(collection)
+    ? buildArrayFileReorderChanges(collection, orderedEntries)
+    : await buildReorderChanges(collection, orderedEntries);
 
   if (!changes.length) {
     return 0;

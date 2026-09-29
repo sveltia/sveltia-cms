@@ -144,7 +144,7 @@ export const getRootFields = ({ collection, collectionFile, isIndexFile }) => {
     return collectionFile.fields;
   }
 
-  if (!collection || !('folder' in collection)) {
+  if (!collection || 'files' in collection) {
     return undefined;
   }
 

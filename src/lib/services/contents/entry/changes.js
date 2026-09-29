@@ -1,5 +1,5 @@
 import { backend } from '$lib/services/backends';
-import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
+import { getArrayItemTarget, getPreviousSha } from '$lib/services/contents/draft/save/changes';
 import {
   buildSingleFileContent,
   getFieldComments,
@@ -103,7 +103,16 @@ export const buildEntryUpdateChanges = async ({
       }),
     ]);
 
-    return [/** @type {FileChange} */ ({ action: 'update', slug, path, previousSha, data })];
+    return [
+      /** @type {FileChange} */ ({
+        action: 'update',
+        slug,
+        path,
+        previousSha,
+        data,
+        ...getArrayItemTarget(entry),
+      }),
+    ];
   }
 
   const localeChanges = await Promise.all(

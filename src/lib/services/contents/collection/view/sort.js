@@ -1,4 +1,5 @@
 import { sortItemsByKey } from '$lib/services/common/view';
+import { isArrayFileCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
@@ -50,6 +51,11 @@ export const getSortKeyGetter = ({
   dateFieldConfig,
   isMarkdownField,
 }) => {
+  // An entry collection storing all the entries in one file keeps them in the order of the array
+  if (key === '_manual' && isArrayFileCollection(collection)) {
+    return (/** @type {Entry} */ entry) => entry.arrayIndex ?? 0;
+  }
+
   // Special handling for summary, which uses a generated value instead of a raw field value
   if (key === '_summary') {
     return (/** @type {Entry} */ entry) =>

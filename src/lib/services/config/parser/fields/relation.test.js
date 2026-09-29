@@ -482,6 +482,168 @@ describe('Relation Field Config Parser', () => {
     });
   });
 
+  describe('relation to a collection storing all the entries in one file', () => {
+    /**
+     * Parse a relation field referring to a `members` collection with the `file` option.
+     * @param {any} extraConfig Extra options for the relation field, e.g. its `value_field`.
+     * @param {any} [collectionOptions] Options for the referenced collection.
+     */
+    const parse = async (extraConfig, collectionOptions = { file: 'data/members.json' }) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'member',
+          widget: 'relation',
+          collection: 'members',
+          ...extraConfig,
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: {
+            collections: [
+              {
+                name: 'members',
+                fields: [
+                  { name: 'id', widget: 'string' },
+                  { name: 'name', widget: 'string' },
+                ],
+                ...collectionOptions,
+              },
+            ],
+          },
+          collection: { name: 'posts' },
+          typedKeyPath: 'member',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    const expected = expect.objectContaining({
+      strKey: 'relation_field_array_file_slug',
+      values: { collection: 'members' },
+    });
+
+    it('should error when the value field defaults to the slug', async () => {
+      await parse({});
+
+      expect(mockAddMessage).toHaveBeenCalledWith(expected);
+    });
+
+    it('should error when the value field contains the slug tag', async () => {
+      await parse({ value_field: '{{slug}}' });
+      await parse({ value_field: '{{locale}}/{{slug}}' });
+
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+      expect(mockAddMessage).toHaveBeenCalledWith(expected);
+    });
+
+    it('should not error when the value field refers to a field', async () => {
+      await parse({ value_field: 'id' });
+      await parse({ value_field: '{{fields.id}}' });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should leave a value field of the wrong type to the JSON schema', async () => {
+      await parse({ value_field: 1 });
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(expected);
+    });
+
+    it('should not error for a collection with the `folder` option', async () => {
+      await parse({}, { folder: 'content/members' });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('relation from a collection storing all the entries in one file', () => {
+    /**
+     * Parse a relation field in a `members` collection with the `file` option.
+     * @param {any} target Referenced collection.
+     * @param {any} [siteOptions] Site-level options.
+     * @param {any} [parentCollection] Collection holding the field.
+     */
+    const parse = async (
+      target,
+      siteOptions = {},
+      parentCollection = { name: 'members', file: 'data/members.json' },
+    ) => {
+      const { parseRelationFieldConfig } = await import('./relation.js');
+
+      parseRelationFieldConfig({
+        config: /** @type {any} */ ({
+          name: 'post',
+          widget: 'relation',
+          collection: target.name,
+          file: target.files ? 'about' : undefined,
+          value_field: 'title',
+        }),
+        context: /** @type {any} */ ({
+          cmsConfig: { collections: [target], ...siteOptions },
+          collection: parentCollection,
+          typedKeyPath: 'post',
+        }),
+        collectors: createCollectors(),
+      });
+    };
+
+    const posts = {
+      name: 'posts',
+      folder: 'content/posts',
+      fields: [{ name: 'title', widget: 'string' }],
+    };
+
+    const expected = expect.objectContaining({
+      strKey: 'relation_field_array_file_workflow',
+      values: { collection: 'posts' },
+    });
+
+    it('should error for a collection with Editorial Workflow', async () => {
+      await parse({ ...posts, publish_mode: 'editorial_workflow' });
+      await parse(posts, { publish_mode: 'editorial_workflow' });
+
+      expect(mockAddMessage).toHaveBeenCalledTimes(2);
+      expect(mockAddMessage).toHaveBeenCalledWith(expected);
+    });
+
+    it('should not error for a collection without Editorial Workflow', async () => {
+      await parse(posts);
+      await parse({ ...posts, publish_mode: 'simple' }, { publish_mode: 'editorial_workflow' });
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should not error for a file collection, whose entries can’t be renamed', async () => {
+      await parse(
+        {
+          name: 'pages',
+          files: [{ name: 'about', file: 'about.md', fields: [{ name: 'title' }] }],
+        },
+        { publish_mode: 'editorial_workflow' },
+      );
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'relation_field_array_file_workflow' }),
+      );
+    });
+
+    it('should not error for a relation in another collection', async () => {
+      await parse({ ...posts, publish_mode: 'editorial_workflow' }, {}, { name: 'authors' });
+      await parse({ ...posts, publish_mode: 'editorial_workflow' }, {}, null);
+
+      expect(mockAddMessage).not.toHaveBeenCalled();
+    });
+
+    it('should skip a divider', async () => {
+      await parse({ name: 'posts', divider: true }, { publish_mode: 'editorial_workflow' });
+
+      expect(mockAddMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ strKey: 'relation_field_array_file_workflow' }),
+      );
+    });
+  });
+
   describe('relation field display and search field validation', () => {
     /** @type {any} */
     const authorFields = [

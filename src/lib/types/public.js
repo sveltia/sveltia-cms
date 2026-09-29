@@ -1072,7 +1072,8 @@
  * @property {FieldKeyPath | string} [value_field] Field name to be stored as the value, or
  * `{{slug}}` (entry slug). Note that `slug` without braces refers to a field named `slug`. It can
  * contain a locale prefix like `{{locale}}/{{slug}}` if i18n is enabled. A wildcard can be used for
- * a List subfield, like `cities.*.name`. Default: `{{slug}}`.
+ * a List subfield, like `cities.*.name`. Default: `{{slug}}`. For a collection with the `file`
+ * option, whose entry slug is the position in the array, it must refer to a field instead.
  * @property {(FieldKeyPath | string)[]} [display_fields] Name of fields to be displayed. It can
  * contain string templates. Default: `value_field` field value or the referenced collection’s
  * `identifier_field`, which is `title` by default.
@@ -1672,13 +1673,27 @@
 /**
  * Entry collection properties.
  * @typedef {object} EntryCollectionProps
- * @property {string} folder Base folder path relative to the project root. It can contain slashes
- * to create subfolders. With i18n enabled, it can also contain the `{{locale}}` placeholder as a
- * whole folder name, like `content/{{locale}}/posts`, to say where each locale’s folder goes. The
- * placeholder takes precedence over the `structure` i18n option: the collection then has one
+ * @property {string} [folder] Base folder path relative to the project root. It can contain
+ * slashes to create subfolders. With i18n enabled, it can also contain the `{{locale}}` placeholder
+ * as a whole folder name, like `content/{{locale}}/posts`, to say where each locale’s folder goes.
+ * The placeholder takes precedence over the `structure` i18n option: the collection then has one
  * folder per locale wherever the placeholder is, and the `omit_default_locale_from_file_path`
  * option leaves the default locale’s folder out. See the
- * [documentation](https://sveltiacms.app/en/docs/i18n/structures) for details.
+ * [documentation](https://sveltiacms.app/en/docs/i18n/structures) for details. Either this or the
+ * `file` option is required.
+ * @property {string} [file] Path to a JSON file, relative to the project root, that stores all the
+ * entries of the collection as an array of objects, instead of one file per entry in a `folder`.
+ * Each object in the array is an entry, and the entries can be reordered with a drag-and-drop UI,
+ * which changes the order of the objects in the array. Saving an entry rewrites the whole file.
+ * Options that assume one file per entry, like `path`, `slug`, `extension`, `nested` and
+ * `index_file`, are not available, and Editorial Workflow is not supported, including a Relation
+ * field referring to a collection with Editorial Workflow. With i18n enabled,
+ * each object holds all the translations with the `single_file` structure, or the
+ * `single_file_default_root` structure if it’s configured; the `{{locale}}` placeholder is not
+ * supported. The slug of an entry is its position in the array, so a Relation field referring to
+ * the collection must store a field value with the `value_field` option, and the `preview_path`
+ * and `thumbnail` options can’t contain the `{{slug}}` tag. Either this or the `folder` option is
+ * required.
  * @property {Field[]} fields Set of fields to be included in entries.
  * @property {string} [path] File path relative to `folder`, without a file extension. It can
  * contain slashes to create subfolders. Default: `{{slug}}`. To use Hugo’s page bundle, set this to

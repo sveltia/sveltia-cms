@@ -18,6 +18,7 @@ import { runInChunks } from '$lib/services/utils/scheduling';
  * InternalCollection,
  * InternalEntryCollection,
  * InternalLocaleCode,
+ * RepositoryFileMetadata,
  * } from '$lib/types/private';
  * @import { Field, RawEntryContent } from '$lib/types/public';
  */
@@ -410,6 +411,93 @@ export const processI18nMultiFileEntry = (
 };
 
 /**
+ * Raw items of the files storing all the entries of an entry collection, keyed by file path, as
+ * they were last parsed. A save rewrites the file from these rather than from the entries, so the
+ * items that don’t make an entry, and the properties that aren’t defined as fields, are kept as
+ * they are. `null` for a file that doesn’t contain a valid array, which can’t be updated.
+ * @type {Map<string, any[] | null>}
+ */
+export const arrayFileItems = new Map();
+
+/**
+ * Create an entry from an item in a file storing all the entries of an entry collection. With i18n
+ * enabled, the item holds all the translations, like a file with the `single_file` or
+ * `single_file_default_root` structure does.
+ * @param {object} args Arguments.
+ * @param {InternalEntryCollection} args.collection Collection.
+ * @param {any} args.item Raw item.
+ * @param {number} args.index Position of the item in the array.
+ * @param {string} args.path File path.
+ * @param {RepositoryFileMetadata} [args.meta] File metadata.
+ * @returns {Entry | undefined} Entry, or `undefined` if the item doesn’t make one.
+ */
+export const createArrayItemEntry = ({ collection, item, index, path, meta = {} }) => {
+  const {
+    fields,
+    _i18n: {
+      i18nEnabled,
+      allLocales,
+      defaultLocale,
+      structureMap: { i18nSingleFileDefaultRoot },
+    },
+  } = collection;
+
+  const rawContent = i18nSingleFileDefaultRoot
+    ? normalizeDefaultRootContent(item, allLocales, defaultLocale)
+    : item;
+
+  const content = rawContent ? transformRawContent(rawContent, fields, i18nEnabled) : undefined;
+
+  if (!content) {
+    return undefined;
+  }
+
+  // The position is the slug, as an item has no file name to take one from
+  const subPath = String(index);
+  /** @type {Entry} */
+  const entry = { id: '', slug: '', subPath, locales: {}, arrayIndex: index, ...meta };
+
+  if (i18nEnabled) {
+    processI18nSingleFileEntry(entry, content, path, undefined, subPath, undefined, allLocales);
+  } else {
+    processNonI18nEntry(entry, content, path, undefined, subPath, undefined);
+  }
+
+  return Object.keys(entry.locales).length ? entry : undefined;
+};
+
+/**
+ * Prepare the entries stored in a file of an entry collection that stores all the entries in one
+ * file, one for each object in the array.
+ * @param {object} args Arguments.
+ * @param {InternalEntryCollection} args.collection Collection.
+ * @param {BaseEntryListItem} args.file Entry file list item.
+ * @param {any} args.rawContent Parsed file content.
+ * @param {Entry[]} args.entries List of prepared entries.
+ * @param {Error[]} args.errors List of parse errors.
+ */
+export const prepareArrayFileEntries = ({ collection, file, rawContent, entries, errors }) => {
+  const { path, meta = {} } = file;
+
+  if (!Array.isArray(rawContent)) {
+    arrayFileItems.set(path, null);
+    errors.push(new Error(`${path} could not be parsed, as it doesn’t contain an array.`));
+
+    return;
+  }
+
+  arrayFileItems.set(path, rawContent);
+
+  rawContent.forEach((item, index) => {
+    const entry = createArrayItemEntry({ collection, item, index, path, meta });
+
+    if (entry) {
+      entries.push(entry);
+    }
+  });
+};
+
+/**
  * Prepare a new entry by processing the given file info and raw content.
  * @param {object} args Arguments.
  * @param {BaseEntryListItem} args.file Entry file list item.
@@ -422,6 +510,14 @@ export const prepareEntry = async ({ file, entries, entryMap, errors }) => {
   const rawContent = await parseFileContent(file, errors);
 
   if (!rawContent) {
+    const { collection, collectionFile } =
+      resolveCollectionAndFile(file.folder.collectionName, file.folder.fileName) ?? {};
+
+    // Make sure a file storing all the entries of an entry collection is not overwritten
+    if (!collectionFile && collection?._type === 'entry' && collection._file.arrayFile) {
+      arrayFileItems.set(file.path, null);
+    }
+
     return;
   }
 
@@ -438,6 +534,12 @@ export const prepareEntry = async ({ file, entries, entryMap, errors }) => {
   }
 
   const { collection, collectionFile } = resolved;
+
+  if (!collectionFile && collection._type === 'entry' && collection._file.arrayFile) {
+    prepareArrayFileEntries({ collection, file, rawContent, entries, errors });
+
+    return;
+  }
 
   const {
     fields = [],

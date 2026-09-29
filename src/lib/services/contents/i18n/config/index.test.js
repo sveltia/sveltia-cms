@@ -1180,6 +1180,21 @@ describe('Test internal helper functions', () => {
         'single_file',
       );
     });
+
+    test('should return single_file for an entry collection storing all the entries in one file', () => {
+      expect(determineStructure('multiple_folders', undefined, undefined, 'data/a.json')).toBe(
+        'single_file',
+      );
+      expect(determineStructure('multiple_files', undefined, undefined, 'data/a.json')).toBe(
+        'single_file',
+      );
+    });
+
+    test('should preserve single_file_default_root for an entry collection storing all the entries in one file', () => {
+      expect(
+        determineStructure('single_file_default_root', undefined, undefined, 'data/a.json'),
+      ).toBe('single_file_default_root');
+    });
   });
 
   describe('createStructureMap', () => {

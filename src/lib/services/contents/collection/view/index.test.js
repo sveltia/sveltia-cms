@@ -85,6 +85,7 @@ vi.mock('$lib/services/contents', () => ({
 vi.mock('$lib/services/contents/collection', () => ({
   selectedCollection: _selectedCollection,
   getCollection: vi.fn(),
+  isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
   // Used by the nested collection helpers, which the entry list runs through
   isEntryCollection: vi.fn(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
@@ -1103,6 +1104,21 @@ describe('collection/view/index', () => {
         name: 'posts',
         _type: 'entry',
         reorder: true,
+      });
+      await wait();
+
+      vi.mocked(getEntriesByCollection).mockReturnValue([]);
+      _allEntries.current = [];
+      await wait();
+
+      expect(collectionState.current.canReorder).toBe(true);
+    });
+
+    test('allows reordering for a collection storing the entries in one file', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'members',
+        _type: 'entry',
+        _file: { arrayFile: true },
       });
       await wait();
 

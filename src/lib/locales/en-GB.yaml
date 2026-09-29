@@ -1397,10 +1397,18 @@ save_conflict:
   overwrite_warning: If you save now, their changes will be lost.
   # Follows `deleted`
   recreate_warning: If you save now, the entry will be created again.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: As the entry is stored in the same file as other entries, it can’t be saved over the change. Cancel editing, then open the entry again from the list and make your edits.
   # OK button label
   save_anyway: Save Anyway
   # Error shown when the repository was updated between the check above and the commit itself
   branch_moved: The repository has been updated by someone else while saving. Please try again.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: An entry stored in the same file has been changed by someone else. Please try again.
+  # {$path} is the file path
+  array_file_invalid: The {$path} file can’t be updated, as it doesn’t contain a valid list of entries.
 
 # Notice shown in the entry editor when someone else has changed or deleted the entry in the
 # repository while the user has it open. The change itself is described with the `save_conflict`
@@ -1786,12 +1794,22 @@ config:
     invalid_asset_collection_name: The asset collection name `{$name}` is invalid. It must not contain special characters.
     # {$name} is the duplicate asset collection name
     duplicate_asset_collection_name: Asset collection names must be unique, but `{$name}` is used more than once.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_no_options: The collection must have either the `folder`, `files` or `divider` option defined.
-    # Don’t localize `folder`, `files`, and `divider`
-    invalid_collection_multiple_options: The collection cannot have the `folder`, `files` and `divider` options together.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: The collection must have either the `folder`, `file`, `files` or `divider` option defined.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: The collection cannot have more than one of the `folder`, `file`, `files` and `divider` options.
     # {$extension} is the file extension and {$format} is the configured content format
     file_format_mismatch: The `{$extension}` extension doesn’t match the `{$format}` format.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: The `file` option `{$file}` is invalid. It must be the path to a JSON file, without the `\{\{locale\}\}` placeholder.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: The `{$prop}` option is not supported in a collection with the `file` option.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: Editorial Workflow, including Open Authoring, is not supported in a collection with the `file` option. Set the collection’s `publish_mode` option to `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: The `{$prop}` option can’t contain the `\{\{slug\}\}` tag in a collection with the `file` option, as an entry’s slug is its position, which changes when the entries are reordered or deleted. Use a field with a unique value instead.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: The slug template `{$slug}` is invalid as it cannot contain slashes. To organise entries in subfolders, use the `path` option instead of `slug`.
     # {$name} is the field name from the configuration; Don’t localize `identifier_field`
@@ -1920,6 +1938,11 @@ config:
     # Don’t localize `file`
     relation_field_missing_file_name: The `file` option must be defined for a relation to a file collection.
     relation_field_invalid_value_field: The referenced value field `{$field}` is invalid or not defined.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: The relation to the `{$collection}` collection can’t store the `\{\{slug\}\}` value, as an entry’s slug in a collection with the `file` option is its position, which changes when the entries are reordered or deleted. Set the `value_field` option to a field with a unique value instead.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: A collection with the `file` option can’t have a relation to the `{$collection}` collection, which uses Editorial Workflow, as the references to an entry renamed or deleted there can’t be updated in the file.
     relation_field_invalid_display_field: The referenced display field `{$field}` is invalid or not defined.
     relation_field_invalid_search_field: The referenced search field `{$field}` is invalid or not defined.
     relation_field_invalid_filter_field: The referenced filter field `{$field}` is invalid or not defined.

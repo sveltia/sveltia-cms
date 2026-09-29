@@ -114,6 +114,7 @@ describe('getReorderGroupingConditions', () => {
       getReorderGroupingConditions({
         name: 'articles',
         folder: 'content/articles',
+        _type: 'entry',
         view_groups: [{ name: 'categories', label: 'Categories', field: 'category' }],
       }),
     ).toEqual({ field: 'category' });
@@ -126,6 +127,7 @@ describe('getReorderGroupingConditions', () => {
       getReorderGroupingConditions({
         name: 'events',
         folder: 'content/events',
+        _type: 'entry',
         view_groups: [{ name: 'upcoming', label: 'Upcoming', field: 'date', gte: '{{today}}' }],
       }),
     ).toEqual({ field: 'date', gte: '{{today}}' });

@@ -73,14 +73,18 @@ const getEditableStages = (editable = true) => {
  * @see https://github.com/sveltia/sveltia-cms/issues/999
  */
 export const getSlugOptions = (collection) => {
-  const { slug, identifier_field: identifierField = 'title' } = /** @type {EntryCollection} */ (
-    collection
-  );
+  const {
+    slug,
+    identifier_field: identifierField = 'title',
+    file,
+  } = /** @type {EntryCollection} */ (collection);
 
   /** @type {CollectionSlugOptions} */
   const options = isObject(slug) ? /** @type {CollectionSlugOptions} */ (slug) : {};
   const configuredTemplate = getConfiguredSlugTemplate(/** @type {EntryCollection} */ (collection));
-  const stages = getEditableStages(options.editable);
+  // An entry stored in a file with the other entries of the collection is told by its position, so
+  // there’s no slug to edit
+  const stages = typeof file === 'string' ? [] : getEditableStages(options.editable);
   const legacyLocalized = !!configuredTemplate?.includes(LEGACY_LOCALIZED_SLUG_EDITOR_TAG);
   const legacy = hasLegacySlugEditorTag(configuredTemplate);
   const create = legacy || stages.includes('create');

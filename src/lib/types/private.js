@@ -667,7 +667,10 @@
  * collection only.
  * @property {RegExp} [fullPathRegEx] Regular expression that matches full entry paths, taking the
  * i18n structure into account. Entry collection only.
- * @property {string} [fullPath] File path of the default locale. File/singleton collection only.
+ * @property {string} [fullPath] File path of the default locale. File/singleton collection, or
+ * entry collection storing all the entries in one file.
+ * @property {boolean} [arrayFile] Whether the entry collection stores all the entries in one file,
+ * defined with the `file` option, as an array of objects.
  * @property {[string, string]} [fmDelimiters] Front matter delimiters.
  * @property {BodyFieldOptions} [bodyField] Body field options for front matter formats.
  * @property {boolean} [yamlQuote] YAML quote configuration. DEPRECATED in favor of the global YAML
@@ -695,7 +698,8 @@
  * @property {string} collectionName Collection name.
  * @property {string} [fileName] Collection file name. File/singleton collection only.
  * @property {Record<InternalLocaleCode, string>} [filePathMap] File path map. The key is a locale,
- * and the value is the corresponding file path. File/singleton collection only.
+ * and the value is the corresponding file path. File/singleton collection, or entry collection
+ * storing all the entries in one file.
  * @property {string} [folderPath] Folder path. Entry collection only.
  * @property {Record<InternalLocaleCode, string>} [folderPathMap] Folder path map. Entry collection
  * only. Paths in `folderPathMap` are prefixed with a locale if the `multiple_root_folders` i18n
@@ -920,6 +924,9 @@
  * @property {string} subPath File name for a file/singleton collection, or file path without an
  * extension for an entry collection. Same as `slug` in most cases.
  * @property {LocalizedEntryMap} locales Localized entry map.
+ * @property {number} [arrayIndex] Position of the entry in the array stored in the file, for an
+ * entry collection storing all the entries in one file. The `slug` and `subPath` are the same
+ * number as a string.
  */
 
 /**
@@ -1145,6 +1152,22 @@
  * @property {string | File} [data] File data. `undefined` for a deleted file, or a file object for
  * a new or updated file. It can also be a string for a text file like Markdown or HTML, which is
  * automatically converted to a Blob.
+ * @property {ArrayItemTarget} [arrayItem] Item that an `update` or `delete` change applies to, in
+ * a file storing all the entries of an entry collection. The `data` of an `update` or `create`
+ * change is then the item alone, and a `create` change adds it to the end of the array. The changes
+ * made to the same file are combined into one before being committed.
+ * @property {ArrayItemTarget[]} [arrayOrder] Items in a file storing all the entries of an entry
+ * collection, in their new order. The items take the positions the listed items occupy now.
+ */
+
+/**
+ * Item in a file storing all the entries of an entry collection, which a {@link FileChange} applies
+ * to.
+ * @typedef {object} ArrayItemTarget
+ * @property {number} index Position of the item in the array, as the user has seen it.
+ * @property {LocalizedEntryMap} [locales] Content of the item as the user has seen it. The change
+ * is refused if the item at the position has been changed since, e.g. by someone else, so that it
+ * doesn’t overwrite another item. `undefined` to skip the check.
  */
 
 /**

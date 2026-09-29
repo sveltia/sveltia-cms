@@ -9,6 +9,7 @@ import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { startRemoteChangePolling, stopRemoteChangePolling } from '$lib/services/backends/poll';
 import { cmsConfig } from '$lib/services/config';
 import { dataLoaded } from '$lib/services/contents';
+import { arrayFileItems } from '$lib/services/contents/file/process';
 import { resetDeployments } from '$lib/services/deployments';
 import { resetPageLiveness } from '$lib/services/deployments/ping';
 import { initDeployments } from '$lib/services/deployments/resolve';
@@ -404,6 +405,8 @@ export const signOut = async () => {
 
   selectBackend(undefined);
   dataLoaded.current = false;
+  // The items of the files storing all the entries of a collection belong to this repository
+  arrayFileItems.clear();
   repositoryHead.current = '';
   unpublishedEntries.current = [];
   unpublishedEntriesLoaded.current = false;

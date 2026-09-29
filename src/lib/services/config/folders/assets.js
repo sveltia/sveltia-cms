@@ -14,6 +14,7 @@ import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
  * AssetFolderInfo,
  * CollectedMediaField,
  * InternalCmsConfig,
+ * InternalSingletonCollection,
  * TypedFieldKeyPath,
  * } from '$lib/types/private';
  * @import {
@@ -79,6 +80,24 @@ export const replaceTags = (folder, { globalMediaFolder, globalPublicFolder }) =
     .replace('{{media_folder}}', `/${globalMediaFolder}`)
     .replace('{{public_folder}}', `/${globalPublicFolder}`)
     .replace('//', '/');
+
+/**
+ * Get the folder that a relative `media_folder` option of an entry collection is relative to: the
+ * collection folder, e.g. `content/posts`, or the folder of the file storing all the entries.
+ * @param {Collection | InternalSingletonCollection} collection Collection.
+ * @returns {string | undefined} Folder path. `undefined` for a file/singleton collection.
+ */
+export const getCollectionBaseFolder = (collection) => {
+  if ('folder' in collection && typeof collection.folder === 'string') {
+    return collection.folder;
+  }
+
+  if ('file' in collection && typeof collection.file === 'string') {
+    return getPathInfo(collection.file).dirname;
+  }
+
+  return undefined;
+};
 
 /**
  * Get a normalized asset folder information given the arguments.
@@ -240,11 +259,11 @@ export const handleFieldMediaFolders = ({ fieldMediaFolders, validCollections, g
       mediaFolder: /** @type {string} */ (fieldConfig.media_folder),
       publicFolder: fieldConfig.public_folder,
       // A relative folder is relative to the collection file, the same as a file-level folder, or
-      // else to the collection folder
+      // else to the collection folder, or the folder of the file storing all the entries
       baseFolder: collectionFile
         ? getPathInfo(collectionFile.file).dirname
-        : collection && 'folder' in collection
-          ? collection.folder
+        : collection
+          ? getCollectionBaseFolder(collection)
           : undefined,
       globalFolders,
     });
@@ -384,9 +403,6 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
       // @ts-ignore
       files: collectionFiles,
       // @ts-ignore
-      // e.g. `content/posts`
-      folder: baseFolder,
-      // @ts-ignore
       // e.g. `{{slug}}/index`
       path: entryPath,
       // relative path, e.g. `` (an empty string), `./` (same as an empty string),
@@ -407,7 +423,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
       // @ts-ignore
       mediaFolder,
       publicFolder,
-      baseFolder,
+      baseFolder: getCollectionBaseFolder(collection),
       entryPath,
       globalFolders,
     });
@@ -458,7 +474,9 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
       const i18n = mergeI18nConfigs({ cmsConfig: config, collection });
 
       const hasLocaleFolder =
-        ('folder' in collection && hasLocalePlaceholder(collection.folder)) ||
+        ('folder' in collection &&
+          typeof collection.folder === 'string' &&
+          hasLocalePlaceholder(collection.folder)) ||
         (!!i18n?.structure && LOCALE_ROOT_FOLDER_STRUCTURES.includes(i18n.structure));
 
       return [collection.name, hasLocaleFolder ? (i18n?.locales ?? []) : []];

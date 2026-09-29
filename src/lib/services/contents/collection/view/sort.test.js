@@ -1473,6 +1473,26 @@ describe('getSortKeyGetter', () => {
     });
   });
 
+  test('should return the position in the array for the _manual key of an array file collection', () => {
+    const getter = getSortKeyGetter({
+      key: '_manual',
+      type: Number,
+      collection: {
+        ...mockCollection,
+        _type: 'entry',
+        _file: { ...mockCollection._file, format: 'json', arrayFile: true },
+      },
+      locale: 'en',
+      collectionName: 'posts',
+      dateFieldConfig: undefined,
+      isMarkdownField: false,
+    });
+
+    expect(getter({ ...mockEntry, arrayIndex: 3 })).toBe(3);
+    expect(getter(mockEntry)).toBe(0);
+    expect(vi.mocked(getPropertyValue)).not.toHaveBeenCalled();
+  });
+
   test('should return a numeric timestamp for a datetime field', () => {
     const mockDate = new Date('2023-06-15');
 

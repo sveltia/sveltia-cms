@@ -1540,6 +1540,7 @@ describe('fillTemplate() for a nested collection', () => {
   const collection = {
     name: 'pages',
     folder: 'content/pages',
+    fields: [],
     _type: 'entry',
     _file: { basePath: 'content/pages' },
     nested: { depth: 100 },

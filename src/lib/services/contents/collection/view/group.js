@@ -51,7 +51,7 @@ export const parseGroupConfig = (filters) =>
  */
 export const getReorderGroupingConditions = (collection) => {
   // Grouping is only available for entry collections
-  if (!collection || !('folder' in collection)) {
+  if (collection?._type !== 'entry') {
     return undefined;
   }
 
@@ -177,7 +177,7 @@ export const viewGroups = createDerivedState(() => {
   const collection = selectedCollection.current;
 
   // Disable grouping for file/singleton collection
-  if (!collection || !('folder' in collection)) {
+  if (collection?._type !== 'entry') {
     return [];
   }
 

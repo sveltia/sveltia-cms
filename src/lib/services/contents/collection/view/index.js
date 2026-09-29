@@ -5,7 +5,7 @@ import { backend } from '$lib/services/backends';
 import { getGroupingKey } from '$lib/services/common/view';
 import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries } from '$lib/services/contents';
-import { selectedCollection } from '$lib/services/contents/collection';
+import { isArrayFileCollection, selectedCollection } from '$lib/services/contents/collection';
 import {
   countCollectionEntries,
   getEntriesByCollection,
@@ -244,9 +244,15 @@ export const collectionState = createDerivedState(() => {
   if (_selectedCollection?._type === 'entry') {
     const canCreate = _selectedCollection.create ?? true;
     const canDelete = !readonly && (_selectedCollection.delete ?? true);
+
     // Reordering writes the new order straight to the configured branch rather than going through
-    // review, so it’s not something an Open Authoring contributor can do
-    const canReorder = !readonly && !!_selectedCollection.reorder && !openAuthoring.current;
+    // review, so it’s not something an Open Authoring contributor can do. An entry collection
+    // storing all the entries in one file can always be reordered
+    const canReorder =
+      !readonly &&
+      (!!_selectedCollection.reorder || isArrayFileCollection(_selectedCollection)) &&
+      !openAuthoring.current;
+
     const quota = _selectedCollection?.limit ?? Infinity;
 
     // In a nested collection, `listedEntries` only holds the folder being browsed, while the

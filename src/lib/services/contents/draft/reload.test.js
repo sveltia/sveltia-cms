@@ -74,6 +74,7 @@ describe('refreshOpenedDraft', () => {
     vi.mocked(isWorkflowDraft).mockReturnValue(false);
     vi.mocked(compareWithStore).mockReturnValue({
       type: 'modified',
+      canOverwrite: true,
       entry: /** @type {any} */ (entry),
     });
     vi.mocked(getBackup).mockResolvedValue(null);
@@ -103,7 +104,19 @@ describe('refreshOpenedDraft', () => {
     await refreshOpenedDraft(makeEntryDraft());
 
     // A deletion is reported by the notice in the editor instead
-    vi.mocked(compareWithStore).mockReturnValue({ type: 'deleted' });
+    vi.mocked(compareWithStore).mockReturnValue({ type: 'deleted', canOverwrite: true });
+    await refreshOpenedDraft(makeEntryDraft());
+
+    expect(createDraft).not.toHaveBeenCalled();
+  });
+
+  test('leaves the draft alone when another entry may have taken its position', async () => {
+    // An entry stored in a file with the other entries is told by its position
+    vi.mocked(compareWithStore).mockReturnValue({
+      type: 'modified',
+      canOverwrite: false,
+      entry: /** @type {any} */ (entry),
+    });
     await refreshOpenedDraft(makeEntryDraft());
 
     expect(createDraft).not.toHaveBeenCalled();

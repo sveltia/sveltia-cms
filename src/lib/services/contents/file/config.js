@@ -339,6 +339,8 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     // @ts-ignore
     folder,
     // @ts-ignore
+    file: dataFile,
+    // @ts-ignore
     path: subPath,
     // @ts-ignore
     extension: _extension,
@@ -349,16 +351,25 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
   } = rawCollection;
 
   const _isEntryCollection = isEntryCollection(rawCollection);
-  const filePath = file?.file ? stripSlashes(file.file) : undefined;
+  // An entry collection can store all the entries in one file instead of a folder
+  const arrayFile = _isEntryCollection && typeof dataFile === 'string';
+
+  const filePath = file?.file
+    ? stripSlashes(file.file)
+    : arrayFile
+      ? stripSlashes(dataFile)
+      : undefined;
+
   const __extension = filePath ? getPathInfo(filePath).extension : _extension;
   const __format = file?.format ?? _format;
   const extension = detectFileExtension({ format: __format, extension: __extension });
   const format = detectFileFormat({ format: __format, extension });
   const delimiter = file?.frontmatter_delimiter ?? _delimiter;
-  const basePath = _isEntryCollection ? stripSlashes(/** @type {string} */ (folder)) : undefined;
-  const indexFile = _isEntryCollection ? getIndexFile(rawCollection) : undefined;
+  const _isFolderCollection = _isEntryCollection && !arrayFile;
+  const basePath = _isFolderCollection ? stripSlashes(/** @type {string} */ (folder)) : undefined;
+  const indexFile = _isFolderCollection ? getIndexFile(rawCollection) : undefined;
   const indexFileName = indexFile?.name;
-  const nestedDepth = _isEntryCollection ? getNestedConfig(rawCollection)?.depth : undefined;
+  const nestedDepth = _isFolderCollection ? getNestedConfig(rawCollection)?.depth : undefined;
 
   const indexFileFormat = getIndexFileFormat({
     indexFile,
@@ -376,7 +387,7 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     extension,
     format,
     basePath,
-    subPath: _isEntryCollection ? subPath : undefined,
+    subPath: _isFolderCollection ? subPath : undefined,
     fullPathRegEx:
       basePath !== undefined
         ? getEntryPathRegEx({
@@ -397,6 +408,10 @@ export const getFileConfig = ({ rawCollection, file, _i18n }) => {
     bodyField: file?.body_field ?? bodyField,
     yamlQuote: !!yamlQuote,
   };
+
+  if (arrayFile) {
+    config.arrayFile = true;
+  }
 
   if (indexFileFormat) {
     // The index file shares the rest of the configuration with the entries, including the path

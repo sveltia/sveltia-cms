@@ -5,6 +5,7 @@ import { backend } from '$lib/services/backends';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
 import { allEntries } from '$lib/services/contents';
+import { combineArrayFileChanges, createArrayFileEntries } from '$lib/services/contents/file/array';
 
 import { getCommitAuthor, saveChanges, updateCache, updateStores } from './save.js';
 
@@ -58,6 +59,11 @@ vi.mock('$lib/services/contents', () => ({
   allEntries: { current: [] },
 }));
 
+vi.mock('$lib/services/contents/file/array', () => ({
+  combineArrayFileChanges: vi.fn(),
+  createArrayFileEntries: vi.fn(),
+}));
+
 const mockUserState = vi.hoisted(() => ({
   account: /** @type {any} */ ({
     name: 'Test User',
@@ -89,6 +95,11 @@ describe('save', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(suspendChecksWhile).mockImplementation((commit) => commit());
+    vi.mocked(combineArrayFileChanges).mockImplementation(async (changes) => ({
+      changes,
+      arrayFileUpdates: [],
+    }));
+    vi.mocked(createArrayFileEntries).mockReturnValue({ entries: [], savedEntries: new Map() });
     repositoryHead.current = '';
     mockPrefs.devModeEnabled = false;
     mockUserState.account = {
@@ -465,6 +476,49 @@ describe('save', () => {
       ]);
     });
 
+    test('should replace the entries previously in the rewritten array files', () => {
+      const data = { path: 'data/items.json' };
+      const other = { path: 'data/other.json' };
+
+      /** @type {any[]} */
+      const existingEntries = [
+        { id: 'a', arrayIndex: 0, locales: { en: data } },
+        { id: 'b', arrayIndex: 1, locales: { en: data } },
+        { id: 'c', slug: 'c', locales: { en: { path: 'posts/c.md' } } },
+        { id: 'd', arrayIndex: 0, locales: { en: other } },
+        // Not an array item, so kept even though the path is the same
+        { id: 'e', slug: 'e', locales: { en: data } },
+      ];
+
+      /** @type {any[]} */
+      const arrayFileEntries = [
+        { id: 'a', arrayIndex: 1, locales: { en: data } },
+        { id: 'n', arrayIndex: 0, locales: { en: data } },
+      ];
+
+      /** @type {any} */
+      const savedC = { id: 'c', slug: 'c2', locales: { en: { path: 'posts/c.md' } } };
+
+      allEntries.current = existingEntries;
+
+      updateStores({
+        changes: [],
+        savedEntries: [arrayFileEntries[0], savedC],
+        savedAssets: [],
+        arrayFileEntries,
+      });
+
+      expect(allEntries.current).toEqual([
+        existingEntries[3],
+        existingEntries[4],
+        savedC,
+        arrayFileEntries[0],
+        arrayFileEntries[1],
+      ]);
+      // The saved array entry is not added twice
+      expect(allEntries.current.filter(({ id }) => id === 'a')).toHaveLength(1);
+    });
+
     test('should update allAssets store by filtering out moved, deleted, and saved assets', () => {
       /** @type {Asset[]} */
       const existingAssets = [
@@ -695,6 +749,32 @@ describe('save', () => {
       expect(mockCommitChanges).toHaveBeenCalledTimes(1);
     });
 
+    test('should combine the changes to a file storing all the entries while checks are held off', async () => {
+      /** @type {boolean[]} */
+      const suspended = [];
+      let inside = false;
+
+      vi.mocked(suspendChecksWhile).mockImplementation(async (task) => {
+        inside = true;
+
+        try {
+          return await task();
+        } finally {
+          inside = false;
+        }
+      });
+      vi.mocked(combineArrayFileChanges).mockImplementation(async (changes) => {
+        suspended.push(inside);
+
+        return { changes, arrayFileUpdates: [] };
+      });
+
+      await saveChanges({ changes: simpleChanges, options: simpleOptions });
+
+      // A check for remote changes would otherwise replace the items the changes are applied to
+      expect(suspended).toEqual([true]);
+    });
+
     test('should record the commit as the head the stores reflect on a Git backend', async () => {
       /** @type {any} */ (backend).current = {
         commitChanges: mockCommitChanges,
@@ -753,6 +833,81 @@ describe('save', () => {
       expect(result).toHaveProperty('savedEntries');
       expect(result).toHaveProperty('savedAssets');
       expect(result.savedEntries).toHaveLength(1);
+    });
+
+    test('should commit the combined changes and use the entries made from the array files', async () => {
+      /** @type {FileChange[]} */
+      const changes = [
+        {
+          action: /** @type {CommitAction} */ ('update'),
+          path: 'data/items.json',
+          data: '{}',
+          arrayItem: { index: 0 },
+        },
+      ];
+
+      /** @type {FileChange[]} */
+      const combinedChanges = [
+        { action: /** @type {CommitAction} */ ('update'), path: 'data/items.json', data: '[]' },
+      ];
+
+      /** @type {any[]} */
+      const arrayFileUpdates = [{ path: 'data/items.json' }];
+      /** @type {any} */
+      const arrayEntry = { id: 'a', slug: 'a', locales: { en: { path: 'data/items.json' } } };
+      /** @type {any} */
+      const otherEntry = { id: 'b', slug: 'b', locales: { en: { path: 'posts/b.md' } } };
+      /** @type {any} */
+      const savedArrayEntry = { ...arrayEntry, arrayIndex: 0 };
+
+      /** @type {any} */
+      const newArrayEntry = {
+        id: 'n',
+        arrayIndex: 1,
+        locales: { en: { path: 'data/items.json' } },
+      };
+
+      vi.mocked(combineArrayFileChanges).mockResolvedValue({
+        changes: combinedChanges,
+        // @ts-ignore - Minimal test objects
+        arrayFileUpdates,
+      });
+      vi.mocked(createArrayFileEntries).mockReturnValue({
+        entries: [savedArrayEntry, newArrayEntry],
+        savedEntries: new Map([[arrayEntry, savedArrayEntry]]),
+      });
+
+      const commitDate = new Date('2023-01-01T12:00:00Z');
+
+      mockCommitChanges.mockResolvedValue({ sha: 'commit123', date: commitDate, files: {} });
+      allEntries.current = [];
+
+      /** @type {CommitOptions} */
+      const options = { commitType: /** @type {CommitType} */ ('update') };
+
+      const result = await saveChanges({
+        changes,
+        savingEntries: [arrayEntry, otherEntry],
+        options,
+      });
+
+      expect(combineArrayFileChanges).toHaveBeenCalledWith(changes);
+      expect(mockCommitChanges).toHaveBeenCalledWith(combinedChanges, options);
+      expect(createArrayFileEntries).toHaveBeenCalledWith({
+        arrayFileUpdates,
+        savingEntries: [arrayEntry, otherEntry],
+        meta: { commitAuthor: expect.any(Object), commitDate },
+      });
+      expect(result.savedEntries).toEqual([
+        savedArrayEntry,
+        { ...otherEntry, commitAuthor: expect.any(Object), commitDate },
+      ]);
+      expect(result.savedEntries[0]).toBe(savedArrayEntry);
+      expect(allEntries.current).toEqual([
+        { ...otherEntry, commitAuthor: expect.any(Object), commitDate },
+        savedArrayEntry,
+        newArrayEntry,
+      ]);
     });
 
     test('should handle asset changes', async () => {

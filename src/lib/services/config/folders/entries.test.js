@@ -839,6 +839,54 @@ describe('config/folders/entries', () => {
       });
     });
 
+    it('should return the file path of a collection storing all the entries in one file', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified mock for testing
+        { name: 'members', file: '/data/members.json', fields: [] },
+      ]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getEntryCollectionFolders(config);
+
+      expect(result).toEqual([
+        { collectionName: 'members', filePathMap: { _default: 'data/members.json' } },
+      ]);
+      expect(normalizeI18nConfig).not.toHaveBeenCalled();
+    });
+
+    it('should sort collections storing all the entries in one file by the file path', () => {
+      vi.mocked(getValidCollections).mockReturnValue([
+        // @ts-ignore - simplified mock for testing
+        { name: 'posts', folder: 'content/posts', fields: [] },
+        // @ts-ignore - simplified mock for testing
+        { name: 'members', file: 'data/members.json', fields: [] },
+        // @ts-ignore - simplified mock for testing
+        { name: 'authors', file: 'content/authors.json', fields: [] },
+        // @ts-ignore - simplified mock for testing
+        { name: 'blog', folder: 'blog', fields: [] },
+      ]);
+
+      const config = {
+        backend: { name: 'git-gateway' },
+        collections: [],
+      };
+
+      // @ts-ignore - simplified config for testing
+      const result = getEntryCollectionFolders(config);
+
+      expect(result.map(({ collectionName }) => collectionName)).toEqual([
+        'blog',
+        'authors',
+        'posts',
+        'members',
+      ]);
+    });
+
     it('should return empty array when no entry collections', () => {
       vi.mocked(getValidCollections).mockReturnValue([]);
 

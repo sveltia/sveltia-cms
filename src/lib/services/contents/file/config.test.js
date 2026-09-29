@@ -1500,6 +1500,46 @@ describe('Test getFileConfig()', () => {
     });
   });
 
+  test('entry collection storing all the entries in one file', () => {
+    const expected = {
+      extension: 'json',
+      format: 'json',
+      basePath: undefined,
+      subPath: undefined,
+      fullPathRegEx: undefined,
+      fullPath: 'data/members.json',
+      fmDelimiters: undefined,
+      yamlQuote: false,
+      arrayFile: true,
+    };
+
+    expect(
+      getFileConfig({
+        rawCollection: /** @type {any} */ ({
+          name: 'members',
+          file: '/data/members.json',
+          fields: [],
+        }),
+        _i18n: i18nDisabled,
+      }),
+    ).toEqual(expected);
+
+    // The folder collection options are ignored, the parser reports them
+    expect(
+      getFileConfig({
+        rawCollection: /** @type {any} */ ({
+          name: 'members',
+          file: 'data/members.json',
+          fields: [],
+          path: '{{slug}}/index',
+          nested: { depth: 2 },
+          index_file: true,
+        }),
+        _i18n: i18nSingleFile,
+      }),
+    ).toEqual(expected);
+  });
+
   test('file collection without i18n', () => {
     expect(
       getFileConfig({

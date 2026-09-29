@@ -588,6 +588,27 @@ describe('draft/backup', () => {
 
       expect(mockBackupDB.put).not.toHaveBeenCalled();
     });
+
+    it('should not save backup for an entry stored in a file with the other entries', async () => {
+      mockPrefs.useDraftBackup = true;
+      vi.mocked(isDraftModified).mockReturnValue(true);
+
+      // The slug is the position in the array, which another entry can take after a reorder
+      const draft = {
+        collectionName: 'members',
+        fileName: undefined,
+        originalEntry: { slug: '2', arrayIndex: 2 },
+        currentLocales: { _default: true },
+        currentSlugs: { _default: '2' },
+        currentValues: { _default: { name: 'Bob' } },
+        files: {},
+        interacted: true,
+      };
+
+      await saveBackup(draft);
+
+      expect(mockBackupDB.put).not.toHaveBeenCalled();
+    });
   });
 
   describe('restoreBackup', () => {
@@ -1137,6 +1158,16 @@ describe('draft/backup', () => {
 
       await restoreBackupIfNeeded({
         draft: createRestoreDraft({ collection: { name: 'posts', readonly: true } }),
+      });
+
+      expect(mockBackupDB.get).not.toHaveBeenCalled();
+    });
+
+    it('should not restore to an entry stored in a file with the other entries', async () => {
+      mockPrefs.useDraftBackup = true;
+
+      await restoreBackupIfNeeded({
+        draft: createRestoreDraft({ originalEntry: { slug: '2', arrayIndex: 2 } }),
       });
 
       expect(mockBackupDB.get).not.toHaveBeenCalled();

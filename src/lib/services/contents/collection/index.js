@@ -43,23 +43,24 @@ export const collectionCacheMap = new Map();
 
 /**
  * Check if the given collection is an entry collection. An entry collection is defined as one that
- * has the `folder` property that is a string and does not have the `files` property.
+ * has the `fields` property that is an array and does not have the `files` property. Its entries
+ * are stored in the `folder`, or in the single `file`, which the config parser requires one of.
  * @param {Collection} collection Collection definition.
  * @returns {collection is EntryCollection} Whether the collection is an entry collection.
  */
 export const isEntryCollection = (collection) =>
   // @ts-ignore
-  typeof collection.folder === 'string' && !Array.isArray(collection.files);
+  Array.isArray(collection.fields) && !Array.isArray(collection.files);
 
 /**
  * Check if the given collection is a file collection. A file collection is defined as one that has
- * the `files` property that is an array and does not have the `folder` property.
+ * the `files` property that is an array.
  * @param {Collection} collection Collection definition.
  * @returns {collection is FileCollection} Whether the collection is a file collection.
  */
 export const isFileCollection = (collection) =>
   // @ts-ignore
-  collection.folder === undefined && Array.isArray(collection.files);
+  Array.isArray(collection.files);
 
 /**
  * Check if the given collection is a singleton collection. A singleton collection is a special type
@@ -71,8 +72,17 @@ export const isSingletonCollection = (collection) =>
   isFileCollection(collection) && collection.name === '_singletons';
 
 /**
+ * Check if the given collection is an entry collection storing all the entries in one file, defined
+ * with the `file` option, as an array of objects.
+ * @param {InternalCollection | undefined} collection Collection.
+ * @returns {boolean} Result.
+ */
+export const isArrayFileCollection = (collection) =>
+  collection?._type === 'entry' && !!collection._file.arrayFile;
+
+/**
  * Check if the given collection is a valid entry or file collection. A valid collection must have a
- * `folder` property for entry collections or a `files` property for file collections. It must not
+ * `fields` property for entry collections or a `files` property for file collections. It must not
  * be a divider.
  * @param {Collection | CollectionDivider} collection Collection definition or divider.
  * @param {object} [options] Filter options.
@@ -107,7 +117,7 @@ export const isValidCollection = (collection, { visible = undefined, type = unde
 
 /**
  * Get a list of valid collections from the given collection definitions. This filters out dividers
- * and invalid collections that do not have a `folder` property for entry collections or a `files`
+ * and invalid collections that do not have a `fields` property for entry collections or a `files`
  * property for file collections.
  * @param {object} [options] Options.
  * @param {(Collection | CollectionDivider)[]} [options.collections] Collection definitions. May
@@ -140,7 +150,7 @@ export const getFirstCollection = () => getValidCollections({ visible: true })[0
  * @returns {FieldKeyPath[]} Key path list.
  */
 export const getThumbnailFieldNames = (rawCollection) => {
-  if (!('folder' in rawCollection)) {
+  if (!isEntryCollection(rawCollection)) {
     return [];
   }
 
@@ -278,7 +288,13 @@ export const getCollection = (name) => {
 
   // Normalize folder/file paths by removing leading/trailing slashes
   if (entryCollection) {
-    entryCollection.folder = stripSlashes(entryCollection.folder);
+    if (typeof entryCollection.folder === 'string') {
+      entryCollection.folder = stripSlashes(entryCollection.folder);
+    }
+
+    if (typeof entryCollection.file === 'string') {
+      entryCollection.file = stripSlashes(entryCollection.file);
+    }
   } else {
     fileCollection?.files.forEach((f) => {
       if (f.file) {

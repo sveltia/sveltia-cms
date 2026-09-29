@@ -29,6 +29,7 @@ vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents', () => ({ allEntries: { current: [] } }));
 vi.mock('$lib/services/contents/collection', () => ({
   selectedCollection: { current: undefined },
+  isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
 }));
 vi.mock('$lib/services/contents/entry/fields');
 
@@ -914,6 +915,39 @@ describe('Test getSortConfig()', async () => {
       keys: ['_manual', 'title', 'name', 'date', 'author', 'description'],
       default: { key: '_manual', order: 'ascending' },
     });
+  });
+
+  test('prepends the _manual key for a collection storing the entries in one file', () => {
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          file: 'data/posts.json',
+          _file: { ...collectionBase._file, arrayFile: true },
+        },
+        isCommitAuthorAvailable: false,
+        isCommitDateAvailable: false,
+      }),
+    ).toEqual({
+      keys: ['_manual', 'title', 'name', 'date', 'author', 'description'],
+      default: { key: '_manual', order: 'ascending' },
+    });
+  });
+
+  test('leaves out the commit keys for a collection storing the entries in one file', () => {
+    // Every entry carries the commit of the whole file, so it doesn’t tell them apart
+    expect(
+      getSortConfig({
+        collection: {
+          ...collectionBase,
+          file: 'data/posts.json',
+          sortable_fields: ['title', 'commit_author', 'commit_date'],
+          _file: { ...collectionBase._file, arrayFile: true },
+        },
+        isCommitAuthorAvailable: true,
+        isCommitDateAvailable: true,
+      }).keys,
+    ).toEqual(['_manual', 'title']);
   });
 
   test('replaces the default order field key with _manual when listed in sortable_fields', () => {

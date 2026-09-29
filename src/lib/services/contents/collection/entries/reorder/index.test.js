@@ -25,6 +25,7 @@ vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
 }));
 
 vi.mock('$lib/services/contents/draft/save/changes', () => ({
+  getArrayItemTarget: vi.fn(() => ({})),
   getPreviousSha: vi.fn().mockResolvedValue('sha-1'),
 }));
 
@@ -71,6 +72,33 @@ const makeEntry = (id, content) => ({
   subPath: id,
   locales: {
     _default: { slug: id, path: `content/${id}.md`, content },
+  },
+});
+
+/**
+ * Build a minimal entry collection mock storing all the entries in one file.
+ * @returns {any} Mock collection.
+ */
+const makeArrayFileCollection = () =>
+  makeCollection({
+    _type: 'entry',
+    file: 'data/items.json',
+    _file: { format: 'json', arrayFile: true, fullPath: 'data/items.json' },
+  });
+
+/**
+ * Build a minimal entry mock stored in a file with the other entries.
+ * @param {string} id Entry id.
+ * @param {number | undefined} arrayIndex Position in the array.
+ * @returns {any} Mock entry.
+ */
+const makeArrayEntry = (id, arrayIndex) => ({
+  id,
+  slug: id,
+  subPath: id,
+  arrayIndex,
+  locales: {
+    _default: { slug: id, path: 'data/items.json', content: { title: id } },
   },
 });
 
@@ -329,6 +357,49 @@ describe('reorderEntries()', () => {
     expect(formatted.ja).toMatchObject({ title: 'あ', order: 1 });
   });
 
+  test('builds one change rewriting the array file in the new order', async () => {
+    const collection = makeArrayFileCollection();
+    const a = makeArrayEntry('a', 0);
+    const b = makeArrayEntry('b', 1);
+    const c = makeArrayEntry('c', 2);
+    const result = await reorderEntries(collection, [b, a, c]);
+
+    expect(result).toBe(2);
+
+    const { saveChanges } = await import('$lib/services/backends/save');
+
+    expect(saveChanges).toHaveBeenCalledWith({
+      changes: [
+        {
+          action: 'update',
+          path: 'data/items.json',
+          arrayOrder: [
+            { index: 1, locales: b.locales },
+            { index: 0, locales: a.locales },
+            { index: 2, locales: c.locales },
+          ],
+        },
+      ],
+      savingEntries: [b, a],
+      options: { commitType: 'update', collection },
+    });
+  });
+
+  test('does nothing when no entry has moved in the array file', async () => {
+    const collection = makeArrayFileCollection();
+
+    const result = await reorderEntries(collection, [
+      makeArrayEntry('a', 0),
+      makeArrayEntry('b', 1),
+    ]);
+
+    expect(result).toBe(0);
+
+    const { saveChanges } = await import('$lib/services/backends/save');
+
+    expect(saveChanges).not.toHaveBeenCalled();
+  });
+
   test('initializes the file cache database when the backend has a databaseName', async () => {
     const { backend } = /** @type {any} */ (await import('$lib/services/backends'));
     const { IndexedDB } = await import('@sveltia/utils/storage');
@@ -477,6 +548,17 @@ describe('sortEntriesByOrderField()', () => {
     expect(
       sortEntriesByOrderField([unorderedA, second, unorderedB, first], makeCollection()),
     ).toEqual([first, second, unorderedA, unorderedB]);
+  });
+
+  test('sorts the entries of an array file collection by their position', () => {
+    const second = makeArrayEntry('b', 2);
+    const unknownA = makeArrayEntry('x', undefined);
+    const first = makeArrayEntry('a', 1);
+    const unknownB = makeArrayEntry('y', undefined);
+
+    expect(
+      sortEntriesByOrderField([second, unknownA, first, unknownB], makeArrayFileCollection()),
+    ).toEqual([unknownA, unknownB, first, second]);
   });
 
   test('moves an entry without an order value after one that comes later with a value', () => {

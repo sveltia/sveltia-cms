@@ -332,6 +332,28 @@ describe('draft/save/index', () => {
       expect(saveChanges).toHaveBeenCalledTimes(1);
     });
 
+    it('should keep checking the item of an entry in an array file when overwriting', async () => {
+      const locales = { en: { path: 'data/members.json', content: { title: 'A' } } };
+
+      // The item at the position may be another entry that has moved there, so it’s still checked
+      mockDraft.isNew = false;
+      mockDraft.originalEntry = { id: 'test-id', slug: '1', arrayIndex: 1, locales };
+      vi.mocked(detectEntryConflict).mockResolvedValue({ type: 'modified', entry: { id: 'x' } });
+      vi.mocked(createSavingEntryData).mockResolvedValue({
+        savingEntry: { id: 'test-id', slug: '1', arrayIndex: 1, locales },
+        changes: [
+          { action: 'update', path: 'data/members.json', arrayItem: { index: 1, locales } },
+        ],
+        savingAssets: [],
+      });
+
+      await saveEntry({ overwrite: true });
+
+      const { changes } = vi.mocked(saveChanges).mock.calls[0][0];
+
+      expect(changes[0].arrayItem).toEqual({ index: 1, locales });
+    });
+
     it('should save when there is no conflict', async () => {
       vi.mocked(detectEntryConflict).mockResolvedValue(undefined);
 

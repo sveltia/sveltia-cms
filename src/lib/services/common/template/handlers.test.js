@@ -150,6 +150,7 @@ describe('Template handler functions', () => {
           collection: /** @type {any} */ ({
             name: 'pages',
             folder: 'content/pages',
+            fields: [],
             _type: 'entry',
             nested: {},
             meta: { path: { widget: 'string', index_file: '_index' } },
