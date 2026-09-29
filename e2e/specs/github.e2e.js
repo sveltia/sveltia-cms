@@ -34,6 +34,15 @@ test('signs in with the stored session and lists the entries', async ({ cms, pag
   ).toBeVisible();
 });
 
+test('refuses a user who can only read the repository', async ({ cms, github, page }) => {
+  github.canWrite = false;
+
+  await cms.open();
+  await expect(page.getByRole('alert')).toContainText(
+    /You don’t have access to the .*e2e-site.* repository/,
+  );
+});
+
 test('commits a change to the branch', async ({ cms, github, page }) => {
   const { oid: headBefore } = github.head;
 

@@ -137,8 +137,8 @@ export class MockGitHub {
   commits = [];
 
   /**
-   * Whether the signed-in user can write to the repository. A user who can’t is an Open Authoring
-   * contributor, who works on a fork.
+   * Whether the signed-in user can write to the repository. A user who can’t is refused, unless
+   * Open Authoring is on, which makes them a contributor who works on a fork.
    */
   canWrite = true;
 
@@ -736,10 +736,6 @@ export class MockGitHub {
       return {
         json: { id, login, name, email, avatar_url: '', html_url: `https://github.com/${login}` },
       };
-    }
-
-    if (pathname === `${repoPath}/collaborators/${this.user.login}`) {
-      return { status: 204 };
     }
 
     if (pathname === '/user/repository_invitations') {

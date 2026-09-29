@@ -7,6 +7,7 @@ import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
+import { user } from '$lib/services/user/account.svelte';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
@@ -19,8 +20,9 @@ import {
 export const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 
 /**
- * Cache for repository information to avoid multiple API calls.
- * @type {Record<string, any> | null}
+ * Cache for repository information to avoid multiple API calls. The information includes the
+ * signed-in user’s permissions, so it’s kept along with the ID of the user it was fetched for.
+ * @type {{ userId: number | undefined, info: Record<string, any> } | null}
  */
 let repositoryInfoCache = null;
 
@@ -52,17 +54,24 @@ export const getBaseURLs = (repoURL, branch) => ({
  */
 export const getRepositoryInfo = async () => {
   const { owner, repo } = repository;
+  const userId = user.account?.id;
 
-  repositoryInfoCache ??= await /** @type {Promise<Record<string, any>>} */ (
-    fetchAPI(`/repos/${owner}/${repo}`)
-  );
+  // Another user may have signed in on the same page, e.g. after a read-only account was refused,
+  // and their permissions are not the previous user’s
+  if (repositoryInfoCache && repositoryInfoCache.userId === userId) {
+    return repositoryInfoCache.info;
+  }
 
-  return repositoryInfoCache;
+  const info = /** @type {Record<string, any>} */ (await fetchAPI(`/repos/${owner}/${repo}`));
+
+  repositoryInfoCache = { userId, info };
+
+  return info;
 };
 
 /**
- * Check if the user has access to the current repository.
- * @throws {Error} If the user is not a collaborator of the repository.
+ * Check if the user has write access to the current repository, like Netlify/Decap CMS requires.
+ * @throws {Error} If the user can’t push to the repository.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
 export const checkRepositoryAccess = async () => {
@@ -71,7 +80,7 @@ export const checkRepositoryAccess = async () => {
   try {
     const { permissions } = await getRepositoryInfo();
 
-    if (!permissions?.pull) {
+    if (!permissions?.push) {
       throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
     }
   } catch (error) {

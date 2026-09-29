@@ -10,12 +10,10 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 
 // Mock dependencies
 vi.mock('$lib/services/backends/git/shared/api');
-vi.mock('$lib/services/user/account.svelte', () => ({
-  user: { account: { login: 'test-user' } },
-}));
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn(() => 'Translation message'),
 }));
+
 describe('GitHub repository service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,19 +52,19 @@ describe('GitHub repository service', () => {
   });
 
   describe('checkRepositoryAccess', () => {
-    test('succeeds when user is a collaborator', async () => {
-      Object.assign(repository, {
-        owner: 'test-owner',
-        repo: 'test-repo',
+    beforeEach(() => {
+      Object.assign(repository, { owner: 'test-owner', repo: 'test-repo' });
+    });
+
+    test('succeeds when the user can push to the repository', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ permissions: { pull: true, push: true } }),
       });
-
-      const mockResponse = { ok: true };
-
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
 
       await expect(checkRepositoryAccess()).resolves.toBeUndefined();
       expect(fetchAPI).toHaveBeenCalledWith(
-        '/repos/test-owner/test-repo/collaborators/test-user',
+        '/repos/test-owner/test-repo',
         expect.objectContaining({
           headers: { Accept: 'application/json' },
           responseType: 'raw',
@@ -74,17 +72,31 @@ describe('GitHub repository service', () => {
       );
     });
 
-    test('throws error when user is not a collaborator', async () => {
-      Object.assign(repository, {
-        owner: 'test-owner',
-        repo: 'test-repo',
+    test('throws error when the user can only read the repository', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ permissions: { pull: true, push: false } }),
       });
 
-      const mockResponse = { ok: false };
+      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+    });
+
+    test('throws error when the repository reports no permissions', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({}),
+      });
+
+      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+    });
+
+    test('throws error when the repository is not visible to the user', async () => {
+      const mockResponse = { ok: false, json: vi.fn() };
 
       vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
 
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
+      expect(mockResponse.json).not.toHaveBeenCalled();
     });
   });
 

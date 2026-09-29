@@ -7,7 +7,6 @@ import {
   applyDefaultBranch,
   REPOSITORY_INFO_PLACEHOLDER,
 } from '$lib/services/backends/git/shared/repository';
-import { user } from '$lib/services/user/account.svelte';
 
 /**
  * @import { RepositoryBaseURLs, RepositoryInfo } from '$lib/types/private';
@@ -34,22 +33,28 @@ export const getBaseURLs = (repoURL, branch) => ({
 });
 
 /**
- * Check if the user has access to the current repository.
- * @throws {Error} If the user is not a collaborator of the repository.
- * @see https://docs.github.com/en/rest/collaborators/collaborators#check-if-a-user-is-a-repository-collaborator
+ * Check if the user has write access to the current repository, which takes the write, maintain or
+ * admin role, like Netlify/Decap CMS requires. The repository reports the authenticated user’s own
+ * permissions, however they’re granted, including through an organization team. Asking the
+ * collaborator endpoint instead would let a read-only collaborator in.
+ * @throws {Error} If the user can’t push to the repository.
+ * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
 export const checkRepositoryAccess = async () => {
   const { owner, repo } = repository;
-  const userName = /** @type {string} */ (user.account?.login);
 
-  const { ok } = /** @type {Response} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/collaborators/${encodeURIComponent(userName)}`, {
+  const response = /** @type {Response} */ (
+    await fetchAPI(`/repos/${owner}/${repo}`, {
       headers: { Accept: 'application/json' },
       responseType: 'raw',
     })
   );
 
-  if (!ok) {
+  const { permissions } = response.ok
+    ? /** @type {{ permissions?: { push?: boolean } }} */ (await response.json())
+    : {};
+
+  if (!permissions?.push) {
     throw createLocalizedError(NOT_COLLABORATOR_ERROR_MESSAGE, 'repository_no_access', { repo });
   }
 };
