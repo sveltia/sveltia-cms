@@ -120,6 +120,17 @@
  * according to the global `slug` option. Default: `false`, meaning that the original file name is
  * kept by default, while Netlify/Decap CMS forces to slugify file names. If set to `true`, for
  * example, `Hello World (1).webp` would be `hello-world-1.webp`.
+ * @property {string} [filename_template] Template to rename an uploaded file with, like
+ * `{{slug}}-{{uuid_short}}`. It supports the same tags and transformations as the entry `slug`
+ * option, including `{{slug}}`, `{{fields.title}}`, date/time tags and `{{uuid}}`, as well as
+ * `{{filename}}` and `{{extension}}` for the original file name and extension. The extension is
+ * always appended, so the template shouldn’t include it. The values of the tags are slugified, and
+ * the entry tags are filled with the default locale’s content when the entry is saved. A file
+ * uploaded in the asset library or to a cloud storage service is named right away, without an
+ * entry, so only the other tags make sense there; Cloudinary keeps the name as the original file
+ * name of an asset whose public ID is generated. A file renamed by hand before saving keeps that
+ * name, and a file replacing an existing asset takes over its name. Default: `undefined`, meaning
+ * that the original file name is kept, or slugified if the `slugify_filename` option is enabled.
  * @property {FileTransformations} [transformations] File transformation option map. The key is an
  * original format like `png` or `jpeg`. It can also be `raster_image` that matches any supported
  * raster image format. See the
@@ -133,15 +144,6 @@
  * This option is available for compatibility with the Cloudinary and Uploadcare media storage
  * providers, but you can simply use the `multiple` option for the File/Image field types instead,
  * which takes precedence over this option.
- * @property {string} [filename_template] Template to rename an uploaded file with, like
- * `{{slug}}-{{uuid_short}}`. It supports the same tags and transformations as the entry `slug`
- * option, including `{{slug}}`, `{{fields.title}}`, date/time tags and `{{uuid}}`, as well as
- * `{{filename}}` and `{{extension}}` for the original file name and extension. The extension is
- * always appended, so the template shouldn’t include it. The values of the tags are slugified, and
- * the entry tags are filled with the default locale’s content when the entry is saved; a file
- * uploaded in the asset library has no entry, so only the other tags make sense there. A file
- * renamed by hand before saving keeps that name. Default: `undefined`, meaning that the original
- * file name is kept, or slugified if the `slugify_filename` option is enabled.
  * @see https://decapcms.org/docs/widgets/#File
  * @see https://decapcms.org/docs/widgets/#Image
  * @see https://sveltiacms.app/en/docs/fields/file

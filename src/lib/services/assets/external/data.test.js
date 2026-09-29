@@ -284,12 +284,41 @@ describe('assets/external/data', () => {
 
       const result = await prepareExternalUploads([valid, oversized, invalid], options);
 
-      expect(processFile).toHaveBeenCalledWith(valid, options);
+      expect(processFile).toHaveBeenCalledWith(valid, options, { nameTemplate: undefined });
       expect(result).toEqual({
         validFiles: [valid],
         oversizedFileNames: ['big.png'],
         invalidFileNames: ['bad.png'],
       });
+    });
+
+    it('should rename the files with the normalized file name template', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = { filename_template: ' {{filename}}-{{uuid_short}} ' };
+
+      await prepareExternalUploads([file], options);
+
+      expect(processFile).toHaveBeenCalledWith(file, options, {
+        nameTemplate: '{{filename}}-{{uuid_short}}',
+      });
+    });
+
+    it('should not rename a file replacing an existing asset', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = { filename_template: '{{filename}}-{{uuid_short}}' };
+
+      await prepareExternalUploads([file], options, { replacing: true });
+
+      expect(processFile).toHaveBeenCalledWith(file, options, { nameTemplate: undefined });
+    });
+
+    it('should ignore a blank file name template', async () => {
+      const file = new File(['x'], 'ok.png', { type: 'image/png' });
+      const options = { filename_template: '  ' };
+
+      await prepareExternalUploads([file], options);
+
+      expect(processFile).toHaveBeenCalledWith(file, options, { nameTemplate: undefined });
     });
   });
 
@@ -303,7 +332,7 @@ describe('assets/external/data', () => {
 
       const result = await uploadExternalAssets([file]);
 
-      expect(processFile).toHaveBeenCalledWith(file, {});
+      expect(processFile).toHaveBeenCalledWith(file, {}, { nameTemplate: undefined });
       expect(service.upload).toHaveBeenCalledWith([file], { ...fetchOptions, dirPath: '' });
       // An asset uploaded under an existing name replaces the old one
       expect(externalAssets.current).toEqual([c, replaced, a]);
@@ -359,6 +388,7 @@ describe('assets/external/data', () => {
 
       await uploadExternalAssets([file], { originalAsset: a });
 
+      expect(processFile).toHaveBeenCalledWith(file, {}, { nameTemplate: undefined });
       expect(service.replace).toHaveBeenCalledWith(a, file, { ...fetchOptions, dirPath: '' });
       expect(service.upload).not.toHaveBeenCalled();
       expect(externalAssets.current).toEqual([replaced, b]);

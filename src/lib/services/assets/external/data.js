@@ -14,6 +14,7 @@ import {
 import { partitionProcessedFiles, processFile } from '$lib/services/assets/process';
 import { cmsConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
+import { normalizeFileNameTemplate } from '$lib/services/integrations/media-libraries/default';
 import { createDeepState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -223,12 +224,20 @@ export const loadExternalAssets = async (service) => {
  * the ones that can’t be uploaded, so the caller can tell the user.
  * @param {File[]} files Files to be uploaded.
  * @param {SharedMediaLibraryOptions} options Media library options, which include the file size
- * limit and the transformations to apply.
+ * limit, the transformations to apply and the template to rename the files with.
+ * @param {object} [extraOptions] Extra options.
+ * @param {boolean} [extraOptions.replacing] Whether the file replaces an existing asset, taking
+ * over its name, so the file isn’t renamed with the template.
  * @returns {Promise<{ validFiles: File[], oversizedFileNames: string[], invalidFileNames: string[]
  * }>} Files that can be uploaded, and the names of the files that were rejected.
  */
-export const prepareExternalUploads = async (files, options) => {
-  const processed = await Promise.all(files.map((file) => processFile(file, options)));
+export const prepareExternalUploads = async (files, options, { replacing = false } = {}) => {
+  const nameTemplate = replacing ? undefined : normalizeFileNameTemplate(options.filename_template);
+
+  const processed = await Promise.all(
+    files.map((file) => processFile(file, options, { nameTemplate })),
+  );
+
   const { validFiles, oversizedFiles, invalidFiles } = partitionProcessedFiles(processed);
 
   return {
@@ -254,6 +263,7 @@ export const uploadExternalAssets = async (files, { originalAsset } = {}) => {
   const { validFiles, oversizedFileNames, invalidFileNames } = await prepareExternalUploads(
     files,
     getSharedMediaLibraryOptions(),
+    { replacing: !!originalAsset },
   );
 
   if (service && validFiles.length) {
