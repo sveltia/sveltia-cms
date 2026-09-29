@@ -57,6 +57,7 @@
 
     const props = buildPreviewProps({
       locale,
+      keyPath,
       fieldConfig,
       currentValue,
       draft: entryDraft.current,

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { buildPreviewData } from '$lib/services/api/helpers';
+import { getImmutable } from '$lib/services/api/immutable';
+
 import { buildPreviewProps } from './preview';
 
 vi.mock('$lib/services/api/helpers', () => ({
@@ -48,6 +51,7 @@ describe('contents/fields/custom/preview-helpers', () => {
       buildPreviewProps({
         preview: undefined,
         currentValue: 'value',
+        keyPath: 'title',
         fieldConfig: { widget: 'custom', name: 'title' },
         locale: 'en',
         draft: /** @type {any} */ ({ originalEntry: {} }),
@@ -58,6 +62,7 @@ describe('contents/fields/custom/preview-helpers', () => {
       buildPreviewProps({
         preview: vi.fn(),
         currentValue: 'value',
+        keyPath: 'title',
         fieldConfig: { widget: 'custom', name: 'title' },
         locale: 'en',
         draft: undefined,
@@ -88,6 +93,7 @@ describe('contents/fields/custom/preview-helpers', () => {
     const props = buildPreviewProps({
       preview,
       currentValue: 'value',
+      keyPath: 'title',
       fieldConfig: { widget: 'custom', name: 'title' },
       locale: 'en',
       draft,
@@ -123,6 +129,7 @@ describe('contents/fields/custom/preview-helpers', () => {
     const props = buildPreviewProps({
       preview,
       currentValue: 'value',
+      keyPath: 'title',
       fieldConfig: { widget: 'custom', name: 'title' },
       locale: 'en',
       draft,
@@ -136,5 +143,58 @@ describe('contents/fields/custom/preview-helpers', () => {
       isNew: false,
     });
     expect(props?.metadata).toBeDefined();
+  });
+
+  describe('looks up the metadata by the key path of the field', () => {
+    const fieldsMetaData = getImmutable().fromJS({
+      title: { authors: { alice: { name: 'Alice' } } },
+      'details.author': { authors: { bob: { name: 'Bob' } } },
+      'authors.1.person': { authors: { carol: { name: 'Carol' } } },
+      tags: { tags: { news: { label: 'News' } } },
+    });
+
+    /** @type {any} */
+    const draft = { originalEntry: { locales: {} }, collectionName: 'posts' };
+
+    /**
+     * Build the preview props of a custom field with the given key path.
+     * @param {string} keyPath Key path of the field.
+     * @returns {any} Metadata of the field as a plain object.
+     */
+    const getMetadata = (keyPath) => {
+      vi.mocked(buildPreviewData).mockReturnValueOnce(
+        /** @type {any} */ ({ entryMap: {}, fieldsMetaData, getAsset: vi.fn() }),
+      );
+
+      return buildPreviewProps({
+        preview: vi.fn(),
+        currentValue: 'value',
+        keyPath,
+        fieldConfig: { widget: 'custom', name: /** @type {string} */ (keyPath.split('.').pop()) },
+        // Use a new draft each time to bypass the preview data cache
+        draft: { ...draft },
+        locale: 'en',
+      })?.metadata.toJS();
+    };
+
+    it('at the top level', () => {
+      expect(getMetadata('title')).toEqual({ authors: { alice: { name: 'Alice' } } });
+    });
+
+    it('in an Object field', () => {
+      expect(getMetadata('details.author')).toEqual({ authors: { bob: { name: 'Bob' } } });
+    });
+
+    it('in a List item', () => {
+      expect(getMetadata('authors.1.person')).toEqual({ authors: { carol: { name: 'Carol' } } });
+    });
+
+    it('as the single subfield of a List field', () => {
+      expect(getMetadata('tags.0')).toEqual({ tags: { news: { label: 'News' } } });
+    });
+
+    it('with no metadata', () => {
+      expect(getMetadata('details.summary')).toEqual({});
+    });
   });
 });

@@ -2317,8 +2317,10 @@
  * @property {MapOf<CustomField>} field Immutable Map of current field configuration. Use
  * `field.get('name')` to access properties.
  * @property {MapOf<any>} metadata Immutable Map of any available metadata for the current field,
- * extracted from `fieldsMetaData` using the field name as key. For relation fields, contains
- * referenced entry data.
+ * extracted from `fieldsMetaData` using the field’s key path as key, e.g. `details.author` for a
+ * field nested in an Object field or `authors.0.name` for one in a List item. A trailing index is
+ * removed, so the subfield of a List field with a single `field` uses the List field’s key path,
+ * e.g. `tags` instead of `tags.0`. For relation fields, contains referenced entry data.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
