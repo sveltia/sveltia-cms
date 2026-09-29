@@ -42,6 +42,15 @@ const collection = {
       max: 1,
       types: [{ name: 'text', widget: 'object', fields: [{ name: 'body', widget: 'string' }] }],
     },
+    // A field taking multiple values, stored like a list without subfields
+    {
+      name: 'colors',
+      widget: 'select',
+      required: false,
+      multiple: true,
+      max: 1,
+      options: ['red', 'green', 'blue'],
+    },
   ],
   _i18n: {
     structureMap: {},
@@ -186,6 +195,50 @@ describe('contents/draft/validate (integration)', () => {
     expect(entryDraft.current.validities._default.tags.valid).toBe(true);
   });
 
+  it('should revalidate a list without subfields when one of its items is edited', () => {
+    // The list’s validity is kept under `tags`, while an edit writes to an item, e.g. `tags.1`,
+    // which has no field config of its own, so the error used to stay until the next save
+    const { currentValues } = entryDraft.current;
+
+    delete currentValues._default.tags;
+    currentValues._default['tags.0'] = 'one';
+
+    expect(validateEntry()).toBe(false);
+    expect(entryDraft.current.validities._default.tags.rangeUnderflow).toBe(true);
+
+    currentValues._default['tags.1'] = 'two';
+
+    expect(entryDraft.current.validities._default.tags.valid).toBe(true);
+    expect(entryDraft.current.validationMessages._default.tags).toEqual([]);
+    expect(entryDraft.current.validities._default).not.toHaveProperty('tags.1');
+
+    // Too many items
+    currentValues._default['tags.2'] = 'three';
+    currentValues._default['tags.3'] = 'four';
+
+    expect(entryDraft.current.validities._default.tags.rangeOverflow).toBe(true);
+    expect(entryDraft.current.validationMessages._default.tags).toEqual([
+      'validation.range_overflow.add',
+    ]);
+  });
+
+  it('should revalidate a field taking multiple values when one of its values is edited', () => {
+    const { currentValues } = entryDraft.current;
+
+    currentValues._default['colors.0'] = 'red';
+    currentValues._default['colors.1'] = 'green';
+
+    expect(validateEntry()).toBe(false);
+    expect(entryDraft.current.validities._default.colors.rangeOverflow).toBe(true);
+
+    delete currentValues._default['colors.1'];
+    currentValues._default['colors.0'] = 'blue';
+
+    expect(entryDraft.current.validities._default.colors.valid).toBe(true);
+    expect(entryDraft.current.validationMessages._default.colors).toEqual([]);
+    expect(entryDraft.current.validities._default).not.toHaveProperty('colors.0');
+  });
+
   it('should hold a list with subfields to its item count when only its items are stored', () => {
     // A list of objects loaded from a file is stored as its items’ subfields, e.g.
     // `speakers.0.name`, with no key path for the list itself, so the list has to be checked from
@@ -268,6 +321,26 @@ describe('contents/draft/validate (integration)', () => {
 
     validateEntry();
     expect(entryDraft.current.validities._default.keywords.patternMismatch).toBe(true);
+  });
+
+  it('should retest the pattern of a list without subfields when one of its items is edited', () => {
+    const values = entryDraft.current.currentValues._default;
+
+    values['keywords.0'] = 'alpha';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.keywords.patternMismatch).toBe(true);
+
+    // No save in between: the items are joined again as soon as one of them changes
+    values['keywords.1'] = 'beta';
+
+    expect(entryDraft.current.validities._default.keywords.valid).toBe(true);
+    expect(entryDraft.current.validationMessages._default.keywords).toEqual([]);
+
+    values['keywords.1'] = 'Beta';
+
+    expect(entryDraft.current.validities._default.keywords.patternMismatch).toBe(true);
+    expect(entryDraft.current.validationMessages._default.keywords).toEqual(['Two words or more']);
   });
 
   it('should still reject an error that isn’t about the field being empty', () => {

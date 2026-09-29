@@ -513,6 +513,35 @@ export const validateField = (args) => {
 export const revalidateField = ({ draft, locale, keyPath, value, valueMap }) => {
   const { collectionName, fileName, isIndexFile, validities, validationMessages } = draft;
   const getFieldArgs = { collectionName, fileName, isIndexFile, keyPath, valueMap };
+
+  const listKeyPath = LIST_KEY_PATH_REGEX.test(keyPath)
+    ? keyPath.replace(LIST_KEY_PATH_REGEX, '')
+    : undefined;
+
+  const listFieldConfig =
+    listKeyPath === undefined ? undefined : getField({ ...getFieldArgs, keyPath: listKeyPath });
+
+  // An item of a List field without subfields, or a value of a field taking multiple values, isn’t
+  // validated on its own: the field is validated as a whole, and its state is kept under the
+  // field’s own key path. See `validateFields()`
+  if (
+    listFieldConfig &&
+    (isFieldMultiple(listFieldConfig) ||
+      (listFieldConfig.widget === 'list' &&
+        !getListFieldInfo(/** @type {ListField} */ (listFieldConfig)).hasSubFields))
+  ) {
+    // Like `validateFields()`, count the items from the value map rather than from the value
+    revalidateField({
+      draft,
+      locale,
+      keyPath: /** @type {string} */ (listKeyPath),
+      value: '',
+      valueMap,
+    });
+
+    return;
+  }
+
   // A KeyValue pair is validated as part of its field, whose state is kept under the field’s own
   // key path, where the editor shows it. See `validateFields()`
   const keyValueField = getField(getFieldArgs) ? undefined : getKeyValueField(getFieldArgs);
