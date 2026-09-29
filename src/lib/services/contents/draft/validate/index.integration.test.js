@@ -56,6 +56,24 @@ const collection = {
       max: 1,
       options: ['red', 'green', 'blue'],
     },
+    // Multiple Select and Relation fields tested against their values joined with commas, numbers
+    // included: ascending sizes, or two related slugs or more
+    {
+      name: 'sizes',
+      widget: 'select',
+      required: false,
+      multiple: true,
+      options: [1, 2, 3],
+      pattern: ['^1,2', 'Start with 1 and 2'],
+    },
+    {
+      name: 'related',
+      widget: 'relation',
+      required: false,
+      multiple: true,
+      collection: 'products',
+      pattern: ['^[a-z-]+(,[a-z-]+)+$', 'Two slugs or more'],
+    },
   ],
   _i18n: {
     structureMap: {},
@@ -478,6 +496,49 @@ describe('contents/draft/validate (integration)', () => {
 
     expect(entryDraft.current.validities._default.keywords.patternMismatch).toBe(true);
     expect(entryDraft.current.validationMessages._default.keywords).toEqual(['Two words or more']);
+  });
+
+  it('should test the pattern of a multiple Select field against its values joined', () => {
+    const values = entryDraft.current.currentValues._default;
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.sizes.valid).toBe(true);
+
+    values['sizes.0'] = 2;
+    values['sizes.1'] = 1;
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.sizes.patternMismatch).toBe(true);
+    expect(entryDraft.current.validationMessages._default.sizes).toEqual(['Start with 1 and 2']);
+
+    // Retested live, with the numbers converted to strings
+    values['sizes.0'] = 1;
+    values['sizes.1'] = 2;
+    values['sizes.2'] = 3;
+
+    expect(entryDraft.current.validities._default.sizes.valid).toBe(true);
+    expect(entryDraft.current.validationMessages._default.sizes).toEqual([]);
+  });
+
+  it('should test the pattern of a multiple Relation field against its values joined', () => {
+    const values = entryDraft.current.currentValues._default;
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.related.valid).toBe(true);
+
+    values['related.0'] = 'foo';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.related.patternMismatch).toBe(true);
+    expect(entryDraft.current.validationMessages._default.related).toEqual(['Two slugs or more']);
+
+    values['related.1'] = 'bar-baz';
+
+    expect(entryDraft.current.validities._default.related.valid).toBe(true);
+
+    values['related.1'] = 'Bar';
+
+    expect(entryDraft.current.validities._default.related.patternMismatch).toBe(true);
   });
 
   it('should still reject an error that isn’t about the field being empty', () => {

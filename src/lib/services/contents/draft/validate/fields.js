@@ -222,8 +222,10 @@ const prepareListField = ({
     max,
   });
 
-  // Like Decap CMS, test the pattern of a List field without subfields against its items joined
-  // with commas, e.g. `a,b,c`, rather than against each item
+  // Like Decap CMS, test the pattern of a List field without subfields, or a multiple Select or
+  // Relation field, against its items joined with commas, e.g. `a,b,c`, rather than against each
+  // item. The other fields prepared here are multiple File/Image fields and custom fields taking an
+  // array, which are left alone
   // @ts-ignore A List field with subfields doesn’t have the `pattern` option
   const { widget, pattern: validation } = fieldConfig;
 
@@ -231,10 +233,13 @@ const prepareListField = ({
     !skip &&
     !empty &&
     Array.isArray(validation) &&
-    widget === 'list' &&
-    !getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields
+    (widget === 'list'
+      ? !getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields
+      : widget === 'relation' || widget === 'select')
   ) {
     validatePattern({
+      // Like Decap’s Immutable `List.join()`, this converts a number to a string and `null` to an
+      // empty string
       value: getListItems({ keyPath, value, valueMap }).join(','),
       validation,
       validity,

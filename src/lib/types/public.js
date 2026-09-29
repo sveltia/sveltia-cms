@@ -447,6 +447,17 @@
  */
 
 /**
+ * Validation options for a field showing multiple options.
+ * @typedef {object} MultiOptionFieldValidationProps
+ * @property {[string | RegExp, string]} [pattern] Validation format. The first argument is a
+ * regular expression matching pattern for a valid input value, and the second argument is an error
+ * message to be displayed when the input value does not match the pattern. If `multiple` is `true`,
+ * like Decap CMS, the pattern is tested against all the selected values joined with commas, e.g.
+ * `foo,bar,baz`, rather than against each value, and not at all while nothing is selected. Numbers
+ * are tested as strings.
+ */
+
+/**
  * Variable type for List/Object fields.
  * @typedef {object} VariableFieldType
  * @property {string} name Unique identifier for the type.
@@ -1055,8 +1066,8 @@
 
 /**
  * Relation field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & RelationFieldProps &
- * MultiOptionFieldProps} RelationField
+ * @typedef {CommonFieldProps & VisibleFieldProps & MultiOptionFieldValidationProps &
+ * RelationFieldProps & MultiOptionFieldProps} RelationField
  */
 
 /**
@@ -1088,8 +1099,8 @@
 
 /**
  * Select field definition.
- * @typedef {CommonFieldProps & VisibleFieldProps & FieldValidationProps & SelectFieldProps &
- * MultiOptionFieldProps} SelectField
+ * @typedef {CommonFieldProps & VisibleFieldProps & MultiOptionFieldValidationProps &
+ * SelectFieldProps & MultiOptionFieldProps} SelectField
  */
 
 /**
