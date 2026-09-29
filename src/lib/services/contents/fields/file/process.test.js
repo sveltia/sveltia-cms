@@ -37,6 +37,18 @@ vi.mock('$lib/services/utils/file', () => ({
    * @returns {string} Path.
    */
   createPath: (segments) => segments.filter(Boolean).join('/'),
+  /**
+   * Return the given path as is.
+   * @param {string} path Path.
+   * @returns {string} Path.
+   */
+  sanitizePath: (path) => path,
+  /**
+   * Replace the characters a file system won’t take, as the real function does.
+   * @param {string} name File name.
+   * @returns {string} File name.
+   */
+  formatFileName: (name) => name.replace(/[:/]/g, ''),
 }));
 
 vi.mock('$lib/services/utils/media/image/validate', () => ({
@@ -45,6 +57,10 @@ vi.mock('$lib/services/utils/media/image/validate', () => ({
 
 vi.mock('$lib/services/assets/kinds', () => ({
   getAssetKind: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/draft/slugs', () => ({
+  getSlugs: vi.fn(),
 }));
 
 describe('Test processResource()', () => {
@@ -228,6 +244,50 @@ describe('Test processResource()', () => {
     });
     // The URL is made for display, while the original file is kept for the upload
     expect(createDisplayBlobURL).toHaveBeenCalledExactlyOnceWith(mockFile);
+  });
+
+  test('should attach the file name template to a new file', async () => {
+    const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+    /** @type {any} */
+    const draft = { files: {} };
+    const resource = { file: mockFile, folder: { name: 'uploads' } };
+    const libraryConfig = { filename_template: '{{slug}}-{{uuid_short}}', slugify_filename: true };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+
+    // @ts-ignore - Test with simplified types
+    await processResource({ draft, resource, libraryConfig });
+
+    expect(draft.files['blob:mock-url']).toEqual({
+      file: mockFile,
+      folder: { name: 'uploads' },
+      replace: false,
+      nameTemplate: {
+        template: '{{slug}}-{{uuid_short}}',
+        slugificationEnabled: true,
+        randomValues: new Map(),
+        dateTimeParts: expect.objectContaining({ year: expect.any(String) }),
+      },
+    });
+  });
+
+  test('should not attach the file name template to a replacing file', async () => {
+    const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+    /** @type {any} */
+    const draft = { files: {} };
+    const resource = { file: mockFile, folder: { name: 'uploads' }, replace: true };
+    const libraryConfig = { filename_template: '{{slug}}-{{uuid_short}}' };
+
+    getGitHashMock.mockResolvedValue('git-hash');
+
+    // @ts-ignore - Test with simplified types
+    await processResource({ draft, resource, libraryConfig });
+
+    expect(draft.files['blob:mock-url']).toEqual({
+      file: mockFile,
+      folder: { name: 'uploads' },
+      replace: true,
+    });
   });
 
   test('should reject a file the browser cannot decode', async () => {
@@ -1255,6 +1315,45 @@ describe('Test getUnsavedAssets()', () => {
       kind: 'image',
       folder: mockFolder2,
     });
+  });
+
+  test('should name the files with the file name template', async () => {
+    const { getUnsavedAssets } = await import('./process');
+    const { getSlugs } = await import('$lib/services/contents/draft/slugs');
+    const mockFile1 = new File(['content1'], 'IMG 1.jpg', { type: 'image/jpeg' });
+    const mockFile2 = new File(['content2'], 'test2.jpg', { type: 'image/jpeg' });
+
+    vi.mocked(getSlugs).mockReturnValue(
+      /** @type {any} */ ({ defaultLocaleSlug: 'my-post', localizedSlugs: undefined }),
+    );
+    getGitHashMock.mockResolvedValue('hash');
+
+    /** @type {any} */
+    const draft = {
+      collection: { name: 'posts', _type: 'entry' },
+      defaultLocale: 'en',
+      currentValues: { en: { title: 'My Post' } },
+      files: {
+        'blob:url-1': {
+          file: mockFile1,
+          folder: undefined,
+          replace: false,
+          nameTemplate: { template: '{{slug}}: {{filename}}', randomValues: new Map() },
+        },
+        'blob:url-2': { file: mockFile2, folder: undefined, replace: false },
+      },
+    };
+
+    const result = await getUnsavedAssets({ draft, targetFolderPath: 'uploads' });
+
+    expect(result.map(({ name, path }) => ({ name, path }))).toEqual([
+      // Sanitized
+      { name: 'my-post img-1.jpg', path: 'uploads/my-post img-1.jpg' },
+      { name: 'test2.jpg', path: 'uploads/test2.jpg' },
+    ]);
+    // The files themselves keep their names until the entry is saved
+    expect(result[0].file).toBe(mockFile1);
+    expect(getSlugs).toHaveBeenCalledOnce();
   });
 
   test('should handle empty draft files', async () => {

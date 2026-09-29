@@ -147,6 +147,46 @@ describe('FileEditorItem', () => {
     expect(activeInlineEditors.current).toBe(0);
   });
 
+  test('shows the name filled with the file name template, until renamed by hand', async () => {
+    const file = await createMockImageFile({ name: 'new photo.png' });
+    const blobURL = URL.createObjectURL(file);
+
+    const nameTemplate = {
+      template: '{{filename}}-{{year}}',
+      randomValues: new Map(),
+      dateTimeParts: { year: '2026' },
+    };
+
+    const { draft } = await renderItem(
+      blobURL,
+      {},
+      { files: { [blobURL]: { file, folder: globalAssetFolder.current, nameTemplate } } },
+    );
+
+    await expect
+      .element(page.getByRole('textbox'))
+      .toHaveTextContent('/static/uploads/new-photo-2026.png');
+
+    await page.getByRole('button', { name: 'Rename' }).click();
+
+    const input = page.getByRole('textbox');
+
+    await expectFileNameSelected(input, 'new-photo-2026.png');
+
+    // Applying the name as is keeps the template
+    await userEvent.keyboard('{Enter}');
+    await expect.element(page.getByRole('button', { name: 'Rename' })).toBeVisible();
+    expect(draft.files[blobURL].nameTemplate).toBeDefined();
+
+    await page.getByRole('button', { name: 'Rename' }).click();
+    await input.fill('Manual.png');
+    await userEvent.keyboard('{Enter}');
+
+    await expect.element(page.getByRole('textbox')).toHaveTextContent('/static/uploads/Manual.png');
+    expect(draft.files[blobURL].file.name).toBe('Manual.png');
+    expect(draft.files[blobURL].nameTemplate).toBeUndefined();
+  });
+
   test('asks for confirmation when the extension changes, and can cancel', async () => {
     const file = await createMockImageFile({ name: 'photo.png' });
     const blobURL = URL.createObjectURL(file);

@@ -1772,6 +1772,118 @@ describe('Test replaceBlobURL()', () => {
     expect(savingAssets).toHaveLength(1);
   });
 
+  describe('with a file name template', () => {
+    const blobURL = 'blob:http://localhost:5173/tpl-123';
+
+    /** @type {any} */
+    const folder = {
+      internalPath: 'static/images',
+      publicPath: '/images',
+      entryRelative: false,
+      collectionName: 'posts',
+    };
+
+    /**
+     * Create an entry draft with content in two locales.
+     * @returns {any} Draft.
+     */
+    const createDraft = () => ({
+      collection: {
+        name: 'posts',
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'posts' },
+      },
+      collectionName: 'posts',
+      fileName: undefined,
+      isIndexFile: false,
+      defaultLocale: 'en',
+      currentValues: { en: { title: 'Summer' }, fr: { title: 'Été' } },
+    });
+
+    /**
+     * Create a file name template.
+     * @returns {any} Template.
+     */
+    const createNameTemplate = () => ({
+      template: '{{slug}}-{{fields.title}}-{{filename}}',
+      randomValues: new Map(),
+      dateTimeParts: {},
+    });
+
+    test('names the file with the default locale’s slug and content', async () => {
+      const file = new File(['a'], 'IMG 1.JPG', { type: 'image/jpeg' });
+      const content = { image: blobURL };
+      /** @type {any[]} */
+      const changes = [];
+      /** @type {any[]} */
+      const savingAssets = [];
+
+      await replaceBlobURL({
+        file,
+        folder,
+        replace: false,
+        nameTemplate: createNameTemplate(),
+        blobURL,
+        draft: createDraft(),
+        locale: 'fr',
+        slug: 'ete',
+        defaultLocaleSlug: 'summer',
+        keyPath: 'image',
+        content,
+        changes,
+        savingAssets,
+        encodingEnabled: false,
+      });
+
+      expect(changes).toEqual([
+        { action: 'create', path: 'static/images/summer-summer-img-1.jpg', data: file },
+      ]);
+      expect(content.image).toBe('/images/summer-summer-img-1.jpg');
+    });
+
+    test('saves a file used in several locales once, under one name', async () => {
+      const file = new File(['a'], 'photo.jpg', { type: 'image/jpeg' });
+      const draft = createDraft();
+      const nameTemplate = createNameTemplate();
+      /** @type {Record<string, { image: string }>} */
+      const contents = { en: { image: blobURL }, fr: { image: blobURL } };
+      /** @type {any[]} */
+      const changes = [];
+      /** @type {any[]} */
+      const savingAssets = [];
+
+      await Promise.all(
+        [
+          ['fr', 'ete'],
+          ['en', 'summer'],
+        ].map(([locale, slug]) =>
+          replaceBlobURL({
+            file,
+            folder,
+            replace: false,
+            nameTemplate,
+            blobURL,
+            draft,
+            locale,
+            slug,
+            defaultLocaleSlug: 'summer',
+            keyPath: 'image',
+            content: contents[locale],
+            changes,
+            savingAssets,
+            encodingEnabled: false,
+          }),
+        ),
+      );
+
+      expect(changes).toHaveLength(1);
+      expect(changes[0].path).toBe('static/images/summer-summer-photo.jpg');
+      expect(contents.en.image).toBe('/images/summer-summer-photo.jpg');
+      expect(contents.fr.image).toBe('/images/summer-summer-photo.jpg');
+    });
+  });
+
   test('should reuse existing file when duplicate detected', async () => {
     const { getGitHash } = await import('$lib/services/utils/file');
     const mockFile = new File(['test content'], 'duplicate.jpg', { type: 'image/jpeg' });

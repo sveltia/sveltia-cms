@@ -3,6 +3,7 @@ import equal from 'fast-deep-equal';
 
 import { allAssets, fillInternalPathTemplate } from '$lib/services/assets';
 import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
+import { getPendingFileName } from '$lib/services/assets/name';
 import { hasTemplateTags } from '$lib/services/common/template';
 import { TEMPLATE_TAG_REPLACE_REGEX } from '$lib/services/common/template/constants';
 import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
@@ -143,6 +144,29 @@ export const getTargetFolderPath = ({ entry, folder }) => {
 
   // Append a placeholder because the complete path is not determined until the entry is saved
   return subPath ? `${internalPath}/${subPath}/-` : `${internalPath}/-`;
+};
+
+/**
+ * Get the name a file that has not been saved to the repository yet will be saved with, before
+ * it’s made unique in the target folder. It’s filled with the current draft content if the
+ * `filename_template` media library option applies to the file.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft holding the file.
+ * @param {string} args.blobURL Blob URL of the file, which is the current field value.
+ * @returns {string | undefined} File name, or `undefined` if the draft doesn’t hold the file.
+ */
+export const getUnsavedFileName = ({ draft, blobURL }) => {
+  const item = draft.files[blobURL];
+
+  if (!item) {
+    return undefined;
+  }
+
+  return getPendingFileName({
+    draft,
+    item,
+    defaultLocaleSlug: item.nameTemplate ? getSlugs({ draft }).defaultLocaleSlug : '',
+  });
 };
 
 /**

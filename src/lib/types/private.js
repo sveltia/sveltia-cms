@@ -963,6 +963,21 @@
  * picker. Empty or `undefined` for the folder root.
  * @property {boolean} replace Whether to replace the existing file if there’s a file with the same
  * name in the target folder.
+ * @property {AssetNameTemplate} [nameTemplate] Template to name the file with when the entry is
+ * saved, if the `filename_template` media library option is set. It’s removed once the file is
+ * renamed by hand, and not set for a file replacing an existing one, which keeps its name.
+ */
+
+/**
+ * Template to name an uploaded file with, along with the values that must stay the same from the
+ * name shown while editing to the one saved.
+ * @typedef {object} AssetNameTemplate
+ * @property {string} template The `filename_template` media library option.
+ * @property {boolean} [slugificationEnabled] Whether the filled name is slugified, according to the
+ * `slugify_filename` media library option.
+ * @property {Map<string, string>} randomValues Random values generated for the tags so far, such
+ * as the one for a `{{uuid}}` tag.
+ * @property {Record<string, string>} dateTimeParts Date/time parts of the time the file was added.
  */
 
 /**
@@ -1594,6 +1609,9 @@
  * @property {Map<string, string>} [randomValues] Random values generated for the entry so far,
  * such as the one for a `{{uuid}}` tag, to be reused instead of generating new ones. It keeps a new
  * entry’s slug the same between the one shown while editing and the one saved.
+ * @property {string} [assetFileName] Original name of the asset file being named with the
+ * `filename_template` media library option. The `{{filename}}` and `{{extension}}` tags then stand
+ * for its name without the extension and its extension.
  */
 
 /**

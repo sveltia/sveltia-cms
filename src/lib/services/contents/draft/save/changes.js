@@ -144,7 +144,13 @@ const replaceBlobURLs = async ({
   // Replace blob URLs in File/Image fields with asset paths
   await Promise.all(
     matches.map(async ([blobURL]) => {
-      const { file, folder = _globalAssetFolder, replace, subfolderPath } = files[blobURL] ?? {};
+      const {
+        file,
+        folder = _globalAssetFolder,
+        replace,
+        subfolderPath,
+        nameTemplate,
+      } = files[blobURL] ?? {};
 
       if (file) {
         await replaceBlobURL({
@@ -153,6 +159,7 @@ const replaceBlobURLs = async ({
           folder,
           replace,
           subfolderPath,
+          nameTemplate,
           blobURL,
         });
       }

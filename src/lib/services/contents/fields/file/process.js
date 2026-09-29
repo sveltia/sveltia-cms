@@ -4,8 +4,10 @@ import { sanitize } from 'isomorphic-dompurify';
 import { allAssets } from '$lib/services/assets';
 import { createDisplayBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { createAssetNameTemplate, getPendingFileName } from '$lib/services/assets/name';
 import { processFile } from '$lib/services/assets/process';
 import { getEntryAssetFolderPath } from '$lib/services/contents/draft/save/assets';
+import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { createPath, getGitHash } from '$lib/services/utils/file';
 import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
@@ -63,6 +65,7 @@ export const getExistingBlobURL = async ({ draft, file, folder, subfolderPath = 
  * Convert unsaved files to the `Asset` format so these can be browsed just like other assets.
  * @param {object} args Arguments.
  * @param {File} args.file Raw file.
+ * @param {string} [args.name] Name the file is saved with. Default: the file’s own name.
  * @param {string} [args.blobURL] Blob URL of the file.
  * @param {AssetFolderInfo | undefined} args.folder Asset folder.
  * @param {string} [args.targetFolderPath] Target folder path.
@@ -72,13 +75,14 @@ export const getExistingBlobURL = async ({ draft, file, folder, subfolderPath = 
  */
 export const convertFileItemToAsset = async ({
   file,
+  name = file.name,
   blobURL,
   folder,
   targetFolderPath,
   subfolderPath,
   replace,
 }) => {
-  const { name, size } = file;
+  const { size } = file;
 
   return /** @type {Asset} */ ({
     unsaved: true,
@@ -103,12 +107,31 @@ export const convertFileItemToAsset = async ({
  * @param {string} [args.targetFolderPath] Target folder path.
  * @returns {Promise<Asset[]>} Assets.
  */
-export const getUnsavedAssets = async ({ draft, targetFolderPath }) =>
-  Promise.all(
-    Object.entries(draft.files).map(async ([blobURL, { file, folder, replace, subfolderPath }]) =>
-      convertFileItemToAsset({ file, blobURL, folder, targetFolderPath, subfolderPath, replace }),
-    ),
+export const getUnsavedAssets = async ({ draft, targetFolderPath }) => {
+  const items = Object.entries(draft.files);
+
+  // The slug is only needed to fill a file name template, and generating it can be costly
+  const defaultLocaleSlug = items.some(([, { nameTemplate }]) => nameTemplate)
+    ? getSlugs({ draft }).defaultLocaleSlug
+    : '';
+
+  return Promise.all(
+    items.map(async ([blobURL, item]) => {
+      const { file, folder, replace, subfolderPath } = item;
+      const name = getPendingFileName({ draft, item, defaultLocaleSlug });
+
+      return convertFileItemToAsset({
+        file,
+        name,
+        blobURL,
+        folder,
+        targetFolderPath,
+        subfolderPath,
+        replace,
+      });
+    }),
   );
+};
 
 /**
  * Get the saved assets relevant to the current entry draft and folder. For entry-relative folders,
@@ -213,8 +236,23 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
         // Set a temporary blob URL, which will be later replaced with the actual file path. The URL
         // is made for display, e.g. an SVG image can’t run script, while the file itself is cached
         value = await createDisplayBlobURL(file);
-        // Cache the file itself for later upload
-        draft.files[value] = { file, folder, replace, subfolderPath };
+
+        // Cache the file itself for later upload. A file replacing an existing one keeps its name
+        const template = replace ? undefined : libraryConfig?.filename_template;
+
+        draft.files[value] = {
+          file,
+          folder,
+          replace,
+          subfolderPath,
+          ...(template
+            ? {
+                nameTemplate: createAssetNameTemplate(template, {
+                  slugificationEnabled: libraryConfig.slugify_filename,
+                }),
+              }
+            : {}),
+        };
       }
     }
   }

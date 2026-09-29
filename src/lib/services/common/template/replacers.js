@@ -1,4 +1,5 @@
 import { generateUUID } from '@sveltia/utils/crypto';
+import { getPathInfo } from '@sveltia/utils/file';
 
 import { slugify } from '$lib/services/common/slug';
 import { UUID_TYPES } from '$lib/services/common/template/constants';
@@ -59,7 +60,7 @@ const getRandomValue = ({ randomValues }, key, generate) => {
  * @returns {any} Replaced value.
  */
 export const replaceTemplateTag = (tag, context) => {
-  const { type, content, entryFilePath, locale, dateTimeParts, basePath } = context;
+  const { type, content, entryFilePath, locale, dateTimeParts, basePath, assetFileName } = context;
   // Handle date-time fields. Parts are pre-calculated in `fillTemplate` to avoid redundant
   // calculations for multiple date-time tags in the same template.
   const _dateTimeParts = /** @type {Record<string, string>} */ (dateTimeParts);
@@ -83,6 +84,11 @@ export const replaceTemplateTag = (tag, context) => {
       `${locale}:${tag}`,
       () => /** @type {string} */ (handleUuidTag(tag)),
     );
+  }
+
+  // Handle the original file name tags when naming an asset file
+  if (assetFileName !== undefined && (tag === 'filename' || tag === 'extension')) {
+    return getPathInfo(assetFileName)[tag] ?? '';
   }
 
   // Handle locale tag for preview path

@@ -43,6 +43,10 @@ vi.mock('@sveltia/utils/string', async () => {
   };
 });
 vi.mock('flat');
+vi.mock('$lib/services/assets/name', () => ({
+  createAssetNameTemplate: vi.fn((template) => ({ template })),
+  fillAssetNameTemplate: vi.fn(() => 'renamed.jpg'),
+}));
 vi.mock('$lib/services/integrations/media-libraries/default', () => ({
   getDefaultMediaLibraryOptions: vi.fn(() => ({
     enabled: true,
@@ -439,6 +443,52 @@ describe('assets/index', () => {
       vi.mocked(isValidImage).mockResolvedValue(true);
 
       expect(processedAssets.current.validFiles).toEqual([secondFile]);
+    });
+
+    it('should rename the files with the file name template', async () => {
+      const { fillAssetNameTemplate } = await import('$lib/services/assets/name');
+      const file = new File(['content'], 'IMG_1.jpg', { type: 'image/jpeg' });
+
+      getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        enabled: true,
+        config: { max_file_size: Infinity, filename_template: '{{year}}-{{filename}}' },
+      });
+
+      uploadingAssets.current = { folder: undefined, files: [file] };
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      expect(vi.mocked(fillAssetNameTemplate)).toHaveBeenCalledWith({
+        nameTemplate: { template: '{{year}}-{{filename}}' },
+        originalName: 'IMG_1.jpg',
+      });
+      expect(processedAssets.current.validFiles).toHaveLength(1);
+      expect(processedAssets.current.validFiles[0]).not.toBe(file);
+    });
+
+    it('should not rename the files replacing existing assets', async () => {
+      const { fillAssetNameTemplate } = await import('$lib/services/assets/name');
+      const file = new File(['content'], 'IMG_1.jpg', { type: 'image/jpeg' });
+
+      getDefaultMediaLibraryOptionsMock.mockReturnValue({
+        enabled: true,
+        config: { max_file_size: Infinity, filename_template: '{{year}}-{{filename}}' },
+      });
+
+      uploadingAssets.current = {
+        folder: undefined,
+        files: [file],
+        originalAssets: [/** @type {any} */ ({ name: 'old.jpg', path: 'uploads/old.jpg' })],
+      };
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      expect(vi.mocked(fillAssetNameTemplate)).not.toHaveBeenCalled();
+      expect(processedAssets.current.validFiles).toEqual([file]);
     });
 
     it('should set processing state during transformations', async () => {

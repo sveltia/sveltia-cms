@@ -70,6 +70,31 @@ describe('integrations/media-libraries/default', () => {
       });
     });
 
+    it('should keep a non-blank file name template, trimmed', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+
+      getMock.mockReturnValue({ config: { filename_template: ' {{slug}}-{{uuid_short}} ' } });
+
+      expect(getDefaultMediaLibraryOptions().config.filename_template).toBe(
+        '{{slug}}-{{uuid_short}}',
+      );
+    });
+
+    it.each([[''], ['  '], [true], [123]])(
+      'should ignore an invalid file name template: %j',
+      async (template) => {
+        const { getMediaLibraryOptions } =
+          await import('$lib/services/integrations/media-libraries');
+
+        const getMock = vi.mocked(getMediaLibraryOptions);
+
+        getMock.mockReturnValue({ config: { filename_template: template } });
+
+        expect(getDefaultMediaLibraryOptions().config.filename_template).toBeUndefined();
+      },
+    );
+
     it('should return field-level media library options', async () => {
       const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
       const getMock = vi.mocked(getMediaLibraryOptions);

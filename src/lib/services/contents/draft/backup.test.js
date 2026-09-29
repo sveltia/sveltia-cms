@@ -445,6 +445,7 @@ describe('draft/backup', () => {
        */
       const proxify = (value) => new Proxy(value, {});
       const file = new File(['x'], 'image.png', { type: 'image/png' });
+      const randomValues = new Map([['undefined:uuid_short', 'abc123']]);
 
       const draft = proxify({
         collectionName: 'posts',
@@ -459,6 +460,16 @@ describe('draft/backup', () => {
             folder: proxify({ internalPath: 'img' }),
             replace: false,
             subfolderPath: 'products',
+          }),
+          'blob:http://localhost/def': proxify({
+            file,
+            folder: undefined,
+            replace: false,
+            nameTemplate: proxify({
+              template: '{{slug}}-{{uuid_short}}',
+              randomValues,
+              dateTimeParts: proxify({ year: '2026' }),
+            }),
           }),
         }),
         interacted: true,
@@ -490,6 +501,20 @@ describe('draft/backup', () => {
         // Picked while browsing a subfolder in the asset picker, so it’s saved there on restore
         subfolderPath: 'products',
       });
+      // The file name template is kept, along with its random values in a `Map`
+      expect(backup.files['blob:http://localhost/def']).toEqual({
+        file,
+        folder: undefined,
+        replace: false,
+        nameTemplate: {
+          template: '{{slug}}-{{uuid_short}}',
+          randomValues: new Map([['undefined:uuid_short', 'abc123']]),
+          dateTimeParts: { year: '2026' },
+        },
+      });
+      expect(backup.files['blob:http://localhost/def'].nameTemplate.randomValues).not.toBe(
+        randomValues,
+      );
     });
 
     it('should keep a file without a folder as is', async () => {

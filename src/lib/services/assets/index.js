@@ -189,7 +189,14 @@ createRootEffect(() => {
       processedAssets.current = { ...getInitialProcessedAssets(), processing: true };
     }
 
-    const results = await Promise.all(originalFiles.map((file) => processFile(file, config)));
+    // A file replacing an existing asset takes over its name, so it’s not renamed
+    const nameTemplate = uploadingAssets.current.originalAssets?.length
+      ? undefined
+      : config.filename_template;
+
+    const results = await Promise.all(
+      originalFiles.map((file) => processFile(file, config, { nameTemplate })),
+    );
 
     if (superseded) {
       return;

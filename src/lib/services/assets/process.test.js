@@ -5,6 +5,10 @@ import { partitionProcessedFiles, processFile } from './process';
 vi.mock('$lib/services/assets/info', () => ({
   hasCachedThumbnail: vi.fn(async () => false),
 }));
+vi.mock('$lib/services/assets/name', () => ({
+  createAssetNameTemplate: vi.fn((template) => ({ template })),
+  fillAssetNameTemplate: vi.fn(() => 'Filled Name.jpg'),
+}));
 vi.mock('$lib/services/integrations/media-libraries/default');
 vi.mock('$lib/services/utils/media/image/validate', () => ({
   isValidImage: vi.fn().mockResolvedValue(true),
@@ -219,6 +223,42 @@ describe('assets/process', () => {
 
       expect(vi.mocked(formatFileName)).not.toHaveBeenCalled();
       expect(result.file).toBe(file);
+    });
+
+    it('should rename the file with the given name template', async () => {
+      const { formatFileName } = await import('$lib/services/utils/file');
+      const { fillAssetNameTemplate } = await import('$lib/services/assets/name');
+      const lastModified = 1700000000000;
+      const file = new File(['content'], 'IMG 1.jpg', { type: 'image/jpeg', lastModified });
+
+      const result = await processFile(
+        file,
+        { slugify_filename: false },
+        { nameTemplate: '{{filename}}' },
+      );
+
+      expect(vi.mocked(fillAssetNameTemplate)).toHaveBeenCalledWith({
+        nameTemplate: { template: '{{filename}}' },
+        originalName: 'IMG 1.jpg',
+      });
+      // Sanitized, but not slugified
+      expect(vi.mocked(formatFileName)).toHaveBeenCalledWith('Filled Name.jpg', {
+        slugificationEnabled: false,
+      });
+      expect(result.file.name).toBe('filled-name.jpg');
+      expect(result.file.type).toBe('image/jpeg');
+      expect(result.file.lastModified).toBe(lastModified);
+    });
+
+    it('should slugify the name filled with the template if slugify_filename is true', async () => {
+      const { formatFileName } = await import('$lib/services/utils/file');
+      const file = new File(['content'], 'IMG 1.jpg', { type: 'image/jpeg' });
+
+      await processFile(file, { slugify_filename: true }, { nameTemplate: '{{filename}}' });
+
+      expect(vi.mocked(formatFileName)).toHaveBeenCalledWith('Filled Name.jpg', {
+        slugificationEnabled: true,
+      });
     });
 
     it('should apply transformations when provided', async () => {

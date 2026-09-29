@@ -34,6 +34,7 @@ export const getDefaultMediaLibraryOptions = ({ fieldConfig } = {}) => {
     max_file_size: maxSize,
     multiple,
     slugify_filename: slugify,
+    filename_template: fileNameTemplate,
     transformations,
   } = typeof options === 'boolean' ? {} : (options?.config ?? {});
 
@@ -43,6 +44,10 @@ export const getDefaultMediaLibraryOptions = ({ fieldConfig } = {}) => {
       max_file_size: typeof maxSize === 'number' && Number.isInteger(maxSize) ? maxSize : Infinity,
       multiple: typeof multiple === 'boolean' ? multiple : false,
       slugify_filename: typeof slugify === 'boolean' ? slugify : false,
+      filename_template:
+        typeof fileNameTemplate === 'string' && fileNameTemplate.trim()
+          ? fileNameTemplate.trim()
+          : undefined,
       transformations: isObject(transformations) ? transformations : undefined,
     },
   };

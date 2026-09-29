@@ -130,15 +130,27 @@ export const saveBackup = async (draft) => {
       currentSlugs: /** @type {LocaleSlugMap} */ (toRaw(currentSlugs)),
       currentValues: /** @type {LocaleContentMap} */ (toRaw(currentValues)),
       files: Object.fromEntries(
-        Object.entries(files).map(([blobURL, { file, folder, replace, subfolderPath }]) => [
-          blobURL,
-          {
-            file,
-            folder: folder ? /** @type {AssetFolderInfo} */ (toRaw(folder)) : folder,
-            replace,
-            subfolderPath,
-          },
-        ]),
+        Object.entries(files).map(
+          ([blobURL, { file, folder, replace, subfolderPath, nameTemplate }]) => [
+            blobURL,
+            {
+              file,
+              folder: folder ? /** @type {AssetFolderInfo} */ (toRaw(folder)) : folder,
+              replace,
+              subfolderPath,
+              // The random values are kept in a `Map`, which a JSON round trip would lose
+              ...(nameTemplate
+                ? {
+                    nameTemplate: {
+                      ...nameTemplate,
+                      randomValues: new Map(nameTemplate.randomValues),
+                      dateTimeParts: { ...nameTemplate.dateTimeParts },
+                    },
+                  }
+                : {}),
+            },
+          ],
+        ),
       ),
       // The entries hold `File` objects among their changes, so a JSON round trip won’t do
       pendingEntries: getSnapshot(pendingEntries),
