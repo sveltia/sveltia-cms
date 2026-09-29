@@ -413,6 +413,21 @@ describe('definitions', () => {
       expect(result?.toPreview).toBe(customComponent.toPreview);
     });
 
+    it('should fall back to the registered name for a custom component without a label', () => {
+      customComponentRegistry.set('no-label', {
+        id: 'no-label',
+        fields: [],
+        pattern: /no-label/,
+        toBlock: () => 'no-label',
+      });
+
+      const result = getComponentDef('x-no-label');
+
+      expect(result?.id).toBe('x-no-label');
+      expect(result?.label).toBe('no-label');
+      expect(result?.toPreview).toBeUndefined();
+    });
+
     it('should prioritize custom components over built-in ones', () => {
       const customImageComponent = {
         id: 'image',

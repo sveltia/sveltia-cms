@@ -229,7 +229,8 @@ export const createCustomNodeClass = (componentDef) => {
         target: document.createElement('div'),
         props: {
           componentName,
-          label,
+          // `getComponentDef()` falls back to the registered name if the label is omitted
+          label: /** @type {string} */ (label),
           collapsed,
           mode,
           inline,

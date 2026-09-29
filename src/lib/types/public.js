@@ -2032,7 +2032,8 @@
  * Custom rich text editor component options.
  * @typedef {object} EditorComponentDefinition
  * @property {string} id Unique identifier for the component.
- * @property {string} label Label of the component to be displayed in the editor UI.
+ * @property {string} [label] Label of the component to be displayed in the editor UI. Default: the
+ * `id` value.
  * @property {string} [icon] Name of a [Material Symbols
  * icon](https://fonts.google.com/icons?icon.set=Material+Symbols) to be displayed in the editor UI.
  * @property {'menuitem' | 'button'} [trigger] Trigger UI of the component. Default: `menuitem`. A

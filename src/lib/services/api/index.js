@@ -163,7 +163,7 @@ const registerEditorComponent = (definition) => {
     throw new TypeError('The `definition.id` must be a non-empty string');
   }
 
-  if (!isNonEmptyString(definition.label)) {
+  if (definition.label !== undefined && !isNonEmptyString(definition.label)) {
     throw new TypeError('The `definition.label` must be a non-empty string');
   }
 
@@ -175,7 +175,7 @@ const registerEditorComponent = (definition) => {
     throw new TypeError('The `definition.toBlock` must be a function');
   }
 
-  if (typeof definition.toPreview !== 'function') {
+  if (definition.toPreview !== undefined && typeof definition.toPreview !== 'function') {
     throw new TypeError('The `definition.toPreview` must be a function');
   }
 

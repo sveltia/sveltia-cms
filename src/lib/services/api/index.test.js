@@ -390,6 +390,12 @@ describe('CMS.registerEditorComponent()', () => {
     );
   });
 
+  test('accepts a definition without the optional label and toPreview', () => {
+    const { label, toPreview, ...definition } = validDefinition;
+
+    expect(() => CMS.registerEditorComponent(definition)).not.toThrow();
+  });
+
   test('throws TypeError if label is not a non-empty string', () => {
     const definition = { ...validDefinition, label: 123 };
 

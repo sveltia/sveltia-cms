@@ -157,7 +157,12 @@ export const getComponentDef = (name) => {
       customComponentRegistry.get(customComponentName)
     );
 
-    return { ...customComponentDef, id: `x-${customComponentName}` };
+    return {
+      ...customComponentDef,
+      id: `x-${customComponentName}`,
+      // The label is optional; fall back to the registered name
+      label: customComponentDef.label ?? customComponentName,
+    };
   }
 
   return getBuiltInComponentDefs().find(({ id }) => id === name);
