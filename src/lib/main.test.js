@@ -781,3 +781,15 @@ describe('Global Markdown parser and HTML sanitizer', () => {
     expect(window.DOMPurify.sanitize('<b>foo</b><script>alert(1)</script>')).toBe('<b>foo</b>');
   });
 });
+
+describe('React globals', () => {
+  test('exposes React APIs on `window`, but not React itself', async () => {
+    const { default: React } = await import('react');
+
+    await import('./main.js');
+
+    expect(window.h).toBe(React.createElement);
+    expect(window.rf).toBe(React.Fragment);
+    expect(/** @type {any} */ (window).React).toBeUndefined();
+  });
+});

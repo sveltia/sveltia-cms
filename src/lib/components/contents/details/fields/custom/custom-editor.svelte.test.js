@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { React } from '$lib/services/api';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import CustomEditor from './custom-editor.svelte';
@@ -242,5 +243,117 @@ describe('CustomEditor', () => {
     // The instance is unregistered along with the control
     unmount();
     await expect.poll(() => document.querySelector('input')).toBeNull();
+  });
+
+  test('renders a function control using hooks from the React the CMS exposes', async () => {
+    /**
+     * A control keeping a click count in state with the `useState` hook, and reporting it.
+     * @param {any} props Control props.
+     * @returns {any} React element.
+     */
+    const CounterControl = ({ value, onChange }) => {
+      const [count, setCount] = React.useState(value ?? 0);
+
+      return createElement(
+        'button',
+        {
+          type: 'button',
+          /**
+           * Increment the count.
+           * @returns {void} Nothing.
+           */
+          onClick: () => {
+            setCount(count + 1);
+            onChange(count + 1);
+          },
+        },
+        `Count: ${count}`,
+      );
+    };
+
+    const { draft } = await renderEditor(3, CounterControl);
+    const button = page.getByRole('button');
+
+    await expect.element(button).toHaveTextContent('Count: 3');
+    await button.click();
+    await expect.element(button).toHaveTextContent('Count: 4');
+    await expect.poll(() => draft.currentValues._default.stars).toBe(4);
+  });
+
+  test('registers an `isValid` method exposed by a function control for validation', async () => {
+    const isValid = vi.fn(() => true);
+    let renderCount = 0;
+
+    /**
+     * A function control exposing an `isValid` method with the `useImperativeHandle` hook. The
+     * handle is created again on every render, as no dependencies are given.
+     * @param {any} props Control props.
+     * @returns {any} React element.
+     */
+    const ValidatingControl = ({ value, ref }) => {
+      renderCount += 1;
+      React.useImperativeHandle(ref, () => ({ isValid }));
+
+      return createElement('input', { value: value ?? '', readOnly: true });
+    };
+
+    const { props } = await renderEditor(3, ValidatingControl);
+
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalledWith(3, expect.anything()));
+
+    // A new handle doesn’t render the control again
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+
+    expect(renderCount).toBeLessThan(5);
+
+    // The value is validated again when it changes
+    props.currentValue = 4;
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalledWith(4, expect.anything()));
+  });
+
+  test('validates the value again when another field in the entry changes', async () => {
+    const isValid = vi.fn(() => true);
+
+    /**
+     * A function control exposing an `isValid` method with the `useImperativeHandle` hook.
+     * @param {any} props Control props.
+     * @returns {any} React element.
+     */
+    const ValidatingControl = ({ value, ref }) => {
+      React.useImperativeHandle(ref, () => ({ isValid }), []);
+
+      return createElement('input', { value: value ?? '', readOnly: true });
+    };
+
+    const { entryDraft } = await renderEditor(3, ValidatingControl);
+
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
+    isValid.mockClear();
+    entryDraft.current.currentValues._default.title = 'Hello';
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalledWith(3, expect.anything()));
+  });
+
+  test('registers an `isValid` method exposed by a `forwardRef` control', async () => {
+    const isValid = vi.fn(() => true);
+
+    const ValidatingControl = React.forwardRef(
+      /**
+       * A function control exposing an `isValid` method with the `useImperativeHandle` hook.
+       * @param {any} props Control props.
+       * @param {any} ref Ref to the control instance.
+       * @returns {any} React element.
+       */
+      ({ value }, ref) => {
+        React.useImperativeHandle(ref, () => ({ isValid }), []);
+
+        return createElement('input', { value: value ?? '', readOnly: true });
+      },
+    );
+
+    await renderEditor(3, ValidatingControl);
+
+    await vi.waitFor(() => expect(isValid).toHaveBeenCalled());
   });
 });

@@ -1,4 +1,5 @@
 import { getImmutable } from '$lib/services/api/immutable';
+import { isReactComponent } from '$lib/services/api/react';
 import { getFieldConfigMap, getPreviewData } from '$lib/services/contents/fields/custom/helpers';
 
 /**
@@ -27,7 +28,7 @@ export const buildPreviewProps = ({
   draft,
   preview,
 }) => {
-  if (typeof preview !== 'function' || !draft) {
+  if (!isReactComponent(preview) || !draft) {
     return undefined;
   }
 

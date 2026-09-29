@@ -105,8 +105,12 @@
   let container = $state();
   /** @type {Root | undefined} */
   let reactRoot = $state();
-  /** @type {any | undefined} */
-  let componentInstance = $state();
+  /**
+   * Control instance, or the handle a function control exposes with `useImperativeHandle()`. Not
+   * proxied, as it belongs to React.
+   * @type {any | undefined}
+   */
+  let componentInstance = $state.raw();
   /** @type {AssetPicker | undefined} */
   let assetPicker = $state();
   /**
@@ -264,9 +268,16 @@
     if (immutableLoaded.current && reactDomLoaded.current && container && resolvedControl) {
       renderComponent();
     }
+  });
 
-    // Trigger async validation when value changes (if the component has `isValid` method). The
-    // result is cached; `awaitCustomFieldValidations()` lets a save attempt wait for it.
+  // Trigger async validation when any field in the locale changes (if the component has `isValid`
+  // method), as the method can check the value against other fields. The result is cached;
+  // `awaitCustomFieldValidations()` lets a save attempt wait for it. This is a separate effect, so
+  // that a function control exposing a new handle on every render doesn’t make the control render
+  // again and again
+  $effect(() => {
+    void getValueMapSnapshot(entryDraft.current, locale, valueStoreKey);
+
     if (typeof componentInstance?.isValid === 'function') {
       triggerCustomFieldValidation({ locale, keyPath, value: currentValue, fieldConfig });
     }

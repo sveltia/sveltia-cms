@@ -757,6 +757,13 @@ describe('CMS.registerPreviewTemplate()', () => {
     );
   });
 
+  test('registers a wrapped component as a preview template', () => {
+    const component = { $$typeof: Symbol.for('react.memo'), type: () => null };
+
+    // @ts-ignore
+    expect(() => CMS.registerPreviewTemplate('posts', component)).not.toThrow();
+  });
+
   test('throws TypeError when component is not a function', () => {
     // @ts-ignore
     expect(() => CMS.registerPreviewTemplate('posts', 'not-a-function')).toThrow(TypeError);
@@ -799,6 +806,14 @@ describe('CMS.registerFieldType()', () => {
     // The components will receive Immutable Maps, so the library is loaded ahead of time
     expect(preloadImmutable).toHaveBeenCalled();
     expect(preloadReactDom).toHaveBeenCalled();
+  });
+
+  test('registers field type with wrapped components', () => {
+    const control = { $$typeof: Symbol.for('react.forward_ref'), render: () => null };
+    const preview = { $$typeof: Symbol.for('react.memo'), type: () => null };
+
+    // @ts-ignore
+    expect(() => CMS.registerFieldType('test', control, preview)).not.toThrow();
   });
 
   test('registers field type with string control', () => {
@@ -1112,6 +1127,26 @@ describe('CMS Proxy - unsupported functions', () => {
     const result = CMS.someRandomProperty;
 
     expect(result).toBeUndefined();
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+});
+
+describe('CMS.React', () => {
+  test('is the React instance bundled with the CMS', async () => {
+    const { default: React } = await import('react');
+    const { React: ReactExport } = await import('.');
+
+    expect(CMS.React).toBe(React);
+    expect(ReactExport).toBe(React);
+    expect(typeof CMS.React.useState).toBe('function');
+  });
+
+  test('does not log a warning', () => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    // eslint-disable-next-line no-unused-expressions
+    CMS.React;
     expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });

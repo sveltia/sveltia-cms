@@ -48,6 +48,15 @@ describe('contents/fields/custom/helpers', () => {
     expect(resolveControl(control)).toBe(control);
   });
 
+  it('resolves a `forwardRef` control directly', () => {
+    const control = /** @type {any} */ ({
+      $$typeof: Symbol.for('react.forward_ref'),
+      render: vi.fn(),
+    });
+
+    expect(resolveControl(control)).toBe(control);
+  });
+
   it('resolves a registered custom widget control from the registry', () => {
     const control = vi.fn();
 

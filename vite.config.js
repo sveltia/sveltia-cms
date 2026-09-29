@@ -375,6 +375,8 @@ const RESOLVED_REACT_SHIM_MODULE_ID = `\0${REACT_SHIM_MODULE_ID}`;
  */
 const shimReact = () => ({
   name: 'shim-react',
+  // Run before Vite’s own resolver, which would otherwise resolve the package to its files
+  enforce: 'pre',
   // eslint-disable-next-line jsdoc/require-jsdoc
   resolveId: (id) => (id === 'react' ? RESOLVED_REACT_SHIM_MODULE_ID : null),
   // eslint-disable-next-line jsdoc/require-jsdoc

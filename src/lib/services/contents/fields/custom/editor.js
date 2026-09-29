@@ -1,3 +1,4 @@
+import { isReactComponent } from '$lib/services/api/react';
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getFieldConfigMap, getPreviewData } from '$lib/services/contents/fields/custom/helpers';
@@ -20,7 +21,7 @@ import { getFieldConfigMap, getPreviewData } from '$lib/services/contents/fields
  * @returns {CustomFieldControl | undefined} Resolved control component or undefined.
  */
 export const resolveControl = (ctrl) => {
-  if (typeof ctrl === 'function') {
+  if (isReactComponent(ctrl)) {
     return ctrl;
   }
 
@@ -28,7 +29,7 @@ export const resolveControl = (ctrl) => {
     const customFieldType = customFieldTypeRegistry.get(ctrl);
 
     if (customFieldType?.control) {
-      if (typeof customFieldType.control === 'function') {
+      if (isReactComponent(customFieldType.control)) {
         return customFieldType.control;
       }
 

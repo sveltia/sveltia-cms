@@ -1,4 +1,5 @@
 import { isObject } from '@sveltia/utils/object';
+import BundledReact from 'react';
 import { mount } from 'svelte';
 
 import App from '$lib/components/app.svelte';
@@ -6,6 +7,7 @@ import { COMPATIBILITY_URL, UNSUPPORTED_FUNC_NAMES } from '$lib/services/api/com
 import { SUPPORTED_EVENT_TYPES } from '$lib/services/api/events';
 import { getFieldTypeDefinition } from '$lib/services/api/field-types';
 import { preloadImmutable } from '$lib/services/api/immutable';
+import { isReactComponent } from '$lib/services/api/react';
 import { preloadReactDom } from '$lib/services/api/react-dom';
 import {
   customComponentRegistry,
@@ -38,6 +40,14 @@ import { renderRichText } from './rich-text';
  */
 // Don’t use `$lib` in `from` above, or type declarations will not be exported
 
+/**
+ * The React instance bundled with the CMS, which renders custom preview templates, custom field
+ * types and editor component previews. Hooks such as `useState` only work when taken from this
+ * instance, not from another copy of React, e.g. the `react` package installed by the user.
+ * @type {typeof import('react')}
+ * @see https://sveltiacms.app/en/docs/api#writing-react-components
+ */
+const React = BundledReact;
 let initialized = false;
 
 /**
@@ -263,7 +273,7 @@ const registerPreviewStyle = (style, { raw = false } = {}) => {
  * Register a custom preview template.
  * @param {string} name Template name.
  * @param {CustomPreviewTemplate} component React component.
- * @throws {TypeError} If `name` is not a string or `component` is not a function.
+ * @throws {TypeError} If `name` is not a string or `component` is not a React component.
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
@@ -274,7 +284,7 @@ const registerPreviewTemplate = (name, component) => {
     );
   }
 
-  if (typeof component !== 'function') {
+  if (!isReactComponent(component)) {
     throw new TypeError(
       'The `component` option for `CMS.registerPreviewTemplate()` must be a React component',
     );
@@ -293,8 +303,8 @@ const registerPreviewTemplate = (name, component) => {
  * @param {CustomFieldControl | string} control Component for the edit pane.
  * @param {CustomFieldPreview} [preview] Component for the preview pane.
  * @param {CustomFieldSchema} [schema] Field schema.
- * @throws {TypeError} If `name` is not a string, `control` is not a function or string, `preview`
- * is not a function, or `schema` is not an object.
+ * @throws {TypeError} If `name` is not a string, `control` is not a React component or string,
+ * `preview` is not a React component, or `schema` is not an object.
  * @see https://decapcms.org/docs/custom-widgets/
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
@@ -312,13 +322,13 @@ const registerFieldType = (name, control, preview, schema) => {
     );
   }
 
-  if (typeof control !== 'function' && typeof control !== 'string') {
+  if (!isReactComponent(control) && typeof control !== 'string') {
     throw new TypeError(
       'The `control` option for `CMS.registerFieldType()` must be a React component or a string',
     );
   }
 
-  if (preview !== undefined && typeof preview !== 'function') {
+  if (preview !== undefined && !isReactComponent(preview)) {
     throw new TypeError(
       'The `preview` option for `CMS.registerFieldType()` must be a React component',
     );
@@ -342,6 +352,7 @@ const registerFieldType = (name, control, preview, schema) => {
  */
 const CMS = new Proxy(
   {
+    React,
     getFieldType,
     getWidget: getFieldType, // alias for backward compatibility with Netlify/Decap CMS
     init,
@@ -391,6 +402,7 @@ export {
   getFieldType,
   getFieldType as getWidget, // alias for backward compatibility with Netlify/Decap CMS
   init,
+  React,
   registerCustomFormat,
   registerEditorComponent,
   registerEventListener,

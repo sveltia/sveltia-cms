@@ -2223,7 +2223,11 @@
  */
 
 /**
- * Custom preview template React component.
+ * Custom preview template React component: a function or class component, or a component wrapped
+ * with `memo()` or `forwardRef()`.
+ * Hooks such as `useState` work when taken from the React instance bundled with the CMS, which is
+ * available as `CMS.React` or the `React` export of the npm package, not from another copy of
+ * React.
  * @typedef {ComponentType<CustomPreviewTemplateProps>} CustomPreviewTemplate
  */
 
@@ -2305,13 +2309,24 @@
  * to `addFile`, including the `media_library` options. Files that are oversized or cannot be
  * decoded are reported to the user in a dialog. It rejects with an error if the contents of a
  * picked asset cannot be retrieved.
+ * @property {(instance: any) => void} [ref] Ref callback the CMS reads an `isValid` method from. A
+ * function component can expose the method by passing this prop to the `useImperativeHandle` hook.
+ * A class component, or one wrapped with `forwardRef()`, receives the ref the usual way instead.
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
 
 /**
- * Custom field control React component. Component instances may optionally implement an `isValid`
- * instance method for custom validation. The method should return:
+ * Custom field control React component: a function or class component, or a component wrapped
+ * with `memo()` or `forwardRef()`.
+ * Hooks such as `useState` work when taken from the React instance bundled with the CMS, which is
+ * available as `CMS.React` or the `React` export of the npm package, not from another copy of
+ * React.
+ *
+ * The control may optionally implement an `isValid` method for custom validation: as an instance
+ * method of a class component, or, in a function component, on the handle it exposes with the
+ * `useImperativeHandle` hook, given the `ref` prop or the ref of `forwardRef()`. The method should
+ * return:
  * - `true` when valid.
  * - `false` or `{ error: { message: "text" } }` when invalid.
  * - A Promise that resolves to any of the above formats.
@@ -2341,7 +2356,11 @@
  */
 
 /**
- * Custom field preview React component.
+ * Custom field preview React component: a function or class component, or a component wrapped with
+ * `memo()` or `forwardRef()`.
+ * Hooks such as `useState` work when taken from the React instance bundled with the CMS, which is
+ * available as `CMS.React` or the `React` export of the npm package, not from another copy of
+ * React.
  * @typedef {ComponentType<CustomFieldPreviewProps>} CustomFieldPreview
  */
 
