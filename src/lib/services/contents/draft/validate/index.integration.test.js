@@ -16,6 +16,13 @@ const collection = {
     // Optional, but carrying the same kind of constraints
     { name: 'note', widget: 'string', required: false, minlength: 3, pattern: ['^\\d+$', 'D'] },
     { name: 'extras', widget: 'list', required: false, min: 2 },
+    // Tested against the items joined with commas: at least two lowercase words
+    {
+      name: 'keywords',
+      widget: 'list',
+      required: false,
+      pattern: ['^[a-z]+(,[a-z]+)+$', 'Two words or more'],
+    },
     // Lists whose items are objects, stored as their subfields, e.g. `speakers.0.name`
     {
       name: 'speakers',
@@ -236,6 +243,31 @@ describe('contents/draft/validate (integration)', () => {
 
     validateEntry();
     expect(entryDraft.current.validities._default.blocks.rangeOverflow).toBe(true);
+  });
+
+  it('should test the pattern of a list without subfields against its items joined', () => {
+    // Like Decap CMS, the pattern of a simple list is matched against `a,b,c` rather than against
+    // each item, so a pattern can refer to the commas, and an empty list isn’t tested at all
+    const values = entryDraft.current.currentValues._default;
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.keywords.valid).toBe(true);
+
+    values['keywords.0'] = 'alpha';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.keywords.patternMismatch).toBe(true);
+    expect(entryDraft.current.validationMessages._default.keywords).toEqual(['Two words or more']);
+
+    values['keywords.1'] = 'beta';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.keywords.valid).toBe(true);
+
+    values['keywords.2'] = 'Gamma';
+
+    validateEntry();
+    expect(entryDraft.current.validities._default.keywords.patternMismatch).toBe(true);
   });
 
   it('should still reject an error that isn’t about the field being empty', () => {

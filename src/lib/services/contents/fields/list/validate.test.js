@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { validateListField } from './validate';
+import { getListItems, validateListField } from './validate';
 
 /**
  * @import { EntryValidityState } from '$lib/types/private';
@@ -225,5 +225,35 @@ describe('validateListField()', () => {
     });
 
     expect(validity.rangeUnderflow).toBe(true);
+  });
+});
+
+describe('getListItems()', () => {
+  test('returns the items stored under the list, in list order', () => {
+    expect(
+      getListItems({
+        keyPath: 'tags',
+        value: '',
+        valueMap: {
+          title: 'Title',
+          'tags.1': 'b',
+          'tags.0': 'a',
+          'tags.10': 'k',
+          'tags.2': 'c',
+          'tags_other.0': 'x',
+          'tags.3.name': 'y',
+        },
+      }),
+    ).toEqual(['a', 'b', 'c', 'k']);
+  });
+
+  test('returns the value itself when the list holds its items in an array', () => {
+    expect(
+      getListItems({ keyPath: 'tags', value: ['a', 'b'], valueMap: { tags: ['a', 'b'] } }),
+    ).toEqual(['a', 'b']);
+  });
+
+  test('returns an empty array when the list has no items', () => {
+    expect(getListItems({ keyPath: 'tags', value: [], valueMap: { tags: [] } })).toEqual([]);
   });
 });

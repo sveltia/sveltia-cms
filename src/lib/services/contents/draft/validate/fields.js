@@ -18,7 +18,7 @@ import {
 } from '$lib/services/contents/fields/key-value/pairs';
 import { validateKeyValueField } from '$lib/services/contents/fields/key-value/validate';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
-import { validateListField } from '$lib/services/contents/fields/list/validate';
+import { getListItems, validateListField } from '$lib/services/contents/fields/list/validate';
 import { validateNumberField } from '$lib/services/contents/fields/number/validate';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { isOptionValue } from '$lib/services/contents/fields/select/helpers';
@@ -121,6 +121,23 @@ export const finalizeValidity = (validity) => {
 };
 
 /**
+ * Test a value against the `pattern` option of a field, updating `validity` in place.
+ * @param {object} args Arguments.
+ * @param {any} args.value Value to test, converted to a string.
+ * @param {any} args.validation Pattern validation array or undefined.
+ * @param {EntryValidityState} args.validity Validity state to update.
+ */
+const validatePattern = ({ value, validation, validity }) => {
+  if (Array.isArray(validation)) {
+    const regex = getRegex(validation[0]);
+
+    if (regex && !regex.test(String(value))) {
+      validity.patternMismatch = true;
+    }
+  }
+};
+
+/**
  * Validate a scalar field (all non-aggregate types), updating `validity` in place.
  * @param {object} args Arguments.
  * @param {any} args.value Current field value.
@@ -139,13 +156,7 @@ const validateScalarField = ({ value, required, validation, validity, selected =
     validity.valueMissing = true;
   }
 
-  if (Array.isArray(validation)) {
-    const regex = getRegex(validation[0]);
-
-    if (regex && !regex.test(String(trimmed))) {
-      validity.patternMismatch = true;
-    }
-  }
+  validatePattern({ value: trimmed, validation, validity });
 
   return { empty };
 };
@@ -185,6 +196,7 @@ const prepareListField = ({
   keyPath,
   value,
   valueMap,
+  fieldConfig,
   validity,
   validities,
   locale,
@@ -203,6 +215,25 @@ const prepareListField = ({
     min,
     max,
   });
+
+  // Like Decap CMS, test the pattern of a List field without subfields against its items joined
+  // with commas, e.g. `a,b,c`, rather than against each item
+  // @ts-ignore A List field with subfields doesn’t have the `pattern` option
+  const { widget, pattern: validation } = fieldConfig;
+
+  if (
+    !skip &&
+    !empty &&
+    Array.isArray(validation) &&
+    widget === 'list' &&
+    !getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields
+  ) {
+    validatePattern({
+      value: getListItems({ keyPath, value, valueMap }).join(','),
+      validation,
+      validity,
+    });
+  }
 
   return { skip, keyPath, value, empty: !!empty };
 };

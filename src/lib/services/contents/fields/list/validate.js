@@ -87,3 +87,29 @@ export const validateListField = ({
 
   return { skip: false, empty: !size };
 };
+
+/**
+ * Get the items of a List field without subfields, which are stored as `field.0`, `field.1` …
+ * `field.N`, unless the list itself holds them in an array.
+ * @param {object} args Arguments.
+ * @param {string} args.keyPath Field key path.
+ * @param {any} args.value Current field value.
+ * @param {FlattenedEntryContent} args.valueMap Entry values.
+ * @returns {any[]} Items in list order.
+ */
+export const getListItems = ({ keyPath, value, valueMap }) => {
+  if (Array.isArray(value) && !!value.length) {
+    return value;
+  }
+
+  const itemKeyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)$`);
+
+  return Object.entries(valueMap)
+    .flatMap(([key, item]) => {
+      const index = key.match(itemKeyPathRegex)?.[1];
+
+      return index === undefined ? [] : [[Number(index), item]];
+    })
+    .sort(([a], [b]) => a - b)
+    .map(([, item]) => item);
+};

@@ -711,8 +711,18 @@
  */
 
 /**
+ * Simple List field properties.
+ * @typedef {object} SimpleListFieldProps
+ * @property {[string | RegExp, string]} [pattern] Validation format. The first argument is a
+ * regular expression matching pattern for a valid input value, and the second argument is an error
+ * message to be displayed when the input value does not match the pattern. Like Decap CMS, the
+ * pattern is tested against all the list items joined with commas, e.g. `foo,bar,baz`, rather than
+ * against each item, and not at all while the list is empty.
+ */
+
+/**
  * Simple List field definition with primitive item types.
- * @typedef {ListFieldBaseProps & FieldValidationProps} SimpleListField
+ * @typedef {ListFieldBaseProps & SimpleListFieldProps} SimpleListField
  */
 
 /**
