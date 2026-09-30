@@ -317,3 +317,41 @@ export const findEditorField = async ({ locale, keyPath, maxAttempts = 20, inter
 
   return pane.querySelector(selector);
 };
+
+/**
+ * Highlight the Edit Pane field that corresponds to an element in a custom preview template, just
+ * like clicking a field in the default preview does. The template marks the element with the
+ * `data-key-path` attribute, which Scroll Synchronization also uses. A click on the element or
+ * anything inside it highlights the field of the innermost marked element, while the Enter key
+ * does so only when the marked element itself has the focus, so it doesn’t get in the way of a
+ * focused link or form control. The template can opt out by calling `preventDefault()`.
+ * @param {object} args Arguments.
+ * @param {MouseEvent | KeyboardEvent} args.event `click` or `keydown` event on the preview frame’s
+ * document.
+ * @param {InternalLocaleCode} args.locale Locale of the Preview Pane.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1029
+ */
+export const highlightPreviewTemplateField = ({ event, locale }) => {
+  const isKeyDown = event.type === 'keydown';
+
+  if (
+    event.defaultPrevented ||
+    (isKeyDown && /** @type {KeyboardEvent} */ (event).key !== 'Enter')
+  ) {
+    return;
+  }
+
+  // The target comes from the frame’s realm, so `instanceof Element` can’t be used. A key event
+  // always targets an element, while a click event can be dispatched to the document
+  const { target } = event;
+
+  const element = /** @type {Element | null | undefined} */ (
+    isKeyDown ? target : /** @type {Element} */ (target).closest?.('[data-key-path]')
+  );
+
+  const keyPath = element?.getAttribute('data-key-path');
+
+  if (keyPath) {
+    highlightEditorField({ locale, keyPath });
+  }
+};

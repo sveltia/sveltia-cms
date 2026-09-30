@@ -124,4 +124,85 @@ describe('EntryPreviewIframe', () => {
       .poll(() => getDocument(container)?.querySelector('.greeting')?.textContent)
       .toBe('Hello, Elsie ()');
   });
+
+  test('highlights the Edit Pane field of an element marked in a React component', async () => {
+    /** @type {any[]} */
+    const messages = [];
+
+    /**
+     * Record a message.
+     * @param {MessageEvent} event Event.
+     */
+    const onMessage = (event) => {
+      messages.push(event.data);
+    };
+
+    /**
+     * A component marking its elements with key paths.
+     * @returns {any} React element.
+     */
+    const Page = () =>
+      createElement(
+        'article',
+        { 'data-key-path': 'sections.0' },
+        createElement(
+          'h2',
+          { 'data-key-path': 'sections.0.heading', tabIndex: 0 },
+          createElement('span', { className: 'heading' }, 'Heading'),
+        ),
+        createElement('p', { className: 'intro' }, 'Intro'),
+        createElement(
+          'a',
+          {
+            className: 'link',
+            'data-key-path': 'sections.0.link',
+            href: '#',
+            /**
+             * Prevent the default action.
+             * @param {Event} event Event.
+             */
+            onClick: (event) => {
+              event.preventDefault();
+            },
+          },
+          'Link',
+        ),
+      );
+
+    window.addEventListener('message', onMessage);
+
+    try {
+      const { container } = await renderWithDraft(EntryPreviewIframe, {
+        draft: createMockDraft(),
+        props: { locale: 'fr', styleURLs: [], reactComponent: Page, reactProps: {} },
+      });
+
+      await expect.poll(() => getDocument(container)?.querySelector('.heading')).toBeTruthy();
+
+      const doc = /** @type {Document} */ (getDocument(container));
+      const heading = /** @type {HTMLElement} */ (doc.querySelector('h2'));
+
+      /** @type {HTMLElement} */ (doc.querySelector('.heading')).click();
+      /** @type {HTMLElement} */ (doc.querySelector('.intro')).click();
+      // The component prevents the default action of the link, so it’s not highlighted
+      /** @type {HTMLElement} */ (doc.querySelector('.link')).click();
+      heading.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      await expect
+        .poll(() => messages)
+        .toEqual([
+          {
+            type: 'highlight-editor-field',
+            payload: { locale: 'fr', keyPath: 'sections.0.heading' },
+          },
+          { type: 'highlight-editor-field', payload: { locale: 'fr', keyPath: 'sections.0' } },
+          {
+            type: 'highlight-editor-field',
+            payload: { locale: 'fr', keyPath: 'sections.0.heading' },
+          },
+        ]);
+    } finally {
+      window.removeEventListener('message', onMessage);
+    }
+  });
 });

@@ -38,17 +38,18 @@ const REGISTRATION_SCRIPT = `
 `;
 
 /**
- * Serve the admin page with the registration script.
+ * Serve the admin page with a registration script.
  * @param {Page} page Page.
+ * @param {string} [script] Script registering the template.
  */
-const registerTemplate = async (page) => {
+const registerTemplate = async (page, script = REGISTRATION_SCRIPT) => {
   await page.route('**/admin/', async (route) => {
     const response = await route.fetch();
     const html = await response.text();
 
     await route.fulfill({
       response,
-      body: html.replace('</body>', `<script>${REGISTRATION_SCRIPT}</script></body>`),
+      body: html.replace('</body>', `<script>${script}</script></body>`),
     });
   });
 };
@@ -97,5 +98,71 @@ test.describe('unsaved image', () => {
     await expect(
       page.frameLocator('iframe').first().getByRole('img', { name: 'Featured' }),
     ).toHaveAttribute('src', /^blob:/);
+  });
+});
+
+test.describe('click-to-highlight', () => {
+  test.use({
+    config: {
+      ...BASE_CONFIG,
+      collections: [
+        {
+          ...BASE_CONFIG.collections[0],
+          fields: [
+            { name: 'title', label: 'Title' },
+            {
+              name: 'items',
+              label: 'Items',
+              widget: 'list',
+              collapsed: true,
+              fields: [{ name: 'name', label: 'Name' }],
+            },
+          ],
+        },
+      ],
+    },
+  });
+
+  test('highlights the field of an element marked with its key path', async ({ cms, page }) => {
+    await registerTemplate(
+      page,
+      `
+        const PostPreview = createClass({
+          render: function () {
+            const { entry } = this.props;
+            const items = entry.getIn(['data', 'items']).toJS();
+
+            return h('article', {},
+              h('h1', { 'data-key-path': 'title', tabIndex: 0 }, entry.getIn(['data', 'title'])),
+              h('ul', {}, items.map((item, index) =>
+                h('li', { key: index, 'data-key-path': 'items.' + index + '.name' },
+                  h('span', {}, item.name),
+                ),
+              )),
+            );
+          },
+        });
+
+        CMS.registerPreviewTemplate('posts', PostPreview);
+      `,
+    );
+    await cms.open();
+    await cms.seed({
+      'content/posts/hello.md':
+        '---\ntitle: Hello\nitems:\n  - name: First\n  - name: Second\n---\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Hello/ }).click();
+
+    const preview = page.frameLocator('iframe').first();
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    // The collapsed item is expanded to reveal the field
+    await preview.getByText('Second').click();
+    await expect(editor.locator('input:focus')).toHaveValue('Second');
+
+    await preview.getByRole('heading', { name: 'Hello' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(editor.locator('input:focus')).toHaveValue('Hello');
   });
 });

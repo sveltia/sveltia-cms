@@ -16,6 +16,7 @@
     createEntryDraftMountContext,
     getEntryDraftContext,
   } from '$lib/services/contents/draft/state.svelte';
+  import { highlightPreviewTemplateField } from '$lib/services/contents/editor/fields';
   import { escapeAttr } from '$lib/services/utils/string';
 
   /**
@@ -142,12 +143,25 @@
     // Loaded on demand, as only a custom preview template renders React here. It’s normally on
     // its way already, as `CMS.registerPreviewTemplate()` starts loading it
     const { createRoot } = await loadReactDom();
-    const target = iframe?.contentDocument?.body;
+    const contentDocument = iframe?.contentDocument;
+    const target = contentDocument?.body;
 
     /* v8 ignore next 3 -- the frame may have been removed while the library was loading */
-    if (!target) {
+    if (!contentDocument || !target) {
       return;
     }
+
+    /**
+     * Highlight the Edit Pane field corresponding to an element the template has marked with the
+     * `data-key-path` attribute. The listeners go away with the frame’s document.
+     * @param {MouseEvent | KeyboardEvent} event `click` or `keydown` event.
+     */
+    const listener = (event) => {
+      highlightPreviewTemplateField({ event, locale });
+    };
+
+    contentDocument.addEventListener('click', listener);
+    contentDocument.addEventListener('keydown', listener);
 
     // Create React root in the iframe; the update $effect will handle the first render
     reactRoot = createRoot(target);

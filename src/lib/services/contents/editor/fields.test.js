@@ -11,6 +11,7 @@ import {
   findEditorField,
   getExpanderKeys,
   highlightEditorField,
+  highlightPreviewTemplateField,
   isExpanded,
 } from './fields.js';
 
@@ -256,6 +257,119 @@ describe('findEditorField', () => {
       findEditorField({ locale: 'en', keyPath: 'list.9', maxAttempts: 3, interval: 0 }),
     ).resolves.toBeNull();
     expect(spy).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('highlightPreviewTemplateField', () => {
+  /**
+   * Create an element-like target.
+   * @param {string | null} keyPath Value of the `data-key-path` attribute.
+   * @param {any} [parent] Parent element.
+   * @returns {any} Element.
+   */
+  const createElementLike = (keyPath, parent) => {
+    /** @type {any} */
+    const element = {
+      getAttribute: vi.fn(() => keyPath),
+      closest: vi.fn(() => (keyPath !== null ? element : (parent?.closest() ?? null))),
+    };
+
+    return element;
+  };
+
+  /**
+   * Call the function with an event.
+   * @param {any} event Event-like object.
+   * @param {string} [locale] Locale.
+   */
+  const run = (event, locale = 'en') => {
+    highlightPreviewTemplateField({ event, locale });
+  };
+
+  /**
+   * Get the key paths of the fields that have been highlighted.
+   * @returns {string[]} Key paths.
+   */
+  const getHighlightedKeyPaths = () =>
+    vi.mocked(window.postMessage).mock.calls.map(([{ payload }]) => payload.keyPath);
+
+  beforeEach(() => {
+    vi.stubGlobal('window', {
+      location: { origin: 'https://example.com' },
+      postMessage: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('highlights the field of the clicked element', () => {
+    const target = createElementLike('sections.0.heading');
+
+    run({ type: 'click', target }, 'fr');
+
+    expect(target.closest).toHaveBeenCalledWith('[data-key-path]');
+    expect(window.postMessage).toHaveBeenCalledExactlyOnceWith(
+      { type: 'highlight-editor-field', payload: { locale: 'fr', keyPath: 'sections.0.heading' } },
+      'https://example.com',
+    );
+  });
+
+  it('highlights the field of the closest marked ancestor', () => {
+    run({ type: 'click', target: createElementLike(null, createElementLike('sections.1')) });
+
+    expect(getHighlightedKeyPaths()).toEqual(['sections.1']);
+  });
+
+  it('does nothing when no element or an empty key path is marked', () => {
+    run({ type: 'click', target: createElementLike(null) });
+    run({ type: 'click', target: createElementLike('') });
+
+    expect(window.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when the document is clicked', () => {
+    run({ type: 'click', target: {} });
+
+    expect(window.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when the template has prevented the default action', () => {
+    run({ type: 'click', target: createElementLike('title'), defaultPrevented: true });
+    run({
+      type: 'keydown',
+      key: 'Enter',
+      target: createElementLike('title'),
+      defaultPrevented: true,
+    });
+
+    expect(window.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('highlights the field when Enter is pressed on the marked element', () => {
+    const target = createElementLike('title');
+
+    run({ type: 'keydown', key: 'Enter', target });
+
+    expect(target.closest).not.toHaveBeenCalled();
+    expect(getHighlightedKeyPaths()).toEqual(['title']);
+  });
+
+  it('ignores Enter pressed on an element inside the marked element', () => {
+    run({
+      type: 'keydown',
+      key: 'Enter',
+      target: createElementLike(null, createElementLike('title')),
+    });
+
+    expect(window.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('ignores other keys', () => {
+    run({ type: 'keydown', key: ' ', target: createElementLike('title') });
+
+    expect(window.postMessage).not.toHaveBeenCalled();
   });
 });
 
