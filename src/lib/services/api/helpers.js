@@ -1,5 +1,6 @@
 import { AssetProxy } from '$lib/services/api/asset-proxy';
 import { getImmutable } from '$lib/services/api/immutable';
+import { UnsavedAssetProxy } from '$lib/services/api/unsaved-asset-proxy';
 import { allAssets, getAssetByPath, isAssetInFolder } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
@@ -14,6 +15,7 @@ import { unflattenMap } from '$lib/services/utils/object';
  * AssetFolderInfo,
  * Entry,
  * EntryDraft,
+ * EntryFileMap,
  * FlattenedEntryContent,
  * GetFieldArgs,
  * InternalLocaleCode,
@@ -123,16 +125,24 @@ export const convertEntryToMap = ({ entry, locale, collectionName, associatedAss
  * @param {Entry} args.entry Entry object.
  * @param {string} args.collectionName Collection name.
  * @param {string} [args.fileName] File name.
+ * @param {EntryFileMap} [args.files] Files added to the entry draft but not saved yet, keyed by the
+ * blob URLs the field values refer to them with.
  * @returns {(path: string) => ApiAsset | undefined} Function that gets asset URLs.
  */
 export const createGetAsset =
-  ({ entry, collectionName, fileName }) =>
+  ({ entry, collectionName, fileName, files }) =>
   /**
    * Get the asset URL for a given asset path.
-   * @param {string} path Path to the asset.
+   * @param {string} path Path to the asset, or the blob URL of a file that hasn’t been saved yet.
    * @returns {ApiAsset | undefined} Asset item.
    */
   (path) => {
+    const unsavedFile = files?.[path]?.file;
+
+    if (unsavedFile) {
+      return new UnsavedAssetProxy(path, unsavedFile);
+    }
+
     const asset = getAssetByPath({ value: path, entry, collectionName, fileName });
 
     if (asset) {
@@ -330,7 +340,7 @@ export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
  * @returns {PreviewData} Object containing computed preview data.
  */
 export const buildPreviewData = ({ draft, locale }) => {
-  const { collectionName, fileName, isIndexFile, originalEntry, currentValues } = draft;
+  const { collectionName, fileName, isIndexFile, originalEntry, currentValues, files } = draft;
   const entry = buildEntry({ originalEntry, currentValues });
   /* v8 ignore next */
   const valueMap = entry.locales[locale].content ?? {};
@@ -355,6 +365,6 @@ export const buildPreviewData = ({ draft, locale }) => {
 
       return fieldsMetaData;
     },
-    getAsset: createGetAsset({ entry, collectionName, fileName }),
+    getAsset: createGetAsset({ entry, collectionName, fileName, files }),
   };
 };

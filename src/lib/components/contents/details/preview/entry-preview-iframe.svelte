@@ -10,6 +10,7 @@
   import { createElement } from 'react';
   import { mount, unmount } from 'svelte';
 
+  import { assetURLUpdates } from '$lib/services/api/asset-proxy';
   import { loadReactDom } from '$lib/services/api/react-dom';
   import {
     createEntryDraftMountContext,
@@ -205,6 +206,9 @@
 
   // Update React component when reactProps changes
   $effect(() => {
+    // Render again once an asset the component got with `getAsset()` has a blob URL
+    void assetURLUpdates.current;
+
     // Only update if we have a React root and the iframe is initialized
     if (initialized && reactRoot && reactComponent && reactProps) {
       renderReactComponent();

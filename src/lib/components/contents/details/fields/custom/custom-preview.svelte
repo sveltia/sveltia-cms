@@ -8,6 +8,7 @@
   import { createElement } from 'react';
   import { onMount } from 'svelte';
 
+  import { assetURLUpdates } from '$lib/services/api/asset-proxy';
   import { fieldStateContext } from '$lib/services/api/field-state';
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
   import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
@@ -100,6 +101,8 @@
     // previews via a cache, which is why the values are not read through it and have to be tracked
     // here. The re-render stays cheap.
     void getValueMapSnapshot(entryDraft.current, locale);
+    // Render again once an asset the preview got with `getAsset()` has a blob URL
+    void assetURLUpdates.current;
 
     // Render the preview once the container and the library are ready, then keep it up to date
     if (immutableLoaded.current && reactDomLoaded.current && container) {

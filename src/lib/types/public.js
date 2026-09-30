@@ -2465,6 +2465,10 @@
  * for a control that shows values derived from other fields in the same entry, such as dynamically
  * generated select options. The prop is updated whenever any field in the entry is updated. It’s
  * `undefined` if the control is rendered outside an entry draft.
+ * @property {((path: string) => ApiAsset | undefined) | undefined} getAsset Function that returns
+ * the asset item for a given path, e.g. a file path stored in the value, or `undefined` if not
+ * found. Use its `url` property to display the file in the control. It’s the same as the `getAsset`
+ * prop of a preview. It’s `undefined` if the control is rendered outside an entry draft.
  * @property {(value: any) => void} onChange Callback function that must be called with the new
  * value whenever the user changes the field. This updates the entry draft.
  * @property {(file: File | Blob, options?: CustomFieldAddFileOptions) => Promise<string>} addFile

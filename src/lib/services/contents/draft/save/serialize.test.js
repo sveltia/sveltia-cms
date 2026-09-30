@@ -20,6 +20,11 @@ const { isFieldRequired, getField } = vi.hoisted(() => ({
   }),
 }));
 
+const { getFieldKind } = vi.hoisted(() => ({
+  // Field types named `custom-*` stand for the ones registered with `CMS.registerFieldType()`
+  getFieldKind: vi.fn((field) => (field.widget?.startsWith('custom-') ? 'custom' : 'builtin')),
+}));
+
 const { hasRootField } = vi.hoisted(() => ({
   hasRootField: vi.fn(
     (fields, fieldType) =>
@@ -43,6 +48,7 @@ const { parseDateTimeConfig } = vi.hoisted(() => ({
 vi.mock('$lib/services/contents/entry/fields', () => ({
   isFieldRequired,
   getField,
+  getFieldKind,
   hasRootField,
 }));
 
@@ -1340,6 +1346,102 @@ describe('Test serializeContent()', () => {
         version: '1.0',
         category: 'tech',
       },
+    });
+  });
+
+  describe('custom field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [],
+      isIndexFile: false,
+    };
+
+    test('keeps an object value in place and in the order the control gave the properties', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['title', 'photo', 'body']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath === 'photo' ? 'custom-photo' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: {
+          body: 'Text',
+          title: 'Title',
+          'photo.original': '/a.jpg',
+          'photo.thumbnail': '/a-thumb.webp',
+          'photo.aspectRatio': 1.5,
+        },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({
+          title: 'Title',
+          photo: { original: '/a.jpg', thumbnail: '/a-thumb.webp', aspectRatio: 1.5 },
+          body: 'Text',
+        }),
+      );
+    });
+
+    test('keeps a primitive or array value in place', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['color', 'tags', 'body']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath === 'body' ? 'string' : 'custom-field',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { body: 'Text', 'tags.0': 'b', 'tags.1': 'a', color: '#fff' },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({ color: '#fff', tags: ['b', 'a'], body: 'Text' }),
+      );
+    });
+
+    test('keeps an object value of a field in a list item in place', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce([
+        'items',
+        'items.*.photo',
+        'items.*.caption',
+      ]);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath.endsWith('.photo') ? 'custom-photo' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: {
+          'items.0.caption': 'First',
+          'items.0.photo.src': '/a.jpg',
+          'items.0.photo.alt': 'A',
+          'items.1.caption': 'Second',
+        },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({
+          items: [{ photo: { src: '/a.jpg', alt: 'A' }, caption: 'First' }, { caption: 'Second' }],
+        }),
+      );
     });
   });
 

@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import * as assetsInfo from '$lib/services/assets/info';
 
-import { AssetProxy } from './asset-proxy';
+import { AssetProxy, assetURLUpdates } from './asset-proxy';
 
 // Mock dependencies first
 vi.mock('@sveltia/utils/file', () => ({
@@ -133,6 +133,7 @@ describe('AssetProxy', () => {
         file: new File(['test'], 'test-image.jpg', { type: 'image/jpeg' }),
       };
 
+      const updates = assetURLUpdates.current;
       const proxy = new AssetProxy(mockAsset);
 
       // Wait for async update
@@ -140,6 +141,29 @@ describe('AssetProxy', () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(proxy.url).toBe('blob:https://example.com/12345');
+      // The components rendering the URL are told to render it again
+      expect(assetURLUpdates.current).toBe(updates + 1);
+    });
+
+    it('should not report an update when the URL is already the blob URL', async () => {
+      /** @type {any} */
+      const mockAsset = {
+        name: 'test-image.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: 'image',
+        folder: { collectionName: undefined, internalPath: 'assets', publicPath: '/assets' },
+        blobURL: 'blob:https://example.com/12345',
+      };
+
+      const updates = assetURLUpdates.current;
+      const proxy = new AssetProxy(mockAsset);
+
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(proxy.url).toBe('blob:https://example.com/12345');
+      expect(assetURLUpdates.current).toBe(updates);
     });
 
     it('should keep existing URL when blob URL is not available', async () => {
@@ -155,6 +179,7 @@ describe('AssetProxy', () => {
         file: new File(['test'], 'test-image.jpg', { type: 'image/jpeg' }),
       };
 
+      const updates = assetURLUpdates.current;
       const proxy = new AssetProxy(mockAsset);
       const initialUrl = proxy.url;
 
@@ -165,6 +190,7 @@ describe('AssetProxy', () => {
       // URL should remain unchanged when getAssetBlobURL returns null
       expect(proxy.url).toBe(initialUrl);
       expect(proxy.url).toBe('/assets/test-image.jpg');
+      expect(assetURLUpdates.current).toBe(updates);
 
       // Reset mock
       vi.mocked(assetsInfo.getAssetBlobURL).mockResolvedValueOnce('blob:https://example.com/12345');

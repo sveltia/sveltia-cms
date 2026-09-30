@@ -7,7 +7,12 @@ import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reor
 import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
 import { createKeyPathList } from '$lib/services/contents/draft/save/key-path';
 import { getAliasesKey, getAliasKeyPaths } from '$lib/services/contents/entry/aliases';
-import { getField, hasRootField, isFieldRequired } from '$lib/services/contents/entry/fields';
+import {
+  getField,
+  getFieldKind,
+  hasRootField,
+  isFieldRequired,
+} from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { TOML_FORMATS } from '$lib/services/contents/file';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
@@ -235,6 +240,28 @@ const finalizeContent = ({
     });
   };
 
+  /**
+   * Copy a custom field’s value to the sorted property map. An object or array value is flattened
+   * into the key paths below the field’s own, which aren’t listed in the configured fields. Copy
+   * them right away, in the order the control gave the properties, rather than leaving them to be
+   * sorted with the remainder at the end of the output.
+   * @param {string} keyPath Concrete key path of the field.
+   * @param {Field} field Field configuration.
+   */
+  const copyCustomField = (keyPath, field) => {
+    if (keyPath in unsortedMap) {
+      copyProperty({ ...copyArgs, key: keyPath, field });
+    }
+
+    const prefix = `${keyPath}.`;
+
+    Object.keys(unsortedMap)
+      .filter((_keyPath) => _keyPath.startsWith(prefix))
+      .forEach((_keyPath) => {
+        copyProperty({ ...copyArgs, key: _keyPath });
+      });
+  };
+
   // Move the listed properties to a new object
   createKeyPathList(fields).forEach((keyPath) => {
     const field = getField({ ...getFieldArgs, keyPath });
@@ -243,6 +270,8 @@ const finalizeContent = ({
     // is the placeholder of an empty field
     if (field?.widget === 'keyvalue' && !keyPath.includes('*')) {
       copyKeyValueField(keyPath, field);
+    } else if (field && !keyPath.includes('*') && getFieldKind(field) === 'custom') {
+      copyCustomField(keyPath, field);
     } else if (keyPath in unsortedMap) {
       copyProperty({ ...copyArgs, key: keyPath, field });
     } else {
@@ -266,6 +295,8 @@ const finalizeContent = ({
 
           if (resolvedField?.widget === 'keyvalue') {
             copyKeyValueField(concreteKeyPath, resolvedField);
+          } else if (resolvedField && getFieldKind(resolvedField) === 'custom') {
+            copyCustomField(concreteKeyPath, resolvedField);
           } else if (concreteKeyPath in unsortedMap) {
             copyProperty({ ...copyArgs, key: concreteKeyPath, field: resolvedField });
           }

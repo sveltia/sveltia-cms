@@ -41,6 +41,7 @@
   import { getContext, onMount } from 'svelte';
 
   import AssetPicker from '$lib/components/contents/details/fields/custom/asset-picker.svelte';
+  import { assetURLUpdates } from '$lib/services/api/asset-proxy';
   import { fieldStateContext } from '$lib/services/api/field-state';
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
   import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
@@ -262,6 +263,8 @@
     // through a cache shared between controls when the props are built, so they have to be tracked
     // here
     void getValueMapSnapshot(entryDraft.current, locale, valueStoreKey);
+    // Render again once an asset the control got with `getAsset()` has a blob URL
+    void assetURLUpdates.current;
 
     // Render the component once the container and the library are ready, and update it when
     // currentValue changes externally (e.g., via revert or copy)

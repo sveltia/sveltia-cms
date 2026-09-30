@@ -52,6 +52,20 @@ vi.mock('$lib/services/api/asset-proxy', () => ({
   },
 }));
 
+vi.mock('$lib/services/api/unsaved-asset-proxy', () => ({
+  UnsavedAssetProxy: vi.fn(
+    /**
+     * Mock constructor for UnsavedAssetProxy.
+     * @param {string} blobURL Blob URL.
+     * @param {File} file File.
+     */
+    function MockUnsavedAssetProxy(blobURL, file) {
+      this.url = blobURL;
+      this.fileObj = file;
+    },
+  ),
+}));
+
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: mockGetEntriesByCollection,
 }));
@@ -537,6 +551,25 @@ describe('React Helpers', () => {
       expect(mockGetAssetByPath).toHaveBeenCalled();
       expect(result).toBeDefined();
       expect(result).toHaveProperty('url');
+    });
+
+    it('should return a file added to the draft by its blob URL', () => {
+      const file = new File(['a'], 'a.png', { type: 'image/png' });
+
+      const getter = createGetAsset({
+        entry: { slug: 'test-post' },
+        collectionName: 'posts',
+        fileName: undefined,
+        files: { 'blob:https://example.com/1': { file, folder: undefined, replace: false } },
+      });
+
+      const result = getter('blob:https://example.com/1');
+
+      expect(mockGetAssetByPath).not.toHaveBeenCalled();
+      expect(result).toEqual(expect.objectContaining({ url: 'blob:https://example.com/1' }));
+      expect(result?.fileObj).toBe(file);
+      // Any other blob URL is looked up as usual
+      expect(getter('blob:https://example.com/2')).toBeUndefined();
     });
 
     it('should return undefined when asset is not found', () => {

@@ -1,10 +1,20 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
 import { getAssetBlob, getAssetBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
+import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
  * @import { Asset } from '$lib/types/private';
  */
+
+/**
+ * Number of times an {@link AssetProxy} has had its URL replaced with a blob URL. A React
+ * component reads the `url` property when it renders, and isn’t told when it changes, so the
+ * components that pass `getAsset` to one depend on this to render it again with the blob URL.
+ * Otherwise a preview would keep the public path, which doesn’t point to the file on the CMS site,
+ * nor at all for a file that hasn’t been published yet.
+ */
+export const assetURLUpdates = createRawState(0);
 
 /**
  * Implement the `ApiAsset` interface for assets returned by the API.
@@ -26,7 +36,12 @@ export class AssetProxy {
     (async () => {
       try {
         // Replace the URL with the blob URL if available, otherwise keep the existing URL
-        this.url = (await getAssetBlobURL(asset)) ?? this.url;
+        const blobURL = await getAssetBlobURL(asset);
+
+        if (blobURL && blobURL !== this.url) {
+          this.url = blobURL;
+          assetURLUpdates.current += 1;
+        }
       } catch {
         // The blob can’t be retrieved, e.g. offline or the file is gone; keep the existing URL
       }
