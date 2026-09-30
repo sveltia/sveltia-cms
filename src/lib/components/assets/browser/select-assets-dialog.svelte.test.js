@@ -759,6 +759,51 @@ describe('SelectAssetsDialog', () => {
     expect(onSelect.mock.calls[0][0][0].file).toBe(file);
   });
 
+  test('releases the URLs of dropped files when closed, but not the draft’s', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+
+    try {
+      // An unsaved file already picked for the entry, whose blob URL is the field value
+      const pending = await createMockImageFile({ name: 'pending.png' });
+      const draftURL = URL.createObjectURL(pending);
+
+      const { onClose } = await renderDialog({
+        draft: {
+          originalEntry: undefined,
+          files: { [draftURL]: { file: pending, folder: globalAssetFolder.current } },
+        },
+      });
+
+      const dialog = page.getByRole('dialog');
+
+      await waitForGrid(3);
+
+      const file = await createMockImageFile({ name: 'new.png', width: 5 });
+
+      dropFiles([file]);
+      await waitForGrid(4);
+
+      const droppedURL =
+        createObjectURL.mock.results[
+          createObjectURL.mock.calls.findIndex(([blob]) => blob === file)
+        ]?.value;
+
+      expect(droppedURL).toMatch(/^blob:/);
+
+      // The tiles are removed along with the dialog, and the draft’s URL has to survive that
+      // @see https://github.com/sveltia/sveltia-cms/issues/1030
+      await dialog.getByRole('button', { name: 'Cancel' }).click();
+      await vi.waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+      await expect.poll(() => revokeObjectURL.mock.calls.flat()).toContain(droppedURL);
+      await sleep(100);
+      expect(revokeObjectURL.mock.calls.flat()).not.toContain(draftURL);
+    } finally {
+      createObjectURL.mockRestore();
+      revokeObjectURL.mockRestore();
+    }
+  });
+
   test('asks whether to replace a dropped file that already exists', async () => {
     const { onSelect } = await renderDialog();
     const dialog = page.getByRole('dialog');

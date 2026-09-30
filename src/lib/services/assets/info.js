@@ -450,10 +450,19 @@ export const revokeBlobURLIfNeeded = (url) => {
 
 /**
  * Revoke the blob URL for the given asset if it’s not being used in any elements.
+ *
+ * An unsaved asset is left alone, as its URL belongs to whoever created it: the entry draft, which
+ * uses it as the field value until the entry is saved, or the asset picker, for a file dropped
+ * into it. Revoking it here would break the field as soon as the picker is closed, if the field
+ * hasn’t displayed the URL again by the next frame — which is the case when the same file is
+ * picked again on a slow device.
  * @param {Asset} asset Asset.
+ * @see https://github.com/sveltia/sveltia-cms/issues/1030
  */
-export const revokeAssetBlobURLIfNeeded = ({ blobURL }) => {
-  revokeBlobURLIfNeeded(blobURL);
+export const revokeAssetBlobURLIfNeeded = ({ blobURL, unsaved }) => {
+  if (!unsaved) {
+    revokeBlobURLIfNeeded(blobURL);
+  }
 };
 
 /**

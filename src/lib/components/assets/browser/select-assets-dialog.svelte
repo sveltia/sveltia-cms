@@ -21,7 +21,7 @@
   import CreateSubfolderDialog from '$lib/components/assets/list/create-subfolder-dialog.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
   import { assetsLocked } from '$lib/services/assets/folders';
-  import { getFolderPublicPath } from '$lib/services/assets/info';
+  import { getFolderPublicPath, revokeBlobURLIfNeeded } from '$lib/services/assets/info';
   import {
     canBrowseSubfolders,
     getDirName,
@@ -370,6 +370,9 @@
     rawSearchTerms = '';
     subfolderPath = '';
     selectedSubfolderPaths = [];
+    // The blob URLs of dropped files belong to the dialog, since the field takes the file itself on
+    // Insert
+    droppedAssets.forEach((asset) => revokeBlobURLIfNeeded(asset.blobURL));
     droppedAssets = [];
     unsavedAssets = [];
     selectedResources = [];

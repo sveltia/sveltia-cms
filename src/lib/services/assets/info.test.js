@@ -3061,6 +3061,22 @@ describe('assets/info', () => {
       expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
     });
 
+    it('should not revoke the blobURL of an unsaved asset', () => {
+      // The URL belongs to the entry draft, which uses it as the field value
+      const unsavedAsset = /** @type {any} */ ({
+        blobURL: 'blob:draft-file',
+        path: 'assets/new.jpg',
+        name: 'new.jpg',
+        unsaved: true,
+      });
+
+      // @ts-ignore
+      revokeAssetBlobURLIfNeeded(unsavedAsset);
+
+      expect(global.window.requestAnimationFrame).not.toHaveBeenCalled();
+      expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+    });
+
     it('should do nothing if element with blobURL exists in DOM', () => {
       const asset = /** @type {any} */ ({
         blobURL: 'blob:url-1',
