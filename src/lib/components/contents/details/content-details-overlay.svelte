@@ -386,8 +386,10 @@
 
   $effect(() => {
     if (prefs.devModeEnabled) {
+      // Log a plain copy rather than the `$state` proxy. Taking it reads every value in the draft,
+      // so the draft is logged again whenever a value or its validity changes
       // eslint-disable-next-line no-console
-      console.info('entryDraft', entryDraft.current);
+      console.info('entryDraft', $state.snapshot(entryDraft.current));
     }
   });
 

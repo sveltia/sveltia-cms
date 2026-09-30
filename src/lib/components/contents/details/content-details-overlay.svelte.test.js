@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -630,6 +631,7 @@ describe('ContentDetailsOverlay', () => {
 
   test('logs the draft in developer mode', async () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn');
 
     prefs.devModeEnabled = true;
 
@@ -637,8 +639,32 @@ describe('ContentDetailsOverlay', () => {
       files: { 'blob:x': { file: new File(['x'], 'x.png'), folder: undefined } },
     });
 
-    await renderOverlay(draft);
+    const { entryDraft } = await renderOverlay(draft);
+
     expect(info).toHaveBeenCalledWith('entryDraft', draft);
+    // Logging the `$state` proxy itself would make Svelte warn
+    expect(warn.mock.calls.some(([message]) => message.includes('console_log_state'))).toBe(false);
+
+    // The draft is logged again when a value or a validity in it changes
+    info.mockClear();
+    /** @type {any} */ (entryDraft.current).currentValues.en.title = 'Hi';
+    flushSync();
+    expect(info).toHaveBeenLastCalledWith(
+      'entryDraft',
+      expect.objectContaining({
+        currentValues: expect.objectContaining({ en: expect.objectContaining({ title: 'Hi' }) }),
+      }),
+    );
+
+    info.mockClear();
+    /** @type {any} */ (entryDraft.current).validities.en.title = { valid: false };
+    flushSync();
+    expect(info).toHaveBeenLastCalledWith(
+      'entryDraft',
+      expect.objectContaining({
+        validities: expect.objectContaining({ en: { title: { valid: false } } }),
+      }),
+    );
   });
 
   test('refuses to create an entry over the limit', async () => {
