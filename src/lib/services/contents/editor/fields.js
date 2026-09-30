@@ -170,7 +170,13 @@ export const getExpanderKeys = ({
         keys.add(`${parentKeyPath}.${parentConfig.name}#`);
       }
 
-      if (parentConfig?.widget === 'list' && 'field' in /** @type {ListField} */ (parentConfig)) {
+      // A list item is expanded by its own key: `config` is the subfield of a List field with
+      // `field`, or the resolved type of a List field with `types`, which has no `widget`
+      if (
+        parentConfig?.widget === 'list' &&
+        ('field' in /** @type {ListField} */ (parentConfig) ||
+          'types' in /** @type {ListField} */ (parentConfig))
+      ) {
         keys.add(_keyPath);
       }
     }

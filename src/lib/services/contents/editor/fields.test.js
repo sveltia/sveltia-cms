@@ -658,6 +658,38 @@ describe('editor/fields', () => {
 
       expect(Array.isArray(keys)).toBe(true);
     });
+
+    it('should expand an item of a list field with variable types', () => {
+      const sections = {
+        name: 'sections',
+        widget: 'list',
+        types: [
+          { name: 'hero', fields: [{ name: 'heading' }] },
+          { name: 'text', fields: [{ name: 'heading' }, { name: 'body', widget: 'text' }] },
+        ],
+      };
+
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'sections') {
+          return sections;
+        }
+
+        if (keyPath === 'sections.2') {
+          // The resolved type has no `widget`
+          return sections.types[1];
+        }
+
+        if (keyPath === 'sections.2.heading') {
+          return { name: 'heading' };
+        }
+
+        return undefined;
+      });
+
+      expect(
+        getExpanderKeys({ collectionName: 'pages', valueMap: {}, keyPath: 'sections.2.heading' }),
+      ).toEqual(['sections#', 'sections.2']);
+    });
   });
 
   describe('expandInvalidFields - validity handling', () => {

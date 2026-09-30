@@ -98,6 +98,37 @@ test('shows the summary of collapsed items', async ({ page }) => {
   await expect(speakers.getByRole('textbox', { name: 'Name' })).toHaveCount(3);
 });
 
+test('expands a collapsed item of a list with types from the preview', async ({ page }) => {
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const sections = editor.getByRole('group', { name: /Sections.*Field/ });
+
+  await sections.getByRole('button', { name: 'Collapse All' }).click();
+  await expect(sections.getByRole('textbox')).toHaveCount(0);
+
+  await editor.getByRole('document', { name: 'Content Preview' }).getByText('Someone').click();
+  await expect(sections.getByRole('textbox', { name: 'Author' })).toBeFocused();
+});
+
+test('expands a collapsed item of a list with types to show an error on saving', async ({
+  cms,
+  page,
+}) => {
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+  const sections = editor.getByRole('group', { name: /Sections.*Field/ });
+
+  await sections.getByRole('textbox', { name: 'Author' }).clear();
+  await sections.getByRole('button', { name: 'Collapse All' }).click();
+  await expect(sections.getByRole('textbox')).toHaveCount(0);
+
+  await editor.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: /One field has an error/ })).toBeVisible();
+  await expect(sections.getByRole('textbox', { name: 'Author' })).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  expect(await readStarParty(cms)).toBe(STAR_PARTY);
+});
+
 test('duplicates an item and adds one below another', async ({ cms, page }) => {
   const editor = page.getByRole('group', { name: 'Content Editor' });
   const sections = editor.getByRole('group', { name: /Sections.*Field/ });

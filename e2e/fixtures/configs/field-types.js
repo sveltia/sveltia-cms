@@ -125,9 +125,9 @@ export const FIELD_TYPES_CONFIG = {
               fields: [{ name: 'body', label: 'Body', widget: 'text' }],
             },
             {
+              // A type doesn’t need `widget: object`; the other one has it, to cover both
               name: 'quote',
               label: 'Quote',
-              widget: 'object',
               summary: '{{author}}',
               fields: [
                 { name: 'quote', label: 'Quote', widget: 'text' },
