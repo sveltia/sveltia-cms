@@ -45,7 +45,11 @@
     showContentOverlay,
     showDuplicateToast,
   } from '$lib/services/contents/editor';
-  import { getExpanderKeys, syncExpanderStates } from '$lib/services/contents/editor/fields';
+  import {
+    findEditorField,
+    getExpanderKeys,
+    syncExpanderStates,
+  } from '$lib/services/contents/editor/fields';
   import {
     getDefaultPanes,
     getLocaleContentLabel,
@@ -94,6 +98,11 @@
 
   let restoring = false;
   let switching = false;
+  /**
+   * Number of field highlight requests so far, so a request still looking for its field can tell
+   * whether a newer one has come in.
+   */
+  let highlightRequestCount = 0;
   /**
    * Width of the first pane in pixels, used to place the pane swap button over the gutter between
    * the panes. The button sits next to the resize handle rather than inside it: the handle is a
@@ -275,6 +284,10 @@
    * @param {FieldKeyPath} args.keyPath Key path of the field.
    */
   const highlightEditorField = async ({ locale, keyPath }) => {
+    highlightRequestCount += 1;
+
+    const request = highlightRequestCount;
+
     await ensureEditPaneVisible(locale);
 
     const draft = entryDraft.current;
@@ -300,32 +313,27 @@
       stateMap: Object.fromEntries(expanderKeys.map((key) => [key, true])),
     });
 
-    window.requestAnimationFrame(() => {
-      const key = CSS.escape(keyPath);
+    const targetField = await findEditorField({ locale, keyPath });
 
-      // The path editor isn’t a field, so it’s marked with a validation key instead of a key path
-      const targetField = document.querySelector(
-        `.content-editor .pane[data-mode="edit"][data-locale="${CSS.escape(locale)}"] ` +
-          `.field:is([data-key-path="${key}"], [data-validation-key="${key}"])`,
-      );
+    // Finding the field can take a while, so leave it to a newer request that came in meanwhile
+    if (!targetField || request !== highlightRequestCount) {
+      return;
+    }
 
-      if (targetField) {
-        /* v8 ignore start -- `scrollIntoViewIfNeeded()` is non-standard; Firefox doesn’t have it */
-        if (typeof targetField.scrollIntoViewIfNeeded === 'function') {
-          targetField.scrollIntoViewIfNeeded();
-        } else {
-          targetField.scrollIntoView();
-        }
-        /* v8 ignore stop */
+    /* v8 ignore start -- `scrollIntoViewIfNeeded()` is non-standard; Firefox doesn’t have it */
+    if (typeof targetField.scrollIntoViewIfNeeded === 'function') {
+      targetField.scrollIntoViewIfNeeded();
+    } else {
+      targetField.scrollIntoView();
+    }
+    /* v8 ignore stop */
 
-        const widgetWrapper = targetField.querySelector('.field-wrapper');
+    const widgetWrapper = targetField.querySelector('.field-wrapper');
 
-        /** @type {HTMLElement | null} */ (
-          widgetWrapper?.querySelector('[contenteditable="true"], [tabindex="0"]') ??
-            widgetWrapper?.querySelector('input, textarea, button')
-        )?.focus();
-      }
-    });
+    /** @type {HTMLElement | null} */ (
+      widgetWrapper?.querySelector('[contenteditable="true"], [tabindex="0"]') ??
+        widgetWrapper?.querySelector('input, textarea, button')
+    )?.focus();
   };
 
   /**

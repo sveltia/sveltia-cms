@@ -620,6 +620,37 @@ describe('ContentDetailsOverlay', () => {
     await expect.element(title).not.toHaveFocus();
   });
 
+  test('leaves an earlier highlight request to a newer one', async () => {
+    await renderOverlay(createDraft());
+
+    const title = page
+      .getByRole('group', { name: 'Edit \u2068English\u2069 Content' })
+      .getByRole('textbox', { name: 'Title' });
+
+    await expect.element(title).toBeInTheDocument();
+
+    // The French content has to be brought into an edit pane first, which takes a while
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'fr', keyPath: 'body' } },
+      window.location.origin,
+    );
+    window.postMessage(
+      { type: 'highlight-editor-field', payload: { locale: 'en', keyPath: 'title' } },
+      window.location.origin,
+    );
+    await expect.element(title).toHaveFocus();
+
+    const frenchBody = page
+      .getByRole('group', { name: 'Edit \u2068French\u2069 Content' })
+      .getByRole('textbox', { name: 'Body' });
+
+    await expect.element(frenchBody).toBeInTheDocument();
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
+    });
+    await expect.element(title).toHaveFocus();
+  });
+
   test('renders no pane until the panes are set up', async () => {
     const { container } = await renderOverlay(createDraft());
 

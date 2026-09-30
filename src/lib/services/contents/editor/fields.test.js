@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getField } from '$lib/services/contents/entry/fields';
@@ -6,6 +8,7 @@ import {
   expandInvalidFields as _expandInvalidFields,
   getInitialExpanderState as _getInitialExpanderState,
   syncExpanderStates as _syncExpanderStates,
+  findEditorField,
   getExpanderKeys,
   highlightEditorField,
   isExpanded,
@@ -100,6 +103,159 @@ describe('highlightEditorField', () => {
       { type: 'highlight-editor-field', payload: { locale, keyPath } },
       'https://example.com',
     );
+  });
+});
+
+describe('findEditorField', () => {
+  /** @type {HTMLElement} */
+  let pane;
+
+  /**
+   * Add a field to the pane.
+   * @param {string} keyPath Key path.
+   * @param {HTMLElement} [parent] Parent element.
+   * @returns {HTMLElement} Field element.
+   */
+  const addField = (keyPath, parent = pane) => {
+    const field = document.createElement('div');
+
+    field.className = 'field';
+    field.dataset.keyPath = keyPath;
+    parent.append(field);
+
+    return field;
+  };
+
+  beforeEach(() => {
+    pane = document.createElement('div');
+    pane.className = 'pane';
+    pane.dataset.mode = 'edit';
+    pane.dataset.locale = 'en';
+    document.body.innerHTML = '<div class="content-editor"></div>';
+    document.body.firstElementChild?.append(pane);
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+    vi.restoreAllMocks();
+  });
+
+  it('returns a field that is already rendered', async () => {
+    addField('title');
+
+    const field = addField('body');
+
+    await expect(findEditorField({ locale: 'en', keyPath: 'body' })).resolves.toBe(field);
+  });
+
+  it('returns the path editor, marked with a validation key', async () => {
+    const field = document.createElement('div');
+
+    field.className = 'field';
+    field.dataset.validationKey = '_path';
+    pane.append(field);
+
+    await expect(findEditorField({ locale: 'en', keyPath: '_path' })).resolves.toBe(field);
+  });
+
+  it('scrolls to the last rendered field of the deepest rendered parent until it is rendered', async () => {
+    addField('title');
+
+    const sections = addField('sections');
+
+    addField('sections.0.heading', sections);
+
+    const heading = addField('sections.4.heading', sections);
+    /** @type {HTMLElement | undefined} */
+    let target;
+    /** @type {HTMLElement[]} */
+    const scrolled = [];
+
+    vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(
+      /**
+       * Render the next field below the one scrolled to.
+       * @param {any} options Options.
+       * @this {HTMLElement}
+       */
+      function scroll(options) {
+        expect(options).toEqual({ block: 'center' });
+        scrolled.push(this);
+
+        if (this === heading) {
+          addField('sections.4.cards', sections);
+        } else {
+          target = addField('sections.4.cards.3.title', sections);
+        }
+      },
+    );
+
+    const field = await findEditorField({
+      locale: 'en',
+      keyPath: 'sections.4.cards.3.title',
+      interval: 0,
+    });
+
+    expect(field).toBe(target);
+    expect(scrolled.map((element) => element.dataset.keyPath)).toEqual([
+      'sections.4.heading',
+      'sections.4.cards',
+    ]);
+  });
+
+  it('scrolls to the last rendered field of the pane for a top-level field', async () => {
+    addField('title');
+
+    const description = addField('description');
+    const spy = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {});
+
+    await expect(
+      findEditorField({ locale: 'en', keyPath: 'body', interval: 0 }),
+    ).resolves.toBeNull();
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy.mock.contexts[0]).toBe(description);
+  });
+
+  it('returns `null` if no parent is rendered', async () => {
+    const spy = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+    await expect(
+      findEditorField({ locale: 'en', keyPath: 'title', interval: 0 }),
+    ).resolves.toBeNull();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('returns `null` if the pane is not found', async () => {
+    addField('title');
+
+    await expect(findEditorField({ locale: 'fr', keyPath: 'title' })).resolves.toBeNull();
+  });
+
+  it('returns `null` if the pane is removed while scrolling', async () => {
+    addField('title');
+
+    const spy = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {
+      pane.remove();
+    });
+
+    await expect(
+      findEditorField({ locale: 'en', keyPath: 'body', interval: 0 }),
+    ).resolves.toBeNull();
+    expect(spy).toHaveBeenCalledOnce();
+  });
+
+  it('gives up after the given number of attempts', async () => {
+    const list = addField('list');
+    let count = 0;
+
+    const spy = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {
+      count += 1;
+      addField(`list.${count}`, list);
+    });
+
+    await expect(
+      findEditorField({ locale: 'en', keyPath: 'list.9', maxAttempts: 3, interval: 0 }),
+    ).resolves.toBeNull();
+    expect(spy).toHaveBeenCalledTimes(3);
   });
 });
 
