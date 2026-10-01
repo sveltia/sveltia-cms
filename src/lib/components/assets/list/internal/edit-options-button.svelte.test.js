@@ -3,8 +3,8 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { editingAsset, renamingAsset, uploadingAssets } from '$lib/services/assets';
 import { getAssetDetails } from '$lib/services/assets/details';
+import { editingAsset, renamingAsset, uploadingAssets } from '$lib/services/assets/state';
 import { showUploadAssetsDialog } from '$lib/services/assets/view';
 import { backendName } from '$lib/services/backends';
 import { repository } from '$lib/services/backends/git/github/repository';

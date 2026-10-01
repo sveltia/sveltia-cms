@@ -14,7 +14,7 @@
 
   import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
   import { customComponentRegistry } from '$lib/services/api/registries';
-  import { getMediaFieldURL } from '$lib/services/assets/info';
+  import { getMediaFieldURL } from '$lib/services/assets/media-field';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { BUILTIN_COMPONENTS } from '$lib/services/contents/fields/rich-text';

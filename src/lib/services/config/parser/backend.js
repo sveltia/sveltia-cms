@@ -1,7 +1,8 @@
 import { _ } from '@sveltia/i18n';
 import { isObject } from '@sveltia/utils/object';
 
-import { gitBackendServices, unsupportedBackends, validBackendNames } from '$lib/services/backends';
+import { unsupportedBackends, validBackendNames } from '$lib/services/backends';
+import { gitBackendServices } from '$lib/services/backends/git/services';
 import { warnDeprecation } from '$lib/services/config/deprecations';
 import { checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
 import { makeLink } from '$lib/services/utils/string';

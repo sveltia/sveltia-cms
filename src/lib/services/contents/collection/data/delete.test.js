@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { deleteEntries, updateStores } from './delete';
 
 // Mock dependencies
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
 }));
 
@@ -98,7 +98,7 @@ describe('Test updateStores()', () => {
   });
 
   test('removes assets from allAssets store when asset paths provided', async () => {
-    const { allAssets } = await import('$lib/services/assets');
+    const { allAssets } = await import('$lib/services/assets/state');
 
     const mockAssets = [
       { path: '/images/image1.jpg', name: 'image1.jpg' },
@@ -117,7 +117,7 @@ describe('Test updateStores()', () => {
 
   test('handles empty arrays gracefully', async () => {
     const { allEntries } = await import('$lib/services/contents');
-    const { allAssets } = await import('$lib/services/assets');
+    const { allAssets } = await import('$lib/services/assets/state');
     const { contentUpdatesToast } = await import('$lib/services/contents/collection/data');
     const initialEntries = [{ id: '1', slug: 'post-1' }];
     const initialAssets = [{ path: '/image.jpg' }];

@@ -4,9 +4,10 @@
 
   import RenameDialog from '$lib/components/assets/list/rename-dialog.svelte';
   import { goto, parseLocation } from '$lib/services/app/navigation';
-  import { getAssetsByDirName, renamingAsset } from '$lib/services/assets';
+  import { getAssetsByDirName } from '$lib/services/assets';
   import { moveAssets } from '$lib/services/assets/data/move';
   import { getAssetUsedEntries } from '$lib/services/assets/details';
+  import { renamingAsset } from '$lib/services/assets/state';
   import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 
   /**

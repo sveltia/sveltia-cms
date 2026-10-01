@@ -5,8 +5,9 @@
   import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { allAssets, isAssetInFolder, uploadingAssets } from '$lib/services/assets';
+  import { isAssetInFolder } from '$lib/services/assets';
   import { assetsLocked, canCreateAsset, getAssetFolder } from '$lib/services/assets/folders';
+  import { allAssets, uploadingAssets } from '$lib/services/assets/state';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { currentView } from '$lib/services/contents/collection/view/settings';
   import { env } from '$lib/services/user/env.svelte';

@@ -2,8 +2,8 @@ import { _ } from '@sveltia/i18n';
 import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
-import { publishedAssets, selectedAssets, uploadingAssets } from '$lib/services/assets';
 import { selectedAssetFolder } from '$lib/services/assets/folders';
+import { publishedAssets, selectedAssets, uploadingAssets } from '$lib/services/assets/state';
 import { browsedDirPath, getDirName, getSubfolders } from '$lib/services/assets/subfolders';
 import { filterAssets } from '$lib/services/assets/view/filter';
 import { groupAssets } from '$lib/services/assets/view/group';

@@ -4,7 +4,7 @@ import { getValidCollections } from '$lib/services/contents/collection';
 import {
   getValidCollectionFiles,
   isValidCollectionFile,
-} from '$lib/services/contents/collection/files';
+} from '$lib/services/contents/collection/predicates';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import { normalizeI18nConfig } from '$lib/services/contents/i18n/config';
 import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';

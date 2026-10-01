@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
-import { getEntryFoldersByPath } from '$lib/services/contents';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 
 import { createFileList } from './process.js';
 import { saveChanges } from './save.js';
@@ -47,7 +47,7 @@ vi.mock('@sveltia/utils/storage', () => {
   };
 });
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
 }));
 
@@ -57,6 +57,9 @@ vi.mock('$lib/services/backends', () => ({
 
 vi.mock('$lib/services/contents', () => ({
   allEntries: { current: [] },
+}));
+
+vi.mock('$lib/services/contents/folders', () => ({
   getEntryFoldersByPath: vi.fn(),
 }));
 

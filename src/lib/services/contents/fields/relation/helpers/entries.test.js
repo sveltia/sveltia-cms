@@ -14,6 +14,9 @@ vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/entry/values', () => ({
   getFieldDisplayValue: vi.fn(),
 }));
 
@@ -25,7 +28,8 @@ describe('Test processEntry()', async () => {
   const { isCollectionIndexFile } =
     await import('$lib/services/contents/collection/entries/index-file');
 
-  const { getField, getFieldDisplayValue } = await import('$lib/services/contents/entry/fields');
+  const { getField } = await import('$lib/services/contents/entry/fields');
+  const { getFieldDisplayValue } = await import('$lib/services/contents/entry/values');
   const { getEntrySummaryFromContent } = await import('$lib/services/contents/entry/summary');
 
   beforeEach(() => {

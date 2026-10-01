@@ -3,11 +3,13 @@ import equal from 'fast-deep-equal';
 
 import { backend } from '$lib/services/backends';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { allEntries, getEntryFoldersByPath } from '$lib/services/contents';
-import { getCollection, isArrayFileCollection } from '$lib/services/contents/collection';
+import { allEntries } from '$lib/services/contents';
+import { getCollection } from '$lib/services/contents/collection';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { arrayFileItems, createArrayItemEntry } from '$lib/services/contents/file/process';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**

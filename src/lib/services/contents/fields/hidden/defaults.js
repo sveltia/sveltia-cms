@@ -1,6 +1,6 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 
-import { replaceTemplateTags } from '$lib/services/common/template';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { user } from '$lib/services/user/account.svelte';
 

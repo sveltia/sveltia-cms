@@ -2,7 +2,6 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
 import {
   filterNestedEntries,
   getEntryDirPath,
@@ -17,8 +16,9 @@ import {
   stripIndexFileName,
   usesCustomEntryPath,
 } from '$lib/services/contents/collection/nested';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 

@@ -1,7 +1,7 @@
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { GIT_CONFIG_FILE_REGEX } from '$lib/services/backends/git/shared/config';
-import { getEntryFoldersByPath } from '$lib/services/contents';
 import { isIndexFile } from '$lib/services/contents/file/process';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 
 /**
  * @import {

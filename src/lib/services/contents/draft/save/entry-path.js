@@ -2,7 +2,6 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { stripSlashes } from '@sveltia/utils/string';
 
 import { fillTemplate } from '$lib/services/common/template';
-import { isArrayFileCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
   getEntryDirPath,
@@ -14,6 +13,7 @@ import {
   getOwnFolderName,
   localizeDirPath,
 } from '$lib/services/contents/collection/nested/i18n';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getLocalePath } from '$lib/services/contents/i18n';

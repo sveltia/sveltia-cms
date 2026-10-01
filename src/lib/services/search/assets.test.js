@@ -8,7 +8,7 @@ import { hasAllMatches, hasMatch, normalize, tokenize } from './util';
  */
 
 // Mock only the stores, not the util functions
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   publishedAssets: { current: [] },
 }));
 
@@ -156,8 +156,12 @@ describe('assetSearchResults derived store', () => {
   it('should compute the results from the assets and search terms', async () => {
     // Import after mocks are set up
     const { assetSearchResults } = await import('./assets');
+
     // The mock replaces the real read-only state with a writable one
-    const allAssets = /** @type {any} */ ((await import('$lib/services/assets')).publishedAssets);
+    const allAssets = /** @type {any} */ (
+      (await import('$lib/services/assets/state')).publishedAssets
+    );
+
     const { searchTerms } = await import('$lib/services/search');
 
     allAssets.current = [

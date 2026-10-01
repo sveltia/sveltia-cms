@@ -14,6 +14,7 @@
   } from 'lexical';
   import { getContext, tick } from 'svelte';
 
+  import { EditorComponent } from '$lib/components/contents/details/fields/rich-text/custom-node-features';
   import { customComponentRegistry } from '$lib/services/api/registries';
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -33,7 +34,6 @@
     DEFAULT_MODES,
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
-  import { EditorComponent } from '$lib/services/contents/fields/rich-text/components';
   import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
   import {
     getDroppedImages,

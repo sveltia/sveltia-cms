@@ -7,10 +7,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  allAssets,
-  editingAsset,
   fillInternalPathTemplate,
-  focusedAsset,
   getAssetByAbsolutePath,
   getAssetByInternalPath,
   getAssetByPath,
@@ -22,15 +19,20 @@ import {
   getDuplicateFiles,
   isAssetInFolder,
   isRelativePath,
+} from '$lib/services/assets';
+import { processedAssets } from '$lib/services/assets/process';
+import {
+  allAssets,
+  editingAsset,
+  focusedAsset,
   overlaidAsset,
-  processedAssets,
   publishedAssets,
   renamingAsset,
   selectedAssetPathSet,
   selectedAssets,
   selectedOrFocusedAssets,
   uploadingAssets,
-} from '.';
+} from '$lib/services/assets/state';
 
 // Mock all dependencies
 vi.mock('@sveltia/utils/file');
@@ -65,10 +67,11 @@ vi.mock('$lib/services/utils/media/image/validate', () => ({
 }));
 vi.mock('$lib/services/common/slug');
 vi.mock('$lib/services/common/template');
+vi.mock('$lib/services/common/template/tags');
 vi.mock('$lib/services/contents/collection');
 vi.mock('$lib/services/contents/collection/files');
 vi.mock('$lib/services/contents/collection/entries/index-file');
-vi.mock('$lib/services/contents/entry');
+vi.mock('$lib/services/contents/entry/collections');
 vi.mock('$lib/services/utils/file');
 
 // Mock folders module with real stores for testing side effects
@@ -705,7 +708,7 @@ describe('assets/index', () => {
 
     it('should handle relative paths with entry', async () => {
       const { resolvePath } = await import('$lib/services/utils/file');
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
       const resolvePathMock = vi.mocked(resolvePath);
       const getAssociatedCollectionsMock = vi.mocked(getAssociatedCollections);
@@ -833,7 +836,7 @@ describe('assets/index', () => {
 
     it('should handle relative paths with fragments', async () => {
       const { resolvePath } = await import('$lib/services/utils/file');
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
       const resolvePathMock = vi.mocked(resolvePath);
       const getAssociatedCollectionsMock = vi.mocked(getAssociatedCollections);
@@ -2187,7 +2190,8 @@ describe('assets/index', () => {
       // of being resolved, so the asset could never be found.
       // @see https://github.com/sveltia/sveltia-cms/issues/853
       const { resolvePath, createPath } = await import('$lib/services/utils/file');
-      const { fillTemplate, hasTemplateTags } = await import('$lib/services/common/template');
+      const { fillTemplate } = await import('$lib/services/common/template');
+      const { hasTemplateTags } = await import('$lib/services/common/template/tags');
 
       const mockAsset = {
         path: 'source/_posts/abc/img0.jpg',
@@ -2547,7 +2551,7 @@ describe('assets/index', () => {
     });
 
     it('should find asset from associated collections', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
       const mockEntry = /** @type {any} */ ({
@@ -2594,7 +2598,7 @@ describe('assets/index', () => {
     });
 
     it('should fall back to exact match at root folder', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
       const mockAsset = {
@@ -2657,7 +2661,7 @@ describe('assets/index', () => {
     });
 
     it('should use collection files when collectionFiles.length > 0 (line 174)', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
       const mockEntry = /** @type {any} */ ({
@@ -3271,7 +3275,7 @@ describe('assets/index', () => {
       const { stripSlashes } = await import('@sveltia/utils/string');
       const { getPathInfo } = await import('@sveltia/utils/file');
       const { getAssetFolder, globalAssetFolder } = await import('$lib/services/assets/folders');
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { fillTemplate } = await import('$lib/services/common/template');
       const { flatten } = await import('flat');
       const { createPath } = await import('$lib/services/utils/file');
@@ -3358,7 +3362,7 @@ describe('assets/index', () => {
       const { stripSlashes } = await import('@sveltia/utils/string');
       const { getPathInfo } = await import('@sveltia/utils/file');
       const { getAssetFolder, allAssetFolders } = await import('$lib/services/assets/folders');
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
       const mockEntry = /** @type {any} */ ({
         id: 'my-post',
@@ -3933,7 +3937,7 @@ describe('assets/index', () => {
 
     it('should handle getAssetByPath with complex relative paths', async () => {
       const { resolvePath } = await import('$lib/services/utils/file');
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
       const resolvePathMock = vi.mocked(resolvePath);
       const getAssociatedCollectionsMock = vi.mocked(getAssociatedCollections);
@@ -4070,7 +4074,7 @@ describe('assets/index', () => {
     });
 
     it('should return undefined for getAssetByRelativePath with no matching collections', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
 
       const mockEntry = /** @type {any} */ ({
@@ -4130,7 +4134,7 @@ describe('assets/index', () => {
 
     it('should properly distinguish between absolute and relative paths in getAssetByPath', async () => {
       const { resolvePath } = await import('$lib/services/utils/file');
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
       const resolvePathMock = vi.mocked(resolvePath);
       const getAssociatedCollectionsMock = vi.mocked(getAssociatedCollections);
@@ -4361,7 +4365,7 @@ describe('assets/index', () => {
       const { stripSlashes } = await import('@sveltia/utils/string');
       const { getPathInfo } = await import('@sveltia/utils/file');
       const { getAssetFolder, allAssetFolders } = await import('$lib/services/assets/folders');
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
       const { createPath } = await import('$lib/services/utils/file');
       const { fillTemplate } = await import('$lib/services/common/template');
 
@@ -4575,7 +4579,7 @@ describe('assets/index', () => {
     });
 
     it('should return undefined when the collection cannot be determined', async () => {
-      const { getAssociatedCollections } = await import('$lib/services/contents/entry');
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
       vi.mocked(getAssociatedCollections).mockReturnValue([]);
 

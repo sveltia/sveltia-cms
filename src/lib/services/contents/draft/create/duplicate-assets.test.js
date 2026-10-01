@@ -38,7 +38,7 @@ vi.mock('$lib/services/assets/info', () => ({
   createDisplayBlobURL: vi.fn(async (/** @type {Blob} */ blob) => URL.createObjectURL(blob)),
 }));
 
-vi.mock('$lib/services/contents/collection/entries', () => ({
+vi.mock('$lib/services/assets/references', () => ({
   MARKDOWN_IMAGE_REGEX: /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g,
 }));
 

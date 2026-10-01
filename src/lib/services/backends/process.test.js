@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
-import { getEntryFoldersByPath } from '$lib/services/contents';
 import { isIndexFile } from '$lib/services/contents/file/process';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 
 import { createFileList, describeFileList } from './process.js';
 
@@ -23,7 +23,7 @@ vi.mock('$lib/services/backends/git/shared/config', () => ({
   GIT_CONFIG_FILE_REGEX: /^\.git(attributes|keep)$/,
 }));
 
-vi.mock('$lib/services/contents', () => ({
+vi.mock('$lib/services/contents/folders', () => ({
   getEntryFoldersByPath: vi.fn(),
 }));
 

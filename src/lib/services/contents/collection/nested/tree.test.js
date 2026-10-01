@@ -2,7 +2,6 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
 import {
   addFolderToTree,
   findNestedTreeNode,
@@ -10,9 +9,10 @@ import {
   getNestedTree,
   getParentFolderTree,
 } from '$lib/services/contents/collection/nested/tree';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 

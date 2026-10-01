@@ -5,7 +5,7 @@ import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
+import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getField } from '$lib/services/contents/entry/fields';
 
 import {
@@ -40,7 +40,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFilesByEntry: vi.fn(() => []),
 }));
 
-vi.mock('$lib/services/contents/entry', () => ({
+vi.mock('$lib/services/contents/entry/collections', () => ({
   getAssociatedCollections: vi.fn(() => [{ name: 'posts' }]),
 }));
 

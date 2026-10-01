@@ -1,7 +1,7 @@
 import { getAssetBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { isMediaKind } from '$lib/services/assets/kinds';
+import { getEntriesByAssetURL } from '$lib/services/assets/references';
 import { backend } from '$lib/services/backends';
-import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getMediaMetadata } from '$lib/services/utils/media';
 

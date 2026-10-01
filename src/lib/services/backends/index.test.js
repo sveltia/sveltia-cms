@@ -4,11 +4,11 @@ import {
   allBackendServices,
   backend,
   backendName,
-  gitBackendServices,
   selectBackend,
   unsupportedBackends,
   validBackendNames,
-} from '.';
+} from '$lib/services/backends';
+import { gitBackendServices } from '$lib/services/backends/git/services';
 
 describe('Backend Services Index', () => {
   beforeEach(() => {

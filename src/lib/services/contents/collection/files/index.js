@@ -1,6 +1,7 @@
 import { cmsConfig } from '$lib/services/config';
 import { allEntries, allEntryFolders } from '$lib/services/contents';
 import { getCollection, getValidCollections } from '$lib/services/contents/collection';
+import { getValidCollectionFiles } from '$lib/services/contents/collection/predicates';
 
 /**
  * @import {
@@ -9,27 +10,8 @@ import { getCollection, getValidCollections } from '$lib/services/contents/colle
  * InternalCollection,
  * InternalCollectionFile,
  * } from '$lib/types/private';
- * @import { CollectionDivider, CollectionFile } from '$lib/types/public';
+ * @import { CollectionFile } from '$lib/types/public';
  */
-
-/**
- * Check if the given collection file is valid. A valid file must have a string `file` property, not
- * be a `divider`, and have `fields` defined as an array.
- * @param {CollectionFile | CollectionDivider} file File definition or divider.
- * @returns {boolean} Whether the file is valid.
- */
-export const isValidCollectionFile = (file) =>
-  !('divider' in file) && typeof file.file === 'string' && Array.isArray(file.fields);
-
-/**
- * Get a list of valid collection files from the given file definitions. This filters out dividers
- * and invalid files that do not have a string `file` property or do not have `fields` defined as an
- * array.
- * @param {(CollectionFile | CollectionDivider)[]} files File definitions. May include dividers.
- * @returns {CollectionFile[]} List of valid collection files.
- */
-export const getValidCollectionFiles = (files) =>
-  /** @type {CollectionFile[]} */ (files.filter((file) => isValidCollectionFile(file)));
 
 /**
  * Get a file in a file/singleton collection by its name.

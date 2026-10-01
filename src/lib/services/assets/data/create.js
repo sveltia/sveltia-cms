@@ -1,11 +1,7 @@
-import {
-  focusedAsset,
-  getAssetByInternalPath,
-  getAssetsByDirName,
-  overlaidAsset,
-} from '$lib/services/assets';
+import { getAssetByInternalPath, getAssetsByDirName } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { focusedAsset, overlaidAsset } from '$lib/services/assets/state';
 import { getUploadDirPath } from '$lib/services/assets/subfolders';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';

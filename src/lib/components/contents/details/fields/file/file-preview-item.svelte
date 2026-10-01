@@ -2,8 +2,8 @@
   import { untrack } from 'svelte';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import { getMediaFieldURL } from '$lib/services/assets/info';
   import { getMediaKind } from '$lib/services/assets/kinds';
+  import { getMediaFieldURL } from '$lib/services/assets/media-field';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
 
   /**

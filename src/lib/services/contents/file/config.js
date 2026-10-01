@@ -4,9 +4,9 @@ import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { warnDeprecation } from '$lib/services/config/deprecations';
-import { isEntryCollection } from '$lib/services/contents/collection';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getNestedConfig } from '$lib/services/contents/collection/nested';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 import {
   EXTENSION_FORMAT_MAP,
   FORMAT_EXTENSION_MAP,

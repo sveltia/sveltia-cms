@@ -1,23 +1,13 @@
 import { backend } from '$lib/services/backends';
-import { deployments, lastCommitPublishHint, productionSHA } from '$lib/services/deployments';
+import {
+  deployments,
+  lastCommitPublishHint,
+  productionSHA,
+  setLastCommitPublishHint,
+} from '$lib/services/deployments';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { isSecureURL } from '$lib/services/utils/networking';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
-
-/**
- * Record what the last commit is expected to have done, worked out without asking the CI/CD
- * provider: `true` when it should have started a deployment, `false` when it shouldn’t have. It’s
- * called when the commit message carries a skip-CI marker, when a commit is made with a known
- * skip-CI option, and when the user triggers a deployment by hand.
- *
- * The time is recorded along with it so that {@link isLastCommitPublished} can tell a deployment
- * read before this point from one read after: the failed build the user has just asked to retry
- * describes an earlier state of the commit, and mustn’t go on saying the site is out of date.
- * @param {boolean} published Whether the last commit is expected to have started a deployment.
- */
-export const setLastCommitPublishHint = (published) => {
-  lastCommitPublishHint.current = { published, time: Date.now() };
-};
 
 /**
  * Whether the last commit on the production branch has been deployed. It decides whether the

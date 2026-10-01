@@ -1,4 +1,4 @@
-import { hasTemplateTags } from '$lib/services/common/template';
+import { hasTemplateTags } from '$lib/services/common/template/tags';
 
 /**
  * @import { Field, ListField } from '$lib/types/public';

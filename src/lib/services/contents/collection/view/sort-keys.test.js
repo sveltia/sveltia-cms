@@ -29,6 +29,9 @@ vi.mock('$lib/services/config');
 vi.mock('$lib/services/contents', () => ({ allEntries: { current: [] } }));
 vi.mock('$lib/services/contents/collection', () => ({
   selectedCollection: { current: undefined },
+}));
+
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
 }));
 vi.mock('$lib/services/contents/entry/fields');

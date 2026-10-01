@@ -1,4 +1,4 @@
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 
 /**
  * @import { Asset } from '$lib/types/private';

@@ -22,7 +22,6 @@
   import NotFound from '$lib/components/global/not-found.svelte';
   import SearchMainArea from '$lib/components/search/search-main-area.svelte';
   import { updateContentFromHashChange } from '$lib/services/app/navigation';
-  import { focusedAsset, selectedAssets } from '$lib/services/assets';
   import { hasAuthInfo, selectedCloudService } from '$lib/services/assets/external';
   import { loadExternalAssets } from '$lib/services/assets/external/data';
   import { LINKED_FILES_SERVICE_ID, linkedAssets } from '$lib/services/assets/external/linked';
@@ -32,6 +31,7 @@
     getSelectedAssetFolderLabel,
     resolveAssetsRoute,
   } from '$lib/services/assets/navigation';
+  import { focusedAsset, selectedAssets } from '$lib/services/assets/state';
   import { assetGroups, listedAssets, showAssetOverlay } from '$lib/services/assets/view';
   import { sortKeys } from '$lib/services/assets/view/sort-keys';
   import { env } from '$lib/services/user/env.svelte';

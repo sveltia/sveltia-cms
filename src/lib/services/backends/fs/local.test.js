@@ -42,8 +42,8 @@ vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
 }));
 
-vi.mock('$lib/services/backends', () => ({
-  allBackendServices: {
+vi.mock('$lib/services/backends/git/services', () => ({
+  gitBackendServices: {
     github: { init: mockInit },
     gitlab: { init: mockInit },
   },

@@ -10,12 +10,15 @@ import {
   removeMarkdownImages,
 } from '$lib/services/assets/data/cascade';
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
 }));
 
 vi.mock('$lib/services/assets/info', () => ({
   getAssetPublicURL: vi.fn((asset) => `/${asset.path}`),
+}));
+
+vi.mock('$lib/services/assets/media-field', () => ({
   getMediaFieldSource: vi.fn(() => undefined),
 }));
 
@@ -27,7 +30,7 @@ vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: {} },
 }));
 
-vi.mock('$lib/services/contents/collection/entries', () => ({
+vi.mock('$lib/services/assets/references', () => ({
   getAssetReferences: vi.fn(async () => []),
   getComparableAssetURL: vi.fn((url) => url.replace('https://example.com', '')),
   MARKDOWN_IMAGE_REGEX: /!\[.*?\]\((.+?)(?:\s+".*?")?\)/g,
@@ -59,11 +62,12 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
   getEntrySummary: vi.fn((collection, entry) => entry.locales._default?.content?.title ?? ''),
 }));
 
-const { allAssets } = await import('$lib/services/assets');
-const { getAssetPublicURL, getMediaFieldSource } = await import('$lib/services/assets/info');
+const { allAssets } = await import('$lib/services/assets/state');
+const { getAssetPublicURL } = await import('$lib/services/assets/info');
+const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
 const { cmsConfig } = await import('$lib/services/config');
 const { allEntries } = await import('$lib/services/contents');
-const { getAssetReferences } = await import('$lib/services/contents/collection/entries');
+const { getAssetReferences } = await import('$lib/services/assets/references');
 
 const { isCollectionIndexFile } =
   await import('$lib/services/contents/collection/entries/index-file');

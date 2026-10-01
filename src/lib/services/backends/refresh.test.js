@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { allEntries } from '$lib/services/contents';

@@ -1,6 +1,6 @@
 import { unique } from '@sveltia/utils/array';
 
-import { replaceTemplateTags } from '$lib/services/common/template';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { normalizeFieldName } from '$lib/services/contents/fields/relation/helpers/field-names';

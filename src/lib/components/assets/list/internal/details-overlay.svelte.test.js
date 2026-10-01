@@ -2,9 +2,9 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { overlaidAsset } from '$lib/services/assets';
 import { deleteAssets } from '$lib/services/assets/data/delete';
 import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
+import { overlaidAsset } from '$lib/services/assets/state';
 import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { currentView } from '$lib/services/assets/view/settings';

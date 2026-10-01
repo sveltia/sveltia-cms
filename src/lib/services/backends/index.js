@@ -1,8 +1,6 @@
 import local from '$lib/services/backends/fs/local';
 import test from '$lib/services/backends/fs/test';
-import gitea from '$lib/services/backends/git/gitea';
-import github from '$lib/services/backends/git/github';
-import gitlab from '$lib/services/backends/git/gitlab';
+import { gitBackendServices } from '$lib/services/backends/git/services';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -17,9 +15,7 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
  * @see https://sveltiacms.app/en/docs/backends
  */
 export const allBackendServices = {
-  github,
-  gitlab,
-  gitea,
+  ...gitBackendServices,
   local,
   'test-repo': test,
 };
@@ -44,14 +40,6 @@ export const unsupportedBackends = {
  */
 export const validBackendNames = /** @type {BackendName[]} */ (
   Object.keys(allBackendServices).filter((name) => name !== 'local')
-);
-
-/**
- * List of all the Git backend services.
- * @type {Record<string, BackendService>}
- */
-export const gitBackendServices = Object.fromEntries(
-  Object.entries(allBackendServices).filter(([, service]) => service.isGit),
 );
 
 /**

@@ -32,9 +32,12 @@ const {
 }));
 
 vi.mock('$lib/services/assets', () => ({
-  allAssets: mockAllAssets,
   getAssetByPath: mockGetAssetByPath,
   isAssetInFolder: mockIsAssetInFolder,
+}));
+
+vi.mock('$lib/services/assets/state', () => ({
+  allAssets: mockAllAssets,
 }));
 
 vi.mock('$lib/services/api/asset-proxy', () => ({

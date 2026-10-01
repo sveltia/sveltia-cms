@@ -2,8 +2,8 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { focusedAsset } from '$lib/services/assets';
 import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
+import { focusedAsset } from '$lib/services/assets/state';
 import {
   deletingSubfolder,
   focusedSubfolder,

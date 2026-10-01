@@ -1,9 +1,9 @@
 import { getPathInfo } from '@sveltia/utils/file';
 
-import { publishedAssets } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { deleteAssets } from '$lib/services/assets/data/delete';
 import { moveAssets } from '$lib/services/assets/data/move';
+import { publishedAssets } from '$lib/services/assets/state';
 import { focusedSubfolder } from '$lib/services/assets/subfolders';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { saveChanges } from '$lib/services/backends/save';

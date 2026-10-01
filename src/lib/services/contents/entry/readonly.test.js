@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { lockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config/state';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
+import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 
 import { getReadonlyEntryLabel, isEntryReadonly } from './readonly';
 
@@ -17,7 +17,7 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
 vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFilesByEntry: vi.fn(() => []),
 }));
-vi.mock('$lib/services/contents/entry', () => ({
+vi.mock('$lib/services/contents/entry/collections', () => ({
   getAssociatedCollections: vi.fn(() => []),
 }));
 

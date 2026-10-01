@@ -1,5 +1,4 @@
 import { saveChanges } from '$lib/services/backends/save';
-import { isArrayFileCollection } from '$lib/services/contents/collection';
 import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
@@ -7,6 +6,7 @@ import {
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import {
   buildEntryUpdateChanges,
   createSyntheticDraft,

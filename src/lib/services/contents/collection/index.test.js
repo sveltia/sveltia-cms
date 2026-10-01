@@ -11,11 +11,6 @@ import {
   getSingletonCollection,
   getThumbnailFieldNames,
   getValidCollections,
-  isArrayFileCollection,
-  isEntryCollection,
-  isFileCollection,
-  isSingletonCollection,
-  isValidCollection,
   parseEntryCollection,
   parseFileCollection,
 } from '$lib/services/contents/collection';
@@ -27,7 +22,8 @@ vi.mock('@sveltia/i18n', () => ({
 vi.mock('$lib/services/config', () => ({
   cmsConfig: { current: undefined },
 }));
-vi.mock('$lib/services/contents/collection/files', () => ({
+vi.mock('$lib/services/contents/collection/predicates', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
   getValidCollectionFiles: vi.fn(),
   isValidCollectionFile: vi.fn(),
 }));
@@ -40,229 +36,6 @@ vi.mock('$lib/services/contents/i18n', () => ({
 vi.mock('$lib/services/contents/i18n/config', () => ({
   normalizeI18nConfig: vi.fn(),
 }));
-
-describe('isEntryCollection()', () => {
-  test('returns true for collection with folder property', () => {
-    const collection = {
-      name: 'posts',
-      folder: 'content/posts',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isEntryCollection(collection)).toBe(true);
-  });
-
-  test('returns false for collection with files property', () => {
-    const collection = {
-      name: 'pages',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    expect(isEntryCollection(collection)).toBe(false);
-  });
-
-  test('returns false for collection with both folder and files', () => {
-    const collection = {
-      name: 'mixed',
-      folder: 'content',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    expect(isEntryCollection(collection)).toBe(false);
-  });
-
-  test('returns true for collection with the file option', () => {
-    const collection = {
-      name: 'members',
-      file: 'data/members.json',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isEntryCollection(collection)).toBe(true);
-  });
-
-  test('returns false for collection without fields', () => {
-    const collection = {
-      name: 'invalid',
-      folder: 'content/posts',
-    };
-
-    expect(isEntryCollection(collection)).toBe(false);
-  });
-});
-
-describe('isFileCollection()', () => {
-  test('returns true for collection with files property', () => {
-    const collection = {
-      name: 'pages',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    expect(isFileCollection(collection)).toBe(true);
-  });
-
-  test('returns false for collection with folder property', () => {
-    const collection = {
-      name: 'posts',
-      folder: 'content/posts',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isFileCollection(collection)).toBe(false);
-  });
-
-  test('returns false for collection without files', () => {
-    const collection = {
-      name: 'invalid',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isFileCollection(collection)).toBe(false);
-  });
-});
-
-describe('isArrayFileCollection()', () => {
-  test('returns true for an entry collection storing the entries in one file', () => {
-    expect(isArrayFileCollection({ _type: 'entry', _file: { arrayFile: true } })).toBe(true);
-  });
-
-  test('returns false for an entry collection storing the entries in a folder', () => {
-    expect(isArrayFileCollection({ _type: 'entry', _file: {} })).toBe(false);
-  });
-
-  test('returns false for a file collection or no collection', () => {
-    expect(isArrayFileCollection({ _type: 'file', _file: { arrayFile: true } })).toBe(false);
-    expect(isArrayFileCollection(undefined)).toBe(false);
-  });
-});
-
-describe('isSingletonCollection()', () => {
-  test('returns true for _singletons collection with files', () => {
-    const collection = {
-      name: '_singletons',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    expect(isSingletonCollection(collection)).toBe(true);
-  });
-
-  test('returns false for non-singleton file collection', () => {
-    const collection = {
-      name: 'pages',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    expect(isSingletonCollection(collection)).toBe(false);
-  });
-
-  test('returns false for entry collection', () => {
-    const collection = {
-      name: '_singletons',
-      folder: 'content',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isSingletonCollection(collection)).toBe(false);
-  });
-});
-
-describe('isValidCollection()', () => {
-  test('returns true for valid entry collection', () => {
-    const collection = {
-      name: 'posts',
-      folder: 'content/posts',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isValidCollection(collection)).toBe(true);
-  });
-
-  test('returns true for valid file collection', () => {
-    const collection = {
-      name: 'pages',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    expect(isValidCollection(collection)).toBe(true);
-  });
-
-  test('returns false for divider', () => {
-    const divider = {
-      divider: true,
-    };
-
-    expect(isValidCollection(divider)).toBe(false);
-  });
-
-  test('returns false for hidden collection when visible=true', () => {
-    const collection = {
-      name: 'hidden',
-      folder: 'content/hidden',
-      hide: true,
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isValidCollection(collection, { visible: true })).toBe(false);
-  });
-
-  test('returns true for hidden collection when visible=false', () => {
-    const collection = {
-      name: 'hidden',
-      folder: 'content/hidden',
-      hide: true,
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isValidCollection(collection, { visible: false })).toBe(true);
-  });
-
-  test('filters by type=entry', () => {
-    const entryCollection = {
-      name: 'posts',
-      folder: 'content/posts',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    const fileCollection = {
-      name: 'pages',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    expect(isValidCollection(entryCollection, { type: 'entry' })).toBe(true);
-    expect(isValidCollection(fileCollection, { type: 'entry' })).toBe(false);
-  });
-
-  test('filters by type=file', () => {
-    const entryCollection = {
-      name: 'posts',
-      folder: 'content/posts',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    const fileCollection = {
-      name: 'pages',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    expect(isValidCollection(entryCollection, { type: 'file' })).toBe(false);
-    expect(isValidCollection(fileCollection, { type: 'file' })).toBe(true);
-  });
-
-  test('filters by type=singleton', () => {
-    const singletonCollection = {
-      name: '_singletons',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    const regularFileCollection = {
-      name: 'pages',
-      files: [{ name: 'about', file: 'about.md', fields: [] }],
-    };
-
-    expect(isValidCollection(singletonCollection, { type: 'singleton' })).toBe(true);
-    expect(isValidCollection(regularFileCollection, { type: 'singleton' })).toBe(false);
-  });
-});
 
 describe('getValidCollections()', () => {
   beforeEach(() => {
@@ -641,7 +414,7 @@ describe('parseFileCollection()', () => {
     const { normalizeI18nConfig: normalizeI18nConfigFromConfig } =
       await import('$lib/services/contents/i18n/config');
 
-    const { isValidCollectionFile } = await import('$lib/services/contents/collection/files');
+    const { isValidCollectionFile } = await import('$lib/services/contents/collection/predicates');
 
     vi.mocked(getFileConfig).mockReturnValue({ fullPath: '/about.md' });
     vi.mocked(normalizeI18nConfig).mockReturnValue({ defaultLocale: 'en' });
@@ -760,7 +533,7 @@ describe('getCollection()', () => {
       await import('$lib/services/contents/i18n/config');
 
     const { getValidCollectionFiles, isValidCollectionFile } =
-      await import('$lib/services/contents/collection/files');
+      await import('$lib/services/contents/collection/predicates');
 
     vi.mocked(getFileConfig).mockReturnValue({ fullPath: '/content/posts' });
     vi.mocked(normalizeI18nConfig).mockReturnValue({ defaultLocale: 'en' });
@@ -781,7 +554,8 @@ describe('getCollection()', () => {
   });
 
   test('returns singleton collection for _singletons', async () => {
-    const { getValidCollectionFiles } = await import('$lib/services/contents/collection/files');
+    const { getValidCollectionFiles } =
+      await import('$lib/services/contents/collection/predicates');
 
     vi.mocked(getValidCollectionFiles).mockReturnValue([
       { name: 'config', file: 'config.yml', fields: [] },
@@ -913,7 +687,9 @@ describe('getCollection()', () => {
 
 describe('getSingletonCollection()', () => {
   beforeEach(async () => {
-    const { getValidCollectionFiles } = await import('$lib/services/contents/collection/files');
+    const { getValidCollectionFiles } =
+      await import('$lib/services/contents/collection/predicates');
+
     const { normalizeI18nConfig } = await import('$lib/services/contents/i18n');
 
     vi.mocked(getValidCollectionFiles).mockImplementation((files) => files);
@@ -937,7 +713,8 @@ describe('getSingletonCollection()', () => {
   });
 
   test('returns undefined when no valid files', async () => {
-    const { getValidCollectionFiles } = await import('$lib/services/contents/collection/files');
+    const { getValidCollectionFiles } =
+      await import('$lib/services/contents/collection/predicates');
 
     vi.mocked(getValidCollectionFiles).mockReturnValue([]);
     cmsConfig.current = /** @type {any} */ ({

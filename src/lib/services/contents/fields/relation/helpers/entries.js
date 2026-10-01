@@ -1,6 +1,6 @@
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { stripIndexFileName } from '$lib/services/contents/collection/nested';
-import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import {
   analyzeListFields,
   processListFields,

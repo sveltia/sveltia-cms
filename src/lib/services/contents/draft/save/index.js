@@ -23,7 +23,7 @@ import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending'
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { buildCascadeChanges } from '$lib/services/contents/entry/relations/cascade/update';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
-import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
+import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { isWorkflowDraft } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 

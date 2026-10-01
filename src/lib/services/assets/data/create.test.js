@@ -4,11 +4,14 @@ import { createFileList, saveAssets, updateStores } from './create.js';
 
 // Mock dependencies
 vi.mock('$lib/services/assets', () => ({
+  getAssetByInternalPath: vi.fn(),
+  getAssetsByDirName: vi.fn(),
+}));
+
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: undefined },
   focusedAsset: { set: vi.fn() },
   overlaidAsset: { set: vi.fn() },
-  getAssetByInternalPath: vi.fn(),
-  getAssetsByDirName: vi.fn(),
 }));
 
 vi.mock('$lib/services/assets/data', () => ({
@@ -684,7 +687,8 @@ describe('assets/data/create', () => {
     });
 
     it('should update focusedAsset when it exists', async () => {
-      const { focusedAsset, getAssetByInternalPath } = await import('$lib/services/assets');
+      const { getAssetByInternalPath } = await import('$lib/services/assets');
+      const { focusedAsset } = await import('$lib/services/assets/state');
 
       const oldAsset = {
         path: '/images/old.jpg',
@@ -710,7 +714,8 @@ describe('assets/data/create', () => {
     });
 
     it('should update overlaidAsset when it exists', async () => {
-      const { overlaidAsset, getAssetByInternalPath } = await import('$lib/services/assets');
+      const { getAssetByInternalPath } = await import('$lib/services/assets');
+      const { overlaidAsset } = await import('$lib/services/assets/state');
 
       const oldAsset = {
         path: '/images/old.jpg',
@@ -736,8 +741,8 @@ describe('assets/data/create', () => {
     });
 
     it('should update both focusedAsset and overlaidAsset when they exist', async () => {
-      const { focusedAsset, getAssetByInternalPath, overlaidAsset } =
-        await import('$lib/services/assets');
+      const { getAssetByInternalPath } = await import('$lib/services/assets');
+      const { focusedAsset, overlaidAsset } = await import('$lib/services/assets/state');
 
       const oldFocused = {
         path: '/images/focused.jpg',

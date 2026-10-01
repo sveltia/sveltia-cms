@@ -1,5 +1,5 @@
-import { allAssets } from '$lib/services/assets';
 import { cacheAssetBlob } from '$lib/services/assets/info';
+import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';

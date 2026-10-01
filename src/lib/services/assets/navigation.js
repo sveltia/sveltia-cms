@@ -3,7 +3,6 @@ import { sleep } from '@sveltia/utils/misc';
 import equal from 'fast-deep-equal';
 
 import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
-import { allAssets, overlaidAsset } from '$lib/services/assets';
 import {
   enabledCloudServices,
   EXTERNAL_LOCATION_PATH_PREFIX,
@@ -15,6 +14,7 @@ import {
 } from '$lib/services/assets/external';
 import { linkedFilesService } from '$lib/services/assets/external/linked';
 import { allAssetFolders, selectedAssetFolder } from '$lib/services/assets/folders';
+import { allAssets, overlaidAsset } from '$lib/services/assets/state';
 import { resolveAssetFolderPath, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import {
   getFolderLabelByCollection,

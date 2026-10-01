@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
+
 import {
   DATE_TIME_FIELDS,
   ESCAPED_PLACEHOLDER_REGEX,
@@ -8,8 +10,6 @@ import {
   TEMPLATE_TAG_REPLACE_REGEX,
   UUID_TYPES,
 } from './constants';
-
-import { replaceTemplateTags } from '.';
 
 describe('Template constants', () => {
   describe('TEMPLATE_TAG_REGEX', () => {

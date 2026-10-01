@@ -78,7 +78,7 @@ vi.mock('$lib/services/contents/collection/files', () => ({
   getCollectionFileLabel: vi.fn(),
 }));
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   publishedAssets: _publishedAssets,
   selectedAssets: _selectedAssets,
   uploadingAssets: _uploadingAssets,

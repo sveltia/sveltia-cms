@@ -13,7 +13,7 @@ vi.mock('$lib/services/contents/i18n', () => ({
   getLocalePath: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
   ),

@@ -20,6 +20,9 @@ vi.mock('$lib/services/contents/collection/view/sort-keys', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/entry/values', () => ({
   getPropertyValue: vi.fn(),
 }));
 
@@ -39,7 +42,8 @@ const { getIndexFile, isCollectionIndexFile } =
   await import('$lib/services/contents/collection/entries/index-file');
 
 const { getSortKeyType } = await import('$lib/services/contents/collection/view/sort-keys');
-const { getField, getPropertyValue } = await import('$lib/services/contents/entry/fields');
+const { getField } = await import('$lib/services/contents/entry/fields');
+const { getPropertyValue } = await import('$lib/services/contents/entry/values');
 const { getEntrySummary } = await import('$lib/services/contents/entry/summary');
 const { getDate } = await import('$lib/services/contents/fields/date-time/helpers');
 const { removeMarkdownSyntax } = await import('$lib/services/utils/markdown');

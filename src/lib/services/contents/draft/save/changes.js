@@ -6,8 +6,8 @@ import { globalAssetFolder } from '$lib/services/assets/folders';
 import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
-import { isArrayFileCollection } from '$lib/services/contents/collection';
 import { isNestedCollection } from '$lib/services/contents/collection/nested';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
 import {

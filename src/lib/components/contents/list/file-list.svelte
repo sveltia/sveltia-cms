@@ -8,7 +8,7 @@
   import StatusBadge from '$lib/components/workflow/status-badge.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
-  import { isValidCollectionFile } from '$lib/services/contents/collection/files';
+  import { isValidCollectionFile } from '$lib/services/contents/collection/predicates';
   import { unpublishedEntries } from '$lib/services/workflow';
 
   /**

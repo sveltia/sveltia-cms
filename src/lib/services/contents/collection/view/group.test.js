@@ -24,6 +24,9 @@ vi.mock('@sveltia/i18n', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/entry/values', () => ({
   getPropertyValue: vi.fn(),
 }));
 
@@ -35,7 +38,7 @@ vi.mock('$lib/services/contents/collection/entries/reorder/config', () => ({
   getReorderGroupName: vi.fn(),
 }));
 
-const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+const { getPropertyValue } = await import('$lib/services/contents/entry/values');
 
 const { getReorderGroupName } =
   await import('$lib/services/contents/collection/entries/reorder/config');

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getEntriesByAssetURL } from '$lib/services/contents/collection/entries';
+import { getEntriesByAssetURL } from '$lib/services/assets/references';
 import { getSourceInfo } from '$lib/services/utils/media';
 
 import {
@@ -9,7 +9,7 @@ import {
   getExternalAssetUsedEntries,
 } from './details';
 
-vi.mock('$lib/services/contents/collection/entries', () => ({
+vi.mock('$lib/services/assets/references', () => ({
   getEntriesByAssetURL: vi.fn(),
 }));
 

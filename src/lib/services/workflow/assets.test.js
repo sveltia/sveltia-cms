@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 import {
   mergeWorkflowAssets,
   publishWorkflowAssets,

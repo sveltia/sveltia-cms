@@ -4,13 +4,10 @@
   import { getPathInfo } from '@sveltia/utils/file';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
-  import {
-    getAssetsByDirName,
-    getDuplicateFiles,
-    processedAssets,
-    uploadingAssets,
-  } from '$lib/services/assets';
+  import { getAssetsByDirName, getDuplicateFiles } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';
+  import { processedAssets } from '$lib/services/assets/process';
+  import { uploadingAssets } from '$lib/services/assets/state';
   import { getUploadDirPath } from '$lib/services/assets/subfolders';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';

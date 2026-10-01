@@ -1,11 +1,11 @@
 import equal from 'fast-deep-equal';
 import { sanitize } from 'isomorphic-dompurify';
 
-import { allAssets } from '$lib/services/assets';
 import { createDisplayBlobURL, getAssetPublicURL } from '$lib/services/assets/info';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { createAssetNameTemplate, getPendingFileName } from '$lib/services/assets/name';
 import { processFile } from '$lib/services/assets/process';
+import { allAssets } from '$lib/services/assets/state';
 import { getEntryAssetFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { createPath, getGitHash } from '$lib/services/utils/file';

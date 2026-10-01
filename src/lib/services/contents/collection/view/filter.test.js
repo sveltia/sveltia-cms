@@ -19,6 +19,9 @@ vi.mock('$lib/services/contents/collection/view/settings', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/entry/values', () => ({
   getPropertyValue: vi.fn(),
 }));
 
@@ -27,7 +30,7 @@ vi.mock('$lib/services/utils/regex', () => ({
 }));
 
 describe('Test filterEntries()', async () => {
-  const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+  const { getPropertyValue } = await import('$lib/services/contents/entry/values');
   const { getRegex } = await import('$lib/services/utils/regex');
 
   /** @type {InternalCollection} */
@@ -353,7 +356,8 @@ describe('Test filterEntries()', async () => {
 });
 
 describe('Test filterEntries() with a comparison', async () => {
-  const { getField, getPropertyValue } = await import('$lib/services/contents/entry/fields');
+  const { getField } = await import('$lib/services/contents/entry/fields');
+  const { getPropertyValue } = await import('$lib/services/contents/entry/values');
   const { getRegex } = await import('$lib/services/utils/regex');
 
   /**

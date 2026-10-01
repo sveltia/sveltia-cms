@@ -1,13 +1,13 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import {
   getComputedValue,
   getListIndex,
   hasUuidTag,
 } from '$lib/services/contents/fields/compute/helpers';
 
-vi.mock('$lib/services/contents/entry/fields', () => ({
+vi.mock('$lib/services/contents/entry/values', () => ({
   getFieldDisplayValue: vi.fn(),
 }));
 

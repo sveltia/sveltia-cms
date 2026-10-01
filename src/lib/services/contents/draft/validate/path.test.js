@@ -2,13 +2,13 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 import { getSlugs, hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { validatePath as _validatePath } from '$lib/services/contents/draft/validate/path';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 

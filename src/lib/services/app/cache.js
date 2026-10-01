@@ -1,7 +1,8 @@
 import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 
-import { backend, gitBackendServices } from '$lib/services/backends';
+import { backend } from '$lib/services/backends';
 import { TEST_BACKEND_NAME, TEST_BACKEND_ROOT_DIR_NAME } from '$lib/services/backends/fs/test';
+import { gitBackendServices } from '$lib/services/backends/git/services';
 
 /**
  * Names of the IndexedDB object stores holding cached file contents, generated asset thumbnails and

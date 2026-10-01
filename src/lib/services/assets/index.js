@@ -8,24 +8,20 @@ import {
   globalAssetFolder,
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
-import { partitionProcessedFiles, processFile } from '$lib/services/assets/process';
+import { allAssets, focusedAsset } from '$lib/services/assets/state';
 import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
-import { fillTemplate, hasTemplateTags } from '$lib/services/common/template';
+import { fillTemplate } from '$lib/services/common/template';
 import {
   ESCAPED_PLACEHOLDER_REGEX,
   TEMPLATE_TAG_REGEX,
 } from '$lib/services/common/template/constants';
+import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
-import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { createPath, resolvePath } from '$lib/services/utils/file';
-import {
-  createDerivedState,
-  createRawState,
-  createRootEffect,
-} from '$lib/services/utils/state.svelte';
+import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
  * @import {
@@ -34,32 +30,9 @@ import {
  * Entry,
  * InternalCollection,
  * InternalCollectionFile,
- * ProcessedAssets,
  * TypedFieldKeyPath,
- * UploadingAssets,
  * } from '$lib/types/private';
  */
-
-/**
- * List of all assets.
- * @type {{ current: Asset[] }}
- */
-export const allAssets = createRawState([]);
-
-/**
- * List of the assets that exist on the configured branch, which is {@link allAssets} minus the ones
- * committed to an Editorial Workflow branch. The Asset Library and the asset search use this,
- * because most asset actions — renaming, moving, deleting — can’t operate on a file that only lives
- * on a pull request branch. Entry previews still resolve against {@link allAssets}, so an image
- * attached to an unpublished entry is displayed where it’s used.
- */
-export const publishedAssets = createDerivedState(() =>
-  // Keep the same array reference when there’s nothing to filter out, to avoid needless downstream
-  // recomputation
-  allAssets.current.some(({ workflow }) => workflow)
-    ? allAssets.current.filter(({ workflow }) => !workflow)
-    : allAssets.current,
-);
 
 /**
  * Lazily-rebuilt Map from asset path to Asset, used for O(1) path lookups. Rebuilt only when
@@ -100,124 +73,6 @@ export const getAssetByInternalPath = (path) => getAssetPathMap().get(path);
  * @returns {string} Key.
  */
 export const getAssetKey = ({ unsaved, blobURL, path }) => (unsaved && blobURL ? blobURL : path);
-
-/**
- * Selected assets.
- * @type {{ current: Asset[] }}
- */
-export const selectedAssets = createRawState([]);
-
-/**
- * Set of selected asset paths, for O(1) membership checks in list items.
- */
-export const selectedAssetPathSet = createDerivedState(
-  () => new Set(selectedAssets.current.map((asset) => asset.path)),
-);
-
-/**
- * Asset currently focused in the UI.
- * @type {{ current: Asset | undefined }}
- */
-export const focusedAsset = createRawState();
-
-/**
- * Assets the toolbar actions operate on: the selected assets, or else the focused asset, if any.
- * @type {{ readonly current: Asset[] }}
- */
-export const selectedOrFocusedAssets = createDerivedState(() => {
-  if (selectedAssets.current.length) {
-    return [...selectedAssets.current];
-  }
-
-  return focusedAsset.current ? [focusedAsset.current] : [];
-});
-
-/**
- * Asset to be displayed in `<AssetDetailsOverlay>`.
- * @type {{ current: Asset | undefined }}
- */
-export const overlaidAsset = createRawState();
-
-/**
- * Assets currently being uploaded.
- * @type {{ current: UploadingAssets }}
- */
-export const uploadingAssets = createRawState({ folder: undefined, files: [] });
-
-/**
- * Asset currently being edited.
- * @type {{ current: Asset | undefined }}
- */
-export const editingAsset = createRawState();
-
-/**
- * Asset currently being renamed.
- * @type {{ current: Asset | undefined }}
- */
-export const renamingAsset = createRawState();
-
-/**
- * Get the initial state of {@link processedAssets}, before any file is processed.
- * @returns {ProcessedAssets} State.
- */
-const getInitialProcessedAssets = () => ({
-  processing: false,
-  validFiles: [],
-  oversizedFiles: [],
-  invalidFiles: [],
-  transformedFileMap: new WeakMap(),
-});
-
-/**
- * Assets currently being processed. Updated whenever {@link uploadingAssets} changes.
- * @type {{ current: ProcessedAssets }}
- */
-export const processedAssets = createRawState(getInitialProcessedAssets());
-
-createRootEffect(() => {
-  // Set when a newer selection supersedes this run. Processing a file is asynchronous and can take
-  // a while — transcoding a large image, for one — so a run that started earlier may well settle
-  // after a later one has, and it must not overwrite the newer results with its own stale ones.
-  let superseded = false;
-  const originalFiles = uploadingAssets.current.files;
-  const { config } = getDefaultMediaLibraryOptions();
-
-  processedAssets.current = getInitialProcessedAssets();
-
-  (async () => {
-    if (originalFiles.length && config.transformations) {
-      processedAssets.current = { ...getInitialProcessedAssets(), processing: true };
-    }
-
-    // A file replacing an existing asset takes over its name, so it’s not renamed
-    const nameTemplate = uploadingAssets.current.originalAssets?.length
-      ? undefined
-      : config.filename_template;
-
-    const results = await Promise.all(
-      originalFiles.map((file) => processFile(file, config, { nameTemplate })),
-    );
-
-    if (superseded) {
-      return;
-    }
-
-    processedAssets.current = {
-      processing: false,
-      ...partitionProcessedFiles(results),
-      transformedFileMap: new WeakMap(
-        results
-          .filter(({ originalFile }) => originalFile !== undefined)
-          .map(({ file, originalFile }) => [file, /** @type {File} */ (originalFile)]),
-      ),
-    };
-  })();
-
-  // Called before the next run starts
-  return () => {
-    superseded = true;
-  };
-});
 
 /**
  * Resolve template tags in an asset folder’s `internalPath`, such as `/assets/images/{{slug}}`,

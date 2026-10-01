@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { callEventHooks } from '$lib/services/api/events';
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
 import { getCommitAuthor } from '$lib/services/backends/save';

@@ -2,7 +2,6 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import {
   getFolderName,
@@ -10,9 +9,10 @@ import {
   hasLocalizedFolders,
   localizeDirPath,
 } from '$lib/services/contents/collection/nested/i18n';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 

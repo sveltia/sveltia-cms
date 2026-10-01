@@ -1,13 +1,14 @@
 import { _ } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
 
-import { focusedAsset, getAssetByInternalPath, overlaidAsset } from '$lib/services/assets';
+import { getAssetByInternalPath } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob, getAssetPublicURL } from '$lib/services/assets/info';
+import { getEntriesByAssets } from '$lib/services/assets/references';
+import { focusedAsset, overlaidAsset } from '$lib/services/assets/state';
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
-import { getEntriesByAssets } from '$lib/services/contents/collection/entries';
 import {
   getIndexFile,
   isCollectionIndexFile,
@@ -15,7 +16,7 @@ import {
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
+import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 
 /**
@@ -29,7 +30,7 @@ import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/e
  * MovingAsset,
  * } from '$lib/types/private';
  * @import { CollectionIndexFile } from '$lib/types/public';
- * @import { AssetReferenceTarget } from '$lib/services/contents/collection/entries';
+ * @import { AssetReferenceTarget } from '$lib/services/assets/references';
  */
 
 /**

@@ -2,9 +2,10 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { processedAssets, uploadingAssets } from '$lib/services/assets';
 import { saveAssets } from '$lib/services/assets/data/create';
 import { globalAssetFolder } from '$lib/services/assets/folders';
+import { processedAssets } from '$lib/services/assets/process';
+import { uploadingAssets } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';
 import { waitForToastsToHide } from '$lib/test/toast';

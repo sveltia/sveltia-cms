@@ -1,7 +1,7 @@
 import { getAssetByPath } from '$lib/services/assets';
 import { getAssetFoldersByPath } from '$lib/services/assets/folders';
 import { createDisplayBlobURL, getAssetBlob } from '$lib/services/assets/info';
-import { MARKDOWN_IMAGE_REGEX } from '$lib/services/contents/collection/entries';
+import { MARKDOWN_IMAGE_REGEX } from '$lib/services/assets/references';
 import { getOwnedEntryFolderPath } from '$lib/services/contents/draft/save/assets';
 import { getField, getTypedKeyPath } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES, RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';

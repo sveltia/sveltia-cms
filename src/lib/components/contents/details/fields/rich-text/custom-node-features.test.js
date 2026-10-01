@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createCustomNodeClass } from './custom-node.js';
-import { createTransformer } from './transformers.js';
-
-import { createLexicalNodeFeatures, EditorComponent, featureCacheMap } from '.';
+import { createCustomNodeClass } from '$lib/components/contents/details/fields/rich-text/custom-node';
+import {
+  createLexicalNodeFeatures,
+  EditorComponent,
+  featureCacheMap,
+} from '$lib/components/contents/details/fields/rich-text/custom-node-features';
+import { createTransformer } from '$lib/services/contents/fields/rich-text/components/transformers';
 
 // Mock the dependencies
-vi.mock('./custom-node.js', () => ({
+vi.mock('$lib/components/contents/details/fields/rich-text/custom-node', () => ({
   /**
    * Mock implementation of createCustomNodeClass.
    * @returns {any} Mock custom node class.
@@ -21,7 +24,7 @@ vi.mock('./custom-node.js', () => ({
   }),
 }));
 
-vi.mock('./transformers.js', () => ({
+vi.mock('$lib/services/contents/fields/rich-text/components/transformers', () => ({
   /**
    * Mock implementation of createTransformer.
    * @returns {object} Mock transformer.

@@ -8,6 +8,9 @@ import { backend } from '$lib/services/backends';
 
 vi.mock('$lib/services/backends', () => ({
   backend: { current: null },
+}));
+
+vi.mock('$lib/services/backends/git/services', () => ({
   gitBackendServices: { github: {}, gitlab: {}, gitea: {} },
 }));
 

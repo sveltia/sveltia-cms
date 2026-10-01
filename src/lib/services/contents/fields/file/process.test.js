@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { allAssets } from '$lib/services/assets';
 import { createDisplayBlobURL } from '$lib/services/assets/info';
+import { allAssets } from '$lib/services/assets/state';
 
 import { processResource } from './process';
 
@@ -14,7 +14,7 @@ vi.mock('isomorphic-dompurify', () => ({
   sanitize: vi.fn(),
 }));
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
 }));
 

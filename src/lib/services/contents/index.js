@@ -1,8 +1,10 @@
-import { getCollection } from '$lib/services/contents/collection';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Entry, EntryFolderInfo, InternalEntryCollection } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * EntryFolderInfo,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -82,88 +84,3 @@ export const findEntryByPaths = (paths) => {
  * @type {{ current: Error[] }}
  */
 export const entryParseErrors = createRawState([]);
-
-/**
- * Cache for {@link getEntryFoldersByPath} to avoid rescanning `allEntryFolders` on every call.
- * `fileMap`: maps each locale-specific file path to the matching `EntryFolderInfo` objects
- * (file/singleton collections). Provides O(1) lookup instead of O(n×m) linear scan.
- * `regexFolders`: entry collections that use `fullPathRegEx`; regex is pre-fetched once.
- */
-const entryFoldersByPathCache = {
-  source: /** @type {EntryFolderInfo[] | undefined} */ (undefined),
-  /** @type {Map<string, EntryFolderInfo[]>} */
-  fileMap: new Map(),
-  /** @type {Array<[EntryFolderInfo, RegExp | undefined]>} */
-  regexFolders: [],
-};
-
-/**
- * Rebuild {@link entryFoldersByPathCache} when `allEntryFolders` changes.
- * @returns {typeof entryFoldersByPathCache} Cache object.
- */
-const getEntryFolderCache = () => {
-  const _allEntryFolders = allEntryFolders.current;
-
-  if (_allEntryFolders === entryFoldersByPathCache.source) {
-    return entryFoldersByPathCache;
-  }
-
-  /** @type {Map<string, EntryFolderInfo[]>} */
-  const fileMap = new Map();
-  /** @type {Array<[EntryFolderInfo, RegExp | undefined]>} */
-  const regexFolders = [];
-
-  _allEntryFolders.forEach((folder) => {
-    if (folder.filePathMap) {
-      // Pre-index every locale-specific path so lookups are O(1).
-      // Deduplicate paths first: multiple locales can share the same physical file path, and
-      // we only want the folder to appear once per path in the results.
-      [...new Set(Object.values(folder.filePathMap))].forEach((filePath) => {
-        const arr = fileMap.get(filePath);
-
-        if (arr) {
-          arr.push(folder);
-        } else {
-          fileMap.set(filePath, [folder]);
-        }
-      });
-    } else {
-      // Pre-fetch the regex so we avoid calling getCollection() per path per call
-      regexFolders.push([
-        folder,
-        /** @type {InternalEntryCollection} */ (getCollection(folder.collectionName))?._file
-          ?.fullPathRegEx,
-      ]);
-    }
-  });
-
-  entryFoldersByPathCache.source = _allEntryFolders;
-  entryFoldersByPathCache.fileMap = fileMap;
-  entryFoldersByPathCache.regexFolders = regexFolders;
-
-  return entryFoldersByPathCache;
-};
-
-/**
- * Get collection entry folders that match the given path.
- * @param {string} path Entry path.
- * @returns {EntryFolderInfo[]} Entry folders. Sometimes it’s hard to find the right folder because
- * multiple collections can have the same folder or partially overlapping folder paths, but the
- * first one is most likely what you need.
- */
-export const getEntryFoldersByPath = (path) => {
-  const { fileMap, regexFolders } = getEntryFolderCache();
-
-  return [
-    // A file/singleton collection declares the exact path, so it’s always more specific than an
-    // entry collection, whose folder may happen to contain the same file. This notably applies to
-    // Hugo’s special index file: `content/blog/_index.md` can be declared as a file collection item
-    // while `content/blog` is also an entry collection’s folder
-    ...(fileMap.get(path) ?? []),
-    // Deeper folder paths are more specific, so sort them in descending order
-    ...regexFolders
-      .filter(([, regex]) => regex?.test(path))
-      .map(([folder]) => folder)
-      .sort((a, b) => (b.folderPath ?? '').localeCompare(a.folderPath ?? '')),
-  ];
-};

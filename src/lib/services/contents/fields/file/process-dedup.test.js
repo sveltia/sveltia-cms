@@ -14,7 +14,7 @@ vi.mock('isomorphic-dompurify', () => ({
   sanitize: vi.fn(),
 }));
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
 }));
 

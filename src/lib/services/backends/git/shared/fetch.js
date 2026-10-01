@@ -1,8 +1,8 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { IndexedDB } from '@sveltia/utils/storage';
 
-import { allAssets } from '$lib/services/assets';
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { allAssets } from '$lib/services/assets/state';
 import { hasSkipCIMarker } from '$lib/services/backends/git/shared/commits';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { reconcileAssets, reconcileEntries } from '$lib/services/backends/git/shared/reconcile';
@@ -11,7 +11,7 @@ import { createFileList, describeFileList } from '$lib/services/backends/process
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
-import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
+import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { createDebugLogger } from '$lib/services/utils/logging';
 import { createRawState } from '$lib/services/utils/state.svelte';
 

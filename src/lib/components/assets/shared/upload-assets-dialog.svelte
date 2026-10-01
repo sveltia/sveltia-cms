@@ -5,8 +5,8 @@
   import { untrack } from 'svelte';
 
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import { uploadingAssets } from '$lib/services/assets';
   import { targetAssetFolder } from '$lib/services/assets/folders';
+  import { uploadingAssets } from '$lib/services/assets/state';
   import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { showAssetOverlay, showUploadAssetsDialog } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';

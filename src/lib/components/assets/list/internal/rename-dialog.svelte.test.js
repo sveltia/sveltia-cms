@@ -2,9 +2,9 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { renamingAsset } from '$lib/services/assets';
 import { moveAssets } from '$lib/services/assets/data/move';
 import { getAssetUsedEntries } from '$lib/services/assets/details';
+import { renamingAsset } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { createMockAsset, initTestConfig, setAssets } from '$lib/test/config';

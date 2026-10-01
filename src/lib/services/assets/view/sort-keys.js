@@ -1,6 +1,6 @@
 import { _ } from '@sveltia/i18n';
 
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
 
 /**

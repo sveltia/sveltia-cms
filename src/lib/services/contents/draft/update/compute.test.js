@@ -7,10 +7,10 @@ import {
   updateComputedValues,
 } from '$lib/services/contents/draft/update/compute';
 import { indexListItems } from '$lib/services/contents/entry/content-index';
-import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
 
-vi.mock('$lib/services/contents/entry/fields', () => ({
+vi.mock('$lib/services/contents/entry/values', () => ({
   getFieldDisplayValue: vi.fn(({ valueMap, keyPath }) => valueMap[keyPath]),
 }));
 vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({

@@ -1,0 +1,603 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { cmsConfig, cmsConfigErrors, cmsConfigVersion } from '$lib/services/config';
+
+// Mock external dependencies
+vi.mock('@sveltia/utils/crypto', () => ({
+  getHash: vi.fn().mockResolvedValue('mock-hash'),
+}));
+
+vi.mock('$lib/services/config/loader', () => ({
+  fetchCmsConfig: vi.fn(),
+}));
+
+vi.mock('$lib/services/config/deprecations', () => ({
+  warnDeprecation: vi.fn(),
+}));
+
+vi.mock('$lib/services/config/schema', () => ({
+  getConfigSchemas: vi.fn().mockReturnValue(undefined),
+  validateConfigSchema: vi.fn(),
+}));
+
+vi.mock('$lib/services/config/folders/assets', () => ({
+  getAllAssetFolders: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock('$lib/services/config/folders/entries', () => ({
+  getAllEntryFolders: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock('$lib/services/assets/folders', () => ({
+  allAssetFolders: { current: [] },
+  selectedAssetFolder: { current: undefined },
+}));
+
+vi.mock('$lib/services/contents', () => ({
+  allEntryFolders: { current: [] },
+}));
+
+vi.mock('$lib/services/user/prefs.svelte', () => ({
+  prefs: { devModeEnabled: false },
+}));
+
+vi.mock('$lib/services/backends', () => ({
+  initBackend: vi.fn(),
+  validBackendNames: ['git-gateway', 'github', 'gitlab', 'gitea'],
+}));
+
+vi.mock('$lib/services/backends/git/services', () => ({
+  gitBackendServices: {
+    github: {},
+    gitlab: {},
+    gitea: {},
+  },
+}));
+
+// Mock i18n
+vi.mock('@sveltia/i18n', () => ({
+  _: vi.fn((key) => key),
+  locale: { current: 'en', set: vi.fn() },
+}));
+
+describe('config/init', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cmsConfig.current = undefined;
+    cmsConfigErrors.current = [];
+    cmsConfigVersion.current = '0';
+  });
+
+  describe('initCmsConfig', () => {
+    /** @type {any} */
+    let fetchcmsConfigMock;
+    /** @type {any} */
+    let getHashMock;
+    /** @type {any} */
+    let originalIsSecureContext;
+    /** @type {any} */
+    let originalLocation;
+
+    beforeEach(async () => {
+      const { fetchCmsConfig } = await import('$lib/services/config/loader');
+      const { getHash } = await import('@sveltia/utils/crypto');
+
+      fetchcmsConfigMock = vi.mocked(fetchCmsConfig);
+      getHashMock = vi.mocked(getHash);
+
+      // Mock window if not defined
+      // @ts-ignore - window may not be defined in Node test environment
+      if (typeof window === 'undefined') {
+        global.window = /** @type {any} */ ({
+          isSecureContext: true,
+          location: { origin: 'http://localhost:3000' },
+        });
+        originalIsSecureContext = true;
+        originalLocation = global.window.location;
+      } else {
+        // @ts-ignore - window may not be defined in Node test environment
+        originalIsSecureContext = window.isSecureContext;
+        // @ts-ignore - window may not be defined in Node test environment
+        originalLocation = window.location;
+        // @ts-ignore - window may not be defined in Node test environment
+        Object.defineProperty(window, 'isSecureContext', { value: true, writable: true });
+      }
+    });
+
+    afterEach(() => {
+      // @ts-ignore - window may not be defined in Node test environment
+      if (typeof window !== 'undefined') {
+        // @ts-ignore - window may not be defined in Node test environment
+        Object.defineProperty(window, 'isSecureContext', {
+          value: originalIsSecureContext,
+          writable: true,
+        });
+
+        if (originalLocation) {
+          // @ts-ignore - window may not be defined in Node test environment
+          Object.defineProperty(window, 'location', {
+            value: originalLocation,
+            writable: true,
+          });
+        }
+      }
+    });
+
+    it('should throw error when not in secure context', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      if (typeof window !== 'undefined') {
+        Object.defineProperty(window, 'isSecureContext', { value: false, writable: true });
+      } else {
+        global.window.isSecureContext = false;
+      }
+
+      await initCmsConfig();
+
+      const errors = cmsConfigErrors.current;
+
+      expect(errors).toBeDefined();
+      expect(errors).toContain('config.error.no_secure_context');
+    });
+
+    it('should load config from file when no manual config provided', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+      getHashMock.mockResolvedValue('test-hash');
+
+      await initCmsConfig();
+
+      expect(fetchcmsConfigMock).toHaveBeenCalledWith();
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      expect(config).toBeDefined();
+      expect(config?.backend.name).toBe('github');
+    });
+
+    it('should use manual config when provided and load_config_file is false', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      /** @type {any} */
+      const manualConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+        load_config_file: false,
+      };
+
+      await initCmsConfig(manualConfig);
+
+      expect(fetchcmsConfigMock).not.toHaveBeenCalled();
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      expect(config).toBeDefined();
+      expect(config?.backend.name).toBe('github');
+    });
+
+    it('should merge manual config with file config when load_config_file is not false', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const fileConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      /** @type {any} */
+      const manualConfig = {
+        backend: { name: 'github', repo: 'different/repo' },
+        site_url: 'https://example.com',
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(fileConfig);
+
+      await initCmsConfig(manualConfig);
+
+      expect(fetchcmsConfigMock).toHaveBeenCalledWith({ manualInit: true });
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      expect(config).toBeDefined();
+      expect(config?.backend.repo).toBe('different/repo');
+      expect(config?._siteURL).toBe('https://example.com');
+    });
+
+    it('should append manual config arrays to file config arrays like Decap CMS', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const fileConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      /** @type {any} */
+      const manualConfig = {
+        collections: [
+          {
+            name: 'pages',
+            label: 'Pages',
+            folder: 'pages',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(fileConfig);
+
+      await initCmsConfig(manualConfig);
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      expect(config?.collections.map((/** @type {any} */ c) => c.name)).toEqual(['posts', 'pages']);
+    });
+
+    it('should throw error when manual config is not an object', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      await initCmsConfig(/** @type {any} */ ('not-an-object'));
+
+      const errors = cmsConfigErrors.current;
+
+      expect(errors).toBeDefined();
+      expect(errors).toContain('config.error.parse_failed');
+    });
+
+    it('should call fetchCmsConfig with manualInit option when merging with explicit load_config_file true', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const fileConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      /** @type {any} */
+      const manualConfig = {
+        backend: { name: 'github', repo: 'different/repo' },
+        load_config_file: true,
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(fileConfig);
+
+      await initCmsConfig(manualConfig);
+
+      expect(fetchcmsConfigMock).toHaveBeenCalledWith({ manualInit: true });
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      expect(config).toBeDefined();
+      expect(config?.backend.repo).toBe('different/repo');
+    });
+
+    it('should set _siteURL from site_url config', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+        site_url: '  https://example.com  ',
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+
+      await initCmsConfig();
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      expect(config?._siteURL).toBe('https://example.com');
+      expect(config?._baseURL).toBe('https://example.com');
+    });
+
+    it('should use DEV_SITE_URL in development when site_url is not provided', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+
+      await initCmsConfig();
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      // In test environment, DEV should be true
+      expect(config?._siteURL).toBeDefined();
+    });
+
+    it('should reject a site_url that is not a URL', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+        site_url: 'not-a-valid-url',
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+
+      await initCmsConfig();
+
+      // The parser rejects the URL, so the configuration is not loaded
+      expect(cmsConfig.current).toBeUndefined();
+      expect(cmsConfigErrors.current).toHaveLength(1);
+    });
+
+    it('should handle root collection folder variants', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: '.',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            name: 'pages',
+            label: 'Pages',
+            folder: '/',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            name: 'docs',
+            label: 'Docs',
+            folder: 'docs',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+
+      await initCmsConfig();
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      expect(config?.collections?.[0].folder).toBe('');
+      expect(config?.collections?.[1].folder).toBe('');
+      expect(config?.collections?.[2].folder).toBe('docs');
+    });
+
+    it('should set cmsConfigVersion with hash of config', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+      getHashMock.mockResolvedValue('config-hash-123');
+
+      await initCmsConfig();
+
+      expect(cmsConfigVersion.current).toBe('config-hash-123');
+    });
+
+    it('should handle validation errors', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const invalidConfig = {
+        // Missing required fields
+        backend: { name: 'github' },
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(invalidConfig);
+
+      await initCmsConfig();
+
+      const errors = cmsConfigErrors.current;
+
+      expect(errors).toBeDefined();
+    });
+
+    it('should handle unexpected errors with generic message', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      fetchcmsConfigMock.mockRejectedValue(new TypeError('Network error'));
+
+      await initCmsConfig();
+
+      const errors = cmsConfigErrors.current;
+
+      expect(errors).toBeDefined();
+      expect(errors).toContain('config.error.unexpected');
+    });
+
+    it('should handle folder normalization for root folders', async () => {
+      const { initCmsConfig } = await import('./init');
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: '.',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            name: 'pages',
+            label: 'Pages',
+            folder: '/',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+          {
+            name: 'drafts',
+            label: 'Drafts',
+            folder: 'drafts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+      getHashMock.mockResolvedValue('test-hash');
+
+      await initCmsConfig();
+
+      const config = /** @type {any} */ (cmsConfig.current);
+
+      expect(config?.collections?.[0]?.folder).toBe('');
+      expect(config?.collections?.[1]?.folder).toBe('');
+      expect(config?.collections?.[2]?.folder).toBe('drafts');
+    });
+
+    it('should log config to console in dev mode', async () => {
+      const { initCmsConfig } = await import('./init');
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+      getHashMock.mockResolvedValue('test-hash');
+
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+
+      prefs.devModeEnabled = true;
+
+      await initCmsConfig();
+
+      // Wait for subscription to trigger
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
+
+      // Check that console.info was called with config
+      const calls = consoleSpy.mock.calls.filter(
+        (c) => c[0] === 'cmsConfig' || c[0] === 'allEntryFolders',
+      );
+
+      expect(calls.length).toBeGreaterThan(0);
+
+      prefs.devModeEnabled = false;
+      consoleSpy.mockRestore();
+    });
+
+    it('should log console.warn when config has deprecated/unsupported options', async () => {
+      const { initCmsConfig } = await import('./init');
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // `local_backend` is an unsupported option that triggers a warning during parsing
+      const mockConfig = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: 'uploads',
+        local_backend: true,
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      fetchcmsConfigMock.mockResolvedValue(mockConfig);
+      getHashMock.mockResolvedValue('test-hash');
+
+      await initCmsConfig();
+
+      expect(consoleSpy).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+  });
+});

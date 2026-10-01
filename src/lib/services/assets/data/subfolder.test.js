@@ -12,7 +12,7 @@ vi.mock('$lib/services/assets/subfolders', () => ({
   focusedSubfolder: { current: undefined },
 }));
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   publishedAssets: { current: [] },
 }));
 
@@ -79,7 +79,7 @@ describe('assets/data/subfolder', () => {
     vi.clearAllMocks();
 
     const { gitConfigFiles } = await import('$lib/services/backends/git/shared/config');
-    const { publishedAssets } = await import('$lib/services/assets');
+    const { publishedAssets } = await import('$lib/services/assets/state');
 
     gitConfigFiles.current = [
       { type: 'config', path: '.gitattributes', name: '.gitattributes', sha: 'a', size: 10 },

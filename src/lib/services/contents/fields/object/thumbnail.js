@@ -1,9 +1,9 @@
-import { getMediaFieldSource } from '$lib/services/assets/info';
 import {
   canCreateThumbnail,
   getMediaKindFromPath,
   getMediaKindFromType,
 } from '$lib/services/assets/kinds';
+import { getMediaFieldSource } from '$lib/services/assets/media-field';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';

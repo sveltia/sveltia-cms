@@ -6,7 +6,7 @@ import { lockedBranch } from '$lib/services/backends/branch-access';
 import { getGroupingKey } from '$lib/services/common/view';
 import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries } from '$lib/services/contents';
-import { isArrayFileCollection, selectedCollection } from '$lib/services/contents/collection';
+import { selectedCollection } from '$lib/services/contents/collection';
 import {
   countCollectionEntries,
   getEntriesByCollection,
@@ -18,6 +18,7 @@ import {
   isNestedCollection,
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { usesCurrentTime } from '$lib/services/contents/collection/view/conditions';
 import { filterEntries, parseFilterConfig } from '$lib/services/contents/collection/view/filter';
 import {

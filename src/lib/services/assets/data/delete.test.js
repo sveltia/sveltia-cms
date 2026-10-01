@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { deleteAssets, updateStores } from './delete.js';
 
 // Mock dependencies
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   focusedAsset: { current: undefined },
 }));
 
@@ -71,7 +71,7 @@ describe('assets/data/delete', () => {
       ];
 
       const mockFocusedAsset = createMockAsset('/images/photo1.jpg', 'photo1.jpg');
-      const { focusedAsset } = await import('$lib/services/assets');
+      const { focusedAsset } = await import('$lib/services/assets/state');
       const { assetUpdatesToast } = await import('$lib/services/assets/data');
 
       focusedAsset.current = mockFocusedAsset;
@@ -90,7 +90,7 @@ describe('assets/data/delete', () => {
     it('should keep focused asset if it does not match deleted assets', async () => {
       const deletedAssets = [createMockAsset('/images/photo1.jpg', 'photo1.jpg')];
       const mockFocusedAsset = createMockAsset('/images/different.jpg', 'different.jpg');
-      const { focusedAsset } = await import('$lib/services/assets');
+      const { focusedAsset } = await import('$lib/services/assets/state');
 
       focusedAsset.current = mockFocusedAsset;
 
@@ -101,7 +101,7 @@ describe('assets/data/delete', () => {
 
     it('should handle undefined focused asset', async () => {
       const deletedAssets = [createMockAsset('/images/photo1.jpg', 'photo1.jpg')];
-      const { focusedAsset } = await import('$lib/services/assets');
+      const { focusedAsset } = await import('$lib/services/assets/state');
 
       focusedAsset.current = undefined;
 

@@ -63,16 +63,19 @@ vi.mock('$lib/services/config/deprecations', () => ({
 }));
 
 vi.mock('$lib/services/backends', () => ({
-  gitBackendServices: {
-    github: { name: 'github' },
-    gitlab: { name: 'gitlab' },
-    gitea: { name: 'gitea' },
-  },
   validBackendNames: ['github', 'gitlab', 'gitea', 'local'],
   unsupportedBackends: {
     azure: { label: 'Azure DevOps' },
     bitbucket: { label: 'Bitbucket' },
     'git-gateway': { label: 'Git Gateway', deprecated: true },
+  },
+}));
+
+vi.mock('$lib/services/backends/git/services', () => ({
+  gitBackendServices: {
+    github: { name: 'github' },
+    gitlab: { name: 'gitlab' },
+    gitea: { name: 'gitea' },
   },
 }));
 

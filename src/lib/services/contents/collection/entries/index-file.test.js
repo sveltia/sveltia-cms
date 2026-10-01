@@ -3,19 +3,19 @@
 import { _, locale as appLocale } from '@sveltia/i18n';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
 import {
   getIndexFile,
   isCollectionIndexFile,
   isCollectionIndexFilePath,
 } from '$lib/services/contents/collection/entries/index-file';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 
 // Mock dependencies
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn(() => 'Index File'),
   locale: { current: 'en-US' },
 }));
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 

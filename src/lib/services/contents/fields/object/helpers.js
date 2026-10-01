@@ -1,12 +1,12 @@
-import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { parseTransformations } from '$lib/services/common/transformations';
+import { getField } from '$lib/services/contents/entry/fields';
 import {
-  getField,
   getFieldDisplayValue,
   getVisibleFieldDisplayValue,
-} from '$lib/services/contents/entry/fields';
+} from '$lib/services/contents/entry/values';
 
 /**
  * @import {

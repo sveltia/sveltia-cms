@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { checkForRemoteChanges, suspendChecksWhile } from '$lib/services/backends/refresh';
@@ -30,7 +30,7 @@ vi.mock('@sveltia/utils/storage', () => ({
   })),
 }));
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
 }));
 

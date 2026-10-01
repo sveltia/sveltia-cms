@@ -1,5 +1,5 @@
-import { allAssets } from '$lib/services/assets';
-import { initCmsConfig } from '$lib/services/config';
+import { allAssets } from '$lib/services/assets/state';
+import { initCmsConfig } from '$lib/services/config/init';
 import { allEntries } from '$lib/services/contents';
 import { collectionCacheMap } from '$lib/services/contents/collection';
 import { fieldConfigCacheMap } from '$lib/services/contents/entry/fields';

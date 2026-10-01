@@ -2,17 +2,16 @@ import { unique } from '@sveltia/utils/array';
 import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 
-import { allAssets, getAssetByPath, isRelativePath } from '$lib/services/assets';
+import { getAssetByPath, isRelativePath } from '$lib/services/assets';
 import { getAssetFolder, getAssetFoldersByPath } from '$lib/services/assets/folders';
-import {
-  getMediaFieldSource,
-  getMediaFieldURL,
-  revokeBlobURLIfNeeded,
-} from '$lib/services/assets/info';
+import { revokeBlobURLIfNeeded } from '$lib/services/assets/info';
 import { canCreateThumbnail } from '$lib/services/assets/kinds';
-import { getCollection, isArrayFileCollection } from '$lib/services/contents/collection';
+import { getMediaFieldSource, getMediaFieldURL } from '$lib/services/assets/media-field';
+import { allAssets } from '$lib/services/assets/state';
+import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { fillEntryPathTemplate } from '$lib/services/contents/entry';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';

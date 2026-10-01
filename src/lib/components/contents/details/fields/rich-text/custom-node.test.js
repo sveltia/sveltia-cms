@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createCustomNodeClass } from './custom-node.js';
+import { createCustomNodeClass } from '$lib/components/contents/details/fields/rich-text/custom-node';
 
 // Set up DOM globals for tests
 const makeMockElement = (tagName) => ({
@@ -162,13 +162,14 @@ vi.mock('$lib/components/contents/details/fields/rich-text/component.svelte', ()
   default: vi.fn(),
 }));
 
-vi.mock('./utils.js', () => ({
+vi.mock('$lib/services/contents/fields/rich-text/components/utils', () => ({
   isMultiLinePattern: vi.fn((pattern) => pattern.multiline || pattern.dotAll),
   normalizeProps: vi.fn((props) => props),
 }));
 
 // Import mocked functions after they're mocked
-const { isMultiLinePattern } = await import('./utils.js');
+const { isMultiLinePattern } =
+  await import('$lib/services/contents/fields/rich-text/components/utils');
 
 describe('createCustomNodeClass', () => {
   const mockComponentDef = {

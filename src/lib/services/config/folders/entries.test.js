@@ -15,7 +15,7 @@ vi.mock('$lib/services/contents/collection', () => ({
   getValidCollections: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/files', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   getValidCollectionFiles: vi.fn(),
   isValidCollectionFile: vi.fn(),
 }));
@@ -31,7 +31,7 @@ vi.mock('$lib/services/contents/i18n/config', () => ({
 const { getValidCollections } = await import('$lib/services/contents/collection');
 
 const { getValidCollectionFiles, isValidCollectionFile } =
-  await import('$lib/services/contents/collection/files');
+  await import('$lib/services/contents/collection/predicates');
 
 const { getLocalePath } = await import('$lib/services/contents/i18n');
 const { normalizeI18nConfig } = await import('$lib/services/contents/i18n/config');

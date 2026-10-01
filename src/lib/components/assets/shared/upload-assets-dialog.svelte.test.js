@@ -2,8 +2,8 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { uploadingAssets } from '$lib/services/assets';
 import { globalAssetFolder } from '$lib/services/assets/folders';
+import { uploadingAssets } from '$lib/services/assets/state';
 import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showAssetOverlay, showUploadAssetsDialog } from '$lib/services/assets/view';
 import { env } from '$lib/services/user/env.svelte';

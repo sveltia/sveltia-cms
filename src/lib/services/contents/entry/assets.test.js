@@ -44,6 +44,9 @@ vi.mock('$lib/services/assets', () => ({
    * @returns {boolean} `true` if the path is relative.
    */
   isRelativePath: (path) => !/^[/@]/.test(path),
+}));
+
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: mockAllAssets,
 }));
 
@@ -53,13 +56,19 @@ vi.mock('$lib/services/assets/folders', () => ({
 }));
 
 vi.mock('$lib/services/assets/info', () => ({
+  revokeBlobURLIfNeeded: mockRevokeBlobURLIfNeeded,
+}));
+
+vi.mock('$lib/services/assets/media-field', () => ({
   getMediaFieldSource: mockGetMediaFieldSource,
   getMediaFieldURL: mockGetMediaFieldURL,
-  revokeBlobURLIfNeeded: mockRevokeBlobURLIfNeeded,
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
   getCollection: mockGetCollection,
+}));
+
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
 }));
 

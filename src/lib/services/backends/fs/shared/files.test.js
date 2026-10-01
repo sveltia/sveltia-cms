@@ -2806,7 +2806,7 @@ describe('loadFiles', () => {
       entryParseErrors: stores.entryParseErrors,
     }));
 
-    vi.doMock('$lib/services/assets', () => ({
+    vi.doMock('$lib/services/assets/state', () => ({
       allAssets: stores.allAssets,
     }));
 

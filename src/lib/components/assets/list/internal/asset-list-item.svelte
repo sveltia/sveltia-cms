@@ -1,8 +1,8 @@
 <script>
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { focusedAsset, selectedAssetPathSet, selectedAssets } from '$lib/services/assets';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
+  import { focusedAsset, selectedAssetPathSet, selectedAssets } from '$lib/services/assets/state';
   import { focusedSubfolder } from '$lib/services/assets/subfolders';
   import { listedAssetIndexMap } from '$lib/services/assets/view';
   import { toggleListItem } from '$lib/services/utils/array';

@@ -2,8 +2,8 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { focusedAsset, uploadingAssets } from '$lib/services/assets';
 import { globalAssetFolder, selectedAssetFolder } from '$lib/services/assets/folders';
+import { focusedAsset, uploadingAssets } from '$lib/services/assets/state';
 import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { currentView } from '$lib/services/assets/view/settings';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';

@@ -6,8 +6,8 @@
 <script>
   import SubfolderListItem from '$lib/components/assets/list/subfolder-list-item.svelte';
   import { goto } from '$lib/services/app/navigation';
-  import { focusedAsset } from '$lib/services/assets';
   import { assetsLocked, selectedAssetFolder } from '$lib/services/assets/folders';
+  import { focusedAsset } from '$lib/services/assets/state';
   import {
     deletingSubfolder,
     focusedSubfolder,

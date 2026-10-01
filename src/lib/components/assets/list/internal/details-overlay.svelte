@@ -13,7 +13,6 @@
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
-  import { overlaidAsset } from '$lib/services/assets';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
@@ -23,6 +22,7 @@
   } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { isMediaKind } from '$lib/services/assets/kinds';
+  import { overlaidAsset } from '$lib/services/assets/state';
   import { browsedDirPath } from '$lib/services/assets/subfolders';
   import { assetGroups, getAdjacentAssets } from '$lib/services/assets/view';
   import { isSearchResultsPath } from '$lib/services/search/navigation';

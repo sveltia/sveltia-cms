@@ -21,7 +21,7 @@ import { expandInvalidFields } from '$lib/services/contents/editor/fields';
 import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
 import { clearEntryHistoryCache } from '$lib/services/contents/entry/history';
 import { assignAutoNowValues } from '$lib/services/contents/fields/date-time/auto-now';
-import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
+import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { isWorkflowDraft, unpublishedEntries } from '$lib/services/workflow';
 import { saveWorkflowChanges } from '$lib/services/workflow/save';
 
@@ -63,7 +63,7 @@ vi.mock('$lib/services/contents/editor/fields');
 vi.mock('$lib/services/contents/editor/pending');
 vi.mock('$lib/services/contents/entry/history');
 vi.mock('$lib/services/contents/fields/date-time/auto-now');
-vi.mock('$lib/services/deployments/publish');
+vi.mock('$lib/services/deployments');
 vi.mock('$lib/services/workflow', async (importOriginal) => ({
   .../** @type {object} */ (await importOriginal()),
   isWorkflowDraft: vi.fn(),

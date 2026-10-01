@@ -5,8 +5,8 @@ import { sanitize } from 'isomorphic-dompurify';
 import { parseInline } from 'marked';
 import { parseEntities } from 'parse-entities';
 
-import { replaceTemplateTags } from '$lib/services/common/template';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { allEntries } from '$lib/services/contents';
@@ -14,7 +14,8 @@ import {
   getIndexFile,
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
-import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getField } from '$lib/services/contents/entry/fields';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import {
   hasLocalePlaceholder,
   stripLocaleFolderPath,

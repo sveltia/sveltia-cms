@@ -24,7 +24,8 @@
     startViewTransition,
   } from '$lib/services/app/navigation';
   import { backend } from '$lib/services/backends';
-  import { cmsConfigLoaded, DEV_SITE_URL, initCmsConfig } from '$lib/services/config';
+  import { cmsConfigLoaded, DEV_SITE_URL } from '$lib/services/config';
+  import { initCmsConfig } from '$lib/services/config/init';
   import { dataLoaded } from '$lib/services/contents';
   import { user } from '$lib/services/user/account.svelte';
   import { initUserEnvDetection } from '$lib/services/user/env.svelte';

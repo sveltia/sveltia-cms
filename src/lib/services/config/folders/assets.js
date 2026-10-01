@@ -1,10 +1,10 @@
 import { getPathInfo } from '@sveltia/utils/file';
 import { compare, stripSlashes } from '@sveltia/utils/string';
 
-import { hasTemplateTags } from '$lib/services/common/template';
+import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { isConfigReadonly } from '$lib/services/config/readonly';
 import { getValidCollections } from '$lib/services/contents/collection';
-import { getValidCollectionFiles } from '$lib/services/contents/collection/files';
+import { getValidCollectionFiles } from '$lib/services/contents/collection/predicates';
 import { LOCALE_ROOT_FOLDER_STRUCTURES } from '$lib/services/contents/i18n/config/constants';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';

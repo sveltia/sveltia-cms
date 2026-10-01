@@ -2,13 +2,13 @@
 import { IndexedDB } from '@sveltia/utils/storage';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { cmsConfigVersion } from '$lib/services/config';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
 import { prepareEntries } from '$lib/services/contents/file/process';
-import { setLastCommitPublishHint } from '$lib/services/deployments/publish';
+import { setLastCommitPublishHint } from '$lib/services/deployments';
 import { createDebugLogger } from '$lib/services/utils/logging';
 
 import {
@@ -38,7 +38,7 @@ vi.mock('$lib/services/contents/file/process');
 // No collection uses a multi-file i18n structure, so each entry is made of a single file
 vi.mock('$lib/services/contents/collection', () => ({ getCollection: vi.fn() }));
 vi.mock('$lib/services/contents/collection/files', () => ({ getCollectionFile: vi.fn() }));
-vi.mock('$lib/services/deployments/publish');
+vi.mock('$lib/services/deployments');
 vi.mock('$lib/services/utils/logging');
 
 const lastConfigHash = 'config-hash-1';

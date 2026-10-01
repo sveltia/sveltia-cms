@@ -9,8 +9,6 @@ import {
   getCollectionFileIndex,
   getCollectionFileLabel,
   getCollectionFilesByEntry,
-  getValidCollectionFiles,
-  isValidCollectionFile,
   resolveCollectionAndFile,
 } from '$lib/services/contents/collection/files';
 
@@ -26,127 +24,9 @@ vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
   getValidCollections: vi.fn(),
 }));
-vi.mock('$lib/services/contents/entry', () => ({
+vi.mock('$lib/services/contents/entry/collections', () => ({
   getAssociatedCollections: vi.fn(),
 }));
-
-describe('isValidCollectionFile()', () => {
-  test('returns true for valid collection file', () => {
-    const validFile = {
-      name: 'test-file',
-      file: 'test.md',
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    expect(isValidCollectionFile(validFile)).toBe(true);
-  });
-
-  test('returns false for divider', () => {
-    const divider = {
-      divider: true,
-    };
-
-    expect(isValidCollectionFile(divider)).toBe(false);
-  });
-
-  test('returns false for file without string file property', () => {
-    const invalidFile = {
-      name: 'test-file',
-      file: 123, // Not a string
-      fields: [{ name: 'title', widget: 'string' }],
-    };
-
-    // Cast to any to test the type validation
-    expect(isValidCollectionFile(/** @type {any} */ (invalidFile))).toBe(false);
-  });
-
-  test('returns false for file without fields array', () => {
-    const invalidFile = {
-      name: 'test-file',
-      file: 'test.md',
-      fields: 'not-an-array',
-    };
-
-    // Cast to any to test the type validation
-    expect(isValidCollectionFile(/** @type {any} */ (invalidFile))).toBe(false);
-  });
-
-  test('returns false for file without fields', () => {
-    const invalidFile = {
-      name: 'test-file',
-      file: 'test.md',
-    };
-
-    // Cast to any to test the type validation
-    expect(isValidCollectionFile(/** @type {any} */ (invalidFile))).toBe(false);
-  });
-});
-
-describe('getValidCollectionFiles()', () => {
-  test('filters out dividers and invalid files', () => {
-    const files = [
-      {
-        name: 'valid-file-1',
-        file: 'test1.md',
-        fields: [{ name: 'title', widget: 'string' }],
-      },
-      {
-        divider: true,
-      },
-      {
-        name: 'valid-file-2',
-        file: 'test2.md',
-        fields: [{ name: 'content', widget: 'markdown' }],
-      },
-      {
-        name: 'invalid-file',
-        file: 123, // Invalid file property
-        fields: [{ name: 'title', widget: 'string' }],
-      },
-    ];
-
-    const validFiles = getValidCollectionFiles(/** @type {any} */ (files));
-
-    expect(validFiles).toHaveLength(2);
-    expect(validFiles[0].name).toBe('valid-file-1');
-    expect(validFiles[1].name).toBe('valid-file-2');
-  });
-
-  test('returns empty array for no valid files', () => {
-    const files = [
-      { divider: true },
-      {
-        name: 'invalid-file',
-        file: 123,
-        fields: 'not-an-array',
-      },
-    ];
-
-    const validFiles = getValidCollectionFiles(/** @type {any} */ (files));
-
-    expect(validFiles).toHaveLength(0);
-  });
-
-  test('returns all files when all are valid', () => {
-    const files = [
-      {
-        name: 'file-1',
-        file: 'test1.md',
-        fields: [{ name: 'title', widget: 'string' }],
-      },
-      {
-        name: 'file-2',
-        file: 'test2.md',
-        fields: [{ name: 'content', widget: 'markdown' }],
-      },
-    ];
-
-    const validFiles = getValidCollectionFiles(files);
-
-    expect(validFiles).toHaveLength(2);
-    expect(validFiles).toEqual(files);
-  });
-});
 
 describe('getCollectionFile()', () => {
   beforeEach(async () => {

@@ -1,6 +1,6 @@
 import { flatten } from 'flat';
 
-import { replaceTemplateTags } from '$lib/services/common/template';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 

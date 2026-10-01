@@ -1,6 +1,6 @@
-import { focusedAsset } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
 import { planAssetDeletion } from '$lib/services/assets/data/cascade';
+import { focusedAsset } from '$lib/services/assets/state';
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { buildTargetChanges } from '$lib/services/contents/entry/cascade';

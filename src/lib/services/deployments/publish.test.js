@@ -6,11 +6,11 @@ import {
   lastCommitPublishHint,
   productionSHA,
   resetDeployments,
+  setLastCommitPublishHint,
 } from '$lib/services/deployments';
 import {
   canTriggerDeployment,
   isLastCommitPublished,
-  setLastCommitPublishHint,
   triggerDeployment,
 } from '$lib/services/deployments/publish';
 import { prefs } from '$lib/services/user/prefs.svelte';
@@ -64,13 +64,6 @@ describe('Publish state', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-  });
-
-  describe('setLastCommitPublishHint', () => {
-    test('records the expectation with the current time', () => {
-      setLastCommitPublishHint(false);
-      expect(lastCommitPublishHint.current).toEqual({ published: false, time: NOW });
-    });
   });
 
   describe('isLastCommitPublished', () => {

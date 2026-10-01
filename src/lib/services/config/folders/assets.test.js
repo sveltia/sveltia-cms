@@ -15,12 +15,12 @@ vi.mock('$lib/services/contents/collection', () => ({
   getValidCollections: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/files', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   getValidCollectionFiles: vi.fn(),
 }));
 
 const { getValidCollections } = await import('$lib/services/contents/collection');
-const { getValidCollectionFiles } = await import('$lib/services/contents/collection/files');
+const { getValidCollectionFiles } = await import('$lib/services/contents/collection/predicates');
 
 describe('config/folders/assets', () => {
   beforeEach(() => {

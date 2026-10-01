@@ -11,7 +11,6 @@
   import PreviewAssetButton from '$lib/components/assets/list/preview-asset-button.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
   import { goBack, goto } from '$lib/services/app/navigation';
-  import { focusedAsset, selectedOrFocusedAssets } from '$lib/services/assets';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
@@ -23,6 +22,7 @@
   } from '$lib/services/assets/folders';
   import { getAssetBlob } from '$lib/services/assets/info';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
+  import { focusedAsset, selectedOrFocusedAssets } from '$lib/services/assets/state';
   import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection, listedAssets } from '$lib/services/assets/view';
   import { lockedBranch } from '$lib/services/backends/branch-access';

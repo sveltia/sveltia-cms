@@ -1,4 +1,4 @@
-import { publishedAssets } from '$lib/services/assets';
+import { publishedAssets } from '$lib/services/assets/state';
 import { searchTerms } from '$lib/services/search';
 import { getNormalizedValueCache, hasAllMatches, tokenize } from '$lib/services/search/util';
 import { createDerivedState } from '$lib/services/utils/state.svelte';

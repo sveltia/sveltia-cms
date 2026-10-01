@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { editingAsset } from '$lib/services/assets';
 import { saveAssets } from '$lib/services/assets/data/create';
+import { editingAsset } from '$lib/services/assets/state';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { createMockAsset } from '$lib/test/config';
 

@@ -7,9 +7,9 @@ import { getPathInfo, readAsText } from '@sveltia/utils/file';
 import { sleep } from '@sveltia/utils/misc';
 import { escapeRegExp, stripSlashes } from '@sveltia/utils/string';
 
-import { allAssets } from '$lib/services/assets';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { getAssetKind } from '$lib/services/assets/kinds';
+import { allAssets } from '$lib/services/assets/state';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { GIT_CONFIG_FILE_REGEX, gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList, describeFileList } from '$lib/services/backends/process';

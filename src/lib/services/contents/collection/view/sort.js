@@ -1,10 +1,11 @@
 import { sortItemsByKey } from '$lib/services/common/view';
-import { isArrayFileCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
-import { getField, getPropertyValue } from '$lib/services/contents/entry/fields';
+import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { getPropertyValue } from '$lib/services/contents/entry/values';
 import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { getDate } from '$lib/services/contents/fields/date-time/helpers';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';

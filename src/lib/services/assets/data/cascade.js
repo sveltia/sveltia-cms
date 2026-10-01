@@ -1,12 +1,13 @@
-import { allAssets } from '$lib/services/assets';
-import { getAssetPublicURL, getMediaFieldSource } from '$lib/services/assets/info';
-import { cmsConfig } from '$lib/services/config';
-import { allEntries } from '$lib/services/contents';
+import { getAssetPublicURL } from '$lib/services/assets/info';
+import { getMediaFieldSource } from '$lib/services/assets/media-field';
 import {
   getAssetReferences,
   getComparableAssetURL,
   MARKDOWN_IMAGE_REGEX,
-} from '$lib/services/contents/collection/entries';
+} from '$lib/services/assets/references';
+import { allAssets } from '$lib/services/assets/state';
+import { cmsConfig } from '$lib/services/config';
+import { allEntries } from '$lib/services/contents';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import {
   compactList,
@@ -31,7 +32,7 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { Field, FieldKeyPath } from '$lib/types/public';
- * @import { AssetReferenceTarget } from '$lib/services/contents/collection/entries';
+ * @import { AssetReferenceTarget } from '$lib/services/assets/references';
  */
 
 /**

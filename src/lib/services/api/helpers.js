@@ -1,8 +1,9 @@
 import { AssetProxy } from '$lib/services/api/asset-proxy';
 import { getImmutable } from '$lib/services/api/immutable';
 import { UnsavedAssetProxy } from '$lib/services/api/unsaved-asset-proxy';
-import { allAssets, getAssetByPath, isAssetInFolder } from '$lib/services/assets';
+import { getAssetByPath, isAssetInFolder } from '$lib/services/assets';
 import { getAssetFolder } from '$lib/services/assets/folders';
+import { allAssets } from '$lib/services/assets/state';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { getField } from '$lib/services/contents/entry/fields';

@@ -1,6 +1,6 @@
 import { unique } from '@sveltia/utils/array';
 
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 import { backend } from '$lib/services/backends';
 import { saveChanges } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';

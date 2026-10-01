@@ -1,4 +1,4 @@
-import { createCustomNodeClass } from '$lib/services/contents/fields/rich-text/components/custom-node';
+import { createCustomNodeClass } from '$lib/components/contents/details/fields/rich-text/custom-node';
 import { createTransformer } from '$lib/services/contents/fields/rich-text/components/transformers';
 import { getOrCreate } from '$lib/services/utils/cache';
 

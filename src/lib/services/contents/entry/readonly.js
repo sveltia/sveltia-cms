@@ -1,7 +1,7 @@
 import { isConfigReadonly } from '$lib/services/config/readonly';
 import { getCollectionLabel } from '$lib/services/contents/collection';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
+import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 
 /**

@@ -5,7 +5,6 @@ import { sleep } from '@sveltia/utils/misc';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { announcedPageStatus, goto, parseLocation } from '$lib/services/app/navigation';
-import { allAssets, overlaidAsset } from '$lib/services/assets';
 import {
   enabledCloudServices,
   getCloudService,
@@ -22,6 +21,7 @@ import {
   getSelectedAssetFolderLabel,
   resolveAssetsRoute,
 } from '$lib/services/assets/navigation';
+import { allAssets, overlaidAsset } from '$lib/services/assets/state';
 import { resolveAssetFolderPath, selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import {
   getFolderLabelByCollection,
@@ -46,7 +46,7 @@ vi.mock('$lib/services/app/navigation', () => ({
   parseLocation: vi.fn(),
 }));
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
   overlaidAsset: { current: undefined },
 }));

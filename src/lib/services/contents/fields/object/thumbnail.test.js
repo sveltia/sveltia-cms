@@ -8,7 +8,9 @@ import { getObjectThumbnail } from './thumbnail';
 
 const { mockGetMediaFieldSource } = vi.hoisted(() => ({ mockGetMediaFieldSource: vi.fn() }));
 
-vi.mock('$lib/services/assets/info', () => ({ getMediaFieldSource: mockGetMediaFieldSource }));
+vi.mock('$lib/services/assets/media-field', () => ({
+  getMediaFieldSource: mockGetMediaFieldSource,
+}));
 
 vi.mock('$lib/services/config', () => ({
   cmsConfig: {

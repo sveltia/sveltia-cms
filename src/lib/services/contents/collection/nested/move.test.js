@@ -3,9 +3,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { fillTemplate } from '$lib/services/common/template';
-import { isEntryCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
 import {
   buildSingleFileContent,
@@ -20,7 +20,7 @@ vi.mock('$lib/services/common/template', () => ({
   fillTemplate: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection', () => ({
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isEntryCollection: vi.fn(),
 }));
 

@@ -3,13 +3,13 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { announcedPageStatus } from '$lib/services/app/navigation';
-import { allAssets, focusedAsset, overlaidAsset } from '$lib/services/assets';
 import { selectedCloudService } from '$lib/services/assets/external';
 import {
   allAssetFolders,
   globalAssetFolder,
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
+import { allAssets, focusedAsset, overlaidAsset } from '$lib/services/assets/state';
 import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
 import { showAssetOverlay } from '$lib/services/assets/view';
 import { currentView } from '$lib/services/assets/view/settings';

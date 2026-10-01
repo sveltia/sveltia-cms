@@ -1,6 +1,6 @@
 import { _, locale as appLocale } from '@sveltia/i18n';
 
-import { isEntryCollection } from '$lib/services/contents/collection';
+import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 
 /**
  * @import { Entry, InternalCollection, InternalEntryCollection } from '$lib/types/private';

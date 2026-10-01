@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { backend } from '$lib/services/backends';
-import { allEntries, getEntryFoldersByPath } from '$lib/services/contents';
+import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import {
   applyArrayFileChanges,
@@ -10,6 +10,7 @@ import {
   getArrayFileCollection,
 } from '$lib/services/contents/file/array';
 import { arrayFileItems, createArrayItemEntry } from '$lib/services/contents/file/process';
+import { getEntryFoldersByPath } from '$lib/services/contents/folders';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
@@ -34,6 +35,9 @@ vi.mock('$lib/services/backends/git/shared/errors', () => ({
 vi.mock('$lib/services/contents', () => ({
   allEntries: { current: [] },
   allEntryFolders: { current: [] },
+}));
+
+vi.mock('$lib/services/contents/folders', () => ({
   getEntryFoldersByPath: vi.fn(() => []),
 }));
 

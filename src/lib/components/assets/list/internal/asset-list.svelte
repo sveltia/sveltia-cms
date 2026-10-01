@@ -6,8 +6,8 @@
   import AssetListItem from '$lib/components/assets/list/internal/asset-list-item.svelte';
   import SubfolderListItem from '$lib/components/assets/list/internal/subfolder-list-item.svelte';
   import UploadAssetsButton from '$lib/components/assets/list/internal/upload-assets-button.svelte';
-  import { focusedAsset, uploadingAssets } from '$lib/services/assets';
   import { assetsLocked, canCreateAsset, targetAssetFolder } from '$lib/services/assets/folders';
+  import { focusedAsset, uploadingAssets } from '$lib/services/assets/state';
   import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { assetGroups, listedAssets, listedSubfolders } from '$lib/services/assets/view';
   import { currentView } from '$lib/services/assets/view/settings';

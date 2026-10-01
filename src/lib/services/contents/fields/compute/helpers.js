@@ -1,11 +1,11 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 import { escapeRegExp } from '@sveltia/utils/string';
 
-import { replaceTemplateTags } from '$lib/services/common/template';
 import { FIELD_TAG_PREFIX_REGEX } from '$lib/services/common/template/constants';
+import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
-import { getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 import { getListFormatter } from '$lib/services/contents/i18n';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isNumeric } from '$lib/services/utils/number';

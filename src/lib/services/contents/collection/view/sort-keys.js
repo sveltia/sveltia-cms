@@ -2,8 +2,9 @@ import { _ } from '@sveltia/i18n';
 import { unique } from '@sveltia/utils/array';
 
 import { allEntries } from '$lib/services/contents';
-import { isArrayFileCollection, selectedCollection } from '$lib/services/contents/collection';
+import { selectedCollection } from '$lib/services/contents/collection';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { parseCustomSortableFields } from '$lib/services/contents/collection/view/utils';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isNumeric } from '$lib/services/utils/number';

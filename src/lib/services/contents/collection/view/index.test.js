@@ -86,6 +86,9 @@ vi.mock('$lib/services/contents', () => ({
 vi.mock('$lib/services/contents/collection', () => ({
   selectedCollection: _selectedCollection,
   getCollection: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/collection/predicates', () => ({
   isArrayFileCollection: vi.fn((collection) => !!collection?._file?.arrayFile),
   // Used by the nested collection helpers, which the entry list runs through
   isEntryCollection: vi.fn(

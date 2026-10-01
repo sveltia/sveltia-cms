@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { allEntries } from '$lib/services/contents';
-import { getField, getFieldDisplayValue } from '$lib/services/contents/entry/fields';
+import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
+import { getFieldDisplayValue } from '$lib/services/contents/entry/values';
 
 /**
  * @import { Entry, InternalCollection } from '$lib/types/private';
@@ -14,6 +15,9 @@ vi.mock('$lib/services/contents', () => ({
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
   getField: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/entry/values', () => ({
   getFieldDisplayValue: vi.fn(),
 }));
 

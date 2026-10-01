@@ -7,7 +7,7 @@
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { appNumberFormatter } from '$lib/services/app/i18n';
   import { goto } from '$lib/services/app/navigation';
-  import { allAssets, getAssetsByFolder } from '$lib/services/assets';
+  import { getAssetsByFolder } from '$lib/services/assets';
   import {
     enabledCloudServices,
     externalAssetCounts,
@@ -20,6 +20,7 @@
     canCreateAsset,
     selectedAssetFolder,
   } from '$lib/services/assets/folders';
+  import { allAssets } from '$lib/services/assets/state';
   import { selectedSubfolderPath } from '$lib/services/assets/subfolders';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
   import { getCollection, getCollectionIndex } from '$lib/services/contents/collection';

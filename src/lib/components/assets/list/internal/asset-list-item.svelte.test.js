@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
-import { focusedAsset, selectedAssets } from '$lib/services/assets';
+import { focusedAsset, selectedAssets } from '$lib/services/assets/state';
 import { focusedSubfolder } from '$lib/services/assets/subfolders';
 import { env } from '$lib/services/user/env.svelte';
 import { createMockAsset, createMockImageFile, initTestConfig, setAssets } from '$lib/test/config';

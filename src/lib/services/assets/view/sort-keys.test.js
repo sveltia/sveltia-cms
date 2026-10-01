@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { allAssets } from '$lib/services/assets';
+import { allAssets } from '$lib/services/assets/state';
 
 import { sortKeys } from './sort-keys.js';
 
@@ -24,7 +24,7 @@ vi.mock('@sveltia/i18n', () => ({
   locale: { current: 'en', set: vi.fn() },
 }));
 
-vi.mock('$lib/services/assets', () => ({
+vi.mock('$lib/services/assets/state', () => ({
   allAssets: { current: [] },
 }));
 

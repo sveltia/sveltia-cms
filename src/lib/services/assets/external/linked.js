@@ -6,7 +6,7 @@ import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import { getAssociatedCollections } from '$lib/services/contents/entry';
+import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
