@@ -1,5 +1,6 @@
 import { getAssetByInternalPath, getAssetsByDirName } from '$lib/services/assets';
 import { assetUpdatesToast } from '$lib/services/assets/data';
+import { formatFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { focusedAsset, overlaidAsset } from '$lib/services/assets/state';
 import { getUploadDirPath } from '$lib/services/assets/subfolders';
@@ -7,7 +8,7 @@ import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shar
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-import { createPath, formatFileName } from '$lib/services/utils/file';
+import { createPath } from '$lib/services/utils/file';
 
 /**
  * @import { Asset, CommitAction, CommitOptions, UploadingAssets } from '$lib/types/private';

@@ -1,5 +1,5 @@
 import { getSubtreeEntries } from '$lib/services/contents/entry/subtree';
-import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
 
 /**
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';

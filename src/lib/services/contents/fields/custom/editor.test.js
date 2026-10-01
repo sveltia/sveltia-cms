@@ -12,7 +12,7 @@ vi.doMock('$lib/services/api/registries', () => {
   };
 });
 
-vi.doMock('$lib/services/api/helpers', () => ({
+vi.doMock('$lib/services/api/preview-data', () => ({
   buildPreviewData: vi.fn(({ draft, locale }) => ({
     entryMap: { __entry: true, content: draft.currentValues[locale] },
     getAsset: { __getAsset: true },

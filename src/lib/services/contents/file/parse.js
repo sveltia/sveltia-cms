@@ -7,8 +7,8 @@ import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFilePath } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
-import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
 import { getFrontMatterDelimiters, resolveFileConfig } from '$lib/services/contents/file/config';
+import { FRONTMATTER_FORMATS } from '$lib/services/contents/file/constants';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**

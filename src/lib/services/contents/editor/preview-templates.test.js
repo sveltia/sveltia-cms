@@ -73,7 +73,7 @@ vi.mock('$lib/components/contents/details/preview/field-preview.svelte', () => (
   default: {},
 }));
 
-vi.mock('$lib/services/api/helpers', () => ({
+vi.mock('$lib/services/api/preview-data', () => ({
   convertEntryToMap: mockConvertEntryToMap,
   buildPreviewData: mockBuildPreviewData,
   getAssociatedPreviewAssets: vi.fn(() => []),

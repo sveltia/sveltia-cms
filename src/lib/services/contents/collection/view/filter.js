@@ -4,7 +4,7 @@ import {
   matchesConditions,
   prepareConditions,
 } from '$lib/services/contents/collection/view/conditions';
-import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
+import { parseViewOptions } from '$lib/services/contents/collection/view/options';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getPropertyValue } from '$lib/services/contents/entry/values';
 import { createDerivedState } from '$lib/services/utils/state.svelte';

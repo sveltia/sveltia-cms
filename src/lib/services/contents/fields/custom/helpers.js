@@ -1,5 +1,5 @@
-import { buildPreviewData } from '$lib/services/api/helpers';
 import { getImmutable } from '$lib/services/api/immutable';
+import { buildPreviewData } from '$lib/services/api/preview-data';
 
 /**
  * @import { MapOf } from 'immutable';

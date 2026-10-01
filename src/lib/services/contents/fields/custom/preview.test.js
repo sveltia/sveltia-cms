@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { buildPreviewData } from '$lib/services/api/helpers';
 import { getImmutable } from '$lib/services/api/immutable';
+import { buildPreviewData } from '$lib/services/api/preview-data';
 
 import { buildPreviewProps } from './preview';
 
-vi.mock('$lib/services/api/helpers', () => ({
+vi.mock('$lib/services/api/preview-data', () => ({
   convertEntryToMap: vi.fn(({ entry, locale, collectionName, content }) => ({
     __mocked: true,
     content: content ?? entry?.locales?.[locale]?.content ?? {},

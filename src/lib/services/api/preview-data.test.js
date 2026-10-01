@@ -10,7 +10,7 @@ import {
   createGetAsset,
   getAssociatedPreviewAssets,
   getMetaData,
-} from './helpers';
+} from './preview-data';
 
 // Mock dependencies using vi.hoisted()
 const {

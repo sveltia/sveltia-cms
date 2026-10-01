@@ -6,7 +6,7 @@ import {
   TEMPLATE_TAG_REPLACE_REGEX,
 } from '$lib/services/common/template/constants';
 import { COMPARISON_OPERATORS, matchesFilter } from '$lib/services/common/view';
-import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/helpers';
+import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/parse';
 import { isValueEmpty } from '$lib/services/utils/object';
 import { getRegex } from '$lib/services/utils/regex';
 

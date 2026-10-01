@@ -1,9 +1,6 @@
-import {
-  getDirectoryHandle,
-  loadFiles,
-  readFile,
-  saveChanges,
-} from '$lib/services/backends/fs/shared/files';
+import { getDirectoryHandle, readFile } from '$lib/services/backends/fs/shared/handles';
+import { loadFiles } from '$lib/services/backends/fs/shared/load';
+import { saveChanges } from '$lib/services/backends/fs/shared/save';
 import { dataLoaded } from '$lib/services/contents';
 
 /**

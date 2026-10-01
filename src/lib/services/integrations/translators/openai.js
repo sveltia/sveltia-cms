@@ -1,6 +1,6 @@
 import * as ai from '$lib/services/integrations/ai/openai';
 
-import { createAiTranslationService } from './shared.js';
+import { createAiTranslationService } from './ai-translation.js';
 
 /**
  * @import { TranslationService } from '$lib/types/private';

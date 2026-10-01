@@ -7,7 +7,7 @@ import { getDefaultValueMap } from './defaults';
  */
 
 // Mock the shared media library functions
-vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
+vi.mock('$lib/services/integrations/media-libraries/multiple', () => ({
   isMultiple: vi.fn(),
 }));
 
@@ -30,7 +30,7 @@ describe('Test getDefaultValueMap()', () => {
     // Reset all mocks before each test
     vi.resetAllMocks();
 
-    const { isMultiple } = await import('$lib/services/integrations/media-libraries/shared');
+    const { isMultiple } = await import('$lib/services/integrations/media-libraries/multiple');
 
     isMultipleMock = /** @type {any} */ (vi.mocked(isMultiple));
   });

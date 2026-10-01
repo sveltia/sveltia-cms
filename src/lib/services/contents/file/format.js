@@ -3,7 +3,7 @@ import { Document, isMap } from 'yaml';
 
 import { customFileFormatRegistry } from '$lib/services/api/registries';
 import { cmsConfig } from '$lib/services/config';
-import { FRONTMATTER_FORMATS } from '$lib/services/contents/file';
+import { FRONTMATTER_FORMATS } from '$lib/services/contents/file/constants';
 
 /**
  * @import { Scalar, ToStringOptions } from 'yaml';

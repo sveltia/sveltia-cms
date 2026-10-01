@@ -24,15 +24,15 @@
     COMPONENT_QUERY_SELECTOR,
     CONTAINER_QUERY_SELECTOR,
     IMAGE_QUERY_SELECTOR,
-    sanitizeRichTextHTML,
     splitMarkdownBlocks,
-  } from '$lib/services/contents/fields/rich-text/helpers';
+  } from '$lib/services/contents/fields/rich-text/previews';
+  import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sanitize';
 
   /**
    * @import { ReactElement } from 'react';
    * @import { FieldPreviewProps } from '$lib/types/private';
    * @import { MarkdownField, RichTextField } from '$lib/types/public';
-   * @import { ComponentPreview } from '$lib/services/contents/fields/rich-text/helpers';
+   * @import { ComponentPreview } from '$lib/services/contents/fields/rich-text/previews';
    */
 
   /**

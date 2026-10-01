@@ -7,7 +7,7 @@ import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
 import { getPropertyValue } from '$lib/services/contents/entry/values';
 import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
-import { getDate } from '$lib/services/contents/fields/date-time/helpers';
+import { getDate } from '$lib/services/contents/fields/date-time/parse';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
 
 /**

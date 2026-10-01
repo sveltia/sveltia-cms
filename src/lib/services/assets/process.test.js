@@ -13,6 +13,7 @@ vi.mock('$lib/services/integrations/media-libraries/default');
 vi.mock('$lib/services/utils/media/image/validate', () => ({
   isValidImage: vi.fn().mockResolvedValue(true),
 }));
+vi.mock('$lib/services/assets/file-name');
 vi.mock('$lib/services/utils/file');
 
 /**
@@ -28,7 +29,7 @@ describe('assets/process', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const { formatFileName } = await import('$lib/services/utils/file');
+    const { formatFileName } = await import('$lib/services/assets/file-name');
 
     vi.mocked(formatFileName).mockImplementation((name) => name.toLowerCase().replace(/\s+/g, '-'));
 
@@ -186,7 +187,7 @@ describe('assets/process', () => {
     });
 
     it('should slugify the filename when slugify_filename is true', async () => {
-      const { formatFileName } = await import('$lib/services/utils/file');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
 
       vi.mocked(formatFileName).mockReturnValue('hello-world.jpg');
 
@@ -203,7 +204,7 @@ describe('assets/process', () => {
     });
 
     it('should preserve file type and lastModified when slugifying', async () => {
-      const { formatFileName } = await import('$lib/services/utils/file');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
 
       vi.mocked(formatFileName).mockReturnValue('my-file.png');
 
@@ -217,7 +218,7 @@ describe('assets/process', () => {
     });
 
     it('should not slugify the filename when slugify_filename is false', async () => {
-      const { formatFileName } = await import('$lib/services/utils/file');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
       const file = new File(['content'], 'Hello World.jpg', { type: 'image/jpeg' });
       const result = await processFile(file, { slugify_filename: false });
 
@@ -226,7 +227,7 @@ describe('assets/process', () => {
     });
 
     it('should rename the file with the given name template', async () => {
-      const { formatFileName } = await import('$lib/services/utils/file');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
       const { fillAssetNameTemplate } = await import('$lib/services/assets/name');
       const lastModified = 1700000000000;
       const file = new File(['content'], 'IMG 1.jpg', { type: 'image/jpeg', lastModified });
@@ -251,7 +252,7 @@ describe('assets/process', () => {
     });
 
     it('should slugify the name filled with the template if slugify_filename is true', async () => {
-      const { formatFileName } = await import('$lib/services/utils/file');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
       const file = new File(['content'], 'IMG 1.jpg', { type: 'image/jpeg' });
 
       await processFile(file, { slugify_filename: true }, { nameTemplate: '{{filename}}' });
@@ -361,7 +362,7 @@ describe('assets/process', () => {
     });
 
     it('should slugify before transforming', async () => {
-      const { formatFileName } = await import('$lib/services/utils/file');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
       const { transformFile } = await import('$lib/services/integrations/media-libraries/default');
 
       vi.mocked(formatFileName).mockReturnValue('my-photo.jpg');
@@ -387,7 +388,7 @@ describe('assets/process', () => {
     });
 
     it('should handle all options together with oversized transformed file', async () => {
-      const { formatFileName } = await import('$lib/services/utils/file');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
       const { transformFile } = await import('$lib/services/integrations/media-libraries/default');
 
       vi.mocked(formatFileName).mockReturnValue('big-file.jpg');

@@ -12,7 +12,7 @@ import {
   FORMAT_EXTENSION_MAP,
   FRONTMATTER_DELIMITER_MAP,
   MARKDOWN_EXTENSIONS,
-} from '$lib/services/contents/file';
+} from '$lib/services/contents/file/constants';
 import { getLocalePath } from '$lib/services/contents/i18n';
 import {
   getLocaleFolderPattern,

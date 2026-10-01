@@ -10,7 +10,7 @@ import { addMessage, checkName } from '$lib/services/config/parser/utils/validat
 import {
   parseCustomSortableFields,
   parseViewOptions,
-} from '$lib/services/contents/collection/view/utils';
+} from '$lib/services/contents/collection/view/options';
 
 /**
  * @import { ConfigParserCollectors } from '$lib/types/private';

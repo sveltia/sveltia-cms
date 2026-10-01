@@ -35,7 +35,7 @@
     toFieldValue,
   } from '$lib/services/contents/fields/file/resources';
   import { getAcceptedImageTypes } from '$lib/services/integrations/media-libraries/default';
-  import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+  import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
   import { focusReorderControl } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
 

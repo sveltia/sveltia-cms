@@ -1,5 +1,5 @@
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
-import { getInputValue } from '$lib/services/contents/fields/date-time/helpers';
+import { getInputValue } from '$lib/services/contents/fields/date-time/value';
 
 /**
  * @import { EntryValidityState, ValidateFieldFuncArgs } from '$lib/types/private';

@@ -1,10 +1,10 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
 import { getPathInfo } from '@sveltia/utils/file';
 
+import { formatFileName } from '$lib/services/assets/file-name';
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
 import { cmsConfig } from '$lib/services/config';
-import { formatFileName } from '$lib/services/utils/file';
 
 /**
  * @import { ReplaceContext } from '$lib/services/common/template/replacers';

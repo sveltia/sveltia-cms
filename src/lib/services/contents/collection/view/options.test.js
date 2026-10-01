@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { isValidArray, parseCustomSortableFields, parseViewOptions } from './utils';
+import { isValidArray, parseCustomSortableFields, parseViewOptions } from './options';
 
 describe('Test parseViewOptions()', () => {
   test('returns empty options for undefined input', () => {

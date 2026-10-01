@@ -8,7 +8,7 @@
 -->
 <script>
   import FilePreviewItem from '$lib/components/contents/details/fields/file/file-preview-item.svelte';
-  import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+  import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';

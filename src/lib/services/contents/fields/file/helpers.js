@@ -2,6 +2,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import equal from 'fast-deep-equal';
 
 import { fillInternalPathTemplate } from '$lib/services/assets';
+import { formatFileName } from '$lib/services/assets/file-name';
 import { allAssetFolders, getAssetFolder, globalAssetFolder } from '$lib/services/assets/folders';
 import { getPendingFileName } from '$lib/services/assets/name';
 import { allAssets } from '$lib/services/assets/state';
@@ -10,7 +11,7 @@ import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { createPublicURL, getAssetFolderPaths } from '$lib/services/contents/draft/save/assets';
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getOrCreate } from '$lib/services/utils/cache';
-import { createPath, formatFileName } from '$lib/services/utils/file';
+import { createPath } from '$lib/services/utils/file';
 
 /**
  * @import {

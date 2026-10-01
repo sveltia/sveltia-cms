@@ -42,6 +42,9 @@ vi.mock('$lib/services/integrations/media-libraries/default', () => ({
 
 vi.mock('$lib/services/utils/file', () => ({
   createPath: vi.fn((/** @type {string[]} */ segments) => segments.filter(Boolean).join('/')),
+}));
+
+vi.mock('$lib/services/assets/file-name', () => ({
   formatFileName: vi.fn((fileName) => fileName),
 }));
 
@@ -94,6 +97,9 @@ vi.mock('$lib/services/config', () => ({
 
 vi.mock('$lib/services/utils/file', () => ({
   createPath: vi.fn((/** @type {string[]} */ segments) => segments.filter(Boolean).join('/')),
+}));
+
+vi.mock('$lib/services/assets/file-name', () => ({
   formatFileName: vi.fn((fileName) => fileName),
 }));
 
@@ -377,7 +383,7 @@ describe('assets/data/create', () => {
 
     it('should keep a same-named asset when replaceDuplicates is disabled', async () => {
       const { getAssetsByDirName } = await import('$lib/services/assets');
-      const { formatFileName } = await import('$lib/services/utils/file');
+      const { formatFileName } = await import('$lib/services/assets/file-name');
 
       vi.mocked(getAssetsByDirName).mockReturnValue([
         {

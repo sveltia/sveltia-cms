@@ -8,7 +8,7 @@
   import { getPathInfo } from '@sveltia/utils/file';
   import mime from 'mime';
 
-  import { formatSize } from '$lib/services/utils/file';
+  import { formatSize } from '$lib/services/assets/file-size';
   import { formatDuration } from '$lib/services/utils/media/video';
 
   /**

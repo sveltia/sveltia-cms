@@ -16,7 +16,7 @@ import {
   LIST_KEY_PATH_REGEX,
 } from '$lib/services/contents/entry/fields';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
-import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
 
 // Mock dependencies
 vi.mock('$lib/services/contents/collection', () => ({
@@ -57,7 +57,7 @@ vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => 
   getComponentDef: vi.fn(),
 }));
 
-vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
+vi.mock('$lib/services/integrations/media-libraries/multiple', () => ({
   isMultiple: vi.fn(),
 }));
 

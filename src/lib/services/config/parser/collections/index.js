@@ -21,7 +21,7 @@ import {
   checkUnsupportedOptions,
 } from '$lib/services/config/parser/utils/validator';
 import { getReorderGroupName } from '$lib/services/contents/collection/entries/reorder/config';
-import { parseViewOptions } from '$lib/services/contents/collection/view/utils';
+import { parseViewOptions } from '$lib/services/contents/collection/view/options';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
 import {
   hasLocalePlaceholder,

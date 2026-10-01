@@ -1,8 +1,8 @@
 import { isObject } from '@sveltia/utils/object';
 import { flatten } from 'flat';
 
-import { createEntryMap } from '$lib/services/api/helpers';
 import { loadImmutable } from '$lib/services/api/immutable';
+import { createEntryMap } from '$lib/services/api/preview-data';
 import { eventHookRegistry } from '$lib/services/api/registries';
 import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
 import { user } from '$lib/services/user/account.svelte';

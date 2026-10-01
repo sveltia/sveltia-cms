@@ -13,7 +13,6 @@ vi.mock('$lib/services/assets', () => ({
 }));
 vi.mock('$lib/services/utils/file', () => ({
   getGitHash: vi.fn(),
-  formatFileName: vi.fn((name) => name.toLowerCase()),
   encodeFilePath: vi.fn((path) => encodeURIComponent(path)),
   createPath: vi.fn((parts) => parts.filter(Boolean).join('/')),
   resolvePath: vi.fn((path) => path),
@@ -23,6 +22,10 @@ vi.mock('$lib/services/utils/file', () => ({
       .filter((/** @type {string} */ segment) => segment !== '.' && segment !== '..')
       .join('/'),
   ),
+}));
+
+vi.mock('$lib/services/assets/file-name', () => ({
+  formatFileName: vi.fn((name) => name.toLowerCase()),
 }));
 vi.mock('$lib/services/contents/draft/slugs', () => ({
   getFillSlugOptions: vi.fn(() => ({ content: {}, collection: {} })),
@@ -2472,7 +2475,8 @@ describe('Test replaceBlobURL()', () => {
   });
 
   test('should not overwrite a file saved to the same place through another entry-relative folder', async () => {
-    const { getGitHash, formatFileName } = await import('$lib/services/utils/file');
+    const { getGitHash } = await import('$lib/services/utils/file');
+    const { formatFileName } = await import('$lib/services/assets/file-name');
     const mockFile = new File(['test content'], 'photo.jpg', { type: 'image/jpeg' });
     const blobURL = 'blob:http://localhost:5173/entry-rel-789';
 
@@ -2605,7 +2609,8 @@ describe('Test replaceBlobURL()', () => {
   });
 
   test('should give a different name to another file with the same name in the same save', async () => {
-    const { getGitHash, formatFileName } = await import('$lib/services/utils/file');
+    const { getGitHash } = await import('$lib/services/utils/file');
+    const { formatFileName } = await import('$lib/services/assets/file-name');
     const firstFile = new File(['first'], 'image.png', { type: 'image/png' });
     const secondFile = new File(['second'], 'image.png', { type: 'image/png' });
     const firstBlobURL = 'blob:http://localhost:5173/pasted-1';

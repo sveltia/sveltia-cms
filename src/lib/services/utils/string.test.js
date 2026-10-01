@@ -2,11 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   escapeAttr,
-  getServiceDescription,
   isNonEmptyString,
   makeLink,
   sanitizeInlineMarkdown,
-} from './string.js';
+} from '$lib/services/utils/string';
 
 // Mimic a localization string that wraps the interpolated values in bidi isolates
 vi.mock('@sveltia/i18n', () => ({
@@ -228,20 +227,5 @@ describe('sanitizeInlineMarkdown', () => {
 
   it('should remove scripts', () => {
     expect(sanitizeInlineMarkdown('<script>alert(1)</script>ok')).toBe('ok');
-  });
-});
-
-describe('getServiceDescription', () => {
-  it('should add links, remove bidi isolates and sanitize the result', () => {
-    expect(
-      getServiceDescription('prefs.test.description', {
-        service: 'Example',
-        developerURL: 'https://example.com/',
-        apiKeyURL: 'https://example.com/keys',
-      }),
-    ).toBe(
-      'prefs.test.description: Example <a href="https://example.com/">site</a> ' +
-        '<a href="https://example.com/keys">key</a>',
-    );
   });
 });

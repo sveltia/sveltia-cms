@@ -1,6 +1,17 @@
 import { validateCustomField } from '$lib/services/contents/draft/validate/custom-fields';
 import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
+import {
+  PREPARE_FIELD_FUNCTIONS,
+  prepareListField,
+  relaxEmptyFieldValidity,
+  resolveMediaValue,
+} from '$lib/services/contents/draft/validate/prepare';
 import { isRequiredEnforced } from '$lib/services/contents/draft/validate/required';
+import {
+  VALIDATE_FIELD_FUNCTIONS,
+  validateScalarField,
+} from '$lib/services/contents/draft/validate/scalar';
+import { DEFAULT_VALIDITY, finalizeValidity } from '$lib/services/contents/draft/validate/validity';
 import {
   getField,
   getFieldKind,
@@ -8,27 +19,16 @@ import {
   isFieldRequired,
   LIST_KEY_PATH_REGEX,
 } from '$lib/services/contents/entry/fields';
-import {
-  MEDIA_FIELD_TYPES,
-  MIN_MAX_VALUE_FIELD_TYPES,
-  MULTI_VALUE_FIELD_TYPES,
-} from '$lib/services/contents/fields';
-import { resolveCodeField } from '$lib/services/contents/fields/code/validate';
+import { MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
 import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
-import { validateDateTimeField } from '$lib/services/contents/fields/date-time/validate';
 import {
   getKeyValueField,
   PAIR_KEY_PATH_REGEX,
 } from '$lib/services/contents/fields/key-value/pairs';
-import { validateKeyValueField } from '$lib/services/contents/fields/key-value/validate';
 import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
-import { getListItems, validateListField } from '$lib/services/contents/fields/list/validate';
-import { validateNumberField } from '$lib/services/contents/fields/number/validate';
 import { COMPONENT_NAME_PREFIX_REGEX } from '$lib/services/contents/fields/rich-text';
 import { isOptionValue } from '$lib/services/contents/fields/select/helpers';
-import { validateStringField } from '$lib/services/contents/fields/string/validate';
 import { isFieldI18nDisabled } from '$lib/services/contents/i18n/fields';
-import { getRegex } from '$lib/services/utils/regex';
 
 /**
  * @import {
@@ -39,10 +39,8 @@ import { getRegex } from '$lib/services/utils/regex';
  * GetFieldArgs,
  * LocaleValidationMessagesMap,
  * LocaleValidityMap,
- * ValidateFieldFuncArgs,
  * } from '$lib/types/private';
  * @import {
- * CodeField,
  * Field,
  * FieldKeyPath,
  * ListField,
@@ -83,301 +81,6 @@ const LIST_ITEM_SUBFIELD_REGEX = /\.\d+(?=\.)/g;
  * is the list’s key path.
  */
 const LIST_ITEM_INDEX_REGEX = /\.\d+(?=\.|$)/g;
-
-/**
- * Default validity state for a field.
- * @type {EntryValidityState}
- */
-export const DEFAULT_VALIDITY = {
-  valueMissing: false,
-  tooShort: false,
-  tooLong: false,
-  rangeUnderflow: false,
-  rangeOverflow: false,
-  patternMismatch: false,
-  typeMismatch: false,
-  customError: false,
-};
-
-/**
- * Map of functions to validate different field types. Each function receives the field config and
- * the current value, and returns an object with the same properties as `EntryValidityState` except
- * `valid`.
- * @type {Record<string, (args: ValidateFieldFuncArgs) => { validity: EntryValidityState }>}
- */
-const VALIDATE_FIELD_FUNCTIONS = {
-  datetime: validateDateTimeField,
-  number: validateNumberField,
-  string: validateStringField,
-  text: validateStringField,
-};
-
-/**
- * Finalize a validity state by adding the `valid` property, which is `true` when none of the
- * constraint flags is set. Mimics the native `ValidityState.valid` property.
- *
- * This is a plain property rather than a getter or a Proxy trap: the validity state is stored in
- * the reactive entry draft, whose `$state` proxy reads own properties only, so a computed property
- * would be invisible there.
- * @param {EntryValidityState} validity Validity state without the `valid` property.
- * @returns {EntryValidityState} Validity state with the `valid` property.
- */
-export const finalizeValidity = (validity) => {
-  const finalized = { ...validity };
-
-  finalized.valid = !Object.values(validity).some(Boolean);
-
-  return finalized;
-};
-
-/**
- * Test a value against the `pattern` option of a field, updating `validity` in place.
- * @param {object} args Arguments.
- * @param {any} args.value Value to test, converted to a string.
- * @param {any} args.validation Pattern validation array or undefined.
- * @param {EntryValidityState} args.validity Validity state to update.
- */
-const validatePattern = ({ value, validation, validity }) => {
-  if (Array.isArray(validation)) {
-    const regex = getRegex(validation[0]);
-
-    if (regex && !regex.test(String(value))) {
-      validity.patternMismatch = true;
-    }
-  }
-};
-
-/**
- * Validate a scalar field (all non-aggregate types), updating `validity` in place.
- * @param {object} args Arguments.
- * @param {any} args.value Current field value.
- * @param {boolean} args.required Whether the field is required.
- * @param {any} args.validation Pattern validation array or undefined.
- * @param {EntryValidityState} args.validity Validity state to update.
- * @param {boolean} [args.selected] Whether the value is a selected option, which is never empty,
- * even if the option’s value is `null` or an empty string.
- * @returns {{ empty: boolean }} Whether the field holds no value at all.
- */
-const validateScalarField = ({ value, required, validation, validity, selected = false }) => {
-  const trimmed = typeof value === 'string' ? value.trim() : value;
-  const empty = !selected && (trimmed === undefined || trimmed === null || trimmed === '');
-
-  if (required && empty) {
-    validity.valueMissing = true;
-  }
-
-  validatePattern({ value: trimmed, validation, validity });
-
-  return { empty };
-};
-
-/**
- * Get the value of a media field to validate. The stored value can be a blob URL, whose original
- * file name is validated instead.
- * @param {object} args Arguments.
- * @param {string} args.fieldType Field type.
- * @param {any} args.value Field value.
- * @param {EntryDraft['files']} args.files Files attached to the draft.
- * @returns {any} Value to validate.
- */
-const resolveMediaValue = ({ fieldType, value, files }) => {
-  if (
-    MEDIA_FIELD_TYPES.includes(fieldType) &&
-    typeof value === 'string' &&
-    value.startsWith('blob:')
-  ) {
-    // The stored `value` is a blob URL; get the original file name
-    return files[value]?.file?.name;
-  }
-
-  return value;
-};
-
-/**
- * Arguments for the functions that prepare an aggregate or special field for validation.
- * @typedef {object} PrepareFieldArgs
- * @property {FieldKeyPath} keyPath Field key path.
- * @property {any} value Field value.
- * @property {FlattenedEntryContent} valueMap Entry values.
- * @property {Field} fieldConfig Field configuration.
- * @property {GetFieldArgs} getFieldArgs Arguments to get the field configuration.
- * @property {EntryDraft['files']} files Files attached to the draft.
- * @property {EntryValidityState} validity Validity state to update.
- * @property {LocaleValidityMap} validities Validity state of all the fields.
- * @property {LocaleCode} locale Current locale.
- * @property {boolean} required Whether the field is required.
- * @property {string | number} min Minimum value or item count.
- * @property {string | number} max Maximum value or item count.
- */
-
-/**
- * Result of the preparation of a field for validation.
- * @typedef {object} PreparedField
- * @property {boolean} skip Whether the field is not validated any further, because it has been
- * validated already.
- * @property {FieldKeyPath} keyPath Key path to validate the field at.
- * @property {any} value Value to validate.
- * @property {boolean} empty Whether the field holds no value at all.
- */
-
-/**
- * Prepare a List field, or a field that takes multiple values, for validation.
- * @param {PrepareFieldArgs} args Arguments.
- * @returns {PreparedField} Result.
- */
-const prepareListField = ({
-  keyPath,
-  value,
-  valueMap,
-  fieldConfig,
-  files,
-  validity,
-  validities,
-  locale,
-  required,
-  min,
-  max,
-}) => {
-  const { skip, empty } = validateListField({
-    keyPath,
-    value,
-    valueMap,
-    validity,
-    validities,
-    locale,
-    required,
-    min,
-    max,
-  });
-
-  // Like Decap CMS, test the pattern of a List field without subfields, or a multiple File, Image,
-  // Relation or Select field, against its items joined with commas, e.g. `a,b,c`, rather than
-  // against each item. A custom field taking an array, also prepared here, is left alone
-  // @ts-ignore A List field with subfields doesn’t have the `pattern` option
-  const { widget: fieldType = 'string', pattern: validation } = fieldConfig;
-
-  if (
-    !skip &&
-    !empty &&
-    Array.isArray(validation) &&
-    (fieldType === 'list'
-      ? !getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields
-      : MULTI_VALUE_FIELD_TYPES.includes(fieldType))
-  ) {
-    validatePattern({
-      // Like Decap’s Immutable `List.join()`, this converts a number to a string and `null` to an
-      // empty string. A file just uploaded is tested by its name, as in a single File/Image field
-      value: getListItems({ keyPath, value, valueMap })
-        .map((item) => resolveMediaValue({ fieldType, value: item, files }))
-        .join(','),
-      validation,
-      validity,
-    });
-  }
-
-  return { skip, keyPath, value, empty: !!empty };
-};
-
-/**
- * Prepare an Object field for validation.
- * @param {PrepareFieldArgs} args Arguments.
- * @returns {PreparedField} Result.
- */
-const prepareObjectField = ({ keyPath, value, valueMap, validity, required }) => {
-  // An Object field holding subfields may have no value at its own key path, e.g. right after the
-  // editor adds the subfields and deletes the `null` it stored while the object was removed, so
-  // the subfields tell whether it’s there
-  const empty =
-    value === undefined
-      ? !Object.keys(valueMap).some((key) => key.startsWith(`${keyPath}.`))
-      : !value;
-
-  if (required && empty) {
-    validity.valueMissing = true;
-  }
-
-  return { skip: false, keyPath, value, empty };
-};
-
-/**
- * Prepare a KeyValue field for validation.
- * @param {PrepareFieldArgs} args Arguments.
- * @returns {PreparedField} Result.
- */
-const prepareKeyValueField = ({
-  keyPath,
-  value,
-  getFieldArgs,
-  validity,
-  validities,
-  locale,
-  required,
-  min,
-  max,
-}) => {
-  const result = validateKeyValueField({
-    keyPath,
-    getFieldArgs,
-    validity,
-    validities,
-    locale,
-    required,
-    min,
-    max,
-  });
-
-  return { skip: result.skip, keyPath: result.keyPath, value, empty: !!result.empty };
-};
-
-/**
- * Prepare a Code field for validation.
- * @param {PrepareFieldArgs} args Arguments.
- * @returns {PreparedField} Result.
- */
-const prepareCodeField = ({ keyPath, value, valueMap, fieldConfig, validities, locale }) => {
-  const result = resolveCodeField({
-    keyPath,
-    value,
-    valueMap,
-    fieldConfig: /** @type {CodeField} */ (fieldConfig),
-    validities,
-    locale,
-  });
-
-  return { skip: result.skip, keyPath: result.keyPath, value: result.value, empty: false };
-};
-
-/**
- * Map of functions to prepare different field types for validation, which run before the
- * functions in {@link VALIDATE_FIELD_FUNCTIONS}. List fields and fields that take multiple values
- * are prepared with {@link prepareListField} instead.
- * @type {Record<string, (args: PrepareFieldArgs) => PreparedField>}
- */
-const PREPARE_FIELD_FUNCTIONS = {
-  object: prepareObjectField,
-  keyvalue: prepareKeyValueField,
-  code: prepareCodeField,
-};
-
-/**
- * Clear the constraint flags of an empty field, updating `validity` in place.
- * @param {EntryValidityState} validity Validity state to update.
- * @param {boolean} enforceRequired Whether an empty required field is marked as missing.
- */
-const relaxEmptyFieldValidity = (validity, enforceRequired) => {
-  Object.assign(validity, {
-    patternMismatch: false,
-    tooShort: false,
-    rangeUnderflow: false,
-    typeMismatch: false,
-  });
-
-  // An Editorial Workflow draft that hasn’t been filled in yet can still be saved, so even a
-  // required field left empty goes unmarked while the entry is in the drafting stage
-  if (!enforceRequired) {
-    validity.valueMissing = false;
-  }
-};
 
 /**
  * Validate each field.

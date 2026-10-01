@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cmsConfig } from '$lib/services/config';
 
-import { hasMultipleInMediaLibraries, hasMultipleInMediaLibrary, isMultiple } from './shared';
+import { hasMultipleInMediaLibraries, hasMultipleInMediaLibrary, isMultiple } from './multiple';
 
 // Mock all dependencies
 vi.mock('$lib/services/config', () => ({

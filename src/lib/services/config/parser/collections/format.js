@@ -2,7 +2,7 @@ import {
   ALLOWED_FRONTMATTER_EXTENSIONS,
   MARKDOWN_EXTENSIONS,
   TEMPLATE_ENGINE_EXTENSIONS,
-} from '$lib/services/contents/file';
+} from '$lib/services/contents/file/constants';
 
 /**
  * @import { Field, FileExtension, FileFormat } from '$lib/types/public';

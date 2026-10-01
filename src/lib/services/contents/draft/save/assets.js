@@ -2,19 +2,14 @@ import { getPathInfo } from '@sveltia/utils/file';
 import equal from 'fast-deep-equal';
 
 import { getAssetsByDirName } from '$lib/services/assets';
+import { formatFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { getPendingFileName } from '$lib/services/assets/name';
 import { fillTemplate } from '$lib/services/common/template';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
 import { getFillSlugOptions } from '$lib/services/contents/draft/slugs';
-import {
-  createPath,
-  encodeFilePath,
-  formatFileName,
-  getGitHash,
-  resolvePath,
-} from '$lib/services/utils/file';
+import { createPath, encodeFilePath, getGitHash, resolvePath } from '$lib/services/utils/file';
 
 /**
  * @import {

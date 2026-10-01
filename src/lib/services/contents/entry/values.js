@@ -3,7 +3,7 @@ import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getField, isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { getKeysByPrefix, getListItemKeys } from '$lib/services/contents/entry/key-paths';
-import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helpers';
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/display';
 import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
 import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';

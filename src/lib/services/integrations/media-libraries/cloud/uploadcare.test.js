@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { formatFileName } from '$lib/services/assets/file-name';
 import { cmsConfig } from '$lib/services/config/state';
-import { formatFileName } from '$lib/services/utils/file';
 
 import uploadcareService, {
   deleteFiles,
@@ -25,7 +25,7 @@ vi.mock('@sveltia/utils/misc', () => ({
   sleep: vi.fn(),
 }));
 
-vi.mock('$lib/services/utils/file', () => ({
+vi.mock('$lib/services/assets/file-name', () => ({
   formatFileName: vi.fn((name) => name),
 }));
 

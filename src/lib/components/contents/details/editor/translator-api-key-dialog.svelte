@@ -4,10 +4,10 @@
 
   import TranslatorSelector from '$lib/components/settings/controls/translator-selector.svelte';
   import { showContentOverlay, translatorApiKeyDialogState } from '$lib/services/contents/editor';
+  import { getServiceDescription } from '$lib/services/integrations/service-description';
   import { translator } from '$lib/services/integrations/translators';
   import { saveApiKey } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
-  import { getServiceDescription } from '$lib/services/utils/string';
 
   const { serviceId, apiLabel, developerURL, apiKeyURL, apiKeyPattern } = $derived(
     translator.current,

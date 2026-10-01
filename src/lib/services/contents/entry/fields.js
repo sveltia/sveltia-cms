@@ -12,7 +12,7 @@ import {
   MULTI_VALUE_FIELD_TYPES,
 } from '$lib/services/contents/fields';
 import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
-import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
 import { isNumeric } from '$lib/services/utils/number';
 
 /**

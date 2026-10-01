@@ -1,3 +1,4 @@
+import { formatFileName } from '$lib/services/assets/file-name';
 import { hasCachedThumbnail } from '$lib/services/assets/info';
 import { createAssetNameTemplate, fillAssetNameTemplate } from '$lib/services/assets/name';
 import { uploadingAssets } from '$lib/services/assets/state';
@@ -6,7 +7,7 @@ import {
   getDefaultMediaLibraryOptions,
   transformFile,
 } from '$lib/services/integrations/media-libraries/default';
-import { formatFileName, getGitHash } from '$lib/services/utils/file';
+import { getGitHash } from '$lib/services/utils/file';
 import { RASTER_IMAGE_TYPES } from '$lib/services/utils/media/image';
 import { sniffRasterImageFormat } from '$lib/services/utils/media/image/sniff';
 import { isValidImage } from '$lib/services/utils/media/image/validate';

@@ -13,7 +13,7 @@ import {
   isCollectionIndexFile,
 } from '$lib/services/contents/collection/entries/index-file';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
-import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/helpers';
+import { getDate, isValidDate } from '$lib/services/contents/fields/date-time/parse';
 
 /**
  * @import {

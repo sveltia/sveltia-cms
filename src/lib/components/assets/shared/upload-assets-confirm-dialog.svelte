@@ -6,12 +6,13 @@
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import { getAssetsByDirName, getDuplicateFiles } from '$lib/services/assets';
   import { saveAssets } from '$lib/services/assets/data/create';
+  import { formatSize } from '$lib/services/assets/file-size';
   import { processedAssets } from '$lib/services/assets/process';
   import { uploadingAssets } from '$lib/services/assets/state';
   import { getUploadDirPath } from '$lib/services/assets/subfolders';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-  import { formatSize, isEquivalentFileExtension } from '$lib/services/utils/file';
+  import { isEquivalentFileExtension } from '$lib/services/utils/file';
 
   /** @type {File[]} */
   let files = $state([]);

@@ -7,7 +7,7 @@ import { getMediaFieldSource } from '$lib/services/assets/media-field';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
-import { isMultiple } from '$lib/services/integrations/media-libraries/shared';
+import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
 
 /**
  * @import {

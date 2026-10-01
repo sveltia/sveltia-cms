@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildPreviewData } from '$lib/services/api/helpers';
+import { buildPreviewData } from '$lib/services/api/preview-data';
 
 import { getFieldConfigMap, getPreviewData } from './helpers';
 
 /** @import { CustomField } from '$lib/types/public'; */
 
-vi.mock('$lib/services/api/helpers', () => ({
+vi.mock('$lib/services/api/preview-data', () => ({
   buildPreviewData: vi.fn(({ draft, locale }) => ({ entryMap: { draft, locale } })),
 }));
 

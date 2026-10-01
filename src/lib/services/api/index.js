@@ -19,7 +19,7 @@ import {
 } from '$lib/services/api/registries';
 import { prefetchCmsConfig } from '$lib/services/config/loader';
 import { BUILTIN_FIELD_TYPES } from '$lib/services/contents/fields';
-import { BUILTIN_FILE_FORMATS } from '$lib/services/contents/file';
+import { BUILTIN_FILE_FORMATS } from '$lib/services/contents/file/constants';
 import { isNonEmptyString } from '$lib/services/utils/string';
 
 import { renderRichText } from './rich-text';

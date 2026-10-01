@@ -1,4 +1,6 @@
-import { loadFiles, readFile, saveChanges } from '$lib/services/backends/fs/shared/files';
+import { readFile } from '$lib/services/backends/fs/shared/handles';
+import { loadFiles } from '$lib/services/backends/fs/shared/load';
+import { saveChanges } from '$lib/services/backends/fs/shared/save';
 import { gitBackendServices } from '$lib/services/backends/git/services';
 import { cmsConfig } from '$lib/services/config';
 import { getRepositoryDatabase } from '$lib/services/utils/database';

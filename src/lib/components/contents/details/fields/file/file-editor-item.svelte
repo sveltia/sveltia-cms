@@ -9,6 +9,7 @@
   import EditableText from '$lib/components/common/editable-text.svelte';
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import { getAssetByPath } from '$lib/services/assets';
+  import { formatFileName } from '$lib/services/assets/file-name';
   import { getMediaKind } from '$lib/services/assets/kinds';
   import { getMediaFieldURL } from '$lib/services/assets/media-field';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -16,7 +17,7 @@
     getUnsavedFileDisplayPath,
     getUnsavedFileName,
   } from '$lib/services/contents/fields/file/helpers';
-  import { formatFileName, isEquivalentFileExtension } from '$lib/services/utils/file';
+  import { isEquivalentFileExtension } from '$lib/services/utils/file';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**

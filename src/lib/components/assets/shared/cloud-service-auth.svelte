@@ -11,9 +11,10 @@
   import { Button, EmptyState, SecretInput, TextInput } from '@sveltia/ui';
   import { sanitize } from 'isomorphic-dompurify';
 
+  import { getServiceDescription } from '$lib/services/integrations/service-description';
   import { saveApiKey } from '$lib/services/user/api-keys';
   import { prefs } from '$lib/services/user/prefs.svelte';
-  import { getServiceDescription, LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
+  import { LINK_SANITIZE_OPTIONS } from '$lib/services/utils/string';
 
   /**
    * @import { MediaLibraryService } from '$lib/types/private';

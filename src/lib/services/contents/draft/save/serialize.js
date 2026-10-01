@@ -14,8 +14,8 @@ import {
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
-import { TOML_FORMATS } from '$lib/services/contents/file';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
+import { TOML_FORMATS } from '$lib/services/contents/file/constants';
 import { getOrCreate } from '$lib/services/utils/cache';
 import { isValueEmpty, unflattenKeys } from '$lib/services/utils/object';
 

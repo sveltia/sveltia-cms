@@ -6,10 +6,8 @@
 -->
 <script>
   import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
-  import {
-    getDate,
-    getDateTimeFieldDisplayValue,
-  } from '$lib/services/contents/fields/date-time/helpers';
+  import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/display';
+  import { getDate } from '$lib/services/contents/fields/date-time/parse';
   import { getTimeZoneLabel } from '$lib/services/contents/fields/date-time/timezone';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
 

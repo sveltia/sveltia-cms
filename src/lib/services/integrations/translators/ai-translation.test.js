@@ -6,7 +6,7 @@ import {
   createTranslationUserPrompt,
   normalizeLanguage,
   resolveLanguageNames,
-} from './shared.js';
+} from './ai-translation.js';
 
 // Mock the i18n functions
 vi.mock('$lib/services/contents/i18n', () => ({

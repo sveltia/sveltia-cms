@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { AlertDialog } from '@sveltia/ui';
 
-  import { formatSize } from '$lib/services/utils/file';
+  import { formatSize } from '$lib/services/assets/file-size';
 
   /**
    * @typedef {object} Props

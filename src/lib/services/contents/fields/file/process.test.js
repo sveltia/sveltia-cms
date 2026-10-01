@@ -43,6 +43,9 @@ vi.mock('$lib/services/utils/file', () => ({
    * @returns {string} Path.
    */
   sanitizePath: (path) => path,
+}));
+
+vi.mock('$lib/services/assets/file-name', () => ({
   /**
    * Replace the characters a file system won’t take, as the real function does.
    * @param {string} name File name.

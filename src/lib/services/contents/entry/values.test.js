@@ -9,7 +9,7 @@ import {
   getPropertyValue,
   getVisibleFieldDisplayValue,
 } from '$lib/services/contents/entry/values';
-import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/helpers';
+import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date-time/display';
 import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
 import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 
@@ -59,7 +59,7 @@ vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => 
   getComponentDef: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/fields/date-time/helpers', () => ({
+vi.mock('$lib/services/contents/fields/date-time/display', () => ({
   getDateTimeFieldDisplayValue: vi.fn(),
 }));
 
@@ -71,7 +71,7 @@ vi.mock('$lib/services/contents/fields/select/helpers', () => ({
   getOptionLabel: vi.fn(),
 }));
 
-vi.mock('$lib/services/integrations/media-libraries/shared', () => ({
+vi.mock('$lib/services/integrations/media-libraries/multiple', () => ({
   isMultiple: vi.fn(),
 }));
 

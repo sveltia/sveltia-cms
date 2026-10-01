@@ -6,7 +6,7 @@
 <script>
   import { parse } from 'marked';
 
-  import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/helpers';
+  import { sanitizeRichTextHTML } from '$lib/services/contents/fields/rich-text/sanitize';
 
   /**
    * @typedef {object} Props

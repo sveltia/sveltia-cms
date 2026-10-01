@@ -2,13 +2,13 @@
 
 import { sleep } from '@sveltia/utils/misc';
 
+import { formatFileName } from '$lib/services/assets/file-name';
 import { cmsConfig } from '$lib/services/config/state';
 import {
   findLibraryOptions,
   resolveLibraryOptions,
 } from '$lib/services/integrations/media-libraries/options';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
-import { formatFileName } from '$lib/services/utils/file';
 
 /**
  * @import {

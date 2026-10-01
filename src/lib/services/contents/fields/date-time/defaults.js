@@ -1,4 +1,4 @@
-import { getCurrentStorableValue } from '$lib/services/contents/fields/date-time/helpers';
+import { getCurrentStorableValue } from '$lib/services/contents/fields/date-time/value';
 
 /**
  * @import { GetDefaultValueMapFuncArgs } from '$lib/types/private';

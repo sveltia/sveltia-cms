@@ -6,7 +6,7 @@
   import { onDestroy } from 'svelte';
 
   import Image from '$lib/components/assets/shared/image.svelte';
-  import { formatSize } from '$lib/services/utils/file';
+  import { formatSize } from '$lib/services/assets/file-size';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**

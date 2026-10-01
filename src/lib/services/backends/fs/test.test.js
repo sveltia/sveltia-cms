@@ -10,10 +10,16 @@ const mockReadFile = vi.fn();
 const mockSaveChanges = vi.fn();
 const mockGetDirectoryHandle = vi.fn();
 
-vi.mock('$lib/services/backends/fs/shared/files', () => ({
-  loadFiles: mockLoadFiles,
-  readFile: mockReadFile,
+vi.mock('$lib/services/backends/fs/shared/save', () => ({
   saveChanges: mockSaveChanges,
+}));
+
+vi.mock('$lib/services/backends/fs/shared/load', () => ({
+  loadFiles: mockLoadFiles,
+}));
+
+vi.mock('$lib/services/backends/fs/shared/handles', () => ({
+  readFile: mockReadFile,
   getDirectoryHandle: mockGetDirectoryHandle,
 }));
 

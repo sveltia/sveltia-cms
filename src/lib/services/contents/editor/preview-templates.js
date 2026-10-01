@@ -2,12 +2,12 @@ import { createElement } from 'react';
 import { mount, unmount } from 'svelte';
 
 import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+import { getImmutable } from '$lib/services/api/immutable';
 import {
   buildPreviewData,
   convertEntryToMap,
   getAssociatedPreviewAssets,
-} from '$lib/services/api/helpers';
-import { getImmutable } from '$lib/services/api/immutable';
+} from '$lib/services/api/preview-data';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { createEntryDraftMountContext } from '$lib/services/contents/draft/state.svelte';

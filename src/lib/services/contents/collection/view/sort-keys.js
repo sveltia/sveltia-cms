@@ -5,7 +5,7 @@ import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
-import { parseCustomSortableFields } from '$lib/services/contents/collection/view/utils';
+import { parseCustomSortableFields } from '$lib/services/contents/collection/view/options';
 import { getField } from '$lib/services/contents/entry/fields';
 import { isNumeric } from '$lib/services/utils/number';
 import { createDerivedState } from '$lib/services/utils/state.svelte';
