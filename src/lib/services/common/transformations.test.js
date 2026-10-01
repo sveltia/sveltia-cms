@@ -44,6 +44,31 @@ describe('Test parseTransformations()', () => {
       ],
     });
   });
+
+  test('does not split at a pipe within a quoted argument', () => {
+    expect(
+      parseTransformations(
+        "title | default('Untitled | Draft') | ternary('A | B', 'C|D') | truncate(5, '|')",
+      ),
+    ).toEqual({
+      value: 'title',
+      transformations: [
+        { method: 'default', args: { defaultValue: 'Untitled | Draft' } },
+        { method: 'ternary', args: { truthyValue: 'A | B', falsyValue: 'C|D' } },
+        { method: 'truncate', args: { max: '5', ellipsis: '|' } },
+      ],
+    });
+  });
+
+  test('does not treat an apostrophe within an argument as a closing quote', () => {
+    expect(parseTransformations("title | default('Don't | Stop') | upper")).toEqual({
+      value: 'title',
+      transformations: [
+        { method: 'default', args: { defaultValue: "Don't | Stop" } },
+        { method: 'upper', args: {} },
+      ],
+    });
+  });
 });
 
 describe('Test applyTransformation()', () => {

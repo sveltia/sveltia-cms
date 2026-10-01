@@ -192,11 +192,14 @@ export const getAssetByRelativePathAndCollection = ({
   // avoid duplication when the stored value already includes the media folder (e.g.
   // `images/photo.jpg`). Also normalize `./` prefix since `./images/photo.jpg` and
   // `images/photo.jpg` are equivalent relative paths.
+  // `media_folder` is normalized the same way, since `./images` and `images/` are equivalent to
+  // `images`.
   const normalizedPath = path.replace(/^\.\//, '');
+  const normalizedMediaFolder = mediaFolder?.replace(/^\.\//, '').replace(/\/$/, '');
 
   let localPath =
-    mediaFolder && normalizedPath.startsWith(`${mediaFolder}/`)
-      ? normalizedPath.slice(mediaFolder.length + 1)
+    normalizedMediaFolder && normalizedPath.startsWith(`${normalizedMediaFolder}/`)
+      ? normalizedPath.slice(normalizedMediaFolder.length + 1)
       : normalizedPath;
 
   let resolvedPath;

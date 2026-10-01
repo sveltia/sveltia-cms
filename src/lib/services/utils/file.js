@@ -59,8 +59,11 @@ export const renameIfNeeded = (name, otherNames) => {
 
   const { filename: slug, extension } = getPathInfo(name);
 
+  // Case-insensitive, since `Photo.jpg` and `photo.jpg` clash on a case-insensitive file system
+  // like macOS’s or Windows’s
   const regex = new RegExp(
     `^${escapeRegExp(slug)}(?:-(?<num>\\d+?))?${extension ? `\\.${extension}` : ''}$`,
+    'i',
   );
 
   // Only the highest number already taken matters, so the names are scanned once rather than

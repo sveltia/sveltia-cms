@@ -180,6 +180,24 @@ describe('fillTemplate()', async () => {
     expect(fillTemplate('{{name}}', { collection, content: {} })).toMatch(/[0-9a-f]{12}/);
   });
 
+  test('look up the field config of a `fields.`-prefixed tag for a filter', async () => {
+    await setupCmsConfig();
+
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    vi.mocked(getField).mockClear();
+
+    expect(
+      fillTemplate("{{fields.published | date('YYYY-MM-DD')}}", {
+        collection,
+        content: { published: '2024-01-23' },
+      }),
+    ).toEqual('2024-01-23');
+
+    // The prefix must be stripped, or the field’s options such as `picker_utc` would be lost
+    expect(getField).toHaveBeenCalledWith(expect.objectContaining({ keyPath: 'published' }));
+  });
+
   test('apply filter', async () => {
     await setupCmsConfig();
 
@@ -622,6 +640,64 @@ describe('fillTemplate()', async () => {
 
     expect(result.length).toBeLessThanOrEqual(30);
     expect(result).not.toMatch(/-$/);
+  });
+
+  test('remove a custom sanitize replacement left at the end by truncation', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        media_folder: 'static/images/uploads',
+        collections: [collection],
+        _siteURL: '',
+        _baseURL: '',
+        slug: {
+          encoding: 'unicode',
+          clean_accents: false,
+          sanitize_replacement: '_',
+          maxlength: 6,
+        },
+      },
+    };
+
+    expect(
+      fillTemplate('{{title}}', {
+        collection: { ...collection, slug_length: undefined },
+        content: { title: 'Hello World' },
+      }),
+    ).toBe('hello');
+  });
+
+  test('remove a trailing hyphen after truncation without the slug options', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: { backend: { name: 'github' }, collections: [collection] },
+    };
+
+    expect(
+      fillTemplate('{{title}}', {
+        collection: { ...collection, slug_length: 6 },
+        content: { title: 'Hello World' },
+      }),
+    ).toBe('hello');
+  });
+
+  test('keep the end of a truncated slug with an empty sanitize replacement', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        collections: [collection],
+        slug: { sanitize_replacement: '', maxlength: 6 },
+      },
+    };
+
+    expect(
+      fillTemplate('{{title}}-{{title}}', {
+        collection: { ...collection, slug_length: undefined },
+        content: { title: 'Hello' },
+      }),
+    ).toBe('hello-');
   });
 
   test('legacy slug_length overrides config maxlength option', async () => {

@@ -219,12 +219,15 @@
   );
   /** Path of the directory being browsed, which is where uploaded files go. */
   const browsedPath = $derived(createPath([targetFolderPath, subfolderPath]));
-  /** Assets shown in the panel: those right in the browsed directory, or every asset listed. */
-  const panelAssets = $derived(
-    browsingSubfolders
-      ? listedAssets.filter(({ path }) => getDirName(path) === browsedPath)
-      : listedAssets,
+  /**
+   * Assets right in the browsed directory. Dropped files go there, even during a search, so only
+   * these can be replaced by one.
+   */
+  const browsedDirAssets = $derived(
+    listedAssets.filter(({ path }) => getDirName(path) === browsedPath),
   );
+  /** Assets shown in the panel: those right in the browsed directory, or every asset listed. */
+  const panelAssets = $derived(browsingSubfolders ? browsedDirAssets : listedAssets);
   const subfolders = $derived(
     browsingSubfolders ? getSubfolders({ dirPath: browsedPath, assets: listedAssets }) : [],
   );
@@ -350,7 +353,7 @@
    * @param {File[]} files File list.
    */
   const onDrop = async (files) => {
-    const replace = await checkDuplicates({ files, listedAssets });
+    const replace = await checkDuplicates({ files, listedAssets: browsedDirAssets });
 
     if (replace === undefined) {
       // User cancelled the dialog

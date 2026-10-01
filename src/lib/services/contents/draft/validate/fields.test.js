@@ -721,6 +721,86 @@ describe('draft/validate/fields', () => {
     });
   });
 
+  describe('validateFields with Code fields', () => {
+    /** @type {any} */
+    const snippetField = { name: 'snippet', widget: 'code', required: true };
+
+    beforeEach(() => {
+      vi.mocked(isFieldRequired).mockReturnValue(true);
+    });
+
+    it('should validate a field holding an object through its code and language', async () => {
+      const { getFieldValidationMessages } =
+        await import('$lib/services/contents/draft/validate/messages');
+
+      // An existing entry has no `{}` placeholder at the field’s own key path
+      mockEntryDraft.currentValues = { en: { 'snippet.code': '', 'snippet.lang': 'js' } };
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        keyPath === 'snippet' ? snippetField : undefined,
+      );
+
+      const result = validateFields('currentValues');
+
+      expect(result.valid).toBe(false);
+      expect(Object.keys(result.validities.en)).toEqual(['snippet']);
+      expect(result.validities.en.snippet.valueMissing).toBe(true);
+      expect(Object.keys(result.validationMessages.en)).toEqual(['snippet']);
+      // Validated only once
+      expect(getFieldValidationMessages).toHaveBeenCalledOnce();
+
+      mockEntryDraft.currentValues = { en: { 'snippet.code': 'x', 'snippet.lang': 'js' } };
+      expect(validateFields('currentValues').validities.en.snippet.valueMissing).toBe(false);
+    });
+
+    it('should skip a field that can’t be edited in the locale', () => {
+      mockEntryDraft.currentValues = {
+        en: { 'snippet.code': 'x', 'snippet.lang': 'js' },
+        fr: { 'snippet.code': 'x', 'snippet.lang': 'js' },
+      };
+      mockEntryDraft.currentLocales = { en: true, fr: true };
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        keyPath === 'snippet' ? { ...snippetField, i18n: false } : undefined,
+      );
+
+      const result = validateFields('currentValues');
+
+      expect(result.validities.fr).toEqual({});
+      expect(result.validationMessages.fr).toEqual({});
+    });
+
+    it('should validate a field with a placeholder only once', () => {
+      // A new draft has a `{}` placeholder, which may come after the code and language
+      mockEntryDraft.currentValues = {
+        en: { 'snippet.code': '', 'snippet.lang': 'js', snippet: {} },
+      };
+      vi.mocked(getField).mockImplementation(({ keyPath }) =>
+        keyPath === 'snippet' ? snippetField : undefined,
+      );
+
+      const result = validateFields('currentValues');
+
+      expect(Object.keys(result.validities.en)).toEqual(['snippet']);
+      expect(result.validities.en.snippet.valueMissing).toBe(true);
+    });
+
+    it('should validate a field named `code` nested in an Object field at its own key path', () => {
+      // The Object field is validated first, which mustn’t be taken for the Code field
+      mockEntryDraft.currentValues = { en: { obj: {}, 'obj.code': '' } };
+      vi.mocked(getField).mockImplementation(
+        ({ keyPath }) =>
+          ({
+            obj: { name: 'obj', widget: 'object', fields: [] },
+            'obj.code': { name: 'code', widget: 'code', output_code_only: true },
+          })[keyPath],
+      );
+
+      const result = validateFields('currentValues');
+
+      expect(Object.keys(result.validities.en)).toEqual(['obj', 'obj.code']);
+      expect(result.validities.en['obj.code'].valueMissing).toBe(true);
+    });
+  });
+
   describe('validateFields with `enforceRequired: false`', () => {
     it('should leave an empty required field unmarked', () => {
       mockEntryDraft.currentValues = { en: { title: '' } };
@@ -1927,16 +2007,16 @@ describe('draft/validate/fields', () => {
         expect(result).toBeUndefined();
       });
 
-      it('should return undefined for code field when keyPath already in validities (line 210)', () => {
-        // Pre-populate with the parent keyPath so the early return in the code branch fires
+      it('should return undefined for code field when keyPath already in validities', () => {
+        // Pre-populate with the keyPath so the early return in the code branch fires
         const validities = { en: { snippet: {} } };
 
         const args = {
           draft: mockEntryDraft,
           validities,
           locale: 'en',
-          keyPath: 'snippet.code',
-          valueMap: { 'snippet.code': 'const x = 1;', 'snippet.lang': 'js' },
+          keyPath: 'snippet',
+          valueMap: { snippet: 'const x = 1;' },
           value: 'const x = 1;',
         };
 

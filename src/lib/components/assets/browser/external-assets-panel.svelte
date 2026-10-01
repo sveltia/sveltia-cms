@@ -160,29 +160,52 @@
   const folderLabel = $derived(getExternalFolderLabel({ dirPath, serviceLabel }));
 
   /**
+   * ID of the latest {@link getAssets} request. A request made earlier, e.g. a search for the terms
+   * typed before, can come back after a later one, and its result must not replace the latest one.
+   */
+  let latestRequestId = 0;
+
+  /**
    * Search or list assets from the external media library.
    * @param {string} query Search query, which is only given to a service that can search.
    */
   const getAssets = async (query) => {
+    latestRequestId += 1;
+
+    const requestId = latestRequestId;
+
     listedAssets = null;
     error = undefined;
 
     try {
+      /** @type {ExternalAsset[]} */
+      let assets;
+      /** @type {string[] | undefined} */
+      let emptyFolders;
+
       if (query) {
-        listedAssets = await /** @type {NonNullable<typeof search>} */ (search)(
-          query,
-          listFetchOptions,
-        );
+        assets = await /** @type {NonNullable<typeof search>} */ (search)(query, listFetchOptions);
       } else if (browse) {
         // A service with folder support lists its empty folders along with the files
-        const listing = await browse(listFetchOptions);
-
-        listedAssets = listing.assets;
-        folders = listing.folders;
+        ({ assets, folders: emptyFolders } = await browse(listFetchOptions));
       } else {
-        listedAssets = (await list?.(listFetchOptions)) ?? [];
+        assets = (await list?.(listFetchOptions)) ?? [];
+      }
+
+      if (requestId !== latestRequestId) {
+        return;
+      }
+
+      listedAssets = assets;
+
+      if (emptyFolders) {
+        folders = emptyFolders;
       }
     } catch (ex) {
+      if (requestId !== latestRequestId) {
+        return;
+      }
+
       error = 'search_fetch_failed';
       // eslint-disable-next-line no-console
       console.error(ex);

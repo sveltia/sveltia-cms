@@ -20,6 +20,7 @@ import {
   LIST_KEY_PATH_REGEX,
 } from '$lib/services/contents/entry/fields';
 import { MIN_MAX_VALUE_FIELD_TYPES } from '$lib/services/contents/fields';
+import { getCodeField } from '$lib/services/contents/fields/code/validate';
 import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
 import {
   getKeyValueField,
@@ -484,6 +485,47 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
         });
       };
 
+      /**
+       * Validate the Code field the value belongs to, if it’s the code or language of one that
+       * stores an object, e.g. `snippet.code`. Like a KeyValue pair, such a key path has no field
+       * configuration of its own, and an existing entry has no value at the field’s own key path,
+       * so the field is validated through its sub-keys, only once, at the field’s key path.
+       */
+      const validateCodeSubKey = () => {
+        const codeField = getCodeField({
+          ...getFieldArgs,
+          keyPath: keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''),
+          valueMap,
+          componentName,
+        });
+
+        const fieldKeyPath = keyPath.replace(PAIR_KEY_PATH_REGEX, '');
+
+        if (!codeField || fieldKeyPath in validities[locale]) {
+          return;
+        }
+
+        if (
+          !validateField({
+            ...validateArgs,
+            keyPath: fieldKeyPath,
+            value: valueMap[fieldKeyPath],
+            componentName,
+          })
+        ) {
+          valid = false;
+        }
+
+        const validity = validities[locale][fieldKeyPath];
+
+        if (validity) {
+          validationMessages[locale][fieldKeyPath] = getFieldValidationMessages({
+            validity,
+            fieldConfig: codeField,
+          });
+        }
+      };
+
       // The items of a List field with subfields or types are flattened to their own subfields,
       // e.g. `speakers.0.name`, so no key path stands for such a list. Validate each list the value
       // is in through the path of its items, or its item count would never be checked
@@ -517,6 +559,7 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
 
       if (!fieldConfig) {
         validateKeyValuePair();
+        validateCodeSubKey();
 
         return;
       }

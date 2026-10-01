@@ -298,6 +298,28 @@ describe('assets/folders', () => {
       }
     });
 
+    it('should match the collection when the component name and index file flag are undefined', () => {
+      const pagesFolder = {
+        collectionName: 'pages',
+        fileName: undefined,
+        typedKeyPath: 'gallery',
+        isIndexFile: false,
+        internalPath: 'content/pages/gallery',
+        publicPath: '/pages/gallery',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      allAssetFolders.current = [...allAssetFolders.current, pagesFolder];
+
+      // `getAssetLibraryFolderMap()` passes every key, with or without a value
+      const cond = { componentName: undefined, typedKeyPath: 'gallery', isIndexFile: undefined };
+
+      expect(getAssetFolder({ ...cond, collectionName: 'pages' })).toEqual(pagesFolder);
+      expect(getAssetFolder({ ...cond, collectionName: 'posts' })?.collectionName).toBe('posts');
+      expect(getAssetFolder({ ...cond, collectionName: 'blog' })).toBeUndefined();
+    });
+
     it('should normalize typed key paths before matching', () => {
       const mockFolders = [
         {

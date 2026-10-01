@@ -251,8 +251,8 @@
         ariaLabel={_('list_item_value')}
         aria-errormessage="{fieldId}-error"
         onkeydown={(/** @type {KeyboardEvent} */ event) => {
-          // Ignore the Enter key while the user is typing with an IME
-          if (event.key !== 'Enter' || event.isComposing || items.length >= max) {
+          // Ignore the Enter key while the user is typing with an IME, or in a read-only field
+          if (event.key !== 'Enter' || event.isComposing || !canEdit || items.length >= max) {
             return;
           }
 

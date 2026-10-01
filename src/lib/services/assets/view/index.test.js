@@ -448,6 +448,9 @@ describe('assets/view/index', () => {
     });
 
     it('should map each asset path to its position via listedAssetIndexMap', () => {
+      vi.mocked(sortAssets).mockImplementation((assets) => assets);
+      vi.mocked(groupAssets).mockImplementation((assets) => ({ '*': assets }));
+
       const indexMap = listedAssetIndexMap.current;
 
       expect([...indexMap]).toEqual([
@@ -455,6 +458,25 @@ describe('assets/view/index', () => {
         ['blog/photo2.jpg', 1],
       ]);
       expect(indexMap.get('missing')).toBeUndefined();
+    });
+
+    it('should number the assets in the order they are sorted and grouped in', () => {
+      // The rows of every group make up one grid, so the index runs across the groups
+      vi.mocked(sortAssets).mockImplementation((assets) => [...assets].reverse());
+      vi.mocked(groupAssets).mockImplementation((assets) =>
+        Object.fromEntries(assets.map((asset, index) => [`group-${index}`, [asset]])),
+      );
+
+      expect([...listedAssetIndexMap.current]).toEqual([
+        ['blog/photo2.jpg', 0],
+        ['images/photo1.jpg', 1],
+      ]);
+
+      // A filtered-out asset has no row
+      vi.mocked(filterAssets).mockImplementationOnce((assets) => assets.slice(1));
+      _publishedAssets.current = [..._publishedAssets.current];
+
+      expect([...listedAssetIndexMap.current]).toEqual([['images/photo1.jpg', 0]]);
     });
 
     it('should reset the selected assets when the listed assets change', async () => {
@@ -542,6 +564,8 @@ describe('assets/view/index', () => {
       });
 
       it('should offset the asset row indexes by the subfolder count', () => {
+        vi.mocked(sortAssets).mockImplementation((assets) => assets);
+        vi.mocked(groupAssets).mockImplementation((assets) => ({ '*': assets }));
         _browsedDirPath.current = 'images';
 
         expect([...listedAssetIndexMap.current]).toEqual([['images/photo1.jpg', 2]]);

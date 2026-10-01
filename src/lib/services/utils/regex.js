@@ -1,5 +1,9 @@
+/**
+ * Regular expression to match a complete regular expression string with delimiters and optional
+ * flags, e.g. `/^.{0,280}$/s`.
+ */
 // cspell:disable-next-line
-const FULL_REGEX_PATTERN = /^\/?(?<pattern>.+?)(?:\/(?<flags>[dgimsuvy]*))?$/;
+const FULL_REGEX_PATTERN = /^\/(?<pattern>.+)\/(?<flags>[dgimsuvy]*)$/;
 /**
  * Regular expression to match the `g` (global) and `y` (sticky) flags.
  */
@@ -26,8 +30,9 @@ export const getRegex = (input) => {
 
   if (typeof input === 'string') {
     // Parse the regex to support simple pattern, e.g `.{12,}`, and complete expression, e.g.
-    // `/^.{0,280}$/s`
-    const { pattern, flags } = input.match(FULL_REGEX_PATTERN)?.groups ?? {};
+    // `/^.{0,280}$/s`. A string without both delimiters is used as a pattern in its entirety, like
+    // Netlify/Decap CMS does, so a slash at either end of `^/blog/` or `^https?://` is kept
+    const { pattern, flags } = input.match(FULL_REGEX_PATTERN)?.groups ?? { pattern: input };
 
     if (pattern) {
       try {

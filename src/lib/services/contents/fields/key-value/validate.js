@@ -36,17 +36,31 @@ export const validateKeyValueField = ({
   min,
   max,
 }) => {
+  /**
+   * Check whether the given key path points to a KeyValue field.
+   * @param {string} _keyPath Key path, which may have a component name prefix.
+   * @returns {boolean} Result.
+   */
+  const isKeyValueField = (_keyPath) =>
+    getField({
+      ...getFieldArgs,
+      keyPath: _keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
+    })?.widget === 'keyvalue';
+
   // Given that values for a KeyValue field are flatten into `field.key1`, `field.key2` ...
   // `field.keyN`, we should validate only once against all these values. The key can be
   // empty, so use `.*` in the regex instead of `.+`
-  const _keyPath = /** @type {string} */ (keyPath.match(KEY_PATH_REGEX)?.[1]);
+  let _keyPath = /** @type {string} */ (keyPath.match(KEY_PATH_REGEX)?.[1]);
+  let isKeyValue = isKeyValueField(_keyPath);
 
-  const parentFieldConfig = getField({
-    ...getFieldArgs,
-    keyPath: _keyPath.replace(COMPONENT_NAME_PREFIX_REGEX, ''), // Remove component name prefix
-  });
+  // The key path can also be the field’s own, e.g. `obj.meta` holding `null` once all the pairs of
+  // a KeyValue field nested in an Object field have been removed
+  if (!isKeyValue && isKeyValueField(keyPath)) {
+    _keyPath = keyPath;
+    isKeyValue = true;
+  }
 
-  if (_keyPath in validities[locale] || parentFieldConfig?.widget !== 'keyvalue') {
+  if (_keyPath in validities[locale] || !isKeyValue) {
     return { skip: true, keyPath };
   }
 

@@ -24,6 +24,11 @@ import {
 } from '$lib/services/workflow';
 import { resetDeployingEntries } from '$lib/services/workflow/deploy';
 import { loadUnpublishedEntries, startLoadingPullRequests } from '$lib/services/workflow/load';
+import {
+  forkedRepository,
+  forkPermissionRequest,
+  openAuthoringInitialized,
+} from '$lib/services/workflow/open-authoring';
 
 /**
  * @import { BackendService, InternalCmsConfig, User } from '$lib/types/private';
@@ -414,6 +419,10 @@ export const signOut = async () => {
   unpublishedEntries.current = [];
   unpublishedEntriesLoaded.current = false;
   publishingBranches.current = [];
+  // The fork belongs to the signed-out user, so the next user needs Open Authoring set up again
+  forkPermissionRequest.current?.respond(false);
+  forkedRepository.current = undefined;
+  openAuthoringInitialized.current = false;
   resetDeployingEntries();
   resetDeployments();
   resetPageLiveness();

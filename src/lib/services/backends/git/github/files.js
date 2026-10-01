@@ -279,6 +279,12 @@ export const fetchBlob = async (asset) => {
     await requestBlob({ owner, repo, sha, responseType: 'raw' })
   );
 
+  // A `raw` response skips the shared error handling, so an error body would otherwise be returned
+  // as the file content, and moving or renaming the asset would commit it in place of the file
+  if (!response.ok) {
+    throw new Error('Failed to fetch the blob', { cause: { status: response.status } });
+  }
+
   // Handle SVG and other non-binary files
   if (response.headers.get('Content-Type') !== 'application/octet-stream') {
     return new Blob([await response.text()], { type: mime.getType(path) ?? 'text/plain' });

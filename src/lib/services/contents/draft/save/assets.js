@@ -404,7 +404,19 @@ export const replaceBlobURL = async ({
           },
     );
 
-    const update = replace && assetNamesInSameFolder.includes(fileName);
+    // A replacing file overwrites the existing asset whose name only differs in case, e.g.
+    // `Photo.jpg` and `photo.jpg`, rather than being added next to it, as the two would clash on a
+    // case-insensitive file system
+    const replacedName = replace
+      ? assetNamesInSameFolder.find((name) => name.toLowerCase() === fileName.toLowerCase())
+      : undefined;
+
+    const update = !!replacedName;
+
+    if (replacedName) {
+      fileName = replacedName;
+    }
+
     const assetPath = resolvedInternalPath ? `${resolvedInternalPath}/${fileName}` : fileName;
 
     changes.push({

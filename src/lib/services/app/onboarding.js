@@ -9,8 +9,9 @@ import { createDerivedState, createRawState } from '$lib/services/utils/state.sv
  */
 
 /**
- * The IndexedDB instance for storing UI settings.
- * @type {IndexedDB | undefined}
+ * The IndexedDB instance for storing UI settings, along with the name of the repository database it
+ * belongs to, so another one is opened once the user signs in to another repository.
+ * @type {{ databaseName: string, db: IndexedDB } | undefined}
  */
 let uiSettingsDB;
 
@@ -36,13 +37,21 @@ export const showMobileSignInDialog = createRawState(false);
  * @returns {IndexedDB | undefined} The IndexedDB instance, or `undefined` if not available.
  */
 const getDatabase = () => {
-  if (uiSettingsDB) {
-    return uiSettingsDB;
+  const repository = backend.current?.repository;
+  const databaseName = repository?.databaseName;
+
+  if (!databaseName) {
+    return undefined;
   }
 
-  uiSettingsDB = getRepositoryDatabase(backend.current?.repository, 'ui-settings');
+  if (uiSettingsDB?.databaseName !== databaseName) {
+    uiSettingsDB = {
+      databaseName,
+      db: /** @type {IndexedDB} */ (getRepositoryDatabase(repository, 'ui-settings')),
+    };
+  }
 
-  return uiSettingsDB;
+  return uiSettingsDB.db;
 };
 
 /**
@@ -51,13 +60,13 @@ const getDatabase = () => {
  * @returns {Promise<any>} The state value, or `undefined` if not found.
  */
 export const getState = async (name) => {
-  uiSettingsDB = getDatabase();
+  const db = getDatabase();
 
-  if (!uiSettingsDB) {
+  if (!db) {
     return undefined;
   }
 
-  const onboardingState = (await uiSettingsDB.get('onboarding')) ?? {};
+  const onboardingState = (await db.get('onboarding')) ?? {};
 
   return onboardingState[name];
 };
@@ -69,15 +78,15 @@ export const getState = async (name) => {
  * @returns {Promise<void>}
  */
 export const setState = async (name, value) => {
-  uiSettingsDB = getDatabase();
+  const db = getDatabase();
 
-  if (!uiSettingsDB) {
+  if (!db) {
     return;
   }
 
-  const onboardingState = (await uiSettingsDB.get('onboarding')) ?? {};
+  const onboardingState = (await db.get('onboarding')) ?? {};
 
-  await uiSettingsDB.set('onboarding', { ...onboardingState, [name]: value });
+  await db.set('onboarding', { ...onboardingState, [name]: value });
 };
 
 /**

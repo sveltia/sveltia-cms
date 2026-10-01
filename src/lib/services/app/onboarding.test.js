@@ -204,6 +204,24 @@ describe('onboarding', () => {
       expect(mockIndexedDBSet).toHaveBeenCalledWith('onboarding', { dismissed: true });
     });
 
+    it('should open the database of another repository after switching to it', async () => {
+      vi.resetModules();
+
+      const { getState: _getState } = await import('./onboarding.js');
+
+      await _getState('dismissed');
+      await _getState('dismissed');
+      expect(mockIndexedDBConstructor).toHaveBeenCalledTimes(1);
+      expect(mockIndexedDBConstructor).toHaveBeenLastCalledWith('test-db', 'ui-settings');
+
+      // Sign in to another repository without reloading the page
+      /** @type {any} */ (backend).current = { repository: { databaseName: 'other-db' } };
+
+      await _getState('dismissed');
+      expect(mockIndexedDBConstructor).toHaveBeenCalledTimes(2);
+      expect(mockIndexedDBConstructor).toHaveBeenLastCalledWith('other-db', 'ui-settings');
+    });
+
     it('should set and retrieve an onboarding state value', async () => {
       mockOnboardingState = { dismissed: false };
 

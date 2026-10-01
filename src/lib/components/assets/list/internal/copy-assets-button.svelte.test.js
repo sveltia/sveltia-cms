@@ -166,6 +166,44 @@ describe('CopyAssetsButton', () => {
     await expect.element(page.getByRole('menuitem', { name: 'File Data' })).toBeEnabled();
   });
 
+  test('can’t copy the URL of an asset focused earlier while another is looked up', async () => {
+    const { rerender } = await render(CopyAssetsButton, { assets: [textAsset] });
+
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'Public URL' })).toBeEnabled();
+    await userEvent.keyboard('{Escape}');
+
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(getAssetDetails).mockReturnValueOnce(/** @type {any} */ (promise));
+    await rerender({ assets: [zipAsset] });
+    await openMenu();
+    await expect.element(page.getByRole('menuitem', { name: 'Public URL' })).toBeDisabled();
+
+    resolve({ publicURL: 'https://example.com/uploads/archive.zip' });
+    await expect.element(page.getByRole('menuitem', { name: 'Public URL' })).toBeEnabled();
+  });
+
+  test('can’t copy the URL of an asset whose details can’t be retrieved', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const { rerender } = await render(CopyAssetsButton, { assets: [textAsset] });
+
+      await openMenu();
+      await expect.element(page.getByRole('menuitem', { name: 'Public URL' })).toBeEnabled();
+      await userEvent.keyboard('{Escape}');
+
+      vi.mocked(getAssetDetails).mockRejectedValueOnce(new Error('Download failed'));
+      await rerender({ assets: [zipAsset] });
+      await vi.waitFor(() => expect(consoleError).toHaveBeenCalledOnce());
+      await openMenu();
+      await expect.element(page.getByRole('menuitem', { name: 'Public URL' })).toBeDisabled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   test('can’t copy the data of a file that can’t be downloaded', async () => {
     // The test backend can’t download a file that isn’t held in memory
     await render(CopyAssetsButton, { assets: [createMockAsset({ name: 'lost.txt' })] });

@@ -148,6 +148,28 @@ describe('ListEditorComplex', () => {
       .toEqual([{ name: 'Melvin', role: 'Editor' }]);
   });
 
+  test('doesn’t take the original position of the item it duplicates', async () => {
+    const { draft } = await renderEditor(authorsField, {
+      'authors.0.name': 'Melvin',
+      'authors.0.role': 'Editor',
+    });
+
+    const values = draft.currentValues._default;
+
+    // The first duplication tags the existing item with its original position
+    await page.getByRole('button', { name: 'List Item Options' }).nth(0).click();
+    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await expect.poll(() => values['authors.0.__sc_item_original_key_path']).toBe('authors.0');
+    await expect.poll(() => getStoredItems(draft, 'authors')).toHaveLength(2);
+
+    // A copy of the tagged item is new, so a revert doesn’t treat it as the original item
+    await page.getByRole('button', { name: 'List Item Options' }).nth(0).click();
+    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await expect.poll(() => getStoredItems(draft, 'authors')).toHaveLength(3);
+    expect(values['authors.0.__sc_item_original_key_path']).toBe('authors.0');
+    expect(values['authors.1.__sc_item_original_key_path']).toBeUndefined();
+  });
+
   test('reorders an item with the keyboard', async () => {
     const { draft } = await renderEditor(authorsField, {
       'authors.0.name': 'a',

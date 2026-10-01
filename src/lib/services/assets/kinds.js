@@ -92,7 +92,8 @@ export const getMediaKindFromType = (mimeType) => {
 
   const [type, subType] = mimeType.split('/');
 
-  if (isMediaKind(type) && !subType.startsWith('x-')) {
+  // A malformed type without a subtype, e.g. from `data:image;base64,…`, is not a media type
+  if (isMediaKind(type) && !!subType && !subType.startsWith('x-')) {
     return /** @type {AssetKind} */ (type);
   }
 

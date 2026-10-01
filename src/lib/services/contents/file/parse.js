@@ -119,26 +119,26 @@ export const parseFrontMatter = ({ collection, collectionFile, isIndexFile, form
   const ed = escapeRegExp(endDelimiter);
   const cacheKey = `${sd}|${ed}`;
 
-  // Front matter matching: allow an empty head and only match a block at the start of the file.
+  // Front matter matching: allow an empty head, including no line at all between the delimiters
+  // (e.g. Jekyll’s `---\n---`), and only match a block at the start of the file.
   const regex = getOrCreate(
     frontMatterRegexCache,
     cacheKey,
-    () => new RegExp(`^${sd}\n(?:(?<head>[\\s\\S]*?))\n${ed}(?:\n(?<body>[\\s\\S]*))?$`, 's'),
+    () => new RegExp(`^${sd}\n(?:(?<head>[\\s\\S]*?)\n)?${ed}(?:\n(?<body>[\\s\\S]*))?$`, 's'),
   );
 
-  const { head, body } =
+  const groups =
     (format === 'json-frontmatter' && startDelimiter === '{' && endDelimiter === '}'
       ? text.match(DOUBLE_BRACE_JSON_FRONT_MATTER_REGEX)?.groups
-      : undefined) ??
-    text.match(regex)?.groups ??
-    {};
+      : undefined) ?? text.match(regex)?.groups;
 
-  if (!head && !body) {
+  if (!groups) {
     // Support Markdown without a front matter block, particularly for VitePress
     // The text can be an empty string, but it’s okay to return an empty body
     return { [bodyKey]: text };
   }
 
+  const { head = '', body } = groups;
   let parsedHead = {};
 
   if (format === 'yaml-frontmatter') {

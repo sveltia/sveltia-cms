@@ -1,6 +1,7 @@
 import { fillTemplate } from '$lib/services/common/template';
 import { DATE_TIME_FIELDS, UUID_TYPES } from '$lib/services/common/template/constants';
 import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
+import { parseTransformations } from '$lib/services/common/transformations';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
 
@@ -189,16 +190,16 @@ const getLocalizingKeyPaths = (collection) => {
   /** @type {Set<string>} */
   const keyPaths = new Set();
 
-  [...template.matchAll(/{{((?:fields\.)?.+?)( \| localize)?}}/g)].forEach(([, tag, localize]) => {
-    if (localize) {
-      keyPaths.add(stripFieldTagPrefix(tag));
-    } else if (localized) {
-      // Leave out the transformations, e.g. `upper` in `{{title | upper}}`
-      const [keyPath] = stripFieldTagPrefix(tag).split(' | ');
+  [...template.matchAll(/{{(.+?)}}/g)].forEach(([, placeholder]) => {
+    // Leave out the transformations, e.g. `upper` in `{{title | upper | localize}}`. The `localize`
+    // flag can come anywhere among them; it’s a no-op when the template is filled
+    const { value, transformations } = parseTransformations(placeholder);
+    const keyPath = stripFieldTagPrefix(value);
 
-      if (!NON_FIELD_TAGS.includes(keyPath)) {
-        keyPaths.add(keyPath);
-      }
+    if (transformations.some(({ method }) => method === 'localize')) {
+      keyPaths.add(keyPath);
+    } else if (localized && !NON_FIELD_TAGS.includes(keyPath)) {
+      keyPaths.add(keyPath);
     }
   });
 

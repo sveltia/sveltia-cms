@@ -46,6 +46,12 @@ describe('Test renameIfNeeded()', () => {
     expect(renameIfNeeded('photo.png', ['photo-10.png', 'photo-9.png'])).toEqual('photo-11.png');
   });
 
+  test('should treat names that only differ in case as taken', () => {
+    // They clash on a case-insensitive file system like macOS’s or Windows’s
+    expect(renameIfNeeded('Photo.jpg', ['photo.jpg'])).toEqual('Photo-1.jpg');
+    expect(renameIfNeeded('photo.jpg', ['PHOTO.JPG', 'Photo-1.jpg'])).toEqual('photo-2.jpg');
+  });
+
   test('should not be fooled by a dot in the base name', () => {
     // The base name is everything before the last dot, so these candidates all share the `x.y.z`
     // prefix. Picking anything but the highest number would hand back a name that is already taken

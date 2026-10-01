@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 
 import { customFieldTypeRegistry } from '$lib/services/api/registries';
 import { highlightEditorField } from '$lib/services/contents/editor/fields';
+import { initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import FieldPreview from './field-preview.svelte';
@@ -120,6 +121,48 @@ describe('FieldPreview', () => {
         })
       ).children,
     ).toHaveLength(1);
+  });
+
+  test('renders a subfield duplicated along with its ancestor in another locale', async () => {
+    /** @type {Field} */
+    const venueField = {
+      name: 'venue',
+      widget: 'object',
+      i18n: 'duplicate',
+      fields: [{ name: 'name', widget: 'string', label: 'Name' }],
+    };
+
+    // The ancestors of a subfield are looked up in the configuration
+    await initTestConfig({
+      i18n: { structure: 'multiple_files', locales: ['en', 'ja'], default_locale: 'en' },
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          i18n: true,
+          fields: [venueField],
+        },
+      ],
+    });
+
+    const { container } = await renderWithDraft(FieldPreview, {
+      draft: createMockDraft({
+        fields: [venueField],
+        i18n: { i18nEnabled: true, defaultLocale: 'en', allLocales: ['en', 'ja'] },
+        values: { en: { 'venue.name': 'Hall' }, ja: { 'venue.name': 'Hall' } },
+      }),
+      props: {
+        locale: 'ja',
+        keyPath: 'venue.name',
+        typedKeyPath: 'venue.name',
+        fieldConfig: /** @type {any} */ (venueField).fields[0],
+      },
+    });
+
+    // Like the editor, which shows it read-only, rather than leaving the Object field empty
+    expect(container.children).toHaveLength(1);
+    await expect.element(page.getByText('Hall')).toBeVisible();
   });
 
   test('highlights the editor field when activated', async () => {

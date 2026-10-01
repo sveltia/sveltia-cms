@@ -1,6 +1,7 @@
 <script>
   import { CustomPreview, previews } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
+  import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
@@ -48,7 +49,23 @@
   );
   /* v8 ignore stop */
   const canTranslate = $derived(i18nEnabled && isFieldTranslatable(i18n));
-  const canDuplicate = $derived(i18nEnabled && (i18n === 'duplicate' || i18n === 'duplicate_keys'));
+  // A field without an `i18n` option of its own is duplicated along with an ancestor using the
+  // `duplicate` strategy, so it’s shown in the other locales like in `FieldEditor`
+  const canDuplicate = $derived(
+    i18nEnabled &&
+      (i18n === 'duplicate_keys' ||
+        isDuplicatedField({
+          fieldConfig,
+          getFieldArgs: {
+            // The preview is only rendered while the draft is there
+            collectionName: /** @type {string} */ (entryDraft.current?.collectionName),
+            fileName: entryDraft.current?.fileName,
+            isIndexFile: entryDraft.current?.isIndexFile,
+            keyPath,
+            valueMap,
+          },
+        })),
+  );
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({ valueMap, keyPath, isList, isCustomFieldType: !!customFieldType }),

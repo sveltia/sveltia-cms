@@ -64,14 +64,20 @@ export const requestAccessToken = async (tokenURL, body, { includeCredentials = 
 };
 
 /**
- * Refresh the OAuth access token using the refresh token.
+ * Token refreshes in progress, keyed by the refresh token they use.
+ * @type {Map<string, Promise<AuthTokens>>}
+ */
+const pendingRefreshes = new Map();
+
+/**
+ * Send a request to refresh the OAuth access token.
  * @param {object} args Arguments.
  * @param {string} args.clientId OAuth application ID.
  * @param {string} args.tokenURL OAuth token request URL.
  * @param {string} args.refreshToken OAuth refresh token.
  * @returns {Promise<AuthTokens>} New access token and refresh token.
  */
-export const refreshAccessToken = async ({ clientId, tokenURL, refreshToken }) => {
+const requestTokenRefresh = async ({ clientId, tokenURL, refreshToken }) => {
   let token = '';
 
   const response = await requestAccessToken(
@@ -90,6 +96,29 @@ export const refreshAccessToken = async ({ clientId, tokenURL, refreshToken }) =
   user.account = user.account ? { ...user.account, token, refreshToken } : user.account;
 
   return { token, refreshToken };
+};
+
+/**
+ * Refresh the OAuth access token using the refresh token. Requests failing at the same time share a
+ * single refresh, as a refresh token may only be used once, e.g. with a GitHub App or Gitea, and
+ * each of them refreshing on its own would make all but the first fail.
+ * @param {object} args Arguments.
+ * @param {string} args.clientId OAuth application ID.
+ * @param {string} args.tokenURL OAuth token request URL.
+ * @param {string} args.refreshToken OAuth refresh token.
+ * @returns {Promise<AuthTokens>} New access token and refresh token.
+ */
+export const refreshAccessToken = ({ clientId, tokenURL, refreshToken }) => {
+  let promise = pendingRefreshes.get(refreshToken);
+
+  if (!promise) {
+    promise = requestTokenRefresh({ clientId, tokenURL, refreshToken }).finally(() => {
+      pendingRefreshes.delete(refreshToken);
+    });
+    pendingRefreshes.set(refreshToken, promise);
+  }
+
+  return promise;
 };
 
 /**
@@ -146,7 +175,21 @@ export const fetchAPI = async (
     {
       responseType,
       refreshAccessToken: refreshToken
-        ? () => refreshAccessToken({ clientId, tokenURL, refreshToken })
+        ? async () => {
+            const { account } = user;
+
+            // Another request has refreshed the token since this one was sent, which used up the
+            // refresh token if it’s single-use, so take the new token instead of refreshing again
+            if (
+              account?.token &&
+              account.token !== token &&
+              account.refreshToken !== refreshToken
+            ) {
+              return { token: account.token, refreshToken: account.refreshToken };
+            }
+
+            return refreshAccessToken({ clientId, tokenURL, refreshToken });
+          }
         : undefined,
     },
   );

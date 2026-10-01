@@ -34,11 +34,31 @@ export const getBaseURLs = (repoURL, branch) => ({
 });
 
 /**
+ * HTTP statuses that mean the signed-in user can’t see the repository at all. A private repository
+ * answers a request from someone without access with a 404 rather than a 403, so its existence
+ * isn’t leaked. A 401 means the token has expired or been revoked.
+ */
+const NO_ACCESS_STATUSES = [401, 403, 404];
+
+/**
+ * Check whether the given response was rejected because the API rate limit is exhausted. GitHub
+ * answers a spent primary limit with a 403, the same status it uses to refuse access, so the
+ * remaining-request count is what tells the two apart.
+ * @param {Response} response Response to check.
+ * @returns {boolean} `true` if the request was rate limited.
+ * @see https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
+ */
+export const isRateLimited = ({ status, headers }) =>
+  status === 429 ||
+  headers.get('retry-after') !== null ||
+  headers.get('x-ratelimit-remaining') === '0';
+
+/**
  * Check if the user has write access to the current repository, which takes the write, maintain or
  * admin role, like Netlify/Decap CMS requires. The repository reports the authenticated user’s own
  * permissions, however they’re granted, including through an organization team. Asking the
  * collaborator endpoint instead would let a read-only collaborator in.
- * @throws {Error} If the user can’t push to the repository.
+ * @throws {Error} If the user can’t push to the repository, or the access couldn’t be checked.
  * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
 export const checkRepositoryAccess = async () => {
@@ -50,6 +70,18 @@ export const checkRepositoryAccess = async () => {
       responseType: 'raw',
     })
   );
+
+  // A rate limit or an outage leaves the question unanswered. Reading that as “no access” would
+  // clear the credentials and sign the user out over something passing, so report it as a failed
+  // check instead. A `raw` response skips the token refresh, so an expired token (401) still counts
+  // as no access, sending the user back to the sign-in form
+  if (!response.ok && (!NO_ACCESS_STATUSES.includes(response.status) || isRateLimited(response))) {
+    throw createLocalizedError(
+      'Failed to check the repository permission.',
+      'open_authoring.permission_check_failed',
+      { repo: `${owner}/${repo}` },
+    );
+  }
 
   const { permissions } = response.ok
     ? /** @type {{ permissions?: { push?: boolean } }} */ (await response.json())

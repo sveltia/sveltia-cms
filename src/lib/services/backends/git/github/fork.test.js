@@ -24,7 +24,8 @@ import {
   requestForkPermission,
 } from '$lib/services/workflow/open-authoring';
 
-vi.mock('$lib/services/backends/git/github/repository', () => ({
+vi.mock('$lib/services/backends/git/github/repository', async (importOriginal) => ({
+  isRateLimited: /** @type {any} */ (await importOriginal()).isRateLimited,
   repository: { owner: 'owner', repo: 'repo', branch: 'main' },
   fetchDefaultBranchName: vi.fn(),
 }));

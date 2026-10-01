@@ -52,12 +52,29 @@ describe('Test getRegex()', () => {
     expect(result?.flags).toBe('im');
   });
 
-  test('converts regex string with leading slash but no pattern delimiters', () => {
+  test('treats a leading slash without a closing delimiter as part of the pattern', () => {
     const result = getRegex('/pattern');
 
     expect(result).toBeInstanceOf(RegExp);
-    expect(result?.source).toBe('pattern');
+    expect(result?.source).toBe('\\/pattern');
     expect(result?.flags).toBe('');
+    expect(result?.test('/pattern')).toBe(true);
+    expect(result?.test('pattern')).toBe(false);
+  });
+
+  test('keeps a trailing slash of a pattern without delimiters', () => {
+    expect(getRegex('^https?://')?.test('https://example.com')).toBe(true);
+    expect(getRegex('^https?://')?.test('https:/example.com')).toBe(false);
+    expect(getRegex('^/blog/')?.test('/blog/post')).toBe(true);
+    expect(getRegex('^/blog/')?.test('/blogroll')).toBe(false);
+  });
+
+  test('does not treat a trailing `/flags` of a pattern without delimiters as flags', () => {
+    const result = getRegex('^[a-z]+/i');
+
+    expect(result?.flags).toBe('');
+    expect(result?.test('abc/i')).toBe(true);
+    expect(result?.test('ABC')).toBe(false);
   });
 
   test('handles regex string without leading slash', () => {

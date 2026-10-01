@@ -1293,6 +1293,12 @@ describe('auth service', () => {
       mockUnpublishedEntriesLoaded.current = true;
       mockPublishingBranches.current = ['cms/posts/hello'];
 
+      const openAuthoringModule = await import('$lib/services/workflow/open-authoring');
+      const forkPermissionGranted = openAuthoringModule.requestForkPermission('owner/repo');
+
+      openAuthoringModule.forkedRepository.current = { owner: 'user', repo: 'repo' };
+      openAuthoringModule.openAuthoringInitialized.current = true;
+
       mockRepositoryHead.current = 'abc123';
       mockLockedBranch.current = 'main';
       mockMergeLockedBranch.current = 'main';
@@ -1325,6 +1331,11 @@ describe('auth service', () => {
       expect(mockUnpublishedEntries.current).toEqual([]);
       expect(mockUnpublishedEntriesLoaded.current).toBe(false);
       expect(mockPublishingBranches.current).toEqual([]);
+      // The next user must not reuse the previous user’s fork
+      expect(openAuthoringModule.forkedRepository.current).toBeUndefined();
+      expect(openAuthoringModule.openAuthoringInitialized.current).toBe(false);
+      expect(openAuthoringModule.forkPermissionRequest.current).toBeUndefined();
+      await expect(forkPermissionGranted).resolves.toBe(false);
       expect(mockResetDeployingEntries).toHaveBeenCalled();
     });
 

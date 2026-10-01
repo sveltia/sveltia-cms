@@ -1818,6 +1818,44 @@ describe('assets/index', () => {
       expect(createPath).toHaveBeenCalledWith(['src/content/entries', 'images', 'photo.jpg']);
     });
 
+    it.each([['./images'], ['images/'], ['./images/']])(
+      'should strip the prefix of a media_folder written as %s',
+      async (mediaFolder) => {
+        // `./images` and `images/` are equivalent to `images`, so the stored
+        // `./images/photo.jpg` must not resolve to `entryFolder/images/images/photo.jpg`
+        const { createPath } = await import('$lib/services/utils/file');
+
+        const mockEntry = /** @type {any} */ ({
+          id: 'my-entry',
+          slug: 'my-entry',
+          locales: {
+            en: {
+              path: 'src/content/entries/my-entry.md',
+              sha: 'sha123',
+              slug: 'my-entry',
+              content: { title: 'My Entry' },
+            },
+          },
+        });
+
+        const mockCollection = /** @type {any} */ ({
+          name: 'entries',
+          media_folder: mediaFolder,
+          _i18n: { defaultLocale: 'en' },
+        });
+
+        allAssets.current = [];
+
+        getAssetByRelativePathAndCollection({
+          path: './images/photo.jpg',
+          entry: mockEntry,
+          collection: mockCollection,
+        });
+
+        expect(createPath).toHaveBeenCalledWith(['src/content/entries', mediaFolder, 'photo.jpg']);
+      },
+    );
+
     it('should not strip path prefix when media_folder is undefined', async () => {
       // When collection has no media_folder, the path must be passed through unchanged
       const { resolvePath, createPath } = await import('$lib/services/utils/file');

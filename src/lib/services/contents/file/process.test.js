@@ -1095,6 +1095,23 @@ describe('Test processI18nSingleFileEntry()', () => {
     expect(entry.locales.en).toBeDefined();
     expect(entry.locales.fr).toBeUndefined();
   });
+
+  test('skips locales without an object', () => {
+    const entry = /** @type {Entry} */ ({ id: '', slug: '', subPath: 'my-post', locales: {} });
+    const rawContent = { en: { title: 'My Post' }, fr: null, de: 'x' };
+
+    processI18nSingleFileEntry(
+      entry,
+      rawContent,
+      '/posts/my-post.md',
+      undefined,
+      'my-post',
+      undefined,
+      ['en', 'fr', 'de'],
+    );
+
+    expect(Object.keys(entry.locales)).toEqual(['en']);
+  });
 });
 
 describe('Test processI18nMultiFileEntry()', () => {
@@ -1437,6 +1454,50 @@ describe('Test processI18nMultiFileEntry()', () => {
     expect(wasMerged).toBe(false);
     // Without a canonical slug the two files aren’t linked, so this is a separate entry
     expect(entry.slug).toBe('mon-article');
+  });
+
+  test('keeps entries with the same slug in different folders apart', () => {
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
+
+    /**
+     * Process a file.
+     * @param {string} subPath Sub path.
+     * @param {string} locale Locale.
+     * @returns {Entry} Entry passed to the function.
+     */
+    const processFile = (subPath, locale) => {
+      const entry = /** @type {Entry} */ ({ id: '', slug: '', subPath, locales: {} });
+
+      processI18nMultiFileEntry(
+        entry,
+        { title: subPath },
+        `posts/${subPath}.${locale}.md`,
+        undefined,
+        subPath,
+        '{{year}}/{{slug}}',
+        locale,
+        'en',
+        'posts',
+        undefined,
+        entryMap,
+      );
+
+      return entry;
+    };
+
+    const entry1 = processFile('2024/hello', 'en');
+    const entry2 = processFile('2025/hello', 'en');
+
+    processFile('2024/hello', 'fr');
+    processFile('2025/hello', 'fr');
+
+    expect(entry1.slug).toBe('hello');
+    expect(entry2.slug).toBe('hello');
+    expect(entryMap.size).toBe(2);
+    expect(entry1.locales.en.content).toEqual({ title: '2024/hello' });
+    expect(entry1.locales.fr.content).toEqual({ title: '2024/hello' });
+    expect(entry2.locales.en.content).toEqual({ title: '2025/hello' });
+    expect(entry2.locales.fr.content).toEqual({ title: '2025/hello' });
   });
 });
 

@@ -326,6 +326,12 @@ describe('assets/kinds', () => {
       expect(getMediaKindFromType('image/x-custom')).toBe(undefined);
       expect(getMediaKindFromType('')).toBe(undefined);
     });
+
+    it('should not throw on a malformed MIME type without a subtype', () => {
+      expect(getMediaKindFromType('image')).toBe(undefined);
+      expect(getMediaKindFromType('image/')).toBe(undefined);
+      expect(getMediaKindFromPath('data:image;base64,iVBORw0KGgo=')).toBe(undefined);
+    });
   });
 
   describe('getMediaKindFromPath', () => {

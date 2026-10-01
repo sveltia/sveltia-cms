@@ -1,7 +1,11 @@
 import { _ } from '@sveltia/i18n';
 import { sleep } from '@sveltia/utils/misc';
 
-import { fetchDefaultBranchName, repository } from '$lib/services/backends/git/github/repository';
+import {
+  fetchDefaultBranchName,
+  isRateLimited,
+  repository,
+} from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { cmsConfig } from '$lib/services/config';
@@ -55,19 +59,6 @@ export const getWorkflowRepository = () => {
  * isn’t leaked.
  */
 const NO_ACCESS_STATUSES = [403, 404];
-
-/**
- * Check whether the given response was rejected because the API rate limit is exhausted. GitHub
- * answers a spent primary limit with a 403, the same status it uses to refuse access, so the
- * remaining-request count is what tells the two apart.
- * @param {Response} response Response to check.
- * @returns {boolean} `true` if the request was rate limited.
- * @see https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
- */
-const isRateLimited = ({ status, headers }) =>
-  status === 429 ||
-  headers.get('retry-after') !== null ||
-  headers.get('x-ratelimit-remaining') === '0';
 
 /**
  * Check whether the signed-in user has an invitation to the configured repository that they haven’t

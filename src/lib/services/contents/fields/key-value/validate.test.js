@@ -103,6 +103,31 @@ describe('validateKeyValueField()', () => {
     expect(result.keyPath).toBe('meta');
   });
 
+  test('resolves to its own keyPath for a KeyValue field nested in an Object field', () => {
+    mockGetField.mockImplementation(({ keyPath }) =>
+      keyPath === 'obj' ? { widget: 'object' } : { widget: 'keyvalue' },
+    );
+
+    // All the pairs have been removed, so the field holds `null`
+    const valueMap = { 'obj.meta': null };
+    const validity = freshValidity();
+    const validities = { _default: {} };
+
+    const result = validateKeyValueField({
+      keyPath: 'obj.meta',
+      getFieldArgs: { ...baseGetFieldArgs, keyPath: 'obj.meta', valueMap },
+      validity,
+      validities,
+      locale: '_default',
+      required: true,
+      min: 0,
+      max: Infinity,
+    });
+
+    expect(result).toEqual({ skip: false, keyPath: 'obj.meta', empty: true });
+    expect(validity.valueMissing).toBe(true);
+  });
+
   test('sets valueMissing when required and no pairs exist', async () => {
     mockGetField.mockReturnValue({ widget: 'keyvalue' });
 

@@ -217,6 +217,49 @@ describe('ExternalAssetsPanel', () => {
     await expect.element(page.getByRole('alert')).toHaveTextContent('No files found.');
   });
 
+  test('ignores the result of an earlier search that comes back late', async () => {
+    const earlier = Promise.withResolvers();
+    const search = vi.fn().mockReturnValueOnce(earlier.promise).mockResolvedValue([assets[1]]);
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), search }),
+      searchTerms: 'a',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    props.searchTerms = 'b';
+    await waitForList(1);
+
+    earlier.resolve(assets);
+    await sleep(100);
+    expect(getAssetOptions().elements()).toHaveLength(1);
+    expect(getOption(assets[1].id).element()).toBeInTheDocument();
+  });
+
+  test('ignores the failure of an earlier search that comes back late', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const earlier = Promise.withResolvers();
+    const search = vi.fn().mockReturnValueOnce(earlier.promise).mockResolvedValue([assets[1]]);
+
+    const props = $state({
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue([]), search }),
+      searchTerms: 'a',
+      selectedResources: /** @type {any[]} */ ([]),
+    });
+
+    await render(ExternalAssetsPanel, props);
+    props.searchTerms = 'b';
+    await waitForList(1);
+
+    earlier.reject(new Error('Boom'));
+    await sleep(100);
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+    expect(getAssetOptions().elements()).toHaveLength(1);
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
   test('ignores the search terms on a service that can’t search', async () => {
     const list = vi.fn().mockResolvedValue(assets);
 

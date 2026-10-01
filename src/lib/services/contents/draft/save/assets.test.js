@@ -2608,6 +2608,70 @@ describe('Test replaceBlobURL()', () => {
     expect(content.image).toBe('/images/photo.jpg');
   });
 
+  test('should overwrite an existing file whose name only differs in case when replace is true', async () => {
+    const { getAssetsByDirName } = await import('$lib/services/assets');
+    const { formatFileName } = await import('$lib/services/assets/file-name');
+    const mockFile = new File(['test content'], 'Photo.jpg', { type: 'image/jpeg' });
+    const blobURL = 'blob:http://localhost:5173/replace-case-123';
+
+    vi.mocked(getAssetsByDirName).mockReturnValue(/** @type {any} */ ([{ name: 'photo.jpg' }]));
+    vi.mocked(formatFileName).mockImplementation((name) => name);
+
+    /** @type {any} */
+    const draft = {
+      collection: {
+        _type: 'entry',
+        _i18n: { defaultLocale: 'en' },
+        _file: { basePath: 'posts' },
+        _assetFolder: { fields: [] },
+      },
+      collectionName: 'posts',
+      fileName: undefined,
+      collectionFile: undefined,
+      isIndexFile: false,
+      currentValues: { en: { title: 'Test' } },
+      currentSlugs: { en: 'test-post' },
+    };
+
+    /** @type {any} */
+    const folder = {
+      internalPath: 'static/images',
+      publicPath: '/images',
+      entryRelative: false,
+      collectionName: 'posts',
+      hasTemplateTags: false,
+    };
+
+    const content = { image: blobURL };
+    /** @type {any[]} */
+    const changes = [];
+    /** @type {any[]} */
+    const savingAssets = [];
+
+    await replaceBlobURL({
+      file: mockFile,
+      folder,
+      replace: true,
+      blobURL,
+      draft,
+      defaultLocaleSlug: 'test-post',
+      keyPath: 'image',
+      content,
+      changes,
+      savingAssets,
+      encodingEnabled: false,
+    });
+
+    // `Photo.jpg` would clash with `photo.jpg` on a case-insensitive file system
+    expect(changes).toHaveLength(1);
+    expect(changes[0].action).toBe('update');
+    expect(changes[0].path).toBe('static/images/photo.jpg');
+    expect(savingAssets[0].name).toBe('photo.jpg');
+    expect(content.image).toBe('/images/photo.jpg');
+
+    vi.mocked(formatFileName).mockImplementation((name) => name.toLowerCase());
+  });
+
   test('should give a different name to another file with the same name in the same save', async () => {
     const { getGitHash } = await import('$lib/services/utils/file');
     const { formatFileName } = await import('$lib/services/assets/file-name');

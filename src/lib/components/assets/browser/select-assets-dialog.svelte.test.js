@@ -340,6 +340,27 @@ describe('SelectAssetsDialog', () => {
       );
     });
 
+    test('only asks to replace a file in the directory the dropped file goes to', async () => {
+      const { onSelect } = await renderDialog();
+      const dialog = page.getByRole('dialog', { name: 'Select Image' });
+
+      await waitForGrid(2);
+
+      // `d.png` is in a subfolder, not in the folder root the file goes to
+      const file = await createMockImageFile({ name: 'd.png', width: 5 });
+
+      dropFiles([file]);
+      await waitForGrid(3);
+      expect(duplicates.showDialog).toBe(false);
+      await dialog.getByRole('button', { name: 'Insert' }).click();
+
+      await vi.waitFor(() =>
+        expect(onSelect).toHaveBeenCalledWith([
+          { file, folder: globalAssetFolder.current, subfolderPath: '', replace: false },
+        ]),
+      );
+    });
+
     test('selects a folder instead of files', async () => {
       const { onSelect } = await renderDialog({
         kind: undefined,

@@ -106,16 +106,34 @@ describe('Gitea Commits Service', () => {
     });
 
     test('should handle branch not found error', async () => {
-      fetchAPIMock.mockRejectedValue(new Error('Branch not found'));
+      fetchAPIMock.mockRejectedValue(
+        new Error('Server responded with an error', { cause: { status: 404 } }),
+      );
 
-      await expect(fetchLastCommit()).rejects.toThrow('Failed to retrieve the last commit hash.');
+      await expect(fetchLastCommit()).rejects.toMatchObject({
+        message: 'Failed to retrieve the last commit hash.',
+        cause: { message: 'branch_not_found' },
+      });
     });
 
-    test('should handle API fetch error', async () => {
-      fetchAPIMock.mockRejectedValue(new Error('Network error'));
+    test('should pass on a network error rather than reporting a missing branch', async () => {
+      const error = new Error('Failed to send the request');
 
-      await expect(fetchLastCommit()).rejects.toThrow('Failed to retrieve the last commit hash.');
+      fetchAPIMock.mockRejectedValue(error);
+
+      await expect(fetchLastCommit()).rejects.toBe(error);
     });
+
+    test.each([401, 500, 503])(
+      'should pass on a %i error rather than reporting a missing branch',
+      async (status) => {
+        const error = new Error('Server responded with an error', { cause: { status } });
+
+        fetchAPIMock.mockRejectedValue(error);
+
+        await expect(fetchLastCommit()).rejects.toBe(error);
+      },
+    );
 
     test('should handle malformed response', async () => {
       const malformedResponse = {

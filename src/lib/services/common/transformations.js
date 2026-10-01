@@ -39,7 +39,6 @@ dayjs.extend(dayjsCustomParseFormat);
 dayjs.extend(dayjsLocalizedFormat);
 dayjs.extend(dayjsUTC);
 
-const TRANSFORMATION_SPLIT_REGEX = /\s*\|\s*/;
 const DATE_ONLY_REGEX = /^\d{4}-[01]\d-[0-3]\d$/;
 const DATE_PART_REGEX = /T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z$/;
 
@@ -72,6 +71,42 @@ const parseTransformation = (transformation) => {
 };
 
 /**
+ * Split a string containing a value and transformations at the pipe (`|`) characters, except for
+ * those within a quoted transformation argument like `default('Untitled | Draft')`. A single quote
+ * only opens an argument after `(` or `,`, and only closes it before `,` or `)`, so an apostrophe
+ * within an argument, as in `default('Don't')`, doesn’t throw off the parsing.
+ * @param {string} string The string to be split.
+ * @returns {string[]} Trimmed segments.
+ */
+const splitTransformations = (string) => {
+  /** @type {string[]} */
+  const segments = [];
+  let segment = '';
+  let quoted = false;
+
+  [...string].forEach((char, index) => {
+    if (char === "'") {
+      if (!quoted && /[(,]\s*$/.test(string.slice(0, index))) {
+        quoted = true;
+      } else if (quoted && /^\s*[,)]/.test(string.slice(index + 1))) {
+        quoted = false;
+      }
+    }
+
+    if (char === '|' && !quoted) {
+      segments.push(segment.trim());
+      segment = '';
+    } else {
+      segment += char;
+    }
+  });
+
+  segments.push(segment.trim());
+
+  return segments;
+};
+
+/**
  * Parse a string containing a value and multiple transformations separated by the pipe (`|`)
  * character.
  * @param {string} string The string containing a value and transformations.
@@ -79,7 +114,7 @@ const parseTransformation = (transformation) => {
  * transformation entries.
  */
 export const parseTransformations = (string) => {
-  const [value, ...rawTransformations] = string.trim().split(TRANSFORMATION_SPLIT_REGEX);
+  const [value, ...rawTransformations] = splitTransformations(string.trim());
 
   return {
     value,

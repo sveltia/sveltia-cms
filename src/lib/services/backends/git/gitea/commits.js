@@ -26,7 +26,7 @@ import { user } from '$lib/services/user/account.svelte';
 /**
  * Fetch the last commit on the repository.
  * @returns {Promise<{ hash: string, message: string }>} Commit’s SHA-1 hash and message.
- * @throws {Error} When the branch could not be found.
+ * @throws {Error} When the branch could not be found, or the request failed.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetSingleCommit
  */
 export const fetchLastCommit = async () => {
@@ -40,7 +40,13 @@ export const fetchLastCommit = async () => {
     );
 
     return { hash, message };
-  } catch {
+  } catch (/** @type {any} */ ex) {
+    // Only a 404 means the branch is missing. Anything else, like an expired token or an outage,
+    // would be misreported as a missing branch, so pass it on as is
+    if (ex.cause?.status !== 404) {
+      throw ex;
+    }
+
     throw createLocalizedError('Failed to retrieve the last commit hash.', 'branch_not_found', {
       repo,
       branch,

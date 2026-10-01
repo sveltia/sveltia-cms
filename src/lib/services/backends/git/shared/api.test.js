@@ -259,6 +259,95 @@ describe('api.js', () => {
     });
   });
 
+  describe('refreshAccessToken with concurrent requests', () => {
+    it('should share one refresh between requests using the same refresh token', async () => {
+      vi.mocked(fetch).mockImplementation(async () =>
+        Response.json({ access_token: 'new-token', refresh_token: 'new-refresh' }),
+      );
+
+      const args = {
+        clientId: 'test-client-id',
+        tokenURL: 'https://api.github.com/oauth/token',
+        refreshToken: 'shared-refresh-token',
+      };
+
+      // A single-use refresh token would make every refresh but the first fail
+      const results = await Promise.all([refreshAccessToken(args), refreshAccessToken(args)]);
+
+      expect(fetch).toHaveBeenCalledOnce();
+      expect(results).toEqual([
+        { token: 'new-token', refreshToken: 'new-refresh' },
+        { token: 'new-token', refreshToken: 'new-refresh' },
+      ]);
+
+      // Once done, the next refresh is sent again
+      await refreshAccessToken(args);
+
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should let a later refresh retry after a failed one', async () => {
+      const args = {
+        clientId: 'test-client-id',
+        tokenURL: 'https://api.github.com/oauth/token',
+        refreshToken: 'failing-refresh-token',
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce(new Response('', { status: 500 }));
+      await expect(refreshAccessToken(args)).rejects.toThrow('Token refresh failed');
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        Response.json({ access_token: 'new-token', refresh_token: 'new-refresh' }),
+      );
+      await expect(refreshAccessToken(args)).resolves.toEqual({
+        token: 'new-token',
+        refreshToken: 'new-refresh',
+      });
+    });
+
+    it('should take the token another request has refreshed instead of refreshing again', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+
+      mockUserState.account = { token: 'old-token', refreshToken: 'old-refresh' };
+      vi.mocked(sendRequest).mockResolvedValue({});
+      await fetchAPI('/test-endpoint');
+
+      const [, , options] = vi.mocked(sendRequest).mock.calls[0];
+
+      // Another request refreshes the token while this one is on its way
+      mockUserState.account = { token: 'new-token', refreshToken: 'new-refresh' };
+
+      await expect(options?.refreshAccessToken?.()).resolves.toEqual({
+        token: 'new-token',
+        refreshToken: 'new-refresh',
+      });
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should refresh when the token has not been refreshed since the request', async () => {
+      const { fetchAPI } = await import('./api');
+      const { sendRequest } = await import('$lib/services/utils/networking');
+
+      mockUserState.account = { token: 'old-token', refreshToken: 'old-refresh' };
+      vi.mocked(sendRequest).mockResolvedValue({});
+      vi.mocked(fetch).mockResolvedValue(
+        Response.json({ access_token: 'new-token', refresh_token: 'new-refresh' }),
+      );
+      Object.assign(apiConfig, { tokenURL: 'https://api.github.com/oauth/token' });
+      await fetchAPI('/test-endpoint');
+
+      const [, , options] = vi.mocked(sendRequest).mock.calls[0];
+
+      await expect(options?.refreshAccessToken?.()).resolves.toEqual({
+        token: 'new-token',
+        refreshToken: 'new-refresh',
+      });
+      expect(fetch).toHaveBeenCalledOnce();
+      Object.assign(apiConfig, { tokenURL: '' });
+    });
+  });
+
   describe('fetchAPI', () => {
     beforeEach(() => {
       // Set up API config for tests

@@ -950,6 +950,52 @@ describe('draft/slugs', () => {
       });
     });
 
+    it('should localize field tags with the localize flag among other transformations', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      fillTemplate.mockImplementation((template, options) =>
+        options.locale === 'fr' ? 'mon-article' : 'my-article',
+      );
+
+      const template =
+        '{{title | upper | localize}}-{{fields.summary | localize | lower}}-{{author}}';
+
+      const draft = {
+        collection: {
+          _type: 'entry',
+          slug: template,
+          _i18n: {
+            defaultLocale: 'en',
+            i18nEnabled: true,
+            structureMap: { i18nSingleFile: false },
+          },
+        },
+        collectionFile: undefined,
+        currentLocales: { en: true, fr: true },
+        currentSlugs: {},
+        slugEditor: {},
+        currentValues: {
+          en: { title: 'My Article', summary: 'Summary', author: 'Me' },
+          fr: { title: 'Mon Article', summary: 'Résumé', author: 'Moi' },
+        },
+        files: {},
+        isIndexFile: false,
+        isNew: true,
+      };
+
+      expect(getLocalizedSlugs({ draft, defaultLocaleSlug: 'my-article' })).toEqual({
+        en: 'my-article',
+        fr: 'mon-article',
+      });
+      expect(fillTemplate).toHaveBeenLastCalledWith(
+        template,
+        expect.objectContaining({
+          locale: 'fr',
+          content: { title: 'Mon Article', summary: 'Résumé', author: 'Me', _slug: undefined },
+        }),
+      );
+    });
+
     it('should localize every field tag with the i18n option of the slug', async () => {
       const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
 

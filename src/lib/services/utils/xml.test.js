@@ -24,6 +24,11 @@ describe('parseXml', () => {
     });
   });
 
+  it('should keep an empty first sibling in an array', () => {
+    expect(parseXml('<Root><Item></Item><Item>x</Item></Root>')).toEqual({ Item: ['', 'x'] });
+    expect(parseXml('<Root><Item/><Item/></Root>')).toEqual({ Item: ['', ''] });
+  });
+
   it('should handle nested elements', () => {
     const xml = '<Root><Parent><Child>value</Child></Parent></Root>';
     const result = parseXml(xml);

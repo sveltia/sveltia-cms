@@ -233,14 +233,31 @@ describe('GitHub pull request helpers', () => {
 
       expect(fetchAPI).toHaveBeenCalledWith('/repos/owner/repo/git/refs/heads/cms/posts/hello', {
         method: 'DELETE',
-        responseType: 'raw',
+        // Not `raw`, which would hand an error response back instead of throwing it
+        responseType: 'text',
       });
     });
 
-    test('ignores a failure', async () => {
-      vi.mocked(fetchAPI).mockRejectedValue(new Error('Not found'));
+    test('ignores a failure, but logs it', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      vi.mocked(fetchAPI).mockRejectedValue(new Error('Error', { cause: { status: 500 } }));
       await expect(deleteBranch('cms/posts/hello')).resolves.toBeUndefined();
+      expect(warn).toHaveBeenCalledOnce();
+      warn.mockRestore();
     });
+
+    test.each([404, 422])(
+      'ignores a branch that is already gone (%i) without logging it',
+      async (status) => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        vi.mocked(fetchAPI).mockRejectedValue(new Error('Error', { cause: { status } }));
+        await expect(deleteBranch('cms/posts/hello')).resolves.toBeUndefined();
+        expect(warn).not.toHaveBeenCalled();
+        warn.mockRestore();
+      },
+    );
 
     test('encodes a branch name that would otherwise be cut short', async () => {
       await deleteBranch('cms/posts/c#-tips');
@@ -250,7 +267,7 @@ describe('GitHub pull request helpers', () => {
         '/repos/owner/repo/git/refs/heads/cms/posts/c%23-tips',
         {
           method: 'DELETE',
-          responseType: 'raw',
+          responseType: 'text',
         },
       );
     });

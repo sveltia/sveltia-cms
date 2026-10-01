@@ -318,6 +318,44 @@ describe('ObjectEditor', () => {
     expect(container.querySelector('.wrapper')).not.toBeNull();
   });
 
+  test('is read-only in a locale where its parent duplicates the default locale values', async () => {
+    /** @type {ObjectField} */
+    const parentField = {
+      name: 'outer',
+      widget: 'object',
+      i18n: 'duplicate',
+      fields: [{ ...authorField, required: false }],
+    };
+
+    // The parent field is looked up in the site configuration
+    await initTestConfig({
+      i18n: { structure: 'multiple_folders', locales: ['en', 'fr'], default_locale: 'en' },
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          i18n: true,
+          fields: [parentField],
+        },
+      ],
+    });
+
+    const { container } = await renderEditor(
+      { ...authorField, required: false },
+      { 'outer.author.name': 'Melvin', 'outer.author.email': '' },
+      {
+        locale: 'fr',
+        props: { keyPath: 'outer.author', typedKeyPath: 'outer.author' },
+      },
+    );
+
+    // The values are shown, like those of a subfield with its own `duplicate` option
+    await expect.poll(() => container.querySelector('.wrapper')).not.toBeNull();
+    // The object can’t be removed in the locale, even without the `readonly` prop
+    await expect.element(page.getByRole('checkbox', { name: /Author/ })).toBeDisabled();
+  });
+
   test('has nothing to edit in another locale when not localized', async () => {
     const { container } = await renderEditor(
       authorField,

@@ -186,7 +186,7 @@ export const replaceTemplatePlaceholder = (placeholder, context) => {
 
   if (transformations.length) {
     value = applyTransformations({
-      fieldConfig: getField({ ...getFieldArgs, keyPath: tag }),
+      fieldConfig: getField({ ...getFieldArgs, keyPath: stripFieldTagPrefix(tag) }),
       value,
       transformations,
       locale,

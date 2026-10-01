@@ -84,25 +84,33 @@
     const _assets = assets;
 
     requestedAssets = _assets;
-    // Don’t copy the data of the assets selected before while the new ones are being looked up
+    // Don’t copy the URLs or data of the assets selected before while the new ones are being
+    // looked up
+    assetsDetailList = [];
     assetBlob = undefined;
     canCopyData = false;
 
     (async () => {
-      const [detailList, blob] = await Promise.all([
-        Promise.all(_assets.map(getAssetDetails)),
-        // Since OSes usually support only one item, the data can be copied only when one file is
-        // selected. The data may not be available, e.g. for a file that can’t be downloaded
-        _assets.length === 1 ? getAssetBlob(_assets[0]).catch(() => undefined) : undefined,
-      ]);
+      try {
+        const [detailList, blob] = await Promise.all([
+          Promise.all(_assets.map(getAssetDetails)),
+          // Since OSes usually support only one item, the data can be copied only when one file is
+          // selected. The data may not be available, e.g. for a file that can’t be downloaded
+          _assets.length === 1 ? getAssetBlob(_assets[0]).catch(() => undefined) : undefined,
+        ]);
 
-      if (requestedAssets !== _assets) {
-        return;
+        if (requestedAssets !== _assets) {
+          return;
+        }
+
+        assetsDetailList = detailList;
+        assetBlob = blob;
+        canCopyData = !!blob && canCopyFileData(blob.type);
+      } catch (/** @type {any} */ ex) {
+        // The details couldn’t be retrieved, so the public URLs are unknown
+        // eslint-disable-next-line no-console
+        console.error(ex);
       }
-
-      assetsDetailList = detailList;
-      assetBlob = blob;
-      canCopyData = !!blob && canCopyFileData(blob.type);
     })();
   });
 </script>

@@ -1,5 +1,5 @@
 import { getDateTimeParts } from '@sveltia/utils/datetime';
-import { truncate } from '@sveltia/utils/string';
+import { escapeRegExp, truncate } from '@sveltia/utils/string';
 
 import { replaceTemplatePlaceholder } from '$lib/services/common/template/replacers';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
@@ -82,9 +82,16 @@ export const fillTemplate = (template, options) => {
     return slug;
   }
 
-  // Truncate a long slug if needed
+  // Truncate a long slug if needed, and remove the replacement character the cut may leave at the
+  // end, which is a hyphen by default but can be configured with `slug.sanitize_replacement`
   if (typeof maxlength === 'number') {
-    slug = truncate(slug, maxlength, { ellipsis: '' }).replace(/-$/, '');
+    const { sanitize_replacement: replacement = '-' } = slugOptions ?? {};
+
+    slug = truncate(slug, maxlength, { ellipsis: '' });
+
+    if (replacement) {
+      slug = slug.replace(new RegExp(`(?:${escapeRegExp(replacement)})+$`), '');
+    }
   }
 
   return renameIfNeeded(slug, getExistingSlugs(collectionName, locale));

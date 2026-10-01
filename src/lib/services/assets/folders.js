@@ -79,17 +79,19 @@ export const getAssetFolder = (cond) => {
     // If the condition has a `componentName`, it is a field-level media folder for a custom editor
     // component. In that case, the `collectionName` and `fileName` are not relevant for the match.
     // The folder is registered with the component name, while the fields within the component get
-    // the prefixed component ID, e.g. `x-youtube`, so resolve it first
-    if ('componentName' in cond) {
+    // the prefixed component ID, e.g. `x-youtube`, so resolve it first. Callers pass the key even
+    // when there is no component, so check the value rather than the key
+    if (cond.componentName) {
       return (
         folder.componentName === (getCustomComponentName(cond.componentName) ?? cond.componentName)
       );
     }
 
+    // A field-level folder stores `isIndexFile: false`, while callers may pass `undefined`
     return (
       folder.collectionName === cond.collectionName &&
       folder.fileName === cond.fileName &&
-      ('isIndexFile' in cond ? folder.isIndexFile === cond.isIndexFile : !folder.isIndexFile)
+      !!folder.isIndexFile === !!cond.isIndexFile
     );
   });
 };

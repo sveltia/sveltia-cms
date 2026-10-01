@@ -92,13 +92,32 @@ describe('GitHub repository service', () => {
       await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
     });
 
-    test('throws error when the repository is not visible to the user', async () => {
-      const mockResponse = { ok: false, json: vi.fn() };
+    test.each([401, 403, 404])(
+      'throws error when the repository is not visible to the user (%i)',
+      async (status) => {
+        const mockResponse = { ok: false, status, headers: new Headers(), json: vi.fn() };
 
-      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+        vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
 
-      await expect(checkRepositoryAccess()).rejects.toThrow('Not a collaborator of the repository');
-      expect(mockResponse.json).not.toHaveBeenCalled();
+        await expect(checkRepositoryAccess()).rejects.toThrow(
+          'Not a collaborator of the repository',
+        );
+        expect(mockResponse.json).not.toHaveBeenCalled();
+      },
+    );
+
+    test.each([
+      ['a server error', 500, {}],
+      ['a 429 rate limit', 429, {}],
+      ['a 403 rate limit', 403, { 'x-ratelimit-remaining': '0' }],
+      ['a 403 secondary rate limit', 403, { 'retry-after': '60' }],
+    ])('keeps the credentials on %s', async (_label, status, headers) => {
+      vi.mocked(fetchAPI).mockResolvedValue({ ok: false, status, headers: new Headers(headers) });
+
+      // Not the no-access error, which signs the user out
+      await expect(checkRepositoryAccess()).rejects.toThrow(
+        'Failed to check the repository permission.',
+      );
     });
   });
 

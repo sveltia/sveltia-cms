@@ -532,6 +532,7 @@ describe('GitHub files service', () => {
       });
 
       const mockResponse = {
+        ok: true,
         headers: new Map([['Content-Type', 'application/octet-stream']]),
         blob: vi.fn().mockResolvedValue(new Blob(['binary data'])),
       };
@@ -558,6 +559,7 @@ describe('GitHub files service', () => {
       });
 
       vi.mocked(fetchAPI).mockResolvedValue({
+        ok: true,
         headers: new Map([['Content-Type', 'application/octet-stream']]),
         blob: vi.fn().mockResolvedValue(new Blob(['binary data'])),
       });
@@ -577,6 +579,7 @@ describe('GitHub files service', () => {
       });
 
       const mockResponse = {
+        ok: true,
         headers: new Map([['Content-Type', 'image/svg+xml']]),
         text: vi.fn().mockResolvedValue('<svg></svg>'),
       };
@@ -601,6 +604,7 @@ describe('GitHub files service', () => {
       });
 
       const mockResponse = {
+        ok: true,
         headers: new Map([['Content-Type', 'text/plain']]),
         text: vi.fn().mockResolvedValue('text content'),
       };
@@ -623,6 +627,7 @@ describe('GitHub files service', () => {
       });
 
       const mockResponse = {
+        ok: true,
         headers: new Map([['Content-Type', 'application/json']]),
         text: vi.fn().mockResolvedValue('{"key":"value"}'),
       };
@@ -645,6 +650,7 @@ describe('GitHub files service', () => {
       });
 
       const mockResponse = {
+        ok: true,
         headers: new Map([['Content-Type', 'text/markdown']]),
         text: vi.fn().mockResolvedValue('# Readme'),
       };
@@ -660,6 +666,26 @@ describe('GitHub files service', () => {
       expect(result.type).toBe('text/markdown');
     });
 
+    test('throws instead of returning an error response as the file content', async () => {
+      const asset = /** @type {any} */ ({ sha: 'test-sha', path: 'image.jpg' });
+
+      const mockResponse = {
+        ok: false,
+        status: 404,
+        headers: new Map([['Content-Type', 'application/json']]),
+        text: vi.fn().mockResolvedValue('{"message":"Not Found"}'),
+        blob: vi.fn(),
+      };
+
+      vi.mocked(fetchAPI).mockResolvedValue(mockResponse);
+
+      await expect(fetchBlob(asset)).rejects.toMatchObject({
+        message: 'Failed to fetch the blob',
+        cause: { status: 404 },
+      });
+      expect(mockResponse.text).not.toHaveBeenCalled();
+    });
+
     test('calls fetchAPI with correct repository and asset SHA', async () => {
       const asset = /** @type {any} */ ({
         sha: 'custom-sha-123',
@@ -667,6 +693,7 @@ describe('GitHub files service', () => {
       });
 
       const mockResponse = {
+        ok: true,
         headers: new Map([['Content-Type', 'application/octet-stream']]),
         blob: vi.fn().mockResolvedValue(new Blob()),
       };

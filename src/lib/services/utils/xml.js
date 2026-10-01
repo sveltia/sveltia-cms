@@ -24,7 +24,7 @@ export const parseXml = (xml) => {
       const key = child.tagName;
       const value = nodeToObject(child);
 
-      if (obj[key]) {
+      if (Object.hasOwn(obj, key)) {
         if (Array.isArray(obj[key])) {
           obj[key].push(value);
         } else {

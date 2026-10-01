@@ -306,9 +306,14 @@ export const deleteBranch = async (branch) => {
   try {
     await fetchAPI(
       `/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`,
-      { method: 'DELETE', responseType: 'raw' },
+      { method: 'DELETE', responseType: 'text' },
     );
   } catch (/** @type {any} */ ex) {
+    // The branch is already gone, which is what was wanted
+    if (ex.cause?.status === 404) {
+      return;
+    }
+
     // Leaving the branch behind is harmless, but it makes the next merge request for the same entry
     // start from an existing branch, so make the failure visible rather than swallowing it
     // eslint-disable-next-line no-console

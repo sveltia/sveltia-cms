@@ -14,6 +14,7 @@
   import ObjectBody from '$lib/components/contents/details/fields/object/object-body.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
   import { suspendAutoDuplication } from '$lib/services/contents/draft';
+  import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
@@ -104,8 +105,16 @@
   const hasValues = $derived(
     getKeysByPrefix(valueMap, `${keyPath}.`).some((_keyPath) => valueMap[_keyPath] !== undefined),
   );
+  const inEditorComponent = $derived(fieldContext === 'rich-text-editor-component');
+  // Like `FieldEditor`, a field without an `i18n` option of its own follows an ancestor using the
+  // `duplicate` strategy, while a rich text editor component’s subfield only has its own option
+  const isDuplicated = $derived(
+    inEditorComponent
+      ? i18n === 'duplicate'
+      : isDuplicatedField({ fieldConfig, getFieldArgs: { ...getFieldArgs, keyPath } }),
+  );
   const canEdit = $derived(
-    fieldContext === 'rich-text-editor-component' || locale === defaultLocale || i18n !== false,
+    inEditorComponent || locale === defaultLocale || i18n !== false || isDuplicated,
   );
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
   const parentExpanded = $derived(isExpanded(entryDraft.current, parentExpandedKeyPath));
@@ -118,9 +127,7 @@
   const unknownType = $derived(hasVariableTypes && !typeConfig);
   const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
   const summaryTemplate = $derived(hasVariableTypes ? typeConfig?.summary || summary : summary);
-  const addButtonDisabled = $derived(
-    readonly || (locale !== defaultLocale && i18n === 'duplicate'),
-  );
+  const addButtonDisabled = $derived(readonly || (locale !== defaultLocale && isDuplicated));
 
   /**
    * Initialize the expander state.

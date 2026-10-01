@@ -277,6 +277,9 @@
         // Add a random ID to the new item to ensure it is unique. This is necessary for the `key`
         // attribute in the `each` block.
         newItem.__sc_item_id = crypto.randomUUID();
+        // A duplicated item is a new one, so it mustn’t keep the original position of its source,
+        // or a revert would treat it as the source item
+        delete newItem.__sc_item_original_key_path;
 
         // Track original key paths for existing items before they shift due to the insertion
         tagListItems(valueList, keyPath);

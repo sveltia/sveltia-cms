@@ -232,4 +232,16 @@ describe('ListEditorSimple', () => {
     expect(page.getByRole('button').elements()).toHaveLength(0);
     await expect.element(page.getByRole('textbox').nth(0)).toHaveAttribute('aria-readonly', 'true');
   });
+
+  test('does not add an item with the Enter key when read-only', async () => {
+    const { draft } = await renderEditor(['a', 'b'], { readonly: true });
+
+    await page.getByRole('textbox').nth(0).element().focus();
+    await userEvent.keyboard('{Enter}');
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    expect(getInputValues()).toEqual(['a', 'b']);
+    expect(getStoredItems(draft)).toEqual(['a', 'b']);
+  });
 });

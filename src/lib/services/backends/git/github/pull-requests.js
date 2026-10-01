@@ -177,9 +177,15 @@ export const deleteBranch = async (branch) => {
   try {
     await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodePath(branch)}`, {
       method: 'DELETE',
-      responseType: 'raw',
+      responseType: 'text',
     });
   } catch (/** @type {any} */ ex) {
+    // The branch is already gone, which is what was wanted. GitHub answers a missing reference with
+    // a 422 rather than a 404
+    if ([404, 422].includes(ex.cause?.status)) {
+      return;
+    }
+
     // Leaving the branch behind is harmless, but it makes the next pull request for the same entry
     // start from an existing branch, so make the failure visible rather than swallowing it
     // eslint-disable-next-line no-console

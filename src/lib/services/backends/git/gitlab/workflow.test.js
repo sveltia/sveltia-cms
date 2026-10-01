@@ -165,7 +165,7 @@ describe('GitLab Editorial Workflow service', () => {
       expect(fetchAPI).toHaveBeenNthCalledWith(
         2,
         `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
-        { method: 'DELETE', responseType: 'raw' },
+        { method: 'DELETE', responseType: 'text' },
       );
       expect(commitChanges).toHaveBeenCalledTimes(2);
       expect(commitChanges).toHaveBeenLastCalledWith([], {
@@ -191,7 +191,7 @@ describe('GitLab Editorial Workflow service', () => {
       // which is committed onto rather than wiped
       expect(fetchAPI).not.toHaveBeenCalledWith(expect.anything(), {
         method: 'DELETE',
-        responseType: 'raw',
+        responseType: 'text',
       });
       expect(commitChanges).toHaveBeenLastCalledWith([], {
         commitType: 'create',
@@ -243,7 +243,7 @@ describe('GitLab Editorial Workflow service', () => {
       expect(fetchAPI).toHaveBeenNthCalledWith(
         2,
         `/projects/${PROJECT_ID}/repository/branches/cms%2Fposts%2Fhello`,
-        { method: 'DELETE', responseType: 'raw' },
+        { method: 'DELETE', responseType: 'text' },
       );
       expect(result.pullRequest.number).toBe(5);
     });

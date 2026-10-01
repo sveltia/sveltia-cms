@@ -338,7 +338,8 @@ export const processI18nSingleFileEntry = (
   entry.slug = slug;
   entry.locales = Object.fromEntries(
     allLocales
-      .filter((_locale) => _locale in rawContent)
+      // A locale key without an object, e.g. an empty `fr:` stub, has no content to read
+      .filter((_locale) => isObject(rawContent[_locale]))
       .map((_locale) => [_locale, { slug, path, content: flatten(rawContent[_locale]) }]),
   );
 };
@@ -380,8 +381,9 @@ export const processI18nMultiFileEntry = (
 
   const slug = fileName || getSlug({ subPath, subPathTemplate });
   const localizedEntry = { slug, path, content: flatten(rawContent) };
-  // Use a temporary ID to locate all the localized files for the entry
-  const tempId = `${collectionName}/${canonicalSlug ?? slug}`;
+  // Use a temporary ID to locate all the localized files for the entry. The sub path is the same
+  // across locales, while the slug may not be unique, e.g. with the `{{year}}/{{slug}}` path
+  const tempId = `${collectionName}/${canonicalSlug ?? (fileName || subPath)}`;
   // Check if the entry has already been added for another locale. A lookup in the map rather than
   // a scan of the entry list keeps this linear over a repository with thousands of localized files
   const existingEntry = entryMap.get(tempId);
