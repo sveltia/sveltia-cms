@@ -45,11 +45,7 @@
     showContentOverlay,
     showDuplicateToast,
   } from '$lib/services/contents/editor';
-  import {
-    findEditorField,
-    getExpanderKeys,
-    syncExpanderStates,
-  } from '$lib/services/contents/editor/fields';
+  import { revealEditorField } from '$lib/services/contents/editor/fields';
   import {
     getDefaultPanes,
     getLocaleContentLabel,
@@ -128,7 +124,6 @@
     collectionFile,
     fileName,
     isIndexFile,
-    currentValues,
   } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
   const { showPreview, showSecondPane = true } = $derived(entryEditorSettings.current ?? {});
   /* v8 ignore start -- only read while the panes are set up, which needs a collection */
@@ -276,14 +271,13 @@
   };
 
   /**
-   * Highlight the corresponding editor field by expanding the parent list/object(s), moving the
-   * element into the viewport, and focus any control within the field, such as a text input or
-   * button.
+   * Reveal the requested editor field: switch to an edit pane for the locale if needed, then expand
+   * the parent list/object(s), move the field into the viewport and focus a control within it.
    * @param {object} args Arguments.
    * @param {InternalLocaleCode} args.locale Locale code.
    * @param {FieldKeyPath} args.keyPath Key path of the field.
    */
-  const highlightEditorField = async ({ locale, keyPath }) => {
+  const revealRequestedField = async ({ locale, keyPath }) => {
     highlightRequestCount += 1;
 
     const request = highlightRequestCount;
@@ -298,42 +292,13 @@
       return;
     }
 
-    const valueMap = currentValues?.[locale] ?? {};
+    /**
+     * Check whether a newer request has come in.
+     * @returns {boolean} Result.
+     */
+    const isOutdated = () => request !== highlightRequestCount;
 
-    const expanderKeys = getExpanderKeys({
-      collectionName,
-      fileName,
-      valueMap,
-      keyPath,
-      isIndexFile,
-    });
-
-    syncExpanderStates({
-      draft,
-      stateMap: Object.fromEntries(expanderKeys.map((key) => [key, true])),
-    });
-
-    const targetField = await findEditorField({ locale, keyPath });
-
-    // Finding the field can take a while, so leave it to a newer request that came in meanwhile
-    if (!targetField || request !== highlightRequestCount) {
-      return;
-    }
-
-    /* v8 ignore start -- `scrollIntoViewIfNeeded()` is non-standard; Firefox doesn’t have it */
-    if (typeof targetField.scrollIntoViewIfNeeded === 'function') {
-      targetField.scrollIntoViewIfNeeded();
-    } else {
-      targetField.scrollIntoView();
-    }
-    /* v8 ignore stop */
-
-    const widgetWrapper = targetField.querySelector('.field-wrapper');
-
-    /** @type {HTMLElement | null} */ (
-      widgetWrapper?.querySelector('[contenteditable="true"], [tabindex="0"]') ??
-        widgetWrapper?.querySelector('input, textarea, button')
-    )?.focus();
+    await revealEditorField({ draft, locale, keyPath, isOutdated });
   };
 
   /**
@@ -341,19 +306,19 @@
    * clicks a search result or validation error. Then clear the highlight state so that it doesn’t
    * trigger again on navigation.
    */
-  const highlightEditorFieldIfNeeded = async () => {
+  const revealRequestedFieldIfNeeded = async () => {
     const { state } = window.history;
     const { locale, keyPath } = state?.highlight ?? {};
 
     if (typeof locale === 'string' && typeof keyPath === 'string' && locale && keyPath) {
-      await highlightEditorField({ locale, keyPath });
+      await revealRequestedField({ locale, keyPath });
       window.history.replaceState({ ...state, highlight: null }, '');
     }
   };
 
   /**
    * Called when a message event is received. If the event is a highlight event, calls
-   * {@link highlightEditorField} with the event payload.
+   * {@link revealRequestedField} with the event payload.
    * @param {MessageEvent} event The message event.
    */
   const onmessage = (event) => {
@@ -363,7 +328,7 @@
     }
 
     if (event.data?.type === 'highlight-editor-field' && event.data.payload) {
-      highlightEditorField(event.data.payload);
+      revealRequestedField(event.data.payload);
     }
   };
 
@@ -466,7 +431,7 @@
           hidden = false;
           await switchPanes();
           await focusOverlay(() => wrapper);
-          await highlightEditorFieldIfNeeded();
+          await revealRequestedFieldIfNeeded();
           resetBackupToastState();
         }
       })();

@@ -13,6 +13,7 @@ import {
   highlightEditorField,
   highlightPreviewTemplateField,
   isExpanded,
+  revealEditorField,
 } from './fields.js';
 
 /**
@@ -257,6 +258,105 @@ describe('findEditorField', () => {
       findEditorField({ locale: 'en', keyPath: 'list.9', maxAttempts: 3, interval: 0 }),
     ).resolves.toBeNull();
     expect(spy).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('revealEditorField', () => {
+  /** @type {any} */
+  let draft;
+  /** @type {HTMLElement} */
+  let field;
+
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <div class="content-editor">
+        <div class="pane" data-mode="edit" data-locale="en">
+          <div class="field" data-key-path="items.0.title">
+            <div class="field-wrapper"><button type="button"></button><input></div>
+          </div>
+        </div>
+      </div>
+    `;
+    field = /** @type {HTMLElement} */ (document.querySelector('.field'));
+    draft = {
+      collectionName: 'posts',
+      fileName: undefined,
+      isIndexFile: false,
+      currentValues: { en: { 'items.0.title': 'Hello' } },
+      expanderStates: { _: {} },
+    };
+    vi.mocked(getField).mockImplementation(({ keyPath }) =>
+      keyPath === 'items' ? /** @type {any} */ ({ name: 'items', widget: 'list' }) : undefined,
+    );
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+    vi.restoreAllMocks();
+  });
+
+  it('expands the parents, scrolls to the field and focuses its first control', async () => {
+    const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {});
+
+    await revealEditorField({ draft, locale: 'en', keyPath: 'items.0.title' });
+
+    expect(getField).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: 'posts', valueMap: draft.currentValues.en }),
+    );
+    expect(draft.expanderStates._).toEqual({ 'items#': true });
+    expect(scroll).toHaveBeenCalledOnce();
+    expect(scroll.mock.contexts[0]).toBe(field);
+    expect(document.activeElement).toBe(field.querySelector('input, button'));
+  });
+
+  it('scrolls only if needed where supported, and prefers a focusable widget', async () => {
+    const scrollIntoViewIfNeeded = vi.fn();
+    const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+    const widget = document.createElement('div');
+
+    widget.tabIndex = 0;
+    field.querySelector('.field-wrapper')?.append(widget);
+    Object.assign(field, { scrollIntoViewIfNeeded });
+
+    await revealEditorField({ draft, locale: 'en', keyPath: 'items.0.title' });
+
+    expect(scrollIntoViewIfNeeded).toHaveBeenCalledOnce();
+    expect(scroll).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(widget);
+  });
+
+  it('leaves the field alone once a newer request has come in', async () => {
+    const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+    await revealEditorField({
+      draft,
+      locale: 'en',
+      keyPath: 'items.0.title',
+      isOutdated: vi.fn(() => true),
+    });
+
+    expect(draft.expanderStates._).toEqual({ 'items#': true });
+    expect(scroll).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('does nothing more if the field can’t be found', async () => {
+    const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+    await revealEditorField({ draft, locale: 'fr', keyPath: 'items.0.title' });
+
+    expect(getField).toHaveBeenCalledWith(expect.objectContaining({ valueMap: {} }));
+    expect(scroll).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('skips the focus if the field has no control', async () => {
+    field.querySelector('.field-wrapper')?.remove();
+    vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {});
+
+    await revealEditorField({ draft, locale: 'en', keyPath: 'items.0.title' });
+
+    expect(document.activeElement).toBe(document.body);
   });
 });
 

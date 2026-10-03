@@ -319,6 +319,57 @@ export const findEditorField = async ({ locale, keyPath, maxAttempts = 20, inter
 };
 
 /**
+ * Reveal the field with the given key path in the edit pane for the given locale: expand its parent
+ * List and Object fields, move it into the viewport, and focus any control within it, such as a
+ * text input or button.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {InternalLocaleCode} args.locale Locale of the edit pane.
+ * @param {FieldKeyPath} args.keyPath Key path of the field.
+ * @param {() => boolean} [args.isOutdated] Function telling whether the request has been
+ * superseded by a newer one while the field was being looked up, in which case it’s left alone.
+ * @returns {Promise<void>} A promise that resolves once the field has been revealed, or couldn’t
+ * be found.
+ */
+export const revealEditorField = async ({ draft, locale, keyPath, isOutdated = () => false }) => {
+  const { collectionName, fileName, currentValues, isIndexFile } = draft;
+
+  const expanderKeys = getExpanderKeys({
+    collectionName,
+    fileName,
+    valueMap: currentValues[locale] ?? {},
+    keyPath,
+    isIndexFile,
+  });
+
+  syncExpanderStates({
+    draft,
+    stateMap: Object.fromEntries(expanderKeys.map((key) => [key, true])),
+  });
+
+  const targetField = await findEditorField({ locale, keyPath });
+
+  // Finding the field can take a while, so leave it to a newer request that came in meanwhile
+  if (!targetField || isOutdated()) {
+    return;
+  }
+
+  // `scrollIntoViewIfNeeded()` is non-standard; Firefox doesn’t have it
+  if (typeof targetField.scrollIntoViewIfNeeded === 'function') {
+    targetField.scrollIntoViewIfNeeded();
+  } else {
+    targetField.scrollIntoView();
+  }
+
+  const widgetWrapper = targetField.querySelector('.field-wrapper');
+
+  /** @type {HTMLElement | null} */ (
+    widgetWrapper?.querySelector('[contenteditable="true"], [tabindex="0"]') ??
+      widgetWrapper?.querySelector('input, textarea, button')
+  )?.focus();
+};
+
+/**
  * Highlight the Edit Pane field that corresponds to an element in a custom preview template, just
  * like clicking a field in the default preview does. The template marks the element with the
  * `data-key-path` attribute, which Scroll Synchronization also uses. A click on the element or

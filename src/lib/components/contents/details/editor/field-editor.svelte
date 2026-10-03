@@ -11,11 +11,11 @@
   import { CustomEditor, editors } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
   import { isDraftReadonly } from '$lib/services/config/readonly';
-  import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { canResetField, resetField } from '$lib/services/contents/draft/update/reset';
   import { isFieldChanged, revertChanges } from '$lib/services/contents/draft/update/revert';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
   import {
     getCurrentValue,
     getFieldKind,
@@ -24,7 +24,6 @@
   } from '$lib/services/contents/entry/fields';
   import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
   import { createRawState } from '$lib/services/utils/state.svelte';
   import { sanitizeInlineMarkdown } from '$lib/services/utils/string';
   import { isPendingDeletion } from '$lib/services/workflow';
@@ -138,7 +137,7 @@
   );
 
   const inEditorComponent = $derived(fieldContext === 'rich-text-editor-component');
-  const { name: fieldName, widget: fieldType = 'string', i18n = false } = $derived(fieldConfig);
+  const { name: fieldName, widget: fieldType = 'string' } = $derived(fieldConfig);
   const {
     label = '',
     hint = '',
@@ -175,39 +174,25 @@
   );
   /* v8 ignore stop */
   const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
-  const canTranslate = $derived(i18nEnabled && isFieldTranslatable(i18n));
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
-  // A field without an `i18n` option of its own is duplicated along with an ancestor using the
-  // `duplicate` strategy, so it’s shown read-only in the other locales like the ancestor, rather
-  // than leaving an empty List item or Object field there. A rich text editor component’s subfield
-  // isn’t part of the entry’s fields, so it only has its own option
-  const canDuplicate = $derived(
-    i18nEnabled &&
-      (inEditorComponent
-        ? i18n === 'duplicate'
-        : isDuplicatedField({
-            fieldConfig,
-            getFieldArgs: {
-              // The editor is only rendered while the draft is there
-              collectionName: /** @type {string} */ (entryDraft.current?.collectionName),
-              fileName: entryDraft.current?.fileName,
-              isIndexFile: entryDraft.current?.isIndexFile,
-              keyPath,
-              valueMap,
-            },
-          })),
-  );
-  // KeyValue field only: the keys are mirrored from the default locale, the values are editable
-  const canDuplicateKeys = $derived(i18nEnabled && i18n === 'duplicate_keys');
-  const canEdit = $derived(
-    inEditorComponent ||
-      locale === defaultLocale ||
-      canTranslate ||
-      canDuplicate ||
-      canDuplicateKeys,
+  // Whether the field is shown, and whether it follows the default locale, in this locale
+  const {
+    canTranslate,
+    isDuplicated,
+    areKeysDuplicated,
+    isShown: canEdit,
+  } = $derived(
+    getFieldLocaleAccess({
+      draft: entryDraft.current,
+      fieldConfig,
+      keyPath,
+      locale,
+      valueMap,
+      inEditorComponent,
+    }),
   );
   const canCopy = $derived(!inEditorComponent && canTranslate && otherLocales.length);
-  const canRevert = $derived(!inEditorComponent && !(canDuplicate && locale !== defaultLocale));
+  const canRevert = $derived(!inEditorComponent && !isDuplicated);
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
     getCurrentValue({ valueMap, keyPath, isList, isCustomFieldType: !!customFieldType }),
@@ -238,14 +223,12 @@
     (readonlyOption ?? fieldType === 'uuid') ||
       autoNow ||
       locked ||
-      (canDuplicate && locale !== defaultLocale) ||
+      isDuplicated ||
       fieldType === 'compute',
   );
   // A field can be restored to its default value or cleared, unless it can’t be edited or its keys
   // follow the default locale, as with a KeyValue field using the `duplicate_keys` i18n strategy
-  const canReset = $derived(
-    !inEditorComponent && !readonly && !(canDuplicateKeys && locale !== defaultLocale),
-  );
+  const canReset = $derived(!inEditorComponent && !readonly && !areKeysDuplicated);
   /**
    * Whether restoring the default value or clearing the field would change anything. It takes
    * going through the whole field, so it’s only checked as the menu opens rather than on every

@@ -230,16 +230,6 @@ describe('ObjectEditor', () => {
     }
   });
 
-  test('can’t add an optional object in a locale whose values follow the default locale', async () => {
-    await renderEditor(
-      { ...authorField, required: false, i18n: 'duplicate' },
-      {},
-      { locale: 'fr' },
-    );
-
-    await expect.element(page.getByRole('checkbox', { name: /Add\W+Author/ })).toBeDisabled();
-  });
-
   test('can’t add or remove an object when read-only', async () => {
     await renderEditor({ ...authorField, required: false }, {}, { props: { readonly: true } });
 
@@ -352,21 +342,10 @@ describe('ObjectEditor', () => {
 
     // The values are shown, like those of a subfield with its own `duplicate` option
     await expect.poll(() => container.querySelector('.wrapper')).not.toBeNull();
-    // The object can’t be removed in the locale, even without the `readonly` prop
-    await expect.element(page.getByRole('checkbox', { name: /Author/ })).toBeDisabled();
-  });
-
-  test('has nothing to edit in another locale when not localized', async () => {
-    const { container } = await renderEditor(
-      authorField,
-      { 'author.name': 'Melvin', 'author.email': '' },
-      { locale: 'fr' },
-    );
-
-    await new Promise((resolve) => {
-      setTimeout(resolve, 100);
-    });
-    expect(container.querySelector('.wrapper')).toBeNull();
+    await expect.element(page.getByRole('textbox', { name: 'name' })).toHaveValue('Melvin');
+    await expect
+      .element(page.getByRole('textbox', { name: 'name' }))
+      .toHaveAttribute('aria-readonly', 'true');
   });
 
   test('hides the header within a single-subfield list', async () => {

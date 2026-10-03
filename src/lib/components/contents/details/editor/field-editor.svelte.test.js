@@ -251,6 +251,22 @@ describe('FieldEditor', () => {
     expect(page.getByRole('button', { name: 'Show Field Options' }).elements()).toHaveLength(0);
   });
 
+  test('can’t add an optional Object field duplicated from the default locale', async () => {
+    await renderEditor({
+      fieldConfig: {
+        name: 'author',
+        widget: 'object',
+        required: false,
+        i18n: 'duplicate',
+        fields: [{ name: 'name', widget: 'string' }],
+      },
+      locale: 'ja',
+      i18nEnabled: true,
+    });
+
+    await expect.element(page.getByRole('checkbox', { name: /Add\W+author/ })).toBeDisabled();
+  });
+
   test('locks every field of a read-only entry', async () => {
     const fieldConfig = { name: 'title', widget: 'string', i18n: true };
 
@@ -551,6 +567,12 @@ describe('FieldEditor (nested in a duplicated field)', () => {
     fields: [
       { name: 'name', widget: 'string' },
       { name: 'note', widget: 'string', i18n: true },
+      {
+        name: 'address',
+        widget: 'object',
+        required: false,
+        fields: [{ name: 'street', widget: 'string' }],
+      },
     ],
   };
 
@@ -622,6 +644,12 @@ describe('FieldEditor (nested in a duplicated field)', () => {
     });
 
     await expect.element(page.getByRole('textbox')).toHaveAttribute('aria-readonly', 'true');
+  });
+
+  test('can’t add an optional Object subfield duplicated along with its ancestor', async () => {
+    await renderSubField(venueField.fields[2]);
+
+    await expect.element(page.getByRole('checkbox', { name: /Add\W+address/ })).toBeDisabled();
   });
 
   test('lets a subfield with its own translatable option be edited in another locale', async () => {

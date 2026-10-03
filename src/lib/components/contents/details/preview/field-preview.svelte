@@ -1,13 +1,11 @@
 <script>
   import { CustomPreview, previews } from '$lib/components/contents/details/fields';
   import { customFieldTypeRegistry } from '$lib/services/api/registries';
-  import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { highlightEditorField } from '$lib/services/contents/editor/fields';
+  import { getFieldLocaleAccess } from '$lib/services/contents/editor/locale';
   import { getCurrentValue, isFieldMultiple } from '$lib/services/contents/entry/fields';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
-  import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 
   /**
    * @import { InternalLocaleCode, TypedFieldKeyPath } from '$lib/types/private';
@@ -36,35 +34,14 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const { name: fieldName, widget: fieldType = 'string', i18n = false } = $derived(fieldConfig);
+  const { name: fieldName, widget: fieldType = 'string' } = $derived(fieldConfig);
   const { label = '', preview = true } = $derived(/** @type {VisibleField} */ (fieldConfig));
   const multiple = $derived(isFieldMultiple(fieldConfig));
   const isList = $derived(fieldType === 'list' || multiple);
-  const collection = $derived(entryDraft.current?.collection);
-  const collectionFile = $derived(entryDraft.current?.collectionFile);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
-  /* v8 ignore start -- the preview is only rendered while the draft is there */
-  const { i18nEnabled, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
-  );
-  /* v8 ignore stop */
-  const canTranslate = $derived(i18nEnabled && isFieldTranslatable(i18n));
-  // A field without an `i18n` option of its own is duplicated along with an ancestor using the
-  // `duplicate` strategy, so it’s shown in the other locales like in `FieldEditor`
-  const canDuplicate = $derived(
-    i18nEnabled &&
-      (i18n === 'duplicate_keys' ||
-        isDuplicatedField({
-          fieldConfig,
-          getFieldArgs: {
-            // The preview is only rendered while the draft is there
-            collectionName: /** @type {string} */ (entryDraft.current?.collectionName),
-            fileName: entryDraft.current?.fileName,
-            isIndexFile: entryDraft.current?.isIndexFile,
-            keyPath,
-            valueMap,
-          },
-        })),
+  // A field duplicated along with an ancestor is shown in the other locales like in `FieldEditor`
+  const { isShown } = $derived(
+    getFieldLocaleAccess({ draft: entryDraft.current, fieldConfig, keyPath, locale, valueMap }),
   );
   const customFieldType = $derived(customFieldTypeRegistry.get(fieldType));
   const currentValue = $derived(
@@ -73,7 +50,7 @@
   const previewProps = $derived({ locale, keyPath, typedKeyPath, fieldConfig, currentValue });
 </script>
 
-{#if fieldType !== 'hidden' && preview && (locale === defaultLocale || canTranslate || canDuplicate)}
+{#if fieldType !== 'hidden' && preview && isShown}
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <section
