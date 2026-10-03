@@ -320,6 +320,54 @@ export const redirectLegacyEntryLink = () => {
 };
 
 /**
+ * Page names that make up the whole route. Unlike the content library and the other pages that
+ * take a path of their own, anything following these in the URL is a dead link.
+ */
+const STANDALONE_PAGE_NAMES = ['workflow', 'config', 'menu'];
+/**
+ * Search modes set by the pages that search their own items.
+ * @type {Record<string, 'contents' | 'assets'>}
+ */
+const PAGE_SEARCH_MODES = { collections: 'contents', assets: 'assets' };
+
+/**
+ * Result of {@link resolveRoute}: a URL to redirect to, a dead link, or the page to show along with
+ * the search mode to set. `searchMode` is `undefined` when the current search mode is to be kept.
+ * @typedef {{ redirect: string } | { notFound: true } | {
+ * pageName: string, searchMode: 'contents' | 'assets' | null | undefined }} ResolvedRoute
+ */
+
+/**
+ * Determine which page to show for the given URL path.
+ * @param {string} path URL path, as returned by {@link parseLocation}.
+ * @param {string[]} pageNames Names of the available pages.
+ * @returns {ResolvedRoute} Result.
+ */
+export const resolveRoute = (path, pageNames) => {
+  // The page name has to fill the whole first path segment, so `/collections-foo` doesn’t pass for
+  // the content library and land on a page that can’t make sense of the rest of the path
+  const { pageName } = path.match(`^\\/(?<pageName>${pageNames.join('|')})(?=\\/|$)`)?.groups ?? {};
+
+  if (!pageName) {
+    // The bare `#/` path is where the app starts, so open the content library. Any other unknown
+    // path is a dead link. Show a Not Found page instead of redirecting, which would hide the fact
+    // that the URL the user followed no longer goes anywhere
+    return path === '/' ? { redirect: '#/collections' } : { notFound: true };
+  }
+
+  if (STANDALONE_PAGE_NAMES.includes(pageName) && path !== `/${pageName}`) {
+    return { notFound: true };
+  }
+
+  // The content library and the asset library search their own items. The search page keeps the
+  // current mode, and any other page has nothing to search
+  return {
+    pageName,
+    searchMode: pageName === 'search' ? undefined : (PAGE_SEARCH_MODES[pageName] ?? null),
+  };
+};
+
+/**
  * Go back to the previous page if possible, or navigate to the given fallback URL.
  * @param {string} path Fallback URL path. With the Navigation API, the previous page is only
  * returned to when it’s at this path, or when `returnTo` accepts its path.

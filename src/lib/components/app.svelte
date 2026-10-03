@@ -1,6 +1,6 @@
 <script>
   import { AppShell } from '@sveltia/ui';
-  import { onMount, untrack } from 'svelte';
+  import { onMount } from 'svelte';
 
   import EntrancePage from '$lib/components/entrance/entrance-page.svelte';
   import BackendStatusIndicator from '$lib/components/global/infobars/backend-status-indicator.svelte';
@@ -54,10 +54,8 @@
     initUserEnvDetection();
   });
 
-  $effect(() => {
-    untrack(() => {
-      initCmsConfig(config);
-    });
+  onMount(() => {
+    initCmsConfig(config);
   });
 
   // Fix the position of the custom mount element if needed

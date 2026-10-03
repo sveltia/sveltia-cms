@@ -11,6 +11,7 @@ import {
   openProductionSite,
   parseLocation,
   redirectLegacyEntryLink,
+  resolveRoute,
   startViewTransition,
   updateContentFromHashChange,
 } from './navigation';
@@ -776,6 +777,61 @@ describe('navigation', () => {
       });
 
       expect(window.history.replaceState).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveRoute', () => {
+    const pageNames = ['collections', 'assets', 'search', 'workflow', 'config', 'menu', 'settings'];
+
+    it('should redirect the root path to the content library', () => {
+      expect(resolveRoute('/', pageNames)).toEqual({ redirect: '#/collections' });
+    });
+
+    it('should report an unknown path as not found', () => {
+      expect(resolveRoute('/unknown', pageNames)).toEqual({ notFound: true });
+      expect(resolveRoute('', pageNames)).toEqual({ notFound: true });
+      // The page name has to fill the whole first path segment
+      expect(resolveRoute('/collections-foo', pageNames)).toEqual({ notFound: true });
+      expect(resolveRoute('/not-found', pageNames)).toEqual({ notFound: true });
+    });
+
+    it('should report a standalone page followed by a sub path as not found', () => {
+      expect(resolveRoute('/workflow/foo', pageNames)).toEqual({ notFound: true });
+      expect(resolveRoute('/config/foo', pageNames)).toEqual({ notFound: true });
+      expect(resolveRoute('/menu/foo', pageNames)).toEqual({ notFound: true });
+    });
+
+    it('should set the search mode for the content and asset libraries', () => {
+      expect(resolveRoute('/collections', pageNames)).toEqual({
+        pageName: 'collections',
+        searchMode: 'contents',
+      });
+      expect(resolveRoute('/collections/posts/entries/hello', pageNames)).toEqual({
+        pageName: 'collections',
+        searchMode: 'contents',
+      });
+      expect(resolveRoute('/assets/images', pageNames)).toEqual({
+        pageName: 'assets',
+        searchMode: 'assets',
+      });
+    });
+
+    it('should keep the search mode on the search page', () => {
+      expect(resolveRoute('/search/foo', pageNames)).toEqual({
+        pageName: 'search',
+        searchMode: undefined,
+      });
+    });
+
+    it('should clear the search mode on any other page', () => {
+      expect(resolveRoute('/workflow', pageNames)).toEqual({
+        pageName: 'workflow',
+        searchMode: null,
+      });
+      expect(resolveRoute('/settings/appearance', pageNames)).toEqual({
+        pageName: 'settings',
+        searchMode: null,
+      });
     });
   });
 

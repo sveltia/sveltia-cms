@@ -3,22 +3,6 @@
   import { SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
   import { AUTO_PREF_VALUE, prefs } from '$lib/services/user/prefs.svelte';
-
-  /**
-   * @import { SettingsPanelOnChangeArgs } from '$lib/types/private';
-   */
-
-  /**
-   * @typedef {object} Props
-   * @property {(detail: SettingsPanelOnChangeArgs) => void} [onChange] `change` event handler.
-   */
-
-  /** @type {Props} */
-  let {
-    /* eslint-disable prefer-const, no-unused-vars */
-    onChange = undefined,
-    /* eslint-enable prefer-const, no-unused-vars */
-  } = $props();
 </script>
 
 <section>

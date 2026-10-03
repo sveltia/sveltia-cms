@@ -24,6 +24,7 @@
   import {
     parseLocation,
     redirectLegacyEntryLink,
+    resolveRoute,
     selectedPageName,
   } from '$lib/services/app/navigation';
   import { canShowMobileSignInDialog } from '$lib/services/app/onboarding';
@@ -35,12 +36,6 @@
    * itself, so `#/not-found` is a dead link like any other unknown path.
    */
   const NOT_FOUND_PAGE_NAME = 'not-found';
-
-  /**
-   * Page names that make up the whole route. Unlike the content library and the other pages that
-   * take a path of their own, anything following these in the URL is a dead link.
-   */
-  const STANDALONE_PAGE_NAMES = ['workflow', 'config', 'menu'];
 
   /** @type {Record<string, any>} */
   const pages = $derived({
@@ -65,61 +60,37 @@
   );
 
   /**
-   * Show the Not Found page, which isn’t a route of its own, so `#/not-found` is a dead link like
-   * any other unknown path.
-   */
-  const showNotFound = () => {
-    selectedPageName.current = NOT_FOUND_PAGE_NAME;
-    searchMode.current = null;
-  };
-
-  /**
    * Select one of the pages given the URL path.
    */
-  export const selectPage = () => {
-    // A Netlify/Decap CMS shorthand link to an entry has to be caught before the fallback below,
+  const selectPage = () => {
+    // A Netlify/Decap CMS shorthand link to an entry has to be caught before the route is resolved,
     // which would otherwise drop the user on the collection list with no sign of where they meant
     // to go. The redirect triggers another `hashchange`, so this runs again with the real route
     if (redirectLegacyEntryLink()) {
       return;
     }
 
-    const { path } = parseLocation();
+    const route = resolveRoute(parseLocation().path, Object.keys(pages));
 
-    // The page name has to fill the whole first path segment, so `/collections-foo` doesn’t pass
-    // for the content library and land on a page that can’t make sense of the rest of the path
-    const { pageName } =
-      path.match(`^\\/(?<pageName>${Object.keys(pages).join('|')})(?=\\/|$)`)?.groups ?? {};
-
-    if (!pageName) {
-      if (path === '/') {
-        // The bare `#/` path is where the app starts, so open the content library
-        window.location.replace('#/collections');
-      } else {
-        // Any other unknown path is a dead link. Show a Not Found page instead of redirecting,
-        // which would hide the fact that the URL the user followed no longer goes anywhere
-        showNotFound();
-      }
+    if ('redirect' in route) {
+      window.location.replace(route.redirect);
 
       return;
     }
 
-    if (STANDALONE_PAGE_NAMES.includes(pageName) && path !== `/${pageName}`) {
-      showNotFound();
-
-      return;
-    }
-
-    if (selectedPageName.current !== pageName) {
-      selectedPageName.current = pageName;
-    }
-
-    if (pageName === 'collections') {
-      searchMode.current = 'contents';
-    } else if (pageName === 'assets') {
-      searchMode.current = 'assets';
-    } else if (pageName !== 'search') {
+    if ('notFound' in route) {
+      selectedPageName.current = NOT_FOUND_PAGE_NAME;
       searchMode.current = null;
+
+      return;
+    }
+
+    if (selectedPageName.current !== route.pageName) {
+      selectedPageName.current = route.pageName;
+    }
+
+    if (route.searchMode !== undefined) {
+      searchMode.current = route.searchMode;
     }
   };
 

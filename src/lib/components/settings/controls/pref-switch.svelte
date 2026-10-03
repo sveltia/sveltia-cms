@@ -19,18 +19,18 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  // eslint-disable-next-line svelte/prefer-writable-derived
-  let checked = $state(true);
-
-  $effect(() => {
-    checked = Boolean(/** @type {Record<string, any>} */ (prefs)[key] ?? defaultValue);
-  });
-
-  $effect(() => {
-    if (/** @type {Record<string, any>} */ (prefs)[key] !== checked) {
-      /** @type {Record<string, any>} */ (prefs)[key] = checked;
-    }
-  });
+  /**
+   * Preferences, cast to allow access by an arbitrary key.
+   */
+  const _prefs = /** @type {Record<string, any>} */ (prefs);
 </script>
 
-<Switch bind:checked {label} />
+<Switch
+  bind:checked={
+    () => Boolean(_prefs[key] ?? defaultValue),
+    (value) => {
+      _prefs[key] = value;
+    }
+  }
+  {label}
+/>

@@ -38,8 +38,8 @@ describe('PrefSwitch', () => {
 
     await render(PrefSwitch, { key: 'closeOnSave', label: 'Close on save' });
     await expect.element(page.getByRole('switch')).toBeChecked();
-    // The default is written back to the preferences
-    await vi.waitFor(() => expect(prefs.closeOnSave).toBe(true));
+    // The default isn’t written to the preferences, which are filled with the defaults on load
+    expect(prefs.closeOnSave).toBeUndefined();
 
     resetPrefs();
 

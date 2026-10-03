@@ -7,11 +7,12 @@
   import { cmsConfig } from '$lib/services/config';
   import { auth, signInAutomatically, signInManually } from '$lib/services/user/auth.svelte';
   import { env } from '$lib/services/user/env.svelte';
+  import { getSignInOptions } from '$lib/services/user/sign-in-options';
   import { makeLink } from '$lib/services/utils/string';
   import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
   /**
-   * @import { Backend, GitBackend, GiteaBackend } from '$lib/types/public';
+   * @import { Backend, GitBackend } from '$lib/types/public';
    */
 
   let showTokenDialog = $state(false);
@@ -36,45 +37,8 @@
     backendName === 'github' && isWorkflowConfigured(cmsConfig.current),
   );
 
-  /**
-   * The label to use for the Sign In button, which is usually the backend’s label but can be
-   * overridden for specific backends (e.g. Forgejo on Codeberg) to provide a better UX.
-   */
-  const signInServiceLabel = $derived.by(() => {
-    if (
-      backendName === 'gitea' &&
-      /** @type {GiteaBackend} */ (configuredBackend).base_url === 'https://codeberg.org'
-    ) {
-      return 'Codeberg';
-    }
-
-    return backend?.label;
-  });
-
-  /**
-   * Whether the option to sign in using a PAT should be hidden.
-   */
-  const tokenOptionHidden = $derived(
-    !isTestRepo &&
-      /** @type {GitBackend} */ (configuredBackend).auth_methods?.includes('token') === false,
-  );
-
-  /**
-   * Whether the option to sign in using OAuth should be hidden.
-   */
-  const oauthOptionHidden = $derived(
-    !isTestRepo &&
-      /** @type {GitBackend} */ (configuredBackend).auth_methods?.includes('oauth') === false,
-  );
-
-  /**
-   * Whether the option to sign in using OAuth should be disabled. This is used for Gitea with PKCE
-   * authentication, which requires an app ID to be provided. We can’t check this during config
-   * validation because token authentication doesn’t require an ID, so we check it here instead.
-   * @see https://github.com/sveltia/sveltia-cms/issues/721
-   */
-  const oauthOptionDisabled = $derived(
-    backendName === 'gitea' && !(/** @type {GiteaBackend} */ (configuredBackend).app_id),
+  const { serviceLabel, tokenOptionHidden, oauthOptionHidden, oauthOptionDisabled } = $derived(
+    getSignInOptions(configuredBackend, backend?.label),
   );
 
   /* v8 ignore start -- the name is only read while the dialog is open, when the account is set */
@@ -137,7 +101,7 @@
         variant={showLocalBackendOption ? 'secondary' : 'primary'}
         label={isTestRepo
           ? _('work_with_test_repo')
-          : _('sign_in_with_x', { values: { service: signInServiceLabel } })}
+          : _('sign_in_with_x', { values: { service: serviceLabel } })}
         disabled={oauthOptionDisabled}
         onclick={async () => {
           await signInManually(backendName);
@@ -147,7 +111,7 @@
     {#if !isTestRepo && !tokenOptionHidden}
       <Button
         variant="secondary"
-        label={_('sign_in_using_access_token', { values: { service: signInServiceLabel } })}
+        label={_('sign_in_using_access_token', { values: { service: serviceLabel } })}
         onclick={() => {
           showTokenDialog = true;
         }}
@@ -186,7 +150,7 @@
   {/if}
   {#if backend?.repository?.tokenPageURL}
     {@html makeLink(
-      _('sign_in_using_access_token_link', { values: { service: signInServiceLabel } }),
+      _('sign_in_using_access_token_link', { values: { service: serviceLabel } }),
       backend.repository.tokenPageURL,
     )}
   {/if}
@@ -206,7 +170,7 @@
   }}
 >
   {_('sign_in_with_link_confirmation', {
-    values: { account: magicLinkAccountName, service: signInServiceLabel },
+    values: { account: magicLinkAccountName, service: serviceLabel },
   })}
 </ConfirmationDialog>
 
