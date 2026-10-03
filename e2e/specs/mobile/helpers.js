@@ -7,7 +7,7 @@ import { expect } from '../../fixtures/test.js';
  */
 
 // The descriptor also names the browser to run, which a test can’t change within a project
-const { defaultBrowserType, ...pixel } = devices['Pixel 7'];
+const { defaultBrowserType: _defaultBrowserType, ...pixel } = devices['Pixel 7'];
 
 /**
  * Browser context options for a phone: a viewport narrower than 768 pixels, where the CMS switches
