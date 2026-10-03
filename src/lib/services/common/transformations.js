@@ -6,6 +6,7 @@ import dayjsUTC from 'dayjs/plugin/utc';
 
 import { slugify } from '$lib/services/common/slug';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
+import { getOrCreateBounded } from '$lib/services/utils/cache';
 
 /**
  * @import { StringTransformation } from '$lib/types/private';
@@ -107,20 +108,42 @@ const splitTransformations = (string) => {
 };
 
 /**
+ * Cache of parsed placeholders, keyed by the placeholder string. Summary and slug templates are
+ * applied to every entry, e.g. on every keystroke of an entry search, but only have a few
+ * placeholders, which are parsed once here instead of once per entry.
+ * @type {Map<string, { value: string, transformations: StringTransformation[] }>}
+ */
+const parsedTransformationsCache = new Map();
+
+/**
  * Parse a string containing a value and multiple transformations separated by the pipe (`|`)
- * character.
+ * character. The result is cached and shared between callers, so it’s frozen.
  * @param {string} string The string containing a value and transformations.
  * @returns {{ value: string, transformations: StringTransformation[] }} Parsed value and
  * transformation entries.
  */
-export const parseTransformations = (string) => {
-  const [value, ...rawTransformations] = splitTransformations(string.trim());
+export const parseTransformations = (string) =>
+  getOrCreateBounded(
+    parsedTransformationsCache,
+    string,
+    () => {
+      const [value, ...rawTransformations] = splitTransformations(string.trim());
 
-  return {
-    value,
-    transformations: rawTransformations.map((tf) => parseTransformation(tf)),
-  };
-};
+      return Object.freeze({
+        value,
+        transformations: /** @type {StringTransformation[]} */ (
+          Object.freeze(
+            rawTransformations.map((tf) => {
+              const { method, args } = parseTransformation(tf);
+
+              return Object.freeze({ method, args: Object.freeze(args) });
+            }),
+          )
+        ),
+      });
+    },
+    500,
+  );
 
 /**
  * Transform the input value to its uppercase string representation.

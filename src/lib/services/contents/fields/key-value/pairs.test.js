@@ -38,6 +38,15 @@ describe('Test getPairsFromContent()', () => {
     ]);
   });
 
+  test('should read the pairs from the key path index of a value map that isn’t mutated', () => {
+    const content = { title: 'Hello', 'metadata.b': '2', 'metadata.a': '1', 'other.a': 'x' };
+
+    expect(getPairsFromContent(content, 'metadata', { live: false })).toEqual([
+      ['b', '2'],
+      ['a', '1'],
+    ]);
+  });
+
   test('should return an empty array when the field holds no pairs', () => {
     expect(getPairsFromContent({ title: 'Hello', metadata: null }, 'metadata')).toEqual([]);
   });

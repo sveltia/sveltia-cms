@@ -182,17 +182,18 @@ describe('PaneHeader', () => {
     const { draft } = await renderHeader({
       draftProps: {
         currentLocales: { en: true, fr: false },
+        originalValues: { en: { title: 'Hello' } },
         currentValues: { en: { title: 'Hello' } },
       },
       thisPane: createRawState({ mode: 'edit', locale: 'fr' }),
     });
 
+    const menu = await openMenu('French');
+
+    // There are no changes to revert either
+    await expect.element(menu.getByRole('menuitem', { name: 'Revert Changes' })).toBeDisabled();
     // The locale has no content to bring back, so it’s enabled rather than reenabled
-    await (
-      await openMenu('French')
-    )
-      .getByRole('menuitem', { name: 'Enable \u2068French\u2069' })
-      .click();
+    await menu.getByRole('menuitem', { name: 'Enable \u2068French\u2069' }).click();
     expect(draft.currentLocales.fr).toBe(true);
     // The content starts empty, as the field isn’t duplicated from the default locale
     expect(draft.currentValues.fr).toEqual({});

@@ -120,7 +120,7 @@ const isRealKey = (valueMap, key) => !INTERNAL_PROP_REGEX.test(key) && valueMap[
  * @param {FlattenedEntryContent} currentValueMap Current values for the locale.
  * @returns {boolean} Whether the values differ.
  */
-const isValueMapModified = (originalValueMap, currentValueMap) => {
+export const isValueMapModified = (originalValueMap, currentValueMap) => {
   let realKeyCount = 0;
 
   const anyValueChanged = Object.keys(currentValueMap).some((key) => {

@@ -38,15 +38,17 @@ export const getKeyValueField = (args) => {
  * Get key-value pairs from the given flattened content.
  * @param {FlattenedEntryContent} content Flattened content for a locale.
  * @param {FieldKeyPath} keyPath Field key path.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.live] Whether the content may be mutated after this call, like the
+ * draft’s live map, which {@link setPairs} mutates in place. Its key paths are then read as they
+ * are right now, rather than from the index kept for a snapshot.
  * @returns {[string, string][]} Key-value pairs.
  */
-export const getPairsFromContent = (content, keyPath) => {
+export const getPairsFromContent = (content, keyPath, { live = true } = {}) => {
   const prefix = `${keyPath}.`;
 
   return /** @type {[string, string][]} */ (
-    // The content may be the draft’s live map, which {@link setPairs} mutates in place, so its key
-    // paths have to be read as they are right now
-    getKeysByPrefix(content, prefix, { live: true }).map((key) => [
+    getKeysByPrefix(content, prefix, { live }).map((key) => [
       key.slice(prefix.length),
       content[key],
     ])

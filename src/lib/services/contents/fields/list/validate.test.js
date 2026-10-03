@@ -226,6 +226,47 @@ describe('validateListField()', () => {
 
     expect(validity.rangeUnderflow).toBe(true);
   });
+
+  test('counts only the items, not other keys under the list or keys of a sibling field', () => {
+    const validity = freshValidity();
+
+    const valueMap = {
+      'tags.0': 'a',
+      'tags.__sc_item_original_key_path': 'x',
+      'tagline.0': 'b',
+      'tags.1': 'c',
+    };
+
+    validateListField({
+      keyPath: 'tags',
+      value: undefined,
+      valueMap,
+      validity,
+      validities: { _default: {} },
+      locale: '_default',
+      required: false,
+      min: 0,
+      max: 1,
+    });
+
+    expect(validity.rangeOverflow).toBe(true);
+
+    const validity2 = freshValidity();
+
+    validateListField({
+      keyPath: 'tags',
+      value: undefined,
+      valueMap,
+      validity: validity2,
+      validities: { _default: {} },
+      locale: '_default',
+      required: false,
+      min: 0,
+      max: 2,
+    });
+
+    expect(validity2.rangeOverflow).toBe(false);
+  });
 });
 
 describe('getListItems()', () => {

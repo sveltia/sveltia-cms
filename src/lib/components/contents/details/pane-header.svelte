@@ -1,7 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Divider, Menu, MenuButton, MenuItem, Spacer, Toolbar } from '@sveltia/ui';
-  import equal from 'fast-deep-equal';
 
   import CopyMenuItems from '$lib/components/contents/details/editor/copy-menu-items.svelte';
   import ResetDialog from '$lib/components/contents/details/editor/reset-dialog.svelte';
@@ -12,7 +11,7 @@
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import { backend } from '$lib/services/backends';
   import { isDraftReadonly } from '$lib/services/config/readonly';
-  import { filterRealValues } from '$lib/services/contents/draft';
+  import { isValueMapModified } from '$lib/services/contents/draft';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { toggleLocale } from '$lib/services/contents/draft/update/locale';
   import { canResetEntry } from '$lib/services/contents/draft/update/reset';
@@ -82,12 +81,13 @@
   // Nor does a read-only entry, but it can still be viewed on the site or in the repository, so the
   // menu keeps the links to it
   const readonly = $derived(isDraftReadonly(entryDraft.current));
+  // This is recomputed on every change, so the values are compared in place rather than by
+  // deep-comparing a filtered copy of the whole locale
   const canRevert = $derived(
-    thisPane.current?.locale &&
-      !equal(
-        originalValues[thisPane.current.locale],
-        // Exclude internal properties from the comparison
-        filterRealValues(getValueMapSnapshot(entryDraft.current, thisPane.current.locale)),
+    !!thisPane.current?.locale &&
+      isValueMapModified(
+        originalValues[thisPane.current.locale] ?? {},
+        getValueMapSnapshot(entryDraft.current, thisPane.current.locale),
       ),
   );
   /**

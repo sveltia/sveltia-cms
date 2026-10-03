@@ -3,7 +3,7 @@ import equal from 'fast-deep-equal';
 
 import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
-import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
+import { getKeysByPrefix, isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs';
 import { isNumeric } from '$lib/services/utils/number';
@@ -65,13 +65,14 @@ const getFieldValues = (valueMap, keyPath) => {
   /** @type {Record<string, any>} */
   const values = {};
 
-  // Walk the keys rather than `Object.entries()`, because this runs for every field editor on every
-  // change, and only the values under the key path are needed
-  Object.keys(valueMap).forEach((_keyPath) => {
-    if (
-      (_keyPath === keyPath || _keyPath.startsWith(prefix)) &&
-      !INTERNAL_PROP_REGEX.test(_keyPath)
-    ) {
+  // This runs for every field editor on every change, so the key paths under the field are looked
+  // up in the value map’s index rather than by walking all of them
+  [...(keyPath in valueMap ? [keyPath] : []), ...getKeysByPrefix(valueMap, prefix)].forEach(
+    (_keyPath) => {
+      if (INTERNAL_PROP_REGEX.test(_keyPath)) {
+        return;
+      }
+
       const value = valueMap[_keyPath];
 
       if (
@@ -80,8 +81,8 @@ const getFieldValues = (valueMap, keyPath) => {
       ) {
         values[_keyPath.slice(prefix.length)] = value;
       }
-    }
-  });
+    },
+  );
 
   return values;
 };

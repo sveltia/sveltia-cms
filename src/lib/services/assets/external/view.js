@@ -15,8 +15,12 @@ import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
 import { getDirName, listSubfolders } from '$lib/services/assets/subfolders';
 import { currentView } from '$lib/services/assets/view/settings';
 import { groupItems, sortItemsByKey } from '$lib/services/common/view';
-import { normalize } from '$lib/services/search/util';
-import { createDerivedState, createRootEffect } from '$lib/services/utils/state.svelte';
+import { getNormalizedValueCache, hasMatch, normalize } from '$lib/services/search/util';
+import {
+  createDerivedState,
+  createRootEffect,
+  createStableDerivedState,
+} from '$lib/services/utils/state.svelte';
 
 /**
  * @import {
@@ -166,11 +170,15 @@ export const searchExternalAssets = (assets, terms) => {
     return assets;
   }
 
-  return assets.filter(
-    ({ fileName, description }) =>
-      normalize(fileName).includes(normalizedTerms) ||
-      normalize(description).includes(normalizedTerms),
-  );
+  // The normalized names are kept with each asset, as the search runs on every keystroke
+  return assets.filter((asset) => {
+    const normalizedValueCache = getNormalizedValueCache(asset);
+
+    return (
+      hasMatch({ value: asset.fileName, terms: normalizedTerms, normalizedValueCache }) ||
+      hasMatch({ value: asset.description, terms: normalizedTerms, normalizedValueCache })
+    );
+  });
 };
 
 /**
@@ -245,26 +253,44 @@ export const listedExternalSubfolders = createDerivedState(() => {
 });
 
 /**
- * Sorted, filtered and searched assets on the selected cloud storage service. The Asset Library’s
- * {@link currentView} is shared with repository folders, so the view type, sort order and file
- * type filter are remembered per service just like per folder. While the service is browsed folder
- * by folder, only the assets right in the folder being browsed are listed.
+ * Sorting conditions of the current view. This and the filtering conditions below are picked out
+ * of {@link currentView} one by one, so replacing the view to switch between list and grid, or to
+ * group the assets, doesn’t sort and filter them all over again.
+ */
+const sortConditions = createStableDerivedState(() => currentView.current.sort);
+/**
+ * Filtering conditions of the current view. See {@link sortConditions}.
+ */
+const filterConditions = createStableDerivedState(() => currentView.current.filter);
+
+/**
+ * Sorted and filtered assets on the selected cloud storage service. While the service is browsed
+ * folder by folder, only the assets right in the folder being browsed are listed. Sorting is the
+ * costliest step, so it’s done here rather than after the search, which runs on every keystroke.
  * @type {{ readonly current: ExternalAsset[] }}
  */
-export const listedExternalAssets = createDerivedState(() => {
-  const { sort, filter } = currentView.current;
+const sortedExternalAssets = createDerivedState(() => {
   let assets = externalAssets.current ?? [];
 
   if (browsingExternalFolders.current) {
     assets = getExternalAssetsInDir({ dirPath: selectedExternalDirPath.current, assets });
   }
 
-  assets = sortExternalAssets(assets, sort);
-  assets = filterExternalAssets(assets, filter);
-  assets = searchExternalAssets(assets, externalAssetSearchTerms.current);
-
-  return assets;
+  return filterExternalAssets(
+    sortExternalAssets(assets, sortConditions.current),
+    filterConditions.current,
+  );
 });
+
+/**
+ * Sorted, filtered and searched assets on the selected cloud storage service. The Asset Library’s
+ * {@link currentView} is shared with repository folders, so the view type, sort order and file
+ * type filter are remembered per service just like per folder.
+ * @type {{ readonly current: ExternalAsset[] }}
+ */
+export const listedExternalAssets = createDerivedState(() =>
+  searchExternalAssets(sortedExternalAssets.current, externalAssetSearchTerms.current),
+);
 
 /**
  * {@link listedExternalAssets} grouped as the list shows them.

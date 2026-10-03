@@ -6,12 +6,10 @@
 -->
 <script>
   import { _ } from '@sveltia/i18n';
-  import equal from 'fast-deep-equal';
-  import { untrack } from 'svelte';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { getPairs } from '$lib/services/contents/fields/key-value/helpers';
+  import { getPairsFromContent } from '$lib/services/contents/fields/key-value/pairs';
 
   /**
    * @import { FieldPreviewProps } from '$lib/types/private';
@@ -43,36 +41,11 @@
   const keyLabel = $derived(_keyLabel || _('key_value.key'));
   const valueLabel = $derived(_valueLabel || _('key_value.value'));
 
-  /** @type {[string, string][]}  */
-  let pairs = $state([]);
-
-  /**
-   * Update the key-value {@link pairs} whenever the draft store is updated.
-   */
-  const updatePairs = () => {
-    const draft = entryDraft.current;
-
-    /* v8 ignore next 3 -- the preview is only rendered while the draft is there */
-    if (!draft) {
-      return;
-    }
-
-    const updatedPairs = getPairs({ draft, keyPath, locale });
-
-    if (!equal(pairs, updatedPairs)) {
-      pairs = updatedPairs;
-    }
-  };
-
-  $effect(() => {
-    if (entryDraft.current) {
-      void [getValueMapSnapshot(entryDraft.current, locale)];
-
-      untrack(() => {
-        updatePairs();
-      });
-    }
-  });
+  // The shared snapshot of the locale’s values is only taken once per change, and its key paths are
+  // indexed, so the pairs are looked up without going through all the values
+  const pairs = $derived(
+    getPairsFromContent(getValueMapSnapshot(entryDraft.current, locale), keyPath, { live: false }),
+  );
 </script>
 
 {#if pairs.length}

@@ -1,21 +1,20 @@
-import { escapeRegExp } from '@sveltia/utils/string';
-
-import { getOrCreate } from '$lib/services/utils/cache';
-
 /**
  * @import {
  * EntryValidityState,
  * FlattenedEntryContent,
  * LocaleValidityMap,
  * } from '$lib/types/private';
- * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**
- * Cache of pre-compiled list key-path regexes, keyed by field key path.
- * @type {Map<FieldKeyPath, RegExp>}
+ * Regular expression to match the item index at the start of a key path relative to its list, e.g.
+ * `0` in `0` or `0.name`.
  */
-const listKeyPathRegexCache = new Map();
+const LEADING_INDEX_REGEX = /^\d+/;
+/**
+ * Regular expression to match a key path relative to its list that is an item index alone.
+ */
+const INDEX_REGEX = /^\d+$/;
 
 /**
  * Validate a list/multiple-value field, updating `validity` in place.
@@ -61,18 +60,23 @@ export const validateListField = ({
    * @returns {number} Item count.
    */
   const countItems = () => {
-    // Pre-compile and cache the regex — validateAnyField is called on every keystroke.
-    const keyPathRegex = getOrCreate(
-      listKeyPathRegexCache,
-      keyPath,
-      () => new RegExp(`^${escapeRegExp(keyPath)}\\.\\d+`),
-    );
+    const prefix = `${keyPath}.`;
+    /** @type {Set<string>} */
+    const indexes = new Set();
 
-    return new Set(
-      Object.keys(valueMap)
-        .map((key) => key.match(keyPathRegex)?.[0])
-        .filter(Boolean),
-    ).size;
+    // This runs on every keystroke once the entry has been validated, against the draft’s live
+    // values, so the cheap prefix test is done first and only the matching keys are parsed
+    Object.keys(valueMap).forEach((key) => {
+      if (key.startsWith(prefix)) {
+        const index = key.slice(prefix.length).match(LEADING_INDEX_REGEX)?.[0];
+
+        if (index !== undefined) {
+          indexes.add(index);
+        }
+      }
+    });
+
+    return indexes.size;
   };
 
   const size = Array.isArray(value) && !!value.length ? value.length : countItems();
@@ -102,13 +106,13 @@ export const getListItems = ({ keyPath, value, valueMap }) => {
     return value;
   }
 
-  const itemKeyPathRegex = new RegExp(`^${escapeRegExp(keyPath)}\\.(\\d+)$`);
+  const prefix = `${keyPath}.`;
 
-  return Object.entries(valueMap)
-    .flatMap(([key, item]) => {
-      const index = key.match(itemKeyPathRegex)?.[1];
+  return Object.keys(valueMap)
+    .flatMap((key) => {
+      const index = key.startsWith(prefix) ? key.slice(prefix.length) : undefined;
 
-      return index === undefined ? [] : [[Number(index), item]];
+      return index !== undefined && INDEX_REGEX.test(index) ? [[Number(index), valueMap[key]]] : [];
     })
     .sort(([a], [b]) => a - b)
     .map(([, item]) => item);
