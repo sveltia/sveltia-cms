@@ -5,10 +5,9 @@ import {
   externalAssets,
   externalAssetSearchTerms,
   externalFolders,
-  focusedExternalAsset,
   hasFolderSupport,
+  pruneExternalAssetSelection,
   selectedCloudService,
-  selectedExternalAssets,
   selectedExternalDirPath,
 } from '$lib/services/assets/external';
 import { LINKED_FILES_SERVICE_ID } from '$lib/services/assets/external/linked';
@@ -308,18 +307,7 @@ export const externalAssetGroups = createDerivedState(() =>
 export const pruneHiddenAssets = () => {
   const listedIds = new Set(listedExternalAssets.current.map(({ id }) => id));
 
-  untrack(() => {
-    const selected = selectedExternalAssets.current;
-    const visible = selected.filter(({ id }) => listedIds.has(id));
-
-    if (visible.length !== selected.length) {
-      selectedExternalAssets.current = visible;
-    }
-
-    if (focusedExternalAsset.current && !listedIds.has(focusedExternalAsset.current.id)) {
-      focusedExternalAsset.current = undefined;
-    }
-  });
+  untrack(() => pruneExternalAssetSelection((id) => listedIds.has(id)));
 };
 
 createRootEffect(pruneHiddenAssets);

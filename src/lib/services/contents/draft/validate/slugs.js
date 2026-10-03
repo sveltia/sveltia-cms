@@ -4,6 +4,7 @@ import { slugify } from '$lib/services/common/slug';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getSharedEntryFileName } from '$lib/services/contents/collection/nested';
 import { getSlugOptions } from '$lib/services/contents/collection/slug';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { getRegex } from '$lib/services/utils/regex';
 import { getUnpublishedEntriesByCollection } from '$lib/services/workflow';
 
@@ -41,10 +42,9 @@ export const getOtherEntries = (draft) => {
     /** @type {EntryDraft & { originalEntry?: UnpublishedEntry }} */ (draft);
 
   // Every file path this entry occupies
-  const ownPaths = new Set([
-    ...Object.values(originalEntry?.locales ?? {}).map(({ path }) => path),
-    ...(originalEntry?.workflow?.previousPaths ?? []),
-  ]);
+  const ownPaths = new Set(
+    originalEntry ? getEntryPaths(originalEntry, { includePrevious: true }) : [],
+  );
 
   return [
     ...getEntriesByCollection(collectionName),

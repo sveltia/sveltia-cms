@@ -25,6 +25,7 @@ import {
   hasFolderSupport,
   mergeUploadedExternalAssets,
   overlaidExternalAssetId,
+  pruneExternalAssetSelection,
   renamingExternalAsset,
   renamingExternalSubfolder,
   resetExternalAssets,
@@ -92,6 +93,33 @@ describe('assets/external', () => {
       expect(selectedOrFocusedExternalAssets.current).not.toBe(selectedExternalAssets.current);
       selectedExternalAssets.current = [];
       focusedExternalAsset.current = undefined;
+    });
+  });
+
+  describe('pruneExternalAssetSelection', () => {
+    const a = /** @type {any} */ ({ id: 'a' });
+    const b = /** @type {any} */ ({ id: 'b' });
+
+    it('should drop the selected and focused assets that fail the test', () => {
+      selectedExternalAssets.current = [a, b];
+      focusedExternalAsset.current = b;
+      pruneExternalAssetSelection((id) => id === 'a');
+      expect(selectedExternalAssets.current).toEqual([a]);
+      expect(focusedExternalAsset.current).toBeUndefined();
+    });
+
+    it('should leave the selection as is when every asset passes the test', () => {
+      const selected = [a, b];
+
+      selectedExternalAssets.current = selected;
+      focusedExternalAsset.current = a;
+      pruneExternalAssetSelection(() => true);
+      expect(selectedExternalAssets.current).toBe(selected);
+      expect(focusedExternalAsset.current).toBe(a);
+      focusedExternalAsset.current = undefined;
+      pruneExternalAssetSelection(() => false);
+      expect(selectedExternalAssets.current).toEqual([]);
+      expect(focusedExternalAsset.current).toBeUndefined();
     });
   });
 

@@ -9,6 +9,7 @@ import { getCommitAuthor } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import {
   buildCascadeDeleteChanges,
   planCascadeDelete,
@@ -113,6 +114,16 @@ const resolveWorkflowBranch = ({ collectionName, slug, entry }) => {
 };
 
 /**
+ * Get the paths the entry occupied before its pull request. Once recorded, they are the published
+ * ones, so an existing pull request keeps them; an empty list means nothing has been recorded yet.
+ * @param {UnpublishedEntry | undefined} existingEntry Unpublished entry the changes belong to.
+ * @param {string[]} paths Paths to record when there are none yet.
+ * @returns {string[]} Previous paths.
+ */
+const getPreviousPaths = (existingEntry, paths) =>
+  existingEntry?.workflow.previousPaths?.length ? existingEntry.workflow.previousPaths : paths;
+
+/**
  * Replace or append the given unpublished entry in the {@link unpublishedEntries} store, keyed by
  * the workflow branch name. An existing entry is replaced in place, so a status change doesn’t make
  * the entry jump to the end of the list on the Editorial Workflow page.
@@ -186,10 +197,10 @@ export const saveWorkflowChanges = async ({
   // recorded, the paths are the published ones, so keep them on later saves. An empty list means
   // nothing has been recorded yet, which is not the same as having no previous location: a pull
   // request that hasn’t renamed anything still needs the paths captured when the slug is edited.
-  const previousPaths = existingEntry?.workflow.previousPaths?.length
-    ? existingEntry.workflow.previousPaths
-    : (originalEntry?.locales && Object.values(originalEntry.locales).map(({ path }) => path)) ||
-      [];
+  const previousPaths = getPreviousPaths(
+    existingEntry,
+    originalEntry ? getEntryPaths(originalEntry) : [],
+  );
 
   /** @type {UnpublishedEntry} */
   const unpublishedEntry = {
@@ -300,13 +311,9 @@ const mergeWorkflowEntry = async (entry) => {
   await workflow.publish(pullRequest);
 
   const { workflow: _workflow, ...publishedEntry } = entry;
-
   // Include the pre-rename paths, so the entry that the pull request renamed is replaced rather
   // than left behind as a duplicate
-  const paths = new Set([
-    ...Object.values(publishedEntry.locales).map(({ path }) => path),
-    ...(_workflow.previousPaths ?? []),
-  ]);
+  const paths = new Set(getEntryPaths(entry, { includePrevious: true }));
 
   // A removal also rewrote the entries referencing the deleted one, so the store is brought up to
   // date with those as well, or they would show the stale references until the next reload. The
@@ -443,7 +450,7 @@ export const deleteWorkflowEntry = async (
   // Remove the files as they stand on the branch. A pull request that renamed the entry has already
   // staged the deletion of the old paths there, so removing the new ones leaves nothing behind once
   // the merge lands
-  const paths = unique(Object.values(entry.locales).map(({ path }) => path));
+  const paths = getEntryPaths(entry);
   // An entry-relative asset lives with the entry, so it goes in the same pull request rather than
   // being left behind once the removal lands
   const assetPaths = unique(assets.map(({ path }) => path));
@@ -487,9 +494,7 @@ export const deleteWorkflowEntry = async (
       collectionName,
       fileName: collectionFile?.name,
       // Where the entry lives on the configured branch, which a rename has already moved away from
-      previousPaths: existingEntry?.workflow.previousPaths?.length
-        ? existingEntry.workflow.previousPaths
-        : paths,
+      previousPaths: getPreviousPaths(existingEntry, paths),
     },
   };
 

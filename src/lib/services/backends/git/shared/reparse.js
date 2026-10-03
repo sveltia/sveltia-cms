@@ -1,17 +1,10 @@
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 
 /**
  * @import { BaseEntryListItem, Entry, EntryFolderInfo } from '$lib/types/private';
  */
-
-/**
- * List the distinct paths of the files an entry is made of. A single-file i18n entry lists the same
- * path under every locale.
- * @param {Entry} entry Entry.
- * @returns {string[]} Paths.
- */
-const getEntryPaths = (entry) => [...new Set(Object.values(entry.locales).map(({ path }) => path))];
 
 /**
  * Check whether the files of the given collection can be merged into one entry, which is the case

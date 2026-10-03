@@ -3,6 +3,7 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { parseAssetFileInfo } from '$lib/services/backends/git/shared/fetch';
 import { createFileList } from '$lib/services/backends/process';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { prepareEntries } from '$lib/services/contents/file/process';
 import { parseBranchName } from '$lib/services/workflow/branch';
 
@@ -28,11 +29,7 @@ import { parseBranchName } from '$lib/services/workflow/branch';
  * @returns {Entry} Entry with the unchanged locales merged in.
  */
 const completeEntry = (entry, previousPaths) => {
-  const paths = new Set([
-    ...Object.values(entry.locales).map(({ path }) => path),
-    ...previousPaths,
-  ]);
-
+  const paths = new Set([...getEntryPaths(entry), ...previousPaths]);
   // `allEntries` holds the version currently on the configured branch
   const publishedEntry = findEntryByPaths(paths);
 

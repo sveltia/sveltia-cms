@@ -8,6 +8,7 @@ import {
   focusedExternalSubfolder,
   getFetchOptions,
   mergeUploadedExternalAssets,
+  pruneExternalAssetSelection,
   selectedCloudService,
   selectedExternalAssets,
   selectedExternalDirPath,
@@ -98,13 +99,7 @@ const forgetDeletedAssets = (assets) => {
   const deletedIds = new Set(assets.map(({ id }) => id));
 
   setAssets(externalAssets.current?.filter(({ id }) => !deletedIds.has(id)));
-  selectedExternalAssets.current = selectedExternalAssets.current.filter(
-    ({ id }) => !deletedIds.has(id),
-  );
-
-  if (focusedExternalAsset.current && deletedIds.has(focusedExternalAsset.current.id)) {
-    focusedExternalAsset.current = undefined;
-  }
+  pruneExternalAssetSelection((id) => !deletedIds.has(id));
 };
 
 /**
@@ -138,11 +133,7 @@ const updateAsset = (oldAsset, newAsset) => {
 const pruneSelection = (assets, folders = []) => {
   const ids = new Set(assets.map(({ id }) => id));
 
-  selectedExternalAssets.current = selectedExternalAssets.current.filter(({ id }) => ids.has(id));
-
-  if (focusedExternalAsset.current && !ids.has(focusedExternalAsset.current.id)) {
-    focusedExternalAsset.current = undefined;
-  }
+  pruneExternalAssetSelection((id) => ids.has(id));
 
   const focusedPath = focusedExternalSubfolder.current?.path;
 

@@ -15,6 +15,7 @@ import {
   getUnpublishedEntryByDraft,
   getUnpublishedEntryBySlug,
   hasPublishedVersion,
+  isPublishAllowed,
   isWorkflowDraft,
   isWorkflowEnabled,
   mergeUnpublishedEntries,
@@ -616,6 +617,54 @@ describe('Test canMergePullRequest()', () => {
       expect(canMergePullRequest({ ...pullRequest, canMerge: true })).toBe(false);
     } finally {
       mergeLockedBranch.current = undefined;
+    }
+  });
+});
+
+describe('Test isPublishAllowed()', () => {
+  const pullRequest = /** @type {any} */ ({ number: 1, branch: 'cms/posts/hello' });
+  const collection = /** @type {any} */ ({ name: 'posts' });
+
+  /**
+   * Create an unpublished entry at the given status.
+   * @param {string} status Workflow status.
+   * @param {object} [overrides] Pull request overrides.
+   * @returns {any} Entry.
+   */
+  const createWorkflowEntry = (status, overrides = {}) => ({
+    workflow: { status, pullRequest: { ...pullRequest, ...overrides } },
+  });
+
+  test('allows publishing a ready entry or carrying out a pending deletion', () => {
+    expect(isPublishAllowed(createWorkflowEntry('pending_publish'), collection)).toBe(true);
+    expect(isPublishAllowed(createWorkflowEntry('pending_deletion'), collection)).toBe(true);
+    expect(isPublishAllowed(createWorkflowEntry('pending_publish'), undefined)).toBe(true);
+  });
+
+  test('refuses an entry that hasn’t reached the last stage', () => {
+    expect(isPublishAllowed(createWorkflowEntry('draft'), collection)).toBe(false);
+    expect(isPublishAllowed(createWorkflowEntry('pending_review'), collection)).toBe(false);
+  });
+
+  test('refuses when the collection’s `publish` option is disabled', () => {
+    expect(
+      isPublishAllowed(createWorkflowEntry('pending_publish'), { ...collection, publish: false }),
+    ).toBe(false);
+  });
+
+  test('refuses a pull request the user can’t merge', () => {
+    expect(
+      isPublishAllowed(createWorkflowEntry('pending_publish', { canMerge: false }), collection),
+    ).toBe(false);
+  });
+
+  test('refuses an Open Authoring contributor', () => {
+    forkedRepository.current = { owner: 'me', repo: 'site' };
+
+    try {
+      expect(isPublishAllowed(createWorkflowEntry('pending_publish'), collection)).toBe(false);
+    } finally {
+      forkedRepository.current = undefined;
     }
   });
 });

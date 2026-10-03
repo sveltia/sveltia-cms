@@ -2,13 +2,19 @@ import { backend } from '$lib/services/backends';
 import { mergeLockedBranch } from '$lib/services/backends/branch-access';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries, findEntryByPaths } from '$lib/services/contents';
+import { getEntryPaths } from '$lib/services/contents/entry/paths';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { isEntryBranch } from '$lib/services/workflow/branch';
 import { getPublishMode, isWorkflowConfigured } from '$lib/services/workflow/config';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { Entry, UnpublishedEntry, WorkflowPullRequest } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * InternalCollection,
+ * UnpublishedEntry,
+ * WorkflowPullRequest,
+ * } from '$lib/types/private';
  * @import { Collection } from '$lib/types/public';
  */
 
@@ -193,6 +199,23 @@ export const canMergePullRequest = (pullRequest) =>
   pullRequest.canMerge !== false && !mergeLockedBranch.current;
 
 /**
+ * Check whether the signed-in user gets the control to publish the given unpublished entry, or to
+ * carry out its pending deletion. The entry can only be published from the last stage, and the
+ * collection’s `publish` option can hide the control altogether, so an editor can move an entry
+ * through the review stages but leave the actual publishing to someone else. An Open Authoring
+ * contributor can’t merge a pull request on the configured repository, and neither can a user who
+ * can push to the entry’s branch but not merge into the configured branch.
+ * @param {UnpublishedEntry} entry Unpublished entry.
+ * @param {InternalCollection | undefined} collection Collection the entry belongs to.
+ * @returns {boolean} Result.
+ */
+export const isPublishAllowed = ({ workflow: { status, pullRequest } }, collection) =>
+  !openAuthoring.current &&
+  canMergePullRequest(pullRequest) &&
+  (status === 'pending_publish' || status === 'pending_deletion') &&
+  collection?.publish !== false;
+
+/**
  * Replace each published entry that has an open pull request with its unpublished version, so a
  * list shows the pending content rather than what’s currently live. Entries are matched by file
  * path, including the paths a pull request renamed them from, so that editing a slug doesn’t make
@@ -211,10 +234,7 @@ export const swapUnpublishedEntries = (entries, drafts) => {
   const draftMap = new Map();
 
   drafts.forEach((entry) => {
-    [
-      ...Object.values(entry.locales).map(({ path }) => path),
-      ...(entry.workflow.previousPaths ?? []),
-    ].forEach((path) => draftMap.set(path, entry));
+    getEntryPaths(entry, { includePrevious: true }).forEach((path) => draftMap.set(path, entry));
   });
 
   return entries.map(
@@ -259,12 +279,9 @@ export const getPublishedVersion = (entry) => {
     return undefined;
   }
 
-  const paths = new Set([
-    ...Object.values(entry.locales).map(({ path }) => path),
-    // The pull request may have renamed the entry, in which case the published version is still at
-    // one of the previous paths
-    ...(workflow.previousPaths ?? []),
-  ]);
+  // The pull request may have renamed the entry, in which case the published version is still at
+  // one of the previous paths
+  const paths = new Set(getEntryPaths(entry, { includePrevious: true }));
 
   // `allEntries` only holds published entries; an unpublished one lives in `unpublishedEntries`
   // until it’s merged

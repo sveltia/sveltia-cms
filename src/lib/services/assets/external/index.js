@@ -182,6 +182,26 @@ export const selectedExternalAssetIdSet = createDerivedState(
 export const focusedExternalAsset = createRawState();
 
 /**
+ * Drop the selected and focused assets that fail the given test, e.g. once they have been deleted
+ * or are no longer listed. The selection is only replaced when an asset is actually dropped, so a
+ * caller running in an effect doesn’t invalidate it needlessly.
+ * @param {(id: string) => boolean} keep Function telling whether to keep the asset with the given
+ * ID.
+ */
+export const pruneExternalAssetSelection = (keep) => {
+  const selected = selectedExternalAssets.current;
+  const kept = selected.filter(({ id }) => keep(id));
+
+  if (kept.length !== selected.length) {
+    selectedExternalAssets.current = kept;
+  }
+
+  if (focusedExternalAsset.current && !keep(focusedExternalAsset.current.id)) {
+    focusedExternalAsset.current = undefined;
+  }
+};
+
+/**
  * Assets the toolbar actions operate on: the selected assets, or else the focused asset, if any.
  * @type {{ readonly current: ExternalAsset[] }}
  */

@@ -35,20 +35,26 @@ vi.mock('$lib/services/assets/data', () => ({
   assetUpdatesToast: { current: {} },
 }));
 
-vi.mock('$lib/services/assets/external', async (importOriginal) => ({
-  mergeUploadedExternalAssets: /** @type {any} */ (await importOriginal())
-    .mergeUploadedExternalAssets,
-  externalAssetCounts: { current: {} },
-  externalAssets: { current: undefined },
-  externalAssetsError: { current: undefined },
-  externalFolders: { current: [] },
-  focusedExternalAsset: { current: undefined },
-  focusedExternalSubfolder: { current: undefined },
-  selectedCloudService: { current: undefined },
-  selectedExternalAssets: { current: [] },
-  selectedExternalDirPath: { current: '' },
-  getFetchOptions: vi.fn(() => ({ apiKey: 'secret' })),
-}));
+vi.mock('$lib/services/assets/external', async (importOriginal) => {
+  /** @type {any} */
+  const original = await importOriginal();
+
+  return {
+    // The selection helper works on the real state, so the selection and the focus are real too
+    mergeUploadedExternalAssets: original.mergeUploadedExternalAssets,
+    pruneExternalAssetSelection: original.pruneExternalAssetSelection,
+    focusedExternalAsset: original.focusedExternalAsset,
+    selectedExternalAssets: original.selectedExternalAssets,
+    externalAssetCounts: { current: {} },
+    externalAssets: { current: undefined },
+    externalAssetsError: { current: undefined },
+    externalFolders: { current: [] },
+    focusedExternalSubfolder: { current: undefined },
+    selectedCloudService: { current: undefined },
+    selectedExternalDirPath: { current: '' },
+    getFetchOptions: vi.fn(() => ({ apiKey: 'secret' })),
+  };
+});
 
 vi.mock('$lib/services/assets/process', async (importOriginal) => ({
   ...(await importOriginal()),

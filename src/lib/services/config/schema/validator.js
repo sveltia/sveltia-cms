@@ -1,6 +1,8 @@
 import { Validator } from '@cfworker/json-schema';
 import { isObject } from '@sveltia/utils/object';
 
+import { decodeSegment, getSegments } from '$lib/services/config/schema/pointer';
+
 /**
  * @import { OutputUnit } from '@cfworker/json-schema';
  * @import { SchemaValidationError } from '$lib/types/private';
@@ -45,21 +47,6 @@ const CONSTRAINT_PARAMS = {
   minLength: 'limit',
   maxLength: 'limit',
 };
-
-/**
- * Decode the escape sequences of a JSON pointer segment.
- * @param {string} segment Segment to decode.
- * @returns {string} Decoded segment.
- */
-const decodeSegment = (segment) => segment.replaceAll('~1', '/').replaceAll('~0', '~');
-
-/**
- * Split a location reported by the validator into JSON pointer segments.
- * @param {string} location Location, such as `#/properties/backend/$ref/properties/name/const`.
- * @returns {string[]} Segments.
- */
-const getSegments = (location) =>
-  location.replace(/^#/, '').split('/').filter(Boolean).map(decodeSegment);
 
 /**
  * Resolve a keyword location within the schema. A `$ref` segment means the reference at that point

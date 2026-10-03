@@ -36,17 +36,24 @@ vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((/** @type {string} */ key) => `[${key}]`),
 }));
 
-vi.mock('$lib/services/assets/external', () => ({
-  externalAssets: { current: undefined },
-  externalAssetSearchTerms: { current: '' },
-  externalFolders: { current: [] },
-  focusedExternalAsset: { current: undefined },
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  hasFolderSupport: (/** @type {any} */ service) => !!service?.browse,
-  selectedCloudService: { current: undefined },
-  selectedExternalAssets: { current: [] },
-  selectedExternalDirPath: { current: '' },
-}));
+vi.mock('$lib/services/assets/external', async (importOriginal) => {
+  /** @type {any} */
+  const original = await importOriginal();
+
+  return {
+    externalAssets: { current: undefined },
+    externalAssetSearchTerms: { current: '' },
+    externalFolders: { current: [] },
+    // The selection helper works on the real state, so the selection and the focus are real too
+    focusedExternalAsset: original.focusedExternalAsset,
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    hasFolderSupport: (/** @type {any} */ service) => !!service?.browse,
+    pruneExternalAssetSelection: original.pruneExternalAssetSelection,
+    selectedCloudService: { current: undefined },
+    selectedExternalAssets: original.selectedExternalAssets,
+    selectedExternalDirPath: { current: '' },
+  };
+});
 
 vi.mock('$lib/services/assets/external/linked', () => ({
   LINKED_FILES_SERVICE_ID: 'linked',

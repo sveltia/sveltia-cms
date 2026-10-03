@@ -1,5 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { getSegments } from '$lib/services/config/schema/pointer';
+
 /**
  * Properties that can discriminate a union of object schemas. The generated schema pins these to a
  * constant in each branch: `widget` identifies a field type and `name` identifies a backend
@@ -31,10 +33,10 @@ const resolveRef = (schema, node) => {
 
     visited.add(current.$ref);
 
-    current = current.$ref
-      .split('/')
-      .slice(1)
-      .reduce((/** @type {any} */ value, key) => value?.[key], schema);
+    current = getSegments(current.$ref).reduce(
+      (/** @type {any} */ value, key) => value?.[key],
+      schema,
+    );
   }
 
   return isObject(current) ? current : undefined;
