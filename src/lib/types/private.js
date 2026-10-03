@@ -333,9 +333,10 @@
  * @property {() => RepositoryInfo | undefined} init Function to initialize the backend.
  * @property {(options: SignInOptions) => Promise<User | void>} signIn Function to sign in.
  * @property {() => Promise<void>} signOut Function to sign out.
- * @property {() => Promise<void>} fetchFiles Function to fetch files. Calling it again once the
- * site data has been loaded brings the stores up to date with the repository, fetching only what
- * has changed.
+ * @property {(options?: { lastCommit?: { hash: string, message: string } }) => Promise<void>}
+ * fetchFiles Function to fetch files. Calling it again once the site data has been loaded brings
+ * the stores up to date with the repository, fetching only what has changed. A Git backend takes
+ * the branch’s last commit, if the caller has just fetched it, so it isn’t fetched again.
  * @property {() => Promise<{ hash: string, message: string }>} [fetchLastCommit] Function to fetch
  * the configured branch’s head commit, to tell whether the repository has changed since the site
  * data was loaded. Git backends only.

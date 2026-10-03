@@ -366,6 +366,8 @@ const readDatabaseEntries = ({ metaDB, cacheDB }) =>
  * default branch name.
  * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit Function to fetch
  * the last commit’s SHA-1 hash and message.
+ * @param {{ hash: string, message: string }} [args.lastCommit] Last commit, if the caller has
+ * just fetched it. It’s only used once the branch is known.
  * @param {DebugLogger} args.log Function to trace the loading in the console.
  * @returns {Promise<{ hash: string, message: string }>} Last commit’s SHA-1 hash and message.
  */
@@ -374,9 +376,17 @@ const resolveHead = async ({
   accessPromise,
   fetchDefaultBranchName,
   fetchLastCommit,
+  lastCommit,
   log,
 }) => {
   let { branch } = repository;
+
+  // A check for remote changes has just fetched the head to compare it, so it isn’t fetched again
+  if (branch && lastCommit) {
+    await accessPromise;
+
+    return lastCommit;
+  }
 
   if (!branch) {
     // Only the request is started here; the access check is settled first, so that its error is
@@ -397,11 +407,11 @@ const resolveHead = async ({
 
   await accessPromise;
 
-  const lastCommit = await lastCommitPromise;
+  const fetchedCommit = await lastCommitPromise;
 
-  log(`Fetched the last commit on ${branch}: ${lastCommit.hash}`);
+  log(`Fetched the last commit on ${branch}: ${fetchedCommit.hash}`);
 
-  return lastCommit;
+  return fetchedCommit;
 };
 
 /**
@@ -601,6 +611,8 @@ const completeMetadata = async ({
  * default branch name.
  * @param {() => Promise<{ hash: string, message: string }>} args.fetchLastCommit Function to fetch
  * the last commit’s SHA-1 hash and message.
+ * @param {{ hash: string, message: string }} [args.lastCommit] Last commit, if the caller has
+ * just fetched it, so it isn’t fetched again.
  * @param {FetchFileListFunction} args.fetchFileList Function to fetch the repository’s complete
  * file list.
  * @param {FetchFileContentsFunction} args.fetchFileContents Function to fetch the metadata of
@@ -617,6 +629,7 @@ export const fetchAndParseFiles = async ({
   checkBranchAccess,
   fetchDefaultBranchName,
   fetchLastCommit,
+  lastCommit,
   fetchFileList,
   fetchFileContents,
   fetchFileMetadata,
@@ -646,6 +659,7 @@ export const fetchAndParseFiles = async ({
     accessPromise,
     fetchDefaultBranchName,
     fetchLastCommit,
+    lastCommit,
     log,
   });
 

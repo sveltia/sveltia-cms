@@ -267,8 +267,10 @@ const loadRepositoryData = async (_backend) => {
 
   await _backend.fetchFiles();
   await loadUnpublishedEntries(pullRequests);
-  // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI
-  initDeployments();
+  // The deploy state is a nicety, so it’s resolved in the background rather than delaying the UI.
+  // The files were loaded from the branch head, which is the commit the production site is built
+  // from, so it isn’t fetched again
+  initDeployments({ head: repositoryHead.current });
   // From here on, someone else’s commits are picked up as they land
   startRemoteChangePolling();
 };

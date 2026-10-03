@@ -31,13 +31,14 @@ vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => (
   createCommitMessage: createCommitMessageMock,
 }));
 
-vi.mock('$lib/services/backends/git/gitea/repository', () => ({
-  repository: {
-    owner: 'test-owner',
-    repo: 'test-repo',
-    branch: 'main',
-  },
-}));
+vi.mock('$lib/services/backends/git/gitea/repository', async (importOriginal) => {
+  // The real module, so the last commit is fetched with its `fetchBranch()`
+  const actual = /** @type {any} */ (await importOriginal());
+
+  Object.assign(actual.repository, { owner: 'test-owner', repo: 'test-repo', branch: 'main' });
+
+  return actual;
+});
 
 vi.mock('$lib/services/user/account.svelte', () => ({
   user: { account: { name: 'John Doe', email: 'john.doe@example.com' } },

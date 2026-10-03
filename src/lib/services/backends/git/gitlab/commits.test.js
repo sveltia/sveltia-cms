@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+  _resetAvatarURLCache,
   commitChanges,
   fetchFileCommits,
   fetchLastCommit,
@@ -43,6 +44,7 @@ vi.mock('@sveltia/utils/file', () => ({
 describe('GitLab commits service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetAvatarURLCache();
   });
 
   describe('fetchLastCommit', () => {
@@ -460,6 +462,35 @@ describe('GitLab commits service', () => {
       const result = await fetchFileCommits(['file.md']);
 
       expect(result).toEqual([]);
+    });
+
+    test('looks each avatar up only once, unless the lookup failed', async () => {
+      const commits = [
+        {
+          id: 'abc123',
+          author_name: 'Alice',
+          author_email: 'alice@example.com',
+          committed_date: '2024-06-01T12:00:00Z',
+        },
+      ];
+
+      vi.mocked(fetchAPI)
+        .mockResolvedValueOnce(commits)
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce(commits)
+        .mockResolvedValueOnce({ avatar_url: 'https://example.com/alice.png' })
+        .mockResolvedValueOnce(commits);
+
+      expect((await fetchFileCommits(['file.md']))[0].authorAvatarURL).toBeUndefined();
+      // The failed lookup is made again
+      expect((await fetchFileCommits(['file.md']))[0].authorAvatarURL).toBe(
+        'https://example.com/alice.png',
+      );
+      // A successful one isn’t
+      expect((await fetchFileCommits(['file.md']))[0].authorAvatarURL).toBe(
+        'https://example.com/alice.png',
+      );
+      expect(fetchAPI).toHaveBeenCalledTimes(5);
     });
 
     test('handles avatar fetch failure gracefully', async () => {

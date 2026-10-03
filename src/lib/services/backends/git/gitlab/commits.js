@@ -8,6 +8,7 @@ import {
 } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getGitHash } from '$lib/services/utils/file';
 
 /**
@@ -131,6 +132,21 @@ export const commitChanges = async (changes, options) => {
 };
 
 /**
+ * Avatar URLs looked up so far, keyed by email address. The commit history is fetched every time
+ * the history of an entry is shown, and mostly lists the same few authors, so each of them is only
+ * looked up once.
+ * @type {Map<string, Promise<string | undefined>>}
+ */
+const avatarURLCache = new Map();
+
+/**
+ * Reset {@link avatarURLCache}. Used in tests.
+ */
+export const _resetAvatarURLCache = () => {
+  avatarURLCache.clear();
+};
+
+/**
  * Fetch the avatar URL for a given email address.
  * @param {string} email Email address.
  * @returns {Promise<string | undefined>} Avatar URL, or `undefined` if not available.
@@ -138,11 +154,14 @@ export const commitChanges = async (changes, options) => {
  */
 const fetchAvatarURL = async (email) => {
   try {
-    const { avatar_url: avatarURL } = /** @type {{ avatar_url: string }} */ (
-      await fetchAPI(`/avatar?email=${encodeURIComponent(email)}&size=48`)
-    );
+    // A failure isn’t remembered, so the avatar can show up next time
+    return await getOrCreateAsync(avatarURLCache, email, async () => {
+      const { avatar_url: avatarURL } = /** @type {{ avatar_url: string }} */ (
+        await fetchAPI(`/avatar?email=${encodeURIComponent(email)}&size=48`)
+      );
 
-    return avatarURL || undefined;
+      return avatarURL || undefined;
+    });
   } catch {
     return undefined;
   }

@@ -703,27 +703,31 @@ describe('Gitea Files Service', () => {
       });
     });
 
-    test('should check the instance version, then the repository access', async () => {
-      vi.mocked(checkInstanceVersion).mockResolvedValue();
+    test('should check the instance version and the repository access at the same time', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+
+      vi.mocked(checkInstanceVersion).mockReturnValue(/** @type {Promise<void>} */ (promise));
       vi.mocked(checkRepositoryAccess).mockResolvedValue();
       vi.mocked(fetchAndParseFiles).mockResolvedValue();
 
       await fetchFiles();
-      await getCheckAccess()();
 
-      expect(checkInstanceVersion).toHaveBeenCalledBefore(vi.mocked(checkRepositoryAccess));
+      const checking = getCheckAccess()();
+
+      // The repository is checked while the version check is still in flight
+      expect(checkRepositoryAccess).toHaveBeenCalled();
+      resolve(undefined);
+      await expect(checking).resolves.toBeUndefined();
     });
 
-    test('should handle errors from instance version check', async () => {
-      const error = new Error('Version check failed');
-
-      vi.mocked(checkInstanceVersion).mockRejectedValue(error);
+    test('should report an unsupported instance before a repository access error', async () => {
+      vi.mocked(checkInstanceVersion).mockRejectedValue(new Error('Version check failed'));
+      vi.mocked(checkRepositoryAccess).mockRejectedValue(new Error('Access denied'));
       vi.mocked(fetchAndParseFiles).mockResolvedValue();
 
       await fetchFiles();
 
       await expect(getCheckAccess()()).rejects.toThrow('Version check failed');
-      expect(checkRepositoryAccess).not.toHaveBeenCalled();
     });
 
     test('should handle errors from repository access check', async () => {

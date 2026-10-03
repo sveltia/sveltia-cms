@@ -23,16 +23,27 @@ export const repository = { ...REPOSITORY_INFO_PLACEHOLDER };
 
 /**
  * Cache for repository information to avoid multiple API calls. The information includes the
- * signed-in user’s permissions, so it’s kept along with the ID of the user it was fetched for.
- * @type {{ userId: number | undefined, info: Record<string, any> } | null}
+ * signed-in user’s permissions, so it’s kept along with the ID of the user it was fetched for. The
+ * request is cached rather than its result, so callers asking at the same time, like the access
+ * check and the default branch lookup, share one request.
+ * @type {{ userId: number | undefined, promise: Promise<Record<string, any>> } | null}
  */
 let repositoryInfoCache = null;
+/**
+ * Last response of the branch endpoint, along with the branch and user it was fetched for. The
+ * last commit and the user’s branch permissions come from the same endpoint, and the permissions
+ * are checked right after the last commit is fetched on the initial load, so they’re read from
+ * here rather than requested again.
+ * @type {{ branch: string, userId: number | undefined, result: Record<string, any> } | undefined}
+ */
+let lastBranchResponse;
 
 /**
  * Reset the repository info cache. Used for testing.
  */
 export const resetRepositoryInfoCache = () => {
   repositoryInfoCache = null;
+  lastBranchResponse = undefined;
 };
 
 /**
@@ -54,21 +65,50 @@ export const getBaseURLs = (repoURL, branch) => ({
  * @returns {Promise<Record<string, any>>} Repository information.
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGet
  */
-export const getRepositoryInfo = async () => {
+export const getRepositoryInfo = () => {
   const { owner, repo } = repository;
   const userId = user.account?.id;
 
   // Another user may have signed in on the same page, e.g. after a read-only account was refused,
   // and their permissions are not the previous user’s
   if (repositoryInfoCache && repositoryInfoCache.userId === userId) {
-    return repositoryInfoCache.info;
+    return repositoryInfoCache.promise;
   }
 
-  const info = /** @type {Record<string, any>} */ (await fetchAPI(`/repos/${owner}/${repo}`));
+  const promise = /** @type {Promise<Record<string, any>>} */ (
+    fetchAPI(`/repos/${owner}/${repo}`)
+  ).catch((ex) => {
+    // A failure isn’t remembered, so a later call can try again
+    if (repositoryInfoCache?.promise === promise) {
+      repositoryInfoCache = null;
+    }
 
-  repositoryInfoCache = { userId, info };
+    throw ex;
+  });
 
-  return info;
+  repositoryInfoCache = { userId, promise };
+
+  return promise;
+};
+
+/**
+ * Fetch the configured branch, which includes its last commit and the signed-in user’s permissions
+ * on it. The response is kept for {@link checkBranchAccess}.
+ * @returns {Promise<Record<string, any>>} Branch information.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetBranch
+ */
+export const fetchBranch = async () => {
+  const { owner, repo } = repository;
+  const branch = String(repository.branch);
+  const userId = user.account?.id;
+
+  const result = /** @type {Record<string, any>} */ (
+    await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(branch)}`)
+  );
+
+  lastBranchResponse = { branch, userId, result };
+
+  return result;
 };
 
 /**
@@ -108,11 +148,18 @@ export const checkBranchAccess = async () => {
   const { owner, repo, branch } = repository;
   let canPush = true;
   let canMerge = true;
+  // Read the response the last commit was just fetched with, if it’s for this branch and user. It’s
+  // only used once, so a later check doesn’t go by permissions fetched long ago
+  const cached = lastBranchResponse;
+
+  lastBranchResponse = undefined;
 
   if (branch) {
     try {
       const result = /** @type {{ user_can_push?: boolean, user_can_merge?: boolean }} */ (
-        await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(branch)}`)
+        cached?.branch === branch && cached.userId === user.account?.id
+          ? cached.result
+          : await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(branch)}`)
       );
 
       canPush = result.user_can_push !== false;

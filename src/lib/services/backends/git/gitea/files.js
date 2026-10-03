@@ -294,24 +294,34 @@ export const fetchFileContents = async (fetchingFiles) => {
 /**
  * Check that the instance is supported and that the user can read the repository. Neither check is
  * needed until the file contents are requested, so they run alongside the branch and commit
- * requests rather than ahead of them.
+ * requests rather than ahead of them, and alongside each other. An unsupported instance is
+ * reported first, though, as it may also be why the repository can’t be read.
  */
 const checkAccess = async () => {
+  const repositoryAccessPromise = checkRepositoryAccess();
+
+  // The rejection is handled below, once the version has been checked
+  repositoryAccessPromise.catch(() => undefined);
+
   await checkInstanceVersion();
-  await checkRepositoryAccess();
+  await repositoryAccessPromise;
 };
 
 /**
  * Fetch file list from the backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
+ * @param {object} [options] Options.
+ * @param {{ hash: string, message: string }} [options.lastCommit] Last commit on the branch, if the
+ * caller has just fetched it, so it isn’t fetched again.
  */
-export const fetchFiles = async () => {
+export const fetchFiles = async ({ lastCommit } = {}) => {
   await fetchAndParseFiles({
     repository,
     checkAccess,
     checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
+    lastCommit,
     fetchFileList,
     fetchFileContents,
   });

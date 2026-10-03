@@ -294,14 +294,18 @@ export const fetchFileContents = async (fetchingFiles) => {
 /**
  * Fetch file list from the backend service, download/parse all the entry files, then cache them in
  * the {@link allEntries} and {@link allAssets} stores.
+ * @param {object} [options] Options.
+ * @param {{ hash: string, message: string }} [options.lastCommit] Last commit on the branch, if the
+ * caller has just fetched it, so it isn’t fetched again.
  */
-export const fetchFiles = async () => {
+export const fetchFiles = async ({ lastCommit } = {}) => {
   await fetchAndParseFiles({
     repository,
     checkAccess: checkRepositoryAccess,
     checkBranchAccess,
     fetchDefaultBranchName,
     fetchLastCommit,
+    lastCommit,
     fetchFileList,
     fetchFileContents,
   });

@@ -982,6 +982,36 @@ describe('git/shared/fetch', () => {
       expect(mockCheckAccess).not.toHaveBeenCalled();
     });
 
+    it('should use the last commit the caller has just fetched, rather than fetch it again', async () => {
+      repositoryHead.current = 'abc123';
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        lastCommit: { hash: 'def456', message: 'Newer commit' },
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockFetchLastCommit).not.toHaveBeenCalled();
+      expect(repositoryHead.current).toBe('def456');
+    });
+
+    it('should fetch the last commit anyway while the branch is still unknown', async () => {
+      await fetchAndParseFiles({
+        repository: { ...mockRepository, branch: '' },
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        lastCommit: { hash: 'def456', message: 'Newer commit' },
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: mockFetchFileContents,
+      });
+
+      expect(mockFetchLastCommit).toHaveBeenCalled();
+      expect(repositoryHead.current).toBe('abc123');
+    });
+
     it('should not repeat the branch access check on a later fetch', async () => {
       const checkBranchAccess = vi.fn().mockResolvedValue(undefined);
 

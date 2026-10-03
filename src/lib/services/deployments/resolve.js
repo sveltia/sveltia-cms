@@ -263,11 +263,20 @@ export const refreshProductionSHA = async () => {
  * The caller doesn’t await this, so nothing may escape: an unexpected failure would otherwise
  * surface as an unhandled rejection rather than something anyone can act on. The deploy state is a
  * convenience, and losing it shouldn’t be louder than that.
+ * @param {object} [options] Options.
+ * @param {string} [options.head] Head commit of the configured branch, if it has just been
+ * resolved along with the content, so it isn’t fetched again.
  * @returns {Promise<void>}
  */
-export const initDeployments = async () => {
+export const initDeployments = async ({ head } = {}) => {
   try {
-    await refreshProductionSHA();
+    if (head && backend.current?.fetchBranchHeadSHA) {
+      report('tracking the branch head', head);
+      productionSHA.current = head;
+    } else {
+      await refreshProductionSHA();
+    }
+
     await resolveDeployments();
   } catch (ex) {
     // eslint-disable-next-line no-console

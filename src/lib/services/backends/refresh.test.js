@@ -145,6 +145,8 @@ describe('checkForRemoteChanges', () => {
       modifiedAssets: [],
       deletedAssets: [],
     });
+    // The head just fetched is handed over, so the fetch doesn’t ask for it again
+    expect(fetchFiles).toHaveBeenCalledWith({ lastCommit: { hash: 'head-2', message: '' } });
   });
 
   test('reports nothing when the new commit changed nothing the CMS manages', async () => {

@@ -537,5 +537,17 @@ describe('Deployment resolution', () => {
       expect(productionSHA.current).toBe('abc');
       expect(deployments.current.abc).toEqual({ state: 'ready', checkedTime: 1 });
     });
+
+    test('takes the head the content has just been loaded from, without fetching it', async () => {
+      backendService.fetchDeployments.mockResolvedValue({
+        def: { state: 'building', checkedTime: 1 },
+      });
+
+      await initDeployments({ head: 'def' });
+
+      expect(backendService.fetchBranchHeadSHA).not.toHaveBeenCalled();
+      expect(productionSHA.current).toBe('def');
+      expect(deployments.current.def).toEqual({ state: 'building', checkedTime: 1 });
+    });
   });
 });

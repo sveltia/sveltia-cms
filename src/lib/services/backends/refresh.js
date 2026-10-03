@@ -79,19 +79,18 @@ const hasChanges = (changes) => Object.values(changes).some((list) => list.lengt
  * @returns {Promise<RemoteChanges | undefined>} What has changed, or `undefined` if nothing has.
  */
 const check = async ({ fetchLastCommit, fetchFiles }) => {
-  const { hash } = await /** @type {NonNullable<typeof fetchLastCommit>} */ (fetchLastCommit)();
+  const lastCommit = await /** @type {NonNullable<typeof fetchLastCommit>} */ (fetchLastCommit)();
 
-  if (hash === repositoryHead.current) {
+  if (lastCommit.hash === repositoryHead.current) {
     return undefined;
   }
 
   const entriesBefore = allEntries.current;
   const assetsBefore = allAssets.current;
 
-  await fetchFiles();
+  await fetchFiles({ lastCommit });
 
-  // The site is now being built from the new head, so that’s the deployment to watch. The fetch
-  // resolves the head again, and records the one it has loaded, which can be newer than `hash`
+  // The site is now being built from the new head, so that’s the deployment to watch
   productionSHA.current = repositoryHead.current;
 
   const changes = diffStores({ entriesBefore, assetsBefore });

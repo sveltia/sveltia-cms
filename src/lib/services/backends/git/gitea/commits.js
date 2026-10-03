@@ -1,13 +1,12 @@
 import { encodeBase64 } from '@sveltia/utils/file';
 
-import { repository } from '$lib/services/backends/git/gitea/repository';
+import { fetchBranch, repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
   createCommitMessage,
   fetchPerPathCommits,
 } from '$lib/services/backends/git/shared/commits';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
-import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -30,14 +29,12 @@ import { user } from '$lib/services/user/account.svelte';
  * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetSingleCommit
  */
 export const fetchLastCommit = async () => {
-  const { owner, repo, branch } = repository;
+  const { repo, branch } = repository;
 
   try {
     const {
       commit: { id: hash, message },
-    } = /** @type {{ commit: { id: string, message: string }}} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(String(branch))}`)
-    );
+    } = /** @type {{ commit: { id: string, message: string }}} */ (await fetchBranch());
 
     return { hash, message };
   } catch (/** @type {any} */ ex) {
