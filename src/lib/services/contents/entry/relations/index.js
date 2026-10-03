@@ -1,10 +1,8 @@
-import { escapeRegExp } from '@sveltia/utils/string';
-
 import { collectors } from '$lib/services/config';
 import { getCollection } from '$lib/services/contents/collection';
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
+import { getListItemKeys, getWildcardKeyPathPattern } from '$lib/services/contents/entry/key-paths';
 import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers';
 
 /**
@@ -100,7 +98,7 @@ export const resolveRelationKeyPath = ({ fieldConfig, context }) => {
 
   return {
     keyPath,
-    valuePattern: new RegExp(`^${escapeRegExp(keyPath).replace(/\\\*/g, '\\d+')}${suffix}$`),
+    valuePattern: new RegExp(`^${getWildcardKeyPathPattern(keyPath)}${suffix}$`),
   };
 };
 

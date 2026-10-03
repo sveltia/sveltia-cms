@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   getKeysByPrefix,
   getListItemKeys,
+  getWildcardKeyPathPattern,
   isKeyPathWithin,
 } from '$lib/services/contents/entry/key-paths';
 
@@ -130,5 +131,32 @@ describe('isKeyPathWithin()', () => {
     expect(isKeyPathWithin('tags', 'tag')).toBe(false);
     expect(isKeyPathWithin('tagline', 'tag')).toBe(false);
     expect(isKeyPathWithin('title_suffix', 'title')).toBe(false);
+  });
+});
+
+describe('getWildcardKeyPathPattern()', () => {
+  test('escapes a key path without wildcards', () => {
+    expect(getWildcardKeyPathPattern('title')).toBe('title');
+    expect(getWildcardKeyPathPattern('meta.title')).toBe('meta\\.title');
+  });
+
+  test('turns each wildcard into a list item index', () => {
+    expect(getWildcardKeyPathPattern('list.*.title')).toBe('list\\.\\d+\\.title');
+    expect(getWildcardKeyPathPattern('a.*.b.*')).toBe('a\\.\\d+\\.b\\.\\d+');
+  });
+
+  test('carries no anchors', () => {
+    const regex = new RegExp(getWildcardKeyPathPattern('list.*.title'));
+
+    expect(regex.test('list.0.title')).toBe(true);
+    expect(regex.test('page.list.12.title.en')).toBe(true);
+    expect(regex.test('list.x.title')).toBe(false);
+  });
+
+  test('keeps other regular expression syntax in a key literal', () => {
+    const regex = new RegExp(`^${getWildcardKeyPathPattern('a\\d+.*')}$`);
+
+    expect(regex.test('a\\d+.3')).toBe(true);
+    expect(regex.test('a5.3')).toBe(false);
   });
 });

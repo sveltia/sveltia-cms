@@ -1,3 +1,5 @@
+import { escapeRegExp } from '@sveltia/utils/string';
+
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
  * @import { FieldKeyPath } from '$lib/types/public';
@@ -18,6 +20,16 @@
  * a map it also mutates — a draft’s live content rather than a snapshot of it — has to pass the
  * `live` option, or it would keep getting the key paths the map had the first time it was read.
  */
+
+/**
+ * Turn a key path that may contain `*` wildcards into a regular expression source matching its
+ * concrete key paths, where each wildcard stands for a list item index, e.g. `list\.\d+\.title`
+ * for `list.*.title`. The source carries no anchors, so callers can add their own.
+ * @param {FieldKeyPath} keyPath Key path that may contain wildcards.
+ * @returns {string} Regular expression source.
+ */
+export const getWildcardKeyPathPattern = (keyPath) =>
+  escapeRegExp(keyPath).replaceAll('\\*', '\\d+');
 
 /**
  * Check whether a key path is the given root key path or sits under it. A plain `startsWith()`

@@ -10,18 +10,12 @@ import { isNestedCollection } from '$lib/services/contents/collection/nested';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
-import {
-  buildSingleFileContent,
-  getFieldComments,
-  getSingleFileComments,
-} from '$lib/services/contents/draft/save/content';
+import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
-import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
 import { getField } from '$lib/services/contents/entry/fields';
 import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
-import { formatEntryFile } from '$lib/services/contents/file/format';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
@@ -375,17 +369,18 @@ export const getSingleFileChange = async ({ draft, savingEntry, cacheDB }) => {
   // which leaves the slug alone
   const renamed = !isNew && !!previousPath && previousPath !== path;
 
+  const [previousSha, data] = await Promise.all([
+    getPreviousSha({ cacheDB, previousPath }),
+    formatEntryData({ draft, config, _file, entry: savingEntry }),
+  ]);
+
   return {
     action: isNew ? 'create' : renamed ? 'move' : 'update',
     slug,
     path,
     previousPath: renamed ? previousPath : undefined,
-    previousSha: await getPreviousSha({ cacheDB, previousPath }),
-    data: await formatEntryFile({
-      content: buildSingleFileContent({ config, entry: savingEntry, draft }),
-      _file,
-      comments: getSingleFileComments({ config, fields: draft.fields }),
-    }),
+    previousSha,
+    data,
     ...(isArrayFileCollection(collection) && !isNew ? getArrayItemTarget(originalEntry) : {}),
   };
 };
@@ -410,13 +405,18 @@ export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }
     isIndexFile,
   } = draft;
 
+  const config = collectionFile ?? /** @type {InternalEntryCollection} */ (collection);
   const _file = resolveFileConfig({ collection, collectionFile, isIndexFile });
-  const { slug, path, content } = savingEntry.locales[locale] ?? {};
+  const { slug, path } = savingEntry.locales[locale] ?? {};
   const previousPath = originalEntry?.locales[locale]?.path;
-  const previousSha = await getPreviousSha({ cacheDB, previousPath });
 
   if (currentLocales[locale]) {
     const renamed = !isNew && !!originalLocales[locale] && !!previousPath && previousPath !== path;
+
+    const [previousSha, data] = await Promise.all([
+      getPreviousSha({ cacheDB, previousPath }),
+      formatEntryData({ draft, config, _file, entry: savingEntry, locale }),
+    ]);
 
     return {
       action: isNew || !originalLocales[locale] ? 'create' : renamed ? 'move' : 'update',
@@ -424,11 +424,7 @@ export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }
       path,
       previousPath: renamed ? previousPath : undefined,
       previousSha,
-      data: await formatEntryFile({
-        content: serializeContent({ draft, locale, valueMap: content }),
-        _file,
-        comments: getFieldComments(draft.fields),
-      }),
+      data,
     };
   }
 
@@ -439,7 +435,7 @@ export const getMultiFileChange = async ({ draft, savingEntry, cacheDB, locale }
       action: 'delete',
       slug: originalEntry?.locales[locale]?.slug ?? slug,
       path: /** @type {string} */ (previousPath),
-      previousSha,
+      previousSha: await getPreviousSha({ cacheDB, previousPath }),
     };
   }
 

@@ -1,13 +1,7 @@
 import { backend } from '$lib/services/backends';
 import { getArrayItemTarget, getPreviousSha } from '$lib/services/contents/draft/save/changes';
-import {
-  buildSingleFileContent,
-  getFieldComments,
-  getSingleFileComments,
-} from '$lib/services/contents/draft/save/content';
-import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
-import { formatEntryFile } from '$lib/services/contents/file/format';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
@@ -22,7 +16,7 @@ import { getRepositoryDatabase } from '$lib/services/utils/database';
  */
 
 /**
- * Build a synthetic draft object suitable for {@link serializeContent} and the field validator.
+ * Build a synthetic draft object suitable for {@link formatEntryData} and the field validator.
  * Bulk operations that re-save existing entries — reordering, cascading relation updates — don’t
  * go through the entry editor, so there’s no real draft to serialize with; only the few properties
  * read by the serializer and the validator are needed. The shape is identical for every entry in a
@@ -96,11 +90,7 @@ export const buildEntryUpdateChanges = async ({
 
     const [previousSha, data] = await Promise.all([
       getPreviousSha({ cacheDB, previousPath: path }),
-      formatEntryFile({
-        content: buildSingleFileContent({ config, entry, draft }),
-        _file,
-        comments: getSingleFileComments({ config, fields: draft.fields }),
-      }),
+      formatEntryData({ draft, config, _file, entry }),
     ]);
 
     return [
@@ -125,11 +115,7 @@ export const buildEntryUpdateChanges = async ({
 
       const [previousSha, data] = await Promise.all([
         getPreviousSha({ cacheDB, previousPath: le.path }),
-        formatEntryFile({
-          content: serializeContent({ draft, locale, valueMap: le.content }),
-          _file,
-          comments: getFieldComments(draft.fields),
-        }),
+        formatEntryData({ draft, config, _file, entry, locale }),
       ]);
 
       return /** @type {FileChange} */ ({

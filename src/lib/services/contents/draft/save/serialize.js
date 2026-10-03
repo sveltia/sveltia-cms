@@ -1,5 +1,5 @@
 import { toRaw } from '@sveltia/utils/object';
-import { compare, escapeRegExp } from '@sveltia/utils/string';
+import { compare } from '@sveltia/utils/string';
 import { TomlDate } from 'smol-toml';
 
 import { cmsConfig } from '$lib/services/config';
@@ -13,6 +13,7 @@ import {
   hasRootField,
   isFieldRequired,
 } from '$lib/services/contents/entry/fields';
+import { getWildcardKeyPathPattern } from '$lib/services/contents/entry/key-paths';
 import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { TOML_FORMATS } from '$lib/services/contents/file/constants';
@@ -46,10 +47,7 @@ const getWildcardKeyPathRegex = (keyPath) =>
   getOrCreate(
     wildcardKeyPathRegexCache,
     keyPath,
-    () =>
-      new RegExp(
-        `^(${escapeRegExp(keyPath.replaceAll('*', '\\d+')).replaceAll('\\\\d\\+', '\\d+')})(?:\\.|$)`,
-      ),
+    () => new RegExp(`^(${getWildcardKeyPathPattern(keyPath)})(?:\\.|$)`),
   );
 
 /**

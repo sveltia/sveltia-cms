@@ -8,16 +8,10 @@ import {
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
-import {
-  buildSingleFileContent,
-  getFieldComments,
-  getSingleFileComments,
-} from '$lib/services/contents/draft/save/content';
-import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
-import { formatEntryFile } from '$lib/services/contents/file/format';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -193,11 +187,7 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
 
     const [previousSha, data] = await Promise.all([
       getPreviousSha({ cacheDB, previousPath }),
-      formatEntryFile({
-        content: buildSingleFileContent({ config: collection, entry: movedEntry, draft }),
-        _file,
-        comments: getSingleFileComments({ config: collection, fields: draft.fields }),
-      }),
+      formatEntryData({ draft, config: collection, _file, entry: movedEntry }),
     ]);
 
     return [
@@ -226,11 +216,7 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
 
       const [previousSha, data] = await Promise.all([
         getPreviousSha({ cacheDB, previousPath }),
-        formatEntryFile({
-          content: serializeContent({ draft, locale, valueMap: localizedEntry.content }),
-          _file,
-          comments: getFieldComments(draft.fields),
-        }),
+        formatEntryData({ draft, config: collection, _file, entry: movedEntry, locale }),
       ]);
 
       return /** @type {FileChange} */ ({
