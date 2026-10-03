@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { canCopyFileData, copyFileData } from '$lib/services/utils/clipboard';
+import {
+  canCopyFileData,
+  canCopyFileDataByName,
+  copyFileData,
+} from '$lib/services/utils/clipboard';
 import { transformImage } from '$lib/services/utils/media/image/transform';
 
 vi.mock('$lib/services/utils/media/image/transform', () => ({
@@ -58,6 +62,31 @@ describe('canCopyFileData()', () => {
 
     expect(canCopyFileData('application/zip')).toBe(false);
     expect(canCopyFileData('application/pdf')).toBe(false);
+  });
+});
+
+describe('canCopyFileDataByName()', () => {
+  test('goes by the type of the file name', () => {
+    stubClipboard();
+
+    expect(canCopyFileDataByName('notes.md')).toBe(true);
+    expect(canCopyFileDataByName('data.json')).toBe(true);
+    expect(canCopyFileDataByName('photo.jpg')).toBe(true);
+    expect(canCopyFileDataByName('icon.svg')).toBe(true);
+    // An image the clipboard can’t take, or a binary file
+    expect(canCopyFileDataByName('photo.heic')).toBe(false);
+    expect(canCopyFileDataByName('scan.tiff')).toBe(false);
+    expect(canCopyFileDataByName('archive.zip')).toBe(false);
+    // No extension to go by
+    expect(canCopyFileDataByName('README')).toBe(false);
+  });
+
+  test('takes a file known to be an image as copyable when its name has no extension', () => {
+    stubClipboard();
+
+    expect(canCopyFileDataByName('photo', { isImage: true })).toBe(true);
+    // The extension still decides when there is one
+    expect(canCopyFileDataByName('photo.heic', { isImage: true })).toBe(false);
   });
 });
 

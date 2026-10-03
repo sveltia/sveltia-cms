@@ -161,6 +161,32 @@ describe('PrimaryToolbar', () => {
     await expect.poll(() => externalAssets.current).toEqual([]);
   });
 
+  test('asks to delete all the assets once every asset in the folder is selected', async () => {
+    const folderAssets = [
+      createMockExternalAsset({ fileName: 'a.png', folder: '2024' }),
+      createMockExternalAsset({ fileName: 'b.png', folder: '2024' }),
+    ];
+
+    selectedCloudService.current = createMockCloudService({ browse: vi.fn(), delete: vi.fn() });
+    // Another asset is stored outside the folder being browsed
+    externalAssets.current = [...folderAssets, createMockExternalAsset({ fileName: 'c.png' })];
+    selectedExternalDirPath.current = '2024';
+    selectedExternalAssets.current = [...folderAssets];
+
+    await render(PrimaryToolbar);
+    await page
+      .getByRole('toolbar', { name: 'Folder' })
+      .getByRole('button', { name: 'Delete Selected Assets' })
+      .click();
+
+    await expect
+      .element(page.getByRole('alertdialog'))
+      .toHaveTextContent(
+        'Delete Assets Are you sure you want to delete all the assets? Delete Cancel',
+      );
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
+  });
+
   test('hides the controls for operations the service doesn’t support', async () => {
     selectedCloudService.current = createMockCloudService();
 

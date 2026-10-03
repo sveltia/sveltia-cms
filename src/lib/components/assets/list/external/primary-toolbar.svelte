@@ -20,7 +20,10 @@
     selectedOrFocusedExternalAssets,
   } from '$lib/services/assets/external';
   import { deleteExternalAssets, fetchExternalAssetBlob } from '$lib/services/assets/external/data';
-  import { browsingExternalFolders } from '$lib/services/assets/external/view';
+  import {
+    browsingExternalFolders,
+    listedExternalAssets,
+  } from '$lib/services/assets/external/view';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -63,7 +66,8 @@
         deleteAssets={deleteExternalAssets}
         buttonDescription={_('delete_selected_assets', { values: { count: assets.length } })}
         dialogDescription={_(
-          assets.length > 1 && assets.length === externalAssets.current?.length
+          // Every asset listed in the view, as in a repository folder
+          assets.length > 1 && assets.length === listedExternalAssets.current.length
             ? 'confirm_deleting_all_assets'
             : 'confirm_deleting_selected_assets',
           { values: { count: assets.length } },

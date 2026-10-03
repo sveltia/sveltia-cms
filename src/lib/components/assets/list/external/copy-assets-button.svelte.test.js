@@ -107,6 +107,15 @@ describe('CopyAssetsButton', () => {
     await expect.element(page.getByRole('menuitem', { name: 'File Data' })).toBeDisabled();
   });
 
+  test('can’t copy the data of an image the clipboard can’t take, such as a HEIC photo', async () => {
+    const heicAsset = createMockExternalAsset({ fileName: 'photo.heic', asset: { kind: 'image' } });
+
+    await render(CopyAssetsButton, { assets: [heicAsset] });
+    await openMenu();
+
+    await expect.element(page.getByRole('menuitem', { name: 'File Data' })).toBeDisabled();
+  });
+
   test('copies the image data as a PNG', async () => {
     const write = vi.spyOn(navigator.clipboard, 'write').mockResolvedValue();
     const canvas = new OffscreenCanvas(4, 3);

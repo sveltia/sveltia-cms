@@ -1,4 +1,5 @@
 import { isTextFileType } from '@sveltia/utils/file';
+import mime from 'mime';
 
 import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 import { transformImage } from '$lib/services/utils/media/image/transform';
@@ -20,6 +21,22 @@ export const canCopyFileData = (type) => {
   }
 
   return false;
+};
+
+/**
+ * Check if the data of the given file can be copied to clipboard, going by its name, for a file
+ * that hasn’t been fetched yet. See {@link canCopyFileData}.
+ * @param {string} fileName File name.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.isImage] Whether the file is known to be an image, e.g. as a cloud
+ * service says so. Such a file is taken as copyable when its name has no extension to tell the
+ * type by, as the image is most likely in a common format.
+ * @returns {boolean} Result.
+ */
+export const canCopyFileDataByName = (fileName, { isImage = false } = {}) => {
+  const type = mime.getType(fileName);
+
+  return type ? canCopyFileData(type) : isImage;
 };
 
 /**

@@ -10,7 +10,7 @@
 
   import CopyMenu from '$lib/components/assets/list/copy-menu.svelte';
   import { fetchExternalAssetBlob } from '$lib/services/assets/external/data';
-  import { copyFileData } from '$lib/services/utils/clipboard';
+  import { canCopyFileDataByName, copyFileData } from '$lib/services/utils/clipboard';
 
   /**
    * @import { ExternalAsset } from '$lib/types/private';
@@ -31,20 +31,15 @@
   } = $props();
 
   /**
-   * Whether the file data can be copied: a single plaintext or image file is selected. Unlike
-   * repository assets, the file has to be fetched from the service first, so the type is guessed
-   * from the kind and file name, and the fetch may still fail if the service doesn’t allow
-   * cross-origin requests.
+   * Whether the file data can be copied: a single plaintext file or an image the clipboard can take
+   * is selected. Unlike repository assets, the file has to be fetched from the service first, so
+   * the type is guessed from the file name, and the fetch may still fail if the service doesn’t
+   * allow cross-origin requests.
    */
-  const canCopyFileData = $derived.by(() => {
-    if (assets.length !== 1) {
-      return false;
-    }
-
-    const [{ kind, fileName }] = assets;
-
-    return kind === 'image' || /\.(?:css|csv|html?|js|json|md|svg|txt|xml|ya?ml)$/i.test(fileName);
-  });
+  const canCopyData = $derived(
+    assets.length === 1 &&
+      canCopyFileDataByName(assets[0].fileName, { isImage: assets[0].kind === 'image' }),
+  );
 
   /**
    * Copy the asset public URL(s) to clipboard.
@@ -90,7 +85,7 @@
       },
       {
         label: _('file_data'),
-        disabled: !canCopyFileData,
+        disabled: !canCopyData,
         /**
          * Fetch the file and copy its data to clipboard.
          */
