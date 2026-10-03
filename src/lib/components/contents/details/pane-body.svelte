@@ -226,14 +226,18 @@
       thisPaneContentArea = contentArea;
     }
 
-    if (thisPaneContentArea) {
-      scrollEventTarget = iframe ? thisPaneContentArea.ownerDocument : thisPaneContentArea;
-      thisPaneContentArea.scrollTop = 0;
-      // Add event listeners manually to use passive mode
-      thisPaneContentArea.addEventListener('wheel', markScrollSource, eventOptions);
-      thisPaneContentArea.addEventListener('touchstart', markScrollSource, eventOptions);
-      scrollEventTarget.addEventListener('scroll', onScroll, scrollEventOptions);
+    // A preview frame removed while its content was loading has no document left to listen to
+    /* v8 ignore next 3 -- a test can’t detach the frame within that moment */
+    if (!thisPaneContentArea) {
+      return;
     }
+
+    scrollEventTarget = iframe ? thisPaneContentArea.ownerDocument : thisPaneContentArea;
+    thisPaneContentArea.scrollTop = 0;
+    // Add event listeners manually to use passive mode
+    thisPaneContentArea.addEventListener('wheel', markScrollSource, eventOptions);
+    thisPaneContentArea.addEventListener('touchstart', markScrollSource, eventOptions);
+    scrollEventTarget.addEventListener('scroll', onScroll, scrollEventOptions);
   };
 
   $effect(() => {
