@@ -1,11 +1,23 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+
 /**
  * The default field key used to store an entry’s display order when reordering is enabled and no
  * custom key is configured.
  * @type {string}
  */
 const DEFAULT_ORDER_FIELD_KEY = 'order';
+
+/**
+ * Check if the entries of the given collection are kept in a manual order: an entry collection with
+ * the `reorder` option, or one storing all the entries in one file, which keeps them in the order
+ * of the array.
+ * @param {any} collection Collection. Anything other than an entry collection returns `false`.
+ * @returns {boolean} Result.
+ */
+export const isManuallyOrdered = (collection) =>
+  collection?._type === 'entry' && (!!collection.reorder || isArrayFileCollection(collection));
 
 /**
  * Get the field key used to persist an entry’s display order for the given collection.

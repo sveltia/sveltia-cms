@@ -1,6 +1,24 @@
 import { describe, expect, test } from 'vitest';
 
-import { getOrderFieldKey, getReorderGroupName } from './config';
+import { getOrderFieldKey, getReorderGroupName, isManuallyOrdered } from './config';
+
+describe('isManuallyOrdered()', () => {
+  test('returns true for an entry collection with the reorder option', () => {
+    expect(isManuallyOrdered({ _type: 'entry', reorder: true, _file: {} })).toBe(true);
+    expect(isManuallyOrdered({ _type: 'entry', reorder: { key: 'weight' }, _file: {} })).toBe(true);
+  });
+
+  test('returns true for an entry collection storing the entries in one file', () => {
+    expect(isManuallyOrdered({ _type: 'entry', _file: { arrayFile: true } })).toBe(true);
+  });
+
+  test('returns false otherwise', () => {
+    expect(isManuallyOrdered({ _type: 'entry', _file: {} })).toBe(false);
+    expect(isManuallyOrdered({ _type: 'entry', reorder: false, _file: {} })).toBe(false);
+    expect(isManuallyOrdered({ _type: 'file', reorder: true })).toBe(false);
+    expect(isManuallyOrdered(undefined)).toBe(false);
+  });
+});
 
 describe('getOrderFieldKey()', () => {
   test('returns undefined when reorder is not configured', () => {

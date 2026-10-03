@@ -18,7 +18,7 @@
   import EntryReorderListItem from '$lib/components/contents/list/entry-reorder-list-item.svelte';
   import { getGroupLabel } from '$lib/services/common/view';
   import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
-  import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder';
+  import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder/sort';
   import {
     entryGroups,
     listedEntryIndexMap,

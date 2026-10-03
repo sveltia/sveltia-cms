@@ -26,7 +26,8 @@ vi.mock('$lib/services/contents/collection', () => ({
   getCollection: vi.fn(),
 }));
 
-vi.mock('$lib/services/contents/collection/predicates', () => ({
+vi.mock('$lib/services/contents/collection/predicates', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
   isEntryCollection: vi.fn(() => true),
 }));
 vi.mock('$lib/services/contents/collection/entries', () => ({
@@ -780,6 +781,75 @@ describe('Test getOptions()', async () => {
         expect(result[0].label).toBe('Alice');
         expect(result[1].label).toBe('Bob');
         expect(result[2].label).toBe('Zoe');
+      });
+
+      test('should follow the manual order of a collection with the reorder option', () => {
+        // @ts-ignore - Using simplified mock collection for testing
+        vi.mocked(getCollection).mockReturnValue({ ...mockCollection, reorder: { key: 'weight' } });
+
+        /**
+         * Build a member entry.
+         * @param {string} name First name.
+         * @param {number} [weight] Order value.
+         * @returns {Entry} Entry.
+         */
+        const makeMember = (name, weight) => ({
+          id: name,
+          slug: name.toLowerCase(),
+          subPath: name.toLowerCase(),
+          locales: {
+            _default: {
+              ...localizedEntryProps,
+              content: { 'name.first': name, ...(weight === undefined ? {} : { weight }) },
+            },
+          },
+        });
+
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          display_fields: ['name.first'],
+        };
+
+        const result = getOptions({
+          locale,
+          fieldConfig,
+          // An entry without an order value, e.g. a pending one, comes last
+          refEntries: [makeMember('Alice'), makeMember('Zoe', 1), makeMember('Bob', 2)],
+        });
+
+        expect(result.map((o) => o.label)).toEqual(['Zoe', 'Bob', 'Alice']);
+      });
+
+      test('should follow the order of an entry collection stored in one file', () => {
+        vi.mocked(getCollection).mockReturnValue({
+          ...mockCollection,
+          _file: { ...mockCollection._file, arrayFile: true },
+        });
+
+        /** @type {RelationField} */
+        const fieldConfig = {
+          ...baseFieldConfig,
+          collection: 'members',
+          display_fields: ['name.first'],
+        };
+
+        const [melvin, elsie, maxine] = comprehensiveMemberEntries;
+
+        const result = getOptions({
+          locale,
+          fieldConfig,
+          refEntries: [
+            { ...elsie, arrayIndex: 2 },
+            { ...melvin, arrayIndex: 0 },
+            { ...maxine, arrayIndex: 1 },
+          ],
+        });
+
+        expect(result.map((o) => o.label)).toEqual(
+          [melvin, maxine, elsie].map(({ locales }) => locales._default.content['name.first']),
+        );
       });
     });
 

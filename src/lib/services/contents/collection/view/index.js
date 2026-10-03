@@ -12,13 +12,13 @@ import {
   getEntriesByCollection,
   selectedEntries,
 } from '$lib/services/contents/collection/entries';
+import { isManuallyOrdered } from '$lib/services/contents/collection/entries/reorder/config';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import {
   filterNestedEntries,
   isNestedCollection,
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
-import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
 import { usesCurrentTime } from '$lib/services/contents/collection/view/conditions';
 import { filterEntries, parseFilterConfig } from '$lib/services/contents/collection/view/filter';
 import {
@@ -256,7 +256,7 @@ export const collectionState = createDerivedState(() => {
     // storing all the entries in one file can always be reordered
     const canReorder =
       !readonly &&
-      (!!_selectedCollection.reorder || isArrayFileCollection(_selectedCollection)) &&
+      isManuallyOrdered(_selectedCollection) &&
       !openAuthoring.current &&
       !lockedBranch.current;
 

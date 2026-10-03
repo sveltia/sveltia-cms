@@ -17,7 +17,6 @@ import { waitForToastsToHide } from '$lib/test/toast';
 import ReorderControls from './reorder-controls.svelte';
 
 vi.mock('$lib/services/contents/collection/entries/reorder', () => ({
-  sortEntriesByOrderField: vi.fn((entries) => entries),
   reorderEntries: vi.fn(),
   buildRenumberChanges: vi.fn(),
   renumberCollectionEntries: vi.fn(),
