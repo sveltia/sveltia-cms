@@ -4,6 +4,7 @@ import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
 import { parseTransformations } from '$lib/services/common/transformations';
 import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getSlugOptions, LEGACY_SLUG_EDITOR_TAG } from '$lib/services/contents/collection/slug';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -51,16 +52,7 @@ const randomValueMaps = new WeakMap();
  * @param {EntryDraft} draft Entry draft.
  * @returns {Map<string, string>} Random values keyed by what they stand for.
  */
-export const getRandomValues = (draft) => {
-  let randomValues = randomValueMaps.get(draft);
-
-  if (!randomValues) {
-    randomValues = new Map();
-    randomValueMaps.set(draft, randomValues);
-  }
-
-  return randomValues;
-};
+export const getRandomValues = (draft) => getOrCreate(randomValueMaps, draft, () => new Map());
 
 /**
  * Get base options for {@link fillTemplate}.

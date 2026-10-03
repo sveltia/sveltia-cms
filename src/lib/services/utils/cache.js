@@ -76,7 +76,7 @@ export const shareInFlight = (cache, key, create) =>
  * Run an asynchronous task once per key and remember its result. A failure isn’t remembered, so a
  * later caller can try again.
  * @template K, V
- * @param {Map<K, Promise<V>>} cache Cache of the tasks.
+ * @param {Map<K, Promise<V>> | WeakMap<K & WeakKey, Promise<V>>} cache Cache of the tasks.
  * @param {K} key Cache key.
  * @param {() => Promise<V>} create Function starting the task.
  * @returns {Promise<V>} Result of the task.
@@ -84,8 +84,33 @@ export const shareInFlight = (cache, key, create) =>
 export const getOrCreateAsync = (cache, key, create) =>
   getOrCreate(cache, key, () =>
     create().catch((ex) => {
-      cache.delete(key);
+      /** @type {Map<K, Promise<V>>} */ (cache).delete(key);
 
       throw ex;
     }),
   );
+
+/**
+ * Create a getter for a value built from a source, such as the array in a store, that is only built
+ * again once the source has been replaced. A store is replaced rather than modified when it
+ * changes, so the source’s identity tells whether the value is still valid. This is how an index
+ * of a store, e.g. assets by path, is kept without rebuilding it on every lookup.
+ * @template S, V
+ * @param {() => S} getSource Function returning the current source.
+ * @param {(source: S) => V} build Function building the value from the source.
+ * @returns {() => V} Function returning the value for the current source.
+ */
+export const memoizeOnSource = (getSource, build) => {
+  /** @type {{ source: S, value: V } | undefined} */
+  let cache;
+
+  return () => {
+    const source = getSource();
+
+    if (!cache || cache.source !== source) {
+      cache = { source, value: build(source) };
+    }
+
+    return cache.value;
+  };
+};

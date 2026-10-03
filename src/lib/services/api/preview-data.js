@@ -7,6 +7,7 @@ import { allAssets } from '$lib/services/assets/state';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { getCollectionFileEntry } from '$lib/services/contents/collection/files';
 import { getField } from '$lib/services/contents/entry/fields';
+import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { unflattenMap } from '$lib/services/utils/object';
 
 /**
@@ -290,11 +291,10 @@ export const buildEntry = ({ originalEntry, currentValues }) =>
  * `allAssets` is replaced. The preview data is rebuilt whenever the entry draft is updated, so
  * without it every keystroke would walk the whole asset library.
  */
-const previewAssetCache = {
-  source: /** @type {Asset[] | undefined} */ (undefined),
-  /** @type {WeakMap<AssetFolderInfo, Asset[]>} */
-  map: new WeakMap(),
-};
+const getPreviewAssetCache = memoizeOnSource(
+  () => allAssets.current,
+  () => /** @type {WeakMap<AssetFolderInfo, Asset[]>} */ (new WeakMap()),
+);
 
 /**
  * Get assets associated with a collection or entry folder.
@@ -310,21 +310,9 @@ export const getAssociatedPreviewAssets = ({ collectionName, fileName }) => {
     return [];
   }
 
-  const { current: _allAssets } = allAssets;
-
-  if (_allAssets !== previewAssetCache.source) {
-    previewAssetCache.source = _allAssets;
-    previewAssetCache.map = new WeakMap();
-  }
-
-  let assets = previewAssetCache.map.get(assetFolder);
-
-  if (!assets) {
-    assets = _allAssets.filter((asset) => isAssetInFolder(asset, assetFolder));
-    previewAssetCache.map.set(assetFolder, assets);
-  }
-
-  return assets;
+  return getOrCreate(getPreviewAssetCache(), assetFolder, () =>
+    allAssets.current.filter((asset) => isAssetInFolder(asset, assetFolder)),
+  );
 };
 
 /**

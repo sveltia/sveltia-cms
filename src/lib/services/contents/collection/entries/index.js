@@ -165,13 +165,7 @@ const getCollectionBuckets = () => {
     allEntries.current.forEach((entry) => {
       // A collection can match an entry through more than one of its folders
       new Set(getAssociatedCollections(entry).map(({ name }) => name)).forEach((name) => {
-        const bucket = buckets.get(name);
-
-        if (bucket) {
-          bucket.push(entry);
-        } else {
-          buckets.set(name, [entry]);
-        }
+        getOrCreate(buckets, name, () => []).push(entry);
       });
     });
 

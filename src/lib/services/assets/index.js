@@ -20,6 +20,7 @@ import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
+import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 import { createPath, resolvePath } from '$lib/services/utils/file';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
 
@@ -35,26 +36,14 @@ import { createRootEffect } from '$lib/services/utils/state.svelte';
  */
 
 /**
- * Lazily-rebuilt Map from asset path to Asset, used for O(1) path lookups. Rebuilt only when
- * `allAssets` changes reference.
- * @type {{ source: Asset[] | undefined, map: Map<string, Asset> }}
+ * Get a Map from asset path to Asset, used for O(1) path lookups. Rebuilt only when `allAssets` is
+ * replaced.
+ * @type {() => Map<string, Asset>}
  */
-const assetPathCache = { source: undefined, map: new Map() };
-
-/**
- * Get a Map from asset path to Asset, rebuilt only when `allAssets` changes.
- * @returns {Map<string, Asset>} Map.
- */
-const getAssetPathMap = () => {
-  const _allAssets = allAssets.current;
-
-  if (_allAssets !== assetPathCache.source) {
-    assetPathCache.source = _allAssets;
-    assetPathCache.map = new Map(_allAssets.map((asset) => [asset.path, asset]));
-  }
-
-  return assetPathCache.map;
-};
+const getAssetPathMap = memoizeOnSource(
+  () => allAssets.current,
+  (_allAssets) => new Map(_allAssets.map((asset) => [asset.path, asset])),
+);
 
 /**
  * Get an asset by its internal repository path.
@@ -322,19 +311,13 @@ const publicPathRegexCache = new WeakMap();
  * @param {AssetFolderInfo} folder Asset folder.
  * @returns {RegExp} Regular expression.
  */
-const getPublicPathRegex = (folder) => {
-  let regex = publicPathRegexCache.get(folder);
-
-  if (!regex) {
+const getPublicPathRegex = (folder) =>
+  getOrCreate(publicPathRegexCache, folder, () => {
     const publicPath = folder.publicPath ?? '';
     const normalizedPath = escapeRegExp(publicPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
 
-    regex = new RegExp(`^${normalizedPath}${publicPath ? '(?=\\/|$)' : '$'}`);
-    publicPathRegexCache.set(folder, regex);
-  }
-
-  return regex;
-};
+    return new RegExp(`^${normalizedPath}${publicPath ? '(?=\\/|$)' : '$'}`);
+  });
 
 /**
  * Get an asset by an absolute public path typically stored as an image field value.

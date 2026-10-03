@@ -8,6 +8,7 @@ import {
   getLocaleFolderPattern,
   hasLocalePlaceholder,
 } from '$lib/services/contents/i18n/placeholder';
+import { memoizeOnSource } from '$lib/services/utils/cache';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
@@ -121,63 +122,49 @@ const getEntryRelativePathRegEx = ({ internalPath, localeFolderNames }) => {
 };
 
 /**
- * Cache for {@link getAssetFoldersByPath} to avoid recreating regexes on every call.
+ * Index of `allAssetFolders` for {@link getAssetFoldersByPath} to avoid recreating regexes on every
+ * call, rebuilt when the store is replaced.
  * `items`: non-entry-relative folders with both regex variants pre-compiled.
  * `entryRelative`: folders whose paths are relative to their parent entry.
+ * @type {() => {
+ * items: Array<{ folder: AssetFolderInfo, regexSub: RegExp, regexExact: RegExp }>,
+ * entryRelative: Array<{ folder: AssetFolderInfo, regex: RegExp }>,
+ * }}
  */
-const assetFoldersByPathCache = {
-  source: /** @type {AssetFolderInfo[] | undefined} */ (undefined),
-  /** @type {Array<{ folder: AssetFolderInfo, regexSub: RegExp, regexExact: RegExp }>} */
-  items: [],
-  /** @type {Array<{ folder: AssetFolderInfo, regex: RegExp }>} */
-  entryRelative: [],
-};
+const getAssetFolderPathCache = memoizeOnSource(
+  () => allAssetFolders.current,
+  (_allAssetFolders) => {
+    /** @type {Array<{ folder: AssetFolderInfo, regexSub: RegExp, regexExact: RegExp }>} */
+    const items = [];
+    /** @type {Array<{ folder: AssetFolderInfo, regex: RegExp }>} */
+    const entryRelative = [];
 
-/**
- * Rebuild {@link assetFoldersByPathCache} when `allAssetFolders` changes.
- * @returns {typeof assetFoldersByPathCache} Cache object.
- */
-const getAssetFolderPathCache = () => {
-  const _allAssetFolders = allAssetFolders.current;
+    _allAssetFolders.forEach((folder) => {
+      const { internalPath, entryRelative: isRelative } = folder;
 
-  if (_allAssetFolders === assetFoldersByPathCache.source) {
-    return assetFoldersByPathCache;
-  }
+      if (internalPath === undefined) {
+        return;
+      }
 
-  /** @type {Array<{ folder: AssetFolderInfo, regexSub: RegExp, regexExact: RegExp }>} */
-  const items = [];
-  /** @type {Array<{ folder: AssetFolderInfo, regex: RegExp }>} */
-  const entryRelative = [];
+      if (isRelative) {
+        entryRelative.push({ folder, regex: getEntryRelativePathRegEx(folder) });
+      } else {
+        // Pre-compile both regex variants so we don’t recreate them on every path lookup.
+        // The internal path can contain template tags like `{{slug}}`, which we normalize to `.+?`.
+        const normalizedPath = escapeRegExp(internalPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
 
-  _allAssetFolders.forEach((folder) => {
-    const { internalPath, entryRelative: isRelative } = folder;
+        items.push({
+          folder,
+          // Match the end of the folder segment for sub-folder matching.
+          regexSub: new RegExp(`^${normalizedPath}${internalPath ? '(?=\\/|$)' : '$'}`),
+          regexExact: new RegExp(`^${normalizedPath}$`),
+        });
+      }
+    });
 
-    if (internalPath === undefined) {
-      return;
-    }
-
-    if (isRelative) {
-      entryRelative.push({ folder, regex: getEntryRelativePathRegEx(folder) });
-    } else {
-      // Pre-compile both regex variants so we don’t recreate them on every path lookup.
-      // The internal path can contain template tags like `{{slug}}`, which we normalize to `.+?`.
-      const normalizedPath = escapeRegExp(internalPath).replace(ESCAPED_PLACEHOLDER_REGEX, '.+?');
-
-      items.push({
-        folder,
-        // Match the end of the folder segment for sub-folder matching.
-        regexSub: new RegExp(`^${normalizedPath}${internalPath ? '(?=\\/|$)' : '$'}`),
-        regexExact: new RegExp(`^${normalizedPath}$`),
-      });
-    }
-  });
-
-  assetFoldersByPathCache.source = _allAssetFolders;
-  assetFoldersByPathCache.items = items;
-  assetFoldersByPathCache.entryRelative = entryRelative;
-
-  return assetFoldersByPathCache;
-};
+    return { items, entryRelative };
+  },
+);
 
 /**
  * Get collection asset folders that match the given path.

@@ -1,6 +1,7 @@
 import { allEntryFolders } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
+import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 
 /**
  * @import { Entry, EntryFolderInfo, InternalCollection } from '$lib/types/private';
@@ -12,34 +13,20 @@ import { getEntryFoldersByPath } from '$lib/services/contents/folders';
  * repeated for every entry on each search keystroke, asset reference scan and so on. An entry is
  * replaced rather than modified when its files change, so its object is a safe key.
  */
-const entryFoldersCache = {
-  source: /** @type {EntryFolderInfo[] | undefined} */ (undefined),
-  /** @type {WeakMap<Entry, EntryFolderInfo[]>} */
-  map: new WeakMap(),
-};
+const getEntryFoldersCache = memoizeOnSource(
+  () => allEntryFolders.current,
+  () => /** @type {WeakMap<Entry, EntryFolderInfo[]>} */ (new WeakMap()),
+);
 
 /**
  * Get the collection entry folders matching the given entry’s path.
  * @param {Entry} entry Entry.
  * @returns {EntryFolderInfo[]} Entry folders.
  */
-const getEntryFolders = (entry) => {
-  const source = allEntryFolders.current;
-
-  if (source !== entryFoldersCache.source) {
-    entryFoldersCache.source = source;
-    entryFoldersCache.map = new WeakMap();
-  }
-
-  let folders = entryFoldersCache.map.get(entry);
-
-  if (!folders) {
-    folders = getEntryFoldersByPath(Object.values(entry.locales)[0].path);
-    entryFoldersCache.map.set(entry, folders);
-  }
-
-  return folders;
-};
+const getEntryFolders = (entry) =>
+  getOrCreate(getEntryFoldersCache(), entry, () =>
+    getEntryFoldersByPath(Object.values(entry.locales)[0].path),
+  );
 
 /**
  * Get a list of collections the given entry belongs to. One entry can theoretically appear in

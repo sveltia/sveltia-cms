@@ -3,6 +3,8 @@ import { getPathInfo } from '@sveltia/utils/file';
 import { escapeRegExp } from '@sveltia/utils/string';
 import sanitize from 'sanitize-filename';
 
+import { getOrCreateAsync } from '$lib/services/utils/cache';
+
 /**
  * Create a regular expression that matches the given path.
  * @param {string} path Path.
@@ -227,17 +229,6 @@ export const getGitHash = (input) => {
     return computeGitHash(getBlob(input));
   }
 
-  let promise = gitHashCache.get(input);
-
-  if (!promise) {
-    promise = computeGitHash(input).catch((error) => {
-      // Leave room for a retry, e.g. once the file is readable again
-      gitHashCache.delete(input);
-      throw error;
-    });
-
-    gitHashCache.set(input, promise);
-  }
-
-  return promise;
+  // A failure isn’t remembered, leaving room for a retry, e.g. once the file is readable again
+  return getOrCreateAsync(gitHashCache, input, () => computeGitHash(input));
 };

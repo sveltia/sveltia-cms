@@ -18,6 +18,7 @@ import { createSavingEntryData } from '$lib/services/contents/draft/save/changes
 import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -252,16 +253,9 @@ export const collectEntryChangesFromAssets = async ({
     );
   }
 
-  const entries = [...updatingEntries].map((entry) => {
-    let copy = updatingEntryMap.get(entry.id);
-
-    if (!copy) {
-      copy = structuredClone(entry);
-      updatingEntryMap.set(entry.id, copy);
-    }
-
-    return copy;
-  });
+  const entries = [...updatingEntries].map((entry) =>
+    getOrCreate(updatingEntryMap, entry.id, () => structuredClone(entry)),
+  );
 
   // The references are replaced in place, in one pass over the copies
   await getEntriesByAssets(replacingTargets, { entries });

@@ -20,6 +20,7 @@ import {
   hasLocalePlaceholder,
   stripLocaleFolderPath,
 } from '$lib/services/contents/i18n/placeholder';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -387,19 +388,12 @@ const formatEntrySummary = (
  */
 export const getEntrySummary = (collection, entry, options = {}) => {
   const { locale, useTemplate = false, allowMarkdown = false, template } = options;
-  let collectionCache = summaryCacheMap.get(entry);
 
-  if (!collectionCache) {
-    collectionCache = new WeakMap();
-    summaryCacheMap.set(entry, collectionCache);
-  }
-
-  let optionCache = collectionCache.get(collection);
-
-  if (!optionCache) {
-    optionCache = new Map();
-    collectionCache.set(collection, optionCache);
-  }
+  const optionCache = getOrCreate(
+    getOrCreate(summaryCacheMap, entry, () => new WeakMap()),
+    collection,
+    () => new Map(),
+  );
 
   // The app locale is part of the key because a summary can contain a localized index file label
   // or Relation field label

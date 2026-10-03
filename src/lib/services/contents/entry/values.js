@@ -7,6 +7,7 @@ import { getDateTimeFieldDisplayValue } from '$lib/services/contents/fields/date
 import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation/helpers';
 import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
+import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -127,12 +128,10 @@ export const getFieldDisplayValue = ({
       value !== ''
     ) {
       const canonicalLocale = getCanonicalLocale(locale);
-      let numberFormatter = numberFormatterCache.get(canonicalLocale);
 
-      if (!numberFormatter) {
-        numberFormatter = Intl.NumberFormat(canonicalLocale);
-        numberFormatterCache.set(canonicalLocale, numberFormatter);
-      }
+      const numberFormatter = getOrCreate(numberFormatterCache, canonicalLocale, () =>
+        Intl.NumberFormat(canonicalLocale),
+      );
 
       value = numberFormatter.format(Number(value));
     }

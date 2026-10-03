@@ -1,70 +1,51 @@
 import { allEntryFolders } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
+import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 
 /**
  * @import { EntryFolderInfo, InternalEntryCollection } from '$lib/types/private';
  */
 
 /**
- * Cache for {@link getEntryFoldersByPath} to avoid rescanning `allEntryFolders` on every call.
+ * Index of `allEntryFolders` for {@link getEntryFoldersByPath} to avoid rescanning it on every
+ * call, rebuilt when the store is replaced.
  * `fileMap`: maps each locale-specific file path to the matching `EntryFolderInfo` objects
  * (file/singleton collections). Provides O(1) lookup instead of O(n×m) linear scan.
  * `regexFolders`: entry collections that use `fullPathRegEx`; regex is pre-fetched once.
+ * @type {() => {
+ * fileMap: Map<string, EntryFolderInfo[]>,
+ * regexFolders: Array<[EntryFolderInfo, RegExp | undefined]>,
+ * }}
  */
-const entryFoldersByPathCache = {
-  source: /** @type {EntryFolderInfo[] | undefined} */ (undefined),
-  /** @type {Map<string, EntryFolderInfo[]>} */
-  fileMap: new Map(),
-  /** @type {Array<[EntryFolderInfo, RegExp | undefined]>} */
-  regexFolders: [],
-};
+const getEntryFolderCache = memoizeOnSource(
+  () => allEntryFolders.current,
+  (_allEntryFolders) => {
+    /** @type {Map<string, EntryFolderInfo[]>} */
+    const fileMap = new Map();
+    /** @type {Array<[EntryFolderInfo, RegExp | undefined]>} */
+    const regexFolders = [];
 
-/**
- * Rebuild {@link entryFoldersByPathCache} when `allEntryFolders` changes.
- * @returns {typeof entryFoldersByPathCache} Cache object.
- */
-const getEntryFolderCache = () => {
-  const _allEntryFolders = allEntryFolders.current;
+    _allEntryFolders.forEach((folder) => {
+      if (folder.filePathMap) {
+        // Pre-index every locale-specific path so lookups are O(1).
+        // Deduplicate paths first: multiple locales can share the same physical file path, and
+        // we only want the folder to appear once per path in the results.
+        [...new Set(Object.values(folder.filePathMap))].forEach((filePath) => {
+          getOrCreate(fileMap, filePath, () => []).push(folder);
+        });
+      } else {
+        // Pre-fetch the regex so we avoid calling getCollection() per path per call
+        regexFolders.push([
+          folder,
+          /** @type {InternalEntryCollection} */ (getCollection(folder.collectionName))?._file
+            ?.fullPathRegEx,
+        ]);
+      }
+    });
 
-  if (_allEntryFolders === entryFoldersByPathCache.source) {
-    return entryFoldersByPathCache;
-  }
-
-  /** @type {Map<string, EntryFolderInfo[]>} */
-  const fileMap = new Map();
-  /** @type {Array<[EntryFolderInfo, RegExp | undefined]>} */
-  const regexFolders = [];
-
-  _allEntryFolders.forEach((folder) => {
-    if (folder.filePathMap) {
-      // Pre-index every locale-specific path so lookups are O(1).
-      // Deduplicate paths first: multiple locales can share the same physical file path, and
-      // we only want the folder to appear once per path in the results.
-      [...new Set(Object.values(folder.filePathMap))].forEach((filePath) => {
-        const arr = fileMap.get(filePath);
-
-        if (arr) {
-          arr.push(folder);
-        } else {
-          fileMap.set(filePath, [folder]);
-        }
-      });
-    } else {
-      // Pre-fetch the regex so we avoid calling getCollection() per path per call
-      regexFolders.push([
-        folder,
-        /** @type {InternalEntryCollection} */ (getCollection(folder.collectionName))?._file
-          ?.fullPathRegEx,
-      ]);
-    }
-  });
-
-  entryFoldersByPathCache.source = _allEntryFolders;
-  entryFoldersByPathCache.fileMap = fileMap;
-  entryFoldersByPathCache.regexFolders = regexFolders;
-
-  return entryFoldersByPathCache;
-};
+    return { fileMap, regexFolders };
+  },
+);
 
 /**
  * Get collection entry folders that match the given path.

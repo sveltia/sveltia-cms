@@ -15,7 +15,7 @@ import { isArrayFileCollection } from '$lib/services/contents/collection/predica
 import { fillEntryPathTemplate } from '$lib/services/contents/entry';
 import { getField } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
-import { getOrCreate } from '$lib/services/utils/cache';
+import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
 
 /**
  * @import { Asset, Entry, InternalEntryCollection } from '$lib/types/private';
@@ -210,9 +210,8 @@ const entryIdsByFolderCache = new WeakMap();
  */
 const getEntryIdsByFolder = (collectionName) => {
   const entries = getEntriesByCollection(collectionName);
-  let index = entryIdsByFolderCache.get(entries);
 
-  if (!index) {
+  return getOrCreate(entryIdsByFolderCache, entries, () => {
     /** @type {Map<string, Set<string>>} */
     const map = new Map();
 
@@ -226,11 +225,8 @@ const getEntryIdsByFolder = (collectionName) => {
       });
     });
 
-    index = map;
-    entryIdsByFolderCache.set(entries, index);
-  }
-
-  return index;
+    return map;
+  });
 };
 
 /**
@@ -244,23 +240,9 @@ const getEntryIdsByFolder = (collectionName) => {
  * Index of `allAssets` by folder, rebuilt when the store is replaced. See
  * {@link getAssetsBelowFolder}.
  */
-const assetsByFolderCache = {
-  source: /** @type {Asset[] | undefined} */ (undefined),
-  /** @type {Map<string, IndexedAsset[]>} */
-  map: new Map(),
-};
-
-/**
- * Get the assets stored in the given folder or any of its subfolders. Every asset is indexed under
- * its own folder and each folder above it, so this is a lookup rather than a scan of the whole
- * asset library — which would otherwise be repeated for every entry being deleted at once.
- * @param {string} folderPath Folder path.
- * @returns {IndexedAsset[]} Assets, in the order of `allAssets`.
- */
-const getAssetsBelowFolder = (folderPath) => {
-  const { current: _allAssets } = allAssets;
-
-  if (_allAssets !== assetsByFolderCache.source) {
+const getAssetsByFolder = memoizeOnSource(
+  () => allAssets.current,
+  (_allAssets) => {
     /** @type {Map<string, IndexedAsset[]>} */
     const map = new Map();
 
@@ -283,12 +265,18 @@ const getAssetsBelowFolder = (folderPath) => {
       }
     });
 
-    assetsByFolderCache.source = _allAssets;
-    assetsByFolderCache.map = map;
-  }
+    return map;
+  },
+);
 
-  return assetsByFolderCache.map.get(folderPath) ?? [];
-};
+/**
+ * Get the assets stored in the given folder or any of its subfolders. Every asset is indexed under
+ * its own folder and each folder above it, so this is a lookup rather than a scan of the whole
+ * asset library — which would otherwise be repeated for every entry being deleted at once.
+ * @param {string} folderPath Folder path.
+ * @returns {IndexedAsset[]} Assets, in the order of `allAssets`.
+ */
+const getAssetsBelowFolder = (folderPath) => getAssetsByFolder().get(folderPath) ?? [];
 
 /**
  * Get a list of assets associated with the given entry.

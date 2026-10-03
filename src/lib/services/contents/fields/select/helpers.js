@@ -2,7 +2,7 @@ import { isObjectArray } from '@sveltia/utils/array';
 import { isObject } from '@sveltia/utils/object';
 
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
-import { getOrCreateBounded } from '$lib/services/utils/cache';
+import { getOrCreate, getOrCreateBounded } from '$lib/services/utils/cache';
 
 /**
  * @import { FlattenedEntryContent } from '$lib/types/private';
@@ -37,16 +37,8 @@ const optionsKeyCache = new WeakMap();
  * @param {any[]} options Field options.
  * @returns {string} Cache key.
  */
-const getOptionsKey = (options) => {
-  let key = optionsKeyCache.get(options);
-
-  if (key === undefined) {
-    key = JSON.stringify(options);
-    optionsKeyCache.set(options, key);
-  }
-
-  return key;
-};
+const getOptionsKey = (options) =>
+  getOrCreate(optionsKeyCache, options, () => JSON.stringify(options));
 
 /**
  * Get the display value for an option.

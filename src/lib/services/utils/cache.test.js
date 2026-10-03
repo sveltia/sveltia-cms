@@ -1,6 +1,12 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
-import { getOrCreate, getOrCreateAsync, getOrCreateBounded, shareInFlight } from './cache';
+import {
+  getOrCreate,
+  getOrCreateAsync,
+  getOrCreateBounded,
+  memoizeOnSource,
+  shareInFlight,
+} from './cache';
 
 describe('Test getOrCreate()', () => {
   test('calls create and stores value when key is absent', () => {
@@ -220,5 +226,31 @@ describe('Test getOrCreateAsync()', () => {
     ).rejects.toThrow('x');
     expect(cache.has('a')).toBe(false);
     await expect(getOrCreateAsync(cache, 'a', async () => 2)).resolves.toBe(2);
+  });
+});
+
+describe('Test memoizeOnSource()', () => {
+  test('builds the value once per source, and again once the source is replaced', () => {
+    let source = [1, 2];
+    const build = vi.fn((/** @type {number[]} */ items) => items.length);
+    const getValue = memoizeOnSource(() => source, build);
+
+    expect(getValue()).toBe(2);
+    expect(getValue()).toBe(2);
+    expect(build).toHaveBeenCalledOnce();
+
+    source = [1, 2, 3];
+
+    expect(getValue()).toBe(3);
+    expect(build).toHaveBeenCalledTimes(2);
+  });
+
+  test('also caches a value built from an undefined source', () => {
+    const build = vi.fn(() => 'x');
+    const getValue = memoizeOnSource(() => undefined, build);
+
+    expect(getValue()).toBe('x');
+    expect(getValue()).toBe('x');
+    expect(build).toHaveBeenCalledOnce();
   });
 });
