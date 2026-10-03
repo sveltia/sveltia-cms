@@ -108,7 +108,6 @@
     {readonly}
     {required}
     {invalid}
-    sortOptions={true}
   />
   {#if creatableCollection}
     <div role="none" class="actions">

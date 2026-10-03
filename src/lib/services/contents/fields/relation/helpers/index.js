@@ -197,7 +197,7 @@ export const getRefEntries = ({ collection: collectionName, file: fileName }) =>
  * templates are ignored.
  * @param {PendingEntry[]} [args.pendingEntries] Entries created from a Relation field of the draft
  * being edited, so the labels referring to one of them through another Relation field resolve.
- * @returns {RelationOption[]} Options.
+ * @returns {RelationOption[]} Options, sorted by label unless the field references a file.
  */
 export const getOptions = ({
   locale,
@@ -207,7 +207,7 @@ export const getOptions = ({
   currentSlug = undefined,
   pendingEntries = undefined,
 }) => {
-  const { filters } = fieldConfig;
+  const { file: fileName, filters } = fieldConfig;
   // Resolve template strings in filter values against the current entry’s locale content and slug.
   // The resolved values are also baked into the cache key so stale options are not returned when
   // the relevant field value changes while the user is editing.
@@ -235,13 +235,17 @@ export const getOptions = ({
       optionsInProgress.add(cacheKey);
 
       try {
-        return buildOptions({
+        const options = buildOptions({
           locale,
           fieldConfig,
           refEntries,
           entryFilters: resolvedFilters,
           pendingEntries,
-        }).sort((a, b) => compare(a.label, b.label));
+        });
+
+        // The options taken from a list in a single file follow the order of the list items, which
+        // the user has arranged; those from the entries of a collection are sorted by label
+        return fileName ? options : options.sort((a, b) => compare(a.label, b.label));
       } finally {
         optionsInProgress.delete(cacheKey);
       }

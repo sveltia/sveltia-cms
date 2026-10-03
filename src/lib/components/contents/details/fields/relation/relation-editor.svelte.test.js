@@ -77,7 +77,7 @@ describe('RelationEditor', () => {
     vi.mocked(hasCreationRoom).mockReturnValue(true);
   });
 
-  test('offers the referenced entries as sorted options', async () => {
+  test('offers the referenced entries in the order of the options', async () => {
     const props = $state({
       locale: '_default',
       keyPath: 'author',
@@ -109,11 +109,12 @@ describe('RelationEditor', () => {
 
     const radios = page.getByRole('radio');
 
-    await expect.element(radios.nth(0)).toHaveAccessibleName('Elsie Dean');
-    await expect.element(radios.nth(1)).toHaveAccessibleName('Melvin Lucas');
-    await expect.element(radios.nth(1)).toBeChecked();
+    // The options are already sorted, or not, by `getOptions`, so the editor keeps their order
+    await expect.element(radios.nth(0)).toHaveAccessibleName('Melvin Lucas');
+    await expect.element(radios.nth(1)).toHaveAccessibleName('Elsie Dean');
+    await expect.element(radios.nth(0)).toBeChecked();
 
-    await radios.nth(0).click();
+    await radios.nth(1).click();
     expect(props.currentValue).toBe('elsie-dean');
 
     // No entry can be created in the collection, so there’s no button for it

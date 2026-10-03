@@ -6,7 +6,6 @@
 -->
 <script>
   import { isObject } from '@sveltia/utils/object';
-  import { compare } from '@sveltia/utils/string';
 
   import SelectMultiple from '$lib/components/contents/details/fields/select/select-multiple.svelte';
   import SelectSingle from '$lib/components/contents/details/fields/select/select-single.svelte';
@@ -20,7 +19,6 @@
    * @typedef {object} Props
    * @property {SelectField} fieldConfig Field configuration.
    * @property {any} currentValue Field value.
-   * @property {boolean} [sortOptions] Whether to sort the options by label.
    */
 
   /** @type {FieldEditorProps & Props} */
@@ -34,7 +32,6 @@
     required = true,
     readonly = false,
     invalid = false,
-    sortOptions = false,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -44,20 +41,14 @@
     multiple,
   } = $derived(fieldConfig);
   const Select = $derived(multiple ? SelectMultiple : SelectSingle);
-  const options = $derived.by(() => {
-    const _options = fieldOptions.map(
+  const options = $derived(
+    fieldOptions.map(
       (option) =>
         /** @type {SelectFieldSelectorOption} */ (
           isObject(option) ? option : { label: option, value: option }
         ),
-    );
-
-    if (sortOptions) {
-      _options.sort((a, b) => compare(a.label, b.label));
-    }
-
-    return _options;
-  });
+    ),
+  );
 </script>
 
 {#key JSON.stringify(options)}

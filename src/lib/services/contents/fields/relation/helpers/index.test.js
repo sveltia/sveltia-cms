@@ -1010,27 +1010,16 @@ describe('Test getOptions()', async () => {
 
         const result = getOptions({ locale, fieldConfig, refEntries: citiesFileCollectionEntries });
 
-        // Should create separate options for each city in the list
-        expect(result).toHaveLength(5);
-
-        // Check that we get actual city names, not 'display-value'
-        const labels = result.map((r) => r.label);
-
-        // The labels should be the actual city names from our test data
-        expect(labels).toContain('New York City');
-        expect(labels).toContain('Boston');
-        expect(labels).toContain('San Francisco');
-        expect(labels).toContain('Los Angeles');
-        expect(labels).toContain('Chicago');
-
-        // Values should be the city IDs
-        const values = result.map((r) => r.value);
-
-        expect(values).toContain('nyc');
-        expect(values).toContain('bos');
-        expect(values).toContain('sf');
-        expect(values).toContain('la');
-        expect(values).toContain('chi');
+        // Should create separate options for each city in the list, in the order of the list
+        // items rather than sorted by label
+        expect(result.map((r) => r.label)).toEqual([
+          'New York City',
+          'Boston',
+          'San Francisco',
+          'Los Angeles',
+          'Chicago',
+        ]);
+        expect(result.map((r) => r.value)).toEqual(['nyc', 'bos', 'sf', 'la', 'chi']);
       });
 
       test('should handle missing file in file collection', () => {
@@ -1246,22 +1235,14 @@ describe('Test getOptions()', async () => {
 
         const result = getOptions({ locale, fieldConfig, refEntries: themeFileCollectionEntries });
 
-        expect(result).toHaveLength(3);
-        expect(result[0]).toEqual({
-          label: 'Accent Red',
-          value: 'Accent Red',
-          searchValue: 'Accent Red',
-        });
-        expect(result[1]).toEqual({
-          label: 'Primary Blue',
-          value: 'Primary Blue',
-          searchValue: 'Primary Blue',
-        });
-        expect(result[2]).toEqual({
-          label: 'Secondary Green',
-          value: 'Secondary Green',
-          searchValue: 'Secondary Green',
-        });
+        // The options follow the order of the list items in the file
+        expect(result).toEqual(
+          ['Primary Blue', 'Secondary Green', 'Accent Red'].map((name) => ({
+            label: name,
+            value: name,
+            searchValue: name,
+          })),
+        );
       });
     });
   });

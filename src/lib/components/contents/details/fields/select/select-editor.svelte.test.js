@@ -16,16 +16,9 @@ import SelectEditor from './select-editor.svelte';
  * @param {SelectFieldValue | SelectFieldValue[] | undefined} [args.currentValue] Field value.
  * @param {Record<string, any>} [args.values] Flattened values in the draft.
  * @param {boolean} [args.required] Whether the field is required.
- * @param {boolean} [args.sortOptions] Whether to sort the options.
  * @returns {Promise<{ props: { currentValue: any }, draft: any }>} Props and draft.
  */
-const renderEditor = async ({
-  config,
-  currentValue = undefined,
-  values = {},
-  required = true,
-  sortOptions = false,
-}) => {
+const renderEditor = async ({ config, currentValue = undefined, values = {}, required = true }) => {
   /** @type {SelectField} */
   const fieldConfig = { name: 'category', widget: 'select', options: [], ...config };
   const draft = createMockDraft({ fields: [fieldConfig], values: { _default: values } });
@@ -39,7 +32,6 @@ const renderEditor = async ({
     fieldConfig,
     currentValue,
     required,
-    sortOptions,
   });
 
   await renderWithDraft(SelectEditor, { draft, props });
@@ -64,7 +56,7 @@ describe('SelectEditor', () => {
       expect(props.currentValue).toBe('banana');
     });
 
-    test('shows labelled options, sorted when requested', async () => {
+    test('shows labelled options in the configured order', async () => {
       await renderEditor({
         config: {
           options: [
@@ -72,13 +64,12 @@ describe('SelectEditor', () => {
             { label: 'Apple', value: 'apple' },
           ],
         },
-        sortOptions: true,
       });
 
       const radios = page.getByRole('radio');
 
-      await expect.element(radios.nth(0)).toHaveAccessibleName('Apple');
-      await expect.element(radios.nth(1)).toHaveAccessibleName('Banana');
+      await expect.element(radios.nth(0)).toHaveAccessibleName('Banana');
+      await expect.element(radios.nth(1)).toHaveAccessibleName('Apple');
     });
 
     test('offers an empty option when the field is optional', async () => {
