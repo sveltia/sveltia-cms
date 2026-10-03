@@ -13,10 +13,10 @@
   import SelectEditor from '$lib/components/contents/details/fields/select/select-editor.svelte';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
+  import { getOptions } from '$lib/services/contents/fields/relation/helpers';
   import {
     getCreatableCollection,
-    getPendingRefEntries,
+    getRefEntriesWithPending,
     hasCreationRoom,
     selectPendingEntry,
   } from '$lib/services/contents/fields/relation/quick-add';
@@ -55,19 +55,9 @@
 
   let showQuickAddDialog = $state(false);
 
-  const refEntries = $derived.by(() => {
-    const entries = getRefEntries(fieldConfig);
-
-    // The entries created from this field, or another one referring to the same collection, are
-    // offered along with the saved ones until they’re saved too
-    const pendingEntries = getPendingRefEntries({
-      draft: entryDraft.current,
-      fieldConfig,
-      refEntries: entries,
-    });
-
-    return pendingEntries.length ? [...entries, ...pendingEntries] : entries;
-  });
+  // The entries created from this field, or another one referring to the same collection, are
+  // offered along with the saved ones until they’re saved too
+  const refEntries = $derived(getRefEntriesWithPending({ draft: entryDraft.current, fieldConfig }));
   const currentLocaleValues = $derived(entryDraft.current?.[valueStoreKey]?.[locale]);
   const currentSlug = $derived(
     entryDraft.current?.currentSlugs[locale] ?? entryDraft.current?.currentSlugs._,

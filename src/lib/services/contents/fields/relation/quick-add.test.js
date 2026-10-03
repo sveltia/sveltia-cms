@@ -6,7 +6,7 @@ import { getReferencedPendingEntries } from '$lib/services/contents/draft/pendin
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
-import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers';
+import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { isWorkflowDraft, isWorkflowEnabled } from '$lib/services/workflow';
 
 import {
@@ -15,6 +15,7 @@ import {
   getNestedPendingEntries,
   getPendingEntrySlugs,
   getPendingRefEntries,
+  getRefEntriesWithPending,
   hasCreationRoom,
   selectPendingEntry,
 } from './quick-add';
@@ -58,6 +59,7 @@ vi.mock('$lib/services/contents/draft/slugs', () => ({
 
 vi.mock('$lib/services/contents/fields/relation/helpers', () => ({
   getEntryOptions: vi.fn(),
+  getRefEntries: vi.fn(() => []),
 }));
 
 vi.mock('$lib/services/workflow', () => ({
@@ -226,6 +228,28 @@ describe('getPendingRefEntries', () => {
   it('returns nothing without a draft', () => {
     expect(getPendingRefEntries({ draft: null, fieldConfig, refEntries: [] })).toEqual([]);
     expect(getPendingRefEntries({ draft: undefined, fieldConfig, refEntries: [] })).toEqual([]);
+  });
+});
+
+describe('getRefEntriesWithPending', () => {
+  it('appends the pending entries to the saved ones', () => {
+    const svelte = createPending('svelte');
+    const react = createPending('react');
+    const saved = { ...svelte.entry, commitDate: new Date() };
+    const draft = createParentDraft({ pendingEntries: [svelte, react] });
+
+    vi.mocked(getRefEntries).mockReturnValue([saved]);
+
+    expect(getRefEntriesWithPending({ draft, fieldConfig })).toEqual([saved, react.entry]);
+    expect(getRefEntries).toHaveBeenCalledWith(fieldConfig);
+  });
+
+  it('returns the saved entries as they are when nothing is pending', () => {
+    const refEntries = [createPending('svelte').entry];
+
+    vi.mocked(getRefEntries).mockReturnValue(refEntries);
+
+    expect(getRefEntriesWithPending({ draft: null, fieldConfig })).toBe(refEntries);
   });
 });
 

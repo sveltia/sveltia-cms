@@ -43,6 +43,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { canResetEntry } from '$lib/services/contents/draft/update/reset';
   import { validateDraft } from '$lib/services/contents/draft/validate';
+  import { countInvalidFields } from '$lib/services/contents/draft/validate/reveal';
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
   import {
     awaitPendingFieldUpdates,
@@ -487,9 +488,7 @@
       }
     } catch (/** @type {any} */ ex) {
       if (ex.message === 'validation_failed') {
-        errorCount = Object.values(draft.validities)
-          .flatMap((validity) => Object.values(validity).map(({ valid }) => !valid))
-          .filter(Boolean).length;
+        errorCount = countInvalidFields(draft.validities);
         showValidationToast = true;
       } else if (ex.message === 'save_conflict') {
         // Someone else has changed the entry since it was opened; let the user decide

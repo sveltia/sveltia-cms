@@ -3,6 +3,7 @@
   import { Divider, Icon, Option, Select, SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { hasInvalidFields } from '$lib/services/contents/draft/validate/reveal';
   import { afterPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
@@ -48,8 +49,7 @@
   );
   const hasAnyError = $derived(
     Object.entries(validities).some(
-      ([locale, validityMap]) =>
-        listedLocales.includes(locale) && Object.values(validityMap).some(({ valid }) => !valid),
+      ([locale, validityMap]) => listedLocales.includes(locale) && hasInvalidFields(validityMap),
     ),
   );
   const useDropDown = $derived(env.isSmallScreen || env.isMediumScreen || allLocales.length >= 5);
@@ -79,7 +79,7 @@
         {@const label = getLocaleLabel(locale) ?? locale}
         {@const disabled = !entryDraft.current?.currentLocales[locale]}
         <!-- A locale without content, e.g. a disabled one, is left out of the validation -->
-        {@const hasError = Object.values(validities[locale] ?? {}).some(({ valid }) => !valid)}
+        {@const hasError = hasInvalidFields(validities[locale])}
         <OptionComponent
           {variant}
           {size}

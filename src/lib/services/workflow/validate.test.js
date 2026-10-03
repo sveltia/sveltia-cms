@@ -51,7 +51,7 @@ describe('workflow/validate', () => {
       vi.mocked(validateEntry).mockReturnValue(true);
 
       expect(validateWorkflowEntry({ entry, draft: openDraft })).toBe(true);
-      expect(validateEntry).toHaveBeenCalledWith({ draft: openDraft });
+      expect(validateEntry).toHaveBeenCalledWith({ draft: openDraft, enforceRequired: true });
       expect(buildDraft).not.toHaveBeenCalled();
       expect(expandInvalidFields).not.toHaveBeenCalled();
     });

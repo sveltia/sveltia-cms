@@ -12,7 +12,7 @@ import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-or
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { updateListField } from '$lib/services/contents/draft/update/list';
 import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
-import { getEntryOptions } from '$lib/services/contents/fields/relation/helpers';
+import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { isWorkflowDraft, isWorkflowEnabled } from '$lib/services/workflow';
 
@@ -124,6 +124,22 @@ export const getPendingRefEntries = ({
   return getPendingEntriesByCollection(draft, collectionName)
     .map(({ entry }) => entry)
     .filter(({ id }) => !refEntryIds.has(id));
+};
+
+/**
+ * Get the entries the given Relation field refers to, followed by the pending entries of the draft
+ * it can refer to: the entries created from the field, or another one referring to the same
+ * collection, are offered and shown along with the saved ones until they’re saved too.
+ * @param {object} args Arguments.
+ * @param {EntryDraft | null | undefined} args.draft Draft being edited.
+ * @param {RelationField} args.fieldConfig Field configuration.
+ * @returns {Entry[]} Entries.
+ */
+export const getRefEntriesWithPending = ({ draft, fieldConfig }) => {
+  const refEntries = getRefEntries(fieldConfig);
+  const pendingEntries = getPendingRefEntries({ draft, fieldConfig, refEntries });
+
+  return pendingEntries.length ? [...refEntries, ...pendingEntries] : refEntries;
 };
 
 /**

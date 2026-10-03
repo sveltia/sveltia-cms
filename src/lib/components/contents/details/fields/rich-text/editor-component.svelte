@@ -17,6 +17,10 @@
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
   import { formatComponentSummary } from '$lib/services/contents/fields/rich-text/components/summary';
+  import {
+    deleteKeysByPrefix,
+    flattenWithPrefix,
+  } from '$lib/services/contents/fields/rich-text/components/values';
   import { unflattenMap } from '$lib/services/utils/object';
   import { watch } from '$lib/services/utils/state.svelte';
 
@@ -199,22 +203,9 @@
     /* v8 ignore next -- the dialog is only open while the draft is there, with a snapshot */
     if (draft && locale && keyPath && valuesSnapshot) {
       // Clear current values
-      /* v8 ignore next -- the locale holds the component’s own values at least */
-      Object.keys(draft[valueStoreKey][locale] ?? {}).forEach((key) => {
-        if (key.startsWith(keyPathPrefix)) {
-          delete draft[valueStoreKey][locale][key];
-        }
-      });
+      deleteKeysByPrefix(draft[valueStoreKey][locale], keyPathPrefix);
       // Restore snapshot
-      Object.assign(
-        draft[valueStoreKey][locale],
-        Object.fromEntries(
-          Object.entries(flatten(valuesSnapshot)).map(([key, value]) => [
-            `${keyPathPrefix}${key}`,
-            value,
-          ]),
-        ),
-      );
+      Object.assign(draft[valueStoreKey][locale], flattenWithPrefix(valuesSnapshot, keyPathPrefix));
     }
   };
 
@@ -335,19 +326,8 @@
 
       // Remove the values and validities from the draft when the component is unmounted
       if (draft) {
-        /* v8 ignore next -- the locale holds the component’s own values at least */
-        Object.keys(draft[valueStoreKey][locale] ?? {}).forEach((key) => {
-          if (key.startsWith(keyPathPrefix)) {
-            delete draft[valueStoreKey][locale][key];
-          }
-        });
-
-        /* v8 ignore next -- the draft holds validities for each of its locales */
-        Object.keys(draft.validities[locale] ?? {}).forEach((key) => {
-          if (key.startsWith(keyPathPrefix)) {
-            delete draft.validities[locale][key];
-          }
-        });
+        deleteKeysByPrefix(draft[valueStoreKey][locale], keyPathPrefix);
+        deleteKeysByPrefix(draft.validities[locale], keyPathPrefix);
       }
     };
   });
@@ -384,14 +364,10 @@
         }
 
         if (!equal(values, currentValues)) {
-          const newEntries = Object.fromEntries(
-            Object.entries(flatten(values)).map(([key, value]) => [
-              `${keyPathPrefix}${key}`,
-              value,
-            ]),
+          Object.assign(
+            entryDraft.current[valueStoreKey][locale],
+            flattenWithPrefix(/** @type {Record<string, any>} */ (values), keyPathPrefix),
           );
-
-          Object.assign(entryDraft.current[valueStoreKey][locale], newEntries);
         }
       }
     },

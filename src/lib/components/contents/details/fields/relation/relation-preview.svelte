@@ -6,9 +6,9 @@
 -->
 <script>
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { getOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
+  import { getOptions } from '$lib/services/contents/fields/relation/helpers';
   import { getPreviewLabels } from '$lib/services/contents/fields/relation/helpers/preview';
-  import { getPendingRefEntries } from '$lib/services/contents/fields/relation/quick-add';
+  import { getRefEntriesWithPending } from '$lib/services/contents/fields/relation/quick-add';
   import { getCanonicalLocale, getDirection, getListFormatter } from '$lib/services/contents/i18n';
 
   /**
@@ -34,18 +34,8 @@
   } = $props();
 
   const listFormatter = $derived(getListFormatter(locale));
-  const refEntries = $derived.by(() => {
-    const entries = getRefEntries(fieldConfig);
-
-    // The entries created from the editor are shown by their labels, like the saved ones
-    const pendingEntries = getPendingRefEntries({
-      draft: entryDraft.current,
-      fieldConfig,
-      refEntries: entries,
-    });
-
-    return pendingEntries.length ? [...entries, ...pendingEntries] : entries;
-  });
+  // The entries created from the editor are shown by their labels, like the saved ones
+  const refEntries = $derived(getRefEntriesWithPending({ draft: entryDraft.current, fieldConfig }));
   const options = $derived(
     getOptions({
       locale,

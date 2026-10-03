@@ -9,7 +9,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { AlertDialog, Button, Icon, Listbox, Option, SearchBar } from '@sveltia/ui';
-  import { isObject } from '@sveltia/utils/object';
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { loadModule } from '$lib/services/app/dependencies';
@@ -17,6 +16,7 @@
   import {
     getGeometryBounds,
     isValidGeoJSON,
+    parseGeoJSON,
     roundCoordinates,
   } from '$lib/services/contents/fields/map/helpers';
   import { toFixed } from '$lib/services/utils/number';
@@ -183,25 +183,9 @@
       return;
     }
 
-    let newValue = currentValue ?? '';
-    /** @type {GeoJSONStoreGeometries | undefined} */
-    let geometry = undefined;
-
     // Validate the value
-    try {
-      geometry = JSON.parse(newValue);
-
-      if (
-        !isObject(geometry) ||
-        geometry.type !== geometryType ||
-        !Array.isArray(geometry.coordinates)
-      ) {
-        throw new Error('Invalid object');
-      }
-    } catch {
-      newValue = '';
-      geometry = undefined;
-    }
+    const geometry = parseGeoJSON(currentValue ?? '', geometryType);
+    const newValue = geometry ? /** @type {string} */ (currentValue) : '';
 
     if (inputValue === newValue) {
       return;

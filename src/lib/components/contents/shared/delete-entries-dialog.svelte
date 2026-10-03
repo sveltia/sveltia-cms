@@ -57,13 +57,17 @@
 
   // Assets committed alongside an unpublished entry don’t exist on the configured branch yet, so
   // only look at the published entries here
-  const associatedAssets = $derived.by(() => {
+  const publishedEntryAssets = $derived.by(() => {
     const collectionName = selectedCollection.current?.name;
 
     return collectionName
-      ? publishedEntries.flatMap((entry) => getEntryRelativeAssets({ entry, collectionName }))
+      ? publishedEntries.map((entry) => ({
+          entry,
+          assets: getEntryRelativeAssets({ entry, collectionName }),
+        }))
       : [];
   });
+  const associatedAssets = $derived(publishedEntryAssets.flatMap(({ assets }) => assets));
 
   /**
    * Delete the selected entries, discarding any unpublished draft rather than committing a deletion
@@ -83,10 +87,10 @@
           // rejected outright when the branch is protected
           // @see https://github.com/decaporg/decap-cms/issues/6610
           await deleteWorkflowEntries(
-            publishedEntries.map((entry) => ({
+            publishedEntryAssets.map(({ entry, assets }) => ({
               entry,
               collection: /** @type {any} */ (collection),
-              assets: getEntryRelativeAssets({ entry, collectionName: collection.name }),
+              assets,
             })),
           );
 

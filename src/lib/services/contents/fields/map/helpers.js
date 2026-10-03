@@ -10,22 +10,33 @@ import { toFixed } from '$lib/services/utils/number';
  */
 
 /**
+ * Parse a string as a GeoJSON geometry object of the given geometry type.
+ * @param {string} value Stringified GeoJSON geometry object.
+ * @param {MapField['type']} [geometryType] Expected geometry type. Default: `Point`.
+ * @returns {GeoJSONStoreGeometries | undefined} Geometry object, or `undefined` if the value is not
+ * valid JSON or not a geometry of the given type.
+ */
+export const parseGeoJSON = (value, geometryType = 'Point') => {
+  try {
+    const geometry = JSON.parse(value);
+
+    return isObject(geometry) &&
+      geometry.type === geometryType &&
+      Array.isArray(geometry.coordinates)
+      ? /** @type {GeoJSONStoreGeometries} */ (geometry)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Check whether a string is a valid GeoJSON geometry object for the given geometry type.
  * @param {string} value Stringified GeoJSON geometry object.
  * @param {MapField['type']} [geometryType] Expected geometry type. Default: `Point`.
  * @returns {boolean} Whether the value is valid.
  */
-export const isValidGeoJSON = (value, geometryType = 'Point') => {
-  try {
-    const geometry = JSON.parse(value);
-
-    return (
-      isObject(geometry) && geometry.type === geometryType && Array.isArray(geometry.coordinates)
-    );
-  } catch {
-    return false;
-  }
-};
+export const isValidGeoJSON = (value, geometryType) => !!parseGeoJSON(value, geometryType);
 
 /**
  * Round all coordinates in a GeoJSON geometry to the specified number of decimal places. Works for

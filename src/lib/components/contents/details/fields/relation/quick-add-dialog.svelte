@@ -16,18 +16,17 @@
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { revokeDraftFileURLs } from '$lib/services/contents/draft';
   import { buildDraft } from '$lib/services/contents/draft/create';
-  import { getValueMapVersion } from '$lib/services/contents/draft/create/proxy.svelte';
   import {
     EntryDraftState,
     getEntryDraftContext,
     setEntryDraftContext,
     setEntryDraftRoot,
   } from '$lib/services/contents/draft/state.svelte';
-  import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
-  import { validateEntry } from '$lib/services/contents/draft/validate';
-  import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
-  import { expandInvalidFields } from '$lib/services/contents/editor/fields';
-  import { awaitPendingFieldUpdates } from '$lib/services/contents/editor/pending';
+  import { trackComputedValues } from '$lib/services/contents/draft/update/compute-tracking.svelte';
+  import {
+    countInvalidFields,
+    validateAndRevealErrors,
+  } from '$lib/services/contents/draft/validate/reveal';
   import { needsSlugInput } from '$lib/services/contents/editor/slug';
   import {
     createPendingEntry,
@@ -137,17 +136,10 @@
     adding = true;
 
     try {
-      // Wait for a rich text editor to write what was just typed, and for custom validators to
-      // report, the same way a save does
-      await awaitPendingFieldUpdates();
-      await awaitCustomFieldValidations();
-
-      // The entry is committed along with the parent, so it has to be complete
-      if (!validateEntry({ draft, enforceRequired: true })) {
-        expandInvalidFields({ draft });
-        errorCount = Object.values(draft.validities)
-          .flatMap((validity) => Object.values(validity).map(({ valid }) => !valid))
-          .filter(Boolean).length;
+      // The entry is committed along with the parent, so it has to be complete. Wait for what was
+      // just typed and for custom validators to report, the same way a save does
+      if (!(await validateAndRevealErrors({ draft, enforceRequired: true }))) {
+        errorCount = countInvalidFields(draft.validities);
         showValidationToast = true;
 
         return;
@@ -197,15 +189,8 @@
       return;
     }
 
-    // Resolve the Compute fields the same way the main editor does: depend on every field value
-    // through the value map versions rather than by walking the values
-    Object.values(draft.currentValues).forEach(getValueMapVersion);
-    Object.values(draft.extraValues).forEach((valueMap) => void $state.snapshot(valueMap));
-    void $state.snapshot(draft.currentLocales);
-
-    untrack(() => {
-      updateComputedValues(draft);
-    });
+    // Resolve the Compute fields the same way the main editor does
+    trackComputedValues(draft);
   });
 </script>
 

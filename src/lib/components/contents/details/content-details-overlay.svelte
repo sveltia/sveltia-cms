@@ -38,7 +38,7 @@
     setEntryDraftContext,
     setEntryDraftRoot,
   } from '$lib/services/contents/draft/state.svelte';
-  import { updateComputedValues } from '$lib/services/contents/draft/update/compute';
+  import { trackComputedValues } from '$lib/services/contents/draft/update/compute-tracking.svelte';
   import {
     editorFirstPane,
     editorSecondPane,
@@ -408,19 +408,7 @@
       return;
     }
 
-    // Depend on every field value at the cost of one dependency per locale, without walking the
-    // values: each value map proxy counts its writes
-    Object.values(draft.currentValues).forEach(getValueMapVersion);
-    // The extra values of rich text editor components are plain `$state` objects with no version,
-    // so they have to be read to be tracked. They are few, so the walk is cheap
-    Object.values(draft.extraValues).forEach((valueMap) => void $state.snapshot(valueMap));
-    void $state.snapshot(draft.currentLocales);
-
-    untrack(() => {
-      // Resolve the Compute fields here rather than in their own editors, which only run while
-      // they are rendered — a collapsed or off-screen list item renders none of its fields
-      updateComputedValues(draft);
-    });
+    trackComputedValues(draft);
   });
 
   $effect(() => {

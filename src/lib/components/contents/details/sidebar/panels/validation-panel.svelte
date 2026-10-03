@@ -5,13 +5,12 @@
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import PanelContainer from '$lib/components/contents/details/sidebar/panels/panel-container.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
-  import { validateEntry } from '$lib/services/contents/draft/validate';
-  import { awaitCustomFieldValidations } from '$lib/services/contents/draft/validate/custom-fields';
   import {
     getInvalidFields,
     getPathValidationMessages,
   } from '$lib/services/contents/draft/validate/messages';
-  import { expandInvalidFields, highlightEditorField } from '$lib/services/contents/editor/fields';
+  import { validateAndRevealErrors } from '$lib/services/contents/draft/validate/reveal';
+  import { highlightEditorField } from '$lib/services/contents/editor/fields';
   import { showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
 
@@ -85,12 +84,8 @@
 
     validating = true;
 
-    // Custom field validators can be async, so wait for any in-flight results, as a save does
-    await awaitCustomFieldValidations();
-
-    if (!validateEntry({ draft })) {
-      expandInvalidFields({ draft });
-    }
+    // Custom field validators can be async, so this waits for any in-flight results, as a save does
+    await validateAndRevealErrors({ draft, awaitFieldUpdates: false });
 
     validating = false;
   };
