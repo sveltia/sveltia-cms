@@ -341,6 +341,89 @@ describe('KeyValueEditor', () => {
       .toHaveAttribute('aria-disabled', 'true');
   });
 
+  test('keeps the focus in a key while typing', async () => {
+    const { draft } = await renderEditor({ color: 'red', size: 'L' });
+    const key = page.getByRole('textbox', { name: 'Key' }).nth(0);
+    const element = key.element();
+
+    await key.click();
+    await userEvent.keyboard('{End}s');
+    // Each keystroke is saved, and the saved pairs come back from the draft
+    await expect.poll(() => getStoredKeys(draft)).toEqual(['colors', 'size']);
+    await userEvent.keyboard('!');
+    await expect.poll(() => getStoredKeys(draft)).toEqual(['colors!', 'size']);
+    expect(key.element()).toBe(element);
+    await expect.element(key).toHaveFocus();
+  });
+
+  test('keeps each row and its error with its pair as the pairs are reordered or removed', async () => {
+    await renderEditor({ color: 'red', size: 'L', shape: 'round' });
+
+    const [color, size, shape] = page.getByRole('row').elements().slice(1);
+    const keys = page.getByRole('textbox', { name: 'Key' });
+
+    await keys.nth(2).fill('');
+    await expect.element(keys.nth(2)).toHaveAttribute('aria-invalid', 'true');
+
+    await page.getByRole('button', { name: 'Reorder Item' }).nth(2).element().focus();
+    await userEvent.keyboard('{Home}');
+    await expect.poll(getRows).toEqual([
+      ['', 'round'],
+      ['color', 'red'],
+      ['size', 'L'],
+    ]);
+    expect(page.getByRole('row').elements().slice(1)).toEqual([shape, color, size]);
+    await expect.element(keys.nth(0)).toHaveAttribute('aria-invalid', 'true');
+    await expect.element(keys.nth(1)).not.toHaveAttribute('aria-invalid', 'true');
+
+    await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+    await expect.poll(getRows).toEqual([
+      ['', 'round'],
+      ['size', 'L'],
+    ]);
+    expect(page.getByRole('row').elements().slice(1)).toEqual([shape, size]);
+    await expect.element(keys.nth(0)).toHaveAttribute('aria-invalid', 'true');
+    await expect.element(keys.nth(1)).not.toHaveAttribute('aria-invalid', 'true');
+
+    await page.getByRole('button', { name: 'Remove' }).nth(0).click();
+    await expect.poll(getRows).toEqual([['size', 'L']]);
+    expect(page.getByRole('row').elements().slice(1)).toEqual([size]);
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+    await expect.element(keys.nth(0)).not.toHaveAttribute('aria-invalid', 'true');
+
+    // A new pair gets a row of its own, which isn’t flagged until its key is edited
+    await page.getByRole('button', { name: /Add\W+meta/ }).click();
+    await expect.poll(getRows).toEqual([
+      ['size', 'L'],
+      ['', ''],
+    ]);
+    expect([color, size, shape]).not.toContain(page.getByRole('row').elements()[2]);
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+  });
+
+  test('keeps the rows by position for an external change, clearing the errors', async () => {
+    const { draft } = await renderEditor({ color: 'red', size: 'L' });
+    const [color, size] = page.getByRole('row').elements().slice(1);
+    const keys = page.getByRole('textbox', { name: 'Key' });
+
+    await keys.nth(1).fill('');
+    await expect.element(keys.nth(1)).toHaveAttribute('aria-invalid', 'true');
+
+    draft.currentValues._default['meta.shape'] = 'round';
+    await expect.poll(getRows).toEqual([
+      ['color', 'red'],
+      ['size', 'L'],
+      ['shape', 'round'],
+    ]);
+
+    const rows = page.getByRole('row').elements().slice(1);
+
+    expect(rows.slice(0, 2)).toEqual([color, size]);
+    expect([color, size]).not.toContain(rows[2]);
+    expect(page.getByRole('alert').elements()).toHaveLength(0);
+    await expect.element(keys.nth(1)).not.toHaveAttribute('aria-invalid', 'true');
+  });
+
   test('follows an external change to the pairs', async () => {
     const { draft } = await renderEditor({ color: 'red' });
 

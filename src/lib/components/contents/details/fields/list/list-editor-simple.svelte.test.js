@@ -157,6 +157,68 @@ describe('ListEditorSimple', () => {
     await expect.element(page.getByRole('textbox').nth(1)).toHaveFocus();
   });
 
+  test('keeps the focus in a row while typing', async () => {
+    const { draft } = await renderEditor(['a', 'b']);
+    const input = page.getByRole('textbox').nth(1);
+
+    await page.getByRole('button', { name: /Add\W+tags/ }).click();
+    await expect.element(page.getByRole('textbox').nth(2)).toHaveFocus();
+
+    const blankInput = page.getByRole('textbox').nth(2).element();
+
+    // The leading space leaves the row blank, so it isn’t stored until the letter is typed
+    await userEvent.keyboard(' c');
+    await expect.poll(() => getStoredItems(draft)).toEqual(['a', 'b', 'c']);
+    expect(page.getByRole('textbox').nth(2).element()).toBe(blankInput);
+    await expect.element(page.getByRole('textbox').nth(2)).toHaveFocus();
+
+    const element = input.element();
+
+    await input.click();
+    await userEvent.keyboard('xyz');
+    await expect.poll(() => getStoredItems(draft)).toEqual(['a', 'bxyz', 'c']);
+    expect(input.element()).toBe(element);
+    await expect.element(input).toHaveFocus();
+  });
+
+  test('keeps each row with its item as the items are reordered or removed', async () => {
+    await renderEditor(['a', 'b', 'c']);
+    await expect.poll(getInputValues).toEqual(['a', 'b', 'c']);
+
+    const [a, b, c] = page.getByRole('textbox').elements();
+
+    await page.getByRole('button', { name: 'Reorder Item' }).nth(2).element().focus();
+    await userEvent.keyboard('{Home}');
+    await expect.poll(getInputValues).toEqual(['c', 'a', 'b']);
+    expect(page.getByRole('textbox').elements()).toEqual([c, a, b]);
+
+    await page.getByRole('button', { name: 'Remove' }).nth(1).click();
+    await expect.poll(getInputValues).toEqual(['c', 'b']);
+    expect(page.getByRole('textbox').elements()).toEqual([c, b]);
+
+    // A new item gets a row of its own rather than taking over the removed one
+    await page.getByRole('button', { name: /Add\W+tags/ }).click();
+    await expect.poll(getInputValues).toEqual(['c', 'b', '']);
+    expect([a, b, c]).not.toContain(page.getByRole('textbox').nth(2).element());
+  });
+
+  test('renders the rows afresh for an external change to the value', async () => {
+    const { props } = await renderEditor(['a', 'b']);
+
+    await expect.poll(getInputValues).toEqual(['a', 'b']);
+
+    const [a, b] = page.getByRole('textbox').elements();
+
+    props.currentValue = ['a', 'x'];
+
+    await expect.poll(getInputValues).toEqual(['a', 'x']);
+
+    const [first, second] = page.getByRole('textbox').elements();
+
+    expect(first).not.toBe(a);
+    expect(second).not.toBe(b);
+  });
+
   test('reorders an item with the keyboard', async () => {
     const { draft } = await renderEditor(['a', 'b', 'c']);
 

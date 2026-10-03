@@ -27,6 +27,7 @@
   import { getDirection } from '$lib/services/contents/i18n';
   import { focusReorderControl, moveListItem } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
+  import { createKeyedRows } from '$lib/services/utils/keyed-rows.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -72,11 +73,10 @@
     readonly || (i18n === 'duplicate_keys' && locale !== defaultLocale),
   );
 
-  /** @type {[string, string][]} */
-  let pairs = $state([]);
-  /** @type {number[]} */
-  let pairIds = $state([]);
-  let nextPairId = 0;
+  /**
+   * Key-value pairs shown in the editor, one per row.
+   */
+  const rows = createKeyedRows(/** @type {[string, string][]} */ ([]));
   /** @type {HTMLTableRowElement[]} */
   const rowElements = $state([]);
   /** @type {HTMLTableSectionElement | undefined} */
@@ -87,23 +87,23 @@
   let validations = $state([]);
 
   // Removing the blank row offered for an empty field would just bring it back
-  const isOnlyBlankRow = $derived(pairs.length === 1 && !pairs[0][0] && !pairs[0][1]);
+  const isOnlyBlankRow = $derived(
+    rows.values.length === 1 && !rows.values[0][0] && !rows.values[0][1],
+  );
 
   /**
    * Add a blank row if there are no pairs, so there’s always somewhere to type, unless the keys
    * can’t be edited, in which case there’s nothing to type into.
    */
   const ensureBlankRow = () => {
-    if (!pairs.length && !keysReadonly) {
-      pairs.push(['', '']);
-      pairIds.push(nextPairId);
-      nextPairId += 1;
+    if (!rows.values.length && !keysReadonly) {
+      rows.insert(rows.values.length, ['', '']);
       edited.push(false);
     }
   };
 
   /**
-   * Update the {@link pairs} whenever the current values are changed.
+   * Update the {@link rows} whenever the current values are changed.
    */
   const updatePairs = () => {
     const draft = entryDraft.current;
@@ -116,20 +116,11 @@
     const updatedPairs = getPairs({ draft, valueStoreKey, keyPath, locale });
     // A pair whose key is still empty hasn’t been written to the draft — adding one removes the
     // `null` placeholder from the draft, which is what runs this — so it doesn’t count as a change
-    const savedPairs = pairs.filter(([key]) => key.trim());
+    const savedPairs = rows.values.filter(([key]) => key.trim());
 
     if (!equal(savedPairs, updatedPairs)) {
-      pairs = [...updatedPairs];
       // Preserve existing IDs for unchanged positions; assign new IDs for new pairs
-      pairIds = updatedPairs.map((_pair, i) => {
-        if (i < pairIds.length) {
-          return pairIds[i];
-        }
-
-        nextPairId += 1;
-
-        return nextPairId - 1;
-      });
+      rows.replace([...updatedPairs], { keepIds: true });
       edited = updatedPairs.map(() => false);
     }
 
@@ -149,42 +140,38 @@
   };
 
   /**
-   * Add an empty pair to the {@link pairs} array.
+   * Add an empty pair to the {@link rows}.
    */
   const addPair = () => {
-    pairs.push(['', '']);
-    pairIds.push(nextPairId);
-    nextPairId += 1;
+    rows.insert(rows.values.length, ['', '']);
     edited.push(false);
 
     window.requestAnimationFrame(() => {
       /** @type {HTMLInputElement} */ (
-        rowElements[pairs.length - 1].querySelector('input')
+        rowElements[rows.values.length - 1].querySelector('input')
       ).focus();
     });
   };
 
   /**
-   * Remove a pair from {@link pairs}.
-   * @param {number} index Index in the {@link pairs} array.
+   * Remove a pair from {@link rows}.
+   * @param {number} index Row index.
    */
   const removePair = (index) => {
-    pairs.splice(index, 1);
-    pairIds.splice(index, 1);
+    rows.remove(index);
     edited.splice(index, 1);
     ensureBlankRow();
   };
 
   /**
-   * Move a pair to another position in {@link pairs}. The pairs are saved in the new order.
+   * Move a pair to another position in {@link rows}. The pairs are saved in the new order.
    * @param {number} from Source index.
    * @param {number} to Destination index.
    * @param {string} [action] `data-action` of the reorder control that triggered the move, so the
    * focus can be restored to the matching control on the row once it has moved.
    */
   const movePair = async (from, to, action = 'reorder') => {
-    pairs = moveListItem(pairs, from, to);
-    pairIds = moveListItem(pairIds, from, to);
+    rows.move(from, to);
     edited = moveListItem(edited, from, to);
 
     await tick();
@@ -196,7 +183,7 @@
      * Get the number of pairs.
      * @returns {number} Pair count.
      */
-    getItemCount: () => pairs.length,
+    getItemCount: () => rows.values.length,
     /**
      * Get the table body, whose rows are the pairs.
      * @returns {HTMLTableSectionElement | undefined} Element.
@@ -206,14 +193,14 @@
   });
 
   /**
-   * Update the draft store whenever the {@link pairs} is updated.
+   * Update the draft store whenever the {@link rows} is updated.
    */
   const updateStore = () => {
     const draft = entryDraft.current;
 
-    validations = validatePairs({ pairs, edited });
+    validations = validatePairs({ pairs: rows.values, edited });
 
-    const keyedPairs = pairs.filter(([key]) => key.trim());
+    const keyedPairs = rows.values.filter(([key]) => key.trim());
 
     if (!draft || validations.some(Boolean)) {
       return;
@@ -221,7 +208,7 @@
 
     if (keyedPairs.length) {
       // Wait until every row has a key before saving
-      if (keyedPairs.length !== pairs.length) {
+      if (keyedPairs.length !== rows.values.length) {
         return;
       }
     } else if (
@@ -258,14 +245,14 @@
   );
 
   watch(
-    () => $state.snapshot(pairs),
+    () => $state.snapshot(rows.values),
     () => {
       updateStore();
     },
   );
 </script>
 
-{#if pairs.length}
+{#if rows.values.length}
   <table>
     <thead>
       <tr>
@@ -284,12 +271,12 @@
       ondragovercapture={sorter.onDragOver}
       ondropcapture={sorter.onDrop}
     >
-      {#each sorter.displayOrder as index (pairIds[index])}
+      {#each sorter.displayOrder as index (rows.ids[index])}
         <tr
           bind:this={rowElements[index]}
           class:dragging={sorter.dragIndex === index}
           draggable={sorter.grabbedIndex === index}
-          ondragstart={(event) => sorter.onDragStart(index, event, pairs[index][0])}
+          ondragstart={(event) => sorter.onDragStart(index, event, rows.values[index][0])}
           ondragend={sorter.onDragEnd}
           animate:flip={{ duration: 200 }}
         >
@@ -298,8 +285,8 @@
               <div role="none">
                 <ReorderControls
                   {index}
-                  itemCount={pairs.length}
-                  disabled={pairs.length < 2}
+                  itemCount={rows.values.length}
+                  disabled={rows.values.length < 2}
                   onGrab={() => sorter.grab(index)}
                   onRelease={sorter.release}
                   onMove={(to, action) => movePair(index, to, action)}
@@ -312,7 +299,7 @@
               dir="ltr"
               readonly={keysReadonly}
               flex
-              bind:value={pairs[index][0]}
+              bind:value={rows.values[index][0]}
               invalid={!!validations[index]}
               ariaLabel={keyLabel}
               aria-errormessage={validations[index] ? `${fieldId}-kv-error` : undefined}
@@ -334,16 +321,16 @@
               dir={getDirection(locale)}
               {readonly}
               flex
-              bind:value={pairs[index][1]}
+              bind:value={rows.values[index][1]}
               ariaLabel={valueLabel}
               onkeydown={(event) => {
                 // Move focus or add a new pair with Enter key
                 if (event.key === 'Enter' && !event.isComposing) {
-                  if (index < pairs.length - 1) {
+                  if (index < rows.values.length - 1) {
                     /** @type {HTMLInputElement} */ (
                       rowElements[index + 1].querySelector('input')
                     ).focus();
-                  } else if (!keysReadonly && pairs.length < max) {
+                  } else if (!keysReadonly && rows.values.length < max) {
                     addPair();
                   }
                 }
@@ -385,12 +372,12 @@
   </ValidationError>
 {/if}
 
-{#if pairs.length < max}
+{#if rows.values.length < max}
   <div role="none" class="toolbar">
     <AddItemButton
       disabled={keysReadonly}
       {fieldConfig}
-      items={pairs}
+      items={rows.values}
       addItem={() => {
         addPair();
       }}
