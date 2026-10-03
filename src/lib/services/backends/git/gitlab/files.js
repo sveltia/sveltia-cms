@@ -11,9 +11,10 @@ import {
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { splitIntoChunks } from '$lib/services/utils/array';
 
 /**
  * @import {
@@ -222,21 +223,12 @@ export const fetchBlobNodes = async (paths, query, variables = {}) => {
   // Only the first two conditions can be satisfied by a fixed count; the size of a blob is unknown
   // until it’s fetched, so {@link fetchBlobBatch} handles the third one by splitting a batch that
   // turns out to be too large.
-  const batches = Array.from({ length: Math.ceil(paths.length / batchSize) }, (_, index) => ({
-    index,
-    paths: paths.slice(index * batchSize, (index + 1) * batchSize),
-  }));
-
-  /** @type {BlobItem[][]} */
-  const results = Array(batches.length);
-
+  //
   // The batches are independent, so a few of them are requested at once rather than one after
   // another; a large repository needs dozens of them, and each is a full round trip
-  await runConcurrently(
-    batches,
-    async ({ index, paths: batchPaths }) => {
-      results[index] = await fetchBlobBatch(batchPaths, query, variables);
-    },
+  const results = await mapConcurrently(
+    splitIntoChunks(paths, batchSize),
+    (batchPaths) => fetchBlobBatch(batchPaths, query, variables),
     { concurrency },
   );
 

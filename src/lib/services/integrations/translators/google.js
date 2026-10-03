@@ -1,3 +1,5 @@
+import { postJSON } from '$lib/services/integrations/ai/api';
+
 /**
  * @import { LanguagePair, TranslationOptions, TranslationService } from '$lib/types/private';
  */
@@ -134,26 +136,13 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
   };
 
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-goog-api-key': apiKey,
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-
-      throw new Error(
-        `Google Translate API error: ${response.status} ${response.statusText}` +
-          `${errorData.error?.message ? ` - ${errorData.error.message}` : ''}`,
-      );
-    }
-
     const { data } = /** @type {{ data: { translations: { translatedText: string }[] } }} */ (
-      await response.json()
+      await postJSON({
+        endpoint: url,
+        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
+        apiLabel: 'Google Translate',
+        body: requestBody,
+      })
     );
 
     // cspell:disable-next-line

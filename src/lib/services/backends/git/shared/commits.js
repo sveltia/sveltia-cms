@@ -1,4 +1,4 @@
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { cmsConfig } from '$lib/services/config';
 import { getCollectionLabel } from '$lib/services/contents/collection';
 import { user } from '$lib/services/user/account.svelte';
@@ -157,13 +157,7 @@ export const dedupeFileCommits = (commits) => {
  * @returns {Promise<FileCommit[]>} Unique commits, newest first.
  */
 export const fetchPerPathCommits = async (paths, fetchHistory, parseCommit) => {
-  /** @type {any[][]} */
-  const results = [];
-
-  // Store the results by index so they come out in the same order as the paths
-  await runConcurrently([...paths.entries()], async ([index, path]) => {
-    results[index] = await fetchHistory(path);
-  });
+  const results = await mapConcurrently(paths, fetchHistory);
 
   return dedupeFileCommits(results.flat().map(parseCommit));
 };

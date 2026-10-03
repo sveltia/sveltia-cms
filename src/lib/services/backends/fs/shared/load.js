@@ -3,7 +3,7 @@ import { readAsText } from '@sveltia/utils/file';
 import { getAssetKind } from '$lib/services/assets/kinds';
 import { allAssets } from '$lib/services/assets/state';
 import { getAllFiles } from '$lib/services/backends/fs/shared/scan';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { createFileList, describeFileList } from '$lib/services/backends/process';
 import { allEntries, dataLoaded, entryParseErrors } from '$lib/services/contents';
@@ -38,32 +38,11 @@ import { createDebugLogger } from '$lib/services/utils/logging';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 /**
  * Maximum number of files processed at the same time, to balance performance with memory safety.
+ * Unlike fixed batches, a new file is picked up as soon as a slot frees up, so one large file
+ * doesn’t stall the others.
  * @see https://github.com/sveltia/sveltia-cms/issues/224
  */
 const FILE_PROCESS_CONCURRENCY = 10;
-
-/**
- * Process the given files with a limited number of them in flight. Unlike fixed batches, a new file
- * is picked up as soon as a slot frees up, so one large file doesn’t stall the others.
- * @template T, R
- * @param {T[]} items Files to process.
- * @param {(item: T) => Promise<R>} task Task to be performed for each file.
- * @returns {Promise<R[]>} Results, in the same order as the given files.
- */
-const processFiles = async (items, task) => {
-  /** @type {R[]} */
-  const results = Array.from({ length: items.length });
-
-  await runConcurrently(
-    [...items.keys()],
-    async (index) => {
-      results[index] = await task(items[index]);
-    },
-    { concurrency: FILE_PROCESS_CONCURRENCY },
-  );
-
-  return results;
-};
 
 /**
  * Parse text file info to create a complete entry or config file object.
@@ -208,13 +187,13 @@ export const loadFiles = async (rootDirHandle, { hashCacheDB = null } = {}) => {
   log(`Scanned the directory: ${describeFileList(fileList)}`);
 
   const entryFileItems = /** @type {BaseEntryListItem[]} */ (
-    await processFiles(entryFiles, parseTextFileInfo)
+    await mapConcurrently(entryFiles, parseTextFileInfo, { concurrency: FILE_PROCESS_CONCURRENCY })
   );
 
   log(`Read ${entryFileItems.length} entry files`);
 
   const configFileItems = /** @type {BaseConfigListItem[]} */ (
-    await processFiles(configFiles, parseTextFileInfo)
+    await mapConcurrently(configFiles, parseTextFileInfo, { concurrency: FILE_PROCESS_CONCURRENCY })
   );
 
   log(`Read ${configFileItems.length} config files`);
@@ -228,8 +207,10 @@ export const loadFiles = async (rootDirHandle, { hashCacheDB = null } = {}) => {
   const newHashes = new Map();
 
   /** @type {Asset[]} */
-  const assets = await processFiles(assetFiles, (fileInfo) =>
-    parseAssetFileInfo(fileInfo, { cachedHashes, newHashes }),
+  const assets = await mapConcurrently(
+    assetFiles,
+    (fileInfo) => parseAssetFileInfo(fileInfo, { cachedHashes, newHashes }),
+    { concurrency: FILE_PROCESS_CONCURRENCY },
   );
 
   // Each asset file is read in full to hash it, so this can take a while with large media, unless

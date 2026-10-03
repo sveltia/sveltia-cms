@@ -10,6 +10,7 @@ import {
   findLibraryOptions,
   resolveLibraryOptions,
 } from '$lib/services/integrations/media-libraries/options';
+import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 import { createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -338,45 +339,34 @@ export const fetchResources = async (options, { maxPages = 10, expression } = {}
     Authorization: authHeader,
   };
 
-  /** @type {CloudinaryResource[]} */
-  const allResources = [];
-  /** @type {string | undefined} */
-  let nextCursor;
+  // Build expression with kind filter if specified
+  let filterExpression = expression;
 
-  // Fetch up to maxPages pages
-  for (let page = 0; page < maxPages; page += 1) {
-    // Build expression with kind filter if specified
-    let filterExpression = expression;
-
-    if (kind === 'image' && !expression) {
-      filterExpression = 'resource_type:image';
-    } else if (kind === 'image' && expression) {
-      filterExpression = `(${expression}) AND resource_type:image`;
-    }
-
-    const params = new URLSearchParams({
-      max_results: '100',
-      ...(filterExpression && { expression: filterExpression }),
-      ...(nextCursor && { next_cursor: nextCursor }),
-    });
-
-    const response = await fetch(`${endpoint}?${params}`, { headers });
-
-    await assertResponseOK(response, 'Failed to fetch resources');
-
-    /** @type {CloudinaryListResponse} */
-    const data = await response.json();
-
-    allResources.push(...data.resources);
-    nextCursor = data.next_cursor;
-
-    if (!nextCursor) {
-      break;
-    }
-
-    // Wait for a bit before requesting the next page
-    await sleep(50);
+  if (kind === 'image' && !expression) {
+    filterExpression = 'resource_type:image';
+  } else if (kind === 'image' && expression) {
+    filterExpression = `(${expression}) AND resource_type:image`;
   }
+
+  const allResources = await fetchPages(
+    async (/** @type {string | undefined} */ nextCursor) => {
+      const params = new URLSearchParams({
+        max_results: '100',
+        ...(filterExpression && { expression: filterExpression }),
+        ...(nextCursor && { next_cursor: nextCursor }),
+      });
+
+      const response = await fetch(`${endpoint}?${params}`, { headers });
+
+      await assertResponseOK(response, 'Failed to fetch resources');
+
+      /** @type {CloudinaryListResponse} */
+      const data = await response.json();
+
+      return { results: data.resources, next: data.next_cursor };
+    },
+    { maxPages },
+  );
 
   return parseResults(allResources, { fieldConfig });
 };

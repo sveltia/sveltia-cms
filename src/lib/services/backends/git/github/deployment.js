@@ -1,8 +1,9 @@
-import { fetchAliasedBatch, splitIntoChunks } from '$lib/services/backends/git/github/graphql';
+import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { findURLInSummary, pickDeployment } from '$lib/services/backends/git/shared/deployment';
+import { splitIntoChunks } from '$lib/services/utils/array';
 
 /**
  * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';

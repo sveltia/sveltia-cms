@@ -9,6 +9,7 @@ import {
   getPrefix,
   getRelativeKey,
 } from '$lib/services/integrations/media-libraries/cloud/shared/keys';
+import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 
 /**
  * @import {
@@ -83,39 +84,32 @@ export const fetchListing = async (provider, config, options, { maxPages = 10 } 
   const files = [];
   /** @type {string[]} */
   const folders = [];
-  /** @type {string | undefined} */
-  let cursor;
 
-  // Fetch up to maxPages pages
-  for (let page = 0; page < maxPages; page += 1) {
-    const result = await provider.listPage({ config, credential, prefix, cursor });
+  const items = await fetchPages(
+    async (/** @type {string | undefined} */ cursor) => {
+      const result = await provider.listPage({ config, credential, prefix, cursor });
 
-    result.items.forEach((item) => {
-      const key = provider.getKey(item);
+      return { results: result.items, next: result.cursor };
+    },
+    { maxPages },
+  );
 
-      // A key ending with a slash is a folder placeholder — one the CMS created for an empty
-      // folder, or one a hierarchical namespace account returns — rather than a file
-      if (key.endsWith('/')) {
-        const dirPath = getRelativeKey(config, key).replace(/\/$/, '');
+  items.forEach((item) => {
+    const key = provider.getKey(item);
 
-        // The placeholder of the prefix itself isn’t a folder below it
-        if (dirPath) {
-          folders.push(dirPath);
-        }
-      } else {
-        files.push(item);
+    // A key ending with a slash is a folder placeholder — one the CMS created for an empty folder,
+    // or one a hierarchical namespace account returns — rather than a file
+    if (key.endsWith('/')) {
+      const dirPath = getRelativeKey(config, key).replace(/\/$/, '');
+
+      // The placeholder of the prefix itself isn’t a folder below it
+      if (dirPath) {
+        folders.push(dirPath);
       }
-    });
-
-    ({ cursor } = result);
-
-    if (!cursor) {
-      break;
+    } else {
+      files.push(item);
     }
-
-    // Wait for a bit before requesting the next page
-    await sleep(50);
-  }
+  });
 
   return { files, folders };
 };

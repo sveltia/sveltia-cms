@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { toggleListItem } from '$lib/services/utils/array';
+import { splitIntoChunks, toggleListItem } from '$lib/services/utils/array';
 
 describe('toggleListItem()', () => {
   const a = { id: 'a' };
@@ -40,5 +40,13 @@ describe('toggleListItem()', () => {
 
     expect(toggleListItem([a], { id: 'a' }, true, isEqual)).toEqual([a]);
     expect(toggleListItem([a, b], { id: 'a' }, false, isEqual)).toEqual([b]);
+  });
+});
+
+describe('splitIntoChunks()', () => {
+  test('splits a list into chunks of the given size', () => {
+    expect(splitIntoChunks([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+    expect(splitIntoChunks([1, 2], 2)).toEqual([[1, 2]]);
+    expect(splitIntoChunks([], 2)).toEqual([]);
   });
 });

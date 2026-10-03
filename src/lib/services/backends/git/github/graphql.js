@@ -1,17 +1,6 @@
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-
-/**
- * Split the given list into chunks of the given size.
- * @template T
- * @param {T[]} items Items to split.
- * @param {number} size Maximum number of items per chunk.
- * @returns {T[][]} Chunks, in the original order.
- */
-export const splitIntoChunks = (items, size) =>
-  Array.from({ length: Math.ceil(items.length / size) }, (_, i) =>
-    items.slice(i * size, (i + 1) * size),
-  );
+import { splitIntoChunks } from '$lib/services/utils/array';
 
 /**
  * Build a query that asks for one aliased field of the repository per item. GraphQL aliases can’t

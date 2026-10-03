@@ -3,6 +3,8 @@
  * @see https://ai.google.dev/api/generate-content
  */
 
+import { postJSON } from '$lib/services/integrations/ai/api';
+
 /**
  * @import { AiCompletionOptions } from '$lib/types/private';
  */
@@ -32,12 +34,11 @@ export const complete = async ({
 }) => {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+  const data = await postJSON({
+    endpoint: url,
+    headers: { 'Content-Type': 'application/json' },
+    apiLabel: 'Gemini',
+    body: {
       system_instruction: { parts: [{ text: systemPrompt }] },
       contents: [{ parts: [{ text: userMessage }] }],
       generationConfig: {
@@ -45,19 +46,8 @@ export const complete = async ({
         maxOutputTokens: maxTokens,
         ...(responseFormat ? { responseMimeType: responseFormat } : {}),
       },
-    }),
+    },
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-
-    throw new Error(
-      `Gemini API error: ${response.status} ${response.statusText}` +
-        `${errorData.error?.message ? ` - ${errorData.error.message}` : ''}`,
-    );
-  }
-
-  const data = await response.json();
 
   if (!Array.isArray(data.candidates) || !data.candidates[0]?.content?.parts?.[0]) {
     throw new Error('Invalid response format from Gemini API.');

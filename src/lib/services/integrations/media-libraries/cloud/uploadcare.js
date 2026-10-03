@@ -8,6 +8,7 @@ import {
   findLibraryOptions,
   resolveLibraryOptions,
 } from '$lib/services/integrations/media-libraries/options';
+import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 import { hmacSha256, toHex } from '$lib/services/utils/crypto';
 
 /**
@@ -141,42 +142,33 @@ export const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
     stored: 'true',
   });
 
-  /** @type {UploadcareResource[]} */
-  const allResults = [];
-  /** @type {string | null} */
-  let nextUrl = `https://api.uploadcare.com/files/?${params}`;
+  const allResults = await fetchPages(
+    async (/** @type {string | undefined} */ nextUrl) => {
+      const response = await fetch(nextUrl ?? `https://api.uploadcare.com/files/?${params}`, {
+        headers,
+      });
 
-  // Fetch up to maxPages pages
-  for (let page = 0; page < maxPages && nextUrl; page += 1) {
-    const response = await fetch(nextUrl, { headers });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch files: ${response.statusText}`);
+      }
 
-    if (!response.ok) {
-      return Promise.reject(new Error(`Failed to fetch files: ${response.statusText}`));
-    }
+      /** @type {UploadcareListResponse} */
+      const data = await response.json();
+      // Apply filters: first kind filter if specified, then custom filter if provided
+      let { results } = data;
 
-    /** @type {UploadcareListResponse} */
-    const data = await response.json();
-    // Apply filters: first kind filter if specified, then custom filter if provided
-    let { results } = data;
+      if (kind === 'image') {
+        results = results.filter((file) => file.is_image);
+      }
 
-    if (kind === 'image') {
-      results = results.filter((file) => file.is_image);
-    }
+      if (filter) {
+        results = results.filter(filter);
+      }
 
-    if (filter) {
-      results = results.filter(filter);
-    }
-
-    allResults.push(...results);
-    nextUrl = data.next;
-
-    if (!nextUrl) {
-      break;
-    }
-
-    // Wait for a bit before requesting the next page
-    await sleep(50);
-  }
+      return { results, next: data.next };
+    },
+    { maxPages },
+  );
 
   return parseResults(allResults, { fieldConfig });
 };

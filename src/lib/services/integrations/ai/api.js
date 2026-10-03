@@ -35,11 +35,12 @@ const getBearerHeaders = (apiKey, headers) => ({
  * @param {string} args.endpoint API endpoint URL.
  * @param {Record<string, string>} args.headers Request headers.
  * @param {Record<string, any>} args.body Request body, serialized as JSON.
- * @param {string} args.apiLabel API name to be used in an error message, e.g. `Messages`.
+ * @param {string} args.apiLabel API name to be used in an error message, e.g. `Messages`, which
+ * is followed by `API error`.
  * @returns {Promise<Record<string, any>>} Parsed response body.
  * @throws {Error} When the API returns a non-OK response.
  */
-const postJSON = async ({ endpoint, headers, body, apiLabel }) => {
+export const postJSON = async ({ endpoint, headers, body, apiLabel }) => {
   const response = await fetch(endpoint, {
     method: 'POST',
     headers,

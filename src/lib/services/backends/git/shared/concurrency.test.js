@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  mapConcurrently,
   MAX_CONCURRENT_REQUESTS,
   runConcurrently,
 } from '$lib/services/backends/git/shared/concurrency';
@@ -91,5 +92,36 @@ describe('backends/git/shared/concurrency', () => {
     });
 
     expect(called).toBe(false);
+  });
+
+  test('maps the items in input order, whatever order the tasks finish in', async () => {
+    /** @type {number[]} */
+    const finished = [];
+    let inFlight = 0;
+    let peak = 0;
+
+    const results = await mapConcurrently(
+      [30, 10, 20, 0],
+      async (delay) => {
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((resolve) => {
+          setTimeout(resolve, delay);
+        });
+        inFlight -= 1;
+        finished.push(delay);
+
+        return delay * 2;
+      },
+      { concurrency: 2 },
+    );
+
+    expect(results).toEqual([60, 20, 40, 0]);
+    expect(finished).not.toEqual([30, 10, 20, 0]);
+    expect(peak).toBe(2);
+  });
+
+  test('returns an empty list for an empty list', async () => {
+    expect(await mapConcurrently([], async () => 1)).toEqual([]);
   });
 });

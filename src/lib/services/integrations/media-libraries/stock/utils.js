@@ -1,5 +1,6 @@
 import { locale as appLocale } from '@sveltia/i18n';
-import { sleep } from '@sveltia/utils/misc';
+
+import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 
 /**
  * Get the best matching locale supported by a stock asset API: the app locale if the API supports
@@ -48,24 +49,13 @@ export const fetchJSON = async (url, init) => {
  * Function to extract the results from a page, along with whether another page follows.
  * @returns {Promise<T[]>} Results of all the fetched pages.
  */
-export const fetchPagedResults = async ({ maxPages, fetchPage, parsePage }) => {
-  /** @type {T[]} */
-  const results = [];
+export const fetchPagedResults = async ({ maxPages, fetchPage, parsePage }) =>
+  fetchPages(
+    async (/** @type {number | undefined} */ cursor) => {
+      const page = cursor ?? 1;
+      const { results, hasMore } = parsePage(await fetchPage(page), page);
 
-  for (let page = 1; page <= maxPages; page += 1) {
-    // eslint-disable-next-line no-await-in-loop
-    const { results: pagedResults, hasMore } = parsePage(await fetchPage(page), page);
-
-    results.push(...pagedResults);
-
-    if (!hasMore || page === maxPages) {
-      break;
-    }
-
-    // Wait for a bit before requesting the next page
-    // eslint-disable-next-line no-await-in-loop
-    await sleep(50);
-  }
-
-  return results;
-};
+      return { results, next: hasMore ? page + 1 : undefined };
+    },
+    { maxPages },
+  );

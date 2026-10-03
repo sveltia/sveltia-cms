@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import {
-  buildAliasedQuery,
-  fetchAliasedBatch,
-  splitIntoChunks,
-} from '$lib/services/backends/git/github/graphql';
+import { buildAliasedQuery, fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { MAX_CONCURRENT_REQUESTS } from '$lib/services/backends/git/shared/concurrency';
 
@@ -37,14 +33,6 @@ const getFragmentUnlessSkipped = (item) => (item === 'skip' ? '' : getFragment(i
 describe('GitHub GraphQL helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe('splitIntoChunks', () => {
-    test('splits a list into chunks of the given size', () => {
-      expect(splitIntoChunks([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
-      expect(splitIntoChunks([1, 2], 2)).toEqual([[1, 2]]);
-      expect(splitIntoChunks([], 2)).toEqual([]);
-    });
   });
 
   describe('buildAliasedQuery', () => {
