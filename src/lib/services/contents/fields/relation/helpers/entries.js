@@ -53,13 +53,9 @@ import { replaceTemplateFields } from '$lib/services/contents/fields/relation/he
  * @param {FlattenedEntryContent} params.content Entry content.
  * @param {InternalCollection} params.collection Collection configuration.
  * @param {TemplateStrings} params.templates Template strings.
- * @param {string[]} params.allFieldNames All field names.
- * @param {boolean} params.hasListFields Whether entry has list fields.
- * @param {string} params.collectionName Collection name.
  * @param {string} [params.fileName] File name.
  * @param {InternalLocaleCode} params.locale Current locale.
  * @param {string} params.identifierField Identifier field.
- * @param {InternalLocaleCode} params.defaultLocale Default locale.
  * @param {PendingEntry[]} [params.pendingEntries] Entries created from a Relation field of the
  * draft being edited, which a Relation field of the entry can refer to before they are saved.
  * @returns {RelationOption[]} Array of relation options.
@@ -69,16 +65,19 @@ export const processEntry = ({
   content,
   collection,
   templates,
-  allFieldNames,
-  hasListFields,
-  collectionName,
   fileName,
   locale,
   identifierField,
-  defaultLocale,
   pendingEntries = undefined,
 }) => {
   const { locales } = refEntry;
+
+  const {
+    name: collectionName,
+    _i18n: { defaultLocale },
+  } = collection;
+
+  const { allFieldNames, hasListFields } = templates;
   // In a nested collection an entry’s slug is its path within the collection folder, ending with
   // the file name shared by every entry. A reference to the entry leaves that name out, the same
   // way a preview path does

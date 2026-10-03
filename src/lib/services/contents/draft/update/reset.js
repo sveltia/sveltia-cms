@@ -2,13 +2,12 @@ import { isObject } from '@sveltia/utils/object';
 import equal from 'fast-deep-equal';
 
 import {
+  collectFieldValues,
   filterRealValues,
-  INTERNAL_PROP_REGEX,
   suspendAutoDuplication,
 } from '$lib/services/contents/draft';
 import { getInheritedI18nOption } from '$lib/services/contents/draft/create/proxy.svelte';
 import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
-import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
 import { deleteSubtree } from '$lib/services/contents/entry/subtree';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
@@ -185,19 +184,6 @@ const resetFieldInStore = ({ valueStore, locale, ...args }) => {
 };
 
 /**
- * Get the values held by the given field, excluding the internal properties.
- * @param {FlattenedEntryContent} valueMap Flattened content for a locale.
- * @param {FieldKeyPath} keyPath Field key path.
- * @returns {FlattenedEntryContent} Values keyed by key path.
- */
-const getFieldValues = (valueMap, keyPath) =>
-  Object.fromEntries(
-    [...(keyPath in valueMap ? [keyPath] : []), ...getKeysByPrefix(valueMap, `${keyPath}.`)]
-      .filter((key) => !INTERNAL_PROP_REGEX.test(key) && valueMap[key] !== undefined)
-      .map((key) => [key, valueMap[key]]),
-  );
-
-/**
  * Check whether resetting the given field would change anything in the given locale.
  * @param {object} args Arguments.
  * @param {FlattenedEntryContent} args.valueMap Flattened content for the locale.
@@ -209,7 +195,7 @@ const getFieldValues = (valueMap, keyPath) =>
  * @returns {boolean} Result.
  */
 export const canResetField = ({ valueMap, restore = false, ...args }) => {
-  const values = getFieldValues(valueMap, args.keyPath);
+  const values = collectFieldValues(valueMap, args.keyPath);
   const resetValues = { ...values };
 
   resetContent({ ...args, content: resetValues, restore });

@@ -77,7 +77,11 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'entry', name: 'authors' };
+      const mockCollection = {
+        _type: 'entry',
+        name: 'authors',
+        _i18n: { defaultLocale: '_default' },
+      };
 
       const result = processEntry({
         refEntry: entry,
@@ -91,13 +95,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['name', 'email', 'slug'],
           hasListFields: false,
         },
-        allFieldNames: ['name', 'email', 'slug'],
-        hasListFields: false,
-        collectionName: 'authors',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       expect(result).toHaveLength(1);
@@ -122,7 +122,7 @@ describe('Test processEntry()', async () => {
         refEntry: entry,
         content: { name: '' },
         // @ts-ignore - Simplified mock collection for testing
-        collection: { _type: 'entry', name: 'authors' },
+        collection: { _type: 'entry', name: 'authors', _i18n: { defaultLocale: 'en' } },
         templates: {
           _displayField: '{{name}}',
           _valueField: '{{slug}}',
@@ -130,13 +130,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['name', 'slug'],
           hasListFields: false,
         },
-        allFieldNames: ['name', 'slug'],
-        hasListFields: false,
-        collectionName: 'authors',
         fileName: undefined,
         locale: 'fr',
         identifierField: 'title',
-        defaultLocale: 'en',
       });
 
       expect(result).toEqual([{ label: 'jean', value: 'jean', searchValue: 'jean' }]);
@@ -166,7 +162,11 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'entry', name: 'pages' };
+      const mockCollection = {
+        _type: 'entry',
+        name: 'pages',
+        _i18n: { defaultLocale: '_default' },
+      };
 
       const result = processEntry({
         refEntry: entry,
@@ -180,13 +180,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['title', 'slug'],
           hasListFields: true, // Has list fields but processListFields will return false
         },
-        allFieldNames: ['title', 'slug'],
-        hasListFields: true,
-        collectionName: 'pages',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       // When replaceTemplateFields returns values
@@ -213,7 +209,7 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'entry', name: 'test' };
+      const mockCollection = { _type: 'entry', name: 'test', _i18n: { defaultLocale: '_default' } };
 
       const result = processEntry({
         refEntry: entry,
@@ -227,13 +223,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['nonexistent', 'slug'],
           hasListFields: true,
         },
-        allFieldNames: ['nonexistent', 'slug'],
-        hasListFields: true,
-        collectionName: 'test',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       // Label should fallback to slug when empty
@@ -260,7 +252,7 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'entry', name: 'test' };
+      const mockCollection = { _type: 'entry', name: 'test', _i18n: { defaultLocale: '_default' } };
 
       const result = processEntry({
         refEntry: entry,
@@ -274,13 +266,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['nonexistent_value'],
           hasListFields: true,
         },
-        allFieldNames: ['nonexistent_value'],
-        hasListFields: true,
-        collectionName: 'test',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       // Value should fallback to slug when empty
@@ -308,7 +296,7 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'entry', name: 'test' };
+      const mockCollection = { _type: 'entry', name: 'test', _i18n: { defaultLocale: '_default' } };
 
       const result = processEntry({
         refEntry: entry,
@@ -322,13 +310,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['slug'],
           hasListFields: true,
         },
-        allFieldNames: ['slug'],
-        hasListFields: true,
-        collectionName: 'test',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       // When searchValue template is empty, it stays empty after replaceTemplateFields
@@ -356,7 +340,7 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'entry', name: 'test' };
+      const mockCollection = { _type: 'entry', name: 'test', _i18n: { defaultLocale: '_default' } };
 
       const result = processEntry({
         refEntry: entry,
@@ -370,13 +354,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['missing1', 'missing2', 'missing3'],
           hasListFields: true,
         },
-        allFieldNames: ['missing1', 'missing2', 'missing3'],
-        hasListFields: true,
-        collectionName: 'test',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       // All should fallback appropriately
@@ -410,7 +390,7 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore
-      const mockCollection = { _type: 'entry', name: 'test' };
+      const mockCollection = { _type: 'entry', name: 'test', _i18n: { defaultLocale: '_default' } };
 
       // @ts-ignore
       const result = processEntry({
@@ -422,16 +402,12 @@ describe('Test processEntry()', async () => {
           _displayField: '', // empty → label = '' → `label || ''` false branch
           _valueField: '', // empty → value = '' → `value || slug` false branch
           _searchField: '', // empty → searchValue = '' → `... || ''` false branch
-          allFieldNames: [],
-          hasListFields: false,
+          allFieldNames: [], // no wildcards → analyzeListFields returns empty Map
+          hasListFields: true, // true so we enter list-handling path then fall through
         },
-        allFieldNames: [], // no wildcards → analyzeListFields returns empty Map
-        hasListFields: true, // true so we enter list-handling path then fall through
-        collectionName: 'test',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       expect(result).toHaveLength(1);
@@ -461,7 +437,7 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'entry', name: 'test' };
+      const mockCollection = { _type: 'entry', name: 'test', _i18n: { defaultLocale: '_default' } };
 
       // Test with hasListFields=true but templates that don't have wildcards
       // @ts-ignore
@@ -479,13 +455,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['title', 'slug'],
           hasListFields: false,
         },
-        allFieldNames: ['title', 'slug'],
-        hasListFields: false,
-        collectionName: 'test',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       // Should process using createSimpleOption path
@@ -519,7 +491,11 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'entry', name: 'entries' };
+      const mockCollection = {
+        _type: 'entry',
+        name: 'entries',
+        _i18n: { defaultLocale: '_default' },
+      };
 
       const result = processEntry({
         refEntry: entry,
@@ -533,13 +509,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['name', 'slug'],
           hasListFields: false,
         },
-        allFieldNames: ['name', 'slug'],
-        hasListFields: false,
-        collectionName: 'entries',
         fileName: undefined,
         locale: 'ja',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       expect(result).toHaveLength(1);
@@ -565,7 +537,11 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'entry', name: 'entries' };
+      const mockCollection = {
+        _type: 'entry',
+        name: 'entries',
+        _i18n: { defaultLocale: '_default' },
+      };
 
       const result = processEntry({
         refEntry: entry,
@@ -579,13 +555,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['name', 'slug'],
           hasListFields: false,
         },
-        allFieldNames: ['name', 'slug'],
-        hasListFields: false,
-        collectionName: 'entries',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       expect(result).toHaveLength(1);
@@ -613,7 +585,11 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore - Simplified mock collection for testing
-      const mockCollection = { _type: 'file', name: 'config' };
+      const mockCollection = {
+        _type: 'file',
+        name: 'config',
+        _i18n: { defaultLocale: '_default' },
+      };
 
       const result = processEntry({
         refEntry: entry,
@@ -627,13 +603,9 @@ describe('Test processEntry()', async () => {
           allFieldNames: ['name', 'slug'],
           hasListFields: false,
         },
-        allFieldNames: ['name', 'slug'],
-        hasListFields: false,
-        collectionName: 'config',
         fileName: 'config.md',
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       expect(result).toHaveLength(1);
@@ -662,7 +634,7 @@ describe('Test processEntry()', async () => {
       };
 
       // @ts-ignore
-      const mockCollection = { _type: 'entry', name: 'test' };
+      const mockCollection = { _type: 'entry', name: 'test', _i18n: { defaultLocale: '_default' } };
 
       // @ts-ignore
       const result = processEntry({
@@ -674,16 +646,12 @@ describe('Test processEntry()', async () => {
           _displayField: '', // empty → label = '' → `label || ''` false branch
           _valueField: '', // empty → value = '' → `value || slug` false branch
           _searchField: '', // empty → searchValue = '' → `... || ''` false branch
-          allFieldNames: [],
-          hasListFields: false,
+          allFieldNames: [], // no wildcards → analyzeListFields returns empty Map
+          hasListFields: true, // true so we enter list-handling path then fall through
         },
-        allFieldNames: [], // no wildcards → analyzeListFields returns empty Map
-        hasListFields: true, // true so we enter list-handling path then fall through
-        collectionName: 'test',
         fileName: undefined,
         locale: '_default',
         identifierField: 'title',
-        defaultLocale: '_default',
       });
 
       expect(result).toHaveLength(1);

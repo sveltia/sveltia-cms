@@ -16,7 +16,6 @@ import {
 } from '$lib/services/contents/entry/relations/cascade/delete';
 import { forgetDeployments } from '$lib/services/deployments';
 import { refreshProductionSHA } from '$lib/services/deployments/resolve';
-import { getOrCreate } from '$lib/services/utils/cache';
 import {
   getUnpublishedEntryByBranch,
   getUnpublishedEntryBySlug,
@@ -534,16 +533,16 @@ export const discardWorkflowEntries = async (entries) => {
  * reports this before the deletion is confirmed, so this is only a safeguard.
  */
 export const deleteWorkflowEntries = async (items) => {
+  /**
+   * Get the key of the group the given item belongs to: its collection and collection file.
+   * @param {(typeof items)[number]} item Item.
+   * @returns {string} Group key.
+   */
+  const getKey = ({ collection, collectionFile }) =>
+    `${collection.name}\0${collectionFile?.name ?? ''}`;
+
   // A selection comes from one entry list, so it’s normally a single group
-  /** @type {Map<string, typeof items>} */
-  const groups = new Map();
-
-  items.forEach((item) => {
-    const key = `${item.collection.name}\0${item.collectionFile?.name ?? ''}`;
-
-    getOrCreate(groups, key, () => []).push(item);
-  });
-
+  const groups = Map.groupBy(items, getKey);
   /** @type {Map<string, CascadeTarget[]>} */
   const targetMap = new Map();
 
@@ -563,9 +562,11 @@ export const deleteWorkflowEntries = async (items) => {
     targetMap.set(key, targets);
   });
 
-  await runConcurrently(items, async ({ entry, collection, collectionFile, assets }) => {
+  await runConcurrently(items, async (item) => {
+    const { entry, collection, collectionFile, assets } = item;
+
     await deleteWorkflowEntry(entry, collection, collectionFile, assets, {
-      targets: targetMap.get(`${collection.name}\0${collectionFile?.name ?? ''}`),
+      targets: targetMap.get(getKey(item)),
     });
   });
 };

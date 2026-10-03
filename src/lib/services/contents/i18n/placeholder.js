@@ -1,5 +1,7 @@
 import { escapeRegExp } from '@sveltia/utils/string';
 
+import { getOrCreate } from '$lib/services/utils/cache';
+
 /**
  * @import { InternalLocaleCode } from '$lib/types/private';
  */
@@ -76,6 +78,13 @@ export const getLocaleFolderPattern = (folderPath, localeFolderMatcher) =>
   `${folderPath}/`.split(`${LOCALE_PLACEHOLDER}/`).map(escapeRegExp).join(localeFolderMatcher);
 
 /**
+ * Cache of the regular expressions used by {@link stripLocaleFolderPath}, keyed by folder path. A
+ * folder path comes from the configuration, so the cache stays small.
+ * @type {Map<string, RegExp>}
+ */
+const localeFolderPrefixRegExpCache = new Map();
+
+/**
  * Strip the given folder path, and the slash after it, from the start of the given file path. The
  * `{{locale}}` placeholder in the folder path stands for any single folder, or none, because the
  * default locale may be omitted from the file path.
@@ -85,4 +94,11 @@ export const getLocaleFolderPattern = (folderPath, localeFolderMatcher) =>
  * below the folder.
  */
 export const stripLocaleFolderPath = (filePath, folderPath) =>
-  filePath.replace(new RegExp(`^${getLocaleFolderPattern(folderPath, '(?:[^/]+\\/)?')}`), '');
+  filePath.replace(
+    getOrCreate(
+      localeFolderPrefixRegExpCache,
+      folderPath,
+      () => new RegExp(`^${getLocaleFolderPattern(folderPath, '(?:[^/]+\\/)?')}`),
+    ),
+    '',
+  );

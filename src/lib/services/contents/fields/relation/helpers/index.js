@@ -140,7 +140,6 @@ const buildOptions = ({
 
   const { identifier_field: identifierField = 'title' } = _type === 'entry' ? collection : {};
   const templates = prepareFieldTemplates(fieldConfig, identifierField);
-  const { allFieldNames, hasListFields } = templates;
 
   const filteredEntries = filterAndPrepareEntries({
     refEntries,
@@ -157,13 +156,9 @@ const buildOptions = ({
       content,
       collection,
       templates,
-      allFieldNames,
-      hasListFields,
-      collectionName,
       fileName,
       locale,
       identifierField,
-      defaultLocale,
       pendingEntries,
     }),
   );

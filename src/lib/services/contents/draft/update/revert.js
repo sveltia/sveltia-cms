@@ -1,9 +1,8 @@
-import { isObject } from '@sveltia/utils/object';
 import equal from 'fast-deep-equal';
 
-import { INTERNAL_PROP_REGEX } from '$lib/services/contents/draft';
+import { collectFieldValues } from '$lib/services/contents/draft';
 import { getField } from '$lib/services/contents/entry/fields';
-import { getKeysByPrefix, isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
+import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
 import { getKeyValueField } from '$lib/services/contents/fields/key-value/pairs';
 import { isNumeric } from '$lib/services/utils/number';
@@ -51,41 +50,15 @@ export const resolveOriginalKeyPath = (valueMap, keyPath) => {
 };
 
 /**
- * Collect the values stored at the given key path and under it, keyed by their path relative to it.
- * Internal props, missing values and empty object/array placeholders are left out: an Object or
- * List field may or may not have a placeholder at its own key path, depending on how the value
- * map was built, while the actual values are always flattened to their own key paths.
+ * Collect the values stored at the given key path and under it, keyed by their path relative to it,
+ * leaving out empty object/array placeholders. See {@link collectFieldValues}.
  * @param {Record<string, any>} valueMap Flat value map for a locale.
  * @param {FieldKeyPath} keyPath Field key path.
  * @returns {Record<string, any>} Values keyed by their relative key path; the field’s own value, if
  * any, is keyed by an empty string.
  */
-const getFieldValues = (valueMap, keyPath) => {
-  const prefix = `${keyPath}.`;
-  /** @type {Record<string, any>} */
-  const values = {};
-
-  // This runs for every field editor on every change, so the key paths under the field are looked
-  // up in the value map’s index rather than by walking all of them
-  [...(keyPath in valueMap ? [keyPath] : []), ...getKeysByPrefix(valueMap, prefix)].forEach(
-    (_keyPath) => {
-      if (INTERNAL_PROP_REGEX.test(_keyPath)) {
-        return;
-      }
-
-      const value = valueMap[_keyPath];
-
-      if (
-        value !== undefined &&
-        !((isObject(value) || Array.isArray(value)) && !Object.keys(value).length)
-      ) {
-        values[_keyPath.slice(prefix.length)] = value;
-      }
-    },
-  );
-
-  return values;
-};
+const getFieldValues = (valueMap, keyPath) =>
+  collectFieldValues(valueMap, keyPath, { relative: true, dropEmptyPlaceholders: true });
 
 /**
  * Check if the given field has been changed from its original value, so its changes can be

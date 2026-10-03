@@ -79,24 +79,14 @@ const isReferencedIn = (sources, { collectionName, values }) =>
   );
 
 /**
- * Check whether the entry being edited still refers to the given pending entry. The entry was
- * created from a Relation field and selected there right away, so it’s only wanted as long as one
- * of the values it goes by is still held by a field in one of the locales, including a field of a
- * rich text editor component. A deselected entry is left out of the save rather than created for
- * nothing.
- * @param {EntryDraft} draft Draft the pending entry belongs to.
- * @param {PendingEntry} pendingEntry Pending entry.
- * @returns {boolean} Whether the entry is referenced.
- */
-export const isPendingEntryReferenced = (draft, pendingEntry) =>
-  isReferencedIn(getDraftValueSources(draft), pendingEntry);
-
-/**
  * Get the pending entries of the given draft that are still referenced, so they can be saved along
- * with the entry. See {@link isPendingEntryReferenced}. A pending entry can also be referenced by
- * another pending entry rather than by the entry being edited, when it was created from a Relation
- * field of that entry’s quick-add dialog, so the referenced set is grown until no more entries are
- * reached, and one referenced only by a deselected entry is left out along with it.
+ * with the entry. An entry was created from a Relation field and selected there right away, so it’s
+ * only wanted as long as one of the values it goes by is still held by a field in one of the
+ * locales, including a field of a rich text editor component. A deselected entry is left out of
+ * the save rather than created for nothing. A pending entry can also be referenced by another
+ * pending entry rather than by the entry being edited, when it was created from a Relation field of
+ * that entry’s quick-add dialog, so the referenced set is grown until no more entries are reached,
+ * and one referenced only by a deselected entry is left out along with it.
  * @param {EntryDraft} draft Draft to save.
  * @returns {PendingEntry[]} Pending entries, in the order they were added, detached from the
  * reactive draft: they go into the entry and asset stores, whose consumers may clone them, which a

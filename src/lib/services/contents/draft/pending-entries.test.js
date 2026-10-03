@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getField } from '$lib/services/contents/entry/fields';
 import { createState } from '$lib/services/utils/state.svelte';
 
-import { getReferencedPendingEntries, isPendingEntryReferenced } from './pending-entries';
+import { getReferencedPendingEntries } from './pending-entries';
 
 /**
  * @import { EntryDraft, PendingEntry } from '$lib/types/private';
@@ -84,7 +84,17 @@ beforeEach(() => {
   );
 });
 
-describe('isPendingEntryReferenced', () => {
+/**
+ * Check whether the given draft refers to the given pending entry, by making it the only pending
+ * entry of the draft.
+ * @param {EntryDraft} draft Draft.
+ * @param {PendingEntry} pendingEntry Pending entry.
+ * @returns {boolean} Whether the entry is referenced.
+ */
+const isPendingEntryReferenced = (draft, pendingEntry) =>
+  getReferencedPendingEntries({ ...draft, pendingEntries: [pendingEntry] }).length === 1;
+
+describe('getReferencedPendingEntries: direct references', () => {
   it('finds the value in any locale', () => {
     const draft = createDraft({
       currentValues: {

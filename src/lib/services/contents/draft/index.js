@@ -1,6 +1,8 @@
+import { isObject } from '@sveltia/utils/object';
 import { stripSlashes } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
+import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
 import { isPairOrderModified } from '$lib/services/contents/fields/key-value/order';
 
 /**
@@ -19,6 +21,7 @@ export const STATIC_DRAFT_KEYS = ['collection', 'collectionFile', 'fields', 'ori
 
 /**
  * @import { EntryDraft, FlattenedEntryContent, LocaleContentMap } from '$lib/types/private';
+ * @import { FieldKeyPath } from '$lib/types/public';
  */
 
 /**
@@ -110,7 +113,51 @@ export const filterRealValues = (valueMap) =>
  * @param {string} key Key to check.
  * @returns {boolean} Whether the key counts.
  */
-const isRealKey = (valueMap, key) => !INTERNAL_PROP_REGEX.test(key) && valueMap[key] !== undefined;
+export const isRealKey = (valueMap, key) =>
+  !INTERNAL_PROP_REGEX.test(key) && valueMap[key] !== undefined;
+
+/**
+ * Collect the values stored at the given field key path and under it, leaving out the keys that
+ * {@link isRealKey} doesn’t count.
+ * @param {FlattenedEntryContent} valueMap Flattened content for a locale.
+ * @param {FieldKeyPath} keyPath Field key path.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.relative] Whether to key the values by their path relative to the
+ * field, in which case the field’s own value, if any, is keyed by an empty string. Otherwise they
+ * are keyed by their full key path.
+ * @param {boolean} [options.dropEmptyPlaceholders] Whether to leave out empty object/array
+ * placeholders as well. An Object or List field may or may not have one at its own key path,
+ * depending on how the value map was built, while the actual values are always flattened to their
+ * own key paths.
+ * @returns {FlattenedEntryContent} Collected values.
+ */
+export const collectFieldValues = (
+  valueMap,
+  keyPath,
+  { relative = false, dropEmptyPlaceholders = false } = {},
+) => {
+  const prefix = `${keyPath}.`;
+
+  // This runs for every field editor on every change, so the key paths under the field are looked
+  // up in the value map’s index rather than by walking all of them
+  return Object.fromEntries(
+    [...(keyPath in valueMap ? [keyPath] : []), ...getKeysByPrefix(valueMap, prefix)]
+      .filter((key) => {
+        if (!isRealKey(valueMap, key)) {
+          return false;
+        }
+
+        const value = valueMap[key];
+
+        return !(
+          dropEmptyPlaceholders &&
+          (isObject(value) || Array.isArray(value)) &&
+          !Object.keys(value).length
+        );
+      })
+      .map((key) => [relative ? key.slice(prefix.length) : key, valueMap[key]]),
+  );
+};
 
 /**
  * Compare a locale’s original and current value maps, ignoring internal properties in the current

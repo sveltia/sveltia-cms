@@ -4,9 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { isPairOrderModified } from '$lib/services/contents/fields/key-value/order';
 
 import {
+  collectFieldValues,
   filterRealValues,
   isAutoDuplicationEnabled,
   isDraftModified,
+  isRealKey,
   revokeDraftFileURLs,
   suspendAutoDuplication,
 } from '.';
@@ -62,6 +64,51 @@ describe('draft/index', () => {
       const valueMap = { __sc_toplevel: 'kept', 'a.__sc_middle.b': 'kept' };
 
       expect(filterRealValues(valueMap)).toEqual(valueMap);
+    });
+  });
+
+  describe('isRealKey', () => {
+    it('should count a key holding a value', () => {
+      expect(isRealKey({ title: '' }, 'title')).toBe(true);
+    });
+
+    it('should not count an internal property or an `undefined` value', () => {
+      const valueMap = { 'items.0.__sc_item_id': 'abc', title: undefined };
+
+      expect(isRealKey(valueMap, 'items.0.__sc_item_id')).toBe(false);
+      expect(isRealKey(valueMap, 'title')).toBe(false);
+      expect(isRealKey(valueMap, 'missing')).toBe(false);
+    });
+  });
+
+  describe('collectFieldValues', () => {
+    const valueMap = {
+      title: 'Hello',
+      items: [],
+      'items.0': {},
+      'items.0.label': 'A',
+      'items.0.__sc_item_id': 'abc',
+      'items.1.label': undefined,
+      itemsX: 'other',
+    };
+
+    it('should collect the field’s own and nested values keyed by full key path', () => {
+      expect(collectFieldValues(valueMap, 'items')).toEqual({
+        items: [],
+        'items.0': {},
+        'items.0.label': 'A',
+      });
+    });
+
+    it('should key the values by relative key path and drop empty placeholders', () => {
+      expect(
+        collectFieldValues(valueMap, 'items', { relative: true, dropEmptyPlaceholders: true }),
+      ).toEqual({ '0.label': 'A' });
+      expect(collectFieldValues(valueMap, 'title', { relative: true })).toEqual({ '': 'Hello' });
+    });
+
+    it('should return an empty object for a missing field', () => {
+      expect(collectFieldValues(valueMap, 'missing')).toEqual({});
     });
   });
 

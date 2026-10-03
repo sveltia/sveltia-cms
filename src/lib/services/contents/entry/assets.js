@@ -362,7 +362,8 @@ export const getAssociatedAssets = ({ entry, collectionName, fileName, relative 
         while (dirPath.length > entryFolderPath.length) {
           const entryIds = entryIdsByFolder.get(dirPath);
 
-          if (entryIds && [...entryIds].some((id) => id !== entry.id)) {
+          // A set in the index is never empty, so it holds another entry unless it holds just this
+          if (entryIds && (entryIds.size > 1 || !entryIds.has(entry.id))) {
             return true;
           }
 
