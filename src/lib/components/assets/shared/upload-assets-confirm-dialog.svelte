@@ -14,9 +14,6 @@
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { isEquivalentFileExtension } from '$lib/services/utils/file';
 
-  /** @type {File[]} */
-  let files = $state([]);
-  let replaceFiles = $state(true);
   // Committing to a remote repository takes a few seconds, and the confirmation dialog is gone by
   // then, so the upload would otherwise happen with nothing on screen to say it’s under way
   let uploading = $state(false);
@@ -38,8 +35,6 @@
   const assetsInSameFolder = $derived(
     originalAsset || dirPath === undefined ? [] : getAssetsByDirName(dirPath),
   );
-  const dupFiles = $derived(getDuplicateFiles(files, assetsInSameFolder));
-  const dupFileCount = $derived(dupFiles.length);
   // A replacement file keeps the name of the asset it replaces, so it has to be in the same
   // format: `cat.jpg` can be replaced with `cat2.jpeg`, which is that same format under another
   // extension, while a `cat.png` is a different thing that can’t be saved under the `.jpg` name.
@@ -58,10 +53,18 @@
       : [],
   );
 
-  $effect(() => {
-    files = validFiles.filter((file) => !mismatchedFiles.includes(file));
-    replaceFiles = true;
+  /** Files that can be saved. */
+  const uploadableFiles = $derived(validFiles.filter((file) => !mismatchedFiles.includes(file)));
+  /** Files to be saved, which the user can remove from the list. */
+  let files = $derived(uploadableFiles);
+  // Duplicates are replaced by default, again whenever another set of files comes in
+  let replaceFiles = $derived.by(() => {
+    void uploadableFiles;
+
+    return true;
   });
+  const dupFiles = $derived(getDuplicateFiles(files, assetsInSameFolder));
+  const dupFileCount = $derived(dupFiles.length);
 
   $effect(() => {
     if (!showAssetOverlay.current) {

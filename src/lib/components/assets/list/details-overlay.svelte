@@ -17,10 +17,16 @@
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
   import { focusOverlay, rememberFocus } from '$lib/services/app/focus';
   import { showAssetOverlay } from '$lib/services/assets/view';
+  import {
+    canSwipeOn,
+    getArrowKeyDirection,
+    getSwipeDirection,
+  } from '$lib/services/assets/view/overlay-navigation';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
    * @import { Snippet } from 'svelte';
+   * @import { AssetNavigationDirection } from '$lib/types/private';
    */
 
   /**
@@ -56,11 +62,6 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /**
-   * Minimum horizontal travel of a touch, in pixels, to count as a swipe rather than a tap.
-   */
-  const SWIPE_MIN_DISTANCE = 50;
-
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
 
@@ -80,48 +81,19 @@
   onMount(rememberFocus);
 
   /**
-   * Elements that use the arrow keys themselves, e.g. to move the caret or to seek in a video, and
-   * composite widgets that move the focus between their children with the keys.
+   * Get the handler moving to the previous or next asset.
+   * @param {AssetNavigationDirection | undefined} direction Direction to move in, if any.
+   * @returns {(() => void) | undefined} Handler, or `undefined` if there is no asset to move to.
    */
-  const ARROW_KEY_USER_SELECTOR = [
-    'input',
-    'textarea',
-    'select',
-    'audio',
-    'video',
-    '[role="grid"]',
-    '[role="listbox"]',
-    '[role="menu"]',
-    '[role="menubar"]',
-    '[role="radiogroup"]',
-    '[role="slider"]',
-    '[role="tablist"]',
-  ].join(', ');
+  const getHandler = (direction) =>
+    direction === 'previous' ? onPrevious : direction === 'next' ? onNext : undefined;
 
   /**
-   * Move to the previous asset with the left arrow key and to the next asset with the right arrow
-   * key, or the other way around in a right-to-left locale. Key presses outside the overlay, e.g.
-   * in a dialog, and those that mean something else where the focus is are left alone.
+   * Move to the previous or next asset with the left/right arrow key.
    * @param {KeyboardEvent} event `keydown` event.
    */
   const onKeyDown = (event) => {
-    const { key, ctrlKey, metaKey, altKey, shiftKey, target } = event;
-
-    if (!['ArrowLeft', 'ArrowRight'].includes(key) || ctrlKey || metaKey || altKey || shiftKey) {
-      return;
-    }
-
-    // The focus lands on the body when the focused button gets disabled at the end of the list
-    if (
-      !(target instanceof HTMLElement) ||
-      !(target === document.body || wrapper?.contains(target)) ||
-      target.isContentEditable ||
-      target.closest(ARROW_KEY_USER_SELECTOR)
-    ) {
-      return;
-    }
-
-    const handler = key === (isRTL() ? 'ArrowRight' : 'ArrowLeft') ? onPrevious : onNext;
+    const handler = getHandler(getArrowKeyDirection(event, { container: wrapper, rtl: isRTL() }));
 
     if (handler) {
       event.preventDefault();
@@ -130,26 +102,17 @@
   };
 
   /**
-   * Elements that are dragged sideways themselves, e.g. the timeline and volume controls of a media
-   * player, so a touch on them is never a swipe.
-   */
-  const SWIPE_USER_SELECTOR = 'audio, video, input, [role="slider"]';
-
-  /**
    * Remember where a touch started to detect a swipe later.
    * @param {TouchEvent} event `touchstart` event.
    */
   const onTouchStart = ({ touches, target }) => {
     const { clientX: x, clientY: y } = touches[0];
 
-    touchStart =
-      target instanceof Element && target.closest(SWIPE_USER_SELECTOR) ? undefined : { x, y };
+    touchStart = canSwipeOn(target) ? { x, y } : undefined;
   };
 
   /**
-   * Move to the previous asset with a swipe towards the end of the line, and to the next asset with
-   * a swipe towards the start, as if the assets were laid out in a row. A mostly vertical move is a
-   * scroll, not a swipe.
+   * Move to the previous or next asset with a horizontal swipe.
    * @param {TouchEvent} event `touchend` event.
    */
   const onTouchEnd = ({ changedTouches }) => {
@@ -157,19 +120,11 @@
       return;
     }
 
-    const { clientX, clientY } = changedTouches[0];
-    const dx = clientX - touchStart.x;
-    const dy = clientY - touchStart.y;
+    const { clientX: x, clientY: y } = changedTouches[0];
+    const direction = getSwipeDirection({ start: touchStart, end: { x, y }, rtl: isRTL() });
 
     touchStart = undefined;
-
-    if (Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dx) < Math.abs(dy)) {
-      return;
-    }
-
-    const handler = (isRTL() ? dx < 0 : dx > 0) ? onPrevious : onNext;
-
-    handler?.();
+    getHandler(direction)?.();
   };
 </script>
 

@@ -42,7 +42,7 @@
     kind,
     loading = 'lazy',
     asset = undefined,
-    src = $bindable(undefined),
+    src = undefined,
     variant = undefined,
     blurBackground = false,
     cover = false,
@@ -61,10 +61,16 @@
   /** @type {string | undefined} */
   let blurImageURL = $state();
   /**
-   * The actual `src` applied to the media element. For the `asset`-based flow this mirrors `src`
-   * (which is set after a visibility check inside {@link updateSrc}). For an externally-provided
-   * `src` with `loading === 'lazy'`, it is deferred via {@link waitForVisibility} so that the
-   * browser does not eagerly fetch off-screen images in grid layouts.
+   * The source URL: the `src` property, or for the `asset`-based flow, the URL looked up in
+   * {@link updateSrc}. A change of the property replaces the looked-up URL.
+   */
+  let resolvedSrc = $derived(src);
+  /**
+   * The actual `src` applied to the media element. For the `asset`-based flow this mirrors
+   * {@link resolvedSrc} (which is set after a visibility check inside {@link updateSrc}). For an
+   * externally-provided `src` with `loading === 'lazy'`, it is deferred via
+   * {@link waitForVisibility} so that the browser does not eagerly fetch off-screen images in grid
+   * layouts.
    * @type {string | undefined}
    */
   let mediaSrc = $state();
@@ -129,7 +135,7 @@
   };
 
   /**
-   * Update the {@link src} property.
+   * Update the {@link resolvedSrc} value.
    */
   const updateSrc = async () => {
     /* v8 ignore next 3 -- the effect below only calls this for a mounted asset, one at a time */
@@ -144,9 +150,10 @@
       await waitForVisibility(mediaElement);
     }
 
-    const previousSrc = src;
     // Read up front, as a derived can’t be read once the component has been destroyed
+    const previousSrc = resolvedSrc;
     const thumbnail = isThumbnail;
+    let nextSrc = previousSrc;
 
     try {
       const url = thumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset);
@@ -159,21 +166,22 @@
         return;
       }
 
-      src = url;
+      nextSrc = url;
+      resolvedSrc = url;
     } catch {
       hasError = true;
     }
 
     if (thumbnail) {
-      ownURL(src);
+      ownURL(nextSrc);
     }
 
-    if (previousSrc !== src) {
+    if (previousSrc !== nextSrc) {
       releaseOwnedURL(previousSrc);
     }
 
-    if (blurBackground && !blurImageURL && src) {
-      blurImageURL = src;
+    if (blurBackground && !blurImageURL && nextSrc) {
+      blurImageURL = nextSrc;
     }
 
     updatingSrc = false;
@@ -262,8 +270,8 @@
   $effect(() => {
     // An asset on an external location comes as a plain URL rather than an `Asset`, and has no
     // cached thumbnail, so the image itself doubles as the blurred backdrop
-    if (blurBackground && !asset && kind === 'image' && src) {
-      blurImageURL = src;
+    if (blurBackground && !asset && kind === 'image' && resolvedSrc) {
+      blurImageURL = resolvedSrc;
     }
   });
 
@@ -278,9 +286,9 @@
   });
 
   $effect(() => {
-    // For the asset-based flow, `src` is set by `updateSrc` after a visibility check
-    if (asset || !src || !mediaElement || loading !== 'lazy') {
-      mediaSrc = src;
+    // For the asset-based flow, `resolvedSrc` is set by `updateSrc` after a visibility check
+    if (asset || !resolvedSrc || !mediaElement || loading !== 'lazy') {
+      mediaSrc = resolvedSrc;
 
       return undefined;
     }
@@ -289,7 +297,7 @@
     // `loading="lazy"` attribute, which browsers may ignore in grid/flex layouts
     mediaSrc = undefined;
 
-    const currentSrc = src;
+    const currentSrc = resolvedSrc;
     const element = mediaElement;
     // The source can change or go away before the element becomes visible
     let stale = false;

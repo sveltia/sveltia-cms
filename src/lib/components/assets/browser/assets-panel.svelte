@@ -73,9 +73,10 @@
   const tokens = $derived(tokenize(searchTerms));
 
   // The items are built separately from the filtering, so typing a search term reuses them instead
-  // of creating a new object for every asset, which would make every rendered preview load again
-  /** @type {(Asset & { relPath: string, key: string })[]} */
-  const listedAssets = $derived(
+  // of creating a new object for every asset. Each item wraps the asset rather than copying it, so
+  // the preview and the selection get the original asset object
+  /** @type {{ asset: Asset, relPath: string, key: string }[]} */
+  const listedItems = $derived(
     assets.map((asset) => {
       const { folder, name, path } = asset;
 
@@ -87,23 +88,22 @@
 
       // An unsaved asset can share a path with the saved asset it’s going to overwrite, so each
       // item is identified by a unique key instead, avoiding Svelte `each` key conflicts
-      return { ...asset, relPath, key: getAssetKey(asset) };
+      return { asset, relPath, key: getAssetKey(asset) };
     }),
   );
 
-  /** @type {(Asset & { relPath: string, key: string })[]} */
-  const filteredAssets = $derived(
+  const filteredItems = $derived(
     tokens.length
       ? // Filter assets by search terms in the relative path, keeping each normalized path for the
         // next keystroke
-        listedAssets.filter((asset) =>
+        listedItems.filter((item) =>
           hasAllMatches({
-            value: asset.relPath,
+            value: item.relPath,
             tokens,
-            normalizedValueCache: getNormalizedValueCache(asset),
+            normalizedValueCache: getNormalizedValueCache(item),
           }),
         )
-      : listedAssets,
+      : listedItems,
   );
 
   /**
@@ -142,7 +142,7 @@
   };
 </script>
 
-{#if filteredAssets.length || subfolders.length}
+{#if filteredItems.length || subfolders.length}
   <div role="none" class="grid-wrapper">
     {#if subfolders.length}
       <SubfolderStrip
@@ -155,17 +155,18 @@
       />
     {/if}
     <!-- An empty list box would only be a stop for the Tab key, with nothing to move through -->
-    {#if filteredAssets.length}
+    {#if filteredItems.length}
       <SimpleImageGrid
         {multiple}
         {gridId}
         {viewType}
         ariaLabel={_(`assets_dialog.available_${kind === 'image' ? 'images' : 'files'}`)}
       >
-        <InfiniteScroll items={filteredAssets} itemKey="key">
-          {#snippet renderItem(/** @type {Asset & { relPath: string, key: string }} */ asset)}
+        <InfiniteScroll items={filteredItems} itemKey="key">
+          {#snippet renderItem(/** @type {{ asset: Asset, relPath: string, key: string }} */ item)}
             {#await sleep() then}
-              {@const { kind: assetKind, unsaved, key, relPath } = asset}
+              {@const { asset, key, relPath } = item}
+              {@const { kind: assetKind, unsaved } = asset}
               <SimpleImageGridItem
                 value={key}
                 ariaLabel={relPath}

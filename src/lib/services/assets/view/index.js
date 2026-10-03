@@ -1,10 +1,16 @@
-import { _ } from '@sveltia/i18n';
+import { _, locale as appLocale } from '@sveltia/i18n';
 import equal from 'fast-deep-equal';
 import { untrack } from 'svelte';
 
 import { selectedAssetFolder } from '$lib/services/assets/folders';
 import { publishedAssets, selectedAssets, uploadingAssets } from '$lib/services/assets/state';
-import { browsedDirPath, getDirName, getSubfolders } from '$lib/services/assets/subfolders';
+import {
+  browsedDirPath,
+  focusedSubfolder,
+  getDirName,
+  getSubfolders,
+  selectedSubfolderPath,
+} from '$lib/services/assets/subfolders';
 import { filterAssets } from '$lib/services/assets/view/filter';
 import { groupAssets } from '$lib/services/assets/view/group';
 import { assetListSettings, currentView, initSettings } from '$lib/services/assets/view/settings';
@@ -21,7 +27,7 @@ import {
 } from '$lib/services/utils/state.svelte';
 
 /**
- * @import { Asset, AssetFolderInfo } from '$lib/types/private';
+ * @import { Asset, AssetFolderInfo, AssetFolderSummary } from '$lib/types/private';
  */
 
 /**
@@ -121,6 +127,48 @@ export const listedSubfolders = createDerivedState(() => {
   return dirPath === undefined
     ? []
     : getSubfolders({ dirPath, assets: selectedFolderAssets.current });
+});
+
+/**
+ * What the folder info panel describes: the focused subfolder, or the folder being browsed — the
+ * subfolder being browsed if any, otherwise the selected folder itself.
+ * @type {{ readonly current: AssetFolderSummary | undefined }}
+ */
+export const folderSummary = createDerivedState(() => {
+  const subfolder = focusedSubfolder.current;
+
+  if (subfolder) {
+    const { name, path } = subfolder;
+    const assets = selectedFolderAssets.current;
+
+    return {
+      name,
+      path,
+      folderCount: getSubfolders({ dirPath: path, assets }).length,
+      assetCount: assets.filter((asset) => getDirName(asset.path) === path).length,
+    };
+  }
+
+  const folder = selectedAssetFolder.current;
+
+  // The panel is only shown with a folder selected
+  if (!folder) {
+    return undefined;
+  }
+
+  const dirPath = browsedDirPath.current;
+
+  return {
+    name:
+      selectedSubfolderPath.current.split('/').at(-1) ||
+      // `appLocale.current` is a key, because the label can be localized
+      (appLocale.current && getFolderLabelByCollection(folder)),
+    // The All Assets folder has no path
+    path: dirPath ?? folder.internalPath,
+    // A folder that isn’t browsed by subfolder lists every asset below it at once
+    folderCount: dirPath === undefined ? undefined : listedSubfolders.current.length,
+    assetCount: listedAssets.current.length,
+  };
 });
 
 /**

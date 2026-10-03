@@ -10,6 +10,7 @@ import { sortAssets } from '$lib/services/assets/view/sort';
 
 import {
   assetGroups,
+  folderSummary,
   getAdjacentAssets,
   getFolderLabelByCollection,
   listedAssetIndexMap,
@@ -30,9 +31,12 @@ const {
   _uploadingAssets,
   _selectedAssetFolder,
   _browsedDirPath,
+  _focusedSubfolder,
+  _selectedSubfolderPath,
   _backend,
   _currentView,
   _prefs,
+  _locale,
 } = await vi.hoisted(async () => {
   const { createRawState } = await import('$lib/services/utils/state.svelte');
 
@@ -48,10 +52,15 @@ const {
     /** @type {{ current: any }} */
     _browsedDirPath: createRawState(undefined),
     /** @type {{ current: any }} */
+    _focusedSubfolder: createRawState(undefined),
+    _selectedSubfolderPath: createRawState(''),
+    /** @type {{ current: any }} */
     _backend: createRawState(null),
     /** @type {{ current: any }} */
     _currentView: createRawState({ type: 'grid', showInfo: true }),
     _prefs: { devModeEnabled: false },
+    /** @type {{ current: string | undefined }} */
+    _locale: { current: 'en' },
   };
 });
 
@@ -66,6 +75,7 @@ vi.mock('@sveltia/i18n', () => ({
 
     return translations[key] || key;
   },
+  locale: _locale,
 }));
 
 vi.mock('$lib/services/contents/collection', () => ({
@@ -90,6 +100,8 @@ vi.mock('$lib/services/assets/folders', () => ({
 
 vi.mock('$lib/services/assets/subfolders', () => ({
   browsedDirPath: _browsedDirPath,
+  focusedSubfolder: _focusedSubfolder,
+  selectedSubfolderPath: _selectedSubfolderPath,
   getDirName: (/** @type {string} */ path) =>
     path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '',
   getSubfolders: vi.fn((/** @type {{ dirPath: string, assets: any[] }} */ { dirPath, assets }) => {
@@ -167,6 +179,8 @@ describe('assets/view/index', () => {
     _uploadingAssets.current = { folder: undefined, files: [] };
     _selectedAssetFolder.current = undefined;
     _browsedDirPath.current = undefined;
+    _focusedSubfolder.current = undefined;
+    _selectedSubfolderPath.current = '';
     currentView.current = { type: 'grid', showInfo: true };
     await wait();
   });
@@ -651,6 +665,85 @@ describe('assets/view/index', () => {
 
       expect(assetGroups.current).not.toBe(groups);
       expect(assetGroups.current).toEqual({ '*': _publishedAssets.current });
+    });
+  });
+
+  describe('folderSummary', () => {
+    const globalFolder = { collectionName: undefined, internalPath: 'images', label: 'Images' };
+
+    beforeEach(() => {
+      _publishedAssets.current = [
+        createAsset('images/photo1.jpg', globalFolder),
+        createAsset('images/2024/photo2.jpg', globalFolder),
+        createAsset('images/2024/summer/photo3.jpg', globalFolder),
+        createAsset('images/2024/summer/photo4.jpg', globalFolder),
+      ];
+    });
+
+    it('should be undefined without a selected folder', () => {
+      expect(folderSummary.current).toBeUndefined();
+    });
+
+    it('should describe the selected folder', () => {
+      _selectedAssetFolder.current = globalFolder;
+      _browsedDirPath.current = 'images';
+
+      expect(folderSummary.current).toEqual({
+        name: 'Images',
+        path: 'images',
+        folderCount: 1,
+        assetCount: 1,
+      });
+    });
+
+    it('should describe the subfolder being browsed', () => {
+      _selectedAssetFolder.current = globalFolder;
+      _selectedSubfolderPath.current = '2024/summer';
+      _browsedDirPath.current = 'images/2024/summer';
+
+      expect(folderSummary.current).toEqual({
+        name: 'summer',
+        path: 'images/2024/summer',
+        folderCount: 0,
+        assetCount: 2,
+      });
+    });
+
+    it('should describe a folder that is not browsed by subfolder', () => {
+      const allAssetsFolder = { collectionName: undefined, internalPath: undefined };
+
+      _selectedAssetFolder.current = allAssetsFolder;
+
+      expect(folderSummary.current).toEqual({
+        name: 'All Assets',
+        path: undefined,
+        folderCount: undefined,
+        assetCount: 4,
+      });
+    });
+
+    it('should wait for the locale to label the folder', () => {
+      _selectedAssetFolder.current = globalFolder;
+      _locale.current = undefined;
+
+      try {
+        expect(folderSummary.current?.name).toBeUndefined();
+      } finally {
+        _locale.current = 'en';
+      }
+    });
+
+    it('should describe the focused subfolder', () => {
+      _selectedAssetFolder.current = globalFolder;
+      _browsedDirPath.current = 'images';
+      _focusedSubfolder.current = { name: '2024', path: 'images/2024' };
+
+      expect(folderSummary.current).toEqual({
+        name: '2024',
+        path: 'images/2024',
+        folderCount: 1,
+        assetCount: 1,
+      });
     });
   });
 

@@ -5,6 +5,7 @@ import {
   externalAssets,
   externalAssetSearchTerms,
   externalFolders,
+  focusedExternalSubfolder,
   hasFolderSupport,
   pruneExternalAssetSelection,
   selectedCloudService,
@@ -23,6 +24,7 @@ import {
 
 /**
  * @import {
+ * AssetFolderSummary,
  * AssetSubfolder,
  * ExternalAsset,
  * FilteringConditions,
@@ -290,6 +292,50 @@ const sortedExternalAssets = createDerivedState(() => {
 export const listedExternalAssets = createDerivedState(() =>
   searchExternalAssets(sortedExternalAssets.current, externalAssetSearchTerms.current),
 );
+
+/**
+ * What the folder info panel describes: the focused subfolder, or the folder being browsed on the
+ * selected cloud storage service — the service itself at the root.
+ * @type {{ readonly current: AssetFolderSummary | undefined }}
+ */
+export const externalFolderSummary = createDerivedState(() => {
+  const subfolder = focusedExternalSubfolder.current;
+
+  if (subfolder) {
+    const { name, path } = subfolder;
+    const assets = externalAssets.current ?? [];
+
+    return {
+      name,
+      path,
+      folderCount: getExternalSubfolders({
+        dirPath: path,
+        assets,
+        folders: externalFolders.current,
+      }).length,
+      assetCount: getExternalAssetsInDir({ dirPath: path, assets }).length,
+    };
+  }
+
+  const service = selectedCloudService.current;
+
+  // The panel is only shown with a service selected
+  if (!service) {
+    return undefined;
+  }
+
+  // A search looks through the whole service rather than the folder being browsed
+  const browsing = browsingExternalFolders.current;
+  const dirPath = browsing ? selectedExternalDirPath.current : '';
+
+  return {
+    name: dirPath.split('/').at(-1) || service.serviceLabel,
+    // The service root has no path of its own
+    path: dirPath || undefined,
+    folderCount: browsing ? listedExternalSubfolders.current.length : undefined,
+    assetCount: listedExternalAssets.current.length,
+  };
+});
 
 /**
  * {@link listedExternalAssets} grouped as the list shows them.

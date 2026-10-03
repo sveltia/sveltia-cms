@@ -139,27 +139,22 @@ describe('AssetsPanel', () => {
 
   test('selects a single asset', async () => {
     const onSelect = vi.fn();
-    const props = $state({ assets, selectedResources: [], onSelect });
+    const props = $state({ assets, selectedResources: /** @type {any[]} */ ([]), onSelect });
 
     await render(AssetsPanel, props);
     await expect.poll(() => page.getByRole('option').elements().length).toBe(3);
 
-    // The listed asset carries its relative path and key
-    /**
-     * Match the listed asset at the given index.
-     * @param {number} index Index.
-     * @returns {any} Matcher.
-     */
-    const listedAsset = (index) =>
-      expect.objectContaining({ path: assets[index].path, relPath: assets[index].name });
-
+    // The original asset object is selected, not a copy
     await getOption(assets[1].path).click();
-    await expect.poll(() => props.selectedResources).toEqual([{ asset: listedAsset(1) }]);
-    expect(onSelect).toHaveBeenCalledWith({ asset: listedAsset(1) });
+    await expect.poll(() => props.selectedResources).toHaveLength(1);
+    expect(props.selectedResources[0].asset).toBe(props.assets[1]);
+    expect(onSelect).toHaveBeenCalledOnce();
+    expect(onSelect.mock.calls[0][0].asset).toBe(props.assets[1]);
 
     // Another selection replaces the previous one
     await getOption(assets[0].path).click();
-    await expect.poll(() => props.selectedResources).toEqual([{ asset: listedAsset(0) }]);
+    await expect.poll(() => props.selectedResources[0]?.asset).toBe(props.assets[0]);
+    expect(props.selectedResources).toHaveLength(1);
   });
 
   test('selects multiple assets, keeping the other resources', async () => {

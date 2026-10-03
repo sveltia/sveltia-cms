@@ -20,8 +20,16 @@
   import InternalAssetsPanel from '$lib/components/assets/browser/internal-assets-panel.svelte';
   import CreateSubfolderDialog from '$lib/components/assets/list/create-subfolder-dialog.svelte';
   import ViewSwitcher from '$lib/components/common/page-toolbar/view-switcher.svelte';
+  import {
+    getFirstDefaultLibraryName,
+    getInsertedResources,
+    getPickedFolderPublicPaths,
+    getStockAssetProviderEntries,
+    isFolderOffered,
+    sortServicesByName,
+  } from '$lib/services/assets/browser/select-assets-dialog.svelte';
   import { assetsLocked } from '$lib/services/assets/folders';
-  import { getFolderPublicPath, revokeBlobURLIfNeeded } from '$lib/services/assets/info';
+  import { revokeBlobURLIfNeeded } from '$lib/services/assets/info';
   import {
     canBrowseSubfolders,
     getDirName,
@@ -46,10 +54,7 @@
     dialogOpen as cloudinaryDialogOpen,
   } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-  import {
-    allStockAssetProviders,
-    getStockAssetMediaLibraryOptions,
-  } from '$lib/services/integrations/media-libraries/stock';
+  import { allStockAssetProviders } from '$lib/services/integrations/media-libraries/stock';
   import { normalize } from '$lib/services/search/util';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
@@ -59,7 +64,6 @@
   /**
    * @import {
    * Asset,
-   * AssetFolderInfo,
    * AssetLibraryFolderMap,
    * AssetLibraryFolderMapKey,
    * AssetSubfolder,
@@ -147,26 +151,9 @@
   let externalAssetsPanel = $state();
 
   /**
-   * Sort services by their label in alphabetical order.
-   * @param {[string, { serviceLabel: string }]} a First service entry.
-   * @param {[string, { serviceLabel: string }]} b Second service entry.
-   * @returns {number} Sorting order value.
+   * View of the asset list, given to the view switcher, which is only rendered once it’s set.
    */
-  const sortServicesByName = (a, b) => {
-    const nameA = a[1].serviceLabel.toLowerCase();
-    const nameB = b[1].serviceLabel.toLowerCase();
-
-    return nameA.localeCompare(nameB);
-  };
-
-  /**
-   * Check if a repository folder is offered in the dialog. Folder selection takes a folder that can
-   * be browsed by subfolder.
-   * @param {{ folder: AssetFolderInfo | undefined, enabled: boolean }} entry Folder map entry.
-   * @returns {boolean} Result.
-   */
-  const isFolderOffered = ({ folder, enabled }) =>
-    enabled && (!selectFolder || canBrowseSubfolders(folder));
+  const currentView = /** @type {{ current: SelectAssetsView }} */ (selectAssetsView);
 
   const title = $derived(
     selectFolder
@@ -178,7 +165,7 @@
   const searchTerms = $derived(normalize(rawSearchTerms));
   const isDefaultLibraryEnabled = $derived(
     getMediaLibraryOptions({ fieldConfig }) !== false &&
-      Object.values(assetLibraryFolderMap).some(isFolderOffered),
+      Object.values(assetLibraryFolderMap).some((entry) => isFolderOffered(entry, selectFolder)),
   );
   /** Whether the URL input is offered. A folder can only be picked from the repository. */
   const showURLInput = $derived(canEnterURL && !selectFolder);
@@ -239,23 +226,9 @@
   const selectedFolderLabel = $derived(
     selectedFolder?.label || _(`assets_dialog.folder.${libraryName.replace('default-', '')}`),
   );
-  const enabledStockAssetProviderEntries = $derived.by(() => {
-    if (selectFolder) {
-      return [];
-    }
-
-    const { providers = [] } = getStockAssetMediaLibraryOptions({ fieldConfig });
-
-    return Object.entries(allStockAssetProviders)
-      .filter(
-        ([serviceId, { hotlinking }]) =>
-          providers.includes(/** @type {StockAssetProviderName} */ (serviceId)) &&
-          // When hotlinking is not required, files are downloaded and then uploaded to the
-          // repository, so the default library has to be configured.
-          (hotlinking || isDefaultLibraryEnabled),
-      )
-      .sort(sortServicesByName);
-  });
+  const enabledStockAssetProviderEntries = $derived(
+    getStockAssetProviderEntries({ fieldConfig, selectFolder, isDefaultLibraryEnabled }),
+  );
   const isEnabledMediaService = $derived(
     enabledStockAssetProviderEntries.some(
       ([serviceId, { authType }]) =>
@@ -277,22 +250,17 @@
   /**
    * Public paths of the folders to be picked: the selected subfolders, or the directory being
    * browsed. Empty unless a folder is to be picked from a folder that can be browsed.
-   * @type {string[]}
    */
-  const pickedFolderPublicPaths = $derived.by(() => {
-    if (!selectFolder || !browsingSubfolders) {
-      return [];
-    }
-
-    const folder = /** @type {AssetFolderInfo} */ (selectedFolder);
-    const basePath = /** @type {string} */ (targetFolderPath);
-
-    const subfolderPaths = selectedSubfolderPaths.length
-      ? selectedSubfolderPaths.map((path) => getRelativePath(path, basePath))
-      : [subfolderPath];
-
-    return subfolderPaths.map((path) => getFolderPublicPath({ folder, subfolderPath: path }));
-  });
+  const pickedFolderPublicPaths = $derived(
+    getPickedFolderPublicPaths({
+      selectFolder,
+      browsingSubfolders,
+      folder: selectedFolder,
+      basePath: targetFolderPath,
+      subfolderPath,
+      selectedSubfolderPaths,
+    }),
+  );
 
   /**
    * Select or deselect a subfolder when a folder is to be picked.
@@ -381,17 +349,6 @@
     selectedResources = [];
   };
 
-  /* v8 ignore start -- an unsaved asset’s path is made of the target folder path, which every
-  folder in the picker has, so the fallback is out of reach */
-  /**
-   * Get the subfolder an unsaved asset is going to be saved to, which its provisional path holds.
-   * @param {Asset} asset Unsaved asset.
-   * @returns {string} Subfolder path relative to the target folder. Empty for the folder root.
-   */
-  const getUnsavedAssetSubfolderPath = ({ path }) =>
-    targetFolderPath !== undefined ? getDirName(getRelativePath(path, targetFolderPath)) : '';
-  /* v8 ignore stop */
-
   /**
    * Handle the OK button click.
    */
@@ -412,34 +369,19 @@
       return;
     }
 
-    const resources = selectedResources.map((resource) => {
-      const { asset, replace } = resource;
-
-      if (!asset?.unsaved) {
-        return $state.snapshot(resource);
-      }
-
-      // The `File` is taken as is: `$state.snapshot()` would clone it with `structuredClone()`,
-      // and the copy would then have to be read and hashed all over again
-      return {
-        file: asset.file,
-        folder: $state.snapshot(asset.folder),
-        subfolderPath: getUnsavedAssetSubfolderPath(asset),
-        replace,
-      };
-    });
-
-    onSelect?.(resources);
+    onSelect?.(getInsertedResources({ resources: selectedResources, targetFolderPath }));
   };
 
   $effect.pre(() => {
-    const firstDefaultLibraryId = isDefaultLibraryEnabled
-      ? Object.entries(assetLibraryFolderMap).find(([, entry]) => isFolderOffered(entry))?.[0]
-      : undefined;
+    const firstDefaultLibraryName = getFirstDefaultLibraryName({
+      assetLibraryFolderMap,
+      isDefaultLibraryEnabled,
+      selectFolder,
+    });
 
-    if (firstDefaultLibraryId) {
+    if (firstDefaultLibraryName) {
       // Select the first enabled folder
-      libraryName = `default-${firstDefaultLibraryId}`;
+      libraryName = firstDefaultLibraryName;
     } else if (untrack(() => pendingFiles.length)) {
       // Select the first cloud storage service, which can take the files to be uploaded
       libraryName = cloudServiceEntries[0]?.[0] ?? enabledExternalServiceEntries[0]?.[0];
@@ -492,10 +434,7 @@
 {#snippet headerItems()}
   {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary') || (isStockLibrary && libraryName !== 'picsum')}
     {#if selectAssetsView.current}
-      <ViewSwitcher
-        currentView={(() => /** @type {{ current: SelectAssetsView }} */ (selectAssetsView))()}
-        aria-controls="select-assets-grid"
-      />
+      <ViewSwitcher {currentView} aria-controls="select-assets-grid" />
     {/if}
     <!-- A search lists matching files rather than folders, so it’s not offered for a folder -->
     {#if !selectFolder}
@@ -615,7 +554,7 @@
         {#if isDefaultLibraryEnabled}
           <OptionGroup label={_('asset_location.repository')}>
             {#each Object.entries(assetLibraryFolderMap) as [id, entry] (id)}
-              {#if isFolderOffered(entry)}
+              {#if isFolderOffered(entry, selectFolder)}
                 {@const { folder } = entry}
                 {@const name = `default-${id}`}
                 <Option

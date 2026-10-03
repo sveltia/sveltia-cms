@@ -1261,6 +1261,23 @@
  */
 
 /**
+ * What the folder info panel in the Asset Library describes: the listed subfolder focused with a
+ * click or the keyboard, if any, or else the folder being browsed.
+ * @typedef {object} AssetFolderSummary
+ * @property {string} name Folder name.
+ * @property {string} [path] Folder path. Omitted for a location without a path, like the All Assets
+ * folder.
+ * @property {number} [folderCount] Number of subfolders. Omitted for a location that isn’t browsed
+ * by subfolder, which lists every asset below it at once.
+ * @property {number} assetCount Number of assets.
+ */
+
+/**
+ * Direction to move in between the listed assets in the asset details overlay.
+ * @typedef {'previous' | 'next'} AssetNavigationDirection
+ */
+
+/**
  * Subfolder of an asset folder, listed in the Asset Library ahead of the assets.
  * @typedef {object} AssetSubfolder
  * @property {string} name Folder name.

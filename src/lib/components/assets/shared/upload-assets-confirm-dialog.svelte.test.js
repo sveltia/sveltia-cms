@@ -190,6 +190,39 @@ describe('UploadAssetsConfirmDialog', () => {
     }
   });
 
+  test('saves the files left after removing one, keeping the conflict resolution', async () => {
+    vi.mocked(saveAssets).mockResolvedValue(undefined);
+
+    const folder = globalAssetFolder.current;
+
+    setAssets([createMockAsset({ name: 'photo.png', asset: { folder } })]);
+
+    try {
+      await render(UploadAssetsConfirmDialog, {});
+
+      uploadingAssets.current = { folder, files: [image, doc] };
+
+      const dialog = page.getByRole('alertdialog');
+      const options = dialog.getByRole('radiogroup', { name: 'File Name Conflict Resolution' });
+
+      await expect.poll(() => dialog.getByRole('listitem').elements().length).toBe(2);
+      await options.getByRole('radio', { name: 'Keep Both' }).click();
+      await dialog.getByRole('listitem').nth(1).getByRole('button', { name: 'Remove' }).click();
+      await expect.poll(() => dialog.getByRole('listitem').elements().length).toBe(1);
+      await expect.element(options.getByRole('radio', { name: 'Keep Both' })).toBeChecked();
+      await dialog.getByRole('button', { name: 'Upload' }).click();
+
+      await vi.waitFor(() =>
+        expect(saveAssets).toHaveBeenCalledWith(
+          { files: [image], folder, replaceDuplicates: false },
+          { commitType: 'uploadMedia' },
+        ),
+      );
+    } finally {
+      setAssets([]);
+    }
+  });
+
   test('sets aside a replacement in a different format', async () => {
     await render(UploadAssetsConfirmDialog, {});
 

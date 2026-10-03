@@ -5,6 +5,7 @@ import {
   externalAssetSearchTerms,
   externalFolders,
   focusedExternalAsset,
+  focusedExternalSubfolder,
   selectedCloudService,
   selectedExternalAssets,
   selectedExternalDirPath,
@@ -18,6 +19,7 @@ import {
   externalAssetGroups,
   externalAssetSortKeys,
   externalAssetViewGroups,
+  externalFolderSummary,
   filterExternalAssets,
   getExternalAssetsInDir,
   getExternalFolderLabel,
@@ -46,6 +48,7 @@ vi.mock('$lib/services/assets/external', async (importOriginal) => {
     externalFolders: { current: [] },
     // The selection helper works on the real state, so the selection and the focus are real too
     focusedExternalAsset: original.focusedExternalAsset,
+    focusedExternalSubfolder: { current: undefined },
     // eslint-disable-next-line jsdoc/require-jsdoc
     hasFolderSupport: (/** @type {any} */ service) => !!service?.browse,
     pruneExternalAssetSelection: original.pruneExternalAssetSelection,
@@ -102,6 +105,7 @@ describe('assets/external/view', () => {
     externalAssets.current = undefined;
     externalAssetSearchTerms.current = '';
     focusedExternalAsset.current = undefined;
+    focusedExternalSubfolder.current = undefined;
     selectedCloudService.current = undefined;
     selectedExternalAssets.current = [];
     externalFolders.current = [];
@@ -355,6 +359,78 @@ describe('assets/external/view', () => {
       externalAssetSearchTerms.current = 'guide';
       expect(listedExternalSubfolders.current).toEqual([]);
       expect(listedExternalAssets.current).toEqual([guide]);
+    });
+  });
+
+  describe('externalFolderSummary', () => {
+    /** @type {any} */
+    const service = { serviceId: 'aws_s3', serviceLabel: 'Amazon S3', browse: vi.fn() };
+
+    beforeEach(() => {
+      externalAssets.current = assets;
+      externalFolders.current = ['images/empty'];
+    });
+
+    it('should be undefined without a selected service', () => {
+      expect(externalFolderSummary.current).toBeUndefined();
+    });
+
+    it('should describe the service root', () => {
+      selectedCloudService.current = service;
+
+      expect(externalFolderSummary.current).toEqual({
+        name: 'Amazon S3',
+        path: undefined,
+        folderCount: 2,
+        assetCount: 0,
+      });
+    });
+
+    it('should describe the folder being browsed', () => {
+      selectedCloudService.current = service;
+      selectedExternalDirPath.current = 'images';
+
+      expect(externalFolderSummary.current).toEqual({
+        name: 'images',
+        path: 'images',
+        folderCount: 1,
+        assetCount: 2,
+      });
+    });
+
+    it('should describe the whole service during a search', () => {
+      selectedCloudService.current = service;
+      selectedExternalDirPath.current = 'images';
+      externalAssetSearchTerms.current = 'hero';
+
+      expect(externalFolderSummary.current).toEqual({
+        name: 'Amazon S3',
+        path: undefined,
+        folderCount: undefined,
+        assetCount: 2,
+      });
+    });
+
+    it('should describe the focused subfolder', () => {
+      selectedCloudService.current = service;
+      focusedExternalSubfolder.current = { name: 'images', path: 'images' };
+
+      expect(externalFolderSummary.current).toEqual({
+        name: 'images',
+        path: 'images',
+        folderCount: 1,
+        assetCount: 2,
+      });
+
+      // The assets may not be loaded yet
+      externalAssets.current = undefined;
+
+      expect(externalFolderSummary.current).toEqual({
+        name: 'images',
+        path: 'images',
+        folderCount: 1,
+        assetCount: 0,
+      });
     });
   });
 

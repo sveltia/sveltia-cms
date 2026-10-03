@@ -122,7 +122,8 @@
           hidden={!removable || files.length === 1}
           onclick={(event) => {
             event.stopPropagation();
-            files.splice(index, 1);
+            // Reassigned rather than spliced, so a parent binding a derived list gets the change
+            files = files.toSpliced(index, 1);
           }}
         >
           <Icon name="close" />
