@@ -73,6 +73,19 @@ export const getExternalAssetPath = (service, { id }) =>
 export const canPreviewExternalAsset = ({ kind, fileName }) => canPreviewFile(kind, fileName);
 
 /**
+ * Add newly uploaded assets to the top of a list. A file uploaded under an existing name overwrites
+ * the asset on most services, so an asset with the same ID is replaced rather than listed twice.
+ * @param {ExternalAsset[]} uploaded Uploaded assets.
+ * @param {ExternalAsset[]} assets Assets listed so far.
+ * @returns {ExternalAsset[]} Merged list.
+ */
+export const mergeUploadedExternalAssets = (uploaded, assets) => {
+  const uploadedIds = new Set(uploaded.map(({ id }) => id));
+
+  return [...uploaded, ...assets.filter(({ id }) => !uploadedIds.has(id))];
+};
+
+/**
  * Cloud storage service currently selected in the Asset Library, or `undefined` when a repository
  * folder is selected instead.
  * @type {{ current: MediaLibraryService | undefined }}

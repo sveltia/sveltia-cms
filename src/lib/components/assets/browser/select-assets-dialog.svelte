@@ -454,13 +454,24 @@
     // Somehow we need to snapshot `droppedAssets` here to make Svelte aware of its changes
     void $state.snapshot(droppedAssets);
 
+    // A read started for an earlier state of the draft can be answered after a later one
+    let stale = false;
+
     (async () => {
-      unsavedAssets = [
+      const assets = [
         // The draft’s files are read synchronously, so their changes are tracked as well
         ...(draft?.files ? await getUnsavedAssets({ draft, targetFolderPath }) : []),
         ...Object.values(droppedAssets),
       ];
+
+      if (!stale) {
+        unsavedAssets = assets;
+      }
     })();
+
+    return () => {
+      stale = true;
+    };
   });
 
   $effect(() => {

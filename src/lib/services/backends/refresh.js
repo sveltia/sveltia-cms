@@ -90,8 +90,9 @@ const check = async ({ fetchLastCommit, fetchFiles }) => {
 
   await fetchFiles();
 
-  // The site is now being built from the new head, so that’s the deployment to watch
-  productionSHA.current = hash;
+  // The site is now being built from the new head, so that’s the deployment to watch. The fetch
+  // resolves the head again, and records the one it has loaded, which can be newer than `hash`
+  productionSHA.current = repositoryHead.current;
 
   const changes = diffStores({ entriesBefore, assetsBefore });
 

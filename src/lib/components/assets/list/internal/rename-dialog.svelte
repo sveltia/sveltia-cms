@@ -62,12 +62,25 @@
   };
 
   $effect(() => {
-    if (asset) {
-      (async () => {
-        usedEntries = await getAssetUsedEntries(asset);
-        open = true;
-      })();
+    if (!asset) {
+      return undefined;
     }
+
+    // Another asset can be renamed before the entries using this one are found
+    let stale = false;
+
+    (async () => {
+      const entries = await getAssetUsedEntries(asset);
+
+      if (!stale) {
+        usedEntries = entries;
+        open = true;
+      }
+    })();
+
+    return () => {
+      stale = true;
+    };
   });
 </script>
 

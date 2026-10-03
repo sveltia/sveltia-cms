@@ -7,6 +7,7 @@ import {
   focusedExternalAsset,
   focusedExternalSubfolder,
   getFetchOptions,
+  mergeUploadedExternalAssets,
   selectedCloudService,
   selectedExternalAssets,
   selectedExternalDirPath,
@@ -290,13 +291,8 @@ export const uploadExternalAssets = async (files, { originalAsset } = {}) => {
         }
       } else if (service.upload) {
         const uploaded = await service.upload(validFiles, fetchOptions);
-        const uploadedIds = new Set(uploaded.map(({ id }) => id));
 
-        // A file uploaded under an existing name overwrites the asset on most services
-        setAssets([
-          ...uploaded,
-          ...(externalAssets.current ?? []).filter(({ id }) => !uploadedIds.has(id)),
-        ]);
+        setAssets(mergeUploadedExternalAssets(uploaded, externalAssets.current ?? []));
         reportSuccess('saved', uploaded.length);
       }
     } catch (ex) {

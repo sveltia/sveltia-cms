@@ -395,6 +395,29 @@ describe('ExternalAssetsPanel', () => {
     expect(dialog.element().textContent).toContain('exceeds the maximum size');
   });
 
+  test('lists a file uploaded under an existing name only once', async () => {
+    const upload = vi.fn(async (/** @type {File[]} */ files) =>
+      files.map((file) => createMockExternalAsset({ fileName: file.name })),
+    );
+
+    const { component } = await render(ExternalAssetsPanel, {
+      serviceProps: createMockCloudService({ list: vi.fn().mockResolvedValue(assets), upload }),
+      selectedResources: [],
+    });
+
+    await waitForList(2);
+    // The service overwrites the existing asset
+    await component.uploadFiles([await createMockImageFile({ name: 'b.png' })]);
+
+    await expect
+      .poll(() =>
+        getAssetOptions()
+          .elements()
+          .map((el) => el.dataset.value),
+      )
+      .toEqual(['images/b.png', 'images/a.png']);
+  });
+
   test('keeps the global size limit when the field has shared options of its own', async () => {
     const upload = vi.fn(async (/** @type {File[]} */ files) =>
       files.map((file) => createMockExternalAsset({ fileName: file.name })),

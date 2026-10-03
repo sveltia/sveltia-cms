@@ -1,3 +1,4 @@
+import { sleep } from '@sveltia/utils/misc';
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -99,6 +100,36 @@ describe('RenameDialog', () => {
         );
       await expect.element(dialog.getByRole('button', { name: 'Rename' })).toBeDisabled();
       expect(isEntryReadonly).toHaveBeenCalledWith(entry);
+    } finally {
+      vi.mocked(isEntryReadonly).mockReturnValue(false);
+    }
+  });
+
+  test('ignores the entries of the asset renamed before, when they’re found late', async () => {
+    const entry = /** @type {any} */ ({ id: 'old', slug: 'old-post', locales: {} });
+    const { promise, resolve } = Promise.withResolvers();
+
+    vi.mocked(getAssetUsedEntries)
+      .mockReturnValueOnce(/** @type {Promise<any>} */ (promise))
+      .mockResolvedValueOnce([]);
+    vi.mocked(isEntryReadonly).mockReturnValue(true);
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+      await vi.waitFor(() => expect(getAssetUsedEntries).toHaveBeenCalledOnce());
+      renamingAsset.current = secondAsset;
+
+      const dialog = page.getByRole('dialog');
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'b.png');
+      // The entries using the first asset are found after that
+      resolve([entry]);
+      await promise;
+      await sleep(50);
+
+      expect(dialog.getByRole('alert').elements()).toHaveLength(0);
     } finally {
       vi.mocked(isEntryReadonly).mockReturnValue(false);
     }

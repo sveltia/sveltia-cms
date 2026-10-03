@@ -3,9 +3,12 @@ import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { React } from '$lib/services/api';
+import { buildControlProps } from '$lib/services/contents/fields/custom/editor';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import CustomEditor from './custom-editor.svelte';
+
+vi.mock('$lib/services/contents/fields/custom/editor', { spy: true });
 
 /**
  * @import { CustomField } from '$lib/types/public';
@@ -126,6 +129,13 @@ describe('CustomEditor', () => {
     await expect.element(input).toHaveValue(3);
     await expect.element(input).toHaveAttribute('id', 'stars');
     await expect.element(input).toHaveAttribute('max', '5');
+  });
+
+  test('renders the control only once on mount', async () => {
+    await renderEditor(3);
+    await expect.element(page.getByRole('spinbutton')).toHaveValue(3);
+
+    expect(buildControlProps).toHaveBeenCalledOnce();
   });
 
   test('writes a change reported by the control to the draft', async () => {

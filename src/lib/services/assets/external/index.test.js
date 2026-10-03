@@ -23,6 +23,7 @@ import {
   getFetchOptions,
   hasAuthInfo,
   hasFolderSupport,
+  mergeUploadedExternalAssets,
   overlaidExternalAssetId,
   renamingExternalAsset,
   renamingExternalSubfolder,
@@ -158,6 +159,18 @@ describe('assets/external', () => {
       expect(canPreviewExternalAsset(create('other', 'a.md'))).toBe(true);
       expect(canPreviewExternalAsset(create('document', 'a.docx'))).toBe(false);
       expect(canPreviewExternalAsset(create('other', 'a'))).toBe(false);
+    });
+  });
+
+  describe('mergeUploadedExternalAssets', () => {
+    it('should list the uploaded assets first, replacing the ones with the same ID', () => {
+      const a = /** @type {any} */ ({ id: 'a', fileName: 'a.png' });
+      const b = /** @type {any} */ ({ id: 'b', fileName: 'b.png' });
+      const newB = /** @type {any} */ ({ id: 'b', fileName: 'b.png', size: 2 });
+      const c = /** @type {any} */ ({ id: 'c', fileName: 'c.png' });
+
+      expect(mergeUploadedExternalAssets([newB, c], [a, b])).toEqual([newB, c, a]);
+      expect(mergeUploadedExternalAssets([c], [])).toEqual([c]);
     });
   });
 

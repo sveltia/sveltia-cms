@@ -368,13 +368,24 @@
     // The editor is closed along with the draft, so this is only a race with the editor closing
     /* v8 ignore next 3 */
     if (!draft) {
-      return;
+      return undefined;
     }
+
+    // A read started for an earlier state of the draft can be answered after a later one
+    let stale = false;
 
     (async () => {
       // The draft’s files are read synchronously, so their changes are tracked as well
-      unsavedAssets = await getUnsavedAssets({ draft, targetFolderPath });
+      const assets = await getUnsavedAssets({ draft, targetFolderPath });
+
+      if (!stale) {
+        unsavedAssets = assets;
+      }
     })();
+
+    return () => {
+      stale = true;
+    };
   });
 </script>
 

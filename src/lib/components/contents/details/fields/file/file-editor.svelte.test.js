@@ -1,7 +1,9 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { globalAssetFolder } from '$lib/services/assets/folders';
+import { listAssets } from '$lib/services/contents/fields/file/helpers';
+import { getUnsavedAssets } from '$lib/services/contents/fields/file/process';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { env } from '$lib/services/user/env.svelte';
 import {
@@ -15,6 +17,9 @@ import {
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import FileEditor from './file-editor.svelte';
+
+vi.mock('$lib/services/contents/fields/file/helpers', { spy: true });
+vi.mock('$lib/services/contents/fields/file/process', { spy: true });
 
 /**
  * Build a drop event carrying the given files.
@@ -589,6 +594,46 @@ describe('FileEditor', () => {
     await dialog.getByRole('button', { name: 'Cancel' }).click();
     await expect.poll(() => page.getByRole('alertdialog').elements().length).toBe(0);
     expect(props.currentValue).toBe('');
+  });
+
+  test('ignores the unsaved assets of an earlier draft state that are read late', async () => {
+    const { draft, container } = await renderEditor({}, '');
+    /** @type {((assets: any[]) => void)[]} */
+    const resolvers = [];
+
+    await vi.waitFor(() => expect(getUnsavedAssets).toHaveBeenCalled());
+    onTestFinished(() => {
+      vi.mocked(getUnsavedAssets).mockReset();
+    });
+    // Read the draft’s files synchronously like the real function, so their changes are tracked
+    vi.mocked(getUnsavedAssets).mockImplementation(({ draft: _draft }) => {
+      void Object.keys(_draft.files);
+
+      return new Promise((resolve) => {
+        resolvers.push(resolve);
+      });
+    });
+    // The draft’s files change twice, and the reads are answered in reverse order
+    draft.files['blob:a'] = /** @type {any} */ ({ file: new File(['a'], 'a.png') });
+    await vi.waitFor(() => expect(resolvers.length).toBeGreaterThan(0));
+
+    const firstReadCount = resolvers.length;
+
+    draft.files['blob:b'] = /** @type {any} */ ({ file: new File(['b'], 'b.png') });
+    await vi.waitFor(() => expect(resolvers.length).toBe(firstReadCount * 2));
+    resolvers.slice(firstReadCount).forEach((resolve) => resolve([{ name: 'latest.png' }]));
+    await vi.waitFor(() => {});
+    resolvers.slice(0, firstReadCount).forEach((resolve) => resolve([{ name: 'stale.png' }]));
+    await vi.waitFor(() => {});
+    vi.mocked(listAssets).mockClear();
+
+    // The assets listed for the duplicate check are read when a file is dropped
+    /** @type {HTMLElement} */ (container.querySelector('.drop-target')).dispatchEvent(
+      createDropEvent([await createMockImageFile({ name: 'new.png' })]),
+    );
+
+    await vi.waitFor(() => expect(listAssets).toHaveBeenCalled());
+    expect(vi.mocked(listAssets).mock.calls[0][0].unsavedAssets).toEqual([{ name: 'latest.png' }]);
   });
 
   test('takes a pasted image', async () => {

@@ -19,7 +19,7 @@
   import CloudServiceAuth from '$lib/components/assets/shared/cloud-service-auth.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import RejectedFilesAlertDialog from '$lib/components/assets/shared/rejected-files-alert-dialog.svelte';
-  import { getFetchOptions } from '$lib/services/assets/external';
+  import { getFetchOptions, mergeUploadedExternalAssets } from '$lib/services/assets/external';
   import {
     fetchExternalAssetBlob,
     getSharedMediaLibraryOptions,
@@ -270,7 +270,7 @@
       const resources = await Promise.all(uploaded.map((asset) => getResource(asset)));
 
       selectedResources = resources.filter((r) => !!r).slice(0, multiple ? undefined : 1);
-      listedAssets = [...uploaded, ...(listedAssets ?? [])];
+      listedAssets = mergeUploadedExternalAssets(uploaded, listedAssets ?? []);
     } catch {
       uploadingToast = { show: true, status: 'error', length: files.length };
     }

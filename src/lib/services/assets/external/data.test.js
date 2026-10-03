@@ -35,7 +35,9 @@ vi.mock('$lib/services/assets/data', () => ({
   assetUpdatesToast: { current: {} },
 }));
 
-vi.mock('$lib/services/assets/external', () => ({
+vi.mock('$lib/services/assets/external', async (importOriginal) => ({
+  mergeUploadedExternalAssets: /** @type {any} */ (await importOriginal())
+    .mergeUploadedExternalAssets,
   externalAssetCounts: { current: {} },
   externalAssets: { current: undefined },
   externalAssetsError: { current: undefined },

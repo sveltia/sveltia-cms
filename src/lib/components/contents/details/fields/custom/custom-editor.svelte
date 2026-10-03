@@ -104,8 +104,12 @@
 
   /** @type {HTMLDivElement | undefined} */
   let container = $state();
-  /** @type {Root | undefined} */
-  let reactRoot = $state();
+  /**
+   * React root, created on the first render. Not reactive, as the effect rendering the component
+   * assigns it, and would otherwise run again right away.
+   * @type {Root | undefined}
+   */
+  let reactRoot;
   /**
    * Control instance, or the handle a function control exposes with `useImperativeHandle()`. Not
    * proxied, as it belongs to React.

@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { buildPreviewProps } from '$lib/services/contents/fields/custom/preview';
 import { initTestConfig } from '$lib/test/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -13,6 +14,7 @@ vi.mock('$lib/services/app/dependencies', () => ({
   getChunkURLs: vi.fn(() => []),
   loadChunk: vi.fn(() => import('$lib/chunks/react-dom.js')),
 }));
+vi.mock('$lib/services/contents/fields/custom/preview', { spy: true });
 
 const fieldConfig = { name: 'stars', widget: 'rating', label: 'Stars', max: 5 };
 
@@ -67,6 +69,27 @@ describe('CustomPreview', () => {
     // And the other fields of the entry
     draft.currentValues._default.title = 'Hi';
     await expect.element(page.getByText('★★★★ (5) for Hi 0')).toBeInTheDocument();
+  });
+
+  test('renders the preview only once on mount', async () => {
+    const draft = createMockDraft({
+      fields: [{ name: 'title', widget: 'string' }, fieldConfig],
+      values: { _default: { title: 'Hello', stars: 3 } },
+    });
+
+    await renderWithDraft(CustomPreview, {
+      draft,
+      props: {
+        locale: '_default',
+        keyPath: 'stars',
+        fieldConfig,
+        currentValue: 3,
+        preview: RatingPreview,
+      },
+    });
+
+    await expect.element(page.getByText('★★★ (5) for Hello 0')).toBeInTheDocument();
+    expect(buildPreviewProps).toHaveBeenCalledOnce();
   });
 
   test('renders nothing without a preview component', async () => {

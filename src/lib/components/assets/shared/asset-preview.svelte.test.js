@@ -1,4 +1,5 @@
-import { describe, expect, test, vi } from 'vitest';
+import { sleep } from '@sveltia/utils/misc';
+import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
 import { createMockAsset } from '$lib/test/config';
@@ -28,6 +29,31 @@ describe('AssetPreview', () => {
     await expect
       .poll(() => container.querySelector('.preview')?.classList.contains('loaded'))
       .toBe(true);
+  });
+
+  test('doesn’t show a lazy image once its URL has been cleared', async () => {
+    // Render the preview below the fold, so the image waits until it’s scrolled into view
+    const spacer = document.body.appendChild(document.createElement('div'));
+
+    spacer.style.height = '200vh';
+    onTestFinished(() => spacer.remove());
+
+    const props = $state({
+      kind: /** @type {const} */ ('image'),
+      src: 'https://example.com/a.png',
+    });
+
+    const { container } = await render(AssetPreview, props);
+    const img = /** @type {HTMLImageElement} */ (container.querySelector('img'));
+
+    await sleep(50);
+    expect(img.getAttribute('src')).toBeNull();
+    props.src = /** @type {any} */ (undefined);
+    // Bring the preview into view
+    spacer.remove();
+    await sleep(100);
+
+    expect(img.getAttribute('src')).toBeNull();
   });
 
   test('shows an unsaved image asset from its file', async () => {

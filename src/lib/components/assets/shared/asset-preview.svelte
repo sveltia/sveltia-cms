@@ -278,23 +278,33 @@
   });
 
   $effect(() => {
-    if (asset) {
-      // For the asset-based flow, `src` is set by `updateSrc` after a visibility check
+    // For the asset-based flow, `src` is set by `updateSrc` after a visibility check
+    if (asset || !src || !mediaElement || loading !== 'lazy') {
       mediaSrc = src;
-    } else if (src && mediaElement && loading === 'lazy') {
-      // For externally-provided `src`, use Intersection Observer instead of relying on the native
-      // `loading="lazy"` attribute, which browsers may ignore in grid/flex layouts
-      mediaSrc = undefined;
 
-      const currentSrc = src;
-
-      (async () => {
-        await waitForVisibility(mediaElement);
-        mediaSrc = currentSrc;
-      })();
-    } else {
-      mediaSrc = src;
+      return undefined;
     }
+
+    // For externally-provided `src`, use Intersection Observer instead of relying on the native
+    // `loading="lazy"` attribute, which browsers may ignore in grid/flex layouts
+    mediaSrc = undefined;
+
+    const currentSrc = src;
+    const element = mediaElement;
+    // The source can change or go away before the element becomes visible
+    let stale = false;
+
+    (async () => {
+      await waitForVisibility(element);
+
+      if (!stale) {
+        mediaSrc = currentSrc;
+      }
+    })();
+
+    return () => {
+      stale = true;
+    };
   });
 
   $effect(() => {
