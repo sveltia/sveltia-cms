@@ -135,26 +135,18 @@ const translate = async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
     format: 'html',
   };
 
-  try {
-    const { data } = /** @type {{ data: { translations: { translatedText: string }[] } }} */ (
-      await postJSON({
-        endpoint: url,
-        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
-        apiLabel: 'Google Translate',
-        body: requestBody,
-      })
-    );
+  const { data } = /** @type {{ data: { translations: { translatedText: string }[] } }} */ (
+    await postJSON({
+      endpoint: url,
+      headers: { 'Content-Type': 'application/json', 'X-goog-api-key': apiKey },
+      apiLabel: 'Google Translate',
+      body: requestBody,
+    })
+  );
 
-    // cspell:disable-next-line
-    // Decode apostrophes in translated text (e.g., "Aujourd&#39;hui" → "Aujourd'hui")
-    return data.translations.map((t) => t.translatedText.replace(/&#39;/g, "'"));
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-
-    throw new Error('Failed to translate text with Google Translate API.');
-  }
+  // cspell:disable-next-line
+  // Decode apostrophes in translated text (e.g., "Aujourd&#39;hui" → "Aujourd'hui")
+  return data.translations.map((t) => t.translatedText.replace(/&#39;/g, "'"));
 };
 
 /**

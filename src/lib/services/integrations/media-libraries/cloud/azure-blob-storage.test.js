@@ -506,7 +506,7 @@ describe('integrations/media-libraries/cloud/azure-blob-storage', () => {
           'x-ms-blob-type': 'BlockBlob',
           'Content-Type': 'image/jpeg',
         },
-        body: expect.any(ArrayBuffer),
+        body: file,
       });
     });
 

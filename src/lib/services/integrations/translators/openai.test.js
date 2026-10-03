@@ -253,16 +253,6 @@ describe('OpenAI Translator Service', () => {
       );
     });
 
-    it('should handle unknown errors', async () => {
-      const mockFetch = vi.mocked(fetch);
-
-      mockFetch.mockRejectedValueOnce('Unknown error');
-
-      await expect(openaiTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
-        'Failed to translate text with OpenAI API.',
-      );
-    });
-
     it('should handle empty text array', async () => {
       const mockResponse = {
         output_text: JSON.stringify([]),

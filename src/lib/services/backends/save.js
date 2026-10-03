@@ -9,7 +9,7 @@ import { productionSHA } from '$lib/services/deployments';
 import { user } from '$lib/services/user/account.svelte';
 import { prefs } from '$lib/services/user/prefs.svelte';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
-import { getBlob } from '$lib/services/utils/file';
+import { getByteSize } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -81,13 +81,11 @@ export const updateCache = async ({ changes, commit }) => {
         await cacheDB.delete(previousPath);
       }
 
-      // Only a deletion, handled above, comes without data
-      const blob = getBlob(/** @type {string | File} */ (data));
-
       /** @type {RepositoryFileInfo} */
       const fileInfo = {
         sha: files[path]?.sha,
-        size: blob.size,
+        // Only a deletion, handled above, comes without data
+        size: getByteSize(/** @type {string | File} */ (data)),
         text: typeof data === 'string' ? data : undefined,
         meta,
       };

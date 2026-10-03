@@ -196,6 +196,16 @@ export const getBlob = (input) =>
   typeof input === 'string' ? new Blob([input], { type: 'text/plain' }) : input;
 
 /**
+ * Get the size of the given file or blob in bytes. A string is measured as UTF-8, the encoding a
+ * `Blob` created from it would use.
+ * @param {File | Blob | string} input File or Blob object, or a string representing the file
+ * content.
+ * @returns {number} Size in bytes.
+ */
+export const getByteSize = (input) =>
+  typeof input === 'string' ? new TextEncoder().encode(input).length : input.size;
+
+/**
  * Compute the Git object ID (SHA-1 hash) of the given blob.
  * @param {Blob} blob File or Blob object.
  * @returns {Promise<string>} Git object ID (SHA-1 hash) of the blob.

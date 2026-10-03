@@ -397,16 +397,6 @@ describe('Anthropic Translator Service', () => {
       );
     });
 
-    it('should handle unknown errors', async () => {
-      const mockFetch = vi.mocked(fetch);
-
-      mockFetch.mockRejectedValueOnce('Unknown error');
-
-      await expect(anthropicTranslator.translate(['test'], mockOptions)).rejects.toThrow(
-        'Failed to translate text with Anthropic API.',
-      );
-    });
-
     it('should use correct model and temperature', async () => {
       const mockResponse = {
         content: [

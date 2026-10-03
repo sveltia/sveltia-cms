@@ -149,7 +149,7 @@ export const resolveLanguageNames = (sourceLanguage, targetLanguage) => {
  * @returns {(texts: string[], options: TranslationOptions) => Promise<string[]>} Translate
  * function.
  */
-export const createAiTranslate =
+const createAiTranslate =
   (complete, model, apiLabel, extraOptions = {}) =>
   /**
    * Translate the given texts using the AI service.
@@ -160,23 +160,15 @@ export const createAiTranslate =
   async (texts, { sourceLanguage, targetLanguage, apiKey }) => {
     const [sourceLangName, targetLangName] = resolveLanguageNames(sourceLanguage, targetLanguage);
 
-    try {
-      const content = await complete({
-        apiKey,
-        model,
-        systemPrompt: createTranslationSystemPrompt(sourceLangName, targetLangName),
-        userMessage: createTranslationUserPrompt(texts),
-        ...extraOptions,
-      });
+    const content = await complete({
+      apiKey,
+      model,
+      systemPrompt: createTranslationSystemPrompt(sourceLangName, targetLangName),
+      userMessage: createTranslationUserPrompt(texts),
+      ...extraOptions,
+    });
 
-      return parseAiTranslationResponse(content, texts.length, apiLabel);
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-
-      throw new Error(`Failed to translate text with ${apiLabel}.`);
-    }
+    return parseAiTranslationResponse(content, texts.length, apiLabel);
   };
 
 /**

@@ -72,7 +72,7 @@ vi.mock('$lib/services/user/prefs.svelte', () => ({
 }));
 
 vi.mock('$lib/services/utils/file', () => ({
-  getBlob: vi.fn(() => ({ size: 1024 })),
+  getByteSize: vi.fn(() => 1024),
 }));
 
 vi.mock('$lib/services/assets/folders', () => ({

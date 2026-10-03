@@ -53,7 +53,7 @@ export const getPathRegex = (path) => {
  * @param {FileSystemDirectoryHandle} dirHandle Directory containing the file.
  * @param {FileSystemFileHandle} fileHandle Temporary file handle.
  */
-export const deleteStaleTempFile = async (dirHandle, fileHandle) => {
+const deleteStaleTempFile = async (dirHandle, fileHandle) => {
   try {
     const { lastModified } = await fileHandle.getFile();
 

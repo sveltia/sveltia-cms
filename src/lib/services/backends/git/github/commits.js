@@ -7,6 +7,7 @@ import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { getByteSize } from '$lib/services/utils/file';
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
@@ -189,13 +190,11 @@ const createCommit = async ({
   // limitation where large blob OIDs cannot be resolved
   // @see https://github.com/sveltia/sveltia-cms/issues/692
   const fileShaQuery = additions
-    .map(({ index, path, data }) => {
-      const size = data instanceof Blob ? data.size : new Blob([data ?? '']).size;
-
-      return size <= MAX_GRAPHQL_BLOB_SIZE
+    .map(({ index, path, data }) =>
+      getByteSize(data ?? '') <= MAX_GRAPHQL_BLOB_SIZE
         ? `file_${index}: file(path: ${JSON.stringify(path)}) { oid }`
-        : '';
-    })
+        : '',
+    )
     .filter(Boolean)
     .join(' ');
 

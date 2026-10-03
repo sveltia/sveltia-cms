@@ -173,7 +173,7 @@ const FETCH_MERGE_PERMISSIONS_QUERY = `
  * @param {WorkflowPullRequest[]} mergeRequests Merge requests to complete.
  * @see https://docs.gitlab.com/api/graphql/reference/#mergerequestpermissions
  */
-export const fetchMergePermissions = async (mergeRequests) => {
+const fetchMergePermissions = async (mergeRequests) => {
   /** @type {Map<string, WorkflowPullRequest>} */
   const iidMap = new Map(mergeRequests.map((mr) => [String(mr.number), mr]));
   const iids = [...iidMap.keys()];

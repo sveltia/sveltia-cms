@@ -266,16 +266,6 @@ describe('Google Translator Service', () => {
       );
     });
 
-    it('should handle unknown errors', async () => {
-      const mockFetch = vi.mocked(fetch);
-
-      mockFetch.mockRejectedValueOnce('Unknown error');
-
-      await expect(googleTranslator.translate(['Hello'], mockOptions)).rejects.toThrow(
-        'Failed to translate text with Google Translate API.',
-      );
-    });
-
     it('should handle empty text array', async () => {
       const mockResponse = {
         data: {

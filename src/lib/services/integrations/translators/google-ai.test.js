@@ -427,25 +427,6 @@ describe('Gemini Translator Service', () => {
       ).rejects.toThrow('Network error');
     });
 
-    it('should wrap non-Error thrown values in a generic error', async () => {
-      const mockFetch = vi.mocked(fetch);
-
-      // Throw a non-Error (string) to trigger the `throw new Error('Failed to translate...')`
-      // branch
-      mockFetch.mockImplementationOnce(() => {
-        // eslint-disable-next-line no-throw-literal
-        throw 'non-error string thrown';
-      });
-
-      await expect(
-        geminiTranslator.translate(['Hello'], {
-          sourceLanguage: 'en',
-          targetLanguage: 'fr',
-          apiKey: 'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
-        }),
-      ).rejects.toThrow('Failed to translate text with Gemini API.');
-    });
-
     it('should make API request with correct payload structure', async () => {
       const mockResponse = {
         candidates: [

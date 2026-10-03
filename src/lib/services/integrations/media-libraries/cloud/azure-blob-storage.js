@@ -182,8 +182,6 @@ const listBlobPage = async ({ config, credential: token, prefix, cursor: marker 
  * @see https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob
  */
 const putBlob = async ({ key, file, config, credential: token }) => {
-  const fileContent = await file.arrayBuffer();
-
   const response = await fetch(buildBlobRequestUrl(config, key, token), {
     method: 'PUT',
     headers: {
@@ -192,7 +190,7 @@ const putBlob = async ({ key, file, config, credential: token }) => {
       'x-ms-blob-type': 'BlockBlob',
       'Content-Type': file.type || 'application/octet-stream',
     },
-    body: fileContent,
+    body: file,
   });
 
   await assertResponseOK(response, `Failed to upload file ${file.name}`);
