@@ -142,9 +142,7 @@ const getRequired = (schema, branch) => {
     return undefined;
   }
 
-  return leaves
-    .map((leaf) => new Set(leaf.required ?? []))
-    .reduce((a, b) => new Set([...a].filter((key) => b.has(key))));
+  return leaves.map((leaf) => new Set(leaf.required ?? [])).reduce((a, b) => a.intersection(b));
 };
 
 /**
@@ -245,17 +243,17 @@ const discriminateByRequired = (schema, branches, rewritten) => {
   }
 
   const signatures = /** @type {Set<string>[]} */ (required);
+  const propertyNames = branches.map((branch) => getPropertyNames(schema, branch));
 
   // A required property only identifies a branch if the other branches don’t accept it at all. A
   // collection divider may have a `name`, for instance, so `name` can’t select a collection.
   const markers = signatures.map((names, index) => {
-    const others = branches.reduce(
-      (acc, branch, otherIndex) =>
-        index === otherIndex ? acc : new Set([...acc, ...getPropertyNames(schema, branch)]),
+    const others = propertyNames.reduce(
+      (acc, otherNames, otherIndex) => (index === otherIndex ? acc : acc.union(otherNames)),
       /** @type {Set<string>} */ (new Set()),
     );
 
-    return [...names].filter((name) => !others.has(name));
+    return [...names.difference(others)];
   });
 
   // As with tags, one branch without a marker can serve as the fallback

@@ -35,7 +35,15 @@ import {
 } from '$lib/services/assets/state';
 
 // Mock all dependencies
-vi.mock('@sveltia/utils/file');
+vi.mock('@sveltia/utils/file', async (importOriginal) => {
+  const actual = /** @type {Record<string, any>} */ (await importOriginal());
+
+  return {
+    ...Object.fromEntries(Object.keys(actual).map((key) => [key, vi.fn()])),
+    // Parses paths for real unless a test says otherwise
+    getPathInfo: vi.fn(actual.getPathInfo),
+  };
+});
 vi.mock('@sveltia/utils/string', async () => {
   const actual = await vi.importActual('@sveltia/utils/string');
 
@@ -72,7 +80,15 @@ vi.mock('$lib/services/contents/collection');
 vi.mock('$lib/services/contents/collection/files');
 vi.mock('$lib/services/contents/collection/entries/index-file');
 vi.mock('$lib/services/contents/entry/collections');
-vi.mock('$lib/services/utils/file');
+vi.mock('$lib/services/utils/file', async (importOriginal) => {
+  const actual = /** @type {Record<string, any>} */ (await importOriginal());
+
+  // Mock every function but the path prefix helper
+  return {
+    ...Object.fromEntries(Object.keys(actual).map((key) => [key, vi.fn()])),
+    stripPathPrefix: actual.stripPathPrefix,
+  };
+});
 
 // Mock folders module with real stores for testing side effects
 vi.mock('$lib/services/assets/folders', async () => {
@@ -88,8 +104,12 @@ vi.mock('$lib/services/assets/folders', async () => {
 });
 
 describe('assets/index', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    const { getPathInfo } = await import('@sveltia/utils/file');
+
     vi.clearAllMocks();
+    // Go back to parsing paths for real after a test mocked the return value
+    vi.mocked(getPathInfo).mockReset();
     // Reset all stores
     allAssets.current = [];
     selectedAssets.current = [];
@@ -2755,6 +2775,41 @@ describe('assets/index', () => {
       // Verify that getCollectionFilesByEntry was called and returned a non-empty array
       // This confirms we entered the if (collectionFiles.length) branch at line 174
       expect(getCollectionFilesByEntry).toHaveBeenCalledWith(mockCollection, mockEntry);
+    });
+
+    it('should stop at the first collection that has the asset', async () => {
+      const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+      const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+      const { resolvePath } = await import('$lib/services/utils/file');
+      const mockAsset = { path: 'content/posts/images/photo.jpg', name: 'photo.jpg' };
+
+      const mockEntry = /** @type {any} */ ({
+        slug: 'my-post',
+        locales: { en: { path: 'content/posts/my-post.md', content: { title: 'My Post' } } },
+      });
+
+      /**
+       * Create a collection.
+       * @param {string} name
+       * @returns {any}
+       */
+      const createCollection = (name) => ({
+        name,
+        media_folder: 'images',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      const first = createCollection('posts');
+      const second = createCollection('pages');
+
+      vi.mocked(getAssociatedCollections).mockReturnValue([first, second]);
+      vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+      vi.mocked(resolvePath).mockReturnValue('content/posts/images/photo.jpg');
+      allAssets.current = /** @type {any[]} */ ([mockAsset]);
+
+      expect(getAssetByRelativePath({ path: 'photo.jpg', entry: mockEntry })).toEqual(mockAsset);
+      expect(getCollectionFilesByEntry).toHaveBeenCalledOnce();
+      expect(getCollectionFilesByEntry).toHaveBeenCalledWith(first, mockEntry);
     });
   });
 

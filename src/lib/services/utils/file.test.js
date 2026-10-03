@@ -13,6 +13,7 @@ import {
   resolvePath,
   sanitizeFileName,
   sanitizePath,
+  stripPathPrefix,
 } from '$lib/services/utils/file';
 
 // Mock i18n dependencies
@@ -470,6 +471,24 @@ describe('Test createPath()', () => {
 
   test('should handle array with only falsy values', () => {
     expect(createPath([null, undefined, ''])).toBe('');
+  });
+});
+
+describe('Test stripPathPrefix()', () => {
+  test('removes the directory from a path below it', () => {
+    expect(stripPathPrefix('images/photo.jpg', 'images')).toBe('photo.jpg');
+    expect(stripPathPrefix('images/2024/photo.jpg', 'images')).toBe('2024/photo.jpg');
+  });
+
+  test('leaves a path that is not below the directory as is', () => {
+    expect(stripPathPrefix('images-backup/photo.jpg', 'images')).toBe('images-backup/photo.jpg');
+    expect(stripPathPrefix('images', 'images')).toBe('images');
+    expect(stripPathPrefix('other/photo.jpg', 'images')).toBe('other/photo.jpg');
+  });
+
+  test('leaves the path as is without a directory', () => {
+    expect(stripPathPrefix('/photo.jpg', '')).toBe('/photo.jpg');
+    expect(stripPathPrefix('photo.jpg', undefined)).toBe('photo.jpg');
   });
 });
 

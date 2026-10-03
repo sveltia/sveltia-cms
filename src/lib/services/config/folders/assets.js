@@ -51,14 +51,6 @@ import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
  */
 
 /**
- * Collection-level and file-level asset folders.
- * @type {AssetFolderInfo[]}
- * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
- * @see https://sveltiacms.app/en/docs/media/internal
- */
-const assetFolders = [];
-
-/**
  * Check if a folder string contains template tags.
  * @param {string} folder Folder string.
  * @returns {boolean} `true` if the folder contains template tags.
@@ -175,9 +167,10 @@ export const normalizeAssetFolder = ({
 /**
  * Add an asset folder for a collection or collection file if it’s not the same as the global
  * asset folder.
+ * @param {AssetFolderInfo[]} folders List to add the folder to.
  * @param {NormalizeAssetFolderArgs} args Arguments for {@link normalizeAssetFolder}.
  */
-export const addFolderIfNeeded = (args) => {
+export const addFolderIfNeeded = (folders, args) => {
   if (args.mediaFolder === undefined) {
     return;
   }
@@ -198,18 +191,19 @@ export const addFolderIfNeeded = (args) => {
     return;
   }
 
-  assetFolders.push(folder);
+  folders.push(folder);
 };
 
 /**
  * Iterate through files in a file/singleton collection and add their folders.
+ * @param {AssetFolderInfo[]} folders List to add the folders to.
  * @param {object} args Arguments.
  * @param {string} args.collectionName Collection name.
  * @param {(CollectionFile | CollectionDivider)[]} args.files Collection files. May include
  * dividers.
  * @param {GlobalFolders | undefined} args.globalFolders Global folders information.
  */
-export const iterateFiles = ({ collectionName, files, globalFolders }) => {
+export const iterateFiles = (folders, { collectionName, files, globalFolders }) => {
   getValidCollectionFiles(files).forEach((file) => {
     const {
       name: fileName,
@@ -218,7 +212,7 @@ export const iterateFiles = ({ collectionName, files, globalFolders }) => {
       public_folder: filePublicFolder,
     } = file;
 
-    addFolderIfNeeded({
+    addFolderIfNeeded(folders, {
       collectionName,
       fileName,
       // @ts-ignore
@@ -232,12 +226,16 @@ export const iterateFiles = ({ collectionName, files, globalFolders }) => {
 
 /**
  * Handle field-level media folders and add them if needed.
+ * @param {AssetFolderInfo[]} folders List to add the folders to.
  * @param {object} args Arguments.
  * @param {CollectedMediaField[]} args.fieldMediaFolders Collected field-level media folders.
  * @param {Collection[]} args.validCollections Valid collections.
  * @param {GlobalFolders | undefined} args.globalFolders Global folders information.
  */
-export const handleFieldMediaFolders = ({ fieldMediaFolders, validCollections, globalFolders }) => {
+export const handleFieldMediaFolders = (
+  folders,
+  { fieldMediaFolders, validCollections, globalFolders },
+) => {
   fieldMediaFolders.forEach(({ fieldConfig, context }) => {
     const { collection, collectionFile, componentName, typedKeyPath, isIndexFile } = context;
 
@@ -250,7 +248,7 @@ export const handleFieldMediaFolders = ({ fieldMediaFolders, validCollections, g
       return;
     }
 
-    addFolderIfNeeded({
+    addFolderIfNeeded(folders, {
       collectionName: collection?.name,
       fileName: collectionFile?.name,
       componentName,
@@ -272,11 +270,12 @@ export const handleFieldMediaFolders = ({ fieldMediaFolders, validCollections, g
 
 /**
  * Add asset folders for asset collections.
+ * @param {AssetFolderInfo[]} folders List to add the folders to.
  * @param {object} args Arguments.
  * @param {AssetCollection[]} args.assetCollections Asset collections from the CMS configuration.
  * @param {GlobalFolders | undefined} args.globalFolders Global folders information.
  */
-const addAssetCollections = ({ assetCollections, globalFolders }) => {
+const addAssetCollections = (folders, { assetCollections, globalFolders }) => {
   assetCollections.forEach((assetCollection) => {
     const {
       name,
@@ -290,7 +289,7 @@ const addAssetCollections = ({ assetCollections, globalFolders }) => {
       return;
     }
 
-    addFolderIfNeeded({
+    addFolderIfNeeded(folders, {
       collectionName: `assets:${name}`,
       mediaFolder: `/${stripSlashes(_mediaFolder)}`,
       publicFolder: _publicFolder,
@@ -347,8 +346,13 @@ export const isAssetFolderReadonly = ({ config, folder, validCollections }) => {
  * @returns {AssetFolderInfo[]} Asset folders.
  */
 export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
-  // Clear any previous results
-  assetFolders.length = 0;
+  /**
+   * Collection-level and file-level asset folders.
+   * @type {AssetFolderInfo[]}
+   * @see https://decapcms.org/docs/collection-folder/#media-and-public-folder
+   * @see https://sveltiacms.app/en/docs/media/internal
+   */
+  const assetFolders = [];
 
   const {
     media_folder: _globalMediaFolder,
@@ -418,7 +422,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
         ? ''
         : _mediaFolder;
 
-    addFolderIfNeeded({
+    addFolderIfNeeded(assetFolders, {
       collectionName,
       // @ts-ignore
       mediaFolder,
@@ -429,16 +433,16 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
     });
 
     if (collectionFiles?.length) {
-      iterateFiles({ collectionName, files: collectionFiles, globalFolders });
+      iterateFiles(assetFolders, { collectionName, files: collectionFiles, globalFolders });
     }
   });
 
   if (singletons?.length) {
     // Singleton collection is always at the end
-    iterateFiles({ collectionName: '_singletons', files: singletons, globalFolders });
+    iterateFiles(assetFolders, { collectionName: '_singletons', files: singletons, globalFolders });
   }
 
-  handleFieldMediaFolders({ fieldMediaFolders, validCollections, globalFolders });
+  handleFieldMediaFolders(assetFolders, { fieldMediaFolders, validCollections, globalFolders });
 
   // `internalPath` is always set to a string via `stripSlashes()` in the folder construction above.
   assetFolders.sort((a, b) =>
@@ -452,7 +456,7 @@ export const getAllAssetFolders = (config, fieldMediaFolders = []) => {
   }
 
   if (assetCollections?.length) {
-    addAssetCollections({ assetCollections, globalFolders });
+    addAssetCollections(assetFolders, { assetCollections, globalFolders });
   }
 
   allFolders.push(...assetFolders);

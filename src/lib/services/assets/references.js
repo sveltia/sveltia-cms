@@ -251,25 +251,6 @@ const matchField = ({
 };
 
 /**
- * Check if the field contains the asset.
- * @param {object} args Arguments.
- * @param {string} args.assetURL Asset’s public or blob URL.
- * @param {string} [args.newURL] New URL to replace the found URL.
- * @param {string} args.collectionName Collection name.
- * @param {Entry} args.entry Entry.
- * @param {FlattenedEntryContent} args.content Value map for the collection. This will be modified
- * if the URL is replaced.
- * @param {FieldKeyPath} args.keyPath Key path of the value in the collection.
- * @param {string} args.value Value of the field.
- * @param {boolean} args.isIndexFile Whether the corresponding entry is the collection’s special
- * index file used specifically in Hugo.
- * @param {InternalCollectionFile} [args.collectionFile] Collection file. File collection only.
- * @returns {boolean} Result.
- */
-export const hasAsset = ({ assetURL, newURL, ...args }) =>
-  matchField({ matcher: createMatcher([{ url: assetURL, newURL }]), ...args }).indexes.size > 0;
-
-/**
  * Walk the given entries once looking for all the given targets, calling back for each field
  * holding any of them. However many targets are given, each value is looked at once, so looking up
  * the assets of a whole folder costs about the same as looking up one.
@@ -296,7 +277,14 @@ const findAssetReferences = (targets, { entries, every = false, onMatch }) => {
 
   entries.forEach((entry) => {
     const { locales } = entry;
-    /** @type {InternalCollection[] | undefined} */
+    /**
+     * Collections associated with the entry, along with what each needs for matching a field.
+     * @type {{
+     * collection: InternalCollection,
+     * isIndexFile: boolean,
+     * files: (InternalCollectionFile | undefined)[],
+     * }[] | undefined}
+     */
     let collections;
     /** @type {Set<number>} */
     const found = new Set();
@@ -314,14 +302,18 @@ const findAssetReferences = (targets, { entries, every = false, onMatch }) => {
         if (!matcher.resolves && !mayReferToTargets(matcher, value)) continue;
 
         // Resolved only once a value passes the pre-filter, as most entries have none that does
-        collections ??= getAssociatedCollections(entry);
-
-        for (const collection of collections) {
-          const isIndexFile = isCollectionIndexFile(collection, entry);
-          const matchArgs = { matcher, collectionName: collection.name, entry, content, keyPath };
+        collections ??= getAssociatedCollections(entry).map((collection) => {
           const collectionFiles = getCollectionFilesByEntry(collection, entry);
-          /** @type {(InternalCollectionFile | undefined)[]} */
-          const files = collectionFiles.length ? collectionFiles : [undefined];
+
+          return {
+            collection,
+            isIndexFile: isCollectionIndexFile(collection, entry),
+            files: collectionFiles.length ? collectionFiles : [undefined],
+          };
+        });
+
+        for (const { collection, isIndexFile, files } of collections) {
+          const matchArgs = { matcher, collectionName: collection.name, entry, content, keyPath };
 
           const matches = files.map((collectionFile) =>
             matchField({ ...matchArgs, value, isIndexFile, collectionFile }),

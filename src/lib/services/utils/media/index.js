@@ -104,8 +104,10 @@ export const getSourceInfo = async (src, kind) => {
  * containing dimensions, duration, created date and coordinates.
  */
 export const getMediaMetadata = async (asset, src, kind) => {
-  const { dimensions, duration } = await getSourceInfo(src, kind);
-  const { createdDate, coordinates } = await extractExifData(asset, kind);
+  const [{ dimensions, duration }, { createdDate, coordinates }] = await Promise.all([
+    getSourceInfo(src, kind),
+    extractExifData(asset, kind),
+  ]);
 
   return { dimensions, duration, createdDate, coordinates };
 };

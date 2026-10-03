@@ -3,6 +3,7 @@ import { IndexedDB, LocalStorage } from '@sveltia/utils/storage';
 import { backend } from '$lib/services/backends';
 import { TEST_BACKEND_NAME, TEST_BACKEND_ROOT_DIR_NAME } from '$lib/services/backends/fs/test';
 import { gitBackendServices } from '$lib/services/backends/git/services';
+import { LEGACY_USER_STORAGE_KEYS } from '$lib/services/user/constants';
 
 /**
  * Names of the IndexedDB object stores holding cached file contents, generated asset thumbnails and
@@ -15,12 +16,6 @@ const CACHE_STORE_NAMES = ['file-cache', 'asset-thumbnails', 'asset-hashes'];
  * Prefix shared by all the local storage keys written by the CMS, such as `sveltia-cms.prefs`.
  */
 const LOCAL_STORAGE_KEY_PREFIX = 'sveltia-cms.';
-/**
- * Local storage keys written by Netlify/Decap CMS. The CMS reads these for backward compatibility,
- * so they have to go as well; otherwise the user would be signed back in right after the reset.
- * @type {string[]}
- */
-const LEGACY_LOCAL_STORAGE_KEYS = ['decap-cms-user', 'netlify-cms-user'];
 /**
  * Pattern matching the IndexedDB database names created by the CMS, which are made up of a Git
  * backend name and a repository path, e.g. `github:owner/repo`. Used to leave any database owned by
@@ -118,7 +113,7 @@ const deleteDatabase = async (name) =>
 const clearLocalStorage = async () => {
   try {
     const keys = (await LocalStorage.keys()).filter(
-      (key) => key.startsWith(LOCAL_STORAGE_KEY_PREFIX) || LEGACY_LOCAL_STORAGE_KEYS.includes(key),
+      (key) => key.startsWith(LOCAL_STORAGE_KEY_PREFIX) || LEGACY_USER_STORAGE_KEYS.includes(key),
     );
 
     await Promise.all(keys.map((key) => LocalStorage.delete(key)));
@@ -136,7 +131,10 @@ const clearLocalStorage = async () => {
 export const eraseAllData = async () => {
   const names = await getDatabaseNames();
 
-  await Promise.all(names.map((name) => deleteDatabase(name)));
-  await clearLocalStorage();
-  await clearTestBackendFiles();
+  // None of these reject, so they can all run at once
+  await Promise.all([
+    ...names.map((name) => deleteDatabase(name)),
+    clearLocalStorage(),
+    clearTestBackendFiles(),
+  ]);
 };

@@ -7,7 +7,6 @@ import {
   getComparableAssetURL,
   getEntriesByAssets,
   getEntriesByAssetURL,
-  hasAsset,
   MARKDOWN_IMAGE_REGEX,
 } from '$lib/services/assets/references';
 import { cmsConfig } from '$lib/services/config';
@@ -155,737 +154,6 @@ describe('MARKDOWN_IMAGE_REGEX', () => {
   });
 });
 
-describe('hasAsset()', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.resetAllMocks();
-  });
-
-  test('returns false when field not found', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    vi.mocked(getField).mockReturnValue(undefined);
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'image',
-      value: 'image.jpg',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('matches image field with direct URL', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'image',
-      widget: 'image',
-    });
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'image.jpg' });
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'image',
-      value: 'image.jpg',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('matches images in markdown content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'image.jpg' });
-
-    const content = {};
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('returns false for non-string values', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'number_field',
-      widget: 'number',
-    });
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'number_field',
-      value: 123, // Non-string value
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('returns false for empty string values', async () => {
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'empty_field',
-      value: '', // Empty string
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('handles newURL parameter for image fields', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'image',
-      widget: 'image',
-    });
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'image.jpg' });
-
-    const content = {};
-
-    const args = {
-      assetURL: 'image.jpg',
-      newURL: 'new-image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'image',
-      value: 'image.jpg',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.image).toBe('new-image.jpg');
-  });
-
-  test('handles newURL parameter for markdown content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'image.jpg' });
-
-    const content = { body: 'Here is an image: ![alt](image.jpg)' };
-
-    const args = {
-      assetURL: 'image.jpg',
-      newURL: 'new-image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.body).toBe('Here is an image: ![alt](new-image.jpg)');
-  });
-
-  test('replaces the URL within the matched images only', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    vi.mocked(getField).mockReturnValue({ name: 'body', widget: 'markdown' });
-
-    // A link to the same file comes first, the new URL contains the old one, the image is used
-    // twice, its alt text holds the URL, and the new URL holds a replacement pattern
-    const value = '[Download](/a.png) ![/a.png](/a.png) ![alt](/a.png "Title") ![other](/b.png)';
-    const content = { body: value };
-
-    const args = {
-      assetURL: '/a.png',
-      newURL: '/img/$&/a.png',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: { en: { content: {}, slug: 'test', path: 'posts/test.md' } },
-      },
-      content,
-      keyPath: 'body',
-      value,
-      isIndexFile: false,
-    };
-
-    expect(hasAsset(args)).toBe(true);
-    // Running it again, as done for each collection the entry belongs to, changes nothing more
-    expect(hasAsset(args)).toBe(true);
-    expect(content.body).toBe(
-      '[Download](/a.png) ![/a.png](/img/$&/a.png) ![alt](/img/$&/a.png "Title") ![other](/b.png)',
-    );
-  });
-
-  test('leaves the markdown content alone without newURL', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    vi.mocked(getField).mockReturnValue({ name: 'body', widget: 'markdown' });
-
-    const value = '![alt](/a.png)';
-    const content = { body: value };
-
-    const args = {
-      assetURL: '/a.png',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: { en: { content: {}, slug: 'test', path: 'posts/test.md' } },
-      },
-      content,
-      keyPath: 'body',
-      value,
-      isIndexFile: false,
-    };
-
-    expect(hasAsset(args)).toBe(true);
-    expect(content.body).toBe(value);
-  });
-
-  test('handles markdown with multiple images', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-    vi.mocked(getMediaFieldSource)
-      .mockReturnValueOnce({ url: 'image1.jpg' })
-      .mockReturnValueOnce({ url: 'image2.jpg' });
-
-    const content = { body: 'First: ![alt](image1.jpg) Second: ![alt](image2.jpg)' };
-
-    const args = {
-      assetURL: 'image1.jpg',
-      newURL: 'new-image1.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'First: ![alt](image1.jpg) Second: ![alt](image2.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.body).toBe('First: ![alt](new-image1.jpg) Second: ![alt](image2.jpg)');
-  });
-
-  test('handles markdown with no matching images', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'other.jpg' });
-
-    const args = {
-      assetURL: 'target.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](other.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('handles blob URLs in image fields', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'image',
-      widget: 'image',
-    });
-
-    // For blob URLs, getMediaFieldSource should resolve the value as-is
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'blob:image.jpg' });
-
-    const args = {
-      assetURL: 'blob:image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'image',
-      value: 'blob:image.jpg',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('compares the blob URL of the asset an entry-relative path resolves to', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({ name: 'image', widget: 'image' });
-
-    const args = {
-      assetURL: 'blob:image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: { en: { content: {}, slug: 'test', path: 'posts/test.md' } },
-      },
-      content: {},
-      keyPath: 'image',
-      value: 'image.jpg',
-      isIndexFile: false,
-    };
-
-    // The asset is resolved without loading it, so only one already holding the URL matches
-    vi.mocked(getMediaFieldSource).mockReturnValue({
-      asset: /** @type {any} */ ({ path: 'posts/image.jpg', blobURL: 'blob:image.jpg' }),
-    });
-    expect(hasAsset(args)).toBe(true);
-
-    vi.mocked(getMediaFieldSource).mockReturnValue({
-      asset: /** @type {any} */ ({ path: 'posts/other.jpg' }),
-    });
-    expect(hasAsset(args)).toBe(false);
-
-    vi.mocked(getMediaFieldSource).mockReturnValue(undefined);
-    expect(hasAsset(args)).toBe(false);
-  });
-
-  test('handles blob URLs in markdown content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'markdown',
-    });
-
-    // For blob URLs, getMediaFieldSource should resolve the value as-is
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'blob:image.jpg' });
-
-    const args = {
-      assetURL: 'blob:image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](blob:image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('matches images in richtext content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'image.jpg' });
-
-    const content = {};
-
-    const args = {
-      assetURL: 'image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('handles newURL parameter for richtext content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'image.jpg' });
-
-    const content = { body: 'Here is an image: ![alt](image.jpg)' };
-
-    const args = {
-      assetURL: 'image.jpg',
-      newURL: 'new-image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.body).toBe('Here is an image: ![alt](new-image.jpg)');
-  });
-
-  test('handles richtext with multiple images', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-    vi.mocked(getMediaFieldSource)
-      .mockReturnValueOnce({ url: 'image1.jpg' })
-      .mockReturnValueOnce({ url: 'image2.jpg' });
-
-    const content = { body: 'First: ![alt](image1.jpg) Second: ![alt](image2.jpg)' };
-
-    const args = {
-      assetURL: 'image1.jpg',
-      newURL: 'new-image1.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content,
-      keyPath: 'body',
-      value: 'First: ![alt](image1.jpg) Second: ![alt](image2.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-    expect(content.body).toBe('First: ![alt](new-image1.jpg) Second: ![alt](image2.jpg)');
-  });
-
-  test('handles richtext with no matching images', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'other.jpg' });
-
-    const args = {
-      assetURL: 'target.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](other.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(false);
-  });
-
-  test('handles blob URLs in richtext content', async () => {
-    const { getField } = await import('$lib/services/contents/entry/fields');
-    const { getMediaFieldSource } = await import('$lib/services/assets/media-field');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-
-    // For blob URLs, getMediaFieldSource should resolve the value as-is
-    vi.mocked(getMediaFieldSource).mockReturnValue({ url: 'blob:image.jpg' });
-
-    const args = {
-      assetURL: 'blob:image.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: {
-            content: {},
-            slug: 'test',
-            path: 'posts/test.md',
-          },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Here is an image: ![alt](blob:image.jpg)',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    expect(result).toBe(true);
-  });
-
-  test('returns false for richtext field with no image syntax (line 159 false branch)', async () => {
-    // When the markdown body has no images, `matches.length` = 0 → the if block
-    // is NOT taken → falls through to `return false` at line 178.
-    const { getField } = await import('$lib/services/contents/entry/fields');
-
-    vi.mocked(getField).mockReturnValue({
-      name: 'body',
-      widget: 'richtext',
-    });
-
-    const args = {
-      assetURL: 'target.jpg',
-      collectionName: 'posts',
-      entry: {
-        id: '1',
-        slug: 'test',
-        subPath: '',
-        locales: {
-          en: { content: {}, slug: 'test', path: 'posts/test.md' },
-        },
-      },
-      content: {},
-      keyPath: 'body',
-      value: 'Just plain text, no image syntax here.',
-      isIndexFile: false,
-    };
-
-    const result = await hasAsset(args);
-
-    // matches.length = 0 (no markdown image syntax) → if block skipped → returns false
-    expect(result).toBe(false);
-  });
-});
-
 describe('getEntriesByAssetURL()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -932,6 +200,43 @@ describe('getEntriesByAssetURL()', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('1');
+  });
+
+  test('skips a value whose field is not configured or cannot hold an asset', async () => {
+    const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
+
+    const { isCollectionIndexFile } =
+      await import('$lib/services/contents/collection/entries/index-file');
+
+    const { getCollectionFilesByEntry } = await import('$lib/services/contents/collection/files');
+    const { getField } = await import('$lib/services/contents/entry/fields');
+
+    const mockEntries = [
+      {
+        id: '1',
+        slug: 'test',
+        subPath: '',
+        locales: {
+          en: { content: { unknown: 'test.jpg' }, slug: 'test', path: 'posts/test.md' },
+        },
+      },
+    ];
+
+    cmsConfig.current = { _baseURL: 'https://example.com' };
+    vi.mocked(getAssociatedCollections).mockReturnValue([{ name: 'posts', _type: 'entry' }]);
+    vi.mocked(isCollectionIndexFile).mockReturnValue(false);
+    vi.mocked(getCollectionFilesByEntry).mockReturnValue([]);
+    vi.mocked(getField).mockReturnValue(undefined);
+
+    const result = await getEntriesByAssetURL('test.jpg', { entries: mockEntries });
+
+    expect(result).toEqual([]);
+    expect(getField).toHaveBeenCalledOnce();
+
+    // A field that is neither a media field nor a rich text field, the widget defaulting to String
+    vi.mocked(getField).mockReturnValue({ name: 'unknown' });
+
+    expect(await getEntriesByAssetURL('test.jpg', { entries: mockEntries })).toEqual([]);
   });
 
   test('returns empty array when no entries match', async () => {
@@ -1237,7 +542,7 @@ describe('getEntriesByAssetURL()', () => {
         subPath: '',
         locales: {
           en: {
-            // Two fields both containing the URL – hasAsset should only be called once
+            // Two fields both containing the URL – only the first one should be looked at
             content: { image1: 'test.jpg', image2: 'test.jpg' },
             slug: 'test',
             path: 'posts/test.md',
@@ -1294,6 +599,9 @@ describe('getEntriesByAssetURL()', () => {
 
     // Both matching fields must be processed so both get replaced
     expect(vi.mocked(getField)).toHaveBeenCalledTimes(2);
+    // What only depends on the collection and the entry is looked up once for both fields
+    expect(vi.mocked(isCollectionIndexFile)).toHaveBeenCalledOnce();
+    expect(vi.mocked(getCollectionFilesByEntry)).toHaveBeenCalledOnce();
     expect(content.image1).toBe('new.jpg');
     expect(content.image2).toBe('new.jpg');
   });
@@ -1341,11 +649,9 @@ describe('getEntriesByAssetURL()', () => {
     expect(result[0].id).toBe('1');
   });
 
-  test('processes fields where hasAsset returns false before a matching field (line 238 false branch)', async () => {
-    // A string field whose value contains the asset URL passes the pre-filter at
-    // line 209, but `hasAsset` returns false for a non-asset widget (line 178),
-    // causing `matched = false` → `if (matched)` false branch at line 238.
-    // The second field (image) matches and sets found = true.
+  test('processes a non-matching field before a matching field', async () => {
+    // A string field whose value contains the asset URL passes the pre-filter, but nothing matches
+    // in a non-asset widget. The second field (image) matches.
     const { getAssociatedCollections } = await import('$lib/services/contents/entry/collections');
 
     const { isCollectionIndexFile } =
@@ -1385,8 +691,7 @@ describe('getEntriesByAssetURL()', () => {
 
     const result = await getEntriesByAssetURL('target.jpg', { entries: mockEntries });
 
-    // description → hasAsset returns false (string widget), matched=false (line 238 false branch)
-    // image → hasAsset returns true, found=true
+    // description → no match (string widget); image → match
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('1');
   });

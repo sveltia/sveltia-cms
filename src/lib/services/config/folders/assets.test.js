@@ -1998,19 +1998,16 @@ describe('config/folders/assets', () => {
   });
 
   describe('addFolderIfNeeded', () => {
-    beforeEach(() => {
-      // Reset any internal state
-      vi.resetModules();
-    });
-
     it('should skip undefined media folder', () => {
       const globalFolders = {
         globalMediaFolder: 'static',
         globalPublicFolder: '/assets',
       };
 
-      // This should not throw and should not add any folder
-      addFolderIfNeeded({
+      /** @type {any[]} */
+      const folders = [];
+
+      addFolderIfNeeded(folders, {
         // @ts-ignore - testing with undefined media folder
         collectionName: 'posts',
         // @ts-ignore - testing undefined for edge case
@@ -2020,8 +2017,7 @@ describe('config/folders/assets', () => {
         globalFolders,
       });
 
-      // We can't easily test the internal state, but the function should not throw
-      expect(true).toBe(true);
+      expect(folders).toEqual([]);
     });
 
     it('should add folder that differs from global settings', () => {
@@ -2030,8 +2026,10 @@ describe('config/folders/assets', () => {
         globalPublicFolder: '/assets',
       };
 
-      // This should add a folder since it's different from global
-      addFolderIfNeeded({
+      /** @type {any[]} */
+      const folders = [];
+
+      addFolderIfNeeded(folders, {
         collectionName: 'posts',
         mediaFolder: '/uploads/posts',
         publicFolder: '/static/posts',
@@ -2039,8 +2037,12 @@ describe('config/folders/assets', () => {
         globalFolders,
       });
 
-      // We can't easily test the internal state, but the function should not throw
-      expect(true).toBe(true);
+      expect(folders).toHaveLength(1);
+      expect(folders[0]).toMatchObject({
+        collectionName: 'posts',
+        internalPath: 'uploads/posts',
+        publicPath: '/static/posts',
+      });
     });
   });
 
@@ -2072,14 +2074,20 @@ describe('config/folders/assets', () => {
         globalPublicFolder: '/assets',
       };
 
-      // This should process the files without throwing
-      iterateFiles({
+      /** @type {any[]} */
+      const folders = [];
+
+      iterateFiles(folders, {
         collectionName: 'settings',
         files: [],
         globalFolders,
       });
 
       expect(getValidCollectionFiles).toHaveBeenCalledWith([]);
+      expect(folders.map((f) => [f.fileName, f.internalPath])).toEqual([
+        ['general', 'uploads/general'],
+        ['advanced', 'uploads/advanced'],
+      ]);
     });
 
     it('should handle empty files array', () => {
@@ -2090,13 +2098,17 @@ describe('config/folders/assets', () => {
         globalPublicFolder: '/assets',
       };
 
-      iterateFiles({
+      /** @type {any[]} */
+      const folders = [];
+
+      iterateFiles(folders, {
         collectionName: 'empty',
         files: [],
         globalFolders,
       });
 
       expect(getValidCollectionFiles).toHaveBeenCalledWith([]);
+      expect(folders).toEqual([]);
     });
   });
 

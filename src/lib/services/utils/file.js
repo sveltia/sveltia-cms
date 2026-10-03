@@ -141,6 +141,17 @@ export const isEquivalentFileExtension = (a, b) => {
 export const createPath = (segments) => segments.filter(Boolean).join('/');
 
 /**
+ * Remove the given directory from the start of a path, if the path sits below it.
+ * @param {string} path Path, e.g. `images/photo.jpg`.
+ * @param {string | undefined} dir Directory path, e.g. `images`. An empty string or `undefined`
+ * leaves the path as is.
+ * @returns {string} Path relative to the directory, e.g. `photo.jpg`, or the original path if it
+ * doesn’t sit below the directory.
+ */
+export const stripPathPrefix = (path, dir) =>
+  dir && path.startsWith(`${dir}/`) ? path.slice(dir.length + 1) : path;
+
+/**
  * Sanitize a path by removing potentially dangerous path traversal segments (`.` and `..`). This
  * prevents path traversal attacks when paths are constructed from user input.
  * @param {string} path Path to sanitize, e.g. `../../../secret` or `images/../config`.

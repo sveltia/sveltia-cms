@@ -9,7 +9,11 @@ import {
   selectedAssetFolder,
 } from '$lib/services/assets/folders';
 import { allAssets, focusedAsset } from '$lib/services/assets/state';
-import { focusedSubfolder, selectedSubfolderPath } from '$lib/services/assets/subfolders';
+import {
+  focusedSubfolder,
+  getDirName,
+  selectedSubfolderPath,
+} from '$lib/services/assets/subfolders';
 import { fillTemplate } from '$lib/services/common/template';
 import {
   ESCAPED_PLACEHOLDER_REGEX,
@@ -21,7 +25,7 @@ import { isCollectionIndexFile } from '$lib/services/contents/collection/entries
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getOrCreate, memoizeOnSource } from '$lib/services/utils/cache';
-import { createPath, resolvePath } from '$lib/services/utils/file';
+import { createPath, resolvePath, stripPathPrefix } from '$lib/services/utils/file';
 import { createRootEffect } from '$lib/services/utils/state.svelte';
 
 /**
@@ -176,7 +180,7 @@ export const getAssetByRelativePathAndCollection = ({
   }
 
   // Directory of the entry file, which is an empty string for an entry file at the repository root
-  const entryFolder = entryFilePath.slice(0, Math.max(entryFilePath.lastIndexOf('/'), 0));
+  const entryFolder = getDirName(entryFilePath);
   // Strip the `media_folder` prefix from the stored path before joining with `mediaFolder`, to
   // avoid duplication when the stored value already includes the media folder (e.g.
   // `images/photo.jpg`). Also normalize `./` prefix since `./images/photo.jpg` and
@@ -185,12 +189,7 @@ export const getAssetByRelativePathAndCollection = ({
   // `images`.
   const normalizedPath = path.replace(/^\.\//, '');
   const normalizedMediaFolder = mediaFolder?.replace(/^\.\//, '').replace(/\/$/, '');
-
-  let localPath =
-    normalizedMediaFolder && normalizedPath.startsWith(`${normalizedMediaFolder}/`)
-      ? normalizedPath.slice(normalizedMediaFolder.length + 1)
-      : normalizedPath;
-
+  let localPath = stripPathPrefix(normalizedPath, normalizedMediaFolder);
   let resolvedPath;
 
   // When `media_folder` is absolute (starts with `/`) and `public_folder` is entry-relative (e.g.
@@ -253,47 +252,38 @@ export const getAssetByRelativePath = ({
       ].filter((folder) => !!folder && !folder.hasTemplateTags)
     );
 
-    /** @type {Asset | undefined} */
-    let foundAsset;
+    const foundAsset = scanningFolders
+      .values()
+      .map((folder) => {
+        // Strip the publicPath prefix from the stored path to get the bare filename/subpath, so
+        // that e.g. `uploads/photo.jpg` with publicPath `/uploads` resolves to `uploads/photo.jpg`
+        // internally rather than `uploads/uploads/photo.jpg`.
+        const localPath = stripPathPrefix(path, folder.publicPath?.replace(/^\//, ''));
 
-    scanningFolders.find((folder) => {
-      // Strip the publicPath prefix from the stored path to get the bare filename/subpath, so
-      // that e.g. `uploads/photo.jpg` with publicPath `/uploads` resolves to `uploads/photo.jpg`
-      // internally rather than `uploads/uploads/photo.jpg`.
-      const publicPathBase = folder.publicPath?.replace(/^\//, '') ?? '';
-
-      const localPath =
-        publicPathBase && path.startsWith(`${publicPathBase}/`)
-          ? path.slice(publicPathBase.length + 1)
-          : path;
-
-      const found = getAssetPathMap().get(
-        createPath([folder.internalPath, folder.internalSubPath ?? '', localPath]),
-      );
-
-      if (found) {
-        foundAsset = found;
-      }
-
-      return !!found;
-    });
+        return getAssetPathMap().get(
+          createPath([folder.internalPath, folder.internalSubPath ?? '', localPath]),
+        );
+      })
+      .find(Boolean);
 
     return foundAsset ?? getAssetPathMap().get(path);
   }
 
-  const assets = getAssociatedCollections(entry).flatMap((collection) => {
-    const collectionFiles = getCollectionFilesByEntry(collection, entry);
-    const args = { path, entry, collection, componentName, typedKeyPath };
+  // Stop at the first collection or collection file that has the asset
+  const foundAsset = getAssociatedCollections(entry)
+    .values()
+    .flatMap((collection) => {
+      const collectionFiles = getCollectionFilesByEntry(collection, entry);
+      const args = { path, entry, collection, componentName, typedKeyPath };
+      /** @type {(InternalCollectionFile | undefined)[]} */
+      const files = collectionFiles.length ? collectionFiles : [undefined];
 
-    if (collectionFiles.length) {
-      return collectionFiles.map((file) => getAssetByRelativePathAndCollection({ ...args, file }));
-    }
-
-    return getAssetByRelativePathAndCollection({ ...args });
-  });
+      return files.values().map((file) => getAssetByRelativePathAndCollection({ ...args, file }));
+    })
+    .find(Boolean);
 
   return (
-    assets.filter(Boolean)[0] ??
+    foundAsset ??
     // Fall back to exact match at the root folder
     getAssetPathMap().get(path)
   );

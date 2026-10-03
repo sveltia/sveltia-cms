@@ -18,7 +18,6 @@ import {
 import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
 import { isFieldMultiple } from '$lib/services/contents/entry/fields';
 import { MEDIA_FIELD_TYPES } from '$lib/services/contents/fields';
-import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
  * @import {
@@ -29,7 +28,6 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * CascadeTarget,
  * Entry,
  * FlattenedEntryContent,
- * InternalLocaleCode,
  * } from '$lib/types/private';
  * @import { Field, FieldKeyPath } from '$lib/types/public';
  * @import { AssetReferenceTarget } from '$lib/services/assets/references';
@@ -245,14 +243,7 @@ const createAssetDeletionPlan = async (assets) => {
 
   // One pass over the entries finds the references to every asset, however many there are
   const references = await getAssetReferences(referenceTargets);
-  /** @type {Map<string, AssetReference[]>} */
-  const referencesByEntry = new Map();
-
-  references.forEach((reference) => {
-    const { id } = reference.entry;
-
-    getOrCreate(referencesByEntry, id, () => []).push(reference);
-  });
+  const referencesByEntry = Map.groupBy(references, ({ entry }) => entry.id);
 
   const results = [...referencesByEntry.values()].map((entryReferences) => {
     // An entry belonging to several collections is written once, under the first collection its
@@ -265,16 +256,12 @@ const createAssetDeletionPlan = async (assets) => {
       isIndexFile: isCollectionIndexFile(collection, entry),
     });
 
-    /** @type {Map<InternalLocaleCode, AssetReference[]>} */
-    const referencesByLocale = new Map();
-
-    entryReferences
-      .filter((r) => r.collection === collection && r.collectionFile === collectionFile)
-      .forEach((reference) => {
-        const { locale } = reference;
-
-        getOrCreate(referencesByLocale, locale, () => []).push(reference);
-      });
+    const referencesByLocale = Map.groupBy(
+      entryReferences.filter(
+        (r) => r.collection === collection && r.collectionFile === collectionFile,
+      ),
+      ({ locale }) => locale,
+    );
 
     /** @type {Entry['locales']} */
     const updatedLocales = {};
