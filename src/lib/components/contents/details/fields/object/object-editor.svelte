@@ -254,7 +254,7 @@
     const message = getUnknownTypeMessage({ fieldType: 'object', type, typeKey, types });
 
     // eslint-disable-next-line no-console
-    console.warn(`List item ${keyPath}: ${message}`);
+    console.warn(`Object field ${keyPath}: ${message}`);
   };
 
   onMount(() => {

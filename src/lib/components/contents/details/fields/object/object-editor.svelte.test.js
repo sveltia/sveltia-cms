@@ -371,7 +371,7 @@ describe('ObjectEditor', () => {
 
       await expect.element(page.getByRole('alert')).toBeVisible();
       expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining('The type key is not found in the object'),
+        expect.stringMatching(/^Object field block: The type key is not found in the object/),
       );
     } finally {
       warn.mockRestore();
