@@ -75,7 +75,11 @@ vi.mock('$lib/services/utils/media/image/validate', () => ({
 }));
 vi.mock('$lib/services/common/slug');
 vi.mock('$lib/services/common/template');
-vi.mock('$lib/services/common/template/tags');
+vi.mock('$lib/services/common/template/tags', async (importOriginal) => {
+  const actual = /** @type {Record<string, any>} */ (await importOriginal());
+
+  return { ...actual, hasTemplateTags: vi.fn(actual.hasTemplateTags) };
+});
 vi.mock('$lib/services/contents/collection');
 vi.mock('$lib/services/contents/collection/files');
 vi.mock('$lib/services/contents/collection/entries/index-file');

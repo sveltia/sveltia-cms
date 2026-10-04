@@ -30,6 +30,11 @@ import { runInChunks } from '$lib/services/utils/scheduling';
  */
 export const isIndexFile = (path) => /\/_index(?:\.[\w-]+)?\.md$/.test(path);
 
+/**
+ * Regex to split a `subPath` template into literal text and template tags. Unlike
+ * `TEMPLATE_TAG_REGEX`, it also matches an empty `{{}}` tag and a tag spanning a line break.
+ */
+const SLUG_TEMPLATE_TAG_REGEX = /{{([^]*?)}}/;
 /** @type {Map<string, RegExp>} */
 const slugRegexCache = new Map();
 
@@ -48,39 +53,17 @@ const slugRegexCache = new Map();
 export const getSlug = ({ subPath, subPathTemplate }) => {
   if (subPathTemplate?.includes('{{slug}}')) {
     const regex = getOrCreate(slugRegexCache, subPathTemplate, () => {
-      // Build regex by replacing placeholders with patterns
-      let regexPattern = '';
-      let remaining = subPathTemplate;
+      const regexPattern = subPathTemplate
+        .split(SLUG_TEMPLATE_TAG_REGEX)
+        .map((part, index) => {
+          // The odd parts are the tags captured by the split; an unclosed `{{` stays literal
+          if (index % 2 === 0) {
+            return escapeRegExp(part);
+          }
 
-      // Process template character by character, handling placeholders specially
-      while (remaining.length > 0) {
-        const nextPlaceholder = remaining.indexOf('{{');
-
-        if (nextPlaceholder === -1) {
-          // No more placeholders, escape remaining literal text
-          regexPattern += escapeRegExp(remaining);
-          break;
-        }
-
-        // Add escaped literal text before placeholder
-        if (nextPlaceholder > 0) {
-          regexPattern += escapeRegExp(remaining.substring(0, nextPlaceholder));
-        }
-
-        // Find end of placeholder
-        const placeholderEnd = remaining.indexOf('}}', nextPlaceholder);
-
-        if (placeholderEnd === -1) {
-          // Malformed template, treat as literal
-          regexPattern += escapeRegExp(remaining);
-          break;
-        }
-
-        const placeholder = remaining.substring(nextPlaceholder, placeholderEnd + 2);
-
-        regexPattern += placeholder === '{{slug}}' ? '([^/]+)' : '[^/]+?';
-        remaining = remaining.substring(placeholderEnd + 2);
-      }
+          return part === 'slug' ? '([^/]+)' : '[^/]+?';
+        })
+        .join('');
 
       return new RegExp(`^${regexPattern}$`);
     });

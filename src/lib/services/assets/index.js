@@ -15,10 +15,7 @@ import {
   selectedSubfolderPath,
 } from '$lib/services/assets/subfolders';
 import { fillTemplate } from '$lib/services/common/template';
-import {
-  ESCAPED_PLACEHOLDER_REGEX,
-  TEMPLATE_TAG_REGEX,
-} from '$lib/services/common/template/constants';
+import { ESCAPED_PLACEHOLDER_REGEX } from '$lib/services/common/template/constants';
 import { hasTemplateTags } from '$lib/services/common/template/tags';
 import { getCollection } from '$lib/services/contents/collection';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
@@ -81,7 +78,7 @@ export const getAssetKey = ({ unsaved, blobURL, path }) => (unsaved && blobURL ?
  * not been saved yet.
  */
 export const fillInternalPathTemplate = ({ internalPath, collectionName, entry }) => {
-  if (!TEMPLATE_TAG_REGEX.test(internalPath)) {
+  if (!hasTemplateTags(internalPath)) {
     return internalPath;
   }
 

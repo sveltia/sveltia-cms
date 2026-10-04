@@ -187,6 +187,16 @@ describe('Test getSlug()', () => {
     ).toBe('my-post-2023');
   });
 
+  test('matches an unclosed placeholder after literal text as literal text only once', () => {
+    // The literal text before an unclosed `{{` used to be added to the pattern twice
+    expect(
+      getSlug({
+        subPath: 'my-post/x{{y',
+        subPathTemplate: '{{slug}}/x{{y',
+      }),
+    ).toBe('my-post');
+  });
+
   test('handles slug extraction when regex match succeeds', () => {
     // Test the successful branch where slug is extracted from regex match
     expect(
