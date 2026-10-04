@@ -506,33 +506,32 @@ export const prepareArrayFileEntries = ({ collection, file, rawContent, entries,
 export const prepareEntry = async ({ file, entries, entryMap, errors }) => {
   const rawContent = await parseFileContent(file, errors);
 
-  if (!rawContent) {
-    const { collection, collectionFile } =
-      resolveCollectionAndFile(file.folder.collectionName, file.folder.fileName) ?? {};
-
-    // Make sure a file storing all the entries of an entry collection is not overwritten
-    if (!collectionFile && collection?._type === 'entry' && collection._file.arrayFile) {
-      arrayFileItems.set(file.path, null);
-    }
-
-    return;
-  }
-
   const {
     path,
     meta = {},
     folder: { collectionName, fileName },
   } = file;
 
-  const resolved = resolveCollectionAndFile(collectionName, fileName);
+  const { collection, collectionFile } = resolveCollectionAndFile(collectionName, fileName) ?? {};
 
-  if (!resolved) {
+  // A file storing all the entries of an entry collection
+  const isArrayFile =
+    !collectionFile && collection?._type === 'entry' && collection._file.arrayFile;
+
+  if (!rawContent) {
+    // Make sure the array file is not overwritten
+    if (isArrayFile) {
+      arrayFileItems.set(path, null);
+    }
+
     return;
   }
 
-  const { collection, collectionFile } = resolved;
+  if (!collection) {
+    return;
+  }
 
-  if (!collectionFile && collection._type === 'entry' && collection._file.arrayFile) {
+  if (isArrayFile) {
     prepareArrayFileEntries({ collection, file, rawContent, entries, errors });
 
     return;
