@@ -15,7 +15,7 @@ import {
   repository,
 } from '$lib/services/backends/git/github/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
-import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
 import { encodePath } from '$lib/services/backends/git/shared/url';
@@ -32,22 +32,83 @@ import { forkedRepository, openAuthoringInitialized } from '$lib/services/workfl
  */
 
 /**
- * Fetch the repository’s complete file list, and return it in the canonical format.
+ * @typedef {{ type: string, path: string, sha: string, size: number }} GitTreeEntry
+ */
+
+/**
+ * Fetch a Git tree.
+ * @param {string} treeRef Commit SHA, branch name or tree SHA.
+ * @param {boolean} recursive Whether to list the subtrees as well.
+ * @returns {Promise<{ tree: GitTreeEntry[], truncated: boolean }>} Tree, and whether the response
+ * was truncated because the tree is too big.
+ * @see https://docs.github.com/en/rest/git/trees#get-a-tree
+ */
+const fetchTree = async (treeRef, recursive) => {
+  const { owner, repo } = repository;
+  const query = recursive ? '?recursive=1' : '';
+
+  return /** @type {{ tree: GitTreeEntry[], truncated: boolean }} */ (
+    await fetchAPI(`/repos/${owner}/${repo}/git/trees/${encodePath(treeRef)}${query}`)
+  );
+};
+
+/**
+ * Fetch the repository’s complete file list, and return it in the canonical format. A tree too big
+ * to be listed recursively in one response, as in a huge repository, has its subtrees listed
+ * separately instead, as GitHub suggests.
  * @param {string} [lastHash] The last commit’s SHA-1 hash.
  * @returns {Promise<BaseFileListItemProps[]>} File list.
+ * @throws {Error} If a single directory has too many files to list.
  */
 export const fetchFileList = async (lastHash) => {
-  const { owner, repo, branch } = repository;
-  const ref = encodePath(/** @type {string} */ (lastHash ?? branch));
+  /** @type {GitTreeEntry[]} */
+  const blobs = [];
+  /** @type {{ sha: string, prefix: string }[]} */
+  let pending = [{ sha: /** @type {string} */ (lastHash ?? repository.branch), prefix: '' }];
 
-  const result =
-    /** @type {{ tree: { type: string, path: string, sha: string, size: number }[] }} */ (
-      await fetchAPI(`/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`)
+  // One level at a time, so the requests in flight stay within the concurrency limit
+  while (pending.length) {
+    // eslint-disable-next-line no-await-in-loop
+    const results = await mapConcurrently(pending, async ({ sha, prefix }) => {
+      const { tree, truncated } = await fetchTree(sha, true);
+
+      if (!truncated) {
+        return { prefix, entries: tree, subtrees: [] };
+      }
+
+      // List this directory alone, and its subdirectories separately
+      const { tree: children, truncated: tooBig } = await fetchTree(sha, false);
+
+      if (tooBig) {
+        throw new Error(`The directory '${prefix || '/'}' has too many files to list.`);
+      }
+
+      return {
+        prefix,
+        entries: children,
+        subtrees: children.filter(({ type }) => type === 'tree'),
+      };
+    });
+
+    pending = results.flatMap(({ prefix, subtrees }) =>
+      subtrees.map(({ path, sha }) => ({ sha, prefix: `${prefix}${path}/` })),
     );
 
-  return result.tree
-    .filter(({ type }) => type === 'blob')
-    .map(({ path, sha, size }) => ({ path, sha, size, name: getPathInfo(path).basename }));
+    results.forEach(({ prefix, entries }) => {
+      entries.forEach((entry) => {
+        if (entry.type === 'blob') {
+          blobs.push({ ...entry, path: `${prefix}${entry.path}` });
+        }
+      });
+    });
+  }
+
+  return blobs.map(({ path, sha, size }) => ({
+    path,
+    sha,
+    size,
+    name: getPathInfo(path).basename,
+  }));
 };
 
 /**

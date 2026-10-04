@@ -162,6 +162,20 @@ export class MockGitHub {
   rateLimited = false;
 
   /**
+   * Whether the recursive listing of a commit’s file tree is truncated, as GitHub does for a tree
+   * with too many entries, so the CMS has to list the directories one by one. The listing then only
+   * has the files and directories at the top level.
+   */
+  truncateTree = false;
+
+  /**
+   * The directories handed out as `tree` entries in a file tree that isn’t listed recursively,
+   * keyed by their made-up tree SHA, so they can be listed in turn.
+   * @type {Map<string, { tree: Map<string, string>, prefix: string }>}
+   */
+  subtrees = new Map();
+
+  /**
    * The OAuth scopes of the sign-in, as GitHub reports them in the `X-OAuth-Scopes` header, e.g.
    * `public_repo`. The header is left out when it’s `undefined`, like for a fine-grained token.
    * @type {string | undefined}
@@ -702,7 +716,12 @@ export class MockGitHub {
       return;
     }
 
-    const response = this.handleREST(method, pathname, request.postDataJSON());
+    const response = this.handleREST(
+      method,
+      pathname,
+      request.postDataJSON(),
+      new URL(request.url()).searchParams,
+    );
 
     if (response) {
       if (response.status === 204) {
@@ -733,9 +752,10 @@ export class MockGitHub {
    * @param {string} method HTTP method.
    * @param {string} pathname URL path.
    * @param {Record<string, any> | null} body Request body.
+   * @param {URLSearchParams} [searchParams] URL query.
    * @returns {MockResponse | undefined} Response, or `undefined` if the request isn’t mocked.
    */
-  handleREST(method, pathname, body) {
+  handleREST(method, pathname, body, searchParams = new URLSearchParams()) {
     const repoPath = `/repos/${this.owner}/${this.repo}`;
 
     if (pathname === '/user') {
@@ -822,20 +842,25 @@ export class MockGitHub {
       const ref = decodeURIComponent(path.slice('git/trees/'.length));
       const commit = this.refs.has(ref) ? this.getHead(ref) : this.getCommit(ref);
 
-      return commit
-        ? {
-            json: {
-              sha: commit.oid,
-              tree: [...commit.tree].map(([filePath, sha]) => ({
-                path: filePath,
-                mode: '100644',
-                type: 'blob',
-                sha,
-                size: this.blobs.get(sha)?.length,
-              })),
-              truncated: false,
-            },
-          }
+      if (commit) {
+        return this.handleTreeRequest({
+          sha: commit.oid,
+          tree: commit.tree,
+          prefix: '',
+          recursive: searchParams.has('recursive'),
+          truncate: this.truncateTree,
+        });
+      }
+
+      const subtree = this.subtrees.get(ref);
+
+      return subtree
+        ? this.handleTreeRequest({
+            sha: ref,
+            ...subtree,
+            recursive: searchParams.has('recursive'),
+            truncate: false,
+          })
         : undefined;
     }
 
@@ -873,6 +898,78 @@ export class MockGitHub {
     }
 
     return undefined;
+  }
+
+  /**
+   * Answer a request for a Git tree: the files in a directory of a commit, and those in its
+   * subdirectories if the listing is recursive. Without recursion, or when the recursive listing is
+   * truncated, a subdirectory is a `tree` entry with a made-up SHA, which can be requested in turn.
+   * @param {object} args Arguments.
+   * @param {string} args.sha SHA of the commit or the tree.
+   * @param {Map<string, string>} args.tree File tree of the commit.
+   * @param {string} args.prefix Path of the directory, with a trailing slash, or an empty string
+   * for the root.
+   * @param {boolean} args.recursive Whether the subdirectories are asked for as well.
+   * @param {boolean} args.truncate Whether to truncate a recursive listing, as GitHub does for a
+   * tree with too many entries.
+   * @returns {MockResponse} Response.
+   * @see https://docs.github.com/en/rest/git/trees#get-a-tree
+   */
+  handleTreeRequest({ sha, tree, prefix, recursive, truncate }) {
+    const files = [...tree]
+      .filter(([filePath]) => filePath.startsWith(prefix))
+      .map(([filePath, blobSHA]) => [filePath.slice(prefix.length), blobSHA]);
+
+    /**
+     * Create a `blob` entry.
+     * @param {string} filePath Path relative to the directory.
+     * @param {string} blobSHA Blob SHA.
+     * @returns {Record<string, any>} Entry.
+     */
+    const toBlobEntry = (filePath, blobSHA) => ({
+      path: filePath,
+      mode: '100644',
+      type: 'blob',
+      sha: blobSHA,
+      size: this.blobs.get(blobSHA)?.length,
+    });
+
+    if (recursive && !truncate) {
+      return {
+        json: {
+          sha,
+          tree: files.map(([filePath, blobSHA]) => toBlobEntry(filePath, blobSHA)),
+          truncated: false,
+        },
+      };
+    }
+
+    const directories = [
+      ...new Set(
+        files
+          .filter(([filePath]) => filePath.includes('/'))
+          .map(([filePath]) => filePath.split('/')[0]),
+      ),
+    ];
+
+    return {
+      json: {
+        sha,
+        tree: [
+          ...files
+            .filter(([filePath]) => !filePath.includes('/'))
+            .map(([filePath, blobSHA]) => toBlobEntry(filePath, blobSHA)),
+          ...directories.map((name) => {
+            const treeSHA = createHash('sha1').update(`tree ${sha} ${name}`).digest('hex');
+
+            this.subtrees.set(treeSHA, { tree, prefix: `${prefix}${name}/` });
+
+            return { path: name, mode: '040000', type: 'tree', sha: treeSHA };
+          }),
+        ],
+        truncated: recursive,
+      },
+    };
   }
 
   /**

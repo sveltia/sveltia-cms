@@ -34,6 +34,19 @@ test('signs in with the stored session and lists the entries', async ({ cms, pag
   ).toBeVisible();
 });
 
+test('lists the entries of a repository too big to list at once', async ({ cms, github, page }) => {
+  github.commit({
+    'README.md': '# Site\n',
+    'content/posts/second-post.md': '---\ntitle: Second Post\n---\n',
+  });
+  // GitHub truncates the recursive listing of the file tree, so the folders are listed one by one
+  github.truncateTree = true;
+
+  await cms.open();
+  await expect(page.getByRole('row', { name: /Second Post/ })).toBeVisible();
+  await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
+});
+
 test('refuses a user who can only read the repository', async ({ cms, github, page }) => {
   github.canWrite = false;
 
