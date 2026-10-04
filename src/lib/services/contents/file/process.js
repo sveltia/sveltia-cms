@@ -386,8 +386,10 @@ export const processI18nMultiFileEntry = ({
   const slug = fileName || getSlug({ subPath, subPathTemplate });
   const localizedEntry = { slug, path, content: flatten(rawContent) };
   // Use a temporary ID to locate all the localized files for the entry. The sub path is the same
-  // across locales, while the slug may not be unique, e.g. with the `{{year}}/{{slug}}` path
-  const tempId = `${collectionName}/${canonicalSlug ?? (fileName || subPath)}`;
+  // across locales, while the slug may not be unique, e.g. with the `{{year}}/{{slug}}` path. A
+  // collection file is identified by its name, so a canonical slug in one of its locales can’t
+  // split it into two entries
+  const tempId = `${collectionName}/${fileName || (canonicalSlug ?? subPath)}`;
   // Check if the entry has already been added for another locale. A lookup in the map rather than
   // a scan of the entry list keeps this linear over a repository with thousands of localized files
   const existingEntry = entryMap.get(tempId);

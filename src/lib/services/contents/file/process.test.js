@@ -1270,6 +1270,43 @@ describe('Test processI18nMultiFileEntry()', () => {
     expect(entry.id).toBe('posts/canonical-slug');
   });
 
+  test('links the locales of a collection file regardless of a canonical slug', () => {
+    const entryMap = /** @type {Map<string, Entry>} */ (new Map());
+    const entry = /** @type {Entry} */ ({ id: '', slug: '', subPath: 'about', locales: {} });
+
+    processI18nMultiFileEntry({
+      entry,
+      rawContent: { title: 'About', translationKey: 'about-page' },
+      path: 'content/about.en.md',
+      fileName: 'about',
+      subPath: 'about',
+      locale: 'en',
+      defaultLocale: 'en',
+      collectionName: 'pages',
+      canonicalSlugKey: 'translationKey',
+      entryMap,
+    });
+
+    const frEntry = /** @type {Entry} */ ({ id: '', slug: '', subPath: 'about', locales: {} });
+
+    const wasMerged = processI18nMultiFileEntry({
+      entry: frEntry,
+      rawContent: { title: 'À propos' },
+      path: 'content/about.fr.md',
+      fileName: 'about',
+      subPath: 'about',
+      locale: 'fr',
+      defaultLocale: 'en',
+      collectionName: 'pages',
+      canonicalSlugKey: 'translationKey',
+      entryMap,
+    });
+
+    expect(wasMerged).toBe(true);
+    expect(entry.id).toBe('pages/about');
+    expect(Object.keys(entry.locales)).toEqual(['en', 'fr']);
+  });
+
   test('updates slug and subPath for default locale in existing entry', () => {
     const existingEntry = /** @type {Entry} */ ({
       id: 'posts/my-post',
