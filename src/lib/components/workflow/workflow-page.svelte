@@ -187,6 +187,24 @@
   };
 
   /**
+   * Ask for confirmation before deleting the given entry, or calling its pending deletion off.
+   * @param {UnpublishedEntry} entry Entry.
+   */
+  const confirmDelete = (entry) => {
+    targetEntry = entry;
+    showDeleteDialog = true;
+  };
+
+  /**
+   * Ask for confirmation before publishing the given entry, or carrying out its pending deletion.
+   * @param {UnpublishedEntry} entry Entry.
+   */
+  const confirmPublish = (entry) => {
+    targetEntry = entry;
+    showPublishDialog = true;
+  };
+
+  /**
    * Move the dragged entry to the given column, which changes the label on the pull request.
    * @param {WorkflowStatus} status New status.
    */
@@ -287,14 +305,8 @@
                       draggedEntry = undefined;
                       dropTarget = undefined;
                     }}
-                    onDelete={() => {
-                      targetEntry = entry;
-                      showDeleteDialog = true;
-                    }}
-                    onPublish={() => {
-                      targetEntry = entry;
-                      showPublishDialog = true;
-                    }}
+                    onDelete={() => confirmDelete(entry)}
+                    onPublish={() => confirmPublish(entry)}
                   />
                 {:else}
                   <EmptyState>
@@ -317,14 +329,8 @@
                   <WorkflowEntryCard
                     {entry}
                     busy={isBusy(entry)}
-                    onDelete={() => {
-                      targetEntry = entry;
-                      showDeleteDialog = true;
-                    }}
-                    onPublish={() => {
-                      targetEntry = entry;
-                      showPublishDialog = true;
-                    }}
+                    onDelete={() => confirmDelete(entry)}
+                    onPublish={() => confirmPublish(entry)}
                   />
                 {/each}
               </div>
