@@ -61,6 +61,17 @@ describe('contents/fields/relation/helpers/locale', () => {
       ).toBe('fr/category-a');
     });
 
+    it('should localize a value for a Relation field rendered by the Select editor', () => {
+      expect(
+        getLocalizedRelationValue({
+          fieldConfig: { ...localizedField, widget: 'select', options: [] },
+          value: 'fr/category-a',
+          sourceLocale: 'fr',
+          targetLocale: 'pl',
+        }),
+      ).toBe('pl/category-a');
+    });
+
     it('should keep a value for a non-Relation field', () => {
       expect(
         getLocalizedRelationValue({

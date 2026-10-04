@@ -238,6 +238,38 @@ describe('draft/update/list', () => {
       expect(mockEntryDraft.extraValues.en).toEqual({ 'tags.0': 'extra', 'tags.1': 'extra2' });
       expect(mockEntryDraft.currentValues.en['tags.3']).toBeUndefined();
     });
+
+    it('should localize a locale-prefixed Relation field value for every locale', () => {
+      const fieldConfig = /** @type {any} */ ({
+        name: 'related',
+        widget: 'relation',
+        i18n: 'duplicate',
+        value_field: '{{locale}}/{{slug}}',
+      });
+
+      mockEntryDraft.currentValues.en = { 'related.0': 'en/foo', 'related.1': 'en/bar' };
+      mockEntryDraft.currentValues.ja = { 'related.0': 'ja/foo', 'related.1': 'ja/bar' };
+
+      updateListFieldForLocales({
+        locale: 'en',
+        i18n: 'duplicate',
+        fieldConfig,
+        keyPath: 'related',
+        manipulate: ({ valueList }) => {
+          valueList.splice(valueList.indexOf('en/foo'), 1);
+          valueList.push('en/baz');
+        },
+      });
+
+      expect(mockEntryDraft.currentValues.en).toEqual({
+        'related.0': 'en/bar',
+        'related.1': 'en/baz',
+      });
+      expect(mockEntryDraft.currentValues.ja).toEqual({
+        'related.0': 'ja/bar',
+        'related.1': 'ja/baz',
+      });
+    });
   });
 
   describe('updateObject (internal)', () => {

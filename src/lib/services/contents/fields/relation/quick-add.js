@@ -8,8 +8,7 @@ import { getReferencedPendingEntries } from '$lib/services/contents/draft/pendin
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
-import { updateListField } from '$lib/services/contents/draft/update/list';
-import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
+import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
 import { renameIfNeeded } from '$lib/services/utils/file';
 import { isWorkflowDraft, isWorkflowEnabled } from '$lib/services/workflow';
@@ -285,10 +284,13 @@ export const selectPendingEntry = ({
     }
   };
 
-  forEachTargetLocale(
-    { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
-    (_valueMap, _locale) => {
-      updateListField({ draft, locale: _locale, valueStoreKey, keyPath, manipulate });
-    },
-  );
+  updateListFieldForLocales({
+    draft,
+    locale,
+    i18n,
+    fieldConfig,
+    valueStoreKey,
+    keyPath,
+    manipulate,
+  });
 };

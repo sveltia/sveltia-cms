@@ -524,6 +524,33 @@ describe('selectPendingEntry', () => {
     expect(draft.currentValues.fr).toEqual({ 'tags.0': 'svelte' });
   });
 
+  it('localizes a locale-prefixed value for every locale of a duplicated field', () => {
+    vi.mocked(getEntryOptions).mockReturnValue([
+      { label: 'Svelte', value: 'en/svelte', searchValue: 'Svelte' },
+    ]);
+
+    const draft = createParentDraft({
+      currentValues: { en: { 'tags.0': 'en/react' }, fr: { 'tags.0': 'fr/react' } },
+    });
+
+    selectPendingEntry({
+      draft,
+      locale: 'en',
+      keyPath: 'tags',
+      valueStoreKey: 'currentValues',
+      fieldConfig: {
+        ...fieldConfig,
+        multiple: true,
+        i18n: 'duplicate',
+        value_field: '{{locale}}/{{slug}}',
+      },
+      pendingEntry,
+    });
+
+    expect(draft.currentValues.en).toEqual({ 'tags.0': 'en/react', 'tags.1': 'en/svelte' });
+    expect(draft.currentValues.fr).toEqual({ 'tags.0': 'fr/react', 'tags.1': 'fr/svelte' });
+  });
+
   it('leaves a list alone when the value is there or the list is full', () => {
     const draft = createParentDraft({
       currentValues: { en: { 'tags.0': 'svelte' }, fr: { 'tags.0': 'react' } },

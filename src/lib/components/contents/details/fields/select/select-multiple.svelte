@@ -46,9 +46,17 @@
     const draft = entryDraft.current;
 
     // Avoid an error while navigating pages
-    /* v8 ignore next 3 */
+    /* v8 ignore next 11 */
     if (draft) {
-      updateListFieldForLocales({ draft, locale, i18n, valueStoreKey, keyPath, manipulate });
+      updateListFieldForLocales({
+        draft,
+        locale,
+        i18n,
+        fieldConfig,
+        valueStoreKey,
+        keyPath,
+        manipulate,
+      });
     }
   };
 

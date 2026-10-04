@@ -4,6 +4,7 @@ import { suspendAutoDuplication } from '$lib/services/contents/draft';
 import { forEachTargetLocale } from '$lib/services/contents/draft/update/locale';
 import { isKeyPathWithin } from '$lib/services/contents/entry/key-paths';
 import { getSubtree } from '$lib/services/contents/entry/subtree';
+import { getLocalizedRelationValue } from '$lib/services/contents/fields/relation/helpers/locale';
 
 /**
  * @import { DraftValueStoreKey, EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -96,6 +97,10 @@ export const updateListField = ({
  * @param {EntryDraft} args.draft Entry draft.
  * @param {InternalLocaleCode} args.locale Locale being edited.
  * @param {Field['i18n']} args.i18n Field-level `i18n` option.
+ * @param {Field} [args.fieldConfig] Field configuration. If given, the values of another locale are
+ * localized for the manipulation, which works with the values of the locale being edited. This is
+ * for a Relation field whose `value_field` option has a locale prefix, e.g. `{{locale}}/{{slug}}`,
+ * so that its value is stored as `fr/foo` rather than `en/foo` in the French content.
  * @param {DraftValueStoreKey} [args.valueStoreKey] Key to store the values in {@link EntryDraft}.
  * @param {FieldKeyPath} args.keyPath Dot-notated field name.
  * @param {(arg: { valueList: any[], expanderStateList: boolean[] }) => void } args.manipulate A
@@ -105,14 +110,48 @@ export const updateListFieldForLocales = ({
   draft,
   locale,
   i18n,
+  fieldConfig,
   valueStoreKey = 'currentValues',
   keyPath,
   manipulate,
 }) => {
+  /**
+   * Localize the values in a list.
+   * @param {any[]} list Values.
+   * @param {InternalLocaleCode} sourceLocale Locale the values are for.
+   * @param {InternalLocaleCode} targetLocale Locale to localize the values for.
+   * @returns {any[]} Localized values.
+   */
+  const localize = (list, sourceLocale, targetLocale) =>
+    list.map((value) =>
+      getLocalizedRelationValue({
+        fieldConfig: /** @type {Field} */ (fieldConfig),
+        value,
+        sourceLocale,
+        targetLocale,
+      }),
+    );
+
   forEachTargetLocale(
     { valueStore: draft[valueStoreKey], locale, i18n, draft, keyPath },
     (_valueMap, _locale) => {
-      updateListField({ draft, locale: _locale, valueStoreKey, keyPath, manipulate });
+      updateListField({
+        draft,
+        locale: _locale,
+        valueStoreKey,
+        keyPath,
+        manipulate:
+          !fieldConfig || _locale === locale
+            ? manipulate
+            : ({ valueList, expanderStateList }) => {
+                // Manipulate the values as they would be in the locale being edited, as the
+                // manipulation compares and adds values of that locale, then localize them back
+                const sourceList = localize(valueList, _locale, locale);
+
+                manipulate({ valueList: sourceList, expanderStateList });
+                valueList.splice(0, valueList.length, ...localize(sourceList, locale, _locale));
+              },
+      });
     },
   );
 };

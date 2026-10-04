@@ -118,6 +118,39 @@ describe('SelectMultiple', () => {
     expect(draft.currentValues.ja).toEqual({ 'tags.0': 'a', 'tags.1': 'c' });
   });
 
+  test('localizes a locale-prefixed Relation value for a duplicated locale', async () => {
+    const fieldConfig = /** @type {any} */ ({
+      name: 'tags',
+      widget: 'relation',
+      collection: 'tags',
+      multiple: true,
+      i18n: 'duplicate',
+      value_field: '{{locale}}/{{slug}}',
+    });
+
+    const draft = createMockDraft({
+      fields: [fieldConfig],
+      i18n: { defaultLocale: 'en', allLocales: ['en', 'ja'] },
+      values: { en: { 'tags.0': 'en/a' }, ja: { 'tags.0': 'ja/a' } },
+    });
+
+    await renderWithDraft(SelectMultiple, {
+      draft,
+      props: {
+        locale: 'en',
+        keyPath: 'tags',
+        fieldId: 'tags',
+        fieldConfig,
+        currentValue: ['en/a'],
+        options: ['en/a', 'en/b'].map((value) => ({ label: value, value, searchValue: value })),
+      },
+    });
+
+    await page.getByRole('checkbox', { name: 'en/b' }).click();
+    expect(draft.currentValues.en).toEqual({ 'tags.0': 'en/a', 'tags.1': 'en/b' });
+    expect(draft.currentValues.ja).toEqual({ 'tags.0': 'ja/a', 'tags.1': 'ja/b' });
+  });
+
   test('can be read-only', async () => {
     const draft = await renderControl({ options: ['a', 'b'] }, ['a'], { readonly: true });
 
