@@ -115,6 +115,40 @@ export const parseResults = (results, { fieldConfig } = {}) => {
 };
 
 /**
+ * Get the Uploadcare API keys for a request.
+ * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey).
+ * @param {object} [args] Arguments.
+ * @param {boolean} [args.secretKeyRequired] Whether to require the secret key.
+ * @returns {{ publicKey: string, secretKey: string }} Public key and secret key.
+ * @throws {Error} When the public key is not configured, or the required secret key is not
+ * provided.
+ */
+const getKeys = ({ fieldConfig, apiKey: secretKey }, { secretKeyRequired = true } = {}) => {
+  const publicKey = getPublicKey(fieldConfig);
+
+  if (!publicKey) {
+    throw new Error('Uploadcare public key is not configured');
+  }
+
+  if (secretKeyRequired && !secretKey) {
+    throw new Error('Uploadcare secret key is not provided');
+  }
+
+  return { publicKey, secretKey };
+};
+
+/**
+ * Get the headers for a REST API request.
+ * @param {{ publicKey: string, secretKey: string }} keys Public key and secret key.
+ * @returns {Record<string, string>} Headers.
+ * @see https://uploadcare.com/api-refs/rest-api/v0.7.0/#section/Authentication
+ */
+const getRESTHeaders = ({ publicKey, secretKey }) => ({
+  Accept: 'application/vnd.uploadcare-v0.7+json',
+  Authorization: `Uploadcare.Simple ${publicKey}:${secretKey}`,
+});
+
+/**
  * Fetch files from Uploadcare API with pagination.
  * @param {MediaLibraryFetchOptions} options Options containing the secret key (apiKey) and kind.
  * @param {object} [config] Additional configuration.
@@ -124,17 +158,8 @@ export const parseResults = (results, { fieldConfig } = {}) => {
  * @see https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File/operation/filesList
  */
 export const fetchFiles = async (options, { maxPages = 10, filter } = {}) => {
-  const { kind, fieldConfig, apiKey: secretKey } = options;
-  const publicKey = getPublicKey(fieldConfig);
-
-  if (!publicKey) {
-    return Promise.reject(new Error('Uploadcare public key is not configured'));
-  }
-
-  const headers = {
-    Accept: 'application/vnd.uploadcare-v0.7+json',
-    Authorization: `Uploadcare.Simple ${publicKey}:${secretKey}`,
-  };
+  const { kind, fieldConfig } = options;
+  const headers = getRESTHeaders(getKeys(options, { secretKeyRequired: false }));
 
   const params = new URLSearchParams({
     limit: '100',
@@ -222,17 +247,8 @@ export const upload = async (files, options) => {
     return [];
   }
 
-  const { fieldConfig, apiKey: secretKey } = options;
-  const publicKey = getPublicKey(fieldConfig);
-
-  if (!publicKey) {
-    return Promise.reject(new Error('Uploadcare public key is not configured'));
-  }
-
-  if (!secretKey) {
-    return Promise.reject(new Error('Uploadcare secret key is not provided'));
-  }
-
+  const { fieldConfig } = options;
+  const { publicKey, secretKey } = getKeys(options);
   // Generate signature for secure upload (expires in 30 minutes)
   const expire = Math.floor(Date.now() / 1000) + 1800;
   const signature = await generateSignature(secretKey, expire);
@@ -307,23 +323,7 @@ export const upload = async (files, options) => {
  * @see https://uploadcare.com/api-refs/rest-api/v0.7.0/#tag/File/operation/filesDelete
  */
 export const deleteFiles = async (assets, options) => {
-  const { fieldConfig, apiKey: secretKey } = options;
-  const publicKey = getPublicKey(fieldConfig);
-
-  if (!publicKey) {
-    return Promise.reject(new Error('Uploadcare public key is not configured'));
-  }
-
-  if (!secretKey) {
-    return Promise.reject(new Error('Uploadcare secret key is not provided'));
-  }
-
-  const headers = {
-    Accept: 'application/vnd.uploadcare-v0.7+json',
-    Authorization: `Uploadcare.Simple ${publicKey}:${secretKey}`,
-    'Content-Type': 'application/json',
-  };
-
+  const headers = { ...getRESTHeaders(getKeys(options)), 'Content-Type': 'application/json' };
   const uuids = assets.map(({ id }) => id);
 
   for (let index = 0; index < uuids.length; index += 100) {
