@@ -60,3 +60,48 @@ export const formatComponentSummary = ({ template, values, fields, locale }) => 
 
   return null;
 };
+
+/**
+ * Get the text shown in the placeholder of a rich text editor component in `dialog` mode: the
+ * formatted summary template if it produces anything, the value of the first string or text field
+ * otherwise, or the component label as a last resort.
+ * @param {object} args Arguments.
+ * @param {string} [args.template] Summary template, e.g. `{{title}}`.
+ * @param {RawEntryContent} [args.currentValues] Values stored in the entry draft.
+ * @param {RawEntryContent} [args.values] Values parsed from the document, used while the entry
+ * draft has no field values yet, e.g. on the initial render.
+ * @param {Field[]} args.fields Field definitions of the component.
+ * @param {string} [args.locale] Locale code passed to the transformations.
+ * @param {string} args.label Component label.
+ * @returns {string} Text.
+ */
+export const getComponentDisplayText = ({
+  template,
+  currentValues,
+  values,
+  fields,
+  locale,
+  label,
+}) => {
+  const hasFieldValues = fields.some((f) => currentValues?.[f.name] !== undefined);
+  const _values = hasFieldValues ? currentValues : values;
+  const formatted = formatComponentSummary({ template, values: _values, fields, locale });
+
+  if (formatted) {
+    return formatted;
+  }
+
+  const displayField = fields.find(
+    (f) => f.widget === 'string' || f.widget === 'text' || !f.widget,
+  );
+
+  if (displayField && _values) {
+    const value = _values[displayField.name];
+
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return label;
+};

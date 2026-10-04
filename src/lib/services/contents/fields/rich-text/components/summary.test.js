@@ -1,6 +1,9 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { formatComponentSummary } from '$lib/services/contents/fields/rich-text/components/summary';
+import {
+  formatComponentSummary,
+  getComponentDisplayText,
+} from '$lib/services/contents/fields/rich-text/components/summary';
 
 vi.mock('$lib/services/config');
 
@@ -73,5 +76,65 @@ describe('formatComponentSummary()', () => {
     expect(
       formatComponentSummary({ template: '{{title}}', values: { title: '   ' }, fields }),
     ).toBeNull();
+  });
+});
+
+describe('getComponentDisplayText()', () => {
+  const args = { fields, label: 'Card' };
+
+  test('prefers the formatted summary', () => {
+    expect(
+      getComponentDisplayText({
+        ...args,
+        template: 'Card: {{title}}',
+        currentValues: { title: 'Hello' },
+      }),
+    ).toBe('Card: Hello');
+  });
+
+  test('falls back to the first string field', () => {
+    expect(getComponentDisplayText({ ...args, currentValues: { title: '  Hello  ' } })).toBe(
+      'Hello',
+    );
+    expect(
+      getComponentDisplayText({
+        fields: [{ name: 'body', widget: 'text' }],
+        label: 'Card',
+        currentValues: { body: 'Text' },
+      }),
+    ).toBe('Text');
+    expect(
+      getComponentDisplayText({
+        fields: [{ name: 'body' }],
+        label: 'Card',
+        currentValues: { body: 'Text' },
+      }),
+    ).toBe('Text');
+  });
+
+  test('uses the values from the document until the draft has some', () => {
+    expect(
+      getComponentDisplayText({ ...args, currentValues: {}, values: { title: 'From Document' } }),
+    ).toBe('From Document');
+    expect(
+      getComponentDisplayText({
+        ...args,
+        currentValues: { title: 'From Draft' },
+        values: { title: 'From Document' },
+      }),
+    ).toBe('From Draft');
+  });
+
+  test('falls back to the label', () => {
+    expect(getComponentDisplayText(args)).toBe('Card');
+    expect(getComponentDisplayText({ ...args, currentValues: { title: '  ' } })).toBe('Card');
+    expect(getComponentDisplayText({ ...args, currentValues: { title: 1 } })).toBe('Card');
+    expect(
+      getComponentDisplayText({
+        fields: [{ name: 'date', widget: 'datetime' }],
+        label: 'Card',
+        currentValues: { date: '2026-01-01' },
+      }),
+    ).toBe('Card');
   });
 });

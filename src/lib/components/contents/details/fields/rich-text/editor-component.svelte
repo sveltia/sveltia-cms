@@ -2,26 +2,23 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Dialog, Icon, Spacer, VisibilityObserver } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { flatten, unflatten } from 'flat';
   import { onMount, untrack } from 'svelte';
 
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { normalizeContent } from '$lib/services/contents/draft/create/normalize';
-  import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import {
     getEntryDraftByElement,
     setEntryDraftContext,
   } from '$lib/services/contents/draft/state.svelte';
-  import { validateFields } from '$lib/services/contents/draft/validate/fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
-  import { formatComponentSummary } from '$lib/services/contents/fields/rich-text/components/summary';
+  import { getComponentDisplayText } from '$lib/services/contents/fields/rich-text/components/summary';
+  import { validateComponentValues } from '$lib/services/contents/fields/rich-text/components/validate';
   import {
     deleteKeysByPrefix,
     flattenWithPrefix,
+    getValuesByPrefix,
+    reconcileComponentValues,
   } from '$lib/services/contents/fields/rich-text/components/values';
-  import { unflattenMap } from '$lib/services/utils/object';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -137,14 +134,6 @@
   const typedKeyPathPrefix = $derived(!typedKeyPath ? '' : `${typedKeyPath}:${fieldId}:`);
   /* v8 ignore stop */
   /**
-   * Find the first string/text field from the fields definition.
-   * @type {Field | undefined}
-   */
-  const displayField = $derived(
-    fields.find((f) => f.widget === 'string' || f.widget === 'text' || !f.widget),
-  );
-
-  /**
    * Get the wrapper element.
    * @returns {HTMLElement | undefined} Wrapper.
    */
@@ -173,15 +162,9 @@
       return undefined;
     }
 
-    const valueMap = getValueMapSnapshot(entryDraft.current, locale, valueStoreKey);
-
-    return unflattenMap(
-      Object.fromEntries(
-        getKeysByPrefix(valueMap, keyPathPrefix).map((key) => [
-          key.slice(keyPathPrefix.length),
-          valueMap[key],
-        ]),
-      ),
+    return getValuesByPrefix(
+      getValueMapSnapshot(entryDraft.current, locale, valueStoreKey),
+      keyPathPrefix,
     );
   });
 
@@ -228,25 +211,7 @@
       return;
     }
 
-    const { validities: extraValidities, validationMessages: extraMessages } = validateFields(
-      'extraValues',
-      { draft },
-    );
-
-    Object.keys(draft.validities).forEach((loc) => {
-      Object.assign(draft.validities[loc], extraValidities[loc]);
-      // The field editors show the messages, not the validity flags
-      Object.assign(draft.validationMessages[loc], extraMessages[loc]);
-    });
-
-    /* v8 ignore next -- the fields were just validated in this locale */
-    const localeValidities = extraValidities[locale] ?? {};
-
-    const thisComponentValid = !Object.entries(localeValidities).some(
-      ([key, validity]) => key.startsWith(keyPathPrefix) && !validity.valid,
-    );
-
-    if (thisComponentValid) {
+    if (validateComponentValues({ draft, locale, keyPathPrefix })) {
       isNewComponent = false;
       dialogOpen = false;
       onChange(new CustomEvent('update', { detail: currentValues }));
@@ -275,27 +240,11 @@
    * 2. First string field’s value
    * 3. Component label.
    */
-  const displayText = $derived.by(() => {
+  const displayText = $derived(
     // Fall back to the `values` prop when `currentValues` has no field data yet, e.g. on initial
-    // render or before the store has been notified with the values.
-    const hasFieldValues = fields.some((f) => currentValues?.[f.name] !== undefined);
-    const vals = hasFieldValues ? currentValues : values;
-    const formatted = formatComponentSummary({ template: summary, values: vals, fields, locale });
-
-    if (formatted) {
-      return formatted;
-    }
-
-    if (displayField && vals) {
-      const value = vals[displayField.name];
-
-      if (typeof value === 'string' && value.trim()) {
-        return value.trim();
-      }
-    }
-
-    return label;
-  });
+    // render or before the store has been notified with the values
+    getComponentDisplayText({ template: summary, currentValues, values, fields, locale, label }),
+  );
 
   onMount(() => {
     window.requestAnimationFrame(() => {
@@ -336,31 +285,17 @@
     () => [values, locale, keyPath],
     () => {
       if (entryDraft?.current && locale && keyPath) {
-        const { defaultLocale } = entryDraft.current;
+        const reconciledValues = reconcileComponentValues({
+          values,
+          fields,
+          componentName,
+          locale,
+          defaultLocale: entryDraft.current.defaultLocale,
+        });
 
-        values ??= /** @type {Record<string, any>} */ (
-          unflatten(getDefaultValues({ fields, locale, defaultLocale }))
-        );
-        values.__sc_component_name = componentName;
-
-        // Reconcile the values parsed from the document with the component’s field definitions,
-        // which may have changed since the document was written. Unlike an entry draft, missing
-        // values are not filled in, because these values live in the document text and doing so
-        // would rewrite it just by opening the entry
-        const normalizedValues = unflatten(
-          normalizeContent({
-            fields,
-            content: flatten(values),
-            locale,
-            defaultLocale,
-            fillDefaults: false,
-          }),
-        );
-
-        // Only reassign when something actually changed; `normalizeContent()` is idempotent, but a
-        // fresh object on every run would retrigger this effect forever
-        if (!equal(normalizedValues, values)) {
-          values = normalizedValues;
+        // Only reassign when something actually changed, or this would run forever
+        if (reconciledValues !== values) {
+          values = reconciledValues;
         }
 
         if (!equal(values, currentValues)) {
