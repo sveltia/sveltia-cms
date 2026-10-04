@@ -96,8 +96,9 @@ const getNestedCanonicalSlug = ({ draft, slugs: { defaultLocaleSlug, localizedSl
  * @property {Asset[]} savingAssets List of assets to be saved.
  * @property {GetFieldArgs} getFieldArgs Arguments to get a field configuration.
  * @property {boolean} encodingEnabled Whether the file path encoding is enabled.
- * @property {AssetFolderInfo} globalAssetFolder Global asset folder, which a file is saved to
- * unless it’s associated with another folder.
+ * @property {AssetFolderInfo | undefined} globalAssetFolder Global asset folder, which a file is
+ * saved to unless it’s associated with another folder. `undefined` without the global
+ * `media_folder` option.
  */
 
 /**
@@ -149,6 +150,12 @@ const replaceBlobURLs = async ({
       } = files[blobURL] ?? {};
 
       if (file) {
+        // A file can only be cached without a folder, and there is no global folder either, when
+        // only a cloud media library is configured. The file has nowhere to go in the repository
+        if (!folder) {
+          throw new Error(`There is no asset folder to save the file "${file.name}" to`);
+        }
+
         await replaceBlobURL({
           ...replaceBlobArgs,
           file,

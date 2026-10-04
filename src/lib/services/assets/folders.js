@@ -28,7 +28,7 @@ export const allAssetFolders = createRawState([]);
  */
 export const globalAssetFolder = createDerivedState(
   () =>
-    /** @type {AssetFolderInfo} */ (
+    /** @type {AssetFolderInfo | undefined} */ (
       allAssetFolders.current.find(
         ({ collectionName, componentName, typedKeyPath, internalPath }) =>
           collectionName === undefined &&

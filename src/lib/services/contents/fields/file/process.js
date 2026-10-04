@@ -188,6 +188,13 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
 
   if (file) {
     const { folder } = resource;
+
+    // A file is uploaded to a repository folder, which there isn’t when only a cloud media library
+    // is configured and neither the field nor the collection has its own `media_folder`
+    if (!folder) {
+      return { value: undefined, credit: '', oversizedFileName, invalidFileName: undefined };
+    }
+
     /** @type {string | undefined} */
     let existingBlobURL;
 

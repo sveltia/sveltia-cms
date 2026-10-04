@@ -1371,6 +1371,51 @@ describe('draft/save/changes', () => {
       expect(vi.mocked(replaceBlobURL)).toHaveBeenCalled();
     });
 
+    it('should fail with a clear error when a file has no folder to be saved to', async () => {
+      const { createEntryPath } = await import('./entry-path');
+      const { replaceBlobURL } = await import('$lib/services/contents/draft/save/assets');
+      const { getField } = await import('$lib/services/contents/entry/fields');
+      const { getBlobRegex } = await import('@sveltia/utils/file');
+
+      vi.mocked(createEntryPath).mockReturnValue('posts/test-post.md');
+      vi.mocked(getField).mockReturnValue({ widget: 'image' });
+      vi.mocked(getBlobRegex).mockReturnValue(/blob:http[^\s]*/g);
+
+      // Neither the file nor the site has a folder, as with only a cloud media library configured
+      const draft = {
+        collection: {
+          _type: 'entry',
+          _i18n: {
+            canonicalSlug: { key: 'translationKey' },
+          },
+        },
+        collectionName: 'posts',
+        collectionFile: undefined,
+        fileName: undefined,
+        isIndexFile: false,
+        currentLocales: { en: true },
+        currentValues: {
+          en: { title: 'Test', image: 'blob:http://localhost:5000/abc123' },
+        },
+        files: {
+          'blob:http://localhost:5000/abc123': {
+            file: { name: 'image.jpg', size: 1024 },
+          },
+        },
+      };
+
+      const slugs = {
+        defaultLocaleSlug: 'test-post',
+        canonicalSlug: 'test-post',
+        localizedSlugs: undefined,
+      };
+
+      await expect(createBaseSavingEntryData({ draft, slugs })).rejects.toThrow(
+        'There is no asset folder to save the file "image.jpg" to',
+      );
+      expect(vi.mocked(replaceBlobURL)).not.toHaveBeenCalled();
+    });
+
     it('should leave the blob URLs in the draft, so a failed save can be retried', async () => {
       const { createEntryPath } = await import('./entry-path');
       const { replaceBlobURL } = await import('$lib/services/contents/draft/save/assets');
@@ -1450,6 +1495,7 @@ describe('draft/save/changes', () => {
         files: {
           'blob:http://localhost:5000/xyz789': {
             file: { name: 'image.jpg', size: 2048 },
+            folder: 'uploads',
           },
         },
       };
@@ -1500,6 +1546,7 @@ describe('draft/save/changes', () => {
         files: {
           'blob:http://localhost:5000/xyz789': {
             file: { name: 'image.jpg', size: 2048 },
+            folder: 'uploads',
           },
         },
       };

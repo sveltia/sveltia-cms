@@ -175,6 +175,16 @@ describe('contents/fields/custom/files', () => {
     expect(processResource).not.toHaveBeenCalled();
   });
 
+  it('rejects a file when there is no asset folder to upload it to', async () => {
+    // Only a cloud media library is configured, and the field has no `media_folder` of its own
+    vi.mocked(getDefaultAssetFolder).mockReturnValue(/** @type {any} */ (undefined));
+
+    await expect(addFile(new File(['x'], 'photo.webp'))).rejects.toThrow(
+      'There is no asset folder to upload the file "photo.webp" to',
+    );
+    expect(processResource).not.toHaveBeenCalled();
+  });
+
   it('rejects a file that cannot be decoded', async () => {
     vi.mocked(processResource).mockResolvedValue({
       value: undefined,

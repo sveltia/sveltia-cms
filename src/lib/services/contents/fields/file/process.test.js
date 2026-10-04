@@ -136,6 +136,30 @@ describe('Test processResource()', () => {
     });
   });
 
+  test('should not cache a file without a folder to upload it to', async () => {
+    // @ts-ignore - Simplified draft for testing
+    const draft = {
+      files: {},
+    };
+
+    // Only a cloud media library is configured, and the field has no `media_folder` of its own
+    const resource = {
+      file: new File(['x'], 'image.jpg', { type: 'image/jpeg' }),
+    };
+
+    // @ts-ignore - Test with simplified types
+    const result = await processResource({ draft, resource, libraryConfig: {} });
+
+    expect(result).toEqual({
+      value: undefined,
+      credit: '',
+      oversizedFileName: undefined,
+      invalidFileName: undefined,
+    });
+    expect(draft.files).toEqual({});
+    expect(createDisplayBlobURL).not.toHaveBeenCalled();
+  });
+
   test('should process resource with asset', async () => {
     // @ts-ignore - Simplified draft for testing
     const draft = {

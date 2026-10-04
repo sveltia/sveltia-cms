@@ -74,7 +74,7 @@ export const getCustomFieldAssetOptions = ({ draft, fieldConfig, typedKeyPath, c
  * uploaded, the public path of the existing asset is returned instead.
  * @throws {TypeError} When the file is not a `File`, or is a `Blob` given without a name.
  * @throws {Error} When the file cannot be decoded or exceeds the size limit configured for the
- * media library.
+ * media library, or there is no asset folder to upload it to.
  */
 export const addFileToDraft = async ({
   draft,
@@ -99,6 +99,12 @@ export const addFileToDraft = async ({
     typedKeyPath,
     componentName,
   });
+
+  // Only a cloud media library is configured, and neither the field nor the collection has its own
+  // `media_folder`
+  if (!folder) {
+    throw new Error(`There is no asset folder to upload the file "${name}" to`);
+  }
 
   const { value, oversizedFileName, invalidFileName } = await processResource({
     draft,
