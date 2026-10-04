@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { decodeBase64, getPathInfo } from '@sveltia/utils/file';
+import { decodeBase64 } from '@sveltia/utils/file';
 
 import { fetchLastCommit } from '$lib/services/backends/git/gitea/commits';
 import { checkInstanceVersion, instance } from '$lib/services/backends/git/gitea/instance';
@@ -13,6 +13,7 @@ import {
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
+import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { dataLoadedProgress } from '$lib/services/contents';
 
@@ -90,9 +91,7 @@ export const fetchFileList = async (lastHash) => {
     }
   }
 
-  return gitEntries
-    .filter(({ type }) => type === 'blob')
-    .map(({ path, sha, size }) => ({ path, sha, size, name: getPathInfo(path).basename }));
+  return toFileListItems(gitEntries);
 };
 
 /**

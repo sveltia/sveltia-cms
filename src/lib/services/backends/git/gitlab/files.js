@@ -1,7 +1,5 @@
 /* eslint-disable no-await-in-loop */
 
-import { getPathInfo } from '@sveltia/utils/file';
-
 import { fetchLastCommit } from '$lib/services/backends/git/gitlab/commits';
 import {
   checkBranchAccess,
@@ -14,6 +12,7 @@ import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { splitIntoChunks } from '$lib/services/utils/array';
 
 /**
@@ -110,10 +109,8 @@ export const fetchFileList = async () => {
     }
   }
 
-  // The `size` is not available from the GitLab API in bulk
-  return blobs
-    .filter(({ type }) => type === 'blob')
-    .map(({ path, sha }) => ({ path, sha, size: 0, name: getPathInfo(path).basename }));
+  // The `size` is not available from the GitLab API in bulk, so it’s left as `0`
+  return toFileListItems(blobs);
 };
 
 /**

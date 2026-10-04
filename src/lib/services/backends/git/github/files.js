@@ -1,4 +1,3 @@
-import { getPathInfo } from '@sveltia/utils/file';
 import mime from 'mime';
 
 import { fetchLastCommit } from '$lib/services/backends/git/github/commits';
@@ -18,6 +17,7 @@ import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { mapConcurrently, runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { fetchAndParseFiles } from '$lib/services/backends/git/shared/fetch';
 import { startSimulatedProgress } from '$lib/services/backends/git/shared/progress';
+import { toFileListItems } from '$lib/services/backends/git/shared/tree';
 import { encodePath } from '$lib/services/backends/git/shared/url';
 import { forkedRepository, openAuthoringInitialized } from '$lib/services/workflow/open-authoring';
 
@@ -103,12 +103,7 @@ export const fetchFileList = async (lastHash) => {
     });
   }
 
-  return blobs.map(({ path, sha, size }) => ({
-    path,
-    sha,
-    size,
-    name: getPathInfo(path).basename,
-  }));
+  return toFileListItems(blobs);
 };
 
 /**
