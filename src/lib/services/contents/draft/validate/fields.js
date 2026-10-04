@@ -84,6 +84,31 @@ const LIST_ITEM_SUBFIELD_REGEX = /\.\d+(?=\.)/g;
 const LIST_ITEM_INDEX_REGEX = /\.\d+(?=\.|$)/g;
 
 /**
+ * Compute the validation messages of a field from its validity state, if it has one, and record
+ * them under the same key path.
+ * @param {object} args Arguments.
+ * @param {LocaleValidityMap} args.validities Validity state.
+ * @param {LocaleValidationMessagesMap} args.validationMessages Validation messages, modified in
+ * place.
+ * @param {LocaleCode} args.locale Locale of the field.
+ * @param {FieldKeyPath} args.keyPath Key path the field’s validity state is kept under.
+ * @param {Field} args.fieldConfig Field configuration.
+ */
+const recordValidationMessages = ({
+  validities,
+  validationMessages,
+  locale,
+  keyPath,
+  fieldConfig,
+}) => {
+  const validity = validities[locale][keyPath];
+
+  if (validity) {
+    validationMessages[locale][keyPath] = getFieldValidationMessages({ validity, fieldConfig });
+  }
+};
+
+/**
  * Validate each field.
  * @param {ValidateFieldArgs} args Arguments.
  * @returns {EntryValidityState | undefined} Field validity.
@@ -274,7 +299,13 @@ const revalidateSingleField = ({ draft, locale, keyPath, value, valueMap }) => {
   // The field is known to be configured, as `validateAnyField` bails out otherwise
   const fieldConfig = /** @type {Field} */ (keyValueField ?? getField(getFieldArgs));
 
-  validationMessages[locale][stateKeyPath] = getFieldValidationMessages({ validity, fieldConfig });
+  recordValidationMessages({
+    validities,
+    validationMessages,
+    locale,
+    keyPath: stateKeyPath,
+    fieldConfig,
+  });
 };
 
 /**
@@ -433,14 +464,13 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
 
         // Compute messages for the list field itself (only on first item iteration)
         if (!(listKeyPath in validationMessages[locale])) {
-          const listValidity = validities[locale][listKeyPath];
-
-          if (listValidity) {
-            validationMessages[locale][listKeyPath] = getFieldValidationMessages({
-              validity: listValidity,
-              fieldConfig: listFieldConfig,
-            });
-          }
+          recordValidationMessages({
+            validities,
+            validationMessages,
+            locale,
+            keyPath: listKeyPath,
+            fieldConfig: listFieldConfig,
+          });
         }
 
         return validateItems;
@@ -479,8 +509,11 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
 
         delete validities[locale][keyPath];
         validities[locale][fieldKeyPath] = validity;
-        validationMessages[locale][fieldKeyPath] = getFieldValidationMessages({
-          validity,
+        recordValidationMessages({
+          validities,
+          validationMessages,
+          locale,
+          keyPath: fieldKeyPath,
           fieldConfig: keyValueField,
         });
       };
@@ -516,14 +549,13 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
           valid = false;
         }
 
-        const validity = validities[locale][fieldKeyPath];
-
-        if (validity) {
-          validationMessages[locale][fieldKeyPath] = getFieldValidationMessages({
-            validity,
-            fieldConfig: codeField,
-          });
-        }
+        recordValidationMessages({
+          validities,
+          validationMessages,
+          locale,
+          keyPath: fieldKeyPath,
+          fieldConfig: codeField,
+        });
       };
 
       // The items of a List field with subfields or types are flattened to their own subfields,
@@ -587,11 +619,7 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
         valid = false;
       }
 
-      const validity = validities[locale][keyPath];
-
-      if (validity) {
-        validationMessages[locale][keyPath] = getFieldValidationMessages({ validity, fieldConfig });
-      }
+      recordValidationMessages({ validities, validationMessages, locale, keyPath, fieldConfig });
     });
   });
 
