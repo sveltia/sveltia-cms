@@ -4,7 +4,11 @@ import { getWorkflowRepository } from '$lib/services/backends/git/github/fork';
 import { fetchAliasedBatch } from '$lib/services/backends/git/github/graphql';
 import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchGraphQL } from '$lib/services/backends/git/shared/api';
-import { createCommitMessage, dedupeFileCommits } from '$lib/services/backends/git/shared/commits';
+import {
+  assertBranchNotMoved,
+  createCommitMessage,
+  dedupeFileCommits,
+} from '$lib/services/backends/git/shared/commits';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { getByteSize } from '$lib/services/utils/file';
@@ -232,17 +236,10 @@ const createCommit = async ({
 
     return commit;
   } catch (ex) {
-    // Tell a commit refused over a moved head from any other failure, so the user is told what
-    // happened and to try again, which picks up the other change first. GitHub says so in the
-    // error message, but the head is looked up rather than the wording relied upon. A failed lookup
-    // leaves the original error to be reported
-    const head = onWorkflowBranch ? undefined : await fetchLastCommit().catch(() => undefined);
-
-    if (head && head.hash !== expectedHeadOid) {
-      throw createLocalizedError(
-        'The branch has moved since the site data was loaded.',
-        'save_conflict.branch_moved',
-      );
+    // GitHub says so in the error message, but the head is looked up rather than the wording
+    // relied upon
+    if (!onWorkflowBranch) {
+      await assertBranchNotMoved(expectedHeadOid, fetchLastCommit);
     }
 
     throw ex;

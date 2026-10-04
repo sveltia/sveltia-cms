@@ -32,7 +32,7 @@ vi.mock('$lib/services/backends/git/gitlab/repository', () => {
 });
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
-  fetchPerPathCommits: /** @type {any} */ (await importOriginal()).fetchPerPathCommits,
+  .../** @type {any} */ (await importOriginal()),
   createCommitMessage: vi.fn(),
 }));
 vi.mock('$lib/services/backends/git/shared/fetch', () => ({

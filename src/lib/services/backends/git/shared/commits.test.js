@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  assertBranchNotMoved,
   createCommitMessage,
   dedupeFileCommits,
   fetchPerPathCommits,
@@ -785,6 +786,26 @@ describe('git/shared/commits', () => {
         },
       );
     });
+  });
+});
+
+describe('assertBranchNotMoved()', () => {
+  it('throws if the head has moved', async () => {
+    await expect(
+      assertBranchNotMoved('abc', vi.fn().mockResolvedValue({ hash: 'def' })),
+    ).rejects.toThrow('The branch has moved since the site data was loaded.');
+  });
+
+  it('returns if the head is where it was expected', async () => {
+    await expect(
+      assertBranchNotMoved('abc', vi.fn().mockResolvedValue({ hash: 'abc' })),
+    ).resolves.toBeUndefined();
+  });
+
+  it('returns if the head can’t be looked up', async () => {
+    await expect(
+      assertBranchNotMoved('abc', vi.fn().mockRejectedValue(new Error('Network error'))),
+    ).resolves.toBeUndefined();
   });
 });
 

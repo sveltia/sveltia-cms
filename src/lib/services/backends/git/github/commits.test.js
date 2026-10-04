@@ -19,7 +19,7 @@ vi.mock('$lib/services/backends/git/github/fork');
 vi.mock('$lib/services/backends/git/github/repository');
 vi.mock('$lib/services/backends/git/shared/api');
 vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => ({
-  dedupeFileCommits: /** @type {any} */ (await importOriginal()).dedupeFileCommits,
+  .../** @type {any} */ (await importOriginal()),
   createCommitMessage: vi.fn().mockReturnValue('Test commit message'),
 }));
 vi.mock('$lib/services/backends/git/shared/fetch', () => ({

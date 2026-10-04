@@ -1,4 +1,5 @@
 import { mapConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { cmsConfig } from '$lib/services/config';
 import { getCollectionLabel } from '$lib/services/contents/collection';
 import { user } from '$lib/services/user/account.svelte';
@@ -143,6 +144,27 @@ export const dedupeFileCommits = (commits) => {
   });
 
   return [...commitMap.values()].sort((a, b) => b.date.getTime() - a.date.getTime());
+};
+
+/**
+ * Throw an error telling the user that the branch has moved, if its head is no longer the one a
+ * refused commit was based on. This tells a commit refused over a moved head from any other
+ * failure, so the user is told what happened and to try again, which picks up the other change
+ * first. The head is looked up rather than the wording of the error relied upon. A failed lookup
+ * returns quietly, leaving the original error to be reported.
+ * @param {string} expectedHead SHA of the head commit the refused commit was based on.
+ * @param {() => Promise<{ hash: string }>} fetchLastCommit Function to fetch the branch’s head.
+ * @throws {Error} When the branch has moved.
+ */
+export const assertBranchNotMoved = async (expectedHead, fetchLastCommit) => {
+  const head = await fetchLastCommit().catch(() => undefined);
+
+  if (head && head.hash !== expectedHead) {
+    throw createLocalizedError(
+      'The branch has moved since the site data was loaded.',
+      'save_conflict.branch_moved',
+    );
+  }
 };
 
 /**

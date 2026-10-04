@@ -3,6 +3,7 @@ import { encodeBase64 } from '@sveltia/utils/file';
 import { fetchBranch, repository } from '$lib/services/backends/git/gitea/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
+  assertBranchNotMoved,
   createCommitMessage,
   fetchPerPathCommits,
 } from '$lib/services/backends/git/shared/commits';
@@ -139,19 +140,9 @@ export const commitChanges = async (changes, options) => {
     );
   } catch (/** @type {any} */ ex) {
     // A changed file is refused with a 409 Conflict on Forgejo and a 422 Unprocessable Entity on
-    // Gitea, and a file someone else has created at the same path with a 422 on both. Tell it from
-    // any other failure, as the GitHub backend does, so the user is told what happened and to try
-    // again, which picks up the other change first. The head is looked up rather than the wording
-    // relied upon. A failed lookup leaves the original error to be reported
+    // Gitea, and a file someone else has created at the same path with a 422 on both
     if (expectedHead && [409, 422].includes(ex.cause?.status)) {
-      const head = await fetchLastCommit().catch(() => undefined);
-
-      if (head && head.hash !== expectedHead) {
-        throw createLocalizedError(
-          'The branch has moved since the site data was loaded.',
-          'save_conflict.branch_moved',
-        );
-      }
+      await assertBranchNotMoved(expectedHead, fetchLastCommit);
     }
 
     throw ex;

@@ -3,6 +3,7 @@ import { encodeBase64 } from '@sveltia/utils/file';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import {
+  assertBranchNotMoved,
   createCommitMessage,
   fetchPerPathCommits,
 } from '$lib/services/backends/git/shared/commits';
@@ -131,19 +132,9 @@ export const commitChanges = async (changes, options) => {
       })
     );
   } catch (/** @type {any} */ ex) {
-    // GitLab refuses a changed file with a 400 Bad Request, like any other invalid request. Tell it
-    // from the rest, as the GitHub backend does, so the user is told what happened and to try
-    // again, which picks up the other change first. The head is looked up rather than the wording
-    // relied upon. A failed lookup leaves the original error to be reported
+    // GitLab refuses a changed file with a 400 Bad Request, like any other invalid request
     if (expectedHead && ex.cause?.status === 400) {
-      const head = await fetchLastCommit().catch(() => undefined);
-
-      if (head && head.hash !== expectedHead) {
-        throw createLocalizedError(
-          'The branch has moved since the site data was loaded.',
-          'save_conflict.branch_moved',
-        );
-      }
+      await assertBranchNotMoved(expectedHead, fetchLastCommit);
     }
 
     throw ex;
