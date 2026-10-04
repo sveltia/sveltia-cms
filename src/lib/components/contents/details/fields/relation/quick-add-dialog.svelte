@@ -16,13 +16,12 @@
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { revokeDraftFileURLs } from '$lib/services/contents/draft';
   import { buildDraft } from '$lib/services/contents/draft/create';
+  import { initEntryDraftEditor } from '$lib/services/contents/draft/editor.svelte';
   import {
     EntryDraftState,
     getEntryDraftContext,
     setEntryDraftContext,
-    setEntryDraftRoot,
   } from '$lib/services/contents/draft/state.svelte';
-  import { trackComputedValues } from '$lib/services/contents/draft/update/compute-tracking.svelte';
   import {
     countInvalidFields,
     validateAndRevealErrors,
@@ -180,24 +179,11 @@
     }
   });
 
-  $effect(() => {
-    if (wrapper) {
-      // Rich text editor components are mounted outside the component tree, so they look the
-      // draft up through the DOM rather than the context
-      setEntryDraftRoot(wrapper, entryDraft);
-    }
-  });
-
-  $effect(() => {
-    const draft = entryDraft.current;
-
-    if (!draft) {
-      return;
-    }
-
-    // Resolve the Compute fields the same way the main editor does
-    trackComputedValues(draft);
-  });
+  // Register the editor root and resolve the Compute fields the same way the main editor does
+  initEntryDraftEditor(
+    () => entryDraft,
+    () => wrapper,
+  );
 </script>
 
 <Dialog

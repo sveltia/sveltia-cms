@@ -29,11 +29,8 @@
   import { collectionState } from '$lib/services/contents/collection/view';
   import { resetBackupToastState, scheduleBackup } from '$lib/services/contents/draft/backup';
   import { getValueMapVersion } from '$lib/services/contents/draft/create/proxy.svelte';
-  import {
-    setEntryDraftContext,
-    setEntryDraftRoot,
-  } from '$lib/services/contents/draft/state.svelte';
-  import { trackComputedValues } from '$lib/services/contents/draft/update/compute-tracking.svelte';
+  import { initEntryDraftEditor } from '$lib/services/contents/draft/editor.svelte';
+  import { setEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
     editorFirstPane,
     editorSecondPane,
@@ -342,15 +339,6 @@
   });
 
   $effect(() => {
-    /* v8 ignore next 5 -- the wrapper is bound as long as the overlay is mounted */
-    if (wrapper) {
-      // Rich text editor components are mounted outside the component tree, so they look the
-      // draft up through the DOM rather than the context
-      setEntryDraftRoot(wrapper, entryDraft);
-    }
-  });
-
-  $effect(() => {
     if (prefs.devModeEnabled) {
       // Log a plain copy rather than the `$state` proxy. Taking it reads every value in the draft,
       // so the draft is logged again whenever a value or its validity changes
@@ -359,15 +347,12 @@
     }
   });
 
-  $effect(() => {
-    const draft = entryDraft.current;
-
-    if (!draft) {
-      return;
-    }
-
-    trackComputedValues(draft);
-  });
+  // Register the editor root, which the rich text editor components look the draft up with, and
+  // resolve the Compute fields
+  initEntryDraftEditor(
+    () => entryDraft,
+    () => wrapper,
+  );
 
   $effect(() => {
     const draft = entryDraft.current;
