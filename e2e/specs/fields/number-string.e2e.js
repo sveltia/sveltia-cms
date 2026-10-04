@@ -42,7 +42,8 @@ test('saves an entry whose optional number field is left empty', async ({ cms, p
   const editor = page.getByRole('group', { name: 'Content Editor' });
 
   await editor.getByRole('textbox', { name: 'Title' }).fill('Summit');
-  await expect(editor.getByRole('spinbutton', { name: 'Low Temperature' })).toBeVisible();
+  // The empty string the field starts with isn’t shown as `NaN`
+  await expect(editor.getByRole('spinbutton', { name: 'Low Temperature' })).toHaveValue('');
   await editor.getByRole('button', { name: 'Save' }).click();
 
   // An empty field is no value at all rather than zero, so it’s not above the maximum

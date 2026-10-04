@@ -23,8 +23,8 @@ const isStringOutput = ({ value_type: valueType = 'int' }) => !['int', 'float'].
  * @param {object} args Arguments.
  * @param {string | number | null | undefined} args.currentValue Value in the entry draft.
  * @param {NumberField} args.fieldConfig Field configuration.
- * @returns {number | undefined} Number to be shown. `NaN` if the stored value is an empty string,
- * so the input is emptied; `undefined` if there is no stored value, or it can’t be parsed.
+ * @returns {number | undefined} Number to be shown. `undefined` if there is no stored value, or it
+ * is blank or can’t be parsed, which empties the input.
  */
 export const getNumberInputValue = ({ currentValue, fieldConfig }) => {
   if (typeof currentValue === 'number') {
@@ -33,10 +33,6 @@ export const getNumberInputValue = ({ currentValue, fieldConfig }) => {
 
   if (typeof currentValue !== 'string') {
     return undefined;
-  }
-
-  if (!currentValue.trim()) {
-    return NaN;
   }
 
   const value = isFloatType(fieldConfig)

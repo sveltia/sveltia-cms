@@ -26,9 +26,11 @@ describe('getNumberInputValue()', () => {
     expect(getNumberInputValue({ currentValue: null, fieldConfig: createField() })).toBe(undefined);
   });
 
-  test('returns `NaN` for a blank string, so the input is emptied', () => {
-    expect(getNumberInputValue({ currentValue: '', fieldConfig: createField() })).toBeNaN();
-    expect(getNumberInputValue({ currentValue: '  ', fieldConfig: createField() })).toBeNaN();
+  test('returns `undefined` for a blank string, so the input is emptied rather than showing NaN', () => {
+    expect(getNumberInputValue({ currentValue: '', fieldConfig: createField() })).toBe(undefined);
+    expect(
+      getNumberInputValue({ currentValue: '  ', fieldConfig: createField('float/string') }),
+    ).toBe(undefined);
   });
 
   test('parses a string as an integer by default', () => {
