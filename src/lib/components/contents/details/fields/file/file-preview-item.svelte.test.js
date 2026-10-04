@@ -63,6 +63,12 @@ const renderItem = async (value, config = {}) => {
     props: { value, fieldConfig, typedKeyPath: 'doc' },
   });
 
+  // The example URLs can’t be loaded. Keep a failed request, whenever it fails, from replacing the
+  // image or player with the fallback icon before it’s checked
+  container.addEventListener('error', (event) => event.stopImmediatePropagation(), {
+    capture: true,
+  });
+
   return container;
 };
 

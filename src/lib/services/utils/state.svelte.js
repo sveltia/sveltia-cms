@@ -178,6 +178,38 @@ export const watch = (getDependencies, fn) => {
 };
 
 /**
+ * Run an async function whenever the reactive state it reads before its first `await` has changed,
+ * like `$effect`, and pass the result on, unless the function has been run again in the meantime.
+ * This keeps the result of a slow run for an earlier state from replacing the result for a later
+ * one. Use it in a component.
+ * @template T
+ * @param {() => Promise<T> | undefined} fn Function to run. It can return `undefined` instead of a
+ * `Promise` to skip the run, e.g. while a required value is missing.
+ * @param {(result: T) => void} onResult Function receiving the result of the latest run.
+ */
+export const watchAsync = (fn, onResult) => {
+  $effect(() => {
+    const promise = fn();
+
+    if (!promise) {
+      return undefined;
+    }
+
+    let stale = false;
+
+    promise.then((result) => {
+      if (!stale) {
+        onResult(result);
+      }
+    });
+
+    return () => {
+      stale = true;
+    };
+  });
+};
+
+/**
  * Keep a field value and the value of its input in sync in both directions, like a bindable prop
  * and the local state bound to an input widget. A change to either side is converted and written to
  * the other side, but only if the converted value is different, so that the other side’s watcher

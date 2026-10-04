@@ -60,6 +60,7 @@
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { createPath, getGitHash } from '$lib/services/utils/file';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import {
@@ -392,29 +393,23 @@
     }
   });
 
-  $effect(() => {
-    // Somehow we need to snapshot `droppedAssets` here to make Svelte aware of its changes
-    void $state.snapshot(droppedAssets);
+  // A read started for an earlier state of the draft can be answered after a later one, which
+  // `watchAsync` takes care of
+  watchAsync(
+    async () => {
+      // Somehow we need to snapshot `droppedAssets` here to make Svelte aware of its changes
+      void $state.snapshot(droppedAssets);
 
-    // A read started for an earlier state of the draft can be answered after a later one
-    let stale = false;
-
-    (async () => {
-      const assets = [
+      return [
         // The draft’s files are read synchronously, so their changes are tracked as well
         ...(draft?.files ? await getUnsavedAssets({ draft, targetFolderPath }) : []),
         ...Object.values(droppedAssets),
       ];
-
-      if (!stale) {
-        unsavedAssets = assets;
-      }
-    })();
-
-    return () => {
-      stale = true;
-    };
-  });
+    },
+    (assets) => {
+      unsavedAssets = assets;
+    },
+  );
 
   $effect(() => {
     if (!showContentOverlay.current) {

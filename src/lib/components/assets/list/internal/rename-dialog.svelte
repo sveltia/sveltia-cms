@@ -9,6 +9,7 @@
   import { getAssetUsedEntries } from '$lib/services/assets/details';
   import { renamingAsset } from '$lib/services/assets/state';
   import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { Entry } from '$lib/types/private';
@@ -64,27 +65,15 @@
     }
   };
 
-  $effect(() => {
-    if (!asset) {
-      return undefined;
-    }
-
-    // Another asset can be renamed before the entries using this one are found
-    let stale = false;
-
-    (async () => {
-      const entries = await getAssetUsedEntries(asset);
-
-      if (!stale) {
-        usedEntries = entries;
-        open = true;
-      }
-    })();
-
-    return () => {
-      stale = true;
-    };
-  });
+  // Another asset can be renamed before the entries using this one are found, which `watchAsync`
+  // takes care of
+  watchAsync(
+    () => (asset ? getAssetUsedEntries(asset) : undefined),
+    (entries) => {
+      usedEntries = entries;
+      open = true;
+    },
+  );
 </script>
 
 <RenameDialog

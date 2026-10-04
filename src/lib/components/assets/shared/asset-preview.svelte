@@ -12,6 +12,7 @@
   } from '$lib/services/assets/info';
   import { hasPDFThumbnail, THUMBNAIL_KINDS } from '$lib/services/assets/kinds';
   import { requestFlushSync } from '$lib/services/utils/render';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { Asset, AssetKind } from '$lib/types/private';
@@ -285,35 +286,34 @@
     }
   });
 
-  $effect(() => {
-    // For the asset-based flow, `resolvedSrc` is set by `updateSrc` after a visibility check
-    if (asset || !resolvedSrc || !mediaElement || loading !== 'lazy') {
-      mediaSrc = resolvedSrc;
+  // The source can change or go away before the element becomes visible, which `watchAsync` takes
+  // care of
+  watchAsync(
+    () => {
+      // For the asset-based flow, `resolvedSrc` is set by `updateSrc` after a visibility check
+      if (asset || !resolvedSrc || !mediaElement || loading !== 'lazy') {
+        mediaSrc = resolvedSrc;
 
-      return undefined;
-    }
-
-    // For externally-provided `src`, use Intersection Observer instead of relying on the native
-    // `loading="lazy"` attribute, which browsers may ignore in grid/flex layouts
-    mediaSrc = undefined;
-
-    const currentSrc = resolvedSrc;
-    const element = mediaElement;
-    // The source can change or go away before the element becomes visible
-    let stale = false;
-
-    (async () => {
-      await waitForVisibility(element);
-
-      if (!stale) {
-        mediaSrc = currentSrc;
+        return undefined;
       }
-    })();
 
-    return () => {
-      stale = true;
-    };
-  });
+      // For externally-provided `src`, use Intersection Observer instead of relying on the native
+      // `loading="lazy"` attribute, which browsers may ignore in grid/flex layouts
+      mediaSrc = undefined;
+
+      const currentSrc = resolvedSrc;
+      const element = mediaElement;
+
+      return (async () => {
+        await waitForVisibility(element);
+
+        return currentSrc;
+      })();
+    },
+    (currentSrc) => {
+      mediaSrc = currentSrc;
+    },
+  );
 
   $effect(() => {
     if (mediaElement && mediaSrc) {

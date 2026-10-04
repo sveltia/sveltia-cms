@@ -5,6 +5,7 @@
   import { getMediaKind } from '$lib/services/assets/kinds';
   import { getMediaFieldURL } from '$lib/services/assets/media-field';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { AssetKind } from '$lib/types/private';
@@ -42,38 +43,37 @@
   /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
 
-  $effect(() => {
-    void [value];
+  // The lookup for an earlier value can be answered after the one for a later value, which
+  // `watchAsync` takes care of
+  watchAsync(
+    () => {
+      void [value];
 
-    // The lookup for an earlier value can be answered after the one for a later value
-    let stale = false;
+      return untrack(async () => {
+        // Determine the kind and source URL of the media. Skip if it’s an image field because we
+        // already know it’s an image. It’s rather problematic if the path doesn’t have an
+        // extension.
+        const newKind = value ? (isImageField ? 'image' : await getMediaKind(value)) : undefined;
 
-    untrack(async () => {
-      // Determine the kind and source URL of the media. Skip if it’s an image field because we
-      // already know it’s an image. It’s rather problematic if the path doesn’t have an extension.
-      const newKind = value ? (isImageField ? 'image' : await getMediaKind(value)) : undefined;
+        const newSrc = newKind
+          ? await getMediaFieldURL({
+              value,
+              entry,
+              collectionName,
+              fileName,
+              fieldConfig,
+              typedKeyPath,
+            })
+          : undefined;
 
-      const newSrc = newKind
-        ? await getMediaFieldURL({
-            value,
-            entry,
-            collectionName,
-            fileName,
-            fieldConfig,
-            typedKeyPath,
-          })
-        : undefined;
-
-      if (!stale) {
-        kind = newKind;
-        src = newSrc;
-      }
-    });
-
-    return () => {
-      stale = true;
-    };
-  });
+        return { newKind, newSrc };
+      });
+    },
+    ({ newKind, newSrc }) => {
+      kind = newKind;
+      src = newSrc;
+    },
+  );
 </script>
 
 {#if kind && src}

@@ -12,6 +12,7 @@ import {
   getSnapshot,
   syncValues,
   watch,
+  watchAsync,
 } from './state.svelte.js';
 
 /**
@@ -236,6 +237,55 @@ describe('watch()', () => {
     dependency.current = 2;
     await wait();
     expect(log).toEqual(['run 1 a', 'cleanup', 'run 2 b']);
+
+    stop();
+  });
+});
+
+describe('watchAsync()', () => {
+  it('should pass on the result of the latest run only', async () => {
+    const input = /** @type {{ current: number | undefined }} */ (createRawState(1));
+    /** @type {Record<number, (value: string) => void>} */
+    const resolvers = {};
+    /** @type {string[]} */
+    const results = [];
+
+    const stop = createRootEffect(() => {
+      watchAsync(
+        () => {
+          const value = input.current;
+
+          return value === undefined
+            ? undefined
+            : new Promise((resolve) => {
+                resolvers[value] = resolve;
+              });
+        },
+        (result) => {
+          results.push(result);
+        },
+      );
+    });
+
+    await wait();
+    resolvers[1]('one');
+    await wait();
+    expect(results).toEqual(['one']);
+
+    // A slow run for an earlier value is answered after the run for a later value
+    input.current = 2;
+    await wait();
+    input.current = 3;
+    await wait();
+    resolvers[3]('three');
+    resolvers[2]('two');
+    await wait();
+    expect(results).toEqual(['one', 'three']);
+
+    // A skipped run doesn’t pass anything on
+    input.current = undefined;
+    await wait();
+    expect(results).toEqual(['one', 'three']);
 
     stop();
   });

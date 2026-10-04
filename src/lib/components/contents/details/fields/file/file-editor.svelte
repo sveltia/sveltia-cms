@@ -38,6 +38,7 @@
   import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
   import { focusReorderControl } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
+  import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
    * @import {
@@ -362,31 +363,25 @@
     onMove: moveItem,
   });
 
-  $effect(() => {
-    const draft = entryDraft.current;
+  // A read started for an earlier state of the draft can be answered after a later one, which
+  // `watchAsync` takes care of
+  watchAsync(
+    () => {
+      const draft = entryDraft.current;
 
-    // The editor is closed along with the draft, so this is only a race with the editor closing
-    /* v8 ignore next 3 */
-    if (!draft) {
-      return undefined;
-    }
-
-    // A read started for an earlier state of the draft can be answered after a later one
-    let stale = false;
-
-    (async () => {
-      // The draft’s files are read synchronously, so their changes are tracked as well
-      const assets = await getUnsavedAssets({ draft, targetFolderPath });
-
-      if (!stale) {
-        unsavedAssets = assets;
+      // The editor is closed along with the draft, so this is only a race with the editor closing
+      /* v8 ignore next 3 */
+      if (!draft) {
+        return undefined;
       }
-    })();
 
-    return () => {
-      stale = true;
-    };
-  });
+      // The draft’s files are read synchronously, so their changes are tracked as well
+      return getUnsavedAssets({ draft, targetFolderPath });
+    },
+    (assets) => {
+      unsavedAssets = assets;
+    },
+  );
 </script>
 
 {#snippet uploadButton()}
