@@ -165,6 +165,21 @@ describe('refreshOpenedDraft', () => {
     expect(createDraft).not.toHaveBeenCalled();
   });
 
+  test('leaves the draft alone when the user starts on it while the backup is looked up', async () => {
+    const entryDraft = makeEntryDraft();
+
+    vi.mocked(getBackup).mockImplementation(async () => {
+      // The user types something in the meantime
+      entryDraft.current.interacted = true;
+
+      return null;
+    });
+
+    await refreshOpenedDraft(entryDraft);
+
+    expect(createDraft).not.toHaveBeenCalled();
+  });
+
   test('gives up quietly when the repository can’t be reached', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const error = new Error('offline');

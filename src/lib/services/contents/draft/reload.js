@@ -37,6 +37,15 @@ export const reloadDraft = async ({ entryDraft, entry }) => {
 };
 
 /**
+ * Check if the given draft is still the one in the editor, and the user hasn’t touched it yet.
+ * @param {EntryDraftState} entryDraft Entry draft state of the editor.
+ * @param {EntryDraft} draft Draft opened in the editor.
+ * @returns {boolean} Result.
+ */
+const isDraftUntouched = (entryDraft, draft) =>
+  entryDraft.current === draft && !draft.interacted && !isDraftModified(draft);
+
+/**
  * Bring a draft that has just been opened for an existing entry up to date with the repository, so
  * the editor shows the entry as it is rather than as it was when the site data was loaded. The
  * check is made in passing, so an entry opened right after another costs nothing. If the entry has
@@ -63,7 +72,7 @@ export const refreshOpenedDraft = async (entryDraft) => {
     return;
   }
 
-  if (entryDraft.current !== draft || draft.interacted || isDraftModified(draft)) {
+  if (!isDraftUntouched(entryDraft, draft)) {
     return;
   }
 
@@ -82,6 +91,11 @@ export const refreshOpenedDraft = async (entryDraft) => {
   // its own time, so the dialog can’t be relied upon to be showing yet. Restoring it into a draft
   // that has just been replaced would lose the restored edits, so the draft is left alone
   if (await getBackup(collectionName, getBackupSlug(draft))) {
+    return;
+  }
+
+  // The user may have started on the draft, or moved on, while the backup was being looked up
+  if (!isDraftUntouched(entryDraft, draft)) {
     return;
   }
 
