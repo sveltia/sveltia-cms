@@ -10,7 +10,7 @@
   import UploadAssetsButton from '$lib/components/assets/list/internal/upload-assets-button.svelte';
   import PreviewAssetButton from '$lib/components/assets/list/preview-asset-button.svelte';
   import PrimaryToolbar from '$lib/components/assets/list/primary-toolbar.svelte';
-  import { goBack, goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goBack, goto } from '$lib/services/app/navigation';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
@@ -63,7 +63,10 @@
    * as the back button on small screens does.
    */
   const browseAncestor = (depth, back) => {
-    const path = `/assets/${createPath([folder?.internalPath, ...subfolderNames.slice(0, depth)])}`;
+    const path = encodeRoutePath(
+      `/assets/${createPath([folder?.internalPath, ...subfolderNames.slice(0, depth)])}`,
+    );
+
     const options = { transitionType: /** @type {const} */ ('backwards'), state: { folder } };
 
     if (back) {
@@ -86,7 +89,7 @@
 <PrimaryToolbar rootLabel={folderLabel} {subfolderNames} onBrowse={browseAncestor}>
   {#snippet actions()}
     <PreviewAssetButton
-      path={asset ? `/assets/${asset.path}` : undefined}
+      path={asset ? encodeRoutePath(`/assets/${asset.path}`) : undefined}
       disabled={!asset || !canPreviewAsset(asset)}
     />
     <CopyAssetsButton assets={asset ? [asset] : []} />

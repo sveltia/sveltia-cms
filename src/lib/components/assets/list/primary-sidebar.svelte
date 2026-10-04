@@ -6,7 +6,7 @@
 
   import QuickSearchBar from '$lib/components/global/toolbar/items/quick-search-bar.svelte';
   import { appNumberFormatter } from '$lib/services/app/i18n';
-  import { goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { getAssetsByFolder } from '$lib/services/assets';
   import {
     enabledCloudServices,
@@ -115,7 +115,7 @@
               selected={env.isSmallScreen || isSearchPage ? false : selected}
               label={getFolderLabel(folder)}
               onSelect={() => {
-                goto(`/assets/${internalPath ?? '-/all'}`, {
+                goto(encodeRoutePath(`/assets/${internalPath ?? '-/all'}`), {
                   transitionType: 'forwards',
                   // An internal path can be shared by multiple collections, files and fields. Pass
                   // the folder info as history state so we can distinguish these different asset
@@ -127,7 +127,7 @@
                 // Selecting the folder already selected doesn’t fire `onSelect` again, but a click
                 // on it while one of its subfolders is browsed should still lead back to its root
                 if (selected && selectedSubfolderPath.current) {
-                  goto(`/assets/${internalPath}`, {
+                  goto(encodeRoutePath(`/assets/${internalPath}`), {
                     transitionType: 'backwards',
                     state: { folder },
                   });

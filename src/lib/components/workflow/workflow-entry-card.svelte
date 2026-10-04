@@ -12,7 +12,7 @@
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
   import DeployStatusBadge from '$lib/components/workflow/deploy-status-badge.svelte';
-  import { goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { isReadonly } from '$lib/services/config/readonly';
   import { getCollection, getCollectionLabel } from '$lib/services/contents/collection';
   import {
@@ -136,7 +136,7 @@ a merged or read-only one -->
     disabled={gone}
     onclick={() => {
       // A collection file is addressed by its name, while its `subPath` is the whole file path
-      goto(`/collections/${collectionName}/entries/${fileName ?? entry.subPath}`, {
+      goto(encodeRoutePath(`/collections/${collectionName}/entries/${fileName ?? entry.subPath}`), {
         transitionType: 'forwards',
       });
     }}

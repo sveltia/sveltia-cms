@@ -3,7 +3,7 @@
   import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import { goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { getFolderLabelByCollection } from '$lib/services/assets/view';
 
   /**
@@ -27,7 +27,7 @@
 
 <GridRow
   onclick={() => {
-    goto(`/assets/${path}`, { transitionType: 'forwards' });
+    goto(encodeRoutePath(`/assets/${path}`), { transitionType: 'forwards' });
   }}
 >
   <GridCell class="image">

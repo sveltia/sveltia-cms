@@ -4,7 +4,7 @@
 
   import AssetsPanel from '$lib/components/assets/browser/assets-panel.svelte';
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
-  import { goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { isAssetInFolder } from '$lib/services/assets';
   import { assetsLocked, canCreateAsset, getAssetFolder } from '$lib/services/assets/folders';
   import { allAssets, uploadingAssets } from '$lib/services/assets/state';
@@ -36,7 +36,7 @@
       <AssetsPanel
         {assets}
         onSelect={({ asset }) => {
-          goto(`/assets/${asset.path}`, { transitionType: 'forwards' });
+          goto(encodeRoutePath(`/assets/${asset.path}`), { transitionType: 'forwards' });
         }}
       />
     </DropZone>

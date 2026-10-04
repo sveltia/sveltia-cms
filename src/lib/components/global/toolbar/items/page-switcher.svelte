@@ -2,7 +2,7 @@
   import { _ } from '@sveltia/i18n';
   import { Icon, SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
-  import { goto, selectedPageName } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto, selectedPageName } from '$lib/services/app/navigation';
   import {
     enabledCloudServices,
     getCloudServicePath,
@@ -29,7 +29,7 @@
     }
 
     if (allAssetFolders.current.length) {
-      return `/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`;
+      return encodeRoutePath(`/assets/${selectedAssetFolder.current?.internalPath ?? '-/all'}`);
     }
 
     return getCloudServicePath(enabledCloudServices.current[0] ?? linkedFilesService);

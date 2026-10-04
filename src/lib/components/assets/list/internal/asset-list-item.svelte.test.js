@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { parseLocation } from '$lib/services/app/navigation';
 import { focusedAsset, selectedAssets } from '$lib/services/assets/state';
 import { focusedSubfolder } from '$lib/services/assets/subfolders';
 import { env } from '$lib/services/user/env.svelte';
@@ -69,5 +70,18 @@ describe('AssetListItem', () => {
 
     await row.dblClick();
     await expect.poll(() => window.location.hash).toBe('#/assets/static/uploads/a.png');
+  });
+
+  test('encodes special characters in the file name of the opened asset', async () => {
+    window.location.hash = '#/assets';
+
+    const asset = createMockAsset({ name: '50%off #1.png' });
+
+    await render(AssetListItem, { asset, viewType: 'list' });
+    await page.getByRole('row', { name: '50%off #1.png' }).dblClick();
+    await expect
+      .poll(() => window.location.hash)
+      .toBe('#/assets/static/uploads/50%25off%20%231.png');
+    expect(parseLocation().path).toBe(`/assets/${asset.path}`);
   });
 });

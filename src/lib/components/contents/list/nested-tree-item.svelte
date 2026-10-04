@@ -4,7 +4,7 @@
 
   // The component recursively renders itself for the child folders
   import NestedTreeItem from '$lib/components/contents/list/nested-tree-item.svelte';
-  import { goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { isDescendantPath, nestedFilterPath } from '$lib/services/contents/collection/nested';
 
@@ -58,7 +58,9 @@
   bind:expanded
   items={children.length ? childItems : undefined}
   onSelect={() => {
-    goto(`/collections/${collectionName}/filter/${path}`, { transitionType: 'forwards' });
+    goto(encodeRoutePath(`/collections/${collectionName}/filter/${path}`), {
+      transitionType: 'forwards',
+    });
   }}
 >
   {#snippet startIcon()}

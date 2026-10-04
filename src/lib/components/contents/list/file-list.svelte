@@ -6,7 +6,7 @@
   import ListContainer from '$lib/components/common/list-container.svelte';
   import ListingGrid from '$lib/components/common/listing-grid.svelte';
   import StatusBadge from '$lib/components/workflow/status-badge.svelte';
-  import { goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { isValidCollectionFile } from '$lib/services/contents/collection/predicates';
   import { unpublishedEntries } from '$lib/services/workflow';
@@ -45,9 +45,12 @@
           {#await sleep() then}
             <GridRow
               onclick={() => {
-                goto(`/collections/${selectedCollection.current?.name}/entries/${name}`, {
-                  transitionType: 'forwards',
-                });
+                goto(
+                  encodeRoutePath(
+                    `/collections/${selectedCollection.current?.name}/entries/${name}`,
+                  ),
+                  { transitionType: 'forwards' },
+                );
               }}
             >
               <GridCell class="title">

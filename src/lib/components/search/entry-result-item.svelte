@@ -4,7 +4,7 @@
   import { sleep } from '@sveltia/utils/misc';
 
   import EntryThumbnail from '$lib/components/contents/shared/entry-thumbnail.svelte';
-  import { goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import { getListedCollections } from '$lib/services/contents/collection/entries';
   import {
@@ -47,10 +47,15 @@
 {#snippet resultRow(/** @type {RowArgs} */ { collection, collectionFile })}
   <GridRow
     onclick={() => {
-      goto(`/collections/${collection.name}/entries/${collectionFile?.name || subPath}`, {
-        state: { highlight: { locale, keyPath } },
-        transitionType: 'forwards',
-      });
+      goto(
+        encodeRoutePath(
+          `/collections/${collection.name}/entries/${collectionFile?.name || subPath}`,
+        ),
+        {
+          state: { highlight: { locale, keyPath } },
+          transitionType: 'forwards',
+        },
+      );
     }}
   >
     <GridCell class="image">

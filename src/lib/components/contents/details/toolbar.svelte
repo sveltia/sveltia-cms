@@ -24,7 +24,7 @@
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
-  import { goBack, goto, overlayTitle } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goBack, goto, overlayTitle } from '$lib/services/app/navigation';
   import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
   import { isDraftReadonly } from '$lib/services/config/readonly';
   import { getCollectionLabel } from '$lib/services/contents/collection';
@@ -296,7 +296,7 @@
 
     goBack(
       dirPath
-        ? `/collections/${collectionName}/filter/${dirPath}`
+        ? encodeRoutePath(`/collections/${collectionName}/filter/${dirPath}`)
         : `/collections/${collectionName}`,
       options,
     );
@@ -466,10 +466,12 @@
         // whole file path. This is done even when the editor is about to be closed, so the `new`
         // route doesn’t stay in the session history: moving forward from the entry list then
         // reopens the entry that was just created instead of a blank editor
-        goto(`/collections/${collectionName}/entries/${fileName ?? savedEntry.subPath}`, {
-          replaceState: true,
-          notifyChange: false,
-        });
+        goto(
+          encodeRoutePath(
+            `/collections/${collectionName}/entries/${fileName ?? savedEntry.subPath}`,
+          ),
+          { replaceState: true, notifyChange: false },
+        );
       }
 
       if (prefs.closeOnSave ?? true) {

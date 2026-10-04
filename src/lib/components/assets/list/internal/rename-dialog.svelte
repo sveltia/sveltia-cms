@@ -3,7 +3,7 @@
   import { getPathInfo } from '@sveltia/utils/file';
 
   import RenameDialog from '$lib/components/assets/list/rename-dialog.svelte';
-  import { goto, parseLocation } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto, parseLocation } from '$lib/services/app/navigation';
   import { getAssetsByDirName } from '$lib/services/assets';
   import { moveAssets } from '$lib/services/assets/data/move';
   import { getAssetUsedEntries } from '$lib/services/assets/details';
@@ -57,7 +57,10 @@
     await moveAssets('rename', [{ asset, path: newPath }]);
 
     if (parseLocation().path === `/assets/${oldPath}`) {
-      await goto(`/assets/${newPath}`, { replaceState: true, notifyChange: false });
+      await goto(encodeRoutePath(`/assets/${newPath}`), {
+        replaceState: true,
+        notifyChange: false,
+      });
     }
   };
 

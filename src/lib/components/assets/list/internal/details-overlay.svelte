@@ -12,7 +12,7 @@
   import TextPreview from '$lib/components/assets/list/text-preview.svelte';
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import NotFound from '$lib/components/global/not-found.svelte';
-  import { goBack, goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goBack, goto } from '$lib/services/app/navigation';
   import { planAssetDeletion } from '$lib/services/assets/data/cascade';
   import { deleteAssets } from '$lib/services/assets/data/delete';
   import {
@@ -48,7 +48,9 @@
   const assets = $derived(asset ? [asset] : []);
   // Back to the subfolder the asset was opened from, if the folder is browsed by subfolder
   const backPath = $derived(
-    `/assets/${browsedDirPath.current ?? selectedAssetFolder.current?.internalPath ?? '-/all'}`,
+    encodeRoutePath(
+      `/assets/${browsedDirPath.current ?? selectedAssetFolder.current?.internalPath ?? '-/all'}`,
+    ),
   );
   /** The assets right before and after the shown one in the list the overlay was opened from. */
   const { previous, next } = $derived(
@@ -62,7 +64,7 @@
    * @param {ViewTransitionType} transitionType View transition type.
    */
   const showAsset = ({ path }, transitionType) => {
-    goto(`/assets/${path}`, { replaceState: true, transitionType });
+    goto(encodeRoutePath(`/assets/${path}`), { replaceState: true, transitionType });
   };
 
   $effect(() => {

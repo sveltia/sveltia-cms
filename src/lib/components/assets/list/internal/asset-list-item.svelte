@@ -1,6 +1,6 @@
 <script>
   import AssetListItem from '$lib/components/assets/list/asset-list-item.svelte';
-  import { goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { canPreviewAsset } from '$lib/services/assets/kinds';
   import { focusedAsset, selectedAssetPathSet, selectedAssets } from '$lib/services/assets/state';
   import { focusedSubfolder } from '$lib/services/assets/subfolders';
@@ -49,6 +49,6 @@
     focusedSubfolder.current = undefined;
   }}
   onPreview={() => {
-    goto(`/assets/${asset.path}`, { transitionType: 'forwards' });
+    goto(encodeRoutePath(`/assets/${asset.path}`), { transitionType: 'forwards' });
   }}
 />

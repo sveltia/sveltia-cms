@@ -7,7 +7,7 @@
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
 
-  import { goto } from '$lib/services/app/navigation';
+  import { encodeRoutePath, goto } from '$lib/services/app/navigation';
   import { getCollectionLabel } from '$lib/services/contents/collection';
   import {
     getCollectionFileLabel,
@@ -55,13 +55,13 @@
           {@const collectionLabel = getCollectionLabel(collection)}
           {#each getCollectionFilesByEntry(collection, entry) as file (file.name)}
             {@render usedEntryLink({
-              link: `/collections/${collection.name}/entries/${file.name}`,
+              link: encodeRoutePath(`/collections/${collection.name}/entries/${file.name}`),
               collectionLabel,
               entryLabel: getCollectionFileLabel(file),
             })}
           {:else}
             {@render usedEntryLink({
-              link: `/collections/${collection.name}/entries/${entry.subPath}`,
+              link: encodeRoutePath(`/collections/${collection.name}/entries/${entry.subPath}`),
               collectionLabel,
               entryLabel: getEntrySummary(collection, entry, { useTemplate: true }),
             })}

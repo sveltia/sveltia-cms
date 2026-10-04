@@ -5,6 +5,7 @@ import { cmsConfig } from '$lib/services/config';
 import { showContentOverlay } from '$lib/services/contents/editor';
 
 import {
+  encodeRoutePath,
   goBack,
   goto,
   hasOverlay,
@@ -248,6 +249,29 @@ describe('navigation', () => {
     it('should keep the root path as is', () => {
       expect(parseLocation('https://example.com/#/').path).toEqual('/');
       expect(parseLocation('https://example.com/#//').path).toEqual('/');
+    });
+
+    it('should not throw on a malformed escape sequence, decoding the valid ones only', () => {
+      // A link to a `50%off.jpg` file built before route paths were encoded
+      expect(parseLocation('https://example.com/#/assets/50%off.jpg').path).toEqual(
+        '/assets/50%off.jpg',
+      );
+      // `%E9` alone is not valid UTF-8, so it’s left as is
+      expect(parseLocation('https://example.com/#/assets/50%off%20sale%E9.jpg').path).toEqual(
+        '/assets/50%off sale%E9.jpg',
+      );
+    });
+
+    it('should decode an encoded route path back to the original path', () => {
+      const path = '/assets/images/50%off #1?.jpg';
+      const encoded = encodeRoutePath(path);
+
+      expect(encoded).toEqual('/assets/images/50%25off%20%231%3F.jpg');
+      expect(parseLocation(`https://example.com/#${encoded}`)).toEqual({ path, params: {} });
+      // An already-encoded name is kept as is, rather than being decoded to another name
+      expect(
+        parseLocation(`https://example.com/#${encodeRoutePath('/assets/a%20b.jpg')}`).path,
+      ).toEqual('/assets/a%20b.jpg');
     });
 
     it('should join duplicate keys with commas', () => {
@@ -660,6 +684,15 @@ describe('navigation', () => {
       expect(document.startViewTransition).not.toHaveBeenCalled();
     });
 
+    it('should skip navigation when already on the same encoded path', async () => {
+      window.location.href = 'https://example.com/#/assets/50%25off.jpg';
+      window.location.hash = '#/assets/50%25off.jpg';
+
+      await goto(encodeRoutePath('/assets/50%off.jpg'));
+
+      expect(window.history.pushState).not.toHaveBeenCalled();
+    });
+
     it('should navigate when on same path but with custom state', async () => {
       window.location.href = 'https://example.com/#/collections';
       window.location.hash = '#/collections';
@@ -743,6 +776,19 @@ describe('navigation', () => {
         expect.any(Object),
         '',
         'https://example.com/#/collections/posts/entries/2026/hello',
+      );
+    });
+
+    it('should keep special characters in the sub path encoded', () => {
+      window.location.href = 'https://example.com/#/edit/posts/50%25off%20%231';
+      window.location.hash = '#/edit/posts/50%25off%20%231';
+
+      expect(redirectLegacyEntryLink()).toBe(true);
+
+      expect(window.history.replaceState).toHaveBeenCalledWith(
+        expect.any(Object),
+        '',
+        'https://example.com/#/collections/posts/entries/50%25off%20%231',
       );
     });
 
@@ -866,6 +912,28 @@ describe('navigation', () => {
       }
 
       expect(mockNavigationBack).toHaveBeenCalled();
+    });
+
+    it('should go back when the previous entry matches the encoded fallback path', () => {
+      Object.defineProperty(window, 'navigation', {
+        value: {
+          currentEntry: { index: 1 },
+          entries: vi.fn(() => [
+            { sameDocument: true, url: 'https://example.com/#/assets/a/50%25off%20%231' },
+          ]),
+          back: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      goBack(encodeRoutePath('/assets/a/50%off #1'));
+
+      expect(window.history.pushState).not.toHaveBeenCalled();
+      expect(document.startViewTransition).toHaveBeenCalledWith({
+        types: ['backwards'],
+        update: expect.any(Function),
+      });
     });
 
     it('should fall back to goto when the previous navigation entry does not match the target path', () => {
