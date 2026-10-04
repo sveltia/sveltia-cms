@@ -1714,6 +1714,27 @@ describe('assets/info', () => {
       expect(result).toBeDefined();
     });
 
+    it('should use the asset’s own folder when neither a collection nor a global folder is found', async () => {
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+
+      // Without the global `media_folder` option, there is no global folder
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+      mockGlobalAssetFolder.current = undefined;
+
+      const assetWithCollection = {
+        ...mockAsset,
+        path: 'static/posts/test.jpg',
+        folder: {
+          ...mockAsset.folder,
+          collectionName: 'posts',
+          internalPath: 'static/posts',
+          publicPath: '/posts',
+        },
+      };
+
+      expect(getAssetPublicURL(assetWithCollection, { pathOnly: true })).toBe('/posts/test.jpg');
+    });
+
     it('should handle undefined baseURL in cmsConfig', () => {
       mockCmsConfig._baseURL = undefined;
 

@@ -600,6 +600,34 @@ describe('assets/data/move', () => {
       );
     });
 
+    it('should fall back to the asset’s own folder without a global folder', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const { getAssetFoldersByPath } = await import('$lib/services/assets/folders');
+      const entry = { id: 'entry1', locales: {} };
+      const asset = { ...mockAsset, folder: { internalPath: 'assets', publicPath: '/media' } };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
+      vi.mocked(getAssetFoldersByPath).mockReturnValue([]);
+      vi.mocked(getEntriesByAssets)
+        .mockResolvedValueOnce([[entry]])
+        .mockResolvedValueOnce([]);
+
+      const updatingEntryMap = new Map();
+
+      // Without the global `media_folder` option, there is no global folder
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: undefined,
+        movingAssets: [{ asset, path: 'assets/new/image.jpg' }],
+        updatingEntryMap,
+      });
+
+      expect(getEntriesByAssets).toHaveBeenLastCalledWith(
+        [{ asset, newURL: '/media/new/image.jpg' }],
+        { entries: [updatingEntryMap.get('entry1')] },
+      );
+    });
+
     it('should rewrite the references in a copy of each entry, falling back to the folder paths', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
       const { getEntriesByAssets } = await import('$lib/services/assets/references');

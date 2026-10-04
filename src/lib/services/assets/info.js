@@ -542,7 +542,10 @@ export const getAssetPublicURL = (
         // used for multiple collections, and the public path can be different for each
         (getAssetFoldersByPath(asset.path).find(
           ({ collectionName }) => collectionName !== undefined,
-        ) ?? globalAssetFolder.current);
+        ) ??
+        globalAssetFolder.current ??
+        // There is no global folder without the global `media_folder` option
+        asset.folder);
 
   // Try to determine an entry-relative path if the asset is in the same folder as the entry, or a
   // sub-folder of it

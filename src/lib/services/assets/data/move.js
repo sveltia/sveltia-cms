@@ -140,7 +140,7 @@ export const collectEntryChanges = async ({ entry, savingEntries, changes }) => 
  * Get the new URL of a moved asset that has no public path, as in an entry-relative folder, by
  * swapping the folder’s internal path for its public path.
  * @param {object} args Arguments.
- * @param {AssetFolderInfo} args._globalAssetFolder Global asset folder.
+ * @param {AssetFolderInfo | undefined} args._globalAssetFolder Global asset folder, if any.
  * @param {string} args.newPath New path for the asset.
  * @param {Asset} args.asset Asset being moved.
  * @returns {string} URL.
@@ -148,7 +148,9 @@ export const collectEntryChanges = async ({ entry, savingEntries, changes }) => 
 const getFallbackURL = ({ _globalAssetFolder, newPath, asset }) => {
   const { publicPath } =
     getAssetFoldersByPath(asset.path).find(({ collectionName }) => collectionName !== undefined) ??
-    _globalAssetFolder;
+    _globalAssetFolder ??
+    // There is no global folder without the global `media_folder` option
+    asset.folder;
 
   return newPath.replace(asset.folder.internalPath ?? '', publicPath ?? '');
 };
@@ -180,7 +182,7 @@ const getRenamedReference = (oldName, newName) => (src) => {
  * Rewrite the references to the given assets in the entries that use them, so these point at the
  * assets’ new paths. The entries are searched once for all the assets, however many there are.
  * @param {object} args Arguments.
- * @param {AssetFolderInfo} args._globalAssetFolder Global asset folder.
+ * @param {AssetFolderInfo | undefined} args._globalAssetFolder Global asset folder, if any.
  * @param {MovingAsset[]} args.movingAssets Assets being moved, with their new paths.
  * @param {Map<string, Entry>} args.updatingEntryMap Copies of the entries being rewritten, keyed by
  * entry ID. An entry using several of the moved assets is copied once and has every reference
