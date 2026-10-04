@@ -54,6 +54,23 @@ describe('MARKDOWN_FIELD_KEYS', () => {
   });
 });
 
+/**
+ * Give the entries the order values 10, 2 and 100, in that order.
+ * @param {Entry[]} entries Entries.
+ * @param {string} [key] Order field key.
+ * @returns {Entry[]} Entries with the order values.
+ */
+const withOrders = (entries, key = 'order') =>
+  entries.map((entry, index) => ({
+    ...entry,
+    locales: {
+      en: {
+        ...entry.locales.en,
+        content: { ...entry.locales.en?.content, [key]: [10, 2, 100][index] },
+      },
+    },
+  }));
+
 describe('sortEntries', () => {
   /** @type {InternalCollection} */
   const mockCollection = {
@@ -1363,13 +1380,7 @@ describe('sortEntries', () => {
     const locale = 'en';
     const reorderableCollection = { ...mockCollection, reorder: true };
 
-    vi.mocked(getPropertyValue).mockImplementation(({ entry }) => {
-      const orders = { 'entry-1': 10, 'entry-2': 2, 'entry-3': 100 };
-
-      return orders[entry.slug];
-    });
-
-    const result = sortEntries(mockEntries, reorderableCollection, {
+    const result = sortEntries(withOrders(mockEntries), reorderableCollection, {
       key: 'order',
       order: 'ascending',
       locale,
@@ -1383,18 +1394,10 @@ describe('sortEntries', () => {
 
   test('should sort numerically when the key is the special _manual key', () => {
     const locale = 'en';
-    const reorderableCollection = { ...mockCollection, reorder: true };
+    // The resolved key should be the actual order field, not `_manual`.
+    const reorderableCollection = { ...mockCollection, reorder: { key: 'weight' } };
 
-    vi.mocked(getPropertyValue).mockImplementation(({ entry, key }) => {
-      // The resolved key should be the actual order field, not `_manual`.
-      expect(key).toBe('order');
-
-      const orders = { 'entry-1': 10, 'entry-2': 2, 'entry-3': 100 };
-
-      return orders[entry.slug];
-    });
-
-    const result = sortEntries(mockEntries, reorderableCollection, {
+    const result = sortEntries(withOrders(mockEntries, 'weight'), reorderableCollection, {
       key: '_manual',
       order: 'ascending',
       locale,
@@ -1402,6 +1405,76 @@ describe('sortEntries', () => {
 
     expect(result.map((e) => e.slug)).toEqual(['entry-2', 'entry-1', 'entry-3']);
     expect(vi.mocked(getSortKeyType)).not.toHaveBeenCalled();
+  });
+
+  test('should sort by the position in the array for the _manual key of an array file collection', () => {
+    const arrayFileCollection = {
+      ...mockCollection,
+      _type: 'entry',
+      _file: { ...mockCollection._file, format: 'json', arrayFile: true },
+    };
+
+    const result = sortEntries(
+      mockEntries.map((entry, index) => ({ ...entry, arrayIndex: 2 - index })),
+      arrayFileCollection,
+      { key: '_manual', order: 'ascending' },
+    );
+
+    expect(result.map((e) => e.slug)).toEqual(['entry-3', 'entry-2', 'entry-1']);
+    expect(vi.mocked(getPropertyValue)).not.toHaveBeenCalled();
+  });
+
+  test('should keep the index file at the top when sorting by the order field', () => {
+    vi.mocked(isCollectionIndexFile).mockImplementation(
+      (_collection, entry) => entry.slug === 'entry-3',
+    );
+
+    const result = sortEntries(
+      withOrders(mockEntries),
+      { ...mockCollection, reorder: true },
+      {
+        key: '_manual',
+        order: 'ascending',
+      },
+    );
+
+    expect(result.map((e) => e.slug)).toEqual(['entry-3', 'entry-2', 'entry-1']);
+  });
+
+  test('should put an entry without a valid order value last, like the reorder UI', () => {
+    const reorderableCollection = { ...mockCollection, reorder: true };
+
+    /**
+     * Create an entry with the given order value.
+     * @param {string} slug Slug.
+     * @param {any} order Order value, or `undefined` to leave it out.
+     * @returns {Entry} Entry.
+     */
+    const entry = (slug, order) => ({
+      id: slug,
+      slug,
+      subPath: slug,
+      locales: { en: { slug, path: `${slug}.md`, content: order === undefined ? {} : { order } } },
+    });
+
+    const entries = [entry('a', undefined), entry('b', 2), entry('c', 'x'), entry('d', 1)];
+
+    expect(
+      sortEntries(entries, reorderableCollection, { key: '_manual', order: 'ascending' }).map(
+        (e) => e.slug,
+      ),
+    ).toEqual(['d', 'b', 'a', 'c']);
+    // Sorting by the order field itself does the same
+    expect(
+      sortEntries(entries, reorderableCollection, { key: 'order', order: 'ascending' }).map(
+        (e) => e.slug,
+      ),
+    ).toEqual(['d', 'b', 'a', 'c']);
+    expect(
+      sortEntries(entries, reorderableCollection, { key: '_manual', order: 'descending' }).map(
+        (e) => e.slug,
+      ),
+    ).toEqual(['c', 'a', 'b', 'd']);
   });
 
   test('should fall back to the _manual key when the collection has no reorder configuration', () => {
@@ -1475,26 +1548,6 @@ describe('getSortKeyGetter', () => {
       locale: 'en',
       useTemplate: true,
     });
-  });
-
-  test('should return the position in the array for the _manual key of an array file collection', () => {
-    const getter = getSortKeyGetter({
-      key: '_manual',
-      type: Number,
-      collection: {
-        ...mockCollection,
-        _type: 'entry',
-        _file: { ...mockCollection._file, format: 'json', arrayFile: true },
-      },
-      locale: 'en',
-      collectionName: 'posts',
-      dateFieldConfig: undefined,
-      isMarkdownField: false,
-    });
-
-    expect(getter({ ...mockEntry, arrayIndex: 3 })).toBe(3);
-    expect(getter(mockEntry)).toBe(0);
-    expect(vi.mocked(getPropertyValue)).not.toHaveBeenCalled();
   });
 
   test('should return a numeric timestamp for a datetime field', () => {

@@ -1,7 +1,7 @@
 import { sortItemsByKey } from '$lib/services/common/view';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
-import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder/sort';
 import { getSortKeyType } from '$lib/services/contents/collection/view/sort-keys';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getEntrySummary } from '$lib/services/contents/entry/summary';
@@ -11,7 +11,12 @@ import { getDate } from '$lib/services/contents/fields/date-time/parse';
 import { removeMarkdownSyntax } from '$lib/services/utils/markdown';
 
 /**
- * @import { Entry, InternalCollection, SortingConditions } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * InternalCollection,
+ * InternalEntryCollection,
+ * SortingConditions,
+ * } from '$lib/types/private';
  * @import { DateTimeField } from '$lib/types/public';
  */
 
@@ -52,11 +57,6 @@ export const getSortKeyGetter = ({
   dateFieldConfig,
   isMarkdownField,
 }) => {
-  // An entry collection storing all the entries in one file keeps them in the order of the array
-  if (key === '_manual' && isArrayFileCollection(collection)) {
-    return (/** @type {Entry} */ entry) => entry.arrayIndex ?? 0;
-  }
-
   // Special handling for summary, which uses a generated value instead of a raw field value
   if (key === '_summary') {
     return (/** @type {Entry} */ entry) =>
@@ -90,6 +90,24 @@ export const getSortKeyGetter = ({
 };
 
 /**
+ * Move the collection’s index file to the top of the sorted entries, where it should always be.
+ * It’s told by its path rather than by its slug, because another collection’s index file within
+ * this collection’s folder carries the same slug.
+ * @param {Entry[]} entries Sorted entries, which are modified in place.
+ * @param {InternalCollection} collection Collection that the entries belong to.
+ * @returns {Entry[]} The given entries.
+ */
+const moveIndexFileToTop = (entries, collection) => {
+  const index = entries.findIndex((entry) => isCollectionIndexFile(collection, entry));
+
+  if (index > -1) {
+    entries.unshift(entries.splice(index, 1)[0]);
+  }
+
+  return entries;
+};
+
+/**
  * Sort the given entries.
  * @param {Entry[]} entries Entry list.
  * @param {InternalCollection} collection Collection that the entries belong to.
@@ -110,15 +128,26 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
     _i18n: { defaultLocale: locale },
   } = collection;
 
-  // The `_manual` special key sorts by the collection’s reorder field. Resolve it to the actual
-  // field key so value lookup works for entries.
-  const orderFieldKey = getOrderFieldKey(collection);
-  const resolvedKey = key === '_manual' ? (orderFieldKey ?? key) : key;
-  const fieldConfig = getField({ collectionName, keyPath: resolvedKey });
-  // The reorder field stores numeric values but may not be defined under the collection’s `fields`,
-  // so it would default to a string sort. Force a numeric sort for it.
-  const isOrderKey = key === '_manual' || resolvedKey === orderFieldKey;
-  const type = isOrderKey ? Number : getSortKeyType({ key, fieldConfig });
+  // The `_manual` special key sorts by the collection’s reorder field, or by the position in the
+  // array. Either way, the entries are sorted the same as in the reorder UI and when they are
+  // renumbered: an entry without a valid number goes last, keeping its place among the others. The
+  // field may not be defined under the collection’s `fields`, so it would otherwise default to a
+  // string sort, and a missing value would come first
+  if (key === '_manual' || key === getOrderFieldKey(collection)) {
+    const sorted = sortEntriesByOrderField(
+      entries,
+      /** @type {InternalEntryCollection} */ (collection),
+    );
+
+    if (order === 'descending') {
+      sorted.reverse();
+    }
+
+    return moveIndexFileToTop(sorted, collection);
+  }
+
+  const fieldConfig = getField({ collectionName, keyPath: key });
+  const type = getSortKeyType({ key, fieldConfig });
 
   const dateFieldConfig =
     fieldConfig?.widget === 'datetime' ? /** @type {DateTimeField} */ (fieldConfig) : undefined;
@@ -129,7 +158,7 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
     RICH_TEXT_FIELD_TYPES.includes(fieldConfig?.widget ?? '') || MARKDOWN_FIELD_KEYS.includes(key);
 
   const getSortKey = getSortKeyGetter({
-    key: resolvedKey,
+    key,
     type,
     collection,
     locale,
@@ -141,13 +170,5 @@ export const sortEntries = (entries, collection, { key, order } = {}) => {
   // `sortItemsByKey()` computes the key once per entry, so there’s no need for a lookup table here
   sortItemsByKey(_entries, getSortKey, !dateFieldConfig && type === String, order);
 
-  // Index file should always be at the top. It’s told by its path rather than by its slug, because
-  // another collection’s index file within this collection’s folder carries the same slug
-  const index = _entries.findIndex((entry) => isCollectionIndexFile(collection, entry));
-
-  if (index > -1) {
-    _entries.unshift(_entries.splice(index, 1)[0]);
-  }
-
-  return _entries;
+  return moveIndexFileToTop(_entries, collection);
 };

@@ -51,6 +51,28 @@ test('lists the entries in their manual order', async ({ page }) => {
   `);
 });
 
+test('lists an entry without an order last, the same as when reordering', async ({ cms, page }) => {
+  // The file was added outside the CMS
+  await cms.seed({
+    'content/faqs/how-do-i-sign-up.md': '---\nquestion: How do I sign up?\nanswer: Online.\n---\n',
+  });
+  // The test backend signs in again on its own
+  await page.reload();
+
+  const snapshot = `
+    - rowgroup:
+      - row /When can I water\\?/
+      - row /Who can join\\?/
+      - row /Are tools provided\\?/
+      - row /How do I sign up\\?/
+  `;
+
+  await expect(getEntryList(page)).toMatchAriaSnapshot(snapshot);
+  await page.getByRole('button', { name: 'Reorder Entries' }).click();
+  await expect(page.getByRole('button', { name: 'Done Reordering Entries' })).toBeVisible();
+  await expect(getEntryList(page)).toMatchAriaSnapshot(snapshot);
+});
+
 test('moves an entry up, and saves the new order of the entries that moved', async ({
   cms,
   page,
