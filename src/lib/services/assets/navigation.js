@@ -206,6 +206,7 @@ export const resolveAssetsRoute = () => {
     return { ...state, isSearchPage: isSearchRoute(path) }; // Different page
   }
 
+  /** @type {{ folderPath?: string, fileName?: string }} */
   let { folderPath, fileName } = match.groups;
 
   if (

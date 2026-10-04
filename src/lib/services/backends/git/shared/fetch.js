@@ -143,7 +143,8 @@ export const getFileList = async ({
  * updated with the files of that commit.
  * @param {object} args Arguments.
  * @param {IndexedDB} args.metaDB The meta database instance.
- * @param {string} args.lastConfigHash The CMS configuration hash the files were fetched for.
+ * @param {string | undefined} args.lastConfigHash The CMS configuration hash the files were
+ * fetched for.
  * @param {string} args.lastCommitHash The commit hash the files were fetched at.
  */
 export const saveFileListMeta = async ({ metaDB, lastConfigHash, lastCommitHash }) => {
