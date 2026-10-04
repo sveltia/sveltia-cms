@@ -435,77 +435,56 @@ const validateListItself = (context, { listKeyPath, fieldConfig, listFieldConfig
 };
 
 /**
- * Validate the KeyValue field the value belongs to, if it’s a pair. A pair is stored under an
- * arbitrary key, e.g. `metadata.color`, that has no field configuration of its own, so the field is
- * validated through its first pair and the result is recorded for the field, where the editor shows
- * it. Without this, a KeyValue field holding pairs would never be validated.
+ * Validate the field the value belongs to when the value’s key path has no field configuration of
+ * its own, but its parent’s does, and record the result under the field’s key path, where the
+ * editor shows it. The field is validated only once, however many of its sub-keys are in the value
+ * map. A KeyValue pair is stored under an arbitrary key, e.g. `metadata.color`, so the field is
+ * validated through its first pair and the result is moved to the field’s key path. Without this, a
+ * KeyValue field holding pairs would never be validated. A Code field that stores an object is
+ * flattened into its code and language, e.g. `snippet.code`, and an existing entry has no value at
+ * the field’s own key path, so the field is validated through its sub-keys at the field’s key path.
  * @param {FieldValidationContext} context Validation context.
- * @param {FieldKeyPath} keyPath Key path of the value.
- * @param {any} value Value.
+ * @param {object} args Arguments.
+ * @param {FieldKeyPath} args.keyPath Key path of the value.
+ * @param {any} args.value Value.
+ * @param {(args: GetFieldArgs) => Field | undefined} args.getParentField Function to get the
+ * configuration of the field the value belongs to.
+ * @param {boolean} args.viaSubKey Whether to validate the field with the value at its own key path
+ * and move the result to the field’s key path, instead of with the value at the field’s key path.
  * @returns {boolean} Whether the field is valid, or `true` if it hasn’t been validated.
  */
-const validateKeyValuePair = (context, keyPath, value) => {
-  const { validateArgs, validationMessages, getFieldArgs } = context;
-  const { validities, locale } = validateArgs;
-  const keyValueField = getKeyValueField({ ...getFieldArgs });
-  const fieldKeyPath = keyPath.replace(PAIR_KEY_PATH_REGEX, '');
-
-  if (!keyValueField || fieldKeyPath in validities[locale]) {
-    return true;
-  }
-
-  const valid = validateField({ ...validateArgs, keyPath, value });
-  const validity = validities[locale][keyPath];
-
-  // A field that can’t be edited in the locale isn’t validated
-  if (!validity) {
-    return valid;
-  }
-
-  delete validities[locale][keyPath];
-  validities[locale][fieldKeyPath] = validity;
-  recordValidationMessages({
-    validities,
-    validationMessages,
-    locale,
-    keyPath: fieldKeyPath,
-    fieldConfig: keyValueField,
-  });
-
-  return valid;
-};
-
-/**
- * Validate the Code field the value belongs to, if it’s the code or language of one that stores an
- * object, e.g. `snippet.code`. Like a KeyValue pair, such a key path has no field configuration of
- * its own, and an existing entry has no value at the field’s own key path, so the field is
- * validated through its sub-keys, only once, at the field’s key path.
- * @param {FieldValidationContext} context Validation context.
- * @param {FieldKeyPath} keyPath Key path of the value.
- * @returns {boolean} Whether the field is valid, or `true` if it hasn’t been validated.
- */
-const validateCodeSubKey = (context, keyPath) => {
+const validateParentField = (context, { keyPath, value, getParentField, viaSubKey }) => {
   const { validateArgs, validationMessages, getFieldArgs } = context;
   const { validities, locale, valueMap } = validateArgs;
-  const codeField = getCodeField({ ...getFieldArgs });
+  const fieldConfig = getParentField({ ...getFieldArgs });
   const fieldKeyPath = keyPath.replace(PAIR_KEY_PATH_REGEX, '');
 
-  if (!codeField || fieldKeyPath in validities[locale]) {
+  if (!fieldConfig || fieldKeyPath in validities[locale]) {
     return true;
   }
+
+  const validateKeyPath = viaSubKey ? keyPath : fieldKeyPath;
 
   const valid = validateField({
     ...validateArgs,
-    keyPath: fieldKeyPath,
-    value: valueMap[fieldKeyPath],
+    keyPath: validateKeyPath,
+    value: viaSubKey ? value : valueMap[fieldKeyPath],
   });
+
+  const validity = validities[locale][validateKeyPath];
+
+  // A field that can’t be edited in the locale isn’t validated, so there is nothing to move
+  if (viaSubKey && validity) {
+    delete validities[locale][keyPath];
+    validities[locale][fieldKeyPath] = validity;
+  }
 
   recordValidationMessages({
     validities,
     validationMessages,
     locale,
     keyPath: fieldKeyPath,
-    fieldConfig: codeField,
+    fieldConfig,
   });
 
   return valid;
@@ -610,11 +589,22 @@ export const validateFields = (valueStoreKey, { draft, enforceRequired = true })
           : undefined);
 
       if (!fieldConfig) {
-        if (!validateKeyValuePair(context, keyPath, value)) {
-          valid = false;
-        }
+        // The value may be a KeyValue pair, or the code or language of a Code field
+        const pairValid = validateParentField(context, {
+          keyPath,
+          value,
+          getParentField: getKeyValueField,
+          viaSubKey: true,
+        });
 
-        if (!validateCodeSubKey(context, keyPath)) {
+        const codeValid = validateParentField(context, {
+          keyPath,
+          value,
+          getParentField: getCodeField,
+          viaSubKey: false,
+        });
+
+        if (!pairValid || !codeValid) {
           valid = false;
         }
 
