@@ -9,7 +9,6 @@
     Menu,
     MenuButton,
     MenuItem,
-    MenuItemCheckbox,
     Spacer,
     SplitButton,
     Toast,
@@ -17,11 +16,13 @@
     TruncatedText,
   } from '@sveltia/ui';
 
-  import CascadeDeleteNote from '$lib/components/common/cascade-delete-note.svelte';
   import BackButton from '$lib/components/common/page-toolbar/back-button.svelte';
+  import DeleteEntryDialog from '$lib/components/contents/details/delete-entry-dialog.svelte';
   import ResetDialog from '$lib/components/contents/details/editor/reset-dialog.svelte';
   import ResetMenuItems from '$lib/components/contents/details/editor/reset-menu-items.svelte';
+  import ViewMenuItems from '$lib/components/contents/details/editor/view-menu-items.svelte';
   import PreviewLinkButton from '$lib/components/contents/details/preview-link-button.svelte';
+  import SaveConflictDialog from '$lib/components/contents/details/save-conflict-dialog.svelte';
   import EntryStatusMenu from '$lib/components/workflow/entry-status-menu.svelte';
   import PublishEntryButton from '$lib/components/workflow/publish-entry-button.svelte';
   import { encodeRoutePath, goBack, goto, overlayTitle } from '$lib/services/app/navigation';
@@ -38,7 +39,6 @@
   import { createDraft } from '$lib/services/contents/draft/create';
   import { duplicateDraft } from '$lib/services/contents/draft/create/duplicate';
   import { saveEntry } from '$lib/services/contents/draft/save';
-  import { describeConflict } from '$lib/services/contents/draft/save/conflict';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { canResetEntry } from '$lib/services/contents/draft/update/reset';
   import { validateDraft } from '$lib/services/contents/draft/validate';
@@ -48,10 +48,6 @@
     awaitPendingFieldUpdates,
     fieldUpdatePending,
   } from '$lib/services/contents/editor/pending';
-  import {
-    entryEditorSettings,
-    toggleEntryEditorSetting,
-  } from '$lib/services/contents/editor/settings';
   import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { canUpdateSlug } from '$lib/services/contents/editor/slug';
   import {
@@ -60,10 +56,6 @@
     getSaveFailure,
   } from '$lib/services/contents/editor/toolbar';
   import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
-  import {
-    EMPTY_CASCADE_DELETE_PLAN,
-    planCascadeDelete,
-  } from '$lib/services/contents/entry/relations/cascade/delete';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
@@ -164,9 +156,7 @@
   const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
   const collectionFile = $derived(entryDraft.current?.collectionFile);
   const originalEntry = $derived(entryDraft.current?.originalEntry);
-  const { i18nEnabled, allLocales, defaultLocale } = $derived(
-    getDraftI18nConfig(entryDraft.current),
-  );
+  const { defaultLocale } = $derived(getDraftI18nConfig(entryDraft.current));
   const collectionName = $derived(collection?.name);
   const fileName = $derived(collectionFile?.name);
   /* v8 ignore start -- only read for an existing entry, which has a collection */
@@ -196,7 +186,6 @@
         ? _('create_entry_title', { values: { name: collectionLabelSingular } })
         : `${collectionLabel} › ${entrySummary}`,
   );
-  const canPreview = $derived(entryDraft.current?.canPreview ?? true);
 
   $effect(() => {
     overlayTitle.current = title;
@@ -205,18 +194,6 @@
       overlayTitle.current = '';
     };
   });
-  const showSecondPane = $derived(entryEditorSettings.current?.showSecondPane ?? true);
-  // There’s only something to put in the second pane when another locale can be edited alongside
-  // the first one, or when the entry has a preview
-  const canShowSecondPane = $derived((i18nEnabled && allLocales.length > 1) || canPreview);
-  // Whether the preview is shown in the second pane, which is all the pane shows for an entry with
-  // a single locale, so there’s nothing to sync the scrolling with otherwise
-  const previewShown = $derived(canPreview && !!entryEditorSettings.current?.showPreview);
-  /* v8 ignore start -- only read while the draft is there, and the preview is hidden */
-  const hasSingleLocale = $derived(
-    Object.keys(entryDraft.current?.currentValues ?? {}).length === 1,
-  );
-  /* v8 ignore stop */
   // Saving, deleting or duplicating takes a moment and navigates away when it’s done, so the whole
   // control group is locked meanwhile rather than just the button that started it
   const busy = $derived(saving || deleting || duplicating);
@@ -285,14 +262,6 @@
   // is when the discarded entry goes away, so it doesn’t change while the dialog is closing
   const discardDialogStrings = $derived(
     getDiscardDialogStrings({ pendingDeletion, publishedVersionExists: true }),
-  );
-  // What the deletion means for the entries referencing this one through Relation fields. Nothing
-  // on the configured branch can reference a draft that has never been published, and the scan is
-  // only worth doing while the dialog is open
-  const cascadePlan = $derived(
-    showDeleteDialog && collection && originalEntry && !discardsDraft
-      ? planCascadeDelete({ collection, collectionFile, entries: [originalEntry] })
-      : EMPTY_CASCADE_DELETE_PLAN,
   );
 
   // Keep the deploy state fresh while the editor is open, so a build that finishes in the
@@ -726,32 +695,7 @@
           />
         {/if}
         {#if env.isLargeScreen}
-          <Divider />
-          <MenuItemCheckbox
-            label={_('show_second_pane')}
-            checked={showSecondPane}
-            disabled={!canShowSecondPane}
-            onChange={() => {
-              toggleEntryEditorSetting('showSecondPane', true);
-            }}
-          />
-          <!-- The preview is rendered in the second pane, so it’s unavailable while hidden -->
-          <MenuItemCheckbox
-            label={_('show_preview')}
-            checked={entryEditorSettings.current?.showPreview}
-            disabled={!showSecondPane || !canPreview}
-            onChange={() => {
-              toggleEntryEditorSetting('showPreview');
-            }}
-          />
-          <MenuItemCheckbox
-            label={_('sync_scrolling')}
-            checked={entryEditorSettings.current?.syncScrolling}
-            disabled={!showSecondPane || (!previewShown && hasSingleLocale)}
-            onChange={() => {
-              toggleEntryEditorSetting('syncScrolling');
-            }}
-          />
+          <ViewMenuItems />
         {/if}
       </Menu>
     {/snippet}
@@ -810,37 +754,18 @@
   {_('workflow.confirm_sending_for_review')}
 </ConfirmationDialog>
 
-<ConfirmationDialog
+<DeleteEntryDialog
   bind:open={showDeleteDialog}
-  title={_('delete_entries', { values: { count: 1 } })}
-  okLabel={_('delete')}
-  okDisabled={!!cascadePlan.blockers.length}
+  {discardsDraft}
+  {useWorkflow}
+  withAssets={!!associatedAssets.length}
   onOk={async () => {
     await deleteEntry();
   }}
   onClose={() => {
     menuButton?.focus();
   }}
->
-  <!-- There’s nothing to confirm when the deletion is refused; the note explains why -->
-  {#if cascadePlan.blockers.length}
-    <CascadeDeleteNote plan={cascadePlan} count={1} />
-  {:else}
-    {#if unpublishedEntry && !publishedVersionExists}
-      {_('workflow.confirm_deleting_unpublished_entry')}
-    {:else if useWorkflow}
-      <!-- The removal is committed to a pull request rather than to the configured branch -->
-      {_('workflow.confirm_deleting_published_entry')}
-    {:else}
-      {_(
-        associatedAssets.length
-          ? 'confirm_deleting_this_entry_with_assets'
-          : 'confirm_deleting_this_entry',
-      )}
-    {/if}
-    <CascadeDeleteNote plan={cascadePlan} count={1} />
-  {/if}
-</ConfirmationDialog>
+/>
 
 <ConfirmationDialog
   bind:open={showDiscardDialog}
@@ -856,41 +781,16 @@
   {discardDialogStrings.message}
 </ConfirmationDialog>
 
-{#snippet conflictDescription()}
-  {#if saveConflict}
-    {@const { description, warning } = describeConflict(saveConflict.conflict, appLocale.current)}
-    {description}
-    {warning}
-  {/if}
-{/snippet}
-
-<!-- An entry stored in a file with the other entries can’t be saved over the change, so the dialog
-only tells what happened -->
-{#if saveConflict?.conflict.canOverwrite === false}
-  <AlertDialog
-    bind:open={showConflictDialog}
-    title={_('save_conflict.title')}
-    onClose={() => {
-      menuButton?.focus();
-    }}
-  >
-    {@render conflictDescription()}
-  </AlertDialog>
-{:else}
-  <ConfirmationDialog
-    bind:open={showConflictDialog}
-    title={_('save_conflict.title')}
-    okLabel={_('save_conflict.save_anyway')}
-    onOk={async () => {
-      await save({ skipCI: saveConflict?.skipCI, overwrite: true });
-    }}
-    onClose={() => {
-      menuButton?.focus();
-    }}
-  >
-    {@render conflictDescription()}
-  </ConfirmationDialog>
-{/if}
+<SaveConflictDialog
+  bind:open={showConflictDialog}
+  conflict={saveConflict?.conflict}
+  onOverwrite={async () => {
+    await save({ skipCI: saveConflict?.skipCI, overwrite: true });
+  }}
+  onClose={() => {
+    menuButton?.focus();
+  }}
+/>
 
 <!-- Shown while the request is in flight. The result is reported by the content library page,
 because this toast goes away with the editor once the deletion has completed -->
