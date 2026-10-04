@@ -147,6 +147,42 @@ export const removeUnpublishedEntry = (branch) => {
 };
 
 /**
+ * Attach the given pull request to the entry, and add the resulting unpublished entry to the
+ * {@link unpublishedEntries} store or replace the one already there.
+ * @param {Entry} entry Entry the pull request holds.
+ * @param {object} args Arguments.
+ * @param {WorkflowPullRequest} args.pullRequest Pull request.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {string[]} args.previousPaths Paths the entry occupied before the pull request.
+ * @returns {UnpublishedEntry} Unpublished entry.
+ */
+const storeUnpublishedEntry = (entry, { pullRequest, collectionName, fileName, previousPaths }) => {
+  /** @type {UnpublishedEntry} */
+  const unpublishedEntry = {
+    ...entry,
+    workflow: { pullRequest, status: pullRequest.status, collectionName, fileName, previousPaths },
+  };
+
+  upsertUnpublishedEntry(unpublishedEntry);
+
+  return unpublishedEntry;
+};
+
+/**
+ * Remove the entry of the given merged or closed pull request from the {@link unpublishedEntries}
+ * store, settle the assets committed to its branch, and forget the deployments of its head commit.
+ * @param {WorkflowPullRequest} pullRequest Pull request.
+ * @param {(branch: string) => void} settleAssets Function to publish or remove the assets committed
+ * to the branch: {@link publishWorkflowAssets} or {@link removeWorkflowAssets}.
+ */
+const clearUnpublishedEntry = (pullRequest, settleAssets) => {
+  removeUnpublishedEntry(pullRequest.branch);
+  settleAssets(pullRequest.branch);
+  forgetDeployments([pullRequest.headSHA]);
+};
+
+/**
  * Save the given entry changes as a pull request instead of committing them directly to the
  * configured branch. The pull request and the workflow branch are created on the first save, and
  * updated on subsequent saves.
@@ -201,25 +237,6 @@ export const saveWorkflowChanges = async ({
     originalEntry ? getEntryPaths(originalEntry) : [],
   );
 
-  /** @type {UnpublishedEntry} */
-  const unpublishedEntry = {
-    ...savingEntry,
-    // Reuse the existing ID so the editor doesn’t lose track of the entry after a save
-    id: existingEntry?.id ?? savingEntry.id,
-    commitAuthor,
-    commitDate,
-    workflow: {
-      // The backend returns the existing pull request as is when there already is one, so the head
-      // commit it carries is the one from before this save. Point it at the new commit, so the
-      // deploy preview lookup doesn’t keep reporting the previous build until the next full load
-      pullRequest: { ...pullRequest, headSHA: commit.sha },
-      status: pullRequest.status,
-      collectionName,
-      fileName,
-      previousPaths,
-    },
-  };
-
   // The assets are committed to the workflow branch only, but add them to the regular asset list
   // right away, so the image attached to the entry can be previewed before it’s published
   const savedAssets = savingAssets.map((asset) => ({
@@ -230,7 +247,25 @@ export const saveWorkflowChanges = async ({
     workflow: { branch },
   }));
 
-  upsertUnpublishedEntry(unpublishedEntry);
+  const unpublishedEntry = storeUnpublishedEntry(
+    {
+      ...savingEntry,
+      // Reuse the existing ID so the editor doesn’t lose track of the entry after a save
+      id: existingEntry?.id ?? savingEntry.id,
+      commitAuthor,
+      commitDate,
+    },
+    {
+      // The backend returns the existing pull request as is when there already is one, so the head
+      // commit it carries is the one from before this save. Point it at the new commit, so the
+      // deploy preview lookup doesn’t keep reporting the previous build until the next full load
+      pullRequest: { ...pullRequest, headSHA: commit.sha },
+      collectionName,
+      fileName,
+      previousPaths,
+    },
+  );
+
   mergeWorkflowAssets(savedAssets);
 
   return {
@@ -338,9 +373,7 @@ const mergeWorkflowEntry = async (entry) => {
   // version on it
   allEntries.current = deletion ? remaining : [...remaining, publishedEntry];
 
-  removeUnpublishedEntry(pullRequest.branch);
-  publishWorkflowAssets(pullRequest.branch);
-  forgetDeployments([pullRequest.headSHA]);
+  clearUnpublishedEntry(pullRequest, publishWorkflowAssets);
   // The merge put a new commit on the configured branch, so the production build to watch is a
   // different one now. The entry is listed as on its way until that build is done, so the head has
   // to be known before it’s recorded
@@ -390,9 +423,7 @@ export const discardWorkflowEntry = async (entry) => {
   const { pullRequest } = entry.workflow;
 
   await workflow.discard(pullRequest);
-  removeUnpublishedEntry(pullRequest.branch);
-  removeWorkflowAssets(pullRequest.branch);
-  forgetDeployments([pullRequest.headSHA]);
+  clearUnpublishedEntry(pullRequest, removeWorkflowAssets);
 };
 
 /**
@@ -484,22 +515,13 @@ export const deleteWorkflowEntry = async (
       ? pullRequest
       : await workflow.updateStatus(pullRequest, 'pending_deletion');
 
-  /** @type {UnpublishedEntry} */
-  const unpublishedEntry = {
-    ...entry,
-    workflow: {
-      pullRequest: readyPullRequest,
-      status: readyPullRequest.status,
-      collectionName,
-      fileName: collectionFile?.name,
-      // Where the entry lives on the configured branch, which a rename has already moved away from
-      previousPaths: getPreviousPaths(existingEntry, paths),
-    },
-  };
-
-  upsertUnpublishedEntry(unpublishedEntry);
-
-  return unpublishedEntry;
+  return storeUnpublishedEntry(entry, {
+    pullRequest: readyPullRequest,
+    collectionName,
+    fileName: collectionFile?.name,
+    // Where the entry lives on the configured branch, which a rename has already moved away from
+    previousPaths: getPreviousPaths(existingEntry, paths),
+  });
 };
 
 /**
