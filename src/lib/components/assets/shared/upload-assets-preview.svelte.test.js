@@ -73,6 +73,31 @@ describe('UploadAssetsPreview', () => {
       .toContain('(converted from \u2068JPEG image\u2069)');
   });
 
+  test('labels a file by its extension rather than its MIME subtype', async () => {
+    const svg = new File(['<svg/>'], 'logo.svg', { type: 'image/svg+xml' });
+    const original = new File([''], 'LOGO.SVG', { type: 'image/svg+xml' });
+
+    const { container } = await render(UploadAssetsPreview, {
+      files: [svg],
+      transformedFileMap: new Map([[svg, new File([''], 'logo.png', { type: 'image/png' })]]),
+      showThumbnail: false,
+    });
+
+    await expect.poll(() => container.querySelector('.meta')?.textContent).toContain('SVG image');
+    expect(container.querySelector('.meta')?.textContent).toContain(
+      '(converted from \u2068PNG image\u2069)',
+    );
+
+    await render(UploadAssetsPreview, {
+      files: [image],
+      transformedFileMap: new Map([[image, original]]),
+    });
+
+    await expect
+      .poll(() => document.body.textContent)
+      .toContain('(converted from \u2068SVG image\u2069)');
+  });
+
   test('lists nothing without files', async () => {
     const { container } = await render(UploadAssetsPreview, {});
 

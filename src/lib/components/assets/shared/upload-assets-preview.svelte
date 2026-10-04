@@ -1,12 +1,12 @@
 <script>
   import { _, locale as appLocale } from '@sveltia/i18n';
   import { Button, Icon, TruncatedText } from '@sveltia/ui';
-  import { getPathInfo } from '@sveltia/utils/file';
   import { sleep } from '@sveltia/utils/misc';
   import { onDestroy } from 'svelte';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import { formatSize } from '$lib/services/assets/file-size';
+  import { getFileTypeLabel } from '$lib/services/assets/file-type';
   import { SUPPORTED_IMAGE_TYPES } from '$lib/services/utils/media/image';
 
   /**
@@ -97,9 +97,7 @@
           <div role="none" class="meta">
             {#key appLocale.current}
               <bdi>
-                {_(`file_type_labels.${file.type.split('/')[1]}`, {
-                  default: getPathInfo(name).extension?.toUpperCase(),
-                })}
+                {getFileTypeLabel(name)}
               </bdi>
               ·
               <bdi>{formatSize(size)}</bdi>
@@ -107,9 +105,7 @@
             {#if originalFile && originalFile.type !== file.type}
               {_('file_meta_converted_from_x', {
                 values: {
-                  type: _(`file_type_labels.${originalFile.type.split('/')[1]}`, {
-                    default: getPathInfo(originalFile.name).extension?.toUpperCase(),
-                  }),
+                  type: getFileTypeLabel(originalFile.name),
                 },
               })}
             {/if}

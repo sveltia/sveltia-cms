@@ -27,6 +27,12 @@ describe('FileInfoSections', () => {
     expect(getSections(container)).toEqual({ Kind: 'text/plain', Size: '\u206813\u2069 bytes' });
   });
 
+  test('labels a file by its extension regardless of the case', async () => {
+    const { container } = await render(FileInfoSections, { fileName: 'PHOTO.JPG', kind: 'image' });
+
+    expect(getSections(container)).toEqual({ Kind: 'JPEG image' });
+  });
+
   test('shows the dimensions of an image once read', async () => {
     const { container } = await render(FileInfoSections, {
       fileName: 'photo.png',

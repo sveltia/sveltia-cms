@@ -9,6 +9,7 @@
   import mime from 'mime';
 
   import { formatSize } from '$lib/services/assets/file-size';
+  import { getFileTypeLabel } from '$lib/services/assets/file-type';
   import { formatDuration } from '$lib/services/utils/media/video';
 
   /**
@@ -45,8 +46,8 @@
   <h4>{_('kind')}</h4>
   <p>
     <!-- A linked file may have no extension, e.g. an avatar URL, so fall back to the kind -->
-    {_(`file_type_labels.${extension}`, {
-      default: mime.getType(fileName) ?? (extension ? extension.toUpperCase() : _(kind)),
+    {getFileTypeLabel(fileName, {
+      fallback: mime.getType(fileName) ?? (extension ? extension.toUpperCase() : _(kind)),
     })}
   </p>
 </section>
