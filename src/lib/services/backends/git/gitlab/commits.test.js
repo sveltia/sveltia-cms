@@ -9,6 +9,7 @@ import {
 import { repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { createCommitMessage } from '$lib/services/backends/git/shared/commits';
+import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { getGitHash } from '$lib/services/utils/file';
 
 // Mock dependencies
@@ -34,6 +35,9 @@ vi.mock('$lib/services/backends/git/shared/commits', async (importOriginal) => (
   fetchPerPathCommits: /** @type {any} */ (await importOriginal()).fetchPerPathCommits,
   createCommitMessage: vi.fn(),
 }));
+vi.mock('$lib/services/backends/git/shared/fetch', () => ({
+  repositoryHead: { current: '' },
+}));
 vi.mock('$lib/services/utils/file', () => ({
   getGitHash: vi.fn(),
 }));
@@ -45,6 +49,7 @@ describe('GitLab commits service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     _resetAvatarURLCache();
+    repositoryHead.current = '';
   });
 
   describe('fetchLastCommit', () => {
@@ -346,6 +351,116 @@ describe('GitLab commits service', () => {
       );
 
       expect(result.files).toEqual({});
+    });
+
+    describe('guard against a concurrent push', () => {
+      const changes = /** @type {any} */ ([
+        { action: 'create', path: 'new.md', data: 'x' },
+        { action: 'update', path: 'updated.md', data: 'x' },
+        { action: 'move', path: 'moved.md', previousPath: 'old.md', data: 'x' },
+        { action: 'delete', path: 'deleted.md' },
+      ]);
+
+      /**
+       * Mock the response of the last commit lookup.
+       * @param {string} sha Commit SHA.
+       * @returns {any} Response.
+       */
+      const lastCommitResponse = (sha) => ({
+        project: { repository: { tree: { lastCommit: { sha, message: '' } } } },
+      });
+
+      const changedFileError = new Error('Server responded with an error', {
+        cause: { status: 400, message: 'The file has changed since you started editing it' },
+      });
+
+      beforeEach(() => {
+        repositoryHead.current = 'loaded-head-sha';
+        vi.mocked(createCommitMessage).mockReturnValue('Update');
+        vi.mocked(getGitHash).mockResolvedValue('file123');
+      });
+
+      test('sends the loaded head as the last commit of each existing file', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01' });
+
+        await commitChanges(changes, /** @type {any} */ ({ commitType: 'update' }));
+
+        const { body } = /** @type {any} */ (vi.mocked(fetchAPI).mock.calls[0][1]);
+
+        expect(body.actions.map((/** @type {any} */ a) => a.last_commit_id)).toEqual([
+          undefined,
+          'loaded-head-sha',
+          'loaded-head-sha',
+          'loaded-head-sha',
+        ]);
+        expect(body.actions[0]).not.toHaveProperty('last_commit_id');
+      });
+
+      test('sends no last commit to a workflow branch', async () => {
+        vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01' });
+
+        await commitChanges(
+          changes,
+          /** @type {any} */ ({ commitType: 'update', branch: 'cms/posts/a' }),
+        );
+
+        const { body } = /** @type {any} */ (vi.mocked(fetchAPI).mock.calls[0][1]);
+
+        body.actions.forEach((/** @type {any} */ a) => {
+          expect(a).not.toHaveProperty('last_commit_id');
+        });
+      });
+
+      test('sends no last commit before the site data is loaded', async () => {
+        repositoryHead.current = '';
+        vi.mocked(fetchAPI).mockResolvedValue({ id: 'c1', committed_date: '2023-01-01' });
+
+        await commitChanges(changes, /** @type {any} */ ({ commitType: 'update' }));
+
+        const { body } = /** @type {any} */ (vi.mocked(fetchAPI).mock.calls[0][1]);
+
+        body.actions.forEach((/** @type {any} */ a) => {
+          expect(a).not.toHaveProperty('last_commit_id');
+        });
+      });
+
+      test('reports a commit refused because the branch has moved', async () => {
+        vi.mocked(fetchAPI).mockRejectedValue(changedFileError);
+        vi.mocked(fetchGraphQL).mockResolvedValue(lastCommitResponse('someone-elses-sha'));
+
+        await expect(
+          commitChanges(changes, /** @type {any} */ ({ commitType: 'update' })),
+        ).rejects.toThrow('The branch has moved since the site data was loaded.');
+      });
+
+      test('passes the failure on when the head is where it was expected', async () => {
+        vi.mocked(fetchAPI).mockRejectedValue(changedFileError);
+        vi.mocked(fetchGraphQL).mockResolvedValue(lastCommitResponse('loaded-head-sha'));
+
+        await expect(
+          commitChanges(changes, /** @type {any} */ ({ commitType: 'update' })),
+        ).rejects.toBe(changedFileError);
+      });
+
+      test('passes the failure on when the head can’t be looked up afterwards', async () => {
+        vi.mocked(fetchAPI).mockRejectedValue(changedFileError);
+        vi.mocked(fetchGraphQL).mockRejectedValue(new Error('Failed to send the request'));
+
+        await expect(
+          commitChanges(changes, /** @type {any} */ ({ commitType: 'update' })),
+        ).rejects.toBe(changedFileError);
+      });
+
+      test('passes any other failure on without a head lookup', async () => {
+        const serverError = new Error('Server responded with an error', { cause: { status: 500 } });
+
+        vi.mocked(fetchAPI).mockRejectedValue(serverError);
+
+        await expect(
+          commitChanges(changes, /** @type {any} */ ({ commitType: 'update' })),
+        ).rejects.toBe(serverError);
+        expect(fetchGraphQL).not.toHaveBeenCalled();
+      });
     });
   });
 

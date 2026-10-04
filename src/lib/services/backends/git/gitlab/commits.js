@@ -8,6 +8,7 @@ import {
 } from '$lib/services/backends/git/shared/commits';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { getOrCreateAsync } from '$lib/services/utils/cache';
 import { getGitHash } from '$lib/services/utils/file';
 
@@ -92,6 +93,15 @@ export const fetchLastCommit = async () => {
  */
 export const commitChanges = async (changes, options) => {
   const branch = options.branch ?? repository.branch;
+  // On the configured branch, the commit the loaded site data reflects, which the caller has just
+  // brought up to date. GitLab has no branch-level guard like GitHub’s `expectedHeadOid`: a
+  // `start_sha` is refused on an existing branch unless `force` is set, which would discard someone
+  // else’s push instead. But an action can take a `last_commit_id`, and GitLab 15.10+ refuses an
+  // update, move or deletion when the file’s last commit on the branch differs from its last commit
+  // as of that ID, i.e. when someone else has changed the file since. So the head goes with every
+  // such action, which takes no lookup per file. A workflow branch is only ever written by its own
+  // author, and its files differ from those on the configured branch, so it’s left alone
+  const expectedHead = options.branch ? undefined : repositoryHead.current || undefined;
 
   const actions = await Promise.all(
     changes.map(async ({ action, path, previousPath, data = '' }) => ({
@@ -100,22 +110,46 @@ export const commitChanges = async (changes, options) => {
       encoding: typeof data === 'string' ? 'text' : 'base64',
       file_path: path,
       previous_path: previousPath,
+      ...(expectedHead && action !== 'create' ? { last_commit_id: expectedHead } : {}),
     })),
   );
 
   const endpoint = `/projects/${getProjectId()}/repository/commits`;
   const body = { branch, commit_message: createCommitMessage(changes, options), actions };
   const { startBranch } = options;
+  /** @type {CommitResponse} */
+  let response;
 
-  // GitLab rejects `start_branch` outright once the branch exists. That’s left to the caller to
-  // sort out, because only the Editorial Workflow service can tell whether the branch is a
-  // leftover to start over from or someone’s work in progress to commit onto
-  const { id: sha, committed_date: committedDate } = /** @type {CommitResponse} */ (
-    await fetchAPI(endpoint, {
-      method: 'POST',
-      body: startBranch ? { ...body, start_branch: startBranch } : body,
-    })
-  );
+  try {
+    // GitLab rejects `start_branch` outright once the branch exists. That’s left to the caller to
+    // sort out, because only the Editorial Workflow service can tell whether the branch is a
+    // leftover to start over from or someone’s work in progress to commit onto
+    response = /** @type {CommitResponse} */ (
+      await fetchAPI(endpoint, {
+        method: 'POST',
+        body: startBranch ? { ...body, start_branch: startBranch } : body,
+      })
+    );
+  } catch (/** @type {any} */ ex) {
+    // GitLab refuses a changed file with a 400 Bad Request, like any other invalid request. Tell it
+    // from the rest, as the GitHub backend does, so the user is told what happened and to try
+    // again, which picks up the other change first. The head is looked up rather than the wording
+    // relied upon. A failed lookup leaves the original error to be reported
+    if (expectedHead && ex.cause?.status === 400) {
+      const head = await fetchLastCommit().catch(() => undefined);
+
+      if (head && head.hash !== expectedHead) {
+        throw createLocalizedError(
+          'The branch has moved since the site data was loaded.',
+          'save_conflict.branch_moved',
+        );
+      }
+    }
+
+    throw ex;
+  }
+
+  const { id: sha, committed_date: committedDate } = response;
 
   // Calculate the SHA-1 hash for each file because the GitLab REST API does not return file SHAs
   const entries = await Promise.all(
