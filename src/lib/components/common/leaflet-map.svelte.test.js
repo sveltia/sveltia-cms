@@ -89,6 +89,21 @@ describe('LeafletMap', () => {
     await vi.waitFor(() => expect(element.querySelector('.leaflet-marker-icon')).toBeNull());
   });
 
+  test('removes the map when destroyed', async () => {
+    const onReady = vi.fn();
+    const { unmount } = await render(LeafletMap, { coordinates: undefined, onReady });
+
+    await vi.waitFor(() => expect(onReady).toHaveBeenCalledOnce());
+
+    const { map } = onReady.mock.calls[0][0];
+    const remove = vi.spyOn(map, 'remove');
+
+    unmount();
+
+    // Leaflet listens to the window resize until the map is removed
+    expect(remove).toHaveBeenCalledOnce();
+  });
+
   test('doesn’t create the map once destroyed while Leaflet is loading', async () => {
     const onReady = vi.fn();
     const { loadModule } = await import('$lib/services/app/dependencies');

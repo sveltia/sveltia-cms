@@ -9,6 +9,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { AlertDialog, Button, Icon, Listbox, Option, SearchBar } from '@sveltia/ui';
+  import { onDestroy } from 'svelte';
 
   import LeafletMap from '$lib/components/common/leaflet-map.svelte';
   import { loadModule } from '$lib/services/app/dependencies';
@@ -69,6 +70,8 @@
 
   /** @type {Leaflet.Map | undefined} */
   let map = undefined;
+  /** Whether the component has been destroyed, possibly before the drawing tools are loaded. */
+  let destroyed = false;
 
   /**
    * Load the Terra Draw libraries and initialize the draw instance once the Leaflet map is ready.
@@ -90,6 +93,11 @@
       'terra-draw-leaflet-adapter',
       'dist/terra-draw-leaflet-adapter.module.js?module',
     );
+
+    // The component may have been destroyed, and the map removed, while the libraries were loading
+    if (destroyed) {
+      return;
+    }
 
     /** @type {Record<string, any>} */
     const constructors = {
@@ -301,6 +309,11 @@
   const clearValue = () => {
     currentValue = '';
   };
+
+  onDestroy(() => {
+    destroyed = true;
+    draw?.stop();
+  });
 
   watch(
     () => [draw, currentValue],

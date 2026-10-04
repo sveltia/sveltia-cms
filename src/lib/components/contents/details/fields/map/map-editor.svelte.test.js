@@ -1,4 +1,5 @@
 import { sleep } from '@sveltia/utils/misc';
+import { TerraDraw } from 'terra-draw';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -36,7 +37,8 @@ vi.mock('$lib/services/contents/fields/map/geocoding', () => ({ searchLocations 
  * @param {Record<string, any>} [config] Field options.
  * @param {string} [currentValue] Field value.
  * @param {Record<string, any>} [props] Props to override.
- * @returns {Promise<{ props: any, container: HTMLElement }>} Props and container.
+ * @returns {Promise<{ props: any, container: HTMLElement, unmount: () => void }>} Props,
+ * container and a function to unmount the editor.
  */
 const renderEditor = async (config = {}, currentValue = '', props = {}) => {
   const _props = $state({
@@ -45,9 +47,9 @@ const renderEditor = async (config = {}, currentValue = '', props = {}) => {
     ...props,
   });
 
-  const { container } = await render(MapEditor, /** @type {any} */ (_props));
+  const { container, unmount } = await render(MapEditor, /** @type {any} */ (_props));
 
-  return { props: _props, container };
+  return { props: _props, container, unmount };
 };
 
 /**
@@ -286,6 +288,53 @@ describe('MapEditor', () => {
     await expect
       .poll(() => container.querySelector('.leaflet-tile')?.getAttribute('src'))
       .toMatch(/\/2\/\d+\/\d+\.png$/);
+  });
+
+  test('stops the drawing tools when destroyed', async () => {
+    const stop = vi.spyOn(TerraDraw.prototype, 'stop');
+    const { container, unmount } = await renderEditor();
+
+    await waitForMap(container);
+    unmount();
+
+    expect(stop).toHaveBeenCalledOnce();
+    stop.mockRestore();
+  });
+
+  test('doesn’t start the drawing tools once destroyed while they are loading', async () => {
+    const { loadModule } = await import('$lib/services/app/dependencies');
+    const start = vi.spyOn(TerraDraw.prototype, 'start');
+    /**
+     * Resolve the pending import of Terra Draw.
+     * @type {(value: any) => void}
+     */
+    let resolve = () => {};
+
+    const loadAll = /** @type {(...args: any[]) => any} */ (
+      vi.mocked(loadModule).getMockImplementation()
+    );
+
+    vi.mocked(loadModule).mockImplementation((library, ...args) =>
+      library === 'terra-draw'
+        ? new Promise((r) => {
+            resolve = r;
+          })
+        : loadAll(library, ...args),
+    );
+
+    try {
+      const { container, unmount } = await renderEditor();
+
+      await expect.poll(() => container.querySelector('.leaflet-container')).not.toBeNull();
+      unmount();
+      resolve(await import('terra-draw'));
+      await sleep(100);
+
+      expect(start).not.toHaveBeenCalled();
+    } finally {
+      start.mockRestore();
+      vi.mocked(loadModule).mockImplementation(loadAll);
+    }
   });
 
   test('is read-only', async () => {

@@ -142,6 +142,14 @@
     return () => {
       destroyed = true;
       resizeObserver?.disconnect();
+
+      // Remove the map, along with the window resize listener Leaflet keeps until then
+      if (instance) {
+        // Leaflet ends a zoom animation with a timer that `remove()` doesn’t clear, and that then
+        // throws on the removed map, so mark the animation as over first
+        /** @type {any} */ (instance.map)._animatingZoom = false;
+        instance.map.remove();
+      }
     };
   });
 </script>
