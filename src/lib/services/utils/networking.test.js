@@ -19,6 +19,11 @@ describe('isSecureURL', () => {
     expect(isSecureURL('http://127.0.0.1:3000/hook')).toBe(true);
   });
 
+  test('should allow HTTP URLs on a subdomain of localhost', () => {
+    expect(isSecureURL('http://mysite.localhost:4321/admin/config.yml')).toBe(true);
+    expect(isSecureURL('http://localhost.example.com/hook')).toBe(false);
+  });
+
   test('should reject non-local HTTP URLs', () => {
     expect(isSecureURL('http://example.com/hook')).toBe(false);
   });
