@@ -342,6 +342,25 @@ describe('EditorComponent', () => {
       await expect.element(placeholder).toHaveTextContent('Hi');
     });
 
+    test('adds no space between an inline placeholder and the text before it', async () => {
+      const { wrapper } = await renderComponent({
+        mode: 'dialog',
+        inline: true,
+        values: { title: 'Hello', url: '' },
+      });
+
+      // Lexical puts the text before an inline node in a sibling element
+      const text = document.createElement('span');
+
+      text.textContent = 'Text ';
+      wrapper.prepend(text);
+
+      const placeholder = page.getByRole('button', { name: 'Card' });
+
+      await expect.element(placeholder).toBeVisible();
+      expect(getComputedStyle(placeholder.element()).marginInlineStart).toBe('0px');
+    });
+
     test('shows the first text field or the label without a summary template', async () => {
       await renderComponent({
         mode: 'dialog',

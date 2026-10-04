@@ -637,10 +637,6 @@
     &.block {
       width: fit-content;
     }
-
-    &.inline:not(:first-child) {
-      margin-inline-start: var(--sui-paragraph-margin);
-    }
   }
 
   .fields {
