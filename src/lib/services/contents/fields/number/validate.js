@@ -13,10 +13,15 @@ import { isFieldRequired } from '$lib/services/contents/entry/fields';
 export const validateNumberField = ({ fieldConfig, locale, value }) => {
   const config = /** @type {NumberField} */ (fieldConfig);
   const { value_type: valueType = 'int', min, max } = config;
-  const rangeUnderflow = typeof min === 'number' && value !== null && Number(value) < min;
 
-  const rangeOverflow =
-    !rangeUnderflow && typeof max === 'number' && value !== null && Number(value) > max;
+  // A blank string, which an empty `int/string` or `float/string` field holds, is no value at all,
+  // like `null`, rather than zero, which `Number('')` would make it
+  const number =
+    value === null || (typeof value === 'string' && !value.trim()) ? NaN : Number(value);
+
+  const hasNumber = Number.isFinite(number);
+  const rangeUnderflow = hasNumber && typeof min === 'number' && number < min;
+  const rangeOverflow = !rangeUnderflow && hasNumber && typeof max === 'number' && number > max;
 
   const typeMismatch =
     (valueType === 'int' || valueType === 'float') &&

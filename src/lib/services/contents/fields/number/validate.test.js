@@ -276,6 +276,49 @@ describe('validateNumberField()', () => {
     });
   });
 
+  describe('empty string value', () => {
+    test.each(['int/string', 'float/string'])(
+      'should not flag an empty %s value as out of range',
+      (valueType) => {
+        /** @type {NumberField} */
+        const overflowConfig = {
+          ...baseFieldConfig,
+          required: false,
+          value_type: /** @type {any} */ (valueType),
+          max: -1,
+        };
+
+        /** @type {NumberField} */
+        const underflowConfig = { ...overflowConfig, max: undefined, min: 1 };
+
+        ['', '  '].forEach((value) => {
+          expect(
+            validateNumberField({ fieldConfig: overflowConfig, locale: 'en', value }).validity,
+          ).toEqual({ rangeUnderflow: false, rangeOverflow: false, typeMismatch: false });
+          expect(
+            validateNumberField({ fieldConfig: underflowConfig, locale: 'en', value }).validity,
+          ).toEqual({ rangeUnderflow: false, rangeOverflow: false, typeMismatch: false });
+        });
+      },
+    );
+
+    test('should still check a numeric string value against the range', () => {
+      /** @type {NumberField} */
+      const fieldConfig = { ...baseFieldConfig, value_type: 'int/string', min: 0, max: 10 };
+
+      expect(validateNumberField({ fieldConfig, locale: 'en', value: '11' }).validity).toEqual({
+        rangeUnderflow: false,
+        rangeOverflow: true,
+        typeMismatch: false,
+      });
+      expect(validateNumberField({ fieldConfig, locale: 'en', value: '-1' }).validity).toEqual({
+        rangeUnderflow: true,
+        rangeOverflow: false,
+        typeMismatch: false,
+      });
+    });
+  });
+
   describe('typeMismatch', () => {
     test('should return typeMismatch=true for required int field with null value', () => {
       /** @type {NumberField} */
