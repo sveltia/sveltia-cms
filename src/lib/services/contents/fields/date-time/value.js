@@ -6,7 +6,7 @@ import dayjsTimeZone from 'dayjs/plugin/timezone';
 import dayjsUTC from 'dayjs/plugin/utc';
 
 import { parseDateTimeConfig } from './config.js';
-import { getDate, getParser } from './parse.js';
+import { getDate, getParser, parseWithFormatFallback } from './parse.js';
 import { getTimeZoneForStoredValue } from './timezone.js';
 
 /**
@@ -187,6 +187,12 @@ export const getCurrentValue = ({ inputValue, currentValue, fieldConfig, timeZon
       return '';
     }
 
+    // A date has no time zone, so store it as is: converting the midnight it was parsed as would
+    // shift it to the previous day east of UTC
+    if (dateOnly) {
+      return parsed.format(format);
+    }
+
     // Apply IANA timezone context first, then optionally convert to UTC
     if (effectiveTimeZone) {
       parsed = parsed.tz(effectiveTimeZone, true);
@@ -293,6 +299,15 @@ export const getInputValue = ({ currentValue, fieldConfig, timeZone }) => {
 
   if (value) {
     return value;
+  }
+
+  // A date stored in the custom format has no time zone either, so read it as is. Parsing it as UTC
+  // midnight with `output_utc` and showing it in a time zone west of UTC would shift it to the
+  // previous day
+  if (dateOnly && format) {
+    const parsed = parseWithFormatFallback({ value: currentValue, format, parseAsUTC: false });
+
+    return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
   }
 
   // `currentValue` is always truthy here (the empty-string guard above returned early). When a

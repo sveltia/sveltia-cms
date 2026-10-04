@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { getDate } from '$lib/services/contents/fields/date-time/parse';
 import {
   getCurrentDateTime,
+  getCurrentStorableValue,
   getCurrentValue,
   getInputValue,
   shouldUpdateValue,
@@ -743,6 +744,31 @@ describe('getCurrentValue', () => {
     expect(typeof result).toBe('string');
     expect(result).toMatch(/2023-06-15T14:30:00(\.000)?Z/);
   });
+
+  test('should store a date in a custom format as is with output_utc east of UTC', () => {
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      time_format: false,
+      format: 'YYYY/MM/DD',
+      output_utc: true,
+    };
+
+    expect(
+      getCurrentValue({
+        inputValue: '2026-10-03',
+        currentValue: '2026/10/03',
+        fieldConfig,
+        timeZone: 'Asia/Tokyo',
+      }),
+    ).toBe('2026/10/03');
+    expect(
+      getCurrentStorableValue(
+        { ...fieldConfig, input_timezone: 'Asia/Tokyo' },
+        { date: new Date('2026-10-03T03:00:00Z') },
+      ),
+    ).toBe('2026/10/03');
+  });
 });
 
 describe('getInputValue', () => {
@@ -970,6 +996,21 @@ describe('getInputValue', () => {
     expect(result).toBe('');
     expect(consoleSpy).toHaveBeenCalledWith('Invalid Date', 'totally-invalid-date-string');
     consoleSpy.mockRestore();
+  });
+
+  test('should read a date in a custom format as is in a time zone west of UTC', () => {
+    /** @type {DateTimeField} */
+    const fieldConfig = {
+      ...baseFieldConfig,
+      time_format: false,
+      format: 'YYYY/MM/DD',
+      output_utc: true,
+    };
+
+    expect(
+      getInputValue({ currentValue: '2026/10/03', fieldConfig, timeZone: 'America/New_York' }),
+    ).toBe('2026-10-03');
+    expect(getInputValue({ currentValue: 'not a date', fieldConfig })).toBe('');
   });
 });
 
