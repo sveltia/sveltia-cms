@@ -108,6 +108,17 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
     keys.unshift('_summary');
   }
 
+  // Make sure the keys are valid field keys or special keys. The canonical slug key,
+  // `translationKey` by default, is part of the content of each localized entry without being a
+  // field, so it can be used as a sort key when i18n is enabled. This has to come first: the
+  // default `date` and `author` keys only stand in for the commit date and author when the
+  // collection has such fields
+  const specialKeys = i18nEnabled ? [...SPECIAL_SORT_KEYS, canonicalSlug.key] : SPECIAL_SORT_KEYS;
+
+  keys = unique(keys).filter(
+    (key) => !!key && (specialKeys.includes(key) || !!getField({ collectionName, keyPath: key })),
+  );
+
   const hasCommitAuthorKey = keys.includes('commit_author');
   const hasCommitDateKey = keys.includes('commit_date');
   // An entry stored in a file with the other entries of the collection carries the file’s last
@@ -129,15 +140,6 @@ export const getSortConfig = ({ collection, isCommitAuthorAvailable, isCommitDat
   } else if (hasCommitDateKey) {
     keys = keys.filter((key) => key !== 'commit_date');
   }
-
-  // Make sure the keys are valid field keys or special keys. The canonical slug key,
-  // `translationKey` by default, is part of the content of each localized entry without being a
-  // field, so it can be used as a sort key when i18n is enabled
-  const specialKeys = i18nEnabled ? [...SPECIAL_SORT_KEYS, canonicalSlug.key] : SPECIAL_SORT_KEYS;
-
-  keys = unique(keys).filter(
-    (key) => !!key && (specialKeys.includes(key) || !!getField({ collectionName, keyPath: key })),
-  );
 
   // If the collection allows reordering, expose a single special `_manual` sort key that maps to
   // the order field. We hide the raw order field key from the dropdown — even if the user listed it

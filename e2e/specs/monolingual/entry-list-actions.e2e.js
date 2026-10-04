@@ -298,7 +298,7 @@ test.describe('on GitHub', () => {
     await page.getByRole('treeitem', { name: 'Authors' }).click();
     await cms.chooseMenuItem(
       page.getByRole('button', { name: 'Sort', exact: true }),
-      page.getByRole('menuitemradio', { name: /Z to A/ }),
+      page.getByRole('menuitemradio', { name: /Name.*Z to A/ }),
     );
     await expect(getRows(page)).toHaveText([/John Smith/, /Jane Doe/]);
 

@@ -76,6 +76,26 @@ test.describe('with the commit date as a sortable field', () => {
   });
 });
 
+test('offers to sort by the commit date and author with the default sortable fields', async ({
+  cms,
+  github,
+  page,
+}) => {
+  // The collection has no `date` or `author` field, which the default sort keys include
+  github.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
+  github.commit({ 'content/posts/third-post.md': '---\ntitle: Third Post\n---\n' });
+
+  await cms.open();
+  await expect(page.getByRole('row')).toHaveCount(3);
+  await cms.chooseMenuItem(
+    page.getByRole('button', { name: 'Sort', exact: true }),
+    page.getByRole('menuitemradio', { name: /Updated on.*new to old/ }),
+  );
+  await expect(page.getByRole('row')).toHaveText([/Third Post/, /Second Post/, /First Post/]);
+  await page.getByRole('button', { name: 'Sort', exact: true }).click();
+  await expect(page.getByRole('menuitemradio', { name: /Updated by/ }).first()).toBeVisible();
+});
+
 test('refuses a user who can only read the repository', async ({ cms, github, page }) => {
   github.canWrite = false;
 

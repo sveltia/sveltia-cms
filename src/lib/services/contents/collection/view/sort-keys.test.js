@@ -291,6 +291,20 @@ describe('Test getSortConfig()', async () => {
     });
   });
 
+  test('adds the commit date and author when the default `date` and `author` keys aren’t fields', () => {
+    // The `pages` collection has none of the default fields, which used to hide the commit options
+    expect(
+      getSortConfig({
+        collection: { ...collectionBase, name: 'pages' },
+        isCommitAuthorAvailable: true,
+        isCommitDateAvailable: true,
+      }),
+    ).toEqual({
+      keys: ['commit_author', 'commit_date'],
+      default: { key: 'commit_author', order: 'ascending' },
+    });
+  });
+
   test('filters out invalid field names', () => {
     expect(
       getSortConfig({
@@ -1256,9 +1270,13 @@ describe('Test sortKeys state', () => {
     ]);
     selectedCollection.current = folderCollection;
 
-    // The default `author` and `date` keys take precedence over the commit author and date, and
-    // they are dropped because the collection has no such fields
-    expect(sortKeys.current).toEqual([{ key: 'title', label: 'title' }]);
+    // The default `author` and `date` keys are dropped because the collection has no such fields,
+    // so the commit author and date are offered instead
+    expect(sortKeys.current).toEqual([
+      { key: 'title', label: 'title' },
+      { key: 'commit_author', label: 'sort_keys.commit_author' },
+      { key: 'commit_date', label: 'sort_keys.commit_date' },
+    ]);
 
     // Clean up
     selectedCollection.current = undefined;
