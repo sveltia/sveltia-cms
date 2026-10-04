@@ -1,9 +1,8 @@
 <script>
   import { ResizableHandle, ResizablePane, ResizablePaneGroup } from '@sveltia/ui';
-  import { IndexedDB } from '@sveltia/utils/storage';
 
   import { hasOverlay } from '$lib/services/app/navigation';
-  import { backend } from '$lib/services/backends';
+  import { getSidebarWidth, saveSidebarWidth } from '$lib/services/app/ui-settings';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -35,46 +34,28 @@
   /** @type {number | undefined} */
   let sidebarWidth = $state();
 
-  /** @type {IndexedDB | null} */
-  let uiSettingsDB = null;
   /**
-   * Name of the database {@link uiSettingsDB} is created for.
-   * @type {string | undefined}
-   */
-  let uiSettingsDBName;
-
-  /**
-   * Restore the sidebar width from IndexedDB, or use the default width if not set.
+   * Restore the sidebar width from the UI settings, or use the default width if not set.
    */
   const restoreSidebarWidth = async () => {
     if (!uiSettingsKey) return;
 
-    const { databaseName } = backend.current?.repository ?? {};
-
-    // The width is restored every time an overlay is closed. Reuse the instance for the same
-    // database, as each instance opens a connection of its own that’s never closed
-    if (!databaseName) {
-      uiSettingsDBName = undefined;
-      uiSettingsDB = null;
-    } else if (databaseName !== uiSettingsDBName) {
-      uiSettingsDBName = databaseName;
-      uiSettingsDB = new IndexedDB(databaseName, 'ui-settings');
-    }
-
-    sidebarWidth = (await uiSettingsDB?.get(uiSettingsKey))?.sidebarWidth ?? 240;
+    sidebarWidth = await getSidebarWidth(uiSettingsKey);
   };
 
   /**
-   * Save the sidebar width to IndexedDB.
+   * Save the sidebar width to the UI settings.
    * @param {number} percent Sidebar width as a percentage of the container’s width.
    */
-  const saveSidebarWidth = async (percent) => {
-    if (!uiSettingsDB || !uiSettingsKey || !container) return;
+  const onResize = async (percent) => {
+    // The panes are only shown once the width has been restored, which takes a settings key, and
+    // the container is there by then
+    const { clientWidth } = /** @type {HTMLElement} */ (container);
 
-    await uiSettingsDB.set(uiSettingsKey, {
-      ...(await uiSettingsDB.get(uiSettingsKey)),
-      sidebarWidth: Math.round(container.clientWidth * (percent / 100)),
-    });
+    await saveSidebarWidth(
+      /** @type {string} */ (uiSettingsKey),
+      Math.round(clientWidth * (percent / 100)),
+    );
   };
 
   $effect.pre(() => {
@@ -104,7 +85,7 @@
   {:else if sidebarWidth !== undefined}
     <ResizablePaneGroup
       onResize={({ sizes }) => {
-        saveSidebarWidth(sizes[0]);
+        onResize(sizes[0]);
       }}
     >
       <ResizablePane defaultSize="{sidebarWidth}px" minSize="160px" maxSize="480px">

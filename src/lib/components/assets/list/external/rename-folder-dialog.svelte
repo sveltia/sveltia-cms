@@ -18,9 +18,10 @@
   } from '$lib/services/assets/external/view';
   import { getTakenNames } from '$lib/services/assets/subfolders';
 
-  let open = $state(false);
-
   const subfolder = $derived(renamingExternalSubfolder.current);
+  // Open while there’s a folder to act on. Closing the dialog writes `open` back, and the folder is
+  // let go of once the dialog has closed
+  let open = $derived(!!subfolder);
   /* v8 ignore start -- these are only read while the dialog is open, which takes a folder */
   const currentName = $derived(subfolder?.name ?? '');
   /** Number of assets in the folder, at any depth, which will be moved along. */
@@ -34,12 +35,6 @@
       exclude: currentName,
     }),
   );
-
-  $effect(() => {
-    if (subfolder) {
-      open = true;
-    }
-  });
 </script>
 
 <SubfolderNameDialog

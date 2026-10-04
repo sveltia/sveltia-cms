@@ -18,9 +18,10 @@
   } from '$lib/services/assets/external';
   import { renameExternalAsset } from '$lib/services/assets/external/data';
 
-  let open = $state(false);
-
   const asset = $derived(renamingExternalAsset.current);
+  // Open while there’s an asset to act on. Closing the dialog writes `open` back, and the asset is
+  // let go of once the dialog has closed
+  let open = $derived(!!asset);
   /* v8 ignore start -- the dialog is only shown for a listed asset */
   const { dirname } = $derived(getPathInfo(asset?.id ?? ''));
   const listedAssets = $derived(externalAssets.current ?? []);
@@ -56,12 +57,6 @@
       });
     }
   };
-
-  $effect(() => {
-    if (asset) {
-      open = true;
-    }
-  });
 </script>
 
 <RenameDialog

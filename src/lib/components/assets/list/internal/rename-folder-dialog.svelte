@@ -13,13 +13,15 @@
   import { listedAssets, listedSubfolders } from '$lib/services/assets/view';
   import { createPath } from '$lib/services/utils/file';
 
-  let open = $state(false);
   // Committing to a remote repository takes a few seconds, and the dialog is gone by then, so the
   // folder would otherwise be renamed with nothing on screen to say it’s under way
   let renaming = $state(false);
   let renamingFailed = $state(false);
 
   const subfolder = $derived(renamingSubfolder.current);
+  // Open while there’s a folder to act on. Closing the dialog writes `open` back, and the folder is
+  // let go of once the dialog has closed
+  let open = $derived(!!subfolder);
   /* v8 ignore start -- these are only read while the dialog is open, which takes a folder */
   const currentName = $derived(subfolder?.name ?? '');
   /** Number of assets in the folder, at any depth, which will be moved along. */
@@ -61,12 +63,6 @@
       renaming = false;
     }
   };
-
-  $effect(() => {
-    if (subfolder) {
-      open = true;
-    }
-  });
 </script>
 
 <SubfolderNameDialog
