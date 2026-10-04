@@ -70,3 +70,43 @@ test('selects the default options given as option objects, saving their values',
     .poll(async () => (await cms.readRepo())['content/talks/runes.yml'])
     .toBe('title: Runes\nformat: online\nlanguages:\n  - fr\n  - ja\n');
 });
+
+test.describe('empty default', () => {
+  // An empty `default:` line in YAML is `null`, which isn’t one of the options
+  test.use({
+    config: [
+      'backend:',
+      '  name: test-repo',
+      'media_folder: static/uploads',
+      'collections:',
+      '  - name: talks',
+      '    label: Talks',
+      '    label_singular: Talk',
+      '    folder: content/talks',
+      '    extension: yml',
+      '    create: true',
+      '    fields:',
+      '      - { name: title, label: Title }',
+      '      - name: format',
+      '        label: Format',
+      '        widget: select',
+      '        required: false',
+      '        options: [in-person, online]',
+      '        default:',
+      '',
+    ].join('\n'),
+  });
+
+  test('treats an empty default as no default', async ({ cms, page }) => {
+    await cms.open();
+    // The config is valid, so the CMS signs in rather than reporting an unknown default
+    await cms.signIn();
+    await page.getByRole('button', { name: 'Create New Entry' }).first().click();
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    await expect(editor.getByRole('radio', { name: 'online' })).toBeVisible();
+    await expect(editor.getByRole('radio', { name: 'online' })).not.toBeChecked();
+    await expect(editor.getByRole('radio', { name: 'in-person' })).not.toBeChecked();
+  });
+});

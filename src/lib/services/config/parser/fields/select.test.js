@@ -81,6 +81,12 @@ describe('parseSelectFieldConfig', () => {
     expectMessages([]);
   });
 
+  test('treats an empty default as no default unless null is an option', () => {
+    check({ options: ['a', 'b'], default: null });
+    check({ options: ['a', 'b'], default: null, multiple: true });
+    expectMessages([]);
+  });
+
   test('accepts a default given as an option object, as documented by Decap CMS', () => {
     check({ options: [{ label: 'A', value: 'a' }], default: { label: 'A', value: 'a' } });
     check({

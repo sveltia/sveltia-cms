@@ -43,7 +43,8 @@ export const parseSelectFieldConfig = ({ config, context, collectors }) => {
     });
   });
 
-  if (defaultValue === undefined) {
+  // An empty `default:` line in YAML is `null`, which means no default unless `null` is an option
+  if (defaultValue === undefined || (defaultValue === null && !values.includes(null))) {
     return;
   }
 
