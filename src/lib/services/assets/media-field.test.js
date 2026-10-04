@@ -5,6 +5,7 @@ import {
   getAssetBaseURL,
   getMediaFieldSource,
   getMediaFieldURL,
+  getRichTextImageURL,
 } from '$lib/services/assets/media-field';
 import * as cloudStorageModule from '$lib/services/integrations/media-libraries/cloud';
 import * as cloudinaryModule from '$lib/services/integrations/media-libraries/cloud/cloudinary';
@@ -26,6 +27,8 @@ const mockCmsConfigState = vi.hoisted(() => ({ current: undefined }));
 const mockGlobalAssetFolder = vi.hoisted(() => ({ current: undefined }));
 /** @type {{ current: any[] }} */
 const mockAllAssets = vi.hoisted(() => ({ current: [] }));
+/** @type {{ current: any[] }} */
+const mockAllAssetFolders = vi.hoisted(() => ({ current: [] }));
 
 vi.mock('@sveltia/i18n', () => ({
   _: vi.fn((key) => key),
@@ -49,6 +52,7 @@ vi.mock('$lib/services/config', () => ({
   cmsConfig: mockCmsConfigState,
 }));
 vi.mock('$lib/services/assets/folders', () => ({
+  allAssetFolders: mockAllAssetFolders,
   getAssetFoldersByPath: vi.fn(),
   globalAssetFolder: mockGlobalAssetFolder,
   selectedAssetFolder: { current: undefined },
@@ -68,6 +72,12 @@ vi.mock('$lib/services/integrations/media-libraries/cloud', () => ({
 }));
 vi.mock('$lib/services/integrations/media-libraries/cloud/cloudinary', () => ({
   getMergedLibraryOptions: vi.fn(),
+}));
+vi.mock('$lib/services/contents/fields/rich-text/components/definitions', () => ({
+  // A custom component ID has the `x-` prefix, unlike a built-in component name
+  getCustomComponentName: vi.fn((name) =>
+    name.startsWith('x-') ? name.replace(/^x-/, '') : undefined,
+  ),
 }));
 
 describe('assets/media-field', () => {
@@ -126,6 +136,7 @@ describe('assets/media-field', () => {
     mockCmsConfigState.current = mockCmsConfig;
     mockGlobalAssetFolder.current = mockAsset.folder;
     mockAllAssets.current = [];
+    mockAllAssetFolders.current = [];
 
     // Mock URL.createObjectURL
     // @ts-ignore
@@ -553,6 +564,79 @@ describe('assets/media-field', () => {
           typedKeyPath: 'hero',
         }),
       );
+    });
+  });
+
+  describe('getRichTextImageURL', () => {
+    const args = {
+      value: 'photo.jpg',
+      collectionName: 'posts',
+      typedKeyPath: 'body',
+      componentNames: ['image', 'x-figure'],
+    };
+
+    beforeEach(() => {
+      // @ts-ignore
+      vi.mocked(cloudStorageModule.allCloudStorageServices.cloudinary.isEnabled).mockReturnValue(
+        false,
+      );
+    });
+
+    it('should return an external URL as-is', async () => {
+      const { getAssetByPath } = await import('$lib/services/assets');
+
+      expect(await getRichTextImageURL({ ...args, value: 'https://example.com/photo.jpg' })).toBe(
+        'https://example.com/photo.jpg',
+      );
+      expect(getAssetByPath).not.toHaveBeenCalled();
+    });
+
+    it('should not search the component folders if the image is found for the field', async () => {
+      const { getAssetByPath } = await import('$lib/services/assets');
+
+      mockAllAssetFolders.current = [{ componentName: 'figure', typedKeyPath: 'src' }];
+      vi.mocked(getAssetByPath).mockReturnValue({ ...mockAsset, blobURL: 'blob:field' });
+
+      expect(await getRichTextImageURL(args)).toBe('blob:field');
+      expect(getAssetByPath).toHaveBeenCalledTimes(1);
+      expect(getAssetByPath).toHaveBeenCalledWith(
+        expect.objectContaining({ value: 'photo.jpg', typedKeyPath: 'body' }),
+      );
+    });
+
+    it('should search the field-level folders of the custom components', async () => {
+      const { getAssetByPath } = await import('$lib/services/assets');
+
+      mockAllAssetFolders.current = [
+        // The global folder, a collection folder, and a field folder of another component
+        { internalPath: 'static/uploads' },
+        { collectionName: 'posts', internalPath: 'content/posts' },
+        { componentName: 'gallery', typedKeyPath: 'images' },
+        { componentName: 'figure', typedKeyPath: 'src' },
+      ];
+      vi.mocked(getAssetByPath).mockImplementation(({ componentName }) =>
+        componentName === 'figure' ? { ...mockAsset, blobURL: 'blob:figure' } : undefined,
+      );
+
+      expect(await getRichTextImageURL(args)).toBe('blob:figure');
+      expect(getAssetByPath).toHaveBeenCalledTimes(2);
+      expect(getAssetByPath).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          value: 'photo.jpg',
+          componentName: 'figure',
+          typedKeyPath: 'src',
+        }),
+      );
+    });
+
+    it('should return undefined if the image is not found anywhere', async () => {
+      const { getAssetByPath } = await import('$lib/services/assets');
+
+      mockAllAssetFolders.current = [{ componentName: 'figure', typedKeyPath: 'src' }];
+      vi.mocked(getAssetByPath).mockReturnValue(undefined);
+
+      expect(await getRichTextImageURL(args)).toBeUndefined();
+      expect(getAssetByPath).toHaveBeenCalledTimes(2);
     });
   });
 

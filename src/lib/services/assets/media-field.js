@@ -1,9 +1,11 @@
 import { getAssetByPath, isRelativePath } from '$lib/services/assets';
+import { allAssetFolders } from '$lib/services/assets/folders';
 import {
   getAssetBlobURL,
   getAssetPublicURL,
   getAssetThumbnailURL,
 } from '$lib/services/assets/info';
+import { getCustomComponentName } from '$lib/services/contents/fields/rich-text/components/definitions';
 import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
 import { getMergedLibraryOptions } from '$lib/services/integrations/media-libraries/cloud/cloudinary';
 
@@ -86,6 +88,29 @@ export const getMediaFieldSource = ({
 };
 
 /**
+ * Get the URL of the given media field source.
+ * @param {MediaFieldSource | undefined} source Source.
+ * @param {boolean} [thumbnail] Whether to use a thumbnail of the image.
+ * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
+ */
+const getSourceURL = async (source, thumbnail = false) => {
+  const { url, asset } = source ?? {};
+
+  if (url) {
+    return url;
+  }
+
+  if (!asset) {
+    return undefined;
+  }
+
+  return (
+    (thumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset)) ??
+    getAssetPublicURL(asset)
+  );
+};
+
+/**
  * Get the blob or public URL from the given image/file entry field value.
  * @param {object} args Arguments.
  * @param {string} args.value Saved field value. It can be an absolute path, entry-relative path, or
@@ -100,19 +125,38 @@ export const getMediaFieldSource = ({
  * @param {boolean} [args.thumbnail] Whether to use a thumbnail of the image.
  * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
  */
-export const getMediaFieldURL = async ({ thumbnail = false, ...args }) => {
-  const { url, asset } = getMediaFieldSource(args) ?? {};
+export const getMediaFieldURL = async ({ thumbnail = false, ...args }) =>
+  getSourceURL(getMediaFieldSource(args), thumbnail);
 
-  if (url) {
-    return url;
-  }
+/**
+ * Get the blob or public URL of an image in a RichText field preview. The image may come from the
+ * preview of a custom editor component, whose fields can have their own media folders. As the
+ * preview HTML doesn’t tell which component an image comes from, the media folders of the given
+ * components are searched if the image is not found for the RichText field itself.
+ * @param {object} args Arguments.
+ * @param {string} args.value Image `src`.
+ * @param {Entry} [args.entry] Associated entry. Can be `undefined` when editing a new draft.
+ * @param {string} args.collectionName Collection name.
+ * @param {string} [args.fileName] Collection file name. File/singleton collection only.
+ * @param {TypedFieldKeyPath} [args.typedKeyPath] Key path of the RichText field.
+ * @param {string[]} args.componentNames Names or IDs of the components the field can contain.
+ * @returns {Promise<string | undefined>} Blob URL or public URL that can be used in the app UI.
+ */
+export const getRichTextImageURL = async ({ componentNames, ...args }) => {
+  const customComponentNames = componentNames.map(getCustomComponentName).filter(Boolean);
 
-  if (!asset) {
-    return undefined;
-  }
+  const source =
+    getMediaFieldSource(args) ??
+    allAssetFolders.current
+      .values()
+      .filter(
+        ({ componentName, typedKeyPath }) =>
+          !!typedKeyPath && customComponentNames.includes(componentName),
+      )
+      .map(({ componentName, typedKeyPath }) =>
+        getMediaFieldSource({ ...args, componentName, typedKeyPath }),
+      )
+      .find(Boolean);
 
-  return (
-    (thumbnail ? await getAssetThumbnailURL(asset) : await getAssetBlobURL(asset)) ??
-    getAssetPublicURL(asset)
-  );
+  return getSourceURL(source);
 };

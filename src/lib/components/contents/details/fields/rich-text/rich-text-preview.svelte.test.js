@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
 import { customComponentRegistry } from '$lib/services/api/registries';
+import { allAssetFolders } from '$lib/services/assets/folders';
+import { allAssets } from '$lib/services/assets/state';
 import { cmsConfig } from '$lib/services/config';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -198,6 +200,59 @@ describe('RichTextPreview', () => {
 
     await expect.poll(() => preview.querySelector('img')?.dataset.processed).toBe('true');
     expect(preview.querySelector('img')).toHaveAttribute('src', 'missing.png');
+  });
+
+  test('resolves an image in a component preview from the component’s media folder', async () => {
+    customComponentRegistry.set('figure', {
+      id: 'figure',
+      label: 'Figure',
+      fields: [
+        {
+          name: 'src',
+          widget: 'image',
+          media_folder: '/static/figures',
+          public_folder: '/figures',
+        },
+      ],
+      pattern: /^:::figure (?<src>.+)$/m,
+      /**
+       * Build the Markdown.
+       * @param {any} data Data.
+       * @returns {string} Markdown.
+       */
+      toBlock: ({ src }) => `:::figure ${src}`,
+      /**
+       * Build the preview.
+       * @param {any} data Data.
+       * @returns {string} HTML.
+       */
+      toPreview: ({ src }) => `<img src="${src}" alt="">`,
+    });
+    allAssetFolders.current = /** @type {any[]} */ ([
+      { internalPath: 'static/uploads', publicPath: '/uploads', entryRelative: false },
+      {
+        componentName: 'figure',
+        typedKeyPath: 'src',
+        internalPath: 'static/figures',
+        publicPath: '/figures',
+        entryRelative: false,
+        hasTemplateTags: false,
+      },
+    ]);
+    allAssets.current = /** @type {any[]} */ ([
+      { path: 'static/figures/photo.png', name: 'photo.png', blobURL: 'blob:figure-photo' },
+    ]);
+
+    try {
+      const preview = await renderPreview(':::figure photo.png');
+
+      await expect
+        .poll(() => preview.querySelector('img')?.getAttribute('src'))
+        .toBe('blob:figure-photo');
+    } finally {
+      allAssetFolders.current = [];
+      allAssets.current = [];
+    }
   });
 
   test('mounts an element preview, and notifies it when it’s removed', async () => {
