@@ -103,6 +103,12 @@ export const getSlug = ({ subPath, subPathTemplate }) => {
  */
 export const parseFileContent = async (file, errors) => {
   try {
+    // A file whose content couldn’t be read, e.g. because it’s too large, has no text. Parsing it
+    // as an empty file would load an empty entry, and saving that would wipe the file
+    if (file.text === undefined) {
+      throw new Error(`${file.path} could not be read.`);
+    }
+
     return await parseEntryFile(file);
   } catch (/** @type {any} */ ex) {
     // eslint-disable-next-line no-console

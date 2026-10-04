@@ -164,7 +164,7 @@ describe('parseTextFileInfo', () => {
       type: 'config',
     });
 
-    expect(result.text).toBe('');
+    expect(result.text).toBeUndefined();
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
@@ -189,7 +189,7 @@ describe('parseTextFileInfo', () => {
       type: 'config',
     });
 
-    expect(result.text).toBe('');
+    expect(result.text).toBeUndefined();
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('is too large'));
     consoleWarnSpy.mockRestore();
   });

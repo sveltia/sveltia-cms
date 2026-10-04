@@ -299,6 +299,29 @@ describe('Test parseFileContent()', () => {
 
     consoleSpy.mockRestore();
   });
+
+  test('doesn’t parse a file whose content couldn’t be read as an empty file', async () => {
+    const file = /** @type {BaseEntryListItem} */ ({
+      name: 'large.md',
+      path: 'posts/large.md',
+      text: undefined,
+      sha: 'abc123',
+      size: 100,
+      type: 'entry',
+      folder: { collectionName: 'posts' },
+    });
+
+    const errors = /** @type {Error[]} */ ([]);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const result = await parseFileContent(file, errors);
+
+    expect(result).toBeUndefined();
+    expect(parseEntryFile).not.toHaveBeenCalled();
+    expect(errors).toHaveLength(1);
+    expect(errors[0].message).toBe('posts/large.md could not be read.');
+
+    consoleSpy.mockRestore();
+  });
 });
 
 describe('Test transformRawContent()', () => {
@@ -2900,6 +2923,7 @@ describe('Test array file entries', () => {
     const file = /** @type {BaseEntryListItem} */ ({
       name: 'posts.json',
       path,
+      text: '[]',
       sha: 'abc',
       size: 10,
       type: 'entry',

@@ -48,7 +48,9 @@ const FILE_PROCESS_CONCURRENCY = 10;
  * Parse text file info to create a complete entry or config file object.
  * @param {BaseFileListItem} fileInfo Entry or config file info.
  * @returns {Promise<BaseFileListItem>} Entry or config file with text content. We don’t populate
- * `size` and `sha` for entries and config files, as they are not needed.
+ * `size` and `sha` for entries and config files, as they are not needed. The text is left out if
+ * the file is too large or can’t be read, rather than made empty, so the file isn’t loaded as an
+ * empty entry that would wipe its content when saved.
  */
 export const parseTextFileInfo = async (fileInfo) => {
   const { name, handle } = fileInfo;
@@ -65,7 +67,7 @@ export const parseTextFileInfo = async (fileInfo) => {
       // eslint-disable-next-line no-console
       console.warn(`File ${name} is too large (${file.size} bytes), skipping content read`);
 
-      return { ...fileInfo, text: '' };
+      return fileInfo;
     }
 
     const text = await readAsText(file);
@@ -75,7 +77,7 @@ export const parseTextFileInfo = async (fileInfo) => {
     // eslint-disable-next-line no-console
     console.error(ex);
 
-    return { ...fileInfo, text: '' };
+    return fileInfo;
   }
 };
 
