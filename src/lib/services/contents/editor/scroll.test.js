@@ -6,21 +6,36 @@ import {
 } from '$lib/services/contents/editor/scroll';
 
 describe('getProportionalScrollTop()', () => {
-  test('scrolls the other pane in proportion', () => {
+  test('scrolls the other pane in proportion to its own scrollable range', () => {
+    const panes = { scrollHeight: 1500, clientHeight: 500, targetScrollHeight: 2000 };
+
+    expect(getProportionalScrollTop({ ...panes, scrollTop: 250, targetClientHeight: 400 })).toBe(
+      400,
+    );
+    expect(getProportionalScrollTop({ ...panes, scrollTop: 0, targetClientHeight: 400 })).toBe(0);
+    // Scrolled to the bottom, the other pane is scrolled to its bottom, not past it
+    expect(getProportionalScrollTop({ ...panes, scrollTop: 1000, targetClientHeight: 400 })).toBe(
+      1600,
+    );
+  });
+
+  test('stays at the top when either pane can’t scroll', () => {
+    expect(
+      getProportionalScrollTop({
+        scrollTop: 0,
+        scrollHeight: 500,
+        clientHeight: 500,
+        targetScrollHeight: 2000,
+        targetClientHeight: 400,
+      }),
+    ).toBe(0);
     expect(
       getProportionalScrollTop({
         scrollTop: 250,
         scrollHeight: 1500,
         clientHeight: 500,
-        targetScrollHeight: 2000,
-      }),
-    ).toBe(500);
-    expect(
-      getProportionalScrollTop({
-        scrollTop: 0,
-        scrollHeight: 1500,
-        clientHeight: 500,
-        targetScrollHeight: 2000,
+        targetScrollHeight: 300,
+        targetClientHeight: 400,
       }),
     ).toBe(0);
   });

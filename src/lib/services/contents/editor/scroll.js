@@ -6,6 +6,7 @@
  * @param {number} args.scrollHeight Scroll height of the pane being scrolled.
  * @param {number} args.clientHeight Client height of the pane being scrolled.
  * @param {number} args.targetScrollHeight Scroll height of the other pane.
+ * @param {number} args.targetClientHeight Client height of the other pane.
  * @returns {number} Scroll position for the other pane.
  */
 export const getProportionalScrollTop = ({
@@ -13,7 +14,17 @@ export const getProportionalScrollTop = ({
   scrollHeight,
   clientHeight,
   targetScrollHeight,
-}) => targetScrollHeight * (scrollTop / (scrollHeight - clientHeight));
+  targetClientHeight,
+}) => {
+  const scrollRange = scrollHeight - clientHeight;
+
+  // The pane being scrolled can’t actually scroll, so there is no proportion to match
+  if (scrollRange <= 0) {
+    return 0;
+  }
+
+  return Math.max(0, targetScrollHeight - targetClientHeight) * (scrollTop / scrollRange);
+};
 
 /**
  * Get the scroll position of another pane that brings the field matching the one at the top of the

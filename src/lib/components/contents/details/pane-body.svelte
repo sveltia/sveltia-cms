@@ -95,6 +95,7 @@
           scrollHeight,
           clientHeight,
           targetScrollHeight: thatPaneContentArea.scrollHeight,
+          targetClientHeight: thatPaneContentArea.clientHeight,
         });
 
         return;
