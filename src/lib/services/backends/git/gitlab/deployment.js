@@ -1,4 +1,8 @@
-import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
+import {
+  getBranchPath,
+  getProjectId,
+  repository,
+} from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { resolveDeployments } from '$lib/services/backends/git/shared/deployment';
@@ -65,9 +69,7 @@ export const fetchBranchHeadSHA = async () => {
     return undefined;
   }
 
-  const result = /** @type {Record<string, any>} */ (
-    await fetchAPI(`/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`)
-  );
+  const result = /** @type {Record<string, any>} */ (await fetchAPI(getBranchPath(branch)));
 
   return result?.commit?.id ?? undefined;
 };

@@ -28,6 +28,15 @@ export const getProjectId = () => {
 };
 
 /**
+ * Get the REST API path of the given branch in the configured project.
+ * @param {string} branch Branch name.
+ * @returns {string} Path.
+ * @see https://docs.gitlab.com/api/branches/
+ */
+export const getBranchPath = (branch) =>
+  `/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`;
+
+/**
  * Generate base URLs for accessing the repository’s resources.
  * @param {string} repoURL The base URL of the repository.
  * @param {string} [branch] The branch name. Could be `undefined` if the branch is not specified in
@@ -83,11 +92,7 @@ export const checkRepositoryAccess = async () => {
  */
 export const checkBranchAccess = async () => {
   await recordBranchAccess(repository.branch, async (branch) => {
-    const result = /** @type {{ can_push?: boolean }} */ (
-      await fetchAPI(
-        `/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`,
-      )
-    );
+    const result = /** @type {{ can_push?: boolean }} */ (await fetchAPI(getBranchPath(branch)));
 
     return { canPush: result.can_push };
   });

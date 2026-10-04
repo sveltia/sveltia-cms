@@ -1,5 +1,9 @@
 import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
-import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
+import {
+  getBranchPath,
+  getProjectId,
+  repository,
+} from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
@@ -301,7 +305,7 @@ export const fetchPullRequests = async () => {
 export const deleteBranch = async (branch) => {
   await deleteRemoteBranch({
     branch,
-    path: `/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`,
+    path: getBranchPath(branch),
     goneStatuses: [404],
   });
 };

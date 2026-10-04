@@ -15,6 +15,14 @@ vi.mock('$lib/services/backends/git/gitlab/repository', () => {
      * @returns {string} URL-encoded project path.
      */
     getProjectId: () => encodeURIComponent(`${mockRepository.owner}/${mockRepository.repo}`),
+    /**
+     * Get the branch path the same way the real module does.
+     * @param {string} branch Branch name.
+     * @returns {string} REST API path.
+     */
+    getBranchPath: (branch) =>
+      `/projects/${encodeURIComponent(`${mockRepository.owner}/${mockRepository.repo}`)}` +
+      `/repository/branches/${encodeURIComponent(branch)}`,
   };
 });
 vi.mock('$lib/services/backends/git/shared/api');

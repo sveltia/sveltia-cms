@@ -6,6 +6,7 @@ import {
   checkRepositoryAccess,
   fetchDefaultBranchName,
   getBaseURLs,
+  getBranchPath,
   getProjectId,
   repository,
 } from '$lib/services/backends/git/gitlab/repository';
@@ -34,6 +35,16 @@ describe('GitLab repository service', () => {
       Object.assign(repository, { owner: 'group/subgroup', repo: 'project' });
 
       expect(getProjectId()).toBe('group%2Fsubgroup%2Fproject');
+    });
+  });
+
+  describe('getBranchPath', () => {
+    test('returns the REST API path of the branch with both names percent-encoded', () => {
+      Object.assign(repository, { owner: 'group/subgroup', repo: 'project' });
+
+      expect(getBranchPath('cms/posts/c#-tips')).toBe(
+        '/projects/group%2Fsubgroup%2Fproject/repository/branches/cms%2Fposts%2Fc%23-tips',
+      );
     });
   });
 
