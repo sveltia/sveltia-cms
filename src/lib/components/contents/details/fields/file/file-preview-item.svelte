@@ -45,11 +45,15 @@
   $effect(() => {
     void [value];
 
+    // The lookup for an earlier value can be answered after the one for a later value
+    let stale = false;
+
     untrack(async () => {
       // Determine the kind and source URL of the media. Skip if it’s an image field because we
       // already know it’s an image. It’s rather problematic if the path doesn’t have an extension.
-      kind = value ? (isImageField ? 'image' : await getMediaKind(value)) : undefined;
-      src = kind
+      const newKind = value ? (isImageField ? 'image' : await getMediaKind(value)) : undefined;
+
+      const newSrc = newKind
         ? await getMediaFieldURL({
             value,
             entry,
@@ -59,7 +63,16 @@
             typedKeyPath,
           })
         : undefined;
+
+      if (!stale) {
+        kind = newKind;
+        src = newSrc;
+      }
     });
+
+    return () => {
+      stale = true;
+    };
   });
 </script>
 
