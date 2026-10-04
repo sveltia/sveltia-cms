@@ -22,6 +22,7 @@ export const apiKeyPattern = /^AIza[a-zA-Z0-9_-]{35}$/;
  * `responseFormat: 'application/json'` to request a JSON response directly without markdown fences.
  * @returns {Promise<string>} Response text.
  * @throws {Error} When the API call fails or returns an invalid response.
+ * @see https://ai.google.dev/api#authentication
  */
 export const complete = async ({
   apiKey,
@@ -32,11 +33,10 @@ export const complete = async ({
   maxTokens = 4000,
   responseFormat,
 }) => {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
   const data = await postJSON({
-    endpoint: url,
-    headers: { 'Content-Type': 'application/json' },
+    endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    // The key goes in a header rather than the URL, which can end up in logs
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     apiLabel: 'Gemini',
     body: {
       system_instruction: { parts: [{ text: systemPrompt }] },

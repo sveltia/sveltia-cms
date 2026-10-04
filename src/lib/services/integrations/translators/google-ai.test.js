@@ -126,6 +126,7 @@ describe('Gemini Translator Service', () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': 'AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567',
           },
         }),
       );
