@@ -25,15 +25,10 @@
   import AddItemButton from '$lib/components/contents/details/fields/object/add-item-button.svelte';
   import ObjectBody from '$lib/components/contents/details/fields/object/object-body.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { updateListFieldForLocales } from '$lib/services/contents/draft/update/list';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
-  import {
-    getInitialExpanderState,
-    isExpanded,
-    syncExpanderStates,
-  } from '$lib/services/contents/editor/fields';
+  import { isExpanded, syncExpanderStates } from '$lib/services/contents/editor/fields';
   import { getSubtree } from '$lib/services/contents/entry/subtree';
   import {
     formatSummary,
@@ -42,11 +37,14 @@
     isSingleItemList,
     tagListItems,
   } from '$lib/services/contents/fields/list/helpers';
+  import {
+    createListItem,
+    getInitialListExpanderStates,
+  } from '$lib/services/contents/fields/list/items';
   import { getUnknownTypeMessage } from '$lib/services/contents/fields/object/helpers';
   import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
-  import { unflattenKeys } from '$lib/services/utils/object';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps, MediaFieldSource } from '$lib/types/private';
@@ -198,16 +196,16 @@
       return;
     }
 
-    updateExpanderStates({
-      [parentExpandedKeyPath]: minimizeCollapsed === 'auto' ? !items.length : !minimizeCollapsed,
-      ...Object.fromEntries(
-        items.map((__, index) => {
-          const key = `${keyPath}.${index}`;
-
-          return [key, getInitialExpanderState({ draft, key, locale, collapsed })];
-        }),
-      ),
-    });
+    updateExpanderStates(
+      getInitialListExpanderStates({
+        draft,
+        keyPath,
+        itemCount: items.length,
+        locale,
+        collapsed,
+        minimizeCollapsed,
+      }),
+    );
   };
 
   /**
@@ -256,33 +254,18 @@
       /* v8 ignore next -- a type is only added from the menu listing the known ones */
       const subFields = type ? (getTypeConfig(type)?.fields ?? []) : singleSubFields;
 
-      const newItem = (() => {
-        if (typeof dupIndex === 'number') {
-          return structuredClone(valueList[dupIndex]);
-        }
-
-        const item = unflattenKeys(
-          getDefaultValues({ fields: subFields, locale, defaultLocale: draft.defaultLocale }),
-        );
-
-        return hasSingleSubField && field ? item[field.name] : item;
-      })();
-
-      if (type) {
-        newItem[typeKey] = type;
-      }
-
-      if (!hasSingleSubField) {
-        // Add a random ID to the new item to ensure it is unique. This is necessary for the `key`
-        // attribute in the `each` block.
-        newItem.__sc_item_id = crypto.randomUUID();
-        // A duplicated item is a new one, so it mustn’t keep the original position of its source,
-        // or a revert would treat it as the source item
-        delete newItem.__sc_item_original_key_path;
-
-        // Track original key paths for existing items before they shift due to the insertion
-        tagListItems(valueList, keyPath);
-      }
+      const newItem = createListItem({
+        valueList,
+        keyPath,
+        dupIndex,
+        subFields,
+        hasSingleSubField,
+        field,
+        type,
+        typeKey,
+        locale,
+        defaultLocale: draft.defaultLocale,
+      });
 
       valueList.splice(index, 0, newItem);
       expanderStateList.splice(index, 0, true);
@@ -479,28 +462,19 @@
         <AddItemButton disabled={isAddDisabled} {fieldConfig} {items} {addItem} />
       {/if}
       {#if parentExpanded && items.length > 1}
-        <Button
-          variant="tertiary"
-          size="small"
-          label={_('expand_all')}
-          disabled={itemExpanderStates.every(([, value]) => value)}
-          onclick={() => {
-            updateExpanderStates(
-              Object.fromEntries(itemExpanderStates.map(([key]) => [key, true])),
-            );
-          }}
-        />
-        <Button
-          variant="tertiary"
-          size="small"
-          label={_('collapse_all')}
-          disabled={itemExpanderStates.every(([, value]) => !value)}
-          onclick={() => {
-            updateExpanderStates(
-              Object.fromEntries(itemExpanderStates.map(([key]) => [key, false])),
-            );
-          }}
-        />
+        {#each [true, false] as expanded (expanded)}
+          <Button
+            variant="tertiary"
+            size="small"
+            label={_(expanded ? 'expand_all' : 'collapse_all')}
+            disabled={itemExpanderStates.every(([, value]) => value === expanded)}
+            onclick={() => {
+              updateExpanderStates(
+                Object.fromEntries(itemExpanderStates.map(([key]) => [key, expanded])),
+              );
+            }}
+          />
+        {/each}
       {/if}
     </div>
   </div>
