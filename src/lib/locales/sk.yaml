@@ -1,0 +1,2487 @@
+# Read https://github.com/sveltia/sveltia-cms/blob/main/src/lib/locales/README.md
+# for instructions on how to add new languages or update existing translations.
+
+# ==============================================================================
+# Common Actions
+# ==============================================================================
+# Generic action button labels used throughout the application. These are
+# reusable strings for common operations like save, delete, cancel, etc.
+
+# Primary actions: creation, selection, and file operations
+create: Vytvoriť
+select: Vybrať
+select_all: Vybrať všetko
+# Accessible name of the checkbox that selects a single entry or asset in a list
+select_item: Vybrať {$name}
+upload: Nahrať
+copy: Kopírovať
+download: Stiahnuť
+duplicate: Duplikovať
+delete: Odstrániť
+reorder: Zmeniť poradie
+
+# Dialog and form actions: confirmation and cancellation
+cancel: Zrušiť
+done: Hotovo
+save: Uložiť
+# Progress indicator shown on the save button while a save operation is in progress
+saving: Ukladá sa…
+
+# Publishing actions: used when committing changes to the repository
+publish: Publikovať
+# Progress indicator shown on the publish button during publishing
+publishing: Publikuje sa…
+
+# Modification actions: editing and updating content
+rename: Premenovať
+update: Aktualizovať
+replace: Nahradiť
+
+# List and collection actions: adding and removing items
+add: Pridať
+remove: Odobrať
+clear: Vymazať
+
+# Expansion and collapse actions: used for accordions, trees, and expandable sections
+expand: Rozbaliť
+expand_all: Rozbaliť všetko
+collapse: Zbaliť
+collapse_all: Zbaliť všetko
+
+# Content manipulation: inserting, restoring, and discarding
+insert: Vložiť
+restore: Obnoviť
+discard: Zahodiť
+
+# ==============================================================================
+# Common UI Elements
+# ==============================================================================
+# Reusable labels and messages for common interface elements like status
+# indicators, loading states, and toolbar regions.
+
+# Status messages: search and results indicators
+# Shown in ARIA live regions during search operations
+searching: Vyhľadáva sa…
+no_results: Nenašli sa žiadne výsledky.
+
+# Toolbar region labels: used as aria-labels for different toolbar areas
+# These help screen readers identify which toolbar is being navigated
+global: Globálny
+primary: Hlavný
+secondary: Sekundárny
+collection: Kolekcia
+folder: Priečinok
+# Label of the subfolder list in the asset picker
+folders: Priečinky
+# Menu in a breadcrumb holding the folders that don’t fit
+more_folders: Ďalšie priečinky
+
+# ==============================================================================
+# Miscellaneous Labels
+# ==============================================================================
+# Various labels used across the application for specific UI elements
+# that don’t fit into other categories.
+
+# Field and input labels
+api_key: API kľúč
+details: Podrobnosti
+back: Späť
+# Reusable label for an option whose value is determined automatically, e.g. the UI language
+automatic: Automaticky
+# Loading indicator shown during async operations (asset preview, panels, etc.)
+loading: Načítava sa…
+# Dismiss button for temporary notifications and infobars
+later: Neskôr
+
+# Entry and collection labels
+# Slug field heading in entry editors
+slug: Slug
+# Fallback labels for singleton collections when names aren’t configured
+singleton: Samostatná položka
+singletons: Samostatné položky
+
+# Error messages
+# Toast notification when clipboard operations fail
+clipboard_error: Nepodarilo sa skopírovať do schránky.
+
+# ==============================================================================
+# Sign-In Page
+# ==============================================================================
+# Strings specific to the authentication and sign-in page, including welcome
+# messages, loading states, OAuth flows, and repository access options.
+
+# Welcome and branding
+# Screen reader announcement when the sign-in page loads
+# {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
+welcome_message: Vitajte v aplikácii {$name}
+# Footer text with CMS branding
+# {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
+powered_by: Beží na {$name}
+
+# Shown during initial configuration and data loading
+loading_cms_config: Načítava sa konfigurácia CMS…
+loading_site_data: Načítavajú sa údaje webu…
+loading_site_data_error: Pri načítavaní údajov webu sa vyskytla chyba.
+
+# OAuth and token authentication
+# Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
+# {$service} is the sign-in provider label, such as GitHub or GitLab
+sign_in_with_x: Prihlásiť sa cez {$service}
+
+# Access token dialog: alternative authentication method
+sign_in_using_access_token: Prihlásiť sa pomocou prístupového tokenu
+sign_in_using_access_token_description: Nižšie zadajte svoj token. Musí mať prístup na čítanie a zápis k obsahu repozitára.
+# Shown after the description above when Editorial Workflow is enabled, which opens and merges pull requests
+sign_in_using_access_token_workflow_note: Keďže je zapnutý schvaľovací proces, musí mať prístup na čítanie a zápis aj k pull requestom.
+# Inline link text with embedded HTML anchor tag
+# {$service} is the provider name whose user settings page contains the token generator, e.g., GitHub or GitLab
+sign_in_using_access_token_link: Token môžete vygenerovať na <a>stránke používateľských nastavení služby {$service}</a>.
+# Input field label for personal access token
+personal_access_token: Osobný prístupový token
+
+# Authentication progress indicators
+authorizing: Prebieha autorizácia…
+signing_in: Prebieha prihlasovanie…
+
+# Local and test repository options
+# Button label and description for working with a local Git repository
+work_with_local_repo: Pracovať s lokálnym repozitárom
+# {$repo} is the configured repository name shown when it is available
+work_with_local_repo_description: Po výzve vyberte koreňový priečinok repozitára „{$repo}“.
+work_with_local_repo_description_no_repo: Po výzve vyberte koreňový priečinok svojho Git repozitára.
+# Button label for demo/test repository
+work_with_test_repo: Pracovať s testovacím repozitárom
+
+# Authentication errors
+# Error messages shown during sign-in failures
+sign_in_error:
+  not_project_root: Vybraný priečinok nie je koreňovým priečinkom repozitára. Skúste to znova.
+  picker_dismissed: Koreňový priečinok repozitára sa nepodarilo vybrať. Skúste to znova.
+  authentication_aborted: Overenie bolo prerušené. Skúste to znova.
+  invalid_token: Zadaný token je neplatný. Skontrolujte ho a skúste to znova.
+  # OAuth and authenticator errors (shown with error codes) — keys are defined in the Sveltia CMS Authenticator library
+  UNSUPPORTED_BACKEND: Autentifikátor nepodporuje váš Git backend.
+  UNSUPPORTED_DOMAIN: Vaša doména nemá povolené používať autentifikátor.
+  MISCONFIGURED_CLIENT: ID klienta alebo tajný kľúč aplikácie OAuth nie je nakonfigurovaný.
+  AUTH_CODE_REQUEST_FAILED: Nepodarilo sa získať autorizačný kód. Skúste to neskôr.
+  CSRF_DETECTED: Zistil sa možný útok CSRF. Proces overenia bol prerušený.
+  TOKEN_REQUEST_FAILED: Nepodarilo sa vyžiadať prístupový token. Skúste to neskôr.
+  TOKEN_REFRESH_FAILED: Nepodarilo sa obnoviť prístupový token. Skúste to neskôr.
+  MALFORMED_RESPONSE: Server odpovedal chybne formátovanými údajmi. Skúste to neskôr.
+
+# Backend and repository validation errors
+# Shown when the configured backend or repository is invalid or inaccessible
+# {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
+backend_unsupported_version: Backend {$name} vyžaduje {$name} vo verzii {$version} alebo novšej.
+# {$repo} is the repository identifier, typically in owner/repo format
+repository_no_access: Nemáte prístup k repozitáru „{$repo}“.
+repository_not_found: Repozitár „{$repo}“ neexistuje.
+repository_empty: Repozitár „{$repo}“ nemá žiadne vetvy.
+# {$repo} is the repository identifier, and {$branch} is the configured branch name
+branch_not_found: Repozitár „{$repo}“ nemá vetvu „{$branch}“.
+
+# General errors
+# Fallback error dialog title for unexpected errors
+unexpected_error: Neočakávaná chyba
+
+# Entry file parsing errors
+# Toast notification when entry files fail to parse on initial load
+# {$count} is the number of entry files that failed to parse
+entry_parse_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Pri spracovaní súboru položky sa vyskytla chyba. Podrobnosti nájdete v konzole prehliadača. }}
+    *   {{ Pri spracovaní súborov položiek sa vyskytli chyby. Podrobnosti nájdete v konzole prehliadača. }}
+
+# ==============================================================================
+# Authentication and Account
+# ==============================================================================
+# These strings are used for sign-in, account management, and authentication
+# flows throughout the application.
+
+# Sign-in page and external assets panel: credential input field aria-labels
+username: Používateľské meno
+password: Heslo
+
+# Sign-in actions: primary button labels and account menu items
+# Used on the sign-in page and in confirmation dialogs for external assets
+sign_in: Prihlásiť sa
+
+# Mobile sign-in feature: dialog title and instructions for QR code authentication
+sign_in_with_mobile: Prihlásiť sa cez mobil
+# Instructions shown in the mobile sign-in dialog for passwordless authentication
+sign_in_with_mobile_instruction: Na prihlásenie bez hesla naskenujte QR kód nižšie telefónom alebo tabletom. Vaše nastavenia sa automaticky skopírujú.
+# Confirmation dialog shown when the CMS is opened with a sign-in link from the mobile sign-in
+# QR code. {$account} is the account name, {$service} is the Git service name, e.g. GitHub
+sign_in_with_link: Prihlásiť sa pomocou odkazu
+sign_in_with_link_confirmation: Tento odkaz vás prihlási ako {$account} v službe {$service} a skopíruje nastavenia zo zariadenia, na ktorom bol vytvorený. Pokračujte, iba ak ste odkaz vytvorili sami.
+
+# Account menu: user status and repository mode indicators
+# Shown at the top of the account dropdown menu
+# {$name} is the signed-in user’s login name
+signed_in_as_x: 'Prihlásený účet: {$name}'
+working_with_local_repo: Práca s lokálnym repozitárom
+working_with_test_repo: Práca s testovacím repozitárom
+
+# Account menu: action items for sign-out and app installation
+sign_out: Odhlásiť sa
+install_as_app: Nainštalovať ako aplikáciu
+
+# ==============================================================================
+# Global Toolbar
+# ==============================================================================
+# Strings used in the main application toolbar, including navigation, search,
+# notifications, and menu items.
+
+# Main page titles in the global navigation and page switcher button group
+contents: Obsah
+assets: Médiá
+editorial_workflow: Schvaľovací proces
+cms_config: Konfigurácia CMS
+# Mobile menu page title (shown only on small screens)
+menu: Ponuka
+
+# Mobile promo infobar: encouraging users to try the mobile version
+mobile_promo_title: Sveltia CMS je teraz k dispozícii aj na mobilných zariadeniach!
+mobile_promo_button: Vyskúšať
+
+# New language infobar: encouraging users to switch to a newly available language
+# {$locale} is the localized language name, e.g., “French”
+new_language_available: Sveltia CMS je teraz k dispozícii v jazyku {$locale}!
+change_language: Zmeniť jazyk
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Prepína sa na jazyk {$locale}…
+locale_load_failed: Nepodarilo sa načítať preklad v jazyku {$locale}. Skúste to neskôr.
+
+# Site and page navigation
+# Toolbar button aria-label for visiting the live site
+visit_live_site: Prejsť na verejný web
+# Page switcher button group aria-label for switching between main sections
+switch_page: Prepnúť stránku
+
+# Search input placeholders
+search_placeholder_contents: Hľadať v obsahu…
+search_placeholder_assets: Hľadať v médiách…
+search_placeholder_all: Hľadať v obsahu a médiách…
+
+# Create button: aria-label for the create menu in the toolbar
+create_entry_or_assets: Vytvoriť položku alebo nahrať médiá
+
+# Publishing actions: button labels and progress indicators
+publish_changes: Publikovať zmeny
+publishing_changes: Publikujú sa zmeny…
+# Error notification when publishing fails
+publishing_changes_failed: Zmeny sa nepodarilo publikovať. Skúste to znova.
+
+# Notifications: button aria-labels and section headings
+show_notifications: Zobraziť oznámenia
+notifications: Oznámenia
+
+# Account menu: button aria-labels and section headings
+show_account_menu: Zobraziť ponuku účtu
+# Account section heading in the account menu and mobile menu page
+account: Účet
+
+# Account menu items: links to external resources
+live_site: Verejný web
+git_repository: Git repozitár
+settings: Nastavenia
+
+# Help menu: button aria-labels and section headings
+show_help_menu: Zobraziť ponuku pomocníka
+# Help section heading in dropdowns and mobile menu
+help: Pomocník
+
+# Help menu items: documentation and support resources
+keyboard_shortcuts: Klávesové skratky
+documentation: Dokumentácia
+release_notes: Poznámky k verzii
+announcements: Novinky
+# Version badge aria-label in the release notes menu item
+# {$version} is the current app version string
+version_x: Verzia {$version}
+# Additional help menu items
+report_issue: Nahlásiť problém
+share_feedback: Poslať spätnú väzbu
+get_help: Získať pomoc
+donate: Podporiť projekt
+join_discord: Pridajte sa k nám na Discorde
+bluesky: Sledujte nás na Bluesky
+
+# Update notification: infobar message and button
+update_available: K dispozícii je najnovšia verzia Sveltia CMS.
+update_now: Aktualizovať teraz
+
+# Backend status notifications
+# Shown when the Git backend (GitHub, GitLab, etc.) is experiencing issues
+# {$service} is the backend service label shown in the toolbar notice, e.g., GitHub or GitLab
+backend_status:
+  minor_incident: Služba {$service} má drobné problémy. Niektoré funkcie nemusia fungovať správne.
+  major_incident: Služba {$service} má vážne problémy. Odporúčame počkať, kým sa situácia zlepší.
+
+# ==============================================================================
+# Content and Asset Libraries
+# ==============================================================================
+# Strings used in the main content and asset management interfaces, including
+# lists, navigation, and collection/folder views.
+
+# Page container aria-labels
+content_library: Knižnica obsahu
+asset_library: Knižnica médií
+
+# Primary sidebar section headings and list aria-labels
+collections: Kolekcie
+entries: Položky
+files: Súbory
+
+# Asset location selector: option group labels
+asset_location:
+  # Assets stored in the site’s Git repository
+  repository: Váš web
+  external: Externé úložiská
+  stock_photos: Fotobanky
+
+# Sidebar and list labels
+# Collection assets panel aria-label
+collection_assets: Médiá kolekcie
+# List aria-labels for different list types
+entry_list: Zoznam položiek
+file_list: Zoznam súborov
+asset_list: Zoznam médií
+
+# Collection and folder page titles
+# Used as aria-labels on page containers
+# {$collection} is the current collection label
+x_collection: Kolekcia {$collection}
+# {$folder} is the current asset folder label
+x_asset_folder: Priečinok médií {$folder}
+
+# Navigation announcements (ARIA live regions)
+# Announce page changes for screen reader users
+viewing_collection_list: Teraz si prezeráte zoznam kolekcií.
+viewing_asset_folder_list: Teraz si prezeráte zoznam priečinkov médií.
+# Collection view announcements with entry counts
+# {$collection} is the collection label and {$count} is the number of entries in it
+viewing_x_collection: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Teraz si prezeráte kolekciu „{$collection}“, ktorá zatiaľ neobsahuje žiadne položky. }}
+    one {{ Teraz si prezeráte kolekciu „{$collection}“, ktorá obsahuje jednu položku. }}
+    few {{ Teraz si prezeráte kolekciu „{$collection}“, ktorá obsahuje {$count} položky. }}
+    *   {{ Teraz si prezeráte kolekciu „{$collection}“, ktorá obsahuje {$count} položiek. }}
+# Asset folder view announcements with asset counts
+# {$folder} is the folder label and {$count} is the number of assets in it
+viewing_x_asset_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Teraz si prezeráte priečinok médií „{$folder}“, ktorý zatiaľ neobsahuje žiadne médiá. }}
+    one {{ Teraz si prezeráte priečinok médií „{$folder}“, ktorý obsahuje jedno médium. }}
+    few {{ Teraz si prezeráte priečinok médií „{$folder}“, ktorý obsahuje {$count} médiá. }}
+    *   {{ Teraz si prezeráte priečinok médií „{$folder}“, ktorý obsahuje {$count} médií. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Teraz si prezeráte médiá v službe {$service}.
+
+# Singleton file selection announcement
+# {$file} is the singleton file name
+singleton_selected_announcement: Stlačením klávesu Enter upravíte súbor „{$file}“.
+
+# Error messages: page, collection, folder or file not found
+page_not_found: Stránka sa nenašla.
+collection_not_found: Kolekcia sa nenašla.
+asset_folder_not_found: Priečinok médií sa nenašiel.
+file_not_found: Súbor sa nenašiel.
+
+# Selection count indicator
+# Shown in the toolbar when items are selected (e.g., “2 of 10 selected”)
+# {$selected} is the selected item count and {$total} is the total item count
+x_of_x_selected: Vybrané {$selected} z {$total}
+
+# View switcher: toggle between list and grid views
+switch_view: Prepnúť zobrazenie
+list_view: Zoznam
+grid_view: Mriežka
+switch_to_list_view: Prepnúť na zoznam
+switch_to_grid_view: Prepnúť na mriežku
+
+# ==============================================================================
+# List Controls: Sort, Filter, and Group
+# ==============================================================================
+# Strings for sorting, filtering, and grouping entries and assets in lists.
+
+# Sort menu: button labels and options
+sort: Zoradiť
+sorting_options: Možnosti zoradenia
+# Sort key option labels
+sort_keys:
+  # No sorting; entries appear in their natural repository order
+  none: Žiadne
+  name: Názov
+  slug: Slug
+  # Sort by the last commit’s author name
+  commit_author: Autor úpravy
+  # Sort by the last commit date
+  commit_date: Dátum úpravy
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Dátum zmeny
+  # Sort by file size
+  size: Veľkosť
+  # Sort by the entry’s computed summary text
+  _summary: Súhrn
+  # Manual order defined by the user via drag-and-drop
+  _manual: Ručne
+# Sort order labels used with field names
+# Example: “Name, A to Z” or “Updated on, new to old”
+# {$label} is the localized sort field label
+ascending: '{$label}, od A po Z'
+ascending_date: '{$label}, od najstarších'
+descending: '{$label}, od Z po A'
+descending_date: '{$label}, od najnovších'
+ascending_number: '{$label}, od najmenšieho po najväčší'
+descending_number: '{$label}, od najväčšieho po najmenší'
+
+# Filter menu: button labels and options
+filter: Filtrovať
+filtering_options: Možnosti filtrovania
+
+# Group menu: button labels and options
+group: Zoskupiť
+grouping_options: Možnosti zoskupenia
+
+# Asset type filter and group labels
+type: Typ
+all: Všetko
+# Group option for the linked files, which can be hosted anywhere: the host name of the file’s URL
+domain: Doména
+# Asset type labels
+image: Obrázok
+video: Video
+audio: Zvuk
+document: Dokument
+other: Iné
+
+# Toolbar toggles: show/hide panels
+show_assets: Zobraziť médiá
+hide_assets: Skryť médiá
+show_info: Zobraziť informácie
+hide_info: Skryť informácie
+
+# Folder display labels when no specific path is configured
+all_assets: Všetky médiá
+global_assets: Globálne médiá
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Prepojené súbory
+# Badge and message shown on a linked file that couldn’t be loaded, e.g. because it has been deleted
+file_unavailable: Nedostupné
+file_unavailable_description: Tento súbor sa nepodarilo načítať. Mohol byť presunutý alebo odstránený.
+
+# ==============================================================================
+# Entry and Collection Actions
+# ==============================================================================
+# Strings related to creating, editing, and managing entries and collections.
+
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Načítava sa položka… }}
+    *   {{ Načítavajú sa položky… }}
+# Error message when entry cannot be found
+entry_not_found: Položka sa nenašla.
+
+# Entry creation restrictions: tooltip and advisory messages
+creating_entries_disabled_by_admin: Vytváranie nových položiek v tejto kolekcii zakázal správca.
+# {$quota} is the collection’s maximum entry count
+creating_entries_disabled_by_quota: |
+  .input {$quota :integer}
+  .match $quota
+    one {{ Do tejto kolekcie nemôžete pridať nové položky, pretože dosiahla svoj limit {$quota} položky. }}
+    few {{ Do tejto kolekcie nemôžete pridať nové položky, pretože dosiahla svoj limit {$quota} položiek. }}
+    *   {{ Do tejto kolekcie nemôžete pridať nové položky, pretože dosiahla svoj limit {$quota} položiek. }}
+# {$quota} is the collection limit and {$remaining} is the number of entries that can still be created
+creating_entries_nearing_quota: |
+  .input {$quota :integer}
+  .input {$remaining :integer}
+  .match $quota $remaining
+    one one {{ Táto kolekcia sa blíži k svojmu limitu {$quota} položky. Môžete vytvoriť už len {$remaining} položku. }}
+    one few {{ Táto kolekcia sa blíži k svojmu limitu {$quota} položky. Môžete vytvoriť už len {$remaining} položky. }}
+    one *   {{ Táto kolekcia sa blíži k svojmu limitu {$quota} položky. Môžete vytvoriť už len {$remaining} položiek. }}
+    few one {{ Táto kolekcia sa blíži k svojmu limitu {$quota} položiek. Môžete vytvoriť už len {$remaining} položku. }}
+    few few {{ Táto kolekcia sa blíži k svojmu limitu {$quota} položiek. Môžete vytvoriť už len {$remaining} položky. }}
+    few *   {{ Táto kolekcia sa blíži k svojmu limitu {$quota} položiek. Môžete vytvoriť už len {$remaining} položiek. }}
+    *   one {{ Táto kolekcia sa blíži k svojmu limitu {$quota} položiek. Môžete vytvoriť už len {$remaining} položku. }}
+    *   few {{ Táto kolekcia sa blíži k svojmu limitu {$quota} položiek. Môžete vytvoriť už len {$remaining} položky. }}
+    *   *   {{ Táto kolekcia sa blíži k svojmu limitu {$quota} položiek. Môžete vytvoriť už len {$remaining} položiek. }}
+
+# Read-only restrictions set with the `readonly` option: advisory messages
+readonly_cms: CMS je v režime iba na čítanie. Obsah a médiá si môžete prezerať, ale nemôžete robiť žiadne zmeny.
+readonly_collection: Táto kolekcia je iba na čítanie. Jej obsah si môžete prezerať, ale nemôžete robiť žiadne zmeny.
+readonly_entry: Táto položka je iba na čítanie. Môžete si ju prezerať, ale nemôžete robiť žiadne zmeny.
+readonly_asset_folder: Tento priečinok je iba na čítanie. Jeho médiá si môžete prezerať, ale nemôžete robiť žiadne zmeny.
+readonly_branch: Nemáte oprávnenie odosielať zmeny do vetvy „{$branch}“. Tento obsah si môžete prezerať, ale nemôžete robiť žiadne zmeny.
+readonly_reference: Položka je iba na čítanie, preto odkaz nemožno odobrať.
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_rename_referenced_entry: 'Túto položku nemožno premenovať, pretože by bolo potrebné upraviť odkazy na ňu v týchto položkách, ktoré sa nedajú upravovať: {$entries}.'
+# {$entries} is a comma-separated list of entries, each shown as “Collection › Entry”
+cannot_move_referenced_asset: 'Toto médium nemožno presunúť ani premenovať, pretože by bolo potrebné upraviť odkazy naň v týchto položkách, ktoré sa nedajú upravovať: {$entries}.'
+
+# Navigation: back links and list labels
+back_to_collection: Späť na kolekciu
+collection_list: Zoznam kolekcií
+back_to_collection_list: Späť na zoznam kolekcií
+asset_folder_list: Zoznam priečinkov médií
+back_to_asset_folder_list: Späť na zoznam priečinkov médií
+# Back button shown in place of the one above while browsing a subfolder of an asset folder
+back_to_parent_folder: Späť do nadradeného priečinka
+
+# ==============================================================================
+# Search
+# ==============================================================================
+# Strings used in the search feature for finding entries and assets.
+
+# Search page: headings and aria-labels
+search_results: Výsledky vyhľadávania
+# {$terms} is the current search query text
+search_results_for_x: Výsledky vyhľadávania pre „{$terms}“
+
+# Search result announcements (ARIA live regions)
+# Entry search results with counts
+# {$terms} is the search query and {$count} is the number of matching entries
+viewing_entry_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Teraz si prezeráte výsledky vyhľadávania pre „{$terms}“. Nenašli sa žiadne položky. }}
+    one {{ Teraz si prezeráte výsledky vyhľadávania pre „{$terms}“. Našla sa jedna položka. }}
+    few {{ Teraz si prezeráte výsledky vyhľadávania pre „{$terms}“. Našli sa {$count} položky. }}
+    *   {{ Teraz si prezeráte výsledky vyhľadávania pre „{$terms}“. Našlo sa {$count} položiek. }}
+# Asset search results with counts
+# {$terms} is the search query and {$count} is the number of matching assets
+viewing_asset_search_results: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Teraz si prezeráte výsledky vyhľadávania pre „{$terms}“. Nenašli sa žiadne médiá. }}
+    one {{ Teraz si prezeráte výsledky vyhľadávania pre „{$terms}“. Našlo sa jedno médium. }}
+    few {{ Teraz si prezeráte výsledky vyhľadávania pre „{$terms}“. Našli sa {$count} médiá. }}
+    *   {{ Teraz si prezeráte výsledky vyhľadávania pre „{$terms}“. Našlo sa {$count} médií. }}
+
+# Result count labels
+# Used in search result headings to show counts
+# {$count} is the number of matching entries
+x_entries: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Žiadne položky }}
+    one {{ {$count} položka }}
+    few {{ {$count} položky }}
+    *   {{ {$count} položiek }}
+# {$count} is the number of matching assets
+x_assets: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Žiadne médiá }}
+    one {{ {$count} médium }}
+    few {{ {$count} médiá }}
+    *   {{ {$count} médií }}
+
+# Empty state messages
+no_files_found: Nenašli sa žiadne súbory.
+no_entries_found: Nenašli sa žiadne položky.
+
+# ==============================================================================
+# Asset Management
+# ==============================================================================
+# Strings for uploading, editing, and managing assets (images, documents, etc.).
+
+# Upload dialog: title and button label
+upload_assets: Nahrať nové médiá
+
+# New Folder button and dialog in the Asset Library
+new_folder: Nový priečinok
+new_folder_name: Názov priečinka
+new_folder_create: Vytvoriť
+# {$folder} is the path of the folder the new one will be created in, starting with a slash
+new_folder_description: Nový priečinok sa vytvorí v priečinku „{$folder}“.
+# Validation errors for the new folder name
+new_folder_error:
+  empty: Názov priečinka nemôže byť prázdny.
+  invalid: Názov priečinka nemôže obsahovať lomky ani začínať bodkou.
+  duplicate: Priečinok alebo súbor s týmto názvom tu už existuje.
+# Progress and error messages while the folder is being created
+creating_folder: Vytvára sa priečinok…
+creating_folder_failed: Priečinok sa nepodarilo vytvoriť.
+
+# Menu on a folder in the Asset Library, and the Rename Folder and Delete Folder dialogs
+folder_options: Možnosti priečinka
+show_folder_options: Zobraziť možnosti priečinka
+rename_folder: Premenovať priečinok
+delete_folder: Odstrániť priečinok
+# Rename Folder dialog body text
+# {$count} is the number of assets in the folder, which are moved along with it
+enter_new_name_for_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nižšie zadajte nový názov. }}
+    one {{ Nižšie zadajte nový názov. Médium v priečinku sa presunie spolu s ním a všetky položky, ktoré ho používajú, sa aktualizujú. }}
+    few {{ Nižšie zadajte nový názov. {$count} médiá v priečinku sa presunú spolu s ním a všetky položky, ktoré ich používajú, sa aktualizujú. }}
+    *   {{ Nižšie zadajte nový názov. {$count} médií v priečinku sa presunie spolu s ním a všetky položky, ktoré ich používajú, sa aktualizujú. }}
+# Rename Folder dialog body text for a cloud storage service, whose files are hotlinked from the
+# entries, so a move changes the URLs and the entries aren’t updated
+enter_new_name_for_external_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nižšie zadajte nový názov. }}
+    one {{ Nižšie zadajte nový názov. Súbor v priečinku sa presunie spolu s ním a jeho URL sa zmení, preto aktualizujte všetky položky, ktoré ho používajú. }}
+    few {{ Nižšie zadajte nový názov. {$count} súbory v priečinku sa presunú spolu s ním a ich URL sa zmenia, preto aktualizujte všetky položky, ktoré ich používajú. }}
+    *   {{ Nižšie zadajte nový názov. {$count} súborov v priečinku sa presunie spolu s ním a ich URL sa zmenia, preto aktualizujte všetky položky, ktoré ich používajú. }}
+# Delete Folder confirmation
+# {$name} is the folder name and {$count} is the number of assets in the folder
+confirm_deleting_folder: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Naozaj chcete odstrániť prázdny priečinok „{$name}“? }}
+    one {{ Naozaj chcete odstrániť priečinok „{$name}“ aj s médiom, ktoré obsahuje? }}
+    few {{ Naozaj chcete odstrániť priečinok „{$name}“ aj s {$count} médiami, ktoré obsahuje? }}
+    *   {{ Naozaj chcete odstrániť priečinok „{$name}“ aj s {$count} médiami, ktoré obsahuje? }}
+# Progress and error messages while the folder is being renamed or deleted
+renaming_folder: Premenúva sa priečinok…
+renaming_folder_failed: Priečinok sa nepodarilo premenovať.
+deleting_folder: Odstraňuje sa priečinok…
+deleting_folder_failed: Priečinok sa nepodarilo odstrániť.
+
+# Edit options menu: button and item labels
+edit_options: Možnosti úprav
+show_edit_options: Zobraziť možnosti úprav
+# Copy menu aria-label
+copy_options: Možnosti kopírovania
+# Edit menu items with specific asset names
+edit_asset: Upraviť médium
+# {$name} is the selected asset name
+edit_x: Upraviť {$name}
+
+# Asset text editor: switch for line wrapping
+wrap_long_lines: Zalamovať dlhé riadky
+
+# Rename asset: dialog and validation
+rename_asset: Premenovať médium
+# {$name} is the current asset name
+rename_x: Premenovať {$name}
+# Dialog body text indicating how many entries reference this asset
+# {$count} is the number of entries that currently reference the asset
+enter_new_name_for_asset: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Nižšie zadajte nový názov. }}
+    one {{ Nižšie zadajte nový názov. Aktualizuje sa aj položka, ktorá toto médium používa. }}
+    few {{ Nižšie zadajte nový názov. Aktualizujú sa aj {$count} položky, ktoré toto médium používajú. }}
+    *   {{ Nižšie zadajte nový názov. Aktualizuje sa aj {$count} položiek, ktoré toto médium používajú. }}
+# Validation errors for asset renaming
+enter_new_name_for_asset_error:
+  empty: Názov súboru nemôže byť prázdny.
+  character: Názov súboru nemôže obsahovať špeciálne znaky.
+  duplicate: Tento názov súboru už používa iné médium.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Zmeniť príponu súboru
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Naozaj chcete zmeniť príponu z „.{$oldExtension}“ na „.{$newExtension}“?
+  add: Naozaj chcete pridať príponu „.{$newExtension}“?
+  remove: Naozaj chcete odobrať príponu „.{$oldExtension}“?
+file_extension_change_warning: Ak prípona nezodpovedá skutočnému formátu súboru, súbor sa nemusí zobraziť alebo spracovať správne.
+
+# Replace asset: menu item and dialog title
+replace_asset: Nahradiť médium
+# {$name} is the asset being replaced
+replace_x: Nahradiť {$name}
+# File/Image field: labels of the Replace and Remove buttons
+replace_file: Nahradiť súbor
+replace_image: Nahradiť obrázok
+remove_file: Odobrať súbor
+remove_image: Odobrať obrázok
+
+# File selection prompts: drop zones and file pickers
+# Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
+click_to_browse: Kliknite a prehľadávajte…
+# Browse prompt shown on touch devices
+tap_to_browse: Ťuknite a prehľadávajte…
+# Drop zone text with browse button
+# {$count} is the number of files expected by the current picker mode
+drop_files_or_click_to_browse: |
+  .input {$count :integer}
+  .match $count
+    one {{ Presuňte sem súbor alebo kliknite a prehľadávajte… }}
+    *   {{ Presuňte sem súbory alebo kliknite a prehľadávajte… }}
+# Partial drop zone text (ends with inline button)
+# {$count} is the number of files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Presuňte sem súbor alebo }}
+    *   {{ Presuňte sem súbory alebo }}
+# Image-specific drop zone text
+# {$count} is the number of image files expected by the current picker mode
+# After the “or” text, the inline buttons are rendered with the localized strings
+drop_image_files_or: |
+  .input {$count :integer}
+  .match $count
+    one {{ Presuňte sem obrázok alebo }}
+    *   {{ Presuňte sem obrázky alebo }}
+
+# File picker and clipboard actions used by upload controls
+browse: Prehľadávať
+# Generic clipboard paste action used by non-image file fields
+paste: Vložiť
+# Clipboard paste action used by image fields
+paste_image: Vložiť obrázok
+
+# Clipboard paste errors
+no_image_in_clipboard: V schránke sa nenašiel žiadny obrázok.
+clipboard_access_denied: Prístup k schránke bol zamietnutý.
+
+# Drag-and-drop overlay text (shown while dragging)
+# {$count} is the number of files expected by the current picker mode
+drop_files_here: |
+  .input {$count :integer}
+  .match $count
+    one {{ Presuňte súbor sem }}
+    *   {{ Presuňte súbory sem }}
+
+# File type validation errors
+unsupported_file_type: Nepodporovaný typ súboru
+# {$type} is the expected asset type label, such as image or document
+dropped_file_type_mismatch: 'Presunutý súbor nie je žiadneho z týchto typov: {$types}. Skúste to znova.'
+dropped_image_type_mismatch: 'Presunutý súbor nie je podporovaný. Prijímajú sa iba obrázky týchto typov: {$types}. Skúste to znova.'
+
+# File chooser button label
+# {$count} is the number of files the picker allows the user to choose
+choose_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Vybrať súbor }}
+    *   {{ Vybrať súbory }}
+
+# ==============================================================================
+# Delete Confirmations
+# ==============================================================================
+# Confirmation dialogs for deleting assets and entries.
+
+# Delete assets: dialog titles and confirmation messages
+# {$count} is the number of assets targeted by the action
+delete_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Odstrániť médium }}
+    *   {{ Odstrániť médiá }}
+# {$count} is the number of selected assets
+delete_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Odstrániť vybrané médium }}
+    *   {{ Odstrániť vybrané médiá }}
+confirm_deleting_this_asset: Naozaj chcete odstrániť toto médium?
+# {$count} is the number of selected assets
+confirm_deleting_selected_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Naozaj chcete odstrániť vybrané médium? }}
+    few {{ Naozaj chcete odstrániť {$count} vybrané médiá? }}
+    *   {{ Naozaj chcete odstrániť {$count} vybraných médií? }}
+confirm_deleting_all_assets: Naozaj chcete odstrániť všetky médiá?
+# Note added to the confirmation when entries use the assets being deleted; the references are
+# removed in the same commit. {$count} is the number of entries using them
+deleting_referenced_assets_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ Odstráni sa aj odkaz naň v jednej položke. }}
+    few {{ Odstránia sa aj odkazy naň v {$count} položkách. }}
+    *   {{ Odstránia sa aj odkazy naň v {$count} položkách. }}
+# Shown in place of the confirmation when removing the references would leave a field in an entry
+# invalid, e.g. a required Image field with nothing left, so the deletion is refused. The fields are
+# listed below the message, each with the validation error it would have. {$count} is the number of
+# assets being deleted
+cannot_delete_referenced_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Toto médium nie je možné odstrániť, pretože nasledujúce polia v položkách, ktoré ho používajú, by bez neho už neboli platné. Najprv tieto položky upravte. }}
+    *   {{ Tieto médiá nie je možné odstrániť, pretože nasledujúce polia v položkách, ktoré ich používajú, by bez nich už neboli platné. Najprv tieto položky upravte. }}
+
+# Delete entries: dialog titles and confirmation messages
+# {$count} is the number of entries targeted by the action
+delete_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Odstrániť položku }}
+    *   {{ Odstrániť položky }}
+# {$count} is the number of selected entries
+delete_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Odstrániť vybranú položku }}
+    *   {{ Odstrániť vybrané položky }}
+confirm_deleting_this_entry: Naozaj chcete odstrániť túto položku?
+confirm_deleting_this_entry_with_assets: Naozaj chcete odstrániť túto položku a súvisiace médiá?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Položku sa nepodarilo odstrániť. Skúste to znova.
+# {$count} is the number of selected entries
+confirm_deleting_selected_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Naozaj chcete odstrániť vybranú položku? }}
+    few {{ Naozaj chcete odstrániť {$count} vybrané položky? }}
+    *   {{ Naozaj chcete odstrániť {$count} vybraných položiek? }}
+# {$count} is the number of selected entries whose associated assets would also be removed
+confirm_deleting_selected_entries_with_assets: |
+  .input {$count :integer}
+  .match $count
+    one {{ Naozaj chcete odstrániť vybranú položku a súvisiace médiá? }}
+    few {{ Naozaj chcete odstrániť {$count} vybrané položky a súvisiace médiá? }}
+    *   {{ Naozaj chcete odstrániť {$count} vybraných položiek a súvisiace médiá? }}
+confirm_deleting_all_entries: Naozaj chcete odstrániť všetky položky?
+confirm_deleting_all_entries_with_assets: Naozaj chcete odstrániť všetky položky a súvisiace médiá?
+# Note added to the confirmation when other entries reference the entries being deleted through
+# Relation fields; the references are removed in the same commit. {$count} is the number of
+# referencing entries
+deleting_referenced_entries_note: |
+  .input {$count :integer}
+  .match $count
+    one {{ Odstráni sa aj odkaz naň v inej položke. }}
+    few {{ Odstránia sa aj odkazy naň v {$count} ďalších položkách. }}
+    *   {{ Odstránia sa aj odkazy naň v {$count} ďalších položkách. }}
+# Shown in place of the confirmation when removing the references would leave a Relation field in
+# another entry invalid, e.g. a required field with nothing selected, so the deletion is refused.
+# The fields are listed below the message, each with the validation error it would have. {$count}
+# is the number of entries being deleted
+cannot_delete_referenced_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Túto položku nie je možné odstrániť, pretože nasledujúce polia v iných položkách by bez nej už neboli platné. Najprv tieto položky upravte. }}
+    *   {{ Tieto položky nie je možné odstrániť, pretože nasledujúce polia v iných položkách by bez nich už neboli platné. Najprv tieto položky upravte. }}
+
+# ==============================================================================
+# Entry Reordering
+# ==============================================================================
+# Strings for manually reordering entries via drag-and-drop.
+
+# Reorder mode: toggle buttons
+reorder_entries: Zmeniť poradie položiek
+done_reordering_entries: Dokončiť zmenu poradia
+cancel_reordering_entries: Zrušiť zmenu poradia
+
+# Reorder error message
+saving_reorder_failed: Nové poradie položiek sa nepodarilo uložiť. Skúste to znova.
+
+# ==============================================================================
+# File Upload and Processing
+# ==============================================================================
+# Strings for file upload dialogs, progress indicators, and validation.
+
+# Processing indicator shown during file preparation
+# {$count} is the number of files currently being processed
+processing_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Spracúva sa súbor. Môže to chvíľu trvať. }}
+    *   {{ Spracúvajú sa súbory. Môže to chvíľu trvať. }}
+
+# Uploading section aria-label
+uploading_files: Nahrávanie súborov
+
+# Replace file confirmation
+# Dialog body when replacing an existing file
+# {$name} is the existing file name that will be replaced
+confirm_replacing_file: 'Súbor „{$name}“ bude nahradený týmto súborom:'
+
+# Upload confirmation with destination folder
+# {$folder} is the destination folder label and {$count} is the number of files being uploaded
+confirm_uploading_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tento súbor sa uloží do priečinka „{$folder}“: }}
+    few {{ Tieto {$count} súbory sa uložia do priečinka „{$folder}“: }}
+    *   {{ Týchto {$count} súborov sa uloží do priečinka „{$folder}“: }}
+
+# File size validation
+# Warning section for files exceeding size limits
+oversized_files: Príliš veľké súbory
+# {$size} is the maximum allowed file size and {$count} is the number of oversized files
+warning_oversized_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tento súbor nie je možné nahrať, pretože prekračuje maximálnu veľkosť {$size}. Zmenšite ho alebo vyberte iný súbor. }}
+    *   {{ Tieto súbory nie je možné nahrať, pretože prekračujú maximálnu veľkosť {$size}. Zmenšite ich alebo vyberte iné súbory. }}
+
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Neplatné súbory
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tento súbor nie je možné nahrať, pretože je poškodený alebo jeho obsah nezodpovedá jeho prípone. Často sa to stáva, keď sa fotografia namiesto konverzie len premenuje, napríklad obrázok HEIC uložený ako súbor JPEG. Skonvertujte súbor a skúste to znova. }}
+    *   {{ Tieto súbory nie je možné nahrať, pretože sú poškodené alebo ich obsah nezodpovedá ich príponám. Často sa to stáva, keď sa fotografie namiesto konverzie len premenujú, napríklad obrázky HEIC uložené ako súbory JPEG. Skonvertujte súbory a skúste to znova. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Súbory v inom formáte
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Tento súbor nemôže nahradiť „{$name}“, pretože je v inom formáte. Skonvertujte súbor do rovnakého formátu a skúste to znova. }}
+    *   {{ Tieto súbory nemôžu nahradiť „{$name}“, pretože sú v inom formáte. Skonvertujte súbory do rovnakého formátu a skúste to znova. }}
+
+# File name conflict resolution
+# {$count} is the number of conflicting file names in the target folder
+file_name_conflict_confirmation: |
+  .input {$count :integer}
+  .match $count
+    one {{ Súbor s rovnakým názvom už v tomto priečinku existuje. Chcete ho nahradiť? }}
+    few {{ V tomto priečinku už existujú {$count} súbory s rovnakými názvami. Chcete ich nahradiť? }}
+    *   {{ V tomto priečinku už existuje {$count} súborov s rovnakými názvami. Chcete ich nahradiť? }}
+# {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
+file_name_conflict_confirmation_with_name: |
+  .input {$count :integer}
+  .input {$name :string}
+  .match $count
+    one {{ Súbor s názvom „{$name}“ už v tomto priečinku existuje. Chcete ho nahradiť? }}
+    few {{ V tomto priečinku už existujú {$count} súbory s rovnakými názvami. Chcete ich nahradiť? }}
+    *   {{ V tomto priečinku už existuje {$count} súborov s rovnakými názvami. Chcete ich nahradiť? }}
+file_name_conflict_resolution: Riešenie konfliktu názvov súborov
+# Option to keep both files (rename the new one)
+keep_both: Ponechať oba
+
+# Upload progress and error messages
+uploading_files_progress: Nahrávanie…
+uploading_files_failed: Nahrávanie zlyhalo.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Odstránenie zlyhalo.
+renaming_asset_failed: Premenovanie zlyhalo.
+
+# File metadata display
+# Appended when a file was auto-converted (e.g., HEIF to JPEG)
+# {$type} is the original file type before conversion
+file_meta_converted_from_x: (skonvertované z {$type})
+
+# ==============================================================================
+# Entry Management
+# ==============================================================================
+# Strings for creating and managing entries in collections
+
+# Empty state messages
+no_entries_created: Táto kolekcia zatiaľ nemá žiadne položky.
+# Button to create first entry
+create_new_entry: Vytvoriť novú položku
+# “Entry” option label in the create button menu
+entry: Položka
+
+# Special entry types
+# Fallback label for collection index files when no custom label is configured
+index_file: Indexový súbor
+
+# Empty state for file collections
+no_files_in_collection: V tejto kolekcii nie sú k dispozícii žiadne súbory.
+
+# Entry duplication
+duplicate_entry: Duplikovať položku
+entry_duplicated: Položka bola duplikovaná ako nový koncept.
+
+# Validation errors
+# Toast shown when entry has validation errors preventing save
+# {$count} is the number of fields with validation errors
+entry_validation_errors: |
+  .input {$count :integer}
+  .match $count
+    one {{ Jedno pole obsahuje chybu. Ak chcete položku uložiť, opravte ju. }}
+    few {{ {$count} polia obsahujú chyby. Ak chcete položku uložiť, opravte ich. }}
+    *   {{ {$count} polí obsahuje chyby. Ak chcete položku uložiť, opravte ich. }}
+# Button on the validation error toast that opens the Validation panel listing the errors
+show_errors: Zobraziť chyby
+
+# ==============================================================================
+# Success Notifications
+# ==============================================================================
+# Toast notifications shown after successful operations.
+
+# Entry operations
+# {$count} is the number of entries affected by the operation
+entry_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Položka bola uložená. }}
+    few {{ {$count} položky boli uložené. }}
+    *   {{ {$count} položiek bolo uložených. }}
+entry_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Položka bola uložená a publikovaná. }}
+    few {{ {$count} položky boli uložené a publikované. }}
+    *   {{ {$count} položiek bolo uložených a publikovaných. }}
+entries_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Položka bola odstránená. }}
+    few {{ {$count} položky boli odstránené. }}
+    *   {{ {$count} položiek bolo odstránených. }}
+
+# Asset operations
+# {$count} is the number of assets or asset-derived values affected by the operation
+assets_saved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médium bolo uložené. }}
+    few {{ {$count} médiá boli uložené. }}
+    *   {{ {$count} médií bolo uložených. }}
+assets_saved_and_published: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médium bolo uložené a publikované. }}
+    few {{ {$count} médiá boli uložené a publikované. }}
+    *   {{ {$count} médií bolo uložených a publikovaných. }}
+asset_urls_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ URL bola skopírovaná do schránky. }}
+    few {{ {$count} URL boli skopírované do schránky. }}
+    *   {{ {$count} URL bolo skopírovaných do schránky. }}
+asset_paths_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Cesta k súboru bola skopírovaná do schránky. }}
+    few {{ {$count} cesty k súborom boli skopírované do schránky. }}
+    *   {{ {$count} ciest k súborom bolo skopírovaných do schránky. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ ID súboru bolo skopírované do schránky. }}
+    few {{ {$count} ID súborov boli skopírované do schránky. }}
+    *   {{ {$count} ID súborov bolo skopírovaných do schránky. }}
+asset_data_copied: |
+  .input {$count :integer}
+  .match $count
+    one {{ Údaje súboru boli skopírované do schránky. }}
+    few {{ Údaje {$count} súborov boli skopírované do schránky. }}
+    *   {{ Údaje {$count} súborov boli skopírované do schránky. }}
+assets_downloaded: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médium bolo stiahnuté. }}
+    few {{ {$count} médiá boli stiahnuté. }}
+    *   {{ {$count} médií bolo stiahnutých. }}
+assets_moved: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médium bolo presunuté. }}
+    few {{ {$count} médiá boli presunuté. }}
+    *   {{ {$count} médií bolo presunutých. }}
+assets_renamed: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médium bolo premenované. }}
+    few {{ {$count} médiá boli premenované. }}
+    *   {{ {$count} médií bolo premenovaných. }}
+assets_deleted: |
+  .input {$count :integer}
+  .match $count
+    one {{ Médium bolo odstránené. }}
+    few {{ {$count} médiá boli odstránené. }}
+    *   {{ {$count} médií bolo odstránených. }}
+folder_created: Priečinok bol vytvorený.
+# Folder info panel in the Asset Library sidebar
+folder_path: Cesta k priečinku
+folder_contents: Obsah
+# {$count} is the number of subfolders in the folder
+x_folders: |
+  .input {$count :integer}
+  .match $count
+    0   {{ Žiadne priečinky }}
+    one {{ {$count} priečinok }}
+    few {{ {$count} priečinky }}
+    *   {{ {$count} priečinkov }}
+folder_renamed: Priečinok bol premenovaný.
+folder_deleted: Priečinok bol odstránený.
+
+# ==============================================================================
+# Content Editor
+# ==============================================================================
+# Strings for the main content/entry editor interface.
+
+# Editor container aria-label
+content_editor: Editor obsahu
+
+# Draft backup: restore dialog
+restore_backup_title: Obnoviť koncept
+# {$datetime} is the localized timestamp of the saved draft backup
+restore_backup_description: Táto položka má zálohu z {$datetime}. Chcete obnoviť upravený koncept?
+
+# Draft backup notifications
+draft_backup_saved: Záloha konceptu bola uložená.
+draft_backup_restored: Záloha konceptu bola obnovená.
+draft_backup_deleted: Záloha konceptu bola odstránená.
+
+# Editor toolbar actions
+cancel_editing: Zrušiť úpravy
+
+# Editor page titles and announcements
+# Creating a new entry
+# {$name} is the singular label of the collection being created in
+create_entry_title: 'Vytváranie: {$name}'
+# {$collection} is the collection label
+create_entry_announcement: Teraz vytvárate novú položku v kolekcii „{$collection}“.
+# Editing an existing entry
+# {$entry} is the current entry label and {$collection} is the collection label
+edit_entry_announcement: Teraz upravujete položku „{$entry}“ v kolekcii „{$collection}“.
+# {$file} is the file name and {$collection} is the collection label
+edit_file_announcement: Teraz upravujete súbor „{$file}“ v kolekcii „{$collection}“.
+# {$file} is the singleton file name
+edit_singleton_announcement: Teraz upravujete súbor „{$file}“.
+
+# Save button variants
+# Shown when CI skip is enabled/disabled
+save_and_publish: Uložiť a publikovať
+save_without_publishing: Uložiť bez publikovania
+
+# Editor options menu
+show_editor_options: Zobraziť možnosti editora
+editor_options: Možnosti editora
+
+# Preview controls
+show_second_pane: Zobraziť druhý panel
+show_preview: Zobraziť náhľad
+
+# Editor settings
+sync_scrolling: Synchronizovať posúvanie
+
+# Locale controls
+switch_locale: Prepnúť jazyk
+# Short status indicators appended to locale names
+locale_content_disabled_short: (vypnuté)
+locale_content_error_short: (chyba)
+
+# Pane labels
+edit: Upraviť
+preview: Náhľad
+
+# Pane controls; not to be confused with pages
+swap_panes: Vymeniť panely
+
+# Locale-specific pane labels
+# {$locale} is the localized language name for the current content pane, e.g., English
+edit_x_locale: Upraviť obsah v jazyku {$locale}
+preview_x_locale: Náhľad obsahu v jazyku {$locale}
+# The content of a monolingual entry, which has no locale to name
+edit_content: Upraviť obsah
+preview_content: Náhľad obsahu
+
+# Preview iframe labels
+content_preview: Náhľad obsahu
+
+# Locale content options
+# {$locale} is the localized language name for the content options menu, e.g., English
+show_content_options_x_locale: Zobraziť možnosti obsahu v jazyku {$locale}
+content_options_x_locale: Možnosti obsahu v jazyku {$locale}
+show_content_options: Zobraziť možnosti obsahu
+content_options: Možnosti obsahu
+
+# Field container labels
+# {$field} is the field’s display label
+x_field: Pole „{$field}“
+
+# Field options menu
+show_field_options: Zobraziť možnosti poľa
+field_options: Možnosti poľa
+
+# Unsupported field type error
+# {$name} is the unsupported field widget or type name
+unsupported_field_type_x: 'Nepodporovaný typ poľa: {$name}'
+
+# Locale management actions
+# {$locale} is the localized language name being enabled or disabled, e.g., English
+enable_x_locale: Zapnúť jazyk {$locale}
+reenable_x_locale: Znova zapnúť jazyk {$locale}
+disable_x_locale: Vypnúť jazyk {$locale}
+
+# Locale status messages
+# {$locale} is the localized language name affected by the status change, e.g., English
+locale_x_has_been_disabled: Obsah v jazyku {$locale} bol vypnutý.
+locale_x_now_disabled: Obsah v jazyku {$locale} je teraz vypnutý. Pri uložení položky sa odstráni.
+
+# Repository and site links
+view_in_repository: Zobraziť v repozitári
+# {$service} is the external service label, such as GitHub or GitLab
+view_on_x: Zobraziť v službe {$service}
+view_on_live_site: Zobraziť na verejnom webe
+
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Zobraziť náhľad
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Náhľad sa ešte pripravuje.
+  # Shown when the build failed, so no preview is available
+  failed: Náhľad sa nepodarilo pripraviť.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Hľadá sa náhľad…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Vyhľadať náhľad
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Hľadá sa náhľad
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Pripravuje sa…
+    failed: Príprava zlyhala
+
+# Content copying from other locales
+copy_from: Kopírovať z…
+# {$locale} is the localized language name of the source content being copied, e.g., English
+copy_from_x: Kopírovať z jazyka {$locale}
+
+# Translation features
+translation_options: Možnosti prekladu
+translate: Preložiť
+# {$count} is the number of fields selected for translation
+translate_fields: |
+  .input {$count :integer}
+  .match $count
+    one {{ Preložiť pole }}
+    *   {{ Preložiť polia }}
+translate_from: Preložiť z…
+# {$locale} is the localized language name of the source content being translated, e.g., English
+translate_from_x: Preložiť z jazyka {$locale}
+
+# Revert changes, restore the default values or clear the fields. The field options menu offers
+# them for a field, the content options menu of an editor pane for the locale it shows, and the
+# editor options menu for the whole entry, the latter two asking for confirmation first
+revert_changes: Vrátiť zmeny
+revert_all_changes: Vrátiť všetky zmeny
+restore_default: Obnoviť predvolené
+clear_all: Vymazať všetko
+confirm_reverting_changes: Naozaj chcete vrátiť všetky zmeny vykonané v tejto položke?
+# {$locale} is a locale name, e.g. French
+confirm_reverting_changes_x_locale: Naozaj chcete vrátiť všetky zmeny vykonané v obsahu v jazyku {$locale}?
+confirm_restoring_defaults: Naozaj chcete obnoviť predvolené hodnoty všetkých polí v tejto položke? Vaše zmeny sa stratia.
+confirm_restoring_defaults_x_locale: Naozaj chcete obnoviť predvolené hodnoty všetkých polí v obsahu v jazyku {$locale}? Vaše zmeny sa stratia.
+confirm_clearing_fields: Naozaj chcete vymazať všetky polia v tejto položke? Vaše zmeny sa stratia.
+confirm_clearing_fields_x_locale: Naozaj chcete vymazať všetky polia v obsahu v jazyku {$locale}? Vaše zmeny sa stratia.
+
+# Slug editing
+edit_slug: Upraviť slug
+edit_slug_error:
+  empty: Slug nemôže byť prázdny.
+  invalid: Slug nesmie obsahovať špeciálne znaky vrátane lomiek a medzier.
+  duplicate: Tento slug už používa iná položka.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Nadradený priečinok
+new_parent_folder: Nový priečinok
+new_parent_folder_create: Vytvoriť
+new_parent_folder_name: Názov priečinka
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: Nový priečinok sa vytvorí v priečinku „{$folder}“.
+new_parent_folder_error:
+  empty: Názov priečinka nemôže byť prázdny.
+  invalid: Názov priečinka nesmie obsahovať lomky ani začínať bodkou a musí obsahovať písmená alebo číslice.
+  duplicate: Priečinok s týmto názvom tu už existuje.
+edit_path_error:
+  invalid: Cesta nesmie obsahovať relatívne časti, napríklad „..“.
+  recursive: Položku nemožno presunúť do jedného z jej vlastných podpriečinkov.
+  duplicate: Túto cestu už používa iná položka.
+
+# Required field indicator
+required: Povinné
+
+# Editor operation feedback
+# Translation and copy operation status messages
+editor:
+  translation:
+    none: Nie je čo prekladať.
+    started: Prekladá sa…
+    error: Preklad zlyhal.
+    # {$source} is the source language name and {$count} is the number of translated fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Z jazyka {$source} sa nepreložilo žiadne pole. }}
+        one {{ Pole bolo preložené z jazyka {$source}. }}
+        few {{ {$count} polia boli preložené z jazyka {$source}. }}
+        *   {{ {$count} polí bolo preložených z jazyka {$source}. }}
+  copy:
+    none: Nie je čo kopírovať.
+    # {$source} is the source language name and {$count} is the number of copied fields
+    complete: |
+      .input {$count :integer}
+      .match $count
+        0   {{ Z jazyka {$source} sa neskopírovalo žiadne pole. }}
+        one {{ Pole bolo skopírované z jazyka {$source}. }}
+        few {{ {$count} polia boli skopírované z jazyka {$source}. }}
+        *   {{ {$count} polí bolo skopírovaných z jazyka {$source}. }}
+
+# ==============================================================================
+# Field Validation
+# ==============================================================================
+# Inline validation error messages for form fields.
+
+validation:
+  # Required field missing
+  value_missing: Toto pole je povinné.
+
+  # Minimum value/count not met
+  range_underflow:
+    # {$min} is the minimum allowed value, already formatted for the input type
+    datetime-local: Dátum a čas nemôžu byť skôr ako {$min}.
+    date: Dátum nemôže byť skôr ako {$min}.
+    time: Čas nemôže byť skôr ako {$min}.
+    number: Hodnota musí byť väčšia alebo rovná {$min}.
+    # {$min} is the minimum number of selected options
+    select: |
+      .input {$min :integer}
+      .match $min
+        one {{ Musíte vybrať aspoň {$min} možnosť. }}
+        few {{ Musíte vybrať aspoň {$min} možnosti. }}
+        *   {{ Musíte vybrať aspoň {$min} možností. }}
+    # {$min} is the minimum number of list items
+    add: |
+      .input {$min :integer}
+      .match $min
+        one {{ Musíte pridať aspoň {$min} položku. }}
+        few {{ Musíte pridať aspoň {$min} položky. }}
+        *   {{ Musíte pridať aspoň {$min} položiek. }}
+
+  # Maximum value/count exceeded
+  range_overflow:
+    # {$max} is the maximum allowed value, already formatted for the input type
+    datetime-local: Dátum a čas nemôžu byť neskôr ako {$max}.
+    date: Dátum nemôže byť neskôr ako {$max}.
+    time: Čas nemôže byť neskôr ako {$max}.
+    number: Hodnota musí byť menšia alebo rovná {$max}.
+    # {$max} is the maximum number of selected options
+    select: |
+      .input {$max :integer}
+      .match $max
+        one {{ Nemôžete vybrať viac ako {$max} možnosť. }}
+        few {{ Nemôžete vybrať viac ako {$max} možnosti. }}
+        *   {{ Nemôžete vybrať viac ako {$max} možností. }}
+    # {$max} is the maximum number of list items
+    add: |
+      .input {$max :integer}
+      .match $max
+        one {{ Nemôžete pridať viac ako {$max} položku. }}
+        few {{ Nemôžete pridať viac ako {$max} položky. }}
+        *   {{ Nemôžete pridať viac ako {$max} položiek. }}
+
+  # String length constraints
+  # {$min :integer} and {$max :integer} are character-count limits
+  too_short: |
+    .input {$min :integer}
+    .match $min
+      one {{ Musíte zadať aspoň {$min} znak. }}
+      few {{ Musíte zadať aspoň {$min} znaky. }}
+      *   {{ Musíte zadať aspoň {$min} znakov. }}
+  too_long: |
+    .input {$max :integer}
+    .match $max
+      one {{ Nemôžete zadať viac ako {$max} znak. }}
+      few {{ Nemôžete zadať viac ako {$max} znaky. }}
+      *   {{ Nemôžete zadať viac ako {$max} znakov. }}
+
+  # Type validation errors
+  type_mismatch:
+    number: Zadajte číslo.
+    email: Zadajte platnú e-mailovú adresu.
+    url: Zadajte platnú URL.
+
+  # Custom field validation error
+  invalid_value: Neplatná hodnota.
+  unexpected_error: Vyskytla sa neočakávaná chyba.
+
+# ==============================================================================
+# Entry Sidebar
+# ==============================================================================
+# Panels shown in the entry editor sidebar.
+
+entry_sidebar:
+  # Sidebar tab list aria-label
+  sidebar_panels: Karty bočného panela
+
+  # Validation panel: shows field validation errors
+  validation:
+    title: Validácia
+    placeholder: Tu sa zobrazia výsledky validácie.
+    no_errors_found: Nenašli sa žiadne chyby.
+    # Button in the panel header that validates the entry on demand
+    validate: Skontrolovať
+
+  # Slug panel: shows the entry slug and lets the user edit it
+  slug:
+    title: Slug
+    generated_on_save: Slug sa vygeneruje z obsahu položky pri jej uložení. Prípadný dátum a čas v ňom bude zodpovedať času uloženia.
+    unavailable: Táto položka nemá slug.
+
+  # History panel: shows entry commit history
+  history:
+    title: História
+    fetch_failed: Históriu sa nepodarilo načítať.
+    no_history: Nenašla sa žiadna história.
+
+  # Backlinks panel: shows entries referencing this entry
+  backlinks:
+    title: Spätné odkazy
+    no_entries: Na túto položku neodkazujú žiadne položky.
+
+# Entry save error dialog
+saving_entry:
+  error:
+    title: Chyba
+    description: Pri ukladaní položky sa vyskytla chyba. Skúste to znova neskôr.
+
+# Dialog shown when saving the entry would overwrite a change someone else has made in the
+# repository since the entry was opened in the editor
+save_conflict:
+  title: Položku zmenil niekto iný
+  # `{$name}` is the other person’s name, `{$date}` when they made the change
+  modified_by: Položka bola zmenená používateľom {$name} ({$date}) potom, ako ste ju otvorili.
+  # Shown instead of `modified_by` when the other person isn’t known
+  modified: Táto položka bola v repozitári zmenená potom, ako ste ju otvorili.
+  deleted: Táto položka bola z repozitára odstránená potom, ako ste ju otvorili.
+  # Follows `modified_by` or `modified`
+  overwrite_warning: Ak položku teraz uložíte, tieto zmeny sa stratia.
+  # Follows `deleted`
+  recreate_warning: Ak položku teraz uložíte, vytvorí sa znova.
+  # Follows `modified_by`, `modified` or `deleted` for an entry stored in the same file as the other
+  # entries of the collection, which can’t be saved over the change
+  reload_warning: Keďže je položka uložená v rovnakom súbore ako iné položky, nemožno ju uložiť tak, aby prepísala túto zmenu. Zrušte úpravy, znova otvorte položku zo zoznamu a vykonajte úpravy.
+  # OK button label
+  save_anyway: Napriek tomu uložiť
+  # Error shown when the repository was updated between the check above and the commit itself
+  branch_moved: Počas ukladania repozitár aktualizoval niekto iný. Skúste to znova.
+  # Error shown when saving would change an item in a file storing all the entries of a collection,
+  # which someone else has changed or moved since it was loaded
+  array_item_changed: Položku uloženú v rovnakom súbore zmenil niekto iný. Skúste to znova.
+  # {$path} is the file path
+  array_file_invalid: Súbor {$path} nemožno aktualizovať, pretože neobsahuje platný zoznam položiek.
+
+# Notice shown in the entry editor when someone else has changed or deleted the entry in the
+# repository while the user has it open. The change itself is described with the `save_conflict`
+# strings above
+remote_change:
+  reload_entry: Znova načítať položku
+  # Confirmation shown before reloading when the user has unsaved changes
+  confirm_reloading_entry: Naozaj chcete znova načítať položku? Vaše neuložené zmeny sa stratia.
+
+# ==============================================================================
+# Asset Editor
+# ==============================================================================
+# Strings for the asset details and editing interface.
+
+# Asset details announcement
+# {$name} is the selected asset name
+viewing_x_asset_details: Prezeráte si podrobnosti média „{$name}“.
+
+# Asset editor container aria-label
+asset_editor: Editor médií
+
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Predchádzajúce médium
+next_asset: Ďalšie médium
+
+# Preview unavailable message
+preview_unavailable: Náhľad nie je k dispozícii.
+
+# Copy menu items: public URLs, file paths, file data
+# {$count} is the number of selected assets
+public_urls: |
+  .input {$count :integer}
+  .match $count
+    one {{ Verejná URL }}
+    *   {{ Verejné URL }}
+# {$count} is the number of selected assets
+file_paths: |
+  .input {$count :integer}
+  .match $count
+    one {{ Cesta k súboru }}
+    *   {{ Cesty k súborom }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ ID súboru }}
+    *   {{ ID súborov }}
+file_data: Údaje súboru
+
+# ==============================================================================
+# Asset Info Panel
+# ==============================================================================
+# Section headings and labels in the asset information panel.
+
+# Panel title and empty state shown in the asset sidebar
+asset_info: Informácie o médiu
+select_asset_show_info: Vyberte médium na zobrazenie informácií.
+
+kind: Typ
+size: Veľkosť
+dimensions: Rozmery
+duration: Dĺžka
+# Short heading for a list of entries using the selected asset
+used_in: Použité v
+created_date: Dátum vytvorenia
+location: Poloha
+
+# Map aria-label showing GPS coordinates
+# {$latitude} and {$longitude} are the formatted coordinate values displayed on the map
+map_lat_lng: Mapa zobrazujúca zemepisnú šírku {$latitude}, zemepisnú dĺžku {$longitude}
+
+# ==============================================================================
+# List and Object Field Controls
+# ==============================================================================
+# Controls for List and Object field types.
+
+# List item actions
+remove_this_item: Odobrať túto položku
+move_up: Posunúť nahor
+move_down: Posunúť nadol
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Zmeniť poradie položky
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Hodnota položky
+
+# Add item button label, also used by the Relation field to create a new entry in the referenced
+# collection, with the collection’s singular label
+# Example: “Add Image”, “Add Author”
+# {$name} is the label of the item type that can be added
+add_x: Pridať {$name}
+
+# List item context menu
+# aria-label for the button opening the menu, and for the menu itself
+list_item_options: Možnosti položky zoznamu
+add_item_above: Pridať položku nad
+add_item_below: Pridať položku pod
+
+# Variable-type list selector
+select_list_type: Vybrať typ zoznamu
+
+# Variable-type mismatch
+unknown_variable_type: Túto položku nemožno zobraziť kvôli neznámemu typu. Podrobnosti nájdete v konzole prehliadača.
+
+# ==============================================================================
+# Field Widgets
+# ==============================================================================
+# Strings for specific field widget types.
+
+# Color field: opacity slider
+opacity: Viditeľnosť
+
+# Select field: empty option placeholder
+unselected_option: (Žiadne)
+
+# Relation field: creating a referenced entry without leaving the editor
+relation_field:
+  # Note shown in the dialog. {$name} is the singular label of the referenced collection
+  save_together_hint: Nová položka „{$name}“ sa uloží spolu s položkou, ktorú upravujete.
+  # Error shown when the entry couldn’t be prepared. {$name} is the singular label of the collection
+  add_failed: Položku „{$name}“ sa nepodarilo pridať. Podrobnosti nájdete v konzole prehliadača.
+
+# Select Assets dialog
+assets_dialog:
+  # Dialog titles for different selection modes
+  title:
+    file: Vybrať súbor
+    image: Vybrať obrázok
+    folder: Vybrať priečinok
+
+  # Search input labels
+  search_for_file: Hľadať súbory
+  search_for_image: Hľadať obrázky
+
+  # Locations panel aria-label
+  locations: Umiestnenia
+
+  # Folder selection mode for a File field with the `select_folder` option. {$path} is the public
+  # path of the folder to be selected, and {$count} is the number of folders selected
+  selected_folder: 'Vybraný priečinok: {$path}'
+  selected_folders: |
+    .input {$count :integer}
+    .match $count
+      one {{ Vybraný {$count} priečinok }}
+      few {{ Vybrané {$count} priečinky }}
+      *   {{ Vybraných {$count} priečinkov }}
+  no_subfolders: Tento priečinok nemá žiadne podpriečinky.
+
+  # Asset folder options
+  folder:
+    field: Médiá poľa
+    entry: Médiá položky
+    file: Médiá súboru
+    collection: Médiá kolekcie
+    global: Globálne médiá
+
+  # Error messages
+  error:
+    invalid_key: Váš API kľúč je neplatný alebo mu vypršala platnosť. Skontrolujte ho a skúste to znova.
+    search_fetch_failed: Pri vyhľadávaní médií sa vyskytla chyba. Skúste to znova neskôr.
+    image_fetch_failed: Pri sťahovaní vybraného média sa vyskytla chyba. Skúste to znova neskôr.
+
+  # Stock photo panels
+  available_images: Dostupné obrázky
+  available_files: Dostupné súbory
+
+  # URL entry option
+  enter_url: Zadať URL
+  enter_file_url: 'Zadajte URL súboru:'
+  enter_image_url: 'Zadajte URL obrázka:'
+
+  # Large file warning dialog
+  large_file:
+    title: Veľký súbor
+
+  # Invalid file warning dialog
+  invalid_file:
+    title: Neplatný súbor
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Súbory nie je možné nahrať
+
+  # Photo credit dialog (stock photos)
+  photo_credit:
+    title: Autor fotografie
+    description: 'Ak je to možné, uveďte nasledujúci údaj o autorovi:'
+
+  # Unsaved asset badge
+  unsaved: Neuložené
+
+# Character counter: shows character count for text fields
+character_counter:
+  # {$count} is the current character count; {$min} and {$max} are configured limits
+  min_max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Nie je zadaný žiadny znak. Minimum: {$min}. Maximum: {$max}. }}
+      one {{ Zadaný {$count} znak. Minimum: {$min}. Maximum: {$max}. }}
+      few {{ Zadané {$count} znaky. Minimum: {$min}. Maximum: {$max}. }}
+      *   {{ Zadaných {$count} znakov. Minimum: {$min}. Maximum: {$max}. }}
+  # {$count} is the current character count and {$min} is the minimum allowed count
+  min: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Nie je zadaný žiadny znak. Minimum: {$min}. }}
+      one {{ Zadaný {$count} znak. Minimum: {$min}. }}
+      few {{ Zadané {$count} znaky. Minimum: {$min}. }}
+      *   {{ Zadaných {$count} znakov. Minimum: {$min}. }}
+  # {$count} is the current character count and {$max} is the maximum allowed count
+  max: |
+    .input {$count :integer}
+    .match $count
+      0   {{ Nie je zadaný žiadny znak. Maximum: {$max}. }}
+      one {{ Zadaný {$count} znak. Maximum: {$max}. }}
+      few {{ Zadané {$count} znaky. Maximum: {$max}. }}
+      *   {{ Zadaných {$count} znakov. Maximum: {$max}. }}
+
+# YouTube video player iframe title
+youtube_video_player: Prehrávač videí YouTube
+
+# Date/time field: quick action buttons
+today: Dnes
+now: Teraz
+
+# Rich-text editor: component field labels
+editor_components:
+  image: Obrázok
+  src: Zdroj
+  alt: Alternatívny text
+  title: Názov
+  link: Odkaz
+
+# Key-Value field: column headers and validation
+key_value:
+  key: Kľúč
+  value: Hodnota
+  action: Akcia
+  empty_key: Kľúč je povinný.
+  duplicate_key: Kľúč musí byť unikátny.
+
+# Map field: location search and geolocation
+find_place: Nájsť miesto
+use_your_location: Použiť vašu polohu
+
+# Geolocation error dialog
+geolocation_error_title: Chyba geolokácie
+geolocation_error_body: Pri zisťovaní vašej polohy sa vyskytla chyba.
+geolocation_unsupported: Rozhranie Geolocation API nie je v tomto prehliadači podporované.
+
+# Boolean field: display labels
+# Note that the keys must be quoted strings to avoid being interpreted as YAML booleans
+boolean:
+  'true': Áno
+  'false': Nie
+
+# ==============================================================================
+# Cloud Storage Services
+# ==============================================================================
+# Strings for external cloud storage service integrations.
+
+cloud_storage:
+  # Configuration error
+  invalid: Služba nie je správne nakonfigurovaná.
+
+  # Authentication states
+  auth:
+    api_key:
+      key_label: API kľúč
+      # {$key} is the credential label, e.g., API Key, and {$service} is the cloud service name
+      initial: Zadajte {$key} pre službu {$service}.
+      requested: Overovanie…
+      # {$key} is the credential label the user entered, e.g., API Key
+      error: Zadaný {$key} je neplatný. Skontrolujte ho a skúste to znova.
+    password:
+      # {$service} is the cloud service name
+      initial: Zadajte heslo pre službu {$service}.
+      requested: Prihlasovanie…
+      error: Používateľské meno alebo heslo je nesprávne. Skontrolujte údaje a skúste to znova.
+
+  # Service-specific configurations
+  cloudinary:
+    iframe_title: Knižnica médií Cloudinary
+    activate:
+      button_label: Aktivovať Cloudinary
+      description: Po prihlásení pokračujte opätovným kliknutím na tlačidlo Prihlásiť sa.
+    auth_key_label: API Secret
+    open_library: Otvoriť Cloudinary
+
+  uploadcare:
+    auth_key_label: API Secret Key
+
+  aws_s3:
+    auth_key_label: Secret Access Key
+
+  bunny_storage:
+    auth_key_label: Storage Zone Password
+
+  cloudflare_r2:
+    auth_key_label: Secret Access Key
+
+  digitalocean_spaces:
+    auth_key_label: Secret Access Key
+
+# ==============================================================================
+# Configuration Validation
+# ==============================================================================
+# Error and warning messages for CMS configuration validation.
+
+config:
+  # Error count notice on entrance page
+  # {$count} is the number of configuration errors found
+  errors: |
+    .input {$count :integer}
+    .match $count
+      one {{ V konfigurácii CMS je chyba. Vyriešte problém a skúste to znova. }}
+      *   {{ V konfigurácii CMS sú chyby. Vyriešte problémy a skúste to znova. }}
+
+  # Error location prefixes
+  error_locator:
+    # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
+    collection: kolekcia {$collection}
+    file: súbor {$file}
+    component: komponent {$component}
+    # Don’t localize `{$field}`
+    field: pole `{$field}`
+
+  # Configuration error messages
+  error:
+    no_secure_context: Sveltia CMS funguje iba s URL využívajúcimi HTTPS alebo localhost.
+    # {$count} is the number of insecure configuration file URLs
+    insecure_urls: |
+      .input {$count :integer}
+      .match $count
+        one {{ URL konfiguračného súboru musí používať protokol HTTPS alebo adresu localhost. }}
+        *   {{ URL konfiguračných súborov musia používať protokol HTTPS alebo adresy localhost. }}
+    fetch_failed: Konfiguračný súbor sa nepodarilo načítať.
+    # {$status} is the HTTP status code returned while fetching the config file
+    fetch_failed_not_ok: Odpoveď HTTP vrátila stav {$status}.
+    # Don’t localize `config.yml`, `load_config_file: false`, and `CMS.init()`
+    fetch_failed_with_manual_init: 'Konfiguračný súbor sa nepodarilo načítať. Ak chcete zabrániť načítaniu súboru `config.yml`, pridajte <a>`load_config_file: false`</a> do konfiguračného objektu odovzdaného do `CMS.init()`.'
+    parse_failed: Konfiguračný súbor sa nepodarilo spracovať.
+    parse_failed_invalid_object: Konfiguračný súbor nie je platný objekt JavaScriptu.
+    parse_failed_unsupported_type: Konfiguračný súbor nemá platný typ súboru. Podporované sú iba formáty YAML, TOML a JSON.
+    no_collection: Kolekcie nie sú definované.
+    # Don’t localize `hide`
+    no_visible_collection: Aspoň jedna kolekcia musí byť viditeľná. Skontrolujte možnosť `hide`.
+    missing_backend: Backend nie je definovaný.
+    missing_backend_name: Názov backendu nie je definovaný.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_known_backend: Backend {$name} <a>nie je podporovaný</a> vo Sveltia CMS.
+    # {$name} is the backend name from the CMS configuration
+    unsupported_deprecated_backend: Zastaraný backend {$name} <a>nie je podporovaný</a> vo Sveltia CMS.
+    unsupported_custom_backend: Vlastné backendy <a>nie sú podporované</a> vo Sveltia CMS.
+    unsupported_backend_suggestion: Namiesto toho použite jeden z <a>podporovaných backendov</a>.
+    missing_repository: Repozitár nie je definovaný.
+    invalid_repository: Nakonfigurovaný repozitár je neplatný. Musí byť vo formáte „vlastník/repozitár“.
+    oauth_implicit_flow: Nakonfigurovaná metóda overenia (implicit flow) nie je vo Sveltia CMS podporovaná. Namiesto nej použite inú <a>metódu overenia</a>.
+    github_pkce_unsupported: Autorizácia PKCE zatiaľ nie je podporovaná kvôli obmedzeniam GitHubu. Namiesto nej použite inú <a>metódu overenia</a>.
+    oauth_no_app_id: ID aplikácie OAuth nie je definované.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: Možnosť `open_authoring` vyžaduje režim publikovania `editorial_workflow`. Podrobnosti nájdete v <a>dokumentácii</a>.
+    # Don’t localize `auth_methods`
+    no_auth_methods: Možnosť `auth_methods` musí obsahovať aspoň jednu metódu.
+    missing_media_folder: Priečinok médií nie je definovaný.
+    public_folder_relative_path: Nakonfigurovaný verejný priečinok je neplatný. Musí to byť absolútna cesta začínajúca znakom „/“.
+    public_folder_absolute_url: Absolútna URL v možnosti verejného priečinka nie je vo Sveltia CMS podporovaná.
+    # {$replacement} is the configured replacement string; Don’t localize `sanitize_replacement`
+    invalid_sanitize_replacement: Možnosť `sanitize_replacement` je nastavená na `{$replacement}`, ale obsahuje znak, ktorý sa v slugu nedá použiť, takže nemôže slúžiť ako náhrada.
+    # {$option} is the option name (`site_url` or `display_url`) and {$url} is the configured value
+    invalid_url_option: Možnosť `{$option}` je nastavená na `{$url}`, ale musí to byť absolútna URL začínajúca na `https://` alebo `http://`.
+    # Don’t localize `i18n` and `locales`
+    i18n_no_locales: Možnosť `i18n.locales` musí obsahovať aspoň jeden jazyk.
+    # {$locale} is the locale code from the configuration; Don’t localize `default_locale` and `locales`
+    i18n_invalid_default_locale: Možnosť `default_locale` je nastavená na `{$locale}`, ale tento jazyk nie je medzi `locales`.
+    # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
+    i18n_invalid_initial_locale: Možnosť `initial_locales` obsahuje `{$locale}`, ale tento jazyk nie je medzi `locales`.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: Možnosť `transformations` obsahuje nepodporovaný kľúč `{$key}`. Musí to byť `raster_image`, `svg` alebo podporovaný formát rastrového obrázka.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: Možnosť `quality` pri transformácii `{$key}` je neplatná. Musí to byť celé číslo od 0 do 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: Možnosť `{$prop}` pri transformácii `{$key}` je neplatná. Musí to byť kladné celé číslo.
+    # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
+    missing_asset_collection_name: Kolekcia médií {$count} musí mať možnosť `name` definovanú ako neprázdny reťazec.
+    # {$name} is the invalid or duplicate asset collection name
+    invalid_asset_collection_name: Názov kolekcie médií `{$name}` je neplatný. Nesmie obsahovať špeciálne znaky.
+    # {$name} is the duplicate asset collection name
+    duplicate_asset_collection_name: Názvy kolekcií médií musia byť unikátne, ale `{$name}` sa používa viackrát.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_no_options: Kolekcia musí mať definovanú jednu z možností `folder`, `file`, `files` alebo `divider`.
+    # Don’t localize `folder`, `file`, `files`, and `divider`
+    invalid_collection_multiple_options: Kolekcia nemôže mať viac ako jednu z možností `folder`, `file`, `files` a `divider`.
+    # {$extension} is the file extension and {$format} is the configured content format
+    file_format_mismatch: Prípona `{$extension}` nezodpovedá formátu `{$format}`.
+    # {$file} is the file path from the configuration; Don’t localize `file` and `locale`. The curly
+    # brackets are escaped with backslashes for MessageFormat 2
+    invalid_collection_data_file: Možnosť `file` s hodnotou `{$file}` je neplatná. Musí to byť cesta k súboru JSON bez parametra `\{\{locale\}\}`.
+    # {$prop} is the option name; Don’t localize `file`
+    unsupported_collection_data_file_option: Možnosť `{$prop}` nie je podporovaná v kolekcii s možnosťou `file`.
+    # Don’t localize `file`, `publish_mode` and `simple`
+    collection_data_file_workflow: Schvaľovací proces vrátane Open Authoring nie je podporovaný v kolekcii s možnosťou `file`. Nastavte možnosť `publish_mode` kolekcie na `simple`.
+    # {$prop} is the option name; Don’t localize `file` and `slug`. The curly brackets are escaped
+    # with backslashes for MessageFormat 2
+    collection_data_file_slug_tag: Možnosť `{$prop}` nemôže v kolekcii s možnosťou `file` obsahovať parameter `\{\{slug\}\}`, pretože slug položky je jej poradie, ktoré sa mení pri zmene poradia alebo odstránení položiek. Namiesto toho použite pole s unikátnou hodnotou.
+    # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
+    invalid_slug_slash: Šablóna slugu `{$slug}` je neplatná, pretože nesmie obsahovať lomky. Ak chcete položky usporiadať do podpriečinkov, použite namiesto `slug` možnosť `path`.
+    # {$name} is the field name from the configuration; Don’t localize `identifier_field`
+    invalid_identifier_field: Možnosť `identifier_field` odkazuje na `{$name}`, ale v kolekcii nie je definované žiadne také pole.
+    # {$name} is the field name from the configuration; Don’t localize `filter`
+    invalid_filter_field: Možnosť `filter` odkazuje na `{$name}`, ale v kolekcii nie je definované žiadne také pole.
+    # Don’t localize `filter`, `value` and `pattern`
+    invalid_filter_no_condition: Možnosť `filter` musí mať možnosť `value` alebo `pattern`, podľa ktorej sa položky porovnávajú.
+    # {$option} is an option name such as `slug` or `summary` and {$name} is the field name or template tag from the configuration
+    option_field_not_found: Možnosť `{$option}` odkazuje na `{$name}`, ale žiadne také pole nie je definované.
+    # {$name} is the field name from the configuration and {$widget} is its field type; Don’t localize `thumbnail`
+    thumbnail_field_not_media: Možnosť `thumbnail` odkazuje na `{$name}`, ale musí to byť pole typu Image alebo File, nie pole typu `{$widget}`.
+    # {$option} is an option name such as `pattern` or `filter` and {$pattern} is the configured pattern
+    invalid_regex: Možnosť `{$option}` obsahuje neplatný regulárny výraz `{$pattern}`, ktorý sa ignoruje.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: Možnosť `reorder` odkazuje na skupinu zobrazenia s názvom `{$name}`, ale v možnosti `view_groups` nie je definovaná žiadna taká skupina.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: Možnosť `sortable_fields` odkazuje na pole s názvom `{$name}`, ale v kolekcii nie je definované žiadne také pole.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: Možnosť `view_groups` odkazuje na pole s názvom `{$name}`, ale v kolekcii nie je definované žiadne také pole.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: Možnosť `view_filters` odkazuje na pole s názvom `{$name}`, ale v kolekcii nie je definované žiadne také pole.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Skupina zobrazenia {$count} musí mať možnosť `name` definovanú ako neprázdny reťazec.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: Názov skupiny zobrazenia `{$name}` je neplatný. Nesmie obsahovať špeciálne znaky.
+    duplicate_view_group_name: Názvy skupín zobrazenia musia byť unikátne, ale `{$name}` sa používa viackrát.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Filter zobrazenia {$count} musí mať možnosť `name` definovanú ako neprázdny reťazec.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `pattern`, `eq` and `gte`
+    invalid_view_filter_no_condition: Filter zobrazenia {$count} musí mať možnosť `pattern` alebo porovnávací operátor, napríklad `eq` alebo `gte`, podľa ktorého sa položky vyfiltrujú.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: Názov filtra zobrazenia `{$name}` je neplatný. Nesmie obsahovať špeciálne znaky.
+    duplicate_view_filter_name: Názvy filtrov zobrazenia musia byť unikátne, ale `{$name}` sa používa viackrát.
+    # {$name} is the default view group name from the configuration; Don’t localize `default` and `view_groups`
+    invalid_view_group_default: Možnosť `default` v `view_groups` je nastavená na `{$name}`, ale žiadna skupina zobrazenia nemá taký názov.
+    # {$name} is the default view filter name from the configuration; Don’t localize `default` and `view_filters`
+    invalid_view_filter_default: Možnosť `default` vo `view_filters` je nastavená na `{$name}`, ale žiadny filter zobrazenia nemá taký názov.
+    # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
+    missing_collection_name: Kolekcia {$count} musí mať možnosť `name` definovanú ako neprázdny reťazec.
+    # {$name} is the invalid or duplicate collection name
+    invalid_collection_name: Názov kolekcie `{$name}` je neplatný. Nesmie obsahovať špeciálne znaky.
+    duplicate_collection_name: Názvy kolekcií musia byť unikátne, ale `{$name}` sa používa viackrát.
+    # {$count} is the 1-based file index inside a file collection; Don’t localize `name`
+    missing_collection_file_name: Súbor kolekcie {$count} musí mať možnosť `name` definovanú ako neprázdny reťazec.
+    # {$name} is the invalid or duplicate collection file name
+    invalid_collection_file_name: Názov súboru kolekcie `{$name}` je neplatný. Nesmie obsahovať špeciálne znaky.
+    duplicate_collection_file_name: Názvy súborov kolekcie musia byť unikátne, ale `{$name}` sa používa viackrát.
+    # Don’t localize `fields`
+    collection_no_fields: Kolekcia musí mať definovanú možnosť `fields` s aspoň jedným poľom.
+    # Don’t localize `fields`
+    collection_file_no_fields: Súbor kolekcie musí mať definovanú možnosť `fields` s aspoň jedným poľom.
+    # Don’t localize `i18n`, `locale` and `folder`
+    collection_folder_i18n_required: Kolekcia musí mať definovanú možnosť `i18n`, ak sa v ceste `folder` používa parameter `locale`.
+    # {$folder} is the invalid folder path; Don’t localize `locale`, `folder` and the example path. The
+    # curly brackets in the example are escaped with backslashes for MessageFormat 2
+    invalid_collection_folder_locale: Cesta `folder` s hodnotou `{$folder}` je neplatná. Zástupný symbol `locale` sa musí použiť iba raz ako celý názov priečinka, napríklad `content/\{\{locale\}\}/posts`.
+    # Don’t localize `i18n`, `locale` and `file`
+    collection_file_i18n_required: Súbor kolekcie musí mať definovanú možnosť `i18n`, ak sa v ceste `file` používa parameter `locale`.
+    # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
+    missing_field_name: Pole {$count} musí mať možnosť `name` definovanú ako neprázdny reťazec.
+    # {$name} is the invalid or duplicate field name
+    invalid_field_name: Názov poľa `{$name}` je neplatný. Nesmie obsahovať špeciálne znaky. Ak chcete polia vnárať, <a>použite namiesto bodkovej notácie polia typu Object</a>.
+    duplicate_field_name: Názvy polí musia byť unikátne, ale `{$name}` sa používa viackrát.
+    # {$count} is the 1-based variable type index in the current types array
+    missing_variable_type: Typ premennej {$count} musí mať možnosť `name` definovanú ako neprázdny reťazec.
+    # {$name} is the invalid or duplicate variable type name
+    invalid_variable_type: Názov typu premennej `{$name}` je neplatný. Nesmie obsahovať špeciálne znaky.
+    duplicate_variable_type: Názvy typov premenných musia byť unikátne, ale `{$name}` sa používa viackrát.
+    date_field_type: 'Zastaraný typ poľa Date nie je vo Sveltia CMS podporovaný. Namiesto neho použite typ poľa DateTime s možnosťou `type: date`.'
+    # {$timeZone} is the invalid IANA timezone identifier from the configuration
+    invalid_timezone: 'Neplatné časové pásmo: {$timeZone}. Musí to byť platný identifikátor časového pásma IANA, napríklad `America/New_York` alebo `Asia/Tokyo`.'
+    # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
+    unsupported_deprecated_option: Zastaraná možnosť `{$prop}` nie je vo Sveltia CMS podporovaná. Namiesto nej použite možnosť `{$newProp}`.
+    # Don’t localize `allow_multiple`, `multiple`, and `false`
+    allow_multiple: Možnosť `allow_multiple` nie je vo Sveltia CMS podporovaná. Namiesto nej použite možnosť `multiple`, ktorej predvolená hodnota je `false`.
+    # Don’t localize `field`, `fields`, and `types`
+    invalid_list_field: Pole typu List nemôže mať súčasne možnosti `field`, `fields` a `types`.
+    # {$widget} is the configured widget value of the invalid variable type; Don’t localize `widget` and `object`
+    invalid_list_variable_type: Typ premennej poľa List je neplatný. Možnosť `widget` je nastavená na `{$widget}`, ale musí byť `object`.
+    # Don’t localize `fields`, and `types`
+    invalid_object_field: Pole typu Object nemôže mať súčasne možnosti `fields` a `types`.
+    # {$min} and {$max} are option names such as `min` and `max` or `minlength` and `maxlength`
+    invalid_range_options: Možnosť `{$min}` nesmie byť väčšia ako možnosť `{$max}`.
+    # {$step} is the configured value; Don’t localize `step`
+    invalid_step: Možnosť `step` je nastavená na `{$step}`, ale musí byť väčšia ako nula.
+    # Don’t localize `options`
+    select_field_no_options: Pole typu Select musí mať v možnosti `options` aspoň jednu položku.
+    # {$value} is the option value from the configuration; Don’t localize `options`
+    select_field_duplicate_option: Hodnoty v možnosti `options` poľa Select musia byť unikátne, ale `{$value}` sa používa viackrát.
+    # {$value} is the default value from the configuration; Don’t localize `default` and `options`
+    select_field_invalid_default: Možnosť `default` poľa Select je nastavená na `{$value}`, ale táto hodnota nie je medzi `options`.
+    # Don’t localize `fields` and `types`
+    list_field_no_subfields: Možnosť `fields` alebo `types` poľa List musí mať aspoň jednu položku. Pre zoznam jednoduchých hodnôt túto možnosť vynechajte.
+    # Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_object: Možnosť `default` poľa List obsahuje objekt, ale každá položka musí byť jednoduchá hodnota, pretože pole nemá `fields` ani `types`.
+    # {$value} is the default item from the configuration; Don’t localize `default`, `fields` and `types`
+    list_field_invalid_default_item: Možnosť `default` poľa List obsahuje `{$value}`, ale každá položka musí byť objekt, pretože pole má `fields` alebo `types`.
+    # {$key} is a property name of the default item from the configuration; Don’t localize `default`
+    list_field_invalid_default_key: Možnosť `default` poľa List obsahuje položku s vlastnosťou `{$key}`, ale žiadne vnorené pole nemá taký názov.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    list_field_default_missing_type: Možnosť `default` poľa List obsahuje položku bez vlastnosti `{$typeKey}`, ktorá určuje jeden z typov v `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default item; Don’t localize `default` and `types`
+    list_field_invalid_default_type: Možnosť `default` poľa List obsahuje položku, ktorej vlastnosť `{$typeKey}` má hodnotu `{$value}`, ale tá nie je medzi `types`.
+    # Don’t localize `default` and `multiple`
+    invalid_default_multiple: Možnosť `default` musí byť pole hodnôt, pretože možnosť `multiple` má hodnotu `true`.
+    invalid_default_single: Možnosť `default` musí byť jedna hodnota, nie pole hodnôt, pretože možnosť `multiple` nemá hodnotu `true`.
+    # {$key} is a property name of the default object from the configuration; Don’t localize `default`
+    object_field_invalid_default_key: Možnosť `default` poľa Object má vlastnosť `{$key}`, ale žiadne vnorené pole nemá taký názov.
+    # {$typeKey} is the configured type key, `type` by default; Don’t localize `default` and `types`
+    object_field_default_missing_type: Možnosť `default` poľa Object nemá vlastnosť `{$typeKey}`, ktorá určuje jeden z typov v `types`.
+    # {$typeKey} is the configured type key, `type` by default, and {$value} is its value in the default object; Don’t localize `default` and `types`
+    object_field_invalid_default_type: Vlastnosť `{$typeKey}` v možnosti `default` poľa Object má hodnotu `{$value}`, ale tá nie je medzi `types`.
+    # Don’t localize `default` and `output_code_only`
+    code_field_invalid_default_object: Možnosť `default` poľa Code musí byť reťazec, pretože možnosť `output_code_only` má hodnotu `true`.
+    # {$key} is a property name of the default object, {$code} and {$lang} are the configured property names; Don’t localize `default` and `keys`
+    code_field_invalid_default_key: Možnosť `default` poľa Code má vlastnosť `{$key}`, ale možnosť `keys` povoľuje iba `{$code}` a `{$lang}`.
+    # {$value} is the default value and {$valueType} is the configured value type; Don’t localize `default` and `value_type`
+    number_field_default_not_integer: Možnosť `default` poľa Number je nastavená na `{$value}`, ale musí to byť celé číslo, pretože možnosť `value_type` má hodnotu `{$valueType}`.
+    number_field_default_not_number: Možnosť `default` poľa Number je nastavená na `{$value}`, ale musí to byť číslo, pretože možnosť `value_type` má hodnotu `{$valueType}`.
+    # Don’t localize `fields` and `types`
+    object_field_no_subfields: Možnosť `fields` alebo `types` poľa Object musí mať aspoň jednu položku.
+    # {$collection}, {$file}, and {$field} are referenced names that could not be resolved
+    relation_field_invalid_collection: Odkazovaná kolekcia `{$collection}` je neplatná alebo nie je definovaná.
+    relation_field_invalid_collection_file: Odkazovaný súbor `{$file}` je neplatný alebo nie je definovaný.
+    # Don’t localize `file`
+    relation_field_missing_file_name: Pri vzťahu ku kolekcii súborov musí byť definovaná možnosť `file`.
+    relation_field_invalid_value_field: Odkazované pole hodnoty `{$field}` je neplatné alebo nie je definované.
+    # {$collection} is the referenced collection name; Don’t localize `file`, `value_field` and `slug`.
+    # The curly brackets are escaped with backslashes for MessageFormat 2
+    relation_field_array_file_slug: Vzťah ku kolekcii `{$collection}` nemôže ukladať hodnotu `\{\{slug\}\}`, pretože v kolekcii s možnosťou `file` je slug položky jej poradie, ktoré sa mení pri zmene poradia alebo odstránení položiek. Namiesto toho nastavte možnosť `value_field` na pole s unikátnou hodnotou.
+    # {$collection} is the referenced collection name; Don’t localize `file`
+    relation_field_array_file_workflow: Kolekcia s možnosťou `file` nemôže mať vzťah ku kolekcii `{$collection}`, ktorá používa schvaľovací proces, pretože odkazy na položku, ktorá sa tam premenuje alebo odstráni, nie je možné v súbore aktualizovať.
+    relation_field_invalid_display_field: Odkazované zobrazované pole `{$field}` je neplatné alebo nie je definované.
+    relation_field_invalid_search_field: Odkazované pole vyhľadávania `{$field}` je neplatné alebo nie je definované.
+    relation_field_invalid_filter_field: Odkazované pole filtra `{$field}` je neplatné alebo nie je definované.
+    unexpected: Neočakávaná chyba
+
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: Možnosť `{$option}` musí byť {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'Možnosť `{$option}` musí mať jednu z týchto hodnôt: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: Možnosť `{$option}` musí mať hodnotu `{$value}`.
+    schema_invalid_empty_value: Možnosť `{$option}` musí byť prázdny reťazec.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: Možnosť `{$option}` musí byť pole s počtom prvkov {$count}.
+    schema_invalid_value: Možnosť `{$option}` má neplatnú hodnotu.
+    schema_missing_option: Možnosť `{$option}` je povinná.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Vyžaduje sa jedna z týchto možností: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: reťazec
+      number: číslo
+      integer: celé číslo
+      boolean: logická hodnota
+      array: pole
+      object: objekt
+      'null': prázdna
+
+  # Warning messages (logged to console)
+  warning:
+    oauth_no_app_id: ID aplikácie OAuth nie je definované. Používatelia sa musia prihlásiť pomocou prístupového tokenu.
+    editorial_workflow_unsupported: Schvaľovací proces (Editorial Workflow) je momentálne podporovaný iba pre GitHub a GitLab.
+    open_authoring_unsupported_backend: Open Authoring je momentálne podporovaný iba pre GitHub.
+    # {$prop} is the unsupported option name that will be ignored
+    unsupported_ignored_option: Možnosť `{$prop}` nie je vo Sveltia CMS podporovaná. Bude ignorovaná.
+    # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
+    conflicting_timezone_options: Je nastavená možnosť `picker_utc` aj novšie možnosti časového pásma (`input_timezone` alebo `output_utc`). Prednosť majú nové možnosti. Zvážte odstránenie `picker_utc` z konfigurácie.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: Možnosť `preview_path` používa parametre dátumu a času, ale kolekcia nemá žiadne pole DateTime, z ktorého by ich bolo možné načítať, takže odkaz na náhľad sa nezobrazí.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: Možnosť `preview_path_date_field` odkazuje na pole s názvom `{$name}`, ale žiadne pole DateTime s týmto názvom nie je definované, takže odkaz na náhľad sa nezobrazí.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: Možnosť `preview_path` odkazuje na `{$name}`, ale v kolekcii nie je definované žiadne také pole, takže odkaz na náhľad sa nezobrazí.
+    # {$name} is the default identifier field name; Don’t localize `identifier_field` and `slug`
+    missing_identifier_field: Kolekcia nemá pole `{$name}`, podľa ktorého by sa pomenovali nové položky, takže každá nová položka dostane náhodný slug. Pridajte pole `{$name}` alebo nastavte možnosť `identifier_field` či `slug`.
+    # Don’t localize `slug`, `i18n`, `multiple_files`, `multiple_folders` and `multiple_root_folders`
+    slug_i18n_ineffective: Možnosť `i18n` v `slug` nemá žiadny efekt, pretože kolekcia nepoužíva štruktúru i18n `multiple_files`, `multiple_folders` ani `multiple_root_folders`, v ktorej má každý jazyk vlastný súbor.
+    # Don’t localize `i18n`
+    i18n_not_configured: Možnosť `i18n` je zapnutá, ale i18n nie je nakonfigurované na najvyššej úrovni konfigurácie ani v kolekcii, takže táto možnosť nemá žiadny efekt.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: Možnosť `public_folder` je prázdny reťazec, preto sa pre cesty k médiám ukladané v položkách použije namiesto nej cesta `media_folder`. Odstráňte túto možnosť alebo ju nastavte na cestu, ktorú chcete použiť, napríklad `/images`.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: Možnosť `{$option}` nie je definovaná v schéme konfigurácie Sveltia CMS. Bude ignorovaná. Skontrolujte, či nejde o preklep alebo syntaktickú chybu.
+
+  # Compatibility link appended to unsupported feature messages
+  compatibility_link: 'Podrobnosti nájdete v poznámkach o kompatibilite: {$link}'
+
+  # Console tip shown after config load
+  schema_tip: Aby ste chyby odhalili skôr, môžete svoj konfiguračný súbor overiť voči schéme JSON Sveltia CMS. Podrobnosti nájdete na {$link}.
+
+# ==============================================================================
+# Local Workflow
+# ==============================================================================
+# Strings for the Local Workflow feature (local repository support).
+
+local_workflow:
+  # Badge text in account button
+  indicator: Lokálne
+  # Browser compatibility warnings
+  unsupported_browser: Lokálny pracovný postup nie je vo vašom prehliadači podporovaný. Použite Chrome alebo Edge.
+  disabled: Lokálny pracovný postup je vo vašom prehliadači vypnutý. <a>Tu je návod, ako ho zapnúť</a>.
+
+# ==============================================================================
+# Editorial Workflow
+# ==============================================================================
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
+
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Teraz si prezeráte tabuľu schvaľovacieho procesu. Koncepty: {$draft}. Na kontrole: {$review}. Pripravené: {$ready}. Čaká na odstránenie: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Teraz si prezeráte tabuľu schvaľovacieho procesu. Koncepty: {$draft}. Na kontrole: {$review}. Čaká na odstránenie: {$deletion}.'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
+status:
+  draft: Koncept
+  drafts: Koncepty
+  in_review: Na kontrole
+  ready: Pripravené
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Čaká na odstránenie
+  # Merged changes the site hasn’t caught up with yet: it’s being rebuilt and deployed from the
+  # merge, so a published entry isn’t live and a deleted one is still up. Heading of the tray below
+  # the board that lists them until the site has caught up
+  deploying: Nasadzuje sa
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Zrušiť odstránenie
+  confirm_cancelling_deletion: Naozaj chcete zrušiť toto odstránenie? Položka zostane publikovaná.
+  confirm_completing_deletion: Naozaj chcete odstrániť túto položku? Odstráni sa okamžite.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one {{ Položka bola označená na odstránenie. }}
+      few {{ {$count} položky boli označené na odstránenie. }}
+      *   {{ {$count} položiek bolo označených na odstránenie. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one {{ Zmeny boli zahodené. }}
+      few {{ Zmeny v {$count} položkách boli zahodené. }}
+      *   {{ Zmeny v {$count} položkách boli zahodené. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Ruší sa odstránenie…
+  deletion_cancelled: Odstránenie bolo zrušené.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Odstránenie sa nepodarilo zrušiť. Skúste to znova.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Nepublikované položky
+  published_entries: Publikované položky
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Stav: {$status}'
+  change_entry_status: Zmeniť stav položky
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Mení sa stav…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Aktualizuje sa stav…
+  status_updated: Stav bol aktualizovaný.
+  # Error notification when the status could not be changed
+  status_change_failed: Stav sa nepodarilo zmeniť. Skúste to znova.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: Položka obsahuje chyby. Pred zmenou stavu ich opravte.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: Položka obsahuje chyby. Pred publikovaním ich opravte.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Odoslať na kontrolu
+  confirm_sending_for_review: Vaše zmeny boli uložené ako koncept. Odoslať položku na kontrolu, aby si ju niekto mohol pozrieť a publikovať?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Publikovať položku
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Zahodiť zmeny
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Naozaj chcete odstrániť túto položku? Odstráni sa až po publikovaní odstránenia. Dovtedy ju nájdete v zozname položiek s označením „Čaká na odstránenie“.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Táto položka ešte nebola publikovaná, takže sa jej odstránením úplne zahodí.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Táto položka má nepublikované zmeny. Ich zahodením sa obnoví publikovaná verzia. Samotná položka sa neodstráni.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Ešte nebola publikovaná, takže vaše nepublikované zmeny sa zahodia. Prípadná publikovaná verzia zostane publikovaná. }}
+      *   {{ Ešte neboli publikované, takže vaše nepublikované zmeny sa zahodia. Prípadné publikované verzie zostanú publikované. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one {{ Jedna z nich ešte nebola publikovaná, takže vaše nepublikované zmeny sa zahodia. Prípadná publikovaná verzia zostane publikovaná. }}
+      few {{ {$count} z nich ešte neboli publikované, takže vaše nepublikované zmeny sa zahodia. Prípadné publikované verzie zostanú publikované. }}
+      *   {{ {$count} z nich ešte nebolo publikovaných, takže vaše nepublikované zmeny sa zahodia. Prípadné publikované verzie zostanú publikované. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry_after_build: Naozaj chcete publikovať túto položku? Vaše zmeny sa prejavia po aktualizácii webu.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Publikuje sa položka…
+  entry_published: Položka bola publikovaná.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Odstraňuje sa položka…
+  discarding_changes: Zahadzujú sa zmeny…
+  entry_deleted: Položka bola odstránená.
+  # Error notification when publishing fails
+  publishing_entry_failed: Položku sa nepodarilo publikovať. Skúste to znova.
+  # Workflow page: empty column message
+  no_entries: Žiadne položky.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Presunutím zmeníte stav
+  # Workflow page: note on a card in the Deploying tray, marking an entry that’s being removed from
+  # the site rather than published to it
+  deploying_deletion: Odstránenie
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Vytvoriť fork repozitára
+  fork: Vytvoriť fork
+  confirm_forking_repository: Ak chcete navrhnúť zmeny v repozitári „{$repo}“, musí sa vo vašom účte vytvoriť jeho fork. Vaše zmeny sa uložia do tohto forku a správca ich pred zverejnením skontroluje.
+  # Error shown when the user declined the dialog above
+  fork_declined: Na navrhovanie zmien potrebujete vo svojom účte fork repozitára.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Vo vašom účte sa nepodarilo vytvoriť fork repozitára „{$repo}“.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Nepodarilo sa overiť váš prístup k repozitáru „{$repo}“. Skúste to znova o chvíľu.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: Repozitár „{$repo}“ nepovoľuje forky. Požiadajte správcu, aby pre neho povolil forkovanie.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Máte čakajúcu pozvánku do repozitára „{$repo}“. Prijmite ju na GitHube a potom sa znova prihláste.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Vaše prihlásenie nezahŕňa prístup k súkromným repozitárom, takže repozitár „{$repo}“ nie je možné načítať. Požiadajte správcu, aby skontroloval nastavenia overovania CMS.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Zmeny na tomto webe môže publikovať iba správca. Namiesto toho označte svoju položku ako „Na kontrole“ a niekto sa na ňu pozrie.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Túto zmenu nie je možné vykonať priamo. Na kontrolu je možné navrhnúť iba úpravy položiek.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Vaše zmeny sa ukladajú do „{$repo}“, vášho forku tohto repozitára, a pred zverejnením sa kontrolujú.
+  view_fork: Zobraziť fork
+
+# ==============================================================================
+# Settings Dialog
+# ==============================================================================
+# Strings for the settings/preferences dialog and its panels.
+
+# Settings page aria-label
+categories: Kategórie
+
+# Site Configuration Editor
+site_configuration_editor: Editor konfigurácie webu
+
+# Preferences panels
+prefs:
+  # API key management feedback messages
+  changes:
+    api_key_saved: API kľúč bol uložený.
+    api_key_removed: API kľúč bol odobraný.
+    api_key_invalid: Zadaný API kľúč je neplatný. Skontrolujte ho a skúste to znova.
+
+  # Preferences operation errors
+  error:
+    permission_denied: Prístup k ukladaniu súborov cookie bol zamietnutý. Skontrolujte povolenia prehliadača a skúste to znova.
+
+  # Appearance panel
+  appearance:
+    title: Vzhľad
+    theme: Motív
+    select_theme: Vybrať motív
+
+  # Theme options
+  theme:
+    dark: Tmavý
+    light: Svetlý
+
+  # Language panel
+  language:
+    title: Jazyk
+    ui_language:
+      title: Jazyk používateľského rozhrania
+      select_language: Vybrať jazyk
+
+  # Contents panel
+  contents:
+    title: Obsah
+    editor:
+      title: Editor
+      use_draft_backup:
+        switch_label: Automaticky zálohovať koncepty položiek
+      close_on_save:
+        switch_label: Po uložení konceptu zavrieť editor
+      close_with_escape:
+        switch_label: Zatvárať editor klávesom Escape
+
+  # Internationalization panel
+  i18n:
+    title: Internacionalizácia
+    translators:
+      default:
+        title: Predvolená prekladová služba
+        select_service: Vybrať službu
+      api_keys:
+        title: API kľúče prekladových služieb
+        description: Spravujte API kľúče pre <a>prekladové služby</a>.
+      # API key input label, e.g., “DeepL Key”
+      # {$service} is the translation service name
+      field_label: Kľúč pre {$service}
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Zaregistrujte sa v službe <a {$homeHref}>{$service}</a> a zadajte sem <a {$apiKeyHref}>svoj API kľúč</a>, aby ste mohli rýchlo prekladať textové polia položiek.
+
+  # Media panel
+  media:
+    title: Médiá
+    stock_photos:
+      api_keys:
+        title: API kľúče fotobánk
+        description: Spravujte API kľúče pre <a>fotobanky</a>.
+      # API key input label, e.g., “Unsplash API Key”
+      # {$service} is the stock photo service name
+      field_label: API kľúč pre {$service}
+      # Description with embedded links
+      # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
+      description: Zaregistrujte sa v <a {$homeHref}>{$service} API</a> a zadajte sem <a {$apiKeyHref}>svoj API kľúč</a>, aby ste mohli do obrázkových polí položiek vkladať bezplatné fotografie z fotobanky.
+      # Photo credit attribution
+      # {$service} is the stock photo service name
+      credit: Fotografie poskytuje {$service}
+      no_services: Nie sú nakonfigurované žiadne <a>fotobanky</a>.
+    cloud_storage:
+      api_keys:
+        title: API kľúče cloudových úložísk
+        description: Spravujte API kľúče pre <a>cloudové úložiská</a>.
+      # API key input label
+      # {$service} is the cloud storage service name
+      field_label: API kľúč pre {$service}
+      no_services: Nie sú nakonfigurované žiadne <a>cloudové úložiská</a>.
+
+  # Accessibility panel
+  accessibility:
+    title: Prístupnosť
+    underline_links:
+      title: Podčiarkovanie odkazov
+      description: Zobrazovať podčiarknutie odkazov v náhľade položky a v textoch používateľského rozhrania.
+      switch_label: Vždy podčiarkovať odkazy
+
+  # Advanced panel
+  advanced:
+    title: Rozšírené
+    beta:
+      title: Beta funkcie
+      description: Povoliť niektoré beta funkcie, ktoré môžu byť nestabilné alebo nepreložené.
+      switch_label: Zapojiť sa do beta programu
+    developer_mode:
+      title: Režim pre vývojárov
+      description: Povoliť niektoré funkcie určené pre vývojárov vrátane podrobných záznamov v konzole a natívnych kontextových menu.
+      switch_label: Zapnúť režim pre vývojárov
+    deploy_hook:
+      title: Webhook pre nasadenie (Deploy Hook)
+      description: Zadajte URL webhooku, ktorý sa zavolá, keď ručne spustíte nasadenie výberom možnosti Publikovať zmeny. Ak používate GitHub Actions, môžete toto pole nechať prázdne.
+      # Hook URL input
+      url:
+        field_label: URL webhooku
+        saved: URL webhooku bola uložená.
+        removed: URL webhooku bola odobraná.
+      # Authorization header input
+      auth:
+        field_label: Autorizačná hlavička (napr. Bearer <token>) (voliteľné)
+        saved: Autorizačná hlavička bola uložená.
+        removed: Autorizačná hlavička bola odobraná.
+    clear_data:
+      title: Vymazať údaje
+      # Clear File Cache button
+      file_cache:
+        description: Odstrániť obsah súborov a miniatúry obrázkov uložené v lokálnej cache, aby sa uvoľnilo miesto v úložisku alebo vyriešili problémy spôsobené zastaranými údajmi.
+        button_label: Vymazať cache súborov
+        confirmation: Obsah súborov a miniatúry obrázkov uložené v lokálnej cache sa odstránia. Vaše neuložené koncepty a nastavenia zostanú zachované a odstránené údaje sa podľa potreby znova stiahnu alebo vygenerujú. Po dokončení sa CMS znova načíta.
+      # Erase All Data button
+      all_data:
+        description: Odstrániť všetko, čo CMS uchováva v tomto prehliadači, vrátane súborov v cache, neuložených konceptov a nastavení. Nič, čo je už uložené vo vašom repozitári, nebude ovplyvnené.
+        button_label: Vymazať všetky údaje
+        confirmation: Všetky údaje uložené v tomto prehliadači sa odstránia vrátane obsahu súborov v cache, miniatúr obrázkov, neuložených konceptov, nastavení a stavu prihlásenia. Váš repozitár nebude ovplyvnený, ale všetky neuložené zmeny sa stratia a budete sa musieť znova prihlásiť. Po dokončení sa CMS znova načíta.
+
+# ==============================================================================
+# Keyboard Shortcuts
+# ==============================================================================
+# Action descriptions for the keyboard shortcuts dialog.
+
+keyboard_shortcuts_:
+  view_content_library: Zobraziť knižnicu obsahu
+  view_asset_library: Zobraziť knižnicu médií
+  search: Vyhľadať položky a médiá
+  create_entry: Vytvoriť novú položku
+  save_entry: Uložiť položku
+  cancel_editing: Zrušiť úpravy položky
+
+# ==============================================================================
+# File Type Labels
+# ==============================================================================
+# Display labels for file types shown in asset info and upload previews.
+
+file_type_labels:
+  # Image formats
+  avif: Obrázok AVIF
+  bmp: Bitmapový obrázok
+  gif: Obrázok GIF
+  heic: Obrázok HEIC
+  heif: Obrázok HEIF
+  ico: Ikona
+  jpeg: Obrázok JPEG
+  jpg: Obrázok JPEG
+  png: Obrázok PNG
+  svg: Obrázok SVG
+  tif: Obrázok TIFF
+  tiff: Obrázok TIFF
+  webp: Obrázok WebP
+  # Video formats
+  avi: Video AVI
+  m4v: Video MP4
+  mov: Video QuickTime
+  mp4: Video MP4
+  mpeg: Video MPEG
+  mpg: Video MPEG
+  ogg: Video Ogg
+  ogv: Video Ogg
+  ts: Video MPEG
+  webm: Video WebM
+  3gp: Video 3GPP
+  3g2: Video 3GPP2
+  # Audio formats
+  aac: Zvuk AAC
+  mid: MIDI
+  midi: MIDI
+  m4a: Zvuk MP4
+  mp3: Zvuk MP3
+  oga: Zvuk Ogg
+  opus: Zvuk OPUS
+  wav: Zvuk WAV
+  weba: Zvuk WebM
+  # Document formats
+  csv: Tabuľka CSV
+  doc: Dokument Word
+  docx: Dokument Word
+  odp: Prezentácia OpenDocument
+  ods: Tabuľka OpenDocument
+  odt: Textový dokument OpenDocument
+  pdf: Dokument PDF
+  ppt: Prezentácia PowerPoint
+  pptx: Prezentácia PowerPoint
+  rtf: Dokument vo formáte RTF
+  xls: Tabuľka Excel
+  xlsx: Tabuľka Excel
+  # Text formats
+  html: Text HTML
+  js: JavaScript
+  json: Text JSON
+  md: Text Markdown
+  toml: Text TOML
+  yaml: Text YAML
+  yml: Text YAML
+
+# ==============================================================================
+# File Size Units
+# ==============================================================================
+# Labels for file size units used in formatted file sizes.
+
+file_size_units:
+  # {$size} is the formatted numeric size for the current unit
+  b: '{$size} B'
+  kb: '{$size} KB'
+  mb: '{$size} MB'
+  gb: '{$size} GB'
+  tb: '{$size} TB'

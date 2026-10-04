@@ -31,6 +31,7 @@
     "check:eslint": "eslint .",
     "check:imports": "node scripts/find-unused-imports.js",
     "check:l10n": "node scripts/check-locales.js",
+    "l10n:style": "node scripts/check-locale-style.js",
     "check:oxlint": "oxlint .",
     "check:prettier": "prettier --check .",
     "check:stylelint": "stylelint '**/*.{css,scss,svelte}'",
