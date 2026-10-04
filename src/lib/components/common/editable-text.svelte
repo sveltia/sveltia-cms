@@ -65,6 +65,11 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  /** @type {HTMLButtonElement | undefined} */
+  let editButton = $state();
+  /** @type {HTMLElement | undefined} */
+  let valueElement = $state();
+
   /**
    * Start editing the value. The text field is focused, with the text selected.
    */
@@ -79,6 +84,17 @@
   };
 
   /**
+   * End editing the value. The text field is gone then, so the focus moves to the pencil button,
+   * or to the value when it can no longer be edited, rather than being lost. Nothing is focused
+   * when the component is gone, e.g. after the applied change removed it.
+   */
+  const stopEditing = async () => {
+    editing = false;
+    await tick();
+    (editButton ?? valueElement)?.focus();
+  };
+
+  /**
    * Apply the edited text.
    */
   const apply = () => {
@@ -87,7 +103,7 @@
     const handler = /** @type {(text: string) => boolean | void} */ (onApply);
 
     if (handler(/** @type {string} */ (text)) !== false) {
-      editing = false;
+      stopEditing();
     }
   };
 
@@ -133,7 +149,7 @@
         event.stopPropagation();
 
         if (key === 'Escape') {
-          editing = false;
+          stopEditing();
         } else {
           apply();
         }
@@ -159,7 +175,7 @@
       aria-label={_('cancel')}
       aria-controls={id}
       onclick={() => {
-        editing = false;
+        stopEditing();
       }}
     >
       {#snippet startIcon()}
@@ -172,6 +188,7 @@
       {id}
       tabindex="0"
       class="value"
+      bind:this={valueElement}
       {dir}
       aria-readonly={readonly}
       aria-invalid={invalid}
@@ -187,6 +204,7 @@
         iconic
         aria-label={editLabel}
         aria-controls={id}
+        bind:element={editButton}
         onclick={() => {
           startEditing();
         }}

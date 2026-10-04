@@ -85,6 +85,8 @@ describe('EditableText', () => {
     await userEvent.keyboard('{Escape}');
     await expect.poll(() => props.editing).toBe(false);
     expect(props.onApply).not.toHaveBeenCalled();
+    // The focus moves back to the pencil button rather than being lost
+    await expect.element(page.getByRole('button', { name: 'Rename' })).toHaveFocus();
 
     await page.getByRole('button', { name: 'Rename' }).click();
     // Other keys are typed as usual
@@ -93,10 +95,26 @@ describe('EditableText', () => {
     await userEvent.keyboard('{Enter}');
     expect(props.onApply).toHaveBeenCalledExactlyOnceWith('image.png');
     await expect.poll(() => props.editing).toBe(false);
+    await expect.element(page.getByRole('button', { name: 'Rename' })).toHaveFocus();
 
     await page.getByRole('button', { name: 'Rename' }).click();
     await page.getByRole('button', { name: 'Cancel' }).click();
     await expect.poll(() => props.editing).toBe(false);
+    await expect.element(page.getByRole('button', { name: 'Rename' })).toHaveFocus();
+  });
+
+  test('focuses the value when it can no longer be edited after applying the text', async () => {
+    const props = await renderEditableText({
+      onApply: vi.fn(() => {
+        props.canEdit = false;
+      }),
+    });
+
+    await page.getByRole('button', { name: 'Rename' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
+
+    await expect.element(page.getByRole('textbox')).toHaveFocus();
+    expect(page.getByRole('button').elements()).toHaveLength(0);
   });
 
   test('keeps editing when the text isn’t applied', async () => {
@@ -117,6 +135,29 @@ describe('EditableText', () => {
 
     await expect.element(page.getByRole('button', { name: 'Done' })).toBeDisabled();
     await expect.element(page.getByRole('textbox')).toHaveAttribute('placeholder', 'placeholder');
+  });
+
+  test('focuses nothing when applying the text removes the component', async () => {
+    /** @type {any} */
+    let screen;
+
+    const onApply = vi.fn(() => {
+      screen.unmount();
+    });
+
+    screen = await render(EditableText, {
+      id: 'value',
+      value: 'photo.png',
+      editLabel: 'Rename',
+      onApply,
+    });
+
+    await page.getByRole('button', { name: 'Rename' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
+
+    expect(onApply).toHaveBeenCalledOnce();
+    await expect.element(page.getByRole('textbox')).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(document.body);
   });
 
   test('offers no pencil button when the value can’t be edited', async () => {
