@@ -1,16 +1,23 @@
 // @ts-nocheck
+import { IndexedDB } from '@sveltia/utils/storage';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { backend } from '$lib/services/backends';
 import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
 import {
   buildEntryFileChanges,
   getPreviousSha,
   isSingleFileEntry,
+  resolveCacheDB,
 } from '$lib/services/contents/draft/save/file-changes';
+
+vi.mock('$lib/services/backends', () => ({ backend: { current: null } }));
 
 vi.mock('$lib/services/contents/draft/save/entry-file', () => ({
   formatEntryData: vi.fn(),
 }));
+
+vi.mock('@sveltia/utils/storage', () => ({ IndexedDB: vi.fn() }));
 
 const draft = { fields: [] };
 const _file = { format: 'yaml-frontmatter' };
@@ -37,6 +44,30 @@ const multiFileConfig = {
     structureMap: { i18nSingleFile: false, i18nSingleFileDefaultRoot: false },
   },
 };
+
+describe('resolveCacheDB()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    backend.current = null;
+  });
+
+  test('returns the provided handle', () => {
+    const provided = { get: vi.fn() };
+
+    expect(resolveCacheDB(provided)).toBe(provided);
+    expect(IndexedDB).not.toHaveBeenCalled();
+  });
+
+  test('opens a handle for the current backend', () => {
+    backend.current = { repository: { databaseName: 'db' } };
+    resolveCacheDB();
+    expect(IndexedDB).toHaveBeenCalledWith('db', 'file-cache');
+  });
+
+  test('returns undefined when no backend is configured', () => {
+    expect(resolveCacheDB()).toBeUndefined();
+  });
+});
 
 describe('getPreviousSha()', () => {
   test('returns undefined when previousPath is undefined', async () => {

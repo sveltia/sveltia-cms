@@ -2,12 +2,12 @@ import { _ } from '@sveltia/i18n';
 
 import { isConfigReadonly } from '$lib/services/config/readonly';
 import { isCollectionIndexFile } from '$lib/services/contents/collection/entries/index-file';
+import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import { validateAnyField } from '$lib/services/contents/draft/validate/fields';
 import { getFieldValidationMessages } from '$lib/services/contents/draft/validate/messages';
 import {
   buildEntryUpdateChanges,
   createSyntheticDraft,
-  resolveCacheDB,
 } from '$lib/services/contents/entry/changes';
 import { getListItemKeys } from '$lib/services/contents/entry/key-paths';
 import { isEntryReadonly } from '$lib/services/contents/entry/readonly';

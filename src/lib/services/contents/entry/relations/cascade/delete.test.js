@@ -48,6 +48,10 @@ vi.mock('$lib/services/contents/entry/changes', () => ({
     { action: 'update', slug: entry.slug, path: `content/posts/${entry.slug}.md`, data: '' },
   ]),
   createSyntheticDraft: vi.fn((args) => ({ synthetic: true, ...args })),
+}));
+
+vi.mock('$lib/services/contents/draft/save/file-changes', async (importOriginal) => ({
+  .../** @type {Record<string, any>} */ (await importOriginal()),
   resolveCacheDB: vi.fn(() => undefined),
 }));
 

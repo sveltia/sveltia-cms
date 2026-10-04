@@ -1,4 +1,6 @@
+import { backend } from '$lib/services/backends';
 import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
+import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -21,6 +23,20 @@ import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
  * The `currentPath` is the path the file is stored at now, to look up its SHA with. It’s
  * `undefined` for a new file.
  */
+
+/**
+ * Resolve a usable file-cache `IndexedDB` handle: prefer the caller-provided one (so the same
+ * handle is shared across composite operations like delete + renumber), otherwise open one.
+ * @param {IndexedDB} [provided] Caller-provided handle.
+ * @returns {IndexedDB | undefined} Cache handle, or `undefined` if no backend is configured.
+ */
+export const resolveCacheDB = (provided) => {
+  if (provided) {
+    return provided;
+  }
+
+  return getRepositoryDatabase(backend.current?.repository, 'file-cache');
+};
 
 /**
  * Get the previous SHA of the file from the cache database.

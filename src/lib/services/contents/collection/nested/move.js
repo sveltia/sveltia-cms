@@ -7,9 +7,12 @@ import {
   getNestedConfig,
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
-import { buildEntryFileChanges } from '$lib/services/contents/draft/save/file-changes';
+import {
+  buildEntryFileChanges,
+  resolveCacheDB,
+} from '$lib/services/contents/draft/save/file-changes';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
-import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
+import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 
 /**

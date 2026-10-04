@@ -3,7 +3,6 @@ import { toRaw } from '@sveltia/utils/object';
 
 import { callEventHooks } from '$lib/services/api/events';
 import { globalAssetFolder } from '$lib/services/assets/folders';
-import { backend } from '$lib/services/backends';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { isNestedCollection } from '$lib/services/contents/collection/nested';
@@ -11,12 +10,14 @@ import { isArrayFileCollection } from '$lib/services/contents/collection/predica
 import { addAlias } from '$lib/services/contents/draft/save/aliases';
 import { replaceBlobURL } from '$lib/services/contents/draft/save/assets';
 import { createEntryPath } from '$lib/services/contents/draft/save/entry-path';
-import { buildEntryFileChanges } from '$lib/services/contents/draft/save/file-changes';
+import {
+  buildEntryFileChanges,
+  resolveCacheDB,
+} from '$lib/services/contents/draft/save/file-changes';
 import { getCanonicalSlug, getFillSlugOptions } from '$lib/services/contents/draft/slugs';
 import { getField } from '$lib/services/contents/entry/fields';
 import { RICH_TEXT_FIELD_TYPES } from '$lib/services/contents/fields';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
-import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
  * @import {
@@ -478,7 +479,7 @@ export const createSavingEntryData = async ({ draft, slugs }) => {
       config: entryCollection,
       _file: resolveFileConfig({ collection, collectionFile, isIndexFile: draft.isIndexFile }),
       entry: savingEntry,
-      cacheDB: getRepositoryDatabase(backend.current?.repository, 'file-cache'),
+      cacheDB: resolveCacheDB(),
       /**
        * Plan the change to a file of the entry.
        * @param {InternalLocaleCode} [locale] Locale of the file, or `undefined` for the single

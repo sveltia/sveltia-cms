@@ -1,7 +1,6 @@
 import { unique } from '@sveltia/utils/array';
 
 import { allAssets } from '$lib/services/assets/state';
-import { backend } from '$lib/services/backends';
 import { saveChanges } from '$lib/services/backends/save';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
@@ -11,13 +10,12 @@ import {
 } from '$lib/services/contents/collection/data';
 import { buildRenumberChanges } from '$lib/services/contents/collection/entries/reorder';
 import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
-import { getPreviousSha } from '$lib/services/contents/draft/save/file-changes';
+import { getPreviousSha, resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import {
   buildCascadeDeleteChanges,
   EMPTY_CASCADE_DELETE_PLAN,
   planCascadeDelete,
 } from '$lib/services/contents/entry/relations/cascade/delete';
-import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
  * @import { Asset, Entry, FileChange, InternalEntryCollection } from '$lib/types/private';
@@ -69,7 +67,7 @@ export const deleteEntries = async (entries, assets = []) => {
     throw new Error('Cannot delete entries that other entries require', { cause: blockers });
   }
 
-  const cacheDB = getRepositoryDatabase(backend.current?.repository, 'file-cache');
+  const cacheDB = resolveCacheDB();
   const changes = /** @type {FileChange[]} */ ([]);
   const action = 'delete';
 

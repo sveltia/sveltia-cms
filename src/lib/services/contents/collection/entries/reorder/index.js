@@ -8,10 +8,10 @@ import { isCollectionIndexFile } from '$lib/services/contents/collection/entries
 import { getOrderFieldKey } from '$lib/services/contents/collection/entries/reorder/config';
 import { sortEntriesByOrderField } from '$lib/services/contents/collection/entries/reorder/sort';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import {
   buildEntryUpdateChanges,
   createSyntheticDraft,
-  resolveCacheDB,
 } from '$lib/services/contents/entry/changes';
 
 /**

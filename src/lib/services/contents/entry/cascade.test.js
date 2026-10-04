@@ -27,6 +27,10 @@ vi.mock('$lib/services/contents/entry/changes', () => ({
     { action: 'update', slug: entry.slug, path: `content/posts/${entry.slug}.md`, data: '' },
   ]),
   createSyntheticDraft: vi.fn((args) => ({ synthetic: true, ...args })),
+}));
+
+vi.mock('$lib/services/contents/draft/save/file-changes', async (importOriginal) => ({
+  .../** @type {Record<string, any>} */ (await importOriginal()),
   resolveCacheDB: vi.fn(() => undefined),
 }));
 
@@ -46,9 +50,10 @@ const { validateAnyField } = await import('$lib/services/contents/draft/validate
 const { getFieldValidationMessages } =
   await import('$lib/services/contents/draft/validate/messages');
 
-const { buildEntryUpdateChanges, createSyntheticDraft, resolveCacheDB } =
+const { buildEntryUpdateChanges, createSyntheticDraft } =
   await import('$lib/services/contents/entry/changes');
 
+const { resolveCacheDB } = await import('$lib/services/contents/draft/save/file-changes');
 const postsCollection = { name: 'posts', label: 'Blog Posts', _type: 'entry' };
 
 /**

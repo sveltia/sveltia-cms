@@ -1,18 +1,13 @@
 // @ts-nocheck
 
-import { IndexedDB } from '@sveltia/utils/storage';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { backend } from '$lib/services/backends';
 import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
 import {
   buildEntryUpdateChanges,
   createSyntheticDraft,
-  resolveCacheDB,
 } from '$lib/services/contents/entry/changes';
 import { formatEntryFile } from '$lib/services/contents/file/format';
-
-vi.mock('$lib/services/backends', () => ({ backend: { current: null } }));
 
 vi.mock('$lib/services/contents/draft/save/changes', () => ({
   getArrayItemTarget: vi.fn((entry) =>
@@ -30,13 +25,10 @@ vi.mock('$lib/services/contents/file/format', () => ({
   formatEntryFile: vi.fn(async ({ content }) => `formatted:${JSON.stringify(content)}`),
 }));
 
-vi.mock('@sveltia/utils/storage', () => ({ IndexedDB: vi.fn() }));
-
 const _file = { format: 'yaml-frontmatter' };
 
 beforeEach(() => {
   vi.clearAllMocks();
-  backend.current = null;
 });
 
 describe('createSyntheticDraft()', () => {
@@ -65,25 +57,6 @@ describe('createSyntheticDraft()', () => {
       fields: collectionFile.fields,
       isIndexFile: true,
     });
-  });
-});
-
-describe('resolveCacheDB()', () => {
-  test('returns the provided handle', () => {
-    const provided = { get: vi.fn() };
-
-    expect(resolveCacheDB(provided)).toBe(provided);
-    expect(IndexedDB).not.toHaveBeenCalled();
-  });
-
-  test('opens a handle for the current backend', () => {
-    backend.current = { repository: { databaseName: 'db' } };
-    resolveCacheDB();
-    expect(IndexedDB).toHaveBeenCalledWith('db', 'file-cache');
-  });
-
-  test('returns undefined when no backend is configured', () => {
-    expect(resolveCacheDB()).toBeUndefined();
   });
 });
 

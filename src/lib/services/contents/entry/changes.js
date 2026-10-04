@@ -1,8 +1,6 @@
-import { backend } from '$lib/services/backends';
 import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
 import { buildEntryFileChanges } from '$lib/services/contents/draft/save/file-changes';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
-import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
  * @import { IndexedDB } from '@sveltia/utils/storage';
@@ -39,20 +37,6 @@ export const createSyntheticDraft = ({ collection, collectionFile, isIndexFile =
   fields: collectionFile?.fields ?? /** @type {InternalEntryCollection} */ (collection).fields,
   isIndexFile,
 });
-
-/**
- * Resolve a usable file-cache `IndexedDB` handle: prefer the caller-provided one (so the same
- * handle is shared across composite operations like delete + renumber), otherwise open one.
- * @param {IndexedDB} [provided] Caller-provided handle.
- * @returns {IndexedDB | undefined} Cache handle, or `undefined` if no backend is configured.
- */
-export const resolveCacheDB = (provided) => {
-  if (provided) {
-    return provided;
-  }
-
-  return getRepositoryDatabase(backend.current?.repository, 'file-cache');
-};
 
 /**
  * Build the `update` {@link FileChange}(s) needed to re-save an existing entry whose content has

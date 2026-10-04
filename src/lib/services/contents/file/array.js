@@ -1,16 +1,15 @@
 import { generateUUID } from '@sveltia/utils/crypto';
 import equal from 'fast-deep-equal';
 
-import { backend } from '$lib/services/backends';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { allEntries } from '$lib/services/contents';
 import { getCollection } from '$lib/services/contents/collection';
 import { isArrayFileCollection } from '$lib/services/contents/collection/predicates';
+import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import { getEntrySummaryFromContent } from '$lib/services/contents/entry/summary';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 import { arrayFileItems, createArrayItemEntry } from '$lib/services/contents/file/process';
 import { getEntryFoldersByPath } from '$lib/services/contents/folders';
-import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
  * @import {
@@ -216,7 +215,7 @@ export const combineArrayFileChanges = async (changes) => {
     return { changes, arrayFileUpdates: [] };
   }
 
-  const cacheDB = getRepositoryDatabase(backend.current?.repository, 'file-cache');
+  const cacheDB = resolveCacheDB();
 
   /** @type {ArrayFileUpdate[]} */
   const arrayFileUpdates = await Promise.all(

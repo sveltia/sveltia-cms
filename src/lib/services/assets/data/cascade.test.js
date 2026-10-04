@@ -51,6 +51,10 @@ vi.mock('$lib/services/contents/draft/validate/messages', () => ({
 vi.mock('$lib/services/contents/entry/changes', () => ({
   createSyntheticDraft: vi.fn((args) => ({ synthetic: true, ...args })),
   buildEntryUpdateChanges: vi.fn(),
+}));
+
+vi.mock('$lib/services/contents/draft/save/file-changes', async (importOriginal) => ({
+  .../** @type {Record<string, any>} */ (await importOriginal()),
   resolveCacheDB: vi.fn(),
 }));
 

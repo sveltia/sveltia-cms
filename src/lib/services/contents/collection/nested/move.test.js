@@ -11,8 +11,9 @@ import {
   getFieldComments,
   getSingleFileComments,
 } from '$lib/services/contents/draft/save/content';
+import { resolveCacheDB } from '$lib/services/contents/draft/save/file-changes';
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
-import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
+import { createSyntheticDraft } from '$lib/services/contents/entry/changes';
 import { formatEntryFile } from '$lib/services/contents/file/format';
 
 vi.mock('$lib/services/common/template', () => ({
@@ -39,6 +40,10 @@ vi.mock('$lib/services/contents/draft/save/serialize', () => ({
 
 vi.mock('$lib/services/contents/entry/changes', () => ({
   createSyntheticDraft: vi.fn(() => ({ synthetic: true })),
+}));
+
+vi.mock('$lib/services/contents/draft/save/file-changes', async (importOriginal) => ({
+  .../** @type {Record<string, any>} */ (await importOriginal()),
   resolveCacheDB: vi.fn(() => undefined),
 }));
 
