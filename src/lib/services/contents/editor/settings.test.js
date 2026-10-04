@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { backend } from '$lib/services/backends';
 import { selectAssetsView } from '$lib/services/contents/editor';
 
-import { entryEditorSettings, initSettings } from './settings.js';
+import { entryEditorSettings, initSettings, toggleEntryEditorSetting } from './settings.js';
 
 const { mockDB, mockIndexedDB } = vi.hoisted(() => {
   const db = { get: vi.fn(), set: vi.fn() };
@@ -235,5 +235,24 @@ describe('editor/settings', () => {
 
       expect(mockIndexedDB).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('toggleEntryEditorSetting', () => {
+  it('turns a setting off and on, keeping the others', () => {
+    entryEditorSettings.current = /** @type {any} */ ({ showPreview: true, syncScrolling: true });
+    toggleEntryEditorSetting('showPreview');
+    expect(entryEditorSettings.current).toEqual({ showPreview: false, syncScrolling: true });
+    toggleEntryEditorSetting('showPreview');
+    expect(entryEditorSettings.current).toEqual({ showPreview: true, syncScrolling: true });
+  });
+
+  it('starts from the given default when the setting isn’t stored yet', () => {
+    entryEditorSettings.current = undefined;
+    toggleEntryEditorSetting('showSecondPane', true);
+    expect(entryEditorSettings.current).toEqual({ showSecondPane: false });
+    entryEditorSettings.current = undefined;
+    toggleEntryEditorSetting('syncScrolling');
+    expect(entryEditorSettings.current).toEqual({ syncScrolling: true });
   });
 });

@@ -48,9 +48,17 @@
     awaitPendingFieldUpdates,
     fieldUpdatePending,
   } from '$lib/services/contents/editor/pending';
-  import { entryEditorSettings } from '$lib/services/contents/editor/settings';
+  import {
+    entryEditorSettings,
+    toggleEntryEditorSetting,
+  } from '$lib/services/contents/editor/settings';
   import { getSidebarPanels, showSidebarPanel } from '$lib/services/contents/editor/sidebar';
   import { canUpdateSlug } from '$lib/services/contents/editor/slug';
+  import {
+    canDuplicateEntry,
+    getRemovalMenuItems,
+    getSaveFailure,
+  } from '$lib/services/contents/editor/toolbar';
   import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
   import {
     EMPTY_CASCADE_DELETE_PLAN,
@@ -249,6 +257,25 @@
   const readonly = $derived(isDraftReadonly(entryDraft.current));
   // Neither kind of entry can have its content changed
   const locked = $derived(pendingDeletion || readonly);
+  const canDuplicate = $derived(
+    canDuplicateEntry({
+      collection,
+      collectionFile,
+      isIndexFile,
+      readonly,
+      creationDisabled: collectionState.current.creationDisabled,
+    }),
+  );
+  // A collection file is part of the collection definition, so it can only be discarded
+  const removalMenuItems = $derived(
+    getRemovalMenuItems({
+      publishedVersionExists,
+      canDeleteEntry,
+      isCollectionFile: !!collectionFile,
+      readonly,
+      locked,
+    }),
+  );
   // The menu item either throws the pull request away or deletes the entry outright, depending on
   // whether it has been published
   const discardItemStrings = $derived(
@@ -477,21 +504,23 @@
         });
       }
     } catch (/** @type {any} */ ex) {
-      if (ex.message === 'validation_failed') {
+      const failure = getSaveFailure(ex);
+
+      if (failure.type === 'validation') {
         errorCount = countInvalidFields(draft.validities);
         showValidationToast = true;
-      } else if (ex.message === 'save_conflict') {
+      } else if (failure.type === 'conflict') {
         // Someone else has changed the entry since it was opened; let the user decide
-        saveConflict = { conflict: ex.cause, skipCI };
+        saveConflict = { conflict: failure.conflict, skipCI };
         showConflictDialog = true;
-      } else if (ex.message === 'saving_failed') {
-        showErrorDialog = true;
-        errorMessage = ex.cause?.message ?? ex.message;
       } else {
         showErrorDialog = true;
-        errorMessage = '';
-        // eslint-disable-next-line no-console
-        console.error(ex);
+        errorMessage = failure.message;
+
+        if (failure.unexpected) {
+          // eslint-disable-next-line no-console
+          console.error(ex);
+        }
       }
     } finally {
       saving = false;
@@ -613,12 +642,6 @@
           {/if}
         {/if}
         {#if !disabled && !isNew}
-          {@const canDuplicate =
-            !readonly &&
-            !collectionFile &&
-            !isIndexFile &&
-            entryCollection?.duplicate !== false &&
-            !collectionState.current.creationDisabled}
           {#if canDuplicate}
             <MenuItem
               variant="ghost"
@@ -644,9 +667,7 @@
               }}
             />
           {/if}
-          <!-- A collection file is part of the collection definition, so it can only be
-            discarded -->
-          {#if !readonly && (publishedVersionExists || (canDeleteEntry && !collectionFile))}
+          {#if removalMenuItems.discard}
             <MenuItem
               variant="ghost"
               disabled={controlsDisabled}
@@ -662,7 +683,7 @@
             />
           {/if}
         {/if}
-        {#if publishedVersionExists && canDeleteEntry && !collectionFile && !locked}
+        {#if removalMenuItems.delete}
           <MenuItem
             label={_('delete')}
             onclick={() => {
@@ -711,10 +732,7 @@
             checked={showSecondPane}
             disabled={!canShowSecondPane}
             onChange={() => {
-              entryEditorSettings.current = {
-                ...entryEditorSettings.current,
-                showSecondPane: !(entryEditorSettings.current?.showSecondPane ?? true),
-              };
+              toggleEntryEditorSetting('showSecondPane', true);
             }}
           />
           <!-- The preview is rendered in the second pane, so it’s unavailable while hidden -->
@@ -723,10 +741,7 @@
             checked={entryEditorSettings.current?.showPreview}
             disabled={!showSecondPane || !canPreview}
             onChange={() => {
-              entryEditorSettings.current = {
-                ...entryEditorSettings.current,
-                showPreview: !entryEditorSettings.current?.showPreview,
-              };
+              toggleEntryEditorSetting('showPreview');
             }}
           />
           <MenuItemCheckbox
@@ -734,10 +749,7 @@
             checked={entryEditorSettings.current?.syncScrolling}
             disabled={!showSecondPane || (!previewShown && hasSingleLocale)}
             onChange={() => {
-              entryEditorSettings.current = {
-                ...entryEditorSettings.current,
-                syncScrolling: !entryEditorSettings.current?.syncScrolling,
-              };
+              toggleEntryEditorSetting('syncScrolling');
             }}
           />
         {/if}
