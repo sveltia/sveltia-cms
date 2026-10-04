@@ -102,8 +102,10 @@ vi.mock('$lib/services/assets/subfolders', () => ({
   browsedDirPath: _browsedDirPath,
   focusedSubfolder: _focusedSubfolder,
   selectedSubfolderPath: _selectedSubfolderPath,
-  getDirName: (/** @type {string} */ path) =>
-    path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '',
+  getAssetsInDir: (/** @type {{ dirPath: string, assets: any[] }} */ { dirPath, assets }) =>
+    assets.filter(
+      ({ path }) => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '') === dirPath,
+    ),
   getSubfolders: vi.fn((/** @type {{ dirPath: string, assets: any[] }} */ { dirPath, assets }) => {
     const prefix = dirPath ? `${dirPath}/` : '';
 

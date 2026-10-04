@@ -259,6 +259,16 @@ export const getSubfolders = ({ dirPath, assets }) => {
 };
 
 /**
+ * Get the assets right in a directory, leaving out the ones in its subfolders.
+ * @param {object} args Arguments.
+ * @param {string} args.dirPath Directory path. An empty string for the repository root.
+ * @param {Asset[]} args.assets Assets below the directory, at any depth.
+ * @returns {Asset[]} Assets in the directory.
+ */
+export const getAssetsInDir = ({ dirPath, assets }) =>
+  assets.filter(({ path }) => getDirName(path) === dirPath);
+
+/**
  * Get the path of the directory that uploaded files are saved to, which is the target folder’s
  * `internalPath` joined with the subfolder path, if any.
  * @param {UploadingAssets} uploadingAssets Files to be uploaded and their target folder.

@@ -7,7 +7,7 @@ import { publishedAssets, selectedAssets, uploadingAssets } from '$lib/services/
 import {
   browsedDirPath,
   focusedSubfolder,
-  getDirName,
+  getAssetsInDir,
   getSubfolders,
   selectedSubfolderPath,
 } from '$lib/services/assets/subfolders';
@@ -114,7 +114,7 @@ export const listedAssets = createDerivedState(() => {
     return assets;
   }
 
-  return assets.filter(({ path }) => getDirName(path) === dirPath);
+  return getAssetsInDir({ dirPath, assets });
 });
 
 /**
@@ -145,7 +145,7 @@ export const folderSummary = createDerivedState(() => {
       name,
       path,
       folderCount: getSubfolders({ dirPath: path, assets }).length,
-      assetCount: assets.filter((asset) => getDirName(asset.path) === path).length,
+      assetCount: getAssetsInDir({ dirPath: path, assets }).length,
     };
   }
 

@@ -4,6 +4,7 @@ import {
   browsedDirPath,
   canBrowseSubfolders,
   formatSubfolderName,
+  getAssetsInDir,
   getDirName,
   getFolderBreadcrumbItems,
   getRelativePath,
@@ -247,6 +248,22 @@ describe('assets/subfolders', () => {
 
       selectedSubfolderPath.current = 'uploads';
       expect(browsedDirPath.current).toBe('uploads');
+    });
+  });
+
+  describe('getAssetsInDir', () => {
+    it('should list the assets right in the directory, leaving out the ones in its subfolders', () => {
+      const assets = ['static/images/a.jpg', 'static/images/2024/b.jpg', 'static/c.jpg'].map(
+        createAsset,
+      );
+
+      expect(getAssetsInDir({ dirPath: 'static/images', assets })).toEqual([assets[0]]);
+    });
+
+    it('should list the assets at the root for an empty directory path', () => {
+      const assets = ['a.jpg', 'static/b.jpg'].map(createAsset);
+
+      expect(getAssetsInDir({ dirPath: '', assets })).toEqual([assets[0]]);
     });
   });
 
