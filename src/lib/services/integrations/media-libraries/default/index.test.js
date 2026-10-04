@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   canConvertHEIC,
+  getAcceptedFileTypes,
   getAcceptedImageTypes,
   getDefaultMediaLibraryOptions,
   transformFile,
@@ -930,6 +931,27 @@ describe('integrations/media-libraries/default', () => {
         'image/heic',
       ]);
       expect(getAcceptedImageTypes({ heic: {} })).toContain('image/heic');
+    });
+  });
+
+  describe('getAcceptedFileTypes', () => {
+    it('should prefer the configured types', () => {
+      expect(
+        getAcceptedFileTypes({ accept: 'image/png', image: true, transformations: undefined }),
+      ).toBe('image/png');
+    });
+
+    it('should give the image types when images are picked', () => {
+      expect(getAcceptedFileTypes({ image: true, transformations: undefined })).toBe(
+        'image/jpeg,image/png,image/svg+xml',
+      );
+      expect(getAcceptedFileTypes({ image: true, transformations: { heic: {} } })).toBe(
+        'image/jpeg,image/png,image/svg+xml,image/heic',
+      );
+    });
+
+    it('should accept any file otherwise', () => {
+      expect(getAcceptedFileTypes({ image: false, transformations: undefined })).toBeUndefined();
     });
   });
 

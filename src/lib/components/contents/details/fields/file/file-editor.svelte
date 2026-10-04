@@ -34,7 +34,7 @@
     processResources,
     toFieldValue,
   } from '$lib/services/contents/fields/file/resources';
-  import { getAcceptedImageTypes } from '$lib/services/integrations/media-libraries/default';
+  import { getAcceptedFileTypes } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { watchAsync } from '$lib/services/utils/state.svelte';
@@ -133,8 +133,11 @@
   const libraryConfig = $derived(assetOptions.libraryConfig);
   // An image field accepts HEIC photos only if they’re converted on upload
   const acceptedTypes = $derived(
-    accept ??
-      (isImageField ? getAcceptedImageTypes(libraryConfig.transformations).join(',') : undefined),
+    getAcceptedFileTypes({
+      accept,
+      image: isImageField,
+      transformations: libraryConfig.transformations,
+    }),
   );
   const assetLibraryFolderMap = $derived(assetOptions.folderMap);
   const targetFolder = $derived(assetOptions.folder);

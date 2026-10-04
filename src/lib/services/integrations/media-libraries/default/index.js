@@ -108,6 +108,21 @@ export const getAcceptedImageTypes = (transformations) =>
   canConvertHEIC(transformations) ? SUPPORTED_IMAGE_TYPES_WITH_HEIC : SUPPORTED_IMAGE_TYPES;
 
 /**
+ * Get the file types a File/Image field or an asset picker accepts, as the value of the `accept`
+ * attribute of a file input.
+ * @param {object} args Arguments.
+ * @param {string} [args.accept] File types configured with the `accept` option, which take
+ * precedence.
+ * @param {boolean} args.image Whether images are picked, in which case the image types are given,
+ * so the asset browser only offers images.
+ * @param {FileTransformations | undefined} args.transformations File transformation options. HEIC
+ * photos are accepted only if they’re converted on upload.
+ * @returns {string | undefined} Comma-separated file types, or `undefined` if any file is accepted.
+ */
+export const getAcceptedFileTypes = ({ accept, image, transformations }) =>
+  accept ?? (image ? getAcceptedImageTypes(transformations).join(',') : undefined);
+
+/**
  * Process the given file by applying a transformation if available.
  * @param {File} file Original file.
  * @param {FileTransformations} transformations File transformation options. The options are

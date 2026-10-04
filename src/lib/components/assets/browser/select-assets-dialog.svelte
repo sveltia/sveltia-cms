@@ -426,6 +426,14 @@
   });
 </script>
 
+{#snippet newFolderButton(/** @type {() => void} */ onclick, disabled = false)}
+  <Button variant="ghost" iconic {disabled} aria-label={_('new_folder')} {onclick}>
+    {#snippet startIcon()}
+      <Icon name="create_new_folder" />
+    {/snippet}
+  </Button>
+{/snippet}
+
 {#snippet headerItems()}
   {#if isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary') || (isStockLibrary && libraryName !== 'picsum')}
     {#if selectAssetsView.current}
@@ -449,33 +457,14 @@
       review, so it’s not something an Open Authoring contributor or a user who can’t push to the
       branch can do, nor anyone within a read-only folder
     -->
-    <Button
-      variant="ghost"
-      iconic
-      disabled={assetsLocked.current || !!selectedFolder?.readonly}
-      aria-label={_('new_folder')}
-      onclick={() => {
-        showNewFolderDialog = true;
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="create_new_folder" />
-      {/snippet}
-    </Button>
+    {@render newFolderButton(() => {
+      showNewFolderDialog = true;
+    }, assetsLocked.current || !!selectedFolder?.readonly)}
   {:else if isCloudLibrary && externalAssetsPanel?.canCreateFolder()}
     <!-- A folder on a cloud storage service is created by the service, not committed -->
-    <Button
-      variant="ghost"
-      iconic
-      aria-label={_('new_folder')}
-      onclick={() => {
-        externalAssetsPanel?.showNewFolderDialog();
-      }}
-    >
-      {#snippet startIcon()}
-        <Icon name="create_new_folder" />
-      {/snippet}
-    </Button>
+    {@render newFolderButton(() => {
+      externalAssetsPanel?.showNewFolderDialog();
+    })}
   {/if}
   {#if !selectFolder && (isDefaultLibrary || (isCloudLibrary && libraryName !== 'cloudinary'))}
     <Button
