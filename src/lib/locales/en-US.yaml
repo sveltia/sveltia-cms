@@ -2011,6 +2011,8 @@ config:
     slug_i18n_ineffective: The `i18n` option of `slug` has no effect, because the collection doesn’t use the `multiple_files`, `multiple_folders` or `multiple_root_folders` i18n structure, where each locale has a file of its own.
     # Don’t localize `i18n`
     i18n_not_configured: The `i18n` option is enabled, but i18n is not configured at the top level of the configuration or in the collection, so the option has no effect.
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: The `public_folder` option is an empty string, so the `media_folder` path is used for the asset paths saved in entries instead. Remove the option, or set it to the path you want to use, such as `/images`.
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: The `{$option}` option is not defined in the Sveltia CMS configuration schema. It will be ignored. Check for a typo or a syntax mistake.
 

@@ -31,10 +31,16 @@ const hasCloudMediaLibrary = ({ media_library, media_libraries }) =>
  */
 export const parseMediaConfig = (cmsConfig, collectors) => {
   const { media_folder, public_folder, asset_collections } = cmsConfig;
-  const { errors } = collectors;
+  const { errors, warnings } = collectors;
 
   if (media_folder === undefined && !hasCloudMediaLibrary(cmsConfig)) {
     errors.add(_('config.error.missing_media_folder'));
+  }
+
+  // An empty site-level public folder is treated like an unset one, so the media folder path is
+  // used instead of storing bare file names as Netlify/Decap CMS does. Let the user know
+  if (public_folder === '' && media_folder !== undefined) {
+    warnings.add(_('config.warning.empty_public_folder'));
   }
 
   if (typeof public_folder === 'string') {

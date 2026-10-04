@@ -10,6 +10,7 @@ const mockI18nStrings = {
   'config.error.missing_media_folder': 'Missing media_folder',
   'config.error.public_folder_relative_path': 'Public folder cannot use relative paths',
   'config.error.public_folder_absolute_url': 'Public folder cannot be an absolute URL',
+  'config.warning.empty_public_folder': 'Empty public_folder',
   'config.error.missing_asset_collection_name': 'Missing asset collection name at index {count}',
   'config.error.invalid_asset_collection_name': 'Invalid asset collection name: {name}',
   'config.error.duplicate_asset_collection_name': 'Duplicate asset collection name: {name}',
@@ -349,6 +350,44 @@ describe('parseMediaConfig', () => {
       const [error] = [...collectors.errors];
 
       expect(error).toBe('Public folder cannot be an absolute URL');
+    });
+  });
+
+  describe('empty public_folder', () => {
+    it('should warn when public_folder is an empty string', async () => {
+      const { parseMediaConfig } = await import('./media.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { media_folder: 'static/images', public_folder: '' };
+
+      parseMediaConfig(config, collectors);
+
+      expect([...collectors.errors]).toEqual([]);
+      expect([...collectors.warnings]).toEqual(['Empty public_folder']);
+    });
+
+    it('should not warn when media_folder is undefined', async () => {
+      const { parseMediaConfig } = await import('./media.js');
+      const collectors = createCollectors();
+      /** @type {any} */
+      const config = { media_library: { name: 'cloudinary' }, public_folder: '' };
+
+      parseMediaConfig(config, collectors);
+
+      expect([...collectors.warnings]).toEqual([]);
+    });
+
+    it('should not warn when public_folder is undefined or non-empty', async () => {
+      const { parseMediaConfig } = await import('./media.js');
+      const collectors = createCollectors();
+
+      parseMediaConfig(/** @type {any} */ ({ media_folder: 'static/images' }), collectors);
+      parseMediaConfig(
+        /** @type {any} */ ({ media_folder: 'static/images', public_folder: '/images' }),
+        collectors,
+      );
+
+      expect([...collectors.warnings]).toEqual([]);
     });
   });
 

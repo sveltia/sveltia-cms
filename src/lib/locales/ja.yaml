@@ -1907,6 +1907,8 @@ config:
     slug_i18n_ineffective: コレクションが各ロケールのファイルを個別に持つ `multiple_files`、`multiple_folders`、`multiple_root_folders` のいずれの i18n 構造も使用していないため、`slug` の `i18n` オプションは効果がありません。
     # Don’t localize `i18n`
     i18n_not_configured: '`i18n` オプションが有効になっていますが、設定のトップレベルまたはコレクションで i18n が設定されていないため、このオプションは効果がありません。'
+    # Don’t localize `public_folder` and `media_folder`
+    empty_public_folder: '`public_folder` オプションが空の文字列になっているため、エントリーに保存されるアセットパスには代わりに `media_folder` のパスが使用されます。このオプションを削除するか、`/images` のように使用したいパスを設定してください。'
     # {$option} is an option path from the configuration, such as `filter.Regulation`
     schema_unknown_option: '`{$option}` オプションは Sveltia CMS の設定スキーマに定義されていません。このオプションは無視されます。入力ミスや記述ミスがないか確認してください。'
 
