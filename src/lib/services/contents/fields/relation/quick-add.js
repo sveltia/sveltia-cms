@@ -2,10 +2,8 @@ import { unique } from '@sveltia/utils/array';
 
 import { isReadonly } from '$lib/services/config/readonly';
 import { getCollection } from '$lib/services/contents/collection';
-import {
-  countCollectionEntries,
-  getEntriesByCollection,
-} from '$lib/services/contents/collection/entries';
+import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
+import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
 import { getReferencedPendingEntries } from '$lib/services/contents/draft/pending-entries';
 import { createSavingEntryData } from '$lib/services/contents/draft/save/changes';
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
@@ -90,13 +88,10 @@ export const getCreatableCollection = ({
 export const hasCreationRoom = ({ collection, draft }) => {
   const { name, limit = Infinity } = collection;
 
-  // The collection’s index file is its own page rather than one of the entries in it, so it doesn’t
-  // take up a slot — see `countCollectionEntries()`
-  return (
-    countCollectionEntries(name, getEntriesByCollection(name)) +
-      getPendingEntriesByCollection(draft, name).length <
-    limit
-  );
+  // The entries only existing in a pull request take up a slot as well, while the collection’s
+  // index file, its own page rather than one of the entries in it, doesn’t — see
+  // `countQuotaEntries()`
+  return countQuotaEntries(name) + getPendingEntriesByCollection(draft, name).length < limit;
 };
 
 /**

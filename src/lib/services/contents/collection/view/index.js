@@ -7,18 +7,11 @@ import { getGroupingKey } from '$lib/services/common/view';
 import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
-import {
-  countCollectionEntries,
-  getEntriesByCollection,
-  selectedEntries,
-} from '$lib/services/contents/collection/entries';
+import { getEntriesByCollection, selectedEntries } from '$lib/services/contents/collection/entries';
+import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
 import { isManuallyOrdered } from '$lib/services/contents/collection/entries/reorder/config';
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
-import {
-  filterNestedEntries,
-  isNestedCollection,
-  nestedFilterPath,
-} from '$lib/services/contents/collection/nested';
+import { filterNestedEntries, nestedFilterPath } from '$lib/services/contents/collection/nested';
 import { usesCurrentTime } from '$lib/services/contents/collection/view/conditions';
 import { filterEntries, parseFilterConfig } from '$lib/services/contents/collection/view/filter';
 import {
@@ -261,18 +254,9 @@ export const collectionState = createDerivedState(() => {
       !lockedBranch.current;
 
     const quota = _selectedCollection?.limit ?? Infinity;
-
-    // In a nested collection, `listedEntries` only holds the folder being browsed, while the
-    // quota applies to the whole collection. Hugo’s special index file is the collection’s own
-    // page rather than one of the entries in it, so it doesn’t take up a slot — and leaving it in
-    // would make the quota disagree with the count shown next to the collection in the sidebar
-    const entryCount = countCollectionEntries(
-      _selectedCollection.name,
-      isNestedCollection(_selectedCollection)
-        ? getEntriesByCollection(_selectedCollection.name)
-        : listedEntries.current,
-    );
-
+    // The quota applies to the whole collection, including the entries that only exist in a pull
+    // request, so it agrees with the count shown next to the collection in the sidebar
+    const entryCount = countQuotaEntries(_selectedCollection.name);
     const remaining = quota < Infinity ? quota - entryCount : Infinity;
 
     return {

@@ -196,3 +196,38 @@ test.describe('with `publish: false` on the collection', () => {
     await expect(card.getByRole('button', { name: 'Publish Entry' })).toHaveCount(0);
   });
 });
+
+test.describe('with a `limit` on the collection', () => {
+  test.use({
+    config: {
+      ...WORKFLOW_CONFIG,
+      collections: [{ ...WORKFLOW_CONFIG.collections[0], limit: 2 }],
+    },
+  });
+
+  test('counts a draft that was never published toward the limit', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    openEntryPullRequest(github, {
+      slug: 'second-post',
+      files: { 'content/posts/second-post.md': post('Second Post', 'Coming soon.') },
+    });
+
+    await cms.open();
+
+    const collection = page.getByRole('main', { name: /Posts.*Collection/ });
+
+    await expect(collection.getByRole('row', { name: /^Second Post/ })).toBeVisible();
+    await expect(collection.getByRole('button', { name: 'Create New Entry' })).toBeDisabled();
+    await expect(collection.getByRole('status')).toHaveText(
+      /You cannot add new entries to this collection because it has reached its limit of 2 entries\./,
+    );
+
+    const menu = page.getByRole('menu', { name: 'Create Entry or Assets' });
+
+    await cms.openPopup(page.getByRole('button', { name: 'Create Entry or Assets' }), menu);
+    await expect(menu.getByRole('menuitem', { name: 'Post' })).toBeDisabled();
+  });
+});

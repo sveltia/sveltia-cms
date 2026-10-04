@@ -7,7 +7,7 @@ import { createSavingEntryData } from '$lib/services/contents/draft/save/changes
 import { assignManualSortOrder } from '$lib/services/contents/draft/save/sort-order';
 import { getCanonicalSlug, getFillSlugOptions, getSlugs } from '$lib/services/contents/draft/slugs';
 import { getEntryOptions, getRefEntries } from '$lib/services/contents/fields/relation/helpers';
-import { isWorkflowDraft, isWorkflowEnabled } from '$lib/services/workflow';
+import { isWorkflowDraft, isWorkflowEnabled, unpublishedEntries } from '$lib/services/workflow';
 
 import {
   createPendingEntry,
@@ -62,9 +62,12 @@ vi.mock('$lib/services/contents/fields/relation/helpers', () => ({
   getRefEntries: vi.fn(() => []),
 }));
 
-vi.mock('$lib/services/workflow', () => ({
+// `mergeUnpublishedEntries` is a pure helper and is used as is
+vi.mock('$lib/services/workflow', async (importOriginal) => ({
+  .../** @type {object} */ (await importOriginal()),
   isWorkflowDraft: vi.fn(() => false),
   isWorkflowEnabled: vi.fn(() => false),
+  unpublishedEntries: { current: [] },
 }));
 
 /** @type {RelationField} */
@@ -157,6 +160,7 @@ describe('getCreatableCollection', () => {
 describe('hasCreationRoom', () => {
   beforeEach(() => {
     vi.mocked(getEntriesByCollection).mockReturnValue([]);
+    unpublishedEntries.current = [];
   });
 
   it('is always true without a limit', () => {
@@ -183,6 +187,30 @@ describe('hasCreationRoom', () => {
         draft: createParentDraft({ pendingEntries: [createPending('a'), createPending('b')] }),
       }),
     ).toBe(false);
+  });
+
+  it('counts a never-published draft in the collection against the limit', () => {
+    const collection = { ...tagCollection, limit: 2 };
+
+    /**
+     * Build an entry in the collection.
+     * @param {string} slug Slug.
+     * @param {object} [workflow] Workflow properties of an unpublished entry.
+     * @returns {any} Entry.
+     */
+    const entry = (slug, workflow) => ({
+      slug,
+      locales: { _default: { path: `tags/${slug}.md` } },
+      ...(workflow ? { workflow } : {}),
+    });
+
+    vi.mocked(getEntriesByCollection).mockReturnValue([entry('a')]);
+    unpublishedEntries.current = [
+      entry('b', { collectionName: 'tags' }),
+      entry('c', { collectionName: 'posts' }),
+    ];
+
+    expect(hasCreationRoom({ collection, draft: createParentDraft() })).toBe(false);
   });
 
   it('doesn’t count the collection’s index file against the limit', () => {

@@ -8,10 +8,7 @@
   import { showUploadAssetsDialog } from '$lib/services/assets/view';
   import { isReadonly } from '$lib/services/config/readonly';
   import { getValidCollections } from '$lib/services/contents/collection';
-  import {
-    countCollectionEntries,
-    getEntriesByCollection,
-  } from '$lib/services/contents/collection/entries';
+  import { countQuotaEntries } from '$lib/services/contents/collection/entries/count';
 
   /**
    * @import { EntryCollection } from '$lib/types/public';
@@ -20,7 +17,8 @@
   const entryCollections = $derived(
     /** @type {EntryCollection[]} */ (getValidCollections({ visible: true, type: 'entry' })),
   );
-  // An entry can’t be created where the collection says so, is read-only or has reached its limit
+  // An entry can’t be created where the collection says so, is read-only or has reached its limit,
+  // which the entries only existing in a pull request count toward as well
   const collectionItems = $derived(
     entryCollections.map((collection) => {
       const {
@@ -37,7 +35,7 @@
         disabled:
           !create ||
           isReadonly({ collection }) ||
-          (limit < Infinity && countCollectionEntries(name, getEntriesByCollection(name)) >= limit),
+          (limit < Infinity && countQuotaEntries(name) >= limit),
       };
     }),
   );

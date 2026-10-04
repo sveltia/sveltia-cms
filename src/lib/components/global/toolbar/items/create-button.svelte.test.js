@@ -6,6 +6,7 @@ import { showUploadAssetsDialog } from '$lib/services/assets/view';
 import { cmsConfig } from '$lib/services/config';
 import { allEntries } from '$lib/services/contents';
 import { collectionCacheMap } from '$lib/services/contents/collection';
+import { unpublishedEntries } from '$lib/services/workflow';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
 
@@ -21,6 +22,7 @@ describe('CreateButton', () => {
     showUploadAssetsDialog.current = false;
     forkedRepository.current = undefined;
     allEntries.current = [];
+    unpublishedEntries.current = [];
     cmsConfig.current = /** @type {any} */ ({
       collections: [
         { name: 'posts', label: 'Posts', label_singular: 'Post', folder: 'posts', fields: [] },
@@ -162,6 +164,38 @@ describe('CreateButton', () => {
       .not.toHaveAttribute('aria-disabled', 'true');
     await expect
       .element(menu.getByRole('menuitem', { name: 'Post' }))
+      .toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('counts a never-published draft toward the entry quota', async () => {
+    await initTestConfig({
+      collections: [
+        {
+          name: 'posts',
+          label: 'Posts',
+          label_singular: 'Post',
+          folder: 'content/posts',
+          limit: 1,
+          fields: [{ name: 'title', widget: 'string' }],
+        },
+      ],
+    });
+    setEntries([]);
+    unpublishedEntries.current = [
+      /** @type {any} */ (
+        createMockEntry({
+          slug: 'hello',
+          entry: /** @type {any} */ ({ workflow: { collectionName: 'posts', status: 'draft' } }),
+        })
+      ),
+    ];
+
+    await render(CreateButton, {});
+    await page.getByRole('button', { name: 'Create Entry or Assets' }).click();
+
+    // The draft only exists in a pull request, but it still takes up the collection’s one slot
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Post' }))
       .toHaveAttribute('aria-disabled', 'true');
   });
 

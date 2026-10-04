@@ -669,6 +669,21 @@ describe('collection/view/index', () => {
       ]);
     });
 
+    test('collectionState counts a never-published draft toward the quota', async () => {
+      _selectedCollection.current = /** @type {any} */ ({
+        name: 'posts',
+        _type: 'entry',
+        create: true,
+        limit: 3,
+      });
+      _unpublishedEntries.current = [createDraft('needed'), createDraft('brand-new')];
+      await wait();
+
+      // The draft for `needed` updates a published entry, so it doesn’t take up another slot
+      expect(read(collectionState).remaining).toBe(0);
+      expect(read(collectionState).creationDisabled).toBe(true);
+    });
+
     test('listedUnpublishedEntries is empty while reordering', async () => {
       _unpublishedEntries.current = [createDraft('brand-new')];
       await wait();
@@ -1529,13 +1544,13 @@ describe('collection/view/index', () => {
       });
       await wait();
 
-      vi.mocked(getEntriesByCollection).mockReturnValue(twoEntries);
+      // Like the real one, read the entry store, which the collection state then depends on
+      vi.mocked(getEntriesByCollection).mockImplementation(() => _allEntries.current);
       _allEntries.current = twoEntries;
       await wait();
       expect(collectionState.current.remaining).toBe(1);
       expect(collectionState.current.creationDisabled).toBe(false);
 
-      vi.mocked(getEntriesByCollection).mockReturnValue(threeEntries);
       _allEntries.current = threeEntries;
       await wait();
       expect(collectionState.current.remaining).toBe(0);
