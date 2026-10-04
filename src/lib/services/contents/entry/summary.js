@@ -7,7 +7,11 @@ import { parseEntities } from 'parse-entities';
 
 import { processNestedTemplates } from '$lib/services/common/template/nested';
 import { replaceTemplateTags } from '$lib/services/common/template/tags';
-import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
+import {
+  getFileNameLocaleSuffixes,
+  getFileNameParts,
+  stripFieldTagPrefix,
+} from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { allEntries } from '$lib/services/contents';
 import {
@@ -39,6 +43,8 @@ import { getOrCreate } from '$lib/services/utils/cache';
  * @property {string} entryPath Entry path.
  * @property {string | undefined} basePath Base path for the entry.
  * @property {string[]} locales Enabled locales for the entry.
+ * @property {string[]} [localeSuffixes] Locale codes that can follow the entry file name, with the
+ * `multiple_files` i18n structure.
  * @property {Date | undefined} commitDate Commit date.
  * @property {CommitAuthor | undefined} commitAuthor Commit author.
  */
@@ -129,7 +135,7 @@ export const getEntrySummaryFromContent = (
  * @returns {string | Date | undefined} Replaced value or `undefined` if the tag is not recognized.
  */
 export const replaceSub = (tag, context) => {
-  const { slug, entryPath, basePath, locales, commitDate, commitAuthor } = context;
+  const { slug, entryPath, basePath, locales, localeSuffixes, commitDate, commitAuthor } = context;
 
   if (tag === 'slug') {
     return slug;
@@ -159,12 +165,8 @@ export const replaceSub = (tag, context) => {
     return stripSlashes(dirPath);
   }
 
-  if (tag === 'filename') {
-    return /** @type {string} */ (entryPath.split('/').pop()).split('.').shift();
-  }
-
-  if (tag === 'extension') {
-    return /** @type {string} */ (entryPath.split('/').pop()).split('.').pop();
+  if (tag === 'filename' || tag === 'extension') {
+    return getFileNameParts(entryPath, localeSuffixes)[tag];
   }
 
   if (tag === 'commit_date') {
@@ -349,6 +351,7 @@ const formatEntrySummary = (
       entryPath,
       basePath,
       locales: Object.keys(locales),
+      localeSuffixes: getFileNameLocaleSuffixes(collection),
       commitDate,
       commitAuthor,
     },

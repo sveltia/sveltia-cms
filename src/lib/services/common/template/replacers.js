@@ -10,7 +10,10 @@ import {
   handleUuidTag,
 } from '$lib/services/common/template/handlers';
 import { processNestedTemplates } from '$lib/services/common/template/nested';
-import { stripFieldTagPrefix } from '$lib/services/common/template/utils';
+import {
+  getFileNameLocaleSuffixes,
+  stripFieldTagPrefix,
+} from '$lib/services/common/template/utils';
 import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
 import { getField } from '$lib/services/contents/entry/fields';
 import { getOrCreate } from '$lib/services/utils/cache';
@@ -60,7 +63,17 @@ const getRandomValue = ({ randomValues }, key, generate) => {
  * @returns {any} Replaced value.
  */
 export const replaceTemplateTag = (tag, context) => {
-  const { type, content, entryFilePath, locale, dateTimeParts, basePath, assetFileName } = context;
+  const {
+    type,
+    collection,
+    content,
+    entryFilePath,
+    locale,
+    dateTimeParts,
+    basePath,
+    assetFileName,
+  } = context;
+
   // Handle date-time fields. Parts are pre-calculated in `fillTemplate` to avoid redundant
   // calculations for multiple date-time tags in the same template.
   const _dateTimeParts = /** @type {Record<string, string>} */ (dateTimeParts);
@@ -98,7 +111,12 @@ export const replaceTemplateTag = (tag, context) => {
 
   // Handle file path related tags
   if (type === 'preview_path' || type === 'media_folder') {
-    const filePathValue = handleFilePathTag(tag, entryFilePath, basePath);
+    const filePathValue = handleFilePathTag(
+      tag,
+      entryFilePath,
+      basePath,
+      getFileNameLocaleSuffixes(collection),
+    );
 
     if (filePathValue !== undefined) {
       return filePathValue;

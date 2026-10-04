@@ -753,6 +753,20 @@ describe('Test replaceSub()', () => {
     expect(result).toBe('md');
   });
 
+  test('should strip only the last extension from the filename tag', () => {
+    const dottedContext = { ...context, entryPath: 'content/posts/2024/my.post.md' };
+
+    expect(replaceSub('filename', dottedContext)).toBe('my.post');
+    expect(replaceSub('extension', dottedContext)).toBe('md');
+  });
+
+  test('should give an empty extension for a file name without a dot', () => {
+    const plainContext = { ...context, entryPath: 'content/posts/2024/README' };
+
+    expect(replaceSub('filename', plainContext)).toBe('README');
+    expect(replaceSub('extension', plainContext)).toBe('');
+  });
+
   test('should replace commit_date tag', () => {
     const result = replaceSub('commit_date', context);
 

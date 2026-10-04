@@ -240,7 +240,12 @@ describe('Template handler functions', () => {
         'my-post',
       );
       expect(handleFilePathTag('filename', 'path/to/article.html', 'path/to')).toBe('article');
-      expect(handleFilePathTag('filename', 'file.component.tsx', undefined)).toBe('file');
+      expect(handleFilePathTag('filename', 'file.component.tsx', undefined)).toBe('file.component');
+      expect(handleFilePathTag('filename', 'content/my.post.md', 'content')).toBe('my.post');
+      expect(handleFilePathTag('filename', 'content/README', 'content')).toBe('README');
+      expect(handleFilePathTag('filename', 'content/my.post.en.md', 'content', ['en'])).toBe(
+        'my.post',
+      );
     });
 
     test('should return file extension', () => {
@@ -249,6 +254,7 @@ describe('Template handler functions', () => {
       );
       expect(handleFilePathTag('extension', 'path/to/article.html', 'path/to')).toBe('html');
       expect(handleFilePathTag('extension', 'file.component.tsx', undefined)).toBe('tsx');
+      expect(handleFilePathTag('extension', 'content/README', 'content')).toBe('');
     });
 
     test('should return empty string when entry file path is undefined', () => {

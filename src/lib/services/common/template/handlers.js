@@ -2,6 +2,7 @@ import { generateUUID } from '@sveltia/utils/crypto';
 import { stripSlashes } from '@sveltia/utils/string';
 
 import { DATE_TIME_FIELDS } from '$lib/services/common/template/constants';
+import { getFileNameParts } from '$lib/services/common/template/utils';
 import {
   getSharedEntryFileName,
   stripIndexFileName,
@@ -85,9 +86,11 @@ export const handleSlugTag = (tag, context) => {
  * @param {string} tag The template tag.
  * @param {string | undefined} entryFilePath Entry file path.
  * @param {string | undefined} basePath Base path.
+ * @param {string[]} [localeSuffixes] Locale codes that can follow the file name, with the
+ * `multiple_files` i18n structure.
  * @returns {string | undefined} The file path value or undefined if not a file path tag.
  */
-export const handleFilePathTag = (tag, entryFilePath, basePath) => {
+export const handleFilePathTag = (tag, entryFilePath, basePath, localeSuffixes = []) => {
   if (!entryFilePath) {
     return '';
   }
@@ -109,17 +112,9 @@ export const handleFilePathTag = (tag, entryFilePath, basePath) => {
       return lastSlashIndex > 0 ? pathAfterBase.substring(0, lastSlashIndex) : '';
     }
 
-    case 'filename': {
-      const fileName = /** @type {string} */ (entryFilePath.split('/').pop());
-
-      return fileName.split('.').shift();
-    }
-
-    case 'extension': {
-      const fileName = /** @type {string} */ (entryFilePath.split('/').pop());
-
-      return fileName.split('.').pop();
-    }
+    case 'filename':
+    case 'extension':
+      return getFileNameParts(entryFilePath, localeSuffixes)[tag];
 
     default:
       return undefined;
