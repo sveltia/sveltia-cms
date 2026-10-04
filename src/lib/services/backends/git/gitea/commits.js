@@ -7,6 +7,7 @@ import {
   fetchPerPathCommits,
 } from '$lib/services/backends/git/shared/commits';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
+import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -64,6 +65,9 @@ export const commitChanges = async (changes, options) => {
   const { name, email } = /** @type {User} */ (user.account);
   const date = new Date().toJSON();
 
+  // The API has no branch-level guard like GitHub’s `expectedHeadOid`, but an update, a move or a
+  // deletion carries the blob SHA of the file as the user knows it, taken from the cached file list
+  // rather than looked up now, so the commit is refused if someone else has changed the file since
   const files = await Promise.all(
     changes.map(async ({ action, path, previousPath, previousSha, data = '' }) => ({
       operation: action === 'move' ? 'update' : action,
@@ -74,19 +78,45 @@ export const commitChanges = async (changes, options) => {
     })),
   );
 
-  const { commit, files: savedFiles } = /** @type {CommitResponse} */ (
-    await fetchAPI(`/repos/${owner}/${repo}/contents`, {
-      method: 'POST',
-      body: {
-        branch,
-        author: { name, email },
-        committer: { name, email },
-        dates: { author: date, committer: date },
-        message: commitMessage,
-        files,
-      },
-    })
-  );
+  const expectedHead = repositoryHead.current;
+  /** @type {CommitResponse} */
+  let response;
+
+  try {
+    response = /** @type {CommitResponse} */ (
+      await fetchAPI(`/repos/${owner}/${repo}/contents`, {
+        method: 'POST',
+        body: {
+          branch,
+          author: { name, email },
+          committer: { name, email },
+          dates: { author: date, committer: date },
+          message: commitMessage,
+          files,
+        },
+      })
+    );
+  } catch (/** @type {any} */ ex) {
+    // A changed file is refused with a 409 Conflict on Forgejo and a 422 Unprocessable Entity on
+    // Gitea, and a file someone else has created at the same path with a 422 on both. Tell it from
+    // any other failure, as the GitHub backend does, so the user is told what happened and to try
+    // again, which picks up the other change first. The head is looked up rather than the wording
+    // relied upon. A failed lookup leaves the original error to be reported
+    if (expectedHead && [409, 422].includes(ex.cause?.status)) {
+      const head = await fetchLastCommit().catch(() => undefined);
+
+      if (head && head.hash !== expectedHead) {
+        throw createLocalizedError(
+          'The branch has moved since the site data was loaded.',
+          'save_conflict.branch_moved',
+        );
+      }
+    }
+
+    throw ex;
+  }
+
+  const { commit, files: savedFiles } = response;
 
   return {
     sha: commit.sha,

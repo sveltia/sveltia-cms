@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { repository } from '$lib/services/backends/git/gitea/repository';
+import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
 
 import { commitChanges, fetchFileCommits, fetchLastCommit } from './commits.js';
 
@@ -39,6 +40,10 @@ vi.mock('$lib/services/backends/git/gitea/repository', async (importOriginal) =>
 
   return actual;
 });
+
+vi.mock('$lib/services/backends/git/shared/fetch', () => ({
+  repositoryHead: { current: '' },
+}));
 
 vi.mock('$lib/services/user/account.svelte', () => ({
   user: { account: { name: 'John Doe', email: 'john.doe@example.com' } },
@@ -390,6 +395,92 @@ describe('Gitea Commits Service', () => {
       fetchAPIMock.mockRejectedValue(new Error('Commit failed'));
 
       await expect(commitChanges(mockChanges, mockOptions)).rejects.toThrow('Commit failed');
+    });
+
+    describe('guard against a concurrent push', () => {
+      /** @type {FileChange[]} */
+      const changes = [
+        { action: 'update', slug: 'a', path: 'a.md', previousSha: 'known-blob-sha', data: 'x' },
+      ];
+
+      const options = { commitType: /** @type {CommitType} */ ('update') };
+
+      beforeEach(() => {
+        repositoryHead.current = 'loaded-head-sha';
+      });
+
+      afterEach(() => {
+        repositoryHead.current = '';
+      });
+
+      test('sends the blob SHA of the file as the user knows it', async () => {
+        fetchAPIMock.mockResolvedValue({
+          commit: { sha: 'c1', created: '2023-01-01T00:00:00Z' },
+          files: [{ path: 'a.md', sha: 'new-blob-sha' }],
+        });
+
+        await commitChanges(changes, options);
+
+        expect(fetchAPIMock).toHaveBeenCalledTimes(1);
+        expect(fetchAPIMock.mock.calls[0][1].body.files[0].sha).toBe('known-blob-sha');
+      });
+
+      test.each([409, 422])(
+        'reports a commit refused with %i because the branch has moved',
+        async (status) => {
+          fetchAPIMock
+            .mockRejectedValueOnce(
+              new Error('Server responded with an error', { cause: { status } }),
+            )
+            .mockResolvedValueOnce({ commit: { id: 'someone-elses-sha', message: '' } });
+
+          await expect(commitChanges(changes, options)).rejects.toThrow(
+            'The branch has moved since the site data was loaded.',
+          );
+          expect(fetchAPIMock).toHaveBeenLastCalledWith(
+            '/repos/test-owner/test-repo/branches/main',
+          );
+        },
+      );
+
+      test('passes the failure on when the head is where it was expected', async () => {
+        const apiError = new Error('Server responded with an error', { cause: { status: 422 } });
+
+        fetchAPIMock
+          .mockRejectedValueOnce(apiError)
+          .mockResolvedValueOnce({ commit: { id: 'loaded-head-sha', message: '' } });
+
+        await expect(commitChanges(changes, options)).rejects.toBe(apiError);
+      });
+
+      test('passes the failure on when the head can’t be looked up afterwards', async () => {
+        const apiError = new Error('Server responded with an error', { cause: { status: 409 } });
+
+        fetchAPIMock
+          .mockRejectedValueOnce(apiError)
+          .mockRejectedValueOnce(new Error('Failed to send the request'));
+
+        await expect(commitChanges(changes, options)).rejects.toBe(apiError);
+      });
+
+      test('passes any other failure on without a head lookup', async () => {
+        const apiError = new Error('Server responded with an error', { cause: { status: 500 } });
+
+        fetchAPIMock.mockRejectedValueOnce(apiError);
+
+        await expect(commitChanges(changes, options)).rejects.toBe(apiError);
+        expect(fetchAPIMock).toHaveBeenCalledTimes(1);
+      });
+
+      test('passes a failure on without a head lookup before the site data is loaded', async () => {
+        const apiError = new Error('Server responded with an error', { cause: { status: 422 } });
+
+        repositoryHead.current = '';
+        fetchAPIMock.mockRejectedValueOnce(apiError);
+
+        await expect(commitChanges(changes, options)).rejects.toBe(apiError);
+        expect(fetchAPIMock).toHaveBeenCalledTimes(1);
+      });
     });
 
     test('should handle multiple file changes in single commit', async () => {
