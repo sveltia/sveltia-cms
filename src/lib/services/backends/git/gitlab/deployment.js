@@ -1,7 +1,7 @@
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
-import { pickDeployment } from '$lib/services/backends/git/shared/deployment';
+import { resolveDeployments } from '$lib/services/backends/git/shared/deployment';
 
 /**
  * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';
@@ -145,48 +145,41 @@ const collectStatusCandidates = async ({ sha }, candidateMap) => {
 };
 
 /**
+ * Run a collector, reporting a failure without failing the batch.
+ * @param {() => Promise<void>} task Task to run.
+ */
+const collectSafely = async (task) => {
+  try {
+    await task();
+  } catch (ex) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to fetch the deployment info.', ex);
+  }
+};
+
+/**
+ * Collect deploy candidates for the given commits from the project’s deployments and from each
+ * commit’s statuses.
+ * @param {string[]} shas Commit SHAs.
+ * @param {Record<string, DeployCandidate[]>} candidateMap Candidates keyed by commit SHA.
+ */
+const collectCandidates = async (shas, candidateMap) => {
+  await Promise.all([
+    collectSafely(() => collectDeploymentCandidates(candidateMap)),
+    runConcurrently(shas, async (sha) =>
+      collectSafely(() =>
+        collectStatusCandidates({ sha, branch: '', kind: 'preview' }, candidateMap),
+      ),
+    ),
+  ]);
+};
+
+/**
  * Fetch the deployment status and URL for the given commits. Each source is requested separately
  * and any failure is swallowed, so a commit whose statuses are gone — after a force push, say —
  * doesn’t take the rest of the batch down with it.
  * @param {DeployTarget[]} targets Commits to look up.
  * @returns {Promise<Record<string, DeployStatus>>} Deployments keyed by commit SHA.
  */
-export const fetchDeployments = async (targets) => {
-  // A merge request created in an older session may have no head commit recorded yet
-  const validTargets = targets.filter(({ sha }) => !!sha);
-
-  if (!validTargets.length) {
-    return {};
-  }
-
-  /** @type {Record<string, DeployCandidate[]>} */
-  const candidateMap = Object.fromEntries(validTargets.map(({ sha }) => [sha, []]));
-
-  /**
-   * Run a collector, reporting a failure without failing the batch.
-   * @param {() => Promise<void>} task Task to run.
-   */
-  const collect = async (task) => {
-    try {
-      await task();
-    } catch (ex) {
-      // eslint-disable-next-line no-console
-      console.warn('Failed to fetch the deployment info.', ex);
-    }
-  };
-
-  await Promise.all([
-    collect(() => collectDeploymentCandidates(candidateMap)),
-    // Two merge requests can share a head commit, so look each one up only once
-    runConcurrently([...new Set(validTargets.map(({ sha }) => sha))], async (sha) =>
-      collect(() => collectStatusCandidates({ sha, branch: '', kind: 'preview' }, candidateMap)),
-    ),
-  ]);
-
-  return Object.fromEntries(
-    validTargets.map(({ sha, kind }) => [
-      sha,
-      pickDeployment(candidateMap[sha], { kind, selfURL: repository.repoURL }),
-    ]),
-  );
-};
+export const fetchDeployments = async (targets) =>
+  resolveDeployments(targets, { collect: collectCandidates, selfURL: repository.repoURL });

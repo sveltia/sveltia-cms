@@ -5,6 +5,7 @@ import {
   getPreviewContext,
   normalizeURL,
   pickDeployment,
+  resolveDeployments,
 } from '$lib/services/backends/git/shared/deployment';
 import { cmsConfig } from '$lib/services/config';
 
@@ -611,5 +612,58 @@ describe('Git deployment selection', () => {
         expect(result.url).toBe('https://a.example.com');
       });
     });
+  });
+});
+
+describe('resolveDeployments()', () => {
+  beforeEach(() => {
+    cmsConfig.current = undefined;
+  });
+
+  test('returns an empty object without collecting when no target has a commit', async () => {
+    const collect = vi.fn();
+
+    await expect(
+      resolveDeployments([{ sha: '', branch: 'main', kind: 'production' }], { collect }),
+    ).resolves.toEqual({});
+    expect(collect).not.toHaveBeenCalled();
+  });
+
+  test('collects each commit once and picks a deployment for each target', async () => {
+    const collect = vi.fn(async (shas, candidateMap) => {
+      expect(candidateMap).toEqual({ abc: [], def: [] });
+      candidateMap.abc.push(createCandidate({ name: 'netlify/deploy-preview' }));
+    });
+
+    const result = await resolveDeployments(
+      [
+        { sha: 'abc', branch: 'cms/a', kind: 'preview' },
+        { sha: 'abc', branch: 'cms/b', kind: 'preview' },
+        { sha: 'def', branch: 'cms/c', kind: 'preview' },
+        { sha: '', branch: 'cms/d', kind: 'preview' },
+      ],
+      { collect, selfURL: 'https://github.com/owner/repo' },
+    );
+
+    expect(collect).toHaveBeenCalledOnce();
+    expect(collect.mock.calls[0][0]).toEqual(['abc', 'def']);
+    expect(Object.keys(result)).toEqual(['abc', 'def']);
+    expect(result.abc).toMatchObject({
+      state: 'ready',
+      url: 'https://example.com',
+      context: 'netlify/deploy-preview',
+    });
+    expect(result.def).toMatchObject({ state: 'unknown' });
+  });
+
+  test('drops a URL leading back to the Git service', async () => {
+    const result = await resolveDeployments([{ sha: 'abc', branch: 'main', kind: 'production' }], {
+      collect: vi.fn(async (shas, candidateMap) => {
+        candidateMap.abc.push(createCandidate({ url: 'https://github.com/owner/repo/actions/1' }));
+      }),
+      selfURL: 'https://github.com/owner/repo',
+    });
+
+    expect(result.abc.url).toBeUndefined();
   });
 });

@@ -1,7 +1,7 @@
 import { cmsConfig } from '$lib/services/config';
 
 /**
- * @import { DeployState, DeployStatus } from '$lib/types/private';
+ * @import { DeployState, DeployStatus, DeployTarget } from '$lib/types/private';
  * @import { GitBackend } from '$lib/types/public';
  */
 
@@ -246,4 +246,38 @@ export const pickDeployment = (candidates, { kind, selfURL }) => {
     context: best.name,
     checkedTime: Date.now(),
   };
+};
+
+/**
+ * Fetch the deployment status and URL for the given commits with a backend’s own collector, then
+ * pick the best candidate for each commit.
+ * @param {DeployTarget[]} targets Commits to look up.
+ * @param {object} args Arguments.
+ * @param {(shas: string[], candidateMap: Record<string, DeployCandidate[]>) => Promise<void>
+ * } args.collect Function that adds the candidates found for the given commits to the map, which
+ * has an empty list for each commit.
+ * @param {string} [args.selfURL] The repository’s own web URL. See {@link pickDeployment}.
+ * @returns {Promise<Record<string, DeployStatus>>} Deployments keyed by commit SHA.
+ */
+export const resolveDeployments = async (targets, { collect, selfURL }) => {
+  // A pull request created in an older session may have no head commit recorded yet
+  const validTargets = targets.filter(({ sha }) => !!sha);
+  // Two pull requests can share a head commit, so look each one up only once
+  const shas = [...new Set(validTargets.map(({ sha }) => sha))];
+
+  if (!shas.length) {
+    return {};
+  }
+
+  /** @type {Record<string, DeployCandidate[]>} */
+  const candidateMap = Object.fromEntries(shas.map((sha) => [sha, []]));
+
+  await collect(shas, candidateMap);
+
+  return Object.fromEntries(
+    validTargets.map(({ sha, kind }) => [
+      sha,
+      pickDeployment(candidateMap[sha], { kind, selfURL }),
+    ]),
+  );
 };
