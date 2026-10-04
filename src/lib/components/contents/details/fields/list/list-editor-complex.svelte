@@ -45,7 +45,6 @@
   import { getUnknownTypeMessage } from '$lib/services/contents/fields/object/helpers';
   import { getObjectThumbnail } from '$lib/services/contents/fields/object/thumbnail';
   import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
-  import { focusReorderControl } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { unflattenKeys } from '$lib/services/utils/object';
 
@@ -326,10 +325,8 @@
    * Move a subfield to another position in the list.
    * @param {number} from Source index.
    * @param {number} to Destination index.
-   * @param {string} [action] `data-action` of the reorder control that triggered the move, so the
-   * focus can be restored to the matching control on the item once it has moved.
    */
-  const moveItem = async (from, to, action = 'reorder') => {
+  const moveItem = (from, to) => {
     updateComplexList(({ valueList, expanderStateList }) => {
       if (!hasSingleSubField) {
         // Ensure the IDs are unique before reordering, so that the `each` block below keeps
@@ -342,9 +339,6 @@
       // The expander states are only manipulated with the default locale, so this list may be empty
       expanderStateList.splice(to, 0, ...expanderStateList.splice(from, 1));
     });
-
-    await sleep(50);
-    focusReorderControl({ listElement: itemList, index: to, action });
   };
 
   const sorter = createDragSorter({
@@ -359,6 +353,11 @@
      */
     getListElement: () => itemList,
     onMove: moveItem,
+    /**
+     * Wait for the moved item to be rendered in its new position.
+     * @returns {Promise<void>} Promise.
+     */
+    settle: () => sleep(50),
   });
 
   /**
@@ -565,7 +564,7 @@
                   icon="drag_handle"
                   onGrab={() => sorter.grab(index)}
                   onRelease={sorter.release}
-                  onMove={(to, action) => moveItem(index, to, action)}
+                  onMove={(to, action) => sorter.move(index, to, action)}
                 />
               {/if}
             {/snippet}

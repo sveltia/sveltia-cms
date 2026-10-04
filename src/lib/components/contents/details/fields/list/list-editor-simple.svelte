@@ -23,7 +23,6 @@
   import { updateNonPrimitiveValue } from '$lib/services/contents/draft/update';
   import { isSingleItemList } from '$lib/services/contents/fields/list/helpers';
   import { getDirection } from '$lib/services/contents/i18n';
-  import { focusReorderControl } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { createKeyedRows } from '$lib/services/utils/keyed-rows.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
@@ -150,14 +149,9 @@
    * Move a row to another position in the list.
    * @param {number} from Source index.
    * @param {number} to Destination index.
-   * @param {string} [action] `data-action` of the reorder control that triggered the move, so the
-   * focus can be restored to the matching control on the row once it has moved.
    */
-  const moveItem = async (from, to, action = 'reorder') => {
+  const moveItem = (from, to) => {
     rows.move(from, to);
-
-    await tick();
-    focusReorderControl({ listElement: itemList, index: to, action });
   };
 
   const sorter = createDragSorter({
@@ -213,7 +207,7 @@
           disabled={!hasMultipleItems}
           onGrab={() => sorter.grab(index)}
           onRelease={sorter.release}
-          onMove={(to, action) => moveItem(index, to, action)}
+          onMove={(to, action) => sorter.move(index, to, action)}
         />
       {/if}
       <TextInput

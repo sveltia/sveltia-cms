@@ -247,6 +247,75 @@ describe('createDragSorter()', () => {
     expect(sorter.displayOrder).toEqual([0, 1, 2]);
   });
 
+  /**
+   * Add reorder controls to each item of the list.
+   * @returns {HTMLButtonElement[][]} Buttons of each item: the drag handle and the Move Down one.
+   */
+  const addReorderControls = () =>
+    list.items.map((item) =>
+      ['reorder', 'move-down'].map((action) => {
+        const button = document.createElement('button');
+
+        button.dataset.action = action;
+        item.append(button);
+
+        return button;
+      }),
+    );
+
+  test('moves an item, then focuses its reorder control once it has been rendered', async () => {
+    const buttons = addReorderControls();
+
+    await sorter.move(0, 2);
+
+    expect(onMove).toHaveBeenCalledExactlyOnceWith(0, 2);
+    expect(document.activeElement).toBe(buttons[2][0]);
+  });
+
+  test('focuses the control that triggered the move', async () => {
+    const buttons = addReorderControls();
+
+    await sorter.move(0, 1, 'move-down');
+
+    expect(document.activeElement).toBe(buttons[1][1]);
+  });
+
+  test('waits with the given function before focusing the reorder control', async () => {
+    const buttons = addReorderControls();
+
+    const { promise: settled, resolve } = /** @type {PromiseWithResolvers<void>} */ (
+      Promise.withResolvers()
+    );
+
+    const settle = vi.fn(() => settled);
+
+    sorter = createDragSorter({
+      /**
+       * Get the item count.
+       * @returns {number} Count.
+       */
+      getItemCount: () => itemCount.current,
+      /**
+       * Get the list element.
+       * @returns {HTMLElement} Element.
+       */
+      getListElement: () => list.listElement,
+      onMove,
+      settle,
+    });
+
+    const promise = sorter.move(1, 0);
+
+    expect(onMove).toHaveBeenCalledExactlyOnceWith(1, 0);
+    expect(settle).toHaveBeenCalledOnce();
+    expect(document.activeElement).not.toBe(buttons[0][0]);
+
+    resolve();
+    await promise;
+
+    expect(document.activeElement).toBe(buttons[0][0]);
+  });
+
   test('discards a stale preview once the list changes length', () => {
     sorter.onDragStart(0);
     sorter.onDragOver(createEvent({ target: list.items[2], clientY: 110 }));

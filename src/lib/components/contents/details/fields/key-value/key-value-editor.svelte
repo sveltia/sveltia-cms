@@ -11,7 +11,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { getContext, tick } from 'svelte';
+  import { getContext } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
@@ -25,7 +25,7 @@
     validatePairs,
   } from '$lib/services/contents/fields/key-value/helpers';
   import { getDirection } from '$lib/services/contents/i18n';
-  import { focusReorderControl, moveListItem } from '$lib/services/utils/drag-sorting';
+  import { moveListItem } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { createKeyedRows } from '$lib/services/utils/keyed-rows.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
@@ -167,15 +167,10 @@
    * Move a pair to another position in {@link rows}. The pairs are saved in the new order.
    * @param {number} from Source index.
    * @param {number} to Destination index.
-   * @param {string} [action] `data-action` of the reorder control that triggered the move, so the
-   * focus can be restored to the matching control on the row once it has moved.
    */
-  const movePair = async (from, to, action = 'reorder') => {
+  const movePair = (from, to) => {
     rows.move(from, to);
     edited = moveListItem(edited, from, to);
-
-    await tick();
-    focusReorderControl({ listElement: tableBody, index: to, action });
   };
 
   const sorter = createDragSorter({
@@ -289,7 +284,7 @@
                   disabled={rows.values.length < 2}
                   onGrab={() => sorter.grab(index)}
                   onRelease={sorter.release}
-                  onMove={(to, action) => movePair(index, to, action)}
+                  onMove={(to, action) => sorter.move(index, to, action)}
                 />
               </div>
             </td>

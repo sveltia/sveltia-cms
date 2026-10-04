@@ -36,7 +36,6 @@
   } from '$lib/services/contents/fields/file/resources';
   import { getAcceptedImageTypes } from '$lib/services/integrations/media-libraries/default';
   import { isMultiple } from '$lib/services/integrations/media-libraries/multiple';
-  import { focusReorderControl } from '$lib/services/utils/drag-sorting';
   import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
   import { watchAsync } from '$lib/services/utils/state.svelte';
 
@@ -331,10 +330,8 @@
    * Move an item to another position in the list.
    * @param {number} from Source index.
    * @param {number} to Destination index.
-   * @param {string} [action] `data-action` of the reorder control that triggered the move, so the
-   * focus can be restored to the matching control on the item once it has moved.
    */
-  const moveItem = async (from, to, action = 'reorder') => {
+  const moveItem = (from, to) => {
     const draft = entryDraft.current;
 
     // The items are gone along with the draft, so this is only a race with the editor closing
@@ -344,9 +341,6 @@
     }
 
     moveMultiValueItem({ draft, locale, valueStoreKey, keyPath, from, to });
-
-    await sleep(50);
-    focusReorderControl({ listElement: itemList, index: to, action });
   };
 
   const sorter = createDragSorter({
@@ -361,6 +355,11 @@
      */
     getListElement: () => itemList,
     onMove: moveItem,
+    /**
+     * Wait for the moved item to be rendered in its new position.
+     * @returns {Promise<void>} Promise.
+     */
+    settle: () => sleep(50),
   });
 
   // A read started for an earlier state of the draft can be answered after a later one, which
@@ -437,7 +436,7 @@
                 onRemove={() => removeItem(index)}
                 onDragStart={() => sorter.onDragStart(index)}
                 onDragEnd={sorter.onDragEnd}
-                onMove={(to, action) => moveItem(index, to, action)}
+                onMove={(to, action) => sorter.move(index, to, action)}
               />
             </div>
           {/each}

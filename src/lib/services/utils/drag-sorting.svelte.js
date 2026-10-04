@@ -1,4 +1,7 @@
+import { tick } from 'svelte';
+
 import {
+  focusReorderControl,
   getDropIndex,
   getListItemAt,
   getMoveTarget,
@@ -15,6 +18,8 @@ import {
  * @property {number[]} displayOrder The order the items are rendered in.
  * @property {(index: number) => void} grab Make the item at the given index draggable.
  * @property {() => void} release Make no item draggable.
+ * @property {(from: number, to: number, action?: string) => Promise<void>} move Move an item to
+ * another position, and move the focus to the matching reorder control on it.
  * @property {(index: number, event?: DragEvent, data?: string) => void} onDragStart Start
  * dragging the item at the given index.
  * @property {(event: DragEvent) => void} onDragOver Handle a `dragover` event on the list.
@@ -33,11 +38,14 @@ import {
  * @param {object} args Arguments.
  * @param {() => number} args.getItemCount Function returning the number of items in the list.
  * @param {() => HTMLElement | undefined} args.getListElement Function returning the list element.
- * @param {(from: number, to: number) => void} args.onMove Function called with the source and
- * destination indexes once an item has been dropped somewhere else.
+ * @param {(from: number, to: number) => void} args.onMove Function moving the item at the source
+ * index to the destination index, called once an item has been dropped somewhere else or moved
+ * with {@link DragSorter.move}.
+ * @param {() => Promise<void>} [args.settle] Function waiting for the moved item to be rendered in
+ * its new position, before its reorder control gets the focus. Defaults to Svelte’s `tick`.
  * @returns {DragSorter} Reactive state and event handlers.
  */
-export const createDragSorter = ({ getItemCount, getListElement, onMove }) => {
+export const createDragSorter = ({ getItemCount, getListElement, onMove, settle = tick }) => {
   /** @type {number | undefined} */
   let grabbedIndex = $state();
   /**
@@ -62,6 +70,20 @@ export const createDragSorter = ({ getItemCount, getListElement, onMove }) => {
     stopAutoScroll();
     grabbedIndex = undefined;
     drag = undefined;
+  };
+
+  /**
+   * Move an item to another position, and move the focus to a reorder control on it once it has
+   * moved, so the control can be used repeatedly without having to find it again.
+   * @param {number} from Source index.
+   * @param {number} to Destination index.
+   * @param {string} [action] `data-action` of the reorder control that triggered the move, so the
+   * focus can be restored to the matching control on the item.
+   */
+  const move = async (from, to, action = 'reorder') => {
+    onMove(from, to);
+    await settle();
+    focusReorderControl({ listElement: getListElement(), index: to, action });
   };
 
   return {
@@ -103,6 +125,7 @@ export const createDragSorter = ({ getItemCount, getListElement, onMove }) => {
     release: () => {
       grabbedIndex = undefined;
     },
+    move,
     /**
      * Start dragging the item at the given index. Call it from the item’s `dragstart` event.
      * @param {number} index Item index.
@@ -184,7 +207,7 @@ export const createDragSorter = ({ getItemCount, getListElement, onMove }) => {
       reset();
 
       if (to !== from) {
-        onMove(from, to);
+        move(from, to);
       }
     },
     /**
