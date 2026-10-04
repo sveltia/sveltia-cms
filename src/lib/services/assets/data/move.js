@@ -1,12 +1,10 @@
 import { _ } from '@sveltia/i18n';
 import { getPathInfo } from '@sveltia/utils/file';
 
-import { getAssetByInternalPath } from '$lib/services/assets';
-import { assetUpdatesToast } from '$lib/services/assets/data';
+import { assetUpdatesToast, refreshFocusedAssets } from '$lib/services/assets/data';
 import { getAssetFoldersByPath, globalAssetFolder } from '$lib/services/assets/folders';
 import { getAssetBlob, getAssetPublicURL } from '$lib/services/assets/info';
 import { getEntriesByAssets } from '$lib/services/assets/references';
-import { focusedAsset, overlaidAsset } from '$lib/services/assets/state';
 import { saveChanges } from '$lib/services/backends/save';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import {
@@ -275,20 +273,7 @@ export const collectEntryChangesFromAssets = async ({
  * @param {boolean} [args.notify] Whether to show a toast reporting the move. Default: `true`.
  */
 export const updateStores = ({ action, movedAssets, notify = true }) => {
-  const focusedAssetPath = focusedAsset.current?.path;
-  const _focusedAsset = movedAssets.find((a) => a.asset.path === focusedAssetPath);
-  const overlaidAssetPath = overlaidAsset.current?.path;
-  const _overlaidAsset = movedAssets.find((a) => a.asset.path === overlaidAssetPath);
-
-  // Replace the existing asset
-  if (_focusedAsset) {
-    focusedAsset.current = getAssetByInternalPath(_focusedAsset.path);
-  }
-
-  // Replace the existing asset
-  if (_overlaidAsset) {
-    overlaidAsset.current = getAssetByInternalPath(_overlaidAsset.path);
-  }
+  refreshFocusedAssets(({ path }) => movedAssets.find((a) => a.asset.path === path)?.path);
 
   if (notify) {
     assetUpdatesToast.current = {

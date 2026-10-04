@@ -1,8 +1,7 @@
-import { getAssetByInternalPath, getAssetsByDirName } from '$lib/services/assets';
-import { assetUpdatesToast } from '$lib/services/assets/data';
+import { getAssetsByDirName } from '$lib/services/assets';
+import { assetUpdatesToast, refreshFocusedAssets } from '$lib/services/assets/data';
 import { formatFileName } from '$lib/services/assets/file-name';
 import { getAssetKind } from '$lib/services/assets/kinds';
-import { focusedAsset, overlaidAsset } from '$lib/services/assets/state';
 import { getUploadDirPath } from '$lib/services/assets/subfolders';
 import { skipCIConfigured, skipCIEnabled } from '$lib/services/backends/git/shared/integration';
 import { saveChanges } from '$lib/services/backends/save';
@@ -66,18 +65,7 @@ export const createFileList = (uploadingAssets) => {
  * @param {number} args.count The number of files that were updated.
  */
 export const updateStores = ({ count }) => {
-  const _focusedAsset = focusedAsset.current;
-  const _overlaidAsset = overlaidAsset.current;
-
-  // Replace the existing asset
-  if (_focusedAsset) {
-    focusedAsset.current = getAssetByInternalPath(_focusedAsset.path);
-  }
-
-  // Replace the existing asset
-  if (_overlaidAsset) {
-    overlaidAsset.current = getAssetByInternalPath(_overlaidAsset.path);
-  }
+  refreshFocusedAssets((asset) => asset.path);
 
   assetUpdatesToast.current = {
     ...UPDATE_TOAST_DEFAULT_STATE,

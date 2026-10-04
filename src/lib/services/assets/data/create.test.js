@@ -14,7 +14,8 @@ vi.mock('$lib/services/assets/state', () => ({
   overlaidAsset: { set: vi.fn() },
 }));
 
-vi.mock('$lib/services/assets/data', () => ({
+vi.mock('$lib/services/assets/data', async (importOriginal) => ({
+  .../** @type {Record<string, any>} */ (await importOriginal()),
   assetUpdatesToast: { set: vi.fn() },
 }));
 
@@ -77,7 +78,8 @@ vi.mock('$lib/services/assets', () => ({
   getAssetsByDirName: vi.fn().mockReturnValue([]),
 }));
 
-vi.mock('$lib/services/assets/data', () => ({
+vi.mock('$lib/services/assets/data', async (importOriginal) => ({
+  .../** @type {Record<string, any>} */ (await importOriginal()),
   assetUpdatesToast: { current: undefined },
 }));
 

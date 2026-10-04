@@ -32,7 +32,8 @@ vi.mock('$lib/services/assets/state', () => ({
   overlaidAsset: { current: undefined },
 }));
 
-vi.mock('$lib/services/assets/data', () => ({
+vi.mock('$lib/services/assets/data', async (importOriginal) => ({
+  .../** @type {Record<string, any>} */ (await importOriginal()),
   assetUpdatesToast: {
     set: vi.fn(),
   },
