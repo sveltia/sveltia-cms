@@ -23,12 +23,6 @@ import { getOrCreate } from '$lib/services/utils/cache';
  */
 
 /**
- * Get the path of the parent folder.
- * @param {string} path Folder path relative to the collection folder.
- * @returns {string} Parent path, or an empty string if the folder is at the top level.
- */
-const getParentPath = (path) => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '');
-/**
  * Count the segments of a path.
  * @param {string} path Path relative to the collection folder, e.g. `about/team`.
  * @returns {number} Number of segments, `0` for the collection folder itself.
@@ -90,11 +84,11 @@ const collectFolders = ({ entries, indexFileName, subfolders }) => {
     }
 
     // Register the ancestors, which don’t necessarily hold an entry of their own
-    let ancestorPath = getParentPath(dirPath);
+    let ancestorPath = getEntryDirPath(dirPath);
 
     while (ancestorPath && !folders.has(ancestorPath)) {
       folders.set(ancestorPath, undefined);
-      ancestorPath = getParentPath(ancestorPath);
+      ancestorPath = getEntryDirPath(ancestorPath);
     }
   });
 
@@ -163,7 +157,7 @@ const buildTree = ({
   const childPaths = new Map();
 
   [...folders.keys()].forEach((path) => {
-    const parentPath = getParentPath(path);
+    const parentPath = getEntryDirPath(path);
 
     getOrCreate(childPaths, parentPath, () => []).push(path);
   });
@@ -238,7 +232,7 @@ export const getMaxParentFolderDepth = ({ collection, entries, ownFolderPath }) 
     return depth - 2;
   }
 
-  const baseDepth = countSegments(getParentPath(ownFolderPath));
+  const baseDepth = countSegments(getEntryDirPath(ownFolderPath));
 
   const height = Math.max(
     2,
