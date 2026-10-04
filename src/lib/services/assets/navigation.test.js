@@ -28,6 +28,7 @@ import {
   listedAssets,
   showAssetOverlay,
 } from '$lib/services/assets/view';
+import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
 
@@ -81,6 +82,7 @@ vi.mock('$lib/services/assets/view', () => ({
   showAssetOverlay: { current: false },
 }));
 
+vi.mock('$lib/services/backends/git/shared/config', () => ({ gitConfigFiles: { current: [] } }));
 vi.mock('$lib/services/search/navigation', () => ({ isSearchRoute: vi.fn() }));
 vi.mock('$lib/services/user/env.svelte', () => ({ env: { isSmallScreen: false } }));
 
@@ -129,6 +131,7 @@ beforeEach(async () => {
   overlaidExternalAssetId.current = undefined;
   selectedCloudService.current = undefined;
   allAssetFolders.current = [];
+  /** @type {any} */ (gitConfigFiles).current = [];
   selectedAssetFolder.current = undefined;
   selectedSubfolderPath.current = '';
   /** @type {any} */ (listedAssets).current = [];
@@ -383,6 +386,47 @@ describe('resolveAssetsRoute()', () => {
 
       expect(announcedPageStatus.current).toBe('');
       expect(showAssetOverlay.current).toBe(true);
+    });
+
+    test('browses a subfolder with a dot in its name', () => {
+      visit('/assets/static/posts/v1.2');
+      allAssets.current = [/** @type {any} */ ({ name: 'a.png', path: 'static/posts/v1.2/a.png' })];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({
+        folder: postsFolder,
+        subfolderPath: 'v1.2',
+      });
+
+      expect(resolveAssetsRoute()).toEqual(initial);
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('static/posts/v1.2', undefined);
+      expect(selectedSubfolderPath.current).toBe('v1.2');
+      expect(overlaidAsset.current).toBeUndefined();
+      expect(sleep).toHaveBeenCalledWith(100);
+    });
+
+    test('browses an empty subfolder or a configured folder with a dot in its name', () => {
+      visit('/assets/static/posts/v1.2');
+      /** @type {any} */ (gitConfigFiles).current = [{ path: 'static/posts/v1.2/.gitkeep' }];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({
+        folder: postsFolder,
+        subfolderPath: 'v1.2',
+      });
+
+      resolveAssetsRoute();
+      expect(resolveAssetFolderPath).toHaveBeenCalledWith('static/posts/v1.2', undefined);
+
+      const dottedFolder = /** @type {any} */ ({ internalPath: 'static/v1.2' });
+
+      visit('/assets/static/v1.2');
+      allAssetFolders.current = [dottedFolder];
+      vi.mocked(resolveAssetFolderPath).mockReturnValue({
+        folder: dottedFolder,
+        subfolderPath: '',
+      });
+
+      resolveAssetsRoute();
+      expect(resolveAssetFolderPath).toHaveBeenLastCalledWith('static/v1.2', undefined);
+      expect(selectedAssetFolder.current).toBe(dottedFolder);
+      expect(showAssetOverlay.current).toBe(false);
     });
 
     test('reports a missing folder', () => {

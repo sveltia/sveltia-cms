@@ -21,6 +21,7 @@ import {
   listedAssets,
   showAssetOverlay,
 } from '$lib/services/assets/view';
+import { gitConfigFiles } from '$lib/services/backends/git/shared/config';
 import { isSearchRoute } from '$lib/services/search/navigation';
 import { env } from '$lib/services/user/env.svelte';
 
@@ -43,6 +44,18 @@ import { env } from '$lib/services/user/env.svelte';
  */
 export const ASSETS_ROUTE_REGEX =
   /^\/assets(?:\/(?<folderPath>.+?)(?:\/(?<fileName>[^/]+\.[A-Za-z0-9]+))?)?$/;
+
+/**
+ * Check if the given path is a known asset folder: a configured folder, or a subfolder holding an
+ * asset or a Git config file such as `.gitkeep`.
+ * @param {string} path Folder path.
+ * @returns {boolean} Result.
+ */
+const isKnownFolderPath = (path) =>
+  allAssetFolders.current.some(({ internalPath }) => internalPath === path) ||
+  [...allAssets.current, ...gitConfigFiles.current].some((file) =>
+    file.path.startsWith(`${path}/`),
+  );
 
 /**
  * Counter to ignore an outdated navigation once a newer one has started.
@@ -193,7 +206,7 @@ export const resolveAssetsRoute = () => {
     return { ...state, isSearchPage: isSearchRoute(path) }; // Different page
   }
 
-  const { folderPath, fileName } = match.groups;
+  let { folderPath, fileName } = match.groups;
 
   if (
     folderPath?.startsWith(EXTERNAL_LOCATION_PATH_PREFIX) &&
@@ -216,6 +229,20 @@ export const resolveAssetsRoute = () => {
 
   if (!folderPath) {
     return resolveIndexRoute(state);
+  }
+
+  // The regex takes a last path segment with a dot for a file name, but a folder can have a dot in
+  // its name too, e.g. `v1.2`. Browse the folder if there is no asset at the path
+  if (fileName) {
+    const fullPath = `${folderPath}/${fileName}`;
+
+    if (
+      !allAssets.current.some((asset) => asset.path === fullPath) &&
+      isKnownFolderPath(fullPath)
+    ) {
+      folderPath = fullPath;
+      fileName = undefined;
+    }
   }
 
   // The path can also point at a subfolder of a configured folder. An internal path can be shared
