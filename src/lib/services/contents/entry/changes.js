@@ -1,6 +1,6 @@
 import { backend } from '$lib/services/backends';
-import { getArrayItemTarget, getPreviousSha } from '$lib/services/contents/draft/save/changes';
-import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
+import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
+import { buildEntryFileChanges } from '$lib/services/contents/draft/save/file-changes';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
@@ -12,7 +12,9 @@ import { getRepositoryDatabase } from '$lib/services/utils/database';
  * InternalCollection,
  * InternalCollectionFile,
  * InternalEntryCollection,
+ * InternalLocaleCode,
  * } from '$lib/types/private';
+ * @import { EntryFilePlan } from '$lib/services/contents/draft/save/file-changes';
  */
 
 /**
@@ -74,59 +76,27 @@ export const buildEntryUpdateChanges = async ({
 }) => {
   const config = /** @type {InternalCollectionFile} */ (collectionFile ?? collection);
 
-  const {
-    _i18n: {
-      i18nEnabled,
-      allLocales,
-      defaultLocale,
-      structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot } = {},
-    },
-  } = config;
+  return buildEntryFileChanges({
+    draft,
+    config,
+    _file: resolveFileConfig({ collection, collectionFile, isIndexFile: draft.isIndexFile }),
+    entry,
+    cacheDB,
+    /**
+     * Plan the change to a file of the entry.
+     * @param {InternalLocaleCode} [locale] Locale of the file, or `undefined` for the single file.
+     * @returns {EntryFilePlan | undefined} Planned change.
+     */
+    planChange: (locale) => {
+      if (locale === undefined) {
+        const { slug, path } = entry.locales[config._i18n.defaultLocale];
 
-  const _file = resolveFileConfig({ collection, collectionFile, isIndexFile: draft.isIndexFile });
-
-  if (!i18nEnabled || i18nSingleFile || i18nSingleFileDefaultRoot) {
-    const { slug, path } = entry.locales[defaultLocale];
-
-    const [previousSha, data] = await Promise.all([
-      getPreviousSha({ cacheDB, previousPath: path }),
-      formatEntryData({ draft, config, _file, entry }),
-    ]);
-
-    return [
-      /** @type {FileChange} */ ({
-        action: 'update',
-        slug,
-        path,
-        previousSha,
-        data,
-        ...getArrayItemTarget(entry),
-      }),
-    ];
-  }
-
-  const localeChanges = await Promise.all(
-    allLocales.map(async (locale) => {
-      const le = entry.locales[locale];
-
-      if (!le?.content) {
-        return undefined;
+        return { action: 'update', slug, path, currentPath: path, ...getArrayItemTarget(entry) };
       }
 
-      const [previousSha, data] = await Promise.all([
-        getPreviousSha({ cacheDB, previousPath: le.path }),
-        formatEntryData({ draft, config, _file, entry, locale }),
-      ]);
+      const { slug, path, content } = entry.locales[locale] ?? {};
 
-      return /** @type {FileChange} */ ({
-        action: 'update',
-        slug: le.slug,
-        path: le.path,
-        previousSha,
-        data,
-      });
-    }),
-  );
-
-  return /** @type {FileChange[]} */ (localeChanges.filter(Boolean));
+      return content ? { action: 'update', slug, path, currentPath: path } : undefined;
+    },
+  });
 };

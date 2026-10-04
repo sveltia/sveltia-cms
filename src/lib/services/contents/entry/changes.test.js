@@ -20,9 +20,6 @@ vi.mock('$lib/services/contents/draft/save/changes', () => ({
       ? {}
       : { arrayItem: { index: entry.arrayIndex, locales: entry.locales } },
   ),
-  getPreviousSha: vi.fn(async ({ previousPath }) =>
-    previousPath ? `sha:${previousPath}` : undefined,
-  ),
 }));
 
 vi.mock('$lib/services/contents/draft/save/serialize', () => ({
@@ -103,7 +100,9 @@ describe('buildEntryUpdateChanges()', () => {
       locales: { _default: { slug: 'a', path: 'content/a.md', content: { title: 'A' } } },
     };
 
-    expect(await buildEntryUpdateChanges({ collection, entry, draft: {} })).toEqual([
+    const cacheDB = { get: vi.fn(async (path) => ({ sha: `sha:${path}` })) };
+
+    expect(await buildEntryUpdateChanges({ collection, entry, draft: {}, cacheDB })).toEqual([
       {
         action: 'update',
         slug: 'a',
@@ -159,6 +158,31 @@ describe('buildEntryUpdateChanges()', () => {
 
     expect(changes).toHaveLength(2);
     expect(changes.map(({ path }) => path)).toEqual(['en/a.md', 'fr/a.md']);
+  });
+
+  test('skips a locale missing from a multi-file entry', async () => {
+    const collection = {
+      name: 'posts',
+      _file,
+      _i18n: { i18nEnabled: true, allLocales: ['en', 'fr'], defaultLocale: 'en' },
+    };
+
+    const entry = {
+      slug: 'a',
+      locales: { en: { slug: 'a', path: 'en/a.md', content: { title: 'A' } } },
+    };
+
+    const cacheDB = { get: vi.fn(async (path) => ({ sha: `sha:${path}` })) };
+
+    expect(await buildEntryUpdateChanges({ collection, entry, draft: {}, cacheDB })).toEqual([
+      {
+        action: 'update',
+        slug: 'a',
+        path: 'en/a.md',
+        previousSha: 'sha:en/a.md',
+        data: 'formatted:{"title":"A"}',
+      },
+    ]);
   });
 
   test('passes the field comments for a single-file entry', async () => {

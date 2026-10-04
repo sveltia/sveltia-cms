@@ -26,7 +26,6 @@ vi.mock('$lib/services/contents/collection/entries/index-file', () => ({
 
 vi.mock('$lib/services/contents/draft/save/changes', () => ({
   getArrayItemTarget: vi.fn(() => ({})),
-  getPreviousSha: vi.fn().mockResolvedValue('sha-1'),
 }));
 
 vi.mock('$lib/services/contents/draft/save/serialize', () => ({
@@ -38,7 +37,15 @@ vi.mock('$lib/services/contents/file/format', () => ({
 }));
 
 vi.mock('@sveltia/utils/storage', () => ({
-  IndexedDB: vi.fn(),
+  // The file cache database the previous SHA of each file is looked up in
+  IndexedDB: vi.fn(
+    /**
+     *
+     */
+    class {
+      get = vi.fn(async () => ({ sha: 'sha-1' }));
+    },
+  ),
 }));
 
 /**

@@ -6,7 +6,6 @@ import { fillTemplate } from '$lib/services/common/template';
 import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
 import { buildNestedMoveChanges } from '$lib/services/contents/collection/nested/move';
 import { isEntryCollection } from '$lib/services/contents/collection/predicates';
-import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
 import {
   buildSingleFileContent,
   getFieldComments,
@@ -26,10 +25,6 @@ vi.mock('$lib/services/contents/collection/predicates', () => ({
 
 vi.mock('$lib/services/contents/collection/entries', () => ({
   getEntriesByCollection: vi.fn(() => []),
-}));
-
-vi.mock('$lib/services/contents/draft/save/changes', () => ({
-  getPreviousSha: vi.fn(async () => 'sha'),
 }));
 
 vi.mock('$lib/services/contents/draft/save/content', () => ({
@@ -66,6 +61,9 @@ const entry = (id, subPath) => ({
   },
 });
 
+/** File cache database the previous SHA of each file is looked up in. */
+const cacheDB = { get: vi.fn() };
+
 /** @type {any} */
 const collection = {
   name: 'pages',
@@ -85,9 +83,9 @@ beforeEach(() => {
   vi.mocked(isEntryCollection).mockImplementation(
     (_collection) => typeof _collection?.folder === 'string' && !Array.isArray(_collection?.files),
   );
-  vi.mocked(getPreviousSha).mockResolvedValue('sha');
+  cacheDB.get.mockResolvedValue({ sha: 'sha' });
   vi.mocked(createSyntheticDraft).mockReturnValue({ synthetic: true });
-  vi.mocked(resolveCacheDB).mockReturnValue(undefined);
+  vi.mocked(resolveCacheDB).mockReturnValue(cacheDB);
   vi.mocked(buildSingleFileContent).mockReturnValue({ title: 'Single' });
   vi.mocked(serializeContent).mockReturnValue({ title: 'Serialized' });
   vi.mocked(formatEntryFile).mockResolvedValue('formatted');
@@ -546,9 +544,7 @@ describe('buildNestedMoveChanges()', () => {
           data: 'formatted',
         },
       ]);
-      expect(vi.mocked(getPreviousSha)).toHaveBeenCalledWith(
-        expect.objectContaining({ previousPath: 'content/pages/fr/a-propos/equipe/_index.md' }),
-      );
+      expect(cacheDB.get).toHaveBeenCalledWith('content/pages/fr/a-propos/equipe/_index.md');
       expect(vi.mocked(serializeContent)).toHaveBeenCalledWith(
         expect.objectContaining({
           locale: 'fr',

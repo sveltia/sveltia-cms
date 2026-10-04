@@ -10,7 +10,8 @@ import {
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
 import { buildRenumberChanges } from '$lib/services/contents/collection/entries/reorder';
-import { getArrayItemTarget, getPreviousSha } from '$lib/services/contents/draft/save/changes';
+import { getArrayItemTarget } from '$lib/services/contents/draft/save/changes';
+import { getPreviousSha } from '$lib/services/contents/draft/save/file-changes';
 import {
   buildCascadeDeleteChanges,
   EMPTY_CASCADE_DELETE_PLAN,

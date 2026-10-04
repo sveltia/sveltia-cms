@@ -7,8 +7,7 @@ import {
   getNestedConfig,
   isDescendantPath,
 } from '$lib/services/contents/collection/nested';
-import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
-import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
+import { buildEntryFileChanges } from '$lib/services/contents/draft/save/file-changes';
 import { hasLocalizedSlugs } from '$lib/services/contents/draft/slugs';
 import { createSyntheticDraft, resolveCacheDB } from '$lib/services/contents/entry/changes';
 import { resolveFileConfig } from '$lib/services/contents/file/config';
@@ -22,6 +21,7 @@ import { resolveFileConfig } from '$lib/services/contents/file/config';
  * InternalEntryCollection,
  * InternalLocaleCode,
  * } from '$lib/types/private';
+ * @import { EntryFilePlan } from '$lib/services/contents/draft/save/file-changes';
  */
 
 /**
@@ -170,33 +170,27 @@ const updateCanonicalSlug = ({ collection, entry }) => {
  * @see https://github.com/sveltia/sveltia-cms/issues/984
  */
 const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, cacheDB }) => {
-  const {
-    _i18n: {
-      i18nEnabled,
-      allLocales,
-      defaultLocale,
-      structureMap: { i18nSingleFile, i18nSingleFileDefaultRoot } = {},
-    },
-  } = /** @type {InternalEntryCollection} */ (collection);
+  const { defaultLocale } = collection._i18n;
 
-  const _file = resolveFileConfig({ collection, isIndexFile: draft.isIndexFile });
+  return buildEntryFileChanges({
+    draft,
+    config: collection,
+    _file: resolveFileConfig({ collection, isIndexFile: draft.isIndexFile }),
+    entry: movedEntry,
+    cacheDB,
+    /**
+     * Plan the change to a file of the entry.
+     * @param {InternalLocaleCode} [locale] Locale of the file, or `undefined` for the single file.
+     * @returns {EntryFilePlan | undefined} Planned change.
+     */
+    planChange: (locale) => {
+      if (locale === undefined) {
+        const previousPath = originalEntry.locales[defaultLocale].path;
+        const { slug, path } = movedEntry.locales[defaultLocale];
 
-  if (!i18nEnabled || i18nSingleFile || i18nSingleFileDefaultRoot) {
-    const previousPath = originalEntry.locales[defaultLocale].path;
-    const { slug, path } = movedEntry.locales[defaultLocale];
+        return { action: 'move', slug, path, previousPath, currentPath: previousPath };
+      }
 
-    const [previousSha, data] = await Promise.all([
-      getPreviousSha({ cacheDB, previousPath }),
-      formatEntryData({ draft, config: collection, _file, entry: movedEntry }),
-    ]);
-
-    return [
-      /** @type {FileChange} */ ({ action: 'move', slug, path, previousPath, previousSha, data }),
-    ];
-  }
-
-  const localeChanges = await Promise.all(
-    allLocales.map(async (locale) => {
       const localizedEntry = movedEntry.locales[locale];
 
       if (!localizedEntry?.content) {
@@ -214,23 +208,15 @@ const buildMoveChanges = async ({ collection, originalEntry, movedEntry, draft, 
         return undefined;
       }
 
-      const [previousSha, data] = await Promise.all([
-        getPreviousSha({ cacheDB, previousPath }),
-        formatEntryData({ draft, config: collection, _file, entry: movedEntry, locale }),
-      ]);
-
-      return /** @type {FileChange} */ ({
+      return {
         action: moved ? 'move' : 'update',
         slug: localizedEntry.slug,
         path: localizedEntry.path,
         previousPath: moved ? previousPath : undefined,
-        previousSha,
-        data,
-      });
-    }),
-  );
-
-  return /** @type {FileChange[]} */ (localeChanges.filter(Boolean));
+        currentPath: previousPath,
+      };
+    },
+  });
 };
 
 /**

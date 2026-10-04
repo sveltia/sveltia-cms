@@ -39,6 +39,10 @@ vi.mock('@sveltia/utils/storage', () => ({
 
 vi.mock('$lib/services/contents/draft/save/changes', async (importOriginal) => ({
   getArrayItemTarget: /** @type {any} */ (await importOriginal()).getArrayItemTarget,
+}));
+
+vi.mock('$lib/services/contents/draft/save/file-changes', async (importOriginal) => ({
+  .../** @type {any} */ (await importOriginal()),
   getPreviousSha: vi.fn().mockResolvedValue('mock-sha-123'),
 }));
 
