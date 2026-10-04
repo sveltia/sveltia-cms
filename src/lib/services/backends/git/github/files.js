@@ -231,18 +231,29 @@ export const parseFileContents = async (fetchingFiles, results) => {
  */
 export const parseFileMetadata = (fetchingFiles, results) =>
   Object.fromEntries(
-    fetchingFiles.map(({ path }, index) => {
-      const {
-        author: { name, email, user: _user },
-        committedDate,
-      } = results[index].target.history.nodes[0];
+    fetchingFiles.flatMap(({ path }, index) => {
+      const commit = results[index]?.target?.history?.nodes?.[0];
+
+      // The file may have been deleted since the tree was fetched, leaving no commit to read. Skip
+      // it rather than losing the metadata of every other file; it’s fetched again next time
+      if (!commit) {
+        return [];
+      }
+
+      const { author, committedDate } = commit;
+      const user = author?.user;
 
       return [
-        path,
-        {
-          commitAuthor: { name, email, id: _user?.id, login: _user?.login },
-          commitDate: new Date(committedDate),
-        },
+        [
+          path,
+          {
+            // The author can be `null` when the commit has no valid author info
+            commitAuthor: author
+              ? { name: author.name, email: author.email, id: user?.id, login: user?.login }
+              : undefined,
+            commitDate: new Date(committedDate),
+          },
+        ],
       ];
     }),
   );

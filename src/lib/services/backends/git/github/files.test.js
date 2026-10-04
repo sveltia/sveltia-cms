@@ -320,6 +320,41 @@ describe('GitHub files service', () => {
         },
       });
     });
+
+    test('skips a file without a commit and tolerates a missing author', () => {
+      const fetchingFiles = /** @type {any[]} */ ([
+        { path: 'deleted.md', sha: 'sha1', size: 100 },
+        { path: 'missing.md', sha: 'sha2', size: 100 },
+        { path: 'anonymous.md', sha: 'sha3', size: 100 },
+        { path: 'file.md', sha: 'sha4', size: 100 },
+      ]);
+
+      const results = [
+        // A file deleted between the tree fetch and the metadata pass
+        { target: { history: { nodes: [] } } },
+        null,
+        {
+          target: { history: { nodes: [{ author: null, committedDate: '2023-01-03T00:00:00Z' }] } },
+        },
+        createCommit('Author 1', { id: 'user1', login: 'author1' }, '2023-01-01T00:00:00Z'),
+      ];
+
+      expect(parseFileMetadata(fetchingFiles, results)).toEqual({
+        'anonymous.md': {
+          commitAuthor: undefined,
+          commitDate: new Date('2023-01-03T00:00:00Z'),
+        },
+        'file.md': {
+          commitAuthor: {
+            name: 'Author 1',
+            email: 'Author 1@example.com',
+            id: 'user1',
+            login: 'author1',
+          },
+          commitDate: new Date('2023-01-01T00:00:00Z'),
+        },
+      });
+    });
   });
 
   describe('fetchFileContents', () => {

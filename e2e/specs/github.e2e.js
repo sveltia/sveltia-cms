@@ -47,6 +47,35 @@ test('lists the entries of a repository too big to list at once', async ({ cms, 
   await expect(page.getByRole('row', { name: /First Post/ })).toBeVisible();
 });
 
+test.describe('with the commit date as a sortable field', () => {
+  test.use({
+    config: {
+      ...GITHUB_CONFIG,
+      collections: [{ ...GITHUB_CONFIG.collections[0], sortable_fields: ['title', 'commit_date'] }],
+    },
+  });
+
+  test('sorts the entries by their commits, although a file has no commit', async ({
+    cms,
+    github,
+    page,
+  }) => {
+    github.commit({ 'content/posts/second-post.md': '---\ntitle: Second Post\n---\n' });
+    github.commit({ 'content/posts/third-post.md': '---\ntitle: Third Post\n---\n' });
+    // The file was deleted after the CMS fetched the file tree, so no commit is found for it
+    github.pathsWithoutHistory.add('content/posts/second-post.md');
+
+    await cms.open();
+    await expect(page.getByRole('row')).toHaveCount(3);
+    // The commit metadata is fetched after the entries are listed
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Sort', exact: true }),
+      page.getByRole('menuitemradio', { name: /Updated on.*new to old/ }),
+    );
+    await expect(page.getByRole('row')).toHaveText([/Third Post/, /First Post/, /Second Post/]);
+  });
+});
+
 test('refuses a user who can only read the repository', async ({ cms, github, page }) => {
   github.canWrite = false;
 

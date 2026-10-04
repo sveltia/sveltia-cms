@@ -162,6 +162,13 @@ export class MockGitHub {
   rateLimited = false;
 
   /**
+   * Paths of the files whose commit history comes back empty, as for a file deleted since the CMS
+   * fetched the file tree.
+   * @type {Set<string>}
+   */
+  pathsWithoutHistory = new Set();
+
+  /**
    * Whether the recursive listing of a commit’s file tree is truncated, as GitHub does for a tree
    * with too many entries, so the CMS has to list the directories one by one. The listing then only
    * has the files and directories at the top level.
@@ -1588,6 +1595,10 @@ export class MockGitHub {
    * @returns {Record<string, any>[]} Commit nodes.
    */
   getHistory(branch, path, first) {
+    if (this.pathsWithoutHistory.has(path)) {
+      return [];
+    }
+
     return this.getAncestors(this.getHead(branch).oid)
       .filter(({ paths, parents }) => paths.has(path) && parents.length < 2)
       .slice(0, first)
