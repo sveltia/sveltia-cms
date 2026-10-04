@@ -81,8 +81,7 @@
         useWorkflow: isWorkflowEnabled(collection),
       });
 
-      // Only the deletion of published entries is reported here; discarding drafts alone isn’t
-      if (toastState && publishedEntries.length) {
+      if (toastState) {
         contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, ...toastState };
       }
     } catch (/** @type {any} */ ex) {

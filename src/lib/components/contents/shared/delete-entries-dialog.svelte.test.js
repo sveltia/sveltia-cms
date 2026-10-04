@@ -6,7 +6,10 @@ import { render } from 'vitest-browser-svelte';
 import { allAssetFolders } from '$lib/services/assets/folders';
 import { backendName } from '$lib/services/backends';
 import { getCollection, selectedCollection } from '$lib/services/contents/collection';
-import { contentUpdatesToast } from '$lib/services/contents/collection/data';
+import {
+  contentUpdatesToast,
+  UPDATE_TOAST_DEFAULT_STATE,
+} from '$lib/services/contents/collection/data';
 import { deleteEntries } from '$lib/services/contents/collection/data/delete';
 import { selectedEntries } from '$lib/services/contents/collection/entries';
 import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
@@ -101,6 +104,7 @@ describe('DeleteEntriesDialog', () => {
 
   test('discards an unpublished entry instead of deleting it', async () => {
     vi.mocked(discardWorkflowEntries).mockResolvedValue(undefined);
+    contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE };
 
     const draft = createMockEntry({
       slug: 'd',
@@ -114,6 +118,10 @@ describe('DeleteEntriesDialog', () => {
 
     await vi.waitFor(() => expect(discardWorkflowEntries).toHaveBeenCalledWith([draft]));
     expect(deleteEntries).not.toHaveBeenCalled();
+    // The draft is gone for good, as nothing was published
+    expect(contentUpdatesToast.current).toEqual(
+      expect.objectContaining({ deleted: true, deletionPending: false, count: 1 }),
+    );
   });
 
   test('notes the unpublished entries among the selected ones', async () => {
