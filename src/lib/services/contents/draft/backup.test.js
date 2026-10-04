@@ -1487,6 +1487,28 @@ describe('draft/backup', () => {
       // Called with '' slug (new entry: originalEntry?.slug → undefined → ?? '' → '')
       expect(mockBackupDB.get).toHaveBeenCalledWith(['posts', '']);
     });
+
+    it('should look up the backup of a file entry whose file doesn’t exist yet by file name', async () => {
+      mockPrefs.useDraftBackup = true;
+      cmsConfigVersion.current = 'v1.0.0';
+      backupToastState.current = { saved: false, restored: false, deleted: false };
+
+      mockBackupDB.get.mockResolvedValue({
+        timestamp: new Date(),
+        cmsConfigVersion: 'v1.0.0',
+        collectionName: 'pages',
+        slug: 'about',
+      });
+
+      await showBackupToastIfNeeded({
+        collectionName: 'pages',
+        fileName: 'about',
+        originalEntry: undefined,
+      });
+
+      expect(mockBackupDB.get).toHaveBeenCalledWith(['pages', 'about']);
+      expect(backupToastState.current.saved).toBe(true);
+    });
   });
 
   describe('resetBackupToastState', () => {

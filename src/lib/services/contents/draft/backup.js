@@ -365,8 +365,7 @@ export const showBackupToastIfNeeded = async (draft) => {
     return;
   }
 
-  const { collectionName, originalEntry } = draft;
-  const backup = await getBackup(collectionName, originalEntry?.slug);
+  const backup = await getBackup(draft.collectionName, getBackupSlug(draft));
 
   if (backup) {
     backupToastState.current = { restored: false, deleted: false, saved: true };
