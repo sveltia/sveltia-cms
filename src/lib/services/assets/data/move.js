@@ -19,6 +19,7 @@ import { getSlugs } from '$lib/services/contents/draft/slugs';
 import { getAssociatedCollections } from '$lib/services/contents/entry/collections';
 import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { encodeFilePath } from '$lib/services/utils/file';
 
 /**
  * @import {
@@ -166,6 +167,9 @@ const getRenamedReference = (oldName, newName) => (src) => {
   const [from, to] =
     [
       [oldName, newName],
+      // The form the `encode_file_path` option saves a reference in
+      [encodeFilePath(oldName), encodeFilePath(newName)],
+      // A reference encoded by hand, which leaves characters like `(` and `)` as they are
       [encodeURI(oldName), encodeURI(newName)],
     ].find(([name]) => src === name || src.endsWith(`/${name}`)) ?? [];
 

@@ -752,6 +752,35 @@ describe('assets/data/move', () => {
       expect(newURL('not-my photo.png')).toBeUndefined();
     });
 
+    it('should swap a file name encoded with the `encode_file_path` option when renaming', async () => {
+      const { getAssetPublicURL } = await import('$lib/services/assets/info');
+      const { getEntriesByAssets } = await import('$lib/services/assets/references');
+      const entry = { id: 'entry1', locales: {} };
+
+      const asset = {
+        path: 'content/posts/hello/photo (1).png',
+        name: 'photo (1).png',
+        folder: { internalPath: 'content/posts', entryRelative: true },
+      };
+
+      vi.mocked(getAssetPublicURL).mockReturnValue(undefined);
+      vi.mocked(getEntriesByAssets).mockResolvedValue([[entry]]);
+
+      await collectEntryChangesFromAssets({
+        _globalAssetFolder: { publicPath: '/images' },
+        movingAssets: [{ asset, path: 'content/posts/hello/photo (2).png' }],
+        updatingEntryMap: new Map(),
+      });
+
+      const [[{ newURL }]] = vi.mocked(getEntriesByAssets).mock.lastCall;
+
+      // `encodeFilePath()` encodes `(` and `)` as well, unlike `encodeURI()`
+      expect(newURL('photo%20%281%29.png')).toBe('photo%20%282%29.png');
+      expect(newURL('./photo%20%281%29.png')).toBe('./photo%20%282%29.png');
+      // A name encoded by hand is still matched
+      expect(newURL('photo%20(1).png')).toBe('photo%20(2).png');
+    });
+
     it('should fall back to the folder paths when an entry-relative asset changes folders', async () => {
       const { getAssetPublicURL } = await import('$lib/services/assets/info');
       const { getEntriesByAssets } = await import('$lib/services/assets/references');
