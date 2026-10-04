@@ -6,12 +6,14 @@ import { announcedPageStatus, mainAreaTitle } from '$lib/services/app/navigation
 import { backendName } from '$lib/services/backends';
 import { selectedCollection } from '$lib/services/contents/collection';
 import { entryListSettings } from '$lib/services/contents/collection/view/settings';
+import { backupToastState, showBackupToastIfNeeded } from '$lib/services/contents/draft/backup';
 import { showContentOverlay } from '$lib/services/contents/editor';
 import { entryEditorSettings } from '$lib/services/contents/editor/settings';
 import { searchMode, searchTerms } from '$lib/services/search';
 import { env } from '$lib/services/user/env.svelte';
 import { unpublishedEntries, unpublishedEntriesLoaded } from '$lib/services/workflow';
 import { createMockEntry, initTestConfig, setEntries } from '$lib/test/config';
+import { waitForToastsToHide } from '$lib/test/toast';
 
 import ContentsPage from './contents-page.svelte';
 
@@ -155,6 +157,31 @@ describe('ContentsPage', () => {
     await editor.getByRole('button', { name: 'Cancel Editing' }).click();
     await expect.poll(() => window.location.hash).toBe('#/collections/posts');
     await expect.poll(() => showContentOverlay.current).toBe(false);
+  });
+
+  test('tells the user about the draft backup once the editor is closed', async () => {
+    vi.mocked(showBackupToastIfNeeded).mockImplementationOnce(async () => {
+      backupToastState.current.saved = true;
+    });
+    window.location.hash = '#/collections/posts/entries/hello';
+
+    await render(ContentsPage);
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    await expect.element(editor.getByRole('textbox', { name: 'title' })).toHaveValue('Hello');
+    // Nothing to tell while the entry is open
+    expect(showBackupToastIfNeeded).not.toHaveBeenCalled();
+
+    await editor.getByRole('button', { name: 'Cancel Editing' }).click();
+    await expect.poll(() => showContentOverlay.current).toBe(false);
+    expect(showBackupToastIfNeeded).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ collectionName: 'posts' }),
+    );
+    // The toast outlives the overlay
+    await expect.element(page.getByRole('status')).toMatchTextContent('Draft backup saved.');
+    await waitForToastsToHide();
+    expect(backupToastState.current.saved).toBe(false);
   });
 
   test('waits for the drafts before opening a deep link with Editorial Workflow', async () => {

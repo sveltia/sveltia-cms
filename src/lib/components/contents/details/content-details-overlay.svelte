@@ -16,7 +16,6 @@
   import { sleep } from '@sveltia/utils/misc';
   import { onMount, tick, untrack } from 'svelte';
 
-  import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import PaneBody from '$lib/components/contents/details/pane-body.svelte';
   import PaneHeader from '$lib/components/contents/details/pane-header.svelte';
   import RemoteChangeInfobar from '$lib/components/contents/details/remote-change-infobar.svelte';
@@ -28,11 +27,7 @@
   import { getReadonlyMessage, isDraftReadonly } from '$lib/services/config/readonly';
   import { selectedCollection } from '$lib/services/contents/collection';
   import { collectionState } from '$lib/services/contents/collection/view';
-  import {
-    resetBackupToastState,
-    scheduleBackup,
-    showBackupToastIfNeeded,
-  } from '$lib/services/contents/draft/backup';
+  import { resetBackupToastState, scheduleBackup } from '$lib/services/contents/draft/backup';
   import { getValueMapVersion } from '$lib/services/contents/draft/create/proxy.svelte';
   import {
     setEntryDraftContext,
@@ -425,9 +420,9 @@
     /* v8 ignore next -- the wrapper is bound as long as the overlay is mounted */
     if (wrapper) {
       (async () => {
-        if (!showContentOverlay.current) {
-          await showBackupToastIfNeeded(entryDraft.current);
-        } else if (hidden) {
+        // The overlay is only rendered while it’s shown, so there is nothing to do once it’s
+        // closed; the page shows the backup toast then
+        if (hidden) {
           hidden = false;
           await switchPanes();
           await focusOverlay(() => wrapper);
@@ -455,7 +450,7 @@
       data-locale={locale}
       data-mode={mode}
     >
-      <PaneHeader id="{position}-pane-header" {thisPane} {thatPane} />
+      <PaneHeader id={`${position}-pane-header`} {thisPane} {thatPane} />
       {#if position === 'first'}
         <PaneBody
           id="first-pane-body"
@@ -591,8 +586,6 @@
     {/if}
   {/key}
 </div>
-
-<BackupFeedback />
 
 <Toast bind:show={showDuplicateToast.current}>
   <Alert status="success">

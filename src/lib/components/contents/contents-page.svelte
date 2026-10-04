@@ -4,6 +4,7 @@
 
   import PageContainerMainArea from '$lib/components/common/page-container-main-area.svelte';
   import PageContainer from '$lib/components/common/page-container.svelte';
+  import BackupFeedback from '$lib/components/contents/details/backup-feedback.svelte';
   import ContentDetailsOverlay from '$lib/components/contents/details/content-details-overlay.svelte';
   import EntryList from '$lib/components/contents/list/entry-list.svelte';
   import FileList from '$lib/components/contents/list/file-list.svelte';
@@ -16,10 +17,12 @@
   import { updateContentFromHashChange } from '$lib/services/app/navigation';
   import { getCollectionLabel, selectedCollection } from '$lib/services/contents/collection';
   import { listedEntries, listedUnpublishedEntries } from '$lib/services/contents/collection/view';
+  import { showBackupToastIfNeeded } from '$lib/services/contents/draft/backup';
   import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
   import { showContentOverlay } from '$lib/services/contents/editor';
   import { CONTENTS_ROUTE_REGEX, resolveContentsRoute } from '$lib/services/contents/navigation';
   import { env } from '$lib/services/user/env.svelte';
+  import { watch } from '$lib/services/utils/state.svelte';
   import { workflowDataReady } from '$lib/services/workflow';
 
   /**
@@ -63,6 +66,17 @@
       showContentOverlay.current = false;
     };
   });
+
+  watch(
+    () => showContentOverlay.current,
+    () => {
+      if (!showContentOverlay.current) {
+        // The draft is kept once the editor is closed, so its backup can be looked up. There is no
+        // draft before an entry has been opened
+        showBackupToastIfNeeded(entryDraft.current);
+      }
+    },
+  );
 
   $effect(() => {
     if (awaitingDrafts && workflowDataReady.current) {
@@ -130,3 +144,6 @@
 {#if showContentOverlay.current}
   <ContentDetailsOverlay {entryDraft} {editorLocale} loading={awaitingDrafts} />
 {/if}
+
+<!-- Outside the overlay, so the toast can tell the user about the backup once it’s closed -->
+<BackupFeedback />

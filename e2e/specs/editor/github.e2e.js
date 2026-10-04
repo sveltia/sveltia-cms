@@ -219,6 +219,57 @@ test.describe('draft backup', () => {
     await expect(page.getByRole('alertdialog', { name: 'Restore Draft' })).toBeHidden();
   });
 
+  test('tells the user that the backup has been saved on leaving the editor', async ({
+    cms,
+    page,
+  }) => {
+    await cms.open();
+    await editAndLeave(page, async (editor) => {
+      await typeIn(editor.getByRole('textbox', { name: 'Title' }), 'Backed-up Post');
+    });
+    await expect(page.getByRole('status').filter({ hasText: 'Draft backup saved.' })).toBeVisible();
+  });
+
+  test.describe('file entry whose file doesn’t exist yet', () => {
+    test.use({
+      config: {
+        ...GITHUB_CONFIG,
+        collections: [
+          {
+            name: 'pages',
+            label: 'Pages',
+            files: [
+              {
+                name: 'about',
+                label: 'About',
+                file: 'content/about.md',
+                fields: [{ name: 'title', label: 'Title' }],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    test('tells the user that the backup has been saved on leaving the editor', async ({
+      cms,
+      page,
+    }) => {
+      await cms.open();
+      await page.getByRole('row', { name: /About/ }).click();
+
+      const editor = page.getByRole('group', { name: 'Content Editor' });
+
+      await typeIn(editor.getByRole('textbox', { name: 'Title' }), 'About Us');
+      // The draft is backed up 500 ms after the last change
+      await page.waitForTimeout(1000);
+      await editor.getByRole('button', { name: 'Cancel Editing' }).click();
+      await expect(
+        page.getByRole('status').filter({ hasText: 'Draft backup saved.' }),
+      ).toBeVisible();
+    });
+  });
+
   test('doesn’t back up an entry that was only opened', async ({ cms, page }) => {
     await cms.open();
     await editAndLeave(page, async () => {});
