@@ -23,7 +23,8 @@ import { prefs } from '$lib/services/user/prefs.svelte';
 import { formatDate } from '$lib/services/utils/date';
 import { unpublishedEntries } from '$lib/services/workflow';
 import {
-  deleteWorkflowEntry,
+  deleteWorkflowEntries,
+  discardWorkflowEntries,
   discardWorkflowEntry,
   updateWorkflowStatus,
 } from '$lib/services/workflow/save';
@@ -1198,7 +1199,7 @@ describe('Toolbar', () => {
     test('deletes an unpublished entry by discarding its pull request', async () => {
       // Nothing has been published yet
       setEntries([]);
-      vi.mocked(discardWorkflowEntry).mockResolvedValue(undefined);
+      vi.mocked(discardWorkflowEntries).mockResolvedValue(undefined);
 
       await renderExisting();
       await (await openMenu()).getByRole('menuitem', { name: 'Delete Entry' }).click();
@@ -1212,14 +1213,16 @@ describe('Toolbar', () => {
         );
       await dialog.getByRole('button', { name: 'Delete' }).click();
 
-      await vi.waitFor(() => expect(discardWorkflowEntry).toHaveBeenCalledWith(unpublishedEntry));
+      await vi.waitFor(() =>
+        expect(discardWorkflowEntries).toHaveBeenCalledWith([unpublishedEntry]),
+      );
       await expect.poll(() => contentUpdatesToast.current.deleted).toBe(true);
       await expect.poll(() => window.location.hash).toBe('#/collections/posts');
     });
 
     test('proposes the deletion of a published entry', async () => {
       setEntries([helloEntry]);
-      vi.mocked(deleteWorkflowEntry).mockResolvedValue(/** @type {any} */ (undefined));
+      vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
 
       await renderExisting();
       await (await openMenu()).getByRole('menuitem', { name: 'Delete' }).click();
@@ -1232,7 +1235,7 @@ describe('Toolbar', () => {
       );
       await dialog.getByRole('button', { name: 'Delete' }).click();
 
-      await vi.waitFor(() => expect(deleteWorkflowEntry).toHaveBeenCalled());
+      await vi.waitFor(() => expect(deleteWorkflowEntries).toHaveBeenCalled());
       await expect.poll(() => contentUpdatesToast.current.deletionPending).toBe(true);
     });
 
@@ -1290,7 +1293,7 @@ describe('Toolbar', () => {
         createMockEntry({ slug: 'a', content: { _default: { title: 'A', tag: 'travel' } } }),
       ]);
       unpublishedEntries.current = [renamedTag];
-      vi.mocked(deleteWorkflowEntry).mockResolvedValue(/** @type {any} */ (undefined));
+      vi.mocked(deleteWorkflowEntries).mockResolvedValue(undefined);
       window.location.hash = '#/collections/tags/entries/trips';
 
       await renderToolbar({

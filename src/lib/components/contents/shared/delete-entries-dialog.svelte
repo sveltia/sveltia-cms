@@ -8,7 +8,6 @@
     contentUpdatesToast,
     UPDATE_TOAST_DEFAULT_STATE,
   } from '$lib/services/contents/collection/data';
-  import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries, listedUnpublishedEntries } from '$lib/services/contents/collection/view';
   import { getEntryRelativeAssets } from '$lib/services/contents/entry/assets';
@@ -17,7 +16,7 @@
     planCascadeDelete,
   } from '$lib/services/contents/entry/relations/cascade/delete';
   import { isWorkflowEnabled } from '$lib/services/workflow';
-  import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
+  import { deleteOrDiscardEntries } from '$lib/services/workflow/delete';
 
   /**
    * @import { Entry, UnpublishedEntry } from '$lib/types/private';
@@ -60,12 +59,10 @@
   const publishedEntryAssets = $derived.by(() => {
     const collectionName = selectedCollection.current?.name;
 
-    return collectionName
-      ? publishedEntries.map((entry) => ({
-          entry,
-          assets: getEntryRelativeAssets({ entry, collectionName }),
-        }))
-      : [];
+    return publishedEntries.map((entry) => ({
+      entry,
+      assets: collectionName ? getEntryRelativeAssets({ entry, collectionName }) : [],
+    }));
   });
   const associatedAssets = $derived(publishedEntryAssets.flatMap(({ assets }) => assets));
 
@@ -75,34 +72,18 @@
    */
   const deleteSelectedEntries = async () => {
     try {
-      if (draftEntries.length) {
-        await discardWorkflowEntries(draftEntries);
-      }
+      const collection = selectedCollection.current;
 
-      if (publishedEntries.length) {
-        const collection = selectedCollection.current;
+      const toastState = await deleteOrDiscardEntries({
+        drafts: draftEntries,
+        items: publishedEntryAssets,
+        collection,
+        useWorkflow: isWorkflowEnabled(collection),
+      });
 
-        if (collection && isWorkflowEnabled(collection)) {
-          // Committing the removals straight to the configured branch would bypass review and be
-          // rejected outright when the branch is protected
-          // @see https://github.com/decaporg/decap-cms/issues/6610
-          await deleteWorkflowEntries(
-            publishedEntryAssets.map(({ entry, assets }) => ({
-              entry,
-              collection: /** @type {any} */ (collection),
-              assets,
-            })),
-          );
-
-          contentUpdatesToast.current = {
-            ...UPDATE_TOAST_DEFAULT_STATE,
-            deleted: true,
-            deletionPending: true,
-            count: publishedEntries.length,
-          };
-        } else {
-          await deleteEntries(publishedEntries, associatedAssets);
-        }
+      // Only the deletion of published entries is reported here; discarding drafts alone isn’t
+      if (toastState && publishedEntries.length) {
+        contentUpdatesToast.current = { ...UPDATE_TOAST_DEFAULT_STATE, ...toastState };
       }
     } catch (/** @type {any} */ ex) {
       showErrorToast = true;

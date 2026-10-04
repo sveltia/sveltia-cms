@@ -32,7 +32,6 @@
     contentUpdatesToast,
     UPDATE_TOAST_DEFAULT_STATE,
   } from '$lib/services/contents/collection/data';
-  import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { getCollectionFileLabel } from '$lib/services/contents/collection/files';
   import { isNestedCollection, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
@@ -72,16 +71,13 @@
     isWorkflowEnabled,
     workflowEnabled,
   } from '$lib/services/workflow';
+  import { deleteOrDiscardEntries } from '$lib/services/workflow/delete';
   import { getDiscardDialogStrings } from '$lib/services/workflow/dialogs';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
-  import {
-    deleteWorkflowEntry,
-    discardWorkflowEntry,
-    updateWorkflowStatus,
-  } from '$lib/services/workflow/save';
+  import { discardWorkflowEntry, updateWorkflowStatus } from '$lib/services/workflow/save';
 
   /**
-   * @import { UnpublishedEntry, UpdateToastState } from '$lib/types/private';
+   * @import { Entry, UnpublishedEntry, UpdateToastState } from '$lib/types/private';
    * @import { EntryConflict } from '$lib/services/contents/draft/save/conflict';
    * @import { ResetAction } from '$lib/services/contents/editor/reset';
    */
@@ -343,28 +339,20 @@
    * to remove.
    */
   const deleteEntry = async () => {
-    await runDeletion(async () => {
-      if (unpublishedEntry && !publishedVersionExists) {
-        await discardWorkflowEntry(unpublishedEntry);
-
-        // Nothing was published, so the entry really is gone
-        return { deleted: true };
-      }
-
-      if (originalEntry && useWorkflow && collection) {
-        await deleteWorkflowEntry(originalEntry, collection, collectionFile, associatedAssets);
-
-        return { deleted: true, deletionPending: true };
-      }
-
-      /* v8 ignore next 4 -- the option is only offered for an existing entry */
-      if (originalEntry) {
-        // `deleteEntries()` reports the outcome itself
-        await deleteEntries([originalEntry], associatedAssets);
-      }
-
-      return undefined;
-    }, 'workflow.deleting_entry');
+    await runDeletion(
+      () =>
+        deleteOrDiscardEntries({
+          drafts: discardsDraft ? [/** @type {UnpublishedEntry} */ (unpublishedEntry)] : [],
+          // The option is only offered for an existing entry
+          items: discardsDraft
+            ? []
+            : [{ entry: /** @type {Entry} */ (originalEntry), assets: associatedAssets }],
+          collection,
+          collectionFile,
+          useWorkflow,
+        }),
+      'workflow.deleting_entry',
+    );
   };
 
   /**
