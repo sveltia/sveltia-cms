@@ -2,6 +2,7 @@ import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { splitIntoChunks } from '$lib/services/utils/array';
 import {
   getAllStatusLabels,
@@ -298,22 +299,11 @@ export const fetchPullRequests = async () => {
  * @see https://docs.gitlab.com/api/branches/#delete-repository-branch
  */
 export const deleteBranch = async (branch) => {
-  try {
-    await fetchAPI(
-      `/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`,
-      { method: 'DELETE', responseType: 'text' },
-    );
-  } catch (/** @type {any} */ ex) {
-    // The branch is already gone, which is what was wanted
-    if (ex.cause?.status === 404) {
-      return;
-    }
-
-    // Leaving the branch behind is harmless, but it makes the next merge request for the same entry
-    // start from an existing branch, so make the failure visible rather than swallowing it
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to delete the ${branch} branch.`, ex);
-  }
+  await deleteRemoteBranch({
+    branch,
+    path: `/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`,
+    goneStatuses: [404],
+  });
 };
 
 /**

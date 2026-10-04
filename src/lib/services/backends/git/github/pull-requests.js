@@ -5,6 +5,7 @@ import { repository } from '$lib/services/backends/git/github/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
 import { encodePath } from '$lib/services/backends/git/shared/url';
+import { deleteRemoteBranch } from '$lib/services/backends/git/shared/workflow';
 import { getAllStatusLabels, getStatusLabel } from '$lib/services/workflow/labels';
 import { forkedRepository } from '$lib/services/workflow/open-authoring';
 
@@ -174,23 +175,12 @@ export const fetchPullRequestFiles = async (pullRequests) => {
 export const deleteBranch = async (branch) => {
   const { owner, repo } = getWorkflowRepository();
 
-  try {
-    await fetchAPI(`/repos/${owner}/${repo}/git/refs/heads/${encodePath(branch)}`, {
-      method: 'DELETE',
-      responseType: 'text',
-    });
-  } catch (/** @type {any} */ ex) {
-    // The branch is already gone, which is what was wanted. GitHub answers a missing reference with
-    // a 422 rather than a 404
-    if ([404, 422].includes(ex.cause?.status)) {
-      return;
-    }
-
-    // Leaving the branch behind is harmless, but it makes the next pull request for the same entry
-    // start from an existing branch, so make the failure visible rather than swallowing it
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to delete the ${branch} branch.`, ex);
-  }
+  await deleteRemoteBranch({
+    branch,
+    path: `/repos/${owner}/${repo}/git/refs/heads/${encodePath(branch)}`,
+    // GitHub answers a missing reference with a 422 rather than a 404
+    goneStatuses: [404, 422],
+  });
 };
 
 /**
