@@ -425,6 +425,64 @@ describe('Gitea Commits Service', () => {
         expect(fetchAPIMock.mock.calls[0][1].body.files[0].sha).toBe('known-blob-sha');
       });
 
+      test.each([
+        { action: 'update', path: 'a b.md', previousPath: undefined, lookupPath: 'a%20b.md' },
+        { action: 'update', path: 'a.md', previousSha: '', lookupPath: 'a.md' },
+        { action: 'delete', path: 'dir/c#.md', previousPath: undefined, lookupPath: 'dir/c%23.md' },
+        { action: 'move', path: 'new.md', previousPath: 'old.md', lookupPath: 'old.md' },
+      ])(
+        'looks up a missing blob SHA for $action as of the loaded commit, not the branch head',
+        async ({ lookupPath, ...change }) => {
+          fetchAPIMock.mockResolvedValueOnce({ sha: 'known-at-head-sha' }).mockResolvedValueOnce({
+            commit: { sha: 'c1', created: '2023-01-01T00:00:00Z' },
+            files: [],
+          });
+
+          await commitChanges(
+            [/** @type {FileChange} */ ({ slug: 'a', data: 'x', ...change })],
+            options,
+          );
+
+          expect(fetchAPIMock).toHaveBeenCalledTimes(2);
+          expect(fetchAPIMock.mock.calls[0]).toEqual([
+            `/repos/test-owner/test-repo/contents/${lookupPath}?ref=loaded-head-sha`,
+          ]);
+          expect(fetchAPIMock.mock.calls[1][1].body.files[0].sha).toBe('known-at-head-sha');
+        },
+      );
+
+      test('doesn’t look up a SHA for a new file', async () => {
+        fetchAPIMock.mockResolvedValueOnce({
+          commit: { sha: 'c1', created: '2023-01-01T00:00:00Z' },
+          files: [{ path: 'n.md', sha: 'new-blob-sha' }],
+        });
+
+        await commitChanges([{ action: 'create', slug: 'n', path: 'n.md', data: 'x' }], options);
+
+        expect(fetchAPIMock).toHaveBeenCalledTimes(1);
+        expect(fetchAPIMock.mock.calls[0][1].body.files[0].sha).toBeUndefined();
+      });
+
+      test('doesn’t commit a change without a SHA if the lookup fails', async () => {
+        const lookupError = new Error('Server responded with an error', { cause: { status: 404 } });
+
+        fetchAPIMock.mockRejectedValueOnce(lookupError);
+
+        await expect(
+          commitChanges([{ action: 'update', slug: 'a', path: 'a.md', data: 'x' }], options),
+        ).rejects.toBe(lookupError);
+        expect(fetchAPIMock).toHaveBeenCalledTimes(1);
+      });
+
+      test('doesn’t commit a change without a SHA before the site data is loaded', async () => {
+        repositoryHead.current = '';
+
+        await expect(
+          commitChanges([{ action: 'delete', slug: 'a', path: 'a.md' }], options),
+        ).rejects.toThrow('The last known version of a.md could not be determined.');
+        expect(fetchAPIMock).not.toHaveBeenCalled();
+      });
+
       test.each([409, 422])(
         'reports a commit refused with %i because the branch has moved',
         async (status) => {

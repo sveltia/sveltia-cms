@@ -8,6 +8,7 @@ import {
 } from '$lib/services/backends/git/shared/commits';
 import { createLocalizedError } from '$lib/services/backends/git/shared/errors';
 import { repositoryHead } from '$lib/services/backends/git/shared/fetch';
+import { encodePath } from '$lib/services/backends/git/shared/url';
 import { user } from '$lib/services/user/account.svelte';
 
 /**
@@ -53,6 +54,40 @@ export const fetchLastCommit = async () => {
 };
 
 /**
+ * Get the blob SHA of a file being updated, moved or deleted, as the user knows it. It normally
+ * comes with the change, taken from the file cache or the asset list, but it can be missing, e.g.
+ * while the cache is still being written after the site data is shown, or once it’s been cleared.
+ * Gitea accepts a change without one whatever the file is now, overwriting someone else’s change,
+ * so the SHA is then looked up as of the commit the site data reflects rather than the branch head,
+ * which keeps the guard working.
+ * @param {FileChange} change File change.
+ * @returns {Promise<string | undefined>} Blob SHA, or `undefined` for a new file.
+ * @throws {Error} When the site data hasn’t been loaded, or the lookup failed.
+ * @see https://docs.gitea.com/api/next/#tag/repository/operation/repoGetContents
+ */
+const getKnownSha = async ({ action, path, previousPath, previousSha }) => {
+  if (action === 'create' || previousSha) {
+    return previousSha;
+  }
+
+  const { owner, repo } = repository;
+  const ref = repositoryHead.current;
+  const knownPath = (action === 'move' && previousPath) || path;
+
+  if (!ref) {
+    throw new Error(`The last known version of ${knownPath} could not be determined.`);
+  }
+
+  const { sha } = /** @type {{ sha: string }} */ (
+    await fetchAPI(
+      `/repos/${owner}/${repo}/contents/${encodePath(knownPath)}?ref=${encodeURIComponent(ref)}`,
+    )
+  );
+
+  return sha;
+};
+
+/**
  * Save entries or assets remotely.
  * @param {FileChange[]} changes File changes to be saved.
  * @param {CommitOptions} options Commit options.
@@ -67,15 +102,21 @@ export const commitChanges = async (changes, options) => {
 
   // The API has no branch-level guard like GitHub’s `expectedHeadOid`, but an update, a move or a
   // deletion carries the blob SHA of the file as the user knows it, taken from the cached file list
-  // rather than looked up now, so the commit is refused if someone else has changed the file since
+  // rather than looked up now, so the commit is refused if someone else has changed the file since.
+  // Gitea doesn’t insist on one, so it’s never left out
   const files = await Promise.all(
-    changes.map(async ({ action, path, previousPath, previousSha, data = '' }) => ({
-      operation: action === 'move' ? 'update' : action,
-      path,
-      content: await encodeBase64(data),
-      from_path: previousPath,
-      sha: previousSha,
-    })),
+    changes.map(async (change) => {
+      const { action, path, previousPath, data = '' } = change;
+      const [content, sha] = await Promise.all([encodeBase64(data), getKnownSha(change)]);
+
+      return {
+        operation: action === 'move' ? 'update' : action,
+        path,
+        content,
+        from_path: previousPath,
+        sha,
+      };
+    }),
   );
 
   const expectedHead = repositoryHead.current;
