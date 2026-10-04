@@ -276,7 +276,8 @@ export const saveChange = async (rootDirHandle, { action, path, previousPath, da
     fileHandle = await moveFile({ rootDirHandle, previousPath, path });
   }
 
-  if (['create', 'update', 'move'].includes(action) && data) {
+  // An empty string is still written, as an emptied file mustn’t keep its old content
+  if (['create', 'update', 'move'].includes(action) && data !== undefined) {
     // We don’t need to write the file is it’s just been renamed with no change, but the `data` is
     // always provided for the compatibility with Git backends, so we cannot distinguish between the
     // two cases

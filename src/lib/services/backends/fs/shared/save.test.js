@@ -1126,6 +1126,31 @@ describe('saveChange', () => {
     expect(mockWritableStream.write).toHaveBeenCalledWith('content');
   });
 
+  test('should write an empty file', async () => {
+    const mockFileHandle = createMockFileHandle('existing.txt');
+
+    const mockWritableStream = {
+      write: vi.fn(),
+      close: vi.fn(),
+    };
+
+    mockFileHandle.createWritable = vi.fn().mockResolvedValue(mockWritableStream);
+
+    /** @type {import('vitest').MockedFunction<any>} */ (
+      rootDirHandle.getFileHandle
+    ).mockResolvedValue(mockFileHandle);
+
+    const result = await saveChange(rootDirHandle, {
+      action: 'update',
+      path: 'existing.txt',
+      data: '',
+    });
+
+    // The old content mustn’t be left on disk
+    expect(result).toBeInstanceOf(File);
+    expect(mockWritableStream.write).toHaveBeenCalledWith('');
+  });
+
   test('should handle update action', async () => {
     const mockFileHandle = createMockFileHandle('existing.txt');
 
