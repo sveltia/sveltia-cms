@@ -2,9 +2,8 @@
   import { untrack } from 'svelte';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
-  import { getMediaKind } from '$lib/services/assets/kinds';
-  import { getMediaFieldURL } from '$lib/services/assets/media-field';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
+  import { getMediaFieldPreview } from '$lib/services/contents/fields/file/preview';
   import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
@@ -49,29 +48,23 @@
     () => {
       void [value];
 
-      return untrack(async () => {
-        // Determine the kind and source URL of the media. Skip if it’s an image field because we
-        // already know it’s an image. It’s rather problematic if the path doesn’t have an
-        // extension.
-        const newKind = value ? (isImageField ? 'image' : await getMediaKind(value)) : undefined;
-
-        const newSrc = newKind
-          ? await getMediaFieldURL({
+      return untrack(async () =>
+        value
+          ? getMediaFieldPreview({
               value,
+              // Skip the detection if it’s an Image field because we already know it’s an image
+              kind: isImageField ? 'image' : undefined,
               entry,
               collectionName,
               fileName,
               fieldConfig,
               typedKeyPath,
             })
-          : undefined;
-
-        return { newKind, newSrc };
-      });
+          : { kind: undefined, src: undefined },
+      );
     },
-    ({ newKind, newSrc }) => {
-      kind = newKind;
-      src = newSrc;
+    (preview) => {
+      ({ kind, src } = preview);
     },
   );
 </script>

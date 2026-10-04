@@ -1,4 +1,5 @@
 import { getPathInfo } from '@sveltia/utils/file';
+import { isURL } from '@sveltia/utils/string';
 import equal from 'fast-deep-equal';
 
 import { fillInternalPathTemplate } from '$lib/services/assets';
@@ -198,6 +199,56 @@ export const getUnsavedFileDisplayPath = ({ draft, blobURL, fileName }) => {
   const { resolvedPublicPath } = getAssetFolderPaths({ draft, defaultLocaleSlug, folder });
 
   return createPublicURL(resolvedPublicPath.replace(EMPTY_PATH_SEGMENT_REGEX, ''), subPath);
+};
+
+/**
+ * Get the path to display for a File/Image field value. For an unsaved file, this is the public
+ * path where the file will be stored, with any template tags like `{{slug}}` and entry-relative
+ * paths resolved with the current draft content. It will be the same as the final path in most
+ * cases, but it could be different if a file with the same name already exists in the assets
+ * folder, and the new file is renamed to avoid conflicts, or if the entry slug changes before
+ * saving.
+ * @param {object} args Arguments.
+ * @param {EntryDraft} args.draft Entry draft.
+ * @param {string} args.value Field value: a path, a complete URL or the blob URL of an unsaved
+ * file.
+ * @param {string} [args.unsavedFileName] Name the unsaved file will be saved with, if the value is
+ * the blob URL of an unsaved file.
+ * @returns {string} The path to display. If the folder could not be determined, it will only be
+ * the file name. It’s empty for an empty value or a blob URL not referring to an unsaved file.
+ */
+export const getFileDisplayPath = ({ draft, value, unsavedFileName }) => {
+  if (!value) {
+    return '';
+  }
+
+  if (unsavedFileName) {
+    return getUnsavedFileDisplayPath({
+      draft,
+      blobURL: value,
+      fileName: decodeURI(unsavedFileName.normalize()),
+    });
+  }
+
+  if (value.startsWith('blob:')) {
+    return '';
+  }
+
+  const decodedValue = decodeURI(value);
+
+  // Truncate query string for display. This is mainly for Unsplash URLs which have a long query
+  // string for image parameters.
+  if (isURL(decodedValue)) {
+    const url = new URL(decodedValue);
+
+    if (url.search) {
+      url.search = '';
+
+      return `${url}…`;
+    }
+  }
+
+  return decodedValue;
 };
 
 /**

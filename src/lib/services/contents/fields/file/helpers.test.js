@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getAssetLibraryFolderMap,
   getDefaultAssetFolder,
+  getFileDisplayPath,
   getTargetFolderPath,
   getUnsavedFileDisplayPath,
   getUnsavedFileName,
@@ -1084,6 +1085,50 @@ describe('contents/fields/file/helpers', () => {
       });
 
       expect(result).toBe('/images/photo.png');
+    });
+  });
+
+  describe('getFileDisplayPath', () => {
+    /** @type {any} */
+    const draft = {
+      files: {
+        'blob:test': {
+          file: new File([], 'photo.png'),
+          folder: { entryRelative: false, publicPath: '/images/uploads' },
+        },
+      },
+    };
+
+    it('should return an empty string for an empty value', () => {
+      expect(getFileDisplayPath({ draft, value: '' })).toBe('');
+    });
+
+    it('should return the path an unsaved file will be stored at, with the name decoded', () => {
+      expect(
+        getFileDisplayPath({ draft, value: 'blob:test', unsavedFileName: 'my%20photo.png' }),
+      ).toBe('/images/uploads/my photo.png');
+    });
+
+    it('should return an empty string for a blob URL not referring to an unsaved file', () => {
+      expect(getFileDisplayPath({ draft, value: 'blob:test' })).toBe('');
+    });
+
+    it('should return a decoded path as is', () => {
+      expect(getFileDisplayPath({ draft, value: '/images/my%20photo.png' })).toBe(
+        '/images/my photo.png',
+      );
+    });
+
+    it('should return a URL without a query string as is', () => {
+      expect(getFileDisplayPath({ draft, value: 'https://example.com/photo.png' })).toBe(
+        'https://example.com/photo.png',
+      );
+    });
+
+    it('should truncate the query string of a URL', () => {
+      expect(
+        getFileDisplayPath({ draft, value: 'https://images.unsplash.com/photo-1?w=800&q=80' }),
+      ).toBe('https://images.unsplash.com/photo-1…');
     });
   });
 

@@ -2,7 +2,6 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
-  import { isURL } from '@sveltia/utils/string';
 
   import AssetPreview from '$lib/components/assets/shared/asset-preview.svelte';
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
@@ -10,13 +9,12 @@
   import ReorderControls from '$lib/components/common/reorder-controls.svelte';
   import { getAssetByPath } from '$lib/services/assets';
   import { formatFileName } from '$lib/services/assets/file-name';
-  import { getMediaKind } from '$lib/services/assets/kinds';
-  import { getMediaFieldURL } from '$lib/services/assets/media-field';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import {
-    getUnsavedFileDisplayPath,
+    getFileDisplayPath,
     getUnsavedFileName,
   } from '$lib/services/contents/fields/file/helpers';
+  import { getMediaFieldPreview } from '$lib/services/contents/fields/file/preview';
   import { isEquivalentFileExtension } from '$lib/services/utils/file';
   import { watch } from '$lib/services/utils/state.svelte';
 
@@ -139,49 +137,16 @@
   });
 
   /**
-   * Get the path to display for the asset or file. For an unsaved file, this is the public path
-   * where the file will be stored, with any template tags like `{{slug}}` and entry-relative paths
-   * resolved with the current draft content. It will be the same as the final path in most cases,
-   * but it could be different if a file with the same name already exists in the assets folder, and
-   * the new file is renamed to avoid conflicts, or if the entry slug changes before saving.
-   * @type {string} The path to display. If the folder could not be determined, it will only be the
-   * file name.
+   * Path to display for the asset or file. For an unsaved file, this is the public path where the
+   * file will be stored.
    */
-  const fileDisplayPath = $derived.by(() => {
-    if (!value) {
-      return '';
-    }
-
-    if (unsavedFileName) {
-      const name = decodeURI(unsavedFileName.normalize());
-
-      return getUnsavedFileDisplayPath({
-        draft: /** @type {EntryDraft} */ (entryDraft.current),
-        blobURL: value,
-        fileName: name,
-      });
-    }
-
-    if (!value.startsWith('blob:')) {
-      const decodedValue = decodeURI(value);
-
-      // Truncate query string for display. This is mainly for Unsplash URLs which have a long query
-      // string for image parameters.
-      if (isURL(decodedValue)) {
-        // eslint-disable-next-line svelte/prefer-svelte-reactivity
-        const url = new URL(decodedValue);
-
-        if (url.search) {
-          url.search = '';
-          return `${url}…`;
-        }
-      }
-
-      return decodedValue;
-    }
-
-    return '';
-  });
+  const fileDisplayPath = $derived(
+    getFileDisplayPath({
+      draft: /** @type {EntryDraft} */ (entryDraft.current),
+      value,
+      unsavedFileName,
+    }),
+  );
 
   /**
    * Rename the unsaved file by replacing the cached `File` object with a new one. The blob URL,
@@ -263,13 +228,10 @@
 
     if (!asset) {
       // Take the arguments before waiting, as the value may have changed by then
-      const urlArgs = { ...getURLArgs, thumbnail: true };
-      const newKind = await getMediaKind(value);
-      const newSrc = newKind ? await getMediaFieldURL(urlArgs) : undefined;
+      const preview = await getMediaFieldPreview({ ...getURLArgs, thumbnail: true });
 
       if (!isStale()) {
-        kind = newKind;
-        src = newSrc;
+        ({ kind, src } = preview);
       }
     }
   };
