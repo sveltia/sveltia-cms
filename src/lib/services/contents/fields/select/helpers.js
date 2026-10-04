@@ -61,10 +61,10 @@ export const getOptionLabel = ({ fieldConfig, valueMap, keyPath }) => {
   }
 
   const optionsKey = getOptionsKey(options);
-
-  const cacheKey = multiple
-    ? `${keyPath}|${optionsKey}|${JSON.stringify(rawValues)}`
-    : `${keyPath}|${optionsKey}|${String(valueMap[keyPath])}`;
+  // Serialize the value with its type, so `1` and `'1'`, which can be options with different
+  // labels, don’t share a cache entry
+  const valueKey = JSON.stringify(multiple ? rawValues : valueMap[keyPath]);
+  const cacheKey = `${keyPath}|${optionsKey}|${valueKey}`;
 
   /**
    * Get the label by value.
