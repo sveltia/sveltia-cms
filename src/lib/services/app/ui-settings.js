@@ -30,7 +30,7 @@ export const _resetUISettingsDB = () => {
  * Get the UI settings store of the current repository’s database.
  * @returns {IndexedDB | undefined} Store, or `undefined` if the backend has no database yet.
  */
-const getUISettingsDB = () => {
+export const getUISettingsDB = () => {
   const repository = backend.current?.repository;
   const databaseName = repository?.databaseName;
 

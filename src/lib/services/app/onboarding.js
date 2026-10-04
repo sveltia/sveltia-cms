@@ -1,19 +1,8 @@
+import { getUISettingsDB } from '$lib/services/app/ui-settings';
 import { backend } from '$lib/services/backends';
 import { user } from '$lib/services/user/account.svelte';
 import { env } from '$lib/services/user/env.svelte';
-import { getRepositoryDatabase } from '$lib/services/utils/database';
 import { createDerivedState, createRawState } from '$lib/services/utils/state.svelte';
-
-/**
- * @import { IndexedDB } from '@sveltia/utils/storage';
- */
-
-/**
- * The IndexedDB instance for storing UI settings, along with the name of the repository database it
- * belongs to, so another one is opened once the user signs in to another repository.
- * @type {{ databaseName: string, db: IndexedDB } | undefined}
- */
-let uiSettingsDB;
 
 /**
  * Whether the dialog offering to sign in on a mobile device can be shown.
@@ -33,34 +22,12 @@ export const canShowMobileSignInDialog = createDerivedState(
 export const showMobileSignInDialog = createRawState(false);
 
 /**
- * Get the IndexedDB instance for storing UI settings.
- * @returns {IndexedDB | undefined} The IndexedDB instance, or `undefined` if not available.
- */
-const getDatabase = () => {
-  const repository = backend.current?.repository;
-  const databaseName = repository?.databaseName;
-
-  if (!databaseName) {
-    return undefined;
-  }
-
-  if (uiSettingsDB?.databaseName !== databaseName) {
-    uiSettingsDB = {
-      databaseName,
-      db: /** @type {IndexedDB} */ (getRepositoryDatabase(repository, 'ui-settings')),
-    };
-  }
-
-  return uiSettingsDB.db;
-};
-
-/**
  * Get a state value from the UI settings database.
  * @param {string} name State name to get from the UI settings database.
  * @returns {Promise<any>} The state value, or `undefined` if not found.
  */
 export const getState = async (name) => {
-  const db = getDatabase();
+  const db = getUISettingsDB();
 
   if (!db) {
     return undefined;
@@ -78,7 +45,7 @@ export const getState = async (name) => {
  * @returns {Promise<void>}
  */
 export const setState = async (name, value) => {
-  const db = getDatabase();
+  const db = getUISettingsDB();
 
   if (!db) {
     return;
