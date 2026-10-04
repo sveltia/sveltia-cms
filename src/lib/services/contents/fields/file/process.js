@@ -165,7 +165,7 @@ const getSavedAssetsForEntry = (draft, folder) => {
     internalPath: /** @type {string} */ (folder.internalPath),
   });
 
-  const expectedPrefix = [assetFolderPath, folder.internalSubPath].filter(Boolean).join('/');
+  const expectedPrefix = createPath([assetFolderPath, folder.internalSubPath]);
 
   return savedAssets.filter((a) => a.path.startsWith(`${expectedPrefix}/`));
 };

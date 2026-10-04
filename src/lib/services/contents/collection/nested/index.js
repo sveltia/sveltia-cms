@@ -4,6 +4,7 @@ import { stripSlashes } from '@sveltia/utils/string';
 import { isEntryCollection } from '$lib/services/contents/collection/predicates';
 import { EXTENSION_FORMAT_MAP, MARKDOWN_EXTENSIONS } from '$lib/services/contents/file/constants';
 import { createRawState } from '$lib/services/utils/state.svelte';
+import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
  * @import { Entry, InternalCollection } from '$lib/types/private';
@@ -91,7 +92,7 @@ export const getNestedConfig = (collection) => {
 
   return {
     depth: typeof depth === 'number' && depth >= 1 ? Math.floor(depth) : Infinity,
-    summary: typeof summary === 'string' && !!summary.trim() ? summary : undefined,
+    summary: isNonEmptyString(summary) ? summary : undefined,
     subfolders: subfolders !== false,
   };
 };

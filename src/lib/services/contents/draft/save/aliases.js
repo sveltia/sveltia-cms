@@ -5,6 +5,7 @@ import {
   removeAliases,
 } from '$lib/services/contents/entry/aliases';
 import { isValueEmpty } from '$lib/services/utils/object';
+import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
  * @import {
@@ -98,7 +99,7 @@ export const addAlias = ({ draft, locale, content, slug, path }) => {
 
   const aliases = keyPaths
     .map((keyPath) => content[keyPath])
-    .filter((alias) => typeof alias === 'string' && !!alias.trim())
+    .filter(isNonEmptyString)
     // Avoid a duplicate as well as an alias pointing at the entry’s own current path, which both
     // Hugo and Zola report as a conflict
     .filter((alias) => alias !== previousPath && alias !== currentPath);

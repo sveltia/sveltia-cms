@@ -2,6 +2,7 @@ import { fetchBlobNodes } from '$lib/services/backends/git/gitlab/files';
 import { getProjectId, repository } from '$lib/services/backends/git/gitlab/repository';
 import { fetchAPI, fetchGraphQL } from '$lib/services/backends/git/shared/api';
 import { runConcurrently } from '$lib/services/backends/git/shared/concurrency';
+import { splitIntoChunks } from '$lib/services/utils/array';
 import {
   getAllStatusLabels,
   getStatusFromLabels,
@@ -176,14 +177,8 @@ const FETCH_MERGE_PERMISSIONS_QUERY = `
 const fetchMergePermissions = async (mergeRequests) => {
   /** @type {Map<string, WorkflowPullRequest>} */
   const iidMap = new Map(mergeRequests.map((mr) => [String(mr.number), mr]));
-  const iids = [...iidMap.keys()];
-  /** @type {string[][]} */
-  const chunks = [];
-
   // The query returns up to 100 merge requests at a time
-  for (let index = 0; index < iids.length; index += MAX_ITEMS.mergeRequests) {
-    chunks.push(iids.slice(index, index + MAX_ITEMS.mergeRequests));
-  }
+  const chunks = splitIntoChunks([...iidMap.keys()], MAX_ITEMS.mergeRequests);
 
   await runConcurrently(chunks, async (chunk) => {
     try {

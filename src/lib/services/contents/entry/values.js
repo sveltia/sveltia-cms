@@ -8,6 +8,7 @@ import { getReferencedOptionLabel } from '$lib/services/contents/fields/relation
 import { getOptionLabel } from '$lib/services/contents/fields/select/helpers';
 import { getCanonicalLocale, getListFormatter } from '$lib/services/contents/i18n';
 import { getOrCreate } from '$lib/services/utils/cache';
+import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
  * @import {
@@ -179,10 +180,7 @@ export const getVisibleFieldDisplayValue = ({
 
     if (
       !_keyPath.startsWith(keyPathPrefix) ||
-      !(
-        (typeof value === 'string' && value.trim()) ||
-        (typeof value === 'number' && !Number.isNaN(value))
-      )
+      !(isNonEmptyString(value) || (typeof value === 'number' && !Number.isNaN(value)))
     ) {
       return false;
     }

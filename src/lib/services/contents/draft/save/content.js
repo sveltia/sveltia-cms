@@ -1,4 +1,5 @@
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
  * @import { Entry, InternalCollection, InternalCollectionFile } from '$lib/types/private';
@@ -20,7 +21,7 @@ export const getFieldComments = (fields = [], prefix = '') =>
       const { name, widget = 'string', comment } = field;
       const keyPath = `${prefix}${name}`;
       /** @type {[FieldKeyPath, string][]} */
-      const entries = typeof comment === 'string' && comment.trim() ? [[keyPath, comment]] : [];
+      const entries = isNonEmptyString(comment) ? [[keyPath, comment]] : [];
 
       if (widget === 'object' && 'fields' in field && Array.isArray(field.fields)) {
         entries.push(...Object.entries(getFieldComments(field.fields, `${keyPath}.`)));

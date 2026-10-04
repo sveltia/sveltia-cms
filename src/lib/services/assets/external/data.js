@@ -17,6 +17,7 @@ import { partitionProcessedFiles, processFile } from '$lib/services/assets/proce
 import { cmsConfig } from '$lib/services/config';
 import { UPDATE_TOAST_DEFAULT_STATE } from '$lib/services/contents/collection/data';
 import { normalizeFileNameTemplate } from '$lib/services/integrations/media-libraries/default';
+import { createPath } from '$lib/services/utils/file';
 import { createDeepState, createRawState } from '$lib/services/utils/state.svelte';
 
 /**
@@ -382,7 +383,7 @@ export const createExternalFolder = async (name) => {
     return false;
   }
 
-  const dirPath = [selectedExternalDirPath.current, name].filter(Boolean).join('/');
+  const dirPath = createPath([selectedExternalDirPath.current, name]);
 
   try {
     await service.createFolder(dirPath, getFetchOptions(service));

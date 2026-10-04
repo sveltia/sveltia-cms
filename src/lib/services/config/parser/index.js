@@ -9,6 +9,7 @@ import { parseMediaConfig } from '$lib/services/config/parser/media';
 import { parseMediaLibraries } from '$lib/services/config/parser/media-libraries';
 import { parseSlugConfig } from '$lib/services/config/parser/slug';
 import { addMessage, checkUnsupportedOptions } from '$lib/services/config/parser/utils/validator';
+import { isNonEmptyString } from '$lib/services/utils/string';
 import { isWorkflowConfigured } from '$lib/services/workflow/config';
 
 /**
@@ -71,7 +72,7 @@ export const parseCmsConfig = (cmsConfig, collectors) => {
 
     // An empty string is as good as none, and a value of another type is reported against the
     // JSON schema
-    if (typeof url === 'string' && url.trim() && !isURL(url.trim())) {
+    if (isNonEmptyString(url) && !isURL(url.trim())) {
       addMessage({
         strKey: 'invalid_url_option',
         values: { option, url },

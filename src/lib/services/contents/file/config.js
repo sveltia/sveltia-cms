@@ -18,6 +18,7 @@ import {
   getLocaleFolderPattern,
   hasLocalePlaceholder,
 } from '$lib/services/contents/i18n/placeholder';
+import { isNonEmptyString } from '$lib/services/utils/string';
 
 /**
  * @import {
@@ -281,7 +282,7 @@ export const getEntryPathRegEx = ({
  * @see https://sveltiacms.app/en/docs/collections/entries/formats#front-matter-delimiter
  */
 export const getFrontMatterDelimiters = ({ format, delimiter }) => {
-  if (typeof delimiter === 'string' && delimiter.trim()) {
+  if (isNonEmptyString(delimiter)) {
     return [delimiter, delimiter];
   }
 
