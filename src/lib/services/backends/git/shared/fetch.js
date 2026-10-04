@@ -304,7 +304,9 @@ export const applyFileMetadata = ({ fetchedFileMap, metadataMap }) => {
 };
 
 /**
- * Update the file cache by saving new entries and deleting unused ones.
+ * Update the file cache by saving new entries and deleting unused ones. Both are awaited, as the
+ * cache is only recorded as reflecting the commit once it’s up to date: a file left in it would
+ * come back with the file list restored from it.
  * @param {object} args Arguments.
  * @param {IndexedDB} args.cacheDB The cache database instance.
  * @param {BaseFileListItem[]} args.allFiles List of all files in the repository.
@@ -322,15 +324,12 @@ export const updateCache = async ({
   const usedPaths = new Set(allFiles.map(({ path }) => path));
   const unusedPaths = Object.keys(cachedFiles).filter((path) => !usedPaths.has(path));
 
-  // Save new entry caches
-  if (fetchingFiles.length) {
-    await cacheDB.saveEntries(Object.entries(fetchedFileMap));
-  }
-
-  // Delete old entry caches; we don’t need `await` for the deletion to finish, as it’s not critical
-  if (unusedPaths.length) {
-    cacheDB.deleteEntries(unusedPaths);
-  }
+  await Promise.all([
+    // Save new entry caches
+    fetchingFiles.length ? cacheDB.saveEntries(Object.entries(fetchedFileMap)) : undefined,
+    // Delete old entry caches
+    unusedPaths.length ? cacheDB.deleteEntries(unusedPaths) : undefined,
+  ]);
 };
 
 /**
@@ -578,9 +577,15 @@ const completeMetadata = async ({
 
   if (fetchFileMetadata && fetchingFiles.length) {
     // Cache the text right away, so that a reload before the slower metadata pass has finished
-    // only costs that pass next time, not the contents again
-    await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
-    log(`Cached the contents of ${fetchingFiles.length} files`);
+    // only costs that pass next time, not the contents again. A failure here doesn’t stop the
+    // metadata from being filled in; the cache is written again below, which reports it
+    try {
+      await updateCache({ cacheDB, allFiles, cachedFiles, fetchingFiles, fetchedFileMap });
+      log(`Cached the contents of ${fetchingFiles.length} files`);
+    } catch (/** @type {any} */ ex) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to cache the contents.', ex);
+    }
 
     try {
       applyFileMetadata({
@@ -605,6 +610,32 @@ const completeMetadata = async ({
       : `Cached ${fetchingFiles.length} files without their metadata; they are fetched again ` +
           'next time',
   );
+};
+
+/**
+ * Update the file cache, then record the commit it reflects. If the cache can’t be updated, the
+ * commit isn’t recorded, so the next fetch gets the file list again instead of restoring it from a
+ * cache that may still hold files of an earlier commit, such as ones deleted since. The site data
+ * is already usable without the cache, so the failure is only logged.
+ * @param {object} args Arguments.
+ * @param {IndexedDB} args.metaDB The meta database instance.
+ * @param {string | undefined} args.lastConfigHash The CMS configuration hash the files were
+ * fetched for.
+ * @param {string} args.lastCommitHash The commit hash the files were fetched at.
+ * @param {Promise<void>} args.cacheUpdate Update of the file cache in progress.
+ */
+const cacheFiles = async ({ metaDB, lastConfigHash, lastCommitHash, cacheUpdate }) => {
+  try {
+    await cacheUpdate;
+  } catch (/** @type {any} */ ex) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to update the file cache.', ex);
+
+    return;
+  }
+
+  // Only now that the cache holds the files of this commit can the file list be restored from it
+  await saveFileListMeta({ metaDB, lastConfigHash, lastCommitHash });
 };
 
 /**
@@ -698,11 +729,24 @@ export const fetchAndParseFiles = async ({
 
   // Skip fetching files if no files found
   if (!fileList.count) {
-    await saveFileListMeta({ metaDB, lastConfigHash, lastCommitHash });
     updateStores({ entries: [], assets: [], configFiles: [] });
     lastParseKey = parseKey;
     repositoryHead.current = lastCommitHash;
     log('The site data is ready: no files to load');
+
+    await cacheFiles({
+      metaDB,
+      lastConfigHash,
+      lastCommitHash,
+      // Only what’s left from the previous commit, to be deleted
+      cacheUpdate: updateCache({
+        cacheDB,
+        allFiles: [],
+        cachedFiles: Object.fromEntries(cachedFileEntries),
+        fetchingFiles: [],
+        fetchedFileMap: {},
+      }),
+    });
 
     return;
   }
@@ -729,16 +773,18 @@ export const fetchAndParseFiles = async ({
   repositoryHead.current = lastCommitHash;
   log('The site data is ready');
 
-  await completeMetadata({
-    cacheDB,
-    allFiles: fileList.allFiles,
-    cachedFiles,
-    fetchingFiles,
-    fetchedFileMap,
-    fetchFileMetadata,
-    log,
+  await cacheFiles({
+    metaDB,
+    lastConfigHash,
+    lastCommitHash,
+    cacheUpdate: completeMetadata({
+      cacheDB,
+      allFiles: fileList.allFiles,
+      cachedFiles,
+      fetchingFiles,
+      fetchedFileMap,
+      fetchFileMetadata,
+      log,
+    }),
   });
-
-  // Only now that the cache holds the files of this commit can the file list be restored from it
-  await saveFileListMeta({ metaDB, lastConfigHash, lastCommitHash });
 };

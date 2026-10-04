@@ -644,6 +644,49 @@ describe('git/shared/fetch', () => {
 
       expect(mockCacheDB.deleteEntries).not.toHaveBeenCalled();
     });
+
+    it('should wait for the unused entries to be deleted', async () => {
+      const { promise, resolve } = Promise.withResolvers();
+      let settled = false;
+
+      mockCacheDB.deleteEntries.mockReturnValue(promise);
+
+      const run = updateCache({
+        cacheDB: mockCacheDB,
+        allFiles: [{ path: 'file1.md' }],
+        cachedFiles: { 'file1.md': { sha: 'abc123' }, 'old-file.md': { sha: 'old123' } },
+        fetchingFiles: [{ path: 'file1.md' }],
+        fetchedFileMap: { 'file1.md': { sha: 'abc123', text: 'content' } },
+      }).then(() => {
+        settled = true;
+      });
+
+      // The save and the deletion are started together
+      expect(mockCacheDB.saveEntries).toHaveBeenCalled();
+      expect(mockCacheDB.deleteEntries).toHaveBeenCalledWith(['old-file.md']);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(settled).toBe(false);
+
+      resolve(undefined);
+      await run;
+
+      expect(settled).toBe(true);
+    });
+
+    it('should reject if the unused entries fail to be deleted', async () => {
+      mockCacheDB.deleteEntries.mockRejectedValue(new Error('Delete failed'));
+
+      await expect(
+        updateCache({
+          cacheDB: mockCacheDB,
+          allFiles: [],
+          cachedFiles: { 'old-file.md': { sha: 'old123' } },
+          fetchingFiles: [],
+          fetchedFileMap: {},
+        }),
+      ).rejects.toThrow('Delete failed');
+    });
   });
 
   describe('fetchAndParseFiles', () => {
@@ -1413,6 +1456,35 @@ describe('git/shared/fetch', () => {
         consoleError.mockRestore();
       });
 
+      it('should still fill in the metadata when the contents fail to be cached first', async () => {
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        // Something left from an earlier commit, whose deletion fails the first time only
+        mockCacheDB.entries.mockResolvedValue([['old.md', { sha: 'old', text: 'old' }]]);
+        mockCacheDB.deleteEntries.mockRejectedValueOnce(new Error('Delete failed'));
+
+        await fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: mockFetchFileContents,
+          fetchFileMetadata: vi.fn().mockResolvedValue({ 'posts/a.md': meta, 'img/a.png': meta }),
+        });
+
+        expect(consoleError).toHaveBeenCalledWith(
+          'Failed to cache the contents.',
+          expect.any(Error),
+        );
+        expect(allEntries.current[0].commitDate).toBe(meta.commitDate);
+        expect(allAssets.current[0].commitDate).toBe(meta.commitDate);
+        // Written again with the metadata, which succeeds this time, so the commit is recorded
+        expect(mockCacheDB.deleteEntries).toHaveBeenCalledTimes(2);
+        expect(mockMetaDB.saveEntries).toHaveBeenCalled();
+
+        consoleError.mockRestore();
+      });
+
       it('should trace each step of the loading in the console', async () => {
         const fetchFileMetadata = vi.fn().mockResolvedValue({
           'posts/a.md': meta,
@@ -1734,6 +1806,140 @@ describe('git/shared/fetch', () => {
           ['last_config_hash', lastConfigHash],
         ]),
       );
+    });
+
+    describe('files deleted from the repository', () => {
+      /**
+       * Fetch the files of the repository.
+       * @returns {Promise<void>} Result.
+       */
+      const runFetch = () =>
+        fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: vi.fn().mockResolvedValue({}),
+        });
+
+      beforeEach(() => {
+        // Created for each test, as the cached data is restored into the list in place
+        const allFiles = [{ path: 'a.md', name: 'a.md', sha: 'sha-a', type: 'entry' }];
+
+        mockFetchLastCommit.mockResolvedValue({ hash: 'abc123', message: 'Test commit' });
+        mockMetaDB.entries.mockResolvedValue([['last_commit_hash', 'old-hash']]);
+        // `b.md` has been deleted from the repository since it was cached
+        mockCacheDB.entries.mockResolvedValue([
+          ['a.md', { sha: 'sha-a', text: 'a', meta: {} }],
+          ['b.md', { sha: 'sha-b', text: 'b', meta: {} }],
+        ]);
+        vi.mocked(createFileList).mockReturnValue({
+          count: 1,
+          entryFiles: allFiles,
+          assetFiles: [],
+          configFiles: [],
+          allFiles,
+        });
+      });
+
+      it('should only record the commit once the deleted files are gone from the cache', async () => {
+        const { promise, resolve } = Promise.withResolvers();
+
+        mockCacheDB.deleteEntries.mockReturnValue(promise);
+
+        const run = runFetch();
+
+        await vi.waitFor(() => {
+          expect(mockCacheDB.deleteEntries).toHaveBeenCalledWith(['b.md']);
+        });
+        // The stores are up to date while the cache is still being updated
+        expect(repositoryHead.current).toBe('abc123');
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+
+        resolve(undefined);
+        await run;
+
+        expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
+          expect.arrayContaining([['last_commit_hash', 'abc123']]),
+        );
+      });
+
+      it('should not record the commit if the deleted files fail to leave the cache', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        mockCacheDB.deleteEntries.mockRejectedValue(new Error('Delete failed'));
+
+        // The site data is usable without the cache, so the load doesn’t fail
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(repositoryHead.current).toBe('abc123');
+        expect(dataLoaded.current).toBe(true);
+        // Otherwise the next fetch for the same commit would restore the deleted file
+        expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to update the file cache.',
+          expect.any(Error),
+        );
+
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should not record the commit if the fetched files fail to be cached', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        mockCacheDB.entries.mockResolvedValue([]);
+        mockCacheDB.saveEntries.mockRejectedValue(new Error('Quota exceeded'));
+
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to update the file cache.',
+          expect.any(Error),
+        );
+
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should clear the cache before recording the commit when no files are left', async () => {
+        vi.mocked(createFileList).mockReturnValue({
+          count: 0,
+          entryFiles: [],
+          assetFiles: [],
+          configFiles: [],
+          allFiles: [],
+        });
+
+        await runFetch();
+
+        expect(mockCacheDB.deleteEntries).toHaveBeenCalledWith(['a.md', 'b.md']);
+        expect(mockCacheDB.deleteEntries).toHaveBeenCalledBefore(mockMetaDB.saveEntries);
+        expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
+          expect.arrayContaining([['last_commit_hash', 'abc123']]),
+        );
+      });
+
+      it('should not record the commit when no files are left and the cache fails to be cleared', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        vi.mocked(createFileList).mockReturnValue({
+          count: 0,
+          entryFiles: [],
+          assetFiles: [],
+          configFiles: [],
+          allFiles: [],
+        });
+        mockCacheDB.deleteEntries.mockRejectedValue(new Error('Delete failed'));
+
+        await expect(runFetch()).resolves.toBeUndefined();
+
+        expect(dataLoaded.current).toBe(true);
+        expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+
+        consoleErrorSpy.mockRestore();
+      });
     });
   });
 });

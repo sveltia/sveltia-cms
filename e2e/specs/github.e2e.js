@@ -190,6 +190,25 @@ test('fetches a colleague’s change again after failing to fetch it', async ({
   await expect(page.getByRole('row', { name: 'First Post' })).toHaveCount(0);
 });
 
+test('keeps the entries a colleague has deleted out of the list after reloading', async ({
+  cms,
+  github,
+  page,
+}) => {
+  await cms.open();
+  await expect(page.getByRole('row', { name: 'First Post' })).toBeVisible();
+
+  github.commit({ 'content/posts/first-post.md': null });
+  await page.reload();
+  await expect(page.getByText('This collection has no entries yet.')).toBeVisible();
+
+  // Reloaded at the same head, the file list is restored from the cache, which must no longer hold
+  // the deleted file
+  await page.reload();
+  await expect(page.getByText('This collection has no entries yet.')).toBeVisible();
+  await expect(page.getByRole('row', { name: 'First Post' })).toHaveCount(0);
+});
+
 test('reloads an open entry a colleague has changed', async ({ cms, github, page }) => {
   await page.clock.install();
   await cms.open();
