@@ -117,7 +117,15 @@ export const copyDefaultLocaleValues = ({ draft, content, targetLanguage, keyPat
       return;
     }
 
-    const { widget: fieldType = 'text', i18n = false } = field;
+    const { widget: fieldType = 'text' } = field;
+
+    // A field without an `i18n` option of its own is duplicated along with a List or Object field
+    // using the `duplicate` strategy, so it has to be kept rather than removed as non-i18n
+    const i18n =
+      field.i18n ??
+      (isDuplicatedField({ fieldConfig: field, getFieldArgs: { ...getFieldArgs, keyPath } })
+        ? 'duplicate'
+        : false);
 
     // Reset the field value to the default value or an empty string if the field is a text-like
     // field type and i18n is enabled, because the content would likely be translated by the user.

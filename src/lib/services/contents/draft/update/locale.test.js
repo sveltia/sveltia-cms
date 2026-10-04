@@ -643,6 +643,44 @@ describe('draft/update/locale', () => {
       expect(result.locale_code).toBe('fr');
     });
 
+    it('should keep a subfield duplicated along with its parent List field', () => {
+      vi.mocked(getField).mockImplementation(({ keyPath }) => {
+        if (keyPath === 'title') {
+          return { name: 'title', widget: 'string', i18n: 'translate' };
+        }
+
+        if (keyPath === 'items') {
+          return { name: 'items', widget: 'list', i18n: 'duplicate' };
+        }
+
+        if (/^items\.\d+\.name$/.test(keyPath)) {
+          return { name: 'name', widget: 'string' };
+        }
+
+        if (keyPath === 'note') {
+          return { name: 'note', widget: 'string' };
+        }
+
+        return undefined;
+      });
+
+      vi.mocked(isDuplicatedField).mockImplementation(({ getFieldArgs }) =>
+        getFieldArgs.keyPath.startsWith('items.'),
+      );
+
+      mockEntryDraft.currentValues.en = {
+        title: 'English Title',
+        'items.0.name': 'A',
+        'items.1.name': 'B',
+        note: 'Note',
+      };
+
+      const result = copyDefaultLocaleValues({ title: '', items: [] }, 'fr');
+
+      expect(result).toEqual({ title: '', items: [], 'items.0.name': 'A', 'items.1.name': 'B' });
+      vi.mocked(isDuplicatedField).mockReset();
+    });
+
     describe('keyPathPrefix option', () => {
       beforeEach(() => {
         vi.mocked(getField).mockImplementation(({ keyPath }) => {
