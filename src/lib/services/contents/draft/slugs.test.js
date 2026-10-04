@@ -713,6 +713,38 @@ describe('draft/slugs', () => {
       );
     });
 
+    it('should keep the default locale value of a field missing from the locale', async () => {
+      const { fillTemplate } = vi.mocked(await import('$lib/services/common/template'));
+
+      const draft = {
+        isNew: true,
+        collection: {
+          _type: 'entry',
+          identifier_field: 'title',
+          slug: { template: '{{title}}-{{category}}', i18n: true },
+          _i18n: { defaultLocale: 'en' },
+        },
+        collectionFile: undefined,
+        currentSlugs: {},
+        slugEditor: {},
+        currentValues: {
+          en: { title: 'Hello', category: 'news' },
+          // `category` isn’t localized, so it only exists in the default locale
+          fr: { title: 'Bonjour' },
+        },
+        files: {},
+        isIndexFile: false,
+      };
+
+      getLocalizedSlug({ draft, locale: 'fr', localizingKeyPaths: ['title', 'category'] });
+
+      expect(fillTemplate.mock.lastCall?.[1].content).toEqual({
+        title: 'Bonjour',
+        category: 'news',
+        _slug: undefined,
+      });
+    });
+
     it('should return existing slug for existing entry', () => {
       const draft = {
         isNew: false,

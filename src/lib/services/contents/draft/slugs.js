@@ -144,11 +144,14 @@ export const getLocalizedSlug = ({ draft, locale, localizingKeyPaths, templateOn
       collection,
       locale,
       content: {
-        // Merge the default locale content and localized content
+        // Merge the default locale content and localized content. A field that isn’t localized
+        // only exists in the default locale, so its value is kept from there
         ...resolveBlobURLs(currentValues[defaultLocale], files),
         ...resolveBlobURLs(
           Object.fromEntries(
-            localizingKeyPaths.map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]]),
+            localizingKeyPaths
+              .map((keyPath) => [keyPath, currentValues[locale]?.[keyPath]])
+              .filter(([, value]) => value !== undefined),
           ),
           files,
         ),
