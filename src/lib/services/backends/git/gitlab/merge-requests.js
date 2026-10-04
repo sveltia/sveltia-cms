@@ -333,19 +333,9 @@ export const createPullRequest = async ({ branch, title, status }) => {
     })
   );
 
-  return {
-    number: result.iid,
-    nodeId: String(result.id),
-    title,
-    url: result.web_url,
-    branch,
-    headSHA: result.sha,
-    status,
-    createdDate: new Date(result.created_at),
-    updatedDate: new Date(result.updated_at),
-    files: [],
-    canMerge: getCanMerge(result),
-  };
+  // Keep the given title rather than stripping the draft prefix from the returned one, which would
+  // also strip a title that happens to start with a draft indicator such as `WIP:`
+  return { ...toMergeRequest(result, status), title, branch };
 };
 
 /**

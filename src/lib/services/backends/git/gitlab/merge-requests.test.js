@@ -503,5 +503,32 @@ describe('GitLab merge requests', () => {
 
       expect(result.canMerge).toBe(false);
     });
+
+    test('keeps a title starting with a draft indicator, and reports the author', async () => {
+      vi.mocked(fetchAPI).mockResolvedValue({
+        id: 900,
+        iid: 5,
+        title: 'WIP: notes',
+        source_branch: 'cms/posts/wip',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+        author: { id: 1, name: 'Alice', username: 'alice' },
+      });
+
+      const result = await createPullRequest({
+        branch: 'cms/posts/wip',
+        title: 'WIP: notes',
+        status: 'pending_review',
+      });
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          title: 'WIP: notes',
+          branch: 'cms/posts/wip',
+          status: 'pending_review',
+          author: { name: 'Alice', email: '', id: 1, login: 'alice' },
+        }),
+      );
+    });
   });
 });
