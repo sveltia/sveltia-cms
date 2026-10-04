@@ -1,4 +1,4 @@
-import { lockedBranch } from '$lib/services/backends/branch-access';
+import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
 import {
   createLocalizedError,
@@ -82,24 +82,15 @@ export const checkRepositoryAccess = async () => {
  * @see https://docs.gitlab.com/user/project/repository/branches/protected/
  */
 export const checkBranchAccess = async () => {
-  const { branch } = repository;
-  let canPush = true;
+  await recordBranchAccess(repository.branch, async (branch) => {
+    const result = /** @type {{ can_push?: boolean }} */ (
+      await fetchAPI(
+        `/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`,
+      )
+    );
 
-  if (branch) {
-    try {
-      const result = /** @type {{ can_push?: boolean }} */ (
-        await fetchAPI(
-          `/projects/${getProjectId()}/repository/branches/${encodeURIComponent(branch)}`,
-        )
-      );
-
-      canPush = result.can_push !== false;
-    } catch {
-      // Keep the branch writable, as said above
-    }
-  }
-
-  lockedBranch.current = canPush ? undefined : branch;
+    return { canPush: result.can_push };
+  });
 };
 
 const FETCH_DEFAULT_BRANCH_NAME_QUERY = `

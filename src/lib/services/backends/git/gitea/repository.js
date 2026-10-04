@@ -1,4 +1,4 @@
-import { lockedBranch, mergeLockedBranch } from '$lib/services/backends/branch-access';
+import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI } from '$lib/services/backends/git/shared/api';
 import {
   createLocalizedError,
@@ -146,31 +146,21 @@ export const checkRepositoryAccess = async () => {
  */
 export const checkBranchAccess = async () => {
   const { owner, repo, branch } = repository;
-  let canPush = true;
-  let canMerge = true;
   // Read the response the last commit was just fetched with, if it’s for this branch and user. It’s
   // only used once, so a later check doesn’t go by permissions fetched long ago
   const cached = lastBranchResponse;
 
   lastBranchResponse = undefined;
 
-  if (branch) {
-    try {
-      const result = /** @type {{ user_can_push?: boolean, user_can_merge?: boolean }} */ (
-        cached?.branch === branch && cached.userId === user.account?.id
-          ? cached.result
-          : await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(branch)}`)
-      );
+  await recordBranchAccess(branch, async (_branch) => {
+    const result = /** @type {{ user_can_push?: boolean, user_can_merge?: boolean }} */ (
+      cached?.branch === _branch && cached.userId === user.account?.id
+        ? cached.result
+        : await fetchAPI(`/repos/${owner}/${repo}/branches/${encodePath(_branch)}`)
+    );
 
-      canPush = result.user_can_push !== false;
-      canMerge = result.user_can_merge !== false;
-    } catch {
-      // Keep the branch writable, as said above
-    }
-  }
-
-  lockedBranch.current = canPush ? undefined : branch;
-  mergeLockedBranch.current = canMerge ? undefined : branch;
+    return { canPush: result.user_can_push, canMerge: result.user_can_merge };
+  });
 };
 
 /**

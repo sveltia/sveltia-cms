@@ -1,4 +1,4 @@
-import { lockedBranch } from '$lib/services/backends/branch-access';
+import { recordBranchAccess } from '$lib/services/backends/branch-access';
 import { fetchAPI, fetchGraphQL, graphqlVars } from '$lib/services/backends/git/shared/api';
 import {
   createLocalizedError,
@@ -118,22 +118,13 @@ const FETCH_BRANCH_ACCESS_QUERY = `
  * @see https://docs.github.com/en/graphql/reference/objects#refupdaterule
  */
 export const checkBranchAccess = async () => {
-  const { branch } = repository;
-  let canPush = true;
+  await recordBranchAccess(repository.branch, async (branch) => {
+    const result = /** @type {{ repository?: { ref?: { refUpdateRule?: any } } }} */ (
+      await fetchGraphQL(FETCH_BRANCH_ACCESS_QUERY, { qualifiedName: `refs/heads/${branch}` })
+    );
 
-  if (branch) {
-    try {
-      const result = /** @type {{ repository?: { ref?: { refUpdateRule?: any } } }} */ (
-        await fetchGraphQL(FETCH_BRANCH_ACCESS_QUERY, { qualifiedName: `refs/heads/${branch}` })
-      );
-
-      canPush = result.repository?.ref?.refUpdateRule?.viewerCanPush !== false;
-    } catch {
-      // Keep the branch writable, as said above
-    }
-  }
-
-  lockedBranch.current = canPush ? undefined : branch;
+    return { canPush: result.repository?.ref?.refUpdateRule?.viewerCanPush };
+  });
 };
 
 const FETCH_DEFAULT_BRANCH_NAME_QUERY = `
