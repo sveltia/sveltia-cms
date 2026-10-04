@@ -151,6 +151,12 @@
         fieldConfig,
       });
 
+      // The dialog can be closed with the Escape key in the meantime, and even opened again. The
+      // draft is then discarded, along with the URLs of its files, so the entry is not to be added
+      if (!open || entryDraft.current !== draft) {
+        return;
+      }
+
       // The entries created from the new entry’s own Relation fields come along with it
       parentDraft.current.pendingEntries.push(
         ...getNestedPendingEntries({ draft, parentDraft: parentDraft.current }),

@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import { getCollection } from '$lib/services/contents/collection';
 import { createPendingEntry } from '$lib/services/contents/fields/relation/quick-add';
@@ -252,6 +252,63 @@ describe('QuickAddDialog', () => {
     await expect.poll(() => document.querySelector('[role="dialog"]')).toBeNull();
     props.open = true;
     await expect.element(dialog.getByRole('textbox', { name: 'Title' })).toHaveValue('');
+  });
+
+  test('doesn’t add the entry once the dialog is closed while it’s being prepared', async () => {
+    const { draft, props, onAdd } = await renderDialog();
+    const dialog = page.getByRole('dialog', { name: /Creating.*Tag/ });
+    /**
+     * Resolve the entry being prepared.
+     * @type {(entry: PendingEntry) => void}
+     */
+    let resolve = () => {};
+
+    vi.mocked(createPendingEntry).mockImplementation(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        }),
+    );
+
+    /**
+     * Click the Add button, and close the dialog with the Escape key while the entry is being
+     * prepared: the footer buttons are disabled, but the key still closes the dialog.
+     */
+    const addAndClose = async () => {
+      await dialog.getByRole('textbox', { name: 'Title' }).fill('Svelte');
+      await dialog.getByRole('button', { name: 'Add' }).click();
+      await expect.poll(() => vi.mocked(createPendingEntry).mock.calls.length).toBeGreaterThan(0);
+      vi.mocked(createPendingEntry).mockClear();
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => props.open).toBe(false);
+    };
+
+    /**
+     * Let the entry be prepared, and wait for the dialog to handle it.
+     */
+    const finishPreparing = async () => {
+      resolve(createPending('tags', 'svelte'));
+      await new Promise((r) => {
+        setTimeout(r, 100);
+      });
+    };
+
+    await addAndClose();
+    await finishPreparing();
+    expect(draft.pendingEntries).toEqual([]);
+    expect(onAdd).not.toHaveBeenCalled();
+
+    // The same once the dialog is opened again
+    await expect.poll(() => document.querySelector('[role="dialog"]')).toBeNull();
+    props.open = true;
+    await addAndClose();
+    await expect.poll(() => document.querySelector('[role="dialog"]')).toBeNull();
+    props.open = true;
+    await expect.element(dialog.getByRole('textbox', { name: 'Title' })).toHaveValue('');
+    await finishPreparing();
+    expect(draft.pendingEntries).toEqual([]);
+    expect(onAdd).not.toHaveBeenCalled();
+    expect(props.open).toBe(true);
   });
 
   test('switches between the locales of a localized collection', async () => {
