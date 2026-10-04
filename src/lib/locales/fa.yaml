@@ -1821,8 +1821,6 @@ workflow:
     .match $count
       one {{ یکی از آن‌ها هنوز منتشر نشده است، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهد ماند. }}
       *   {{ {$count} مورد از آن‌ها هنوز منتشر نشده‌اند، بنابراین تغییرات منتشرنشده شما دور انداخته خواهند شد. هر نسخه منتشرشده‌ای منتشرشده باقی خواهند ماند. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: آیا مطمئن هستید که می‌خواهید این ورودی را منتشر کنید؟ تغییرات شما بلافاصله اعمال خواهد شد.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: در حال انتشار ورودی…

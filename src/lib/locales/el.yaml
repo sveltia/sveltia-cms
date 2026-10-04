@@ -1828,8 +1828,6 @@ workflow:
     .match $count
       one {{ Μία από αυτές δεν έχει δημοσιευτεί ακόμη, επομένως οι μη δημοσιευμένες αλλαγές σας θα απορριφθούν. Τυχόν δημοσιευμένη έκδοση θα παραμείνει δημοσιευμένη. }}
       *   {{ {$count} από αυτές δεν έχουν δημοσιευτεί ακόμη, επομένως οι μη δημοσιευμένες αλλαγές σας θα απορριφθούν. Τυχόν δημοσιευμένες εκδόσεις θα παραμείνουν δημοσιευμένες. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Είστε βέβαιοι ότι θέλετε να δημοσιεύσετε αυτή την καταχώριση; Οι αλλαγές σας θα τεθούν σε ισχύ αμέσως.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Δημοσίευση καταχώρισης…

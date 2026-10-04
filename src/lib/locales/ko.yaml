@@ -1727,8 +1727,6 @@ workflow:
     .match $count
       1   {{ 그중 1개는 아직 게시되지 않았으므로 게시되지 않은 변경 사항은 취소됩니다. 이미 게시된 버전은 그대로 유지됩니다. }}
       *   {{ 그중 {$count}개는 아직 게시되지 않았으므로 게시되지 않은 변경 사항은 취소됩니다. 이미 게시된 버전은 그대로 유지됩니다. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: 이 엔트리를 게시하시겠습니까? 변경 사항이 즉시 적용됩니다.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: 엔트리 게시 중…

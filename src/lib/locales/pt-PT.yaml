@@ -1828,8 +1828,6 @@ workflow:
     .match $count
       one {{ Uma delas ainda não foi publicada, pelo que as suas alterações não publicadas serão descartadas. Qualquer versão publicada continuará publicada. }}
       *   {{ {$count} delas ainda não foram publicadas, pelo que as suas alterações não publicadas serão descartadas. Quaisquer versões publicadas continuarão publicadas. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Tem a certeza de que pretende publicar esta entrada? As suas alterações entrarão em vigor de imediato.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: A publicar a entrada…

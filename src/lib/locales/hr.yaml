@@ -1888,8 +1888,6 @@ workflow:
       one {{ {$count} njih još nije objavljen, pa će vaše neobjavljene promjene biti odbačene. Objavljena verzija, ako postoji, ostat će objavljena. }}
       few {{ {$count} njih još nisu objavljena, pa će vaše neobjavljene promjene biti odbačene. Objavljene verzije, ako postoje, ostat će objavljene. }}
       *   {{ {$count} njih još nije objavljeno, pa će vaše neobjavljene promjene biti odbačene. Objavljene verzije, ako postoje, ostat će objavljene. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Jeste li sigurni da želite objaviti ovaj unos? Vaše će promjene odmah stupiti na snagu.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Objavljivanje unosa…

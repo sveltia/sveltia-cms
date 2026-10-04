@@ -1828,8 +1828,6 @@ workflow:
     .match $count
       one {{ En av dem har inte publicerats än, så dina opublicerade ändringar förkastas. En eventuell publicerad version förblir publicerad. }}
       *   {{ {$count} av dem har inte publicerats än, så dina opublicerade ändringar förkastas. Eventuella publicerade versioner förblir publicerade. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Är du säker på att du vill publicera denna post? Dina ändringar träder i kraft omedelbart.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Publicerar post…

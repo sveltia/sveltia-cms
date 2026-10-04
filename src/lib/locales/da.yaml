@@ -1828,8 +1828,6 @@ workflow:
     .match $count
       one {{ Et af dem er endnu ikke udgivet, så dine ikke-udgivne ændringer bliver kasseret. En eventuel udgivet version forbliver udgivet. }}
       *   {{ {$count} af dem er endnu ikke udgivet, så dine ikke-udgivne ændringer bliver kasseret. Eventuelle udgivne versioner forbliver udgivet. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Er du sikker på at du vil udgive dette dokument? Dine ændringer træder i kraft med det samme.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Udgiver dokument…

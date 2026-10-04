@@ -2037,7 +2037,7 @@ workflow:
       1   {{ そのうち 1 件はまだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。 }}
       *   {{ そのうち {$count} 件はまだ公開されていないため、未公開の変更は破棄されます。公開版があればそのまま公開されたままになります。 }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: このエントリーを公開してもよろしいですか？ 変更は即座に反映されます。
+  confirm_publishing_entry_after_build: このエントリーを公開してもよろしいですか？ 変更はサイトの再構築後に反映されます。
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: エントリーを公開しています…

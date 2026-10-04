@@ -1828,8 +1828,6 @@ workflow:
     .match $count
       one {{ Един от тях все още не е публикуван, така че непубликуваните ви промени ще бъдат отхвърлени. Всяка публикувана версия ще остане публикувана. }}
       *   {{ {$count} от тях все още не са публикувани, така че непубликуваните ви промени ще бъдат отхвърлени. Всички публикувани версии ще останат публикувани. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Сигурни ли сте, че искате да публикувате този запис? Промените ви ще влязат в сила веднага.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Публикуване на записа…

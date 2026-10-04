@@ -1754,8 +1754,6 @@ workflow:
     .input {$count :integer}
     .match $count
       * {{ 其中 {$count} 个条目尚未发布，因此您未发布的更改将被放弃。已发布的版本将保持发布状态。 }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: 您确定要发布此条目吗？您的更改将立即生效。
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: 正在发布条目……

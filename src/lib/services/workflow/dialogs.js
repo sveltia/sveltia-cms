@@ -59,5 +59,5 @@ export const getPublishDialogStrings = ({ deletion }) =>
     : {
         label: _('publish'),
         title: _('workflow.publish_entry'),
-        message: _('workflow.confirm_publishing_entry'),
+        message: _('workflow.confirm_publishing_entry_after_build'),
       };

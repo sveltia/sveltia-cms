@@ -2145,7 +2145,7 @@ workflow:
       one {{ One of them hasn’t been published yet, so your unpublished changes will be discarded. Any published version will remain published. }}
       *   {{ {$count} of them haven’t been published yet, so your unpublished changes will be discarded. Any published versions will remain published. }}
   # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Are you sure you want to publish this entry? Your changes will take effect right away.
+  confirm_publishing_entry_after_build: Are you sure you want to publish this entry? Your changes will go live once your site has been rebuilt.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Publishing Entry…

@@ -244,7 +244,7 @@ describe('WorkflowPage', () => {
     await expect
       .element(dialog)
       .toHaveTextContent(
-        'Publish Entry Are you sure you want to publish this entry? Your changes will take effect right away. Publish Cancel',
+        'Publish Entry Are you sure you want to publish this entry? Your changes will go live once your site has been rebuilt. Publish Cancel',
       );
 
     // An invalid entry can’t be published

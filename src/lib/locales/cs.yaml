@@ -1875,8 +1875,6 @@ workflow:
       one {{ Jedna z nich ještě nebyla publikována, takže vaše nepublikované změny budou zahozeny. Případná publikovaná verze zůstane publikována. }}
       few {{ {$count} z nich ještě nebyly publikovány, takže vaše nepublikované změny budou zahozeny. Případné publikované verze zůstanou publikovány. }}
       *   {{ {$count} z nich ještě nebylo publikováno, takže vaše nepublikované změny budou zahozeny. Případné publikované verze zůstanou publikovány. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Opravdu chcete tuto položku publikovat? Vaše změny se projeví okamžitě.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Publikování položky…

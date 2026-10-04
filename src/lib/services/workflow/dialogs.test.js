@@ -43,7 +43,7 @@ describe('getPublishDialogStrings', () => {
     expect(getPublishDialogStrings({ deletion: false })).toEqual({
       label: 'publish',
       title: 'workflow.publish_entry',
-      message: 'workflow.confirm_publishing_entry',
+      message: 'workflow.confirm_publishing_entry_after_build',
     });
   });
 

@@ -1794,8 +1794,6 @@ workflow:
     .match $count
       1   {{ Một bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Phiên bản đã xuất bản vẫn được giữ nguyên. }}
       *   {{ {$count} bài viết chưa được xuất bản nên các thay đổi chưa xuất bản sẽ bị hủy. Các phiên bản đã xuất bản vẫn được giữ nguyên. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Bạn có chắc chắn muốn xuất bản bài viết này? Những thay đổi của bạn sẽ có hiệu lực ngay lập tức.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Đang xuất bản bài viết…

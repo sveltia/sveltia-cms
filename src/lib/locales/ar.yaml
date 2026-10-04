@@ -2067,8 +2067,6 @@ workflow:
       few  {{ لم يتم نشر {$count} منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
       many {{ لم يتم نشر {$count} منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
       *    {{ لم يتم نشر {$count} منها بعد، لذلك سيتم تجاهل تغييراتك غير المنشورة. ستبقى أي نسخ منشورة كما هي. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: هل أنت متأكد من أنك تريد نشر هذا العنصر؟ ستصبح تغييراتك سارية على الفور.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: جارٍ نشر العنصر…

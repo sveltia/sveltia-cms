@@ -1935,8 +1935,6 @@ workflow:
       few  {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
       many {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
       *    {{ {$count} з них ще не опубліковано, тому ваші неопубліковані зміни буде відкинуто. Опубліковані версії, якщо вони є, залишаться опублікованими. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Ви впевнені, що хочете опублікувати цей запис? Ваші зміни набудуть чинності негайно.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: Публікація запису…

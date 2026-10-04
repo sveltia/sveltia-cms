@@ -1789,8 +1789,6 @@ workflow:
     .match $count
       one {{ Bunlardan biri henüz yayınlanmadığı için yayınlanmamış değişiklikleriniz iptal edilecek. Yayınlanmış bir sürüm varsa yayında kalacak. }}
       *   {{ Bunlardan {$count} tanesi henüz yayınlanmadığı için yayınlanmamış değişiklikleriniz iptal edilecek. Yayınlanmış sürümler varsa yayında kalacak. }}
-  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
-  confirm_publishing_entry: Bu içeriği yayınlamak istediğinizden emin misiniz? Değişiklikleriniz hemen geçerli olacak.
   # Workflow page: toast notifications shown while an entry is being published from a card, and
   # once publishing has completed
   publishing_entry: İçerik Yayınlanıyor…
