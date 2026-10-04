@@ -75,9 +75,11 @@ let lastParseKey;
 const getParseKey = (databaseName) => `${databaseName}\n${cmsConfigVersion.current}`;
 
 /**
- * Get the file list from the meta database or fetch it if not cached.
+ * Get the file list from the meta database or fetch it if not cached. The commit the list was
+ * fetched at isn’t recorded here but with {@link saveFileListMeta}, once the file contents have
+ * been cached: until then, the cache still holds the files of the previous commit, which the file
+ * list would be restored from.
  * @param {object} args Arguments.
- * @param {IndexedDB} args.metaDB The meta database instance.
  * @param {[string, any][]} args.metaEntries Entries read from the meta database.
  * @param {string} args.lastCommitHash The latest commit hash.
  * @param {[string, any][]} args.cachedFileEntries Cached file entries.
@@ -87,7 +89,6 @@ const getParseKey = (databaseName) => `${databaseName}\n${cmsConfigVersion.curre
  * @returns {Promise<BaseFileList>} The file list.
  */
 export const getFileList = async ({
-  metaDB,
   metaEntries,
   lastCommitHash,
   cachedFileEntries,
@@ -133,15 +134,26 @@ export const getFileList = async ({
 
   log(`Fetched the file list: ${describeFileList(fileList)}`);
 
-  metaDB.saveEntries(
+  return fileList;
+};
+
+/**
+ * Record the commit and CMS configuration the file cache reflects, so that the next fetch for the
+ * same ones can restore the file list from the cache. This is only done once the cache has been
+ * updated with the files of that commit.
+ * @param {object} args Arguments.
+ * @param {IndexedDB} args.metaDB The meta database instance.
+ * @param {string} args.lastConfigHash The CMS configuration hash the files were fetched for.
+ * @param {string} args.lastCommitHash The commit hash the files were fetched at.
+ */
+export const saveFileListMeta = async ({ metaDB, lastConfigHash, lastCommitHash }) => {
+  await metaDB.saveEntries(
     Object.entries({
       last_config_hash: lastConfigHash,
       last_commit_hash: lastCommitHash,
       git_config_fetched: true,
     }),
   );
-
-  return fileList;
 };
 
 /**
@@ -668,8 +680,9 @@ export const fetchAndParseFiles = async ({
 
   log(`Read the file cache: ${cachedFileEntries.length} files`);
 
+  const lastConfigHash = cmsConfigVersion.current;
+
   const fileList = await getFileList({
-    metaDB,
     metaEntries,
     lastCommitHash,
     cachedFileEntries,
@@ -684,6 +697,7 @@ export const fetchAndParseFiles = async ({
 
   // Skip fetching files if no files found
   if (!fileList.count) {
+    await saveFileListMeta({ metaDB, lastConfigHash, lastCommitHash });
     updateStores({ entries: [], assets: [], configFiles: [] });
     lastParseKey = parseKey;
     repositoryHead.current = lastCommitHash;
@@ -723,4 +737,7 @@ export const fetchAndParseFiles = async ({
     fetchFileMetadata,
     log,
   });
+
+  // Only now that the cache holds the files of this commit can the file list be restored from it
+  await saveFileListMeta({ metaDB, lastConfigHash, lastCommitHash });
 };

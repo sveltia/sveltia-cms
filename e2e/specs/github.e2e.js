@@ -94,6 +94,40 @@ test('lists an entry a colleague has added, on the next scheduled check', async 
   await expect(page.getByRole('row', { name: /Second Post/ })).toBeVisible();
 });
 
+test('fetches a colleague’s change again after failing to fetch it', async ({
+  cms,
+  github,
+  page,
+}) => {
+  await cms.open();
+  await expect(page.getByRole('row', { name: 'First Post' })).toBeVisible();
+
+  const { tree } = github.commit({
+    'content/posts/first-post.md': '---\ntitle: Revised Post\n---\n\nHello from Alex!\n',
+  });
+
+  const sha = /** @type {string} */ (tree.get('content/posts/first-post.md'));
+  let failed = false;
+
+  // The request for the changed file fails once, as the network drops
+  await page.route('https://api.github.com/**', async (route) => {
+    const request = route.request();
+
+    if (!failed && `${request.url()}${request.postData() ?? ''}`.includes(sha)) {
+      failed = true;
+      await route.abort('failed');
+    } else {
+      await route.fallback();
+    }
+  });
+  await page.reload();
+  await expect(page.getByText('There was an error while loading site data.')).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole('row', { name: 'Revised Post' })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'First Post' })).toHaveCount(0);
+});
+
 test('reloads an open entry a colleague has changed', async ({ cms, github, page }) => {
   await page.clock.install();
   await cms.open();

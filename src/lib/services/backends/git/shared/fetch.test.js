@@ -129,7 +129,6 @@ describe('git/shared/fetch', () => {
       ]);
 
       const result = await getFileList({
-        metaDB: mockMetaDB,
         metaEntries,
         lastCommitHash,
         cachedFileEntries,
@@ -156,7 +155,6 @@ describe('git/shared/fetch', () => {
       ]);
 
       await getFileList({
-        metaDB: mockMetaDB,
         metaEntries,
         lastCommitHash,
         cachedFileEntries,
@@ -165,13 +163,8 @@ describe('git/shared/fetch', () => {
       });
 
       expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
-      expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
-        Object.entries({
-          last_config_hash: lastConfigHash,
-          last_commit_hash: lastCommitHash,
-          git_config_fetched: true,
-        }),
-      );
+      // The commit is only recorded once the file contents have been cached
+      expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
       expect(mockLog).toHaveBeenCalledWith(
         'Fetched the file list: 2 entry files, 0 asset files, 0 config files',
       );
@@ -185,7 +178,6 @@ describe('git/shared/fetch', () => {
       ]);
 
       await getFileList({
-        metaDB: mockMetaDB,
         metaEntries,
         lastCommitHash,
         cachedFileEntries,
@@ -194,9 +186,6 @@ describe('git/shared/fetch', () => {
       });
 
       expect(mockFetchFileList).toHaveBeenCalledWith(lastCommitHash);
-      expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
-        expect.arrayContaining([['last_config_hash', lastConfigHash]]),
-      );
     });
 
     it('should fetch new file list when cache is empty', async () => {
@@ -207,7 +196,6 @@ describe('git/shared/fetch', () => {
       ]);
 
       await getFileList({
-        metaDB: mockMetaDB,
         metaEntries,
         lastCommitHash,
         cachedFileEntries: [], // Empty cache
@@ -1651,6 +1639,66 @@ describe('git/shared/fetch', () => {
       });
 
       expect(setLastCommitPublishHint).toHaveBeenCalledWith(true);
+    });
+
+    it('should not record the commit if the file contents fail to load', async () => {
+      const allFiles = [{ path: 'a.md', name: 'a.md', sha: 'new-sha', type: 'entry' }];
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: allFiles,
+        assetFiles: [],
+        configFiles: [],
+        allFiles,
+      });
+      // The cache holds the previous commit’s version of the file
+      mockCacheDB.entries.mockResolvedValue([['a.md', { sha: 'old-sha', text: 'old', meta: {} }]]);
+      mockMetaDB.entries.mockResolvedValue([['last_commit_hash', 'old-hash']]);
+
+      await expect(
+        fetchAndParseFiles({
+          repository: mockRepository,
+          fetchDefaultBranchName: mockFetchDefaultBranchName,
+          fetchLastCommit: mockFetchLastCommit,
+          fetchFileList: mockFetchFileList,
+          fetchFileContents: vi.fn().mockRejectedValue(new Error('Network error')),
+        }),
+      ).rejects.toThrow('Network error');
+
+      // Otherwise the next fetch for the same commit would restore the stale cached file list
+      expect(mockMetaDB.saveEntries).not.toHaveBeenCalled();
+    });
+
+    it('should record the commit once the file contents have been cached', async () => {
+      const allFiles = [{ path: 'a.md', name: 'a.md', sha: 'new-sha', type: 'entry' }];
+
+      vi.mocked(createFileList).mockReturnValue({
+        count: 1,
+        entryFiles: allFiles,
+        assetFiles: [],
+        configFiles: [],
+        allFiles,
+      });
+      mockFetchLastCommit.mockResolvedValue({ hash: 'abc123', message: 'Test commit' });
+
+      await fetchAndParseFiles({
+        repository: mockRepository,
+        fetchDefaultBranchName: mockFetchDefaultBranchName,
+        fetchLastCommit: mockFetchLastCommit,
+        fetchFileList: mockFetchFileList,
+        fetchFileContents: vi.fn().mockResolvedValue({
+          'a.md': { sha: 'new-sha', text: 'new', meta: {} },
+        }),
+      });
+
+      expect(mockCacheDB.saveEntries).toHaveBeenCalledBefore(mockMetaDB.saveEntries);
+      expect(mockMetaDB.saveEntries).toHaveBeenCalledWith(
+        Object.entries({
+          last_config_hash: lastConfigHash,
+          last_commit_hash: 'abc123',
+          git_config_fetched: true,
+        }),
+      );
     });
 
     it('should cache meta database hash after fetching files', async () => {
