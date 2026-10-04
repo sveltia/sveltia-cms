@@ -28,6 +28,8 @@ describe('EntryList', () => {
             { name: 'image', widget: 'image' },
           ],
           view_filters: [{ label: 'Nothing', field: 'title', pattern: 'nothing' }],
+          // A saved group is only restored while it’s still configured
+          view_groups: [{ label: 'Category', field: 'category' }],
         },
       ],
     });
@@ -178,6 +180,7 @@ describe('EntryList', () => {
               { name: 'category', widget: 'string' },
             ],
             view_filters: [{ label: 'Nothing', field: 'title', pattern: 'nothing' }],
+            view_groups: [{ label: 'Category', field: 'category' }],
           },
         ],
       });

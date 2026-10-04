@@ -3,7 +3,7 @@ import { untrack } from 'svelte';
 
 import { backend } from '$lib/services/backends';
 import { lockedBranch } from '$lib/services/backends/branch-access';
-import { getGroupingKey } from '$lib/services/common/view';
+import { getConditionKey, getGroupingKey, getViewConditions } from '$lib/services/common/view';
 import { isReadonly } from '$lib/services/config/readonly';
 import { allEntries } from '$lib/services/contents';
 import { selectedCollection } from '$lib/services/contents/collection';
@@ -38,7 +38,12 @@ import { swapUnpublishedEntries, unpublishedEntries } from '$lib/services/workfl
 import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
 /**
- * @import { Entry, EntryListView, InternalEntryCollection } from '$lib/types/private';
+ * @import {
+ * Entry,
+ * EntryListView,
+ * GroupingConditions,
+ * InternalEntryCollection,
+ * } from '$lib/types/private';
  */
 
 /**
@@ -351,8 +356,34 @@ const restoreView = (collection, _allEntries) => {
     isCommitDateAvailable: _allEntries.some((entry) => !!entry.commitDate),
   });
 
+  // The commit metadata may arrive after the entries, so a saved sort key depending on it is
+  // validated as if it were there, rather than dropped while it’s on its way
+  const { keys: sortKeys } = getSortConfig({
+    collection,
+    isCommitAuthorAvailable: true,
+    isCommitDateAvailable: true,
+  });
+
   const { default: defaultFilter } = parseFilterConfig(viewFilters);
-  const { default: defaultGroup } = parseGroupConfig(viewGroups);
+  const { options: groupOptions, default: defaultGroup } = parseGroupConfig(viewGroups);
+
+  // Drop a saved sort key or group that has been removed from the configuration since the view was
+  // saved, so the defaults apply instead. A stale group would otherwise stay applied while the menu
+  // no longer offers a way to undo it. Stale filters are ignored by `filterEntries()` instead
+  if (view.sort?.key !== undefined && !sortKeys.includes(view.sort.key)) {
+    delete view.sort;
+  }
+
+  if (
+    view.group &&
+    !groupOptions.some(
+      (option) =>
+        getConditionKey(getViewConditions(option)) ===
+        getConditionKey(/** @type {GroupingConditions} */ (view.group)),
+    )
+  ) {
+    delete view.group;
+  }
 
   if (view.sort === undefined && defaultSort) {
     view.sort = defaultSort;

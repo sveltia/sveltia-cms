@@ -1,3 +1,5 @@
+import { stringify } from 'yaml';
+
 import { MONOLINGUAL_CONFIG, MONOLINGUAL_FILES } from '../../fixtures/configs/monolingual.js';
 import { createPNG } from '../../fixtures/files.js';
 import { expect, GITHUB_CONFIG, test } from '../../fixtures/test.js';
@@ -317,6 +319,41 @@ test.describe('on GitHub', () => {
     ).toHaveAttribute('aria-expanded', 'false');
     await expect(grid.getByRole('row', { name: /First Light/ })).toBeHidden();
     await expect(grid.getByRole('row', { name: /Talking to Jane/ })).toBeVisible();
+  });
+
+  test('drops a remembered group removed from the configuration', async ({ cms, page }) => {
+    const grid = page.getByRole('grid', { name: 'Entries' });
+
+    await cms.open();
+    await expect(getRows(page)).toHaveCount(3);
+    await cms.chooseMenuItem(
+      page.getByRole('button', { name: 'Group', exact: true }),
+      page.getByRole('menuitemradio', { name: 'Category' }),
+    );
+    await expect(grid.getByRole('rowgroup')).toHaveCount(3);
+    await expect
+      .poll(async () => (await readViewSettings(page))?.posts?.group)
+      .toEqual({ field: 'category' });
+
+    // The administrator has removed the group option since
+    await page.route('**/admin/config.yml?*', (route) =>
+      route.fulfill({
+        contentType: 'application/yaml',
+        body: stringify({
+          ...MONOLINGUAL_CONFIG,
+          backend: GITHUB_CONFIG.backend,
+          collections: MONOLINGUAL_CONFIG.collections.map((collection) => ({
+            ...collection,
+            view_groups: undefined,
+          })),
+        }),
+      }),
+    );
+    await page.reload();
+
+    await expect(getRows(page)).toHaveCount(3);
+    await expect(grid.getByRole('rowgroup')).toHaveCount(1);
+    await expect(grid.getByRole('rowgroup', { name: /^news$/i })).toHaveCount(0);
   });
 });
 
