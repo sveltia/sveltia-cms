@@ -3,8 +3,26 @@ import { locale as appLocale } from '@sveltia/i18n';
 import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 
 /**
+ * Get the language and the likely script of a locale, e.g. `zh-Hant` for `zh-TW` or `zh-HK`, and
+ * `zh-Hans` for `zh` or `zh-SG`.
+ * @param {string} locale Locale code.
+ * @returns {string | undefined} Language and script, or `undefined` if the locale code is invalid.
+ */
+const getLanguageScript = (locale) => {
+  try {
+    const { language, script } = new Intl.Locale(locale).maximize();
+
+    return `${language}-${script}`;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Get the best matching locale supported by a stock asset API: the app locale if the API supports
- * it, otherwise the first supported locale of the same language, otherwise the fallback.
+ * it, otherwise the first supported locale of the same language written in the same script, so
+ * Traditional Chinese doesn’t get Simplified Chinese results, otherwise the first supported locale
+ * of the same language, otherwise the fallback.
  * @param {string[]} supportedLocales Locale codes supported by the API, either language codes like
  * `en` or language-region codes like `en-US`.
  * @param {string} fallback Locale code to fall back to.
@@ -13,9 +31,13 @@ import { fetchPages } from '$lib/services/integrations/media-libraries/paging';
 export const getSupportedLocale = (supportedLocales, fallback) => {
   const locale = appLocale.current.toLowerCase();
   const [lang] = locale.split('-');
+  const languageScript = getLanguageScript(locale);
 
   return (
     supportedLocales.find((code) => code.toLowerCase() === locale) ??
+    (languageScript
+      ? supportedLocales.find((code) => getLanguageScript(code) === languageScript)
+      : undefined) ??
     supportedLocales.find((code) => code.split('-')[0] === lang) ??
     fallback
   );

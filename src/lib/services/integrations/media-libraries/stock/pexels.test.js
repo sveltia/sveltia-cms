@@ -73,7 +73,7 @@ describe('integrations/media-libraries/stock/pexels', () => {
         expect(getLocale()).toBe('es-ES');
 
         mockLocale.current = 'zh';
-        expect(getLocale()).toBe('zh-TW'); // First match in the list
+        expect(getLocale()).toBe('zh-CN'); // Simplified Chinese, the script `zh` is written in
 
         mockLocale.current = 'fr';
         expect(getLocale()).toBe('fr-FR');
