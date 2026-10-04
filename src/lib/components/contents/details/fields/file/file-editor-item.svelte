@@ -230,50 +230,60 @@
 
   /**
    * Update properties when value changes.
+   * @param {() => boolean} isStale Function telling whether the value has changed since, so the
+   * result of a slow lookup for an earlier value doesn’t replace the preview of the current one.
    */
-  const updateProps = async () => {
+  const updateProps = async (isStale) => {
     // Restore `file` after a draft backup is restored, and drop it once the value is no longer an
     // unsaved file, e.g. after the changes are reverted, so its name isn’t shown for another value
     file = value?.startsWith('blob:') ? entryDraft.current?.files[value]?.file : undefined;
 
-    // A folder has no preview
-    if (isFolder) {
-      asset = undefined;
-      kind = undefined;
-      src = undefined;
+    // Remove the preview of the previous value, so it’s not shown for another one, e.g. a saved
+    // asset or an unsaved file replaced with another unsaved file
+    asset = undefined;
+    kind = undefined;
+    src = undefined;
+
+    // A folder has no preview, nor has an empty value
+    if (isFolder || !value) {
+      return;
+    }
+
+    if (isImageField && /^https?:/.test(value)) {
+      kind = 'image';
+      src = value;
 
       return;
     }
 
     // Update the `src` when an asset is selected
-    if (value) {
-      if (isImageField && /^https?:/.test(value)) {
-        asset = undefined;
-        kind = 'image';
-        src = value;
-      } else if (!value.startsWith('blob:')) {
-        asset = getAssetByPath({ ...getURLArgs });
-        kind = undefined;
-        src = undefined;
-      }
+    if (!value.startsWith('blob:')) {
+      asset = getAssetByPath({ ...getURLArgs });
+    }
 
-      if (!asset && !src) {
-        kind = await getMediaKind(value);
-        src = kind ? await getMediaFieldURL({ ...getURLArgs, thumbnail: true }) : undefined;
+    if (!asset) {
+      // Take the arguments before waiting, as the value may have changed by then
+      const urlArgs = { ...getURLArgs, thumbnail: true };
+      const newKind = await getMediaKind(value);
+      const newSrc = newKind ? await getMediaFieldURL(urlArgs) : undefined;
+
+      if (!isStale()) {
+        kind = newKind;
+        src = newSrc;
       }
-    } else {
-      // Remove properties after the value is removed
-      asset = undefined;
-      file = undefined;
-      kind = undefined;
-      src = undefined;
     }
   };
 
   watch(
     () => value,
     () => {
-      updateProps();
+      let stale = false;
+
+      updateProps(() => stale);
+
+      return () => {
+        stale = true;
+      };
     },
   );
 </script>

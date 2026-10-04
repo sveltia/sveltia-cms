@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -297,6 +298,56 @@ describe('FileEditorItem', () => {
     props.value = '/uploads/photo.png';
     await expect.element(page.getByRole('textbox')).toHaveTextContent('/uploads/photo.png');
     expect(page.getByRole('button', { name: 'Rename' }).elements()).toHaveLength(0);
+  });
+
+  test('shows the preview of an unsaved file replacing a saved asset or another unsaved file', async () => {
+    const fileA = await createMockImageFile({ name: 'a.png' });
+    const fileB = await createMockImageFile({ name: 'b.png' });
+    const blobA = URL.createObjectURL(fileA);
+    const blobB = URL.createObjectURL(fileB);
+
+    const { container, props } = await renderItem(
+      '/uploads/photo.png',
+      {},
+      {
+        files: {
+          [blobA]: { file: fileA, folder: globalAssetFolder.current },
+          [blobB]: { file: fileB, folder: globalAssetFolder.current },
+        },
+      },
+    );
+
+    await expect.poll(() => container.querySelector('img')?.getAttribute('src')).toMatch(/^blob:/);
+
+    props.value = blobA;
+    await expect.poll(() => container.querySelector('img')?.getAttribute('src')).toBe(blobA);
+
+    props.value = blobB;
+    await expect.poll(() => container.querySelector('img')?.getAttribute('src')).toBe(blobB);
+  });
+
+  test('ignores the preview of an earlier value resolved after the current one', async () => {
+    const file = await createMockImageFile({ name: 'a.png' });
+    const blobURL = URL.createObjectURL(file);
+
+    const { container, props } = await renderItem(
+      '/uploads/photo.png',
+      {},
+      { files: { [blobURL]: { file, folder: globalAssetFolder.current } } },
+    );
+
+    await expect.poll(() => container.querySelector('img')).not.toBeNull();
+
+    // The kind of the unsaved file is still being read when the value is removed
+    props.value = blobURL;
+    flushSync();
+    props.value = '';
+    flushSync();
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 200);
+    });
+    expect(container.querySelector('img')).toBeNull();
   });
 
   test('offers the reorder controls in a list', async () => {
