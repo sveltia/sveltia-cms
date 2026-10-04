@@ -66,6 +66,34 @@ test('creates an entry in a new folder', async ({ cms, page }) => {
   ).toBeVisible();
 });
 
+test.describe('with a maximum slug length', () => {
+  test.use({ config: { ...NESTED_CONFIG, slug: { maxlength: 6 } } });
+
+  test('trims the hyphen left at the end of a new folder name cut to the length', async ({
+    cms,
+    page,
+  }) => {
+    await page.getByRole('button', { name: 'Create New Entry' }).click();
+
+    const editor = page.getByRole('group', { name: 'Content Editor' });
+
+    await editor.getByRole('button', { name: 'New Folder' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'New Folder' });
+
+    // `video-tutorials` is cut to `video-` before the hyphen is trimmed
+    await dialog.getByRole('textbox', { name: 'Folder Name' }).fill('Video Tutorials');
+    await dialog.getByRole('button', { name: 'Create' }).click();
+    await expect(editor.getByRole('button', { name: 'Parent Folder' })).toContainText('video');
+    await editor.getByRole('textbox', { name: 'Title' }).fill('First Steps');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => Object.keys(await cms.readRepo()).filter((path) => !(path in NESTED_FILES)))
+      .toEqual(['content/docs/video/first.md']);
+  });
+});
+
 test('moves an entry to another folder', async ({ cms, page }) => {
   await page.getByRole('row', { name: /FAQ/ }).click();
 

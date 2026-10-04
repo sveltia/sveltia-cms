@@ -575,7 +575,7 @@ describe('Test slugify()', () => {
     // Test with config option
     expect(slugify('hello-world')).toBe('hello-worl');
     expect(slugify('hello')).toBe('hello');
-    expect(slugify('very-long-slug-name')).toBe('very-long-');
+    expect(slugify('very-long-slug-name')).toBe('very-long');
   });
 
   test('maxLength parameter overrides config option', async () => {
@@ -645,7 +645,17 @@ describe('Test slugify()', () => {
     // Test that maxLength is applied after all transformations
     expect(slugify('Hello, World!', { maxLength: 8 })).toBe('hello-wo');
     expect(slugify('Hello   World', { maxLength: 10 })).toBe('hello-worl');
-    expect(slugify('HELLO WORLD', { maxLength: 6 })).toBe('hello-');
+    // The replacement character the cut leaves at the end is trimmed
+    expect(slugify('HELLO WORLD', { maxLength: 6 })).toBe('hello');
+  });
+
+  test('maxLength keeps the replacement character the cut leaves when trim is disabled', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { sanitize_replacement: '-', trim: false },
+    };
+
+    expect(slugify('hello world', { maxLength: 6 })).toBe('hello-');
   });
 
   test('maxLength with accent cleaning', async () => {
@@ -679,7 +689,7 @@ describe('Test slugify()', () => {
     // Test maxLength with ASCII encoding
     expect(slugify('Hello World')).toBe('hello-world'); // 11 chars, within limit
     expect(slugify('Hello World', { maxLength: 8 })).toBe('hello-wo');
-    expect(slugify('Very Long String', { maxLength: 10 })).toBe('very-long-');
+    expect(slugify('Very Long String', { maxLength: 10 })).toBe('very-long');
   });
 
   test('maxLength with custom replacement character', async () => {
@@ -695,7 +705,7 @@ describe('Test slugify()', () => {
 
     expect(slugify('Hello World')).toBe('hello_worl');
     expect(slugify('Hello World', { maxLength: 5 })).toBe('hello');
-    expect(slugify('a_b_c_d_e_f', { maxLength: 6 })).toBe('a_b_c_');
+    expect(slugify('a_b_c_d_e_f', { maxLength: 6 })).toBe('a_b_c');
   });
 
   test('maxLength with trim option', async () => {
@@ -790,7 +800,7 @@ describe('Test slugify()', () => {
     // 'こんにちは-世界' is 8 graphemes, within maxlength: 10 config
     expect(slugify('こんにちは-世界')).toBe('こんにちは-世界');
     expect(slugify('こんにちは-世界', { maxLength: 5 })).toBe('こんにちは');
-    expect(slugify('Hello-🌍-World', { maxLength: 8 })).toBe('hello-🌍-');
+    expect(slugify('Hello-🌍-World', { maxLength: 8 })).toBe('hello-🌍');
   });
 
   test('lowercase option enabled (default)', async () => {
@@ -1104,6 +1114,16 @@ describe('Test getNewFolderName()', () => {
   test('trims the name first', async () => {
     await setUpConfig();
     expect(getNewFolderName('  Guides  ')).toBe('guides');
+  });
+
+  test('trims the replacement character a cut to the maximum length leaves', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig.current = {
+      slug: { sanitize_replacement: '-', maxlength: 6 },
+    };
+
+    expect(getNewFolderName('My Guides')).toBe('my-gui');
+    expect(getNewFolderName('Hello World')).toBe('hello');
   });
 
   test('keeps a leading dot, which makes the folder hidden', async () => {

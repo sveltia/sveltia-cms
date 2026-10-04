@@ -79,6 +79,9 @@ export const slugify = (
   // Replace all the spaces with replacers (hyphens by default)
   slug = slug.trim().replaceAll(/\s+/g, sanitizeReplacement);
 
+  /** @type {RegExp | undefined} */
+  let trimPattern;
+
   // Consolidate consecutive replacement characters into a single one and trim them from ends
   if (sanitizeReplacement) {
     const escapedReplacement = sanitizeReplacement.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -92,7 +95,8 @@ export const slugify = (
 
     // Trim replacement characters from the beginning and end
     if (trimReplacement) {
-      slug = slug.replace(cachedSlugRegexes.trimPattern, '');
+      ({ trimPattern } = cachedSlugRegexes);
+      slug = slug.replace(trimPattern, '');
     }
   }
 
@@ -102,6 +106,11 @@ export const slugify = (
 
   if (typeof maxLength === 'number' && slug.length > maxLength) {
     slug = truncate(slug, maxLength, { ellipsis: '' });
+
+    // Trim the replacement character the cut may leave at the end
+    if (trimPattern) {
+      slug = slug.replace(trimPattern, '');
+    }
   }
 
   if (lowercase) {
