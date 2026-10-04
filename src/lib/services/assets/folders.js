@@ -23,14 +23,18 @@ import { openAuthoring } from '$lib/services/workflow/open-authoring';
 export const allAssetFolders = createRawState([]);
 
 /**
- * Global asset folder.
+ * Global asset folder. A field-level folder in a custom editor component doesn’t belong to a
+ * collection either, and comes first when the global `media_folder` option isn’t configured.
  */
 export const globalAssetFolder = createDerivedState(
   () =>
     /** @type {AssetFolderInfo} */ (
       allAssetFolders.current.find(
-        ({ collectionName, internalPath }) =>
-          collectionName === undefined && internalPath !== undefined,
+        ({ collectionName, componentName, typedKeyPath, internalPath }) =>
+          collectionName === undefined &&
+          componentName === undefined &&
+          typedKeyPath === undefined &&
+          internalPath !== undefined,
       )
     ),
 );

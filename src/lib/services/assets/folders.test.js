@@ -74,6 +74,55 @@ describe('assets/folders', () => {
       expect(result).toEqual(mockFolders[1]);
     });
 
+    it('should not take a custom editor component’s folder for the global folder', () => {
+      const mockFolders = [
+        {
+          collectionName: undefined,
+          internalPath: undefined,
+          publicPath: undefined,
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        // Without the global `media_folder` option, there is no global folder, but a field-level
+        // folder in a custom editor component doesn’t belong to a collection either
+        {
+          collectionName: undefined,
+          fileName: undefined,
+          componentName: 'custom-component',
+          typedKeyPath: 'image',
+          isIndexFile: false,
+          internalPath: 'uploads/custom',
+          publicPath: '/custom',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+        {
+          collectionName: 'posts',
+          internalPath: 'content/posts/images',
+          publicPath: '/images',
+          entryRelative: false,
+          hasTemplateTags: false,
+        },
+      ];
+
+      allAssetFolders.current = mockFolders;
+
+      expect(globalAssetFolder.current).toBeUndefined();
+
+      // It’s found after the component’s folder too
+      const globalFolder = {
+        collectionName: undefined,
+        internalPath: 'static/uploads',
+        publicPath: '/uploads',
+        entryRelative: false,
+        hasTemplateTags: false,
+      };
+
+      allAssetFolders.current = [mockFolders[0], mockFolders[1], globalFolder];
+
+      expect(globalAssetFolder.current).toEqual(globalFolder);
+    });
+
     it('should handle case when no global folder exists', () => {
       const mockFolders = [
         {
