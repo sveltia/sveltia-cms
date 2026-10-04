@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { React } from '$lib/services/api';
+import { allAssetFolders } from '$lib/services/assets/folders';
 import { buildControlProps } from '$lib/services/contents/fields/custom/editor';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
@@ -181,14 +182,30 @@ describe('CustomEditor', () => {
   test('lets the control add a file to the draft', async () => {
     reports.length = 0;
 
-    const { draft } = await renderEditor(undefined, FileControl);
+    // The global folder the file is uploaded to
+    const folder = {
+      collectionName: undefined,
+      internalPath: 'static/uploads',
+      publicPath: '/uploads',
+      entryRelative: false,
+      hasTemplateTags: false,
+      isAssetCollection: false,
+    };
 
-    await page.getByRole('button', { name: 'Add' }).click();
+    allAssetFolders.current = [folder];
 
-    await expect.poll(() => draft.currentValues._default.stars).toMatch(/^blob:/);
-    expect(Object.values(draft.files)[0]).toEqual(
-      expect.objectContaining({ file: expect.any(File) }),
-    );
+    try {
+      const { draft } = await renderEditor(undefined, FileControl);
+
+      await page.getByRole('button', { name: 'Add' }).click();
+
+      await expect.poll(() => draft.currentValues._default.stars).toMatch(/^blob:/);
+      expect(Object.values(draft.files)[0]).toEqual(
+        expect.objectContaining({ file: expect.any(File), folder }),
+      );
+    } finally {
+      allAssetFolders.current = [];
+    }
   });
 
   test('lets the control pick a file, unless the entry editor has been left', async () => {
