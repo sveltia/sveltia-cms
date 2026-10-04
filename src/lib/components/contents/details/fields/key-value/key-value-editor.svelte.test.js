@@ -447,6 +447,18 @@ describe('KeyValueEditor', () => {
     expect(page.getByRole('button', { name: 'Reorder Item' }).elements()).toHaveLength(0);
   });
 
+  test('moves on to the next value with the Enter key where the keys follow the default locale', async () => {
+    await renderEditor(
+      { color: 'red', size: 'L' },
+      { config: { i18n: 'duplicate_keys' }, locale: 'fr' },
+    );
+
+    await page.getByRole('textbox', { name: 'Value' }).nth(0).click();
+    await userEvent.keyboard('{Enter}');
+    // The key is read-only, so the focus skips it
+    await expect.element(page.getByRole('textbox', { name: 'Value' }).nth(1)).toHaveFocus();
+  });
+
   test('locks the keys when read-only', async () => {
     await renderEditor({ color: 'red' }, { readonly: true });
 

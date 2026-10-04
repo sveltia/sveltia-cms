@@ -324,11 +324,14 @@
               bind:value={rows.values[index][1]}
               ariaLabel={valueLabel}
               onkeydown={(event) => {
-                // Move focus or add a new pair with Enter key
+                // Move focus or add a new pair with Enter key. The next key is skipped when it’s
+                // read-only
                 if (event.key === 'Enter' && !event.isComposing) {
                   if (index < rows.values.length - 1) {
                     /** @type {HTMLInputElement} */ (
-                      rowElements[index + 1].querySelector('input')
+                      rowElements[index + 1].querySelector(
+                        keysReadonly ? 'td.value input' : 'td.key input',
+                      )
                     ).focus();
                   } else if (!keysReadonly && rows.values.length < max) {
                     addPair();
