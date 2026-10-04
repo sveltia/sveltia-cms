@@ -7,7 +7,7 @@
   import { afterPendingFieldUpdates } from '$lib/services/contents/editor/pending';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
   import { createRawState } from '$lib/services/utils/state.svelte';
 
@@ -33,10 +33,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  const collection = $derived(entryDraft.current?.collection);
-  const collectionFile = $derived(entryDraft.current?.collectionFile);
+  const { allLocales } = $derived(getDraftI18nConfig(entryDraft.current));
   /* v8 ignore start -- the switcher is only rendered while the draft is there */
-  const { allLocales } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
   const validities = $derived(entryDraft.current?.validities ?? {});
   const canPreview = $derived(entryDraft.current?.canPreview ?? true);
   /* v8 ignore stop */

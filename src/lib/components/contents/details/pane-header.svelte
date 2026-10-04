@@ -19,7 +19,7 @@
   import { getLocaleContentLabel } from '$lib/services/contents/editor/panes';
   import { getEntryRepoBlobURL } from '$lib/services/contents/entry';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { deployments, deployPollTimedOut, productionSHA } from '$lib/services/deployments';
   import { getEntryPreviewLink } from '$lib/services/deployments/link';
   import { recheckDeployments } from '$lib/services/deployments/poll';
@@ -62,7 +62,7 @@
   /* v8 ignore start -- the header is only rendered for a pane while the draft is there */
   const originalValues = $derived(entryDraft.current?.originalValues ?? {});
   const { i18nEnabled, saveAllLocales, allLocales, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
+    getDraftI18nConfig(entryDraft.current),
   );
   const isLocaleEnabled = $derived(
     entryDraft.current?.currentLocales[thisPane.current?.locale ?? ''],

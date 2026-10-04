@@ -23,7 +23,7 @@
     isFieldRequired,
   } from '$lib/services/contents/entry/fields';
   import { isAutoNowField } from '$lib/services/contents/fields/date-time/auto-now';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { createRawState } from '$lib/services/utils/state.svelte';
   import { sanitizeInlineMarkdown } from '$lib/services/utils/string';
   import { isPendingDeletion } from '$lib/services/workflow';
@@ -165,14 +165,10 @@
   );
   const hasExtraLabels = $derived(!!(prefix || suffix || beforeInputLabel || afterInputLabel));
   const isList = $derived(fieldType === 'list' || multiple);
-  const collection = $derived(entryDraft.current?.collection);
-  const collectionFile = $derived(entryDraft.current?.collectionFile);
   const originalValues = $derived(entryDraft.current?.originalValues);
-  /* v8 ignore start -- the editor is only rendered while the draft is there */
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
+    getDraftI18nConfig(entryDraft.current),
   );
-  /* v8 ignore stop */
   const otherLocales = $derived(i18nEnabled ? allLocales.filter((l) => l !== locale) : []);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   // Whether the field is shown, and whether it follows the default locale, in this locale

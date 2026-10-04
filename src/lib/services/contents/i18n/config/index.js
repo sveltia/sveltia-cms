@@ -10,6 +10,7 @@ import { hasLocalePlaceholder } from '$lib/services/contents/i18n/placeholder';
 
 /**
  * @import {
+ * EntryDraft,
  * I18nFileStructureMap,
  * InternalCmsConfig,
  * InternalI18nOptions,
@@ -39,6 +40,15 @@ export const DEFAULT_I18N_CONFIG = {
   omitDefaultLocaleFromFilePath: false,
   omitDefaultLocaleFromPreviewPath: false,
 };
+
+/**
+ * Get the normalized i18n configuration of the collection or collection file an entry draft
+ * belongs to.
+ * @param {EntryDraft | null | undefined} draft Entry draft.
+ * @returns {InternalI18nOptions} I18n configuration, or the default one if there is no draft.
+ */
+export const getDraftI18nConfig = (draft) =>
+  (draft?.collectionFile ?? draft?.collection)?._i18n ?? DEFAULT_I18N_CONFIG;
 
 /**
  * Determines the appropriate structure based on the collection or file configuration.

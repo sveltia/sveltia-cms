@@ -1,5 +1,5 @@
 import { isDuplicatedField } from '$lib/services/contents/draft/create/proxy.svelte';
-import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 
 /**
@@ -43,10 +43,7 @@ export const getFieldLocaleAccess = ({
   inEditorComponent = false,
 }) => {
   const { i18n = false } = fieldConfig;
-
-  const { i18nEnabled, defaultLocale } =
-    (draft?.collectionFile ?? draft?.collection)?._i18n ?? DEFAULT_I18N_CONFIG;
-
+  const { i18nEnabled, defaultLocale } = getDraftI18nConfig(draft);
   const inOtherLocale = i18nEnabled && locale !== defaultLocale;
   const canTranslate = i18nEnabled && isFieldTranslatable(i18n);
   // Another locale only comes with i18n, which comes with the draft

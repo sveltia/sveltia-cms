@@ -7,6 +7,7 @@ import {
   determineInitialLocales,
   determineOmitDefaultLocale,
   determineStructure,
+  getDraftI18nConfig,
   normalizeI18nConfig,
 } from '.';
 
@@ -1116,6 +1117,31 @@ describe('Test normalizeI18nConfig()', () => {
     expect(result.structureMap.i18nMultiRootFolder).toBe(true);
     expect(result.i18nEnabled).toBe(true);
     expect(result.allLocales).toEqual(['en', 'de']);
+  });
+});
+
+describe('Test getDraftI18nConfig()', () => {
+  const collectionI18n = /** @type {any} */ ({ ...DEFAULT_I18N_CONFIG, i18nEnabled: true });
+  const fileI18n = /** @type {any} */ ({ ...DEFAULT_I18N_CONFIG, defaultLocale: 'ja' });
+
+  test('returns the config of the collection file if any', () => {
+    const draft = /** @type {any} */ ({
+      collection: { _i18n: collectionI18n },
+      collectionFile: { _i18n: fileI18n },
+    });
+
+    expect(getDraftI18nConfig(draft)).toBe(fileI18n);
+  });
+
+  test('returns the config of the collection otherwise', () => {
+    const draft = /** @type {any} */ ({ collection: { _i18n: collectionI18n } });
+
+    expect(getDraftI18nConfig(draft)).toBe(collectionI18n);
+  });
+
+  test('returns the default config without a draft', () => {
+    expect(getDraftI18nConfig(undefined)).toBe(DEFAULT_I18N_CONFIG);
+    expect(getDraftI18nConfig(/** @type {any} */ ({}))).toBe(DEFAULT_I18N_CONFIG);
   });
 });
 

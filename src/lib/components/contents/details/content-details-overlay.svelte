@@ -55,7 +55,7 @@
     awaitPendingFieldUpdates,
   } from '$lib/services/contents/editor/pending';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
+  import { getDraftI18nConfig } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import { watch } from '$lib/services/utils/state.svelte';
@@ -121,11 +121,9 @@
     isIndexFile,
   } = $derived(/** @type {EntryDraft} */ (entryDraft.current ?? {}));
   const { showPreview, showSecondPane = true } = $derived(entryEditorSettings.current ?? {});
-  /* v8 ignore start -- only read while the panes are set up, which needs a collection */
   const { i18nEnabled, allLocales, defaultLocale } = $derived(
-    (collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG,
+    getDraftI18nConfig(entryDraft.current),
   );
-  /* v8 ignore stop */
   const paneStateKey = $derived(getPaneStateKey({ collection, collectionFile }));
   const {
     readonly: collectionReadonly,
