@@ -150,8 +150,13 @@ export const getAssetByRelativePathAndCollection = ({
       })
     : undefined;
 
-  let mediaFolder = fieldFolder?.entryRelative
-    ? (fieldFolder.internalSubPath ?? '')
+  // A field-level folder that isn’t entry-relative is an absolute one, e.g. `/src/assets/authors`,
+  // which has to be used along with its own `public_folder` rather than the collection’s
+  // `media_folder`
+  let mediaFolder = fieldFolder
+    ? fieldFolder.entryRelative
+      ? (fieldFolder.internalSubPath ?? '')
+      : `/${fieldFolder.internalPath}`
     : /** @type {string | undefined} */ ((file ?? collection).media_folder);
 
   const publicFolder = fieldFolder?.publicPath
