@@ -218,9 +218,11 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
     }
 
     if (format === 'frontmatter') {
-      format = detectFrontMatterFormat(text);
+      const detectedFormat = detectFrontMatterFormat(text);
+
       // Remembered, so the file is saved back in the same format
-      detectedFrontMatterFormats.set(path, format);
+      detectedFrontMatterFormats.set(path, detectedFormat);
+      format = detectedFormat;
     }
 
     if (FRONTMATTER_FORMATS.includes(/** @type {any} */ (format))) {

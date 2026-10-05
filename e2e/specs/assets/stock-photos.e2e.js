@@ -156,7 +156,7 @@ test('searches Pexels with an API key, and uploads the photo with the entry', as
         ? PEXELS_PHOTOS.filter(({ alt }) => alt.includes(searchParams.get('query') ?? ''))
         : PEXELS_PHOTOS;
 
-    return route.fulfill({ json: { photos: photos.map(({ image, ...photo }) => photo) } });
+    return route.fulfill({ json: { photos: photos.map(({ image: _image, ...photo }) => photo) } });
   });
   await page.route('https://images.pexels.com/photos/**', (route) => {
     const id = Number(new URL(route.request().url()).pathname.split('/')[2]);

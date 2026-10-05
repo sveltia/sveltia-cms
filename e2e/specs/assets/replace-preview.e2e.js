@@ -48,9 +48,9 @@ const getColor = (image) =>
     canvas.height = img.naturalHeight;
     context.drawImage(img, 0, 0);
 
-    return [
-      ...context.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data.slice(0, 3),
-    ].map((value) => (value < 128 ? 0 : 255));
+    return Array.from(
+      context.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data.slice(0, 3),
+    ).map((value) => (value < 128 ? 0 : 255));
   });
 
 /**
