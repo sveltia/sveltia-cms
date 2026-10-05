@@ -744,7 +744,10 @@ describe('Toolbar', () => {
     const dialog = page.getByRole('alertdialog', { name: 'Error' });
 
     await expect.element(dialog).toBeVisible();
-    expect(dialog.element().textContent).toContain('saving_failed');
+    // Only the generic description, not the error key
+    expect(dialog.element().textContent).toContain('There was an error while saving the entry.');
+    expect(dialog.element().textContent).not.toContain('saving_failed');
+    expect(dialog.element().querySelector('.error')).toBeNull();
   });
 
   test('renders a bare toolbar for a missing entry', async () => {

@@ -62,7 +62,9 @@ export const getRemovalMenuItems = ({
 /**
  * Work out how to report the given error thrown while saving an entry: invalid fields are pointed
  * out, someone else’s change to the entry is left for the user to decide on, and anything else is
- * shown as an error, with the backend’s message if there is one.
+ * shown as an error, with the backend’s message if there is one. A server error without a message,
+ * e.g. a gateway’s HTML error page, leaves only the generic description, rather than the
+ * `saving_failed` key.
  * @param {any} ex Error.
  * @returns {SaveFailure} Report. `unexpected` is `true` for an error that doesn’t come from the
  * save itself, which is worth logging.
@@ -77,7 +79,7 @@ export const getSaveFailure = (ex) => {
   }
 
   if (ex.message === 'saving_failed') {
-    return { type: 'error', message: ex.cause?.message ?? ex.message, unexpected: false };
+    return { type: 'error', message: ex.cause?.message ?? '', unexpected: false };
   }
 
   return { type: 'error', message: '', unexpected: true };

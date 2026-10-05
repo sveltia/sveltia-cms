@@ -25,24 +25,26 @@ const createChunk = (type, data) => {
  * files with the same content into one asset.
  * @param {object} [options] Options.
  * @param {number} [options.size] Width and height in pixels.
+ * @param {number} [options.width] Width in pixels, for an image that isn’t square.
+ * @param {number} [options.height] Height in pixels, for an image that isn’t square.
  * @param {[number, number, number]} [options.color] Red, green and blue values, 0–255.
  * @returns {Buffer} PNG file content.
  */
-export const createPNG = ({ size = 32, color = [255, 0, 0] } = {}) => {
+export const createPNG = ({ size = 32, width = size, height = size, color = [255, 0, 0] } = {}) => {
   const header = Buffer.alloc(13);
 
-  header.writeUInt32BE(size, 0);
-  header.writeUInt32BE(size, 4);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
   header[8] = 8; // bit depth
   header[9] = 2; // color type: RGB
 
   // Each row starts with filter type 0 (none), followed by the pixels
-  const row = Buffer.concat([Buffer.from([0]), ...Array(size).fill(Buffer.from(color))]);
+  const row = Buffer.concat([Buffer.from([0]), ...Array(width).fill(Buffer.from(color))]);
 
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     createChunk('IHDR', header),
-    createChunk('IDAT', deflateSync(Buffer.concat(Array(size).fill(row)))),
+    createChunk('IDAT', deflateSync(Buffer.concat(Array(height).fill(row)))),
     createChunk('IEND', Buffer.alloc(0)),
   ]);
 };

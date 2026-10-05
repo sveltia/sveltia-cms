@@ -9,6 +9,7 @@ import { isCollectionIndexFilePath } from '$lib/services/contents/collection/ent
 import { getCollectionFile } from '$lib/services/contents/collection/files';
 import { getFrontMatterDelimiters, resolveFileConfig } from '$lib/services/contents/file/config';
 import { FRONTMATTER_FORMATS } from '$lib/services/contents/file/constants';
+import { detectedFrontMatterFormats } from '$lib/services/contents/file/detected-formats';
 import { getOrCreate } from '$lib/services/utils/cache';
 
 /**
@@ -218,6 +219,8 @@ export const parseEntryFile = async ({ text = '', path, folder: { collectionName
 
     if (format === 'frontmatter') {
       format = detectFrontMatterFormat(text);
+      // Remembered, so the file is saved back in the same format
+      detectedFrontMatterFormats.set(path, format);
     }
 
     if (FRONTMATTER_FORMATS.includes(/** @type {any} */ (format))) {

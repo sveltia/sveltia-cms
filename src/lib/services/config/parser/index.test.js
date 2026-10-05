@@ -86,8 +86,10 @@ vi.mock('$lib/services/backends/git/services', () => ({
   },
 }));
 
+const mockWarnDeprecation = vi.hoisted(() => vi.fn());
+
 vi.mock('$lib/services/config/deprecations', () => ({
-  warnDeprecation: vi.fn(),
+  warnDeprecation: mockWarnDeprecation,
 }));
 
 const mockParseFields = vi.hoisted(() => vi.fn());
@@ -206,6 +208,28 @@ describe('Config Parser', () => {
 
       // A relative `display_url` opens fine in a new tab, so only `site_url` is checked
       expect([...collectors.errors]).toEqual(['Invalid URL in site_url: example.com']);
+    });
+
+    it('should warn about the deprecated `logo_url` option', () => {
+      /** @type {any} */
+      const config = {
+        backend: { name: 'github', repo: 'owner/repo' },
+        media_folder: '/media',
+        collections: [
+          {
+            name: 'posts',
+            label: 'Posts',
+            folder: 'content/posts',
+            fields: [{ name: 'title', widget: 'string' }],
+          },
+        ],
+      };
+
+      parseCmsConfig(config, createCollectors());
+      expect(mockWarnDeprecation).not.toHaveBeenCalledWith('logo_url');
+
+      parseCmsConfig({ ...config, logo_url: '/logo.svg' }, createCollectors());
+      expect(mockWarnDeprecation).toHaveBeenCalledWith('logo_url');
     });
 
     it('should accept site URLs that are URLs, or empty', () => {

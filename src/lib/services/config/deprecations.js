@@ -12,6 +12,7 @@ export const warnedOnceMap = {
   automatic_deployments: false,
   multiple_folders_i18n_root: false,
   omit_default_locale_from_filename: false,
+  logo_url: false,
 };
 
 /**
@@ -53,6 +54,9 @@ export const warningMessages = {
     'The `omit_default_locale_from_filename` i18n option is deprecated and will be removed in ' +
     'Sveltia CMS 1.0. Use the `omit_default_locale_from_file_path` option instead. ' +
     'https://sveltiacms.app/en/docs/i18n/structures',
+  logo_url:
+    'The `logo_url` option is deprecated and will be removed in a future version of Sveltia CMS. ' +
+    'Use the `logo.src` option instead. https://sveltiacms.app/en/docs/customization#custom-logo',
 };
 
 /**

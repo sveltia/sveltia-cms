@@ -1,6 +1,7 @@
 import { isURL } from '@sveltia/utils/string';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
+import { warnDeprecation } from '$lib/services/config/deprecations';
 import { parseBackendConfig } from '$lib/services/config/parser/backend';
 import { parseCollections } from '$lib/services/config/parser/collections';
 import { parseFields } from '$lib/services/config/parser/fields';
@@ -81,6 +82,11 @@ export const parseCmsConfig = (cmsConfig, collectors) => {
       });
     }
   });
+
+  // The option still works, but `logo.src` replaces it
+  if (cmsConfig.logo_url !== undefined) {
+    warnDeprecation('logo_url');
+  }
 
   parseMediaConfig(cmsConfig, collectors);
   parseMediaLibraries({ config: cmsConfig, context: { cmsConfig }, collectors });

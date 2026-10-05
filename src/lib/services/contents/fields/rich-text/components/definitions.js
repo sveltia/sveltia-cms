@@ -96,6 +96,12 @@ export const getBuiltInComponentDefs = () => {
       { name: 'title', label: _('editor_components.title'), required: false },
     ],
     trigger: /** @type {'button'} */ ('button'),
+    /**
+     * Create the Markdown inserted in the plain text mode. A new image has no source yet, for which
+     * `toBlock()` returns an empty string, so nothing would be inserted.
+     * @returns {string} Empty image.
+     */
+    createMarkdown: () => '![]()',
   };
 
   return [

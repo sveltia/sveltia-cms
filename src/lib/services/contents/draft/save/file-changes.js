@@ -1,5 +1,6 @@
 import { backend } from '$lib/services/backends';
 import { formatEntryData } from '$lib/services/contents/draft/save/entry-file';
+import { getSavedFileConfig } from '$lib/services/contents/file/detected-formats';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
 
 /**
@@ -113,7 +114,13 @@ export const buildEntryFileChanges = async ({
 
       const [previousSha, data] = await Promise.all([
         getPreviousSha({ cacheDB, previousPath: currentPath }),
-        formatEntryData({ draft, config, _file, entry, locale }),
+        formatEntryData({
+          draft,
+          config,
+          _file: getSavedFileConfig({ _file, previousPath: currentPath, path: change.path }),
+          entry,
+          locale,
+        }),
       ]);
 
       return { ...change, previousSha, data };

@@ -325,6 +325,12 @@ describe('definitions', () => {
       expect(linkedImageComponent).toBeDefined();
     });
 
+    it('should insert an empty image in the plain text mode', () => {
+      getBuiltInComponentDefs().forEach((def) => {
+        expect(/** @type {any} */ (def).createMarkdown()).toBe('![]()');
+      });
+    });
+
     it('should return components with localized labels', () => {
       const builtInDefs = getBuiltInComponentDefs();
 

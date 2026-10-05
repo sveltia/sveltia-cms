@@ -120,9 +120,18 @@ describe('getSaveFailure', () => {
       message: 'Not Found',
       unexpected: false,
     });
+  });
+
+  test('reports an error without a message, not the `saving_failed` key', () => {
     expect(getSaveFailure(new Error('saving_failed'))).toEqual({
       type: 'error',
-      message: 'saving_failed',
+      message: '',
+      unexpected: false,
+    });
+    // The cause of a server error without a JSON body, e.g. a gateway’s HTML error page
+    expect(getSaveFailure(new Error('saving_failed', { cause: { status: 500 } }))).toEqual({
+      type: 'error',
+      message: '',
       unexpected: false,
     });
   });

@@ -14,6 +14,7 @@ describe('Test warnedOnceMap', () => {
       automatic_deployments: false,
       multiple_folders_i18n_root: false,
       omit_default_locale_from_filename: false,
+      logo_url: false,
     });
   });
 
@@ -91,6 +92,14 @@ describe('Test warningMessages', () => {
     expect(warningMessages.omit_default_locale_from_filename).toContain(
       'omit_default_locale_from_file_path',
     );
+  });
+
+  test('should contain useful information in logo_url message', () => {
+    expect(warningMessages.logo_url).toContain('logo_url');
+    expect(warningMessages.logo_url).toContain('deprecated');
+    expect(warningMessages.logo_url).toContain('logo.src');
+    // It isn’t scheduled for removal in 1.0
+    expect(warningMessages.logo_url).toContain('a future version');
   });
 });
 
