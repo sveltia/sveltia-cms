@@ -30,8 +30,8 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))
       '@sveltia/ui':
-        specifier: ^0.79.1
-        version: 0.79.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)
+        specifier: ^0.79.3
+        version: 0.79.3(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)
       '@sveltia/utils':
         specifier: ^0.12.3
         version: 0.12.3
@@ -154,8 +154,8 @@ importers:
         specifier: ^10.1.8
         version: 10.1.8(eslint@9.39.5(supports-color@10.2.2))
       eslint-plugin-jsdoc:
-        specifier: ^65.0.2
-        version: 65.0.2(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
+        specifier: ^65.1.0
+        version: 65.1.0(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
       eslint-plugin-package-json:
         specifier: ^1.10.1
         version: 1.10.1(eslint@9.39.5(supports-color@10.2.2))
@@ -1251,8 +1251,8 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  '@sveltia/ui@0.79.1':
-    resolution: {integrity: sha512-pcQ7VQ+DuT1sBXUknuG6RfhbWxHwcDBoUVyb81bmQAp0IvQr9KNIhUvH1LmlwwPnMFO5N+NWgpaJSmLOjpp5TQ==}
+  '@sveltia/ui@0.79.3':
+    resolution: {integrity: sha512-uSE3bnU30V9Ibu/ox4Qr9L3i3FPTVibmW/jZ/I796EmexpIashxVisAfzdYypNS8tT+s3+TBmiOqqmEaRnFnSA==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2202,8 +2202,8 @@ packages:
       '@typescript-eslint/parser':
         optional: true
 
-  eslint-plugin-jsdoc@65.0.2:
-    resolution: {integrity: sha512-zy1VuN7NNUmfXk15B5ZDAGTXBiye+JskSJZ22Qd5E3VlUluX/RHf8TXYTj8yradaKKJt+69aylhJS22TX/aeRA==}
+  eslint-plugin-jsdoc@65.1.0:
+    resolution: {integrity: sha512-P7levv6MorzYZ85Yy/UVOAY9FKxwU6NJ9+c02QPYhzoIVg007OCtMi+9na8Xkho64Bu89QguoLSxH78YSmy1Zg==}
     engines: {node: ^22.22.2 || >=24.15.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
@@ -5010,7 +5010,7 @@ snapshots:
       messageformat: 4.0.0
       svelte: 5.57.1(@typescript-eslint/types@8.71.0)
 
-  '@sveltia/ui@0.79.1(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)':
+  '@sveltia/ui@0.79.3(svelte@5.57.1(@typescript-eslint/types@8.71.0))(typescript@6.0.3)':
     dependencies:
       '@lexical/code-core': 0.52.0(typescript@6.0.3)
       '@lexical/dragon': 0.52.0(typescript@6.0.3)
@@ -6128,7 +6128,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-jsdoc@65.0.2(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3):
+  eslint-plugin-jsdoc@65.1.0(eslint@9.39.5(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3):
     dependencies:
       '@es-joy/jsdoccomment': 0.98.0
       '@es-joy/resolve.exports': 1.2.0
