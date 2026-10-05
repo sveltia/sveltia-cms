@@ -580,7 +580,7 @@ export default defineConfig({
     exclude: ['@sveltia/ui'],
     // Pre-bundle the packages the component tests only get to late in a run, or Vite discovers
     // them mid-run and reloads the browser, failing whatever tests are loading at that moment
-    include: ['create-react-class'],
+    include: ['create-react-class', 'htm'],
   },
   define: {
     ...SHARED_DEFINE,
