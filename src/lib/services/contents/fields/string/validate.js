@@ -26,17 +26,11 @@ export const validateStringField = ({ fieldConfig, value }) => {
   const hasMax =
     Number.isInteger(maxlength) && (minlength ?? 0) <= /** @type {number} */ (maxlength);
 
-  const count = value ? [...value.trim()].length : 0;
-  const tooShort = hasMin && count < /** @type {number} */ (minlength);
-  const tooLong = hasMax && count > /** @type {number} */ (maxlength);
-  let typeMismatch = false;
+  const { type = 'text', prefix, suffix } = /** @type {StringField} */ (config);
+  let trimValue = value ?? '';
 
-  // Check the URL or email with native form validation
-  if (fieldType === 'string' && value) {
-    const { type = 'text', prefix, suffix } = /** @type {StringField} */ (config);
-    let trimValue = value;
-
-    // Remove the prefix/suffix before validation
+  // Remove the prefix and suffix, which the user doesn’t type, before counting and validating
+  if (fieldType === 'string') {
     if (prefix && trimValue.startsWith(prefix)) {
       trimValue = trimValue.slice(prefix.length);
     }
@@ -44,7 +38,15 @@ export const validateStringField = ({ fieldConfig, value }) => {
     if (suffix && trimValue.endsWith(suffix)) {
       trimValue = trimValue.slice(0, -suffix.length);
     }
+  }
 
+  const count = [...trimValue.trim()].length;
+  const tooShort = hasMin && count < /** @type {number} */ (minlength);
+  const tooLong = hasMax && count > /** @type {number} */ (maxlength);
+  let typeMismatch = false;
+
+  // Check the URL or email with native form validation
+  if (fieldType === 'string' && trimValue) {
     if (type !== 'text') {
       const inputElement = document.createElement('input');
 

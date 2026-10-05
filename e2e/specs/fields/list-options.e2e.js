@@ -448,20 +448,48 @@ test('collapses an object with `collapsed: auto` only if it’s filled', async (
   await expect.poll(() => readHome(cms)).toBe(HOME.replace("  city: ''\n", '  city: Montreal\n'));
 });
 
-test('clears a list that doesn’t allow removing items from the field options (known issue)', async ({
-  cms,
-  page,
-}) => {
+test('offers no way to clear a list that doesn’t allow removing items', async ({ cms, page }) => {
   const tags = getField(page, 'Tags');
+  const links = getField(page, 'Links');
 
-  // Known issue: the field options offer Clear, and Restore Default, which here is empty too, on a
-  // list with `allow_remove: false`, so every item can be removed at once although none can be
-  // removed one by one. Once it’s decided that the option also covers these, the menu items should
-  // be left out or disabled, and this test should check that instead
+  /**
+   * Open the field options of a list, and get the Clear and Restore Default menu items.
+   * @param {import('@playwright/test').Locator} field Field group.
+   * @returns {Promise<{ clear: import('@playwright/test').Locator, restore:
+   * import('@playwright/test').Locator }>} Menu items.
+   */
+  const openOptions = async (field) => {
+    await field.getByRole('button', { name: 'Show Field Options' }).first().click();
+
+    return {
+      clear: page.getByRole('menuitem', { name: 'Clear' }),
+      restore: page.getByRole('menuitem', { name: 'Restore Default' }),
+    };
+  };
+
+  // Clearing removes every item, and restoring the default value can remove items too
+  let items = await openOptions(tags);
+
+  await expect(items.clear).toBeDisabled();
+  await expect(items.restore).toBeDisabled();
+  await page.keyboard.press('Escape');
+
+  // A list that doesn’t allow adding items can be cleared, but restoring could add items
+  items = await openOptions(links);
+  await expect(items.clear).toBeEnabled();
+  await expect(items.restore).toBeDisabled();
+  await page.keyboard.press('Escape');
+
+  // Clearing the whole entry leaves the list alone as well
   await cms.chooseMenuItem(
-    tags.getByRole('button', { name: 'Show Field Options' }).first(),
-    page.getByRole('menuitem', { name: 'Clear' }),
+    page.getByRole('button', { name: 'Show Editor Options' }),
+    page.getByRole('menuitem', { name: 'Clear All' }),
   );
-  await expect(tags.getByText('0 Tags')).toBeVisible();
-  await expect(tags.getByRole('textbox', { name: 'Tag' })).toHaveCount(0);
+  await page
+    .getByRole('alertdialog', { name: 'Clear All' })
+    .getByRole('button', { name: 'Clear All' })
+    .click();
+  await expect(getField(page, 'Steps').getByText('0 Steps')).toBeVisible();
+  await expect(tags.getByText('2 Tags')).toBeVisible();
+  await expect(tags.getByRole('textbox', { name: 'Tag' }).first()).toHaveValue('space');
 });

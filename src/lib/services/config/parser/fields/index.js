@@ -2,6 +2,7 @@ import { parseCodeFieldConfig } from '$lib/services/config/parser/fields/code';
 import { parseComputeFieldConfig } from '$lib/services/config/parser/fields/compute';
 import { parseDateTimeFieldConfig } from '$lib/services/config/parser/fields/datetime';
 import { parseFileFieldConfig } from '$lib/services/config/parser/fields/file';
+import { parseHiddenFieldConfig } from '$lib/services/config/parser/fields/hidden';
 import { parseListFieldConfig } from '$lib/services/config/parser/fields/list';
 import { parseNumberFieldConfig } from '$lib/services/config/parser/fields/number';
 import { parseObjectFieldConfig } from '$lib/services/config/parser/fields/object';
@@ -18,6 +19,7 @@ Object.assign(fieldParsers, {
   compute: parseComputeFieldConfig,
   datetime: parseDateTimeFieldConfig,
   file: parseFileFieldConfig,
+  hidden: parseHiddenFieldConfig,
   image: parseFileFieldConfig, // alias
   list: parseListFieldConfig,
   markdown: parseRichTextFieldConfig, // alias

@@ -10,6 +10,7 @@ import { getInheritedI18nOption } from '$lib/services/contents/draft/create/prox
 import { populateDefaultValue } from '$lib/services/contents/draft/defaults';
 import { deleteSubtree } from '$lib/services/contents/entry/subtree';
 import { syncAllDuplicateKeys } from '$lib/services/contents/fields/key-value/duplicate-keys';
+import { getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
 import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
 
 /**
@@ -20,10 +21,12 @@ import { isFieldTranslatable } from '$lib/services/contents/i18n/fields';
  * LocaleContentMap,
  * } from '$lib/types/private';
  * @import {
+ * ComplexListField,
  * Field,
  * FieldKeyPath,
  * FieldWithSubFields,
  * FieldWithTypes,
+ * ListField,
  * ObjectField,
  * } from '$lib/types/public';
  */
@@ -67,8 +70,9 @@ const PRESERVED_FIELD_TYPES = ['compute', 'hidden', 'uuid'];
  * `false`. Restoring gives every field the value a new entry would have instead, taking the
  * `default` option into account.
  *
- * The subfields the user can’t edit in the locale are left alone, as are the read-only ones and
- * those listed in {@link PRESERVED_FIELD_TYPES}.
+ * The subfields the user can’t edit in the locale are left alone, as are the read-only ones, those
+ * listed in {@link PRESERVED_FIELD_TYPES}, and a List field whose items can’t be removed or, when
+ * restoring, added.
  * @param {ResetContentArgs} args Arguments.
  */
 const resetContent = (args) => {
@@ -79,6 +83,20 @@ const resetContent = (args) => {
 
   if (PRESERVED_FIELD_TYPES.includes(fieldType) || /** @type {any} */ (fieldConfig).readonly) {
     return;
+  }
+
+  // A List field with subfields keeps its items if the user can’t remove them: clearing removes
+  // every item, and restoring the default value can remove items as well as add them
+  if (
+    fieldType === 'list' &&
+    getListFieldInfo(/** @type {ListField} */ (fieldConfig)).hasSubFields
+  ) {
+    const { allow_add: allowAdd = true, allow_remove: allowRemove = true } =
+      /** @type {ComplexListField} */ (fieldConfig);
+
+    if (!allowRemove || (restore && !allowAdd)) {
+      return;
+    }
   }
 
   // The subfields of an Object field are checked one by one, as their `i18n` options can differ

@@ -328,10 +328,7 @@ test.describe('`minlength` and `maxlength` options', () => {
     );
   });
 
-  test('counts the prefix of a string along with what the user typed (known issue)', async ({
-    cms,
-    page,
-  }) => {
+  test('counts only what the user typed, without the prefix', async ({ cms, page }) => {
     const editor = await createVenue({ cms, page });
     const field = getField(editor, 'Room');
     const input = field.getByRole('textbox', { name: 'Room' });
@@ -339,15 +336,20 @@ test.describe('`minlength` and `maxlength` options', () => {
 
     await expect(counter).toHaveText(counted(0, 3));
 
-    // The counter and the length check take the saved value, `Room 1`, so a single character typed
-    // is already too many. The `type` check strips the prefix and the suffix from the value, as the
-    // user doesn’t type them, and once the length check does the same, the counter should show
-    // `1 / 3` and the entry should be saved with `room: Room 1`.
-    await input.fill('1');
-    await expect(counter).toHaveText(counted(6, 3));
+    // The saved value is `Room 1234`, but the user only typed the number
+    await input.fill('1234');
+    await expect(counter).toHaveText(counted(4, 3));
     await expectSaveRefused({ cms, page, editor });
     await expect(field.getByRole('alert')).toContainText(
       'You cannot enter more than 3 characters.',
+    );
+
+    await input.fill('101');
+    await expect(counter).toHaveText(counted(3, 3));
+    await expect(field.getByRole('alert')).toHaveCount(0);
+
+    expect(await save({ cms, editor })).toBe(
+      'title: Massey Hall\nemail: box@example.com\nroom: Room 101\n',
     );
   });
 

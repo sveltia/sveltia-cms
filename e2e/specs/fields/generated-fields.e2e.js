@@ -374,24 +374,42 @@ test.describe('Hidden field', () => {
 });
 
 test.describe('Hidden field with the locale tag', () => {
-  test.use({ config: config([{ name: 'lang', widget: 'hidden', default: '{{locale}}' }]) });
+  const FIELD = { name: 'lang', widget: 'hidden', default: '{{locale | upper}}' };
 
-  test.beforeEach(async ({ cms }) => {
-    await cms.open();
-    await cms.signIn();
+  test.describe('without i18n', () => {
+    test.use({ config: config([FIELD]) });
+
+    test('refuses the config, as there’s no locale to fill the tag with', async ({ cms, page }) => {
+      await cms.open();
+      await expect(page.getByRole('alert')).toContainText(
+        'The default option of a Hidden field uses the {{locale}} placeholder, but i18n isn’t ' +
+          'enabled for the collection',
+      );
+      await expect(page.getByRole('button', { name: 'Work with Test Repository' })).toBeHidden();
+    });
   });
 
-  test('writes the internal locale key without i18n (known issue)', async ({ cms, page }) => {
-    const editor = await createNote(page, 'Fresh');
+  test.describe('with i18n', () => {
+    test.use({
+      config: {
+        ...config([FIELD]),
+        i18n: { structure: 'single_file', locales: ['en', 'fr'] },
+        collections: [{ ...notes([{ ...FIELD, i18n: true }]), i18n: true }],
+      },
+    });
 
-    await editor.getByRole('button', { name: 'Save' }).click();
+    test('fills the tag with the locale of each translation', async ({ cms, page }) => {
+      await cms.open();
+      await cms.signIn();
 
-    // The tag is replaced with `_default`, the key the CMS uses internally for the content of a
-    // site without i18n, which means nothing to the site. Once fixed, expect an empty value, or
-    // whatever the tag is decided to stand for without i18n
-    await expect
-      .poll(async () => (await cms.readRepo())['content/notes/fresh.yml'])
-      .toBe('title: Fresh\nlang: _default\n');
+      const editor = await createNote(page, 'Fresh');
+
+      await editor.getByRole('button', { name: 'Save' }).click();
+
+      await expect
+        .poll(async () => (await cms.readRepo())['content/notes/fresh.yml'])
+        .toBe('en:\n  title: Fresh\n  lang: EN\nfr:\n  lang: FR\n');
+    });
   });
 });
 

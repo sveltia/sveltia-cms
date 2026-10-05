@@ -309,6 +309,74 @@ describe('Test canResetField()', () => {
     expect(canResetField({ ...meta, ...locales, valueMap: { 'meta.a': '' } })).toBe(true);
     expect(canResetField({ ...meta, ...locales, valueMap: { meta: null } })).toBe(false);
   });
+
+  test('should keep the items of a List field that doesn’t allow removing or adding them', () => {
+    /**
+     * Get the arguments for a List field of links with the given options.
+     * @param {Record<string, any>} options List options.
+     * @returns {any} Arguments.
+     */
+    const getArgs = (options) => ({
+      fieldConfig: {
+        name: 'links',
+        widget: 'list',
+        default: [{ url: '/' }],
+        fields: [{ name: 'url', widget: 'string' }],
+        ...options,
+      },
+      keyPath: 'links',
+      locale: 'en',
+      defaultLocale: 'en',
+      valueMap: { links: [], 'links.0.url': '/docs', 'links.1.url': '/blog' },
+    });
+
+    // Clearing removes every item
+    expect(canResetField(getArgs({ allow_remove: false }))).toBe(false);
+    expect(canResetField(getArgs({ allow_add: false }))).toBe(true);
+    // Restoring the default value can remove items as well as add them
+    expect(canResetField({ ...getArgs({ allow_remove: false }), restore: true })).toBe(false);
+    expect(canResetField({ ...getArgs({ allow_add: false }), restore: true })).toBe(false);
+    expect(canResetField({ ...getArgs({}), restore: true })).toBe(true);
+    // A List field without subfields doesn’t take the options
+    expect(
+      canResetField({
+        ...getArgs({}),
+        fieldConfig: { name: 'links', widget: 'list', allow_remove: false },
+        valueMap: { links: [], 'links.0': 'a' },
+      }),
+    ).toBe(true);
+  });
+
+  test('should keep a List field that doesn’t allow removing items within an Object field', () => {
+    const draft = createDraft({
+      en: { 'venue.name': 'Hall', 'venue.rooms': [], 'venue.rooms.0.name': 'East' },
+    });
+
+    resetField({
+      draft,
+      fieldConfig: {
+        name: 'venue',
+        widget: 'object',
+        fields: [
+          { name: 'name', widget: 'string' },
+          {
+            name: 'rooms',
+            widget: 'list',
+            allow_remove: false,
+            fields: [{ name: 'name', widget: 'string' }],
+          },
+        ],
+      },
+      keyPath: 'venue',
+      locale: 'en',
+    });
+
+    expect(draft.currentValues.en).toEqual({
+      'venue.name': '',
+      'venue.rooms': [],
+      'venue.rooms.0.name': 'East',
+    });
+  });
 });
 
 describe('Test resetField() for restoring', () => {

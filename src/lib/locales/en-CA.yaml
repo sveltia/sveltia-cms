@@ -1899,6 +1899,8 @@ config:
     invalid_variable_type: The variable type name `{$name}` is invalid. It must not contain special characters.
     duplicate_variable_type: Variable type names must be unique, but `{$name}` is used more than once.
     date_field_type: 'The deprecated Date field type is not supported in Sveltia CMS. Use the DateTime field type with the `type: date` option instead.'
+    # curly brackets in the placeholder are escaped with backslashes for MessageFormat 2
+    hidden_field_locale_without_i18n: The `default` option of a Hidden field uses the `\{\{locale\}\}` placeholder, but i18n isn’t enabled for the collection, so the content has no locale to fill it with.
     # {$timeZone} is the invalid IANA timezone identifier from the configuration
     invalid_timezone: 'Invalid timezone: {$timeZone}. Must be a valid IANA timezone identifier like `America/New_York` or `Asia/Tokyo`.'
     # {$prop} is the deprecated option name and {$newProp} is the supported replacement option
