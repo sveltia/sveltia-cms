@@ -76,8 +76,9 @@ test('strips only the last extension in the media folder', async ({ cms, page })
   await expect(cover.getByRole('button', { name: 'Replace Image' })).toBeVisible();
   await editor.getByRole('button', { name: 'Save' }).click();
 
-  await expect.poll(() => cms.readRepoFile('static/media/my.post/kite.png')).toEqual(kite);
-  expect((await cms.readRepo())['content/posts/my.post.md']).toBe(
-    '---\ntitle: My Post\ncover: /media/my.post/kite.png\n---\n',
-  );
+  // The entry file is written last, after its assets
+  await expect
+    .poll(async () => (await cms.readRepo())['content/posts/my.post.md'])
+    .toBe('---\ntitle: My Post\ncover: /media/my.post/kite.png\n---\n');
+  expect(await cms.readRepoFile('static/media/my.post/kite.png')).toEqual(kite);
 });

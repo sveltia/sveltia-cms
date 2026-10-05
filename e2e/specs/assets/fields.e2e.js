@@ -149,10 +149,11 @@ test('writes an uploaded image only when the entry is saved', async ({ cms, page
 
   await editor.getByRole('button', { name: 'Save' }).click();
 
-  await expect.poll(() => cms.readRepoFile('static/uploads/kite.png')).toEqual(kite);
-  expect((await cms.readRepo())['content/notes/kite.md']).toBe(
-    "---\ntitle: Kite\ncover: /uploads/kite.png\nattachment: ''\ngallery: []\n---\n",
-  );
+  // The entry file is written last, after its assets
+  await expect
+    .poll(async () => (await cms.readRepo())['content/notes/kite.md'])
+    .toBe("---\ntitle: Kite\ncover: /uploads/kite.png\nattachment: ''\ngallery: []\n---\n");
+  expect(await cms.readRepoFile('static/uploads/kite.png')).toEqual(kite);
 });
 
 test('leaves nothing behind when an upload is cancelled with the entry', async ({ cms, page }) => {

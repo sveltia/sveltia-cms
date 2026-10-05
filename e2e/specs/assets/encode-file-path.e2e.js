@@ -54,8 +54,9 @@ test('renames an asset next to an entry and updates its encoded reference', asyn
   await dialog.getByRole('textbox').fill('photo (2).png');
   await dialog.getByRole('button', { name: 'Rename' }).click();
 
-  await expect.poll(() => cms.readRepoFile('content/posts/hello/photo (2).png')).toEqual(photo);
-  expect((await cms.readRepo())['content/posts/hello/index.md']).toBe(
-    '---\ntitle: Hello\ncover: photo%20%282%29.png\n---\n',
-  );
+  // The entry file is written last, after its assets
+  await expect
+    .poll(async () => (await cms.readRepo())['content/posts/hello/index.md'])
+    .toBe('---\ntitle: Hello\ncover: photo%20%282%29.png\n---\n');
+  expect(await cms.readRepoFile('content/posts/hello/photo (2).png')).toEqual(photo);
 });

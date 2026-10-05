@@ -58,8 +58,9 @@ test('warns about an empty public folder and saves the media folder path', async
   await expect(cover.getByRole('button', { name: 'Replace Image' })).toBeVisible();
   await editor.getByRole('button', { name: 'Save' }).click();
 
-  await expect.poll(() => cms.readRepoFile('static/images/kite.png')).toEqual(kite);
-  expect((await cms.readRepo())['content/posts/kite.md']).toBe(
-    '---\ntitle: Kite\ncover: /static/images/kite.png\n---\n',
-  );
+  // The entry file is written last, after its assets
+  await expect
+    .poll(async () => (await cms.readRepo())['content/posts/kite.md'])
+    .toBe('---\ntitle: Kite\ncover: /static/images/kite.png\n---\n');
+  expect(await cms.readRepoFile('static/images/kite.png')).toEqual(kite);
 });
