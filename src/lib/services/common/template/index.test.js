@@ -722,6 +722,42 @@ describe('fillTemplate()', async () => {
     ).toBe('hello-');
   });
 
+  test('keep the replacement at the end of a slug that is not truncated', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        collections: [collection],
+        slug: { trim: false, maxlength: 50 },
+      },
+    };
+
+    expect(
+      fillTemplate('{{title}}', {
+        collection: { ...collection, slug_length: undefined },
+        content: { title: '--Hello World--' },
+      }),
+    ).toBe('-hello-world-');
+  });
+
+  test('keep the replacement left at the end by truncation with `trim: false`', async () => {
+    // @ts-ignore
+    (await import('$lib/services/config')).cmsConfig = {
+      current: {
+        backend: { name: 'github' },
+        collections: [collection],
+        slug: { trim: false, maxlength: 6 },
+      },
+    };
+
+    expect(
+      fillTemplate('{{title}}', {
+        collection: { ...collection, slug_length: undefined },
+        content: { title: 'Hello World' },
+      }),
+    ).toBe('hello-');
+  });
+
   test('legacy slug_length overrides config maxlength option', async () => {
     // @ts-ignore
     (await import('$lib/services/config')).cmsConfig = {

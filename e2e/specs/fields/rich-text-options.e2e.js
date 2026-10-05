@@ -398,10 +398,7 @@ test.describe('Markdown shortcuts', () => {
   test.describe('turned off', () => {
     test.use({ config: noteConfig({ use_markdown_shortcuts: false }) });
 
-    test('keeps a Markdown prefix as text, but saves it unescaped (known issue)', async ({
-      cms,
-      page,
-    }) => {
+    test('keeps a Markdown prefix as text, saving it escaped', async ({ cms, page }) => {
       const { editor, body } = await openNote({ cms, page, body: 'The dome opens.' });
 
       await moveCaretToEnd(body);
@@ -410,10 +407,37 @@ test.describe('Markdown shortcuts', () => {
       await expect(body.locator('p').last()).toHaveText('## Hours');
       await expect(body.getByRole('heading')).toHaveCount(0);
 
-      // Known issue: the editor writes the text of a paragraph as is, without escaping the Markdown
-      // syntax in it, so the paragraph is read back as a heading the next time the entry is opened.
-      // Once fixed, the prefix should be saved escaped, as `\## Hours`
-      await saveAndExpect({ cms, editor, body: 'The dome opens.\n\n## Hours' });
+      // Escaped, so the paragraph isn’t read back as a heading the next time the entry is opened
+      await saveAndExpect({ cms, editor, body: 'The dome opens.\n\n\\## Hours' });
+    });
+  });
+});
+
+test.describe('escaped Markdown syntax', () => {
+  test.use({ config: noteConfig({}) });
+
+  test('keeps escaped block syntax as text when another paragraph changes', async ({
+    cms,
+    page,
+  }) => {
+    const { editor, body } = await openNote({
+      cms,
+      page,
+      body: '\\## Hours\n\n1\\. Daily\n\nThe dome opens.',
+    });
+
+    await expect(body.getByRole('heading')).toHaveCount(0);
+    await expect(body.getByRole('list')).toHaveCount(0);
+    await expect(body.locator('p').first()).toHaveText('## Hours');
+
+    await moveCaretToEnd(body);
+    await page.keyboard.type(' Weather permitting.');
+
+    // The escapes are written back, or the entry would get a heading and a list
+    await saveAndExpect({
+      cms,
+      editor,
+      body: '\\## Hours\n\n1\\. Daily\n\nThe dome opens. Weather permitting.',
     });
   });
 });

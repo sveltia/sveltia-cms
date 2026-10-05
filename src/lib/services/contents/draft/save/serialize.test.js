@@ -1445,6 +1445,101 @@ describe('Test serializeContent()', () => {
     });
   });
 
+  describe('hidden field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [],
+      isIndexFile: false,
+    };
+
+    test('keeps a list value read from a file in place', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['title', 'tags', 'body']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath === 'tags' ? 'hidden' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { title: 'Title', 'tags.0': 'b', 'tags.1': 'a', body: 'Text' },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({ title: 'Title', tags: ['b', 'a'], body: 'Text' }),
+      );
+    });
+
+    test('keeps an object value of a field in a list item in place', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['items', 'items.*.meta', 'items.*.name']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath.endsWith('.meta') ? 'hidden' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: { 'items.0.name': 'First', 'items.0.meta.id': 1, 'items.0.meta.kind': 'a' },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({ items: [{ meta: { id: 1, kind: 'a' }, name: 'First' }] }),
+      );
+    });
+  });
+
+  describe('code field', () => {
+    /** @type {any} */
+    const draft = {
+      collectionName: 'posts',
+      collection: {
+        _file: { format: 'json' },
+        _i18n: {
+          canonicalSlug: { key: '' },
+        },
+      },
+      fields: [],
+      isIndexFile: false,
+    };
+
+    test('keeps the code and the language in the order of the custom keys', async () => {
+      const { createKeyPathList } = await import('$lib/services/contents/draft/save/key-path');
+
+      vi.mocked(createKeyPathList).mockReturnValueOnce(['script', 'body']);
+      getField.mockImplementation(({ keyPath }) => ({
+        name: keyPath,
+        widget: keyPath === 'script' ? 'code' : 'string',
+      }));
+
+      const result = serializeContent({
+        draft,
+        locale: 'en',
+        valueMap: {
+          body: 'Text',
+          'script.source': 'print(1)',
+          'script.language': 'python',
+          script: {},
+        },
+      });
+
+      expect(JSON.stringify(result)).toBe(
+        JSON.stringify({ script: { source: 'print(1)', language: 'python' }, body: 'Text' }),
+      );
+    });
+  });
+
   describe('keyvalue field in list field', () => {
     /** @type {any} */
     const draft = {

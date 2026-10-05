@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
+import {
+  awaitPendingFieldUpdates,
+  fieldUpdatePending,
+} from '$lib/services/contents/editor/pending';
 import { createMockDraft, renderWithDraft } from '$lib/test/draft';
 
 import CodeEditor from './code-editor.svelte';
@@ -50,6 +54,33 @@ describe('CodeEditor', () => {
 
     await editor.fill('console.log(2);');
     await expect.poll(() => draft.currentValues._default['snippet.code']).toBe('console.log(2);');
+  });
+
+  test('registers a change as pending until it reaches the draft', async () => {
+    const { draft } = await renderEditor({
+      values: { snippet: {}, 'snippet.code': 'one', 'snippet.lang': 'plain' },
+    });
+
+    const editor = page.getByRole('textbox');
+    /** @type {boolean[]} */
+    const states = [];
+
+    // Record the state rather than read it after typing, which a slow runner may only get to once
+    // the change has landed
+    const cleanup = $effect.root(() => {
+      $effect(() => {
+        states.push(fieldUpdatePending.current);
+      });
+    });
+
+    await expect.element(editor).toHaveTextContent('one');
+    await editor.fill('two');
+    // The editor passes the code on a moment later, so a save has to wait for it
+    await expect.poll(() => states.includes(true)).toBe(true);
+    await awaitPendingFieldUpdates();
+    expect(draft.currentValues._default['snippet.code']).toBe('two');
+    expect(fieldUpdatePending.current).toBe(false);
+    cleanup();
   });
 
   test('uses the custom keys and the default language', async () => {

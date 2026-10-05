@@ -8,10 +8,11 @@
   import { CodeEditor } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { isObject } from '@sveltia/utils/object';
-  import { getContext } from 'svelte';
+  import { getContext, tick } from 'svelte';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { trackPendingFieldUpdate } from '$lib/services/contents/editor/pending';
   import { watch } from '$lib/services/utils/state.svelte';
 
   /**
@@ -46,6 +47,7 @@
 
   let code = $state('');
   let lang = $state('');
+  let pending = $state(false);
 
   const {
     default_language: defaultLanguage = 'plain',
@@ -148,6 +150,27 @@
       setCurrentValue();
     },
   );
+
+  // While the editor holds a change made by the user, register it as a pending update: the editor
+  // passes the code on with a short delay, so a save right after a change would otherwise validate
+  // and write the previous value
+  $effect(() => {
+    if (!pending) {
+      return undefined;
+    }
+
+    /** @type {PromiseWithResolvers<void>} */
+    const { promise, resolve } = Promise.withResolvers();
+
+    trackPendingFieldUpdate(promise);
+
+    // Settle once the value has reached the draft, which `setCurrentValue()` writes in a microtask,
+    // or when the editor goes away
+    return async () => {
+      await tick();
+      resolve();
+    };
+  });
 </script>
 
 {#await sleep() then}
@@ -159,6 +182,7 @@
     <CodeEditor
       bind:code
       bind:lang
+      bind:pending
       {showLanguageSwitcher}
       flex
       {readonly}

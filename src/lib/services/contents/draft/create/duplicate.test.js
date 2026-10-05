@@ -10,7 +10,6 @@ vi.mock('$lib/services/contents/editor', () => ({
 }));
 
 vi.mock('$lib/services/contents/entry/fields', () => ({
-  LIST_KEY_PATH_REGEX: /\.\d+$/,
   getField: vi.fn(),
 }));
 
@@ -448,21 +447,16 @@ describe('contents/draft/create/duplicate', () => {
       });
     });
 
-    it('should handle hidden field with array default value', async () => {
+    it('should reset a hidden field whose list value is flattened', async () => {
+      const fieldConfig = { widget: 'hidden', default: ['default1', 'default2'], i18n: true };
+
       mockEntryDraft.currentValues.en['tags.0'] = 'tag1';
       mockEntryDraft.currentValues.en['tags.1'] = 'tag2';
 
-      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
-        if (keyPath === 'tags.0' || keyPath === 'tags.1') {
-          return { widget: 'hidden', default: ['default1', 'default2'], i18n: true };
-        }
-
-        if (keyPath === 'tags') {
-          return { widget: 'hidden', default: ['default1', 'default2'], i18n: true };
-        }
-
-        return undefined;
-      });
+      // Like the real `getField()`, only the field’s own key path resolves to it
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) =>
+        keyPath === 'tags' ? fieldConfig : undefined,
+      );
 
       mockGetHiddenFieldDefaultValueMap.mockReturnValue({
         tags: ['default1', 'default2'],
@@ -470,10 +464,48 @@ describe('contents/draft/create/duplicate', () => {
 
       const { duplicateDraft } = await import('./duplicate.js');
       const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
-      const setCallArg = newDraft;
 
-      expect(setCallArg.currentValues.en['tags.0']).toBeUndefined();
-      expect(setCallArg.currentValues.en['tags.1']).toBeUndefined();
+      expect(newDraft.currentValues.en['tags.0']).toBeUndefined();
+      expect(newDraft.currentValues.en['tags.1']).toBeUndefined();
+      expect(newDraft.currentValues.en.tags).toEqual(['default1', 'default2']);
+      expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledOnce();
+      expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledWith({
+        fieldConfig,
+        keyPath: 'tags',
+        locale: 'en',
+        defaultLocale: 'en',
+      });
+    });
+
+    it('should reset a hidden field whose object value is flattened in a list item', async () => {
+      const fieldConfig = { widget: 'hidden', default: 'new', i18n: true };
+
+      mockEntryDraft.currentValues.en['items.0.name'] = 'First';
+      mockEntryDraft.currentValues.en['items.0.meta.id'] = 1;
+      mockEntryDraft.currentValues.en['items.0.meta.kind'] = 'a';
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) => {
+        if (keyPath === 'items' || keyPath === 'items.0') {
+          return { widget: 'list', fields: [] };
+        }
+
+        if (keyPath === 'items.0.meta') {
+          return fieldConfig;
+        }
+
+        return keyPath === 'items.0.name' ? { widget: 'string' } : undefined;
+      });
+
+      mockGetHiddenFieldDefaultValueMap.mockReturnValue({ 'items.0.meta': 'new' });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(newDraft.currentValues.en['items.0.name']).toBe('First');
+      expect(newDraft.currentValues.en['items.0.meta.id']).toBeUndefined();
+      expect(newDraft.currentValues.en['items.0.meta.kind']).toBeUndefined();
+      expect(newDraft.currentValues.en['items.0.meta']).toBe('new');
+      expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledOnce();
     });
 
     it('should not reset hidden field for non-default locale when i18n is duplicate', async () => {
@@ -713,8 +745,7 @@ describe('contents/draft/create/duplicate', () => {
       });
     });
 
-    it('should handle hidden array field and skip further processing when normalized key path already exists', async () => {
-      // This test covers the branch at line 46 (early return)
+    it('should reset a hidden field once although its key path holds a value along with its items', async () => {
       mockEntryDraft.currentValues.en = {
         tags: [], // Parent array already exists
         'tags.0': 'tag1',
@@ -746,7 +777,27 @@ describe('contents/draft/create/duplicate', () => {
       // The 'tags' key should exist (or be re-assigned), and 'tags.0', 'tags.1' should be deleted
       expect(setCallArg.currentValues.en['tags.0']).toBeUndefined();
       expect(setCallArg.currentValues.en['tags.1']).toBeUndefined();
-      expect(setCallArg.currentValues.en.tags).toBeDefined();
+      expect(setCallArg.currentValues.en.tags).toEqual(['default1', 'default2']);
+      // Once for each locale
+      expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledTimes(2);
+    });
+
+    it('should keep the default of a hidden field whose key path comes after its items', async () => {
+      mockEntryDraft.currentValues.en = { 'tags.0': 'tag1', tags: [] };
+      mockEntryDraft.currentValues.ja = {};
+
+      mockGetField.mockImplementation((/** @type {any} */ { keyPath }) =>
+        keyPath === 'tags' ? { widget: 'hidden', default: ['default1'], i18n: true } : undefined,
+      );
+
+      mockGetHiddenFieldDefaultValueMap.mockReturnValue({ tags: ['default1'] });
+
+      const { duplicateDraft } = await import('./duplicate.js');
+      const newDraft = /** @type {any} */ (await duplicateDraft(entryDraft));
+
+      expect(newDraft.currentValues.en['tags.0']).toBeUndefined();
+      expect(newDraft.currentValues.en.tags).toEqual(['default1']);
+      expect(mockGetHiddenFieldDefaultValueMap).toHaveBeenCalledOnce();
     });
 
     it('should reset hidden field for non-default locale when i18n is true or translate', async () => {

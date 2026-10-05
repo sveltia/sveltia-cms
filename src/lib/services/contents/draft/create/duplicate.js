@@ -6,7 +6,7 @@ import { copyEntryRelativeAssets } from '$lib/services/contents/draft/create/dup
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { showDuplicateToast } from '$lib/services/contents/editor';
 import { getAliasesKey, removeAliases } from '$lib/services/contents/entry/aliases';
-import { getField, LIST_KEY_PATH_REGEX } from '$lib/services/contents/entry/fields';
+import { getField } from '$lib/services/contents/entry/fields';
 import { hasUuidTag } from '$lib/services/contents/fields/compute/helpers';
 import { getDefaultValueMap as getHiddenFieldDefaultValueMap } from '$lib/services/contents/fields/hidden/defaults';
 import { getInitialValue as getInitialUuidValue } from '$lib/services/contents/fields/uuid/helpers';
@@ -15,9 +15,32 @@ import { createState, getSnapshot } from '$lib/services/utils/state.svelte';
 
 /**
  * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
- * @import { EntryDraft, LocaleContentMap } from '$lib/types/private';
- * @import { ComputeField, HiddenField, UuidField } from '$lib/types/public';
+ * @import { EntryDraft, GetFieldArgs, LocaleContentMap } from '$lib/types/private';
+ * @import { ComputeField, FieldKeyPath, HiddenField, UuidField } from '$lib/types/public';
  */
+
+/**
+ * Find the Hidden field the given key path belongs to. A Hidden field takes a value of any shape,
+ * and an object or array value is flattened into key paths below the field’s own, like `tags.0`,
+ * which no field configuration describes, so look for the field along the key path from the top.
+ * @param {GetFieldArgs} args Arguments.
+ * @returns {{ fieldConfig: HiddenField, keyPath: FieldKeyPath } | undefined} The field and its key
+ * path, or `undefined` if the key path doesn’t belong to a Hidden field.
+ */
+const findHiddenField = ({ keyPath, ...getFieldArgs }) => {
+  const segments = keyPath.split('.');
+
+  for (let length = 1; length <= segments.length; length += 1) {
+    const parentKeyPath = segments.slice(0, length).join('.');
+    const fieldConfig = getField({ ...getFieldArgs, keyPath: parentKeyPath });
+
+    if (fieldConfig?.widget === 'hidden') {
+      return { fieldConfig: /** @type {HiddenField} */ (fieldConfig), keyPath: parentKeyPath };
+    }
+  }
+
+  return undefined;
+};
 
 /**
  * Duplicate the entry draft open in the editor, replacing it with the duplicate.
@@ -62,6 +85,8 @@ export const duplicateDraft = async (entryDraft) => {
     }
 
     const getFieldArgs = { collectionName, fileName, valueMap, isIndexFile };
+    /** @type {Map<FieldKeyPath, HiddenField>} */
+    const hiddenFields = new Map();
 
     // Reset some unique values
     Object.keys(valueMap).forEach((keyPath) => {
@@ -85,29 +110,23 @@ export const duplicateDraft = async (entryDraft) => {
         }
       }
 
-      if (fieldConfig?.widget === 'hidden') {
-        // The value could be array; normalize the key path, e.g. `tags.0` -> `tags`
-        if (Array.isArray(fieldConfig.default) && LIST_KEY_PATH_REGEX.test(keyPath)) {
-          delete valueMap[keyPath];
-          keyPath = keyPath.replace(LIST_KEY_PATH_REGEX, '');
+      const hidden = findHiddenField({ ...getFieldArgs, keyPath });
 
-          if (keyPath in valueMap) {
-            return;
-          }
-        }
-
-        if (locale === defaultLocale || isFieldTranslatable(fieldConfig?.i18n)) {
-          Object.assign(
-            valueMap,
-            getHiddenFieldDefaultValueMap({
-              fieldConfig: /** @type {HiddenField} */ (fieldConfig),
-              keyPath,
-              locale,
-              defaultLocale,
-            }),
-          );
-        }
+      if (hidden && (locale === defaultLocale || isFieldTranslatable(hidden.fieldConfig.i18n))) {
+        // An object or array value is flattened into key paths below the field’s own, e.g.
+        // `tags.0`, which are replaced along with it
+        delete valueMap[keyPath];
+        hiddenFields.set(hidden.keyPath, hidden.fieldConfig);
       }
+    });
+
+    // Fill in the defaults once all the old values are gone, so a key path that comes after its
+    // own items, like `tags` after `tags.0`, doesn’t take the default away again
+    hiddenFields.forEach((fieldConfig, keyPath) => {
+      Object.assign(
+        valueMap,
+        getHiddenFieldDefaultValueMap({ fieldConfig, keyPath, locale, defaultLocale }),
+      );
     });
   });
 

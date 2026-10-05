@@ -83,14 +83,17 @@ export const fillTemplate = (template, options) => {
   }
 
   // Truncate a long slug if needed, and remove the replacement character the cut may leave at the
-  // end, which is a hyphen by default but can be configured with `slug.sanitize_replacement`
+  // end, which is a hyphen by default but can be configured with `slug.sanitize_replacement`. Like
+  // `slugify`, leave the end alone if the slug isn’t cut or `slug.trim` is turned off, so a slug
+  // can still end with the replacement
   if (typeof maxlength === 'number') {
-    const { sanitize_replacement: replacement = '-' } = slugOptions ?? {};
+    const { sanitize_replacement: replacement = '-', trim = true } = slugOptions ?? {};
+    const truncated = truncate(slug, maxlength, { ellipsis: '' });
 
-    slug = truncate(slug, maxlength, { ellipsis: '' });
-
-    if (replacement) {
-      slug = slug.replace(new RegExp(`(?:${escapeRegExp(replacement)})+$`), '');
+    if (truncated !== slug && replacement && trim) {
+      slug = truncated.replace(new RegExp(`(?:${escapeRegExp(replacement)})+$`), '');
+    } else {
+      slug = truncated;
     }
   }
 
