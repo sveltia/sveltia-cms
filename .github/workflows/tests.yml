@@ -31,23 +31,31 @@ jobs:
             command: pnpm test --project browser --shard=3/3
             browser: true
           # The end-to-end tests run against the production bundle, so each shard builds it first.
-          # They take the longest, so they are split into one more shard than the component tests
-          - name: Test (end-to-end 1/4)
-            command: pnpm build && pnpm test:e2e --shard=1/4
+          # They take the longest, so they get twice as many shards as the component tests
+          - name: Test (end-to-end 1/6)
+            command: pnpm build && pnpm test:e2e --shard=1/6
             browser: true
             report: e2e-1
-          - name: Test (end-to-end 2/4)
-            command: pnpm build && pnpm test:e2e --shard=2/4
+          - name: Test (end-to-end 2/6)
+            command: pnpm build && pnpm test:e2e --shard=2/6
             browser: true
             report: e2e-2
-          - name: Test (end-to-end 3/4)
-            command: pnpm build && pnpm test:e2e --shard=3/4
+          - name: Test (end-to-end 3/6)
+            command: pnpm build && pnpm test:e2e --shard=3/6
             browser: true
             report: e2e-3
-          - name: Test (end-to-end 4/4)
-            command: pnpm build && pnpm test:e2e --shard=4/4
+          - name: Test (end-to-end 4/6)
+            command: pnpm build && pnpm test:e2e --shard=4/6
             browser: true
             report: e2e-4
+          - name: Test (end-to-end 5/6)
+            command: pnpm build && pnpm test:e2e --shard=5/6
+            browser: true
+            report: e2e-5
+          - name: Test (end-to-end 6/6)
+            command: pnpm build && pnpm test:e2e --shard=6/6
+            browser: true
+            report: e2e-6
           - name: Build
             command: pnpm build
     steps:
