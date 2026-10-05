@@ -396,7 +396,8 @@ describe('Test processResource()', () => {
     // @ts-ignore - Test with simplified types
     const result = await processResource({ draft, resource, libraryConfig });
 
-    expect(result.value).toBe('');
+    // Nothing is added to the field, like for a corrupt file
+    expect(result.value).toBeUndefined();
     expect(result.credit).toBe('');
     expect(result.oversizedFileName).toBe('large-file.jpg');
     expect(Object.keys(draft.files)).toHaveLength(0);

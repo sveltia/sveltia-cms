@@ -96,6 +96,42 @@ test('offers to sort by the commit date and author with the default sortable fie
   await expect(page.getByRole('menuitemradio', { name: /Updated by/ }).first()).toBeVisible();
 });
 
+test('tells the user about an incident on GitHub until it’s over', async ({
+  cms,
+  github,
+  page,
+}) => {
+  github.statusIndicator = 'major';
+  await page.clock.install();
+  await cms.open();
+
+  const infobar = page.getByRole('alert').filter({ hasText: /is experiencing/ });
+
+  await expect(infobar).toHaveText(
+    /GitHub.* is experiencing a major incident\. You may want to wait until the situation has improved\./,
+  );
+
+  // The details are on the GitHub status page
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    infobar.getByRole('button', { name: 'Details' }).click(),
+  ]);
+
+  expect(new URL(popup.url()).hostname).toBe('www.githubstatus.com');
+  await popup.close();
+
+  // The status is checked again every 5 minutes
+  github.statusIndicator = 'minor';
+  await page.clock.fastForward('05:00');
+  await expect(infobar).toHaveText(
+    /GitHub.* is experiencing a minor incident\. Your workflow may be affected\./,
+  );
+
+  github.statusIndicator = 'none';
+  await page.clock.fastForward('05:00');
+  await expect(infobar).toBeHidden();
+});
+
 test('refuses a user who can only read the repository', async ({ cms, github, page }) => {
   github.canWrite = false;
 

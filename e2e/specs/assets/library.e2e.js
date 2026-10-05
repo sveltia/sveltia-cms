@@ -168,6 +168,23 @@ test('cancels an upload', async ({ cms, page }) => {
   expect(await cms.readRepoFile('static/uploads/kite.png')).toBeUndefined();
 });
 
+test('lists the entries using an asset, and opens one', async ({ page }) => {
+  const info = page.getByRole('group', { name: 'Asset Info' });
+
+  await openFolder(page, /Global Assets/);
+  await page.getByRole('row', { name: 'forest.png' }).click();
+  await expect(info).toContainText(/Used in\s+None/);
+
+  // An entry-relative image is used by the entry next to it
+  await openFolder(page, /Posts/);
+  await page.getByRole('row', { name: 'hero.png' }).click();
+  await info.getByRole('link', { name: 'Posts › Hello' }).click();
+
+  const editor = page.getByRole('group', { name: 'Content Editor' });
+
+  await expect(editor.getByRole('textbox', { name: 'Title' })).toHaveValue('Hello');
+});
+
 test('previews an asset and moves to the next one', async ({ page }) => {
   await openFolder(page, /Global Assets/);
   await page.getByRole('row', { name: 'ocean.png' }).click();

@@ -242,6 +242,18 @@ export class MockGitHub {
   received = [];
 
   /**
+   * Overall status of GitHub as its status page reports it: `none`, `minor`, `major` or
+   * `critical`. The CMS shows an incident above the app.
+   */
+  statusIndicator = 'none';
+
+  /**
+   * The `repository_dispatch` events the CMS has sent to trigger a deployment, by their type.
+   * @type {string[]}
+   */
+  dispatches = [];
+
+  /**
    * Function called once when the CMS next commits, before the commit is made, e.g. to commit
    * something else first and make the branch move under the CMS.
    * @type {(() => void) | undefined}
@@ -684,7 +696,7 @@ export class MockGitHub {
 
     await page.route('https://api.github.com/**', (route) => this.handleRoute(route));
     await page.route('https://www.githubstatus.com/**', (route) =>
-      route.fulfill({ json: { status: { indicator: 'none' } } }),
+      route.fulfill({ json: { status: { indicator: this.statusIndicator } } }),
     );
     await page.route('https://avatars.githubusercontent.com/**', (route) =>
       route.fulfill({ status: 404 }),
@@ -825,6 +837,13 @@ export class MockGitHub {
 
     const path = pathname.slice(repoPath.length + 1);
     const segments = path.split('/');
+
+    // A deployment triggered with the Publish Changes button, which GitHub Actions picks up
+    if (method === 'POST' && path === 'dispatches') {
+      this.dispatches.push(body?.event_type);
+
+      return { status: 204 };
+    }
 
     if (method === 'POST' && path === 'forks') {
       if (!this.allowForking) {

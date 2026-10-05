@@ -183,8 +183,6 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
   let { asset, file } = resource;
   /** @type {string | undefined} */
   let value = '';
-  /** @type {string | undefined} */
-  let oversizedFileName = undefined;
 
   if (file) {
     const { folder } = resource;
@@ -192,7 +190,12 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
     // A file is uploaded to a repository folder, which there isn’t when only a cloud media library
     // is configured and neither the field nor the collection has its own `media_folder`
     if (!folder) {
-      return { value: undefined, credit: '', oversizedFileName, invalidFileName: undefined };
+      return {
+        value: undefined,
+        credit: '',
+        oversizedFileName: undefined,
+        invalidFileName: undefined,
+      };
     }
 
     /** @type {string | undefined} */
@@ -204,7 +207,12 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
       // The file can’t be read any more, e.g. it was moved or deleted after being picked. It can’t
       // be uploaded either way, so it’s reported along with the corrupt files rather than failing
       // the whole batch and leaving the field stuck in the processing state.
-      return { value: undefined, credit: '', oversizedFileName, invalidFileName: file.name };
+      return {
+        value: undefined,
+        credit: '',
+        oversizedFileName: undefined,
+        invalidFileName: file.name,
+      };
     }
 
     if (existingBlobURL) {
@@ -219,7 +227,12 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
       file = processedFile;
 
       if (invalid) {
-        return { value: undefined, credit: '', oversizedFileName, invalidFileName: file.name };
+        return {
+          value: undefined,
+          credit: '',
+          oversizedFileName: undefined,
+          invalidFileName: file.name,
+        };
       }
 
       const sha = await getGitHash(file);
@@ -237,8 +250,13 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
         asset = existingAsset;
         file = undefined;
       } else if (oversized) {
-        oversizedFileName = file.name;
-        file = undefined;
+        // Like a corrupt file, an oversized file leaves nothing to add to the field
+        return {
+          value: undefined,
+          credit: '',
+          oversizedFileName: file.name,
+          invalidFileName: undefined,
+        };
       } else {
         // Set a temporary blob URL, which will be later replaced with the actual file path. The URL
         // is made for display, e.g. an SVG image can’t run script, while the file itself is cached
@@ -291,7 +309,7 @@ export const processResource = async ({ draft, resource, libraryConfig }) => {
   return {
     value,
     credit: credit ? sanitize(credit, LINK_SANITIZE_OPTIONS) : '',
-    oversizedFileName,
+    oversizedFileName: undefined,
     invalidFileName: undefined,
   };
 };
