@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
@@ -10,7 +10,7 @@ import { MockGitHub } from './github.js';
 import { MockGitLab } from './gitlab.js';
 
 /**
- * @import { Locator, Page } from '@playwright/test';
+ * @import { BrowserContext, Locator, Page } from '@playwright/test';
  */
 
 /**
@@ -70,6 +70,13 @@ export const GITLAB_CONFIG = {
 };
 
 /**
+ * Version of the CMS being tested, which the update check is told is the latest.
+ */
+const { version: CMS_VERSION } = JSON.parse(
+  await readFile(new URL('../../package.json', import.meta.url), 'utf8'),
+);
+
+/**
  * The CMS on the test page.
  */
 export class CMS {
@@ -77,10 +84,12 @@ export class CMS {
    * Create a handle for the CMS on a page.
    * @param {Page} page Page.
    * @param {string} adminPath Path of the admin page.
+   * @param {string} [siteOrigin] Origin to serve the admin page from instead of the test server.
    */
-  constructor(page, adminPath) {
+  constructor(page, adminPath, siteOrigin) {
     this.page = page;
     this.adminPath = adminPath;
+    this.siteOrigin = siteOrigin;
     /**
      * Temporary directories holding the files dropped with {@link dropFiles}.
      * @type {string[]}
@@ -99,7 +108,7 @@ export class CMS {
    * Open the admin page.
    */
   async open() {
-    await this.page.goto(this.adminPath);
+    await this.page.goto(`${this.siteOrigin ?? ''}${this.adminPath}`);
   }
 
   /**
@@ -298,9 +307,59 @@ export class CMS {
 }
 
 /**
+ * Answer the requests the CMS makes for its site in a browser context: the config, the admin page
+ * at another origin if any, and what it asks the CDN for. The `cms` fixture does this for the test
+ * page; call it for another browser context, e.g. a phone.
+ * @param {BrowserContext} context Browser context.
+ * @param {object} args Arguments.
+ * @param {object | string} args.config CMS config, as an object or a YAML string.
+ * @param {string} [args.siteOrigin] Origin to serve the admin page from, passing its requests on to
+ * the test server.
+ * @param {string} [args.baseURL] URL of the test server.
+ */
+export const serveSite = async (context, { config, siteOrigin, baseURL }) => {
+  if (siteOrigin) {
+    await context.route(
+      (url) => url.origin === siteOrigin,
+      async (route) => {
+        const { pathname, search } = new URL(route.request().url());
+
+        await route.fulfill({
+          response: await route.fetch({ url: `${baseURL}${pathname}${search}` }),
+        });
+      },
+    );
+  }
+
+  // The CMS checks for a newer version on the CDN: it’s the one being tested
+  await context.route('https://unpkg.com/@sveltia/cms/package.json', (route) =>
+    route.fulfill({ json: { version: CMS_VERSION } }),
+  );
+  // The production bundle only includes the English strings and fetches the others from the CDN,
+  // so answer that request with the file the build has generated
+  await context.route('https://unpkg.com/@sveltia/cms@*/locales/*.json', async (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: await readFile(
+        new URL(`../../package/locales/${route.request().url().split('/').pop()}`, import.meta.url),
+      ),
+    }),
+  );
+  // The CMS adds a cache-busting query to the URL, hence the trailing wildcard. A sign-in popup
+  // opens the CMS as well, so the config is served to every page of the browser context. Routes
+  // added later take precedence, so this one is answered rather than passed on to the server
+  await context.route('**/admin/config.yml?*', (route) =>
+    route.fulfill({
+      contentType: 'application/yaml',
+      body: typeof config === 'string' ? config : stringify(config),
+    }),
+  );
+};
+
+/**
  * @typedef {{
- * config: object | string, signedIn: boolean, cms: CMS, github: MockGitHub, gitlab: MockGitLab,
- * gitea: MockGitea
+ * config: object | string, signedIn: boolean, siteOrigin: string | undefined, cms: CMS,
+ * github: MockGitHub, gitlab: MockGitLab, gitea: MockGitea
  * }} TestFixtures
  * @typedef {{ adminPath: string }} WorkerFixtures
  */
@@ -316,18 +375,16 @@ export const test = base.extend({
   // Whether the `github`, `gitlab` and `gitea` fixtures store a session for the user, so the CMS
   // signs in on its own; a test of the sign-in itself turns it off
   signedIn: [true, { option: true }],
+  // An HTTPS origin like `https://cms.example.com` to serve the admin page from, for a feature the
+  // CMS only offers off localhost. The requests to it are passed on to the test server
+  siteOrigin: [undefined, { option: true }],
   // eslint-disable-next-line jsdoc/require-jsdoc
-  cms: async ({ page, adminPath, config }, use) => {
-    // The CMS adds a cache-busting query to the URL, hence the trailing wildcard. A sign-in popup
-    // opens the CMS as well, so the config is served to every page of the browser context
-    await page.context().route('**/admin/config.yml?*', (route) =>
-      route.fulfill({
-        contentType: 'application/yaml',
-        body: typeof config === 'string' ? config : stringify(config),
-      }),
-    );
+  cms: async ({ page, adminPath, config, siteOrigin, baseURL }, use) => {
+    const context = page.context();
 
-    const cms = new CMS(page, adminPath);
+    await serveSite(context, { config, siteOrigin, baseURL });
+
+    const cms = new CMS(page, adminPath, siteOrigin);
 
     await use(cms);
     await cms.cleanUp();

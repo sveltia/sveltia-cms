@@ -18,6 +18,20 @@ export const GITEA_API_ROOT = 'https://gitea.com/api/v1';
  */
 export class MockGitea extends MockGitRepository {
   /**
+   * Root of the API: Gitea.com’s, or a self-hosted instance’s like
+   * `https://code.example.com/git/api/v1`. Set it before the page is opened.
+   */
+  apiRoot = GITEA_API_ROOT;
+
+  /**
+   * Whether the instance is Forgejo. By default, it’s told from the {@link version}, but Forgejo
+   * can report a bare version like `13.0.3`, which Gitea 28 and later can report as well; the CMS
+   * then asks the Forgejo API for its version, which only Forgejo has.
+   * @type {boolean | undefined}
+   */
+  forgejo = undefined;
+
+  /**
    * Version the instance reports. A Forgejo version carries the Gitea version it’s based on, e.g.
    * `13.0.3+gitea-1.22.0`, which makes the CMS read the files with the Forgejo API.
    */
@@ -41,11 +55,11 @@ export class MockGitea extends MockGitRepository {
   treePageSize = 1000;
 
   /**
-   * Whether the instance is Forgejo, from its {@link version}.
+   * Whether the instance is Forgejo, from {@link forgejo} or its {@link version}.
    * @type {boolean}
    */
   get isForgejo() {
-    return this.version.includes('+gitea-');
+    return this.forgejo ?? this.version.includes('+gitea-');
   }
 
   /**
@@ -61,7 +75,20 @@ export class MockGitea extends MockGitRepository {
       await this.storeSession(page, 'gitea');
     }
 
-    await page.context().route(`${GITEA_API_ROOT}/**`, (route) => this.handleRoute(route));
+    const context = page.context();
+
+    await context.route(
+      (url) => url.href.startsWith(`${this.apiRoot}/`),
+      (route) => this.handleRoute(route),
+    );
+    // The Forgejo API is next to the Gitea one, e.g. `/api/forgejo/v1` beside `/api/v1`
+    await context.route(
+      (url) => url.href === new URL('../forgejo/v1/version', `${this.apiRoot}/`).href,
+      (route) =>
+        this.isForgejo
+          ? route.fulfill({ json: { version: this.version } })
+          : route.fulfill({ status: 404, json: { message: 'Not Found' } }),
+    );
   }
 
   /**
@@ -72,7 +99,7 @@ export class MockGitea extends MockGitRepository {
     const request = route.request();
     const url = new URL(request.url());
     const method = request.method();
-    const path = url.pathname.slice(new URL(GITEA_API_ROOT).pathname.length);
+    const path = url.pathname.slice(new URL(this.apiRoot).pathname.length);
 
     await this.answer(
       route,

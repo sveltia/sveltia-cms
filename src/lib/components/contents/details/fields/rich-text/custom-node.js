@@ -28,7 +28,8 @@ const TAG_NAME_REGEX = /^<(?<tagName>[a-z]+)/i;
  * HTML document can be converted back to the component.
  * @param {string | HTMLElement | ReactElement | undefined} preview Return value of the component’s
  * `toPreview()` method, if any.
- * @param {string} block Return value of the component’s `toBlock()` method.
+ * @param {string | undefined} block Return value of the component’s `toBlock()` method, if it
+ * could be called.
  * @returns {string | undefined} Tag name, e.g. `img`, or `undefined` if it cannot be determined,
  * including when the preview is a React element.
  */
@@ -42,13 +43,27 @@ const getTagName = (preview, block) => {
   if (typeof preview === 'string') {
     return (
       preview.trim().match(TAG_NAME_REGEX)?.groups?.tagName ??
-      (typeof block === 'string'
-        ? block.trim().match(TAG_NAME_REGEX)?.groups?.tagName
-        : /* v8 ignore next */ undefined)
+      (typeof block === 'string' ? block.trim().match(TAG_NAME_REGEX)?.groups?.tagName : undefined)
     );
   }
 
   return undefined;
+};
+
+/**
+ * Call a method of a component with empty field values, to learn the HTML tag it renders. A method
+ * that needs the values can throw, e.g. by reading a property of `undefined`. The tag is then left
+ * unknown, rather than the error breaking the editor, which creates the node class of every
+ * registered component, whether an entry uses it or not.
+ * @param {((props: Record<string, any>) => any) | undefined} method `toPreview()` or `toBlock()`.
+ * @returns {any} Return value, or `undefined` if the method is missing or has thrown.
+ */
+const callWithEmptyProps = (method) => {
+  try {
+    return method?.({});
+  } catch {
+    return undefined;
+  }
 };
 
 /**
@@ -71,8 +86,8 @@ export const createCustomNodeClass = (componentDef) => {
   } = componentDef;
 
   const inline = !isMultiLinePattern(pattern);
-  const preview = toPreview?.({});
-  const block = toBlock({});
+  const preview = callWithEmptyProps(toPreview);
+  const block = callWithEmptyProps(toBlock);
   const tagName = getTagName(preview, block);
 
   /**

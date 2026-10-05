@@ -1,5 +1,3 @@
-import { readFile } from 'fs/promises';
-
 import { expect, test } from '../../fixtures/test.js';
 
 /**
@@ -124,20 +122,6 @@ test('switches the theme, and keeps it after a reload', async ({ cms, page }) =>
 });
 
 test('switches the UI language, and keeps it after a reload', async ({ cms, page }) => {
-  // The production bundle only includes the English strings and fetches the others from the CDN,
-  // so answer that request with the file the build has generated
-  await page.route('https://unpkg.com/@sveltia/cms@*/locales/*.json', async (route) =>
-    route.fulfill({
-      contentType: 'application/json',
-      body: await readFile(
-        new URL(
-          `../../../package/locales/${route.request().url().split('/').pop()}`,
-          import.meta.url,
-        ),
-      ),
-    }),
-  );
-
   const dialog = await openSettings(cms, page, 'Language');
   const select = dialog.getByRole('combobox', { name: 'Select Language' });
 

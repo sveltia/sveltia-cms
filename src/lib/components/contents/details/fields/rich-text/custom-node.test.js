@@ -494,6 +494,69 @@ describe('createCustomNodeClass', () => {
       expect(importDOM.article).toBeDefined();
     });
 
+    it('should leave the tag unknown when preview throws on empty props', () => {
+      const component = {
+        ...mockComponentDef,
+        /**
+         * Convert properties to preview format, which needs a value.
+         * @param {Record<string, any>} props Properties.
+         * @returns {string} Preview HTML.
+         */
+        toPreview: (props) => `<span>${props.title.toUpperCase()}</span>`,
+        /**
+         * Convert properties to block format.
+         * @returns {string} Block string.
+         */
+        toBlock: () => '<section>Block content</section>',
+      };
+
+      const CustomNode = createCustomNodeClass(component);
+
+      // Like a component without a preview, the block isn’t looked at
+      expect(CustomNode.importDOM()).toEqual({});
+    });
+
+    it('should leave the tag unknown when block throws on empty props', () => {
+      const component = {
+        ...mockComponentDef,
+        /**
+         * Convert properties to preview format.
+         * @returns {string} Preview string.
+         */
+        toPreview: () => 'Plain text',
+        /**
+         * Convert properties to block format, which needs a value.
+         * @param {Record<string, any>} props Properties.
+         * @returns {string} Block string.
+         */
+        toBlock: (props) => `<section>${props.title.trim()}</section>`,
+      };
+
+      const CustomNode = createCustomNodeClass(component);
+
+      expect(CustomNode.importDOM()).toEqual({});
+    });
+
+    it('should not throw when both preview and block throw on empty props', () => {
+      const component = {
+        ...mockComponentDef,
+        /**
+         * Convert properties to preview format, which needs a value.
+         * @param {Record<string, any>} props Properties.
+         * @returns {string} Preview HTML.
+         */
+        toPreview: (props) => props.title.toUpperCase(),
+        /**
+         * Convert properties to block format, which needs a value.
+         * @param {Record<string, any>} props Properties.
+         * @returns {string} Block string.
+         */
+        toBlock: (props) => props.title.trim(),
+      };
+
+      expect(() => createCustomNodeClass(component)).not.toThrow();
+    });
+
     it('should handle when both preview and block return non-tag strings', () => {
       const componentNoTag = {
         ...mockComponentDef,

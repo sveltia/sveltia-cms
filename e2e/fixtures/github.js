@@ -66,6 +66,17 @@ const splitBranchKey = (key) => {
  */
 export class MockGitHub extends MockGitRepository {
   /**
+   * Root of the REST API: GitHub’s, or a GitHub Enterprise Server’s like
+   * `https://github.example.com/api/v3`. Set it before the page is opened.
+   */
+  apiRoot = 'https://api.github.com';
+
+  /**
+   * URL of the GraphQL API, e.g. `https://github.example.com/api/graphql` for GitHub Enterprise.
+   */
+  graphqlURL = 'https://api.github.com/graphql';
+
+  /**
    * GraphQL node ID of the repository.
    */
   repositoryId = 'R_e2e';
@@ -161,6 +172,12 @@ export class MockGitHub extends MockGitRepository {
    * @type {MockPullRequest[]}
    */
   pullRequests = [];
+
+  /**
+   * Builds reported for each commit with {@link reportBuild}, keyed by commit SHA.
+   * @type {Map<string, Record<string, any[]>>}
+   */
+  builds = new Map();
 
   /**
    * Overall status of GitHub as its status page reports it: `none`, `minor`, `major` or
@@ -360,6 +377,43 @@ export class MockGitHub extends MockGitRepository {
   }
 
   /**
+   * Report the builds of a commit, as a CI/CD provider connected to the repository does: a
+   * deployment with its environment, a check run, or a commit status. A later report replaces the
+   * earlier ones, like a build moving on from pending.
+   * @param {string} sha Commit SHA.
+   * @param {object} builds Builds.
+   * @param {{ environment: string, state: string, environmentUrl?: string, description?: string
+   * }[]} [builds.deployments] Deployments, with a state like `PENDING`, `SUCCESS` or `FAILURE`.
+   * @param {{ name: string, status: string, conclusion?: string, detailsUrl?: string, summary?:
+   * string }[]} [builds.checkRuns] Check runs, with a status like `IN_PROGRESS` or `COMPLETED`.
+   * @param {{ context: string, state: string, targetUrl?: string, description?: string }[]}
+   * [builds.statuses] Commit statuses, with a state like `PENDING` or `SUCCESS`.
+   */
+  reportBuild(sha, { deployments = [], checkRuns = [], statuses = [] }) {
+    this.builds.set(sha, { deployments, checkRuns, statuses });
+  }
+
+  /**
+   * Get the builds of a commit in the shape of the GraphQL `Commit` fields the CMS asks for.
+   * @param {string} sha Commit SHA.
+   * @returns {Record<string, any>} Fields.
+   */
+  toBuildNodes(sha) {
+    const { deployments = [], checkRuns = [], statuses = [] } = this.builds.get(sha) ?? {};
+
+    return {
+      status: statuses.length ? { contexts: statuses } : null,
+      deployments: {
+        nodes: deployments.map(({ environment, state, environmentUrl, description }) => ({
+          environment,
+          latestStatus: { state, environmentUrl, description },
+        })),
+      },
+      checkSuites: { nodes: checkRuns.length ? [{ checkRuns: { nodes: checkRuns } }] : [] },
+    };
+  }
+
+  /**
    * Route the GitHub requests of the pages in a browser context to the mock, including a sign-in
    * popup, and store a session for the user, so the CMS signs in on its own when the page is
    * opened.
@@ -374,7 +428,12 @@ export class MockGitHub extends MockGitRepository {
       await this.storeSession(page, 'github');
     }
 
-    await context.route('https://api.github.com/**', (route) => this.handleRoute(route));
+    await context.route(
+      (url) =>
+        url.href.startsWith(`${this.apiRoot}/`) ||
+        `${url.origin}${url.pathname}` === this.graphqlURL,
+      (route) => this.handleRoute(route),
+    );
     await context.route('https://www.githubstatus.com/**', (route) =>
       route.fulfill({ json: { status: { indicator: this.statusIndicator } } }),
     );
@@ -389,7 +448,9 @@ export class MockGitHub extends MockGitRepository {
    */
   async handleRoute(route) {
     const request = route.request();
-    const { pathname } = new URL(request.url());
+    const url = new URL(request.url());
+    // The path after the API root, e.g. `/user`
+    const pathname = url.pathname.slice(new URL(this.apiRoot).pathname.replace(/\/$/, '').length);
     const method = request.method();
 
     if (!this.isAuthorized(request)) {
@@ -398,7 +459,7 @@ export class MockGitHub extends MockGitRepository {
       return;
     }
 
-    if (pathname === '/graphql') {
+    if (`${url.origin}${url.pathname}` === this.graphqlURL) {
       const { query, variables } = request.postDataJSON();
       const data = this.handleGraphQL(query, variables);
 
@@ -411,12 +472,7 @@ export class MockGitHub extends MockGitRepository {
       return;
     }
 
-    const response = this.handleREST(
-      method,
-      pathname,
-      request.postDataJSON(),
-      new URL(request.url()).searchParams,
-    );
+    const response = this.handleREST(method, pathname, request.postDataJSON(), url.searchParams);
 
     if (response) {
       await MockGitHub.respond(route, response);
@@ -1113,9 +1169,9 @@ export class MockGitHub extends MockGitRepository {
     /** @type {Record<string, any>} */
     const repository = {};
 
-    // File contents, fetched in batches with an alias for each file, and the CI checks of a commit,
-    // which the CMS shows with the deployment status. There are no checks in this repository. Like
-    // GitHub, answer `null` for an object that doesn’t exist
+    // File contents, fetched in batches with an alias for each file, and the builds of a commit,
+    // which the CMS shows with the deployment status: those reported with `reportBuild()`, or none.
+    // Like GitHub, answer `null` for an object that doesn’t exist
     query
       .matchAll(/(\w+_\d+):\s*object\(oid:\s*"(\w+)"\)\s*\{\s*\.\.\.\s*on\s+(Blob|Commit)\b/g)
       .forEach(([, alias, sha, type]) => {
@@ -1124,7 +1180,7 @@ export class MockGitHub extends MockGitRepository {
 
           repository[alias] = blob ? { text: blob.toString(), isTruncated: false } : null;
         } else {
-          repository[alias] = this.getCommit(sha) ? { checkSuites: { nodes: [] } } : null;
+          repository[alias] = this.getCommit(sha) ? this.toBuildNodes(sha) : null;
         }
       });
 

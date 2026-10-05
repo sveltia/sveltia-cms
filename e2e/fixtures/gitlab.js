@@ -47,6 +47,17 @@ const STATUS_URL = 'https://status-api.hostedstatus.com/**';
  */
 export class MockGitLab extends MockGitRepository {
   /**
+   * Root of the REST API: GitLab.com’s, or a self-managed instance’s like
+   * `https://gitlab.example.com/api/v4`. Set it before the page is opened.
+   */
+  apiRoot = GITLAB_API_ROOT;
+
+  /**
+   * URL of the GraphQL API, e.g. `https://gitlab.example.com/api/graphql`.
+   */
+  graphqlURL = GITLAB_GRAPHQL_URL;
+
+  /**
    * Whether the signed-in user can push code to the project. A user who can’t is refused.
    */
   canWrite = true;
@@ -69,6 +80,12 @@ export class MockGitLab extends MockGitRepository {
   mergeRequests = [];
 
   /**
+   * Builds reported for each commit with {@link reportBuild}, keyed by commit SHA.
+   * @type {Map<string, { deployments: Record<string, any>[], statuses: Record<string, any>[] }>}
+   */
+  builds = new Map();
+
+  /**
    * Whether a pipeline is running for the merge requests. Until it succeeds, a merge request can’t
    * be merged, but it can be set to be merged then; {@link finishPipeline} lets it succeed.
    */
@@ -86,6 +103,20 @@ export class MockGitLab extends MockGitRepository {
    */
   get projectPath() {
     return `/projects/${encodeURIComponent(`${this.owner}/${this.repo}`)}`;
+  }
+
+  /**
+   * Report the builds of a commit: a deployment to an environment, like a Review App, or a commit
+   * status posted by an external CI/CD service. A later report replaces the earlier ones.
+   * @param {string} sha Commit SHA.
+   * @param {object} builds Builds.
+   * @param {{ environment: string, status: string, url?: string }[]} [builds.deployments]
+   * Deployments, with a status like `running`, `success` or `failed`.
+   * @param {{ name: string, status: string, target_url?: string, description?: string }[]}
+   * [builds.statuses] Commit statuses, with a status like `running` or `success`.
+   */
+  reportBuild(sha, { deployments = [], statuses = [] }) {
+    this.builds.set(sha, { deployments, statuses });
   }
 
   /**
@@ -383,8 +414,14 @@ export class MockGitLab extends MockGitRepository {
       await this.storeSession(page, 'gitlab');
     }
 
-    await context.route(`${GITLAB_API_ROOT}/**`, (route) => this.handleRoute(route));
-    await context.route(GITLAB_GRAPHQL_URL, (route) => this.handleGraphQLRoute(route));
+    await context.route(
+      (url) => url.href.startsWith(`${this.apiRoot}/`),
+      (route) => this.handleRoute(route),
+    );
+    await context.route(
+      (url) => `${url.origin}${url.pathname}` === this.graphqlURL,
+      (route) => this.handleGraphQLRoute(route),
+    );
     await context.route(STATUS_URL, (route) =>
       route.fulfill({ json: { result: { status_overall: { status_code: this.statusCode } } } }),
     );
@@ -399,7 +436,7 @@ export class MockGitLab extends MockGitRepository {
     const url = new URL(request.url());
     const method = request.method();
     // Keep the encoded slashes of a project or file path, so the path can be split into segments
-    const path = url.pathname.slice(new URL(GITLAB_API_ROOT).pathname.length);
+    const path = url.pathname.slice(new URL(this.apiRoot).pathname.length);
 
     await this.answer(
       route,
@@ -456,9 +493,19 @@ export class MockGitLab extends MockGitRepository {
       return { json: { avatar_url: '' } };
     }
 
-    // There is no CI in this project, so no deployment is listed
+    // The deployments of the project, the latest first, as reported with `reportBuild()`
     if (method === 'GET' && pathname === `${this.projectPath}/deployments`) {
-      return { json: [] };
+      return {
+        json: [...this.builds]
+          .flatMap(([sha, { deployments }]) =>
+            deployments.map(({ environment, status, url }) => ({
+              sha,
+              status,
+              environment: { name: environment, external_url: url },
+            })),
+          )
+          .reverse(),
+      };
     }
 
     if (pathname.startsWith(`${this.projectPath}/merge_requests`)) {
@@ -513,9 +560,9 @@ export class MockGitLab extends MockGitRepository {
         : { status: 404, json: { message: '404 File Not Found' } };
     }
 
-    // The statuses an external CI service has posted on a commit, which there are none of
+    // The statuses an external CI service has posted on a commit
     if (method === 'GET' && resource === 'commits' && rest[1] === 'statuses') {
-      return { json: [] };
+      return { json: this.builds.get(rest[0])?.statuses ?? [] };
     }
 
     if (method === 'GET' && resource === 'commits' && !rest.length) {
