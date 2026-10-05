@@ -39,7 +39,15 @@ describe('ValidationPanel', () => {
         default_locale: 'en',
       },
       collections: [
-        { name: 'posts', label: 'Posts', folder: 'content/posts', i18n: true, fields },
+        {
+          name: 'posts',
+          label: 'Posts',
+          folder: 'content/posts',
+          i18n: true,
+          // A collection with i18n enabled needs a localized field. The optional `note` field
+          // leaves the validation results alone
+          fields: fields.map((field) => (field.name === 'note' ? { ...field, i18n: true } : field)),
+        },
         { name: 'pages', label: 'Pages', folder: 'content/pages', fields },
         { name: 'notes', label: 'Notes', folder: 'content/notes', fields: noteFields },
       ],

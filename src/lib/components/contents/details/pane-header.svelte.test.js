@@ -96,7 +96,8 @@ describe('PaneHeader', () => {
           folder: 'content/posts',
           preview_path: 'posts/{{slug}}',
           i18n: true,
-          fields,
+          // A collection with i18n enabled needs a localized field
+          fields: [{ ...fields[0], i18n: true }],
         },
         { name: 'pages', label: 'Pages', folder: 'content/pages', fields },
       ],
@@ -195,8 +196,8 @@ describe('PaneHeader', () => {
     // The locale has no content to bring back, so it’s enabled rather than reenabled
     await menu.getByRole('menuitem', { name: 'Enable \u2068French\u2069' }).click();
     expect(draft.currentLocales.fr).toBe(true);
-    // The content starts empty, as the field isn’t duplicated from the default locale
-    expect(draft.currentValues.fr).toEqual({});
+    // The translatable field starts empty rather than duplicated from the default locale
+    expect(draft.currentValues.fr).toEqual({ title: '' });
   });
 
   test('links to the entry on the live site', async () => {
