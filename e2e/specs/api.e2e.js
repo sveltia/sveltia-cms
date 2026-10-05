@@ -248,6 +248,140 @@ test.describe('CMS.registerEditorComponent()', () => {
   });
 });
 
+test.describe('html', () => {
+  test.use({
+    config: {
+      ...CONFIG,
+      collections: [
+        {
+          ...CONFIG.collections[0],
+          fields: [
+            { name: 'title', label: 'Title' },
+            { name: 'body', label: 'Body', widget: 'markdown', required: false },
+            { name: 'tagline', label: 'Tagline', widget: 'shout', required: false },
+          ],
+        },
+      ],
+    },
+  });
+
+  test.beforeEach(async ({ page }) => {
+    // Components written with the HTM tagged template rather than `h()`, as a page would without a
+    // build step. The preview template is only registered when asked for, as it replaces the
+    // previews of the fields
+    await addScripts(page, {
+      after: `
+        const { useState } = CMS.React;
+
+        const Badge = ({ label, children }) => html\`
+          <span
+            class="badge"
+            style="--gap: 4px; padding: var(--gap); color: red; font-weight: bold !important"
+          >
+            \${label}: \${children}
+          </span>
+        \`;
+
+        const PostPreview = ({ entry }) => {
+          const [count, setCount] = useState(0);
+
+          return html\`
+            <h1 class="title">\${entry.getIn(['data', 'title'])}</h1>
+            <\${Badge} label="Likes">\${count}<//>
+            <button onClick=\${() => setCount(count + 1)}>Like</button>
+          \`;
+        };
+
+        if (window.usePreviewTemplate) {
+          CMS.registerPreviewTemplate('posts', PostPreview);
+        }
+
+        CMS.registerFieldType(
+          'shout',
+          ({ value, onChange, forID, classNameWrapper }) => html\`
+            <input
+              id=\${forID}
+              class=\${classNameWrapper}
+              value=\${value ?? ''}
+              onInput=\${(event) => onChange(event.target.value)}
+            />
+          \`,
+          ({ value }) => html\`<strong class="shout">\${value?.toUpperCase()}</strong>\`,
+        );
+
+        CMS.registerEditorComponent({
+          id: 'youtube',
+          label: 'YouTube',
+          fields: [{ name: 'id', label: 'Video ID' }],
+          pattern: /^{{< youtube (\\S+) >}}$/,
+          fromBlock: (match) => ({ id: match[1] }),
+          toBlock: ({ id }) => '{{< youtube ' + id + ' >}}',
+          toPreview: ({ id }) => html\`
+            <p class="video" style="font-style: italic">Video \${id}</p>
+          \`,
+        });
+      `,
+    });
+  });
+
+  test('renders a preview template with hooks, attributes and inline styles', async ({
+    cms,
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      /** @type {any} */ (window).usePreviewTemplate = true;
+    });
+    await cms.open();
+    await cms.seed({ 'content/posts/launch-day.md': '---\ntitle: Launch Day\n---\n\nHello.\n' });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Launch Day/ }).click();
+
+    const preview = page.frameLocator('iframe').first();
+    const badge = preview.locator('.badge');
+
+    await expect(preview.locator('h1.title')).toHaveText('Launch Day');
+    await expect(badge).toHaveText('Likes: 0');
+    // A `style` string, which React alone rejects, is converted to an object
+    await expect(badge).toHaveCSS('color', 'rgb(255, 0, 0)');
+    await expect(badge).toHaveCSS('font-weight', '700');
+    await expect(badge).toHaveCSS('padding-top', '4px');
+    await preview.getByRole('button', { name: 'Like' }).click();
+    await expect(badge).toHaveText('Likes: 1');
+  });
+
+  test('renders the control and the preview of a field type', async ({ cms, page }) => {
+    await cms.open();
+    await cms.signIn();
+
+    const editor = await createPost(page, 'Launch Day');
+    const input = editor.getByRole('group', { name: /Tagline.*Field/ }).getByRole('textbox');
+
+    await input.fill('we have liftoff');
+    await expect(
+      page.getByRole('document', { name: 'Content Preview' }).locator('.shout'),
+    ).toHaveText('WE HAVE LIFTOFF');
+    await editor.getByRole('button', { name: 'Save' }).click();
+
+    await expect
+      .poll(async () => (await cms.readRepo())['content/posts/launch-day.md'])
+      .toBe('---\ntitle: Launch Day\ntagline: we have liftoff\n---\n');
+  });
+
+  test('renders the preview of an editor component', async ({ cms, page }) => {
+    await cms.open();
+    await cms.seed({
+      'content/posts/launch-day.md': '---\ntitle: Launch Day\n---\n\n{{< youtube dQw4w9WgXcQ >}}\n',
+    });
+    await cms.signIn();
+    await page.getByRole('row', { name: /Launch Day/ }).click();
+
+    const video = page.getByRole('document', { name: 'Content Preview' }).locator('.video');
+
+    await expect(video).toHaveText('Video dQw4w9WgXcQ');
+    await expect(video).toHaveCSS('font-style', 'italic');
+  });
+});
+
 test.describe('CMS.registerPreviewStyle()', () => {
   test.use({ config: CONFIG });
 

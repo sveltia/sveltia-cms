@@ -8,6 +8,7 @@ interface Window {
   createElement: Function;
   h: Function;
   rf: any;
+  html: Function;
   // Markdown parser and HTML sanitizer exposed on `window`. See `main.js`
   marked: any;
   DOMPurify: any;

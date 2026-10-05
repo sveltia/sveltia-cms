@@ -7,6 +7,7 @@ import React, { createElement, Fragment } from 'react';
 
 import { SHARED_REACT_KEY } from './chunks/constants';
 import CMS, { init } from './services/api';
+import { html } from './services/api/htm';
 
 export default CMS;
 export * from './services/api';
@@ -16,7 +17,8 @@ window.CMS = CMS;
 window.initCMS = init;
 
 // Expose React APIs for custom field types, custom preview templates and custom editor components.
-// React itself is available as `CMS.React` and the `React` export rather than on `window`
+// React itself is available as `CMS.React` and the `React` export rather than on `window`.
+// `html` is the HTM tagged template bound to that React, for components without a build step
 // @see https://decapcms.org/docs/custom-widgets/
 // @see https://decapcms.org/docs/customization/
 // @see https://sveltiacms.app/en/docs/api/field-types
@@ -25,6 +27,7 @@ window.createClass = createClass;
 window.createElement = createElement;
 window.h = createElement;
 window.rf = Fragment;
+window.html = html;
 
 // Share the React instance with the `react-dom` chunk, which is loaded on demand and has to render
 // the elements created with the React above rather than bring a copy of its own

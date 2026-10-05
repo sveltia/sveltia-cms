@@ -792,4 +792,12 @@ describe('React globals', () => {
     expect(window.rf).toBe(React.Fragment);
     expect(/** @type {any} */ (window).React).toBeUndefined();
   });
+
+  test('exposes the HTM tagged template on `window`', async () => {
+    const { html } = await import('$lib/services/api/htm');
+
+    await import('./main.js');
+
+    expect(window.html).toBe(html);
+  });
 });
