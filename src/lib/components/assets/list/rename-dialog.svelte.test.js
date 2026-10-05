@@ -53,6 +53,47 @@ describe('RenameDialog', () => {
     await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith('picture.png'));
   });
 
+  test('slugifies the new name, showing it below the input', async () => {
+    const { onRename } = await renderDialog({
+      slugificationEnabled: true,
+      otherNames: ['logo.png', 'old-logo.png'],
+    });
+
+    const dialog = page.getByRole('dialog');
+    const textbox = dialog.getByRole('textbox');
+    const button = dialog.getByRole('button', { name: 'Rename' });
+
+    await expectFileNameSelected(textbox, 'photo.png');
+    // The current name is already a slug, so there’s nothing to show
+    await expect.element(dialog.getByRole('status')).not.toBeInTheDocument();
+
+    // A name that slugifies to the current one doesn’t change anything
+    await textbox.fill('Photo.PNG');
+    await expect
+      .element(dialog.getByRole('status'))
+      .toHaveTextContent('The file will be saved as “\u2068photo.png\u2069”.');
+    await expect.element(button).toBeDisabled();
+
+    await textbox.fill(' ');
+    await expect.element(dialog.getByText('File name cannot be empty.')).toBeInTheDocument();
+
+    // Nor can it take the name of another asset once slugified
+    await textbox.fill('Old Logo.png');
+    await expect
+      .element(dialog.getByText('This file name is used for another asset.'))
+      .toBeInTheDocument();
+    await expect.element(dialog.getByRole('status')).not.toBeInTheDocument();
+    await expect.element(button).toBeDisabled();
+
+    await textbox.fill('Blog Photo 1.png');
+    await expect
+      .element(dialog.getByRole('status'))
+      .toHaveTextContent('The file will be saved as “\u2068blog-photo-1.png\u2069”.');
+    await button.click();
+
+    await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith('blog-photo-1.png'));
+  });
+
   test('explains why the asset can’t be renamed, and refuses the rename', async () => {
     await renderDialog({ blockedMessage: 'A read-only entry uses it.' });
 

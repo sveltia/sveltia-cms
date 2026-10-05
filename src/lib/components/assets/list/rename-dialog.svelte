@@ -12,6 +12,7 @@
   import { tick } from 'svelte';
 
   import FileExtensionChangeDialog from '$lib/components/assets/shared/file-extension-change-dialog.svelte';
+  import { formatFileName } from '$lib/services/assets/file-name';
   import { showAssetOverlay } from '$lib/services/assets/view';
   import { isEquivalentFileExtension } from '$lib/services/utils/file';
 
@@ -25,6 +26,9 @@
    * body because they will be updated as well.
    * @property {string} [blockedMessage] Why the asset can’t be renamed, e.g. because a read-only
    * entry uses it. The message is shown in place of the input, and the Rename button is disabled.
+   * @property {boolean} [slugificationEnabled] Whether the new name is slugified, according to the
+   * `slugify_filename` media library option, as an uploaded file’s name is. The resulting name is
+   * shown below the input when it differs from the entered one.
    * @property {(newName: string) => void} onRename Called with the new name once confirmed.
    * @property {() => void} [onClose] Called when the dialog is closed for good, as opposed to
    * while the extension change confirmation is shown.
@@ -38,6 +42,7 @@
     otherNames,
     usedEntryCount = 0,
     blockedMessage = undefined,
+    slugificationEnabled = false,
     onRename,
     onClose = undefined,
     /* eslint-enable prefer-const */
@@ -54,14 +59,20 @@
 
   const { extension: oldExtension } = $derived(getPathInfo(name));
   const trimmedName = $derived(newName.trim());
-  const newExtension = $derived(getPathInfo(trimmedName).extension);
+  /** Name the file will be renamed to, which may be different from the entered name. */
+  const finalName = $derived(
+    slugificationEnabled && trimmedName
+      ? formatFileName(trimmedName, { slugificationEnabled })
+      : trimmedName,
+  );
+  const newExtension = $derived(getPathInfo(finalName).extension);
   /** Whether the file extension is being changed in a way that requires confirmation. */
   const extensionChanged = $derived(!isEquivalentFileExtension(oldExtension, newExtension));
 
   const error = $derived.by(() => {
     if (!trimmedName) return 'empty';
     if (trimmedName.includes('/')) return 'character';
-    if (otherNames.includes(trimmedName)) return 'duplicate';
+    if (otherNames.includes(finalName)) return 'duplicate';
     return undefined;
   });
 
@@ -111,13 +122,13 @@
   title={_('rename_x', { values: { name } })}
   bind:open
   okLabel={_('rename')}
-  okDisabled={!!blockedMessage || trimmedName === name || invalid}
+  okDisabled={!!blockedMessage || finalName === name || invalid}
   onOk={() => {
     if (extensionChanged) {
       // Ask for confirmation before renaming
       confirmationOpen = true;
     } else {
-      onRename(trimmedName);
+      onRename(finalName);
     }
   }}
   onClose={() => {
@@ -147,6 +158,11 @@
       aria-errormessage="{componentId}-error"
     />
   </div>
+  {#if !invalid && finalName !== trimmedName}
+    <div role="status" class="note">
+      {_('file_will_be_saved_as', { values: { name: finalName } })}
+    </div>
+  {/if}
   <div role="none" class="error" id="{componentId}-error">
     {#if invalid}
       {_(`enter_new_name_for_asset_error.${error}`)}
@@ -160,7 +176,7 @@
   {newExtension}
   okLabel={_('rename')}
   onOk={() => {
-    onRename(trimmedName);
+    onRename(finalName);
     onClose?.();
   }}
   onCancel={() => {
@@ -179,6 +195,12 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+
+  .note {
+    margin: 4px 0 0;
+    color: var(--sui-secondary-foreground-color);
+    font-size: var(--sui-font-size-small);
   }
 
   .error {

@@ -148,6 +148,48 @@ describe('FileEditorItem', () => {
     expect(activeInlineEditors.current).toBe(0);
   });
 
+  test('slugifies the new name with the `slugify_filename` option', async () => {
+    const config = { site_url: 'https://example.com' };
+
+    await initTestConfig({
+      ...config,
+      media_libraries: { default: { config: { slugify_filename: true } } },
+    });
+
+    try {
+      const file = await createMockImageFile({ name: 'new-photo.png' });
+      const blobURL = URL.createObjectURL(file);
+
+      const { draft } = await renderItem(
+        blobURL,
+        {},
+        { files: { [blobURL]: { file, folder: globalAssetFolder.current } } },
+      );
+
+      await page.getByRole('button', { name: 'Rename' }).click();
+
+      const input = page.getByRole('textbox');
+
+      await expectFileNameSelected(input, 'new-photo.png');
+      // The current name is already a slug, so there’s nothing to show
+      expect(page.getByRole('status').elements()).toHaveLength(0);
+
+      await input.fill('Blog Photo 1.png');
+      await expect
+        .element(page.getByRole('status'))
+        .toHaveTextContent('The file will be saved as “\u2068blog-photo-1.png\u2069”.');
+      await userEvent.keyboard('{Enter}');
+
+      await expect
+        .element(page.getByRole('textbox'))
+        .toHaveTextContent('/static/uploads/blog-photo-1.png');
+      expect(draft.files[blobURL].file.name).toBe('blog-photo-1.png');
+      expect(page.getByRole('status').elements()).toHaveLength(0);
+    } finally {
+      await initTestConfig(config);
+    }
+  });
+
   test('shows the name filled with the file name template, until renamed by hand', async () => {
     const file = await createMockImageFile({ name: 'new photo.png' });
     const blobURL = URL.createObjectURL(file);

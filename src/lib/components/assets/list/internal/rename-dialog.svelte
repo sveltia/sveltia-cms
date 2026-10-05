@@ -9,6 +9,7 @@
   import { getAssetUsedEntries } from '$lib/services/assets/details';
   import { renamingAsset } from '$lib/services/assets/state';
   import { getReadonlyEntryLabel, isEntryReadonly } from '$lib/services/contents/entry/readonly';
+  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { watchAsync } from '$lib/services/utils/state.svelte';
 
   /**
@@ -82,6 +83,7 @@
   {otherNames}
   usedEntryCount={usedEntries.length}
   {blockedMessage}
+  slugificationEnabled={getDefaultMediaLibraryOptions().config.slugify_filename}
   onRename={renameAsset}
   onClose={() => {
     renamingAsset.current = undefined;

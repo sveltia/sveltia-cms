@@ -640,6 +640,9 @@ enter_new_name_for_asset_error:
   empty: ファイル名を空白にすることはできません。
   character: ファイル名に特別な文字を含めることはできません。
   duplicate: このファイル名は他のアセットに使われています。
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: ファイルは「{$name}」として保存されます。
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: 拡張子の変更
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png

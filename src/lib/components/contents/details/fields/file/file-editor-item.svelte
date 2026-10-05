@@ -15,6 +15,7 @@
     getUnsavedFileName,
   } from '$lib/services/contents/fields/file/helpers';
   import { getMediaFieldPreview } from '$lib/services/contents/fields/file/preview';
+  import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import { isEquivalentFileExtension } from '$lib/services/utils/file';
   import { watch } from '$lib/services/utils/state.svelte';
 
@@ -122,8 +123,21 @@
       : undefined,
   );
   const oldExtension = $derived(file ? getPathInfo(file.name).extension : undefined);
-  /** Sanitized file name to be saved, which may be different from the entered name. */
-  const finalName = $derived(formatFileName(newName.trim()));
+  /**
+   * Sanitized, and possibly slugified, file name to be saved, which may be different from the
+   * entered name.
+   */
+  const finalName = $derived.by(() => {
+    const name = newName.trim();
+
+    // An empty name has nothing to slugify
+    return name
+      ? formatFileName(name, {
+          slugificationEnabled: getDefaultMediaLibraryOptions({ fieldConfig }).config
+            .slugify_filename,
+        })
+      : '';
+  });
   const newExtension = $derived(getPathInfo(finalName).extension);
 
   const getURLArgs = $derived({
@@ -317,6 +331,11 @@
         onApply={applyNewName}
       />
     </div>
+    {#if editing && finalName !== newName.trim()}
+      <div role="status" class="note">
+        {_('file_will_be_saved_as', { values: { name: finalName } })}
+      </div>
+    {/if}
     <div role="none">
       {#if onReplace}
         <Button
@@ -408,6 +427,12 @@
     & > div {
       flex: auto;
       overflow: hidden;
+
+      .note {
+        margin: 4px 0;
+        color: var(--sui-secondary-foreground-color);
+        font-size: var(--sui-font-size-small);
+      }
 
       .path {
         @media (width < 768px) {

@@ -79,6 +79,38 @@ describe('RenameDialog', () => {
     await expect.poll(() => renamingAsset.current).toBeUndefined();
   });
 
+  test('slugifies the new name with the `slugify_filename` option', async () => {
+    const config = { site_url: 'https://example.com' };
+
+    await initTestConfig({
+      ...config,
+      media_libraries: { default: { config: { slugify_filename: true } } },
+    });
+
+    try {
+      await render(RenameDialog);
+
+      renamingAsset.current = firstAsset;
+
+      const dialog = page.getByRole('dialog', { name: 'Rename \u2068a.png\u2069' });
+
+      await expectFileNameSelected(dialog.getByRole('textbox'), 'a.png');
+      await dialog.getByRole('textbox').fill('Blog Photo 1.png');
+      await expect
+        .element(dialog.getByRole('status'))
+        .toHaveTextContent('The file will be saved as “\u2068blog-photo-1.png\u2069”.');
+      await dialog.getByRole('button', { name: 'Rename' }).click();
+
+      await vi.waitFor(() =>
+        expect(moveAssets).toHaveBeenCalledWith('rename', [
+          { asset: firstAsset, path: 'static/uploads/blog-photo-1.png' },
+        ]),
+      );
+    } finally {
+      await initTestConfig(config);
+    }
+  });
+
   test('refuses to rename an asset a read-only entry uses', async () => {
     const entry = /** @type {any} */ ({ id: 'old', slug: 'old-post', locales: {} });
 

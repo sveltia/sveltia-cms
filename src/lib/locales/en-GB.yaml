@@ -667,6 +667,9 @@ enter_new_name_for_asset_error:
   empty: File name cannot be empty.
   character: File name cannot contain special characters.
   duplicate: This file name is used for another asset.
+# Shown while renaming a file whose name will be changed on saving, e.g. by the `slugify_filename`
+# media library option
+file_will_be_saved_as: The file will be saved as “{$name}”.
 # Confirmation dialog shown when the file extension is changed while renaming an asset
 change_file_extension: Change File Extension
 # {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
