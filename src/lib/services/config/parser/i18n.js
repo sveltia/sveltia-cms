@@ -1,11 +1,20 @@
 import { isObject } from '@sveltia/utils/object';
 
+import { getSubFields } from '$lib/services/config/parser/utils/fields';
 import { addMessage } from '$lib/services/config/parser/utils/validator';
 import { mergeI18nConfigs } from '$lib/services/contents/i18n/config/merge';
+import { isFieldLocalized } from '$lib/services/contents/i18n/fields';
 
 /**
  * @import { ConfigParserCollectors, ConfigParserContext } from '$lib/types/private';
- * @import { CmsConfig, I18nOptions } from '$lib/types/public';
+ * @import {
+ * CmsConfig,
+ * CollectionFile,
+ * EntryCollection,
+ * Field,
+ * FileCollection,
+ * I18nOptions,
+ * } from '$lib/types/public';
  */
 
 /**
@@ -64,15 +73,98 @@ const checkLocales = (config, context, collectors) => {
 };
 
 /**
+ * Check if any of the given fields, or their subfields at any depth, is localized with the `i18n`
+ * option. A subfield inherits the option from its parent, so a localized parent counts for all of
+ * its subfields.
+ * @param {Field[]} fields Field list.
+ * @returns {boolean} Result.
+ */
+const hasLocalizedField = (fields) =>
+  fields.some((field) => isFieldLocalized(field.i18n) || hasLocalizedField(getSubFields(field)));
+
+/**
+ * Check if the given value is an array with at least one item.
+ * @param {unknown} value Value.
+ * @returns {value is any[]} Result.
+ */
+const isNonEmptyArray = (value) => Array.isArray(value) && !!value.length;
+
+/**
  * Parse and validate the site-level i18n configuration.
  * @param {CmsConfig} cmsConfig Raw CMS configuration.
  * @param {ConfigParserCollectors} collectors Collectors.
  */
 export const parseI18nConfig = (cmsConfig, collectors) => {
-  const { i18n } = cmsConfig;
+  const { i18n, collections, singletons } = cmsConfig;
 
-  if (isObject(i18n)) {
-    checkLocales(/** @type {I18nOptions} */ (i18n), { cmsConfig }, collectors);
+  if (!isObject(i18n)) {
+    return;
+  }
+
+  checkLocales(/** @type {I18nOptions} */ (i18n), { cmsConfig }, collectors);
+
+  // The site-level configuration only takes effect in the collections and singletons that enable
+  // i18n with their own `i18n` option, so without any of them, nothing can be translated. A missing
+  // or empty collection list is reported on its own
+  if (!isNonEmptyArray(collections) && !isNonEmptyArray(singletons)) {
+    return;
+  }
+
+  const isI18nEnabled = [...(collections ?? []), ...(singletons ?? [])].some(
+    (item) => !('divider' in item) && !!(/** @type {any} */ (item).i18n),
+  );
+
+  if (!isI18nEnabled) {
+    addMessage({ strKey: 'i18n_no_collections', context: { cmsConfig }, collectors });
+  }
+};
+
+/**
+ * Check that a collection or collection file with i18n enabled has something to translate: an entry
+ * collection or a file needs at least one localized field, and a file collection at least one file
+ * with the `i18n` option, as the option of each level only takes effect on top of the one above it.
+ * Without any, the other locales are left empty, which looks like a bug rather than a mistake in
+ * the configuration.
+ * @param {ConfigParserContext} context Context, with the `collection` and optionally the
+ * `collectionFile` to check.
+ * @param {ConfigParserCollectors} collectors Collectors.
+ * @see https://github.com/sveltia/sveltia-cms/issues/577
+ */
+const checkI18nTargets = (context, collectors) => {
+  const { collection, collectionFile } = context;
+
+  if (collectionFile) {
+    const { fields } = /** @type {CollectionFile} */ (collectionFile);
+
+    // A missing or empty field list is reported on its own
+    if (isNonEmptyArray(fields) && !hasLocalizedField(fields)) {
+      addMessage({ strKey: 'collection_file_i18n_no_fields', context, collectors });
+    }
+
+    return;
+  }
+
+  if ('files' in /** @type {any} */ (collection)) {
+    const { files } = /** @type {FileCollection} */ (collection);
+    // A file divider doesn’t count, and a collection without files is reported on its own
+    const fileList = Array.isArray(files) ? files.filter((file) => !('divider' in file)) : [];
+
+    if (fileList.length && !fileList.some((file) => !!file.i18n)) {
+      addMessage({ strKey: 'collection_i18n_no_files', context, collectors });
+    }
+
+    return;
+  }
+
+  const { fields, index_file: indexFile } = /** @type {EntryCollection} */ (collection);
+
+  // A missing or empty field list is reported on its own. An index file can define its own fields,
+  // which count as well
+  if (
+    isNonEmptyArray(fields) &&
+    !hasLocalizedField([...fields, ...(isObject(indexFile) ? (indexFile.fields ?? []) : [])])
+  ) {
+    addMessage({ strKey: 'collection_i18n_no_fields', context, collectors });
   }
 };
 
@@ -120,4 +212,6 @@ export const checkI18nOverrides = (context, collectors) => {
   if (isObject(option) && LOCALE_OPTIONS.some((key) => key in option)) {
     checkLocales(merged, context, collectors);
   }
+
+  checkI18nTargets(context, collectors);
 };

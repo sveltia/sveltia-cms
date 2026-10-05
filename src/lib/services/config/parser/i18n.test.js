@@ -67,6 +67,54 @@ describe('parseI18nConfig', () => {
     check({ locales: ['en'], default_locale: 1 });
     expect(addMessage).not.toHaveBeenCalled();
   });
+
+  describe('collections and singletons', () => {
+    const i18n = { locales: ['en', 'fr'] };
+
+    /**
+     * Run the check with the given collections and singletons.
+     * @param {any} [collections] Collections.
+     * @param {any} [singletons] Singletons.
+     * @returns {any} The configuration the check ran with.
+     */
+    const checkItems = (collections, singletons) => {
+      const cmsConfig = { i18n, collections, singletons };
+
+      parseI18nConfig(/** @type {any} */ (cmsConfig), collectors);
+
+      return cmsConfig;
+    };
+
+    test('says nothing when a collection or singleton enables i18n', () => {
+      checkItems([{ name: 'posts' }, { name: 'pages', i18n: true }]);
+      checkItems([{ name: 'posts', i18n: { structure: 'multiple_files' } }]);
+      checkItems([{ name: 'posts' }], [{ name: 'about', i18n: true }]);
+      checkItems(undefined, [{ name: 'about', i18n: 'duplicate' }]);
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('leaves a missing or empty collection list to the collection parser', () => {
+      checkItems();
+      checkItems([], []);
+      checkItems('posts');
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('reports when no collection or singleton enables i18n', () => {
+      const cmsConfig = checkItems(
+        [{ divider: true, i18n: true }, { name: 'posts', i18n: false }, { name: 'pages' }],
+        [{ name: 'about' }],
+      );
+
+      expectMessages([{ strKey: 'i18n_no_collections', context: { cmsConfig } }]);
+    });
+
+    test('reports singletons alone that do not enable i18n', () => {
+      const cmsConfig = checkItems(undefined, [{ name: 'about' }]);
+
+      expectMessages([{ strKey: 'i18n_no_collections', context: { cmsConfig } }]);
+    });
+  });
 });
 
 describe('checkI18nOverrides', () => {
@@ -174,5 +222,192 @@ describe('checkI18nOverrides', () => {
     });
 
     expect(addMessage).not.toHaveBeenCalled();
+  });
+});
+
+describe('checkI18nOverrides targets', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  const cmsConfig = { i18n: { locales: ['en', 'fr'] } };
+
+  /**
+   * Run the check for a collection, or a file in it.
+   * @param {any} collection Collection.
+   * @param {any} [collectionFile] Collection file.
+   * @returns {any} The context the check ran with.
+   */
+  const check = (collection, collectionFile) => {
+    const context = { cmsConfig, collection, collectionFile };
+
+    checkI18nOverrides(/** @type {any} */ (context), collectors);
+
+    return context;
+  };
+
+  describe('entry collection', () => {
+    /**
+     * Create an entry collection with i18n enabled.
+     * @param {any} fields Fields.
+     * @param {any} [indexFile] The `index_file` option.
+     * @returns {any} Collection.
+     */
+    const collection = (fields, indexFile) => ({
+      name: 'posts',
+      folder: 'content/posts',
+      i18n: true,
+      fields,
+      index_file: indexFile,
+    });
+
+    test('says nothing when a field is localized', () => {
+      check(collection([{ name: 'title', i18n: true }, { name: 'date' }]));
+      check(collection([{ name: 'title', i18n: 'translate' }]));
+      check(collection([{ name: 'title', i18n: 'duplicate' }]));
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('says nothing when a subfield or a variable type field is localized', () => {
+      check(collection([{ name: 'author', fields: [{ name: 'name', i18n: true }] }]));
+      check(collection([{ name: 'tags', field: { name: 'tag', i18n: 'duplicate' } }]));
+      check(
+        collection([
+          {
+            name: 'blocks',
+            types: [{ name: 'image' }, { name: 'text', fields: [{ name: 'body', i18n: true }] }],
+          },
+        ]),
+      );
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('says nothing when an index file field is localized', () => {
+      check(collection([{ name: 'title' }], { fields: [{ name: 'intro', i18n: true }] }));
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('leaves a missing or empty field list to the collection parser', () => {
+      check(collection(undefined));
+      check(collection([]));
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('says nothing when i18n is not enabled for the collection', () => {
+      check({ name: 'posts', folder: 'content/posts', fields: [{ name: 'title' }] });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('reports when no field is localized', () => {
+      const context = check(
+        collection(
+          [
+            { name: 'title', i18n: false },
+            { name: 'body', i18n: 'none' },
+            { name: 'author', fields: [{ name: 'name' }] },
+          ],
+          true,
+        ),
+      );
+
+      expectMessages([{ strKey: 'collection_i18n_no_fields', context }]);
+    });
+
+    test('reports when no field is localized, with an index file of its own', () => {
+      const context = check(collection([{ name: 'title' }], { fields: [{ name: 'intro' }] }));
+
+      expectMessages([{ strKey: 'collection_i18n_no_fields', context }]);
+    });
+
+    test('reports when no field is localized, with an index file sharing the fields', () => {
+      const context = check(collection([{ name: 'title' }], { name: '_index' }));
+
+      expectMessages([{ strKey: 'collection_i18n_no_fields', context }]);
+    });
+
+    test('reports when no field of an array file collection is localized', () => {
+      const context = check({
+        name: 'tags',
+        file: 'data/tags.yaml',
+        i18n: true,
+        fields: [{ name: 'title' }],
+      });
+
+      expectMessages([{ strKey: 'collection_i18n_no_fields', context }]);
+    });
+  });
+
+  describe('file collection', () => {
+    /**
+     * Create a file collection with i18n enabled.
+     * @param {any} files Files.
+     * @returns {any} Collection.
+     */
+    const collection = (files) => ({ name: 'pages', i18n: true, files });
+
+    test('says nothing when a file enables i18n', () => {
+      check(collection([{ name: 'home' }, { name: 'about', i18n: true }]));
+      check(collection([{ name: 'about', i18n: { initial_locales: 'all' } }]));
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('leaves a missing or empty file list to the collection parser', () => {
+      check(collection(undefined));
+      check(collection([]));
+      check(collection([{ divider: true }]));
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('reports when no file enables i18n', () => {
+      const context = check(
+        collection([
+          { divider: true, i18n: true },
+          { name: 'home', i18n: false },
+          { name: 'about' },
+        ]),
+      );
+
+      expectMessages([{ strKey: 'collection_i18n_no_files', context }]);
+    });
+  });
+
+  describe('collection file', () => {
+    const collection = { name: 'pages', i18n: true, files: [] };
+    const singletons = { name: '_singletons', files: [] };
+    /**
+     * Create a collection file with i18n enabled.
+     * @param {any} fields Fields.
+     * @returns {any} Collection file.
+     */
+    const file = (fields) => ({ name: 'about', file: 'about.yaml', i18n: true, fields });
+
+    test('says nothing when a field is localized', () => {
+      check(collection, file([{ name: 'title', i18n: true }]));
+      check(singletons, file([{ name: 'list', field: { name: 'item', i18n: 'duplicate' } }]));
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('leaves a missing or empty field list to the file parser', () => {
+      check(collection, file(undefined));
+      check(collection, file([]));
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('says nothing when i18n is not enabled for the file', () => {
+      check(collection, { name: 'about', file: 'about.yaml', fields: [{ name: 'title' }] });
+      expect(addMessage).not.toHaveBeenCalled();
+    });
+
+    test('reports when no field is localized', () => {
+      const context = check(collection, file([{ name: 'title' }]));
+
+      expectMessages([{ strKey: 'collection_file_i18n_no_fields', context }]);
+    });
+
+    test('reports when no field of a singleton is localized', () => {
+      const context = check(singletons, file([{ name: 'title', i18n: 'none' }]));
+
+      expectMessages([{ strKey: 'collection_file_i18n_no_fields', context }]);
+    });
   });
 });

@@ -1790,6 +1790,8 @@ config:
     i18n_invalid_default_locale: The `default_locale` option is set to `{$locale}`, but it’s not one of the `locales`.
     # {$locale} is the locale code from the configuration; Don’t localize `initial_locales` and `locales`
     i18n_invalid_initial_locale: The `initial_locales` option contains `{$locale}`, but it’s not one of the `locales`.
+    # Don’t localize `i18n`
+    i18n_no_collections: 'The `i18n` option is configured at the top level, but none of the collections or singletons have the `i18n` option, so no content can be translated. Add `i18n: true` to the collections and singletons to translate.'
     # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
     invalid_transformation_key: The `transformations` option contains an unsupported `{$key}` key. It must be `raster_image`, `svg` or a supported raster image format.
     # {$key} is the transformation key; Don’t localize `quality`
@@ -1877,6 +1879,12 @@ config:
     invalid_collection_folder_locale: The `folder` path `{$folder}` is invalid. The `locale` placeholder must be used only once as a whole folder name, like `content/\{\{locale\}\}/posts`.
     # Don’t localize `i18n`, `locale` and `file`
     collection_file_i18n_required: The collection file must have the `i18n` option defined if the `locale` placeholder is used in the `file` path.
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_i18n_no_fields: 'The collection has the `i18n` option, but none of its fields have the `i18n` option, so no field can be translated. Add `i18n: true` or `i18n: duplicate` to the fields to translate.'
+    # Don’t localize `i18n` and `i18n: true`
+    collection_i18n_no_files: 'The collection has the `i18n` option, but none of its files have the `i18n` option, so no file can be translated. Add `i18n: true` to the files to translate.'
+    # Don’t localize `i18n`, `i18n: true` and `i18n: duplicate`
+    collection_file_i18n_no_fields: 'The collection file has the `i18n` option, but none of its fields have the `i18n` option, so no field can be translated. Add `i18n: true` or `i18n: duplicate` to the fields to translate.'
     # {$count} is the 1-based field index in the current fields array; Don’t localize `name`
     missing_field_name: The field {$count} must have the `name` option defined as a non-empty string.
     # {$name} is the invalid or duplicate field name

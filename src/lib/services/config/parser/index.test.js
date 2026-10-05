@@ -245,7 +245,8 @@ describe('Config Parser', () => {
             name: 'posts',
             label: 'Posts',
             folder: 'content/posts',
-            fields: [{ name: 'title', widget: 'string' }],
+            i18n: true,
+            fields: [{ name: 'title', widget: 'string', i18n: true }],
           },
         ],
       };
