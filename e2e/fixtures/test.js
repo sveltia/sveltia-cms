@@ -5,7 +5,9 @@ import { join } from 'path';
 import { test as base, expect } from '@playwright/test';
 import { stringify } from 'yaml';
 
+import { MockGitea } from './gitea.js';
 import { MockGitHub } from './github.js';
+import { MockGitLab } from './gitlab.js';
 
 /**
  * @import { Locator, Page } from '@playwright/test';
@@ -16,7 +18,7 @@ import { MockGitHub } from './github.js';
  * stores the repository files. Keep it in sync with `TEST_BACKEND_ROOT_DIR_NAME` in
  * `src/lib/services/backends/fs/test.js`.
  */
-const TEST_REPO_DIR_NAME = 'sveltia-cms-test';
+export const TEST_REPO_DIR_NAME = 'sveltia-cms-test';
 
 /**
  * Default CMS config: a blog on the `test-repo` backend, which needs no authentication and keeps
@@ -49,6 +51,22 @@ export const BASE_CONFIG = {
 export const GITHUB_CONFIG = {
   ...BASE_CONFIG,
   backend: { name: 'github', repo: 'sveltia/e2e-site', branch: 'main' },
+};
+
+/**
+ * CMS config for a Gitea or Forgejo repository, which the `gitea` fixture mocks.
+ */
+export const GITEA_CONFIG = {
+  ...BASE_CONFIG,
+  backend: { name: 'gitea', repo: 'sveltia/e2e-site', branch: 'main' },
+};
+
+/**
+ * CMS config for a GitLab project, which the `gitlab` fixture mocks.
+ */
+export const GITLAB_CONFIG = {
+  ...BASE_CONFIG,
+  backend: { name: 'gitlab', repo: 'sveltia/e2e-site', branch: 'main' },
 };
 
 /**
@@ -280,7 +298,10 @@ export class CMS {
 }
 
 /**
- * @typedef {{ config: object | string, cms: CMS, github: MockGitHub }} TestFixtures
+ * @typedef {{
+ * config: object | string, signedIn: boolean, cms: CMS, github: MockGitHub, gitlab: MockGitLab,
+ * gitea: MockGitea
+ * }} TestFixtures
  * @typedef {{ adminPath: string }} WorkerFixtures
  */
 
@@ -292,10 +313,14 @@ export class CMS {
 export const test = base.extend({
   adminPath: ['/admin/', { option: true, scope: 'worker' }],
   config: [BASE_CONFIG, { option: true }],
+  // Whether the `github`, `gitlab` and `gitea` fixtures store a session for the user, so the CMS
+  // signs in on its own; a test of the sign-in itself turns it off
+  signedIn: [true, { option: true }],
   // eslint-disable-next-line jsdoc/require-jsdoc
   cms: async ({ page, adminPath, config }, use) => {
-    // The CMS adds a cache-busting query to the URL, hence the trailing wildcard
-    await page.route('**/admin/config.yml?*', (route) =>
+    // The CMS adds a cache-busting query to the URL, hence the trailing wildcard. A sign-in popup
+    // opens the CMS as well, so the config is served to every page of the browser context
+    await page.context().route('**/admin/config.yml?*', (route) =>
       route.fulfill({
         contentType: 'application/yaml',
         body: typeof config === 'string' ? config : stringify(config),
@@ -309,13 +334,33 @@ export const test = base.extend({
   },
   // A test that asks for this fixture signs in to a mocked GitHub repository when the page opens
   // eslint-disable-next-line jsdoc/require-jsdoc
-  github: async ({ page }, use) => {
+  github: async ({ page, signedIn }, use) => {
     const github = new MockGitHub();
 
-    await github.install(page);
+    await github.install(page, { signedIn });
     await use(github);
 
     expect(github.unhandled, 'Requests the GitHub mock couldn’t answer').toEqual([]);
+  },
+  // A test that asks for this fixture signs in to a mocked GitLab project when the page opens
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  gitlab: async ({ page, signedIn }, use) => {
+    const gitlab = new MockGitLab();
+
+    await gitlab.install(page, { signedIn });
+    await use(gitlab);
+
+    expect(gitlab.unhandled, 'Requests the GitLab mock couldn’t answer').toEqual([]);
+  },
+  // A test that asks for this fixture signs in to a mocked Gitea repository when the page opens
+  // eslint-disable-next-line jsdoc/require-jsdoc
+  gitea: async ({ page, signedIn }, use) => {
+    const gitea = new MockGitea();
+
+    await gitea.install(page, { signedIn });
+    await use(gitea);
+
+    expect(gitea.unhandled, 'Requests the Gitea mock couldn’t answer').toEqual([]);
   },
 });
 

@@ -1,27 +1,10 @@
 import { createHash } from 'crypto';
 
+import { MockGitRepository } from './git.js';
+
 /**
  * @import { Page, Route } from '@playwright/test';
- */
-
-/**
- * @typedef {object} MockCommit
- * @property {string} oid Commit SHA.
- * @property {string} message Commit message.
- * @property {Date} date Commit date.
- * @property {{ name: string, email: string, login?: string, id?: number }} author Commit author.
- * @property {Map<string, string>} tree Blob SHA keyed by file path, as of this commit.
- * @property {Set<string>} paths Paths of the files added, updated or deleted in this commit.
- * @property {string[]} parents SHAs of the parent commits: none for the initial commit, two for a
- * merge commit.
- */
-
-/**
- * @typedef {object} MockUser
- * @property {number} id User ID.
- * @property {string} login User name.
- * @property {string} name Display name.
- * @property {string} email Email address.
+ * @import { MockCommit, MockResponse, MockUser } from './git.js';
  */
 
 /**
@@ -44,27 +27,10 @@ import { createHash } from 'crypto';
  */
 
 /**
- * @typedef {object} MockResponse
- * @property {number} [status] HTTP status, 200 by default.
- * @property {any} [json] Response body.
- * @property {Record<string, string>} [headers] Response headers.
- */
-
-/**
  * Pattern of a string literal in a GraphQL query, as the CMS writes one with `JSON.stringify()`.
  * The patterns below allow for any whitespace, as the CMS collapses it before sending a query.
  */
 const STRING = '("(?:[^"\\\\]|\\\\.)*")';
-
-/**
- * Calculate the Git blob SHA of a file, like `git hash-object` does, so the SHAs match what the CMS
- * calculates for the files it saves.
- * @param {Buffer} content File content.
- * @returns {string} SHA-1 hash.
- */
-const getBlobSHA = (content) =>
-  createHash('sha1').update(`blob ${content.length}\0`).update(content).digest('hex');
-
 /**
  * Strip the `refs/heads/` prefix from a qualified ref name, which the GraphQL API accepts along
  * with a bare branch name.
@@ -92,49 +58,17 @@ const splitBranchKey = (key) => {
 /**
  * A GitHub repository behind a mocked REST and GraphQL API, for the CMS to sign in to, load files
  * from and commit to. A test can commit to it as someone else with {@link MockGitHub.commit} to
- * simulate a colleague’s change, and check what the CMS committed in {@link MockGitHub.received}.
+ * simulate a colleague’s change, and check what the CMS committed in {@link MockGitHub.received}:
+ * the `createCommitOnBranch` inputs it has sent.
  * Branches and pull requests work as well, with labels and the draft state, for Editorial Workflow.
  * For Open Authoring, the signed-in user can be denied write access with
  * {@link MockGitHub.canWrite}, and given a fork with {@link MockGitHub.createFork}.
  */
-export class MockGitHub {
-  owner = 'sveltia';
-
-  repo = 'e2e-site';
-
-  /**
-   * The default branch, which the CMS is configured with.
-   */
-  branch = 'main';
-
+export class MockGitHub extends MockGitRepository {
   /**
    * GraphQL node ID of the repository.
    */
   repositoryId = 'R_e2e';
-
-  /**
-   * The signed-in user.
-   * @type {MockUser}
-   */
-  user = { id: 1, login: 'mona', name: 'Mona Lisa', email: 'mona@example.com' };
-
-  /**
-   * Someone else committing to the repository with {@link commit}.
-   * @type {MockUser}
-   */
-  colleague = { id: 2, login: 'alex', name: 'Alex Kim', email: 'alex@example.com' };
-
-  /**
-   * File content keyed by blob SHA, for every version of every file.
-   * @type {Map<string, Buffer>}
-   */
-  blobs = new Map();
-
-  /**
-   * Every commit on any branch, the oldest first.
-   * @type {MockCommit[]}
-   */
-  commits = [];
 
   /**
    * Whether the signed-in user can write to the repository. A user who can’t is refused, unless
@@ -223,23 +157,10 @@ export class MockGitHub {
   forkPendingRequests = 0;
 
   /**
-   * Head commit SHA keyed by branch name. A branch in the fork is keyed as `owner:branch`, e.g.
-   * `mona:main`; see {@link forkBranch}.
-   * @type {Map<string, string>}
-   */
-  refs = new Map();
-
-  /**
    * Pull requests, open or not, the oldest first.
    * @type {MockPullRequest[]}
    */
   pullRequests = [];
-
-  /**
-   * The `createCommitOnBranch` inputs the CMS has sent, whether accepted or not.
-   * @type {Record<string, any>[]}
-   */
-  received = [];
 
   /**
    * Overall status of GitHub as its status page reports it: `none`, `minor`, `major` or
@@ -252,35 +173,6 @@ export class MockGitHub {
    * @type {string[]}
    */
   dispatches = [];
-
-  /**
-   * Function called once when the CMS next commits, before the commit is made, e.g. to commit
-   * something else first and make the branch move under the CMS.
-   * @type {(() => void) | undefined}
-   */
-  beforeCommit = undefined;
-
-  /**
-   * Requests the mock couldn’t answer. The fixture fails the test if there is any, so a change in
-   * what the CMS requests is noticed rather than ending in a timeout.
-   * @type {string[]}
-   */
-  unhandled = [];
-
-  /**
-   * Create a repository with an empty initial commit on the default branch.
-   */
-  constructor() {
-    this.commit({}, { message: 'Initial commit' });
-  }
-
-  /**
-   * The latest commit on the default branch.
-   * @type {MockCommit}
-   */
-  get head() {
-    return this.getHead(this.branch);
-  }
 
   /**
    * Fork the repository onto the signed-in user’s account, with a copy of the default branch. Like
@@ -317,180 +209,6 @@ export class MockGitHub {
    */
   toBranchKey(owner, branch) {
     return owner && owner !== this.owner ? `${owner}:${branch}` : branch;
-  }
-
-  /**
-   * Get a commit by its SHA.
-   * @param {string} oid Commit SHA.
-   * @returns {MockCommit | undefined} Commit.
-   */
-  getCommit(oid) {
-    return this.commits.find((commit) => commit.oid === oid);
-  }
-
-  /**
-   * Get the latest commit on a branch.
-   * @param {string} branch Branch name.
-   * @returns {MockCommit} Commit.
-   * @throws {Error} When the branch doesn’t exist.
-   */
-  getHead(branch) {
-    const oid = this.refs.get(branch);
-    const commit = oid ? this.getCommit(oid) : undefined;
-
-    if (!commit) {
-      throw new Error(`Branch ${branch} doesn’t exist`);
-    }
-
-    return commit;
-  }
-
-  /**
-   * Add a commit to the repository, without moving any branch.
-   * @param {object} args Arguments.
-   * @param {Map<string, string>} args.tree File tree.
-   * @param {Iterable<string>} args.paths Paths changed by the commit.
-   * @param {string} args.message Commit message.
-   * @param {MockUser} args.author Author.
-   * @param {string[]} args.parents Parent commit SHAs.
-   * @returns {MockCommit} New commit.
-   */
-  addCommit({ tree, paths, message, author, parents }) {
-    const latest = this.commits.at(-1);
-
-    /** @type {MockCommit} */
-    const commit = {
-      oid: createHash('sha1').update(`commit ${this.commits.length} ${message}`).digest('hex'),
-      message,
-      // At least a second apart, so their order is clear from the dates
-      date: new Date(Math.max(Date.now(), (latest?.date.getTime() ?? 0) + 1000)),
-      author,
-      tree,
-      paths: new Set(paths),
-      parents,
-    };
-
-    this.commits.push(commit);
-
-    return commit;
-  }
-
-  /**
-   * Commit files to a branch.
-   * @param {Record<string, string | Buffer | null>} files File content keyed by path; `null`
-   * deletes the file.
-   * @param {object} [options] Options.
-   * @param {string} [options.message] Commit message.
-   * @param {MockUser} [options.author] Author, the colleague by default.
-   * @param {string} [options.branch] Branch, the default branch by default, or a fork branch key
-   * from {@link forkBranch}. It has to exist, except for the initial commit.
-   * @returns {MockCommit} New commit.
-   * @throws {Error} When the branch doesn’t exist.
-   */
-  commit(files, { message = 'Update files', author = this.colleague, branch = this.branch } = {}) {
-    const parent = this.refs.has(branch) ? this.getHead(branch) : undefined;
-
-    if (!parent && this.commits.length) {
-      throw new Error(`Branch ${branch} doesn’t exist`);
-    }
-
-    const tree = new Map(parent?.tree);
-
-    Object.entries(files).forEach(([path, content]) => {
-      if (content === null) {
-        tree.delete(path);
-      } else {
-        const buffer = Buffer.from(content);
-        const sha = getBlobSHA(buffer);
-
-        this.blobs.set(sha, buffer);
-        tree.set(path, sha);
-      }
-    });
-
-    const commit = this.addCommit({
-      tree,
-      paths: Object.keys(files),
-      message,
-      author,
-      parents: parent ? [parent.oid] : [],
-    });
-
-    this.refs.set(branch, commit.oid);
-
-    return commit;
-  }
-
-  /**
-   * Get the content of a file on a branch.
-   * @param {string} path File path.
-   * @param {string} [branch] Branch, the default branch by default, or a fork branch key from
-   * {@link forkBranch}.
-   * @returns {string | undefined} File content, or `undefined` if the file or the branch doesn’t
-   * exist.
-   */
-  readFile(path, branch = this.branch) {
-    if (!this.refs.has(branch)) {
-      return undefined;
-    }
-
-    const sha = this.getHead(branch).tree.get(path);
-
-    return sha ? this.blobs.get(sha)?.toString() : undefined;
-  }
-
-  /**
-   * Get a commit and all of its ancestors, the latest first.
-   * @param {string} oid Commit SHA.
-   * @returns {MockCommit[]} Commits.
-   */
-  getAncestors(oid) {
-    /** @type {Set<string>} */
-    const seen = new Set();
-    const queue = [oid];
-
-    while (queue.length) {
-      const current = /** @type {string} */ (queue.shift());
-
-      if (!seen.has(current)) {
-        seen.add(current);
-        queue.push(...(this.getCommit(current)?.parents ?? []));
-      }
-    }
-
-    return this.commits.filter((commit) => seen.has(commit.oid)).reverse();
-  }
-
-  /**
-   * Find the merge base of two commits: their latest common ancestor.
-   * @param {string} a Commit SHA.
-   * @param {string} b Commit SHA.
-   * @returns {MockCommit} Merge base. Every commit descends from the initial commit, so there’s
-   * always one.
-   */
-  getMergeBase(a, b) {
-    const ancestorsOfB = new Set(this.getAncestors(b).map(({ oid }) => oid));
-
-    return /** @type {MockCommit} */ (
-      this.getAncestors(a).find(({ oid }) => ancestorsOfB.has(oid))
-    );
-  }
-
-  /**
-   * Compare two file trees.
-   * @param {Map<string, string>} before Tree before.
-   * @param {Map<string, string>} after Tree after.
-   * @returns {{ path: string, changeType: 'ADDED' | 'MODIFIED' | 'DELETED' }[]} Changed files.
-   */
-  static diffTrees(before, after) {
-    return [...new Set([...before.keys(), ...after.keys()])]
-      .filter((path) => before.get(path) !== after.get(path))
-      .sort()
-      .map((path) => ({
-        path,
-
-        changeType: !before.has(path) ? 'ADDED' : !after.has(path) ? 'DELETED' : 'MODIFIED',
-      }));
   }
 
   /**
@@ -535,22 +253,6 @@ export class MockGitHub {
    */
   getOpenPullRequest(branch) {
     return this.pullRequests.find(({ head, state }) => head === branch && state === 'open');
-  }
-
-  /**
-   * Create a branch pointing at a commit.
-   * @param {string} branch Branch name.
-   * @param {string} oid Commit SHA.
-   * @returns {boolean} Whether the branch was created: it isn’t if it already exists.
-   */
-  createBranch(branch, oid) {
-    if (this.refs.has(branch)) {
-      return false;
-    }
-
-    this.refs.set(branch, oid);
-
-    return true;
   }
 
   /**
@@ -635,82 +337,50 @@ export class MockGitHub {
       return undefined;
     }
 
-    const head = this.getHead(pullRequest.head);
-    const baseHead = this.getHead(pullRequest.base);
-    const mergeBase = this.getMergeBase(head.oid, baseHead.oid);
-    const tree = new Map(baseHead.tree);
-    /** @type {string[]} */
-    const paths = [];
+    const { oid: headOid } = this.getHead(pullRequest.head);
 
-    const conflict = MockGitHub.diffTrees(mergeBase.tree, head.tree).some(({ path }) => {
-      const theirs = head.tree.get(path);
-
-      if (baseHead.tree.get(path) !== mergeBase.tree.get(path)) {
-        // Changed on both sides: fine only if they made the same change
-        return baseHead.tree.get(path) !== theirs;
-      }
-
-      if (theirs === undefined) {
-        tree.delete(path);
-      } else {
-        tree.set(path, theirs);
-      }
-
-      paths.push(path);
-
-      return false;
-    });
-
-    if (conflict) {
-      return undefined;
-    }
-
-    const commit = this.addCommit({
-      tree,
-      paths,
+    const commit = this.mergeBranch({
+      head: pullRequest.head,
+      base: pullRequest.base,
+      method,
       message: title ?? pullRequest.title,
       author,
-      parents: method === 'squash' ? [baseHead.oid] : [baseHead.oid, head.oid],
     });
 
-    this.refs.set(pullRequest.base, commit.oid);
-    Object.assign(pullRequest, {
-      state: 'merged',
-      mergeCommit: commit.oid,
-      lastHead: head.oid,
-      updatedAt: new Date(),
-    });
+    if (commit) {
+      Object.assign(pullRequest, {
+        state: 'merged',
+        mergeCommit: commit.oid,
+        lastHead: headOid,
+        updatedAt: new Date(),
+      });
+    }
 
     return commit;
   }
 
   /**
-   * Route the GitHub requests of a page to the mock, and store a session for the user, so the CMS
-   * signs in on its own when the page is opened.
+   * Route the GitHub requests of the pages in a browser context to the mock, including a sign-in
+   * popup, and store a session for the user, so the CMS signs in on its own when the page is
+   * opened.
    * @param {Page} page Page.
+   * @param {object} [options] Options.
+   * @param {boolean} [options.signedIn] Whether to store the session.
    */
-  async install(page) {
-    await page.addInitScript((user) => {
-      localStorage.setItem('sveltia-cms.user', JSON.stringify(user));
-    }, this.getUserProfile());
+  async install(page, { signedIn = true } = {}) {
+    const context = page.context();
 
-    await page.route('https://api.github.com/**', (route) => this.handleRoute(route));
-    await page.route('https://www.githubstatus.com/**', (route) =>
+    if (signedIn) {
+      await this.storeSession(page, 'github');
+    }
+
+    await context.route('https://api.github.com/**', (route) => this.handleRoute(route));
+    await context.route('https://www.githubstatus.com/**', (route) =>
       route.fulfill({ json: { status: { indicator: this.statusIndicator } } }),
     );
-    await page.route('https://avatars.githubusercontent.com/**', (route) =>
+    await context.route('https://avatars.githubusercontent.com/**', (route) =>
       route.fulfill({ status: 404 }),
     );
-  }
-
-  /**
-   * Get the user profile the CMS stores for a signed-in user.
-   * @returns {Record<string, any>} Profile.
-   */
-  getUserProfile() {
-    const { id, login, name, email } = this.user;
-
-    return { backendName: 'github', id, login, name, email, token: 'e2e-token' };
   }
 
   /**
@@ -721,6 +391,12 @@ export class MockGitHub {
     const request = route.request();
     const { pathname } = new URL(request.url());
     const method = request.method();
+
+    if (!this.isAuthorized(request)) {
+      await MockGitHub.respond(route, { status: 401, json: { message: 'Bad credentials' } });
+
+      return;
+    }
 
     if (pathname === '/graphql') {
       const { query, variables } = request.postDataJSON();
@@ -743,21 +419,7 @@ export class MockGitHub {
     );
 
     if (response) {
-      if (response.status === 204) {
-        await route.fulfill({ status: 204 });
-      } else if (response.json instanceof Buffer) {
-        await route.fulfill({ contentType: 'application/octet-stream', body: response.json });
-      } else {
-        await route.fulfill({
-          status: response.status ?? 200,
-          json: response.json,
-          // Like GitHub, let the page read the headers across origins
-          headers: response.headers && {
-            ...response.headers,
-            'access-control-expose-headers': Object.keys(response.headers).join(', '),
-          },
-        });
-      }
+      await MockGitHub.respond(route, response);
 
       return;
     }
