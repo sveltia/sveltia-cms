@@ -26,8 +26,9 @@ export default defineConfig({
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   // Each test opens a fresh browser context with the whole app in it, so cap the number of them
-  // running at once, like the component tests do, to keep the memory in check
-  workers: isCI ? 2 : 4,
+  // running at once, like the component tests do, to keep the memory in check. A CI runner has four
+  // cores and 16 GB, enough for four
+  workers: 4,
   reporter: isCI
     ? [['list'], ['html', { outputFolder: '../playwright-report', open: 'never' }]]
     : 'list',
