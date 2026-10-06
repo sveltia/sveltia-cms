@@ -212,15 +212,18 @@
  * @property {string} [region] Region, e.g. `us-east-1`. Required for Amazon S3, Backblaze B2, Bunny
  * Storage (two-letter storage region code, e.g. `de`), DigitalOcean Spaces and Scaleway Object
  * Storage. For Supabase Storage, set it to the project’s region; it defaults to `us-east-1`.
- * Ignored for Cloudflare R2, which always uses `auto`.
+ * Ignored for Cloudflare R2, which always uses `auto`. With a custom `endpoint`, it’s only used to
+ * sign requests and must match the server’s region, e.g. Garage’s `s3_region` (`garage` by
+ * default) or MinIO’s `us-east-1`; otherwise every request fails with a signature mismatch.
  * @property {string} [account_id] Cloudflare account ID. Required for Cloudflare R2.
  * @property {'default' | 'eu' | 'fedramp'} [jurisdiction] Cloudflare R2 jurisdiction. Required for
  * buckets created in the EU or FedRAMP jurisdictions; the global endpoint returns an error for
  * those buckets. Default: `'default'`.
  * @property {string} [project_id] Supabase project reference ID. Required for Supabase Storage.
- * @property {string} [endpoint] Custom endpoint URL for another S3-compatible service, such as
- * MinIO, configured as `aws_s3`. Ignored for the other services, whose endpoints are derived from
- * their own options.
+ * @property {string} [endpoint] Custom endpoint URL for another S3-compatible service, such as a
+ * self-hosted Garage or MinIO server, configured as `aws_s3`, e.g. `https://s3.example.com`.
+ * Objects are addressed with path-style URLs (`{endpoint}/{bucket}/{key}`), so no wildcard DNS is
+ * needed. Ignored for the other services, whose endpoints are derived from their own options.
  * @property {string} [prefix] Path prefix within the bucket, e.g. `uploads/`. A trailing slash is
  * added if missing.
  * @property {boolean} [force_path_style] Whether to use path-style URLs

@@ -740,6 +740,22 @@ describe('integrations/media-libraries/cloud/s3/shared utilities', () => {
       );
     });
 
+    it('should strip trailing slashes from the custom endpoint in list URL', async () => {
+      const xmlResponse = '<ListBucketResult><IsTruncated>false</IsTruncated></ListBucketResult>';
+
+      vi.mocked(fetch).mockResolvedValue(new Response(xmlResponse, { status: 200 }));
+
+      await listS3Objects(
+        { ...mockConfig, endpoint: 'http://localhost:3900//' },
+        { kind: undefined, apiKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' },
+      );
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/^http:\/\/localhost:3900\/test-bucket\?/),
+        expect.anything(),
+      );
+    });
+
     it('should handle single Contents item (non-array) response', async () => {
       const xmlResponse =
         '<ListBucketResult>' +

@@ -350,7 +350,7 @@ const listS3Page = async ({ config, credential: secretAccessKey, prefix, cursor 
   });
 
   const url = endpoint
-    ? `${endpoint}/${bucket}?${params}`
+    ? `${endpoint.replace(/\/+$/, '')}/${bucket}?${params}`
     : forcePathStyle
       ? `https://s3.${region}.amazonaws.com/${bucket}?${params}`
       : `https://${bucket}.s3.${region}.amazonaws.com/?${params}`;
